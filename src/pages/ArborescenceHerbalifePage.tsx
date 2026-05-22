@@ -321,12 +321,42 @@ export function ArborescenceHerbalifePage() {
         />
       )}
 
-      {/* Delete confirmation modal */}
+      {/* Delete confirmation modal — gère aussi la réassignation des
+          enfants si le distri à supprimer en a (chantier #1 polish). */}
       {deleteConfirmUser && (
         <DeleteConfirmModal
           user={deleteConfirmUser}
+          allUsers={users}
+          currentUserId={currentUser.id}
+          childrenCount={
+            externalsBySponsor.get(deleteConfirmUser.id)?.length ?? 0
+          }
           onClose={() => setDeleteConfirmUser(null)}
-          onConfirm={async () => {
+          onConfirm={async (reassignTo: string | null) => {
+            const children = externalsBySponsor.get(deleteConfirmUser.id) ?? [];
+            // 1. Si enfants présents et réassignation choisie : update chaque enfant d'abord
+            if (children.length > 0 && reassignTo) {
+              for (const child of children) {
+                const r = await updateExternalDistributor({
+                  userId: child.id,
+                  name: child.name,
+                  currentRank: child.currentRank ?? "distributor_25",
+                  sponsorId: reassignTo,
+                });
+                if (!r.ok) {
+                  pushToast({
+                    tone: "error",
+                    title: `Réassignation ${child.name} échouée : ${r.error}`,
+                  });
+                  return;
+                }
+              }
+              pushToast({
+                tone: "success",
+                title: `${children.length} enfant(s) réassigné(s)`,
+              });
+            }
+            // 2. Delete le distri
             const result = await deleteExternalDistributor(deleteConfirmUser.id);
             if (result.ok) {
               pushToast({ tone: "success", title: `${deleteConfirmUser.name} supprimé` });
@@ -627,27 +657,62 @@ function EditProfileModal({
 // ─── DeleteConfirmModal ────────────────────────────────────────────────────
 function DeleteConfirmModal({
   user,
+  allUsers,
+  currentUserId,
+  childrenCount,
   onClose,
   onConfirm,
 }: {
   user: User;
+  allUsers: User[];
+  currentUserId: string;
+  childrenCount: number;
   onClose: () => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: (reassignTo: string | null) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const [reassignTo, setReassignTo] = useState<string>(currentUserId);
+  const hasChildren = childrenCount > 0;
+
   return (
     <div style={modalOverlayStyle} onClick={onClose} role="dialog" aria-modal="true">
-      <div style={{ ...modalContentStyle, maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ ...modalContentStyle, maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div style={modalHeaderStyle}>
           <h2 style={modalTitleStyle}>Supprimer {user.name} ?</h2>
           <button type="button" onClick={onClose} aria-label="Fermer" style={modalCloseStyle}>×</button>
         </div>
-        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "var(--ls-text)", lineHeight: 1.5 }}>
             Cette action est <strong>irréversible</strong> : <strong>{user.name}</strong> sera retiré de ton arborescence avec tout son historique PV.
           </p>
-          <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
-            ℹ️ Si ce distri a des enfants dans l'arbre ou est utilisé comme uplink HL sur des clients, la suppression sera refusée — réassigne d'abord.
+
+          {hasChildren && (
+            <div style={reassignBoxStyle}>
+              <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "var(--ls-text)", fontWeight: 600, marginBottom: 6 }}>
+                ⚠️ {user.name} a <strong>{childrenCount} enfant{childrenCount > 1 ? "s" : ""}</strong> dans l'arbre.
+              </p>
+              <p style={{ margin: "0 0 10px", fontFamily: "DM Sans, sans-serif", fontSize: 11.5, color: "var(--ls-text-muted)" }}>
+                Choisis vers qui les réassigner avant la suppression :
+              </p>
+              <select
+                value={reassignTo}
+                onChange={(e) => setReassignTo(e.target.value)}
+                style={selectStyle}
+                disabled={busy}
+              >
+                {allUsers
+                  .filter((u) => u.id !== user.id)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.id === currentUserId ? `${u.name} (toi)` : u.name}{u.isExternal ? " (externe)" : u.active ? "" : " (inactif)"}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
+          <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 11.5, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
+            ℹ️ Si ce distri est utilisé comme uplink HL sur des clients, la suppression sera refusée — change l'uplink sur ces fiches d'abord.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, padding: "12px 22px 18px", justifyContent: "flex-end", borderTop: "0.5px solid var(--ls-border)" }}>
@@ -657,7 +722,7 @@ function DeleteConfirmModal({
             onClick={async () => {
               setBusy(true);
               try {
-                await onConfirm();
+                await onConfirm(hasChildren ? reassignTo : null);
               } finally {
                 setBusy(false);
               }
@@ -665,7 +730,7 @@ function DeleteConfirmModal({
             style={btnDangerStyle}
             disabled={busy}
           >
-            {busy ? "Suppression…" : "Supprimer définitivement"}
+            {busy ? "Suppression…" : hasChildren ? `Réassigner ${childrenCount} + supprimer` : "Supprimer définitivement"}
           </button>
         </div>
       </div>
@@ -1177,6 +1242,13 @@ const btnGhostStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
   cursor: "pointer",
+};
+
+const reassignBoxStyle: React.CSSProperties = {
+  padding: 12,
+  borderRadius: 12,
+  background: "color-mix(in srgb, var(--ls-coral) 6%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 24%, transparent)",
 };
 
 const btnDangerStyle: React.CSSProperties = {
