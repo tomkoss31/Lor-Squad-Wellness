@@ -2017,6 +2017,133 @@ export async function deleteSupabaseExternalDistributor(
 }
 
 /**
+ * Charge les entries manual_pv distinctes (par name) pour un viewer.
+ * Chantier #9 polish — assistant de migration vers distri externes.
+ */
+export async function loadDistinctManualEntries(
+  viewerUserId: string,
+): Promise<Array<{
+  name: string;
+  tierPct: number;
+  monthsCount: number;
+  totalPv: number;
+  entryIds: string[];
+}>> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("manual_pv_entries")
+    .select("id, name, own_tier_pct, month, pv_15, pv_25, pv_35, pv_42, pv_royalty")
+    .eq("viewer_user_id", viewerUserId);
+  if (error || !data) return [];
+
+  // Groupe par name
+  const map = new Map<string, { tierPct: number; months: Set<string>; totalPv: number; ids: string[] }>();
+  for (const row of data as Array<{
+    id: string;
+    name: string;
+    own_tier_pct: number;
+    month: string;
+    pv_15: number | null;
+    pv_25: number | null;
+    pv_35: number | null;
+    pv_42: number | null;
+    pv_royalty: number | null;
+  }>) {
+    const key = row.name.trim();
+    if (!key) continue;
+    const entry = map.get(key) ?? { tierPct: row.own_tier_pct, months: new Set<string>(), totalPv: 0, ids: [] };
+    entry.months.add(row.month);
+    entry.totalPv +=
+      Number(row.pv_15 ?? 0) +
+      Number(row.pv_25 ?? 0) +
+      Number(row.pv_35 ?? 0) +
+      Number(row.pv_42 ?? 0) +
+      Number(row.pv_royalty ?? 0);
+    entry.ids.push(row.id);
+    map.set(key, entry);
+  }
+  return Array.from(map.entries())
+    .map(([name, v]) => ({
+      name,
+      tierPct: v.tierPct,
+      monthsCount: v.months.size,
+      totalPv: v.totalPv,
+      entryIds: v.ids,
+    }))
+    .sort((a, b) => b.totalPv - a.totalPv);
+}
+
+/**
+ * Migre toutes les entries manual_pv pour un name donné vers un nouveau
+ * distri externe + persiste les PV mensuels dans pv_monthly_breakdown.
+ *
+ * Étapes :
+ *   1. Charge les manual entries pour (viewerId, name) → groupées par mois
+ *   2. Crée le distri externe via endpoint (sponsorId = viewer par défaut)
+ *   3. Pour chaque mois, INSERT dans pv_monthly_breakdown via setUserPvBreakdown
+ *   4. Delete les manual_pv_entries originales
+ */
+export async function migrateManualToExternal(params: {
+  viewerUserId: string;
+  name: string;
+  currentRank: import("../types/domain").HerbalifeRank;
+  sponsorId?: string | null;
+}): Promise<{ ok: true; userId: string; monthsMigrated: number } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+
+  // 1. Charge les entries
+  const { data: entries, error: loadErr } = await client
+    .from("manual_pv_entries")
+    .select("id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty")
+    .eq("viewer_user_id", params.viewerUserId)
+    .eq("name", params.name);
+  if (loadErr || !entries) {
+    return { ok: false, error: loadErr?.message ?? "Aucune entry trouvée." };
+  }
+
+  // 2. Crée l'externe
+  const createResult = await createSupabaseExternalDistributor({
+    name: params.name,
+    currentRank: params.currentRank,
+    sponsorId: params.sponsorId ?? params.viewerUserId,
+  });
+  if (!createResult.ok) {
+    return { ok: false, error: createResult.error };
+  }
+  const userId = createResult.userId;
+
+  // 3. Agrège par mois (au cas où plusieurs entries même mois) et upsert breakdown
+  const byMonth = new Map<string, { pv15: number; pv25: number; pv35: number; pv42: number; pvRoyalty: number }>();
+  for (const e of entries as Array<{ month: string; pv_15: number | null; pv_25: number | null; pv_35: number | null; pv_42: number | null; pv_royalty: number | null }>) {
+    const cur = byMonth.get(e.month) ?? { pv15: 0, pv25: 0, pv35: 0, pv42: 0, pvRoyalty: 0 };
+    cur.pv15 += Number(e.pv_15 ?? 0);
+    cur.pv25 += Number(e.pv_25 ?? 0);
+    cur.pv35 += Number(e.pv_35 ?? 0);
+    cur.pv42 += Number(e.pv_42 ?? 0);
+    cur.pvRoyalty += Number(e.pv_royalty ?? 0);
+    byMonth.set(e.month, cur);
+  }
+
+  let monthsMigrated = 0;
+  for (const [month, pv] of byMonth.entries()) {
+    try {
+      await setUserPvBreakdown({ userId, month, ...pv });
+      monthsMigrated += 1;
+    } catch (err) {
+      console.warn(`[migrateManualToExternal] mois ${month} échec:`, err);
+    }
+  }
+
+  // 4. Delete les entries originales (best-effort)
+  const ids = (entries as Array<{ id: string }>).map((e) => e.id);
+  if (ids.length > 0) {
+    await client.from("manual_pv_entries").delete().in("id", ids);
+  }
+
+  return { ok: true, userId, monthsMigrated };
+}
+
+/**
  * Charge les N derniers mois de breakdown PV pour un user.
  */
 export async function loadUserPvHistory(

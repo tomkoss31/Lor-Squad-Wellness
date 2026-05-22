@@ -24,7 +24,12 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
-import { setUserPvBreakdown, loadUserPvHistory } from "../services/supabaseService";
+import {
+  setUserPvBreakdown,
+  loadUserPvHistory,
+  loadDistinctManualEntries,
+  migrateManualToExternal,
+} from "../services/supabaseService";
 import { RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank, User } from "../types/domain";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
@@ -94,6 +99,32 @@ export function ArborescenceHerbalifePage() {
   const [csvRaw, setCsvRaw] = useState("");
   const [importing, setImporting] = useState(false);
   const [importLog, setImportLog] = useState<Array<{ name: string; ok: boolean; error?: string }>>([]);
+
+  // Migration manual_pv_entries → externes (chantier #9 polish 2026-05-22)
+  const [showMigration, setShowMigration] = useState(false);
+  const [manualEntries, setManualEntries] = useState<Array<{ name: string; tierPct: number; monthsCount: number; totalPv: number; entryIds: string[] }>>([]);
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationLog, setMigrationLog] = useState<Array<{ name: string; ok: boolean; monthsMigrated?: number; error?: string }>>([]);
+  const [selectedToMigrate, setSelectedToMigrate] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!showMigration || !currentUser) return;
+    setMigrationLoading(true);
+    void loadDistinctManualEntries(currentUser.id)
+      .then((rows) => {
+        setManualEntries(rows);
+        setSelectedToMigrate(new Set(rows.map((r) => r.name)));
+      })
+      .finally(() => setMigrationLoading(false));
+  }, [showMigration, currentUser]);
+
+  function tierPctToRank(tier: number): HerbalifeRank {
+    if (tier <= 25) return "distributor_25";
+    if (tier <= 35) return "senior_consultant_35";
+    if (tier <= 42) return "success_builder_42";
+    return "supervisor_50";
+  }
 
   // Quel externe est actuellement en édition PV ?
   const [editingExternalId, setEditingExternalId] = useState<string | null>(null);
@@ -280,6 +311,9 @@ export function ArborescenceHerbalifePage() {
           <button type="button" onClick={() => setShowCsvImport((s) => !s)} style={importBtnStyle}>
             📥 Import CSV
           </button>
+          <button type="button" onClick={() => setShowMigration((s) => !s)} style={importBtnStyle}>
+            🔄 Migrer mes entries hors-app
+          </button>
         </div>
         {!isCurrentMonth && (
           <div style={retroBannerStyle}>
@@ -432,6 +466,124 @@ export function ArborescenceHerbalifePage() {
           >
             {importing ? "Import en cours…" : `Importer ${csvRaw.split("\n").filter((l) => l.trim()).length} ligne(s)`}
           </button>
+        </div>
+      )}
+
+      {showMigration && (
+        <div style={createBoxStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={createTitleStyle}>🔄 Migrer tes entries hors-app → distri externes</span>
+            <button
+              type="button"
+              onClick={() => { setShowMigration(false); setMigrationLog([]); }}
+              style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 18 }}
+              aria-label="Fermer"
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "0 0 12px", lineHeight: 1.6, fontFamily: "DM Sans, sans-serif" }}>
+            Les anciennes saisies <code style={codeStyle}>manual_pv_entries</code> (issue de la V1 rentab) peuvent être
+            converties en distri externes persistants : chaque nom devient un user externe avec son rang HL, et tous
+            les mois historiques sont transférés vers le breakdown du nouveau user. Les entries originales sont supprimées.
+            <br />
+            ➜ Tu pourras ensuite saisir leurs PV mois après mois sans re-saisir leur identité.
+          </p>
+
+          {migrationLoading ? (
+            <div style={{ textAlign: "center", padding: 20, color: "var(--ls-text-muted)" }}>Chargement…</div>
+          ) : manualEntries.length === 0 ? (
+            <div style={{ padding: 16, textAlign: "center", color: "var(--ls-text-muted)", background: "var(--ls-surface2)", borderRadius: 8, fontSize: 13 }}>
+              ✨ Aucune entry manual_pv à migrer. Tu es à jour.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                {manualEntries.length} distri unique{manualEntries.length > 1 ? "s" : ""} détecté{manualEntries.length > 1 ? "s" : ""}
+              </div>
+              <div style={migrationListStyle}>
+                {manualEntries.map((e) => {
+                  const checked = selectedToMigrate.has(e.name);
+                  return (
+                    <label key={e.name} style={migrationRowStyle(checked)}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(ev) => {
+                          const next = new Set(selectedToMigrate);
+                          if (ev.target.checked) next.add(e.name);
+                          else next.delete(e.name);
+                          setSelectedToMigrate(next);
+                        }}
+                        disabled={migrating}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--ls-text)" }}>
+                          {e.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                          Tier {e.tierPct}% → {RANK_LABELS[tierPctToRank(e.tierPct)]} · {e.monthsCount} mois · {Math.round(e.totalPv).toLocaleString("fr-FR")} PV cumulés
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {migrationLog.length > 0 && (
+                <div style={importLogStyle}>
+                  <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "var(--ls-text-muted)" }}>
+                    Résultat ({migrationLog.filter((l) => l.ok).length}/{migrationLog.length} migrés) :
+                  </p>
+                  {migrationLog.map((entry, idx) => (
+                    <div key={idx} style={{ fontSize: 11.5, color: entry.ok ? "var(--ls-teal)" : "var(--ls-coral)", marginBottom: 2 }}>
+                      {entry.ok ? "✓" : "✗"} {entry.name}
+                      {entry.ok && entry.monthsMigrated != null ? ` (${entry.monthsMigrated} mois)` : ""}
+                      {entry.error ? ` — ${entry.error}` : ""}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (selectedToMigrate.size === 0 || !currentUser) return;
+                  setMigrating(true);
+                  setMigrationLog([]);
+                  const log: typeof migrationLog = [];
+                  for (const entry of manualEntries.filter((e) => selectedToMigrate.has(e.name))) {
+                    const result = await migrateManualToExternal({
+                      viewerUserId: currentUser.id,
+                      name: entry.name,
+                      currentRank: tierPctToRank(entry.tierPct),
+                      sponsorId: currentUser.id,
+                    });
+                    if (result.ok) {
+                      log.push({ name: entry.name, ok: true, monthsMigrated: result.monthsMigrated });
+                    } else {
+                      log.push({ name: entry.name, ok: false, error: result.error });
+                    }
+                  }
+                  setMigrationLog(log);
+                  const okCount = log.filter((l) => l.ok).length;
+                  pushToast({
+                    tone: okCount === log.length ? "success" : okCount > 0 ? "warning" : "error",
+                    title: `Migration : ${okCount}/${log.length} OK`,
+                  });
+                  setMigrating(false);
+                  // Recharge la liste (les migrés ont disparu)
+                  if (currentUser) {
+                    void loadDistinctManualEntries(currentUser.id).then(setManualEntries);
+                  }
+                }}
+                style={btnPrimaryStyle}
+                disabled={migrating || selectedToMigrate.size === 0}
+              >
+                {migrating ? "Migration en cours…" : `Migrer ${selectedToMigrate.size} distri en bloc`}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -1553,6 +1705,28 @@ const codeStyle: React.CSSProperties = {
   borderRadius: 4,
   fontSize: 11.5,
 };
+
+const migrationListStyle: React.CSSProperties = {
+  maxHeight: 280,
+  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  marginBottom: 12,
+};
+
+function migrationRowStyle(checked: boolean): React.CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 12px",
+    background: checked ? "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))" : "var(--ls-surface2)",
+    border: checked ? "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)" : "0.5px solid var(--ls-border)",
+    borderRadius: 10,
+    cursor: "pointer",
+  };
+}
 
 const importLogStyle: React.CSSProperties = {
   marginBottom: 10,
