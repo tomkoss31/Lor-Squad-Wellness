@@ -34,6 +34,7 @@ import {
 import { RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank, User } from "../types/domain";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
+import { rankProgression } from "../lib/herbalifeFormulas";
 import { PV_BREAKDOWN_UPDATED_EVENT } from "../hooks/usePvBreakdowns";
 
 const RANK_OPTIONS: Array<{ value: HerbalifeRank; label: string }> = [
@@ -976,6 +977,12 @@ function ExternalsList({
                 )}
               </div>
 
+              {/* Mini-jauge progression vers prochain rang (chantier ext 2026-05-22) */}
+              <ProgressionMiniBar
+                currentRank={u.currentRank ?? "distributor_25"}
+                personalPv={total}
+              />
+
               {/* Historique multi-mois (chantier 2026-05-22) */}
               <PvHistoryStrip userId={u.id} currentMonth={monthIso} />
 
@@ -1008,6 +1015,51 @@ function ExternalsList({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── ProgressionMiniBar (chantier ext #1 2026-05-22) ─────────────────────
+// Affiche la jauge vers le prochain rang sous chaque card externe.
+// Si déjà Supervisor+ → affiche "✓ Supervisor" sans jauge.
+// Approximation : utilise le PV mois courant (pas 12 mois glissants).
+function ProgressionMiniBar({ currentRank, personalPv }: { currentRank: string; personalPv: number }) {
+  const progression = rankProgression(currentRank, personalPv);
+  if (!progression) {
+    return (
+      <div style={{ marginTop: 8, fontSize: 11, color: "var(--ls-teal)", fontFamily: "DM Sans, sans-serif" }}>
+        ✓ Supervisor 50% — palier max atteint
+      </div>
+    );
+  }
+  return (
+    <div style={{ marginTop: 10, paddingTop: 8, borderTop: "0.5px dashed var(--ls-border)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontFamily: "DM Sans, sans-serif", fontSize: 10.5, marginBottom: 4 }}>
+        <span style={{ color: "var(--ls-text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          → {progression.nextLabel}
+        </span>
+        <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>
+          {Math.round(progression.pvCurrent).toLocaleString("fr-FR")} / {progression.pvNeeded.toLocaleString("fr-FR")} PV
+        </span>
+      </div>
+      <div style={{ height: 5, background: "var(--ls-surface2)", borderRadius: 999, overflow: "hidden" }}>
+        <div
+          style={{
+            width: `${progression.pct}%`,
+            height: "100%",
+            background: progression.pct >= 80
+              ? "linear-gradient(90deg, var(--ls-gold), var(--ls-coral))"
+              : "linear-gradient(90deg, var(--ls-teal), var(--ls-purple))",
+            borderRadius: 999,
+            transition: "width 600ms ease",
+          }}
+        />
+      </div>
+      {progression.remaining > 0 && (
+        <div style={{ fontSize: 10, color: "var(--ls-text-muted)", marginTop: 3, fontFamily: "DM Sans, sans-serif" }}>
+          reste {Math.round(progression.remaining).toLocaleString("fr-FR")} PV
+        </div>
+      )}
     </div>
   );
 }
