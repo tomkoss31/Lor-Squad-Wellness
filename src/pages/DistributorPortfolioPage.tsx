@@ -103,6 +103,48 @@ export function DistributorPortfolioPage() {
     );
   }
 
+  // Cas passive supervisor : pas de portefeuille client (par design).
+  // On affiche une info dédiée + lien vers /arborescence-herbalife où l'admin
+  // peut saisir ses PV mensuels + récupérer son magic link.
+  if (targetUser?.isPassiveSupervisor) {
+    return (
+      <Card className="space-y-4" style={{ padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 28 }}>🔗</span>
+          <div>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700, color: "var(--ls-text)", margin: 0 }}>
+              {targetUser.name}
+            </h2>
+            <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "4px 0 0" }}>
+              Supervisor passif · Pas de portefeuille client
+            </p>
+          </div>
+        </div>
+        <div style={{
+          padding: 16,
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+          border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+          borderRadius: 12,
+          fontSize: 13.5,
+          color: "var(--ls-text)",
+          lineHeight: 1.6,
+        }}>
+          <strong>Ce distri ne se connecte pas à l'app coach.</strong><br />
+          Il accède en lecture seule à sa rentabilité via un magic link personnel
+          (URL <code style={{ background: "var(--ls-surface)", padding: "1px 5px", borderRadius: 4, fontSize: 12 }}>/distri-passif?token=…</code>) généré lors de sa création.
+          <br /><br />
+          ➜ Pour saisir ses PV mensuels ou régénérer son lien, va dans{" "}
+          <a
+            href="/parametres/arborescence-herbalife"
+            style={{ color: "var(--ls-teal)", fontWeight: 600, textDecoration: "underline" }}
+          >
+            Paramètres &gt; Arborescence Herbalife
+          </a>.
+        </div>
+      </Card>
+    );
+  }
+
   const portfolioUsers = getActivePortfolioUsers(users, visibleClients, currentUser);
   const portfolioUser =
     portfolioUsers.find((u) => u.id === distributorId) ??
