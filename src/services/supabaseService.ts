@@ -2011,6 +2011,29 @@ export async function createSupabasePassiveSupervisor(payload: {
 }
 
 /**
+ * Récupère le magic link d'un Supervisor passif (admin only).
+ * Lit passive_supervisor_accounts.token via RLS (read = admin).
+ * 2026-05-22.
+ */
+export async function getPassiveSupervisorMagicLink(userId: string): Promise<
+  { ok: true; magicLink: string } | { ok: false; error: string }
+> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("passive_supervisor_accounts")
+    .select("token")
+    .eq("user_id", userId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data?.token) return { ok: false, error: "Aucun lien actif pour ce distri." };
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return { ok: true, magicLink: `${origin}/distri-passif?token=${data.token}` };
+}
+
+/**
  * Update un distri externe (admin/référent only). 2026-05-22.
  */
 export async function updateSupabaseExternalDistributor(payload: {
