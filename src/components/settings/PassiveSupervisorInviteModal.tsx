@@ -82,7 +82,13 @@ export function PassiveSupervisorInviteModal({ open, onClose }: Props) {
         sponsorId: sponsorId || currentUser?.id || null,
       });
       if (res.ok) {
-        setResult({ magicLink: res.magicLink, name: name.trim() });
+        // L'API renvoie soit /distri-passif?token=… (relatif) soit une URL
+        // complète. On normalise pour toujours afficher une URL absolue
+        // copiable telle quelle.
+        const fullLink = res.magicLink.startsWith("http")
+          ? res.magicLink
+          : `${window.location.origin}${res.magicLink}`;
+        setResult({ magicLink: fullLink, name: name.trim() });
         pushToast({ tone: "success", title: `${name.trim()} créé. Magic link prêt.` });
       } else {
         pushToast({ tone: "error", title: res.error });

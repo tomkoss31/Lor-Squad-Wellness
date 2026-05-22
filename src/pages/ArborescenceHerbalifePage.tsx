@@ -612,7 +612,10 @@ export function ArborescenceHerbalifePage() {
                       sponsorId: passiveSponsorId || currentUser?.id || null,
                     });
                     if (result.ok) {
-                      setPassiveResult({ name: passiveName.trim(), magicLink: result.magicLink });
+                      const fullLink = result.magicLink.startsWith("http")
+                        ? result.magicLink
+                        : `${window.location.origin}${result.magicLink}`;
+                      setPassiveResult({ name: passiveName.trim(), magicLink: fullLink });
                       pushToast({ tone: "success", title: `${passiveName.trim()} créé. Magic link prêt.` });
                       setPassiveName("");
                       setPassiveSponsorId("");
