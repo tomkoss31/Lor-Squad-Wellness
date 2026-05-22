@@ -119,7 +119,7 @@ export default async function handler(req: any, res: any) {
     authUser =
       (usersList.find((item) => item.email?.toLowerCase() === email) as
         | typeof authUser
-        | null) ?? null;
+        | undefined) ?? null;
   }
 
   if (!authUser?.id || !authUser.email) {
