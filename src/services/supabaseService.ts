@@ -2050,13 +2050,14 @@ export async function updateSupabaseExternalDistributor(payload: {
     data: { session },
   } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
-  const response = await fetch("/api/admin-update-external-distributor", {
+  // Endpoint fusionné (limite Vercel 12 functions) : flag action=update.
+  const response = await fetch("/api/admin-create-external-distributor", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, action: "update" }),
   });
   const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
   if (!response.ok || !body.ok) {
@@ -2076,13 +2077,14 @@ export async function deleteSupabaseExternalDistributor(
     data: { session },
   } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
-  const response = await fetch("/api/admin-delete-external-distributor", {
+  // Endpoint fusionné (limite Vercel 12 functions) : flag action=delete.
+  const response = await fetch("/api/admin-create-external-distributor", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ userId, action: "delete" }),
   });
   const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
   if (!response.ok || !body.ok) {
