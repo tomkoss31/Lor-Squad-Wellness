@@ -89,6 +89,11 @@ export function ArborescenceHerbalifePage() {
   const [newRank, setNewRank] = useState<HerbalifeRank>("success_builder_42");
   const [newSponsorId, setNewSponsorId] = useState<string>("");
   const [creating, setCreating] = useState(false);
+  // Import CSV bulk (chantier #4 polish 2026-05-22)
+  const [showCsvImport, setShowCsvImport] = useState(false);
+  const [csvRaw, setCsvRaw] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importLog, setImportLog] = useState<Array<{ name: string; ok: boolean; error?: string }>>([]);
 
   // Quel externe est actuellement en édition PV ?
   const [editingExternalId, setEditingExternalId] = useState<string | null>(null);
@@ -243,6 +248,9 @@ export function ArborescenceHerbalifePage() {
           <button type="button" onClick={() => setShowCreate((s) => !s)} style={addBtnStyle}>
             + Ajouter un distri externe
           </button>
+          <button type="button" onClick={() => setShowCsvImport((s) => !s)} style={importBtnStyle}>
+            📥 Import CSV
+          </button>
         </div>
         {!isCurrentMonth && (
           <div style={retroBannerStyle}>
@@ -299,6 +307,101 @@ export function ArborescenceHerbalifePage() {
           </select>
           <button type="button" onClick={handleCreate} style={btnPrimaryStyle} disabled={creating}>
             {creating ? "Création…" : "Ajouter à mon arborescence"}
+          </button>
+        </div>
+      )}
+
+      {showCsvImport && (
+        <div style={createBoxStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={createTitleStyle}>📥 Import CSV bulk</span>
+            <button
+              type="button"
+              onClick={() => { setShowCsvImport(false); setCsvRaw(""); setImportLog([]); }}
+              style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 18 }}
+              aria-label="Fermer"
+            >
+              ×
+            </button>
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "0 0 10px", lineHeight: 1.6, fontFamily: "DM Sans, sans-serif" }}>
+            Colle ton CSV avec une ligne par distri. Format : <code style={codeStyle}>nom,rang,sponsor</code><br />
+            Rangs valides : <code style={codeStyle}>distributor_25</code>, <code style={codeStyle}>senior_consultant_35</code>, <code style={codeStyle}>success_builder_42</code>, <code style={codeStyle}>supervisor_50</code>, etc.<br />
+            Sponsor : nom d'un distri existant (toi ou un autre externe). Vide = toi.
+          </p>
+          <textarea
+            value={csvRaw}
+            onChange={(e) => setCsvRaw(e.target.value)}
+            placeholder={`Virgile L.,success_builder_42,\nAurélie Urbes,senior_consultant_35,Virgile L.\nOphélie M.,success_builder_42,`}
+            style={textareaStyle}
+            disabled={importing}
+            rows={6}
+          />
+          {importLog.length > 0 && (
+            <div style={importLogStyle}>
+              <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "var(--ls-text-muted)" }}>
+                Résultat ({importLog.filter((l) => l.ok).length}/{importLog.length} créés) :
+              </p>
+              {importLog.map((entry, idx) => (
+                <div key={idx} style={{ fontSize: 11.5, color: entry.ok ? "var(--ls-teal)" : "var(--ls-coral)", marginBottom: 2 }}>
+                  {entry.ok ? "✓" : "✗"} {entry.name}{entry.error ? ` — ${entry.error}` : ""}
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              const lines = csvRaw.split("\n").map((l) => l.trim()).filter(Boolean);
+              if (lines.length === 0) {
+                pushToast({ tone: "warning", title: "Le CSV est vide." });
+                return;
+              }
+              setImporting(true);
+              setImportLog([]);
+              const log: Array<{ name: string; ok: boolean; error?: string }> = [];
+              for (const line of lines) {
+                const parts = line.split(",").map((p) => p.trim());
+                const name = parts[0] ?? "";
+                const rank = (parts[1] ?? "success_builder_42") as HerbalifeRank;
+                const sponsorName = parts[2] ?? "";
+                if (!name || name.length < 2) {
+                  log.push({ name: line, ok: false, error: "Nom invalide" });
+                  continue;
+                }
+                let sponsorId: string | null = currentUser?.id ?? null;
+                if (sponsorName) {
+                  // Match par nom (insensitive)
+                  const match = users.find((u) => u.name.toLowerCase() === sponsorName.toLowerCase());
+                  if (match) {
+                    sponsorId = match.id;
+                  } else {
+                    log.push({ name, ok: false, error: `Sponsor "${sponsorName}" introuvable` });
+                    continue;
+                  }
+                }
+                const result = await createExternalDistributor({ name, currentRank: rank, sponsorId });
+                if (result.ok) {
+                  log.push({ name, ok: true });
+                } else {
+                  log.push({ name, ok: false, error: result.error });
+                }
+              }
+              setImportLog(log);
+              const okCount = log.filter((l) => l.ok).length;
+              pushToast({
+                tone: okCount === log.length ? "success" : okCount > 0 ? "warning" : "error",
+                title: `Import : ${okCount}/${log.length} créé${okCount > 1 ? "s" : ""}`,
+              });
+              setImporting(false);
+              if (okCount === log.length) {
+                setCsvRaw("");
+              }
+            }}
+            style={btnPrimaryStyle}
+            disabled={importing || !csvRaw.trim()}
+          >
+            {importing ? "Import en cours…" : `Importer ${csvRaw.split("\n").filter((l) => l.trim()).length} ligne(s)`}
           </button>
         </div>
       )}
@@ -1366,6 +1469,49 @@ const btnGhostStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
   cursor: "pointer",
+};
+
+const importBtnStyle: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const textareaStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text)",
+  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+  fontSize: 12.5,
+  resize: "vertical",
+  marginBottom: 10,
+};
+
+const codeStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+  background: "var(--ls-surface2)",
+  padding: "1px 4px",
+  borderRadius: 4,
+  fontSize: 11.5,
+};
+
+const importLogStyle: React.CSSProperties = {
+  marginBottom: 10,
+  padding: 10,
+  borderRadius: 8,
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+  maxHeight: 200,
+  overflowY: "auto",
 };
 
 const searchBarStyle: React.CSSProperties = {
