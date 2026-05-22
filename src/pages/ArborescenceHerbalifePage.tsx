@@ -96,8 +96,54 @@ export function ArborescenceHerbalifePage() {
   const [editProfileUser, setEditProfileUser] = useState<User | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
 
+  // Search + tri (chantier #2 polish 2026-05-22)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortMode, setSortMode] = useState<"tree" | "name" | "pv" | "rank">("tree");
+
   const isAdmin = currentUser?.role === "admin";
   const externals = useMemo(() => users.filter((u) => u.isExternal), [users]);
+
+  // Filtre search (chantier #2)
+  const searchLower = searchQuery.trim().toLowerCase();
+  const filteredExternals = useMemo(() => {
+    if (!searchLower) return externals;
+    return externals.filter((u) => u.name.toLowerCase().includes(searchLower));
+  }, [externals, searchLower]);
+
+  // Tri "flat" pour les modes name / pv / rank
+  const flatSorted = useMemo(() => {
+    if (sortMode === "tree") return [];
+    const list = [...filteredExternals];
+    if (sortMode === "name") {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortMode === "pv") {
+      const totalFor = (id: string) => {
+        const b = breakdowns.find((x) => x.userId === id);
+        return b ? (b.pv15 ?? 0) + (b.pv25 ?? 0) + (b.pv35 ?? 0) + (b.pv42 ?? 0) + (b.pvRoyalty ?? 0) : 0;
+      };
+      list.sort((a, b) => totalFor(b.id) - totalFor(a.id));
+    } else if (sortMode === "rank") {
+      const rankOrder: Record<string, number> = {
+        presidents_50: 12,
+        millionaire_7500_50: 11,
+        millionaire_50: 10,
+        get_team_2500_50: 9,
+        get_team_50: 8,
+        active_world_team_50: 7,
+        world_team_50: 6,
+        active_supervisor_50: 5,
+        supervisor_50: 4,
+        success_builder_42: 3,
+        senior_consultant_35: 2,
+        distributor_25: 1,
+      };
+      list.sort((a, b) =>
+        (rankOrder[b.currentRank ?? "distributor_25"] ?? 0) -
+        (rankOrder[a.currentRank ?? "distributor_25"] ?? 0)
+      );
+    }
+    return list;
+  }, [filteredExternals, sortMode, breakdowns]);
   const externalsBySponsor = useMemo(() => {
     const map = new Map<string, User[]>();
     for (const u of externals) {
@@ -267,36 +313,90 @@ export function ArborescenceHerbalifePage() {
           </p>
         </div>
       ) : (
-        <div style={treeWrapStyle}>
-          {/* Racine = currentUser (toi), affichée juste pour le contexte */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <Avatar initials={initialsOf(currentUser.name)} hue={avatarHue(currentUser.name)} size={44} />
-            <div>
-              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-text)" }}>
-                {currentUser.name} <span style={{ color: "var(--ls-gold)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
-                {RANK_LABELS[currentUser.currentRank ?? "distributor_25"] ?? "—"}
-              </div>
+        <>
+          {/* Search + tri (chantier #2 polish 2026-05-22) */}
+          <div style={searchBarStyle}>
+            <input
+              type="search"
+              placeholder="🔍 Chercher par nom (Virgile, Aurélie...)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={searchInputStyle}
+            />
+            <div style={sortChipsRowStyle}>
+              <SortChip active={sortMode === "tree"} onClick={() => setSortMode("tree")}>🌳 Arbre</SortChip>
+              <SortChip active={sortMode === "name"} onClick={() => setSortMode("name")}>A-Z</SortChip>
+              <SortChip active={sortMode === "pv"} onClick={() => setSortMode("pv")}>💰 PV</SortChip>
+              <SortChip active={sortMode === "rank"} onClick={() => setSortMode("rank")}>👑 Rang</SortChip>
             </div>
           </div>
 
-          <ExternalsList
-            users={rootChildren}
-            allBySponsor={externalsBySponsor}
-            depth={1}
-            breakdowns={breakdowns}
-            monthIso={monthIso}
-            editingExternalId={editingExternalId}
-            onEditToggle={(id) => setEditingExternalId((cur) => (cur === id ? null : id))}
-            onSaved={() => {
-              setEditingExternalId(null);
-              void refetch();
-            }}
-            onEditProfile={(u) => setEditProfileUser(u)}
-            onDelete={(u) => setDeleteConfirmUser(u)}
-          />
-        </div>
+          {searchLower && (
+            <div style={searchSummaryStyle}>
+              {filteredExternals.length} résultat{filteredExternals.length > 1 ? "s" : ""} pour "{searchQuery}"
+              {filteredExternals.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  style={{ marginLeft: 10, background: "transparent", border: "none", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 11, textDecoration: "underline" }}
+                >
+                  effacer
+                </button>
+              )}
+            </div>
+          )}
+
+          <div style={treeWrapStyle}>
+            {/* Racine = currentUser (toi), affichée juste pour le contexte */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <Avatar initials={initialsOf(currentUser.name)} hue={avatarHue(currentUser.name)} size={44} />
+              <div>
+                <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-text)" }}>
+                  {currentUser.name} <span style={{ color: "var(--ls-gold)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+                  {RANK_LABELS[currentUser.currentRank ?? "distributor_25"] ?? "—"}
+                </div>
+              </div>
+            </div>
+
+            {sortMode === "tree" ? (
+              <ExternalsList
+                users={searchLower ? filteredExternals.filter((u) => u.sponsorId === currentUser.id || !u.sponsorId) : rootChildren}
+                allBySponsor={searchLower
+                  ? new Map(Array.from(externalsBySponsor.entries()).map(([k, v]) => [k, v.filter((u) => filteredExternals.includes(u))]))
+                  : externalsBySponsor}
+                depth={1}
+                breakdowns={breakdowns}
+                monthIso={monthIso}
+                editingExternalId={editingExternalId}
+                onEditToggle={(id) => setEditingExternalId((cur) => (cur === id ? null : id))}
+                onSaved={() => {
+                  setEditingExternalId(null);
+                  void refetch();
+                }}
+                onEditProfile={(u) => setEditProfileUser(u)}
+                onDelete={(u) => setDeleteConfirmUser(u)}
+              />
+            ) : (
+              <ExternalsList
+                users={flatSorted}
+                allBySponsor={new Map()}
+                depth={0}
+                breakdowns={breakdowns}
+                monthIso={monthIso}
+                editingExternalId={editingExternalId}
+                onEditToggle={(id) => setEditingExternalId((cur) => (cur === id ? null : id))}
+                onSaved={() => {
+                  setEditingExternalId(null);
+                  void refetch();
+                }}
+                onEditProfile={(u) => setEditProfileUser(u)}
+                onDelete={(u) => setDeleteConfirmUser(u)}
+              />
+            )}
+          </div>
+        </>
       )}
 
       {/* Edit profile modal */}
@@ -471,6 +571,30 @@ function ExternalsList({
         );
       })}
     </div>
+  );
+}
+
+function SortChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        height: 28,
+        padding: "0 12px",
+        borderRadius: 999,
+        border: active ? "0.5px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
+        background: active ? "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface2))" : "var(--ls-surface)",
+        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        fontFamily: "DM Sans, sans-serif",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -1242,6 +1366,43 @@ const btnGhostStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
   cursor: "pointer",
+};
+
+const searchBarStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  alignItems: "center",
+  marginBottom: 14,
+};
+
+const searchInputStyle: React.CSSProperties = {
+  flex: "1 1 240px",
+  minWidth: 200,
+  padding: "10px 14px",
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+};
+
+const sortChipsRowStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 6,
+  flexWrap: "wrap",
+};
+
+const searchSummaryStyle: React.CSSProperties = {
+  marginBottom: 10,
+  padding: "8px 12px",
+  borderRadius: 10,
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12,
+  color: "var(--ls-text-muted)",
 };
 
 const reassignBoxStyle: React.CSSProperties = {
