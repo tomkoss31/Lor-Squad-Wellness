@@ -155,11 +155,19 @@ async function impl(req: any, res: any) {
     return;
   }
 
+  // Magic link absolu : on récupère l'origine depuis la requête pour que le
+  // lien soit copiable/partageable directement sans préfixage côté front.
+  const origin = (() => {
+    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const proto = req.headers["x-forwarded-proto"] || "https";
+    return host ? `${proto}://${host}` : "";
+  })();
+
   res.status(200).json({
     ok: true,
     userId: createdUser.user.id,
     token,
-    magicLink: `/distri-passif?token=${token}`,
+    magicLink: origin ? `${origin}/distri-passif?token=${token}` : `/distri-passif?token=${token}`,
     name,
   });
 }
