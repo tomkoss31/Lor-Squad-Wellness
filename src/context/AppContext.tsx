@@ -111,7 +111,7 @@ interface AppContextValue {
   resolveMessage: (id: string) => Promise<void>;
   unresolveMessage: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
-  updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number }) => Promise<void>;
+  updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number; firstName?: string; lastName?: string; sex?: "male" | "female"; birthDate?: string | null }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
   /** Active le programme : start_date = aujourd'hui (ou date donnée) +
    *  réaligne pv_client_products. Chantier activator 2026-05-05. */
@@ -967,21 +967,27 @@ export function AppProvider({ children }: PropsWithChildren) {
         if (sb) await sb.from('client_messages').delete().eq('id', id);
         setClientMessages(prev => prev.filter(m => m.id !== id));
       },
-      updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number }) => {
+      updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number; firstName?: string; lastName?: string; sex?: "male" | "female"; birthDate?: string | null }) => {
         // Site 4 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
         // Chantier edit height/age (2026-04-25) : support des 2 champs profil
         // numériques pour permettre aux coachs/distris de corriger les clients
         // importés avec height=0 ou age=0.
+        // Fix Mélanie 2026-05-22 : support édition prénom/nom/sexe/birthDate
+        // pour corriger les erreurs d'import et changements d'état civil.
         const sb = await getSupabaseClient();
         if (!sb) {
           throw new Error("Client Supabase indisponible.");
         }
-        const updateData: Record<string, string | number> = {};
+        const updateData: Record<string, string | number | null> = {};
         if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.email !== undefined) updateData.email = data.email;
         if (data.city !== undefined) updateData.city = data.city;
         if (data.age !== undefined) updateData.age = data.age;
         if (data.height !== undefined) updateData.height = data.height;
+        if (data.firstName !== undefined) updateData.first_name = data.firstName;
+        if (data.lastName !== undefined) updateData.last_name = data.lastName;
+        if (data.sex !== undefined) updateData.sex = data.sex;
+        if (data.birthDate !== undefined) updateData.birth_date = data.birthDate;
         const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
         if (error) {
           throw error;
