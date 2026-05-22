@@ -10,7 +10,41 @@
 // =============================================================================
 
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, extractIp, logAdminAction } from "./_shared/admin-guard";
+
+// ─── Rate limit + audit inlined (Vercel ignore les fichiers commençant par _,
+// les imports relatifs depuis _shared/ peuvent échouer en serverless build).
+// Chantier #12 polish 2026-05-22.
+const RATE_BUCKET = new Map<string, number[]>();
+function checkRateLimit(key: string, max: number, windowMs: number) {
+  const now = Date.now();
+  const history = (RATE_BUCKET.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (history.length >= max) {
+    const oldest = history[0];
+    return { ok: false as const, retryAfter: Math.ceil((oldest + windowMs - now) / 1000) };
+  }
+  history.push(now);
+  RATE_BUCKET.set(key, history);
+  return { ok: true as const };
+}
+function extractIp(req: any): string {
+  const fwd = String(req.headers["x-forwarded-for"] ?? "");
+  if (fwd) return fwd.split(",")[0].trim();
+  return String(req.headers["x-real-ip"] ?? "unknown");
+}
+async function logAdminAction(sb: any, params: { actorUserId: string; action: string; targetId?: string | null; targetLabel?: string | null; payload?: Record<string, unknown> | null; ip?: string | null }) {
+  try {
+    await sb.rpc("log_admin_action", {
+      p_actor_user_id: params.actorUserId,
+      p_action: params.action,
+      p_target_id: params.targetId ?? null,
+      p_target_label: params.targetLabel ?? null,
+      p_payload: params.payload ?? null,
+      p_ip: params.ip ?? null,
+    });
+  } catch (err) {
+    console.warn("[admin-audit] log_admin_action failed:", err);
+  }
+}
 
 const ALLOWED_RANKS = [
   "distributor_25",
@@ -130,9 +164,10 @@ export default async function handler(req: any, res: any) {
   });
 
   if (createError || !createdUser?.user) {
+    console.error("[admin-create-external] auth.admin.createUser failed:", createError);
     res.status(400).json({
       ok: false,
-      error: createError?.message ?? "Impossible de créer le distri externe.",
+      error: createError?.message ?? "auth.admin.createUser a échoué (vérifier service_role).",
     });
     return;
   }
@@ -153,13 +188,14 @@ export default async function handler(req: any, res: any) {
   });
 
   if (insertError) {
+    console.error("[admin-create-external] public.users upsert failed:", insertError);
     // Best-effort cleanup auth.users si profile insert échoue
     try {
       await admin.auth.admin.deleteUser(createdUser.user.id);
     } catch {
       /* ignore */
     }
-    res.status(400).json({ ok: false, error: insertError.message });
+    res.status(400).json({ ok: false, error: `Insert public.users : ${insertError.message}` });
     return;
   }
 

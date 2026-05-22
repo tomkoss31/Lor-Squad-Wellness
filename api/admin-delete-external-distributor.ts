@@ -11,7 +11,39 @@
 // =============================================================================
 
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, extractIp, logAdminAction } from "./_shared/admin-guard";
+
+// Inlined rate-limit + audit (cf. admin-create-external-distributor.ts).
+const RATE_BUCKET = new Map<string, number[]>();
+function checkRateLimit(key: string, max: number, windowMs: number) {
+  const now = Date.now();
+  const history = (RATE_BUCKET.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (history.length >= max) {
+    const oldest = history[0];
+    return { ok: false as const, retryAfter: Math.ceil((oldest + windowMs - now) / 1000) };
+  }
+  history.push(now);
+  RATE_BUCKET.set(key, history);
+  return { ok: true as const };
+}
+function extractIp(req: any): string {
+  const fwd = String(req.headers["x-forwarded-for"] ?? "");
+  if (fwd) return fwd.split(",")[0].trim();
+  return String(req.headers["x-real-ip"] ?? "unknown");
+}
+async function logAdminAction(sb: any, params: { actorUserId: string; action: string; targetId?: string | null; targetLabel?: string | null; payload?: Record<string, unknown> | null; ip?: string | null }) {
+  try {
+    await sb.rpc("log_admin_action", {
+      p_actor_user_id: params.actorUserId,
+      p_action: params.action,
+      p_target_id: params.targetId ?? null,
+      p_target_label: params.targetLabel ?? null,
+      p_payload: params.payload ?? null,
+      p_ip: params.ip ?? null,
+    });
+  } catch (err) {
+    console.warn("[admin-audit] log_admin_action failed:", err);
+  }
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
