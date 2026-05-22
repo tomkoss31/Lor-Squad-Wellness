@@ -142,6 +142,10 @@ export interface User {
    *  reconstruire l'arborescence Herbalife (downline historique pas inscrite
    *  sur l'app). Pas de login utilisable. true = externe, false = vrai user. */
   isExternal?: boolean;
+  /** Supervisor passif (chantier 2026-05-22) : compte créé pour donner accès
+   *  read-only à la rentab via magic link /distri-passif?token=…
+   *  N'accède PAS à l'app coach (pas de clients, pas de messagerie). */
+  isPassiveSupervisor?: boolean;
   /** Accès beta formation (opt-in admin). Default false. Quand true,
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;

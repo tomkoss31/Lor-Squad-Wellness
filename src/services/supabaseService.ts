@@ -335,6 +335,7 @@ function mapUser(row: UserRow): User {
     currentRank: (row.current_rank ?? "distributor_25") as User["currentRank"],
     rankSetAt: row.rank_set_at ?? null,
     isExternal: (row as { is_external?: boolean }).is_external ?? false,
+    isPassiveSupervisor: (row as { is_passive_supervisor?: boolean }).is_passive_supervisor ?? false,
     formationBetaAccess: row.formation_beta_access ?? false,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
