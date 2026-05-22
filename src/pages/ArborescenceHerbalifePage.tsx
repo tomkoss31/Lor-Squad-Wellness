@@ -64,8 +64,25 @@ export function ArborescenceHerbalifePage() {
   const navigate = useNavigate();
   const { users, currentUser, createExternalDistributor, updateExternalDistributor, deleteExternalDistributor } = useAppContext();
   const { push: pushToast } = useToast();
-  const monthIso = useMemo(() => currentMonthIso(), []);
+  // Sélecteur de mois (chantier #3 polish 2026-05-22) : permet de saisir
+  // rétroactivement pour les mois passés. Default = mois en cours.
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthIso());
+  const monthIso = selectedMonth;
   const { breakdowns, refetch } = usePvBreakdowns(monthIso);
+
+  // Génère liste mois sélectionnables : 12 mois passés + 2 mois futurs.
+  const monthOptions = useMemo(() => {
+    const now = new Date();
+    const out: Array<{ value: string; label: string }> = [];
+    for (let offset = 2; offset >= -12; offset--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 15));
+      const value = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+      const label = monthLabel(value);
+      out.push({ value, label });
+    }
+    return out;
+  }, []);
+  const isCurrentMonth = selectedMonth === currentMonthIso();
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -151,12 +168,42 @@ export function ArborescenceHerbalifePage() {
           Saisis leur PV mensuel pour que ton override remonte automatiquement.
         </p>
         <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={chipMonthStyle}>📅 {monthLabel(monthIso)}</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span aria-hidden="true">📅</span>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={monthSelectStyle}
+              aria-label="Mois de saisie"
+            >
+              {monthOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}{o.value === currentMonthIso() ? " (en cours)" : ""}
+                </option>
+              ))}
+            </select>
+            {!isCurrentMonth && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(currentMonthIso())}
+                style={resetMonthBtnStyle}
+                title="Revenir au mois en cours"
+              >
+                ↺
+              </button>
+            )}
+          </div>
           <span style={chipCountStyle}>{externals.length} distri externe{externals.length > 1 ? "s" : ""}</span>
           <button type="button" onClick={() => setShowCreate((s) => !s)} style={addBtnStyle}>
             + Ajouter un distri externe
           </button>
         </div>
+        {!isCurrentMonth && (
+          <div style={retroBannerStyle}>
+            <span aria-hidden="true">⏱️</span>
+            Saisie rétroactive pour <strong>{monthLabel(selectedMonth)}</strong>. L'historique sera mis à jour rétroactivement dans tous les calculs de rentabilité.
+          </div>
+        )}
       </header>
 
       {showCreate && (
@@ -772,19 +819,44 @@ const subStyle: React.CSSProperties = {
   maxWidth: 640,
 };
 
-const chipMonthStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
+const monthSelectStyle: React.CSSProperties = {
   height: 28,
-  padding: "0 12px",
+  padding: "0 10px",
   borderRadius: 999,
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 24%, transparent)",
   background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))",
   color: "var(--ls-teal)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 12,
   fontWeight: 600,
-  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 24%, transparent)",
+  cursor: "pointer",
+  appearance: "none",
+};
+
+const resetMonthBtnStyle: React.CSSProperties = {
+  height: 28,
+  width: 28,
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-text-muted)",
+  cursor: "pointer",
+  fontSize: 14,
+  fontWeight: 600,
+};
+
+const retroBannerStyle: React.CSSProperties = {
+  marginTop: 12,
+  padding: "10px 14px",
+  borderRadius: 12,
+  background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+  color: "var(--ls-gold)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12.5,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
 };
 
 const chipCountStyle: React.CSSProperties = {
