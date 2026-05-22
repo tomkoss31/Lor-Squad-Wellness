@@ -249,6 +249,29 @@ export function ArborescenceHerbalifePage() {
 
   return (
     <div style={wrapStyle}>
+      <style>{`
+        @media (max-width: 720px) {
+          .lr-arbo-header-row { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+          .lr-arbo-actions { width: 100%; flex-wrap: wrap; }
+          .lr-arbo-actions > button, .lr-arbo-actions > .lr-arbo-month-pick {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 0;
+          }
+          .lr-arbo-h1 { font-size: 22px !important; }
+          .lr-arbo-sub { font-size: 12.5px !important; }
+          .lr-arbo-tree { padding: 12px !important; }
+          .lr-arbo-card-row { flex-wrap: wrap !important; }
+          .lr-arbo-card-row [data-arbo-actions] {
+            margin-left: auto;
+          }
+          .lr-arbo-edit-btn { font-size: 11px !important; padding: 6px 10px !important; }
+          .lr-arbo-modal-content { max-width: 100% !important; max-height: calc(100vh - 32px) !important; overflow-y: auto !important; }
+        }
+        @media (max-width: 480px) {
+          .lr-arbo-tree { padding: 8px !important; }
+          .lr-arbo-tree > div { margin-left: 8px !important; }
+        }
+      `}</style>
       <button type="button" onClick={() => navigate(-1)} style={backBtnStyle}>
         ← Retour
       </button>
@@ -258,13 +281,13 @@ export function ArborescenceHerbalifePage() {
           <span aria-hidden="true">🌳</span>
           Arborescence Herbalife
         </div>
-        <h1 style={h1Style}>Mes distri externes</h1>
-        <p style={subStyle}>
+        <h1 className="lr-arbo-h1" style={h1Style}>Mes distri externes</h1>
+        <p className="lr-arbo-sub" style={subStyle}>
           Reconstruis ici ton équipe Herbalife historique (distri qui ne sont pas sur l'app : Virgile, Aurélie, etc.).
           Saisis leur PV mensuel pour que ton override remonte automatiquement.
         </p>
-        <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <div className="lr-arbo-header-row lr-arbo-actions" style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
+          <div className="lr-arbo-month-pick" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <span aria-hidden="true">📅</span>
             <select
               value={selectedMonth}
@@ -630,7 +653,7 @@ export function ArborescenceHerbalifePage() {
             </div>
           )}
 
-          <div style={treeWrapStyle}>
+          <div className="lr-arbo-tree" style={treeWrapStyle}>
             {/* Racine = currentUser (toi), affichée juste pour le contexte */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <Avatar initials={initialsOf(currentUser.name)} hue={avatarHue(currentUser.name)} size={44} />
