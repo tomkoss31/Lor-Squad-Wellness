@@ -105,15 +105,29 @@ export function ArborescenceHerbalifePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<"tree" | "name" | "pv" | "rank">("tree");
 
+  // Vue consolidée (chantier #5 polish 2026-05-22)
+  // "externals" = uniquement externes (défaut historique)
+  // "all" = externes + vrais distri actifs/inactifs (vue team complète)
+  const [scopeMode, setScopeMode] = useState<"externals" | "all">("externals");
+
   const isAdmin = currentUser?.role === "admin";
   const externals = useMemo(() => users.filter((u) => u.isExternal), [users]);
+
+  // Scope effectif (chantier #5) : externes seuls OU toute l'équipe
+  // (externes + vrais distri actifs/inactifs, mais EXCLU toi-même qui es la racine).
+  const scopedUsers = useMemo(() => {
+    if (scopeMode === "all") {
+      return users.filter((u) => u.id !== currentUser?.id);
+    }
+    return externals;
+  }, [scopeMode, users, externals, currentUser]);
 
   // Filtre search (chantier #2)
   const searchLower = searchQuery.trim().toLowerCase();
   const filteredExternals = useMemo(() => {
-    if (!searchLower) return externals;
-    return externals.filter((u) => u.name.toLowerCase().includes(searchLower));
-  }, [externals, searchLower]);
+    if (!searchLower) return scopedUsers;
+    return scopedUsers.filter((u) => u.name.toLowerCase().includes(searchLower));
+  }, [scopedUsers, searchLower]);
 
   // Tri "flat" pour les modes name / pv / rank
   const flatSorted = useMemo(() => {
@@ -151,14 +165,14 @@ export function ArborescenceHerbalifePage() {
   }, [filteredExternals, sortMode, breakdowns]);
   const externalsBySponsor = useMemo(() => {
     const map = new Map<string, User[]>();
-    for (const u of externals) {
+    for (const u of scopedUsers) {
       const key = u.sponsorId ?? "";
       const arr = map.get(key) ?? [];
       arr.push(u);
       map.set(key, arr);
     }
     return map;
-  }, [externals]);
+  }, [scopedUsers]);
 
   // Tree de Thomas (currentUser) → externes
   const rootChildren = currentUser ? externalsBySponsor.get(currentUser.id) ?? [] : [];
@@ -244,7 +258,22 @@ export function ArborescenceHerbalifePage() {
               </button>
             )}
           </div>
-          <span style={chipCountStyle}>{externals.length} distri externe{externals.length > 1 ? "s" : ""}</span>
+          <div style={scopeToggleWrapStyle}>
+            <button
+              type="button"
+              onClick={() => setScopeMode("externals")}
+              style={scopeBtnStyle(scopeMode === "externals")}
+            >
+              🌳 Externes ({externals.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setScopeMode("all")}
+              style={scopeBtnStyle(scopeMode === "all")}
+            >
+              👥 Team complète ({users.length - 1})
+            </button>
+          </div>
           <button type="button" onClick={() => setShowCreate((s) => !s)} style={addBtnStyle}>
             + Ajouter un distri externe
           </button>
@@ -620,7 +649,14 @@ function ExternalsList({
                     {u.name}
                   </div>
                   <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-                    {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "—"} · externe
+                    {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "—"} ·{" "}
+                    {u.isExternal ? (
+                      <span style={{ color: "var(--ls-purple)" }}>externe</span>
+                    ) : u.active ? (
+                      <span style={{ color: "var(--ls-teal)" }}>actif app</span>
+                    ) : (
+                      <span style={{ color: "var(--ls-text-muted)" }}>inactif</span>
+                    )}
                   </div>
                 </div>
                 {total > 0 && (
@@ -635,10 +671,13 @@ function ExternalsList({
                 >
                   {editing ? "Fermer" : total > 0 ? "Modifier PV" : "Saisir PV ce mois"}
                 </button>
-                <ActionsMenu
-                  onEdit={() => onEditProfile(u)}
-                  onDelete={() => onDelete(u)}
-                />
+                {/* Edit/Delete réservés aux externes (chantier #5 polish) */}
+                {u.isExternal && (
+                  <ActionsMenu
+                    onEdit={() => onEditProfile(u)}
+                    onDelete={() => onDelete(u)}
+                  />
+                )}
               </div>
 
               {/* Historique multi-mois (chantier 2026-05-22) */}
@@ -1111,6 +1150,32 @@ const subStyle: React.CSSProperties = {
   maxWidth: 640,
 };
 
+const scopeToggleWrapStyle: React.CSSProperties = {
+  display: "inline-flex",
+  padding: 3,
+  gap: 2,
+  background: "var(--ls-surface2)",
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+};
+
+function scopeBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    height: 24,
+    padding: "0 12px",
+    borderRadius: 999,
+    border: "none",
+    cursor: "pointer",
+    background: active ? "var(--ls-surface)" : "transparent",
+    color: active ? "var(--ls-text)" : "var(--ls-text-muted)",
+    fontFamily: "DM Sans, sans-serif",
+    fontSize: 11.5,
+    fontWeight: 600,
+    boxShadow: active ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+    transition: "all .15s",
+  };
+}
+
 const monthSelectStyle: React.CSSProperties = {
   height: 28,
   padding: "0 10px",
@@ -1149,21 +1214,6 @@ const retroBannerStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
-};
-
-const chipCountStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  height: 28,
-  padding: "0 12px",
-  borderRadius: 999,
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text-muted)",
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 12,
-  fontWeight: 500,
-  border: "0.5px solid var(--ls-border)",
 };
 
 const addBtnStyle: React.CSSProperties = {
