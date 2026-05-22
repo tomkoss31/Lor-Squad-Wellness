@@ -212,6 +212,13 @@ const BienvenuePage = lazy(() =>
     default: module.BienvenuePage
   }))
 );
+// Chantier passive_supervisor (Aurélie 2026-05-22) — page rentabilité
+// read-only pour distri Supervisor passif via magic link.
+const PassiveSupervisorPage = lazy(() =>
+  import("./pages/PassiveSupervisorPage").then((module) => ({
+    default: module.PassiveSupervisorPage,
+  })),
+);
 // Chantier Onboarding distributeur complet (2026-04-24) : wizard
 // /bienvenue-distri pour que les nouveaux distri créent leur accès.
 const BienvenueDistriPage = lazy(() =>
@@ -686,6 +693,8 @@ export default function App() {
           <Route path="/bienvenue" element={<BienvenuePage />} />
           {/* Chantier Onboarding distributeur complet (2026-04-24). */}
           <Route path="/bienvenue-distri" element={<BienvenueDistriPage />} />
+          {/* Chantier distri passif (Aurélie 2026-05-22). */}
+          <Route path="/distri-passif" element={<PassiveSupervisorPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>

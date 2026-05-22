@@ -1976,6 +1976,40 @@ export async function createSupabaseExternalDistributor(payload: {
 }
 
 /**
+ * Crée un distri Supervisor passif + token magic link.
+ * Chantier passive_supervisor 2026-05-22.
+ */
+export async function createSupabasePassiveSupervisor(payload: {
+  name: string;
+  currentRank: import("../types/domain").HerbalifeRank;
+  sponsorId?: string | null;
+}): Promise<{ ok: true; userId: string; token: string; magicLink: string } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+  const { data: { session } } = await client.auth.getSession();
+  if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
+  let response: Response;
+  try {
+    response = await fetch("/api/admin-create-passive-supervisor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };
+  }
+  let body: { ok?: boolean; error?: string; userId?: string; token?: string; magicLink?: string } = {};
+  try { body = await response.json(); } catch {
+    const txt = await response.text().catch(() => "");
+    console.error("[createPassiveSupervisor] non-json", response.status, txt.slice(0, 200));
+    return { ok: false, error: `HTTP ${response.status} : endpoint inaccessible.` };
+  }
+  if (!response.ok || !body.ok || !body.userId || !body.token || !body.magicLink) {
+    return { ok: false, error: body.error ?? `Échec (HTTP ${response.status}).` };
+  }
+  return { ok: true, userId: body.userId, token: body.token, magicLink: body.magicLink };
+}
+
+/**
  * Update un distri externe (admin/référent only). 2026-05-22.
  */
 export async function updateSupabaseExternalDistributor(payload: {

@@ -11,7 +11,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useUserRentability } from "../../hooks/useUserRentability";
+import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 import { Avatar, avatarHue, initialsOf } from "./shared/Avatar";
+import { currentMonthIso, rankProgression, totalPvFromBreakdown } from "../../lib/herbalifeFormulas";
 
 interface MemberRow {
   userId: string;
@@ -24,12 +26,14 @@ function MemberRowItem({
   rank,
   total,
   isLeader,
+  rankProgressionPct,
   onClick,
 }: {
   name: string;
   rank: number;
   total: number;
   isLeader: boolean;
+  rankProgressionPct: number | null;
   onClick: () => void;
 }) {
   return (
@@ -58,18 +62,33 @@ function MemberRowItem({
       <span style={{ flex: 1, minWidth: 0, fontFamily: "DM Sans, sans-serif", fontSize: 12.5, fontWeight: 600, color: "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {name}
       </span>
-      <span
-        data-stealth
-        style={{
-          fontFamily: "Syne, serif",
-          fontStyle: "italic",
-          fontWeight: 700,
-          fontSize: 14,
-          color: isLeader ? "var(--ls-gold)" : "var(--ls-text)",
-        }}
-      >
-        {Math.round(total).toLocaleString("fr-FR")} €
-      </span>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+        <span
+          data-stealth
+          style={{
+            fontFamily: "Syne, serif",
+            fontStyle: "italic",
+            fontWeight: 700,
+            fontSize: 14,
+            color: isLeader ? "var(--ls-gold)" : "var(--ls-text)",
+          }}
+        >
+          {Math.round(total).toLocaleString("fr-FR")} €
+        </span>
+        {rankProgressionPct !== null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "DM Sans, sans-serif", fontSize: 9.5, color: "var(--ls-text-muted)" }}>
+            <div style={{ width: 36, height: 3, background: "var(--ls-surface2)", borderRadius: 999, overflow: "hidden" }}>
+              <div style={{
+                width: `${rankProgressionPct}%`,
+                height: "100%",
+                background: rankProgressionPct >= 80 ? "var(--ls-gold)" : "var(--ls-teal)",
+                borderRadius: 999,
+              }} />
+            </div>
+            <span>{rankProgressionPct}%</span>
+          </div>
+        )}
+      </div>
     </button>
   );
 }
@@ -77,24 +96,37 @@ function MemberRowItem({
 function MemberFetcher({
   userId,
   name,
+  currentRank,
   rank,
   isLeader,
   onResolved,
 }: {
   userId: string;
   name: string;
+  currentRank: string | undefined;
   rank: number;
   isLeader: boolean;
   onResolved: (row: MemberRow) => void;
 }) {
   const navigate = useNavigate();
   const { data, loading } = useUserRentability(userId);
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { breakdowns } = usePvBreakdowns(monthIso);
+
   useEffect(() => {
     if (!loading && data) {
       onResolved({ userId, name, margin: data.margin_eur });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, data?.margin_eur]);
+
+  // Mini progression % vers prochain rang (chantier ext #2 2026-05-22)
+  const progressionPct = useMemo(() => {
+    const breakdown = breakdowns.find((b) => b.userId === userId);
+    const personalPv = breakdown ? totalPvFromBreakdown(breakdown) : 0;
+    const prog = rankProgression(currentRank, personalPv);
+    return prog?.pct ?? null;
+  }, [breakdowns, userId, currentRank]);
 
   if (loading || !data) {
     return (
@@ -110,6 +142,7 @@ function MemberFetcher({
       rank={rank}
       total={data.margin_eur}
       isLeader={isLeader}
+      rankProgressionPct={progressionPct}
       onClick={() => navigate("/rentabilite")}
     />
   );
@@ -121,11 +154,13 @@ export function RentabilityTeamLeaderboard() {
 
   const isAdmin = currentUser?.role === "admin";
 
-  // Liste des membres : tous les vrais users (pas externes) sauf moi
+  // Liste des membres : tous les vrais users (pas externes) sauf TOUS les admins
+  // (Thomas + Mélanie = même équipe co-managée, leaderboard = membres distri
+  // hors couple admin). Chantier 2026-05-22.
   const teamMembers = useMemo(() => {
     if (!isAdmin || !currentUser) return [];
     return users
-      .filter((u) => u.active && !u.isExternal && u.id !== currentUser.id && u.role !== "admin")
+      .filter((u) => u.active && !u.isExternal && u.role !== "admin")
       .slice(0, 8); // safety cap
   }, [users, currentUser, isAdmin]);
 
@@ -167,6 +202,7 @@ export function RentabilityTeamLeaderboard() {
             key={u.id}
             userId={u.id}
             name={u.name}
+            currentRank={u.currentRank}
             rank={i + 1}
             isLeader={u.id === leaderId && resolved.get(u.id) !== undefined && (resolved.get(u.id) ?? 0) > 0}
             onResolved={handleResolved}

@@ -29,10 +29,12 @@ import {
   loadUserPvHistory,
   loadDistinctManualEntries,
   migrateManualToExternal,
+  createSupabasePassiveSupervisor,
 } from "../services/supabaseService";
 import { RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank, User } from "../types/domain";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
+import { rankProgression } from "../lib/herbalifeFormulas";
 import { PV_BREAKDOWN_UPDATED_EVENT } from "../hooks/usePvBreakdowns";
 
 const RANK_OPTIONS: Array<{ value: HerbalifeRank; label: string }> = [
@@ -99,6 +101,14 @@ export function ArborescenceHerbalifePage() {
   const [csvRaw, setCsvRaw] = useState("");
   const [importing, setImporting] = useState(false);
   const [importLog, setImportLog] = useState<Array<{ name: string; ok: boolean; error?: string }>>([]);
+
+  // Passive Supervisor — chantier Aurélie 2026-05-22
+  const [showPassive, setShowPassive] = useState(false);
+  const [passiveName, setPassiveName] = useState("");
+  const [passiveRank, setPassiveRank] = useState<HerbalifeRank>("supervisor_50");
+  const [passiveSponsorId, setPassiveSponsorId] = useState<string>("");
+  const [passiveCreating, setPassiveCreating] = useState(false);
+  const [passiveResult, setPassiveResult] = useState<{ name: string; magicLink: string } | null>(null);
 
   // Migration manual_pv_entries → externes (chantier #9 polish 2026-05-22)
   const [showMigration, setShowMigration] = useState(false);
@@ -205,8 +215,26 @@ export function ArborescenceHerbalifePage() {
     return map;
   }, [scopedUsers]);
 
-  // Tree de Thomas (currentUser) → externes
-  const rootChildren = currentUser ? externalsBySponsor.get(currentUser.id) ?? [] : [];
+  // Tree racine (currentUser) → externes
+  // RÈGLE (2026-05-22) : Thomas + Mélanie = MÊME équipe (couple admin). Donc
+  // tout externe sponsorisé par N'IMPORTE QUEL admin est considéré "enfant
+  // direct de la racine" pour les deux. Sans ça, Mélanie ne voyait pas les
+  // distri créés par Thomas.
+  const adminUserIds = useMemo(
+    () => new Set(users.filter((u) => u.role === "admin").map((u) => u.id)),
+    [users],
+  );
+  const rootChildren = useMemo(() => {
+    if (!currentUser) return [] as User[];
+    const acc: User[] = [];
+    for (const adminId of adminUserIds) {
+      const children = externalsBySponsor.get(adminId) ?? [];
+      for (const c of children) {
+        if (!acc.find((x) => x.id === c.id)) acc.push(c);
+      }
+    }
+    return acc;
+  }, [currentUser, adminUserIds, externalsBySponsor]);
 
   if (!currentUser) return null;
   if (!isAdmin) {
@@ -336,6 +364,9 @@ export function ArborescenceHerbalifePage() {
           </button>
           <button type="button" onClick={() => setShowMigration((s) => !s)} style={importBtnStyle}>
             🔄 Migrer mes entries hors-app
+          </button>
+          <button type="button" onClick={() => { setShowPassive((s) => !s); setPassiveResult(null); }} style={importBtnStyle}>
+            🔗 + Distri passif (magic link)
           </button>
         </div>
         {!isCurrentMonth && (
@@ -489,6 +520,115 @@ export function ArborescenceHerbalifePage() {
           >
             {importing ? "Import en cours…" : `Importer ${csvRaw.split("\n").filter((l) => l.trim()).length} ligne(s)`}
           </button>
+        </div>
+      )}
+
+      {showPassive && (
+        <div style={createBoxStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={createTitleStyle}>🔗 Créer un distri passif (Supervisor read-only)</span>
+            <button
+              type="button"
+              onClick={() => { setShowPassive(false); setPassiveResult(null); }}
+              style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 18 }}
+              aria-label="Fermer"
+            >×</button>
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "0 0 12px", lineHeight: 1.6, fontFamily: "DM Sans, sans-serif" }}>
+            Pour un distri Supervisor 50%+ qui ne fait pas le business mais veut voir ses royalties (cas Aurélie).
+            Tu génères un magic link à lui envoyer par WhatsApp ; il accède à une page simple
+            <code style={codeStyle}> /distri-passif</code> avec ses gains du mois, son historique 12 mois et sa lignée directe.
+            <strong> Pas d'accès aux fiches clients sous lui</strong> (confidentialité respectée).
+          </p>
+
+          {passiveResult ? (
+            <div style={{ padding: 14, borderRadius: 12, background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface2))", border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)" }}>
+              <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 600, color: "var(--ls-teal)", marginBottom: 8 }}>
+                ✓ {passiveResult.name} créé. Copie ce lien et envoie-lui par WhatsApp :
+              </p>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <code style={{ ...codeStyle, flex: 1, padding: "8px 10px", display: "block", wordBreak: "break-all", fontSize: 11 }}>
+                  {window.location.origin}{passiveResult.magicLink}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}${passiveResult.magicLink}`);
+                    pushToast({ tone: "success", title: "Lien copié" });
+                  }}
+                  style={btnPrimaryStyle}
+                >
+                  📋 Copier
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Nom (ex: Aurélie Demoutte)"
+                value={passiveName}
+                onChange={(e) => setPassiveName(e.target.value)}
+                style={{ ...inputStyle, marginBottom: 8 }}
+                disabled={passiveCreating}
+                maxLength={80}
+              />
+              <select
+                value={passiveRank}
+                onChange={(e) => setPassiveRank(e.target.value as HerbalifeRank)}
+                style={{ ...selectStyle, marginBottom: 8 }}
+                disabled={passiveCreating}
+              >
+                {RANK_OPTIONS.filter((r) => r.value.includes("50")).map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <select
+                value={passiveSponsorId}
+                onChange={(e) => setPassiveSponsorId(e.target.value)}
+                style={{ ...selectStyle, marginBottom: 8 }}
+                disabled={passiveCreating}
+              >
+                <option value="">— Sponsor (défaut : toi {currentUser?.name}) —</option>
+                {users.filter((u) => u.id !== currentUser?.id).map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}{u.isExternal ? " (externe)" : u.active ? "" : " (inactif)"}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!passiveName.trim() || passiveName.trim().length < 2) {
+                    pushToast({ tone: "warning", title: "Nom requis (≥ 2 caractères)." });
+                    return;
+                  }
+                  setPassiveCreating(true);
+                  try {
+                    const result = await createSupabasePassiveSupervisor({
+                      name: passiveName.trim(),
+                      currentRank: passiveRank,
+                      sponsorId: passiveSponsorId || currentUser?.id || null,
+                    });
+                    if (result.ok) {
+                      setPassiveResult({ name: passiveName.trim(), magicLink: result.magicLink });
+                      pushToast({ tone: "success", title: `${passiveName.trim()} créé. Magic link prêt.` });
+                      setPassiveName("");
+                      setPassiveSponsorId("");
+                    } else {
+                      pushToast({ tone: "error", title: result.error ?? "Échec création." });
+                    }
+                  } finally {
+                    setPassiveCreating(false);
+                  }
+                }}
+                style={btnPrimaryStyle}
+                disabled={passiveCreating || !passiveName.trim()}
+              >
+                {passiveCreating ? "Création…" : "Créer + générer magic link"}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -669,7 +809,7 @@ export function ArborescenceHerbalifePage() {
 
             {sortMode === "tree" ? (
               <ExternalsList
-                users={searchLower ? filteredExternals.filter((u) => u.sponsorId === currentUser.id || !u.sponsorId) : rootChildren}
+                users={searchLower ? filteredExternals.filter((u) => (u.sponsorId ? adminUserIds.has(u.sponsorId) : true)) : rootChildren}
                 allBySponsor={searchLower
                   ? new Map(Array.from(externalsBySponsor.entries()).map(([k, v]) => [k, v.filter((u) => filteredExternals.includes(u))]))
                   : externalsBySponsor}
@@ -855,6 +995,12 @@ function ExternalsList({
                 )}
               </div>
 
+              {/* Mini-jauge progression vers prochain rang (chantier ext 2026-05-22) */}
+              <ProgressionMiniBar
+                currentRank={u.currentRank ?? "distributor_25"}
+                personalPv={total}
+              />
+
               {/* Historique multi-mois (chantier 2026-05-22) */}
               <PvHistoryStrip userId={u.id} currentMonth={monthIso} />
 
@@ -887,6 +1033,51 @@ function ExternalsList({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── ProgressionMiniBar (chantier ext #1 2026-05-22) ─────────────────────
+// Affiche la jauge vers le prochain rang sous chaque card externe.
+// Si déjà Supervisor+ → affiche "✓ Supervisor" sans jauge.
+// Approximation : utilise le PV mois courant (pas 12 mois glissants).
+function ProgressionMiniBar({ currentRank, personalPv }: { currentRank: string; personalPv: number }) {
+  const progression = rankProgression(currentRank, personalPv);
+  if (!progression) {
+    return (
+      <div style={{ marginTop: 8, fontSize: 11, color: "var(--ls-teal)", fontFamily: "DM Sans, sans-serif" }}>
+        ✓ Supervisor 50% — palier max atteint
+      </div>
+    );
+  }
+  return (
+    <div style={{ marginTop: 10, paddingTop: 8, borderTop: "0.5px dashed var(--ls-border)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontFamily: "DM Sans, sans-serif", fontSize: 10.5, marginBottom: 4 }}>
+        <span style={{ color: "var(--ls-text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          → {progression.nextLabel}
+        </span>
+        <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>
+          {Math.round(progression.pvCurrent).toLocaleString("fr-FR")} / {progression.pvNeeded.toLocaleString("fr-FR")} PV
+        </span>
+      </div>
+      <div style={{ height: 5, background: "var(--ls-surface2)", borderRadius: 999, overflow: "hidden" }}>
+        <div
+          style={{
+            width: `${progression.pct}%`,
+            height: "100%",
+            background: progression.pct >= 80
+              ? "linear-gradient(90deg, var(--ls-gold), var(--ls-coral))"
+              : "linear-gradient(90deg, var(--ls-teal), var(--ls-purple))",
+            borderRadius: 999,
+            transition: "width 600ms ease",
+          }}
+        />
+      </div>
+      {progression.remaining > 0 && (
+        <div style={{ fontSize: 10, color: "var(--ls-text-muted)", marginTop: 3, fontFamily: "DM Sans, sans-serif" }}>
+          reste {Math.round(progression.remaining).toLocaleString("fr-FR")} PV
+        </div>
+      )}
     </div>
   );
 }

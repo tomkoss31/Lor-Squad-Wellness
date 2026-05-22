@@ -14,10 +14,12 @@ import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { useAppContext } from "../../context/AppContext";
 import { InviteDistributorModal } from "../users/InviteDistributorModal";
+import { PassiveSupervisorInviteModal } from "./PassiveSupervisorInviteModal";
 
 export function EquipeTab() {
   const { currentUser, users, clients, pvTransactions } = useAppContext();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [passiveOpen, setPassiveOpen] = useState(false);
 
   const teamMembers = useMemo(() => {
     if (!currentUser) return [];
@@ -109,6 +111,15 @@ export function EquipeTab() {
               Gérer les accès détaillés
             </Link>
             <Button onClick={() => setInviteOpen(true)}>+ Inviter un distributeur</Button>
+            {currentUser.role === "admin" && (
+              <Button
+                variant="ghost"
+                onClick={() => setPassiveOpen(true)}
+                title="Distri Supervisor passif (read-only via magic link, ne fait pas de business)"
+              >
+                🔗 Distri passif
+              </Button>
+            )}
           </div>
         </div>
 
@@ -141,6 +152,10 @@ export function EquipeTab() {
       <InviteDistributorModal
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
+      />
+      <PassiveSupervisorInviteModal
+        open={passiveOpen}
+        onClose={() => setPassiveOpen(false)}
       />
     </div>
   );
