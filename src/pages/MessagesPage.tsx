@@ -303,7 +303,7 @@ function filterAndSort(messages: ClientMessage[], filters: MessageFiltersState):
 }
 
 export function MessagesPage() {
-  const { clientMessages, markMessageRead, deleteMessage, getClientById, currentUser, users } = useAppContext()
+  const { clientMessages, markMessageRead, markMessagesRead, deleteMessage, getClientById, currentUser, users } = useAppContext()
   const actions = useMessageActions()
   const navigate = useNavigate()
   const location = useLocation()
@@ -558,14 +558,44 @@ export function MessagesPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setComposeOpen(true)}
-            data-tour-id="messages-compose"
-            className="ls-msg-cta"
-          >
-            ✨ + Démarrer une conversation
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {totalUnread > 0 && (
+              <button
+                type="button"
+                onClick={async () => {
+                  // Mark all visible unread messages as read (chantier #12 fix 2026-05-22)
+                  // Inclut TOUTES les sources : clients + products + recos
+                  // pour purger le badge en 1 click.
+                  const unreadIds = incoming
+                    .filter((m) => !m.read && !m.archived_at)
+                    .map((m) => m.id);
+                  if (unreadIds.length === 0) return;
+                  await markMessagesRead(unreadIds);
+                }}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  border: "0.5px solid var(--ls-border)",
+                  background: "var(--ls-surface)",
+                  color: "var(--ls-text-muted)",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                ✓ Tout marquer lu ({totalUnread})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setComposeOpen(true)}
+              data-tour-id="messages-compose"
+              className="ls-msg-cta"
+            >
+              ✨ + Démarrer une conversation
+            </button>
+          </div>
         </div>
 
         {/* Stats inline dans le hero — data-tour-id pour Academy section Messages.
