@@ -140,9 +140,20 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
           {overlineLabel}
         </div>
 
-        <h2 style={titleStyle}>
-          {heroTitle}
-        </h2>
+        {/* Fix Thomas 2026-05-22 : titre cliquable pour les RDV/suivi
+            → tap = ouvre directement la fiche client (équivalent CTA). */}
+        {action.kind === "rdv" || action.kind === "followup" ? (
+          <button
+            type="button"
+            onClick={handlePrimary}
+            style={{ ...titleStyle, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: "inherit" }}
+            aria-label={`Ouvrir la fiche de ${action.clientName}`}
+          >
+            {heroTitle}
+          </button>
+        ) : (
+          <h2 style={titleStyle}>{heroTitle}</h2>
+        )}
 
         <div style={chipsRowStyle}>
           {chips.map((c, i) => (

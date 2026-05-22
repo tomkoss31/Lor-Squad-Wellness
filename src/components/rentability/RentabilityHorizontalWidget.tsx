@@ -111,11 +111,29 @@ export function RentabilityHorizontalWidget() {
 
   return (
     <div className={`lr ${stealthOn ? "lr-stealth-on" : ""}`}>
-      <div className="lr-card" style={widgetWrapStyle}>
+      <style>{`
+        @media (max-width: 720px) {
+          .lr-rentab-widget-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+            padding: 18px 16px 16px !important;
+          }
+          .lr-rentab-widget-grid [data-lr-amount] {
+            font-size: 48px !important;
+          }
+          .lr-rentab-widget-grid [data-lr-gauge-wrap] {
+            order: 2;
+          }
+          .lr-rentab-widget-grid [data-lr-left] {
+            order: 1;
+          }
+        }
+      `}</style>
+      <div className="lr-card lr-rentab-widget-grid" style={widgetWrapStyle}>
         <div className="lr-mesh" style={{ opacity: 0.65 }} />
 
         {/* ─── LEFT ──────────────────────────────────────────────── */}
-        <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+        <div data-lr-left style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           <div className="lr-fadeup" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <span className="lr-eyebrow">
               <span aria-hidden="true">◆</span>
@@ -154,7 +172,7 @@ export function RentabilityHorizontalWidget() {
             >
               Tu gagnes
             </span>
-            <span data-stealth className="lr-display lr-num" style={{ fontSize: 64 }}>
+            <span data-stealth data-lr-amount className="lr-display lr-num" style={{ fontSize: 64 }}>
               {Math.round(animTotal).toLocaleString("fr-FR")}
               <span style={{ fontSize: 38, marginLeft: 2 }}>€</span>
             </span>
@@ -229,6 +247,7 @@ export function RentabilityHorizontalWidget() {
 
         {/* ─── RIGHT (jauge) ────────────────────────────────────── */}
         <div
+          data-lr-gauge-wrap
           style={{
             position: "relative",
             display: "flex",

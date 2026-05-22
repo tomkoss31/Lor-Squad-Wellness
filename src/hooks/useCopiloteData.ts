@@ -231,11 +231,15 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
     );
     if (upcomingToday.length > 0) {
       const first = upcomingToday[0];
+      // Fix Thomas 2026-05-22 : title doit inclure le nom client (pas
+      // juste le type "Suivi terrain"). Le HeroEditorial affiche
+      // action.title comme heading principal → besoin de l'identité.
       nextAction = {
         kind: "rdv",
         clientId: first.clientId,
         clientName: first.name,
-        title: first.type,
+        title: `${first.type} avec ${first.name}`,
+        subtitle: undefined,
         time: first.time,
         isProspect: first.kind === "rdv-prospect",
       };
@@ -245,7 +249,8 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
         kind: "followup",
         clientId: first.clientId,
         clientName: first.clientName,
-        title: `J+${first.protocolDay} · ${first.label}`,
+        title: `Suivi ${first.clientName} · J+${first.protocolDay}`,
+        subtitle: first.label,
         protocolDay: first.protocolDay,
       };
     }
