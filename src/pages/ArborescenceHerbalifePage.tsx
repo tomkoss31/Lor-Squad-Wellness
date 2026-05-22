@@ -215,8 +215,26 @@ export function ArborescenceHerbalifePage() {
     return map;
   }, [scopedUsers]);
 
-  // Tree de Thomas (currentUser) → externes
-  const rootChildren = currentUser ? externalsBySponsor.get(currentUser.id) ?? [] : [];
+  // Tree racine (currentUser) → externes
+  // RÈGLE (2026-05-22) : Thomas + Mélanie = MÊME équipe (couple admin). Donc
+  // tout externe sponsorisé par N'IMPORTE QUEL admin est considéré "enfant
+  // direct de la racine" pour les deux. Sans ça, Mélanie ne voyait pas les
+  // distri créés par Thomas.
+  const adminUserIds = useMemo(
+    () => new Set(users.filter((u) => u.role === "admin").map((u) => u.id)),
+    [users],
+  );
+  const rootChildren = useMemo(() => {
+    if (!currentUser) return [] as User[];
+    const acc: User[] = [];
+    for (const adminId of adminUserIds) {
+      const children = externalsBySponsor.get(adminId) ?? [];
+      for (const c of children) {
+        if (!acc.find((x) => x.id === c.id)) acc.push(c);
+      }
+    }
+    return acc;
+  }, [currentUser, adminUserIds, externalsBySponsor]);
 
   if (!currentUser) return null;
   if (!isAdmin) {
@@ -791,7 +809,7 @@ export function ArborescenceHerbalifePage() {
 
             {sortMode === "tree" ? (
               <ExternalsList
-                users={searchLower ? filteredExternals.filter((u) => u.sponsorId === currentUser.id || !u.sponsorId) : rootChildren}
+                users={searchLower ? filteredExternals.filter((u) => (u.sponsorId ? adminUserIds.has(u.sponsorId) : true)) : rootChildren}
                 allBySponsor={searchLower
                   ? new Map(Array.from(externalsBySponsor.entries()).map(([k, v]) => [k, v.filter((u) => filteredExternals.includes(u))]))
                   : externalsBySponsor}

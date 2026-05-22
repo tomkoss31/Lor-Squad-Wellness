@@ -154,11 +154,13 @@ export function RentabilityTeamLeaderboard() {
 
   const isAdmin = currentUser?.role === "admin";
 
-  // Liste des membres : tous les vrais users (pas externes) sauf moi
+  // Liste des membres : tous les vrais users (pas externes) sauf TOUS les admins
+  // (Thomas + Mélanie = même équipe co-managée, leaderboard = membres distri
+  // hors couple admin). Chantier 2026-05-22.
   const teamMembers = useMemo(() => {
     if (!isAdmin || !currentUser) return [];
     return users
-      .filter((u) => u.active && !u.isExternal && u.id !== currentUser.id && u.role !== "admin")
+      .filter((u) => u.active && !u.isExternal && u.role !== "admin")
       .slice(0, 8); // safety cap
   }, [users, currentUser, isAdmin]);
 
