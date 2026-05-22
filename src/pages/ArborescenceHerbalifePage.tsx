@@ -19,15 +19,16 @@
 // la relation sponsor_id (mécanisme existant).
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
-import { setUserPvBreakdown } from "../services/supabaseService";
+import { setUserPvBreakdown, loadUserPvHistory } from "../services/supabaseService";
 import { RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank, User } from "../types/domain";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
+import { PV_BREAKDOWN_UPDATED_EVENT } from "../hooks/usePvBreakdowns";
 
 const RANK_OPTIONS: Array<{ value: HerbalifeRank; label: string }> = [
   { value: "distributor_25", label: "Distributor — 25%" },
@@ -61,7 +62,7 @@ function monthLabel(iso: string): string {
 
 export function ArborescenceHerbalifePage() {
   const navigate = useNavigate();
-  const { users, currentUser, createExternalDistributor } = useAppContext();
+  const { users, currentUser, createExternalDistributor, updateExternalDistributor, deleteExternalDistributor } = useAppContext();
   const { push: pushToast } = useToast();
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns, refetch } = usePvBreakdowns(monthIso);
@@ -74,6 +75,9 @@ export function ArborescenceHerbalifePage() {
 
   // Quel externe est actuellement en édition PV ?
   const [editingExternalId, setEditingExternalId] = useState<string | null>(null);
+  // Edit / delete distri modals (chantier 2026-05-22)
+  const [editProfileUser, setEditProfileUser] = useState<User | null>(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
 
   const isAdmin = currentUser?.role === "admin";
   const externals = useMemo(() => users.filter((u) => u.isExternal), [users]);
@@ -242,8 +246,49 @@ export function ArborescenceHerbalifePage() {
               setEditingExternalId(null);
               void refetch();
             }}
+            onEditProfile={(u) => setEditProfileUser(u)}
+            onDelete={(u) => setDeleteConfirmUser(u)}
           />
         </div>
+      )}
+
+      {/* Edit profile modal */}
+      {editProfileUser && (
+        <EditProfileModal
+          user={editProfileUser}
+          allUsers={users}
+          currentUserId={currentUser.id}
+          onClose={() => setEditProfileUser(null)}
+          onSave={async (payload) => {
+            const result = await updateExternalDistributor({
+              userId: editProfileUser.id,
+              ...payload,
+            });
+            if (result.ok) {
+              pushToast({ tone: "success", title: `${payload.name} mis à jour` });
+              setEditProfileUser(null);
+            } else {
+              pushToast({ tone: "error", title: result.error ?? "Échec mise à jour." });
+            }
+          }}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirmUser && (
+        <DeleteConfirmModal
+          user={deleteConfirmUser}
+          onClose={() => setDeleteConfirmUser(null)}
+          onConfirm={async () => {
+            const result = await deleteExternalDistributor(deleteConfirmUser.id);
+            if (result.ok) {
+              pushToast({ tone: "success", title: `${deleteConfirmUser.name} supprimé` });
+              setDeleteConfirmUser(null);
+            } else {
+              pushToast({ tone: "error", title: result.error ?? "Échec suppression." });
+            }
+          }}
+        />
       )}
     </div>
   );
@@ -260,6 +305,8 @@ function ExternalsList({
   editingExternalId,
   onEditToggle,
   onSaved,
+  onEditProfile,
+  onDelete,
 }: {
   users: User[];
   allBySponsor: Map<string, User[]>;
@@ -269,6 +316,8 @@ function ExternalsList({
   editingExternalId: string | null;
   onEditToggle: (id: string) => void;
   onSaved: () => void;
+  onEditProfile: (u: User) => void;
+  onDelete: (u: User) => void;
 }) {
   if (users.length === 0) return null;
   return (
@@ -306,7 +355,14 @@ function ExternalsList({
                 >
                   {editing ? "Fermer" : total > 0 ? "Modifier PV" : "Saisir PV ce mois"}
                 </button>
+                <ActionsMenu
+                  onEdit={() => onEditProfile(u)}
+                  onDelete={() => onDelete(u)}
+                />
               </div>
+
+              {/* Historique multi-mois (chantier 2026-05-22) */}
+              <PvHistoryStrip userId={u.id} currentMonth={monthIso} />
 
               {editing && (
                 <PvEditor
@@ -330,11 +386,242 @@ function ExternalsList({
                 editingExternalId={editingExternalId}
                 onEditToggle={onEditToggle}
                 onSaved={onSaved}
+                onEditProfile={onEditProfile}
+                onDelete={onDelete}
               />
             )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── ActionsMenu ────────────────────────────────────────────────────────────
+function ActionsMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Actions"
+        style={actionsBtnStyle}
+      >
+        ⋯
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={menuBackdropStyle} aria-hidden="true" />
+          <div style={menuStyle}>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onEdit(); }}
+              style={menuItemStyle}
+            >
+              ✏️  Modifier nom / rang / sponsor
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onDelete(); }}
+              style={{ ...menuItemStyle, color: "var(--ls-coral)" }}
+            >
+              🗑️  Supprimer ce distri
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── PvHistoryStrip ─────────────────────────────────────────────────────────
+// Affiche les 5 derniers mois saisis (hors mois courant) sous forme de
+// petites chips. Auto-refetch sur PV_BREAKDOWN_UPDATED_EVENT.
+function PvHistoryStrip({ userId, currentMonth }: { userId: string; currentMonth: string }) {
+  const [history, setHistory] = useState<Awaited<ReturnType<typeof loadUserPvHistory>>>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchHistory = useCallback(async () => {
+    setLoading(true);
+    try {
+      const rows = await loadUserPvHistory(userId, 6);
+      setHistory(rows.filter((r) => r.month !== currentMonth));
+    } catch {
+      setHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, currentMonth]);
+
+  useEffect(() => {
+    void fetchHistory();
+  }, [fetchHistory]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => void fetchHistory();
+    window.addEventListener(PV_BREAKDOWN_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(PV_BREAKDOWN_UPDATED_EVENT, handler);
+  }, [fetchHistory]);
+
+  if (loading && history.length === 0) return null;
+  if (history.length === 0) return null;
+
+  return (
+    <div style={historyStripStyle}>
+      <span style={historyLabelStyle}>Historique :</span>
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+        {history.map((h) => (
+          <span key={h.month} style={historyChipStyle} title={`Détail ${h.month} : ${h.pv15}/${h.pv25}/${h.pv35}/${h.pv42}/${h.pvRoyalty} PV`}>
+            {shortMonthLabel(h.month)} · {Math.round(h.total).toLocaleString("fr-FR")} PV
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function shortMonthLabel(iso: string): string {
+  try {
+    const d = new Date(iso + "-15T12:00:00Z");
+    return new Intl.DateTimeFormat("fr-FR", { month: "short", year: "2-digit" }).format(d).replace(".", "");
+  } catch {
+    return iso;
+  }
+}
+
+// ─── EditProfileModal ──────────────────────────────────────────────────────
+function EditProfileModal({
+  user,
+  allUsers,
+  currentUserId,
+  onClose,
+  onSave,
+}: {
+  user: User;
+  allUsers: User[];
+  currentUserId: string;
+  onClose: () => void;
+  onSave: (payload: { name: string; currentRank: HerbalifeRank; sponsorId: string | null }) => Promise<void>;
+}) {
+  const [name, setName] = useState(user.name);
+  const [rank, setRank] = useState<HerbalifeRank>(user.currentRank ?? "success_builder_42");
+  const [sponsorId, setSponsorId] = useState<string>(user.sponsorId ?? "");
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <div style={modalOverlayStyle} onClick={onClose} role="dialog" aria-modal="true">
+      <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={modalHeaderStyle}>
+          <h2 style={modalTitleStyle}>Modifier {user.name}</h2>
+          <button type="button" onClick={onClose} aria-label="Fermer" style={modalCloseStyle}>×</button>
+        </div>
+
+        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nom"
+            style={inputStyle}
+            disabled={saving}
+            maxLength={80}
+          />
+          <select
+            value={rank}
+            onChange={(e) => setRank(e.target.value as HerbalifeRank)}
+            style={selectStyle}
+            disabled={saving}
+          >
+            {RANK_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <select
+            value={sponsorId}
+            onChange={(e) => setSponsorId(e.target.value)}
+            style={selectStyle}
+            disabled={saving}
+          >
+            <option value="">— Pas de sponsor (racine) —</option>
+            {allUsers.filter((u) => u.id !== user.id).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.id === currentUserId ? `${u.name} (toi)` : u.name}{u.isExternal ? " (externe)" : u.active ? "" : " (inactif)"}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, padding: "12px 22px 18px", justifyContent: "flex-end", borderTop: "0.5px solid var(--ls-border)" }}>
+          <button type="button" onClick={onClose} style={btnGhostStyle} disabled={saving}>Annuler</button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!name.trim() || name.trim().length < 2) return;
+              setSaving(true);
+              try {
+                await onSave({ name: name.trim(), currentRank: rank, sponsorId: sponsorId || null });
+              } finally {
+                setSaving(false);
+              }
+            }}
+            style={btnPrimaryStyle}
+            disabled={saving}
+          >
+            {saving ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DeleteConfirmModal ────────────────────────────────────────────────────
+function DeleteConfirmModal({
+  user,
+  onClose,
+  onConfirm,
+}: {
+  user: User;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div style={modalOverlayStyle} onClick={onClose} role="dialog" aria-modal="true">
+      <div style={{ ...modalContentStyle, maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+        <div style={modalHeaderStyle}>
+          <h2 style={modalTitleStyle}>Supprimer {user.name} ?</h2>
+          <button type="button" onClick={onClose} aria-label="Fermer" style={modalCloseStyle}>×</button>
+        </div>
+        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "var(--ls-text)", lineHeight: 1.5 }}>
+            Cette action est <strong>irréversible</strong> : <strong>{user.name}</strong> sera retiré de ton arborescence avec tout son historique PV.
+          </p>
+          <p style={{ margin: 0, fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
+            ℹ️ Si ce distri a des enfants dans l'arbre ou est utilisé comme uplink HL sur des clients, la suppression sera refusée — réassigne d'abord.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 8, padding: "12px 22px 18px", justifyContent: "flex-end", borderTop: "0.5px solid var(--ls-border)" }}>
+          <button type="button" onClick={onClose} style={btnGhostStyle} disabled={busy}>Annuler</button>
+          <button
+            type="button"
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onConfirm();
+              } finally {
+                setBusy(false);
+              }
+            }}
+            style={btnDangerStyle}
+            disabled={busy}
+          >
+            {busy ? "Suppression…" : "Supprimer définitivement"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -666,4 +953,168 @@ const pvInputStyle: React.CSSProperties = {
   color: "var(--ls-text)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
+};
+
+// ─── Styles new components (chantier 2026-05-22) ──────────────────────────
+
+const actionsBtnStyle: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-text-muted)",
+  cursor: "pointer",
+  fontSize: 18,
+  fontWeight: 700,
+  lineHeight: 1,
+};
+
+const menuBackdropStyle: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 50,
+};
+
+const menuStyle: React.CSSProperties = {
+  position: "absolute",
+  top: 36,
+  right: 0,
+  minWidth: 250,
+  background: "var(--ls-surface)",
+  border: "0.5px solid var(--ls-border)",
+  borderRadius: 12,
+  boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
+  padding: 6,
+  zIndex: 51,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+};
+
+const menuItemStyle: React.CSSProperties = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  border: "none",
+  background: "transparent",
+  color: "var(--ls-text)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: "pointer",
+  textAlign: "left",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+};
+
+const historyStripStyle: React.CSSProperties = {
+  marginTop: 10,
+  paddingTop: 8,
+  borderTop: "0.5px dashed var(--ls-border)",
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexWrap: "wrap",
+};
+
+const historyLabelStyle: React.CSSProperties = {
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 10.5,
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: 0.6,
+  color: "var(--ls-text-muted)",
+};
+
+const historyChipStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  height: 22,
+  padding: "0 8px",
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface))",
+  color: "var(--ls-purple)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 10.5,
+  fontWeight: 600,
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 22%, transparent)",
+  whiteSpace: "nowrap",
+  cursor: "default",
+};
+
+// ─── Modals ────────────────────────────────────────────────────────────────
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.55)",
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)",
+  zIndex: 9999,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 16,
+};
+
+const modalContentStyle: React.CSSProperties = {
+  width: "100%",
+  maxWidth: 520,
+  background: "var(--ls-surface)",
+  border: "0.5px solid var(--ls-border)",
+  borderRadius: 22,
+  boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+  overflow: "hidden",
+};
+
+const modalHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "16px 22px",
+  borderBottom: "0.5px solid var(--ls-border)",
+};
+
+const modalTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: "Syne, sans-serif",
+  fontSize: 18,
+  fontWeight: 700,
+  color: "var(--ls-text)",
+};
+
+const modalCloseStyle: React.CSSProperties = {
+  width: 32,
+  height: 32,
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-text-muted)",
+  cursor: "pointer",
+  fontSize: 18,
+  lineHeight: 1,
+};
+
+const btnGhostStyle: React.CSSProperties = {
+  padding: "9px 16px",
+  borderRadius: 10,
+  border: "0.5px solid var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  cursor: "pointer",
+};
+
+const btnDangerStyle: React.CSSProperties = {
+  padding: "9px 16px",
+  borderRadius: 10,
+  border: "none",
+  background: "var(--ls-coral)",
+  color: "#fff",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
 };

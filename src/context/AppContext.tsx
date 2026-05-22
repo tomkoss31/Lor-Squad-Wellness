@@ -46,6 +46,8 @@ import {
   updateSupabaseClientGeneralNote,
   updateSupabaseClientHerbalifeUplink,
   createSupabaseExternalDistributor,
+  updateSupabaseExternalDistributor,
+  deleteSupabaseExternalDistributor,
   updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
@@ -145,6 +147,13 @@ interface AppContextValue {
     currentRank: import("../types/domain").HerbalifeRank;
     sponsorId?: string | null;
   }) => Promise<{ ok: boolean; error?: string; userId?: string }>;
+  updateExternalDistributor: (payload: {
+    userId: string;
+    name: string;
+    currentRank: import("../types/domain").HerbalifeRank;
+    sponsorId?: string | null;
+  }) => Promise<{ ok: boolean; error?: string }>;
+  deleteExternalDistributor: (userId: string) => Promise<{ ok: boolean; error?: string }>;
   // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
   setClientOnboardingChecks: (
     clientId: string,
@@ -1096,6 +1105,28 @@ export function AppProvider({ children }: PropsWithChildren) {
         if (result.ok && currentUser) {
           await refreshRemoteData(currentUser);
           return { ok: true, userId: result.userId };
+        }
+        return { ok: false, error: result.ok ? undefined : result.error };
+      },
+      // Edit / delete distri externe (chantier 2026-05-22)
+      updateExternalDistributor: async (payload: {
+        userId: string;
+        name: string;
+        currentRank: import("../types/domain").HerbalifeRank;
+        sponsorId?: string | null;
+      }) => {
+        const result = await updateSupabaseExternalDistributor(payload);
+        if (result.ok && currentUser) {
+          await refreshRemoteData(currentUser);
+          return { ok: true };
+        }
+        return { ok: false, error: result.ok ? undefined : result.error };
+      },
+      deleteExternalDistributor: async (userId: string) => {
+        const result = await deleteSupabaseExternalDistributor(userId);
+        if (result.ok && currentUser) {
+          await refreshRemoteData(currentUser);
+          return { ok: true };
         }
         return { ok: false, error: result.ok ? undefined : result.error };
       },

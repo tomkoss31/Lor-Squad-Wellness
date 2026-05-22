@@ -1961,6 +1961,94 @@ export async function createSupabaseExternalDistributor(payload: {
   return { ok: true, userId: body.userId };
 }
 
+/**
+ * Update un distri externe (admin/référent only). 2026-05-22.
+ */
+export async function updateSupabaseExternalDistributor(payload: {
+  userId: string;
+  name: string;
+  currentRank: import("../types/domain").HerbalifeRank;
+  sponsorId?: string | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+  const {
+    data: { session },
+  } = await client.auth.getSession();
+  if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
+  const response = await fetch("/api/admin-update-external-distributor", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+  if (!response.ok || !body.ok) {
+    return { ok: false, error: body.error ?? "Échec mise à jour." };
+  }
+  return { ok: true };
+}
+
+/**
+ * Delete un distri externe (admin only). Refuse si enfants ou uplink utilisé.
+ */
+export async function deleteSupabaseExternalDistributor(
+  userId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+  const {
+    data: { session },
+  } = await client.auth.getSession();
+  if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
+  const response = await fetch("/api/admin-delete-external-distributor", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ userId }),
+  });
+  const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+  if (!response.ok || !body.ok) {
+    return { ok: false, error: body.error ?? "Échec suppression." };
+  }
+  return { ok: true };
+}
+
+/**
+ * Charge les N derniers mois de breakdown PV pour un user.
+ */
+export async function loadUserPvHistory(
+  userId: string,
+  months: number = 6,
+): Promise<Array<{ month: string; pv15: number; pv25: number; pv35: number; pv42: number; pvRoyalty: number; total: number }>> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("pv_monthly_breakdown")
+    .select("month, pv_15, pv_25, pv_35, pv_42, pv_royalty")
+    .eq("user_id", userId)
+    .order("month", { ascending: false })
+    .limit(Math.max(1, Math.min(36, months)));
+  if (error || !data) return [];
+  return data.map((r: { month: string; pv_15: number | null; pv_25: number | null; pv_35: number | null; pv_42: number | null; pv_royalty: number | null }) => {
+    const pv15 = Number(r.pv_15 ?? 0);
+    const pv25 = Number(r.pv_25 ?? 0);
+    const pv35 = Number(r.pv_35 ?? 0);
+    const pv42 = Number(r.pv_42 ?? 0);
+    const pvRoyalty = Number(r.pv_royalty ?? 0);
+    return {
+      month: r.month,
+      pv15,
+      pv25,
+      pv35,
+      pv42,
+      pvRoyalty,
+      total: pv15 + pv25 + pv35 + pv42 + pvRoyalty,
+    };
+  });
+}
+
 export async function updateSupabaseClientHerbalifeUplink(params: {
   clientId: string;
   uplinkUserId: string | null;
