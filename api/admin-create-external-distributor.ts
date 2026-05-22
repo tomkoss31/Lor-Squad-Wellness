@@ -100,15 +100,90 @@ async function handleImpl(req: any, res: any) {
     return;
   }
 
-  // Rate limit (chantier #12 polish) : 10 créations / minute / IP max
+  const payload = req.body ?? {};
   const ip = extractIp(req);
+  const action = String(payload.action ?? "create");
+
+  // Setup client + auth check (commun à toutes les actions)
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const {
+    data: { user: requester },
+    error: authError,
+  } = await admin.auth.getUser(accessToken);
+  if (authError || !requester?.id) {
+    res.status(401).json({ ok: false, error: "Session admin invalide." });
+    return;
+  }
+  const { data: profile } = await admin
+    .from("users")
+    .select("role, active")
+    .eq("id", requester.id)
+    .single<{ role: string; active: boolean }>();
+  if (!profile || !["admin", "referent"].includes(profile.role) || !profile.active) {
+    res.status(403).json({ ok: false, error: "Admin/référent actif requis." });
+    return;
+  }
+
+  // ─── Action : update ───────────────────────────────────────────────────────
+  if (action === "update") {
+    const rl = checkRateLimit(`update-ext:${ip}`, 20, 60_000);
+    if (!rl.ok) {
+      res.status(429).json({ ok: false, error: `Trop de mises à jour. Réessaie dans ${rl.retryAfter}s.` });
+      return;
+    }
+    const userId = String(payload.userId ?? "").trim();
+    const upName = String(payload.name ?? "").trim();
+    const upRank = String(payload.currentRank ?? "").trim();
+    const upSponsorId = String(payload.sponsorId ?? "").trim() || null;
+    if (!userId) return res.status(400).json({ ok: false, error: "userId requis." });
+    if (!upName || upName.length < 2) return res.status(400).json({ ok: false, error: "Nom requis (min 2 caractères)." });
+    if (!ALLOWED_RANKS.includes(upRank)) return res.status(400).json({ ok: false, error: "Rang Herbalife invalide." });
+    const { data: target } = await admin.from("users").select("id, is_external").eq("id", userId).single<{ id: string; is_external: boolean }>();
+    if (!target) return res.status(404).json({ ok: false, error: "Distri externe introuvable." });
+    if (!target.is_external) return res.status(400).json({ ok: false, error: "Modification réservée aux distri externes." });
+    let upSponsorName: string | null = null;
+    if (upSponsorId) {
+      if (upSponsorId === userId) return res.status(400).json({ ok: false, error: "Un distri ne peut pas être son propre sponsor." });
+      const { data: sp } = await admin.from("users").select("id, name").eq("id", upSponsorId).single<{ id: string; name: string }>();
+      if (!sp) return res.status(400).json({ ok: false, error: "Sponsor introuvable." });
+      upSponsorName = sp.name;
+    }
+    const { error: updErr } = await admin.from("users").update({ name: upName, current_rank: upRank, sponsor_id: upSponsorId, sponsor_name: upSponsorName }).eq("id", userId);
+    if (updErr) return res.status(400).json({ ok: false, error: updErr.message });
+    await logAdminAction(admin, { actorUserId: requester.id, action: "external_distributor_updated", targetId: userId, targetLabel: upName, payload: { currentRank: upRank, sponsorId: upSponsorId }, ip });
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  // ─── Action : delete ───────────────────────────────────────────────────────
+  if (action === "delete") {
+    if (profile.role !== "admin") return res.status(403).json({ ok: false, error: "Admin actif requis pour supprimer un externe." });
+    const rl = checkRateLimit(`delete-ext:${ip}`, 5, 60_000);
+    if (!rl.ok) return res.status(429).json({ ok: false, error: `Trop de suppressions. Réessaie dans ${rl.retryAfter}s.` });
+    const userId = String(payload.userId ?? "").trim();
+    if (!userId) return res.status(400).json({ ok: false, error: "userId requis." });
+    const { data: target } = await admin.from("users").select("id, name, is_external").eq("id", userId).single<{ id: string; name: string; is_external: boolean }>();
+    if (!target) return res.status(404).json({ ok: false, error: "Distri externe introuvable." });
+    if (!target.is_external) return res.status(400).json({ ok: false, error: "Suppression réservée aux distri externes." });
+    const { count: childrenCount } = await admin.from("users").select("id", { count: "exact", head: true }).eq("sponsor_id", userId);
+    if ((childrenCount ?? 0) > 0) return res.status(409).json({ ok: false, error: `Impossible de supprimer ${target.name} : ${childrenCount} distri pointent vers lui comme sponsor. Réassigne-les d'abord.` });
+    const { count: clientsUplinkCount } = await admin.from("clients").select("id", { count: "exact", head: true }).eq("herbalife_uplink_user_id", userId);
+    if ((clientsUplinkCount ?? 0) > 0) return res.status(409).json({ ok: false, error: `Impossible de supprimer ${target.name} : ${clientsUplinkCount} client(s) l'utilisent comme uplink HL.` });
+    const { error: delErr } = await admin.auth.admin.deleteUser(userId);
+    if (delErr) return res.status(400).json({ ok: false, error: delErr.message });
+    await logAdminAction(admin, { actorUserId: requester.id, action: "external_distributor_deleted", targetId: userId, targetLabel: target.name, payload: null, ip });
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  // ─── Action : create (par défaut) ──────────────────────────────────────────
   const rl = checkRateLimit(`create-ext:${ip}`, 10, 60_000);
   if (!rl.ok) {
     res.status(429).json({ ok: false, error: `Trop de créations. Réessaie dans ${rl.retryAfter}s.` });
     return;
   }
-
-  const payload = req.body ?? {};
   const name = String(payload.name ?? "").trim();
   const currentRank = String(payload.currentRank ?? "").trim();
   const sponsorId = String(payload.sponsorId ?? "").trim() || null;
@@ -130,31 +205,7 @@ async function handleImpl(req: any, res: any) {
     return;
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  // Vérifie que le caller est admin actif
-  const {
-    data: { user: requester },
-    error: authError,
-  } = await admin.auth.getUser(accessToken);
-
-  if (authError || !requester?.id) {
-    res.status(401).json({ ok: false, error: "Session admin invalide." });
-    return;
-  }
-
-  const { data: profile, error: profileError } = await admin
-    .from("users")
-    .select("role, active")
-    .eq("id", requester.id)
-    .single<{ role: string; active: boolean }>();
-
-  if (profileError || !profile || !["admin", "referent"].includes(profile.role) || !profile.active) {
-    res.status(403).json({ ok: false, error: "Seul un admin/référent actif peut ajouter un distri externe." });
-    return;
-  }
+  // (admin client + auth check déjà faits en haut, communs à toutes les actions)
 
   // Si sponsorId fourni, vérifier qu'il existe
   let sponsorName: string | null = null;
