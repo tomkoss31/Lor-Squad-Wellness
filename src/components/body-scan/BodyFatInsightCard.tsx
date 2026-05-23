@@ -21,6 +21,8 @@ interface BodyFatInsightCardProps {
   initial?: BodyFatReference | null;
   objective?: Objective;
   sex?: BiologicalSex;
+  /** Age en années (cf. Tanita) — module les seuils Sain/Surpoids/Obésité. */
+  age?: number | null;
   history?: BodyFatHistoryPoint[];
 }
 
@@ -30,18 +32,19 @@ export function BodyFatInsightCard({
   initial = null,
   objective,
   sex,
+  age,
   history = []
 }: BodyFatInsightCardProps) {
   const currentKg = estimateBodyFatKg(current.weight, current.percent);
   const previousKg = previous ? estimateBodyFatKg(previous.weight, previous.percent) : null;
   const initialKg = initial ? estimateBodyFatKg(initial.weight, initial.percent) : null;
   const gaugePosition = getGaugePosition(current.percent);
-  const targetRange = getBodyFatTargetRange(sex, objective);
+  const targetRange = getBodyFatTargetRange(sex, objective, age);
   const bodyFatTone = getBodyFatTone(current.percent, targetRange);
   const bodyFatBand = getBodyFatBand(current.percent, targetRange);
   const targetStart = getGaugePosition(targetRange.min);
   const targetEnd = getGaugePosition(targetRange.max);
-  const gaugeRanges = getBodyFatGaugeRanges(sex);
+  const gaugeRanges = getBodyFatGaugeRanges(sex, age);
 
   const previousPercentDelta = previous ? round(current.percent - previous.percent) : 0;
   const previousKgDelta = previousKg == null ? 0 : round(currentKg - previousKg);
@@ -486,46 +489,74 @@ function getBodyFatBand(percent: number, targetRange: { min: number; max: number
   return "Au-dessus de la cible";
 }
 
-function getBodyFatGaugeRanges(sex?: BiologicalSex) {
-  if (sex === "male") {
-    return [
-      { label: "Sec", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9, tone: "blue" as const },
-      { label: "Sain", value: "10 - 20 %", min: 10, max: 20, tone: "green" as const },
-      { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25, tone: "amber" as const },
-      { label: "Obésité", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
-    ];
-  }
+// Matrice Tanita officielle (2026-05-23) : seuils masse grasse par sexe × âge.
+// Source : tableau standard balance Tanita (cf. photo référence Thomas).
+// Bornes inclusives sur le bas, exclusives sur le haut (sauf Obésité = ≥).
+type TanitaBand = { sainMin: number; sainMax: number; surpoidsMax: number };
 
+function getTanitaBand(sex: BiologicalSex | undefined, age: number | null | undefined): TanitaBand {
+  const a = typeof age === "number" && age >= 0 ? age : 40; // fallback 40-59 (cohorte adulte typique)
+
+  if (sex === "male") {
+    if (a <= 39) return { sainMin: 8,  sainMax: 19, surpoidsMax: 24 }; // Obésité ≥25
+    if (a <= 59) return { sainMin: 11, sainMax: 21, surpoidsMax: 27 }; // Obésité ≥28
+    return            { sainMin: 13, sainMax: 24, surpoidsMax: 29 };   // Obésité ≥30 (60-79)
+  }
+  // female (default si sex inconnu : on prend la grille femme pour ne pas
+  // sous-estimer la zone saine d'une femme dont le sexe n'aurait pas été
+  // renseigné — la sous-estimation côté homme est plus risquée).
+  if (a <= 39) return { sainMin: 21, sainMax: 32, surpoidsMax: 38 }; // Obésité ≥39
+  if (a <= 59) return { sainMin: 23, sainMax: 33, surpoidsMax: 39 }; // Obésité ≥40
+  return            { sainMin: 24, sainMax: 35, surpoidsMax: 41 };   // Obésité ≥42 (60-79)
+}
+
+function getBodyFatGaugeRanges(sex?: BiologicalSex, age?: number | null) {
+  const band = getTanitaBand(sex, age);
+  const obesityMin = band.surpoidsMax + 1;
   return [
-    { label: "Sec", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9, tone: "blue" as const },
-    { label: "Sain", value: "20 - 30 %", min: 20, max: 30, tone: "green" as const },
-    { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35, tone: "amber" as const },
-    { label: "Obésité", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
+    {
+      label: "Maigreur",
+      value: `< ${band.sainMin} %`,
+      min: Number.NEGATIVE_INFINITY,
+      max: band.sainMin - 0.1,
+      tone: "blue" as const
+    },
+    {
+      label: "Sain",
+      value: `${band.sainMin} - ${band.sainMax} %`,
+      min: band.sainMin,
+      max: band.sainMax,
+      tone: "green" as const
+    },
+    {
+      label: "Surpoids",
+      value: `${band.sainMax + 1} - ${band.surpoidsMax} %`,
+      min: band.sainMax + 0.1,
+      max: band.surpoidsMax,
+      tone: "amber" as const
+    },
+    {
+      label: "Obésité",
+      value: `≥ ${obesityMin} %`,
+      min: obesityMin - 0.1,
+      max: Number.POSITIVE_INFINITY,
+      tone: "red" as const
+    }
   ];
 }
 
-function getBodyFatTargetRange(sex?: BiologicalSex, objective?: Objective) {
-  if (sex === "male") {
-    if (objective === "sport") {
-      return { min: 10, max: 15 };
-    }
-
-    if (objective === "weight-loss") {
-      return { min: 14, max: 20 };
-    }
-
-    return { min: 12, max: 20 };
+function getBodyFatTargetRange(sex?: BiologicalSex, objective?: Objective, age?: number | null) {
+  // Override sport : on garde des zones plus serrées (athlétique).
+  if (sex === "male" && objective === "sport") {
+    return { min: 10, max: 15 };
   }
-
-  if (objective === "sport") {
+  if (sex === "female" && objective === "sport") {
     return { min: 18, max: 24 };
   }
-
-  if (objective === "weight-loss") {
-    return { min: 24, max: 30 };
-  }
-
-  return { min: 22, max: 30 };
+  // Cas général + weight-loss : on s'appuie sur la zone saine Tanita
+  // (= référentiel utilisé partout dans l'app).
+  const band = getTanitaBand(sex, age);
+  return { min: band.sainMin, max: band.sainMax };
 }
 
 function getSexLabel(sex?: BiologicalSex) {
