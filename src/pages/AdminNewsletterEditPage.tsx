@@ -87,6 +87,17 @@ function emptySection(position: number): SectionData {
   );
 }
 
+function audienceLabel(a: NewsletterAudience): string {
+  switch (a) {
+    case "clients":
+      return "tous les clients ayant un email";
+    case "distri":
+      return "tous les distri actifs (distributor, admin, referent)";
+    case "all":
+      return "tous les clients + tous les distri actifs";
+  }
+}
+
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -108,6 +119,8 @@ export function AdminNewsletterEditPage() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const [data, setData] = useState<NewsletterFull | null>(null);
 
@@ -213,6 +226,59 @@ export function AdminNewsletterEditPage() {
       return { ...d, body_json: { sections } };
     });
     setDirty(true);
+  }
+
+  async function dispatch(mode: "test" | "send") {
+    if (!data || sending) return;
+    if (dirty) {
+      alert("Enregistre tes modifications avant d'envoyer.");
+      return;
+    }
+    if (data.body_json.sections.length === 0) {
+      alert("La newsletter doit contenir au moins 1 section.");
+      return;
+    }
+    setSending(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée.");
+
+      const supabaseUrl = (sb as unknown as { supabaseUrl: string }).supabaseUrl;
+      const res = await fetch(`${supabaseUrl}/functions/v1/dispatch-newsletter`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ newsletter_id: data.id, mode }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result?.success) {
+        throw new Error(result?.error ?? `HTTP ${res.status}`);
+      }
+      if (mode === "test") {
+        pushToast({
+          tone: "success",
+          title: `✅ Email test envoyé à ${result.sent_to}`,
+        });
+      } else {
+        pushToast({
+          tone: "success",
+          title: `📨 Envoyé à ${result.sent_count}/${result.total} destinataires${
+            result.failed_count ? ` · ${result.failed_count} échec(s)` : ""
+          }`,
+        });
+        setSendModalOpen(false);
+        await load();
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur d'envoi.");
+    } finally {
+      setSending(false);
+    }
   }
 
   async function save() {
@@ -321,11 +387,155 @@ export function AdminNewsletterEditPage() {
             ...btnPrimaryStyle,
             opacity: saving ? 0.6 : dirty ? 1 : 0.5,
             cursor: saving || !dirty ? "not-allowed" : "pointer",
+            background: dirty ? "var(--ls-gold)" : "var(--ls-surface)",
+            color: dirty ? "var(--ls-charcoal)" : "var(--ls-text-muted)",
           }}
         >
           {saving ? "Enregistrement…" : dirty ? "💾 Enregistrer" : "✓ À jour"}
         </button>
+        {data.status === "draft" && data.body_json.sections.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => dispatch("test")}
+              disabled={sending || dirty}
+              title={dirty ? "Sauvegarde d'abord" : "Envoie 1 email à ton adresse pour valider visuel"}
+              style={{
+                ...btnGhostStyle,
+                opacity: sending || dirty ? 0.5 : 1,
+                cursor: sending || dirty ? "not-allowed" : "pointer",
+              }}
+            >
+              {sending ? "…" : "🧪 Test à moi"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSendModalOpen(true)}
+              disabled={sending || dirty}
+              title={dirty ? "Sauvegarde d'abord" : "Envoi pour de vrai à tous les destinataires"}
+              style={{
+                padding: "9px 18px",
+                background: "linear-gradient(135deg, var(--ls-teal), var(--ls-teal))",
+                border: "none",
+                borderRadius: 10,
+                color: "white",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: sending || dirty ? "not-allowed" : "pointer",
+                opacity: sending || dirty ? 0.5 : 1,
+              }}
+            >
+              📨 Envoyer
+            </button>
+          </>
+        )}
+        {data.status === "sent" && (
+          <span
+            style={{
+              padding: "9px 14px",
+              background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+              color: "var(--ls-teal)",
+              borderRadius: 10,
+              fontWeight: 700,
+              fontSize: 12,
+              letterSpacing: "0.06em",
+            }}
+          >
+            ✓ ENVOYÉ
+          </span>
+        )}
       </div>
+
+      {/* ─── Modale confirmation envoi ──────────────────────────────────── */}
+      {sendModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 1000,
+          }}
+          onClick={() => !sending && setSendModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 16,
+              padding: 24,
+              maxWidth: 480,
+              width: "100%",
+            }}
+          >
+            <h3
+              style={{
+                margin: "0 0 10px",
+                fontFamily: "'Syne', serif",
+                fontSize: 20,
+                fontWeight: 700,
+                color: "var(--ls-text)",
+              }}
+            >
+              📨 Envoyer pour de vrai ?
+            </h3>
+            <p style={{ margin: "0 0 16px", fontSize: 14, color: "var(--ls-text-muted)", lineHeight: 1.6 }}>
+              Tu vas envoyer <strong>« {data.title} »</strong> à <strong>{audienceLabel(data.audience)}</strong>.
+            </p>
+            <div
+              style={{
+                padding: "12px 14px",
+                background: "color-mix(in srgb, var(--ls-coral) 8%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--ls-coral) 25%, var(--ls-border))",
+                borderRadius: 10,
+                fontSize: 13,
+                color: "var(--ls-text)",
+                marginBottom: 18,
+                lineHeight: 1.5,
+              }}
+            >
+              ⚠️ Action <strong>irréversible</strong> : une fois envoyée, la newsletter passe en statut <code>sent</code>. Tu ne pourras plus la modifier ni la re-envoyer.
+              <br />
+              <br />
+              💡 Si tu as un doute, clique d'abord <strong>🧪 Test à moi</strong> pour valider le rendu sur ta boîte mail.
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => !sending && setSendModalOpen(false)}
+                disabled={sending}
+                style={{ ...btnGhostStyle, opacity: sending ? 0.5 : 1 }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => dispatch("send")}
+                disabled={sending}
+                style={{
+                  padding: "10px 20px",
+                  background: "var(--ls-teal)",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: sending ? "not-allowed" : "pointer",
+                  opacity: sending ? 0.6 : 1,
+                }}
+              >
+                {sending ? "Envoi en cours…" : "Confirmer l'envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Split layout ───────────────────────────────────────────────── */}
       <div
