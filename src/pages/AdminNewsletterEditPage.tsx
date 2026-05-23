@@ -25,12 +25,39 @@ import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
 type NewsletterAudience = "clients" | "distri" | "all";
 
+type PaywallMode = "none" | "teaser";
+
 interface SectionData {
   id: string;
   title: string;
   body_md: string;
   is_public: boolean;
   position: number;
+  // Champs riches alignés sur docs/mockups/newsletter-mai-juin.html (8.4b)
+  emoji: string;             // ex: "💧"
+  tag_label: string;         // ex: "Conseil #1 · Hydratation" (vide = pas de pill)
+  saviez_vous_md: string;    // markdown callout (vide = pas de callout)
+  saviez_vous_label: string; // ex: "Le saviez-vous ?" ou "Côté coach 👋"
+  show_cta_bilan: boolean;   // affiche le CTA Bilan inline gold
+  paywall_mode: PaywallMode; // 'teaser' = masque + CTA "Débloque"
+}
+
+// Normalise les sections lues depuis Supabase pour garantir tous les champs riches
+// (rétro-compat : sections créées avant 8.4b n'ont que id/title/body_md/is_public/position).
+function normalizeSection(raw: Partial<SectionData> & { id?: string }, fallbackPos: number): SectionData {
+  return {
+    id: raw.id ?? `sec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: raw.title ?? "",
+    body_md: raw.body_md ?? "",
+    is_public: typeof raw.is_public === "boolean" ? raw.is_public : true,
+    position: raw.position ?? fallbackPos,
+    emoji: raw.emoji ?? "",
+    tag_label: raw.tag_label ?? "",
+    saviez_vous_md: raw.saviez_vous_md ?? "",
+    saviez_vous_label: raw.saviez_vous_label ?? "Le saviez-vous ?",
+    show_cta_bilan: raw.show_cta_bilan ?? false,
+    paywall_mode: raw.paywall_mode ?? "none",
+  };
 }
 
 interface NewsletterFull {
@@ -50,13 +77,14 @@ function newSectionId(): string {
 }
 
 function emptySection(position: number): SectionData {
-  return {
-    id: newSectionId(),
-    title: "Nouvelle section",
-    body_md: "",
-    is_public: true,
+  return normalizeSection(
+    {
+      id: newSectionId(),
+      title: "Nouvelle section",
+      tag_label: `Conseil #${position}`,
+    },
     position,
-  };
+  );
 }
 
 function slugify(input: string): string {
@@ -102,14 +130,12 @@ export function AdminNewsletterEditPage() {
         .eq("id", id)
         .single();
       if (err) throw err;
-      const sections = (row.body_json?.sections as SectionData[] | undefined) ?? [];
-      // Normalise positions (au cas où data corrompue)
-      sections.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-      sections.forEach((s, i) => {
-        s.position = i + 1;
-        if (!s.id) s.id = newSectionId();
-        if (typeof s.is_public !== "boolean") s.is_public = true;
-      });
+      const rawSections = (row.body_json?.sections as Array<Partial<SectionData>> | undefined) ?? [];
+      const sectionsSorted = [...rawSections].sort(
+        (a, b) => (a.position ?? 0) - (b.position ?? 0),
+      );
+      const sections = sectionsSorted.map((s, i) => normalizeSection(s, i + 1));
+      sections.forEach((s, i) => (s.position = i + 1));
       setData({
         ...row,
         body_json: { sections },
@@ -514,6 +540,10 @@ function SectionEditor({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
+  const [showAdvanced, setShowAdvanced] = useState(
+    Boolean(section.saviez_vous_md || section.show_cta_bilan || section.paywall_mode !== "none"),
+  );
+
   return (
     <div
       style={{
@@ -524,6 +554,7 @@ function SectionEditor({
         background: "var(--ls-bg)",
       }}
     >
+      {/* Top bar : numéro + public/privé + reorder + delete */}
       <div
         style={{
           display: "flex",
@@ -591,39 +622,184 @@ function SectionEditor({
           🗑
         </button>
       </div>
+
+      {/* Tag pill + emoji */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <input
+          type="text"
+          value={section.emoji}
+          onChange={(e) => onChange({ emoji: e.target.value.slice(0, 4) })}
+          placeholder="💧"
+          style={{
+            ...inputStyle,
+            width: 70,
+            textAlign: "center",
+            fontSize: 22,
+            marginBottom: 0,
+            flex: "0 0 70px",
+          }}
+          title="Emoji affiché à côté du titre"
+        />
+        <input
+          type="text"
+          value={section.tag_label}
+          onChange={(e) => onChange({ tag_label: e.target.value })}
+          placeholder="Conseil #1 · Hydratation"
+          style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+          title="Tag pill teal au-dessus du titre"
+        />
+      </div>
+
+      {/* Titre */}
       <input
         type="text"
         value={section.title}
         onChange={(e) => onChange({ title: e.target.value })}
         placeholder="Titre de la section…"
-        style={{ ...inputStyle, fontWeight: 600, marginBottom: 8 }}
+        style={{ ...inputStyle, fontWeight: 600, marginTop: 8, marginBottom: 8 }}
       />
+
+      {/* Body markdown */}
       <textarea
         value={section.body_md}
         onChange={(e) => onChange({ body_md: e.target.value })}
         rows={6}
-        placeholder="Contenu (markdown : ## titre, **gras**, *italique*, - liste, > citation…)"
+        placeholder="Contenu (markdown : **gras**, *italique*, - liste, > citation…)"
         style={{
           ...inputStyle,
           fontFamily: "var(--ls-font-mono, monospace)",
           fontSize: 13,
           resize: "vertical",
           minHeight: 100,
-          marginBottom: 0,
+          marginBottom: 8,
         }}
       />
+
+      {/* Toggle "Options avancées" */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        style={{
+          background: "transparent",
+          border: "none",
+          color: "var(--ls-text-muted)",
+          fontSize: 12,
+          cursor: "pointer",
+          padding: "4px 0",
+          fontWeight: 600,
+        }}
+      >
+        {showAdvanced ? "− Masquer options" : "+ Callout, CTA Bilan, Paywall…"}
+      </button>
+
+      {showAdvanced && (
+        <div
+          style={{
+            marginTop: 10,
+            paddingTop: 12,
+            borderTop: "1px dashed var(--ls-border)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          {/* Callout "Le saviez-vous ?" */}
+          <div>
+            <Label>Label du callout</Label>
+            <input
+              type="text"
+              value={section.saviez_vous_label}
+              onChange={(e) => onChange({ saviez_vous_label: e.target.value })}
+              placeholder="Le saviez-vous ?"
+              style={{ ...inputStyle, marginBottom: 6 }}
+            />
+            <Label>Contenu du callout (markdown, vide = masqué)</Label>
+            <textarea
+              value={section.saviez_vous_md}
+              onChange={(e) => onChange({ saviez_vous_md: e.target.value })}
+              rows={3}
+              placeholder="Ex: Avoir soif = être déjà légèrement déshydraté…"
+              style={{
+                ...inputStyle,
+                fontFamily: "var(--ls-font-mono, monospace)",
+                fontSize: 13,
+                resize: "vertical",
+                minHeight: 60,
+                marginBottom: 0,
+              }}
+            />
+          </div>
+
+          {/* CTA Bilan inline */}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 10,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={section.show_cta_bilan}
+              onChange={(e) => onChange({ show_cta_bilan: e.target.checked })}
+            />
+            <span style={{ fontSize: 13, color: "var(--ls-text)" }}>
+              🎯 Afficher CTA Bilan en bas de section (gold)
+            </span>
+          </label>
+
+          {/* Paywall mode */}
+          <div>
+            <Label>Paywall</Label>
+            <select
+              value={section.paywall_mode}
+              onChange={(e) => onChange({ paywall_mode: e.target.value as PaywallMode })}
+              style={{ ...inputStyle, marginBottom: 0 }}
+            >
+              <option value="none">Pas de paywall</option>
+              <option value="teaser">Teaser : masque + CTA "Débloque ton programme"</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+// Rendu pixel-perfect du mockup docs/mockups/newsletter-mai-juin.html
+// Couleurs hardcodées car cet aperçu doit ressembler à l'email/page publique
+// (qui sont toujours light theme cream, indépendamment du thème admin).
+const PV = {
+  gold: "#C9A84C",
+  goldLight: "#E5C97D",
+  teal: "#2DD4BF",
+  tealDark: "#0F766E",
+  charcoal: "#0B0D11",
+  cream: "#FBF7F0",
+  surface: "#FFFFFF",
+  surface2: "#F7F3EC",
+  border: "rgba(11,13,17,0.10)",
+  text: "#1F2937",
+  textMuted: "#4B5563",
+  textHint: "#9CA3AF",
+};
+
 function NewsletterPreview({ data }: { data: NewsletterFull }) {
+  const sections = data.body_json.sections;
+  const hasPrivateSections = data.is_public && sections.some((s) => !s.is_public);
+
   return (
     <div
       style={{
-        background: "var(--ls-surface)",
+        background: PV.surface2,
         border: "1px solid var(--ls-border)",
         borderRadius: 12,
-        padding: 24,
+        padding: 12,
         maxHeight: "calc(100vh - 60px)",
         overflowY: "auto",
       }}
@@ -635,125 +811,486 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: "var(--ls-teal)",
-          marginBottom: 12,
+          marginBottom: 10,
+          paddingLeft: 4,
         }}
       >
-        🌐 Aperçu page publique /news/{data.slug}
+        🌐 Aperçu /news/{data.slug}
       </div>
 
-      <h1
+      {/* Container newsletter (max 640px comme mockup) */}
+      <div
         style={{
-          fontFamily: "'Syne', serif",
-          fontSize: 28,
-          fontWeight: 700,
-          margin: "0 0 6px",
-          color: "var(--ls-text)",
-          lineHeight: 1.2,
+          maxWidth: 640,
+          margin: "0 auto",
+          background: PV.surface,
+          boxShadow: "0 4px 30px rgba(0,0,0,0.05)",
+          borderRadius: 8,
+          overflow: "hidden",
+          color: PV.text,
+          fontFamily: "'DM Sans', sans-serif",
         }}
       >
-        {data.title || <span style={{ opacity: 0.4 }}>(titre)</span>}
-      </h1>
-      {data.subtitle && (
-        <p
+        {/* ─── Header brand ─── */}
+        <header
           style={{
-            margin: "0 0 20px",
-            fontSize: 15,
-            color: "var(--ls-text-muted)",
-            lineHeight: 1.5,
-            fontStyle: "italic",
-          }}
-        >
-          {data.subtitle}
-        </p>
-      )}
-
-      {data.body_json.sections.length === 0 && (
-        <div
-          style={{
-            padding: 24,
+            padding: "24px 20px 20px",
+            background: "linear-gradient(135deg, #FAEEDA 0%, #FBF7F0 100%)",
+            borderBottom: `1px solid ${PV.border}`,
             textAlign: "center",
-            color: "var(--ls-text-muted)",
-            fontSize: 13,
-            border: "1px dashed var(--ls-border)",
-            borderRadius: 10,
-            marginTop: 16,
           }}
         >
-          Aucune section pour le moment.<br />
-          L'aperçu se met à jour automatiquement.
-        </div>
-      )}
+          <div
+            style={{
+              fontFamily: "'Syne', Georgia, serif",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              color: PV.gold,
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}
+          >
+            La Base 360{" "}
+            <span
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: PV.teal,
+                margin: "0 6px",
+                transform: "translateY(-2px)",
+              }}
+            />{" "}
+            News
+          </div>
+          <div style={{ fontSize: 12, color: PV.textHint, fontWeight: 500 }}>
+            {data.subtitle || `Édition ${new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`}
+          </div>
+        </header>
 
-      {data.body_json.sections.map((section) => (
-        <article
-          key={section.id}
+        {/* ─── Hero ─── */}
+        <section style={{ padding: "32px 20px 28px", textAlign: "center", background: PV.surface }}>
+          <h1
+            style={{
+              fontFamily: "'Syne', Georgia, serif",
+              fontSize: 28,
+              fontWeight: 700,
+              color: PV.text,
+              lineHeight: 1.25,
+              margin: "0 0 12px",
+            }}
+          >
+            {data.title || <span style={{ opacity: 0.4 }}>(titre de la newsletter)</span>}
+          </h1>
+          {data.subtitle && (
+            <p
+              style={{
+                fontSize: 15,
+                color: PV.textMuted,
+                maxWidth: 380,
+                margin: "0 auto",
+                lineHeight: 1.5,
+              }}
+            >
+              {data.subtitle}
+            </p>
+          )}
+        </section>
+
+        {/* ─── Sections ─── */}
+        {sections.length === 0 && (
+          <div
+            style={{
+              padding: 32,
+              textAlign: "center",
+              color: PV.textMuted,
+              fontSize: 13,
+              fontStyle: "italic",
+            }}
+          >
+            Aucune section. Ajoute-en à gauche, l'aperçu s'actualise en temps réel.
+          </div>
+        )}
+
+        {sections.map((section) => (
+          <NewsletterPreviewSection
+            key={section.id}
+            section={section}
+            newsletterIsPublic={data.is_public}
+          />
+        ))}
+
+        {/* ─── CTA Business (auto-appended, futur 8.10) ─── */}
+        <section
           style={{
-            marginTop: 24,
-            paddingTop: 20,
-            borderTop: "1px solid var(--ls-border)",
-            opacity: section.is_public || !data.is_public ? 1 : 0.55,
+            margin: "24px 20px",
+            padding: "22px 20px",
+            background: `linear-gradient(135deg, ${PV.tealDark} 0%, ${PV.teal} 100%)`,
+            borderRadius: 16,
+            color: "white",
+            textAlign: "center",
+            boxShadow: "0 8px 24px rgba(13,118,110,0.25)",
             position: "relative",
           }}
         >
-          {data.is_public && !section.is_public && (
-            <span
-              style={{
-                position: "absolute",
-                top: 14,
-                right: 0,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "var(--ls-gold)",
-                background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-                padding: "3px 9px",
-                borderRadius: 999,
-              }}
-            >
-              🔒 PRIVÉE
-            </span>
-          )}
-          <h2
+          <span
             style={{
-              fontFamily: "'Syne', serif",
-              fontSize: 20,
+              position: "absolute",
+              top: 8,
+              right: 8,
+              fontSize: 9,
               fontWeight: 700,
-              margin: "0 0 10px",
-              color: "var(--ls-text)",
+              letterSpacing: "0.06em",
+              color: "rgba(255,255,255,0.7)",
+              background: "rgba(255,255,255,0.12)",
+              padding: "2px 7px",
+              borderRadius: 4,
             }}
           >
-            {section.title || <span style={{ opacity: 0.4 }}>(titre section)</span>}
-          </h2>
-          {section.body_md.trim() ? (
-            <MarkdownRenderer content={section.body_md} />
-          ) : (
-            <p style={{ color: "var(--ls-text-muted)", fontSize: 13, fontStyle: "italic", margin: 0 }}>
-              (Vide — saisis du markdown à gauche)
-            </p>
-          )}
-        </article>
-      ))}
+            AUTO 8.10
+          </span>
+          <div
+            style={{
+              display: "inline-block",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              padding: "4px 12px",
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.18)",
+              marginBottom: 12,
+            }}
+          >
+            💼 Opportunité
+          </div>
+          <h3
+            style={{
+              fontFamily: "'Syne', Georgia, serif",
+              fontSize: 22,
+              fontWeight: 700,
+              margin: "0 0 10px",
+              lineHeight: 1.3,
+            }}
+          >
+            Tu pensais auto-financer tes vacances ?
+          </h3>
+          <p style={{ fontSize: 14, opacity: 0.92, margin: "0 auto 16px", maxWidth: 340 }}>
+            Découvre comment notre équipe accompagne celles et ceux qui veulent
+            transformer leur passion santé en revenus complémentaires.
+          </p>
+          <span
+            style={{
+              display: "inline-block",
+              padding: "14px 28px",
+              background: "white",
+              color: PV.tealDark,
+              borderRadius: 10,
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            Je découvre l'opportunité →
+          </span>
+        </section>
 
-      {data.is_public && data.body_json.sections.some((s) => !s.is_public) && (
+        {/* ─── Footer (auto-appended, futur 8.7) ─── */}
+        <footer
+          style={{
+            padding: "28px 20px 32px",
+            textAlign: "center",
+            background: PV.charcoal,
+            color: PV.cream,
+            position: "relative",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              color: "rgba(251,247,240,0.5)",
+              background: "rgba(251,247,240,0.1)",
+              padding: "2px 7px",
+              borderRadius: 4,
+            }}
+          >
+            AUTO 8.7
+          </span>
+          <div
+            style={{
+              fontFamily: "'Syne', Georgia, serif",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              color: PV.gold,
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            La Base 360 <span style={{ color: PV.teal }}>·</span> News
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(251,247,240,0.7)", marginBottom: 18 }}>
+            Conseils nutrition & bien-être, sans pression.
+          </div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", marginBottom: 18 }}>
+            {["📷", "📘", "💬", "▶️"].map((e, i) => (
+              <span
+                key={i}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "rgba(251,247,240,0.08)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                }}
+              >
+                {e}
+              </span>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(251,247,240,0.45)", maxWidth: 420, margin: "0 auto", lineHeight: 1.5 }}>
+            Se désabonner · Mentions légales
+          </div>
+        </footer>
+      </div>
+
+      {hasPrivateSections && (
+        <p
+          style={{
+            marginTop: 12,
+            padding: 10,
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            textAlign: "center",
+            fontStyle: "italic",
+          }}
+        >
+          🔒 Les sections privées (paywall) ne s'affichent pas en mode public —
+          remplacées par un CTA "Débloque via ton bilan".
+        </p>
+      )}
+    </div>
+  );
+}
+
+function NewsletterPreviewSection({
+  section,
+  newsletterIsPublic,
+}: {
+  section: SectionData;
+  newsletterIsPublic: boolean;
+}) {
+  const hiddenInPublic = newsletterIsPublic && !section.is_public;
+
+  return (
+    <section
+      style={{
+        padding: "24px 20px 20px",
+        borderBottom: `1px solid ${PV.border}`,
+        position: "relative",
+        opacity: hiddenInPublic ? 0.55 : 1,
+        overflow: section.paywall_mode === "teaser" ? "hidden" : undefined,
+        paddingBottom: section.paywall_mode === "teaser" ? 80 : 20,
+      }}
+    >
+      {hiddenInPublic && (
+        <span
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: PV.gold,
+            background: "rgba(201,168,76,0.16)",
+            padding: "3px 8px",
+            borderRadius: 999,
+          }}
+        >
+          🔒 MASQUÉE (PUBLIC)
+        </span>
+      )}
+
+      {/* Tag pill */}
+      {section.tag_label && (
+        <span
+          style={{
+            display: "inline-block",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "4px 10px",
+            borderRadius: 12,
+            background: "rgba(45,212,191,0.12)",
+            color: PV.tealDark,
+            marginBottom: 12,
+          }}
+        >
+          {section.tag_label}
+        </span>
+      )}
+
+      {/* Titre H2 avec emoji */}
+      <h2
+        style={{
+          fontFamily: "'Syne', Georgia, serif",
+          fontSize: 22,
+          fontWeight: 700,
+          color: PV.text,
+          lineHeight: 1.3,
+          margin: "0 0 10px",
+        }}
+      >
+        {section.emoji && (
+          <span style={{ fontSize: 26, marginRight: 4 }}>{section.emoji}</span>
+        )}
+        {section.title || <span style={{ opacity: 0.4 }}>(titre section)</span>}
+      </h2>
+
+      {/* Body markdown */}
+      <div style={{ color: PV.text, fontSize: 15, lineHeight: 1.6 }}>
+        {section.body_md.trim() ? (
+          <MarkdownRenderer content={section.body_md} />
+        ) : (
+          <p style={{ color: PV.textMuted, fontStyle: "italic", margin: 0 }}>
+            (Saisis du markdown à gauche)
+          </p>
+        )}
+      </div>
+
+      {/* Callout "Le saviez-vous ?" */}
+      {section.saviez_vous_md.trim() && (
         <div
           style={{
-            marginTop: 24,
-            padding: 16,
-            background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
-            border: "1px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
+            marginTop: 14,
+            padding: "14px 16px",
+            background: PV.surface2,
+            borderLeft: `3px solid ${PV.gold}`,
+            borderRadius: 4,
+            fontSize: 14,
+            color: PV.textMuted,
+            fontStyle: "italic",
+          }}
+        >
+          <strong
+            style={{
+              fontStyle: "normal",
+              color: PV.gold,
+              display: "block",
+              marginBottom: 4,
+            }}
+          >
+            {section.saviez_vous_label || "Le saviez-vous ?"}
+          </strong>
+          <MarkdownRenderer content={section.saviez_vous_md} />
+        </div>
+      )}
+
+      {/* CTA Bilan inline */}
+      {section.show_cta_bilan && (
+        <div
+          style={{
+            margin: "18px 0 6px",
+            padding: "16px 18px",
+            background: "linear-gradient(135deg, #FAEEDA 0%, #F4DFA8 100%)",
             borderRadius: 12,
+            border: "1px solid rgba(201,168,76,0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <div style={{ fontSize: 28, flexShrink: 0 }}>🎯</div>
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontFamily: "'Syne', Georgia, serif",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#633806",
+                lineHeight: 1.3,
+                marginBottom: 2,
+              }}
+            >
+              Prêt(e) pour la suite ?
+            </div>
+            <div style={{ fontSize: 12, color: "#8B5A1B" }}>
+              Fais ton bilan personnalisé en 2 min
+            </div>
+          </div>
+          <span
+            style={{
+              padding: "10px 16px",
+              background: PV.charcoal,
+              color: PV.cream,
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 13,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Je commence
+          </span>
+        </div>
+      )}
+
+      {/* Paywall teaser : masque + CTA "Débloque" */}
+      {section.paywall_mode === "teaser" && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: "28px 20px",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(251,247,240,0.8) 30%, " +
+              PV.surface2 +
+              " 100%)",
             textAlign: "center",
           }}
         >
-          <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--ls-text)", fontWeight: 600 }}>
-            🔓 Lis la suite en faisant ton bilan en 2 min
+          <h3
+            style={{
+              fontFamily: "'Syne', Georgia, serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: PV.text,
+              margin: "0 0 6px",
+            }}
+          >
+            🔒 La suite est réservée
+          </h3>
+          <p style={{ fontSize: 13, color: PV.textMuted, margin: "0 auto 12px", maxWidth: 320 }}>
+            Débloque le programme complet avec ton bilan personnalisé.
           </p>
-          <p style={{ margin: 0, fontSize: 11, color: "var(--ls-text-muted)" }}>
-            (CTA réel sera câblé en étape 8.10)
-          </p>
+          <span
+            style={{
+              display: "inline-block",
+              background: PV.charcoal,
+              color: PV.cream,
+              padding: "10px 20px",
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            Je débloque →
+          </span>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
