@@ -208,11 +208,11 @@ export function WeightSummaryBlock({
   if (muscleGainPts != null) {
     col3HasData = true;
     if (muscleGainPts > 0.1) {
-      col3Value = `+${muscleGainPts.toFixed(1)} pts`;
+      col3Value = `+${muscleGainPts.toFixed(1)} %`;
       col3Positive = true;
-      col3Hint = "de masse musculaire (% du poids)";
+      col3Hint = "de masse musculaire depuis le départ";
     } else if (muscleGainPts < -0.1) {
-      col3Value = `-${Math.abs(muscleGainPts).toFixed(1)} pts`;
+      col3Value = `-${Math.abs(muscleGainPts).toFixed(1)} %`;
       col3Positive = false;
       col3Hint = "Attention à la masse maigre";
     } else {
