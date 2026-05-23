@@ -150,6 +150,11 @@ const AdminTestimonialsPage = lazy(() =>
     default: module.AdminTestimonialsPage,
   })),
 );
+const AdminNewslettersPage = lazy(() =>
+  import("./pages/AdminNewslettersPage").then((module) => ({
+    default: module.AdminNewslettersPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -640,6 +645,8 @@ export default function App() {
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
                 <Route path="admin/testimonials" element={<AdminTestimonialsPage />} />
+                {/* Chantier #8 (2026-05-23) : gestion newsletters La Base 360 News. */}
+                <Route path="admin/newsletters" element={<AdminNewslettersPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}

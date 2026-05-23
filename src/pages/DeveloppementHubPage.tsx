@@ -183,6 +183,18 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
+    id: "newsletters",
+    emoji: "📰",
+    title: "Newsletters",
+    description:
+      "Gère tes éditions de La Base 360 News (bi-mensuel). Crée, édite, envoie aux clients + distri, partage la version publique pour capter des leads.",
+    cta: "Ouvrir l'admin",
+    path: "/admin/newsletters",
+    accent: "var(--ls-coral)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
+  {
     id: "testimonials",
     emoji: "💬",
     title: "Témoignages clients",
