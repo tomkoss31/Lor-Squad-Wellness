@@ -165,6 +165,11 @@ const AdminNewsletterStatsPage = lazy(() =>
     default: module.AdminNewsletterStatsPage,
   })),
 );
+const PublicNewsletterPage = lazy(() =>
+  import("./pages/PublicNewsletterPage").then((module) => ({
+    default: module.PublicNewsletterPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -540,6 +545,9 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
+          {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
+              "La Base 360 News". Visible si status='sent' AND is_public=true. */}
+          <Route path="/news/:slug" element={<PublicNewsletterPage />} />
           {/* Chantier #7 V2 (2026-05-17) — page business scroll narratif
               unifie. Fusionne /opportunite + /simulateur. Mockup Claude Design
               business-v2.html valide. */}
