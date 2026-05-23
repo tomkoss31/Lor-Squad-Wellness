@@ -160,6 +160,11 @@ const AdminNewsletterEditPage = lazy(() =>
     default: module.AdminNewsletterEditPage,
   })),
 );
+const AdminNewsletterStatsPage = lazy(() =>
+  import("./pages/AdminNewsletterStatsPage").then((module) => ({
+    default: module.AdminNewsletterStatsPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -653,6 +658,7 @@ export default function App() {
                 {/* Chantier #8 (2026-05-23) : gestion newsletters La Base 360 News. */}
                 <Route path="admin/newsletters" element={<AdminNewslettersPage />} />
                 <Route path="admin/newsletters/:id/edit" element={<AdminNewsletterEditPage />} />
+                <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}

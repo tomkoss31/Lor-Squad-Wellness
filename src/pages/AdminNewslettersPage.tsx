@@ -311,6 +311,7 @@ export function AdminNewslettersPage() {
             row={r}
             busy={busyId === r.id}
             onEdit={() => navigate(`/admin/newsletters/${r.id}/edit`)}
+            onStats={() => navigate(`/admin/newsletters/${r.id}/stats`)}
             onPreview={() => window.open(`/news/${r.slug}`, "_blank", "noopener,noreferrer")}
             onDelete={() => deleteNewsletter(r.id, r.title)}
             onArchive={() => archiveNewsletter(r.id, r.title)}
@@ -450,6 +451,7 @@ function NewsletterCard({
   row,
   busy,
   onEdit,
+  onStats,
   onPreview,
   onDelete,
   onArchive,
@@ -457,6 +459,7 @@ function NewsletterCard({
   row: NewsletterRow;
   busy: boolean;
   onEdit: () => void;
+  onStats: () => void;
   onPreview: () => void;
   onDelete: () => void;
   onArchive: () => void;
@@ -564,6 +567,11 @@ function NewsletterCard({
         <ActionButton variant="primary" onClick={onEdit} disabled={busy}>
           ✏️ Éditer
         </ActionButton>
+        {row.status === "sent" && (
+          <ActionButton variant="ghost" onClick={onStats} disabled={busy}>
+            📊 Stats
+          </ActionButton>
+        )}
         {row.is_public && (
           <ActionButton variant="ghost" onClick={onPreview} disabled={busy}>
             🌐 Voir publique
