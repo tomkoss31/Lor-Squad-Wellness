@@ -10,6 +10,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { buildReportData } from "../lib/evolutionReport";
+import { getEffectiveAge } from "../lib/age";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { refreshClientRecap, checkAgendaConflict } from "../services/supabaseService";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -630,6 +631,7 @@ export function NewFollowUpPage() {
               current={{ weight: bodyScan.weight, percent: bodyScan.bodyFat }}
               objective={targetClient.objective}
               sex={targetClient.sex}
+              age={getEffectiveAge(targetClient)}
               previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
               initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
               history={[

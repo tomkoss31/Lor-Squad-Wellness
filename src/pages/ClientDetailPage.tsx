@@ -25,6 +25,7 @@ import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
 import { SharePublicButton } from "../components/client/SharePublicButton";
+import { getEffectiveAge } from "../lib/age";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -671,6 +672,7 @@ export function ClientDetailPage() {
                 current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
                 objective={client.objective}
                 sex={client.sex}
+                age={getEffectiveAge(client)}
                 previous={
                   previousAssessment
                     ? {

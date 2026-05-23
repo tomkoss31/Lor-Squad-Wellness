@@ -2643,6 +2643,7 @@ export function NewAssessmentPage() {
                   current={{ weight: form.weight, percent: form.bodyFat }}
                   objective={form.objective}
                   sex={form.sex}
+                  age={form.age > 0 ? form.age : null}
                 />
               )}
 

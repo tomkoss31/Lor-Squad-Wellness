@@ -128,13 +128,24 @@ export function WeightSummaryBlock({
       ? firstBodyFatPct - latestBodyFatPct
       : null;
 
-  // Chantier V2 (2026-04-24) : muscle repris en POURCENTAGE (pas en kg)
-  //   = ((actuel - départ) / départ) × 100
-  // Plus parlant pour le coach ("tu as repris 4.2% de muscle") que +0.8 kg
-  // qui nécessite un référentiel absolu.
-  const muscleGainPct =
-    firstMuscleMass != null && latestMuscleMass != null && firstMuscleMass > 0
-      ? ((latestMuscleMass - firstMuscleMass) / firstMuscleMass) * 100
+  // Fix 2026-05-23 : muscle repris en POINTS DE % DU POIDS CORPOREL.
+  //   = (latestMuscle/latestWeight × 100) − (firstMuscle/firstWeight × 100)
+  // Avant : on calculait la variation des kg de muscle (((Δkg)/kg_initial)×100)
+  // qui est ridiculement faible quand le client perd du gras (les kg bougent
+  // peu en valeur absolue alors que le % de masse maigre explose). Maintenant
+  // on lit l'évolution du % de masse musculaire (= ratio muscle/poids), ce
+  // qui matche le chiffre affiché sur les fiches Masse musculaire.
+  const firstMusclePct =
+    firstMuscleMass != null && firstWeight != null && firstWeight > 0
+      ? (firstMuscleMass / firstWeight) * 100
+      : null;
+  const latestMusclePct =
+    latestMuscleMass != null && latestWeight != null && latestWeight > 0
+      ? (latestMuscleMass / latestWeight) * 100
+      : null;
+  const muscleGainPts =
+    firstMusclePct != null && latestMusclePct != null
+      ? latestMusclePct - firstMusclePct
       : null;
 
   const firstAssessmentCount = client.assessments?.length ?? 0;
@@ -189,19 +200,19 @@ export function WeightSummaryBlock({
     }
   }
 
-  // --- Column 3: Muscle repris (EN %)
+  // --- Column 3: Muscle repris (EN POINTS DE % DU POIDS CORPOREL)
   let col3Value = "—";
   let col3Hint = noComparison ? "En attente d'un second scan" : "Pas assez de données";
   let col3Positive = true;
   let col3HasData = false;
-  if (muscleGainPct != null) {
+  if (muscleGainPts != null) {
     col3HasData = true;
-    if (muscleGainPct > 0.1) {
-      col3Value = `+${muscleGainPct.toFixed(1)} %`;
+    if (muscleGainPts > 0.1) {
+      col3Value = `+${muscleGainPts.toFixed(1)} pts`;
       col3Positive = true;
-      col3Hint = "par rapport au départ";
-    } else if (muscleGainPct < -0.1) {
-      col3Value = `-${Math.abs(muscleGainPct).toFixed(1)} %`;
+      col3Hint = "de masse musculaire (% du poids)";
+    } else if (muscleGainPts < -0.1) {
+      col3Value = `-${Math.abs(muscleGainPts).toFixed(1)} pts`;
       col3Positive = false;
       col3Hint = "Attention à la masse maigre";
     } else {
@@ -271,8 +282,8 @@ export function WeightSummaryBlock({
         positive: col3Positive,
         hasData: col3HasData,
         beforeAfter:
-          firstMuscleMass != null && latestMuscleMass != null
-            ? `${firstMuscleMass.toFixed(1)} kg → ${latestMuscleMass.toFixed(1)} kg`
+          firstMusclePct != null && latestMusclePct != null
+            ? `${firstMusclePct.toFixed(1)}% → ${latestMusclePct.toFixed(1)}%`
             : null,
       })}
     </div>
