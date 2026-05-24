@@ -150,6 +150,26 @@ const AdminTestimonialsPage = lazy(() =>
     default: module.AdminTestimonialsPage,
   })),
 );
+const AdminNewslettersPage = lazy(() =>
+  import("./pages/AdminNewslettersPage").then((module) => ({
+    default: module.AdminNewslettersPage,
+  })),
+);
+const AdminNewsletterEditPage = lazy(() =>
+  import("./pages/AdminNewsletterEditPage").then((module) => ({
+    default: module.AdminNewsletterEditPage,
+  })),
+);
+const AdminNewsletterStatsPage = lazy(() =>
+  import("./pages/AdminNewsletterStatsPage").then((module) => ({
+    default: module.AdminNewsletterStatsPage,
+  })),
+);
+const PublicNewsletterPage = lazy(() =>
+  import("./pages/PublicNewsletterPage").then((module) => ({
+    default: module.PublicNewsletterPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -525,6 +545,9 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
+          {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
+              "La Base 360 News". Visible si status='sent' AND is_public=true. */}
+          <Route path="/news/:slug" element={<PublicNewsletterPage />} />
           {/* Chantier #7 V2 (2026-05-17) — page business scroll narratif
               unifie. Fusionne /opportunite + /simulateur. Mockup Claude Design
               business-v2.html valide. */}
@@ -640,6 +663,10 @@ export default function App() {
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
                 <Route path="admin/testimonials" element={<AdminTestimonialsPage />} />
+                {/* Chantier #8 (2026-05-23) : gestion newsletters La Base 360 News. */}
+                <Route path="admin/newsletters" element={<AdminNewslettersPage />} />
+                <Route path="admin/newsletters/:id/edit" element={<AdminNewsletterEditPage />} />
+                <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
