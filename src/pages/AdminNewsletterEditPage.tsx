@@ -15,12 +15,13 @@
 // Save : bouton manuel (pas d'autosave V1 — éviter conflits multi-onglets).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useToast } from "../context/ToastContext";
 import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
+import { OgImageTemplate } from "../components/newsletter/OgImageTemplate";
 
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
 type NewsletterAudience = "clients" | "distri" | "all";
@@ -70,6 +71,8 @@ interface NewsletterFull {
   is_public: boolean;
   body_json: { sections: SectionData[] };
   template_key: string | null;
+  preview_image_url: string | null;
+  sent_at: string | null;
 }
 
 function newSectionId(): string {
@@ -121,8 +124,10 @@ export function AdminNewsletterEditPage() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [generatingOg, setGeneratingOg] = useState(false);
 
   const [data, setData] = useState<NewsletterFull | null>(null);
+  const ogTemplateRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
@@ -139,7 +144,7 @@ export function AdminNewsletterEditPage() {
       if (!sb) throw new Error("Service indisponible.");
       const { data: row, error: err } = await sb
         .from("newsletters")
-        .select("id, title, slug, subtitle, audience, status, is_public, body_json, template_key")
+        .select("id, title, slug, subtitle, audience, status, is_public, body_json, template_key, preview_image_url, sent_at")
         .eq("id", id)
         .single();
       if (err) throw err;
@@ -226,6 +231,71 @@ export function AdminNewsletterEditPage() {
       return { ...d, body_json: { sections } };
     });
     setDirty(true);
+  }
+
+  async function generateOgImage() {
+    if (!data || generatingOg) return;
+    if (dirty) {
+      alert("Enregistre tes modifications avant de générer l'image OG.");
+      return;
+    }
+    const node = ogTemplateRef.current;
+    if (!node) {
+      alert("Template OG non monté.");
+      return;
+    }
+    setGeneratingOg(true);
+    try {
+      // Lazy import html2canvas (déjà dans le bundle pour les certificats)
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(node, {
+        width: 1200,
+        height: 630,
+        scale: 1,
+        backgroundColor: "#FBF7F0",
+        useCORS: true,
+        logging: false,
+      });
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("Conversion en PNG échouée.");
+
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+
+      // Upload (upsert pour permettre regen)
+      const fileName = `${data.slug}.png`;
+      const { error: uploadErr } = await sb.storage
+        .from("newsletter-og-images")
+        .upload(fileName, blob, {
+          contentType: "image/png",
+          upsert: true,
+          cacheControl: "3600",
+        });
+      if (uploadErr) throw uploadErr;
+
+      // Public URL (cache-buster = timestamp pour forcer refresh côté browser)
+      const { data: pubData } = sb.storage
+        .from("newsletter-og-images")
+        .getPublicUrl(fileName);
+      const publicUrl = `${pubData.publicUrl}?v=${Date.now()}`;
+
+      // Update newsletter
+      const { error: updErr } = await sb
+        .from("newsletters")
+        .update({ preview_image_url: publicUrl })
+        .eq("id", data.id);
+      if (updErr) throw updErr;
+
+      setData((d) => (d ? { ...d, preview_image_url: publicUrl } : d));
+      pushToast({ tone: "success", title: "🖼 Image OG générée et uploadée" });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur de génération.");
+    } finally {
+      setGeneratingOg(false);
+    }
   }
 
   async function dispatch(mode: "test" | "send") {
@@ -350,6 +420,30 @@ export function AdminNewsletterEditPage() {
 
   return (
     <div style={{ padding: "20px 16px", maxWidth: 1400, margin: "0 auto" }}>
+      {/* ─── Template OG offscreen (capturé par html2canvas) ───────────────
+          Positionné absolutement hors viewport. NE PAS supprimer : c'est
+          ce DOM que html2canvas convertit en PNG. */}
+      <div
+        style={{
+          position: "fixed",
+          top: -10000,
+          left: -10000,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+        aria-hidden="true"
+      >
+        <OgImageTemplate
+          ref={ogTemplateRef}
+          title={data.title}
+          subtitle={data.subtitle}
+          slug={data.slug}
+          templateKey={data.template_key}
+          sentAt={data.sent_at}
+          isDraft={data.status === "draft"}
+        />
+      </div>
+
       {/* ─── Top bar ────────────────────────────────────────────────────── */}
       <div
         style={{
@@ -381,12 +475,32 @@ export function AdminNewsletterEditPage() {
         </button>
         <button
           type="button"
-          onClick={() => window.open(`/api/og/preview/${data.id}`, "_blank", "noopener,noreferrer")}
-          style={btnGhostStyle}
-          title="Voir le PNG OG (1200×630) qui sera utilisé pour le partage social"
+          onClick={generateOgImage}
+          disabled={generatingOg || dirty}
+          style={{
+            ...btnGhostStyle,
+            opacity: generatingOg || dirty ? 0.5 : 1,
+            cursor: generatingOg || dirty ? "not-allowed" : "pointer",
+          }}
+          title={
+            dirty
+              ? "Sauvegarde d'abord"
+              : "Génère le PNG 1200×630 pour le partage social et l'upload sur Supabase Storage"
+          }
         >
-          🖼 Aperçu OG
+          {generatingOg ? "⏳ Génération…" : data.preview_image_url ? "🔄 Re-générer OG" : "🖼 Générer image OG"}
         </button>
+        {data.preview_image_url && (
+          <a
+            href={data.preview_image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...btnGhostStyle, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+            title="Ouvrir l'image OG actuelle"
+          >
+            👁 Voir
+          </a>
+        )}
         <button
           type="button"
           onClick={save}
