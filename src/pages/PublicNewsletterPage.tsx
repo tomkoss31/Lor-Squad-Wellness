@@ -151,10 +151,15 @@ export function PublicNewsletterPage() {
     setMeta("property", "og:title", `${data.title} — La Base 360 News`);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:type", "article");
-    if (data.preview_image_url) {
-      setMeta("property", "og:image", data.preview_image_url);
-    }
-    setMeta("name", "twitter:card", data.preview_image_url ? "summary_large_image" : "summary");
+    // OG image dynamique via Vercel edge fn (étape 8.8)
+    // URL absolue obligatoire pour les crawlers sociaux
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://labase360.fr";
+    const ogImageUrl = data.preview_image_url ?? `${origin}/api/og/${data.slug}`;
+    setMeta("property", "og:image", ogImageUrl);
+    setMeta("property", "og:image:width", "1200");
+    setMeta("property", "og:image:height", "630");
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:image", ogImageUrl);
 
     return () => {
       document.title = originalTitle;
