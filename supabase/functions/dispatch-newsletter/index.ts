@@ -159,7 +159,7 @@ serve(async (req) => {
   // 1. Load newsletter
   const { data: nl, error: nlErr } = await sb
     .from("newsletters")
-    .select("id, title, slug, subtitle, audience, status, is_public, body_json")
+    .select("id, title, slug, subtitle, audience, status, is_public, body_json, sent_at, template_key")
     .eq("id", newsletterId)
     .single();
   if (nlErr || !nl) return json({ success: false, error: "newsletter_not_found" }, 404);
@@ -192,6 +192,8 @@ serve(async (req) => {
     mode: "email",
     bilanCtaUrl: "https://labase360.fr/bilan-online/admin?utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug,
     businessUrl: "https://labase360.fr/business?utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug + "&leadcapture=1",
+    sentAt: nl.sent_at,
+    templateKey: nl.template_key,
   });
   const subject = nl.subtitle ? `${nl.title} — ${nl.subtitle}` : nl.title;
 

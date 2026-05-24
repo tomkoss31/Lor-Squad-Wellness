@@ -233,6 +233,57 @@ export function AdminNewsletterEditPage() {
     setDirty(true);
   }
 
+  async function exportPdf() {
+    if (!data) return;
+    if (dirty) {
+      alert("Enregistre tes modifications avant d'exporter en PDF.");
+      return;
+    }
+    try {
+      // Le PDF reprend exactement le rendu de la preview (sections + CTAs)
+      // donc on capture le NewsletterPreview qui est déjà monté.
+      const preview = document.querySelector("[data-newsletter-preview]") as HTMLElement | null;
+      if (!preview) {
+        alert("Active la preview (👁 Aperçu) puis réessaie.");
+        return;
+      }
+      const [html2canvas, jsPDFmod] = await Promise.all([
+        import("html2canvas").then((m) => m.default),
+        import("jspdf").then((m) => m.default ?? m.jsPDF),
+      ]);
+      const canvas = await html2canvas(preview, {
+        scale: 2,
+        backgroundColor: "#FBF7F0",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      // A4 portrait : 210×297 mm. On adapte la largeur à 180mm (marges 15mm)
+      const pdf = new jsPDFmod({ unit: "mm", format: "a4", orientation: "portrait" });
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Si trop long pour 1 page : on splitte sur plusieurs pages
+      let position = margin;
+      let remainingHeight = imgHeight;
+      while (remainingHeight > 0) {
+        pdf.addImage(imgData, "PNG", margin, position - (imgHeight - remainingHeight), imgWidth, imgHeight);
+        remainingHeight -= pageHeight - margin * 2;
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          position = margin;
+        }
+      }
+      pdf.save(`${data.slug || "newsletter"}.pdf`);
+      pushToast({ tone: "success", title: "📥 PDF généré" });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur d'export PDF.");
+    }
+  }
+
   async function generateOgImage() {
     if (!data || generatingOg) return;
     if (dirty) {
@@ -472,6 +523,19 @@ export function AdminNewsletterEditPage() {
           title="Afficher/masquer l'aperçu"
         >
           {previewOpen ? "👁 Aperçu" : "📝 Édition seule"}
+        </button>
+        <button
+          type="button"
+          onClick={exportPdf}
+          disabled={dirty}
+          style={{
+            ...btnGhostStyle,
+            opacity: dirty ? 0.5 : 1,
+            cursor: dirty ? "not-allowed" : "pointer",
+          }}
+          title={dirty ? "Sauvegarde d'abord" : "Télécharge un PDF A4 de la newsletter"}
+        >
+          📥 PDF
         </button>
         <button
           type="button"
@@ -1127,6 +1191,7 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
 
   return (
     <div
+      data-newsletter-preview="true"
       style={{
         background: PV.surface2,
         border: "1px solid var(--ls-border)",

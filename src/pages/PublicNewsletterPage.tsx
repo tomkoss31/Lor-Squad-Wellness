@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { getNewsletterCtas } from "../lib/newsletterCtas";
 
 interface SectionData {
   id: string;
@@ -42,6 +43,7 @@ interface NewsletterPublic {
   body_json: { sections: SectionData[] };
   sent_at: string | null;
   preview_image_url: string | null;
+  template_key: string | null;
 }
 
 // Palette light cream du mockup (pas le theme app)
@@ -99,7 +101,7 @@ export function PublicNewsletterPage() {
         // RLS public_read : status='sent' AND is_public=true
         const { data: row, error: err } = await sb
           .from("newsletters")
-          .select("id, title, slug, subtitle, body_json, sent_at, preview_image_url")
+          .select("id, title, slug, subtitle, body_json, sent_at, preview_image_url, template_key")
           .eq("slug", slug)
           .eq("status", "sent")
           .eq("is_public", true)
@@ -260,6 +262,8 @@ export function PublicNewsletterPage() {
   // (le teaser veut le début du contenu visible). Les sections is_public=false sans
   // paywall_mode='teaser' sont totalement masquées.
   const visibleSections = sections.filter((s) => s.is_public || s.paywall_mode === "teaser");
+  // Variants CTAs saisonniers (étape 8.10)
+  const ctas = getNewsletterCtas(data.sent_at, data.template_key);
 
   return (
     <div
@@ -352,7 +356,7 @@ export function PublicNewsletterPage() {
 
         {/* ─── Sections visibles ─── */}
         {visibleSections.map((section) => (
-          <PublicSection key={section.id} section={section} bilanUrl={bilanUrl} />
+          <PublicSection key={section.id} section={section} bilanUrl={bilanUrl} ctas={ctas} />
         ))}
 
         {/* ─── CTA Business teal ─── */}
@@ -380,7 +384,7 @@ export function PublicNewsletterPage() {
               marginBottom: 12,
             }}
           >
-            💼 Opportunité
+            {ctas.business.tag}
           </div>
           <h3
             style={{
@@ -392,11 +396,10 @@ export function PublicNewsletterPage() {
               color: "white",
             }}
           >
-            Tu pensais auto-financer tes vacances ?
+            {ctas.business.title}
           </h3>
           <p style={{ fontSize: 14, opacity: 0.92, margin: "0 auto 16px", maxWidth: 340, color: "white" }}>
-            Découvre comment notre équipe accompagne celles et ceux qui veulent transformer leur passion santé en
-            revenus complémentaires.
+            {ctas.business.description}
           </p>
           <button
             type="button"
@@ -414,7 +417,7 @@ export function PublicNewsletterPage() {
               fontFamily: "inherit",
             }}
           >
-            Je découvre l'opportunité →
+            {ctas.business.buttonText}
           </button>
         </section>
 
@@ -476,7 +479,15 @@ export function PublicNewsletterPage() {
   );
 }
 
-function PublicSection({ section, bilanUrl }: { section: SectionData; bilanUrl: string }) {
+function PublicSection({
+  section,
+  bilanUrl,
+  ctas,
+}: {
+  section: SectionData;
+  bilanUrl: string;
+  ctas: ReturnType<typeof getNewsletterCtas>;
+}) {
   const isPaywall = section.paywall_mode === "teaser";
 
   return (
@@ -572,9 +583,9 @@ function PublicSection({ section, bilanUrl }: { section: SectionData; bilanUrl: 
                 marginBottom: 2,
               }}
             >
-              Prêt(e) pour la suite ?
+              {ctas.bilan.title}
             </div>
-            <div style={{ fontSize: 12, color: "#8B5A1B" }}>Fais ton bilan personnalisé en 2 min</div>
+            <div style={{ fontSize: 12, color: "#8B5A1B" }}>{ctas.bilan.subtitle}</div>
           </div>
           <span
             style={{
@@ -589,7 +600,7 @@ function PublicSection({ section, bilanUrl }: { section: SectionData; bilanUrl: 
               whiteSpace: "nowrap",
             }}
           >
-            Je commence
+            {ctas.bilan.buttonText}
           </span>
         </a>
       )}

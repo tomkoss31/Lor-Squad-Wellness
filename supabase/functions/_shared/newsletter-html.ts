@@ -39,7 +39,56 @@ export interface NewsletterCompileInput {
   bilanCtaUrl?: string; // /bilan-online/admin par défaut
   businessUrl?: string; // /business avec UTM
   unsubUrl?: string;    // pour footer email
+  // Étape 8.10 : pour détecter les variantes saisonnières des CTAs
+  sentAt?: string | null;
+  templateKey?: string | null;
 }
+
+// ─── Variantes saisonnières CTAs (étape 8.10) ─────────────────────────────────
+// Note : duplicate de src/lib/newsletterCtas.ts pour respecter la frontière
+// Deno (pas d'import depuis src/). Garder synchronisé manuellement.
+type SeasonInternal = "summer" | "autumn" | "winter" | "spring" | "neutral";
+
+function detectSeasonDeno(sentAt: string | null | undefined, templateKey: string | null | undefined): SeasonInternal {
+  if (templateKey === "summer-prep") return "summer";
+  if (templateKey === "back-to-school") return "autumn";
+  if (templateKey === "winter-immunity") return "winter";
+  if (templateKey === "new-year-fresh") return "spring";
+  if (!sentAt) return "neutral";
+  const m = new Date(sentAt).getMonth() + 1;
+  if (m >= 5 && m <= 7) return "summer";
+  if (m >= 8 && m <= 10) return "autumn";
+  if (m === 11 || m === 12 || m <= 2) return "winter";
+  return "spring";
+}
+
+interface CtaPack {
+  bilan: { title: string; subtitle: string; buttonText: string };
+  business: { tag: string; title: string; description: string; buttonText: string };
+}
+
+const CTAS: Record<SeasonInternal, CtaPack> = {
+  summer: {
+    bilan: { title: "Prêt(e) pour l'été ?", subtitle: "Fais ton bilan personnalisé en 2 min", buttonText: "Je commence" },
+    business: { tag: "💼 Opportunité", title: "Tu pensais auto-financer tes vacances ?", description: "Découvre comment notre équipe accompagne celles et ceux qui veulent transformer leur passion santé en revenus complémentaires.", buttonText: "Je découvre l'opportunité →" },
+  },
+  autumn: {
+    bilan: { title: "Cette rentrée, tu repars du bon pied ?", subtitle: "Bilan personnalisé en 2 min", buttonText: "Je fais mon bilan" },
+    business: { tag: "💼 Opportunité rentrée", title: "Tu pensais auto-financer la rentrée des enfants ?", description: "La rentrée coûte cher. Découvre comment certains de nos coachs ont créé un revenu complémentaire qui finance école, sport, loisirs des kids.", buttonText: "Je découvre l'opportunité →" },
+  },
+  winter: {
+    bilan: { title: "Boost ton immunité avant l'hiver", subtitle: "Bilan personnalisé en 2 min — sommeil, énergie, défenses", buttonText: "Je commence" },
+    business: { tag: "💼 Opportunité", title: "Tu pensais auto-financer tes cadeaux de Noël ?", description: "Décembre arrive vite. Découvre comment notre équipe accompagne celles et ceux qui veulent un revenu complémentaire pour vivre les fêtes sans stress.", buttonText: "Je découvre l'opportunité →" },
+  },
+  spring: {
+    bilan: { title: "Nouvelle année, nouveau toi ?", subtitle: "Fais le point en 2 min — bilan personnalisé", buttonText: "Je commence" },
+    business: { tag: "💼 Opportunité", title: "Tu pensais auto-financer tes projets de l'année ?", description: "Nouvelle année = nouveaux projets. Découvre comment notre équipe accompagne celles et ceux qui veulent créer un revenu complémentaire en partant du bon pied.", buttonText: "Je découvre l'opportunité →" },
+  },
+  neutral: {
+    bilan: { title: "Envie de comprendre ton corps ?", subtitle: "Fais ton bilan personnalisé en 2 min", buttonText: "Je commence" },
+    business: { tag: "💼 Opportunité", title: "Et si tu vivais de ta passion santé ?", description: "Découvre comment notre équipe accompagne celles et ceux qui veulent transformer leur passion santé en revenus complémentaires.", buttonText: "Je découvre l'opportunité →" },
+  },
+};
 
 // ─── Markdown mini parser ─────────────────────────────────────────────────────
 // Supporte : **bold**, *italic*, - liste, paragraphes, links [txt](url).
@@ -158,15 +207,16 @@ function renderSection(
       </div>`
     : "";
 
+  const ctas = CTAS[detectSeasonDeno(input.sentAt, input.templateKey)];
   const ctaBilan =
     section.show_cta_bilan && input.bilanCtaUrl
       ? `<a href="${input.bilanCtaUrl}" style="margin:18px 0 6px;padding:16px 18px;background:linear-gradient(135deg,#FAEEDA 0%,#F4DFA8 100%);border-radius:12px;border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;">
         <div style="font-size:28px;flex-shrink:0;">🎯</div>
         <div style="flex:1;">
-          <div style="font-family:'Syne',Georgia,serif;font-size:15px;font-weight:700;color:#633806;line-height:1.3;margin-bottom:2px;">Prêt(e) pour la suite ?</div>
-          <div style="font-size:12px;color:#8B5A1B;">Fais ton bilan personnalisé en 2 min</div>
+          <div style="font-family:'Syne',Georgia,serif;font-size:15px;font-weight:700;color:#633806;line-height:1.3;margin-bottom:2px;">${escapeHtml(ctas.bilan.title)}</div>
+          <div style="font-size:12px;color:#8B5A1B;">${escapeHtml(ctas.bilan.subtitle)}</div>
         </div>
-        <span style="display:inline-block;margin-left:auto;padding:10px 16px;background:#0B0D11;color:#FBF7F0;border-radius:8px;font-weight:600;font-size:13px;white-space:nowrap;">Je commence</span>
+        <span style="display:inline-block;margin-left:auto;padding:10px 16px;background:#0B0D11;color:#FBF7F0;border-radius:8px;font-weight:600;font-size:13px;white-space:nowrap;">${escapeHtml(ctas.bilan.buttonText)}</span>
       </a>`
       : "";
 
@@ -205,13 +255,14 @@ export function compileNewsletterHtml(input: NewsletterCompileInput): string {
     .map((s) => renderSection(s, input))
     .join("");
 
-  // CTA Business final (auto-append, sera enrichi 8.10 avec variant saisonnier)
+  // CTA Business final (variant saisonnier étape 8.10)
   const ctaBusinessUrl = input.businessUrl ?? "https://labase360.fr/business";
+  const ctasGlobal = CTAS[detectSeasonDeno(input.sentAt, input.templateKey)];
   const ctaBusiness = `<section style="margin:24px 20px;padding:22px 20px;background:linear-gradient(135deg,#0F766E 0%,#2DD4BF 100%);border-radius:16px;color:white;text-align:center;box-shadow:0 8px 24px rgba(13,118,110,0.25);">
-    <div style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.18);margin-bottom:12px;">💼 Opportunité</div>
-    <h3 style="font-family:'Syne',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 10px;line-height:1.3;color:white;">Tu pensais auto-financer tes vacances ?</h3>
-    <p style="font-size:14px;opacity:0.92;margin:0 auto 16px;max-width:340px;color:white;">Découvre comment notre équipe accompagne celles et ceux qui veulent transformer leur passion santé en revenus complémentaires.</p>
-    <a href="${ctaBusinessUrl}" style="display:inline-block;padding:14px 28px;background:white;color:#0F766E;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">Je découvre l'opportunité →</a>
+    <div style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.18);margin-bottom:12px;">${escapeHtml(ctasGlobal.business.tag)}</div>
+    <h3 style="font-family:'Syne',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 10px;line-height:1.3;color:white;">${escapeHtml(ctasGlobal.business.title)}</h3>
+    <p style="font-size:14px;opacity:0.92;margin:0 auto 16px;max-width:340px;color:white;">${escapeHtml(ctasGlobal.business.description)}</p>
+    <a href="${ctaBusinessUrl}" style="display:inline-block;padding:14px 28px;background:white;color:#0F766E;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">${escapeHtml(ctasGlobal.business.buttonText)}</a>
   </section>`;
 
   const unsubLink = input.unsubUrl
