@@ -315,32 +315,28 @@ export function AdminNewsletterEditPage() {
 
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée.");
 
-      // Upload (upsert pour permettre regen)
-      const fileName = `${data.slug}.png`;
-      const { error: uploadErr } = await sb.storage
-        .from("newsletter-og-images")
-        .upload(fileName, blob, {
-          contentType: "image/png",
-          upsert: true,
-          cacheControl: "3600",
-        });
-      if (uploadErr) throw uploadErr;
+      // Upload via edge function service_role (bypass RLS storage)
+      const formData = new FormData();
+      formData.append("file", blob, `${data.slug}.png`);
+      formData.append("slug", data.slug);
+      formData.append("newsletter_id", data.id);
 
-      // Public URL (cache-buster = timestamp pour forcer refresh côté browser)
-      const { data: pubData } = sb.storage
-        .from("newsletter-og-images")
-        .getPublicUrl(fileName);
-      const publicUrl = `${pubData.publicUrl}?v=${Date.now()}`;
+      const supabaseUrl = (sb as unknown as { supabaseUrl: string }).supabaseUrl;
+      const res = await fetch(`${supabaseUrl}/functions/v1/upload-newsletter-og`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
+      const result = await res.json();
+      if (!res.ok || !result?.success) {
+        throw new Error(result?.error ?? `HTTP ${res.status}`);
+      }
 
-      // Update newsletter
-      const { error: updErr } = await sb
-        .from("newsletters")
-        .update({ preview_image_url: publicUrl })
-        .eq("id", data.id);
-      if (updErr) throw updErr;
-
-      setData((d) => (d ? { ...d, preview_image_url: publicUrl } : d));
+      setData((d) => (d ? { ...d, preview_image_url: result.public_url } : d));
       pushToast({ tone: "success", title: "🖼 Image OG générée et uploadée" });
     } catch (e) {
       alert(e instanceof Error ? e.message : "Erreur de génération.");
