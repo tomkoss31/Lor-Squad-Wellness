@@ -46,7 +46,7 @@ const PROMPTS: Array<{ emoji: string; title: string; sub: string; insert: string
   },
   {
     emoji: "💪",
-    title: "Comment tu te sens aujourd'hui ?",
+    title: "Comment vas-tu aujourd'hui ?",
     sub: "Ton ressenti global, dans ta peau",
     insert: "💪 Aujourd'hui, je me sens : ",
   },
@@ -276,9 +276,9 @@ export function TestimonialFormPage() {
             maxWidth: 480,
           }}
         >
-          Hey{firstName ? ` ${firstName}` : " toi"},
+          {firstName ? `Bonjour ${firstName}, ` : ""}Ton retour compte.
           <br />
-          <span style={publicGradText}>comment ça se passe ?</span>
+          <span style={publicGradText}>Vraiment.</span>
         </h1>
         <p
           style={{
@@ -289,7 +289,7 @@ export function TestimonialFormPage() {
             lineHeight: 1.55,
           }}
         >
-          Partage ton vécu en 30 secondes. Ça aide énormément les prochains qui hésitent à se lancer.
+          Partage ton vécu en 30 secondes — ça inspire celles et ceux qui hésitent à se lancer.
         </p>
 
         {/* Meta-strip */}
@@ -429,7 +429,7 @@ export function TestimonialFormPage() {
           {/* Rating étoiles */}
           <div>
             <div style={fieldLabelStyle}>
-              Comment tu notes ton expérience ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+              Comment notes-tu ton expérience ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
             </div>
             <div
               style={{ display: "flex", gap: 8, justifyContent: "center" }}
