@@ -381,6 +381,14 @@ export function AdminNewsletterEditPage() {
         </button>
         <button
           type="button"
+          onClick={() => window.open(`/api/og/preview/${data.id}`, "_blank", "noopener,noreferrer")}
+          style={btnGhostStyle}
+          title="Voir le PNG OG (1200×630) qui sera utilisé pour le partage social"
+        >
+          🖼 Aperçu OG
+        </button>
+        <button
+          type="button"
           onClick={save}
           disabled={saving || !dirty}
           style={{
