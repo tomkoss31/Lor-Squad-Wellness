@@ -36,6 +36,7 @@ import {
   EngagementTotalBlock,
   ProgressionRangBlock,
   PvBizworksBlock,
+  PvOverrideBlock,
   RangHerbalifeBlock,
 } from "../components/distributor-blocks";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
@@ -506,6 +507,13 @@ export function DistributorPortfolioPage() {
                 memberId={distributorId}
                 fullUser={fullUser}
                 monthIso={pvMonth}
+              />
+              <PvOverrideBlock
+                memberId={distributorId}
+                memberName={portfolioUser.name}
+                initialOverride={fullUser?.monthlyPvOverride ?? null}
+                initialOverrideMonth={fullUser?.monthlyPvOverrideMonth ?? null}
+                onApplied={refresh}
               />
               <PvBizworksBlock
                 memberId={distributorId}
