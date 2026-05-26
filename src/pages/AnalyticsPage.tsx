@@ -35,6 +35,7 @@ import {
   type AdminAnalyticsPayload,
 } from "../hooks/useAdminAnalytics";
 import { DistriDrillDownModal } from "../components/analytics/DistriDrillDownModal";
+import { ProductDrilldownModal } from "../components/analytics/ProductDrilldownModal";
 import { AnalyticsPdfReport } from "../components/analytics/AnalyticsPdfReport";
 
 export function AnalyticsPage() {
@@ -207,6 +208,8 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
     id: string;
     name: string;
   } | null>(null);
+  // Polish 2026-05-26 : drill-down produit.
+  const [drillDownProduct, setDrillDownProduct] = useState<string | null>(null);
 
   return (
     <>
@@ -282,22 +285,35 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
               {top_produits.map((p) => (
-                <li
-                  key={p.name}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "8px 12px",
-                    background: "var(--ls-surface2)",
-                    borderRadius: 8,
-                    fontSize: 13,
-                  }}
-                >
-                  <span style={{ color: "var(--ls-text)" }}>{p.name}</span>
-                  <span style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif" }}>
-                    {p.total_pv} PV
-                  </span>
+                <li key={p.name} style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => setDrillDownProduct(p.name)}
+                    title={`Voir les clients qui ont ${p.name}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      padding: "8px 12px",
+                      background: "var(--ls-surface2)",
+                      border: "0.5px solid var(--ls-border)",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      color: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ color: "var(--ls-text)", flex: 1 }}>{p.name}</span>
+                    <span style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif", marginRight: 6 }}>
+                      {p.total_pv} PV
+                    </span>
+                    <span style={{ fontSize: 10, color: "var(--ls-text-hint)" }} aria-hidden="true">
+                      →
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -518,6 +534,14 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
             setDrillDownDistri(null);
             navigate(`/clients?owner=${encodeURIComponent(id)}`);
           }}
+        />
+      ) : null}
+
+      {/* Polish 2026-05-26 : modale drill-down produit */}
+      {drillDownProduct ? (
+        <ProductDrilldownModal
+          productName={drillDownProduct}
+          onClose={() => setDrillDownProduct(null)}
         />
       ) : null}
     </>
