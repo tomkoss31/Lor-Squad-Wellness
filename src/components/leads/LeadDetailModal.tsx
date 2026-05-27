@@ -22,6 +22,7 @@ interface Props {
   onStatusChange: (s: LeadStatus) => Promise<void>;
   onNotesChange: (notes: string) => Promise<void>;
   onRefresh: () => Promise<void>;
+  onDelete?: () => Promise<void>;
 }
 
 const OBJECTIVE_LABELS: Record<string, string> = {
@@ -53,11 +54,13 @@ const MEAL_LABELS: Record<string, string> = {
   light: "Léger / snack",
 };
 
-export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange }: Props) {
+export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete }: Props) {
   const { currentUser } = useAppContext();
   const [notes, setNotes] = useState(bilan.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const coachFirstName = (currentUser?.name ?? "").trim().split(/\s+/)[0] ?? "";
+  const isAdmin = currentUser?.role === "admin";
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -83,6 +86,25 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange 
       await onNotesChange(notes);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!onDelete) return;
+    const label = `${bilan.first_name}${bilan.age != null ? `, ${bilan.age} ans` : ""}`;
+    const ok = window.confirm(
+      `Supprimer définitivement le lead « ${label} » ?\n\nCette action est irréversible. Les notes, le statut et les données du bilan seront perdus.`,
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await onDelete();
+      onClose();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erreur inconnue";
+      window.alert(`Suppression impossible : ${msg}`);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -240,6 +262,22 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange 
             rows={4}
           />
         </Section>
+
+        {isAdmin && onDelete && (
+          <div className="ldm-danger-zone">
+            <button
+              type="button"
+              className="ldm-delete-btn"
+              onClick={() => void handleDelete()}
+              disabled={deleting || saving}
+            >
+              {deleting ? "Suppression…" : "🗑️ Supprimer ce lead"}
+            </button>
+            <p className="ldm-danger-hint">
+              Action admin uniquement · irréversible · pour nettoyer les comptes test.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -418,5 +456,41 @@ const STYLES = `
     outline: none;
     border-color: var(--ls-gold, #C9A84C);
     box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+  }
+
+  .ldm-danger-zone {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(220, 38, 38, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .ldm-delete-btn {
+    background: transparent;
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .ldm-delete-btn:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: #DC2626;
+  }
+  .ldm-delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .ldm-danger-hint {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--ls-text-muted, #9CA3AF);
+    font-style: italic;
   }
 `;

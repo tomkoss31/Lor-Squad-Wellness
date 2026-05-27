@@ -50,7 +50,7 @@ function formatDateShort(iso: string): string {
 }
 
 export function LeadsKanban() {
-  const { bilans, loading, error, updateStatus, updateNotes, refetch } = useOnlineBilans();
+  const { bilans, loading, error, updateStatus, updateNotes, deleteBilan, refetch } = useOnlineBilans();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const byStatus = useMemo(() => {
@@ -135,6 +135,9 @@ export function LeadsKanban() {
             await updateNotes(openLead.id, n);
           }}
           onRefresh={refetch}
+          onDelete={async () => {
+            await deleteBilan(openLead.id);
+          }}
         />
       )}
     </div>
