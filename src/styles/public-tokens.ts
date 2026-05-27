@@ -61,6 +61,10 @@ export const PUBLIC_FONTS = {
 } as const;
 
 // Style helper pour les headlines avec gradient teal -> violet -> coral
+//
+// Fix 2026-05-27 : ajout display: inline-block + padding-right pour eviter
+// que background-clip:text + italic coupe la derniere lettre (S, F, etc.).
+// Probleme constate sur "Merci THOMAS" + tous les step heroes du bilan.
 export const publicGradText: CSSProperties = {
   background: PUBLIC_TOKENS.gradHeadline,
   WebkitBackgroundClip: "text",
@@ -68,6 +72,10 @@ export const publicGradText: CSSProperties = {
   WebkitTextFillColor: "transparent",
   fontStyle: "italic",
   fontWeight: 500,
+  display: "inline-block",
+  paddingRight: "0.12em",
+  paddingBottom: "0.04em",
+  lineHeight: 1.22,
 };
 
 // Style helper pour le CTA primary (gradient teal -> violet)

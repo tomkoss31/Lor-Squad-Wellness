@@ -19,10 +19,23 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+// Normalise un prenom potentiellement tape en MAJUSCULES (THOMAS -> Thomas)
+// ou tout-minuscules (thomas -> Thomas). Gere les prenoms composes : "jean-claude"
+// devient "Jean-Claude", "marie anne" devient "Marie Anne".
+function prettifyFirstName(raw: string): string {
+  if (!raw) return "";
+  return raw
+    .trim()
+    .toLowerCase()
+    .split(/(\s|-)/) // garde les separateurs (espace / tiret)
+    .map((part) => (part.length > 1 ? capitalize(part) : part))
+    .join("");
+}
+
 export function BilanOnlineMerciPage() {
   const { coachSlug } = useParams<{ coachSlug?: string }>();
   const [params] = useSearchParams();
-  const firstName = (params.get("firstName") ?? "").trim();
+  const firstName = prettifyFirstName(params.get("firstName") ?? "");
   const coachName = useMemo(() => (coachSlug ? capitalize(coachSlug) : ""), [coachSlug]);
   const hasCoach = !!coachSlug;
 
