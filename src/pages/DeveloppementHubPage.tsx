@@ -220,7 +220,7 @@ const CARDS: HubCard[] = [
 export function DeveloppementHubPage() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
-  const academy = useAcademyProgress();
+  const { view: academy } = useAcademyProgress();
   const isAdmin = currentUser?.role === "admin";
 
   const visibleCards = CARDS.filter((c) => {
