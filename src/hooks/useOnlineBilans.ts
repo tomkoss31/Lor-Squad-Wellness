@@ -44,6 +44,8 @@ export interface OnlineBilanRow {
   age: number | null;
   height_cm: number | null;
   city: string | null;
+  phone: string | null;
+  email: string | null;
   objectives: string[];
   weight_loss_target_kg: number | null;
   motivation_score: number | null;
@@ -67,6 +69,7 @@ interface UseOnlineBilansResult {
   refetch: () => Promise<void>;
   updateStatus: (id: string, status: LeadStatus) => Promise<void>;
   updateNotes: (id: string, notes: string) => Promise<void>;
+  deleteBilan: (id: string) => Promise<void>;
 }
 
 export function useOnlineBilans(): UseOnlineBilansResult {
@@ -147,5 +150,18 @@ export function useOnlineBilans(): UseOnlineBilansResult {
     );
   }, []);
 
-  return { bilans, loading, error, refetch: fetchAll, updateStatus, updateNotes };
+  const deleteBilan = useCallback(async (id: string) => {
+    const sb = await getSupabaseClient();
+    if (!sb) throw new Error("Supabase indisponible");
+    // RLS : DELETE est admin only côté DB (cf. migration 20261109000000_online_bilans.sql).
+    // Si l'utilisateur n'est pas admin, l'appel échoue silencieusement (0 rows) côté Postgres.
+    const { error: err } = await sb
+      .from("online_bilans")
+      .delete()
+      .eq("id", id);
+    if (err) throw err;
+    setBilans((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  return { bilans, loading, error, refetch: fetchAll, updateStatus, updateNotes, deleteBilan };
 }

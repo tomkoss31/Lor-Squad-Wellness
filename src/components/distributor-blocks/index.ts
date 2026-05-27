@@ -10,6 +10,7 @@ export { EngagementBlock } from "./EngagementBlock";
 export { RangHerbalifeBlock } from "./RangHerbalifeBlock";
 export { ProgressionRangBlock } from "./ProgressionRangBlock";
 export { PvBizworksBlock } from "./PvBizworksBlock";
+export { PvOverrideBlock } from "./PvOverrideBlock";
 export { CompteActifBlock } from "./CompteActifBlock";
 export { DistriQuickLink } from "./DistriQuickLink";
 

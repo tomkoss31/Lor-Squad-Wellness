@@ -23,6 +23,7 @@ import {
   EngagementTotalBlock,
   ProgressionRangBlock,
   PvBizworksBlock,
+  PvOverrideBlock,
   RangHerbalifeBlock,
 } from "../distributor-blocks";
 import { RankPinBadge } from "../rank/RankPinBadge";
@@ -121,6 +122,13 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
               onApplied={refresh}
             />
             <ProgressionRangBlock memberId={member.user_id} fullUser={fullUser} />
+            <PvOverrideBlock
+              memberId={member.user_id}
+              memberName={member.name}
+              initialOverride={fullUser?.monthlyPvOverride ?? null}
+              initialOverrideMonth={fullUser?.monthlyPvOverrideMonth ?? null}
+              onApplied={refresh}
+            />
             <PvBizworksBlock
               memberId={member.user_id}
               memberName={member.name}

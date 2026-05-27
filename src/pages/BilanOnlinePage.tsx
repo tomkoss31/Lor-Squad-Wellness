@@ -1,7 +1,21 @@
 // =============================================================================
-// BilanOnlinePage V2 dark (chantier A, 2026-05-18) — formulaire bilan online
-// 5 étapes refondu sur tokens publics + dark premium.
-// Source de verite : docs/mockups/bilan-online-v2.html view-form.
+// BilanOnlinePage V2 — formulaire bilan online 7 étapes (refonte 2026-05-27).
+//
+// V1 livré 2026-05-18 (5 étapes). V2 (chantier "bilan online V2") :
+//  - Étape 1 : ajout téléphone + email (au moins un des deux requis)
+//  - Étape 2 : ajout objectif "performance pro"
+//  - Étape 3 : pivoté du passé au présent — "qu'est-ce que tu fais déjà ?"
+//  - Étape 4 : refondu en auto-perception + hydratation (eau/café/sodas/alcool)
+//  - Étape 5 NEW : sommeil + stress + charge mentale
+//  - Étape 6 NEW : job + cercle de vie
+//  - Étape 7 : finalize — activité + fréquence sport + budget + préférence contact + consent
+//
+// DB : phone + email = colonnes first-class (migration 20261123000000).
+// Le reste va dans le payload jsonb existant. Edge fn submit-online-bilan
+// étendue pour accepter phone/email.
+//
+// LocalStorage key bumpée à v2 pour invalider les drafts V1 incompatibles.
+//
 // Route : /bilan-online/:coachSlug?/formulaire
 // =============================================================================
 
@@ -17,56 +31,101 @@ import {
   publicGradText,
 } from "../components/public/PublicShell";
 
-type ObjectiveKey = "weight_loss" | "mass_gain" | "energy" | "sleep" | "wellbeing";
-type PreviousAttempt = "diet" | "coach" | "sport" | "supplements" | "nothing";
-type MealType =
-  | "sweet" | "salty" | "smoothie" | "coffee_only"
-  | "home" | "canteen" | "sandwich" | "fastfood";
+// ── Types ───────────────────────────────────────────────────────────────────
+
+type ObjectiveKey =
+  | "weight_loss" | "mass_gain" | "energy" | "sleep" | "wellbeing" | "perf_pro";
+type CurrentAction = "sport" | "good_food" | "supplements" | "coach" | "nothing";
+type MealsBalanced = "yes" | "no" | "unsure";
+type WaterTier = "1-3" | "4-6" | "7-10" | "10+";
+type CoffeeTier = "0" | "1-2" | "3-4" | "5+";
+type SodaTier = "0" | "1" | "2-3" | "4+";
+type AlcoholTier = "0" | "1-3" | "4-7" | "8+";
+type SleepQuality = "bad" | "meh" | "ok" | "great";
+type SleepHours = "<6" | "6-7" | "7-8" | "8+";
+type MentalLoad = "light" | "ok" | "heavy" | "crushed";
+type JobFeeling = "great" | "valued" | "routine" | "demotivated" | "lost";
+type SocialCircle = "family" | "couple" | "friends" | "alone";
+type SportFrequency = "never" | "1x" | "2-3x" | "4+x";
 type BudgetTier = "2" | "4" | "8" | "10" | "15+";
+type ContactPref = "phone" | "email" | "whatsapp";
 
 interface FormState {
+  // Étape 1 — Identité + contact
   first_name: string;
   age: string;
   height_cm: string;
   city: string;
+  phone: string;
+  email: string;
+  // Étape 2 — Objectifs
   objectives: ObjectiveKey[];
   weight_loss_target_kg: string;
   motivation_score: number;
-  previous_attempts: PreviousAttempt[];
-  previous_attempts_result: string;
-  breakfast: MealType | "";
-  lunch: MealType | "";
-  fastfood_per_week: number;
-  daily_food_budget: BudgetTier | "";
+  // Étape 3 — Présent
+  current_actions: CurrentAction[];
+  current_actions_detail: string;
+  // Étape 4 — Assiette & verre
+  meals_balanced: MealsBalanced | "";
+  water_per_day: WaterTier | "";
+  coffee_per_day: CoffeeTier | "";
+  soda_per_day: SodaTier | "";
+  alcohol_per_week: AlcoholTier | "";
+  // Étape 5 — Sommeil & tête
+  sleep_quality: SleepQuality | "";
+  sleep_hours: SleepHours | "";
+  stress_level: number;
+  mental_load: MentalLoad | "";
+  // Étape 6 — Job & cercle
+  job_feeling: JobFeeling | "";
+  social_circle: SocialCircle | "";
+  // Étape 7 — Finalisation
   active_daily: "yes" | "no" | "";
   active_daily_detail: string;
+  sport_frequency: SportFrequency | "";
+  daily_food_budget: BudgetTier | "";
+  contact_pref: ContactPref | "";
   consent: boolean;
 }
+
 const INITIAL: FormState = {
   first_name: "", age: "", height_cm: "", city: "",
+  phone: "", email: "",
   objectives: [], weight_loss_target_kg: "", motivation_score: 7,
-  previous_attempts: [], previous_attempts_result: "",
-  breakfast: "", lunch: "", fastfood_per_week: 2,
-  daily_food_budget: "", active_daily: "", active_daily_detail: "",
+  current_actions: [], current_actions_detail: "",
+  meals_balanced: "",
+  water_per_day: "", coffee_per_day: "", soda_per_day: "", alcohol_per_week: "",
+  sleep_quality: "", sleep_hours: "", stress_level: 5, mental_load: "",
+  job_feeling: "", social_circle: "",
+  active_daily: "", active_daily_detail: "",
+  sport_frequency: "",
+  daily_food_budget: "",
+  contact_pref: "",
   consent: false,
 };
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 7;
 const MOTIV_LABELS = [
   "", "Pas trop", "Hésitant(e)", "Hésitant(e)", "Curieux(se)",
   "Curieux(se)", "Motivé(e)", "Plutôt motivé(e)", "Très motivé(e)",
   "Engagé(e) à fond", "Engagé(e) à fond",
 ];
-const FF_LABELS = [
-  "Excellent !", "Modéré", "Modéré", "Habituel",
-  "Habituel", "Souvent", "Très souvent", "Tous les jours",
+const STRESS_LABELS = [
+  "", "Zen total", "Très calme", "Calme", "Plutôt serein",
+  "Ça va", "Tendu", "Stressé", "Très stressé",
+  "Sous pression", "À bout",
 ];
+
+// Validation email + téléphone (alignée avec l'edge fn).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_RE = /^\+?[\d\s.\-()]{6,20}$/;
 
 export function BilanOnlinePage() {
   const navigate = useNavigate();
   const { coachSlug } = useParams<{ coachSlug?: string }>();
   const slug = coachSlug?.trim() || "";
-  const storageKey = useMemo(() => `ls-bilan-online-${slug || "none"}`, [slug]);
+  // Bump v2 pour invalider les drafts V1 (shape FormState change).
+  const storageKey = useMemo(() => `ls-bilan-online-v2-${slug || "none"}`, [slug]);
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL);
@@ -110,13 +169,21 @@ export function BilanOnlinePage() {
         : [...p.objectives, o],
     }));
   }
-  function togglePreviousAttempt(o: PreviousAttempt) {
-    setForm((p) => ({
-      ...p,
-      previous_attempts: p.previous_attempts.includes(o)
-        ? p.previous_attempts.filter((x) => x !== o)
-        : [...p.previous_attempts, o],
-    }));
+  function toggleCurrentAction(o: CurrentAction) {
+    setForm((p) => {
+      const exists = p.current_actions.includes(o);
+      let next: CurrentAction[];
+      if (exists) {
+        next = p.current_actions.filter((x) => x !== o);
+      } else if (o === "nothing") {
+        // "Rien encore" exclusif : on vide tout le reste
+        next = ["nothing"];
+      } else {
+        // Sélection d'une vraie action → retire "nothing" s'il y était
+        next = [...p.current_actions.filter((x) => x !== "nothing"), o];
+      }
+      return { ...p, current_actions: next };
+    });
   }
 
   function validateStep(s: number): string | null {
@@ -127,6 +194,11 @@ export function BilanOnlinePage() {
       const h = Number(form.height_cm);
       if (!form.height_cm || !Number.isFinite(h) || h < 100 || h > 220) return "Taille entre 100 et 220 cm.";
       if (form.city.trim().length < 2) return "Ta ville.";
+      const hasPhone = form.phone.trim().length > 0;
+      const hasEmail = form.email.trim().length > 0;
+      if (!hasPhone && !hasEmail) return "Un moyen de te recontacter (tél ou email).";
+      if (hasEmail && !EMAIL_RE.test(form.email.trim())) return "Email invalide.";
+      if (hasPhone && !PHONE_RE.test(form.phone.trim())) return "Téléphone invalide.";
     }
     if (s === 2) {
       if (form.objectives.length === 0) return "Choisis au moins un objectif.";
@@ -135,13 +207,30 @@ export function BilanOnlinePage() {
         if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) return "Combien de kilos viser ?";
       }
     }
+    if (s === 3) {
+      if (form.current_actions.length === 0) return "Coche au moins une option (ou « Rien encore »).";
+    }
     if (s === 4) {
-      if (!form.breakfast) return "Choisis ton petit-déj.";
-      if (!form.lunch) return "Choisis ton repas du midi.";
+      if (!form.meals_balanced) return "Ton ressenti sur tes repas.";
+      if (!form.water_per_day) return "Ton hydratation eau.";
+      if (!form.coffee_per_day) return "Ta conso café.";
+      if (!form.soda_per_day) return "Ta conso sodas / jus.";
+      if (!form.alcohol_per_week) return "Ta conso alcool.";
     }
     if (s === 5) {
-      if (!form.daily_food_budget) return "Choisis ton budget.";
+      if (!form.sleep_quality) return "Qualité de ton sommeil.";
+      if (!form.sleep_hours) return "Heures de sommeil par nuit.";
+      if (!form.mental_load) return "Ta charge mentale.";
+    }
+    if (s === 6) {
+      if (!form.job_feeling) return "Ton ressenti au boulot.";
+      if (!form.social_circle) return "Ton entourage.";
+    }
+    if (s === 7) {
       if (!form.active_daily) return "Es-tu actif au quotidien ?";
+      if (!form.sport_frequency) return "Ta fréquence de sport.";
+      if (!form.daily_food_budget) return "Ton budget alimentaire.";
+      if (!form.contact_pref) return "Comment ton coach te recontacte.";
       if (!form.consent) return "Le consentement RGPD est obligatoire.";
     }
     return null;
@@ -165,7 +254,7 @@ export function BilanOnlinePage() {
   }
 
   async function submit() {
-    const err = validateStep(5);
+    const err = validateStep(TOTAL_STEPS);
     if (err) { setErrorMsg(err); return; }
     setErrorMsg("");
     setSubmitting(true);
@@ -173,16 +262,45 @@ export function BilanOnlinePage() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
       const payloadDetail = {
-        previous_attempts: form.previous_attempts,
-        previous_attempts_result: form.previous_attempts_result.trim() || null,
-        habits: {
-          breakfast: form.breakfast,
-          lunch: form.lunch,
-          fastfood_per_week: form.fastfood_per_week,
+        // Étape 3 — présent
+        current_actions: form.current_actions,
+        current_actions_detail: form.current_actions_detail.trim() || null,
+        // Étape 4 — assiette & verre
+        meals: {
+          balanced: form.meals_balanced,
+          water_per_day: form.water_per_day,
+          coffee_per_day: form.coffee_per_day,
+          soda_per_day: form.soda_per_day,
+          alcohol_per_week: form.alcohol_per_week,
         },
+        // Étape 5 — sommeil & tête
+        sleep_mind: {
+          quality: form.sleep_quality,
+          hours: form.sleep_hours,
+          stress_level: form.stress_level,
+          mental_load: form.mental_load,
+        },
+        // Étape 6 — job & cercle
+        life: {
+          job_feeling: form.job_feeling,
+          social_circle: form.social_circle,
+        },
+        // Étape 7 — finalize
+        finalize: {
+          active_daily: form.active_daily === "yes",
+          active_daily_detail: form.active_daily === "yes"
+            ? form.active_daily_detail.trim() || null
+            : null,
+          sport_frequency: form.sport_frequency,
+          budget: form.daily_food_budget,
+          contact_pref: form.contact_pref,
+        },
+        // Compat avec LeadDetailModal V1 (budget + active_daily lus à la racine)
         budget: form.daily_food_budget,
         active_daily: form.active_daily === "yes",
-        active_daily_detail: form.active_daily === "yes" ? form.active_daily_detail.trim() || null : null,
+        active_daily_detail: form.active_daily === "yes"
+          ? form.active_daily_detail.trim() || null
+          : null,
       };
       const { data, error } = await sb.functions.invoke("submit-online-bilan", {
         body: {
@@ -191,6 +309,8 @@ export function BilanOnlinePage() {
           age: Number(form.age),
           height_cm: Number(form.height_cm),
           city: form.city.trim(),
+          phone: form.phone.trim() || null,
+          email: form.email.trim() || null,
           objectives: form.objectives,
           weight_loss_target_kg: form.objectives.includes("weight_loss")
             ? Number(form.weight_loss_target_kg) : null,
@@ -206,8 +326,51 @@ export function BilanOnlinePage() {
           : raw);
       }
       try { localStorage.removeItem(storageKey); } catch { /* */ }
+
+      // Chantier B (2026-05-27) : on stocke les inputs de scoring en sessionStorage
+      // pour que la page résultats puisse les lire + calculer l'auto-éval.
+      // Chantier C : on stocke aussi les meta (contact_pref, email, phone,
+      // objectives, motivation) pour que la page merci personnalise les CTAs.
+      // Pas de PII envoyée dans une URL — sessionStorage = onglet courant only,
+      // wiped à la fermeture du tab.
+      try {
+        const scoringInput = {
+          meals_balanced: form.meals_balanced,
+          water_per_day: form.water_per_day,
+          coffee_per_day: form.coffee_per_day,
+          soda_per_day: form.soda_per_day,
+          alcohol_per_week: form.alcohol_per_week,
+          sleep_quality: form.sleep_quality,
+          sleep_hours: form.sleep_hours,
+          stress_level: form.stress_level,
+          mental_load: form.mental_load,
+          job_feeling: form.job_feeling,
+          social_circle: form.social_circle,
+          active_daily: form.active_daily,
+          sport_frequency: form.sport_frequency,
+          daily_food_budget: form.daily_food_budget,
+        };
+        sessionStorage.setItem(
+          `ls-bilan-results-${slug || "none"}`,
+          JSON.stringify(scoringInput),
+        );
+        const meta = {
+          first_name: form.first_name.trim(),
+          contact_pref: form.contact_pref,
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          objectives: form.objectives,
+          motivation_score: form.motivation_score,
+          coach_slug: slug || null,
+        };
+        sessionStorage.setItem(
+          `ls-bilan-meta-${slug || "none"}`,
+          JSON.stringify(meta),
+        );
+      } catch { /* sessionStorage indispo / quota */ }
+
       const params = new URLSearchParams({ firstName: form.first_name.trim() });
-      navigate(`/bilan-online${slug ? `/${slug}` : ""}/merci?${params.toString()}`);
+      navigate(`/bilan-online${slug ? `/${slug}` : ""}/resultats?${params.toString()}`);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Erreur inconnue.");
       setSubmitting(false);
@@ -281,9 +444,11 @@ export function BilanOnlinePage() {
       >
         {step === 1 && <StepIdentity form={form} update={update} />}
         {step === 2 && <StepObjectives form={form} update={update} toggle={toggleObjective} />}
-        {step === 3 && <StepExperience form={form} update={update} toggle={togglePreviousAttempt} />}
-        {step === 4 && <StepHabits form={form} update={update} />}
-        {step === 5 && <StepBudget form={form} update={update} />}
+        {step === 3 && <StepPresent form={form} update={update} toggle={toggleCurrentAction} />}
+        {step === 4 && <StepFoodWater form={form} update={update} />}
+        {step === 5 && <StepSleepMind form={form} update={update} />}
+        {step === 6 && <StepJobCircle form={form} update={update} />}
+        {step === 7 && <StepFinalize form={form} update={update} />}
 
         {errorMsg && (
           <div style={{
@@ -389,9 +554,10 @@ function Field({ label, required, children }: { label: string; required?: boolea
 
 function PsInput(p: {
   value: string; onChange: (v: string) => void;
-  type?: string; inputMode?: "text" | "numeric";
+  type?: string; inputMode?: "text" | "numeric" | "tel" | "email";
   maxLength?: number; min?: number; max?: number;
   placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <input
@@ -400,6 +566,7 @@ function PsInput(p: {
       onChange={(e) => p.onChange(e.target.value)}
       maxLength={p.maxLength} min={p.min} max={p.max}
       placeholder={p.placeholder}
+      autoComplete={p.autoComplete}
       className="ps-input"
       style={inputStyle}
       onFocus={(e) => {
@@ -579,14 +746,23 @@ function SubField({ visible, children }: { visible: boolean; children: ReactNode
   );
 }
 
+const sectionLabel: CSSProperties = {
+  display: "block",
+  fontFamily: PUBLIC_FONTS.display,
+  fontSize: 11, fontWeight: 600,
+  color: "var(--cream-muted)",
+  textTransform: "uppercase", letterSpacing: "0.12em",
+  margin: "20px 0 10px",
+};
+
 // ── Steps ──────────────────────────────────────────────────────────────────
 
 function StepIdentity({ form, update }: StepProps) {
   return (
     <>
-      <StepHero emoji="👋" title="Faisons" gradWord="connaissance" subtitle="4 infos rapides pour personnaliser ton bilan." />
+      <StepHero emoji="👋" title="Faisons" gradWord="connaissance" subtitle="Quelques infos pour personnaliser ton bilan." />
       <Field label="Ton prénom" required>
-        <PsInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" />
+        <PsInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" autoComplete="given-name" />
       </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Âge" required>
@@ -597,7 +773,24 @@ function StepIdentity({ form, update }: StepProps) {
         </Field>
       </div>
       <Field label="Ta ville" required>
-        <PsInput value={form.city} onChange={(v) => update("city", v)} maxLength={80} placeholder="Metz" />
+        <PsInput value={form.city} onChange={(v) => update("city", v)} maxLength={80} placeholder="Metz" autoComplete="address-level2" />
+      </Field>
+
+      <div style={{
+        marginTop: 6, marginBottom: 14, padding: "12px 14px",
+        background: "var(--glass-input-focus)",
+        borderRadius: 12,
+        borderLeft: `3px solid ${PUBLIC_TOKENS.teal}`,
+        fontSize: 12.5, color: "var(--cream-muted)", lineHeight: 1.5,
+      }}>
+        📬 On a besoin d'au moins <strong style={{ color: "var(--cream)" }}>un moyen de te recontacter</strong> — téléphone ou email.
+      </div>
+
+      <Field label="Téléphone">
+        <PsInput value={form.phone} onChange={(v) => update("phone", v)} type="tel" inputMode="tel" maxLength={20} placeholder="06 12 34 56 78" autoComplete="tel" />
+      </Field>
+      <Field label="Email">
+        <PsInput value={form.email} onChange={(v) => update("email", v)} type="email" inputMode="email" maxLength={120} placeholder="marie@email.com" autoComplete="email" />
       </Field>
     </>
   );
@@ -609,7 +802,8 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
     { key: "mass_gain", emoji: "💪", label: "Prise de masse" },
     { key: "energy", emoji: "⚡", label: "Plus d'énergie" },
     { key: "sleep", emoji: "😴", label: "Mieux dormir" },
-    { key: "wellbeing", emoji: "🌿", label: "Bien-être général", full: true },
+    { key: "wellbeing", emoji: "🌿", label: "Bien-être général" },
+    { key: "perf_pro", emoji: "💼", label: "Performance au travail", full: true },
   ];
   return (
     <>
@@ -660,113 +854,270 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
   );
 }
 
-function StepExperience({ form, update, toggle }: StepProps & { toggle: (o: PreviousAttempt) => void }) {
-  const ATT: { key: PreviousAttempt; emoji: string; label: string; full?: boolean }[] = [
-    { key: "diet", emoji: "🥗", label: "Régimes" },
-    { key: "coach", emoji: "👤", label: "Coach" },
-    { key: "sport", emoji: "🏃", label: "Sport" },
-    { key: "supplements", emoji: "💊", label: "Suppléments" },
+function StepPresent({ form, update, toggle }: StepProps & { toggle: (o: CurrentAction) => void }) {
+  const ACTIONS: { key: CurrentAction; emoji: string; label: string; full?: boolean }[] = [
+    { key: "sport", emoji: "🏃", label: "Sport régulier" },
+    { key: "good_food", emoji: "🥗", label: "Alimentation soignée" },
+    { key: "supplements", emoji: "💊", label: "Suppléments / vitamines" },
+    { key: "coach", emoji: "👤", label: "Suivi coach / pro" },
     { key: "nothing", emoji: "🤷", label: "Rien encore", full: true },
   ];
-  const hasAttempt = form.previous_attempts.length > 0;
+  const hasRealAction = form.current_actions.some((a) => a !== "nothing");
   return (
     <>
       <StepHero
-        emoji="🧭" title="Ton" gradWord="vécu"
-        subtitle="As-tu déjà essayé quelque chose pour atteindre tes objectifs ?"
+        emoji="🧭" title="Et" gradWord="aujourd'hui ?"
+        subtitle="Qu'est-ce que tu fais déjà pour ta santé ?"
       />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {ATT.map((a) => (
+        {ACTIONS.map((a) => (
           <ChoiceCard
             key={a.key} emoji={a.emoji} label={a.label} full={a.full}
-            selected={form.previous_attempts.includes(a.key)}
+            selected={form.current_actions.includes(a.key)}
             onClick={() => toggle(a.key)}
           />
         ))}
       </div>
-      <SubField visible={hasAttempt}>
+      <SubField visible={hasRealAction}>
         <div style={{
           fontFamily: PUBLIC_FONTS.display,
           fontSize: 12, fontWeight: 600, marginBottom: 8,
           color: PUBLIC_TOKENS.teal,
           letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
-          Qu'est-ce que ça a donné ? (optionnel)
+          Ce qui marche ou pas pour toi ? (optionnel)
         </div>
         <textarea
-          value={form.previous_attempts_result}
-          onChange={(e) => update("previous_attempts_result", e.target.value)}
+          value={form.current_actions_detail}
+          onChange={(e) => update("current_actions_detail", e.target.value)}
           rows={3}
-          maxLength={200}
-          placeholder="J'ai perdu 4 kg avec un régime, mais je les ai repris…"
+          maxLength={300}
+          placeholder="Je cours 2× par semaine mais j'ai du mal à tenir l'alimentation…"
           className="ps-textarea"
-          style={{
-            ...inputStyle, fontSize: 14, resize: "vertical", minHeight: 80,
-          }}
+          style={{ ...inputStyle, fontSize: 14, resize: "vertical", minHeight: 80 }}
         />
       </SubField>
     </>
   );
 }
 
-function StepHabits({ form, update }: StepProps) {
-  const PDJ: { key: MealType; emoji: string; label: string }[] = [
-    { key: "sweet", emoji: "🥐", label: "Sucré (croissant, céréales)" },
-    { key: "salty", emoji: "🥚", label: "Salé (œufs, charcuterie)" },
-    { key: "smoothie", emoji: "🥤", label: "Smoothie / healthy" },
-    { key: "coffee_only", emoji: "☕", label: "Café seulement / rien" },
+function StepFoodWater({ form, update }: StepProps) {
+  const BALANCED: { key: MealsBalanced; emoji: string; label: string; full?: boolean }[] = [
+    { key: "yes", emoji: "✅", label: "Oui, plutôt" },
+    { key: "no", emoji: "❌", label: "Non, pas vraiment" },
+    { key: "unsure", emoji: "🤔", label: "Je ne sais pas", full: true },
   ];
-  const MIDI: { key: MealType; emoji: string; label: string }[] = [
-    { key: "home", emoji: "🏠", label: "Maison" },
-    { key: "canteen", emoji: "🍽️", label: "Cantine / resto" },
-    { key: "sandwich", emoji: "🥪", label: "Sandwich / wrap" },
-    { key: "fastfood", emoji: "🍔", label: "Fast-food" },
+  const WATER: { key: WaterTier; emoji: string; label: string }[] = [
+    { key: "1-3", emoji: "💧", label: "1 à 3 verres" },
+    { key: "4-6", emoji: "💧💧", label: "4 à 6 verres" },
+    { key: "7-10", emoji: "💧💧💧", label: "7 à 10 verres" },
+    { key: "10+", emoji: "🌊", label: "10 et +" },
   ];
-  const sectionLabel: CSSProperties = {
-    display: "block",
-    fontFamily: PUBLIC_FONTS.display,
-    fontSize: 11, fontWeight: 600,
-    color: "var(--cream-muted)",
-    textTransform: "uppercase", letterSpacing: "0.12em",
-    margin: "20px 0 10px",
-  };
+  const COFFEE: { key: CoffeeTier; emoji: string; label: string }[] = [
+    { key: "0", emoji: "🚫", label: "Aucun" },
+    { key: "1-2", emoji: "☕", label: "1 à 2" },
+    { key: "3-4", emoji: "☕☕", label: "3 à 4" },
+    { key: "5+", emoji: "☕☕☕", label: "5 et +" },
+  ];
+  const SODA: { key: SodaTier; emoji: string; label: string }[] = [
+    { key: "0", emoji: "🚫", label: "Aucun" },
+    { key: "1", emoji: "🥤", label: "1" },
+    { key: "2-3", emoji: "🥤🥤", label: "2 à 3" },
+    { key: "4+", emoji: "🥤🥤🥤", label: "4 et +" },
+  ];
+  const ALCOHOL: { key: AlcoholTier; emoji: string; label: string }[] = [
+    { key: "0", emoji: "🚫", label: "Aucun" },
+    { key: "1-3", emoji: "🍷", label: "1 à 3 verres" },
+    { key: "4-7", emoji: "🍷🍷", label: "4 à 7 verres" },
+    { key: "8+", emoji: "🍷🍷🍷", label: "8 et +" },
+  ];
   return (
     <>
       <StepHero
-        emoji="🍽️" title="Tes" gradWord="habitudes"
-        subtitle="Format ultra-court — choisis ce qui te ressemble le plus."
+        emoji="🍽️" title="Ton assiette &" gradWord="ton verre"
+        subtitle="On capte l'essentiel — ressenti + hydratation."
       />
-      <label style={sectionLabel}>Petit-déjeuner</label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {PDJ.map((m) => (
-          <RadioCard
-            key={m.key} emoji={m.emoji} label={m.label}
-            selected={form.breakfast === m.key}
-            onClick={() => update("breakfast", m.key)}
+
+      <label style={sectionLabel}>D'après toi, tes repas sont équilibrés ?</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {BALANCED.map((b) => (
+          <ChoiceCard
+            key={b.key} emoji={b.emoji} label={b.label} full={b.full}
+            selected={form.meals_balanced === b.key}
+            onClick={() => update("meals_balanced", b.key)}
           />
         ))}
       </div>
-      <label style={sectionLabel}>Repas du midi</label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {MIDI.map((m) => (
-          <RadioCard
-            key={m.key} emoji={m.emoji} label={m.label}
-            selected={form.lunch === m.key}
-            onClick={() => update("lunch", m.key)}
+
+      <label style={sectionLabel}>💧 Eau / jour</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {WATER.map((w) => (
+          <ChoiceCard
+            key={w.key} emoji={w.emoji} label={w.label}
+            selected={form.water_per_day === w.key}
+            onClick={() => update("water_per_day", w.key)}
           />
         ))}
       </div>
-      <label style={sectionLabel}>Fast-food par semaine</label>
-      <SliderWrap
-        value={form.fastfood_per_week} min={0} max={7}
-        valueLabel={FF_LABELS[form.fastfood_per_week] || ""}
-        onChange={(v) => update("fastfood_per_week", v)}
-      />
+
+      <label style={sectionLabel}>☕ Café / jour</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {COFFEE.map((c) => (
+          <ChoiceCard
+            key={c.key} emoji={c.emoji} label={c.label}
+            selected={form.coffee_per_day === c.key}
+            onClick={() => update("coffee_per_day", c.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>🥤 Sodas / jus sucrés / jour</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {SODA.map((s) => (
+          <ChoiceCard
+            key={s.key} emoji={s.emoji} label={s.label}
+            selected={form.soda_per_day === s.key}
+            onClick={() => update("soda_per_day", s.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>🍷 Alcool / semaine</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {ALCOHOL.map((a) => (
+          <ChoiceCard
+            key={a.key} emoji={a.emoji} label={a.label}
+            selected={form.alcohol_per_week === a.key}
+            onClick={() => update("alcohol_per_week", a.key)}
+          />
+        ))}
+      </div>
     </>
   );
 }
 
-function StepBudget({ form, update }: StepProps) {
+function StepSleepMind({ form, update }: StepProps) {
+  const QUALITY: { key: SleepQuality; emoji: string; label: string }[] = [
+    { key: "bad", emoji: "😫", label: "Mauvais" },
+    { key: "meh", emoji: "😕", label: "Moyen" },
+    { key: "ok", emoji: "🙂", label: "Correct" },
+    { key: "great", emoji: "😊", label: "Top" },
+  ];
+  const HOURS: { key: SleepHours; emoji: string; label: string }[] = [
+    { key: "<6", emoji: "🌙", label: "Moins de 6 h" },
+    { key: "6-7", emoji: "🌙", label: "6 à 7 h" },
+    { key: "7-8", emoji: "🌙", label: "7 à 8 h" },
+    { key: "8+", emoji: "🌙", label: "Plus de 8 h" },
+  ];
+  const LOAD: { key: MentalLoad; emoji: string; label: string }[] = [
+    { key: "light", emoji: "🌿", label: "Légère" },
+    { key: "ok", emoji: "😐", label: "Ça va" },
+    { key: "heavy", emoji: "😰", label: "Lourde" },
+    { key: "crushed", emoji: "🌪️", label: "Écrasante" },
+  ];
+  return (
+    <>
+      <StepHero
+        emoji="😴" title="Sommeil &" gradWord="tête"
+        subtitle="Comment tu te sens niveau récup' et mental."
+      />
+
+      <label style={sectionLabel}>Qualité de sommeil</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {QUALITY.map((q) => (
+          <ChoiceCard
+            key={q.key} emoji={q.emoji} label={q.label}
+            selected={form.sleep_quality === q.key}
+            onClick={() => update("sleep_quality", q.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>Heures / nuit</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {HOURS.map((h) => (
+          <ChoiceCard
+            key={h.key} emoji={h.emoji} label={h.label}
+            selected={form.sleep_hours === h.key}
+            onClick={() => update("sleep_hours", h.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>Niveau de stress (1 = zen, 10 = à bout)</label>
+      <SliderWrap
+        value={form.stress_level} min={1} max={10}
+        valueLabel={STRESS_LABELS[form.stress_level] || ""}
+        onChange={(v) => update("stress_level", v)}
+      />
+
+      <label style={sectionLabel}>Charge mentale au quotidien</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {LOAD.map((l) => (
+          <ChoiceCard
+            key={l.key} emoji={l.emoji} label={l.label}
+            selected={form.mental_load === l.key}
+            onClick={() => update("mental_load", l.key)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function StepJobCircle({ form, update }: StepProps) {
+  const JOB: { key: JobFeeling; emoji: string; label: string }[] = [
+    { key: "great", emoji: "🌟", label: "Super, j'adore ce que je fais" },
+    { key: "valued", emoji: "✨", label: "Plutôt valorisé(e)" },
+    { key: "routine", emoji: "🔁", label: "Dans la routine" },
+    { key: "demotivated", emoji: "😞", label: "Démotivé(e)" },
+    { key: "lost", emoji: "🌧️", label: "Perdu(e) / en transition" },
+  ];
+  const CIRCLE: { key: SocialCircle; emoji: string; label: string }[] = [
+    { key: "family", emoji: "👨‍👩‍👧", label: "Famille présente / soutien" },
+    { key: "couple", emoji: "💑", label: "En couple, ça m'épaule" },
+    { key: "friends", emoji: "👥", label: "Entouré(e) d'amis" },
+    { key: "alone", emoji: "🌿", label: "Plutôt seul(e) en ce moment" },
+  ];
+  return (
+    <>
+      <StepHero
+        emoji="💼" title="Job &" gradWord="cercle"
+        subtitle="Le contexte autour de toi compte aussi."
+      />
+
+      <label style={sectionLabel}>Au boulot, en ce moment</label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {JOB.map((j) => (
+          <RadioCard
+            key={j.key} emoji={j.emoji} label={j.label}
+            selected={form.job_feeling === j.key}
+            onClick={() => update("job_feeling", j.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>Ton entourage</label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {CIRCLE.map((c) => (
+          <RadioCard
+            key={c.key} emoji={c.emoji} label={c.label}
+            selected={form.social_circle === c.key}
+            onClick={() => update("social_circle", c.key)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function StepFinalize({ form, update }: StepProps) {
+  const SPORT: { key: SportFrequency; emoji: string; label: string }[] = [
+    { key: "never", emoji: "🛋️", label: "Jamais" },
+    { key: "1x", emoji: "👟", label: "1× par semaine" },
+    { key: "2-3x", emoji: "💪", label: "2 à 3× par semaine" },
+    { key: "4+x", emoji: "🔥", label: "4× et +" },
+  ];
   const BUDGETS: { key: BudgetTier; emoji: string; label: string; full?: boolean }[] = [
     { key: "2", emoji: "💰", label: "2 €" },
     { key: "4", emoji: "💰", label: "4 €" },
@@ -774,29 +1125,16 @@ function StepBudget({ form, update }: StepProps) {
     { key: "10", emoji: "💰", label: "10 €" },
     { key: "15+", emoji: "💎", label: "15 € et +", full: true },
   ];
-  const sectionLabel: CSSProperties = {
-    display: "block",
-    fontFamily: PUBLIC_FONTS.display,
-    fontSize: 11, fontWeight: 600,
-    color: "var(--cream-muted)",
-    textTransform: "uppercase", letterSpacing: "0.12em",
-    margin: "18px 0 10px",
-  };
+  const CONTACT: { key: ContactPref; emoji: string; label: string }[] = [
+    { key: "phone", emoji: "📞", label: "Téléphone" },
+    { key: "email", emoji: "📧", label: "Email" },
+    { key: "whatsapp", emoji: "💬", label: "WhatsApp" },
+  ];
   return (
     <>
-      <StepHero emoji="💰" title="Budget + " gradWord="activité" subtitle="Dernière étape, on y est presque !" />
-      <label style={sectionLabel}>Budget alimentaire / jour</label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {BUDGETS.map((b) => (
-          <ChoiceCard
-            key={b.key} emoji={b.emoji} label={b.label} full={b.full}
-            selected={form.daily_food_budget === b.key}
-            onClick={() => update("daily_food_budget", b.key)}
-          />
-        ))}
-      </div>
+      <StepHero emoji="💪" title="On" gradWord="finalise" subtitle="Quelques infos pour boucler la boucle." />
 
-      <label style={sectionLabel}>Es-tu actif au quotidien ? (marche, escaliers, jardin)</label>
+      <label style={sectionLabel}>Actif au quotidien ? (marche, escaliers, jardin)</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <RadioCard
           emoji="✅" label="Oui"
@@ -804,7 +1142,7 @@ function StepBudget({ form, update }: StepProps) {
           onClick={() => update("active_daily", "yes")}
         />
         <RadioCard
-          emoji="❌" label="Non"
+          emoji="❌" label="Non, plutôt sédentaire"
           selected={form.active_daily === "no"}
           onClick={() => update("active_daily", "no")}
         />
@@ -825,6 +1163,39 @@ function StepBudget({ form, update }: StepProps) {
           placeholder="Marche 30 min/jour pour aller au travail"
         />
       </SubField>
+
+      <label style={sectionLabel}>🏋️ Fréquence sport / semaine</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {SPORT.map((s) => (
+          <ChoiceCard
+            key={s.key} emoji={s.emoji} label={s.label}
+            selected={form.sport_frequency === s.key}
+            onClick={() => update("sport_frequency", s.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>💰 Budget alimentaire / jour</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {BUDGETS.map((b) => (
+          <ChoiceCard
+            key={b.key} emoji={b.emoji} label={b.label} full={b.full}
+            selected={form.daily_food_budget === b.key}
+            onClick={() => update("daily_food_budget", b.key)}
+          />
+        ))}
+      </div>
+
+      <label style={sectionLabel}>📬 Tu préfères qu'on te recontacte par</label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {CONTACT.map((c) => (
+          <RadioCard
+            key={c.key} emoji={c.emoji} label={c.label}
+            selected={form.contact_pref === c.key}
+            onClick={() => update("contact_pref", c.key)}
+          />
+        ))}
+      </div>
 
       <label style={{
         display: "flex", alignItems: "flex-start", gap: 12,

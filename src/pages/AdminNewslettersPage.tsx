@@ -24,6 +24,15 @@ import { useToast } from "../context/ToastContext";
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
 type NewsletterAudience = "clients" | "distri" | "all";
 
+interface NewsletterBrief {
+  key: string;
+  label: string;
+  season: string | null;
+  default_subtitle: string | null;
+  default_sections: unknown;
+  is_seasonal: boolean;
+}
+
 interface NewsletterRow {
   id: string;
   title: string;
@@ -66,6 +75,8 @@ export function AdminNewslettersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ title: "", subtitle: "" });
   const [creating, setCreating] = useState(false);
+  const [briefs, setBriefs] = useState<NewsletterBrief[]>([]);
+  const [selectedBriefKey, setSelectedBriefKey] = useState<string>("");
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
@@ -101,6 +112,20 @@ export function AdminNewslettersPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Load briefs (templates saisonniers seedés en étape 8.11)
+  useEffect(() => {
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data, error: err } = await sb
+        .from("newsletter_briefs")
+        .select("key, label, season, default_subtitle, default_sections, is_seasonal")
+        .eq("active", true)
+        .order("position", { ascending: true });
+      if (!err && data) setBriefs(data as NewsletterBrief[]);
+    })();
+  }, []);
 
   const filtered = useMemo(() => {
     if (filter === "all") return rows;
@@ -138,16 +163,22 @@ export function AdminNewslettersPage() {
         slug = `${baseSlug}-${suffix}`;
         suffix += 1;
       }
+      // Si un template est sélectionné, on injecte ses sections + sous-titre par défaut
+      const selectedBrief = selectedBriefKey ? briefs.find((b) => b.key === selectedBriefKey) : null;
+      const initialSections = selectedBrief?.default_sections ?? [];
+      const initialSubtitle =
+        subtitle || (selectedBrief?.default_subtitle ?? null);
       const { data, error: err } = await sb
         .from("newsletters")
         .insert({
           title,
           slug,
-          subtitle: subtitle || null,
+          subtitle: initialSubtitle,
           status: "draft",
           audience: "all",
           is_public: true,
-          body_json: { sections: [] },
+          body_json: { sections: initialSections },
+          template_key: selectedBrief?.key ?? null,
           created_by_user_id: currentUser?.id ?? null,
         })
         .select("id")
@@ -156,6 +187,7 @@ export function AdminNewslettersPage() {
       pushToast({ tone: "success", title: `✅ Brouillon "${title}" créé` });
       setCreateOpen(false);
       setCreateForm({ title: "", subtitle: "" });
+      setSelectedBriefKey("");
       navigate(`/admin/newsletters/${data.id}/edit`);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Erreur inconnue.");
@@ -391,6 +423,43 @@ export function AdminNewslettersPage() {
               placeholder="Hydratation, repas légers, voyages…"
               style={inputStyle}
             />
+
+            {briefs.length > 0 && (
+              <>
+                <label style={labelStyle}>Template (optionnel)</label>
+                <select
+                  value={selectedBriefKey}
+                  onChange={(e) => setSelectedBriefKey(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="">— Vide (je rédige depuis zéro) —</option>
+                  <optgroup label="🌿 Templates saisonniers (sections pré-remplies)">
+                    {briefs
+                      .filter((b) => b.is_seasonal)
+                      .map((b) => (
+                        <option key={b.key} value={b.key}>
+                          {b.label}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="📅 Templates neutres mensuels (squelette vide)">
+                    {briefs
+                      .filter((b) => !b.is_seasonal)
+                      .map((b) => (
+                        <option key={b.key} value={b.key}>
+                          {b.label}
+                        </option>
+                      ))}
+                  </optgroup>
+                </select>
+                {selectedBriefKey && (
+                  <p style={{ fontSize: 11, color: "var(--ls-text-muted)", margin: "-8px 0 14px", fontStyle: "italic" }}>
+                    ✨ Les sections du template seront pré-remplies. Tu pourras tout
+                    éditer ensuite.
+                  </p>
+                )}
+              </>
+            )}
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
               <button

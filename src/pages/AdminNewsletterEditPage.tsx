@@ -15,12 +15,13 @@
 // Save : bouton manuel (pas d'autosave V1 — éviter conflits multi-onglets).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useToast } from "../context/ToastContext";
 import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
+import { OgImageTemplate } from "../components/newsletter/OgImageTemplate";
 
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
 type NewsletterAudience = "clients" | "distri" | "all";
@@ -70,6 +71,8 @@ interface NewsletterFull {
   is_public: boolean;
   body_json: { sections: SectionData[] };
   template_key: string | null;
+  preview_image_url: string | null;
+  sent_at: string | null;
 }
 
 function newSectionId(): string {
@@ -121,8 +124,10 @@ export function AdminNewsletterEditPage() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [generatingOg, setGeneratingOg] = useState(false);
 
   const [data, setData] = useState<NewsletterFull | null>(null);
+  const ogTemplateRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
@@ -139,7 +144,7 @@ export function AdminNewsletterEditPage() {
       if (!sb) throw new Error("Service indisponible.");
       const { data: row, error: err } = await sb
         .from("newsletters")
-        .select("id, title, slug, subtitle, audience, status, is_public, body_json, template_key")
+        .select("id, title, slug, subtitle, audience, status, is_public, body_json, template_key, preview_image_url, sent_at")
         .eq("id", id)
         .single();
       if (err) throw err;
@@ -226,6 +231,118 @@ export function AdminNewsletterEditPage() {
       return { ...d, body_json: { sections } };
     });
     setDirty(true);
+  }
+
+  async function exportPdf() {
+    if (!data) return;
+    if (dirty) {
+      alert("Enregistre tes modifications avant d'exporter en PDF.");
+      return;
+    }
+    try {
+      // Le PDF reprend exactement le rendu de la preview (sections + CTAs)
+      // donc on capture le NewsletterPreview qui est déjà monté.
+      const preview = document.querySelector("[data-newsletter-preview]") as HTMLElement | null;
+      if (!preview) {
+        alert("Active la preview (👁 Aperçu) puis réessaie.");
+        return;
+      }
+      const [html2canvas, jsPDFmod] = await Promise.all([
+        import("html2canvas").then((m) => m.default),
+        import("jspdf").then((m) => m.default ?? m.jsPDF),
+      ]);
+      const canvas = await html2canvas(preview, {
+        scale: 2,
+        backgroundColor: "#FBF7F0",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      // A4 portrait : 210×297 mm. On adapte la largeur à 180mm (marges 15mm)
+      const pdf = new jsPDFmod({ unit: "mm", format: "a4", orientation: "portrait" });
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Si trop long pour 1 page : on splitte sur plusieurs pages
+      let position = margin;
+      let remainingHeight = imgHeight;
+      while (remainingHeight > 0) {
+        pdf.addImage(imgData, "PNG", margin, position - (imgHeight - remainingHeight), imgWidth, imgHeight);
+        remainingHeight -= pageHeight - margin * 2;
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          position = margin;
+        }
+      }
+      pdf.save(`${data.slug || "newsletter"}.pdf`);
+      pushToast({ tone: "success", title: "📥 PDF généré" });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur d'export PDF.");
+    }
+  }
+
+  async function generateOgImage() {
+    if (!data || generatingOg) return;
+    if (dirty) {
+      alert("Enregistre tes modifications avant de générer l'image OG.");
+      return;
+    }
+    const node = ogTemplateRef.current;
+    if (!node) {
+      alert("Template OG non monté.");
+      return;
+    }
+    setGeneratingOg(true);
+    try {
+      // Lazy import html2canvas (déjà dans le bundle pour les certificats)
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(node, {
+        width: 1200,
+        height: 630,
+        scale: 1,
+        backgroundColor: "#FBF7F0",
+        useCORS: true,
+        logging: false,
+      });
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("Conversion en PNG échouée.");
+
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée.");
+
+      // Upload via edge function service_role (bypass RLS storage)
+      const formData = new FormData();
+      formData.append("file", blob, `${data.slug}.png`);
+      formData.append("slug", data.slug);
+      formData.append("newsletter_id", data.id);
+
+      const supabaseUrl = (sb as unknown as { supabaseUrl: string }).supabaseUrl;
+      const res = await fetch(`${supabaseUrl}/functions/v1/upload-newsletter-og`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
+      const result = await res.json();
+      if (!res.ok || !result?.success) {
+        throw new Error(result?.error ?? `HTTP ${res.status}`);
+      }
+
+      setData((d) => (d ? { ...d, preview_image_url: result.public_url } : d));
+      pushToast({ tone: "success", title: "🖼 Image OG générée et uploadée" });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur de génération.");
+    } finally {
+      setGeneratingOg(false);
+    }
   }
 
   async function dispatch(mode: "test" | "send") {
@@ -350,6 +467,30 @@ export function AdminNewsletterEditPage() {
 
   return (
     <div style={{ padding: "20px 16px", maxWidth: 1400, margin: "0 auto" }}>
+      {/* ─── Template OG offscreen (capturé par html2canvas) ───────────────
+          Positionné absolutement hors viewport. NE PAS supprimer : c'est
+          ce DOM que html2canvas convertit en PNG. */}
+      <div
+        style={{
+          position: "fixed",
+          top: -10000,
+          left: -10000,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+        aria-hidden="true"
+      >
+        <OgImageTemplate
+          ref={ogTemplateRef}
+          title={data.title}
+          subtitle={data.subtitle}
+          slug={data.slug}
+          templateKey={data.template_key}
+          sentAt={data.sent_at}
+          isDraft={data.status === "draft"}
+        />
+      </div>
+
       {/* ─── Top bar ────────────────────────────────────────────────────── */}
       <div
         style={{
@@ -379,6 +520,47 @@ export function AdminNewsletterEditPage() {
         >
           {previewOpen ? "👁 Aperçu" : "📝 Édition seule"}
         </button>
+        <button
+          type="button"
+          onClick={exportPdf}
+          disabled={dirty}
+          style={{
+            ...btnGhostStyle,
+            opacity: dirty ? 0.5 : 1,
+            cursor: dirty ? "not-allowed" : "pointer",
+          }}
+          title={dirty ? "Sauvegarde d'abord" : "Télécharge un PDF A4 de la newsletter"}
+        >
+          📥 PDF
+        </button>
+        <button
+          type="button"
+          onClick={generateOgImage}
+          disabled={generatingOg || dirty}
+          style={{
+            ...btnGhostStyle,
+            opacity: generatingOg || dirty ? 0.5 : 1,
+            cursor: generatingOg || dirty ? "not-allowed" : "pointer",
+          }}
+          title={
+            dirty
+              ? "Sauvegarde d'abord"
+              : "Génère le PNG 1200×630 pour le partage social et l'upload sur Supabase Storage"
+          }
+        >
+          {generatingOg ? "⏳ Génération…" : data.preview_image_url ? "🔄 Re-générer OG" : "🖼 Générer image OG"}
+        </button>
+        {data.preview_image_url && (
+          <a
+            href={data.preview_image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...btnGhostStyle, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+            title="Ouvrir l'image OG actuelle"
+          >
+            👁 Voir
+          </a>
+        )}
         <button
           type="button"
           onClick={save}
@@ -1005,6 +1187,7 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
 
   return (
     <div
+      data-newsletter-preview="true"
       style={{
         background: PV.surface2,
         border: "1px solid var(--ls-border)",
