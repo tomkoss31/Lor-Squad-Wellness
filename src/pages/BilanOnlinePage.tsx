@@ -329,7 +329,10 @@ export function BilanOnlinePage() {
 
       // Chantier B (2026-05-27) : on stocke les inputs de scoring en sessionStorage
       // pour que la page résultats puisse les lire + calculer l'auto-éval.
-      // Pas de PII transmise (que les réponses choices), on nettoie après affichage.
+      // Chantier C : on stocke aussi les meta (contact_pref, email, phone,
+      // objectives, motivation) pour que la page merci personnalise les CTAs.
+      // Pas de PII envoyée dans une URL — sessionStorage = onglet courant only,
+      // wiped à la fermeture du tab.
       try {
         const scoringInput = {
           meals_balanced: form.meals_balanced,
@@ -350,6 +353,19 @@ export function BilanOnlinePage() {
         sessionStorage.setItem(
           `ls-bilan-results-${slug || "none"}`,
           JSON.stringify(scoringInput),
+        );
+        const meta = {
+          first_name: form.first_name.trim(),
+          contact_pref: form.contact_pref,
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          objectives: form.objectives,
+          motivation_score: form.motivation_score,
+          coach_slug: slug || null,
+        };
+        sessionStorage.setItem(
+          `ls-bilan-meta-${slug || "none"}`,
+          JSON.stringify(meta),
         );
       } catch { /* sessionStorage indispo / quota */ }
 
