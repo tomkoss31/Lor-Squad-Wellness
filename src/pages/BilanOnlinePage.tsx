@@ -326,8 +326,35 @@ export function BilanOnlinePage() {
           : raw);
       }
       try { localStorage.removeItem(storageKey); } catch { /* */ }
+
+      // Chantier B (2026-05-27) : on stocke les inputs de scoring en sessionStorage
+      // pour que la page résultats puisse les lire + calculer l'auto-éval.
+      // Pas de PII transmise (que les réponses choices), on nettoie après affichage.
+      try {
+        const scoringInput = {
+          meals_balanced: form.meals_balanced,
+          water_per_day: form.water_per_day,
+          coffee_per_day: form.coffee_per_day,
+          soda_per_day: form.soda_per_day,
+          alcohol_per_week: form.alcohol_per_week,
+          sleep_quality: form.sleep_quality,
+          sleep_hours: form.sleep_hours,
+          stress_level: form.stress_level,
+          mental_load: form.mental_load,
+          job_feeling: form.job_feeling,
+          social_circle: form.social_circle,
+          active_daily: form.active_daily,
+          sport_frequency: form.sport_frequency,
+          daily_food_budget: form.daily_food_budget,
+        };
+        sessionStorage.setItem(
+          `ls-bilan-results-${slug || "none"}`,
+          JSON.stringify(scoringInput),
+        );
+      } catch { /* sessionStorage indispo / quota */ }
+
       const params = new URLSearchParams({ firstName: form.first_name.trim() });
-      navigate(`/bilan-online${slug ? `/${slug}` : ""}/merci?${params.toString()}`);
+      navigate(`/bilan-online${slug ? `/${slug}` : ""}/resultats?${params.toString()}`);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Erreur inconnue.");
       setSubmitting(false);

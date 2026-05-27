@@ -175,6 +175,11 @@ const BilanOnlineMerciPage = lazy(() =>
     default: module.BilanOnlineMerciPage,
   })),
 );
+const BilanOnlineResultatsPage = lazy(() =>
+  import("./pages/BilanOnlineResultatsPage").then((module) => ({
+    default: module.BilanOnlineResultatsPage,
+  })),
+);
 const BusinessPage = lazy(() =>
   import("./pages/BusinessPage").then((module) => ({
     default: module.BusinessPage,
@@ -304,7 +309,6 @@ const FormationPage = lazy(() =>
 );
 // Formation gate (2026-11-04) : direct import (lightweight) pour l afficher
 // sans Suspense supplementaire au cas ou un distri tente d acceder.
-import { FormationAdminGate } from "./pages/FormationLockedPage";
 const FormationCategoryPage = lazy(() =>
   import("./pages/FormationCategoryPage").then((module) => ({
     default: module.FormationCategoryPage
@@ -541,9 +545,11 @@ export default function App() {
               Slug = users.first_name normalisé, résolu par submit-online-bilan. */}
           <Route path="/bilan-online" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/merci" element={<BilanOnlineMerciPage />} />
           <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
@@ -615,38 +621,43 @@ export default function App() {
               {/* Chantier #3 (2026-05-17) — Module Prospection cold mobile-first.
                   4 étapes : Marché → Profil → Hashtags → Messages multi-langues. */}
               <Route path="prospection" element={<ProspectionPage />} />
-              {/* Chantier #3 étape 3.3 — CRUD admin scripts + briefs */}
-              <Route path="admin/prospection" element={<AdminProspectionPage />} />
+              {/* Chantier #3 étape 3.3 — CRUD admin scripts + briefs.
+                  Gel sécurité 2026-05-27 : wrap RoleRoute admin (avant la
+                  route était libre, trou de défense en profondeur). */}
+              <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+                <Route path="admin/prospection" element={<AdminProspectionPage />} />
+              </Route>
               {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
               <Route path="rentabilite" element={<RentabilitePage />} />
-              {/* La Base 360 Academy Phase 1 (2026-04-26) — gated admin only
-                  en prod (RoleRoute). Defense en profondeur : RoleRoute
-                  redirige vers /co-pilote si non-admin tape l URL manuelle. */}
+              {/* La Base 360 Academy — ouverte à tous les distri depuis
+                  2026-05-27 (chantier onboarding plan A). Academy est la
+                  porte d'entrée pédagogique obligatoire ; débloque Boîte
+                  à outils @ 50% + Simulateur EBE / Prospection @ 100%
+                  (gates UI dans DeveloppementHubPage). */}
+              <Route path="academy" element={<AcademyOverviewPage />} />
+              <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+              <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
+              <Route path="academy/sandbox" element={<AcademySandboxPage />} />
+              <Route path="academy/:sectionId" element={<AcademySectionPage />} />
+              <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
+              <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              {/* Formation distributeur Herbalife — ouverte à tous les distri
+                  depuis 2026-05-27 (chantier onboarding plan A). Seul
+                  /formation/admin reste gardé pour l'édition de contenu. */}
+              <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
-                <Route path="academy" element={<AcademyOverviewPage />} />
-                <Route path="academy/certificat" element={<AcademyCertificatePage />} />
-                <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
-                <Route path="academy/sandbox" element={<AcademySandboxPage />} />
-                <Route path="academy/:sectionId" element={<AcademySectionPage />} />
-                <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
-                <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+                <Route path="formation/admin" element={<FormationAdminPage />} />
               </Route>
-              {/* Formation gate (2026-11-04) : admin-only tant que le contenu
-                  n est pas finalise pour les distri. Distri qui tape /formation
-                  en direct atterrit sur FormationLockedPage (hero "chantier en
-                  cours" plus chaleureux qu un redirect sec). */}
-              <Route path="formation" element={<FormationAdminGate><FormationPage /></FormationAdminGate>} />
-              <Route path="formation/mon-equipe" element={<FormationAdminGate><FormationMyTeamPage /></FormationAdminGate>} />
-              <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
-              <Route path="formation/certificat" element={<FormationAdminGate><FormationCertificatePage /></FormationAdminGate>} />
-              <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
-              <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
-              <Route path="formation/boite-a-outils" element={<FormationAdminGate><FormationToolkitPage /></FormationAdminGate>} />
-              <Route path="formation/boite-a-outils/:slug" element={<FormationAdminGate><FormationToolkitDetailPage /></FormationAdminGate>} />
-              <Route path="formation/reconnaissance" element={<FormationAdminGate><FormationRecognitionPage /></FormationAdminGate>} />
-              <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
-              <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
-              <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />
+              <Route path="formation/certificat" element={<FormationCertificatePage />} />
+              <Route path="formation/calculateur" element={<FormationCalculatorPage />} />
+              <Route path="formation/glossaire" element={<FormationGlossaryPage />} />
+              <Route path="formation/boite-a-outils" element={<FormationToolkitPage />} />
+              <Route path="formation/boite-a-outils/:slug" element={<FormationToolkitDetailPage />} />
+              <Route path="formation/reconnaissance" element={<FormationRecognitionPage />} />
+              <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
+              <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationModuleDetailPage />} />
+              <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}
               <Route path="settings" element={<SettingsPage />} />
