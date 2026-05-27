@@ -84,8 +84,9 @@ export function BilanOnlineResultatsPage() {
   );
 
   function onContinue() {
-    // On nettoie le sessionStorage pour pas garder de data perso.
-    try { sessionStorage.removeItem(SESSION_KEY(slug)); } catch { /* */ }
+    // Chantier C : on garde le sessionStorage pour que la merci puisse
+    // relire scoring + meta et générer les CTAs (mailto pré-rempli).
+    // La merci page nettoiera au démontage.
     const q = firstName ? `?firstName=${encodeURIComponent(firstName)}` : "";
     navigate(`/bilan-online${slug ? `/${slug}` : ""}/merci${q}`);
   }
