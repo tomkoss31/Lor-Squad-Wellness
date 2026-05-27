@@ -12,10 +12,21 @@
 //
 // Sidebar passe de 4 entrées (Academy / Formation / Cahier / Simu) à 1 entrée
 // (Mon développement). Chaque carte mène vers la page existante (URLs intactes).
+//
+// Chantier onboarding 2026-05-27 (plan A) :
+//   - Academy ouverte à tous les distri (carte "Commence ici")
+//   - Bandeau progression Academy en hero tant que !isCompleted
+//   - Gate UI "🔒 Academy X%" sur 4 cartes (Boîte à outils @ 50%,
+//     Simulateur EBE / Prospection internationale / Comment marche la
+//     prospection @ 100%). Click locked → /academy.
+//   - Admin bypasse toutes les gates (isAdmin).
+//   - Cartes "Témoignages clients" et "Fiche distri enrichie" retirées
+//     (déjà accessibles via fiche client / Mon équipe).
 // =============================================================================
 
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 
 interface HubCard {
   id: string;
@@ -29,6 +40,8 @@ interface HubCard {
   tag?: { label: string; color: string };
   /** Nécessite un rôle spécifique. */
   requireRole?: "admin";
+  /** Nécessite Academy complétée à X% (0-100). Bypass admin. */
+  requireAcademyPercent?: number;
 }
 
 const CARDS: HubCard[] = [
@@ -41,7 +54,7 @@ const CARDS: HubCard[] = [
     cta: "Apprendre l'app",
     path: "/academy",
     accent: "var(--ls-purple)",
-    requireRole: "admin",
+    tag: { label: "Commence ici", color: "var(--ls-gold)" },
   },
   {
     id: "formation",
@@ -62,6 +75,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir la boîte",
     path: "/formation/boite-a-outils",
     accent: "var(--ls-teal)",
+    requireAcademyPercent: 50,
   },
   {
     id: "cahier",
@@ -84,6 +98,7 @@ const CARDS: HubCard[] = [
     path: "/simulateur-ebe",
     accent: "var(--ls-purple)",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireAcademyPercent: 100,
   },
   {
     id: "routine-du-jour",
@@ -149,6 +164,7 @@ const CARDS: HubCard[] = [
     path: "/prospection",
     accent: "var(--ls-teal)",
     tag: { label: "Mis à jour", color: "var(--ls-gold)" },
+    requireAcademyPercent: 100,
   },
   {
     id: "prospection-explique",
@@ -159,6 +175,7 @@ const CARDS: HubCard[] = [
     cta: "Lire la fiche",
     path: "/developpement/prospection-explique",
     accent: "var(--ls-gold)",
+    requireAcademyPercent: 100,
   },
   {
     id: "admin-prospection",
@@ -194,40 +211,29 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
-  {
-    id: "testimonials",
-    emoji: "💬",
-    title: "Témoignages clients",
-    description:
-      "Récupère ton lien partageable, partage-le à tes clients sur WhatsApp ou en story, et modère les retours avant qu'ils s'affichent sur ta page bilan en ligne.",
-    cta: "Ouvrir",
-    path: "/admin/testimonials",
-    accent: "var(--ls-teal)",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-    requireRole: "admin",
-  },
-  {
-    id: "fiche-distri",
-    emoji: "👥",
-    title: "Fiche distri enrichie",
-    description:
-      "Tout ce qu'il faut pour piloter ton équipe : engagement, apprentissage, activité, rang Herbalife, PV Bizworks mois par mois, gel de compte. Accessible en cliquant sur la carte d'un distri depuis Paramètres > Équipe, /pv/team ou /flex/equipe.",
-    cta: "Voir l'équipe",
-    path: "/parametres?tab=equipe",
-    accent: "var(--ls-gold)",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-    requireRole: "admin",
-  },
+  // Cartes "Témoignages clients" et "Fiche distri enrichie" retirées
+  // 2026-05-27 (chantier onboarding plan A) : flux déjà accessibles via
+  // fiche client (request-testimonial) et via Mon équipe / Paramètres >
+  // Équipe. Évite la duplication de navigation.
 ];
 
 export function DeveloppementHubPage() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
+  const academy = useAcademyProgress();
+  const isAdmin = currentUser?.role === "admin";
 
   const visibleCards = CARDS.filter((c) => {
-    if (c.requireRole === "admin") return currentUser?.role === "admin";
+    if (c.requireRole === "admin") return isAdmin;
     return true;
+  }).map((c) => {
+    const required = c.requireAcademyPercent ?? 0;
+    const isLocked =
+      !isAdmin && required > 0 && academy.percentComplete < required;
+    return { ...c, isLocked, requiredPercent: required };
   });
+
+  const showAcademyBanner = !isAdmin && !academy.isCompleted;
 
   return (
     <div style={pageWrap}>
@@ -238,6 +244,33 @@ export function DeveloppementHubPage() {
         <p style={heroSubtitle}>
           Apprendre, m'entraîner, suivre ma progression. Tout est ici, en un seul endroit.
         </p>
+        {showAcademyBanner && (
+          <button
+            type="button"
+            onClick={() => navigate("/academy")}
+            style={academyBannerStyle}
+          >
+            <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+              <div style={academyBannerTitleStyle}>
+                🎓 {academy.hasStarted ? "Continue l'Academy" : "Commence par l'Academy"}
+              </div>
+              <div style={academyBannerSubStyle}>
+                {academy.completedCount}/{academy.totalCount} sections · {academy.percentComplete}% · Termine pour débloquer Boîte à outils, Simulateur EBE et Prospection.
+              </div>
+              <div style={academyBannerBarTrack}>
+                <div
+                  style={{
+                    ...academyBannerBarFill,
+                    width: `${Math.max(2, academy.percentComplete)}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div style={academyBannerCtaStyle}>
+              {academy.hasStarted ? "Reprendre" : "Démarrer"} →
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Grid cards */}
@@ -247,14 +280,22 @@ export function DeveloppementHubPage() {
             key={card.id}
             type="button"
             data-tour-id={`hub-card-${card.id}`}
-            onClick={() => navigate(card.path)}
+            onClick={() => navigate(card.isLocked ? "/academy" : card.path)}
             style={{
               ...cardStyle(card.accent),
+              opacity: card.isLocked ? 0.62 : 1,
               animationDelay: `${i * 60}ms`,
             }}
             className="ls-hub-card"
+            aria-label={
+              card.isLocked
+                ? `${card.title} (verrouillé jusqu'à Academy ${card.requiredPercent}%)`
+                : card.title
+            }
           >
-            {card.tag && (
+            {card.isLocked ? (
+              <div style={lockBadgeStyle}>🔒 Academy {card.requiredPercent}%</div>
+            ) : card.tag ? (
               <div
                 style={{
                   position: "absolute",
@@ -274,13 +315,21 @@ export function DeveloppementHubPage() {
               >
                 {card.tag.label}
               </div>
-            )}
-            <div style={emojiCircleStyle(card.accent)}>{card.emoji}</div>
+            ) : null}
+            <div style={emojiCircleStyle(card.accent)}>
+              {card.isLocked ? "🔒" : card.emoji}
+            </div>
             <h3 style={cardTitleStyle}>{card.title}</h3>
             <p style={cardDescStyle}>{card.description}</p>
-            <div style={ctaStyle(card.accent)}>
-              {card.cta} <span style={{ marginLeft: 4 }}>→</span>
-            </div>
+            {card.isLocked ? (
+              <div style={ctaStyle("var(--ls-text-muted)")}>
+                Termine l'Academy <span style={{ marginLeft: 4 }}>→</span>
+              </div>
+            ) : (
+              <div style={ctaStyle(card.accent)}>
+                {card.cta} <span style={{ marginLeft: 4 }}>→</span>
+              </div>
+            )}
           </button>
         ))}
       </div>
@@ -291,8 +340,8 @@ export function DeveloppementHubPage() {
           💡 Comment t'organiser
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "var(--ls-text-muted)" }}>
-          <li><strong>Tu débutes ?</strong> Commence par <em>Modules de formation</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
-          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer.</li>
+          <li><strong>Tu débutes ?</strong> Commence par <em>Apprendre l'app La Base 360</em> (Academy) puis enchaîne avec <em>Formation distributeur Herbalife</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
+          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer (déverrouillé une fois Academy terminée).</li>
           <li><strong>Tu doutes sur FLEX ?</strong> <em>Comment marche FLEX</em> répond aux questions les plus fréquentes.</li>
         </ul>
       </div>
@@ -435,4 +484,76 @@ const footerHelpStyle: React.CSSProperties = {
   background: "var(--ls-surface2)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 12,
+};
+
+// ─── Banner Academy (chantier onboarding 2026-05-27) ───────────────────────
+
+const academyBannerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 14,
+  width: "100%",
+  marginTop: 18,
+  padding: "14px 16px",
+  background: "color-mix(in srgb, var(--ls-purple) 14%, var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 40%, var(--ls-border))",
+  borderRadius: 14,
+  cursor: "pointer",
+  textAlign: "left",
+};
+
+const academyBannerTitleStyle: React.CSSProperties = {
+  fontFamily: "Syne, sans-serif",
+  fontSize: 14,
+  fontWeight: 700,
+  color: "var(--ls-text)",
+  marginBottom: 4,
+};
+
+const academyBannerSubStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "var(--ls-text-muted)",
+  lineHeight: 1.45,
+  marginBottom: 8,
+};
+
+const academyBannerBarTrack: React.CSSProperties = {
+  width: "100%",
+  height: 6,
+  background: "color-mix(in srgb, var(--ls-text) 8%, transparent)",
+  borderRadius: 100,
+  overflow: "hidden",
+};
+
+const academyBannerBarFill: React.CSSProperties = {
+  height: "100%",
+  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-gold))",
+  borderRadius: 100,
+  transition: "width 0.4s ease",
+};
+
+const academyBannerCtaStyle: React.CSSProperties = {
+  fontSize: 12,
+  fontFamily: "DM Sans, sans-serif",
+  fontWeight: 700,
+  color: "var(--ls-purple)",
+  textTransform: "uppercase",
+  letterSpacing: 0.8,
+  whiteSpace: "nowrap",
+};
+
+const lockBadgeStyle: React.CSSProperties = {
+  position: "absolute",
+  top: 12,
+  right: 12,
+  fontSize: 9,
+  fontFamily: "DM Sans, sans-serif",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: 0.8,
+  color: "var(--ls-text-muted)",
+  padding: "3px 8px",
+  borderRadius: 8,
+  background: "color-mix(in srgb, var(--ls-text) 6%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-text) 18%, transparent)",
 };
