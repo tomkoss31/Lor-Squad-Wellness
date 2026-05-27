@@ -44,6 +44,8 @@ export interface OnlineBilanRow {
   age: number | null;
   height_cm: number | null;
   city: string | null;
+  phone: string | null;
+  email: string | null;
   objectives: string[];
   weight_loss_target_kg: number | null;
   motivation_score: number | null;

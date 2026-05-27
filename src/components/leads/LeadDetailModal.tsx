@@ -31,7 +31,9 @@ const OBJECTIVE_LABELS: Record<string, string> = {
   energy: "Plus d'énergie",
   sleep: "Mieux dormir / récupérer",
   wellbeing: "Bien-être général",
+  perf_pro: "Performance au travail",
 };
+// Legacy V1 — bilan online avant 2026-05-27. Conservé pour compat affichage.
 const ATTEMPT_LABELS: Record<string, string> = {
   diet: "Régimes",
   coach: "Coach / accompagnement",
@@ -52,6 +54,67 @@ const MEAL_LABELS: Record<string, string> = {
   skip: "Je saute",
   delivery: "Livraison",
   light: "Léger / snack",
+};
+// V2 — bilan online refondu 2026-05-27.
+const CURRENT_ACTION_LABELS: Record<string, string> = {
+  sport: "🏃 Sport régulier",
+  good_food: "🥗 Alimentation soignée",
+  supplements: "💊 Suppléments / vitamines",
+  coach: "👤 Suivi coach / pro",
+  nothing: "🤷 Rien encore",
+};
+const MEALS_BALANCED_LABELS: Record<string, string> = {
+  yes: "✅ Oui, plutôt",
+  no: "❌ Non, pas vraiment",
+  unsure: "🤔 Ne sait pas",
+};
+const WATER_LABELS: Record<string, string> = {
+  "1-3": "1-3 verres",
+  "4-6": "4-6 verres",
+  "7-10": "7-10 verres",
+  "10+": "10+ verres",
+};
+const COFFEE_LABELS: Record<string, string> = {
+  "0": "Aucun", "1-2": "1-2", "3-4": "3-4", "5+": "5+",
+};
+const SODA_LABELS: Record<string, string> = {
+  "0": "Aucun", "1": "1", "2-3": "2-3", "4+": "4+",
+};
+const ALCOHOL_LABELS: Record<string, string> = {
+  "0": "Aucun", "1-3": "1-3 verres/sem", "4-7": "4-7 verres/sem", "8+": "8+ verres/sem",
+};
+const SLEEP_QUALITY_LABELS: Record<string, string> = {
+  bad: "😫 Mauvais", meh: "😕 Moyen", ok: "🙂 Correct", great: "😊 Top",
+};
+const SLEEP_HOURS_LABELS: Record<string, string> = {
+  "<6": "Moins de 6 h", "6-7": "6 à 7 h", "7-8": "7 à 8 h", "8+": "Plus de 8 h",
+};
+const MENTAL_LOAD_LABELS: Record<string, string> = {
+  light: "🌿 Légère", ok: "😐 Ça va", heavy: "😰 Lourde", crushed: "🌪️ Écrasante",
+};
+const JOB_LABELS: Record<string, string> = {
+  great: "🌟 Super, j'adore",
+  valued: "✨ Plutôt valorisé(e)",
+  routine: "🔁 Dans la routine",
+  demotivated: "😞 Démotivé(e)",
+  lost: "🌧️ Perdu(e) / en transition",
+};
+const CIRCLE_LABELS: Record<string, string> = {
+  family: "👨‍👩‍👧 Famille soutien",
+  couple: "💑 En couple",
+  friends: "👥 Entouré(e) d'amis",
+  alone: "🌿 Plutôt seul(e)",
+};
+const SPORT_FREQ_LABELS: Record<string, string> = {
+  never: "Jamais",
+  "1x": "1× / semaine",
+  "2-3x": "2-3× / semaine",
+  "4+x": "4× et + / semaine",
+};
+const CONTACT_PREF_LABELS: Record<string, string> = {
+  phone: "📞 Téléphone",
+  email: "📧 Email",
+  whatsapp: "💬 WhatsApp",
 };
 
 export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete }: Props) {
@@ -109,6 +172,7 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
   }
 
   const payload = bilan.payload ?? {};
+  // V1 legacy (avant 2026-05-27)
   const habits = (payload.habits as Record<string, unknown>) ?? {};
   const previousAttempts = Array.isArray(payload.previous_attempts)
     ? (payload.previous_attempts as string[])
@@ -117,6 +181,19 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
   const budget = payload.budget as string | undefined;
   const activeDaily = payload.active_daily as boolean | undefined;
   const activeDailyDetail = payload.active_daily_detail as string | null | undefined;
+  // V2 (chantier "bilan online V2")
+  const currentActions = Array.isArray(payload.current_actions)
+    ? (payload.current_actions as string[])
+    : [];
+  const currentActionsDetail = (payload.current_actions_detail as string | null) ?? null;
+  const meals = (payload.meals as Record<string, unknown>) ?? {};
+  const sleepMind = (payload.sleep_mind as Record<string, unknown>) ?? {};
+  const life = (payload.life as Record<string, unknown>) ?? {};
+  const finalize = (payload.finalize as Record<string, unknown>) ?? {};
+  const hasV2Meals = !!meals.balanced || !!meals.water_per_day;
+  const hasV2SleepMind = !!sleepMind.quality || !!sleepMind.hours;
+  const hasV2Life = !!life.job_feeling || !!life.social_circle;
+  const hasV2Finalize = !!finalize.sport_frequency || !!finalize.contact_pref;
 
   return (
     <div
@@ -144,6 +221,28 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
             })}
             {bilan.coach_slug ? ` · via /${bilan.coach_slug}` : " · bilan libre"}
           </p>
+          {(bilan.phone || bilan.email) && (
+            <div className="ldm-contact-row">
+              {bilan.phone && (
+                <a
+                  className="ldm-contact-chip"
+                  href={`tel:${bilan.phone.replace(/\s/g, "")}`}
+                  aria-label="Appeler"
+                >
+                  📞 {bilan.phone}
+                </a>
+              )}
+              {bilan.email && (
+                <a
+                  className="ldm-contact-chip"
+                  href={`mailto:${bilan.email}`}
+                  aria-label="Envoyer un email"
+                >
+                  📧 {bilan.email}
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="ldm-status-row">
@@ -235,6 +334,119 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
               <p className="ldm-line">
                 <strong>Actif au quotidien :</strong> {activeDaily ? "Oui" : "Non"}
                 {activeDailyDetail ? ` — ${activeDailyDetail}` : ""}
+              </p>
+            )}
+          </Section>
+        )}
+
+        {/* === V2 sections (chantier "bilan online V2", 2026-05-27) === */}
+        {currentActions.length > 0 && (
+          <Section title="Ce qu'iel fait déjà">
+            <div className="ldm-tags">
+              {currentActions.map((a) => (
+                <span key={a} className="ldm-tag">
+                  {CURRENT_ACTION_LABELS[a] ?? a}
+                </span>
+              ))}
+            </div>
+            {currentActionsDetail && (
+              <p className="ldm-quote">« {currentActionsDetail} »</p>
+            )}
+          </Section>
+        )}
+
+        {hasV2Meals && (
+          <Section title="Assiette & hydratation">
+            {meals.balanced != null && (
+              <p className="ldm-line">
+                <strong>Repas équilibrés :</strong>{" "}
+                {MEALS_BALANCED_LABELS[String(meals.balanced)] ?? String(meals.balanced)}
+              </p>
+            )}
+            {meals.water_per_day != null && (
+              <p className="ldm-line">
+                <strong>💧 Eau / jour :</strong>{" "}
+                {WATER_LABELS[String(meals.water_per_day)] ?? String(meals.water_per_day)}
+              </p>
+            )}
+            {meals.coffee_per_day != null && (
+              <p className="ldm-line">
+                <strong>☕ Café / jour :</strong>{" "}
+                {COFFEE_LABELS[String(meals.coffee_per_day)] ?? String(meals.coffee_per_day)}
+              </p>
+            )}
+            {meals.soda_per_day != null && (
+              <p className="ldm-line">
+                <strong>🥤 Sodas/jus / jour :</strong>{" "}
+                {SODA_LABELS[String(meals.soda_per_day)] ?? String(meals.soda_per_day)}
+              </p>
+            )}
+            {meals.alcohol_per_week != null && (
+              <p className="ldm-line">
+                <strong>🍷 Alcool / semaine :</strong>{" "}
+                {ALCOHOL_LABELS[String(meals.alcohol_per_week)] ?? String(meals.alcohol_per_week)}
+              </p>
+            )}
+          </Section>
+        )}
+
+        {hasV2SleepMind && (
+          <Section title="Sommeil & tête">
+            {sleepMind.quality != null && (
+              <p className="ldm-line">
+                <strong>Qualité sommeil :</strong>{" "}
+                {SLEEP_QUALITY_LABELS[String(sleepMind.quality)] ?? String(sleepMind.quality)}
+              </p>
+            )}
+            {sleepMind.hours != null && (
+              <p className="ldm-line">
+                <strong>Heures / nuit :</strong>{" "}
+                {SLEEP_HOURS_LABELS[String(sleepMind.hours)] ?? String(sleepMind.hours)}
+              </p>
+            )}
+            {typeof sleepMind.stress_level === "number" && (
+              <p className="ldm-line">
+                <strong>Stress :</strong> {String(sleepMind.stress_level)}/10
+              </p>
+            )}
+            {sleepMind.mental_load != null && (
+              <p className="ldm-line">
+                <strong>Charge mentale :</strong>{" "}
+                {MENTAL_LOAD_LABELS[String(sleepMind.mental_load)] ?? String(sleepMind.mental_load)}
+              </p>
+            )}
+          </Section>
+        )}
+
+        {hasV2Life && (
+          <Section title="Job & cercle de vie">
+            {life.job_feeling != null && (
+              <p className="ldm-line">
+                <strong>Au boulot :</strong>{" "}
+                {JOB_LABELS[String(life.job_feeling)] ?? String(life.job_feeling)}
+              </p>
+            )}
+            {life.social_circle != null && (
+              <p className="ldm-line">
+                <strong>Entourage :</strong>{" "}
+                {CIRCLE_LABELS[String(life.social_circle)] ?? String(life.social_circle)}
+              </p>
+            )}
+          </Section>
+        )}
+
+        {hasV2Finalize && (
+          <Section title="Activité & préférence contact">
+            {finalize.sport_frequency != null && (
+              <p className="ldm-line">
+                <strong>🏋️ Sport :</strong>{" "}
+                {SPORT_FREQ_LABELS[String(finalize.sport_frequency)] ?? String(finalize.sport_frequency)}
+              </p>
+            )}
+            {finalize.contact_pref != null && (
+              <p className="ldm-line">
+                <strong>Préférence contact :</strong>{" "}
+                {CONTACT_PREF_LABELS[String(finalize.contact_pref)] ?? String(finalize.contact_pref)}
               </p>
             )}
           </Section>
@@ -363,6 +575,30 @@ const STYLES = `
   .ldm-close:hover { background: rgba(0,0,0,0.10); }
 
   .ldm-header { padding-right: 40px; margin-bottom: 16px; }
+  .ldm-contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .ldm-contact-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(45, 212, 191, 0.10);
+    color: #0D9488;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .ldm-contact-chip:hover {
+    background: rgba(45, 212, 191, 0.18);
+    transform: translateY(-1px);
+  }
   .ldm-name {
     font-family: 'Syne', 'Inter', sans-serif;
     font-size: 20px;
