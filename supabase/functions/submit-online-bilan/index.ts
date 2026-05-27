@@ -86,11 +86,25 @@ interface SubmitBody {
   age?: number | null;
   height_cm?: number | null;
   city?: string | null;
+  phone?: string | null;
+  email?: string | null;
   objectives?: string[];
   weight_loss_target_kg?: number | null;
   motivation_score?: number | null;
   payload?: Record<string, unknown>;
   consent?: boolean;
+}
+
+// Validation email simple (pas RFC-strict, juste sain).
+function isValidEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+}
+
+// Validation téléphone : accepte chiffres, espaces, +, -, parenthèses, point.
+// 6-20 caractères après nettoyage.
+function isValidPhone(s: string): boolean {
+  const cleaned = s.replace(/[\s.\-()]/g, "");
+  return /^\+?\d{6,20}$/.test(cleaned);
 }
 
 serve(async (req) => {
@@ -156,6 +170,23 @@ serve(async (req) => {
   }
 
   const city = (body.city ?? "").trim() || null;
+
+  // V2 (2026-05-27) : phone et email — colonnes first-class.
+  // Backward compat : l'edge ne *requiert* PAS au moins un des deux,
+  // car le front V1 (legacy, encore en prod) ne les envoie pas. Le front V2
+  // applique la règle "tél OU email requis" côté navigateur.
+  // L'edge se contente de valider le format si fourni.
+  const phoneRaw = (body.phone ?? "").toString().trim();
+  const emailRaw = (body.email ?? "").toString().trim().toLowerCase();
+  const phone = phoneRaw || null;
+  const email = emailRaw || null;
+  if (phone && !isValidPhone(phone)) {
+    return json({ success: false, error: "Téléphone invalide." }, 400);
+  }
+  if (email && !isValidEmail(email)) {
+    return json({ success: false, error: "Email invalide." }, 400);
+  }
+
   const coachSlugRaw = (body.coach_slug ?? "").toString().trim();
   const coachSlug = coachSlugRaw ? normalizeSlug(coachSlugRaw) : null;
 
@@ -202,6 +233,8 @@ serve(async (req) => {
         age,
         height_cm: heightCm,
         city,
+        phone,
+        email,
         objectives,
         weight_loss_target_kg: weightLossKg,
         motivation_score: motivation,
