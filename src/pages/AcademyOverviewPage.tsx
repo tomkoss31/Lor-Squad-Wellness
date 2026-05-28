@@ -77,7 +77,7 @@ export function AcademyOverviewPage() {
       style={{
         maxWidth: 880,
         margin: "0 auto",
-        padding: "32px 24px",
+        padding: "clamp(16px, 4vw, 32px) clamp(12px, 4vw, 24px)",
         fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
       }}
     >
@@ -88,7 +88,7 @@ export function AcademyOverviewPage() {
         style={{
           background: "var(--ls-surface)",
           borderRadius: 16,
-          padding: 28,
+          padding: "clamp(16px, 4vw, 28px)",
           border: "0.5px solid var(--ls-border)",
         }}
       >
@@ -131,11 +131,11 @@ export function AcademyOverviewPage() {
               {view.percentComplete}%
             </text>
           </svg>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ flex: "1 1 220px", minWidth: 0 }}>
             <h1
               style={{
                 fontFamily: "var(--ls-font-serif, Georgia, serif)",
-                fontSize: 26,
+                fontSize: "clamp(22px, 5.5vw, 26px)",
                 fontWeight: 500,
                 margin: "0 0 6px 0",
                 color: "var(--ls-text)",
