@@ -168,9 +168,15 @@ export function DistributorPortfolioPage() {
   }
 
   const portfolioUsers = getActivePortfolioUsers(users, visibleClients, currentUser);
+  // Fallback (fix 2026-05-28) : si l'user existe et que le viewer a le droit
+  // d'y accéder (canAccessPortfolioUser déjà checked ligne 100), on l'affiche
+  // même s'il n'est pas dans getActivePortfolioUsers — cas des distri tout
+  // juste inscrits qui n'ont pas encore de client (Sébastien Zanardi 28/05).
+  // La page gère gracieusement l'absence de clients (counts à 0, empty state).
   const portfolioUser =
     portfolioUsers.find((u) => u.id === distributorId) ??
-    (currentUser.id === distributorId ? currentUser : null);
+    (currentUser.id === distributorId ? currentUser : null) ??
+    targetUser;
   if (!portfolioUser) {
     return (
       <Card>
