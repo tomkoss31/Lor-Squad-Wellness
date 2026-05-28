@@ -164,7 +164,7 @@ export function AcademyOverviewPage() {
                 {view.hasStarted ? "Reprendre la formation" : "Démarrer la formation"}
               </button>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(8px, 2vw, 12px)", alignItems: "center" }}>
                 <span
                   style={{
                     display: "inline-flex",
@@ -348,10 +348,11 @@ export function AcademyOverviewPage() {
           role="status"
           style={{
             position: "fixed",
-            top: 24,
+            top: "max(24px, env(safe-area-inset-top))",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 99998,
+            maxWidth: "calc(100vw - 32px)",
             background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
             color: "white",
             padding: "14px 24px",

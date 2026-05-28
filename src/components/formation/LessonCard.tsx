@@ -64,10 +64,11 @@ export function LessonCard({ lesson, index }: Props) {
         style={{
           display: "flex",
           alignItems: "baseline",
-          gap: 10,
+          gap: "clamp(6px, 2vw, 10px)",
           marginBottom: 12,
           paddingBottom: 10,
           borderBottom: "0.5px solid var(--ls-border)",
+          flexWrap: "wrap",
         }}
       >
         <span

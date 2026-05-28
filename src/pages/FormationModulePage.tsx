@@ -80,7 +80,7 @@ export function FormationModulePage() {
       {/* Bandeau progression du niveau */}
       <div
         style={{
-          padding: "14px 18px",
+          padding: "clamp(12px, 3.5vw, 18px)",
           background: `linear-gradient(135deg, color-mix(in srgb, ${accentVar} 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`,
           border: `0.5px solid color-mix(in srgb, ${accentVar} 25%, var(--ls-border))`,
           borderLeft: `3px solid ${accentVar}`,
@@ -164,7 +164,7 @@ export function FormationModulePage() {
       {/* Nav autres niveaux */}
       <div
         style={{
-          padding: "14px 16px",
+          padding: "clamp(12px, 3.5vw, 16px)",
           background: "var(--ls-surface)",
           border: "0.5px solid var(--ls-border)",
           borderRadius: 14,
