@@ -66,18 +66,34 @@ export function ConfettiBurst({
   onComplete,
   zIndex = 99999,
 }: ConfettiBurstProps) {
-  const particles = useMemo(() => generateParticles(count), [count]);
+  // Adaptive : moins de particules sur mobile (perf + visuel pas surchargé).
+  // Respect prefers-reduced-motion : on skippe complètement les confettis.
+  const { effectiveCount, reducedMotion } = useMemo(() => {
+    if (typeof window === "undefined") return { effectiveCount: count, reducedMotion: false };
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile = window.innerWidth < 480;
+    return {
+      effectiveCount: isMobile ? Math.max(20, Math.round(count * 0.4)) : count,
+      reducedMotion: prefersReduced,
+    };
+  }, [count]);
+  const particles = useMemo(
+    () => (reducedMotion ? [] : generateParticles(effectiveCount)),
+    [effectiveCount, reducedMotion],
+  );
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // Si reducedMotion : on appelle onComplete immédiatement (pas de show).
+    const delay = reducedMotion ? 0 : durationMs;
     const t = window.setTimeout(() => {
       setVisible(false);
       onComplete?.();
-    }, durationMs);
+    }, delay);
     return () => window.clearTimeout(t);
-  }, [durationMs, onComplete]);
+  }, [durationMs, onComplete, reducedMotion]);
 
-  if (!visible) return null;
+  if (!visible || reducedMotion) return null;
 
   return (
     <div

@@ -122,7 +122,7 @@ export function FormationPage() {
           style={{
             display: "grid",
             gap: 14,
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
             marginTop: 14,
           }}
         >
@@ -147,8 +147,8 @@ export function FormationPage() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 16,
-            padding: "20px 22px",
+            gap: "clamp(10px, 3vw, 16px)",
+            padding: "clamp(14px, 3.5vw, 22px)",
             marginTop: 14,
             background:
               "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 50%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
@@ -252,7 +252,7 @@ export function FormationPage() {
           style={{
             display: "grid",
             gap: 12,
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
             marginTop: 12,
           }}
         >

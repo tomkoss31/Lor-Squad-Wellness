@@ -189,7 +189,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
         {showConfetti ? <ConfettiBurst onComplete={() => setShowConfetti(false)} /> : null}
         <div
           style={{
-            padding: 32,
+            padding: "clamp(20px, 5vw, 32px)",
             textAlign: "center",
             fontFamily: "DM Sans, sans-serif",
             background:
@@ -261,7 +261,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div
           style={{
-            padding: 28,
+            padding: "clamp(18px, 4.5vw, 28px)",
             textAlign: "center",
             fontFamily: "DM Sans, sans-serif",
             background: "var(--ls-surface)",
@@ -348,7 +348,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
     return (
       <div
         style={{
-          padding: 28,
+          padding: "clamp(18px, 4.5vw, 28px)",
           textAlign: "center",
           fontFamily: "DM Sans, sans-serif",
           background:
@@ -661,7 +661,7 @@ function QcmPanel({
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
-        padding: "16px 18px",
+        padding: "clamp(12px, 3.5vw, 18px)",
         margin: 0,
       }}
     >
@@ -757,7 +757,7 @@ function FreeTextPanel({
         border: "0.5px solid var(--ls-border)",
         borderLeft: "3px solid var(--ls-purple)",
         borderRadius: 14,
-        padding: "16px 18px",
+        padding: "clamp(12px, 3.5vw, 18px)",
         margin: 0,
       }}
     >

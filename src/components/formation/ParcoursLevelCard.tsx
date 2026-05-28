@@ -65,7 +65,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        padding: 18,
+        padding: "clamp(14px, 3.5vw, 18px)",
         background:
           isLocked
             ? "var(--ls-surface)"
@@ -83,7 +83,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
         opacity,
         overflow: "hidden",
-        minHeight: 220,
+        minHeight: "clamp(190px, 50vw, 220px)",
         fontFamily: "DM Sans, sans-serif",
       }}
       onMouseEnter={(e) => {
@@ -102,9 +102,9 @@ export function ParcoursLevelCard({ level, stats }: Props) {
         style={{
           position: "absolute",
           top: 10,
-          right: 14,
+          right: "clamp(-4px, 1vw, 14px)",
           fontFamily: "Syne, serif",
-          fontSize: 72,
+          fontSize: "clamp(48px, 16vw, 72px)",
           fontWeight: 900,
           color: `color-mix(in srgb, ${accentVar} 12%, transparent)`,
           lineHeight: 1,
@@ -136,7 +136,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
           <h3
             style={{
               fontFamily: "Syne, serif",
-              fontSize: 19,
+              fontSize: "clamp(16px, 4.5vw, 19px)",
               fontWeight: 800,
               color: "var(--ls-text)",
               margin: 0,

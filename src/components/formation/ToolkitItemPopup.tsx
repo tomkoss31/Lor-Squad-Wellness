@@ -177,7 +177,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
         <header
           style={{
             position: "relative",
-            padding: "32px 32px 24px",
+            padding: "clamp(20px, 5vw, 32px) clamp(16px, 5vw, 32px) clamp(16px, 4vw, 24px)",
             background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`,
             borderBottom: `0.5px solid color-mix(in srgb, ${accent} 18%, var(--ls-border))`,
           }}
@@ -250,7 +250,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
             >
               {item.icon}
             </div>
-            <div style={{ flex: 1, minWidth: 0, paddingRight: 32 }}>
+            <div style={{ flex: 1, minWidth: 0, paddingRight: "clamp(12px, 3vw, 32px)" }}>
               <h2
                 style={{
                   fontFamily: "Syne, serif",
@@ -280,7 +280,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
         </header>
 
         {/* BODY */}
-        <div style={{ padding: "24px 32px 32px", position: "relative" }}>
+        <div style={{ padding: "clamp(16px, 4vw, 24px) clamp(16px, 5vw, 32px) clamp(20px, 5vw, 32px)", position: "relative" }}>
           {/* Markdown intro */}
           {item.contentMarkdown ? (
             <div style={{ marginBottom: 24 }}>
@@ -382,6 +382,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
                           alignItems: "center",
                           gap: 5,
                           flexShrink: 0,
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {isCopied ? "✓ Copié" : "📋 Copier"}

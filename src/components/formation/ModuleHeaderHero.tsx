@@ -33,7 +33,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
         border: `0.5px solid color-mix(in srgb, ${levelAccent} 25%, var(--ls-border))`,
         borderTop: `3px solid ${levelAccent}`,
         borderRadius: 18,
-        padding: "20px 22px",
+        padding: "clamp(14px, 4vw, 22px)",
         fontFamily: "DM Sans, sans-serif",
         overflow: "hidden",
       }}
@@ -44,8 +44,8 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
         style={{
           position: "absolute",
           top: -10,
-          right: 14,
-          fontSize: 110,
+          right: "clamp(-6px, 1vw, 14px)",
+          fontSize: "clamp(64px, 22vw, 110px)",
           lineHeight: 1,
           opacity: 0.12,
           pointerEvents: "none",
@@ -80,7 +80,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
       <h1
         style={{
           fontFamily: "Syne, serif",
-          fontSize: 26,
+          fontSize: "clamp(20px, 5.5vw, 26px)",
           fontWeight: 800,
           letterSpacing: "-0.02em",
           margin: "0 0 8px",
@@ -136,7 +136,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
             border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
             borderLeft: "3px solid var(--ls-gold)",
             borderRadius: 12,
-            padding: "12px 14px",
+            padding: "clamp(10px, 2.5vw, 14px)",
             display: "flex",
             gap: 10,
           }}

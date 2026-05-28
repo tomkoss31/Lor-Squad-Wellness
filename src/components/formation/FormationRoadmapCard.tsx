@@ -40,7 +40,7 @@ export function FormationRoadmapCard({
       <div
         style={{
           position: "relative",
-          padding: "24px 28px 26px",
+          padding: "clamp(18px, 5vw, 26px) clamp(18px, 5vw, 28px)",
           borderRadius: 22,
           background:
             "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
@@ -65,7 +65,7 @@ export function FormationRoadmapCard({
           }}
         />
         <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 56, marginBottom: 10 }} aria-hidden="true">
+          <div style={{ fontSize: "clamp(40px, 13vw, 56px)", marginBottom: 10 }} aria-hidden="true">
             🎉
           </div>
           <div
@@ -125,7 +125,7 @@ export function FormationRoadmapCard({
       style={{
         display: "block",
         position: "relative",
-        padding: "20px 24px 22px",
+        padding: "clamp(16px, 4.5vw, 22px) clamp(16px, 4.5vw, 24px)",
         borderRadius: 22,
         background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 12%, var(--ls-surface)) 0%, color-mix(in srgb, ${accent} 4%, var(--ls-surface)) 100%)`,
         border: `0.5px solid color-mix(in srgb, ${accent} 35%, var(--ls-border))`,
@@ -188,7 +188,7 @@ export function FormationRoadmapCard({
         </div>
 
         {/* Texte central */}
-        <div style={{ flex: 1, minWidth: 220 }}>
+        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
           <div
             style={{
               fontFamily: "DM Sans, sans-serif",

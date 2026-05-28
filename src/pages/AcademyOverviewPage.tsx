@@ -77,7 +77,7 @@ export function AcademyOverviewPage() {
       style={{
         maxWidth: 880,
         margin: "0 auto",
-        padding: "32px 24px",
+        padding: "clamp(16px, 4vw, 32px) clamp(12px, 4vw, 24px)",
         fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
       }}
     >
@@ -88,7 +88,7 @@ export function AcademyOverviewPage() {
         style={{
           background: "var(--ls-surface)",
           borderRadius: 16,
-          padding: 28,
+          padding: "clamp(16px, 4vw, 28px)",
           border: "0.5px solid var(--ls-border)",
         }}
       >
@@ -131,11 +131,11 @@ export function AcademyOverviewPage() {
               {view.percentComplete}%
             </text>
           </svg>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ flex: "1 1 220px", minWidth: 0 }}>
             <h1
               style={{
                 fontFamily: "var(--ls-font-serif, Georgia, serif)",
-                fontSize: 26,
+                fontSize: "clamp(22px, 5.5vw, 26px)",
                 fontWeight: 500,
                 margin: "0 0 6px 0",
                 color: "var(--ls-text)",
@@ -164,7 +164,7 @@ export function AcademyOverviewPage() {
                 {view.hasStarted ? "Reprendre la formation" : "Démarrer la formation"}
               </button>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(8px, 2vw, 12px)", alignItems: "center" }}>
                 <span
                   style={{
                     display: "inline-flex",
@@ -342,16 +342,20 @@ export function AcademyOverviewPage() {
           50% { box-shadow: 0 0 0 8px rgba(29,158,117,0.18), 0 0 22px 4px rgba(29,158,117,0.35); }
           100% { box-shadow: 0 0 0 0 rgba(29,158,117,0), 0 0 0 0 rgba(29,158,117,0); }
         }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="ls-academy-pulse"] { animation: none !important; }
+        }
       `}</style>
       {confettiActive ? (
         <div
           role="status"
           style={{
             position: "fixed",
-            top: 24,
+            top: "max(24px, env(safe-area-inset-top))",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 99998,
+            maxWidth: "calc(100vw - 32px)",
             background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
             color: "white",
             padding: "14px 24px",
