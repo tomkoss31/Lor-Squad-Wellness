@@ -129,6 +129,30 @@ dépend qu'on ait des chiffres justes — donc dépend de cette décision.
 
 ---
 
+## ⚠️ Règle du build vérifié avant push prod (2026-05-27)
+
+**Avant tout `git push origin claude/focused-pike`, lancer impérativement :**
+
+```bash
+npx tsc -b --noEmit
+```
+
+Si erreurs TS → fix avant push. Vercel build cassé = pas de deploy
+(la prod reste sur l'ancienne version), mais le commit fautif est visible
+dans l'historique et un commit hotfix est nécessaire en panique.
+
+**Pourquoi** : incident 2026-05-27 — push `6d07ccf` (chantier onboarding
+hub) en prod sans type-check local, build Vercel planté sur TS2339
+(`useAcademyProgress()` retourne `{ view, ...actions }` et non
+`AcademyProgressView` directement). Hotfix `5a92fbd` poussé dans la
+foulée pour rétablir la chaîne de build.
+
+**Pas applicable** sur `dev/thomas-test` ou branches `feat/*` : on
+accepte des erreurs TS temporaires en dev. Mais `claude/focused-pike`
+doit toujours builder.
+
+---
+
 ## ⚠️ Règle du livrable complet (2026-05-04)
 
 **Une feature N'EST PAS livrée tant que :**
