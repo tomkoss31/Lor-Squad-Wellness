@@ -229,11 +229,11 @@ export function DeveloppementHubPage() {
   }).map((c) => {
     const required = c.requireAcademyPercent ?? 0;
     const isLocked =
-      !isAdmin && required > 0 && academy.view.percentComplete < required;
+      !isAdmin && required > 0 && academy.percentComplete < required;
     return { ...c, isLocked, requiredPercent: required };
   });
 
-  const showAcademyBanner = !isAdmin && !academy.view.isCompleted;
+  const showAcademyBanner = !isAdmin && !academy.isCompleted;
 
   return (
     <div style={pageWrap}>
@@ -252,22 +252,22 @@ export function DeveloppementHubPage() {
           >
             <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
               <div style={academyBannerTitleStyle}>
-                🎓 {academy.view.hasStarted ? "Continue l'Academy" : "Commence par l'Academy"}
+                🎓 {academy.hasStarted ? "Continue l'Academy" : "Commence par l'Academy"}
               </div>
               <div style={academyBannerSubStyle}>
-                {academy.view.completedCount}/{academy.view.totalCount} sections · {academy.view.percentComplete}% · Termine pour débloquer Boîte à outils, Simulateur EBE et Prospection.
+                {academy.completedCount}/{academy.totalCount} sections · {academy.percentComplete}% · Termine pour débloquer Boîte à outils, Simulateur EBE et Prospection.
               </div>
               <div style={academyBannerBarTrack}>
                 <div
                   style={{
                     ...academyBannerBarFill,
-                    width: `${Math.max(2, academy.view.percentComplete)}%`,
+                    width: `${Math.max(2, academy.percentComplete)}%`,
                   }}
                 />
               </div>
             </div>
             <div style={academyBannerCtaStyle}>
-              {academy.view.hasStarted ? "Reprendre" : "Démarrer"} →
+              {academy.hasStarted ? "Reprendre" : "Démarrer"} →
             </div>
           </button>
         )}
