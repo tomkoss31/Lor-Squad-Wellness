@@ -283,6 +283,8 @@ function renderInline(text: string): ReactNode[] {
             borderRadius: 4,
             background: "var(--ls-surface2)",
             color: "var(--ls-text)",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
           }}
         >
           {m.slice(1, -1)}

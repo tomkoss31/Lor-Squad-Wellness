@@ -54,7 +54,7 @@ export function LessonCard({ lesson, index }: Props) {
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
-        padding: "18px 20px",
+        padding: "clamp(12px, 3.5vw, 20px)",
         fontFamily: "DM Sans, sans-serif",
         animation: `ls-lesson-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms backwards`,
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
@@ -64,10 +64,11 @@ export function LessonCard({ lesson, index }: Props) {
         style={{
           display: "flex",
           alignItems: "baseline",
-          gap: 10,
+          gap: "clamp(6px, 2vw, 10px)",
           marginBottom: 12,
           paddingBottom: 10,
           borderBottom: "0.5px solid var(--ls-border)",
+          flexWrap: "wrap",
         }}
       >
         <span
@@ -124,13 +125,22 @@ export function LessonCard({ lesson, index }: Props) {
       ) : null}
 
       {lesson.kind === "video" && lesson.videoUrl ? (
-        <div style={{ aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", background: "#000" }}>
+        <div
+          style={{
+            aspectRatio: "16/9",
+            borderRadius: 12,
+            overflow: "hidden",
+            background: "#000",
+            width: "100%",
+            maxWidth: "100%",
+          }}
+        >
           <iframe
             src={lesson.videoUrl}
             title={lesson.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            style={{ width: "100%", height: "100%", border: "none" }}
+            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
           />
         </div>
       ) : null}
@@ -335,7 +345,7 @@ function AudioBody({ lesson }: { lesson: FormationLesson }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div
         style={{
-          padding: "14px 16px",
+          padding: "clamp(12px, 3vw, 16px)",
           background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
           border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
           borderRadius: 12,

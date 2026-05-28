@@ -229,14 +229,21 @@ serve(async (req) => {
         .eq("active", true)
         .order("start_date", { ascending: false }),
 
+      // Fix 2026-05-28 : ordre DESC + reverse côté serveur. Avant : ASC +
+      // limit(20) → si un client a >20 bilans, on gardait les 20 plus
+      // ANCIENS et le hero "Aujourd'hui" plafonnait à un bilan obsolète
+      // (cas Isabelle Tondeur, 20+ bilans, hero figé sur 11 mars alors
+      // que le dernier coach-side était 2026-05-27). On garde l'output
+      // ASC pour ne pas casser les consumers (getStartingAssessment /
+      // getCurrentAssessment supposent ordre ASC).
       supabase
         .from("assessments")
         .select(
           "id, date, type, objective, program_title, body_scan, questionnaire, sport_frequency, sport_types, sport_sub_objective, current_intake, coach_notes_initial",
         )
         .eq("client_id", clientId)
-        .order("date", { ascending: true })
-        .limit(20),
+        .order("date", { ascending: false })
+        .limit(50),
 
       // Chantier MEGA app client v2 (2026-04-25) : ajout mensurations.
       // Schema réel : waist, hips, thigh_left/right, arm_left/right.
@@ -323,7 +330,9 @@ serve(async (req) => {
     // ─── 3. Dérivations Conseils (assessment history + recos + alerts) ─
     // Format assessment_history : tableau normalisé (date + métriques
     // principales du body_scan). On reste permissif (champs optionnels).
-    const rawAssessments = (assessmentsRes.data ?? []) as Array<Record<string, unknown>>;
+    // Fix 2026-05-28 : reverse() ici pour repasser en ASC (le SELECT est
+    // désormais DESC pour capturer les bilans récents avec un cap raisonnable).
+    const rawAssessments = ((assessmentsRes.data ?? []) as Array<Record<string, unknown>>).slice().reverse();
     interface AssessmentRow {
       id?: string;
       date?: string | null;
