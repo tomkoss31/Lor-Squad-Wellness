@@ -382,6 +382,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
                           alignItems: "center",
                           gap: 5,
                           flexShrink: 0,
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {isCopied ? "✓ Copié" : "📋 Copier"}

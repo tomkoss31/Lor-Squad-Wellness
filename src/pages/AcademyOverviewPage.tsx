@@ -342,6 +342,9 @@ export function AcademyOverviewPage() {
           50% { box-shadow: 0 0 0 8px rgba(29,158,117,0.18), 0 0 22px 4px rgba(29,158,117,0.35); }
           100% { box-shadow: 0 0 0 0 rgba(29,158,117,0), 0 0 0 0 rgba(29,158,117,0); }
         }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="ls-academy-pulse"] { animation: none !important; }
+        }
       `}</style>
       {confettiActive ? (
         <div

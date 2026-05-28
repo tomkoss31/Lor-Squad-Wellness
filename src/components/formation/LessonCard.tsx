@@ -345,7 +345,7 @@ function AudioBody({ lesson }: { lesson: FormationLesson }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div
         style={{
-          padding: "14px 16px",
+          padding: "clamp(12px, 3vw, 16px)",
           background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
           border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
           borderRadius: 12,

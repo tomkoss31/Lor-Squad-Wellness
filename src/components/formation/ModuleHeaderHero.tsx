@@ -136,7 +136,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
             border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
             borderLeft: "3px solid var(--ls-gold)",
             borderRadius: 12,
-            padding: "12px 14px",
+            padding: "clamp(10px, 2.5vw, 14px)",
             display: "flex",
             gap: 10,
           }}
