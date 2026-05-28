@@ -8,7 +8,7 @@
 // Source de verite visuelle : docs/mockups/temoignage-client-v2.html
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
@@ -31,26 +31,10 @@ interface TestimonialContext {
 
 type LoadStatus = "loading" | "ready" | "already" | "invalid" | "error";
 
-const PROMPTS: Array<{ emoji: string; title: string; sub: string; insert: string }> = [
-  {
-    emoji: "📅",
-    title: "Quand as-tu démarré ?",
-    sub: "Date approximative + ton point de départ",
-    insert: "📅 J'ai démarré il y a [X mois]… ",
-  },
-  {
-    emoji: "✨",
-    title: "Qu'est-ce qui a changé ?",
-    sub: "Poids, énergie, sommeil, digestion, ballonnements, peau, mental…",
-    insert: "✨ Concrètement, ce qui a changé : ",
-  },
-  {
-    emoji: "💪",
-    title: "Comment vas-tu aujourd'hui ?",
-    sub: "Ton ressenti global, dans ta peau",
-    insert: "💪 Aujourd'hui, je me sens : ",
-  },
-];
+// PROMPTS retirés 2026-05-28 : Thomas trouvait que les gabarits
+// "J'ai démarré il y a [X mois]..." bloquaient les gens / les forçaient
+// dans une structure rigide. On laisse maintenant l'utilisateur écrire
+// librement avec juste un placeholder doux.
 
 export function TestimonialFormPage() {
   // 2 patterns d'URL :
@@ -71,11 +55,9 @@ export function TestimonialFormPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState("");
   const [consentRgpd, setConsentRgpd] = useState(false);
-  const [photoConsent, setPhotoConsent] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // ─── Fetch context ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -167,14 +149,6 @@ export function TestimonialFormPage() {
     [firstName, city, rating, content, consentRgpd],
   );
 
-  const insertPrompt = useCallback((insert: string) => {
-    setContent((prev) => {
-      const sep = prev.length > 0 && !prev.endsWith("\n") ? "\n\n" : "";
-      return prev + sep + insert;
-    });
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  }, []);
-
   async function handleSubmit(e?: FormEvent) {
     e?.preventDefault();
     if (!canSubmit || submitting) return;
@@ -186,7 +160,10 @@ export function TestimonialFormPage() {
       const baseBody = {
         content: content.trim(),
         rating,
-        photo_consent: photoConsent,
+        // photo_consent figé à false depuis 2026-05-28 (case retirée du form
+        // public à la demande de Thomas : "ça limite et bloque"). On garde
+        // le champ dans le payload pour compat edge function existante.
+        photo_consent: false,
         language: "fr",
         first_name: firstName.trim(),
         city: city.trim(),
@@ -244,7 +221,6 @@ export function TestimonialFormPage() {
   }
 
   // ─── FORM VIEW ─────────────────────────────────────────────────────────────
-  const coachLabel = ctx?.coachFirstName ? ctx.coachFirstName : "ton coach";
 
   return (
     <PublicShell defaultTheme="dark">
@@ -312,77 +288,10 @@ export function TestimonialFormPage() {
           {ctx?.coachFirstName && <span>· pour {ctx.coachFirstName}</span>}
         </div>
 
-        {/* Guide bienveillant */}
-        <div
-          style={{
-            background: "var(--glass)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid var(--hair)",
-            borderRadius: 18,
-            padding: "20px 18px",
-            marginBottom: 24,
-            textAlign: "left",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: PUBLIC_FONTS.display,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--cream-muted)",
-              letterSpacing: "0.10em",
-              textTransform: "uppercase",
-              marginBottom: 12,
-              textAlign: "center",
-            }}
-          >
-            💡 Pas sûr·e par où commencer ?
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {PROMPTS.map((p) => (
-              <button
-                key={p.title}
-                type="button"
-                onClick={() => insertPrompt(p.insert)}
-                style={{
-                  background: "var(--glass)",
-                  border: "1px solid var(--hair)",
-                  borderRadius: 12,
-                  padding: "12px 14px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 12,
-                  transition: "all 0.22s",
-                  color: "var(--cream)",
-                  fontFamily: PUBLIC_FONTS.body,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
-                  e.currentTarget.style.background = "var(--glass-input-focus)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--hair)";
-                  e.currentTarget.style.background = "var(--glass)";
-                }}
-              >
-                <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.2 }}>
-                  {p.emoji}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 14, fontWeight: 600 }}>
-                    {p.title}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 2, lineHeight: 1.4 }}>
-                    {p.sub}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Guide bienveillant retiré 2026-05-28 : Thomas trouvait que la
+            card de prompts "J'ai démarré il y a [X mois]…" bloquait les gens
+            en imposant un gabarit. Maintenant : juste un placeholder doux
+            sur la textarea ci-dessous, et l'utilisateur écrit librement. */}
 
         {/* Form card */}
         <div
@@ -473,10 +382,9 @@ export function TestimonialFormPage() {
               Ton ressenti, ton vécu, tes résultats<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
             </div>
             <textarea
-              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value.slice(0, 1000))}
-              placeholder="Clique sur un des prompts au-dessus pour démarrer, ou écris librement…"
+              placeholder="Écris librement ce que tu souhaites partager — quelques mots suffisent."
               rows={6}
               minLength={10}
               maxLength={1000}
@@ -526,33 +434,9 @@ export function TestimonialFormPage() {
             </span>
           </label>
 
-          {/* Consent photo optionnel */}
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 12,
-              padding: 14,
-              background: "var(--glass)",
-              border: "1px solid var(--hair)",
-              borderRadius: 12,
-              cursor: "pointer",
-              fontSize: 13,
-              color: "var(--cream-muted)",
-              lineHeight: 1.5,
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={photoConsent}
-              onChange={(e) => setPhotoConsent(e.target.checked)}
-              style={{ marginTop: 2, flexShrink: 0, width: 18, height: 18, accentColor: PUBLIC_TOKENS.teal }}
-            />
-            <span>
-              (Optionnel) J'autorise La Base 360 à me recontacter si {coachLabel} souhaite m'inviter à
-              partager une photo.
-            </span>
-          </label>
+          {/* Case "consent photo" retirée 2026-05-28 (cf. commit) : Thomas
+              voulait simplifier — limite/bloque la soumission. La colonne
+              testimonials.photo_consent reste, on envoie false en dur. */}
 
           {errorMsg && (
             <div
