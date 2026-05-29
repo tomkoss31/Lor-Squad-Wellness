@@ -49,6 +49,16 @@ export function FormationModuleDetailPage() {
   const level = levelSlug ? getFormationLevelBySlug(levelSlug) : undefined;
   const module = level?.modules.find((m) => m.slug === moduleSlug);
 
+  // Reset mode → lecture quand on change de module (bug fix 2026-05-29).
+  // Sans ça, naviguer d'un module à un autre (ex: via le bouton "Passer au
+  // module suivant" de la page récap) conservait mode="quiz" et l'user
+  // arrivait direct sur le quiz du nouveau module au lieu des leçons.
+  // React Router ne remount pas FormationModuleDetailPage sur changement de
+  // params, donc le state `mode` persiste — on le force ici.
+  useEffect(() => {
+    setMode("lecture");
+  }, [module?.id]);
+
   // Au mount, cree la row in_progress si pas existante
   useEffect(() => {
     if (!module) {
