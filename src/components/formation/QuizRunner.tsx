@@ -60,6 +60,64 @@ function clearDraft(moduleId: string): void {
   }
 }
 
+// ─── Anti-perte récap : persistance submittedResult (bug fix 2026-05-28) ───
+// Le parent FormationModuleDetailPage peut remount QuizRunner après submit
+// (ex: reloadProgress flippe progressLoading même si on a déjà patché). Pour
+// rendre la page récap robuste à TOUT remount, on persiste le résultat de
+// soumission en localStorage avec un TTL de 10 min. Au mount, si on trouve
+// un résultat frais pour ce moduleId, on saute direct sur la page récap.
+// Cleared explicitement quand l'utilisateur clique "Module suivant" ou
+// "Retour à l'accueil".
+
+const RECAP_STORAGE_PREFIX = "ls_formation_quiz_recap_";
+const RECAP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+interface PersistedRecap {
+  autoValidated: boolean;
+  score: number;
+  qcmAnswers: Record<string, number>;
+  freeTextAnswers: Record<string, string>;
+  ts: number; // Date.now() au moment de la sauvegarde
+}
+
+function readRecap(moduleId: string): PersistedRecap | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(RECAP_STORAGE_PREFIX + moduleId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedRecap;
+    if (typeof parsed.ts !== "number" || Date.now() - parsed.ts > RECAP_TTL_MS) {
+      // Expiré → cleanup
+      window.localStorage.removeItem(RECAP_STORAGE_PREFIX + moduleId);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeRecap(moduleId: string, data: Omit<PersistedRecap, "ts">): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      RECAP_STORAGE_PREFIX + moduleId,
+      JSON.stringify({ ...data, ts: Date.now() }),
+    );
+  } catch {
+    /* quota / private */
+  }
+}
+
+function clearRecap(moduleId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(RECAP_STORAGE_PREFIX + moduleId);
+  } catch {
+    /* noop */
+  }
+}
+
 interface Props {
   module: FormationModule;
   /** Slug du niveau (pour le retour apres submission). */
@@ -77,15 +135,25 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
   const navigate = useNavigate();
   const { submitModule, busy } = useFormationActions();
 
+  // Anti-perte récap : si un résultat persisté < 10min existe pour ce module,
+  // on hydrate l'état avec → la page récap re-s'affiche même après remount.
+  const persistedRecap = useMemo(() => readRecap(module.id), [module.id]);
+
   // Restaure le brouillon des reponses si refresh / retour arriere
+  // (le recap persistant a priorité sur le draft pour ne pas écraser les
+  // réponses ayant servi à la soumission).
   const initialDraft = useMemo(() => readDraft(module.id), [module.id]);
-  const [qcmAnswers, setQcmAnswers] = useState<QcmAnswerMap>(initialDraft.qcm);
-  const [freeTextAnswers, setFreeTextAnswers] = useState<FreeTextAnswerMap>(initialDraft.free);
+  const [qcmAnswers, setQcmAnswers] = useState<QcmAnswerMap>(
+    persistedRecap ? persistedRecap.qcmAnswers : initialDraft.qcm,
+  );
+  const [freeTextAnswers, setFreeTextAnswers] = useState<FreeTextAnswerMap>(
+    persistedRecap ? persistedRecap.freeTextAnswers : initialDraft.free,
+  );
   const [showConfetti, setShowConfetti] = useState(false);
   const [submittedResult, setSubmittedResult] = useState<null | {
     autoValidated: boolean;
     score: number;
-  }>(null);
+  }>(persistedRecap ? { autoValidated: persistedRecap.autoValidated, score: persistedRecap.score } : null);
 
   // UX safety (2026-05-03) : écran intro de confirmation avant que les
   // questions s'affichent. Évite les clics par erreur (cf. retour Mandy
@@ -170,6 +238,15 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
     if (!result) return;
 
     setSubmittedResult({ autoValidated: result.autoValidated, score: quizScore });
+    // Persiste le résultat en localStorage (TTL 10min). Permet à la page
+    // récap de se ré-afficher même si QuizRunner est remount par le parent
+    // (ex: reloadProgress qui flippe progressLoading). Bug fix 2026-05-28.
+    writeRecap(module.id, {
+      autoValidated: result.autoValidated,
+      score: quizScore,
+      qcmAnswers,
+      freeTextAnswers,
+    });
     // Cleanup brouillon apres soumission reussie
     clearDraft(module.id);
     // Chantier récap quiz (2026-05-28) : confettis si score ≥ 80% (qu'il y
@@ -452,7 +529,10 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
           >
             <button
               type="button"
-              onClick={() => navigate(nextStep.path)}
+              onClick={() => {
+                clearRecap(module.id);
+                navigate(nextStep.path);
+              }}
               style={{
                 flex: "1 1 240px",
                 minWidth: 0,
@@ -499,7 +579,10 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             </button>
             <button
               type="button"
-              onClick={() => navigate("/formation")}
+              onClick={() => {
+                clearRecap(module.id);
+                navigate("/formation");
+              }}
               style={{
                 flex: "0 1 200px",
                 padding: "14px 22px",
