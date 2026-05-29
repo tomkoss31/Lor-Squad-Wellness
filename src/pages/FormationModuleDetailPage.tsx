@@ -41,7 +41,7 @@ const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
 export function FormationModuleDetailPage() {
   const { levelSlug, moduleSlug } = useParams<{ levelSlug: string; moduleSlug: string }>();
   const navigate = useNavigate();
-  const { getByModuleId, reload: reloadProgress, loading: progressLoading } = useMyFormationProgress();
+  const { getByModuleId, reload: reloadProgress } = useMyFormationProgress();
   const { users } = useAppContext();
   const [mode, setMode] = useState<"lecture" | "quiz">("lecture");
   const [initLoading, setInitLoading] = useState(true);
@@ -87,8 +87,12 @@ export function FormationModuleDetailPage() {
     );
   }
 
-  // Skeleton loader pendant le fetch initial de la progression
-  if (initLoading || progressLoading) {
+  // Skeleton loader pendant le fetch INITIAL uniquement.
+  // Bug fix (2026-05-28) : ne PAS unmount sur les reloads (progressLoading)
+  // car ça détruit la page récap de QuizRunner après une soumission de quiz.
+  // Pattern stale-while-revalidate : on garde l'affichage avec les anciennes
+  // données pendant que la nouvelle requête tourne en arrière-plan.
+  if (initLoading) {
     return (
       <div className="space-y-5">
         <style>{`
