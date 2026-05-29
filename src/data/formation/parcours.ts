@@ -65,3 +65,73 @@ export function getFormationLevelBySlug(slug: string): FormationLevel | undefine
 export function getFormationLevelById(id: string): FormationLevel | undefined {
   return FORMATION_LEVELS.find((l) => l.id === id);
 }
+
+// =============================================================================
+// Helper navigation post-quiz (chantier récap quiz 2026-05-28)
+//
+// À partir du module courant (qui vient d'être terminé), détermine où aller
+// quand l'utilisateur clique "Passer à l'étape suivante" sur la page récap.
+//
+// 4 cas :
+//   1. Module suivant dispo dans le même niveau (cas le plus fréquent)
+//   2. Dernier module du niveau → emmène à la page du niveau suivant
+//   3. Dernier module du dernier niveau → "tu as tout fini" → /formation
+//   4. levelSlug / moduleSlug invalide → fallback /formation
+// =============================================================================
+
+export type NextFormationStepKind = "next-module" | "next-level" | "all-complete" | "fallback";
+
+export interface NextFormationStep {
+  kind: NextFormationStepKind;
+  /** Chemin de navigation pour le bouton "Passer à l'étape suivante". */
+  path: string;
+  /** Label court pour le bouton (ex: "🚀 Construire" ou "Module suivant"). */
+  label: string;
+  /** Sous-label optionnel (ex: titre du module suivant). */
+  subLabel?: string;
+}
+
+export function getNextFormationStep(
+  currentLevelSlug: string,
+  currentModuleSlug: string,
+): NextFormationStep {
+  const levelIdx = FORMATION_LEVELS.findIndex((l) => l.slug === currentLevelSlug);
+  if (levelIdx === -1) {
+    return { kind: "fallback", path: "/formation", label: "Retour à la formation" };
+  }
+  const level = FORMATION_LEVELS[levelIdx];
+  const moduleIdx = level.modules.findIndex((m) => m.slug === currentModuleSlug);
+  if (moduleIdx === -1) {
+    return { kind: "fallback", path: "/formation", label: "Retour à la formation" };
+  }
+
+  // Cas 1 : module suivant dans le même niveau
+  if (moduleIdx + 1 < level.modules.length) {
+    const next = level.modules[moduleIdx + 1];
+    return {
+      kind: "next-module",
+      path: `/formation/parcours/${level.slug}/${next.slug}`,
+      label: "Passer au module suivant",
+      subLabel: `${next.icon} ${next.title}`,
+    };
+  }
+
+  // Cas 2 : dernier module du niveau → niveau suivant
+  if (levelIdx + 1 < FORMATION_LEVELS.length) {
+    const nextLevel = FORMATION_LEVELS[levelIdx + 1];
+    return {
+      kind: "next-level",
+      path: `/formation/parcours/${nextLevel.slug}`,
+      label: `Découvrir le niveau ${nextLevel.order}`,
+      subLabel: `${nextLevel.icon} ${nextLevel.title}`,
+    };
+  }
+
+  // Cas 3 : dernier module du dernier niveau → /formation
+  return {
+    kind: "all-complete",
+    path: "/formation",
+    label: "🎉 Retour à l'accueil",
+    subLabel: "Tu as terminé tout le parcours guidé",
+  };
+}

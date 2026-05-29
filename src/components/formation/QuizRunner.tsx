@@ -18,6 +18,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormationActions } from "../../features/formation";
+import { getNextFormationStep } from "../../data/formation";
 import type { FormationModule } from "../../data/formation";
 import type {
   FormationFreeTextQuestion,
@@ -171,174 +172,353 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
     setSubmittedResult({ autoValidated: result.autoValidated, score: quizScore });
     // Cleanup brouillon apres soumission reussie
     clearDraft(module.id);
-    if (result.autoValidated) {
+    // Chantier récap quiz (2026-05-28) : confettis si score ≥ 80% (qu'il y
+    // ait validation auto ou pas). Sinon icône neutre côté UI. Plus de redirect
+    // auto — l'utilisateur reste sur la page récap et choisit lui-même
+    // "module suivant" ou "retour accueil".
+    if (quizScore >= 80) {
       setShowConfetti(true);
-    } else {
-      // Redirige vers la page niveau apres 1.5s pour laisser voir le toast
-      window.setTimeout(() => {
-        navigate(`/formation/parcours/${levelSlug}`);
-      }, 1500);
     }
     onSubmitDone?.();
   }
 
-  // ─── Rendu post-submission (auto-validated avec confetti) ───────────────
-  if (submittedResult?.autoValidated) {
-    return (
-      <>
-        {showConfetti ? <ConfettiBurst onComplete={() => setShowConfetti(false)} /> : null}
-        <div
-          style={{
-            padding: "clamp(20px, 5vw, 32px)",
-            textAlign: "center",
-            fontFamily: "DM Sans, sans-serif",
-            background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
-            borderTop: "3px solid var(--ls-teal)",
-            borderRadius: 18,
-          }}
-        >
-          <div style={{ fontSize: 56, marginBottom: 12 }} aria-hidden="true">
-            🎉
-          </div>
-          <h2
-            style={{
-              fontFamily: "Syne, serif",
-              fontSize: 24,
-              fontWeight: 800,
-              margin: "0 0 8px",
-              color: "var(--ls-text)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Module validé à 100% !
-          </h2>
-          <p
-            style={{
-              fontSize: 14,
-              color: "var(--ls-text-muted)",
-              margin: "0 0 16px",
-              lineHeight: 1.55,
-            }}
-          >
-            QCM parfait. Ton sponsor a reçu une notif et lira tes réponses libres pour rebondir.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate(`/formation/parcours/${levelSlug}`)}
-            style={{
-              padding: "10px 22px",
-              borderRadius: 999,
-              border: "none",
-              background:
-                "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
-              color: "white",
-              fontFamily: "Syne, serif",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              boxShadow: "0 6px 16px -4px color-mix(in srgb, var(--ls-teal) 35%, transparent)",
-            }}
-          >
-            Continuer le parcours →
-          </button>
-        </div>
-      </>
-    );
-  }
-
-  // ─── Rendu post-submission (pending sponsor) ────────────────────────────
-  if (submittedResult && !submittedResult.autoValidated) {
-    // Reconstitue les réponses pour le renderer (pas besoin de fetch DB).
+  // ─── Rendu post-submission (récap unifié — chantier 2026-05-28) ─────────
+  // Une SEULE page récap qui couvre les 3 cas :
+  //   - autoValidated (100% QCM) → 🎉 célébration + confettis
+  //   - score ≥ 80 mais pas auto → 🎉 "Bien joué" + confettis (l'effort est là)
+  //   - score < 80 → ✓ neutre, pas de confettis, l'user voit clairement
+  //     qu'il peut relire ses erreurs avant de continuer
+  //
+  // Plus de redirect auto. L'utilisateur choisit lui-même via 2 boutons :
+  //   - "Passer au module suivant" (primaire) — pointe sur le module N+1
+  //     du même niveau, ou sur la page du niveau N+1 si dernier module,
+  //     ou sur /formation si dernier module du dernier niveau.
+  //   - "Retour à l'accueil formation" (secondaire) — /formation
+  if (submittedResult) {
+    const { autoValidated, score } = submittedResult;
+    const isHighScore = score >= 80;
     const localAnswers = qcmQuestions.map((q) => ({
       questionId: q.id,
       chosenIndex: qcmAnswers[q.id],
       correctIndex: q.correctIndex,
       isCorrect: qcmAnswers[q.id] === q.correctIndex,
     }));
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div
-          style={{
-            padding: "clamp(18px, 4.5vw, 28px)",
-            textAlign: "center",
-            fontFamily: "DM Sans, sans-serif",
-            background: "var(--ls-surface)",
-            border: "0.5px solid var(--ls-border)",
-            borderTop: "3px solid var(--ls-gold)",
-            borderRadius: 18,
-          }}
-        >
-          <div style={{ fontSize: 44, marginBottom: 12 }} aria-hidden="true">
-            📬
-          </div>
-          <h2
-            style={{
-              fontFamily: "Syne, serif",
-              fontSize: 22,
-              fontWeight: 800,
-              margin: "0 0 8px",
-              color: "var(--ls-text)",
-            }}
-          >
-            Soumis pour validation
-          </h2>
-          <p style={{ fontSize: 13.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.55 }}>
-            QCM {submittedResult.score}% — ton sponsor va relire tes réponses libres et te répondre sous 48h. En attendant, profite-en pour relire ci-dessous les bonnes réponses.
-          </p>
-        </div>
+    const correctCount = localAnswers.filter((a) => a.isCorrect).length;
+    const totalQcm = qcmQuestions.length;
+    const nextStep = getNextFormationStep(levelSlug, module.slug);
 
-        {/* Détail des QCM (visible distri pour apprentissage) */}
-        <div
-          style={{
-            padding: "16px 18px",
-            background: "var(--ls-surface)",
-            border: "0.5px solid var(--ls-border)",
-            borderRadius: 14,
-            fontFamily: "DM Sans, sans-serif",
-          }}
-        >
+    // Hero copy contextualisé
+    const heroIcon = autoValidated ? "🎉" : isHighScore ? "🎉" : "✓";
+    const heroTitle = autoValidated
+      ? "Module validé à 100% !"
+      : isHighScore
+        ? "Bien joué !"
+        : "Quiz terminé";
+    const heroSubtitle = autoValidated
+      ? "QCM parfait. Ton sponsor a reçu une notif et lira tes réponses libres pour rebondir."
+      : isHighScore
+        ? `Bon score ! ${freeQuestions.length > 0 ? "Ton sponsor relira tes réponses libres et te répondra sous 48h." : "Tu peux passer à la suite."}`
+        : "Tu peux relire ci-dessous les bonnes réponses avant de passer au module suivant.";
+    const heroAccent = isHighScore ? "var(--ls-teal)" : "var(--ls-gold)";
+
+    return (
+      <>
+        {showConfetti ? <ConfettiBurst onComplete={() => setShowConfetti(false)} /> : null}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, fontFamily: "DM Sans, sans-serif" }}>
+          {/* HERO Score + Jauge bonnes réponses */}
           <div
             style={{
-              fontSize: 10,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
-              color: "var(--ls-gold)",
-              marginBottom: 10,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
+              padding: "clamp(20px, 5vw, 32px)",
+              textAlign: "center",
+              background: `linear-gradient(135deg, color-mix(in srgb, ${heroAccent} 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`,
+              border: `0.5px solid color-mix(in srgb, ${heroAccent} 30%, var(--ls-border))`,
+              borderTop: `3px solid ${heroAccent}`,
+              borderRadius: 18,
             }}
           >
-            <span aria-hidden="true">📝</span> Tu peux relire tes erreurs
-          </div>
-          <QuizAnswersDetailRenderer
-            qcmQuestions={qcmQuestions}
-            answers={localAnswers}
-            audience="distri"
-          />
-        </div>
+            <div style={{ fontSize: "clamp(44px, 12vw, 56px)", marginBottom: 12, lineHeight: 1 }} aria-hidden="true">
+              {heroIcon}
+            </div>
+            <h2
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: "clamp(20px, 5.5vw, 24px)",
+                fontWeight: 800,
+                margin: "0 0 8px",
+                color: "var(--ls-text)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {heroTitle}
+            </h2>
+            <p
+              style={{
+                fontSize: 13.5,
+                color: "var(--ls-text-muted)",
+                margin: "0 0 16px",
+                lineHeight: 1.55,
+                maxWidth: 460,
+                marginInline: "auto",
+              }}
+            >
+              {heroSubtitle}
+            </p>
 
-        <button
-          type="button"
-          onClick={() => navigate(`/formation/parcours/${levelSlug}`)}
-          style={{
-            alignSelf: "center",
-            padding: "10px 22px",
-            borderRadius: 999,
-            border: "0.5px solid var(--ls-border)",
-            background: "transparent",
-            color: "var(--ls-text-muted)",
-            fontFamily: "DM Sans, sans-serif",
-            fontSize: 13,
-            cursor: "pointer",
-          }}
-        >
-          ← Retour au parcours
-        </button>
-      </div>
+            {/* Jauge bonnes réponses */}
+            {totalQcm > 0 ? (
+              <div style={{ maxWidth: 360, margin: "0 auto" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    marginBottom: 6,
+                    fontSize: 12,
+                    color: "var(--ls-text-muted)",
+                    fontWeight: 600,
+                  }}
+                >
+                  <span>Bonnes réponses QCM</span>
+                  <span
+                    style={{
+                      fontFamily: "Syne, serif",
+                      fontWeight: 800,
+                      fontSize: 16,
+                      color: heroAccent,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {correctCount} / {totalQcm} · {score}%
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: 8,
+                    borderRadius: 4,
+                    background: "var(--ls-surface2)",
+                    overflow: "hidden",
+                    border: "0.5px solid var(--ls-border)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${score}%`,
+                      height: "100%",
+                      background: heroAccent,
+                      transition: "width 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Détail QCM (relire bonnes réponses + erreurs) */}
+          {totalQcm > 0 ? (
+            <div
+              style={{
+                padding: "clamp(14px, 3.5vw, 18px)",
+                background: "var(--ls-surface)",
+                border: "0.5px solid var(--ls-border)",
+                borderRadius: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  color: "var(--ls-gold)",
+                  marginBottom: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span aria-hidden="true">📝</span> Détail de tes réponses
+              </div>
+              <QuizAnswersDetailRenderer
+                qcmQuestions={qcmQuestions}
+                answers={localAnswers}
+                audience="distri"
+              />
+            </div>
+          ) : null}
+
+          {/* Détail free_text avec badge "💬 En attente sponsor" */}
+          {freeQuestions.length > 0 ? (
+            <div
+              style={{
+                padding: "clamp(14px, 3.5vw, 18px)",
+                background: "var(--ls-surface)",
+                border: "0.5px solid var(--ls-border)",
+                borderLeft: "3px solid var(--ls-purple)",
+                borderRadius: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  color: "var(--ls-purple)",
+                  marginBottom: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span aria-hidden="true">💭</span> Tes réponses libres
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {freeQuestions.map((q, idx) => (
+                  <div
+                    key={q.id}
+                    style={{
+                      padding: "12px 14px",
+                      background: "var(--ls-surface2)",
+                      border: "0.5px solid var(--ls-border)",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "flex-start",
+                        flexWrap: "wrap",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "Syne, serif",
+                          fontWeight: 800,
+                          fontSize: 12,
+                          color: "var(--ls-text)",
+                          flex: 1,
+                          minWidth: 0,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        Q{qcmQuestions.length + idx + 1} · {q.question}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "3px 8px",
+                          borderRadius: 999,
+                          background: "color-mix(in srgb, var(--ls-purple) 14%, transparent)",
+                          color: "var(--ls-purple)",
+                          border: "0.5px solid color-mix(in srgb, var(--ls-purple) 35%, transparent)",
+                          letterSpacing: "0.04em",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                      >
+                        💬 En attente sponsor
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 13,
+                        color: "var(--ls-text-muted)",
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-wrap",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      « {freeTextAnswers[q.id]?.trim() || "(vide)"} »
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* 2 boutons navigation : étape suivante (primaire) + accueil (secondaire) */}
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginTop: 4,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => navigate(nextStep.path)}
+              style={{
+                flex: "1 1 240px",
+                minWidth: 0,
+                maxWidth: 360,
+                padding: "14px 22px",
+                borderRadius: 14,
+                border: "none",
+                background:
+                  "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
+                color: "var(--ls-bg)",
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 14,
+                cursor: "pointer",
+                boxShadow: "0 6px 18px -4px color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                lineHeight: 1.3,
+              }}
+            >
+              <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden="true">
+                →
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block" }}>{nextStep.label}</span>
+                {nextStep.subLabel ? (
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: 11.5,
+                      fontWeight: 500,
+                      opacity: 0.85,
+                      marginTop: 2,
+                      fontFamily: "DM Sans, sans-serif",
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {nextStep.subLabel}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/formation")}
+              style={{
+                flex: "0 1 200px",
+                padding: "14px 22px",
+                borderRadius: 14,
+                border: "0.5px solid var(--ls-border)",
+                background: "var(--ls-surface)",
+                color: "var(--ls-text-muted)",
+                fontFamily: "DM Sans, sans-serif",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                lineHeight: 1.3,
+              }}
+            >
+              ← Retour à l'accueil de la formation
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 

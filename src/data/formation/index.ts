@@ -11,6 +11,9 @@ export {
   FORMATION_LEVELS,
   getFormationLevelBySlug,
   getFormationLevelById,
+  getNextFormationStep,
+  type NextFormationStep,
+  type NextFormationStepKind,
 } from "./parcours";
 export {
   FORMATION_CATEGORIES,
