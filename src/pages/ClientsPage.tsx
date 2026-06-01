@@ -373,6 +373,7 @@ export function ClientsPage() {
       <ClientsMobileView
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isAdmin={isAdmin}
         clientsCount={filteredClients.length}
         leadsCount={leadsCount}
         testimonialsCount={testimonialsCount}
