@@ -310,6 +310,10 @@ serve(async (req) => {
       .select("id, email")
       .in("role", ["distributor", "admin", "referent"])
       .eq("active", true)
+      // Fix 2026-06-01 : ne JAMAIS envoyer aux comptes gelés. Le gel (frozen_at)
+      // devient le levier unique : compte gelé = plus d'accès app (RouteGuards
+      // → /frozen, donc Academy + Formation verrouillées) ET plus de newsletter.
+      .is("frozen_at", null)
       .not("email", "is", null)
       .neq("email", "");
     if (usrErr) return json({ success: false, error: `users_fetch: ${usrErr.message}` }, 500);
