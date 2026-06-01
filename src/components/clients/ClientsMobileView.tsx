@@ -23,10 +23,14 @@ import { useNavigate } from "react-router-dom";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { useHaptic } from "../../hooks/useHaptic";
 import { FiltersBottomSheet, type FiltersSheetState, type OwnerOption } from "./FiltersBottomSheet";
+import { LeadsKanban } from "../leads/LeadsKanban";
+import { AdminTestimonialsPage } from "../../pages/AdminTestimonialsPage";
 
 interface ClientsMobileViewProps {
   activeTab: "clients" | "leads" | "temoignages";
   onTabChange: (tab: "clients" | "leads" | "temoignages") => void;
+  /** Gate l'onglet Témoignages comme la vue desktop (admin only). */
+  isAdmin: boolean;
   clientsCount: number;
   leadsCount: number;
   testimonialsCount: number;
@@ -112,6 +116,7 @@ function clientMeta(
 export function ClientsMobileView({
   activeTab,
   onTabChange,
+  isAdmin,
   clientsCount,
   leadsCount,
   testimonialsCount,
@@ -162,18 +167,20 @@ export function ClientsMobileView({
           onClick={() => onTabChange("leads")}
         >
           Leads
-          <span className="count">{leadsCount}</span>
+          {leadsCount > 0 ? <span className="count">{leadsCount}</span> : null}
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "temoignages"}
-          className={`lb-tab${activeTab === "temoignages" ? " active" : ""}`}
-          onClick={() => onTabChange("temoignages")}
-        >
-          Témoignages
-          <span className="count">{testimonialsCount}</span>
-        </button>
+        {isAdmin ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "temoignages"}
+            className={`lb-tab${activeTab === "temoignages" ? " active" : ""}`}
+            onClick={() => onTabChange("temoignages")}
+          >
+            Témoignages
+            {testimonialsCount > 0 ? <span className="count">{testimonialsCount}</span> : null}
+          </button>
+        ) : null}
       </div>
 
       {/* Tab Clients : search + stats + liste */}
@@ -289,6 +296,22 @@ export function ClientsMobileView({
             </ul>
           )}
         </>
+      ) : null}
+
+      {/* Tab Leads : kanban autonome (scroll-x), responsive mobile.
+          Fix 2026-06-01 — la vue mobile rendait les onglets Leads/Témoignages
+          mais aucun contenu → écran blanc sur iPhone/iPad. */}
+      {activeTab === "leads" ? (
+        <div className="lb-embed">
+          <LeadsKanban />
+        </div>
+      ) : null}
+
+      {/* Tab Témoignages : admin only (comme la vue desktop). */}
+      {activeTab === "temoignages" && isAdmin ? (
+        <div className="lb-embed">
+          <AdminTestimonialsPage />
+        </div>
       ) : null}
 
       {/* Bottom sheet filtres */}

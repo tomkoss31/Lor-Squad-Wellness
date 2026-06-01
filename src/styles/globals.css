@@ -2874,6 +2874,10 @@ body.ls-stealth-active [data-stealth]:focus-within {
 
 .lb-clients-mobile { display: flex; flex-direction: column; gap: 8px; }
 
+/* Conteneur des onglets Leads / Témoignages embarqués dans la vue mobile
+   (fix 2026-06-01 — contenu manquant sur iPhone/iPad). */
+.lb-embed { padding: 12px 14px 0; }
+
 .lb-tabs {
   display: flex; gap: 18px; padding: 8px 18px 0;
   border-bottom: 1px solid var(--ls-border);
