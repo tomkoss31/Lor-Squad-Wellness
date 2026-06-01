@@ -73,16 +73,70 @@ async function sendOneEmail(params: {
   return { ok: true, message_id: body?.id ?? "unknown" };
 }
 
-// Throttle simple : Resend free tier = 100 emails / 10 sec.
-// On envoie par batches de 10 avec pause 1s pour rester safe (~600/min).
+// ─── Envoi via l'endpoint BATCH de Resend ─────────────────────────────────────
+// Fix 2026-06-01 : l'ancien code tirait 10 requêtes EN PARALLÈLE par batch, ce
+// qui dépasse la limite Resend (5 req/sec par team → 429). Résultat : des emails
+// valides étaient rejetés et marqués à tort comme "bounce".
+//
+// Nouvelle approche : POST /emails/batch envoie jusqu'à 100 emails en UNE seule
+// requête. Pour < 100 destinataires = 1 seul appel → zéro risque de rate-limit.
+// La réponse `data[]` est dans le MÊME ORDRE que l'input → on mappe l'index pour
+// récupérer le resend_message_id de chaque destinataire.
+//   Doc : https://resend.com/docs/api-reference/emails/send-batch-emails
+//   Rate limit : https://resend.com/docs/api-reference/introduction (5 req/s)
+const BATCH_MAX = 100;            // limite dure de l'endpoint /emails/batch
+const RATE_DELAY_MS = 350;        // pause entre 2 appels batch (marge sous 5 req/s)
+const MAX_RETRY = 3;              // retries sur 429 / 5xx
+
+// Envoie un chunk (<=100) via /emails/batch, avec retry backoff sur 429/5xx.
+// Idempotency-Key : si on retry après un 429, Resend dédoublonne (pas de double
+// envoi). Renvoie les ids dans l'ordre, ou une erreur pour TOUT le chunk.
+async function sendBatchChunk(
+  payload: Array<Record<string, unknown>>,
+  idempotencyKey: string,
+): Promise<{ ok: true; ids: Array<string | null> } | { ok: false; error: string }> {
+  let lastErr = "";
+  for (let attempt = 0; attempt < MAX_RETRY; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch("https://api.resend.com/emails/batch", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : "network_error";
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      continue;
+    }
+    // 429 (rate-limit) ou 5xx → transitoire : on retry avec backoff (1s, 2s, 4s)
+    if (res.status === 429 || res.status >= 500) {
+      lastErr = `Resend HTTP ${res.status} (transient)`;
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      continue;
+    }
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: body?.message ?? `Resend HTTP ${res.status}` };
+    }
+    const data = (body?.data ?? []) as Array<{ id?: string }>;
+    return { ok: true, ids: data.map((d) => d?.id ?? null) };
+  }
+  return { ok: false, error: lastErr || "rate_limited_after_retries" };
+}
+
 async function sendBatch(
   recipients: Array<{ id: string; email: string; recipient_type: "client" | "distri" }>,
   subject: string,
   html: string,
+  newsletterId: string,
 ): Promise<
   Array<{ id: string; email: string; recipient_type: "client" | "distri"; ok: boolean; message_id?: string; error?: string }>
 > {
-  const BATCH_SIZE = 10;
   const results: Array<{
     id: string;
     email: string;
@@ -92,19 +146,33 @@ async function sendBatch(
     error?: string;
   }> = [];
 
-  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-    const batch = recipients.slice(i, i + BATCH_SIZE);
-    const batchResults = await Promise.all(
-      batch.map(async (r) => {
-        const res = await sendOneEmail({ to: r.email, subject, html });
-        if (res.ok) return { ...r, ok: true, message_id: res.message_id };
-        return { ...r, ok: false, error: res.error };
-      }),
-    );
-    results.push(...batchResults);
-    // Pause entre batches sauf le dernier
-    if (i + BATCH_SIZE < recipients.length) {
-      await new Promise((r) => setTimeout(r, 1000));
+  for (let i = 0; i < recipients.length; i += BATCH_MAX) {
+    const chunk = recipients.slice(i, i + BATCH_MAX);
+    const payload = chunk.map((r) => ({
+      from: FROM,
+      to: [r.email],
+      subject,
+      html,
+      reply_to: REPLY_TO,
+    }));
+    const chunkIndex = Math.floor(i / BATCH_MAX);
+    const batch = await sendBatchChunk(payload, `${newsletterId}-${chunkIndex}`);
+
+    if (batch.ok) {
+      chunk.forEach((r, j) => {
+        const id = batch.ids[j];
+        if (id) results.push({ ...r, ok: true, message_id: id });
+        else results.push({ ...r, ok: false, error: "no_id_returned" });
+      });
+    } else {
+      // L'appel batch entier a échoué (API/réseau) → échec d'ENVOI pour ce chunk.
+      // PAS un bounce : on stocke l'erreur, le vrai statut viendra (ou pas) du webhook.
+      chunk.forEach((r) => results.push({ ...r, ok: false, error: batch.error }));
+    }
+
+    // Pause entre chunks (sauf le dernier) pour rester sous 5 req/s.
+    if (i + BATCH_MAX < recipients.length) {
+      await new Promise((r) => setTimeout(r, RATE_DELAY_MS));
     }
   }
   return results;
@@ -242,6 +310,10 @@ serve(async (req) => {
       .select("id, email")
       .in("role", ["distributor", "admin", "referent"])
       .eq("active", true)
+      // Fix 2026-06-01 : ne JAMAIS envoyer aux comptes gelés. Le gel (frozen_at)
+      // devient le levier unique : compte gelé = plus d'accès app (RouteGuards
+      // → /frozen, donc Academy + Formation verrouillées) ET plus de newsletter.
+      .is("frozen_at", null)
       .not("email", "is", null)
       .neq("email", "");
     if (usrErr) return json({ success: false, error: `users_fetch: ${usrErr.message}` }, 500);
@@ -268,11 +340,14 @@ serve(async (req) => {
   }
 
   // 5. Envoi batch + insert newsletter_recipients
-  const sendResults = await sendBatch(dedup, subject, html);
+  const sendResults = await sendBatch(dedup, subject, html, newsletterId);
   const successCount = sendResults.filter((r) => r.ok).length;
   const failures = sendResults.filter((r) => !r.ok);
 
-  // Bulk insert recipients (upsert via unique constraint pour idempotence)
+  // Bulk insert recipients (upsert via unique constraint pour idempotence).
+  // Fix 2026-06-01 : un échec d'envoi (ex: 429 rate-limit) est stocké dans
+  // `send_error`, PAS dans `bounced_at`. Les vrais bounces sont posés
+  // exclusivement par le webhook Resend (email.bounced).
   const recipientsRows = sendResults.map((r) => ({
     newsletter_id: newsletterId,
     recipient_type: r.recipient_type,
@@ -280,7 +355,7 @@ serve(async (req) => {
     email: r.email,
     sent_at: new Date().toISOString(),
     resend_message_id: r.ok ? r.message_id : null,
-    bounced_at: r.ok ? null : new Date().toISOString(),
+    send_error: r.ok ? null : (r.error ?? "unknown"),
   }));
   // Chunked insert (Supabase limite ~1000/batch)
   for (let i = 0; i < recipientsRows.length; i += 500) {

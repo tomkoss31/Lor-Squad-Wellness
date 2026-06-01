@@ -443,7 +443,45 @@ function ProductsTab({
 
 // ─── Card produit actif avec progress bar de cure ────────────────────────────
 
+function toDateInputValue(d: string | Date | null | undefined): string {
+  if (!d) return "";
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return "";
+  // Format YYYY-MM-DD en heure locale (évite le décalage UTC d'un toISOString).
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function ActiveProductCard({ p }: { p: PvProductUsage }) {
+  const { updatePvProductStartDate } = useAppContext();
+  const { push: pushToast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [draftDate, setDraftDate] = useState(() => toDateInputValue(p.startDate));
+  const [savingDate, setSavingDate] = useState(false);
+
+  async function handleSaveStartDate() {
+    if (!draftDate) {
+      pushToast({ tone: "error", title: "Choisis une date de démarrage." });
+      return;
+    }
+    setSavingDate(true);
+    try {
+      await updatePvProductStartDate(p.recordId, draftDate);
+      pushToast({ tone: "success", title: "✅ Date de démarrage corrigée" });
+      setEditing(false);
+    } catch (e) {
+      pushToast({
+        tone: "error",
+        title: "Échec de la mise à jour",
+        message: e instanceof Error ? e.message : "Réessaie.",
+      });
+    } finally {
+      setSavingDate(false);
+    }
+  }
+
   const remaining = p.estimatedRemainingDays;
   const total = p.durationReferenceDays ?? 21;
   const elapsed = Math.max(0, total - Math.max(0, remaining));
@@ -497,8 +535,34 @@ function ActiveProductCard({ p }: { p: PvProductUsage }) {
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif" }}>
             {p.productName}
           </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-            {p.quantityStart} {p.quantiteLabel ? `· ${p.quantiteLabel}` : ""} · Démarré le {formatDateLocal(p.startDate)}
+          <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span>
+              {p.quantityStart} {p.quantiteLabel ? `· ${p.quantiteLabel}` : ""} · Démarré le {formatDateLocal(p.startDate)}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setDraftDate(toDateInputValue(p.startDate));
+                setEditing((v) => !v);
+              }}
+              title="Corriger la date de démarrage"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                padding: "2px 7px",
+                borderRadius: 999,
+                border: "0.5px solid var(--ls-border)",
+                background: "var(--ls-surface)",
+                color: "var(--ls-text-muted)",
+                fontSize: 10,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              ✏️ Modifier
+            </button>
           </div>
         </div>
         <span
@@ -517,6 +581,79 @@ function ActiveProductCard({ p }: { p: PvProductUsage }) {
           {label}
         </span>
       </div>
+
+      {/* Éditeur inline date de démarrage (correction d'une erreur de saisie
+          du délai de réception). Recalcule reste + prochaine commande au save. */}
+      {editing ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            padding: "10px 12px",
+            marginBottom: 12,
+            background: "var(--ls-surface2)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            borderRadius: 10,
+          }}
+        >
+          <span style={{ fontSize: 11, color: "var(--ls-text-muted)", fontWeight: 600 }}>
+            Démarrage :
+          </span>
+          <input
+            type="date"
+            value={draftDate}
+            onChange={(e) => setDraftDate(e.target.value)}
+            style={{
+              padding: "7px 10px",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 8,
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 13,
+              background: "var(--ls-surface)",
+              color: "var(--ls-text)",
+              outline: "none",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => void handleSaveStartDate()}
+            disabled={savingDate}
+            style={{
+              padding: "7px 14px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--ls-gold)",
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: savingDate ? "wait" : "pointer",
+              fontFamily: "Syne, serif",
+              opacity: savingDate ? 0.7 : 1,
+            }}
+          >
+            {savingDate ? "…" : "Enregistrer"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            disabled={savingDate}
+            style={{
+              padding: "7px 12px",
+              borderRadius: 8,
+              border: "0.5px solid var(--ls-border)",
+              background: "transparent",
+              color: "var(--ls-text-muted)",
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Annuler
+          </button>
+        </div>
+      ) : null}
 
       {/* Progress bar de cure */}
       <div style={{ marginBottom: 10 }}>

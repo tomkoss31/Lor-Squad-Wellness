@@ -41,9 +41,12 @@ interface RecipientRow {
   clicked_bilan_at: string | null;
   clicked_business_at: string | null;
   bounced_at: string | null;
+  // Fix 2026-06-01 : échec d'envoi synchrone (rate-limit 429, etc.) — distinct
+  // d'un vrai bounce. NULL = envoi accepté par Resend.
+  send_error: string | null;
 }
 
-type RecipientFilter = "all" | "opened" | "clicked" | "bounced" | "delivered_only";
+type RecipientFilter = "all" | "opened" | "clicked" | "bounced" | "delivered_only" | "send_error";
 
 export function AdminNewsletterStatsPage() {
   const { id } = useParams<{ id: string }>();
@@ -78,7 +81,7 @@ export function AdminNewsletterStatsPage() {
           .single(),
         sb
           .from("newsletter_recipients")
-          .select("id, recipient_type, email, sent_at, delivered_at, opened_at, clicked_bilan_at, clicked_business_at, bounced_at")
+          .select("id, recipient_type, email, sent_at, delivered_at, opened_at, clicked_bilan_at, clicked_business_at, bounced_at, send_error")
           .eq("newsletter_id", id)
           .order("sent_at", { ascending: false })
           .limit(1000),
@@ -107,7 +110,8 @@ export function AdminNewsletterStatsPage() {
     const clickedBusiness = recipients.filter((r) => r.clicked_business_at).length;
     const clicked = recipients.filter((r) => r.clicked_bilan_at || r.clicked_business_at).length;
     const bounced = recipients.filter((r) => r.bounced_at).length;
-    return { total, delivered, opened, clicked, clickedBilan, clickedBusiness, bounced };
+    const sendError = recipients.filter((r) => r.send_error).length;
+    return { total, delivered, opened, clicked, clickedBilan, clickedBusiness, bounced, sendError };
   }, [recipients]);
 
   const filtered = useMemo(() => {
@@ -118,6 +122,8 @@ export function AdminNewsletterStatsPage() {
         return recipients.filter((r) => r.clicked_bilan_at || r.clicked_business_at);
       case "bounced":
         return recipients.filter((r) => r.bounced_at);
+      case "send_error":
+        return recipients.filter((r) => r.send_error);
       case "delivered_only":
         return recipients.filter((r) => r.delivered_at && !r.opened_at && !r.bounced_at);
       default:
@@ -291,6 +297,11 @@ export function AdminNewsletterStatsPage() {
         <PillButton active={filter === "bounced"} onClick={() => setFilter("bounced")}>
           ⚠️ Bounces ({counts.bounced})
         </PillButton>
+        {counts.sendError > 0 && (
+          <PillButton active={filter === "send_error"} onClick={() => setFilter("send_error")}>
+            🚫 Erreurs d'envoi ({counts.sendError})
+          </PillButton>
+        )}
       </div>
 
       {/* ─── Liste destinataires ─── */}
@@ -484,6 +495,11 @@ function RecipientRow({ row }: { row: RecipientRow }) {
         <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
           {row.recipient_type === "client" ? "Client" : "Distri"} · envoyé {fmt(row.sent_at)}
         </div>
+        {row.send_error && (
+          <div style={{ fontSize: 10, color: "var(--ls-coral)", marginTop: 2, fontWeight: 600 }}>
+            🚫 Échec d'envoi : {row.send_error}
+          </div>
+        )}
       </div>
       <CellStatus done={!!row.delivered_at} label={fmt(row.delivered_at)} good="var(--ls-teal)" />
       <CellStatus done={!!row.opened_at} label={fmt(row.opened_at)} good="var(--ls-gold)" />

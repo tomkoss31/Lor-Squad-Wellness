@@ -1096,6 +1096,38 @@ export async function upsertSupabasePvClientProduct(product: PvClientProductReco
   return mapPvClientProduct(data);
 }
 
+/**
+ * Corrige la date de démarrage d'UN produit actif (fiche Suivi PV).
+ * Cas d'usage : erreur de saisie du délai de réception à la commande
+ * (ex: "aujourd'hui" au lieu de "+3 jours"). Cible la ligne par son id
+ * `pv_client_products.id` (= PvProductUsage.recordId), donc n'impacte que
+ * ce produit (contrairement à activateSupabaseClientProgram qui reset tout).
+ * @param recordId   pv_client_products.id
+ * @param startDateIso  YYYY-MM-DD
+ */
+export async function updateSupabasePvClientProductStartDate(
+  recordId: string,
+  startDateIso: string,
+): Promise<PvClientProductRecord> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("pv_client_products")
+    .update({ start_date: startDateIso })
+    .eq("id", recordId)
+    .select("*")
+    .single<PvClientProductRow>();
+
+  if (error || !data) {
+    const pvSetupError = getPvModuleSetupError(error);
+    if (pvSetupError) throw new Error(pvSetupError);
+    throw new Error(
+      error?.message ?? "Impossible de mettre à jour la date de démarrage du produit.",
+    );
+  }
+
+  return mapPvClientProduct(data);
+}
+
 export async function addSupabasePvTransaction(transaction: PvClientTransaction) {
   const client = await requireSupabase();
   const { data, error } = await client
