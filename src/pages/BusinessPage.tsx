@@ -168,11 +168,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Combien j'investis vraiment au démarrage ?",
-    a: "60 € pour le pack ambassadeur. C'est tout. Pas de minimum mensuel à acheter. Pas de stock à constituer. Pas de matériel de prospection à payer. Si tu veux investir dans tes propres produits (usage perso ou pour faire goûter), c'est optionnel et au prix partenaire (−25 à −50 %). Beaucoup démarrent avec 0 € d'investissement supplémentaire au-delà du pack.",
+    a: "61,21 € pour le pack ambassadeur. C'est tout. Pas de minimum mensuel à acheter. Pas de stock à constituer. Pas de matériel de prospection à payer. Si tu veux investir dans tes propres produits (usage perso ou pour faire goûter), c'est optionnel et au prix partenaire (−25 à −50 %). Beaucoup démarrent avec 0 € d'investissement supplémentaire au-delà du pack.",
   },
   {
     q: "Et si ça ne marche pas pour moi ?",
-    a: "Tu arrêtes, point. Pas d'engagement, pas de clause de non-concurrence, pas de pénalité. Le pack ambassadeur est remboursé intégralement les 30 premiers jours. Au-delà, tu peux mettre ton activité en pause autant que tu veux et la relancer plus tard. Aucun risque financier au-delà des 60 € initiaux.",
+    a: "Tu arrêtes, point. Pas d'engagement, pas de clause de non-concurrence, pas de pénalité. Le pack ambassadeur est remboursé intégralement les 30 premiers jours. Au-delà, tu peux mettre ton activité en pause autant que tu veux et la relancer plus tard. Aucun risque financier au-delà des 61,21 € initiaux.",
   },
   {
     q: "Quand je commence à gagner ?",
@@ -300,7 +300,7 @@ export function BusinessPage() {
     const meta = document.createElement("meta");
     meta.name = "description";
     meta.content =
-      "Découvre comment transformer ta consommation bien-être en revenu durable. Marque mondiale, modèle éprouvé, accompagnement complet. Démarrer coûte 60 €.";
+      "Découvre comment transformer ta consommation bien-être en revenu durable. Marque mondiale, modèle éprouvé, accompagnement complet. Démarrer coûte 61,21 €.";
     document.head.appendChild(meta);
     const jsonLd = document.createElement("script");
     jsonLd.type = "application/ld+json";
@@ -763,13 +763,13 @@ export function BusinessPage() {
           <div className="biz-container">
             <div className="biz-reveal" style={{textAlign:"center",maxWidth:680,margin:"0 auto"}}>
               <div className="biz-eyebrow">§ 03c · Pack ambassadeur</div>
-              <h3 className="biz-h3">Démarrer coûte 60 €. C'est tout.</h3>
+              <h3 className="biz-h3">Démarrer coûte 61,21 €. C'est tout.</h3>
               <p className="biz-section__lead" style={{marginLeft:"auto",marginRight:"auto"}}>Pas de stock à acheter. Pas d'engagement. Pas de minimum mensuel.</p>
             </div>
             <div className="biz-pack biz-reveal">
               <div className="biz-pack__price">
                 <div className="biz-pack__price-label">Pack ambassadeur</div>
-                <div className="biz-pack__amount">60<span>€</span></div>
+                <div className="biz-pack__amount">61,21<span>€</span></div>
                 <p className="biz-pack__note">TVA incluse · Livré sous 5 jours en France métropolitaine · Annulation possible 30 jours, remboursement intégral.</p>
               </div>
               <div>

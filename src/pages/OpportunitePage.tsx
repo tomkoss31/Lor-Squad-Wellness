@@ -394,7 +394,7 @@ export function OpportunitePage() {
             <div className="pack-visual reveal">
               <div className="pack-price">
                 <span className="label">Pack de démarrage</span>
-                <span className="num">60<sup>€</sup></span>
+                <span className="num">61,21<sup>€</sup></span>
               </div>
             </div>
             <ul className="pack-list reveal">
@@ -461,7 +461,7 @@ export function OpportunitePage() {
               ["Je peux arrêter quand je veux ?", "Oui, à tout moment, sans frais ni pénalité. Tu n'es pas salarié·e — tu es indépendant·e."],
               ["Faut-il stocker des produits ?", "Non. Les commandes sont expédiées directement depuis l'entrepôt à tes clients. Pas de garage à transformer en dépôt, pas de logistique à gérer."],
               ["C'est légal ?", "Oui. C'est de la vente directe, encadrée en France par la Fédération de la Vente Directe (FVD) et soumise au Code de la consommation. Tu factures, tu déclares, c'est carré."],
-              ["Et si ça ne marche pas pour moi ?", "Tu n'as perdu que 60€ et le temps que tu y as mis. Tu repars avec une formation, des outils, et une expérience entrepreneuriale concrète. On t'aura prévenu·e : la seule règle, c'est de démarrer."],
+              ["Et si ça ne marche pas pour moi ?", "Tu n'as perdu que 61,21€ et le temps que tu y as mis. Tu repars avec une formation, des outils, et une expérience entrepreneuriale concrète. On t'aura prévenu·e : la seule règle, c'est de démarrer."],
             ].map(([q, a], i) => {
               const isOpen = openFaq === i;
               return (
