@@ -71,7 +71,7 @@ const TOOLS: ToolDef[] = [
     emoji: "📄",
     title: "Plan prospect (PDF)",
     description:
-      "Document complet pour recrutement client : 5 paliers vulgarisés, cas concret 10 programmes, pack 60 €, FAQ. A4 portrait ~5 pages.",
+      "Document complet pour recrutement client : 5 paliers vulgarisés, cas concret 10 programmes, pack 61,21 €, FAQ. A4 portrait ~5 pages.",
     path: "/marketing-plan-prospect.html",
     isPrintable: true,
     accent: "violet",
