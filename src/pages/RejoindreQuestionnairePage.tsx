@@ -698,18 +698,6 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 10px 28px rgba(16,185,129,0.30)",
   },
   trustDone: { marginTop: 18, fontSize: 12.5, color: C.creamHint, textAlign: "center" },
-  recap: {
-    marginTop: 28,
-    textAlign: "left",
-    padding: "16px 18px",
-    borderRadius: 14,
-    border: `1px dashed ${C.hair}`,
-    background: "rgba(255,255,255,0.03)",
-  },
-  recapTitle: { fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: C.creamHint, fontWeight: 700, marginBottom: 10 },
-  recapRow: { display: "flex", justifyContent: "space-between", gap: 12, fontSize: 12.5, padding: "4px 0", borderBottom: `1px solid ${C.hair}` },
-  recapKey: { color: C.creamHint, fontFamily: "Sora, sans-serif" },
-  recapVal: { color: C.cream, fontWeight: 600, textAlign: "right" },
   slideIn: { animation: "rj-slide-in 0.32s cubic-bezier(0.4,0,0.2,1)" },
   slideInBack: { animation: "rj-slide-in-back 0.32s cubic-bezier(0.4,0,0.2,1)" },
 };
