@@ -198,7 +198,11 @@ serve(async (req) => {
         payload: {
           title: `🌅 ${dueCount} ${suivisLabel} à faire aujourd'hui`,
           body: "Ouvre l'app pour les envoyer en 2 clics.",
-          url: "/co-pilote",
+          // Destination = page dédiée Suivis du jour (2026-06-03). NB déploiement :
+          // ne `supabase functions deploy morning-suivis-digest` qu'APRÈS que la
+          // route /suivis-du-jour soit en prod (claude/focused-pike), sinon les
+          // users prod cliquent vers une route 404 (base Supabase partagée).
+          url: "/suivis-du-jour",
           type: "morning_digest",
         },
         dedupe: {
