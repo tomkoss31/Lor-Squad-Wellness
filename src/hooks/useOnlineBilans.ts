@@ -70,6 +70,11 @@ interface UseOnlineBilansResult {
   updateStatus: (id: string, status: LeadStatus) => Promise<void>;
   updateNotes: (id: string, notes: string) => Promise<void>;
   deleteBilan: (id: string) => Promise<void>;
+  /** Chantier #3 (2026-06-03) : marque un lead converti en fiche client.
+   *  Renseigne converted_to_client_id + converted_at + lead_status='qualified'
+   *  + clôt la relance. La création de la fiche elle-même se fait via
+   *  AppContext.createClientWithInitialAssessment (côté LeadConvertModal). */
+  convertLead: (id: string, clientId: string) => Promise<void>;
 }
 
 export function useOnlineBilans(): UseOnlineBilansResult {
@@ -163,5 +168,28 @@ export function useOnlineBilans(): UseOnlineBilansResult {
     setBilans((prev) => prev.filter((b) => b.id !== id));
   }, []);
 
-  return { bilans, loading, error, refetch: fetchAll, updateStatus, updateNotes, deleteBilan };
+  const convertLead = useCallback(async (id: string, clientId: string) => {
+    const sb = await getSupabaseClient();
+    if (!sb) throw new Error("Supabase indisponible");
+    const now = new Date().toISOString();
+    const patch: Record<string, unknown> = {
+      converted_to_client_id: clientId,
+      converted_at: now,
+      lead_status: "qualified" as LeadStatus,
+      // La conversion clôt aussi toute relance en attente.
+      relance_done_at: now,
+    };
+    const { error: err } = await sb
+      .from("online_bilans")
+      .update(patch)
+      .eq("id", id);
+    if (err) throw err;
+    setBilans((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, ...(patch as Partial<OnlineBilanRow>) } : b,
+      ),
+    );
+  }, []);
+
+  return { bilans, loading, error, refetch: fetchAll, updateStatus, updateNotes, deleteBilan, convertLead };
 }

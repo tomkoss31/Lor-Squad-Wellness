@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LEAD_STATUS_LABELS,
   LEAD_STATUS_ORDER,
@@ -14,6 +15,7 @@ import {
   type OnlineBilanRow,
 } from "../../hooks/useOnlineBilans";
 import { LeadResponsePanel } from "./LeadResponsePanel";
+import { LeadConvertModal } from "./LeadConvertModal";
 import { useAppContext } from "../../context/AppContext";
 
 interface Props {
@@ -23,6 +25,8 @@ interface Props {
   onNotesChange: (notes: string) => Promise<void>;
   onRefresh: () => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Chantier #3 (2026-06-03) : marque le lead converti en fiche client. */
+  onConverted?: (clientId: string) => Promise<void>;
 }
 
 const OBJECTIVE_LABELS: Record<string, string> = {
@@ -117,11 +121,14 @@ const CONTACT_PREF_LABELS: Record<string, string> = {
   whatsapp: "💬 WhatsApp",
 };
 
-export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete }: Props) {
+export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete, onConverted }: Props) {
   const { currentUser } = useAppContext();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState(bilan.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
+  const isConverted = Boolean(bilan.converted_to_client_id);
   const coachFirstName = (currentUser?.name ?? "").trim().split(/\s+/)[0] ?? "";
   const isAdmin = currentUser?.role === "admin";
 
@@ -196,6 +203,7 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
   const hasV2Finalize = !!finalize.sport_frequency || !!finalize.contact_pref;
 
   return (
+    <>
     <div
       className="ldm-backdrop"
       role="dialog"
@@ -257,6 +265,27 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
               <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>
             ))}
           </select>
+        </div>
+
+        {/* Chantier #3 (2026-06-03) : conversion lead → fiche client */}
+        <div className="ldm-convert-row">
+          {isConverted ? (
+            <button
+              type="button"
+              className="ldm-convert-btn ldm-convert-done"
+              onClick={() => navigate(`/clients/${bilan.converted_to_client_id}`)}
+            >
+              ✅ Fiche créée — Ouvrir la fiche →
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ldm-convert-btn"
+              onClick={() => setShowConvert(true)}
+            >
+              ✅ Valider le bilan → créer la fiche client
+            </button>
+          )}
         </div>
 
         <Section title="Objectifs">
@@ -492,6 +521,15 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
         )}
       </div>
     </div>
+
+    {showConvert && onConverted && (
+      <LeadConvertModal
+        bilan={bilan}
+        onClose={() => setShowConvert(false)}
+        onConverted={onConverted}
+      />
+    )}
+    </>
   );
 }
 
@@ -635,6 +673,31 @@ const STYLES = `
     font-size: 14px;
     font-family: inherit;
   }
+
+  .ldm-convert-row { margin: 0 0 18px; }
+  .ldm-convert-btn {
+    width: 100%;
+    padding: 13px 16px;
+    border: none;
+    border-radius: 11px;
+    background: var(--ls-gold, #C9A84C);
+    color: var(--ls-gold-contrast, #0B0D11);
+    font-family: 'Syne', 'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ldm-convert-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(201, 168, 76, 0.30);
+  }
+  .ldm-convert-done {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .ldm-convert-done:hover { box-shadow: 0 6px 16px rgba(16, 185, 129, 0.20); }
 
   .ldm-section { margin-bottom: 16px; }
   .ldm-section-title {
