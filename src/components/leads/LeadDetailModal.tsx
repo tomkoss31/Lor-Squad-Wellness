@@ -317,9 +317,12 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
           )}
         </Section>
 
-        {bilan.height_cm != null && (
+        {(bilan.height_cm != null || bilan.current_weight_kg != null) && (
           <Section title="Profil">
-            <p className="ldm-line">Taille : {bilan.height_cm} cm</p>
+            {bilan.height_cm != null && <p className="ldm-line">Taille : {bilan.height_cm} cm</p>}
+            {bilan.current_weight_kg != null && (
+              <p className="ldm-line">Poids actuel : {bilan.current_weight_kg} kg</p>
+            )}
           </Section>
         )}
 

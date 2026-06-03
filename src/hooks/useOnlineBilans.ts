@@ -48,6 +48,7 @@ export interface OnlineBilanRow {
   email: string | null;
   objectives: string[];
   weight_loss_target_kg: number | null;
+  current_weight_kg: number | null;
   motivation_score: number | null;
   payload: Record<string, unknown>;
   lead_status: LeadStatus;

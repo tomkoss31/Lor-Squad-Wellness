@@ -90,6 +90,7 @@ interface SubmitBody {
   email?: string | null;
   objectives?: string[];
   weight_loss_target_kg?: number | null;
+  current_weight_kg?: number | null;
   motivation_score?: number | null;
   payload?: Record<string, unknown>;
   consent?: boolean;
@@ -169,6 +170,13 @@ serve(async (req) => {
     return json({ success: false, error: "Score motivation invalide." }, 400);
   }
 
+  // Poids actuel optionnel (chantier poids 2026-06-03). Jamais bloquant côté
+  // public : on valide la plage seulement s'il est fourni.
+  const currentWeightKg = body.current_weight_kg != null ? Number(body.current_weight_kg) : null;
+  if (currentWeightKg != null && (!Number.isFinite(currentWeightKg) || currentWeightKg < 20 || currentWeightKg > 400)) {
+    return json({ success: false, error: "Poids actuel invalide." }, 400);
+  }
+
   const city = (body.city ?? "").trim() || null;
 
   // V2 (2026-05-27) : phone et email — colonnes first-class.
@@ -237,6 +245,7 @@ serve(async (req) => {
         email,
         objectives,
         weight_loss_target_kg: weightLossKg,
+        current_weight_kg: currentWeightKg,
         motivation_score: motivation,
         payload: body.payload ?? {},
         user_agent: userAgent,

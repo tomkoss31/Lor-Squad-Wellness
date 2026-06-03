@@ -55,7 +55,12 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
   const [objective, setObjective] = useState<Objective>(
     () => mapOnlineObjective(bilan.objectives),
   );
-  const [weightStr, setWeightStr] = useState("");
+  // Pré-rempli depuis le poids éventuellement saisi dans le bilan online
+  // (chantier poids 2026-06-03). Sinon vide → le coach le saisit ou le client
+  // renseignera son point de départ (poids ou mensurations) dans l'app.
+  const [weightStr, setWeightStr] = useState(
+    bilan.current_weight_kg != null ? String(bilan.current_weight_kg) : "",
+  );
   const [programTitle, setProgramTitle] = useState("");
   const [startsImmediately, setStartsImmediately] = useState(false);
   const [notes, setNotes] = useState(bilan.notes ?? "");
