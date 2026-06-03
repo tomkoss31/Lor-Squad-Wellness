@@ -16,6 +16,7 @@ import {
 } from "../../hooks/useOnlineBilans";
 import { LeadResponsePanel } from "./LeadResponsePanel";
 import { LeadConvertModal } from "./LeadConvertModal";
+import { LeadScheduleModal } from "./LeadScheduleModal";
 import { useAppContext } from "../../context/AppContext";
 
 interface Props {
@@ -128,6 +129,7 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
   const isConverted = Boolean(bilan.converted_to_client_id);
   const coachFirstName = (currentUser?.name ?? "").trim().split(/\s+/)[0] ?? "";
   const isAdmin = currentUser?.role === "admin";
@@ -278,13 +280,22 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
               ✅ Fiche créée — Ouvrir la fiche →
             </button>
           ) : (
-            <button
-              type="button"
-              className="ldm-convert-btn"
-              onClick={() => setShowConvert(true)}
-            >
-              ✅ Valider le bilan → créer la fiche client
-            </button>
+            <>
+              <button
+                type="button"
+                className="ldm-convert-btn"
+                onClick={() => setShowConvert(true)}
+              >
+                ✅ Valider le bilan → créer la fiche client
+              </button>
+              <button
+                type="button"
+                className="ldm-schedule-btn"
+                onClick={() => setShowSchedule(true)}
+              >
+                📅 Programmer un RDV
+              </button>
+            </>
           )}
         </div>
 
@@ -529,6 +540,19 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
         onConverted={onConverted}
       />
     )}
+
+    {showSchedule && (
+      <LeadScheduleModal
+        bilan={bilan}
+        onClose={() => setShowSchedule(false)}
+        onScheduled={async () => {
+          // Programmer un RDV implique un contact → bump new → contact.
+          if (bilan.lead_status === "new") {
+            await onStatusChange("contact");
+          }
+        }}
+      />
+    )}
     </>
   );
 }
@@ -674,7 +698,21 @@ const STYLES = `
     font-family: inherit;
   }
 
-  .ldm-convert-row { margin: 0 0 18px; }
+  .ldm-convert-row { margin: 0 0 18px; display: flex; flex-direction: column; gap: 8px; }
+  .ldm-schedule-btn {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid rgba(45, 212, 191, 0.40);
+    border-radius: 11px;
+    background: rgba(45, 212, 191, 0.08);
+    color: #0D9488;
+    font-family: 'Syne', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .ldm-schedule-btn:hover { background: rgba(45, 212, 191, 0.16); }
   .ldm-convert-btn {
     width: 100%;
     padding: 13px 16px;
