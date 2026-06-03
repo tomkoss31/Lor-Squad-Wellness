@@ -104,9 +104,15 @@ export function evaluateProtocolEligibility(
     reasons.push("no_program");
   }
 
-  // Filtre 4 : Body scan avec poids valide
+  // Filtre 4 : point de départ = poids mesuré OU mensurations de départ
+  // (chantier poids couche 3, 2026-06-03). Le suivi = des points de contact,
+  // pas une pesée → des mensurations de départ suffisent comme repère. Évite
+  // d'exclure les clients "mensurations seules" (qui ont choisi la balance ou
+  // le mètre à l'onboarding app client).
   const weight = initialAssessment.bodyScan?.weight;
-  if (typeof weight !== "number" || Number.isNaN(weight) || weight <= 0) {
+  const hasWeight = typeof weight === "number" && !Number.isNaN(weight) && weight > 0;
+  const hasMeasurements = client.onboardingChecks?.measurements === true;
+  if (!hasWeight && !hasMeasurements) {
     reasons.push("no_body_scan");
   }
 
@@ -127,7 +133,7 @@ export function labelForIneligibilityReason(reason: ProtocolIneligibilityReason)
     case "no_program":
       return "Pas de programme nutrition assigné";
     case "no_body_scan":
-      return "Pas de body scan avec poids mesuré";
+      return "Pas de point de départ (ni poids mesuré ni mensurations)";
   }
 }
 

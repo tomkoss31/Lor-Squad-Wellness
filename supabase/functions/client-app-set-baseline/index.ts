@@ -112,6 +112,26 @@ serve(async (req) => {
       }
     }
 
+    // ─── Mode measurements : coche onboarding_checks.measurements ───────────
+    // Rend le client éligible au protocole de suivi côté coach (couche 3),
+    // même sans poids. Best-effort (préserve telegram / photo_before).
+    if (mode === "measurements") {
+      try {
+        const { data: c } = await sb
+          .from("clients")
+          .select("onboarding_checks")
+          .eq("id", clientId)
+          .maybeSingle();
+        const checks = {
+          ...((c?.onboarding_checks as Record<string, unknown>) ?? {}),
+          measurements: true,
+        };
+        await sb.from("clients").update({ onboarding_checks: checks }).eq("id", clientId);
+      } catch (e) {
+        console.warn("[set-baseline] measurements flag skipped:", e);
+      }
+    }
+
     // ─── Stamp baseline_at (tous modes) ─────────────────────────────────────
     const nowIso = new Date().toISOString();
     const { error: stampErr } = await sb
