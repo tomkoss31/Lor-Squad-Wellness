@@ -15,6 +15,9 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { getSupabaseClient } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
+import { scoreOpportunityLead, type OpportunityScore } from "../lib/opportunityLeadScore";
 
 const C = {
   emerald: "#10B981",
@@ -272,7 +275,51 @@ export function RejoindreQuestionnairePage() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
-  const [done, setDone] = useState(false);
+  const [phase, setPhase] = useState<"form" | "submitting" | "done" | "error">("form");
+  const [result, setResult] = useState<OpportunityScore | null>(null);
+  const [submitError, setSubmitError] = useState("");
+
+  // Submit → scoring + écriture prospect_leads (via metadata, pas de migration).
+  async function submitLead() {
+    setPhase("submitting");
+    setSubmitError("");
+    const sc = scoreOpportunityLead(answers);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const ref = searchParams.get("ref") || undefined;
+      const { data, error } = await sb.functions.invoke("submit-prospect-lead", {
+        body: {
+          first_name: (answers.firstName || "").trim(),
+          phone: (answers.phone || "").trim(),
+          city: (answers.city || "").trim() || undefined,
+          source: "rejoindre-funnel",
+          coach_slug: coachSlug || undefined,
+          referrer_user_id: ref,
+          referral_source: answers.source,
+          consent_recontact: true,
+          metadata: {
+            funnel: "opportunite-gated",
+            profile: sc.profile,
+            score: sc.score,
+            temperature: sc.temperature,
+            email: (answers.email || "").trim(),
+            last_name: (answers.lastName || "").trim(),
+            answers,
+          },
+        },
+      });
+      if (error || !data?.success) {
+        const raw = await extractFunctionError(data, error, "Erreur inconnue.");
+        throw new Error(raw === "rate_limited" ? "Trop de tentatives, réessaie dans 1h." : raw);
+      }
+      setResult(sc);
+      setPhase("done");
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Erreur inconnue.");
+      setPhase("error");
+    }
+  }
 
   // Steps visibles selon les branches (recalculé à chaque réponse)
   const visibleSteps = useMemo(() => STEPS.filter((s) => !s.when || s.when(answers)), [answers]);
@@ -314,8 +361,7 @@ export function RejoindreQuestionnairePage() {
   function goNext() {
     if (!canAdvance) return;
     if (idx >= total - 1) {
-      // ÉTAPE 2 : pas d'écriture DB encore → écran récap stub.
-      setDone(true);
+      void submitLead();
       return;
     }
     setDir(1);
@@ -337,7 +383,7 @@ export function RejoindreQuestionnairePage() {
   function pickChoice(id: string, value: string) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
     if (idx >= total - 1) {
-      setDone(true);
+      void submitLead();
       return;
     }
     setDir(1);
@@ -345,30 +391,76 @@ export function RejoindreQuestionnairePage() {
     window.setTimeout(() => setIdx((i) => i + 1), 180);
   }
 
-  if (done) {
+  if (phase === "submitting") {
     return (
       <div style={styles.page}>
         <style>{KEYFRAMES}</style>
         <div aria-hidden="true" style={styles.glowTop} />
-        <div style={{ ...styles.container, textAlign: "center" }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }} className="rj-pop">🎉</div>
-          <h1 style={styles.h1}>
-            Merci {firstName} !
-          </h1>
-          <p style={styles.lead}>
-            On a bien reçu tes réponses. La <span style={styles.grad}>suite</span> (ton accès
-            débloqué + ton plan personnalisé selon ton profil, et la prise de RDV) arrive à
-            l'étape suivante du chantier.
-          </p>
-          <div style={styles.recap}>
-            <div style={styles.recapTitle}>Récap (debug étape 2)</div>
-            {Object.entries(answers).map(([k, v]) => (
-              <div key={k} style={styles.recapRow}>
-                <span style={styles.recapKey}>{k}</span>
-                <span style={styles.recapVal}>{v}</span>
-              </div>
-            ))}
-          </div>
+        <div style={{ ...styles.container, textAlign: "center", paddingTop: 120 }}>
+          <div style={{ fontSize: 44, marginBottom: 16 }} className="rj-pop">⏳</div>
+          <h1 style={styles.h1}>On enregistre tes réponses…</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "error") {
+    return (
+      <div style={styles.page}>
+        <style>{KEYFRAMES}</style>
+        <div aria-hidden="true" style={styles.glowTop} />
+        <div style={{ ...styles.container, textAlign: "center", paddingTop: 90 }}>
+          <div style={{ fontSize: 44, marginBottom: 16 }}>😕</div>
+          <h1 style={{ ...styles.h1, fontSize: "clamp(24px,6vw,32px)" }}>Oups, ça a coincé</h1>
+          <p style={styles.lead}>{submitError}</p>
+          <button type="button" onClick={() => void submitLead()} style={styles.cta}>
+            Réessayer →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "done") {
+    const ref = searchParams.get("ref");
+    const businessUrl = `/business${ref ? `?ref=${ref}` : ""}`;
+    const profile = result?.profile;
+    const after =
+      profile === "career_change"
+        ? {
+            emoji: "🚀",
+            title: `Ton profil nous intéresse, ${firstName}.`,
+            text: "Vu tes réponses, un coach va te rappeler en priorité pour caler un échange en visio. En attendant, découvre l'opportunité en détail.",
+            ctaLabel: "Découvrir l'opportunité →",
+            href: businessUrl,
+          }
+        : profile === "side_income"
+          ? {
+              emoji: "💸",
+              title: `C'est noté, ${firstName} !`,
+              text: "Voici de quoi te projeter : calcule concrètement ce qu'un complément de revenu pourrait te rapporter avec le simulateur.",
+              ctaLabel: "Calculer mon plan →",
+              href: `${businessUrl}${ref ? "&" : "?"}sim=1#simulateur`,
+            }
+          : {
+              emoji: "🔍",
+              title: `Merci ${firstName} !`,
+              text: "Découvre l'opportunité complète à ton rythme — les 3 façons d'en vivre, les paliers, les témoignages. Et quand tu veux, on échange.",
+              ctaLabel: "Découvrir à mon rythme →",
+              href: businessUrl,
+            };
+    return (
+      <div style={styles.page}>
+        <style>{KEYFRAMES}</style>
+        <div aria-hidden="true" style={styles.glowTop} />
+        <div style={{ ...styles.container, textAlign: "center", paddingTop: 64 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }} className="rj-pop">{after.emoji}</div>
+          <h1 style={styles.h1}>{after.title}</h1>
+          <p style={styles.lead}>{after.text}</p>
+          <button type="button" onClick={() => navigate(after.href)} style={styles.cta}>
+            {after.ctaLabel}
+          </button>
+          <div style={styles.trustDone}>✓ On a bien reçu tes infos · ✓ On revient vers toi vite</div>
         </div>
       </div>
     );
@@ -605,6 +697,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
     boxShadow: "0 10px 28px rgba(16,185,129,0.30)",
   },
+  trustDone: { marginTop: 18, fontSize: 12.5, color: C.creamHint, textAlign: "center" },
   recap: {
     marginTop: 28,
     textAlign: "left",

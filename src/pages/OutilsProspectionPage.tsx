@@ -42,6 +42,17 @@ interface ToolDef {
 const TOOLS: ToolDef[] = [
   // ─── Liens à partager (pages React) ───────────────────────────────────────
   {
+    id: "rejoindre",
+    category: "link",
+    emoji: "🚪",
+    title: "Funnel Opportunité (gated)",
+    description:
+      "La porte qualifiante : questionnaire de pré-qualif → lead scoré (profil + température) dans tes Leads. À partager en priorité, capture les infos AVANT de montrer l'opportunité.",
+    path: "/rejoindre",
+    accent: "violet",
+    usage: "Ton lien principal à partager (Insta, WhatsApp, bio)",
+  },
+  {
     id: "opportunite",
     category: "link",
     emoji: "🎯",
