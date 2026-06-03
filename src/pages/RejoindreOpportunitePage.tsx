@@ -214,6 +214,9 @@ const styles: Record<string, React.CSSProperties> = {
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     color: "transparent",
+    // Fix clip italique (le "360" rogné à droite).
+    display: "inline-block",
+    paddingRight: "0.12em",
   },
   brandSub: { fontSize: 13, color: C.creamHint, fontWeight: 500 },
   eyebrow: {
