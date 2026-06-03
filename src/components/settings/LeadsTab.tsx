@@ -77,7 +77,12 @@ export function LeadsTab() {
   const { push: pushToast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<LeadStatus | "all">("all");
+  const [filter, setFilter] = useState<LeadStatus | "all">(() => {
+    // Pré-filtre depuis l'URL (?status=new|contacted|converted|lost),
+    // utilisé par les raccourcis cliquables de la carte stats prospection.
+    const s = new URLSearchParams(window.location.search).get("status");
+    return s === "new" || s === "contacted" || s === "converted" || s === "lost" ? s : "all";
+  });
   const [search, setSearch] = useState("");
   const [scheduleLead, setScheduleLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);

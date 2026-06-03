@@ -129,6 +129,13 @@ export function ReferrerStatsCard() {
   const conversionPct =
     stats.leads_total > 0 ? Math.round((stats.leads_converted / stats.leads_total) * 100) : 0;
 
+  // Les cellules ne sont cliquables que pour les admins : la gestion des leads
+  // (/parametres?tab=leads) est réservée aux admins. Pour les autres, stats
+  // en lecture seule.
+  const isAdmin = currentUser?.role === "admin";
+  const leadsHref = (status?: string) =>
+    isAdmin ? `/parametres?tab=leads${status ? `&status=${status}` : ""}` : undefined;
+
   return (
     <div
       style={{
@@ -139,6 +146,11 @@ export function ReferrerStatsCard() {
         border: "0.5px solid color-mix(in srgb, #10B981 30%, var(--ls-border))",
       }}
     >
+      <style>{`
+        .rsc-statcell-link { transition: border-color .15s, box-shadow .15s, transform .1s; }
+        .rsc-statcell-link:hover { border-color: color-mix(in srgb, #10B981 55%, var(--ls-border)); box-shadow: 0 4px 12px rgba(16,185,129,0.18); transform: translateY(-1px); }
+        .rsc-statcell-link:active { transform: translateY(0); }
+      `}</style>
       <div
         style={{
           display: "flex",
@@ -205,10 +217,10 @@ export function ReferrerStatsCard() {
           marginBottom: 12,
         }}
       >
-        <StatCell label="Total" value={stats.leads_total} color="#0F172A" big />
-        <StatCell label="Nouveaux" value={stats.leads_new} color="#10B981" />
-        <StatCell label="Contactés" value={stats.leads_contacted} color="#06B6D4" />
-        <StatCell label="Convertis" value={stats.leads_converted} color="#8B5CF6" />
+        <StatCell label="Total" value={stats.leads_total} color="#0F172A" big to={leadsHref()} />
+        <StatCell label="Nouveaux" value={stats.leads_new} color="#10B981" to={leadsHref("new")} />
+        <StatCell label="Contactés" value={stats.leads_contacted} color="#06B6D4" to={leadsHref("contacted")} />
+        <StatCell label="Convertis" value={stats.leads_converted} color="#8B5CF6" to={leadsHref("converted")} />
       </div>
 
       <div
@@ -253,22 +265,25 @@ function StatCell({
   value,
   color,
   big,
+  to,
 }: {
   label: string;
   value: number;
   color: string;
   big?: boolean;
+  to?: string;
 }) {
-  return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "8px 6px",
-        borderRadius: 10,
-        background: "var(--ls-surface)",
-        border: "0.5px solid var(--ls-border)",
-      }}
-    >
+  const baseStyle: React.CSSProperties = {
+    display: "block",
+    textAlign: "center",
+    padding: "8px 6px",
+    borderRadius: 10,
+    background: "var(--ls-surface)",
+    border: "0.5px solid var(--ls-border)",
+    textDecoration: "none",
+  };
+  const inner = (
+    <>
       <div
         style={{
           fontFamily: "Sora, sans-serif",
@@ -293,6 +308,15 @@ function StatCell({
       >
         {label}
       </div>
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link to={to} className="rsc-statcell-link" style={{ ...baseStyle, cursor: "pointer" }} aria-label={`Voir les leads — ${label}`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div style={baseStyle}>{inner}</div>;
 }
