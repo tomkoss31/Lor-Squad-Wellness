@@ -25,6 +25,7 @@ import {
   mapOnlineObjective,
   objectiveLabel,
 } from "../../lib/leadConversion";
+import { ClientAccessModal } from "../client/ClientAccessModal";
 
 interface Props {
   bilan: OnlineBilanRow;
@@ -60,6 +61,7 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
   const [notes, setNotes] = useState(bilan.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
+  const [showAccess, setShowAccess] = useState(false);
 
   // Distributeur : le coach assigné au lead, sinon celui qui convertit.
   const distributorId =
@@ -178,10 +180,27 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
               >
                 Ouvrir la fiche →
               </button>
+              <button
+                type="button"
+                className="lcm-secondary"
+                onClick={() => setShowAccess(true)}
+              >
+                📲 Partager l'app client
+              </button>
               <button type="button" className="lcm-ghost" onClick={onClose}>
                 Retour aux leads
               </button>
             </div>
+
+            <ClientAccessModal
+              open={showAccess}
+              onClose={() => setShowAccess(false)}
+              clientId={createdClientId}
+              clientFirstName={bilan.first_name}
+              clientLastName={lastName.trim()}
+              clientPhone={bilan.phone}
+              clientEmail={bilan.email}
+            />
           </div>
         ) : (
           // ─── Formulaire sandbox ────────────────────────────────────────
@@ -402,6 +421,13 @@ const STYLES = `
     transition: opacity 0.15s ease;
   }
   .lcm-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .lcm-secondary {
+    padding: 12px 18px; border-radius: 11px;
+    border: 1px solid rgba(45,212,191,0.40); background: rgba(45,212,191,0.08);
+    color: var(--ls-teal, #0D9488); font-family: 'Syne', sans-serif;
+    font-size: 13.5px; font-weight: 700; cursor: pointer;
+  }
+  .lcm-secondary:hover { background: rgba(45,212,191,0.16); }
   .lcm-ghost {
     padding: 12px 18px; border: 1px solid var(--ls-border, #E5E7EB); border-radius: 11px;
     background: transparent; color: var(--ls-text-muted, #6B7280);
