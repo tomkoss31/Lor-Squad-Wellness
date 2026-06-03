@@ -667,6 +667,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.18,
     letterSpacing: "-0.02em",
     margin: "0 0 10px",
+    color: C.cream,
   },
   grad: {
     fontStyle: "italic",
@@ -747,6 +748,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.2,
     letterSpacing: "-0.02em",
     margin: "0 0 12px",
+    color: C.cream,
   },
   evalSectionTitle: {
     fontSize: 12,
