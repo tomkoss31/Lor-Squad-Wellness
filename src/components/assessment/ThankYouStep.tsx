@@ -17,8 +17,10 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import "./ThankYouStep.css";
 
-// TODO Thomas : remplacer par lien officiel Google Reviews La Base Verdun
-const GOOGLE_REVIEW_URL = "https://g.page/r/REMPLACE_MOI/review";
+// Lien officiel de sollicitation d'avis Google (La Base Verdun) — fourni par
+// Thomas le 2026-06-03. Ouvre directement le formulaire d'avis sur la fiche.
+const GOOGLE_REVIEW_URL =
+  "https://www.google.com/maps/place//data=!4m3!3m2!1s0x47eb1d44e38c23ab:0x685b5b72dd6c5ae2!12e1?source=g.page.m._&laa=merchant-review-solicitation";
 
 interface Props {
   clientFirstName: string;
