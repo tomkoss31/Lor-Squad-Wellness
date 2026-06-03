@@ -423,7 +423,10 @@ export function RejoindreQuestionnairePage() {
 
   if (phase === "done") {
     const ref = searchParams.get("ref");
-    const businessUrl = `/business${ref ? `?ref=${ref}` : ""}`;
+    const bizParams = new URLSearchParams();
+    if (ref) bizParams.set("ref", ref);
+    bizParams.set("from", "funnel"); // → /business remplace le form §07 par un remerciement
+    const businessUrl = `/business?${bizParams.toString()}`;
     const profile = result?.profile;
     const after =
       profile === "career_change"
@@ -440,7 +443,7 @@ export function RejoindreQuestionnairePage() {
               title: `C'est noté, ${firstName} !`,
               text: "Voici de quoi te projeter : calcule concrètement ce qu'un complément de revenu pourrait te rapporter avec le simulateur.",
               ctaLabel: "Calculer mon plan →",
-              href: `${businessUrl}${ref ? "&" : "?"}sim=1#simulateur`,
+              href: `${businessUrl}#simulateur`,
             }
           : {
               emoji: "🔍",
