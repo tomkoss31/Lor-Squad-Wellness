@@ -201,6 +201,10 @@ export function BusinessPage() {
   const [params] = useSearchParams();
   const referrerId = params.get("ref");
   const wantsLeadCapture = params.get("leadcapture") === "1";
+  // Funnel Opportunité gated (2026-06) : si on arrive du funnel /rejoindre, le
+  // prospect a DÉJÀ laissé ses infos → on remplace le form §07 (doublon) par un
+  // remerciement. Visiteur direct/froid = garde le formulaire de capture.
+  const fromFunnel = params.get("from") === "funnel";
 
   // ─── Avatars §05 (fondateurs + partenaires) via RPC publiques ─────────────
   const [foundersAvatars, setFoundersAvatars] = useState<{
@@ -1126,6 +1130,39 @@ export function BusinessPage() {
         <section ref={contactRef} className="biz-section biz-section--ink biz-cta" id="contact">
           <div className="biz-container">
             <div className="biz-cta__inner biz-reveal">
+              {fromFunnel ? (
+                <>
+                  <div className="biz-eyebrow biz-eyebrow--on-dark">§ 07 · Merci</div>
+                  <h3 className="biz-cta__title">C'est noté 🎉</h3>
+                  <p className="biz-cta__sub">
+                    On a bien reçu tes réponses. Ton coach te recontacte <strong>sous 48 h</strong> pour
+                    un échange simple, sans pression. D'ici là, prépare tes questions — tu pourras tout
+                    lui demander à l'appel 📞
+                  </p>
+                  <div
+                    style={{
+                      marginTop: 22,
+                      padding: "18px 20px",
+                      borderRadius: 16,
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      maxWidth: 460,
+                      marginLeft: "auto",
+                      marginRight: "auto",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
+                      💬 Tu as une question avant l'appel ?
+                    </div>
+                    <div style={{ fontSize: 13.5, color: "rgba(255,255,255,0.7)", lineHeight: 1.55 }}>
+                      Note-la quelque part, ou explore l'opportunité ci-dessus à ton rythme.
+                      Ton coach revient vers toi très vite.
+                    </div>
+                  </div>
+                </>
+              ) : (
+              <>
               <div className="biz-eyebrow biz-eyebrow--on-dark">§ 07 · On en parle</div>
               <h3 className="biz-cta__title">On en parle ?</h3>
               <p className="biz-cta__sub">Réponse sous 48 h, sans pression. Pas de présentation d'une heure — juste un échange humain.</p>
@@ -1185,6 +1222,8 @@ export function BusinessPage() {
                   <p>Tu seras contacté·e par un partenaire de l'équipe.</p>
                 </div>
               </form>
+              </>
+              )}
             </div>
           </div>
         </section>
