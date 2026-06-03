@@ -149,39 +149,6 @@ export function RejoindreOpportunitePage() {
   );
 }
 
-// ─── Placeholder questionnaire (étape 2 à venir) ────────────────────────────
-export function RejoindreQuestionnairePage() {
-  const navigate = useNavigate();
-  const { coachSlug } = useParams<{ coachSlug?: string }>();
-  const [searchParams] = useSearchParams();
-
-  function back() {
-    const qs = searchParams.toString();
-    const base = coachSlug ? `/rejoindre/${coachSlug}` : "/rejoindre";
-    navigate(qs ? `${base}?${qs}` : base);
-  }
-
-  return (
-    <div style={styles.page}>
-      <style>{KEYFRAMES}</style>
-      <div aria-hidden="true" style={styles.glowTop} />
-      <div style={{ ...styles.container, textAlign: "center" }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>🚧</div>
-        <h1 style={{ ...styles.h1, fontSize: "clamp(26px, 6vw, 36px)" }}>
-          Le <span style={styles.grad}>questionnaire</span> arrive
-        </h1>
-        <p style={styles.lead}>
-          Étape 2 du chantier — le questionnaire rebondissant (identité, profil,
-          dispo, réseau…) sera branché ici très vite.
-        </p>
-        <button type="button" onClick={back} style={{ ...styles.cta, marginTop: 12 }}>
-          ← Retour
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Données teaser ─────────────────────────────────────────────────────────
 const TEASER_CARDS = [
   { emoji: "💸", title: "Trois façons d'en vivre", desc: "Consommer, recommander, construire — tu choisis." },

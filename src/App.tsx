@@ -177,7 +177,7 @@ const RejoindreOpportunitePage = lazy(() =>
   })),
 );
 const RejoindreQuestionnairePage = lazy(() =>
-  import("./pages/RejoindreOpportunitePage").then((module) => ({
+  import("./pages/RejoindreQuestionnairePage").then((module) => ({
     default: module.RejoindreQuestionnairePage,
   })),
 );
