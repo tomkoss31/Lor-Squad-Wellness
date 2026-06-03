@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LEAD_STATUS_LABELS,
   LEAD_STATUS_ORDER,
@@ -14,6 +15,8 @@ import {
   type OnlineBilanRow,
 } from "../../hooks/useOnlineBilans";
 import { LeadResponsePanel } from "./LeadResponsePanel";
+import { LeadConvertModal } from "./LeadConvertModal";
+import { LeadScheduleModal } from "./LeadScheduleModal";
 import { useAppContext } from "../../context/AppContext";
 
 interface Props {
@@ -23,6 +26,8 @@ interface Props {
   onNotesChange: (notes: string) => Promise<void>;
   onRefresh: () => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Chantier #3 (2026-06-03) : marque le lead converti en fiche client. */
+  onConverted?: (clientId: string) => Promise<void>;
 }
 
 const OBJECTIVE_LABELS: Record<string, string> = {
@@ -117,11 +122,15 @@ const CONTACT_PREF_LABELS: Record<string, string> = {
   whatsapp: "💬 WhatsApp",
 };
 
-export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete }: Props) {
+export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange, onDelete, onConverted }: Props) {
   const { currentUser } = useAppContext();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState(bilan.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const isConverted = Boolean(bilan.converted_to_client_id);
   const coachFirstName = (currentUser?.name ?? "").trim().split(/\s+/)[0] ?? "";
   const isAdmin = currentUser?.role === "admin";
 
@@ -196,6 +205,7 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
   const hasV2Finalize = !!finalize.sport_frequency || !!finalize.contact_pref;
 
   return (
+    <>
     <div
       className="ldm-backdrop"
       role="dialog"
@@ -259,6 +269,36 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
           </select>
         </div>
 
+        {/* Chantier #3 (2026-06-03) : conversion lead → fiche client */}
+        <div className="ldm-convert-row">
+          {isConverted ? (
+            <button
+              type="button"
+              className="ldm-convert-btn ldm-convert-done"
+              onClick={() => navigate(`/clients/${bilan.converted_to_client_id}`)}
+            >
+              ✅ Fiche créée — Ouvrir la fiche →
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="ldm-convert-btn"
+                onClick={() => setShowConvert(true)}
+              >
+                ✅ Valider le bilan → créer la fiche client
+              </button>
+              <button
+                type="button"
+                className="ldm-schedule-btn"
+                onClick={() => setShowSchedule(true)}
+              >
+                📅 Programmer un RDV
+              </button>
+            </>
+          )}
+        </div>
+
         <Section title="Objectifs">
           <div className="ldm-tags">
             {bilan.objectives.map((o) => (
@@ -277,9 +317,12 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
           )}
         </Section>
 
-        {bilan.height_cm != null && (
+        {(bilan.height_cm != null || bilan.current_weight_kg != null) && (
           <Section title="Profil">
-            <p className="ldm-line">Taille : {bilan.height_cm} cm</p>
+            {bilan.height_cm != null && <p className="ldm-line">Taille : {bilan.height_cm} cm</p>}
+            {bilan.current_weight_kg != null && (
+              <p className="ldm-line">Poids actuel : {bilan.current_weight_kg} kg</p>
+            )}
           </Section>
         )}
 
@@ -492,6 +535,28 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange,
         )}
       </div>
     </div>
+
+    {showConvert && onConverted && (
+      <LeadConvertModal
+        bilan={bilan}
+        onClose={() => setShowConvert(false)}
+        onConverted={onConverted}
+      />
+    )}
+
+    {showSchedule && (
+      <LeadScheduleModal
+        bilan={bilan}
+        onClose={() => setShowSchedule(false)}
+        onScheduled={async () => {
+          // Programmer un RDV implique un contact → bump new → contact.
+          if (bilan.lead_status === "new") {
+            await onStatusChange("contact");
+          }
+        }}
+      />
+    )}
+    </>
   );
 }
 
@@ -635,6 +700,45 @@ const STYLES = `
     font-size: 14px;
     font-family: inherit;
   }
+
+  .ldm-convert-row { margin: 0 0 18px; display: flex; flex-direction: column; gap: 8px; }
+  .ldm-schedule-btn {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid rgba(45, 212, 191, 0.40);
+    border-radius: 11px;
+    background: rgba(45, 212, 191, 0.08);
+    color: #0D9488;
+    font-family: 'Syne', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .ldm-schedule-btn:hover { background: rgba(45, 212, 191, 0.16); }
+  .ldm-convert-btn {
+    width: 100%;
+    padding: 13px 16px;
+    border: none;
+    border-radius: 11px;
+    background: var(--ls-gold, #C9A84C);
+    color: var(--ls-gold-contrast, #0B0D11);
+    font-family: 'Syne', 'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ldm-convert-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(201, 168, 76, 0.30);
+  }
+  .ldm-convert-done {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .ldm-convert-done:hover { box-shadow: 0 6px 16px rgba(16, 185, 129, 0.20); }
 
   .ldm-section { margin-bottom: 16px; }
   .ldm-section-title {

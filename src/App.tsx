@@ -420,6 +420,12 @@ const RoutineDuJourPage = lazy(() =>
     default: module.RoutineDuJourPage,
   })),
 );
+// Suivis du jour (2026-06-03) — page dédiée destination du digest matinal.
+const SuivisDuJourPage = lazy(() =>
+  import("./pages/SuivisDuJourPage").then((module) => ({
+    default: module.SuivisDuJourPage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -615,6 +621,7 @@ export default function App() {
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
+              <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
               <Route path="outils-prospection" element={<OutilsProspectionPage />} />

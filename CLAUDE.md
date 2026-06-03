@@ -681,6 +681,7 @@ avec `supabase functions deploy <name>`.
 | `formation-validation-notifier` | trigger / fetch | Notif validation module |
 | `formation-relay-to-admin` | fetch front (coach) | Escalade question admin |
 | `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
+| `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
 
 Toute nouvelle edge function = ajouter ici.
 

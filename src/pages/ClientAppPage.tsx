@@ -9,6 +9,7 @@ import { ClientXpToast } from '../features/client-xp/ClientXpToast'
 import { recordClientXp } from '../features/client-xp/useClientXp'
 import { ClientFaqChatbot } from '../components/client-app/ClientFaqChatbot'
 import { ClientOnboardingTour } from '../components/client-app/ClientOnboardingTour'
+import { ClientBaselineStep } from '../components/client-app/ClientBaselineStep'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
@@ -149,6 +150,10 @@ export function ClientAppPage() {
   // 4 slides au 1er login. NULL = jamais fait → on affiche. Set au
   // "Terminer" / "Skip" via edge function client-app-mark-onboarded.
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
+  // Chantier poids couche 2 (2026-06-03) : point de départ. undefined = pas
+  // encore résolu, null = à demander, string = posé/skippé, 'error' = lecture
+  // KO → on n'affiche pas (fail-open, jamais de client enfermé dehors).
+  const [baselineAt, setBaselineAt] = useState<string | null | undefined>(undefined)
   // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
   // au coach depuis l'app — question produit OU demande de reco générique.
   const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
@@ -415,6 +420,25 @@ export function ClientAppPage() {
         setOnboardingDone(true) // safe default — on cache si on sait pas
       }
 
+      // Couche 2 point de départ : lit baseline_at. FAIL-OPEN — toute erreur
+      // (colonne absente, réseau) → sentinel 'error' → l'étape ne s'affiche
+      // pas (on n'enferme jamais le client hors de l'app).
+      try {
+        let bAt = (snapshot as { baseline_at?: string | null }).baseline_at
+        if (bAt === undefined) {
+          const { data: acc2, error: bErr } = await sb
+            .from('client_app_accounts')
+            .select('baseline_at')
+            .eq('token', token)
+            .maybeSingle()
+          if (bErr) throw bErr
+          bAt = (acc2 as { baseline_at?: string | null } | null)?.baseline_at ?? null
+        }
+        setBaselineAt(bAt ?? null)
+      } catch {
+        setBaselineAt('error')
+      }
+
       // Chantier Migration RLS Edge Function (2026-04-26) : les 3 SELECT
       // live directs (clients.current_program, follow_ups, pv_client_products)
       // ont été retirés d'ici. Ils sont remplacés par l'Edge Function
@@ -504,6 +528,32 @@ export function ClientAppPage() {
         firstName={data.client_first_name ?? ''}
         coachName={data.coach_name ?? ''}
         onComplete={() => setOnboardingDone(true)}
+      />
+    )
+  }
+
+  // Couche 2 point de départ (2026-06-03) : après le tour, si le client n'a
+  // ni poids (body_scan.weight>0) ni mensuration, on impose "ton point de
+  // départ". FAIL-OPEN : on n'affiche que si baseline_at vaut strictement
+  // null ET que la donnée live est résolue (dataSource != unknown) — toute
+  // incertitude (undefined / 'error' / live pas prêt) → on n'affiche pas.
+  const hasBaseline =
+    (data.metrics_history ?? []).some((m) => Number((m as Record<string, number>).weight) > 0) ||
+    ((liveData?.measurements?.length ?? 0) > 0)
+  const showBaselineStep =
+    Boolean(token) &&
+    onboardingDone === true &&
+    baselineAt === null &&
+    !hasBaseline &&
+    dataSource !== 'unknown'
+  if (showBaselineStep) {
+    return (
+      <ClientBaselineStep
+        token={token as string}
+        clientId={data.client_id}
+        firstName={data.client_first_name ?? ''}
+        coachFirstName={data.coach_name?.split(' ')[0]}
+        onDone={() => setBaselineAt(new Date().toISOString())}
       />
     )
   }

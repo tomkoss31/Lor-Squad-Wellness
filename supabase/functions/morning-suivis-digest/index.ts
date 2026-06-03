@@ -52,6 +52,7 @@ interface ClientRow {
   id: string;
   distributor_id: string;
   lifecycle_status: string | null;
+  onboarding_checks: { measurements?: boolean } | null;
 }
 
 /**
@@ -97,8 +98,12 @@ function isClientEligible(
     return { eligible: false, daysSince };
   }
 
+  // Point de départ = poids mesuré OU mensurations de départ (chantier poids
+  // couche 3, 2026-06-03). Cohérent avec evaluateProtocolEligibility côté front.
   const weight = initial.body_scan?.weight;
-  if (typeof weight !== "number" || Number.isNaN(weight) || weight <= 0) {
+  const hasWeight = typeof weight === "number" && !Number.isNaN(weight) && weight > 0;
+  const hasMeasurements = client.onboarding_checks?.measurements === true;
+  if (!hasWeight && !hasMeasurements) {
     return { eligible: false, daysSince };
   }
 
@@ -131,7 +136,7 @@ serve(async (req) => {
     //    l'équipe entière).
     const { data: clients, error: clientsErr } = await sb
       .from("clients")
-      .select("id, distributor_id, lifecycle_status");
+      .select("id, distributor_id, lifecycle_status, onboarding_checks");
     if (clientsErr) return jsonResponse({ error: clientsErr.message }, 500);
 
     const { data: assessments, error: assessmentsErr } = await sb
@@ -198,6 +203,10 @@ serve(async (req) => {
         payload: {
           title: `🌅 ${dueCount} ${suivisLabel} à faire aujourd'hui`,
           body: "Ouvre l'app pour les envoyer en 2 clics.",
+          // Destination : /co-pilote tant que /suivis-du-jour n'est PAS en prod
+          // (base Supabase partagée dev+prod = edge unique). AU MERGE PROD de la
+          // page /suivis-du-jour : remettre url: "/suivis-du-jour" + redéployer
+          // cette fonction. Sinon les coachs prod cliquent vers une route 404.
           url: "/co-pilote",
           type: "morning_digest",
         },

@@ -61,6 +61,9 @@ interface FormState {
   // Étape 2 — Objectifs
   objectives: ObjectiveKey[];
   weight_loss_target_kg: string;
+  /** Poids actuel optionnel — demandé seulement si objectif perte de poids
+   *  ou prise de masse (chantier poids 2026-06-03). Vide = non renseigné. */
+  current_weight_kg: string;
   motivation_score: number;
   // Étape 3 — Présent
   current_actions: CurrentAction[];
@@ -91,7 +94,7 @@ interface FormState {
 const INITIAL: FormState = {
   first_name: "", age: "", height_cm: "", city: "",
   phone: "", email: "",
-  objectives: [], weight_loss_target_kg: "", motivation_score: 7,
+  objectives: [], weight_loss_target_kg: "", current_weight_kg: "", motivation_score: 7,
   current_actions: [], current_actions_detail: "",
   meals_balanced: "",
   water_per_day: "", coffee_per_day: "", soda_per_day: "", alcohol_per_week: "",
@@ -206,6 +209,11 @@ export function BilanOnlinePage() {
         const kg = Number(form.weight_loss_target_kg);
         if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) return "Combien de kilos viser ?";
       }
+      // Poids actuel optionnel : on valide la plage seulement s'il est saisi.
+      if (form.current_weight_kg.trim()) {
+        const w = Number(form.current_weight_kg.replace(",", "."));
+        if (!Number.isFinite(w) || w < 20 || w > 400) return "Poids actuel invalide (20-400 kg).";
+      }
     }
     if (s === 3) {
       if (form.current_actions.length === 0) return "Coche au moins une option (ou « Rien encore »).";
@@ -314,6 +322,11 @@ export function BilanOnlinePage() {
           objectives: form.objectives,
           weight_loss_target_kg: form.objectives.includes("weight_loss")
             ? Number(form.weight_loss_target_kg) : null,
+          current_weight_kg:
+            (form.objectives.includes("weight_loss") || form.objectives.includes("mass_gain")) &&
+            form.current_weight_kg.trim()
+              ? Number(form.current_weight_kg.replace(",", "."))
+              : null,
           motivation_score: form.motivation_score,
           payload: payloadDetail,
           consent: form.consent,
@@ -833,6 +846,38 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
           placeholder="5"
         />
       </SubField>
+
+      {/* Poids actuel — question douce optionnelle (chantier poids 2026-06-03).
+          Visible seulement pour perte de poids / prise de masse. Copy adaptée :
+          rassurante si perte de poids, perf si prise de masse. Jamais bloquant. */}
+      <SubField visible={form.objectives.includes("weight_loss") || form.objectives.includes("mass_gain")}>
+        <div style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 12, fontWeight: 600, marginBottom: 8,
+          color: PUBLIC_TOKENS.teal,
+          letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
+          {form.objectives.includes("weight_loss")
+            ? "Si tu te sens à l'aise : ton poids actuel"
+            : "Ton poids actuel"}
+        </div>
+        <PsInput
+          value={form.current_weight_kg}
+          onChange={(v) => update("current_weight_kg", v)}
+          type="number" inputMode="numeric" min={20} max={400}
+          placeholder="kg — optionnel"
+        />
+        <div style={{
+          fontFamily: PUBLIC_FONTS.body,
+          fontSize: 11.5, marginTop: 8, lineHeight: 1.5,
+          color: "var(--cream-muted)",
+        }}>
+          {form.objectives.includes("weight_loss")
+            ? "🔒 Vu uniquement par ton coach · 100% confidentiel · facultatif."
+            : "Pour calculer tes besoins en protéines · facultatif."}
+        </div>
+      </SubField>
+
       <div style={{ marginTop: 24 }}>
         <label style={{
           display: "block",
