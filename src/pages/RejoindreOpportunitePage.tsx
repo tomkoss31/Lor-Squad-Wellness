@@ -206,7 +206,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: `linear-gradient(135deg, ${C.emerald}, ${C.cyan} 55%, ${C.violet})`,
     boxShadow: "0 0 16px rgba(16,185,129,0.4)",
   },
-  brandText: { fontFamily: "Sora, sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: "-0.02em" },
+  brandText: { fontFamily: "Sora, sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: "-0.02em", color: C.cream },
   brand360: {
     fontStyle: "italic",
     fontWeight: 400,
@@ -245,6 +245,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.12,
     letterSpacing: "-0.025em",
     margin: "0 0 14px",
+    color: C.cream,
   },
   grad: {
     fontStyle: "italic",
