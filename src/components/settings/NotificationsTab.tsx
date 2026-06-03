@@ -11,6 +11,7 @@ interface Prefs {
   notif_rdv_imminent: boolean;
   notif_morning_digest: boolean;
   notif_coach_tips: boolean;
+  notif_daily_actions: boolean;
   notif_quiet_hours: boolean;
   notif_message_batching_min: number;
 }
@@ -20,6 +21,7 @@ const DEFAULTS: Prefs = {
   notif_rdv_imminent: true,
   notif_morning_digest: true,
   notif_coach_tips: true,
+  notif_daily_actions: true,
   notif_quiet_hours: false,
   notif_message_batching_min: 5,
 };
@@ -40,7 +42,7 @@ export function NotificationsTab() {
         if (!sb) return;
         const { data, error } = await sb
           .from("users")
-          .select("notif_messages, notif_rdv_imminent, notif_morning_digest, notif_coach_tips, notif_quiet_hours, notif_message_batching_min")
+          .select("notif_messages, notif_rdv_imminent, notif_morning_digest, notif_coach_tips, notif_daily_actions, notif_quiet_hours, notif_message_batching_min")
           .eq("id", currentUser.id)
           .maybeSingle();
         if (cancelled) return;
@@ -52,6 +54,7 @@ export function NotificationsTab() {
             notif_rdv_imminent: (data as { notif_rdv_imminent?: boolean }).notif_rdv_imminent ?? true,
             notif_morning_digest: (data as { notif_morning_digest?: boolean }).notif_morning_digest ?? true,
             notif_coach_tips: (data as { notif_coach_tips?: boolean }).notif_coach_tips ?? true,
+            notif_daily_actions: (data as { notif_daily_actions?: boolean }).notif_daily_actions ?? true,
             notif_quiet_hours: (data as { notif_quiet_hours?: boolean }).notif_quiet_hours ?? false,
             notif_message_batching_min: (data as { notif_message_batching_min?: number }).notif_message_batching_min ?? 5,
           });
@@ -184,6 +187,13 @@ export function NotificationsTab() {
           subtitle="1 conseil coach matin 8h, choisi selon ton contexte (PV en retard, anniv client, 0 RDV…)"
           checked={prefs.notif_coach_tips}
           onChange={(v) => setPrefs((p) => ({ ...p, notif_coach_tips: v }))}
+        />
+        <ToggleRow
+          emoji="☀️"
+          label="Rappel check-list 20h"
+          subtitle="Push le soir si ta check-list quotidienne n'est pas complète (X/5). Désactive si tu la trouves trop insistante."
+          checked={prefs.notif_daily_actions}
+          onChange={(v) => setPrefs((p) => ({ ...p, notif_daily_actions: v }))}
         />
         <ToggleRow
           emoji="🌙"
