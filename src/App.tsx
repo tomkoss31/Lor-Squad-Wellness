@@ -170,6 +170,17 @@ const PublicNewsletterPage = lazy(() =>
     default: module.PublicNewsletterPage,
   })),
 );
+// Funnel Opportunité gated (chantier 2026-06) — brief docs/BRIEF_OPPORTUNITE_GATED_2026-06.md
+const RejoindreOpportunitePage = lazy(() =>
+  import("./pages/RejoindreOpportunitePage").then((module) => ({
+    default: module.RejoindreOpportunitePage,
+  })),
+);
+const RejoindreQuestionnairePage = lazy(() =>
+  import("./pages/RejoindreQuestionnairePage").then((module) => ({
+    default: module.RejoindreQuestionnairePage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -564,6 +575,13 @@ export default function App() {
               unifie. Fusionne /opportunite + /simulateur. Mockup Claude Design
               business-v2.html valide. */}
           <Route path="/business" element={<BusinessPage />} />
+          {/* Funnel Opportunité gated (chantier 2026-06) — la « porte » qualifiante
+              partagée par les coachs. /rejoindre[/<slug>] préserve ?ref=. Le
+              questionnaire (étape 2) + scoring + mini-CRM arrivent ensuite. */}
+          <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
+          <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
+          <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
+          <Route path="/rejoindre/questionnaire" element={<RejoindreQuestionnairePage />} />
           {/* Legacy redirects (preserve ?ref=) */}
           <Route path="/opportunite" element={<RedirectToBusiness />} />
           <Route path="/simulateur" element={<RedirectToBusiness hash="simulateur" />} />

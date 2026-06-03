@@ -6,8 +6,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { useToast } from "../../context/ToastContext";
+import {
+  PROFILE_LABEL,
+  TEMPERATURE_META,
+  type LeadProfile,
+  type LeadTemperature,
+} from "../../lib/opportunityLeadScore";
 
 type LeadStatus = "new" | "contacted" | "converted" | "lost";
+
+interface LeadMeta {
+  funnel?: string;
+  profile?: LeadProfile | null;
+  score?: number;
+  temperature?: LeadTemperature;
+  email?: string;
+  last_name?: string;
+}
 
 interface Lead {
   id: string;
@@ -20,6 +35,7 @@ interface Lead {
   created_at: string;
   contacted_at: string | null;
   assigned_to_user_id: string | null;
+  metadata: LeadMeta | null;
 }
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string }> = {
@@ -238,8 +254,28 @@ export function LeadsTab() {
                       {meta.label}
                     </span>
                   </div>
+                  {/* Funnel Opportunité gated : profil + température + score + email */}
+                  {lead.metadata?.funnel === "opportunite-gated" ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      {lead.metadata.profile ? (
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(139,92,246,0.12)", color: "#6D28D9" }}>
+                          {PROFILE_LABEL[lead.metadata.profile]}
+                        </span>
+                      ) : null}
+                      {lead.metadata.temperature ? (
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: `color-mix(in srgb, ${TEMPERATURE_META[lead.metadata.temperature].color} 14%, transparent)`, color: TEMPERATURE_META[lead.metadata.temperature].color }}>
+                          {TEMPERATURE_META[lead.metadata.temperature].emoji} {TEMPERATURE_META[lead.metadata.temperature].label}
+                        </span>
+                      ) : null}
+                      {typeof lead.metadata.score === "number" ? (
+                        <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>· score {lead.metadata.score}</span>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
-                    📞 {lead.phone} · Reçu {formatRelative(lead.created_at)}
+                    📞 {lead.phone}
+                    {lead.metadata?.email ? ` · ✉️ ${lead.metadata.email}` : ""}
+                    {" "}· Reçu {formatRelative(lead.created_at)}
                     {lead.source ? ` · Source : ${lead.source}` : ""}
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

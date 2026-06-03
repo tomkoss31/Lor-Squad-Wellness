@@ -164,8 +164,21 @@ serve(async (req) => {
 
         // Notif via send-push function (déjà déployée dans le projet)
         if (allSubs.length > 0) {
-          const title = "🔥 Nouveau prospect";
-          const pushBody = `${firstName}${city ? " de " + city : ""} · ${phone}`;
+          // Funnel Opportunité gated (chantier 2026-06) : notif enrichie profil + température.
+          const meta = (metadata && typeof metadata === "object") ? metadata as Record<string, unknown> : {};
+          const isFunnel = meta.funnel === "opportunite-gated";
+          const profileLabel =
+            ({ curious: "🔍 Curieux", side_income: "💸 Complément", career_change: "🚀 Reconversion" } as Record<string, string>)[
+              String(meta.profile)
+            ] ?? "";
+          const tempLabel =
+            ({ hot: "🔥 chaud", warm: "🟡 tiède", cold: "❄️ froid" } as Record<string, string>)[
+              String(meta.temperature)
+            ] ?? "";
+          const title = isFunnel ? `🚪 Lead opportunité ${tempLabel}`.trim() : "🔥 Nouveau prospect";
+          const pushBody = isFunnel
+            ? `${firstName}${profileLabel ? ` · ${profileLabel}` : ""} · ${phone}`
+            : `${firstName}${city ? " de " + city : ""} · ${phone}`;
           await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
             method: "POST",
             headers: {
