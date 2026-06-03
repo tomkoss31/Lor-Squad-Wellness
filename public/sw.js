@@ -21,7 +21,7 @@
 // Changer cette constante à chaque déploiement front important : le navigateur
 // détecte le nouveau sw.js → install → skipWaiting → activate (vide les caches)
 // → controllerchange → reload auto → l'utilisateur récupère le dernier bundle.
-const SW_VERSION = "2026-06-03-2";
+const SW_VERSION = "2026-06-03-3";
 void SW_VERSION;
 
 self.addEventListener("install", () => {
