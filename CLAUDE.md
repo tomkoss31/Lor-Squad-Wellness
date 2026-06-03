@@ -5,7 +5,11 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
-## ✅ Roadmap à jour (2026-05-20)
+## ✅ Roadmap à jour (2026-06-03)
+
+> **Audit complet 2026-06-03** : roadmap re-synchronisée avec le code réel
+> (le doc dérivait). Plusieurs items « à faire » étaient en fait livrés —
+> voir sous-section « Confirmés livrés mais oubliés ».
 
 ### 🟢 Livrés en prod
 - **Chantier A — Jauge rentabilité** : `RentabilitePage` + composants + 7 migrations V1→V5
@@ -20,6 +24,16 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - **D — Popup météo 5 jours (2026-05-05)** : `WeatherPopup` + `useWeatherForecast` (Open-Meteo no key, cache 30min, mapping WMO). Pill weather Co-pilote cliquable. CTA "Renseigne ta ville" si `users.city` absent.
 - **Fix inbox messagerie** : limite globale 50 → 1000 (PR #91)
 
+#### ✅ Confirmés livrés mais oubliés de la roadmap (audit 2026-06-03)
+- **Plan d'action PV matin** : RPC `get_pv_action_plan` + hook `usePvActionPlan`, consommé sur Co-pilote V5 (était listé « à faire » à tort)
+- **Newsletter privée** (La Base 360 News) : pages admin (`AdminNewslettersPage`/`AdminNewsletterEditPage`/`AdminNewsletterStatsPage`) + edges `dispatch-newsletter`/`send-newsletter-email`/`track-newsletter-view` + Resend. Seul le **volet public lead-magnet** reste à faire (#8)
+- **Export PDF Analytics + Rentabilité** : `AnalyticsPdfReport` + `RentabilityPdfReport` (était listé « polish à faire »)
+- **Features non documentées présentes en prod** : VIP Program, gamification/leaderboards, système Rang + qualifications Herbalife auto, Client XP, Charte distri signable, Analytics admin, Team tree/arborescence, Manual PV entries, Share public, onboarding distri complet
+- **Leads (chantier 2026-06-03)** : modale détail réponses funnel + pré-évaluation personnalisée fin de funnel + stats prospection cliquables + suppression admin des leads (policy `prospect_leads_admin_delete`)
+
+#### ⚠️ Règle métier critique
+Voir **`docs/HERBALIFE_PALIERS_REGLES.md`** (paliers, fenêtres glissantes, qualifications) — à lire AVANT toute modif sur le calcul PV / rentabilité / FLEX margins. Récupéré en prod le 2026-06-03 (était piégé sur une branche morte).
+
 ### 🔴 À faire (court terme)
 
 **Quick wins**
@@ -31,19 +45,21 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 
 - **Chantier C — Paiement Square** (2-3j+) : edge function + SMS Twilio + webhook
 - **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
-- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur)
-- **#8 Newsletter publique** (17-25h) : 12 étapes spec brainstorm
-- **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube
-- **#13 Fiche distri publique enrichie** (8-11h)
-- **Plan d'action PV matin** (dépend décision Bizworks override admin)
+- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (audit 2026-06-03)
+- **#8 Newsletter — volet PUBLIC lead-magnet** : la newsletter privée est LIVRÉE (voir Livrés). Reste la page publique d'inscription + capture lead
+- **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube. **Aucun code amorcé**. (réf : composants `VideoPlayerModal`/`formationContent` existaient sur la branche morte `audit/client-app-deep-dive`, trop vieux pour merger — à refaire)
+- **#13 Fiche distri publique enrichie** (8-11h) : **aucun code amorcé**
+- _(Paiement Square + Lor'Squad AI ci-dessus : aucun code amorcé non plus — confirmé audit 2026-06-03)_
 
 ### 🟢 Polish opportuniste
 
-- Export PDF rapport mensuel Analytics
+- ~~Export PDF rapport mensuel Analytics~~ ✅ LIVRÉ (`AnalyticsPdfReport`)
 - Drill-down produit Analytics
 - Tri par PV mois sur `/clients`
 - Hydratation `selectedProductQuantities` dans Edit/Follow-up
-- **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage 4350L, AgendaPage 2251L, supabaseService 2443L. **Opportuniste only** — pas de chantier refacto dédié.
+- Messagerie `AppContext` `limit(50)` global → conversations tronquées hors-cache (à porter à 1000 comme l'inbox)
+- Google Reviews URL placeholder à remplacer dans `ThankYouStep.tsx` (TODO Thomas)
+- **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage ~2900L, AgendaPage 2251L, supabaseService 2443L. **Opportuniste only** — pas de chantier refacto dédié.
 
 ### ❓ À décider
 
@@ -400,6 +416,11 @@ quand prêt à signer compte Anthropic API + monitorer coûts récurrents.
 ---
 
 ## Chantier futur : Stratégie d'action PV (mémo 2026-04-29)
+
+> ✅ **MISE À JOUR audit 2026-06-03** : le cœur est LIVRÉ. RPC
+> `get_pv_action_plan(p_user_id)` + hook `usePvActionPlan` existent et
+> alimentent Co-pilote V5 (target_pv, prorata, dormants, restock, etc.).
+> Ce mémo reste pour le contexte / enrichissements futurs éventuels.
 
 L'utilisateur a noté l'objectif PV mensuel comme un levier qu'on ne
 travaille qu'à moitié. La colonne `users.monthly_pv_target` existe
