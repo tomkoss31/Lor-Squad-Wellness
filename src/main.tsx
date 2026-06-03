@@ -41,6 +41,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
+// Auto-réparation après déploiement : si un chunk lazy (ex. page Rentabilité)
+// échoue à charger — typiquement parce qu'un ancien index.html en cache pointe
+// vers un chunk qui n'existe plus après un déploiement — on recharge une fois
+// pour récupérer le nouvel index.html + ses chunks frais. sessionStorage évite
+// toute boucle de rechargement si l'erreur est réelle (chunk vraiment absent).
+window.addEventListener("vite:preloadError", () => {
+  const KEY = "ls-chunk-reload-once";
+  if (sessionStorage.getItem(KEY)) return;
+  sessionStorage.setItem(KEY, "1");
+  window.location.reload();
+});
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     let hasReloadedForServiceWorker = false;
