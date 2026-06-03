@@ -18,6 +18,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import { scoreOpportunityLead, type OpportunityScore } from "../lib/opportunityLeadScore";
+import { buildPreEvaluation } from "../lib/opportunityPreEval";
 
 const C = {
   emerald: "#10B981",
@@ -428,42 +429,80 @@ export function RejoindreQuestionnairePage() {
     bizParams.set("from", "funnel"); // → /business remplace le form §07 par un remerciement
     const businessUrl = `/business?${bizParams.toString()}`;
     const profile = result?.profile;
-    const after =
-      profile === "career_change"
-        ? {
-            emoji: "🚀",
-            title: `Ton profil nous intéresse, ${firstName}.`,
-            text: "Vu tes réponses, un coach va te rappeler en priorité pour caler un échange en visio. En attendant, découvre l'opportunité en détail.",
-            ctaLabel: "Découvrir l'opportunité →",
-            href: businessUrl,
-          }
-        : profile === "side_income"
-          ? {
-              emoji: "💸",
-              title: `C'est noté, ${firstName} !`,
-              text: "Voici de quoi te projeter : calcule concrètement ce qu'un complément de revenu pourrait te rapporter avec le simulateur.",
-              ctaLabel: "Calculer mon plan →",
-              href: `${businessUrl}#simulateur`,
-            }
-          : {
-              emoji: "🔍",
-              title: `Merci ${firstName} !`,
-              text: "Découvre l'opportunité complète à ton rythme — les 3 façons d'en vivre, les paliers, les témoignages. Et quand tu veux, on échange.",
-              ctaLabel: "Découvrir à mon rythme →",
-              href: businessUrl,
-            };
+    const sc = result ?? scoreOpportunityLead(answers);
+    const evalu = buildPreEvaluation(answers, sc, firstName);
+    const cta =
+      profile === "side_income"
+        ? { label: "Calculer mon plan →", href: `${businessUrl}#simulateur` }
+        : profile === "career_change"
+          ? { label: "Découvrir l'opportunité →", href: businessUrl }
+          : { label: "Découvrir à mon rythme →", href: businessUrl };
+    const toneColor =
+      evalu.verdictTone === "hot" ? C.emerald : evalu.verdictTone === "warm" ? C.cyan : C.violet;
+
     return (
       <div style={styles.page}>
         <style>{KEYFRAMES}</style>
         <div aria-hidden="true" style={styles.glowTop} />
-        <div style={{ ...styles.container, textAlign: "center", paddingTop: 64 }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }} className="rj-pop">{after.emoji}</div>
-          <h1 style={styles.h1}>{after.title}</h1>
-          <p style={styles.lead}>{after.text}</p>
-          <button type="button" onClick={() => navigate(after.href)} style={styles.cta}>
-            {after.ctaLabel}
+        <div style={{ ...styles.container, paddingTop: 48 }}>
+          {/* En-tête centré */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 56, marginBottom: 14 }} className="rj-pop">{evalu.emoji}</div>
+            <div
+              style={{
+                display: "inline-block",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontFamily: "Sora, sans-serif",
+                color: toneColor,
+                marginBottom: 10,
+              }}
+            >
+              Ta pré-évaluation
+            </div>
+            <h1 style={styles.h1}>{evalu.headline}</h1>
+            <p style={{ ...styles.lead, marginBottom: 28 }}>{evalu.verdict}</p>
+          </div>
+
+          {/* Atouts dérivés des réponses */}
+          <div style={{ marginBottom: evalu.goal || evalu.watchout ? 18 : 28 }}>
+            <div style={styles.evalSectionTitle}>✅ Ce que tu as déjà pour toi</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {evalu.assets.map((asset, i) => (
+                <div
+                  key={asset.label}
+                  className="rj-fade-up"
+                  style={{ ...styles.assetCard, animationDelay: `${0.06 * i}s` }}
+                >
+                  <span style={styles.assetEmoji} aria-hidden="true">{asset.emoji}</span>
+                  <span>
+                    <span style={styles.assetLabel}>{asset.label}</span>
+                    <span style={styles.assetWhy}>{asset.why}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Objectif reformulé */}
+          {evalu.goal ? (
+            <div style={styles.goalBox}>
+              <span style={{ fontSize: 18, flexShrink: 0 }} aria-hidden="true">🎯</span>
+              <span style={{ fontSize: 14, lineHeight: 1.5, color: C.cream }}>{evalu.goal}</span>
+            </div>
+          ) : null}
+
+          {/* Point d'honnêteté */}
+          {evalu.watchout ? (
+            <div style={styles.watchoutBox}>{evalu.watchout}</div>
+          ) : null}
+
+          <button type="button" onClick={() => navigate(cta.href)} style={styles.cta}>
+            {cta.label}
           </button>
-          <div style={styles.trustDone}>✓ On a bien reçu tes infos · ✓ On revient vers toi vite</div>
+          <div style={styles.trustDone}>✓ On a bien reçu tes infos · ✓ Un coach revient vers toi vite</div>
         </div>
       </div>
     );
@@ -701,6 +740,55 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 10px 28px rgba(16,185,129,0.30)",
   },
   trustDone: { marginTop: 18, fontSize: 12.5, color: C.creamHint, textAlign: "center" },
+  h1: {
+    fontFamily: "Sora, sans-serif",
+    fontSize: "clamp(24px, 5.5vw, 32px)",
+    fontWeight: 800,
+    lineHeight: 1.2,
+    letterSpacing: "-0.02em",
+    margin: "0 0 12px",
+  },
+  evalSectionTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    color: C.creamMuted,
+    fontFamily: "Sora, sans-serif",
+    marginBottom: 12,
+  },
+  assetCard: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 13,
+    padding: "14px 15px",
+    borderRadius: 14,
+    border: `1px solid ${C.hair}`,
+    background: "rgba(255,255,255,0.04)",
+  },
+  assetEmoji: { fontSize: 22, flexShrink: 0, lineHeight: 1.2 },
+  assetLabel: { display: "block", fontSize: 15, fontWeight: 700, color: C.cream, fontFamily: "Sora, sans-serif" },
+  assetWhy: { display: "block", fontSize: 13.5, color: C.creamMuted, lineHeight: 1.45, marginTop: 3 },
+  goalBox: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 11,
+    padding: "14px 16px",
+    borderRadius: 14,
+    border: `1px solid color-mix(in srgb, ${C.emerald} 30%, transparent)`,
+    background: `linear-gradient(135deg, color-mix(in srgb, ${C.emerald} 10%, transparent), color-mix(in srgb, ${C.violet} 8%, transparent))`,
+    marginBottom: 14,
+  },
+  watchoutBox: {
+    padding: "12px 15px",
+    borderRadius: 12,
+    border: `1px dashed ${C.hairStrong}`,
+    background: "rgba(255,255,255,0.02)",
+    fontSize: 13,
+    lineHeight: 1.5,
+    color: C.creamMuted,
+    marginBottom: 22,
+  },
   slideIn: { animation: "rj-slide-in 0.32s cubic-bezier(0.4,0,0.2,1)" },
   slideInBack: { animation: "rj-slide-in-back 0.32s cubic-bezier(0.4,0,0.2,1)" },
 };
@@ -710,8 +798,10 @@ const KEYFRAMES = `
 @keyframes rj-slide-in-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes rj-pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 .rj-pop { animation: rj-pop 0.5s cubic-bezier(0.2,0.8,0.2,1) both; }
+@keyframes rj-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.rj-fade-up { animation: rj-fade-up 0.4s cubic-bezier(0.4,0,0.2,1) both; }
 @media (prefers-reduced-motion: reduce) {
-  [style*="rj-slide"], .rj-pop { animation: none !important; }
+  [style*="rj-slide"], .rj-pop, .rj-fade-up { animation: none !important; }
 }
 `;
 
