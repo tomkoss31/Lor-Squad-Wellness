@@ -3,9 +3,11 @@
 // rempli le formulaire Welcome → table avec filtres status + action
 // WhatsApp + marquer contacté/converti/perdu.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../../services/supabaseClient";
-import { useToast } from "../../context/ToastContext";
+import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
+import { useAppContext } from "../../context/AppContext";
 import {
   PROFILE_LABEL,
   TEMPERATURE_META,
@@ -35,6 +37,7 @@ interface Lead {
   created_at: string;
   contacted_at: string | null;
   assigned_to_user_id: string | null;
+  referrer_user_id: string | null;
   metadata: LeadMeta | null;
 }
 
@@ -73,6 +76,7 @@ export function LeadsTab() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [scheduleLead, setScheduleLead] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -296,6 +300,23 @@ export function LeadsTab() {
                     >
                       📱 WhatsApp
                     </a>
+                    <button
+                      type="button"
+                      onClick={() => setScheduleLead(lead)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        background: "transparent",
+                        border: "1px solid rgba(139,92,246,0.4)",
+                        color: "#6D28D9",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "DM Sans, sans-serif",
+                      }}
+                    >
+                      📅 Planifier visio
+                    </button>
                     {lead.status !== "contacted" && lead.status !== "converted" ? (
                       <button
                         type="button"
@@ -354,6 +375,150 @@ export function LeadsTab() {
               );
             })}
           </div>
+        )}
+      </div>
+
+      {scheduleLead ? (
+        <ScheduleVisioModal
+          lead={scheduleLead}
+          onClose={() => setScheduleLead(null)}
+          onScheduled={async () => {
+            await updateStatus(scheduleLead.id, "contacted");
+            setScheduleLead(null);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Modale « Planifier visio » (funnel opportunité) ────────────────────────
+// Crée un RDV prospect dans l'agenda interne via createProspect (rappel push
+// ~1h avant déjà géré côté agenda). Côté coach = authentifié = sûr.
+function ScheduleVisioModal({
+  lead,
+  onClose,
+  onScheduled,
+}: {
+  lead: Lead;
+  onClose: () => void;
+  onScheduled: () => Promise<void> | void;
+}) {
+  const navigate = useNavigate();
+  const { createProspect, currentUser } = useAppContext();
+  const { push: pushToast } = useToast();
+
+  const defaultLocal = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(10, 0, 0, 0);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }, []);
+
+  const [rdvLocal, setRdvLocal] = useState(defaultLocal);
+  const profileLabel = lead.metadata?.profile ? PROFILE_LABEL[lead.metadata.profile] : "";
+  const [note, setNote] = useState(
+    `Visio opportunité — ${profileLabel || "prospect"}${lead.metadata?.score != null ? ` · score ${lead.metadata.score}` : ""}.`,
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function submit() {
+    if (submitting || !rdvLocal) return;
+    const rdvDate = new Date(rdvLocal);
+    if (Number.isNaN(rdvDate.getTime())) {
+      pushToast({ tone: "error", title: "Date de RDV invalide." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createProspect({
+        firstName: lead.first_name.trim(),
+        lastName: lead.metadata?.last_name?.trim() || "",
+        phone: lead.phone?.trim() || undefined,
+        email: lead.metadata?.email?.trim().toLowerCase() || undefined,
+        rdvDate: rdvDate.toISOString(),
+        source: "Autre",
+        sourceDetail: "Opportunité gated",
+        note: note.trim() || undefined,
+        distributorId: lead.referrer_user_id ?? currentUser?.id ?? "",
+      });
+      await onScheduled();
+      setDone(true);
+      pushToast({ tone: "success", title: `Visio programmée avec ${lead.first_name} ✓` });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de créer le RDV."));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: "var(--ls-surface)", color: "var(--ls-text)", width: "100%", maxWidth: 440, borderRadius: 18, padding: 22, border: "1px solid var(--ls-border)" }}
+      >
+        {done ? (
+          <div style={{ textAlign: "center", padding: "8px 4px" }}>
+            <div style={{ fontSize: 40 }}>📅</div>
+            <h3 style={{ fontFamily: "Syne, sans-serif", fontSize: 19, margin: "8px 0 6px" }}>Visio programmée</h3>
+            <p style={{ fontSize: 13, color: "var(--ls-text-muted)", lineHeight: 1.5, margin: "0 0 16px" }}>
+              Le RDV avec <strong>{lead.first_name}</strong> est dans ton agenda (onglet prospects). Rappel push ~1h avant.
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" onClick={() => navigate("/agenda")} style={{ flex: 1, padding: "11px 16px", border: "none", borderRadius: 11, background: "var(--ls-teal)", color: "#04221C", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                Voir l'agenda →
+              </button>
+              <button type="button" onClick={onClose} style={{ padding: "11px 16px", border: "1px solid var(--ls-border)", borderRadius: 11, background: "transparent", color: "var(--ls-text-muted)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ls-teal)", marginBottom: 6 }}>
+              📅 Planifier la visio
+            </div>
+            <h3 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>
+              {lead.first_name} {profileLabel ? `· ${profileLabel}` : ""}
+            </h3>
+            <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "0 0 16px", lineHeight: 1.45 }}>
+              Crée un RDV prospect dans ton agenda interne.
+            </p>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Date et heure</span>
+              <input
+                type="datetime-local"
+                value={rdvLocal}
+                onChange={(e) => setRdvLocal(e.target.value)}
+                style={{ padding: "9px 11px", border: "1px solid var(--ls-border)", borderRadius: 9, background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 14, fontFamily: "inherit" }}
+              />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Note</span>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                style={{ padding: "9px 11px", border: "1px solid var(--ls-border)", borderRadius: 9, background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 14, fontFamily: "inherit", resize: "vertical" }}
+              />
+            </label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" disabled={submitting || !rdvLocal} onClick={() => void submit()} style={{ flex: 1, padding: "12px 18px", border: "none", borderRadius: 11, background: "var(--ls-teal)", color: "#04221C", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.6 : 1 }}>
+                {submitting ? "Création…" : "Programmer"}
+              </button>
+              <button type="button" onClick={onClose} style={{ padding: "12px 18px", border: "1px solid var(--ls-border)", borderRadius: 11, background: "transparent", color: "var(--ls-text-muted)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                Annuler
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -184,3 +184,19 @@ Colonnes (statuts) :
 6. **Visio/RDV** + **annonce distri** + fiche tuto (règle du livrable complet).
 
 Recette à chaque étape avant prod.
+
+---
+
+## 10. État au 2026-06-03 — LIVRÉ (prod + dev)
+
+- ✅ **Étape 1** porte `/rejoindre/:coachSlug` (hero + teaser flouté + CTA)
+- ✅ **Étape 2** questionnaire rebondissant (branches profil, progression, micro-rebonds)
+- ✅ **Étape 3** submit + scoring (`metadata` jsonb, **pas de migration**) + push admin enrichi
+- ✅ **Étape 4** sorties routées « après » par profil (curieux / complément / reconversion)
+- ✅ **Étape 5** mini-CRM léger : badges profil/température/score/email dans Paramètres → Leads
+- ✅ **Étape 6** visio dans l'agenda interne : bouton « 📅 Planifier visio » sur le lead → `createProspect` (RDV prospect + rappel push)
+- ✅ Lien du funnel dans **Outils Prospection**
+
+**Reste (non bloquant)** :
+- 📣 Publier l'**annonce distri** : `insert into public.app_announcements (...)` à exécuter dans le SQL Editor (db push bloqué par divergence d'historique `20260528*`).
+- 🗃️ Promouvoir les champs `metadata` en **vraies colonnes** (migration propre) quand le db push sera débloqué.
