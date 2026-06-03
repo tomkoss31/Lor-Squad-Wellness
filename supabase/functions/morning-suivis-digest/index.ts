@@ -203,11 +203,8 @@ serve(async (req) => {
         payload: {
           title: `🌅 ${dueCount} ${suivisLabel} à faire aujourd'hui`,
           body: "Ouvre l'app pour les envoyer en 2 clics.",
-          // Destination : /co-pilote tant que /suivis-du-jour n'est PAS en prod
-          // (base Supabase partagée dev+prod = edge unique). AU MERGE PROD de la
-          // page /suivis-du-jour : remettre url: "/suivis-du-jour" + redéployer
-          // cette fonction. Sinon les coachs prod cliquent vers une route 404.
-          url: "/co-pilote",
+          // Destination = page dédiée Suivis du jour (en prod depuis 2026-06-03).
+          url: "/suivis-du-jour",
           type: "morning_digest",
         },
         dedupe: {
