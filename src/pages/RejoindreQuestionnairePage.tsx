@@ -13,7 +13,7 @@
 // Pour l'instant l'écran final est un récap « merci » (stub, pas d'écriture DB).
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
@@ -274,6 +274,17 @@ export function RejoindreQuestionnairePage() {
 
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [consentChecked, setConsentChecked] = useState(false);
+
+  // Page marketing SOMBRE-ONLY : neutralise le thème clair de l'app coach
+  // (sinon les overrides globaux theme-light forcent le texte cream → noir).
+  useEffect(() => {
+    const html = document.documentElement;
+    const wasLight = html.classList.contains("theme-light");
+    if (wasLight) html.classList.remove("theme-light");
+    return () => {
+      if (wasLight) html.classList.add("theme-light");
+    };
+  }, []);
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
   const [phase, setPhase] = useState<"form" | "submitting" | "done" | "error">("form");

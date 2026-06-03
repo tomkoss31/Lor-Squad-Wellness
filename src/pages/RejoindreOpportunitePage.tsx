@@ -15,7 +15,7 @@
 // Le questionnaire rebondissant + scoring + submit = étapes 2-3 (à venir).
 // =============================================================================
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 // ─── Palette G3 business (cf. CLAUDE.md : BusinessPage --biz-* / ProspectFormModal) ──
@@ -50,6 +50,21 @@ export function RejoindreOpportunitePage() {
 
   const slug = useMemo(() => normalizeSlug(coachSlug ?? ""), [coachSlug]);
   const coachName = slug ? capitalize(slug) : "";
+
+  // Page marketing SOMBRE-ONLY : on neutralise le thème clair de l'app coach
+  // pendant l'affichage. Sinon les overrides globaux `html.theme-light
+  // [style*="color: #F0EDE8"]` (globals.css) forcent le texte cream → noir →
+  // titre invisible sur fond sombre. On retire theme-light le temps de la page
+  // et on le restaure en sortant (sans effet sur l'app coach : "Ouvrir" ouvre
+  // une nouvelle fenêtre isolée).
+  useEffect(() => {
+    const html = document.documentElement;
+    const wasLight = html.classList.contains("theme-light");
+    if (wasLight) html.classList.remove("theme-light");
+    return () => {
+      if (wasLight) html.classList.add("theme-light");
+    };
+  }, []);
 
   // Préserve l'attribution (?ref=<coach_id>) en passant au questionnaire.
   function startQuestionnaire() {
