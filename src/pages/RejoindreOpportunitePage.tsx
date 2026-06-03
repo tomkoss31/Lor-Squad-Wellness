@@ -254,6 +254,11 @@ const styles: Record<string, React.CSSProperties> = {
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     color: "transparent",
+    // Fix clip italique : sans inline-block + padding, le jambage de
+    // l'italique dépasse la boîte du dégradé et se fait rogner (le "u" de
+    // "revenu" coupé). Même correctif que l'accent gradient du Co-pilote.
+    display: "inline-block",
+    paddingRight: "0.12em",
   },
   lead: { fontSize: 15.5, color: C.creamMuted, lineHeight: 1.6, margin: "0 0 24px", maxWidth: 420 },
   coachPill: {
