@@ -75,7 +75,10 @@ function buildWhatsAppUrl(phone: string, firstName: string): string {
 
 export function LeadsTab() {
   const { push: pushToast } = useToast();
+  const { currentUser } = useAppContext();
+  const isAdmin = currentUser?.role === "admin";
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<LeadStatus | "all">(() => {
     // Pré-filtre depuis l'URL (?status=new|contacted|converted|lost),
@@ -125,6 +128,21 @@ export function LeadsTab() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erreur inconnue";
       pushToast({ tone: "error", title: "Mise à jour impossible", message: msg });
+    }
+  }
+
+  async function deleteLead(id: string) {
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { error } = await sb.from("prospect_leads").delete().eq("id", id);
+      if (error) throw error;
+      pushToast({ tone: "success", title: "Lead supprimé" });
+      setConfirmDelete(null);
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erreur inconnue";
+      pushToast({ tone: "error", title: "Suppression impossible", message: msg });
     }
   }
 
@@ -292,25 +310,23 @@ export function LeadsTab() {
                     {lead.source ? ` · Source : ${lead.source}` : ""}
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {lead.metadata?.answers && Object.keys(lead.metadata.answers).length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setDetailLead(lead)}
-                        style={{
-                          padding: "6px 12px",
-                          borderRadius: 8,
-                          background: "rgba(139,92,246,0.1)",
-                          border: "1px solid rgba(139,92,246,0.4)",
-                          color: "#6D28D9",
-                          cursor: "pointer",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          fontFamily: "DM Sans, sans-serif",
-                        }}
-                      >
-                        🔎 Voir ses réponses
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setDetailLead(lead)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        background: "rgba(139,92,246,0.1)",
+                        border: "1px solid rgba(139,92,246,0.4)",
+                        color: "#6D28D9",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "DM Sans, sans-serif",
+                      }}
+                    >
+                      🔎 Voir le détail
+                    </button>
                     <a
                       href={buildWhatsAppUrl(lead.phone, lead.first_name)}
                       target="_blank"
@@ -397,6 +413,36 @@ export function LeadsTab() {
                       >
                         ✕ Perdu
                       </button>
+                    ) : null}
+                    {isAdmin ? (
+                      confirmDelete === lead.id ? (
+                        <span style={{ display: "inline-flex", gap: 6, alignItems: "center", marginLeft: "auto" }}>
+                          <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>Supprimer ?</span>
+                          <button
+                            type="button"
+                            onClick={() => void deleteLead(lead.id)}
+                            style={{ padding: "6px 10px", borderRadius: 8, background: "#E2484A", border: "none", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                          >
+                            Oui, supprimer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(null)}
+                            style={{ padding: "6px 10px", borderRadius: 8, background: "transparent", border: "1px solid var(--ls-border)", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 12 }}
+                          >
+                            Annuler
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(lead.id)}
+                          title="Supprimer ce lead"
+                          style={{ padding: "6px 10px", borderRadius: 8, background: "transparent", border: "1px solid rgba(226,72,74,0.35)", color: "#B91C1C", cursor: "pointer", fontSize: 12, marginLeft: "auto" }}
+                        >
+                          🗑 Supprimer
+                        </button>
+                      )
                     ) : null}
                   </div>
                 </div>
@@ -517,8 +563,10 @@ function LeadAnswersModal({
           Ses réponses ({rows.length})
         </div>
         {rows.length === 0 ? (
-          <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: "0 0 16px" }}>
-            Aucune réponse détaillée enregistrée pour ce lead.
+          <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Pas de réponses détaillées : ce lead vient du formulaire direct
+            (Welcome / capture), pas du questionnaire d'opportunité. Seules ses
+            coordonnées sont disponibles.
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 18 }}>
