@@ -22,8 +22,12 @@ export function HydrationVisceralInsightCard({
   hydrationPercent,
   visceralFat,
   sex,
-  history = []
+  history: historyRaw = []
 }: HydrationVisceralInsightCardProps) {
+  // Fix tri chrono (2026-06-04) : historique trié par date (cf. BodyFatInsightCard).
+  const history = [...historyRaw].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
   const hydrationKg = estimateHydrationKg(weight, hydrationPercent);
   const hydrationReference = getHydrationReference(sex);
   const hydrationStatus = getHydrationStatus(hydrationPercent, hydrationReference);
