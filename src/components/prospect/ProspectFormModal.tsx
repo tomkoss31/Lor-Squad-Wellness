@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { PROSPECT_SOURCES, type Prospect, type ProspectSource, type User } from "../../types/domain";
 import { canSponsorDistributors } from "../../lib/auth";
+import { confirmNoAgendaConflict } from "../../lib/agendaGuard";
 import { Button } from "../ui/Button";
 
 interface ProspectFormModalProps {
@@ -94,6 +95,13 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
     setSaving(true);
     try {
       const isoRdv = new Date(rdvDate).toISOString();
+      // Garde-fou disponibilité (chantier 2026-06-04) : prévient si le créneau
+      // est déjà pris (RDV client OU prospect) pour ce distri. Avertir + autoriser.
+      const slotOk = await confirmNoAgendaConflict(distributorId, isoRdv, null, initial?.id ?? null);
+      if (!slotOk) {
+        setSaving(false);
+        return;
+      }
       if (initial) {
         const updated = await updateProspect(initial.id, {
           firstName: firstName.trim(),

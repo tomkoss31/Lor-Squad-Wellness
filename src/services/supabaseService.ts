@@ -1731,6 +1731,7 @@ export async function checkAgendaConflict(
   coachUserId: string,
   dueDateIso: string,
   excludeFollowUpId?: string | null,
+  excludeProspectId?: string | null,
 ): Promise<{ id: string; clientName: string; dueDate: string } | null> {
   if (!coachUserId || !dueDateIso) return null;
   const due = new Date(dueDateIso);
@@ -1762,11 +1763,33 @@ export async function checkAgendaConflict(
     return clientLink?.distributor_id === coachUserId;
   });
 
-  if (!match) return null;
+  if (match) {
+    return {
+      id: match.id,
+      clientName: match.client_name ?? "client",
+      dueDate: match.due_date,
+    };
+  }
+
+  // Cross-table (chantier 2026-06-04) : un créneau peut aussi être pris par un
+  // RDV prospect/lead. On scanne la table prospects sur la même fenêtre, pour
+  // le même coach, statut 'scheduled' uniquement (RDV à venir — done/cold/
+  // converted/cancelled/lost/no_show n'occupent plus le créneau).
+  let pq = sb
+    .from("prospects")
+    .select("id, rdv_date, first_name, last_name, distributor_id, status")
+    .gte("rdv_date", startIso)
+    .lte("rdv_date", endIso)
+    .eq("distributor_id", coachUserId)
+    .eq("status", "scheduled");
+  if (excludeProspectId) pq = pq.neq("id", excludeProspectId);
+  const { data: pData, error: pError } = await pq;
+  if (pError || !pData || pData.length === 0) return null;
+  const p = pData[0] as { id: string; rdv_date: string; first_name: string; last_name: string };
   return {
-    id: match.id,
-    clientName: match.client_name ?? "client",
-    dueDate: match.due_date,
+    id: p.id,
+    clientName: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "prospect",
+    dueDate: p.rdv_date,
   };
 }
 
