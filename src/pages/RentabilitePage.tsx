@@ -14,7 +14,7 @@
 // Rollback : `git show HEAD~1:src/pages/RentabilitePage.tsx` pour l'ancien.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useUserRentability } from "../hooks/useUserRentability";
@@ -31,6 +31,7 @@ import {
   computeManualEntriesOverride,
   computeOwnSelfMargin,
   computeViewerDownlineOverride,
+  computeViewerOverridePerMember,
   currentMonthIso,
   tierPctForRank,
 } from "../lib/herbalifeFormulas";
@@ -80,7 +81,7 @@ function computeOwnMargin(
 
 export function RentabilitePage() {
   const navigate = useNavigate();
-  const { currentUser, users } = useAppContext();
+  const { currentUser, users, pvTransactions } = useAppContext();
   const { data: ownData, loading: ownLoading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const { members } = useTeamEngagement(currentUser?.id ?? null);
 
@@ -93,9 +94,38 @@ export function RentabilitePage() {
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
 
-  const ownDownlineOverride = useMemo(() => {
-    if (!ownData || !currentUser) return 0;
-    return computeViewerDownlineOverride(
+  // ─── PV app réel par membre (mois courant) ───────────────────────────────
+  // Source : pvTransactions (ventes passées dans l'app, déjà en contexte).
+  // Sert de fallback au calcul d'override quand aucun breakdown Bizworks
+  // manuel n'a été saisi pour le distri → ses ventes app remontent
+  // automatiquement dans les royalties de l'upline. Mois calé en heure
+  // locale (Paris), cohérent avec la jauge Co-pilote.
+  const memberPvMonthMap = useMemo(() => {
+    const [y, m] = monthIso.split("-").map(Number);
+    const map = new Map<string, number>();
+    for (const t of pvTransactions) {
+      const d = new Date(t.date);
+      if (d.getFullYear() !== y || d.getMonth() !== m - 1) continue;
+      map.set(t.responsibleId, (map.get(t.responsibleId) ?? 0) + (t.pv || 0));
+    }
+    return map;
+  }, [pvTransactions, monthIso]);
+
+  const fallbackOverrideForUser = useCallback(
+    (uid: string): { totalPv: number; tierPct: number } | null => {
+      const pv = memberPvMonthMap.get(uid) ?? 0;
+      if (pv <= 0) return null;
+      const u = users.find((x) => x.id === uid);
+      return { totalPv: pv, tierPct: tierPctForRank(u?.currentRank) };
+    },
+    [memberPvMonthMap, users],
+  );
+
+  // Override du viewer ventilé par membre (multi-niveaux correct). Le total
+  // est la somme des contributions ; chaque card lit sa propre part.
+  const ownOverridePerMember = useMemo(() => {
+    if (!ownData || !currentUser) return new Map<string, number>();
+    return computeViewerOverridePerMember(
       ownData.scope_user_ids,
       users.map((u) => ({
         id: u.id,
@@ -104,8 +134,15 @@ export function RentabilitePage() {
         frozenAt: u.frozenAt,
       })),
       breakdowns,
+      fallbackOverrideForUser,
     );
-  }, [ownData, currentUser, users, breakdowns]);
+  }, [ownData, currentUser, users, breakdowns, fallbackOverrideForUser]);
+
+  const ownDownlineOverride = useMemo(() => {
+    let sum = 0;
+    for (const v of ownOverridePerMember.values()) sum += v;
+    return sum;
+  }, [ownOverridePerMember]);
 
   const ownSelfMargin = useMemo(
     () => computeOwnMargin(ownData, breakdowns, users),
@@ -145,8 +182,9 @@ export function RentabilitePage() {
         frozenAt: u.frozenAt,
       })),
       breakdowns,
+      fallbackOverrideForUser,
     );
-  }, [selectedData, currentUser, users, breakdowns]);
+  }, [selectedData, currentUser, users, breakdowns, fallbackOverrideForUser]);
   const selectedSelfMargin = useMemo(
     () => computeOwnMargin(selectedData, breakdowns, users),
     [selectedData, breakdowns, users],
@@ -522,8 +560,9 @@ export function RentabilitePage() {
                 userId={m.user_id}
                 name={m.name}
                 rankLabel={m.current_rank ?? "Distri"}
-                viewerScopeIds={ownData.scope_user_ids}
+                viewerOverride={ownOverridePerMember.get(m.user_id) ?? 0}
                 totalDownlineOverride={ownDownlineOverride}
+                fallbackOverrideForUser={fallbackOverrideForUser}
                 animDelay={120 + i * 60}
                 onClick={() => setSelectedMemberId(m.user_id)}
               />
@@ -885,40 +924,47 @@ function TeamMemberCard({
   userId,
   name,
   rankLabel,
-  viewerScopeIds,
+  viewerOverride,
   totalDownlineOverride,
+  fallbackOverrideForUser,
   animDelay,
   onClick,
 }: {
   userId: string;
   name: string;
   rankLabel: string;
-  viewerScopeIds: string[];
+  /** Ce que le viewer (couple admin) touche en override grâce à CE membre. */
+  viewerOverride: number;
   totalDownlineOverride: number;
+  fallbackOverrideForUser: (userId: string) => { totalPv: number; tierPct: number } | null;
   animDelay: number;
   onClick: () => void;
 }) {
   const { users } = useAppContext();
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
+  // Marge retail réelle du membre sur ses propres clients (ventes app).
+  const { data: memberData } = useUserRentability(userId);
 
-  // Calcule l'override du viewer SUR ce membre uniquement (sa contribution).
-  const memberOverride = useMemo(() => {
+  // Gain propre du membre sur SA downline (ex : Mandy touche l'override sur
+  // Victoria). Même moteur que l'admin, mais viewer = ce membre.
+  const memberOwnDownlineOverride = useMemo(() => {
     return computeViewerDownlineOverride(
-      viewerScopeIds,
-      users
-        .filter((u) => u.id === userId || viewerScopeIds.includes(u.id))
-        .map((u) => ({
-          id: u.id,
-          sponsorId: u.sponsorId,
-          currentRank: u.currentRank,
-          frozenAt: u.frozenAt,
-        })),
-      breakdowns.filter((b) => b.userId === userId),
+      [userId],
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+      fallbackOverrideForUser,
     );
-  }, [viewerScopeIds, users, userId, breakdowns]);
+  }, [userId, users, breakdowns, fallbackOverrideForUser]);
 
-  const contribRatio = totalDownlineOverride > 0 ? memberOverride / totalDownlineOverride : 0;
+  // Gain réel total du membre = marge retail directe + override sur sa downline.
+  const memberGain = (memberData?.margin_eur ?? 0) + memberOwnDownlineOverride;
+  const contribRatio = totalDownlineOverride > 0 ? viewerOverride / totalDownlineOverride : 0;
 
   return (
     <button
@@ -969,10 +1015,33 @@ function TeamMemberCard({
               fontWeight: 700,
               fontStyle: "italic",
               fontSize: 22,
-              color: "var(--ls-rentab-purple)",
+              color: "var(--ls-rentab-ink)",
+              lineHeight: 1.1,
             }}
           >
-            +{Math.round(memberOverride)}€
+            {Math.round(memberGain).toLocaleString("fr-FR")}€
+          </div>
+          <div
+            style={{
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 10.5,
+              color: "var(--ls-rentab-ink-3)",
+              marginTop: 1,
+            }}
+          >
+            gain {name.split(" ")[0]}
+          </div>
+          <div
+            data-stealth
+            style={{
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: 700,
+              fontSize: 12.5,
+              color: "var(--ls-rentab-purple)",
+              marginTop: 4,
+            }}
+          >
+            +{Math.round(viewerOverride).toLocaleString("fr-FR")}€ <span style={{ fontWeight: 500, color: "var(--ls-rentab-ink-3)" }}>ton override</span>
           </div>
         </div>
       </div>

@@ -449,6 +449,91 @@ export function computeViewerDownlineOverride(
 }
 
 /**
+ * Variante de `computeViewerDownlineOverride` qui ventile l'override du viewer
+ * PAR membre de la downline (clé = userId du downstream, valeur = EUR que le
+ * viewer touche grâce à CE membre précis).
+ *
+ * Même walk d'arbre / même compression / même fallback que la fonction de
+ * total — mais on accumule dans une Map au lieu d'un scalaire. Utile pour
+ * afficher la contribution individuelle de chaque distri (card "Mon équipe")
+ * tout en restant correct en multi-niveaux : un membre à 2 niveaux de
+ * profondeur garde ses `intermediateTiers` (compression par les uplines
+ * intermédiaires), ce que l'ancien calcul par-card (users filtrés) ratait.
+ *
+ * `total` = somme de toutes les valeurs de la Map (identique à
+ * computeViewerDownlineOverride avec les mêmes args).
+ */
+export function computeViewerOverridePerMember(
+  viewerIds: string[],
+  users: Array<{
+    id: string;
+    sponsorId?: string;
+    currentRank?: string | null;
+    frozenAt?: string | null;
+  }>,
+  breakdowns: PvMonthlyBreakdown[],
+  fallbackOverrideForUser?: (userId: string) => { totalPv: number; tierPct: number } | null,
+): Map<string, number> {
+  const perMember = new Map<string, number>();
+  const breakdownByUserId = new Map<string, PvMonthlyBreakdown>();
+  for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
+
+  const viewerTierPct = Math.max(
+    ...viewerIds.map((uid) => {
+      const u = users.find((x) => x.id === uid);
+      return tierPctForRank(u?.currentRank);
+    }),
+  );
+
+  const childrenBySponsor = new Map<string, typeof users>();
+  for (const u of users) {
+    if (u.frozenAt) continue;
+    if (!u.sponsorId) continue;
+    const arr = childrenBySponsor.get(u.sponsorId) ?? [];
+    arr.push(u);
+    childrenBySponsor.set(u.sponsorId, arr);
+  }
+
+  interface Frame {
+    user: typeof users[0];
+    intermediateTiers: number[];
+  }
+  const queue: Frame[] = [];
+  for (const ownerId of viewerIds) {
+    const directs = childrenBySponsor.get(ownerId) ?? [];
+    for (const u of directs) queue.push({ user: u, intermediateTiers: [] });
+  }
+
+  while (queue.length > 0) {
+    const frame = queue.shift()!;
+    const { user: u, intermediateTiers } = frame;
+    const breakdown = breakdownByUserId.get(u.id);
+    let cut = 0;
+    if (breakdown) {
+      cut = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
+    } else if (fallbackOverrideForUser) {
+      const fb = fallbackOverrideForUser(u.id);
+      if (fb && fb.totalPv > 0) {
+        const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
+        const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
+        cut = fb.totalPv * cutPct * PV_TO_EUR_RATIO;
+      }
+    }
+    if (cut > 0) perMember.set(u.id, (perMember.get(u.id) ?? 0) + cut);
+
+    const yTierPct = tierPctForRank(u.currentRank);
+    const childList = childrenBySponsor.get(u.id) ?? [];
+    for (const child of childList) {
+      queue.push({
+        user: child,
+        intermediateTiers: [...intermediateTiers, yTierPct],
+      });
+    }
+  }
+  return perMember;
+}
+
+/**
  * Retourne la progression du distri vers son prochain palier.
  *
  * @param currentRank rang actuel
