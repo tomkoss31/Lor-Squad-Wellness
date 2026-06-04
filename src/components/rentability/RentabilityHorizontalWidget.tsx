@@ -9,20 +9,10 @@
 // Source design : docs/mockups/rentabilite-design-v2/.../widget.jsx
 // =============================================================================
 
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useUserRentability } from "../../hooks/useUserRentability";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
-import { useManualPvEntries } from "../../hooks/useManualPvEntries";
 import { useStealthMode } from "../../hooks/useStealthMode";
-import {
-  computeManualEntriesOverride,
-  computeOwnSelfMargin,
-  computeViewerDownlineOverride,
-  currentMonthIso,
-  tierPctForRank,
-} from "../../lib/herbalifeFormulas";
+import { useRentabilitySummary } from "../../hooks/useRentabilitySummary";
 import { useCountUp } from "./shared/useCountUp";
 import { GaugeProjection } from "./shared/GaugeProjection";
 
@@ -39,52 +29,19 @@ function monthLabel(iso: string | undefined): string {
 
 export function RentabilityHorizontalWidget() {
   const navigate = useNavigate();
-  const { currentUser, users } = useAppContext();
-  const { data, loading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
-  const monthIso = useMemo(() => currentMonthIso(), []);
-  const { breakdowns } = usePvBreakdowns(monthIso);
-  const { entries: manualEntries } = useManualPvEntries(data?.scope_user_ids ?? null, monthIso);
+  const { currentUser } = useAppContext();
+  const {
+    data,
+    loading,
+    isCoupleAggregated,
+    downlineOverride,
+    manualOverride,
+    totalMargin,
+    prevMonthEur: prev,
+    delta,
+    projection,
+  } = useRentabilitySummary(currentUser?.id ?? null);
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
-
-  const downlineOverride = useMemo(() => {
-    if (!data || !currentUser) return 0;
-    return computeViewerDownlineOverride(
-      data.scope_user_ids,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      breakdowns,
-    );
-  }, [data, currentUser, users, breakdowns]);
-
-  const ownSelfMargin = useMemo(() => {
-    if (!data || !currentUser) return data?.margin_eur ?? 0;
-    let total = 0;
-    let any = false;
-    for (const ownerId of data.scope_user_ids) {
-      const b = breakdowns.find((br) => br.userId === ownerId);
-      if (b) {
-        const owner = users.find((u) => u.id === ownerId);
-        total += computeOwnSelfMargin(b, tierPctForRank(owner?.currentRank));
-        any = true;
-      }
-    }
-    return any ? Math.max(total, data.margin_eur) : data.margin_eur;
-  }, [data, currentUser, users, breakdowns]);
-
-  const manualOverride = useMemo(() => {
-    if (!currentUser) return 0;
-    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
-  }, [manualEntries, currentUser]);
-
-  const totalMargin = ownSelfMargin + downlineOverride + manualOverride;
-  const prev = data?.prev_month_eur ?? 0;
-  const delta = Math.round(totalMargin - prev);
-  const ratio = data && data.margin_eur > 0 ? totalMargin / data.margin_eur : 1;
-  const projection = Math.round(((data?.projection_eur ?? totalMargin) || totalMargin) * ratio);
 
   const animTotal = useCountUp(Math.round(totalMargin), { duration: 1100, delay: 80 });
   const month = monthLabel(data?.month_start);
