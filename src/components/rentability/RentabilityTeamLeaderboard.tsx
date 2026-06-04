@@ -7,18 +7,18 @@
 // est saisi (via le event global).
 // =============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useUserRentability } from "../../hooks/useUserRentability";
+import { useRentabilitySummary } from "../../hooks/useRentabilitySummary";
 import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 import { Avatar, avatarHue, initialsOf } from "./shared/Avatar";
 import { currentMonthIso, rankProgression, totalPvFromBreakdown } from "../../lib/herbalifeFormulas";
 
-interface MemberRow {
-  userId: string;
-  name: string;
+interface MemberResolved {
+  /** Gain réel du membre = marge retail + override sur sa downline. */
   margin: number;
+  progressionPct: number | null;
 }
 
 function MemberRowItem({
@@ -93,32 +93,23 @@ function MemberRowItem({
   );
 }
 
+// Fetcher invisible : calcule le gain réel d'UN membre (via la source de
+// vérité partagée useRentabilitySummary) et le remonte au parent. Rendu null —
+// on monte un fetcher pour CHAQUE membre afin de pouvoir classer tout le monde
+// avant d'afficher le top 5 (l'ancienne version ne fetchait que les 5 premiers
+// users du tableau, jamais classés → tout restait à 0 / Mandy invisible).
 function MemberFetcher({
   userId,
-  name,
   currentRank,
-  rank,
-  isLeader,
   onResolved,
 }: {
   userId: string;
-  name: string;
   currentRank: string | undefined;
-  rank: number;
-  isLeader: boolean;
-  onResolved: (row: MemberRow) => void;
+  onResolved: (userId: string, resolved: MemberResolved) => void;
 }) {
-  const navigate = useNavigate();
-  const { data, loading } = useUserRentability(userId);
+  const { totalMargin, loading, data } = useRentabilitySummary(userId);
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
-
-  useEffect(() => {
-    if (!loading && data) {
-      onResolved({ userId, name, margin: data.margin_eur });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, data?.margin_eur]);
 
   // Mini progression % vers prochain rang (chantier ext #2 2026-05-22)
   const progressionPct = useMemo(() => {
@@ -128,29 +119,20 @@ function MemberFetcher({
     return prog?.pct ?? null;
   }, [breakdowns, userId, currentRank]);
 
-  if (loading || !data) {
-    return (
-      <div style={{ height: 44, opacity: 0.4, fontSize: 11, color: "var(--ls-text-muted)", padding: "12px 10px" }}>
-        Chargement {name}…
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!loading && data) {
+      onResolved(userId, { margin: totalMargin, progressionPct });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, totalMargin, progressionPct]);
 
-  return (
-    <MemberRowItem
-      name={name}
-      rank={rank}
-      total={data.margin_eur}
-      isLeader={isLeader}
-      rankProgressionPct={progressionPct}
-      onClick={() => navigate("/rentabilite")}
-    />
-  );
+  return null;
 }
 
 export function RentabilityTeamLeaderboard() {
+  const navigate = useNavigate();
   const { users, currentUser } = useAppContext();
-  const [resolved, setResolved] = useState<Map<string, number>>(new Map());
+  const [resolved, setResolved] = useState<Map<string, MemberResolved>>(new Map());
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -161,31 +143,47 @@ export function RentabilityTeamLeaderboard() {
     if (!isAdmin || !currentUser) return [];
     return users
       .filter((u) => u.active && !u.isExternal && u.role !== "admin")
-      .slice(0, 8); // safety cap
+      .slice(0, 24); // safety cap (fetch large, on n'affiche que le top 5)
   }, [users, currentUser, isAdmin]);
+
+  const handleResolved = useCallback((userId: string, r: MemberResolved) => {
+    setResolved((prev) => {
+      const cur = prev.get(userId);
+      if (cur && cur.margin === r.margin && cur.progressionPct === r.progressionPct) {
+        return prev;
+      }
+      const next = new Map(prev);
+      next.set(userId, r);
+      return next;
+    });
+  }, []);
+
+  // Classement par gain réel décroissant (membres non résolus en bas).
+  const ranked = useMemo(
+    () =>
+      [...teamMembers].sort(
+        (a, b) => (resolved.get(b.id)?.margin ?? -1) - (resolved.get(a.id)?.margin ?? -1),
+      ),
+    [teamMembers, resolved],
+  );
 
   if (!isAdmin || teamMembers.length === 0) return null;
 
-  // Tri par margin resolved (les non-resolved restent en bas)
-  const sortedMembers = [...teamMembers].sort((a, b) => {
-    const ma = resolved.get(a.id) ?? -1;
-    const mb = resolved.get(b.id) ?? -1;
-    return mb - ma;
-  });
-  const top5 = sortedMembers.slice(0, 5);
-  const leaderId = top5[0]?.id;
-
-  const handleResolved = (row: MemberRow) => {
-    setResolved((prev) => {
-      if (prev.get(row.userId) === row.margin) return prev;
-      const next = new Map(prev);
-      next.set(row.userId, row.margin);
-      return next;
-    });
-  };
+  const top5 = ranked.slice(0, 5);
+  const leader = top5[0];
+  const leaderHasGain = leader ? (resolved.get(leader.id)?.margin ?? 0) > 0 : false;
 
   return (
     <section style={cardStyle}>
+      {/* Fetch invisible de TOUS les membres → classement complet */}
+      {teamMembers.map((u) => (
+        <MemberFetcher
+          key={`fetch-${u.id}`}
+          userId={u.id}
+          currentRank={u.currentRank}
+          onResolved={handleResolved}
+        />
+      ))}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
         <div>
           <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700 }}>
@@ -198,14 +196,14 @@ export function RentabilityTeamLeaderboard() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {top5.map((u, i) => (
-          <MemberFetcher
+          <MemberRowItem
             key={u.id}
-            userId={u.id}
             name={u.name}
-            currentRank={u.currentRank}
             rank={i + 1}
-            isLeader={u.id === leaderId && resolved.get(u.id) !== undefined && (resolved.get(u.id) ?? 0) > 0}
-            onResolved={handleResolved}
+            total={resolved.get(u.id)?.margin ?? 0}
+            isLeader={leader?.id === u.id && leaderHasGain}
+            rankProgressionPct={resolved.get(u.id)?.progressionPct ?? null}
+            onClick={() => navigate("/rentabilite")}
           />
         ))}
       </div>
