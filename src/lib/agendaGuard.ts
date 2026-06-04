@@ -21,10 +21,16 @@ export async function confirmNoAgendaConflict(
   coachUserId: string | null | undefined,
   dueDateIso: string | null | undefined,
   excludeFollowUpId?: string | null,
+  excludeProspectId?: string | null,
 ): Promise<boolean> {
   if (!coachUserId || !dueDateIso) return true;
   try {
-    const conflict = await checkAgendaConflict(coachUserId, dueDateIso, excludeFollowUpId);
+    const conflict = await checkAgendaConflict(
+      coachUserId,
+      dueDateIso,
+      excludeFollowUpId,
+      excludeProspectId,
+    );
     if (!conflict) return true;
     const when = new Date(conflict.dueDate).toLocaleString("fr-FR", {
       weekday: "short",
