@@ -5,97 +5,34 @@
 // popup détail. Skippe silencieusement si pas de user (login).
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useUserRentability } from "../../hooks/useUserRentability";
 import { RentabilityGauge } from "./RentabilityGauge";
 import { RentabilityDetailModal } from "./RentabilityDetailModal";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
-import { useManualPvEntries } from "../../hooks/useManualPvEntries";
 import { useStealthMode } from "../../hooks/useStealthMode";
-import {
-  computeManualEntriesOverride,
-  computeOwnSelfMargin,
-  computeViewerDownlineOverride,
-  currentMonthIso,
-  tierPctForRank,
-} from "../../lib/herbalifeFormulas";
+import { useRentabilitySummary } from "../../hooks/useRentabilitySummary";
 
 export function RentabilityWidget() {
   const navigate = useNavigate();
-  const { currentUser, users } = useAppContext();
-  const { data, loading, error, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
+  const { currentUser } = useAppContext();
+  // Source de vérité unique partagée avec la WalletCard / le widget horizontal /
+  // la page /rentabilite → garantit le même "Tu gagnes" partout, override des
+  // ventes app inclus.
+  const {
+    data,
+    loading,
+    error,
+    isCoupleAggregated,
+    directMargin: ownSelfMargin,
+    downlineOverride,
+    manualOverride,
+    totalMargin,
+    dataWithOverride,
+  } = useRentabilitySummary(currentUser?.id ?? null);
   const [open, setOpen] = useState(false);
   // Stealth mode (chantier 2026-11-07) : floute les montants pour les RDV.
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
-
-  // Override downline (V2.1) — additionne au margin_eur pour la jauge.
-  // La RPC SQL ne lit pas pv_monthly_breakdown ; on injecte cote front.
-  const monthIso = useMemo(() => currentMonthIso(), []);
-  const { breakdowns } = usePvBreakdowns(monthIso);
-  const downlineOverride = useMemo(() => {
-    if (!data || !currentUser) return 0;
-    return computeViewerDownlineOverride(
-      data.scope_user_ids,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      breakdowns,
-    );
-  }, [data, currentUser, users, breakdowns]);
-  // Marge propre du user sur SES ventes : si breakdown perso saisi, on
-  // l utilise (capture les ventes Bizworks hors-app). Sinon RPC fallback.
-  //
-  // Bugfix 2026-05-20 (cas Mandy) : auparavant un breakdown perso saisi
-  // ECRASAIT la RPC, même s'il était vide ou inférieur. Conséquence :
-  // un distri qui avait saisi un breakdown vide perdait les ventes app
-  // trackées (ex. Mandy : 111€ RPC sur EMMANUELLA → 0€ affiché car
-  // breakdown vide saisi). Désormais on prend MAX(RPC, breakdown) :
-  // - Breakdown vide/inférieur → on garde la vérité RPC (ventes app)
-  // - Breakdown supérieur → on prend breakdown (capture Bizworks > app)
-  const ownSelfMargin = useMemo(() => {
-    if (!data || !currentUser) return data?.margin_eur ?? 0;
-    // Pour le couple, on additionne les breakdowns des 2 si saisis.
-    let total = 0;
-    let hasAnyBreakdown = false;
-    for (const ownerId of data.scope_user_ids) {
-      const b = breakdowns.find((br) => br.userId === ownerId);
-      if (b) {
-        const owner = users.find((u) => u.id === ownerId);
-        const tierPct = tierPctForRank(owner?.currentRank);
-        total += computeOwnSelfMargin(b, tierPct);
-        hasAnyBreakdown = true;
-      }
-    }
-    return hasAnyBreakdown ? Math.max(total, data.margin_eur) : data.margin_eur;
-  }, [data, currentUser, users, breakdowns]);
-  // V3 : entrees manuelles distri hors-app.
-  // Bugfix 2026-05-20 : agréger sur scope_user_ids (couple) pour cohérence
-  // Thomas/Mélanie.
-  const { entries: manualEntries } = useManualPvEntries(
-    data?.scope_user_ids ?? null,
-    monthIso,
-  );
-  const manualOverride = useMemo(() => {
-    if (!currentUser) return 0;
-    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
-  }, [manualEntries, currentUser]);
-  // Patch data pour la jauge : own_self + downline + manuel
-  const dataWithOverride = useMemo(() => {
-    if (!data) return null;
-    const newMargin = ownSelfMargin + downlineOverride + manualOverride;
-    if (newMargin === data.margin_eur) return data;
-    const ratio = data.margin_eur > 0 ? newMargin / data.margin_eur : 1;
-    return {
-      ...data,
-      margin_eur: newMargin,
-      projection_eur: data.projection_eur * ratio,
-    };
-  }, [data, ownSelfMargin, downlineOverride, manualOverride]);
 
   if (!currentUser) return null;
   if (loading) {
@@ -147,7 +84,7 @@ export function RentabilityWidget() {
   if (manualOverride > 0) {
     subParts.push(`+${Math.round(manualOverride).toLocaleString("fr-FR")} € distri hors-app`);
   }
-  const effectiveMargin = ownSelfMargin + downlineOverride + manualOverride;
+  const effectiveMargin = totalMargin;
   const effectiveProjection = (dataWithOverride ?? data).projection_eur;
   if (effectiveProjection > effectiveMargin) {
     subParts.push(`projection ${Math.round(effectiveProjection).toLocaleString("fr-FR")} € fin de mois`);

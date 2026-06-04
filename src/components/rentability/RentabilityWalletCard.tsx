@@ -16,20 +16,11 @@
 //              désactivées en prefers-reduced-motion.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useUserRentability } from "../../hooks/useUserRentability";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
-import { useManualPvEntries } from "../../hooks/useManualPvEntries";
 import { useStealthMode } from "../../hooks/useStealthMode";
-import {
-  computeManualEntriesOverride,
-  computeOwnSelfMargin,
-  computeViewerDownlineOverride,
-  currentMonthIso,
-  tierPctForRank,
-} from "../../lib/herbalifeFormulas";
+import { useRentabilitySummary } from "../../hooks/useRentabilitySummary";
 import { useCountUp } from "./shared/useCountUp";
 
 function monthLabel(iso: string | undefined): string {
@@ -75,55 +66,23 @@ export function RentabilityWalletCard({
   interaction = "navigate",
 }: RentabilityWalletCardProps) {
   const navigate = useNavigate();
-  const { currentUser, users } = useAppContext();
-  const { data, loading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
-  const monthIso = useMemo(() => currentMonthIso(), []);
-  const { breakdowns } = usePvBreakdowns(monthIso);
-  const { entries: manualEntries } = useManualPvEntries(data?.scope_user_ids ?? null, monthIso);
+  const { currentUser } = useAppContext();
+  // Source de vérité unique partagée (override ventes app inclus) → la carte
+  // affiche le même total que la page /rentabilite et les widgets Co-pilote.
+  const {
+    data,
+    loading,
+    isCoupleAggregated,
+    directMargin: ownSelfMargin,
+    downlineOverride,
+    manualOverride,
+    totalMargin,
+    delta,
+    projection,
+  } = useRentabilitySummary(currentUser?.id ?? null);
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
 
   const [flipped, setFlipped] = useState(false);
-
-  // ─── Calculs (mêmes que RentabilityWidget) ───────────────────────────────
-  const downlineOverride = useMemo(() => {
-    if (!data || !currentUser) return 0;
-    return computeViewerDownlineOverride(
-      data.scope_user_ids,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      breakdowns,
-    );
-  }, [data, currentUser, users, breakdowns]);
-
-  const ownSelfMargin = useMemo(() => {
-    if (!data || !currentUser) return data?.margin_eur ?? 0;
-    let total = 0;
-    let any = false;
-    for (const ownerId of data.scope_user_ids) {
-      const b = breakdowns.find((br) => br.userId === ownerId);
-      if (b) {
-        const owner = users.find((u) => u.id === ownerId);
-        total += computeOwnSelfMargin(b, tierPctForRank(owner?.currentRank));
-        any = true;
-      }
-    }
-    return any ? Math.max(total, data.margin_eur) : data.margin_eur;
-  }, [data, currentUser, users, breakdowns]);
-
-  const manualOverride = useMemo(() => {
-    if (!currentUser) return 0;
-    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
-  }, [manualEntries, currentUser]);
-
-  const totalMargin = ownSelfMargin + downlineOverride + manualOverride;
-  const prev = data?.prev_month_eur ?? 0;
-  const delta = Math.round(totalMargin - prev);
-  const ratio = data && data.margin_eur > 0 ? totalMargin / data.margin_eur : 1;
-  const projection = Math.round(((data?.projection_eur ?? totalMargin) || totalMargin) * ratio);
 
   // Décomposition pour le dos
   const caBrut = data?.revenue_brut ?? 0;
