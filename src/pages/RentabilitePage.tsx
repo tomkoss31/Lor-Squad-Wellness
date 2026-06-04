@@ -81,7 +81,7 @@ function computeOwnMargin(
 
 export function RentabilitePage() {
   const navigate = useNavigate();
-  const { currentUser, users, pvTransactions } = useAppContext();
+  const { currentUser, users, pvClientProducts } = useAppContext();
   const { data: ownData, loading: ownLoading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const { members } = useTeamEngagement(currentUser?.id ?? null);
 
@@ -95,21 +95,23 @@ export function RentabilitePage() {
   const { breakdowns } = usePvBreakdowns(monthIso);
 
   // ─── PV app réel par membre (mois courant) ───────────────────────────────
-  // Source : pvTransactions (ventes passées dans l'app, déjà en contexte).
-  // Sert de fallback au calcul d'override quand aucun breakdown Bizworks
-  // manuel n'a été saisi pour le distri → ses ventes app remontent
-  // automatiquement dans les royalties de l'upline. Mois calé en heure
-  // locale (Paris), cohérent avec la jauge Co-pilote.
+  // Source : pvClientProducts — LA MÊME table (pv_client_products) que la RPC
+  // get_users_rentability qui produit la marge affichée (les 119€). Mêmes
+  // filtres : produit actif + start_date dans le mois courant. PV = pv_per_unit
+  // × quantité. Sert de fallback au calcul d'override quand aucun breakdown
+  // Bizworks manuel n'a été saisi → les ventes app remontent automatiquement
+  // dans les royalties de l'upline, génériquement pour tout l'arbre.
   const memberPvMonthMap = useMemo(() => {
-    const [y, m] = monthIso.split("-").map(Number);
     const map = new Map<string, number>();
-    for (const t of pvTransactions) {
-      const d = new Date(t.date);
-      if (d.getFullYear() !== y || d.getMonth() !== m - 1) continue;
-      map.set(t.responsibleId, (map.get(t.responsibleId) ?? 0) + (t.pv || 0));
+    for (const p of pvClientProducts) {
+      if (!p.active) continue;
+      if ((p.startDate ?? "").slice(0, 7) !== monthIso) continue;
+      const pv = (p.pvPerUnit || 0) * (p.quantityStart || 0);
+      if (pv <= 0) continue;
+      map.set(p.responsibleId, (map.get(p.responsibleId) ?? 0) + pv);
     }
     return map;
-  }, [pvTransactions, monthIso]);
+  }, [pvClientProducts, monthIso]);
 
   const fallbackOverrideForUser = useCallback(
     (uid: string): { totalPv: number; tierPct: number } | null => {

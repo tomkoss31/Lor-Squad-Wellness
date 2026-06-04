@@ -426,7 +426,9 @@ export function computeViewerDownlineOverride(
     const frame = queue.shift()!;
     const { user: u, intermediateTiers } = frame;
     const breakdown = breakdownByUserId.get(u.id);
-    if (breakdown) {
+    // Un breakdown Bizworks manuel n'a la priorité que s'il porte du PV.
+    // Une row vide (tout à 0) ne doit PAS court-circuiter le fallback ventes app.
+    if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
       total += computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
     } else if (fallbackOverrideForUser) {
       const fb = fallbackOverrideForUser(u.id);
@@ -509,7 +511,7 @@ export function computeViewerOverridePerMember(
     const { user: u, intermediateTiers } = frame;
     const breakdown = breakdownByUserId.get(u.id);
     let cut = 0;
-    if (breakdown) {
+    if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
       cut = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
     } else if (fallbackOverrideForUser) {
       const fb = fallbackOverrideForUser(u.id);
