@@ -19,8 +19,12 @@ export function WeightGoalInsightCard({
   currentWeight,
   targetWeight,
   timeline,
-  history = []
+  history: historyRaw = []
 }: WeightGoalInsightCardProps) {
+  // Fix tri chrono (2026-06-04) : historique trié par date (cf. BodyFatInsightCard).
+  const history = [...historyRaw].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
   const plan = getWeightLossPlan(currentWeight, targetWeight, timeline);
   const pace = getWeightLossPaceInsight(plan);
   const capValue =

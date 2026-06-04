@@ -27,8 +27,12 @@ export function MuscleMassInsightCard({
   current,
   previous = null,
   initial = null,
-  history = []
+  history: historyRaw = []
 }: MuscleMassInsightCardProps) {
+  // Fix tri chrono (2026-06-04) : historique trié par date (cf. BodyFatInsightCard).
+  const history = [...historyRaw].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
   const currentMetrics = normalizeMuscleMass(current);
   const previousMetrics = previous ? normalizeMuscleMass(previous) : null;
   const initialMetrics = initial ? normalizeMuscleMass(initial) : null;

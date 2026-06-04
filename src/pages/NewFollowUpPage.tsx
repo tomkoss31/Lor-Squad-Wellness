@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
+import { MetabolicAgeInsightCard } from "../components/body-scan/MetabolicAgeInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { Button } from "../components/ui/Button";
@@ -12,7 +13,8 @@ import { EvolutionReportModal } from "../components/assessment/EvolutionReportMo
 import { buildReportData } from "../lib/evolutionReport";
 import { getEffectiveAge } from "../lib/age";
 import { getSupabaseClient } from "../services/supabaseClient";
-import { refreshClientRecap, checkAgendaConflict } from "../services/supabaseService";
+import { refreshClientRecap } from "../services/supabaseService";
+import { confirmNoAgendaConflict } from "../lib/agendaGuard";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
@@ -263,23 +265,11 @@ export function NewFollowUpPage() {
     .join(" ");
 
   async function handleSubmit() {
-    // Quality fix Thomas 2026-05-18 : check conflit agenda avant save.
+    // Garde-fou agenda (helper partagé) : uniquement si un RDV concret est saisi.
     if (currentUser?.id && dueDate) {
-      try {
-        const dueIso = serializeDateTimeForStorage(dueDate);
-        const conflict = await checkAgendaConflict(currentUser.id, dueIso);
-        if (conflict) {
-          const when = new Date(conflict.dueDate).toLocaleString("fr-FR", {
-            weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-          });
-          const ok = window.confirm(
-            `⚠️ Conflit agenda\n\nTu as déjà un RDV avec ${conflict.clientName} le ${when}.\n\nValider quand même ?`,
-          );
-          if (!ok) return;
-        }
-      } catch (e) {
-        console.warn("[NewFollowUp] agenda conflict check failed:", e);
-      }
+      const dueIso = serializeDateTimeForStorage(dueDate);
+      const ok = await confirmNoAgendaConflict(currentUser.id, dueIso);
+      if (!ok) return;
     }
 
     const nextQuestionnaire: AssessmentQuestionnaire = {
@@ -689,6 +679,24 @@ export function NewFollowUpPage() {
                 }
               ]}
             />
+
+            {(bodyScan.metabolicAge ?? 0) > 0 ? (
+              <MetabolicAgeInsightCard
+                current={bodyScan.metabolicAge}
+                realAge={getEffectiveAge(targetClient)}
+                history={[
+                  ...(targetClient.assessments ?? []).map((assessment) => ({
+                    date: assessment.date,
+                    metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
+                  })),
+                  {
+                    date: assessmentDate,
+                    metabolicAge: bodyScan.metabolicAge,
+                    label: "Aujourd'hui"
+                  }
+                ]}
+              />
+            ) : null}
 
             {targetClient.objective === "weight-loss" ? (
               <WeightGoalInsightCard

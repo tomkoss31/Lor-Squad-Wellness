@@ -10,6 +10,7 @@ import { MeasurementsPanel } from "../features/measurements/MeasurementsPanel";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
+import { MetabolicAgeInsightCard } from "../components/body-scan/MetabolicAgeInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Card } from "../components/ui/Card";
@@ -725,6 +726,17 @@ export function ClientDetailPage() {
                   visceralFat: assessment.bodyScan?.visceralFat ?? 0
                 }))}
               />
+
+              {(latestBodyScan.metabolicAge ?? 0) > 0 && (
+                <MetabolicAgeInsightCard
+                  current={latestBodyScan.metabolicAge}
+                  realAge={getEffectiveAge(client)}
+                  history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                    date: assessment.date,
+                    metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
+                  }))}
+                />
+              )}
             </>
           )}
 
