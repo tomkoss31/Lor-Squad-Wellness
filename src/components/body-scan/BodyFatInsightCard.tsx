@@ -33,8 +33,14 @@ export function BodyFatInsightCard({
   objective,
   sex,
   age,
-  history = []
+  history: historyRaw = []
 }: BodyFatInsightCardProps) {
+  // Fix tri chrono (2026-06-04) : on trie l'historique par date pour que la
+  // courbe ET le slice(-3) "3 derniers points" soient corrects même quand
+  // l'appelant passe les points dans le désordre (cas saisie suivi/bilan).
+  const history = [...historyRaw].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
   const currentKg = estimateBodyFatKg(current.weight, current.percent);
   const previousKg = previous ? estimateBodyFatKg(previous.weight, previous.percent) : null;
   const initialKg = initial ? estimateBodyFatKg(initial.weight, initial.percent) : null;
