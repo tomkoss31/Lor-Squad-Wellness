@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
+import { MetabolicAgeInsightCard } from "../components/body-scan/MetabolicAgeInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { Button } from "../components/ui/Button";
@@ -689,6 +690,24 @@ export function NewFollowUpPage() {
                 }
               ]}
             />
+
+            {(bodyScan.metabolicAge ?? 0) > 0 ? (
+              <MetabolicAgeInsightCard
+                current={bodyScan.metabolicAge}
+                realAge={getEffectiveAge(targetClient)}
+                history={[
+                  ...(targetClient.assessments ?? []).map((assessment) => ({
+                    date: assessment.date,
+                    metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
+                  })),
+                  {
+                    date: assessmentDate,
+                    metabolicAge: bodyScan.metabolicAge,
+                    label: "Aujourd'hui"
+                  }
+                ]}
+              />
+            ) : null}
 
             {targetClient.objective === "weight-loss" ? (
               <WeightGoalInsightCard
