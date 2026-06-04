@@ -14,7 +14,7 @@
 // Rollback : `git show HEAD~1:src/pages/RentabilitePage.tsx` pour l'ancien.
 // =============================================================================
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useUserRentability } from "../hooks/useUserRentability";
@@ -28,13 +28,10 @@ import { useManualPvEntries } from "../hooks/useManualPvEntries";
 import { useStealthMode } from "../hooks/useStealthMode";
 import { ManualPvEntriesSection } from "../components/rentability/ManualPvEntriesSection";
 import {
-  computeManualEntriesOverride,
-  computeOwnSelfMargin,
   computeViewerDownlineOverride,
-  computeViewerOverridePerMember,
   currentMonthIso,
-  tierPctForRank,
 } from "../lib/herbalifeFormulas";
+import { useRentabilitySummary } from "../hooks/useRentabilitySummary";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
 import { Sparkline } from "../components/rentability/shared/Sparkline";
 import { useCountUp } from "../components/rentability/shared/useCountUp";
@@ -60,33 +57,13 @@ function prevMonthShort(iso: string): string {
   }
 }
 
-function computeOwnMargin(
-  data: { scope_user_ids: string[]; margin_eur: number } | null,
-  breakdowns: import("../lib/herbalifeFormulas").PvMonthlyBreakdown[],
-  users: Array<{ id: string; currentRank?: import("../types/domain").HerbalifeRank }>,
-): number {
-  if (!data) return 0;
-  let total = 0;
-  let any = false;
-  for (const ownerId of data.scope_user_ids) {
-    const b = breakdowns.find((br) => br.userId === ownerId);
-    if (b) {
-      const owner = users.find((u) => u.id === ownerId);
-      total += computeOwnSelfMargin(b, tierPctForRank(owner?.currentRank));
-      any = true;
-    }
-  }
-  return any ? Math.max(total, data.margin_eur) : data.margin_eur;
-}
-
 export function RentabilitePage() {
   const navigate = useNavigate();
-  const { currentUser, users, pvClientProducts } = useAppContext();
-  const { data: ownData, loading: ownLoading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
+  const { currentUser, users } = useAppContext();
   const { members } = useTeamEngagement(currentUser?.id ?? null);
 
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const { data: selectedData } = useUserRentability(selectedMemberId);
+  const selectedSummary = useRentabilitySummary(selectedMemberId);
   const [detailOpen, setDetailOpen] = useState(false);
   const [calcView, setCalcView] = useState<"classic" | "flow">("classic");
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
@@ -94,114 +71,32 @@ export function RentabilitePage() {
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
 
-  // ─── PV app réel par membre (mois courant) ───────────────────────────────
-  // Source : pvClientProducts — LA MÊME table (pv_client_products) que la RPC
-  // get_users_rentability qui produit la marge affichée (les 119€). Mêmes
-  // filtres : produit actif + start_date dans le mois courant. PV = pv_per_unit
-  // × quantité. Sert de fallback au calcul d'override quand aucun breakdown
-  // Bizworks manuel n'a été saisi → les ventes app remontent automatiquement
-  // dans les royalties de l'upline, génériquement pour tout l'arbre.
-  const memberPvMonthMap = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of pvClientProducts) {
-      if (!p.active) continue;
-      if ((p.startDate ?? "").slice(0, 7) !== monthIso) continue;
-      const pv = (p.pvPerUnit || 0) * (p.quantityStart || 0);
-      if (pv <= 0) continue;
-      map.set(p.responsibleId, (map.get(p.responsibleId) ?? 0) + pv);
-    }
-    return map;
-  }, [pvClientProducts, monthIso]);
+  // Source de vérité unique du gain (override ventes app inclus) — partagée
+  // avec la WalletCard et les widgets Co-pilote, garantit le même total partout.
+  const {
+    data: ownData,
+    loading: ownLoading,
+    isCoupleAggregated,
+    directMargin: ownSelfMargin,
+    downlineOverride: ownDownlineOverride,
+    manualOverride: ownManualOverride,
+    totalMargin,
+    dataWithOverride: ownDataWithOverride,
+    overridePerMember: ownOverridePerMember,
+    fallbackOverrideForUser,
+  } = useRentabilitySummary(currentUser?.id ?? null);
 
-  const fallbackOverrideForUser = useCallback(
-    (uid: string): { totalPv: number; tierPct: number } | null => {
-      const pv = memberPvMonthMap.get(uid) ?? 0;
-      if (pv <= 0) return null;
-      const u = users.find((x) => x.id === uid);
-      return { totalPv: pv, tierPct: tierPctForRank(u?.currentRank) };
-    },
-    [memberPvMonthMap, users],
-  );
-
-  // Override du viewer ventilé par membre (multi-niveaux correct). Le total
-  // est la somme des contributions ; chaque card lit sa propre part.
-  const ownOverridePerMember = useMemo(() => {
-    if (!ownData || !currentUser) return new Map<string, number>();
-    return computeViewerOverridePerMember(
-      ownData.scope_user_ids,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      breakdowns,
-      fallbackOverrideForUser,
-    );
-  }, [ownData, currentUser, users, breakdowns, fallbackOverrideForUser]);
-
-  const ownDownlineOverride = useMemo(() => {
-    let sum = 0;
-    for (const v of ownOverridePerMember.values()) sum += v;
-    return sum;
-  }, [ownOverridePerMember]);
-
-  const ownSelfMargin = useMemo(
-    () => computeOwnMargin(ownData, breakdowns, users),
-    [ownData, breakdowns, users],
-  );
-
+  // Tableau des entrées manuelles (compteur "N distri saisis" + Sankey).
   const { entries: manualEntries } = useManualPvEntries(
     ownData?.scope_user_ids ?? null,
     monthIso,
   );
-  const ownManualOverride = useMemo(() => {
-    if (!currentUser) return 0;
-    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
-  }, [manualEntries, currentUser]);
 
-  const totalMargin = ownSelfMargin + ownDownlineOverride + ownManualOverride;
-  const ownDataWithOverride = useMemo(() => {
-    if (!ownData) return null;
-    if (totalMargin === ownData.margin_eur) return ownData;
-    const ratio = ownData.margin_eur > 0 ? totalMargin / ownData.margin_eur : 1;
-    return {
-      ...ownData,
-      margin_eur: totalMargin,
-      projection_eur: ownData.projection_eur * ratio,
-    };
-  }, [ownData, totalMargin]);
-
-  // Sélection membre équipe (admin viewing other)
-  const selectedDownlineOverride = useMemo(() => {
-    if (!selectedData || !currentUser) return 0;
-    return computeViewerDownlineOverride(
-      selectedData.scope_user_ids,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      breakdowns,
-      fallbackOverrideForUser,
-    );
-  }, [selectedData, currentUser, users, breakdowns, fallbackOverrideForUser]);
-  const selectedSelfMargin = useMemo(
-    () => computeOwnMargin(selectedData, breakdowns, users),
-    [selectedData, breakdowns, users],
-  );
-  const selectedDataWithOverride = useMemo(() => {
-    if (!selectedData) return null;
-    const newMargin = selectedSelfMargin + selectedDownlineOverride;
-    if (newMargin === selectedData.margin_eur) return selectedData;
-    const ratio = selectedData.margin_eur > 0 ? newMargin / selectedData.margin_eur : 1;
-    return {
-      ...selectedData,
-      margin_eur: newMargin,
-      projection_eur: selectedData.projection_eur * ratio,
-    };
-  }, [selectedData, selectedSelfMargin, selectedDownlineOverride]);
+  // Détail d'un membre d'équipe sélectionné (admin) — même source de vérité.
+  const selectedData = selectedSummary.data;
+  const selectedSelfMargin = selectedSummary.directMargin;
+  const selectedDownlineOverride = selectedSummary.downlineOverride;
+  const selectedDataWithOverride = selectedSummary.dataWithOverride;
 
   const isAdminOrRef = currentUser?.role === "admin" || currentUser?.role === "referent";
   const otherMembers = useMemo(() => {
