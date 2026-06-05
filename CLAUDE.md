@@ -46,7 +46,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - **Chantier C — Paiement Square** (2-3j+) : edge function + SMS Twilio + webhook
 - **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
 - **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (audit 2026-06-03)
-- **#8 Newsletter — volet PUBLIC lead-magnet** : la newsletter privée est LIVRÉE (voir Livrés). Reste la page publique d'inscription + capture lead
+- ~~**#8 Newsletter — volet PUBLIC lead-magnet**~~ ✅ **LIVRÉ EN PROD** (2026-06-02) : chantier #8 COMPLET (étapes 8.1→8.12). Route publique `/news/:slug` (`PublicNewsletterPage`) + popup capture lead + image OG dynamique (html2canvas + Supabase Storage) + tracking webhooks Resend + page stats + envoi batch Resend (fix faux bounces). Admin : `/admin/newsletters` + éditeur + `/admin/newsletters/:id/stats`. (Audit 2026-06-05 : la ligne « reste à faire » était périmée.)
 - **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube. **Aucun code amorcé**. (réf : composants `VideoPlayerModal`/`formationContent` existaient sur la branche morte `audit/client-app-deep-dive`, trop vieux pour merger — à refaire)
 - **#13 Fiche distri publique enrichie** (8-11h) : **aucun code amorcé**
 - _(Paiement Square + Lor'Squad AI ci-dessus : aucun code amorcé non plus — confirmé audit 2026-06-03)_
