@@ -41,7 +41,7 @@ interface Props {
 // - VIP    : 2 chiffres + 2 lettres + 6 chiffres (ex: 21XY010361)
 
 export function ClientVipCoachPanel({ client }: Props) {
-  const { clients } = useAppContext();
+  const { clients, reloadClients } = useAppContext();
   const { push: pushToast } = useToast();
   const status = useClientVipStatus(client.id);
   const tree = useClientVipTree(client.id);
@@ -70,9 +70,15 @@ export function ClientVipCoachPanel({ client }: Props) {
 
   // ─── Activation manuelle VIP (2026-04-29) ─────────────────────────────────
   const [togglingActivation, setTogglingActivation] = useState(false);
-  const vipActive = Boolean(
-    (client as Client & { vipStartedAt?: string | null }).vipStartedAt,
-  );
+  const vipStartedAtValue =
+    (client as Client & { vipStartedAt?: string | null }).vipStartedAt ?? null;
+  const vipActive = Boolean(vipStartedAtValue);
+  // Édition de la date d'activation VIP (2026-06-05, demande Thomas) : permet
+  // de rétropédaler la date pour intégrer les commandes antérieures à
+  // l'activation manuelle (cas Huard : compte créé après les commandes).
+  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [startDateInput, setStartDateInput] = useState<string>("");
+  const [savingStartDate, setSavingStartDate] = useState(false);
 
   // Sponsor candidates : tous les autres clients du coach.
   const sponsorCandidates = useMemo(
@@ -149,6 +155,42 @@ export function ClientVipCoachPanel({ client }: Props) {
       });
     } finally {
       setTogglingActivation(false);
+    }
+  }
+
+  async function saveVipStartDate() {
+    if (savingStartDate) return;
+    if (!startDateInput) {
+      pushToast({ tone: "warning", title: "Date manquante", message: "Choisis une date d'activation." });
+      return;
+    }
+    setSavingStartDate(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      // Stocké à midi pour éviter tout décalage de jour selon le fuseau.
+      const iso = new Date(`${startDateInput}T12:00:00`).toISOString();
+      const { error } = await sb
+        .from("clients")
+        .update({ vip_started_at: iso })
+        .eq("id", client.id);
+      if (error) throw error;
+      pushToast({
+        tone: "success",
+        title: "Date d'activation mise à jour",
+        message: "Le cumul VIP intègre désormais les commandes depuis cette date.",
+      });
+      setEditingStartDate(false);
+      void status.reload();
+      void reloadClients?.();
+    } catch (err) {
+      pushToast({
+        tone: "error",
+        title: "Erreur",
+        message: err instanceof Error ? err.message : "Impossible de modifier la date",
+      });
+    } finally {
+      setSavingStartDate(false);
     }
   }
 
@@ -375,40 +417,119 @@ export function ClientVipCoachPanel({ client }: Props) {
             color: "var(--ls-teal)",
           }}
         >
-          <span>
-            ✓ Programme actif depuis le{" "}
-            <strong>
-              {(() => {
-                const d = (client as Client & { vipStartedAt?: string | null }).vipStartedAt;
-                if (!d) return "—";
-                return new Date(d).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                });
-              })()}
-            </strong>
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm("Désactiver le programme VIP ? Les PV ne compteront plus pour le palier.")) {
-                void toggleVipActivation();
-              }
-            }}
-            disabled={togglingActivation}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--ls-text-hint)",
-              fontSize: 10,
-              cursor: "pointer",
-              textDecoration: "underline",
-              fontFamily: "DM Sans, sans-serif",
-            }}
-          >
-            Désactiver
-          </button>
+          {editingStartDate ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ color: "var(--ls-text-hint)" }}>Activé depuis le</span>
+              <input
+                type="date"
+                value={startDateInput}
+                onChange={(e) => setStartDateInput(e.target.value)}
+                style={{
+                  background: "var(--ls-surface)",
+                  border: "0.5px solid var(--ls-border)",
+                  borderRadius: 8,
+                  padding: "4px 8px",
+                  fontSize: 12,
+                  color: "var(--ls-text)",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => void saveVipStartDate()}
+                disabled={savingStartDate}
+                style={{
+                  background: "var(--ls-teal)",
+                  border: "none",
+                  color: "#04201c",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "5px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                {savingStartDate ? "…" : "Enregistrer"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingStartDate(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--ls-text-hint)",
+                  fontSize: 11,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                Annuler
+              </button>
+            </span>
+          ) : (
+            <>
+              <span>
+                ✓ Programme actif depuis le{" "}
+                <strong>
+                  {(() => {
+                    const d = vipStartedAtValue;
+                    if (!d) return "—";
+                    return new Date(d).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    });
+                  })()}
+                </strong>
+              </span>
+              <span style={{ display: "inline-flex", gap: 12, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartDateInput(
+                      vipStartedAtValue
+                        ? new Date(vipStartedAtValue).toLocaleDateString("en-CA")
+                        : new Date().toLocaleDateString("en-CA"),
+                    );
+                    setEditingStartDate(true);
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--ls-teal)",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontFamily: "DM Sans, sans-serif",
+                  }}
+                >
+                  Modifier la date
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Désactiver le programme VIP ? Les PV ne compteront plus pour le palier.")) {
+                      void toggleVipActivation();
+                    }
+                  }}
+                  disabled={togglingActivation}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--ls-text-hint)",
+                    fontSize: 10,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontFamily: "DM Sans, sans-serif",
+                  }}
+                >
+                  Désactiver
+                </button>
+              </span>
+            </>
+          )}
         </div>
       )}
 
