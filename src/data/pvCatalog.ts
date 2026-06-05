@@ -452,6 +452,18 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     active: true,
   },
   {
+    id: "the-102g-mangue-dragon",
+    name: "Boisson Thé Mangue Fruit du Dragon 102 g (grand format)",
+    category: "hydratation / routine",
+    pricePublic: 73.5,
+    pv: 34.95,
+    quantiteLabel: "102 g",
+    dureeReferenceJours: 42,
+    noteMetier: "Grand format ≈ 42 jours — parfum mangue fruit du dragon (SKU 331K). Prix déduit du thé 102g (même PV), à confirmer si prix officiel différent.",
+    recommendedProgram: "Programme Premium",
+    active: true,
+  },
+  {
     id: "iced-coffee-latte",
     name: "High Protein Iced Coffee Latte Macchiato",
     category: "energie / proteine",
