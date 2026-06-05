@@ -54,6 +54,7 @@ export function ClientDetailPage() {
     getClientById,
     followUps,
     reloadClients,
+    pvClientProducts,
   } = useAppContext();
   const { push: pushToast } = useToast();
 
@@ -236,6 +237,14 @@ export function ClientDetailPage() {
     .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
     .filter((product): product is NonNullable<typeof product> => product != null);
   void retainedProducts;
+
+  // Produits réellement commandés/actifs du client (Suivi PV). Sert de
+  // fallback à la card "Programme actuel" quand aucun produit n'a été coché
+  // au bilan : le coach a saisi les commandes via le réassort, elles doivent
+  // remonter dans le programme (fix 2026-06-05, cas Marjorie HUARD).
+  const activeClientProducts = pvClientProducts.filter(
+    (p) => p.clientId === client.id && p.active,
+  );
 
   // handleDeleteClient + handleTransferClient déplacés dans ActionsTab.tsx
   // (Chantier Refonte Actions premium 2026-04-26).
@@ -883,8 +892,21 @@ export function ClientDetailPage() {
             const existingIds = new Set(retainedProductIds);
             const existingNames = new Set(retainedProducts.map(p => p?.name).filter((n): n is string => typeof n === 'string'));
             const upsells = (recoProducts ?? []).filter(r => r && !existingNames.has(r.name));
-            const allProductIds = [...retainedProductIds];
-            const allProducts = allProductIds.map(id => pvProductCatalog.find(p => p.id === id) ?? null).filter((p): p is NonNullable<typeof p> => p != null);
+            // "Programme actuel" : produits cochés au bilan en priorité ; sinon
+            // fallback sur les produits réellement commandés/actifs (réassort).
+            type ProgramProduct = { id: string; name: string; pv: number; pricePublic: number; dureeReferenceJours: number };
+            const allProducts: ProgramProduct[] = retainedProductIds.length > 0
+              ? retainedProductIds
+                  .map(id => pvProductCatalog.find(p => p.id === id))
+                  .filter((p): p is NonNullable<typeof p> => p != null)
+                  .map(p => ({ id: p.id, name: p.name, pv: p.pv, pricePublic: p.pricePublic, dureeReferenceJours: p.dureeReferenceJours }))
+              : activeClientProducts.map(p => ({
+                  id: p.productId,
+                  name: p.productName,
+                  pv: p.pvPerUnit ?? 0,
+                  pricePublic: p.pricePublicPerUnit ?? 0,
+                  dureeReferenceJours: p.durationReferenceDays ?? 0,
+                }));
             const totalPv = allProducts.reduce((s, p) => s + (p?.pv ?? 0), 0);
             const totalPrice = allProducts.reduce((s, p) => s + (p?.pricePublic ?? 0), 0);
 
