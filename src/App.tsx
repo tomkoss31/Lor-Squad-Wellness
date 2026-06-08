@@ -176,6 +176,11 @@ const RejoindreOpportunitePage = lazy(() =>
     default: module.RejoindreOpportunitePage,
   })),
 );
+const CoachPublicProfilePage = lazy(() =>
+  import("./pages/CoachPublicProfilePage").then((module) => ({
+    default: module.CoachPublicProfilePage,
+  })),
+);
 const RejoindreQuestionnairePage = lazy(() =>
   import("./pages/RejoindreQuestionnairePage").then((module) => ({
     default: module.RejoindreQuestionnairePage,
@@ -578,6 +583,7 @@ export default function App() {
           {/* Funnel Opportunité gated (chantier 2026-06) — la « porte » qualifiante
               partagée par les coachs. /rejoindre[/<slug>] préserve ?ref=. Le
               questionnaire (étape 2) + scoring + mini-CRM arrivent ensuite. */}
+          <Route path="/coach/:slug" element={<CoachPublicProfilePage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
