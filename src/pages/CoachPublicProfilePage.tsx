@@ -28,8 +28,6 @@ import {
   type CoachCredibility,
 } from "../components/bilan-online/CoachCredibilityBadges";
 import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
-import { RankPinBadge } from "../components/rank/RankPinBadge";
-import type { HerbalifeRank } from "../types/domain";
 
 function normalizeSlug(input: string): string {
   return input
@@ -61,7 +59,6 @@ export function CoachPublicProfilePage() {
     return fallbackCoachName;
   }, [coachData, fallbackCoachName]);
 
-  const coachRank = (coachData?.rank ?? null) as HerbalifeRank | null;
   const initial = (coachData?.first_name ?? fallbackCoachName ?? "?")
     .charAt(0)
     .toUpperCase();
@@ -135,8 +132,7 @@ export function CoachPublicProfilePage() {
                 justifyContent: "center",
               }}
             >
-              <span>{coachDisplayName || "—"}</span>
-              {coachRank && <RankPinBadge rank={coachRank} size="sm" />}
+              {coachDisplayName || "—"}
             </h1>
             <p
               style={{
@@ -155,6 +151,7 @@ export function CoachPublicProfilePage() {
             <CoachCredibilityBadges
               coachSlug={slug}
               variant="business"
+              hideRank
               onResolved={(d) => {
                 setCoachData(d);
                 setResolved(true);

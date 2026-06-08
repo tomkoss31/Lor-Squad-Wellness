@@ -41,6 +41,9 @@ interface Props {
   preloaded?: CoachCredibility | null;
   /** Notif au parent : on a résolu le coach (utile pour afficher le nom officiel). */
   onResolved?: (data: CoachCredibility | null) => void;
+  /** Masque le badge rang Herbalife (ex: fiche publique distri où le rang
+   *  interne ne parle pas aux prospects). Défaut false. */
+  hideRank?: boolean;
 }
 
 function formatTenure(months: number): string {
@@ -57,6 +60,7 @@ export function CoachCredibilityBadges({
   variant = "welcome",
   preloaded,
   onResolved,
+  hideRank = false,
 }: Props) {
   const [data, setData] = useState<CoachCredibility | null>(preloaded ?? null);
   const [loading, setLoading] = useState<boolean>(!preloaded && !!(coachSlug || coachUserId));
@@ -111,15 +115,18 @@ export function CoachCredibilityBadges({
   }
   if (!data) return null;
 
-  const items: Array<{ icon: string; label: string; key: string }> = [
-    { icon: "🏆", label: data.rank_label, key: "rank" },
-  ];
+  const items: Array<{ icon: string; label: string; key: string }> = [];
+  if (!hideRank) {
+    items.push({ icon: "🏆", label: data.rank_label, key: "rank" });
+  }
   if (data.city && data.city.trim().length > 0) {
     items.push({ icon: "📍", label: data.city.trim(), key: "city" });
   }
   if (typeof data.tenure_months === "number" && data.tenure_months >= 1) {
     items.push({ icon: "🗓", label: formatTenure(data.tenure_months), key: "tenure" });
   }
+  // Si plus rien à afficher (rang masqué + ni ville ni ancienneté) → rien.
+  if (items.length === 0) return null;
 
   if (variant === "newsletter") {
     return (
@@ -144,8 +151,8 @@ export function CoachCredibilityBadges({
   if (variant === "business") {
     return (
       <div style={{
-        display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12,
-        margin: "0 auto", maxWidth: 520,
+        display: "grid", gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 12,
+        margin: "0 auto", maxWidth: items.length >= 3 ? 520 : items.length * 170,
       }}>
         {items.map((it) => (
           <div key={it.key} style={{
