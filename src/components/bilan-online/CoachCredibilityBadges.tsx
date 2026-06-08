@@ -29,6 +29,11 @@ export interface CoachCredibility {
   city: string | null;
   coaching_since: string | null;
   tenure_months: number | null;
+  // Ajouts V3 (chantier #13-B) — présents seulement si la RPC v3 est déployée.
+  avatar_url?: string | null;
+  bio?: string | null;
+  bilans_count?: number | null;
+  clients_count?: number | null;
 }
 
 type Variant = "welcome" | "business" | "newsletter";
