@@ -101,7 +101,11 @@ serve(async (req) => {
             client_id: clientId,
             client_name: `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim(),
             distributor_id: client.distributor_id,
-            message_type: "message",
+            // 'general' (et non 'message') : seuls product_request /
+            // recommendation / rdv_request / general sont rendus dans un
+            // onglet de MessagesPage. Un type invalide rend le message
+            // invisible côté coach (badge "+1" mais introuvable). Bug 2026-06-08.
+            message_type: "general",
             message:
               "👋 Je préfère faire mon point de départ (poids ou mensurations) avec toi, lors de notre échange.",
             sender: "client",
