@@ -229,7 +229,7 @@ export function FlexTeamPage() {
               {drift.map((d) => (
                 <Link
                   key={d.user_id}
-                  to={`/users`}
+                  to={`/distributors/${d.user_id}`}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
