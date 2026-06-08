@@ -369,7 +369,11 @@ export function MessagesPage() {
   const productMessages = useMemo(() => incoming.filter(m => m.message_type === 'product_request'), [incoming])
   const recoMessages = useMemo(() => incoming.filter(m => m.message_type === 'recommendation'), [incoming])
   const clientAskMessages = useMemo(
-    () => incoming.filter(m => m.message_type === 'rdv_request' || m.message_type === 'general'),
+    // Catch-all (fix 2026-06-08) : rdv_request, general ET tout type inconnu /
+    // legacy (ex. 'message' écrit par une edge fn). Sans ce fallback, un type
+    // hors des 3 onglets rend le message invisible côté coach (badge "+1" mais
+    // introuvable). 'coach_reply' n'arrive jamais ici (incoming = sender client).
+    () => incoming.filter(m => m.message_type !== 'product_request' && m.message_type !== 'recommendation'),
     [incoming],
   )
 
