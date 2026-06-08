@@ -28,13 +28,13 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run backup
 
-      - name: Committer les backups
-        run: |
-          git config user.name "backup-bot"
-          git config user.email "backup@lorsquad.app"
-          git add -f backups/
-          git diff --staged --quiet || git commit -m "backup: $(date +%Y-%m-%d)"
-          git push
+      - name: Archiver les backups (artefact GitHub, hors git)
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 90
+          if-no-files-found: error
 
       - name: Récap hebdo (dimanche) → crée une issue GitHub
         if: github.event_name == 'schedule'
@@ -58,8 +58,8 @@ jobs:
 
           ---
 
-          📂 [Voir les sauvegardes](../tree/main/backups)
-          📖 [Guide de restauration](../blob/main/backups/README.md)
+          📂 Sauvegardes archivées en artefact GitHub Actions (90j) — onglet **Actions** → ce run → section *Artifacts*.
+          📖 [Guide de restauration](../blob/main/docs/BACKUPS.md)
 
           Si tu reçois cet email, ta sauvegarde tourne normalement. ✨"
             fi
