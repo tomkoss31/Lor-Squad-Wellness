@@ -5,12 +5,15 @@
 // crédibilité (ancienneté/ville) + témoignages + DOUBLE CTA (bilan gratuit
 // pour clients, rejoindre l'équipe pour recrues).
 //
-// Données : RPC publique get_coach_credibility_by_slug (via CoachCredibilityBadges,
-// SECURITY DEFINER, champs public-safe uniquement — pas d'email/téléphone).
-// Avatar réel + bio = étape B.2 (migration RPC). Ici : placeholder initiale.
+// Données : RPC publique get_coach_credibility_by_slug v3 (via CoachCredibilityBadges,
+// SECURITY DEFINER, champs public-safe uniquement — jamais email/téléphone).
+// Renvoie avatar_url + bio + clients_count (B.2a). Rang masqué (hideRank, retour
+// Thomas : ne parle pas aux prospects). Stat "personnes accompagnées" affichée
+// seulement au-dessus d'un seuil (anti-décrédibilisation distri débutant).
+// Reste B.2c : image OG de partage social (serveur).
 //
-// Briques réutilisées : PublicShell (dark), RankPinBadge, CoachCredibilityBadges,
-// TestimonialsCarousel. Aucun mockup validé → direction à valider avec Thomas.
+// Briques réutilisées : PublicShell (dark), CoachCredibilityBadges,
+// TestimonialsCarousel. Aucun mockup validé → direction validée avec Thomas.
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
@@ -62,6 +65,12 @@ export function CoachPublicProfilePage() {
   const initial = (coachData?.first_name ?? fallbackCoachName ?? "?")
     .charAt(0)
     .toUpperCase();
+  const avatarUrl = coachData?.avatar_url ?? null;
+  const bio = (coachData?.bio ?? "").trim();
+  // Seuil anti-décrédibilisation (cf. raison du DROP "bilans réalisés" en V2) :
+  // on n'affiche le compteur que s'il est flatteur.
+  const accompagnes = coachData?.clients_count ?? 0;
+  const showAccompagnes = accompagnes >= 5;
 
   // SEO de base (les balises og: viendront en B.2)
   useEffect(() => {
@@ -92,28 +101,44 @@ export function CoachPublicProfilePage() {
             gap: 16,
           }}
         >
-          {/* Avatar placeholder (initiale dans cercle gradient) — avatar réel en B.2 */}
-          <div
-            className="ps-bounce"
-            style={{
-              width: 112,
-              height: 112,
-              borderRadius: "50%",
-              background: PUBLIC_TOKENS.gradCta,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: PUBLIC_FONTS.display,
-              fontSize: 44,
-              fontWeight: 700,
-              color: "#fff",
-              boxShadow: "0 8px 32px rgba(45,212,191,0.35)",
-              border: "3px solid var(--hair)",
-            }}
-            aria-hidden="true"
-          >
-            {initial}
-          </div>
+          {/* Avatar : photo réelle si dispo, sinon initiale dans cercle gradient */}
+          {avatarUrl ? (
+            <img
+              className="ps-bounce"
+              src={avatarUrl}
+              alt={coachDisplayName || "Coach"}
+              style={{
+                width: 112,
+                height: 112,
+                borderRadius: "50%",
+                objectFit: "cover",
+                boxShadow: "0 8px 32px rgba(45,212,191,0.35)",
+                border: "3px solid var(--hair)",
+              }}
+            />
+          ) : (
+            <div
+              className="ps-bounce"
+              style={{
+                width: 112,
+                height: 112,
+                borderRadius: "50%",
+                background: PUBLIC_TOKENS.gradCta,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: PUBLIC_FONTS.display,
+                fontSize: 44,
+                fontWeight: 700,
+                color: "#fff",
+                boxShadow: "0 8px 32px rgba(45,212,191,0.35)",
+                border: "3px solid var(--hair)",
+              }}
+              aria-hidden="true"
+            >
+              {initial}
+            </div>
+          )}
 
           <div>
             <h1
@@ -158,20 +183,48 @@ export function CoachPublicProfilePage() {
               }}
             />
           )}
+
+          {/* Preuve sociale : nb de personnes accompagnées (si flatteur) */}
+          {showAccompagnes && (
+            <div
+              className="ps-fade-in"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 16px",
+                borderRadius: 999,
+                background: "color-mix(in srgb, var(--teal) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--teal) 35%, transparent)",
+                fontFamily: PUBLIC_FONTS.body,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--cream)",
+              }}
+            >
+              <span aria-hidden="true">✨</span>
+              <span>
+                <strong style={{ fontFamily: PUBLIC_FONTS.display }}>{accompagnes}</strong>{" "}
+                personnes accompagnées
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* ── Tagline ──────────────────────────────────────────────────── */}
+        {/* ── Bio du coach (si renseignée) sinon tagline générique ─────── */}
         <p
           style={{
             fontSize: 16,
             color: "var(--cream-muted)",
-            maxWidth: 420,
+            maxWidth: 440,
             margin: "28px auto 32px",
-            lineHeight: 1.55,
+            lineHeight: 1.6,
+            whiteSpace: bio ? "pre-line" : "normal",
           }}
         >
-          Reprends ta forme avec un accompagnement humain et personnalisé — ou
-          découvre comment en faire ton activité.
+          {bio
+            ? bio
+            : "Reprends ta forme avec un accompagnement humain et personnalisé — ou découvre comment en faire ton activité."}
         </p>
 
         {/* ── Double CTA ───────────────────────────────────────────────── */}
@@ -206,6 +259,86 @@ export function CoachPublicProfilePage() {
           >
             🚀 Rejoindre mon équipe
           </button>
+        </div>
+
+        {/* ── Comment ça se passe (3 étapes) ───────────────────────────── */}
+        <div style={{ marginTop: 56 }}>
+          <h2
+            style={{
+              fontFamily: PUBLIC_FONTS.display,
+              fontSize: 20,
+              fontWeight: 600,
+              color: "var(--cream)",
+              marginBottom: 22,
+            }}
+          >
+            Comment <span style={publicGradText}>ça se passe</span>
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              {
+                emoji: "📋",
+                title: "1 · Ton bilan offert",
+                desc: "On fait le point sur ton corps, tes habitudes et ton objectif. 100% gratuit, sans engagement.",
+              },
+              {
+                emoji: "🎯",
+                title: "2 · Ton programme personnalisé",
+                desc: "Je te construis un plan nutrition + activité adapté à TA vie, pas un truc générique.",
+              },
+              {
+                emoji: "🤝",
+                title: "3 · Ton suivi rapproché",
+                desc: "On reste en contact, on ajuste, on célèbre tes progrès. Tu n'es jamais seul·e.",
+              },
+            ].map((step) => (
+              <div
+                key={step.title}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 14,
+                  textAlign: "left",
+                  padding: "16px 18px",
+                  borderRadius: 16,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--hair)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{ fontSize: 26, lineHeight: 1.1, flexShrink: 0 }}
+                >
+                  {step.emoji}
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontFamily: PUBLIC_FONTS.display,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "var(--cream)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {step.title}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: PUBLIC_FONTS.body,
+                      fontSize: 13.5,
+                      color: "var(--cream-muted)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {step.desc}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Témoignages du coach ─────────────────────────────────────── */}
