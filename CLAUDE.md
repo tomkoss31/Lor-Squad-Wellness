@@ -23,6 +23,7 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - **Onboarding client PWA (chantier C 2026-11-04)** : `ClientOnboardingTour` 4 slides + edge `client-app-mark-onboarded` + colonne `client_app_accounts.onboarded_at`. Tutorial 9 étapes désormais sur demande via FAQ chatbot (chantier C V2 2026-05-20)
 - **D — Popup météo 5 jours (2026-05-05)** : `WeatherPopup` + `useWeatherForecast` (Open-Meteo no key, cache 30min, mapping WMO). Pill weather Co-pilote cliquable. CTA "Renseigne ta ville" si `users.city` absent.
 - **Fix inbox messagerie** : limite globale 50 → 1000 (PR #91)
+- **Fix messagerie `message_type` invisible (2026-06-08)** : l'edge `client-app-set-baseline` (onboarding mode `skip`) écrivait `message_type='message'`, valeur hors union → message client invisible dans la Messagerie (badge "+1" mais introuvable). Fix : edge → `'general'` ; backfill prod des 3 messages perdus (Bazard/Romane/Gabriel) ; `MessagesPage` catch-all (type inconnu → onglet « Demandes clients ») ; `InboxWidget` aligné sur `unreadMessageCount` ; **CHECK constraint** sur `client_messages.message_type` (échec écriture > perte silencieuse). Cf. règle « tout insert client_messages doit utiliser un type de l'union `domain.ts` ».
 
 #### ✅ Confirmés livrés mais oubliés de la roadmap (audit 2026-06-03)
 - **Plan d'action PV matin** : RPC `get_pv_action_plan` + hook `usePvActionPlan`, consommé sur Co-pilote V5 (était listé « à faire » à tort)
@@ -60,7 +61,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - ~~Messagerie `AppContext` `limit(50)` global~~ ✅ déjà à `limit(1000)` (`AppContext.tsx:319`, depuis 2026-05-20). Ligne périmée — corrigé audit 2026-06-08.
 - ~~Google Reviews URL placeholder dans `ThankYouStep.tsx`~~ ✅ URL réelle déjà en prod (`ThankYouStep.tsx:22`, La Base Verdun). Plus un placeholder — corrigé audit 2026-06-08.
 - **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage ~4340L (a encore grossi), AgendaPage ~2280L, supabaseService ~2500L. **Opportuniste only** — pas de chantier refacto dédié. (tailles re-mesurées audit 2026-06-08)
-- **Backlog santé edge functions** (audit 2026-06-08) : `catch {}` silencieux (coach-tips, formation-relay, request-testimonial) → ajouter `console.warn` ; `fetch()` vers send-push sans timeout (×4) → `AbortSignal.timeout` ; compteurs newsletter non-atomiques (`resend-webhook`). Non bloquant. `client-anniversary-check` fallback `lifecycle`→`lifecycle_status` corrigé (déployé ?).
+- **Backlog santé edge functions** (audit 2026-06-08) : `catch {}` silencieux (coach-tips, formation-relay, request-testimonial) → ajouter `console.warn` ; `fetch()` vers send-push sans timeout (×4) → `AbortSignal.timeout` ; compteurs newsletter non-atomiques (`resend-webhook`). Non bloquant. ✅ `client-anniversary-check` fallback `lifecycle`→`lifecycle_status` **corrigé + déployé prod 2026-06-08**.
 - **`TourRunner.tsx:137`** : `console.log()` oublié à retirer (seul du repo).
 
 ### ❓ À décider
