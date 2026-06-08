@@ -34,14 +34,26 @@ function badgeForType(type: ClientMessage["message_type"]): string {
 }
 
 export function InboxWidget() {
-  const { clientMessages, currentUser } = useAppContext();
+  const { clientMessages, visibleClients, currentUser } = useAppContext();
   const navigate = useNavigate();
+
+  // Aligné sur unreadMessageCount (AppContext, fix Mélanie 2026-05-22) : on
+  // exclut les messages orphelins (client supprimé / transféré / hors scope
+  // RLS), sinon le widget montre un badge "3" alors que la Messagerie est
+  // vide. Pas de filtre par type : MessagesPage a un catch-all qui rend
+  // désormais TOUS les types client visibles (fix 2026-06-08).
+  const visibleClientIds = useMemo(
+    () => new Set(visibleClients.map((c) => c.id)),
+    [visibleClients],
+  );
 
   const toHandle = useMemo(() => {
     const incoming = clientMessages.filter((m) => {
       if ((m.sender ?? "client") !== "client") return false;
       if (m.archived_at || m.resolved_at) return false;
       if (m.read) return false;
+      // Si le message est rattaché à un client, exiger qu'il soit visible.
+      if (m.client_id && !visibleClientIds.has(m.client_id)) return false;
       if (currentUser && currentUser.role !== "admin") {
         return m.distributor_id === currentUser.id || m.distributor_id === currentUser.name;
       }
@@ -50,7 +62,7 @@ export function InboxWidget() {
     return [...incoming]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 5);
-  }, [clientMessages, currentUser]);
+  }, [clientMessages, visibleClientIds, currentUser]);
 
   const count = toHandle.length;
 

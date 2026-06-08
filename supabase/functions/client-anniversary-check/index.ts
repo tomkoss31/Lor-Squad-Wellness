@@ -125,7 +125,7 @@ serve(async (req) => {
           client_app_accounts!inner(token),
           assessments!inner(date, type)
         `)
-        .eq("lifecycle", "active")
+        .eq("lifecycle_status", "active")
         .eq("assessments.type", "initial");
       if (dErr) {
         log("error", "fetch_clients_failed", { message: dErr.message });
