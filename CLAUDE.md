@@ -37,7 +37,7 @@ Voir **`docs/HERBALIFE_PALIERS_REGLES.md`** (paliers, fenêtres glissantes, qual
 ### 🔴 À faire (court terme)
 
 **Quick wins**
-- Désactiver / supprimer la push notif 20h `daily-actions-notifier` si Thomas la trouve agressive (toggle `users.notif_daily_actions` = false)
+- Push notif 20h `daily-actions-notifier` : le toggle `users.notif_daily_actions` est **déjà livré** (UI `NotificationsTab.tsx` + edge le consomme). Reste juste la **décision** de Thomas s'il la trouve agressive — pas de dev. (clarifié audit 2026-06-08)
 
 _(plus aucun chantier court terme validé — tout livré, voir section moyen/long terme pour les gros chantiers à venir)_
 
@@ -47,7 +47,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
 - **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (audit 2026-06-03)
 - ~~**#8 Newsletter — volet PUBLIC lead-magnet**~~ ✅ **LIVRÉ EN PROD** (2026-06-02) : chantier #8 COMPLET (étapes 8.1→8.12). Route publique `/news/:slug` (`PublicNewsletterPage`) + popup capture lead + image OG dynamique (html2canvas + Supabase Storage) + tracking webhooks Resend + page stats + envoi batch Resend (fix faux bounces). Admin : `/admin/newsletters` + éditeur + `/admin/newsletters/:id/stats`. (Audit 2026-06-05 : la ligne « reste à faire » était périmée.)
-- **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube. **Aucun code amorcé**. (réf : composants `VideoPlayerModal`/`formationContent` existaient sur la branche morte `audit/client-app-deep-dive`, trop vieux pour merger — à refaire)
+- **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube. 🟡 **Socle partiel déjà présent** (audit 2026-06-08) : `FormationCategoryPage.tsx:361` a une modale iframe YouTube + `formation/types.ts` gère `kind="internal-video"`. Reste à faire : composant `TutorialLink` réutilisable hors Formation. (l'ancienne réf `VideoPlayerModal` de la branche morte n'est plus pertinente.)
 - **#13 Fiche distri publique enrichie** (8-11h) : **aucun code amorcé**
 - _(Paiement Square + Lor'Squad AI ci-dessus : aucun code amorcé non plus — confirmé audit 2026-06-03)_
 
@@ -57,9 +57,11 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - Drill-down produit Analytics
 - Tri par PV mois sur `/clients`
 - Hydratation `selectedProductQuantities` dans Edit/Follow-up
-- Messagerie `AppContext` `limit(50)` global → conversations tronquées hors-cache (à porter à 1000 comme l'inbox)
-- Google Reviews URL placeholder à remplacer dans `ThankYouStep.tsx` (TODO Thomas)
-- **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage ~2900L, AgendaPage 2251L, supabaseService 2443L. **Opportuniste only** — pas de chantier refacto dédié.
+- ~~Messagerie `AppContext` `limit(50)` global~~ ✅ déjà à `limit(1000)` (`AppContext.tsx:319`, depuis 2026-05-20). Ligne périmée — corrigé audit 2026-06-08.
+- ~~Google Reviews URL placeholder dans `ThankYouStep.tsx`~~ ✅ URL réelle déjà en prod (`ThankYouStep.tsx:22`, La Base Verdun). Plus un placeholder — corrigé audit 2026-06-08.
+- **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage ~4340L (a encore grossi), AgendaPage ~2280L, supabaseService ~2500L. **Opportuniste only** — pas de chantier refacto dédié. (tailles re-mesurées audit 2026-06-08)
+- **Backlog santé edge functions** (audit 2026-06-08) : `catch {}` silencieux (coach-tips, formation-relay, request-testimonial) → ajouter `console.warn` ; `fetch()` vers send-push sans timeout (×4) → `AbortSignal.timeout` ; compteurs newsletter non-atomiques (`resend-webhook`). Non bloquant. `client-anniversary-check` fallback `lifecycle`→`lifecycle_status` corrigé (déployé ?).
+- **`TourRunner.tsx:137`** : `console.log()` oublié à retirer (seul du repo).
 
 ### ❓ À décider
 
