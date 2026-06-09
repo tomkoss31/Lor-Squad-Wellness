@@ -6,15 +6,29 @@
 
 ---
 
+## 🔴 MAJ 2026-06-09 — NOUVELLES RÈGLES (rétroactif depuis février 2026)
+
+Herbalife a changé les seuils. **Changement principal : Senior Consultant 35 % passe de 500 → 250 PV.** Détail validé Thomas :
+
+- **35 % (Senior Consultant)** : **250 PV / 2 mois** glissants  *(était 500)*
+- **42 % (Success Builder)** : **1000 PV / 3 mois** glissants  *(inchangé)* — **OU via QP : 2500 PV / 6 mois** (le QP donne aussi 42 %). Sans 1000/3m ni 2500, on reste à 35 % en cumulant jusqu'à 2500 → 42 %.
+- **50 % (Superviseur)** : **4000 PV / 3 à 12 mois** glissants  *(inchangé)*
+
+**Rétroactif** : appliqué via **calcul à l'affichage** (la RPC `get_distributor_qualifications` somme les fenêtres glissantes en live → rétroactif automatique, pas de migration de `users.current_rank`).
+
+Migration : `20261201000000_herbalife_rules_2026_update.sql`. Le tableau ci-dessous reflète déjà ces nouvelles valeurs.
+
+---
+
 ## 🏆 Paliers de remise / commission
 
 | Palier | Remise | PV requis | Fenêtre glissante | Maintien |
 |---|---|---|---|---|
 | **Distributor** | **25 %** | 0 PV | — (statut par défaut à l'inscription) | Permanent (sauf inactivité prolongée) |
-| **Senior Consultant** | **35 %** | **500 PV** | **2 mois glissants consécutifs** | Mensuel — à requalifier |
+| **Senior Consultant** | **35 %** | **250 PV** *(MAJ — était 500)* | **2 mois glissants consécutifs** | Mensuel — à requalifier |
 | **Success Builder** | **42 %** | **1000 PV** | **3 mois glissants** | Mensuel — à requalifier |
-| **Qualified Producer (QP)** | étape | **2500 PV** | **6 mois glissants** | Étape intermédiaire vers Supervisor |
-| **Supervisor (TAB Team)** | **50 %** | **4000 PV** | **1 à 12 mois glissants** | **Annuel** — à requalifier chaque année avec 4000 PV |
+| **Qualified Producer (QP)** | **42 %** (même marge que SB) | **2500 PV** | **6 mois glissants** | Voie alternative vers le 42 % |
+| **Supervisor (TAB Team)** | **50 %** | **4000 PV** | **3 à 12 mois glissants** | **Annuel** — à requalifier chaque année avec 4000 PV |
 
 ---
 
@@ -27,7 +41,7 @@
 
 Pour vérifier si Mandy se qualifie Senior Consultant (35 %) en mai 2026, il faut sommer :
 - PV avril 2026 + PV mai 2026 (fenêtre 2 mois glissants)
-- Si total ≥ 500 → qualifiée 35 %
+- Si total ≥ **250** → qualifiée 35 % *(MAJ 2026-06-09 — était 500)*
 
 Pour vérifier si elle se qualifie Success Builder (42 %) en mai 2026 :
 - PV mars 2026 + PV avril 2026 + PV mai 2026 (fenêtre 3 mois glissants)
@@ -182,7 +196,7 @@ Pour Mandy avec données fictives :
 | Mai 2026 | 0 (en cours) |
 
 **Calculs attendus en mai 2026 :**
-- Senior Consultant (500 PV / 2 mois glissants) : 0 + 900 = 900 PV → ✅ qualifiée 35 %
+- Senior Consultant (**250** PV / 2 mois glissants) : 0 + 900 = 900 PV → ✅ qualifiée 35 %
 - Success Builder (1000 PV / 3 mois glissants) : 0 + 900 + 800 = 1700 PV → ✅ qualifiée 42 %
 - QP (2500 PV / 6 mois glissants) : 0 + 900 + 800 + 400 + 600 + 200 = 2900 PV → ✅ qualifiée QP
 - Supervisor (4000 PV / 12 mois glissants) : 2900 PV (somme des 12 derniers mois, qui sont 6 ici) → ❌ pas encore, manque 1100 PV
