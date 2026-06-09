@@ -63,8 +63,8 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - ~~Messagerie `AppContext` `limit(50)` global~~ ✅ déjà à `limit(1000)` (`AppContext.tsx:319`, depuis 2026-05-20). Ligne périmée — corrigé audit 2026-06-08.
 - ~~Google Reviews URL placeholder dans `ThankYouStep.tsx`~~ ✅ URL réelle déjà en prod (`ThankYouStep.tsx:22`, La Base Verdun). Plus un placeholder — corrigé audit 2026-06-08.
 - **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage ~4340L (a encore grossi), AgendaPage ~2280L, supabaseService ~2500L. **Opportuniste only** — pas de chantier refacto dédié. (tailles re-mesurées audit 2026-06-08)
-- **Backlog santé edge functions** (audit 2026-06-08) : `catch {}` silencieux (coach-tips, formation-relay, request-testimonial) → ajouter `console.warn` ; `fetch()` vers send-push sans timeout (×4) → `AbortSignal.timeout` ; compteurs newsletter non-atomiques (`resend-webhook`). Non bloquant. ✅ `client-anniversary-check` fallback `lifecycle`→`lifecycle_status` **corrigé + déployé prod 2026-06-08**.
-- **`TourRunner.tsx:137`** : `console.log()` oublié à retirer (seul du repo).
+- ~~**Backlog santé edge functions**~~ ✅ **LIVRÉ prod 2026-06-09** (chantier B) : `AbortSignal.timeout(2500)` sur les 4 fetch send-push ; `console.warn` sur les catch silencieux (coach-tips ×4 + submit-testimonial) ; compteur newsletter **atomique** via RPC `increment_newsletter_counter` (resend-webhook) ; 6 edge fns redéployées (flags verify_jwt préservés). `client-anniversary-check` lifecycle déjà corrigé 2026-06-08.
+- ~~**`TourRunner.tsx:137` `console.log()`**~~ ✅ retiré (chantier B, 2026-06-09).
 
 ### ❓ À décider
 
