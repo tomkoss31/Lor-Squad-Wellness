@@ -162,11 +162,10 @@ export function computeSponsorCutOnDownstream(
 }
 
 // ─── Rank progression thresholds (jauge UI vers prochain rang) ────────────
-// Sources : Herbalife Marketing Plan FR. Simplifies pour UI :
-//   - Distributor 25% -> Senior Consultant 35% : 500 PV en 1 mois
-//   - Senior Consultant 35% -> Success Builder 42% : 1000 PV en 1 mois
-//   - Success Builder 42% -> Supervisor 50% : 4000 PV en 1 mois
-// (les voies cumulatives sur 12 mois existent mais sont moins lisibles UI)
+// Sources : Herbalife Marketing Plan FR. MAJ 2026-06-09 (cf. HERBALIFE_PALIERS_REGLES.md) :
+//   - Distributor 25% -> Senior Consultant 35% : 250 PV / 2 mois glissants (était 500)
+//   - Senior Consultant 35% -> Success Builder 42% : 1000 PV / 3 mois (ou QP 2500/6m)
+//   - Success Builder 42% -> Supervisor 50% : 4000 PV / 3-12 mois glissants
 
 export interface RankProgression {
   currentLabel: string;
@@ -185,7 +184,7 @@ const RANK_PROGRESSION_THRESHOLDS: Record<
   string,
   { nextKey: string; pvNeeded: number; source: "personal" | "personal_extended" }
 > = {
-  distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 500, source: "personal" },
+  distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 250, source: "personal" },
   senior_consultant_35: { nextKey: "success_builder_42", pvNeeded: 1000, source: "personal" },
   // Supervisor 4000 PV : on compte le PV perso + downline NON-Supervisor.
   // Tant que personne en bas n'est Supervisor, ses PV comptent comme PV perso
@@ -576,10 +575,10 @@ export function rankProgression(
 // Variante fenêtre glissante (règle Herbalife officielle 2026-05-18)
 // =============================================================================
 //
-// Les qualifs Herbalife sont sur fenêtre GLISSANTE, pas mois isolé :
-//   - Senior Consultant 35% : 500  PV / 2  mois glissants
-//   - Success Builder 42%   : 1000 PV / 3  mois glissants
-//   - Supervisor 50%        : 4000 PV / 1-12 mois glissants
+// Les qualifs Herbalife sont sur fenêtre GLISSANTE, pas mois isolé (MAJ 2026-06-09) :
+//   - Senior Consultant 35% : 250  PV / 2  mois glissants  (était 500)
+//   - Success Builder 42%   : 1000 PV / 3  mois glissants  (ou QP 2500 / 6 mois)
+//   - Supervisor 50%        : 4000 PV / 3-12 mois glissants
 //
 // `rankProgressionFromWindows` accepte les sommes pré-calculées des fenêtres
 // glissantes (typiquement issues de la RPC get_distributor_qualifications)
