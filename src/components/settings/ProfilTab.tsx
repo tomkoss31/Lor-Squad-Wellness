@@ -14,6 +14,7 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
 import { UserActivityPanel } from "../../features/gamification/components/UserActivityPanel";
 import { AvatarUploader } from "./AvatarUploader";
+import { PublicProfileShareCard } from "./PublicProfileShareCard";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
@@ -856,6 +857,9 @@ export function ProfilTab() {
           </Button>
         </div>
       </Card>
+
+      {/* Fiche publique partageable (#13-B 2026-06-08) */}
+      <PublicProfileShareCard name={currentUser.name} />
 
       <Card className="space-y-3">
         <p className="eyebrow-label">Session</p>
