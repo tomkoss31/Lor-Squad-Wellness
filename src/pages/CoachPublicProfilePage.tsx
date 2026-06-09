@@ -301,10 +301,12 @@ export function CoachPublicProfilePage() {
                   textAlign: "left",
                   padding: "16px 18px",
                   borderRadius: 16,
-                  background: "rgba(255,255,255,0.04)",
+                  // Fond theme-aware (var(--glass-strong) : sombre subtil en dark,
+                  // blanc en light). PAS de backdrop-filter ici : sous le CTA très
+                  // lumineux, le flou rendait la carte claire et masquait le texte
+                  // clair en mode sombre (fix 2026-06-09).
+                  background: "var(--glass-strong)",
                   border: "1px solid var(--hair)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
                 }}
               >
                 <span
