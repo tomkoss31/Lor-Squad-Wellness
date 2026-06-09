@@ -48,8 +48,6 @@ export default async function handler(req: any, res: any) {
   let title = "Coach bien-être · La Base 360";
   let description =
     "Reprends ta forme avec un accompagnement humain et personnalisé.";
-  let image = FALLBACK_IMAGE;
-  let isSquare = false;
 
   try {
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -75,10 +73,6 @@ export default async function handler(req: any, res: any) {
           } else if (data.city) {
             description = `Coach bien-être à ${data.city}. Bilan offert + accompagnement personnalisé.`;
           }
-          if (data.avatar_url) {
-            image = String(data.avatar_url);
-            isSquare = true; // les avatars sont carrés → twitter:card "summary"
-          }
         }
       }
     }
@@ -86,7 +80,13 @@ export default async function handler(req: any, res: any) {
     // best-effort : on garde l'OG générique en cas d'erreur réseau/RPC.
   }
 
-  const twitterCard = isSquare ? "summary" : "summary_large_image";
+  // og:image = bannière 1200×630 générée par api/og/coach (B.2c). La fonction OG
+  // gère elle-même le coach inconnu. Fallback générique si pas de slug exploitable.
+  const image =
+    slug.length >= 2
+      ? `${proto}://${host}/api/og/coach?slug=${encodeURIComponent(slug)}`
+      : FALLBACK_IMAGE;
+  const twitterCard = "summary_large_image";
 
   const html = `<!doctype html>
 <html lang="fr">
@@ -100,6 +100,8 @@ export default async function handler(req: any, res: any) {
 <meta property="og:description" content="${esc(description)}" />
 <meta property="og:url" content="${esc(pageUrl)}" />
 <meta property="og:image" content="${esc(image)}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta property="og:locale" content="fr_FR" />
 <meta name="twitter:card" content="${twitterCard}" />
 <meta name="twitter:title" content="${esc(title)}" />

@@ -45,6 +45,12 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+// Accroche preuve sociale CLUB (fixe pour tous les coachs La Base 360) — décision
+// Thomas 2026-06-09 : le compteur auto de l'app (clients perso en fiche) sous-estime
+// gravement la réalité équipe. Chiffre club réel : +250/mois. Mirroir dans
+// api/coach-meta.ts et api/og/coach.tsx — garder synchro.
+const SOCIAL_PROOF = "+250 personnes accompagnées chaque mois";
+
 export function CoachPublicProfilePage() {
   const navigate = useNavigate();
   const { slug: rawSlug } = useParams<{ slug?: string }>();
@@ -69,8 +75,6 @@ export function CoachPublicProfilePage() {
   const bio = (coachData?.bio ?? "").trim();
   // Seuil anti-décrédibilisation (cf. raison du DROP "bilans réalisés" en V2) :
   // on n'affiche le compteur que s'il est flatteur.
-  const accompagnes = coachData?.clients_count ?? 0;
-  const showAccompagnes = accompagnes >= 5;
 
   // SEO de base (les balises og: viendront en B.2)
   useEffect(() => {
@@ -184,31 +188,26 @@ export function CoachPublicProfilePage() {
             />
           )}
 
-          {/* Preuve sociale : nb de personnes accompagnées (si flatteur) */}
-          {showAccompagnes && (
-            <div
-              className="ps-fade-in"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 16px",
-                borderRadius: 999,
-                background: "color-mix(in srgb, var(--teal) 12%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--teal) 35%, transparent)",
-                fontFamily: PUBLIC_FONTS.body,
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--cream)",
-              }}
-            >
-              <span aria-hidden="true">✨</span>
-              <span>
-                <strong style={{ fontFamily: PUBLIC_FONTS.display }}>{accompagnes}</strong>{" "}
-                personnes accompagnées
-              </span>
-            </div>
-          )}
+          {/* Preuve sociale CLUB (fixe) — chiffre équipe réel, pas le compteur app */}
+          <div
+            className="ps-fade-in"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 16px",
+              borderRadius: 999,
+              background: "color-mix(in srgb, var(--teal) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--teal) 35%, transparent)",
+              fontFamily: PUBLIC_FONTS.body,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--cream)",
+            }}
+          >
+            <span aria-hidden="true">✨</span>
+            <span>{SOCIAL_PROOF}</span>
+          </div>
         </div>
 
         {/* ── Bio du coach (si renseignée) sinon tagline générique ─────── */}
