@@ -12,6 +12,7 @@
 // =============================================================================
 
 import { useNavigate } from "react-router-dom";
+import { TutorialLink } from "../components/tutorial/TutorialLink";
 
 interface Section {
   emoji: string;
@@ -116,6 +117,11 @@ export function FlexExpliquePage() {
           7 minutes de lecture pour saisir comment FLEX transforme ton objectif annuel
           en actions concrètes au quotidien.
         </p>
+        {/* Exemple TutorialLink (#6) — affiche « bientôt » tant que l'URL n'est
+            pas renseignée dans data/tutorials.ts (clé "flex"). */}
+        <div style={{ marginTop: 14 }}>
+          <TutorialLink tutorialKey="flex" label="Voir en vidéo" />
+        </div>
       </div>
 
       {/* Sections */}
