@@ -58,7 +58,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 
 - ~~Export PDF rapport mensuel Analytics~~ ✅ LIVRÉ (`AnalyticsPdfReport`)
 - Drill-down produit Analytics
-- Tri par PV mois sur `/clients`
+- ~~Tri par PV mois sur `/clients`~~ ✅ déjà livré (C V3, option « PV ce mois ↓ »). Corrigé audit 2026-06-09.
 - Hydratation `selectedProductQuantities` dans Edit/Follow-up
 - ~~Messagerie `AppContext` `limit(50)` global~~ ✅ déjà à `limit(1000)` (`AppContext.tsx:319`, depuis 2026-05-20). Ligne périmée — corrigé audit 2026-06-08.
 - ~~Google Reviews URL placeholder dans `ThankYouStep.tsx`~~ ✅ URL réelle déjà en prod (`ThankYouStep.tsx:22`, La Base Verdun). Plus un placeholder — corrigé audit 2026-06-08.
@@ -347,11 +347,11 @@ sélection multiple, bulk lifecycle change, **bulk message multi-canal**,
 **tri par colonne** (intelligent / nom / dernier bilan), **export CSV**
 de la sélection.
 
-**Reste à faire (V3 si besoin)** :
-- Tri par PV mois (nécessite agrégation côté front depuis pvTransactions)
-- Sélection persistée entre navigations (localStorage)
-- Filtre par owner via query param (`?owner=<userId>`) déjà passé depuis
-  AnalyticsPage drill-down → ClientsPage doit le lire et pré-sélectionner
+**Reste à faire (V3 si besoin)** : ✅ **tout livré** (vérifié audit 2026-06-09) —
+les 3 items ci-dessous étaient déjà faits dans le chantier C V3 (2026-04-28) :
+- ~~Tri par PV mois~~ ✅ SortKey `pv-month-desc` + map `pvByClientThisMonth` + option UI « PV ce mois ↓ » (`ClientsPage.tsx`)
+- ~~Sélection persistée entre navigations (localStorage)~~ ✅ `selectedIds` lu/écrit en localStorage
+- ~~Filtre par owner via query param (`?owner=<userId>`)~~ ✅ `ClientsPage` lit `searchParams.get("owner")` et pré-filtre (drill-down Analytics)
 
 ### 🟢 D. Analytics admin — V2 livrée
 **Fait** : KPIs (bilans/clients/PV/conversion), funnel, top produits,
