@@ -49,7 +49,9 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 - **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (audit 2026-06-03)
 - ~~**#8 Newsletter — volet PUBLIC lead-magnet**~~ ✅ **LIVRÉ EN PROD** (2026-06-02) : chantier #8 COMPLET (étapes 8.1→8.12). Route publique `/news/:slug` (`PublicNewsletterPage`) + popup capture lead + image OG dynamique (html2canvas + Supabase Storage) + tracking webhooks Resend + page stats + envoi batch Resend (fix faux bounces). Admin : `/admin/newsletters` + éditeur + `/admin/newsletters/:id/stats`. (Audit 2026-06-05 : la ligne « reste à faire » était périmée.)
 - **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube. 🟡 **Socle partiel déjà présent** (audit 2026-06-08) : `FormationCategoryPage.tsx:361` a une modale iframe YouTube + `formation/types.ts` gère `kind="internal-video"`. Reste à faire : composant `TutorialLink` réutilisable hors Formation. (l'ancienne réf `VideoPlayerModal` de la branche morte n'est plus pertinente.)
-- **#13 Fiche distri publique enrichie** (8-11h) : **aucun code amorcé**
+- **#13 Fiche distri** (clarifié audit 2026-06-08) : ⚠️ « #13 » recouvre 2 choses.
+  - **13-A Fiche distri INTERNE** (`/distributors/:id`, gestion équipe admin) : ✅ **LIVRÉ** (composants `distributor-blocks/` mai 2026 + page 5 onglets + bouton « ⚡ Aperçu rapide » 13A.5 + resurfaçage 13B partout : Équipe/PV team/FLEX team/Team/Users/fiche client + annonce `20260518160000`). L'ancien « aucun code amorcé » était périmé.
+  - **13-B Fiche distri PUBLIQUE** (`/coach/:slug`, vitrine prospection, double CTA bilan + recrutement) : 🔴 **à faire** (chantier en cours sur `feat/fiche-distri-13`). Briques prêtes : `PublicShell`, `RankPinBadge`, `CoachCredibilityBadges`, `TestimonialsCarousel`.
 - _(Paiement Square + Lor'Squad AI ci-dessus : aucun code amorcé non plus — confirmé audit 2026-06-03)_
 
 ### 🟢 Polish opportuniste
