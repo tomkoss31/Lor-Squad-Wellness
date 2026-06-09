@@ -16,6 +16,7 @@ import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/
 import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
 import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import { ClientConseilsTab } from '../components/client-app/ClientConseilsTab'
+import { ClubVipPresentation } from '../components/client-app/ClubVipPresentation'
 import { ClientAppEvolutionHero } from '../components/client-app/ClientAppEvolutionHero'
 import { ClientAppKeyMetricsGrid } from '../components/client-app/ClientAppKeyMetricsGrid'
 import { ClientAppWeightChart } from '../components/client-app/ClientAppWeightChart'
@@ -975,7 +976,18 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
+            {/* Présentation Club VIP & Recommandations (chantier VIP 2026-06-09) */}
+            <ClubVipPresentation
+              currentPv={(liveData?.current_products ?? []).reduce(
+                (s: number, p: { pv_per_unit?: number | null }) => s + (p.pv_per_unit ?? 0),
+                0,
+              )}
+              coachName={data.coach_name}
+              onShareContact={() => {
+                document.getElementById('refer-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            />
+            <div id="refer-form" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
               <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
                 Recommander un ami
               </div>
