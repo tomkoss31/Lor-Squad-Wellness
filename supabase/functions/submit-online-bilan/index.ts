@@ -294,6 +294,7 @@ serve(async (req) => {
             : "";
           const pushBody = `${firstName}${city ? " · " + city : ""}${objLabel}`;
           await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+            signal: AbortSignal.timeout(2500),
             method: "POST",
             headers: {
               Authorization: `Bearer ${SERVICE_KEY}`,
