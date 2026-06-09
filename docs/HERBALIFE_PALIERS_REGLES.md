@@ -12,7 +12,7 @@ Herbalife a changé les seuils. **Changement principal : Senior Consultant 35 % 
 
 - **35 % (Senior Consultant)** : **250 PV / 2 mois** glissants  *(était 500)*
 - **42 % (Success Builder)** : **1000 PV / 3 mois** glissants  *(inchangé)* — **OU via QP : 2500 PV / 6 mois** (le QP donne aussi 42 %). Sans 1000/3m ni 2500, on reste à 35 % en cumulant jusqu'à 2500 → 42 %.
-- **50 % (Superviseur)** : **4000 PV / 3 à 12 mois** glissants  *(inchangé)*
+- **50 % (Superviseur)** : **2500 PV perso / 3 mois** *(voie rapide)* **OU 4000 PV étendu / 3-12 mois** *(voie standard)*. La **vitesse** décide : 2500 en 3 mois → 50 %, mais 2500 en 6 mois → seulement 42 % (QP).
 
 **Rétroactif** : appliqué via **calcul à l'affichage** (la RPC `get_distributor_qualifications` somme les fenêtres glissantes en live → rétroactif automatique, pas de migration de `users.current_rank`).
 
@@ -28,7 +28,7 @@ Migration : `20261201000000_herbalife_rules_2026_update.sql`. Le tableau ci-dess
 | **Senior Consultant** | **35 %** | **250 PV** *(MAJ — était 500)* | **2 mois glissants consécutifs** | Mensuel — à requalifier |
 | **Success Builder** | **42 %** | **1000 PV** | **3 mois glissants** | Mensuel — à requalifier |
 | **Qualified Producer (QP)** | **42 %** (même marge que SB) | **2500 PV** | **6 mois glissants** | Voie alternative vers le 42 % |
-| **Supervisor (TAB Team)** | **50 %** | **4000 PV** | **3 à 12 mois glissants** | **Annuel** — à requalifier chaque année avec 4000 PV |
+| **Supervisor (TAB Team)** | **50 %** | **2500 PV perso / 3 mois** (voie rapide) **ou 4000 PV étendu** | **3 à 12 mois glissants** (4000) · **3 mois** (voie rapide 2500) | **Annuel** — à requalifier |
 
 ---
 
