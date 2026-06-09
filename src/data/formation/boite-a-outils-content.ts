@@ -1654,7 +1654,7 @@ Pour chaque palier que tu atteins, tu **t'offres** une récompense que tu as cho
 | Palier | Date cible | Date réelle | Ma récompense |
 |---|---|---|---|
 | 1ᵉʳ client | ___ | ___ | ___ |
-| 500 PV cumulés (Senior Consultant) | ___ | ___ | ___ |
+| 250 PV cumulés (Senior Consultant) | ___ | ___ | ___ |
 | 1ᵉʳ distri parrainé | ___ | ___ | ___ |
 | 2 500 PV (QP) | ___ | ___ | ___ |
 | **Supervisor (4 000 PV)** | ___ | ___ | ___ |

@@ -26,12 +26,14 @@ interface Tier {
   label: string;
   emoji: string;
 }
+// Paliers officiels Herbalife (source : docs/HERBALIFE_PALIERS_REGLES.md +
+// src/lib/herbalifeFormulas.ts). PV requis sur fenêtre glissante (2→12 mois).
 const TIERS: Tier[] = [
-  { pct: 15, min: 0, label: "Je démarre", emoji: "🙂" },
-  { pct: 25, min: 100, label: "Je suis régulier·e", emoji: "😉" },
-  { pct: 35, min: 500, label: "J'en parle autour de moi", emoji: "😃" },
-  { pct: 42, min: 1000, label: "Je suis lancé·e", emoji: "🤩" },
-  { pct: 50, min: 2500, label: "Le maximum", emoji: "🏆" },
+  { pct: 15, min: 0, label: "Préféré VIP · je démarre", emoji: "🙂" },
+  { pct: 25, min: 100, label: "Distributeur · je suis régulier·e", emoji: "😉" },
+  { pct: 35, min: 250, label: "Senior Consultant · j'en parle", emoji: "😃" },
+  { pct: 42, min: 1000, label: "Success Builder · je suis lancé·e", emoji: "🤩" },
+  { pct: 50, min: 4000, label: "Superviseur · le maximum", emoji: "🏆" },
 ];
 
 function tierForPv(pv: number): Tier {
@@ -252,8 +254,10 @@ export function ClubVipPresentation({
           </div>
         </div>
 
-        <div style={{ fontSize: 10.5, color: "rgba(248,250,252,0.4)", marginTop: 8, textAlign: "center" }}>
-          Base : ta consommation actuelle ≈ {currentPv} PV · estimation indicative
+        <div style={{ fontSize: 10.5, color: "rgba(248,250,252,0.4)", marginTop: 8, textAlign: "center", lineHeight: 1.5 }}>
+          Base : ta consommation ≈ {currentPv} PV · estimation indicative. Les paliers
+          Herbalife se qualifient sur une fenêtre glissante (2 à 12 mois) — ton coach
+          confirme ta remise exacte.
         </div>
       </div>
 
