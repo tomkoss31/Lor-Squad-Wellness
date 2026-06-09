@@ -258,6 +258,7 @@ async function notifyAdmins(sb: ReturnType<typeof createClient>, payload: { titl
     const allSubs = subsResults.flatMap((r) => r.data ?? []);
     if (allSubs.length === 0) return;
     await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+      signal: AbortSignal.timeout(2500),
       method: "POST",
       headers: {
         Authorization: `Bearer ${SERVICE_KEY}`,
@@ -273,8 +274,8 @@ async function notifyAdmins(sb: ReturnType<typeof createClient>, payload: { titl
           badge: "/badge-72.png",
         },
       }),
-    }).catch(() => {});
-  } catch {
-    // ignore
+    }).catch((e) => console.warn("[submit-testimonial] push admin échouée (non bloquant):", e));
+  } catch (e) {
+    console.warn("[submit-testimonial] notif admin échouée (non bloquant):", e);
   }
 }

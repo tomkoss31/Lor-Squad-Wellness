@@ -122,6 +122,7 @@ async function processCandidates(sb: ReturnType<typeof createClient>, candidates
         const firstName = c.first_name?.trim() || "Un client";
         try {
           await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+            signal: AbortSignal.timeout(2500),
             method: "POST",
             headers: {
               Authorization: `Bearer ${SERVICE_KEY}`,
