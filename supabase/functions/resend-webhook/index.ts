@@ -105,27 +105,19 @@ async function findRecipient(
   return data;
 }
 
-// Increment atomique via RPC SQL (évite race condition).
-// On utilise un raw update avec sb.from() puisqu'on est en service_role.
+// Increment ATOMIQUE via RPC SQL `increment_newsletter_counter` (migration
+// 20261130000000). Évite la race condition du lecture-modification précédent
+// (sous webhooks concurrents Resend, des events pouvaient être perdus/doublés).
 async function incrementCounter(
   sb: ReturnType<typeof createClient>,
   newsletterId: string,
   column: "email_open_count" | "email_click_count" | "bilan_cta_clicks" | "business_cta_clicks",
 ) {
-  // On utilise rpc-like via une raw query car .update ne supporte pas
-  // l'incrément atomique. Lecture-modification suffit : volume webhook
-  // par newsletter reste bas (< 1k events sur 1h), race condition acceptable.
-  const { data: nl, error: nlErr } = await sb
-    .from("newsletters")
-    .select(column)
-    .eq("id", newsletterId)
-    .single();
-  if (nlErr || !nl) return;
-  const current = (nl as Record<string, number>)[column] ?? 0;
-  await sb
-    .from("newsletters")
-    .update({ [column]: current + 1 })
-    .eq("id", newsletterId);
+  const { error } = await sb.rpc("increment_newsletter_counter", {
+    p_newsletter_id: newsletterId,
+    p_column: column,
+  });
+  if (error) console.warn("[resend-webhook] increment compteur échoué:", column, error.message);
 }
 
 serve(async (req) => {

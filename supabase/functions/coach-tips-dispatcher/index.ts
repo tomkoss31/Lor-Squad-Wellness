@@ -139,7 +139,7 @@ async function detectSignal(
       if (ratio < 0.85) {
         return { trigger: "pv_retard", tip: SIGNAL_TIPS.pv_retard };
       }
-    } catch { /* fallthrough */ }
+    } catch (e) { console.warn(`[coach-tips] signal pv_retard ignoré (${userId}):`, e); }
   }
 
   // ─── Signal 2 : Anniversaire client demain ───────────────────────────────
@@ -160,7 +160,7 @@ async function detectSignal(
     if (hasBirthdayTomorrow) {
       return { trigger: "client_anniv", tip: SIGNAL_TIPS.client_anniv };
     }
-  } catch { /* fallthrough */ }
+  } catch (e) { console.warn(`[coach-tips] signal client_anniv ignoré (${userId}):`, e); }
 
   // ─── Signal 3 : Lundi + 0 RDV cette semaine ──────────────────────────────
   if (ctx.isMonday) {
@@ -179,7 +179,7 @@ async function detectSignal(
       if (!rdvRows || rdvRows.length === 0) {
         return { trigger: "zero_rdv", tip: SIGNAL_TIPS.zero_rdv };
       }
-    } catch { /* fallthrough */ }
+    } catch (e) { console.warn(`[coach-tips] signal zero_rdv ignoré (${userId}):`, e); }
   }
 
   // ─── Signal 4 : Client en pause depuis >90j ──────────────────────────────
@@ -196,7 +196,7 @@ async function detectSignal(
     if (pausedRows && pausedRows.length > 0) {
       return { trigger: "client_pause", tip: SIGNAL_TIPS.client_pause };
     }
-  } catch { /* fallthrough */ }
+  } catch (e) { console.warn(`[coach-tips] signal client_pause ignoré (${userId}):`, e); }
 
   // ─── Signal 5 : Lundi tonus (defaut lundi sans signal stronger) ──────────
   if (ctx.isMonday) {
