@@ -2,31 +2,37 @@
 // useCrmLeads — pipeline CRM unifié (VIP-4 2026-06-10, décision Thomas :
 // « un pipeline pour tous, juste avoir l'info d'où ça vient »).
 //
-// Agrège les 3 tables de capture qui portent un CONTACT actionnable :
-//   - online_bilans            (funnel bilan online → kanban Leads existant)
-//   - prospect_leads           (welcome / opportunité / simulateur / business /
-//                               page publique Club VIP / recos PWA routées)
-//   - client_referrals         (recos clients PWA historiques — legacy)
-//
-// Les `client_referral_intentions` (prénoms sans contact, saisis dans le
-// sandbox VIP) restent volontairement hors CRM : pas de moyen de contact,
-// elles vivent sur la fiche client (ClientVipCoachPanel).
+// Agrège les 4 tables de capture :
+//   - online_bilans              (funnel bilan online → kanban Leads existant)
+//   - prospect_leads             (welcome / opportunité / simulateur / business /
+//                                 page publique Club VIP / recos PWA routées)
+//   - client_referrals           (recos clients PWA historiques — legacy)
+//   - client_referral_intentions (prénoms saisis dans le sandbox VIP — pas de
+//     contact direct, MAIS le parrain est un client connu : l'action CRM est
+//     « demander le contact au parrain » via son téléphone. Upgrade V1.1
+//     2026-06-10, demande Thomas.)
 //
 // Statut normalisé : new → contacted → qualified → converted / lost.
 // Le write-back traduit vers les valeurs natives de chaque table. RLS fait
-// le filtrage par coach (admin voit tout sur prospect_leads/online_bilans,
-// chaque coach voit ses client_referrals).
+// le filtrage par coach (admin voit tout sur prospect_leads/online_bilans/
+// intentions, chaque coach voit ses client_referrals et les intentions de
+// SES clients).
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
-export type CrmTable = "online_bilans" | "prospect_leads" | "client_referrals";
+export type CrmTable =
+  | "online_bilans"
+  | "prospect_leads"
+  | "client_referrals"
+  | "client_referral_intentions";
 export type CrmSource =
   | "bilan-online"
   | "vip"
   | "reco-client"
+  | "intention"
   | "opportunite"
   | "simulateur"
   | "business"
@@ -45,6 +51,10 @@ export interface CrmLead {
   status: CrmStatus;
   /** « via Marie D. » pour les recos clients. */
   viaName: string | null;
+  /** Téléphone du client parrain (intentions : action « demander le contact »). */
+  parrainPhone: string | null;
+  /** Info complémentaire courte (ex. relation famille/travail pour intentions). */
+  extra: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
   relanceDue: boolean;
   createdAt: string;
@@ -63,10 +73,19 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   "bilan-online": { label: "Bilan online", emoji: "🌱" },
   vip: { label: "Club VIP", emoji: "👑" },
   "reco-client": { label: "Reco client", emoji: "🤝" },
+  intention: { label: "Intention", emoji: "💭" },
   opportunite: { label: "Opportunité", emoji: "🚪" },
   simulateur: { label: "Simulateur", emoji: "✨" },
   business: { label: "Business", emoji: "💼" },
   welcome: { label: "Page d'accueil", emoji: "🌿" },
+};
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  family: "famille",
+  work: "travail",
+  sport: "sport",
+  friend: "ami·e",
+  other: "connaissance",
 };
 
 function looksLikePhone(value: string | null | undefined): boolean {
@@ -127,6 +146,16 @@ export function statusOptionsFor(table: CrmTable): CrmStatus[] {
   return ["new", "contacted", "converted", "lost"];
 }
 
+interface IntentionRow {
+  id: string;
+  referrer_client_id: string | null;
+  prospect_first_name: string | null;
+  relationship: string | null;
+  status: string | null;
+  created_at: string;
+  notes: string | null;
+}
+
 export function useCrmLeads() {
   const [leads, setLeads] = useState<CrmLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +168,7 @@ export function useCrmLeads() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
 
-      const [bilansRes, prospectsRes, referralsRes] = await Promise.all([
+      const [bilansRes, prospectsRes, referralsRes, intentionsRes] = await Promise.all([
         sb
           .from("online_bilans")
           .select(
@@ -157,12 +186,38 @@ export function useCrmLeads() {
           .select("id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
           .limit(500),
+        sb
+          .from("client_referral_intentions")
+          .select("id, referrer_client_id, prospect_first_name, relationship, status, created_at, notes")
+          .order("created_at", { ascending: false })
+          .limit(500),
       ]);
 
       // Garde-fou : on remonte la 1ère erreur au lieu d'un échec silencieux
-      // (leçon RLS 2026-04-25). Les 2 autres sources restent affichées.
-      const firstError = bilansRes.error ?? prospectsRes.error ?? referralsRes.error;
+      // (leçon RLS 2026-04-25). Les autres sources restent affichées.
+      const firstError =
+        bilansRes.error ?? prospectsRes.error ?? referralsRes.error ?? intentionsRes.error;
       if (firstError) setError(firstError.message);
+
+      // Résolution des parrains (nom + téléphone) pour les intentions —
+      // 1 seule requête clients sur les ids référents.
+      const intentionRows = (intentionsRes.data ?? []) as IntentionRow[];
+      const parrainIds = [
+        ...new Set(intentionRows.map((r) => r.referrer_client_id).filter(Boolean)),
+      ] as string[];
+      const parrains = new Map<string, { name: string; phone: string | null }>();
+      if (parrainIds.length > 0) {
+        const { data: parrainData } = await sb
+          .from("clients")
+          .select("id, first_name, last_name, phone")
+          .in("id", parrainIds);
+        for (const c of parrainData ?? []) {
+          parrains.set(c.id as string, {
+            name: `${(c.first_name as string) ?? ""} ${(c.last_name as string) ?? ""}`.trim(),
+            phone: (c.phone as string | null) ?? null,
+          });
+        }
+      }
 
       const now = Date.now();
       const all: CrmLead[] = [];
@@ -183,6 +238,8 @@ export function useCrmLeads() {
             row.converted_to_client_id as string | null,
           ),
           viaName: null,
+          parrainPhone: null,
+          extra: null,
           relanceDue: Boolean(
             row.relance_due_at &&
               !row.relance_done_at &&
@@ -209,6 +266,8 @@ export function useCrmLeads() {
           source,
           status: mapSimpleStatus(row.status as string | null),
           viaName,
+          parrainPhone: null,
+          extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
           notes: (row.notes as string | null) ?? null,
@@ -227,9 +286,34 @@ export function useCrmLeads() {
           source: "reco-client",
           status: mapSimpleStatus(row.status as string | null),
           viaName: (row.from_client_name as string | null) ?? null,
+          parrainPhone: null,
+          extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
           notes: null,
+        });
+      }
+
+      // Intentions VIP (upgrade V1.1) : pas de contact direct — l'action est
+      // « demander le contact au parrain » (client connu, téléphone résolu).
+      for (const row of intentionRows) {
+        const parrain = row.referrer_client_id ? parrains.get(row.referrer_client_id) : undefined;
+        all.push({
+          key: `client_referral_intentions:${row.id}`,
+          table: "client_referral_intentions",
+          id: row.id,
+          firstName: row.prospect_first_name || "—",
+          contact: null,
+          contactIsPhone: false,
+          city: null,
+          source: "intention",
+          status: mapSimpleStatus(row.status),
+          viaName: parrain?.name ?? null,
+          parrainPhone: parrain?.phone ?? null,
+          extra: row.relationship ? RELATIONSHIP_LABELS[row.relationship] ?? row.relationship : null,
+          relanceDue: false,
+          createdAt: row.created_at,
+          notes: row.notes ?? null,
         });
       }
 
@@ -264,6 +348,17 @@ export function useCrmLeads() {
         const patch: Record<string, unknown> = { status: next === "qualified" ? "contacted" : next };
         if (next === "contacted") patch.contacted_at = new Date().toISOString();
         const { error: e } = await sb.from("prospect_leads").update(patch).eq("id", lead.id);
+        err = e?.message ?? null;
+      } else if (lead.table === "client_referral_intentions") {
+        // Natif : pending / contacted / converted / lost.
+        const native = next === "new" ? "pending" : next === "qualified" ? "contacted" : next;
+        const patch: Record<string, unknown> = { status: native };
+        if (next === "contacted") patch.contacted_at = new Date().toISOString();
+        if (next === "converted") patch.converted_at = new Date().toISOString();
+        const { error: e } = await sb
+          .from("client_referral_intentions")
+          .update(patch)
+          .eq("id", lead.id);
         err = e?.message ?? null;
       } else {
         const { error: e } = await sb

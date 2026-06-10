@@ -34,6 +34,7 @@ import {
   type CrmStatus,
 } from "../hooks/useCrmLeads";
 import {
+  buildAskContactMessage,
   buildCrmMessage,
   buildCrmRelanceMessage,
   buildCrmSmsLink,
@@ -65,6 +66,9 @@ export function CrmPage() {
 
   const [filterSource, setFilterSource] = useState<CrmSource | "all">("all");
   const [search, setSearch] = useState("");
+  // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
+  // desktop ; sur mobile le select par card reste le moyen principal).
+  const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -109,6 +113,24 @@ export function CrmPage() {
     if (err) {
       pushToast({ tone: "warning", title: "Statut non enregistré", message: err });
     }
+  }
+
+  function handleDrop(leadKey: string, target: CrmStatus) {
+    setDragOverStatus(null);
+    const lead = leads.find((l) => l.key === leadKey);
+    if (!lead || lead.status === target) return;
+    if (!statusOptionsFor(lead.table).includes(target)) {
+      pushToast({
+        tone: "warning",
+        title: "Pas par ici",
+        message:
+          lead.table === "online_bilans" && target === "converted"
+            ? "Pour convertir un bilan en fiche client, passe par Dossiers clients > Leads (bouton 📂 Détails)."
+            : "Ce statut n'est pas disponible pour cette source.",
+      });
+      return;
+    }
+    void handleStatusChange(lead, target);
   }
 
   async function copyMessage(text: string) {
@@ -195,8 +217,31 @@ export function CrmPage() {
         <div style={columnsWrap}>
           {STATUS_ORDER.map((status) => {
             const col = filtered.filter((l) => l.status === status);
+            const isDragOver = dragOverStatus === status;
             return (
-              <div key={status} style={column}>
+              <div
+                key={status}
+                style={{
+                  ...column,
+                  ...(isDragOver
+                    ? {
+                        borderColor: `color-mix(in srgb, ${CRM_STATUS_META[status].color} 60%, transparent)`,
+                        background: `color-mix(in srgb, ${CRM_STATUS_META[status].color} 6%, var(--ls-surface2))`,
+                      }
+                    : {}),
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverStatus(status);
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverStatus(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(e.dataTransfer.getData("text/plain"), status);
+                }}
+              >
                 <div style={columnHeader(CRM_STATUS_META[status].color)}>
                   <span aria-hidden="true">{CRM_STATUS_META[status].emoji}</span>{" "}
                   {CRM_STATUS_META[status].label}
@@ -227,8 +272,8 @@ export function CrmPage() {
         <button type="button" onClick={() => navigate("/clients?tab=leads")} style={inlineLink}>
           Dossiers clients &gt; Leads
         </button>
-        . Les recos VIP sans contact (prénoms du simulateur) restent sur la fiche du client
-        parrain.
+        . Les <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients dans leur
+        simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au parrain.
       </footer>
     </div>
   );
@@ -250,14 +295,30 @@ function LeadCard({
   onOpenBilans: () => void;
 }) {
   const src = CRM_SOURCE_META[lead.source];
-  const message =
-    lead.status === "contacted"
+  // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
+  // le numéro. Sinon : 1er contact, puis relance douce une fois contacté.
+  const isIntention = lead.source === "intention";
+  const message = isIntention
+    ? buildAskContactMessage(lead, msgCtx)
+    : lead.status === "contacted"
       ? buildCrmRelanceMessage(lead, msgCtx)
       : buildCrmMessage(lead, msgCtx);
-  const messageLabel = lead.status === "contacted" ? "Relance douce" : "1er contact";
+  const messageLabel = isIntention
+    ? "Demander le contact"
+    : lead.status === "contacted"
+      ? "Relance douce"
+      : "1er contact";
 
   return (
-    <div style={card}>
+    <div
+      style={card}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", lead.key);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      title="Glisse-moi dans une autre colonne (ou utilise le sélecteur de statut)"
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <strong style={{ fontFamily: "Syne, sans-serif", fontSize: 14, color: "var(--ls-text)" }}>
           {lead.firstName}
@@ -273,13 +334,25 @@ function LeadCard({
 
       <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
         {lead.viaName ? <>🤝 via <strong>{lead.viaName}</strong> · </> : null}
+        {lead.extra ? <>{lead.extra} · </> : null}
         {lead.city ? <>{lead.city} · </> : null}
-        {lead.contact ?? "pas de contact"}
+        {lead.contact ?? (isIntention ? "contact à demander au parrain" : "pas de contact")}
       </div>
 
       {/* Actions message pro */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {lead.contactIsPhone ? (
+        {isIntention && lead.parrainPhone ? (
+          <a
+            href={buildCrmWhatsAppLink(lead.parrainPhone, message)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={actionBtn("#25D366")}
+            title={`Écrire à ${lead.viaName ?? "ton client"} pour obtenir le contact`}
+          >
+            📱 Demander à {(lead.viaName ?? "").split(/\s+/)[0] || "ton client"}
+          </a>
+        ) : null}
+        {!isIntention && lead.contactIsPhone ? (
           <>
             <a
               href={buildCrmWhatsAppLink(lead.contact, message)}
@@ -498,6 +571,7 @@ const card: React.CSSProperties = {
   flexDirection: "column",
   gap: 9,
   fontFamily: "DM Sans, sans-serif",
+  cursor: "grab",
 };
 
 const srcBadge: React.CSSProperties = {

@@ -76,6 +76,22 @@ export function buildCrmMessage(lead: CrmLead, ctx: CrmMessageContext): string {
   }
 }
 
+/** Intentions VIP : message AU PARRAIN pour demander le contact du prospect.
+    (Le lead n'a pas de coordonnées — c'est le client parrain qu'on contacte.) */
+export function buildAskContactMessage(lead: CrmLead, ctx: CrmMessageContext): string {
+  const parrain = (lead.viaName ?? "").split(/\s+/)[0] || "toi";
+  const prospect = lead.firstName.trim() || "la personne";
+  const rel = lead.extra ? ` (${lead.extra})` : "";
+  return (
+    `Salut ${parrain} ! 🌿\n\n` +
+    `Tu m'avais parlé de ${prospect}${rel} qui pourrait être intéressé·e — ` +
+    `merci encore pour la reco 🙏\n\n` +
+    `Tu peux me partager son numéro, ou mieux : nous mettre en contact ` +
+    `(un petit groupe WhatsApp à 3, c'est parfait) ? Je m'occupe du reste, ` +
+    `en douceur comme toujours 🙂\n${ctx.coachFirstName}`
+  );
+}
+
 /** Message de relance douce (J+3 sans réponse), toutes sources. */
 export function buildCrmRelanceMessage(lead: CrmLead, ctx: CrmMessageContext): string {
   const f = lead.firstName.trim() || "toi";
