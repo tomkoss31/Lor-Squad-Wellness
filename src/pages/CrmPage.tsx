@@ -40,6 +40,7 @@ import {
   buildCrmSmsLink,
   buildCrmWhatsAppLink,
 } from "../lib/crmMessages";
+import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -69,6 +70,8 @@ export function CrmPage() {
   // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
   // desktop ; sur mobile le select par card reste le moyen principal).
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
+  // Wagon 2 chantier 3 : lead chaud → RDV agenda en 1 clic (prospect pré-rempli).
+  const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -256,6 +259,7 @@ export function CrmPage() {
                       onStatusChange={(s) => void handleStatusChange(lead, s)}
                       onCopy={(text) => void copyMessage(text)}
                       onOpenBilans={() => navigate("/clients?tab=leads")}
+                      onAgenda={() => setAgendaLead(lead)}
                     />
                   ))}
                   {col.length === 0 ? <div style={columnEmpty}>—</div> : null}
@@ -265,6 +269,39 @@ export function CrmPage() {
           })}
         </div>
       )}
+
+      {/* Lead → RDV agenda (wagon 2 chantier 3) : prospect pré-rempli, et le
+          lead passe automatiquement en Qualifié/Contacté à la création. */}
+      {agendaLead ? (
+        <ProspectFormModal
+          prefill={{
+            firstName: agendaLead.firstName,
+            phone: agendaLead.contactIsPhone ? agendaLead.contact ?? undefined : undefined,
+            source:
+              agendaLead.source === "reco-client" || agendaLead.source === "intention"
+                ? "Parrainage"
+                : "Autre",
+            sourceDetail: `CRM · ${CRM_SOURCE_META[agendaLead.source].label}${agendaLead.viaName ? ` (via ${agendaLead.viaName})` : ""}`,
+            note: agendaLead.notes ?? undefined,
+          }}
+          onClose={() => setAgendaLead(null)}
+          onSaved={() => {
+            const lead = agendaLead;
+            setAgendaLead(null);
+            if (lead) {
+              const next: CrmStatus = statusOptionsFor(lead.table).includes("qualified")
+                ? "qualified"
+                : "contacted";
+              void handleStatusChange(lead, next);
+              pushToast({
+                tone: "success",
+                title: "RDV créé",
+                message: `${lead.firstName} est dans l'agenda — lead passé en ${CRM_STATUS_META[next].label}.`,
+              });
+            }
+          }}
+        />
+      ) : null}
 
       <footer style={footerHint}>
         💡 Les leads <strong>Bilan online</strong> ont aussi leur kanban détaillé (réponses
@@ -287,12 +324,14 @@ function LeadCard({
   onStatusChange,
   onCopy,
   onOpenBilans,
+  onAgenda,
 }: {
   lead: CrmLead;
   msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
   onStatusChange: (s: CrmStatus) => void;
   onCopy: (text: string) => void;
   onOpenBilans: () => void;
+  onAgenda: () => void;
 }) {
   const src = CRM_SOURCE_META[lead.source];
   // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
@@ -371,6 +410,16 @@ function LeadCard({
         <button type="button" onClick={() => onCopy(message)} style={actionBtn("var(--ls-gold)")}>
           📋 {messageLabel}
         </button>
+        {lead.status !== "converted" && lead.status !== "lost" ? (
+          <button
+            type="button"
+            onClick={onAgenda}
+            style={actionBtn("var(--ls-coral)")}
+            title="Caler un RDV — prospect agenda pré-rempli"
+          >
+            📅 RDV
+          </button>
+        ) : null}
         {lead.table === "online_bilans" ? (
           <button type="button" onClick={onOpenBilans} style={actionBtn("var(--ls-teal)")}>
             📂 Détails

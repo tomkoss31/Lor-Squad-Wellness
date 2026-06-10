@@ -23,6 +23,7 @@ import { useGlobalView } from "./useGlobalView";
 import { useDormantClients } from "./useDormantClients";
 import { useOnlineBilans } from "./useOnlineBilans";
 import { useCahierDeBord } from "./useCahierDeBord";
+import { useCrmBadge } from "./useCrmBadge";
 import { getSupabaseClient } from "../services/supabaseClient";
 
 export type DailyActionKey =
@@ -75,6 +76,9 @@ export function useDailyActionChecklist(now: Date = new Date()): UseDailyActionC
   const { clients: dormantClients } = useDormantClients(currentUser?.id ?? null);
   const { bilans: onlineBilans } = useOnlineBilans();
   const { contacts: liste100Contacts } = useCahierDeBord(currentUser?.id ?? null);
+  // Wagon 2 chantier 2 (2026-06-10) : l'action Leads couvre désormais TOUT le
+  // pipeline CRM (bilans + prospects + recos + intentions), pas que les bilans.
+  const { count: crmCount } = useCrmBadge(Boolean(currentUser?.id));
 
   const [persisted, setPersisted] = useState<Record<DailyActionKey, DailyActionStatus>>({
     f1_f21: "pending",
@@ -90,13 +94,16 @@ export function useDailyActionChecklist(now: Date = new Date()): UseDailyActionC
   const f1f21Count = copilote.pendingFollowups.length + copilote.pendingFollowupsMoreCount;
   const rdvCount = copilote.todayAppointmentsCount;
   const dormantCount = dormantClients.length;
-  const leadsCount = useMemo(
+  // Compteur Leads = pipeline CRM complet ; fallback sur les bilans online
+  // (déjà chargés) si le count CRM n'est pas encore arrivé.
+  const bilansFallbackCount = useMemo(
     () =>
       onlineBilans.filter((b) =>
         b.lead_status === "new" || b.lead_status === "to_recontact" || b.lead_status === "relance",
       ).length,
     [onlineBilans],
   );
+  const leadsCount = Math.max(crmCount, bilansFallbackCount);
   const liste100Count = liste100Contacts.length;
 
   // ─── Fetch persisté (coach_daily_actions du jour) ────────────────────────
@@ -212,15 +219,15 @@ export function useDailyActionChecklist(now: Date = new Date()): UseDailyActionC
       firstAction,
       {
         key: "leads",
-        label: "Leads bilan online à qualifier",
-        emoji: "🌱",
+        label: "Leads à traiter (CRM)",
+        emoji: "🎯",
         count: leadsCount,
         detail:
           leadsCount === 0
-            ? "Pipeline vide — partage ton lien bilan."
-            : `${leadsCount} lead${leadsCount > 1 ? "s" : ""} en attente de qualif (= revenus court terme).`,
-        linkPath: "/clients?tab=leads",
-        linkLabel: "Ouvrir Leads",
+            ? "Pipeline vide — partage ton lien bilan ou ta page Club VIP."
+            : `${leadsCount} lead${leadsCount > 1 ? "s" : ""} en attente (bilans, recos, VIP) — réponds sous 24h (= revenus court terme).`,
+        linkPath: "/crm",
+        linkLabel: "Ouvrir le CRM",
         status: persisted.leads,
       },
       {
