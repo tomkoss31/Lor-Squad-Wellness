@@ -53,6 +53,9 @@ export interface CrmLead {
   viaName: string | null;
   /** Téléphone du client parrain (intentions : action « demander le contact »). */
   parrainPhone: string | null;
+  /** Id client du parrain (recos + intentions) — pour la push de gratification
+      à la conversion (wagon 2 chantier 5). */
+  parrainClientId: string | null;
   /** Info complémentaire courte (ex. relation famille/travail pour intentions). */
   extra: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
@@ -156,6 +159,42 @@ interface IntentionRow {
   notes: string | null;
 }
 
+export interface CrmSourceStat {
+  source: CrmSource;
+  total: number;
+  active: number; // ni converti ni perdu
+  converted: number;
+  lost: number;
+  conversionRate: number; // converted / total (0-1)
+}
+
+/** Stats par source pour le panneau #6 (taux de conversion par canal). */
+export function computeCrmStats(leads: CrmLead[]): {
+  bySource: CrmSourceStat[];
+  overall: { total: number; converted: number; conversionRate: number };
+} {
+  const map = new Map<CrmSource, CrmSourceStat>();
+  for (const l of leads) {
+    const s =
+      map.get(l.source) ??
+      { source: l.source, total: 0, active: 0, converted: 0, lost: 0, conversionRate: 0 };
+    s.total += 1;
+    if (l.status === "converted") s.converted += 1;
+    else if (l.status === "lost") s.lost += 1;
+    else s.active += 1;
+    map.set(l.source, s);
+  }
+  const bySource = [...map.values()]
+    .map((s) => ({ ...s, conversionRate: s.total > 0 ? s.converted / s.total : 0 }))
+    .sort((a, b) => b.total - a.total);
+  const total = leads.length;
+  const converted = leads.filter((l) => l.status === "converted").length;
+  return {
+    bySource,
+    overall: { total, converted, conversionRate: total > 0 ? converted / total : 0 },
+  };
+}
+
 export function useCrmLeads() {
   const [leads, setLeads] = useState<CrmLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,7 +222,7 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("client_referrals")
-          .select("id, from_client_name, referred_name, referred_contact, status, created_at")
+          .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -239,6 +278,7 @@ export function useCrmLeads() {
           ),
           viaName: null,
           parrainPhone: null,
+          parrainClientId: null,
           extra: null,
           relanceDue: Boolean(
             row.relance_due_at &&
@@ -267,6 +307,8 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status as string | null),
           viaName,
           parrainPhone: null,
+          parrainClientId:
+            typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
           extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
@@ -287,6 +329,7 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status as string | null),
           viaName: (row.from_client_name as string | null) ?? null,
           parrainPhone: null,
+          parrainClientId: (row.from_client_id as string | null) ?? null,
           extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
@@ -310,6 +353,7 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status),
           viaName: parrain?.name ?? null,
           parrainPhone: parrain?.phone ?? null,
+          parrainClientId: row.referrer_client_id,
           extra: row.relationship ? RELATIONSHIP_LABELS[row.relationship] ?? row.relationship : null,
           relanceDue: false,
           createdAt: row.created_at,
@@ -372,6 +416,21 @@ export function useCrmLeads() {
         setLeads((prev) =>
           prev.map((l) => (l.key === lead.key ? { ...l, status: next, relanceDue: false } : l)),
         );
+        // Wagon 2 chantier 5 : conversion d'une reco/intention → push de
+        // gratification au client parrain (« 🎉 Ta reco a porté ses fruits »).
+        // Fire-and-forget : un échec ne bloque jamais le changement de statut.
+        if (next === "converted" && lead.parrainClientId) {
+          void sb.functions
+            .invoke("notify-referral-converted", {
+              body: {
+                parrain_client_id: lead.parrainClientId,
+                prospect_first_name: lead.firstName,
+              },
+            })
+            .catch(() => {
+              /* best-effort */
+            });
+        }
       }
       return err;
     },

@@ -18,6 +18,7 @@ import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
 import { useState } from "react";
+import { useCrmBadge } from "../../hooks/useCrmBadge";
 import type { HerbalifeRank } from "../../types/domain";
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
@@ -34,6 +35,8 @@ export function AppLayout() {
   useRealtimeMessages();
   // Tracking session pour stats activite admin (2026-04-29)
   useSessionTracker();
+  // Badge 🎯 CRM : leads à traiter (wagon 2 chantier 1, 2026-06-10).
+  const { count: crmBadgeCount } = useCrmBadge(currentUser?.isPassiveSupervisor !== true);
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
@@ -102,7 +105,8 @@ export function AppLayout() {
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
         { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
         // CRM commun (VIP-4 2026-06-10) — pipeline unifié de tous les leads.
-        { label: "CRM", path: "/crm", emoji: "🎯", badge: 0 },
+        // Badge = nouveaux + relances dues (toutes sources).
+        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount },
         { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]

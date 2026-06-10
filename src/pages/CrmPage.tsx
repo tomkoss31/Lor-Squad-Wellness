@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
+  computeCrmStats,
   CRM_SOURCE_META,
   CRM_STATUS_META,
   statusOptionsFor,
@@ -40,6 +41,8 @@ import {
   buildCrmSmsLink,
   buildCrmWhatsAppLink,
 } from "../lib/crmMessages";
+import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { getSupabaseClient } from "../services/supabaseClient";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -58,9 +61,18 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
 
+function relativeDays(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  return `il y a ${days}j`;
+}
+
 export function CrmPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, clients } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, counts, refetch, updateStatus } = useCrmLeads();
 
@@ -69,10 +81,42 @@ export function CrmPage() {
   // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
   // desktop ; sur mobile le select par card reste le moyen principal).
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
+  // Wagon 2 chantier 3 : lead chaud → RDV agenda en 1 clic (prospect pré-rempli).
+  const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
+  // Wagon 3 chantier 6 : panneau stats par source (toggle).
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
   }, []);
+
+  const stats = useMemo(() => computeCrmStats(leads), [leads]);
+
+  // Wagon 3 chantier 7 : anti-doublon. Index des téléphones déjà clients +
+  // détection des leads en double dans le pipeline (même téléphone).
+  const dupeInfo = useMemo(() => {
+    const norm = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").slice(-9);
+    const clientPhones = new Map<string, string>();
+    for (const c of clients ?? []) {
+      const p = norm(c.phone);
+      if (p.length >= 6) clientPhones.set(p, `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim());
+    }
+    const leadPhoneCount = new Map<string, number>();
+    for (const l of leads) {
+      const p = norm(l.contact);
+      if (p.length >= 6) leadPhoneCount.set(p, (leadPhoneCount.get(p) ?? 0) + 1);
+    }
+    return { norm, clientPhones, leadPhoneCount };
+  }, [clients, leads]);
+
+  function dupeFlagFor(lead: CrmLead): { kind: "client" | "dupe"; label: string } | null {
+    const p = dupeInfo.norm(lead.contact);
+    if (p.length < 6) return null;
+    const clientName = dupeInfo.clientPhones.get(p);
+    if (clientName) return { kind: "client", label: `déjà client (${clientName})` };
+    if ((dupeInfo.leadPhoneCount.get(p) ?? 0) > 1) return { kind: "dupe", label: "doublon pipeline" };
+    return null;
+  }
 
   const msgCtx = useMemo(() => {
     const slug = normalizeSlug((currentUser?.name ?? "").split(/\s+/)[0] ?? "");
@@ -202,7 +246,46 @@ export function CrmPage() {
           style={searchInput}
           aria-label="Rechercher un lead"
         />
+        <button
+          type="button"
+          onClick={() => setShowStats((s) => !s)}
+          style={sourceChip(showStats, "var(--ls-purple)")}
+        >
+          📊 Stats {showStats ? "▲" : "▼"}
+        </button>
       </div>
+
+      {/* Stats par source (wagon 3 chantier 6) */}
+      {showStats ? (
+        <div style={statsPanel}>
+          <div style={statsPanelHead}>
+            📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis (
+            {Math.round(stats.overall.conversionRate * 100)}%)
+          </div>
+          <div style={statsGrid}>
+            {stats.bySource.map((s) => (
+              <div key={s.source} style={statsCard}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)" }}>
+                  {CRM_SOURCE_META[s.source].emoji} {CRM_SOURCE_META[s.source].label}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, margin: "4px 0" }}>
+                  <span style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-teal)" }}>
+                    {Math.round(s.conversionRate * 100)}%
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>conversion</span>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                  {s.total} lead{s.total > 1 ? "s" : ""} · {s.active} actifs · {s.converted} convertis · {s.lost} perdus
+                </div>
+                {/* Barre conversion */}
+                <div style={statsBarTrack}>
+                  <div style={{ ...statsBarFill, width: `${Math.max(2, Math.round(s.conversionRate * 100))}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Pipeline */}
       {loading ? (
@@ -256,6 +339,8 @@ export function CrmPage() {
                       onStatusChange={(s) => void handleStatusChange(lead, s)}
                       onCopy={(text) => void copyMessage(text)}
                       onOpenBilans={() => navigate("/clients?tab=leads")}
+                      onAgenda={() => setAgendaLead(lead)}
+                      dupeFlag={dupeFlagFor(lead)}
                     />
                   ))}
                   {col.length === 0 ? <div style={columnEmpty}>—</div> : null}
@@ -265,6 +350,39 @@ export function CrmPage() {
           })}
         </div>
       )}
+
+      {/* Lead → RDV agenda (wagon 2 chantier 3) : prospect pré-rempli, et le
+          lead passe automatiquement en Qualifié/Contacté à la création. */}
+      {agendaLead ? (
+        <ProspectFormModal
+          prefill={{
+            firstName: agendaLead.firstName,
+            phone: agendaLead.contactIsPhone ? agendaLead.contact ?? undefined : undefined,
+            source:
+              agendaLead.source === "reco-client" || agendaLead.source === "intention"
+                ? "Parrainage"
+                : "Autre",
+            sourceDetail: `CRM · ${CRM_SOURCE_META[agendaLead.source].label}${agendaLead.viaName ? ` (via ${agendaLead.viaName})` : ""}`,
+            note: agendaLead.notes ?? undefined,
+          }}
+          onClose={() => setAgendaLead(null)}
+          onSaved={() => {
+            const lead = agendaLead;
+            setAgendaLead(null);
+            if (lead) {
+              const next: CrmStatus = statusOptionsFor(lead.table).includes("qualified")
+                ? "qualified"
+                : "contacted";
+              void handleStatusChange(lead, next);
+              pushToast({
+                tone: "success",
+                title: "RDV créé",
+                message: `${lead.firstName} est dans l'agenda — lead passé en ${CRM_STATUS_META[next].label}.`,
+              });
+            }
+          }}
+        />
+      ) : null}
 
       <footer style={footerHint}>
         💡 Les leads <strong>Bilan online</strong> ont aussi leur kanban détaillé (réponses
@@ -287,14 +405,85 @@ function LeadCard({
   onStatusChange,
   onCopy,
   onOpenBilans,
+  onAgenda,
+  dupeFlag,
 }: {
   lead: CrmLead;
   msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
   onStatusChange: (s: CrmStatus) => void;
   onCopy: (text: string) => void;
   onOpenBilans: () => void;
+  onAgenda: () => void;
+  dupeFlag: { kind: "client" | "dupe"; label: string } | null;
 }) {
+  const { currentUser } = useAppContext();
+  const { push: pushToast } = useToast();
   const src = CRM_SOURCE_META[lead.source];
+  // Wagon 3 chantier 8 : message généré par IA (Lor'Squad AI).
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
+  // l'enregistre quand le coach déclenche un message, on l'affiche ici.
+  const [lastTouch, setLastTouch] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`crm-touch-${lead.key}`);
+    } catch {
+      return null;
+    }
+  });
+  function recordTouch() {
+    const iso = new Date().toISOString();
+    try {
+      localStorage.setItem(`crm-touch-${lead.key}`, iso);
+    } catch {
+      /* ignore */
+    }
+    setLastTouch(iso);
+  }
+
+  async function generateAi() {
+    setAiLoading(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data, error } = await sb.functions.invoke("lor-squad-ai", {
+        body: {
+          mode: lead.status === "contacted" ? "relance" : "first_contact",
+          coachFirstName: msgCtx.coachFirstName,
+          coachUserId: currentUser?.id,
+          bilanUrl: msgCtx.bilanUrl,
+          lead: {
+            firstName: lead.firstName,
+            source: lead.source,
+            sourceLabel: src.label,
+            viaName: lead.viaName,
+            city: lead.city,
+            status: lead.status,
+            extra: lead.extra,
+            notes: lead.notes,
+          },
+        },
+      });
+      const payload = data as { message?: string; error?: string; message_text?: string } | null;
+      if (error || !payload?.message) {
+        const reason =
+          (payload as { message?: string } | null)?.message ||
+          "IA indisponible — réessaie ou utilise le message pré-rédigé.";
+        pushToast({ tone: "warning", title: "IA", message: reason });
+        return;
+      }
+      setAiMessage(payload.message);
+      recordTouch();
+    } catch (e) {
+      pushToast({
+        tone: "warning",
+        title: "IA",
+        message: e instanceof Error ? e.message : "Erreur IA.",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  }
   // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
   // le numéro. Sinon : 1er contact, puis relance douce une fois contacté.
   const isIntention = lead.source === "intention";
@@ -327,6 +516,9 @@ function LeadCard({
           {src.emoji} {src.label}
         </span>
         {lead.relanceDue ? <span style={relanceBadge}>🔔 Relance due</span> : null}
+        {dupeFlag ? (
+          <span style={dupeFlag.kind === "client" ? clientBadge : dupeBadge}>⚠️ {dupeFlag.label}</span>
+        ) : null}
         <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
           {formatDate(lead.createdAt)}
         </span>
@@ -337,6 +529,9 @@ function LeadCard({
         {lead.extra ? <>{lead.extra} · </> : null}
         {lead.city ? <>{lead.city} · </> : null}
         {lead.contact ?? (isIntention ? "contact à demander au parrain" : "pas de contact")}
+        {lastTouch ? (
+          <span style={{ color: "var(--ls-teal)" }}> · 📨 contacté {relativeDays(lastTouch)}</span>
+        ) : null}
       </div>
 
       {/* Actions message pro */}
@@ -346,6 +541,7 @@ function LeadCard({
             href={buildCrmWhatsAppLink(lead.parrainPhone, message)}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={recordTouch}
             style={actionBtn("#25D366")}
             title={`Écrire à ${lead.viaName ?? "ton client"} pour obtenir le contact`}
           >
@@ -358,25 +554,99 @@ function LeadCard({
               href={buildCrmWhatsAppLink(lead.contact, message)}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={recordTouch}
               style={actionBtn("#25D366")}
               title={`${messageLabel} pré-rédigé`}
             >
               📱 WhatsApp
             </a>
-            <a href={buildCrmSmsLink(lead.contact, message)} style={actionBtn("var(--ls-purple)")}>
+            <a
+              href={buildCrmSmsLink(lead.contact, message)}
+              onClick={recordTouch}
+              style={actionBtn("var(--ls-purple)")}
+            >
               💬 SMS
             </a>
           </>
         ) : null}
-        <button type="button" onClick={() => onCopy(message)} style={actionBtn("var(--ls-gold)")}>
+        <button
+          type="button"
+          onClick={() => {
+            recordTouch();
+            onCopy(message);
+          }}
+          style={actionBtn("var(--ls-gold)")}
+        >
           📋 {messageLabel}
         </button>
+        {lead.status !== "converted" && lead.status !== "lost" ? (
+          <button
+            type="button"
+            onClick={onAgenda}
+            style={actionBtn("var(--ls-coral)")}
+            title="Caler un RDV — prospect agenda pré-rempli"
+          >
+            📅 RDV
+          </button>
+        ) : null}
         {lead.table === "online_bilans" ? (
           <button type="button" onClick={onOpenBilans} style={actionBtn("var(--ls-teal)")}>
             📂 Détails
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => void generateAi()}
+          disabled={aiLoading}
+          style={actionBtn("var(--ls-purple)")}
+          title="Générer un message personnalisé par IA (Lor'Squad AI)"
+        >
+          {aiLoading ? "✨ …" : "✨ IA"}
+        </button>
       </div>
+
+      {/* Message IA généré (wagon 3 chantier 8) */}
+      {aiMessage ? (
+        <div style={aiPanel}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>
+            ✨ Proposition IA — édite avant d'envoyer
+          </div>
+          <textarea
+            value={aiMessage}
+            onChange={(e) => setAiMessage(e.target.value)}
+            rows={6}
+            style={aiTextarea}
+          />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+            {lead.contactIsPhone ? (
+              <a
+                href={buildCrmWhatsAppLink(lead.contact, aiMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={actionBtn("#25D366")}
+              >
+                📱 WhatsApp
+              </a>
+            ) : null}
+            {isIntention && lead.parrainPhone ? (
+              <a
+                href={buildCrmWhatsAppLink(lead.parrainPhone, aiMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={actionBtn("#25D366")}
+              >
+                📱 Au parrain
+              </a>
+            ) : null}
+            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-gold)")}>
+              📋 Copier
+            </button>
+            <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>
+              ✕ Fermer
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Statut */}
       <select
@@ -596,6 +866,68 @@ const relanceBadge: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+const clientBadge: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 700,
+  padding: "2px 8px",
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+  color: "var(--ls-purple)",
+  whiteSpace: "nowrap",
+};
+
+const dupeBadge: React.CSSProperties = {
+  ...clientBadge,
+  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
+  color: "var(--ls-gold)",
+};
+
+const statsPanel: React.CSSProperties = {
+  marginBottom: 16,
+  padding: "14px 16px",
+  borderRadius: 14,
+  background: "var(--ls-surface)",
+  border: "0.5px solid var(--ls-border)",
+};
+
+const statsPanelHead: React.CSSProperties = {
+  fontFamily: "Syne, sans-serif",
+  fontWeight: 700,
+  fontSize: 13.5,
+  color: "var(--ls-text)",
+  marginBottom: 12,
+};
+
+const statsGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+  gap: 10,
+};
+
+const statsCard: React.CSSProperties = {
+  padding: "12px 14px",
+  borderRadius: 12,
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+};
+
+const statsBarTrack: React.CSSProperties = {
+  marginTop: 8,
+  width: "100%",
+  height: 5,
+  borderRadius: 100,
+  background: "color-mix(in srgb, var(--ls-text) 8%, transparent)",
+  overflow: "hidden",
+};
+
+const statsBarFill: React.CSSProperties = {
+  height: "100%",
+  borderRadius: 100,
+  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-gold))",
+};
+
 const actionBtn = (accent: string): React.CSSProperties => ({
   display: "inline-flex",
   alignItems: "center",
@@ -611,6 +943,28 @@ const actionBtn = (accent: string): React.CSSProperties => ({
   textDecoration: "none",
   fontFamily: "DM Sans, sans-serif",
 });
+
+const aiPanel: React.CSSProperties = {
+  marginTop: 4,
+  padding: "10px 12px",
+  borderRadius: 10,
+  background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
+};
+
+const aiTextarea: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text)",
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  fontFamily: "DM Sans, sans-serif",
+  resize: "vertical",
+  outline: "none",
+};
 
 const statusSelect = (color: string): React.CSSProperties => ({
   padding: "6px 10px",
