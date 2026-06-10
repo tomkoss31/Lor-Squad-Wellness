@@ -406,6 +406,41 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
 
 // ─── LISTE 100 ──────────────────────────────────────────────────────────
 
+// 2026-06-10 — filtre par date d'ajout (added_at existait en DB mais n'était
+// ni affiché ni filtrable ; impossible de retrouver la prospection d'un jour
+// donné quand la liste grossit).
+type Liste100PeriodFilter = "all" | "today" | "7d" | "30d" | "month";
+
+function ymdLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function matchesAddedAtFilter(
+  addedAt: string,
+  period: Liste100PeriodFilter,
+  day: string,
+): boolean {
+  if (!addedAt) return true;
+  const added = new Date(addedAt);
+  if (Number.isNaN(added.getTime())) return true;
+  if (day) return ymdLocal(added) === day;
+  if (period === "all") return true;
+  const now = new Date();
+  if (period === "today") return ymdLocal(added) === ymdLocal(now);
+  if (period === "month")
+    return (
+      added.getFullYear() === now.getFullYear() && added.getMonth() === now.getMonth()
+    );
+  const days = period === "7d" ? 7 : 30;
+  return now.getTime() - added.getTime() <= days * 24 * 60 * 60 * 1000;
+}
+
+function formatAddedAt(addedAt: string): string {
+  const d = new Date(addedAt);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }) {
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState({
@@ -421,6 +456,10 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
   const [filterTemp, setFilterTemp] = useState<Liste100Temperature | "all">("all");
   const [filterStatus, setFilterStatus] = useState<Liste100Status | "all">("all");
   const [filterCountry, setFilterCountry] = useState<string | "all">("all");
+  // 2026-06-10 — filtre par date d'ajout (demande Thomas : retrouver la
+  // prospection d'une période précise quand la liste grossit).
+  const [filterPeriod, setFilterPeriod] = useState<Liste100PeriodFilter>("all");
+  const [filterDay, setFilterDay] = useState<string>(""); // YYYY-MM-DD précis
   /** Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe en
       `rdv_cale`, on propose de créer un prospect agenda pré-rempli. */
   const [prospectModalContact, setProspectModalContact] = useState<Liste100Contact | null>(null);
@@ -465,6 +504,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
     if (filterTemp !== "all" && c.temperature !== filterTemp) return false;
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
     if (filterCountry !== "all" && (c.country_code ?? "") !== filterCountry) return false;
+    if (!matchesAddedAtFilter(c.added_at, filterPeriod, filterDay)) return false;
     return true;
   });
 
@@ -513,6 +553,32 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           onChange={(v) => setFilterCountry(v === "" ? "all" : v)}
           includeAllFilter
           ariaLabel="Filtrer par pays de prospection"
+        />
+        <select
+          value={filterPeriod}
+          onChange={(e) => {
+            setFilterPeriod(e.target.value as Liste100PeriodFilter);
+            setFilterDay(""); // période et jour précis sont exclusifs
+          }}
+          style={selectStyle}
+          aria-label="Filtrer par date d'ajout"
+        >
+          <option value="all">📅 Toutes dates</option>
+          <option value="today">Ajoutés aujourd'hui</option>
+          <option value="7d">7 derniers jours</option>
+          <option value="30d">30 derniers jours</option>
+          <option value="month">Ce mois-ci</option>
+        </select>
+        <input
+          type="date"
+          value={filterDay}
+          onChange={(e) => {
+            setFilterDay(e.target.value);
+            if (e.target.value) setFilterPeriod("all");
+          }}
+          style={selectStyle}
+          aria-label="Filtrer par jour d'ajout précis"
+          title="Jour d'ajout précis"
         />
 
         <button type="button" onClick={() => setShowForm(true)} style={btnPrimary("var(--ls-purple)")}>
@@ -716,9 +782,10 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
                     })()}
                     <span>{c.full_name}</span>
                   </div>
-                  {c.note && (
-                    <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{c.note}</div>
-                  )}
+                  <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                    {formatAddedAt(c.added_at) ? `📅 Ajouté le ${formatAddedAt(c.added_at)}` : ""}
+                    {c.note ? `${formatAddedAt(c.added_at) ? " · " : ""}${c.note}` : ""}
+                  </div>
                 </div>
                 {deepLink && platformMeta ? (
                   <a
