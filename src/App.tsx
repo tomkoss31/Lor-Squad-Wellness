@@ -34,6 +34,12 @@ const ClientsPage = lazy(() =>
     default: module.ClientsPage
   }))
 );
+// CRM commun toutes sources de leads (VIP-4 2026-06-10).
+const CrmPage = lazy(() =>
+  import("./pages/CrmPage").then((module) => ({
+    default: module.CrmPage
+  }))
+);
 const UsersPage = lazy(() =>
   import("./pages/UsersPage").then((module) => ({
     default: module.UsersPage
@@ -737,6 +743,8 @@ export default function App() {
               <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
+              {/* CRM commun (VIP-4) — pipeline unifié de tous les leads. */}
+              <Route path="crm" element={<CrmPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
