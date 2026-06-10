@@ -22,8 +22,10 @@ import { useMemo, useState } from "react";
 
 // 1 proche qui démarre ≈ +130 PV / mois (panier-type, cf. loupe ci-dessous).
 const FRIEND_PV = 130;
-// Programme de référence pour l'exemple de gain (PDF : ~200 € → net 15 %).
-const EXAMPLE_NET = 170;
+// Nutrition de référence pour le calcul du gain : ~200 € retail / mois.
+// Le gain CLIENT = l'économie sur SA propre nutrition quand sa remise grimpe
+// (pas une commission — ça, c'est le modèle distributeur, cf. marche 42-50 %).
+const REF_RETAIL = 200;
 // Horizon du simulateur multi-mois.
 const MONTHS = 3;
 
@@ -43,12 +45,14 @@ const CLIENT_TIERS: Tier[] = [
 const CLIENT_MAX_PCT = 35;
 
 // Panier-type d'un mois ≈ 130 PV (vrais PV du catalogue herbalifeCatalog.ts).
+// L'alternative entre () montre qu'on peut adapter selon le profil (sans
+// surcharger l'affichage).
 const BASKET_130: { emoji: string; name: string; pv: number }[] = [
-  { emoji: "🥤", name: "Formula 1 (ton repas équilibré)", pv: 32.75 },
-  { emoji: "💪", name: "Formula 3 protéines (PDM)", pv: 17.95 },
-  { emoji: "🌿", name: "Aloé Vera (digestion)", pv: 24.95 },
-  { emoji: "🍵", name: "Thé concentré (énergie)", pv: 34.95 },
-  { emoji: "🌾", name: "Multi-Fibres (transit)", pv: 22.95 },
+  { emoji: "🥤", name: "Formula 1 — ton repas équilibré", pv: 32.75 },
+  { emoji: "💪", name: "Protéines PDM (ou créatine)", pv: 17.95 },
+  { emoji: "🌿", name: "Aloé Vera (ou immune booster)", pv: 24.95 },
+  { emoji: "🍵", name: "Thé concentré — énergie", pv: 34.95 },
+  { emoji: "🌾", name: "Multi-Fibres (ou phyto complet)", pv: 22.95 },
 ];
 
 function tierForPv(pv: number): Tier {
@@ -108,8 +112,12 @@ export function ClubVipPresentation({
   const finalTier = timeline[timeline.length - 1].tier;
   const atClientMax = finalTier.pct >= CLIENT_MAX_PCT;
   const next = nextTier(finalPv);
-  const gainPerFriend = Math.round(((finalTier.pct - 15) / 100) * EXAMPLE_NET);
-  const totalGain = gainPerFriend * friends;
+  // Gain CLIENT = économie mensuelle sur sa propre nutrition au palier atteint,
+  // + le surplus gagné par rapport à son palier de départ (mois 1, sans proches).
+  const startTier = useMemo(() => tierForPv(currentPv), [currentPv]);
+  const savingFinal = Math.round((finalTier.pct / 100) * REF_RETAIL);
+  const savingStart = Math.round((startTier.pct / 100) * REF_RETAIL);
+  const savingDelta = Math.max(0, savingFinal - savingStart);
   const basketTotal = Math.round(BASKET_130.reduce((s, p) => s + p.pv, 0));
 
   return (
@@ -426,18 +434,20 @@ export function ClubVipPresentation({
       {/* ── LE GAIN (sans rien vendre) ─────────────────────────────────── */}
       <div style={{ margin: "0 16px 16px", padding: 16, borderRadius: 14, background: `color-mix(in srgb, ${C.coral} 12%, ${C.ink2})`, border: `1px solid color-mix(in srgb, ${C.coral} 30%, transparent)` }}>
         <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
-          💸 Et tu peux même y gagner
+          💸 Ce que ça te fait économiser
         </div>
         <div style={{ fontSize: 12.5, color: "rgba(248,250,252,0.85)", lineHeight: 1.6 }}>
-          À <strong>-{finalTier.pct}%</strong>, chaque proche que tu parraines te fait
-          empocher l'écart de remise — soit{" "}
-          <strong style={{ color: C.coral }}>≈ {gainPerFriend > 0 ? gainPerFriend : 17} € par personne</strong>
-          {friends > 1 && totalGain > 0 ? (
+          À <strong>-{finalTier.pct}%</strong>, sur une nutrition à ~{REF_RETAIL} €/mois, ta remise
+          vaut <strong style={{ color: C.coral }}>≈ {savingFinal} € chaque mois</strong> dans ta poche.{" "}
+          {savingDelta > 0 ? (
             <>
-              , <strong style={{ color: C.coral }}>≈ {totalGain} € pour tes {friends} proches</strong>
+              Grâce à tes {friends} proche{friends > 1 ? "s" : ""}, c'est{" "}
+              <strong style={{ color: C.coral }}>≈ {savingDelta} €/mois de plus qu'aujourd'hui</strong> —
+              sans rien vendre, juste en partageant ce qui marche pour toi.
             </>
-          ) : null}
-          . Sur leur nutrition, sans rien vendre — juste en partageant ce qui marche pour toi.
+          ) : (
+            <>Ajoute des proches ci-dessus&nbsp;: ta remise grimpe, ton panier baisse.</>
+          )}
         </div>
       </div>
 
