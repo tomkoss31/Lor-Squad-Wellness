@@ -19,6 +19,7 @@ import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
 import { useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
+import { NoalyFab } from "../noaly/NoalyFab";
 import type { HerbalifeRank } from "../../types/domain";
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
@@ -620,6 +621,8 @@ export function AppLayout() {
       {/* Spotlight nouveautés (2026-05-04) : popup auto-affiché à la 1ère
           ouverture après publication d'une annonce non lue. Skippable. */}
       <AnnouncementSpotlight />
+      {/* Noaly (2026-06-10) : FAB ✨ assistante IA, sur toutes les pages coach. */}
+      <NoalyFab />
     </div>
   );
 }
