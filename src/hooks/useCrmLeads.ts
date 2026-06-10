@@ -216,8 +216,9 @@ export function useCrmLeads() {
           .order("created_at", { ascending: false })
           .limit(500),
         sb
+          // prospect_leads n'a pas de colonne email (uniquement phone).
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, notes")
+          .select("id, first_name, phone, city, source, status, metadata, created_at, notes")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -300,7 +301,7 @@ export function useCrmLeads() {
           table: "prospect_leads",
           id: row.id as string,
           firstName: (row.first_name as string) || "—",
-          contact: (row.phone as string | null) || (row.email as string | null) || null,
+          contact: (row.phone as string | null) || null,
           contactIsPhone: looksLikePhone(row.phone as string | null),
           city: (row.city as string | null) ?? null,
           source,
