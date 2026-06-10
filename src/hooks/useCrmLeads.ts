@@ -159,6 +159,42 @@ interface IntentionRow {
   notes: string | null;
 }
 
+export interface CrmSourceStat {
+  source: CrmSource;
+  total: number;
+  active: number; // ni converti ni perdu
+  converted: number;
+  lost: number;
+  conversionRate: number; // converted / total (0-1)
+}
+
+/** Stats par source pour le panneau #6 (taux de conversion par canal). */
+export function computeCrmStats(leads: CrmLead[]): {
+  bySource: CrmSourceStat[];
+  overall: { total: number; converted: number; conversionRate: number };
+} {
+  const map = new Map<CrmSource, CrmSourceStat>();
+  for (const l of leads) {
+    const s =
+      map.get(l.source) ??
+      { source: l.source, total: 0, active: 0, converted: 0, lost: 0, conversionRate: 0 };
+    s.total += 1;
+    if (l.status === "converted") s.converted += 1;
+    else if (l.status === "lost") s.lost += 1;
+    else s.active += 1;
+    map.set(l.source, s);
+  }
+  const bySource = [...map.values()]
+    .map((s) => ({ ...s, conversionRate: s.total > 0 ? s.converted / s.total : 0 }))
+    .sort((a, b) => b.total - a.total);
+  const total = leads.length;
+  const converted = leads.filter((l) => l.status === "converted").length;
+  return {
+    bySource,
+    overall: { total, converted, conversionRate: total > 0 ? converted / total : 0 },
+  };
+}
+
 export function useCrmLeads() {
   const [leads, setLeads] = useState<CrmLead[]>([]);
   const [loading, setLoading] = useState(true);

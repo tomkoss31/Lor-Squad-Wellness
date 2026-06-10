@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
+  computeCrmStats,
   CRM_SOURCE_META,
   CRM_STATUS_META,
   statusOptionsFor,
@@ -59,9 +60,18 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
 
+function relativeDays(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  return `il y a ${days}j`;
+}
+
 export function CrmPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, clients } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, counts, refetch, updateStatus } = useCrmLeads();
 
@@ -72,10 +82,40 @@ export function CrmPage() {
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
   // Wagon 2 chantier 3 : lead chaud → RDV agenda en 1 clic (prospect pré-rempli).
   const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
+  // Wagon 3 chantier 6 : panneau stats par source (toggle).
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
   }, []);
+
+  const stats = useMemo(() => computeCrmStats(leads), [leads]);
+
+  // Wagon 3 chantier 7 : anti-doublon. Index des téléphones déjà clients +
+  // détection des leads en double dans le pipeline (même téléphone).
+  const dupeInfo = useMemo(() => {
+    const norm = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").slice(-9);
+    const clientPhones = new Map<string, string>();
+    for (const c of clients ?? []) {
+      const p = norm(c.phone);
+      if (p.length >= 6) clientPhones.set(p, `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim());
+    }
+    const leadPhoneCount = new Map<string, number>();
+    for (const l of leads) {
+      const p = norm(l.contact);
+      if (p.length >= 6) leadPhoneCount.set(p, (leadPhoneCount.get(p) ?? 0) + 1);
+    }
+    return { norm, clientPhones, leadPhoneCount };
+  }, [clients, leads]);
+
+  function dupeFlagFor(lead: CrmLead): { kind: "client" | "dupe"; label: string } | null {
+    const p = dupeInfo.norm(lead.contact);
+    if (p.length < 6) return null;
+    const clientName = dupeInfo.clientPhones.get(p);
+    if (clientName) return { kind: "client", label: `déjà client (${clientName})` };
+    if ((dupeInfo.leadPhoneCount.get(p) ?? 0) > 1) return { kind: "dupe", label: "doublon pipeline" };
+    return null;
+  }
 
   const msgCtx = useMemo(() => {
     const slug = normalizeSlug((currentUser?.name ?? "").split(/\s+/)[0] ?? "");
@@ -205,7 +245,46 @@ export function CrmPage() {
           style={searchInput}
           aria-label="Rechercher un lead"
         />
+        <button
+          type="button"
+          onClick={() => setShowStats((s) => !s)}
+          style={sourceChip(showStats, "var(--ls-purple)")}
+        >
+          📊 Stats {showStats ? "▲" : "▼"}
+        </button>
       </div>
+
+      {/* Stats par source (wagon 3 chantier 6) */}
+      {showStats ? (
+        <div style={statsPanel}>
+          <div style={statsPanelHead}>
+            📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis (
+            {Math.round(stats.overall.conversionRate * 100)}%)
+          </div>
+          <div style={statsGrid}>
+            {stats.bySource.map((s) => (
+              <div key={s.source} style={statsCard}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)" }}>
+                  {CRM_SOURCE_META[s.source].emoji} {CRM_SOURCE_META[s.source].label}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, margin: "4px 0" }}>
+                  <span style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-teal)" }}>
+                    {Math.round(s.conversionRate * 100)}%
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>conversion</span>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                  {s.total} lead{s.total > 1 ? "s" : ""} · {s.active} actifs · {s.converted} convertis · {s.lost} perdus
+                </div>
+                {/* Barre conversion */}
+                <div style={statsBarTrack}>
+                  <div style={{ ...statsBarFill, width: `${Math.max(2, Math.round(s.conversionRate * 100))}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Pipeline */}
       {loading ? (
@@ -260,6 +339,7 @@ export function CrmPage() {
                       onCopy={(text) => void copyMessage(text)}
                       onOpenBilans={() => navigate("/clients?tab=leads")}
                       onAgenda={() => setAgendaLead(lead)}
+                      dupeFlag={dupeFlagFor(lead)}
                     />
                   ))}
                   {col.length === 0 ? <div style={columnEmpty}>—</div> : null}
@@ -325,6 +405,7 @@ function LeadCard({
   onCopy,
   onOpenBilans,
   onAgenda,
+  dupeFlag,
 }: {
   lead: CrmLead;
   msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
@@ -332,8 +413,27 @@ function LeadCard({
   onCopy: (text: string) => void;
   onOpenBilans: () => void;
   onAgenda: () => void;
+  dupeFlag: { kind: "client" | "dupe"; label: string } | null;
 }) {
   const src = CRM_SOURCE_META[lead.source];
+  // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
+  // l'enregistre quand le coach déclenche un message, on l'affiche ici.
+  const [lastTouch, setLastTouch] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`crm-touch-${lead.key}`);
+    } catch {
+      return null;
+    }
+  });
+  function recordTouch() {
+    const iso = new Date().toISOString();
+    try {
+      localStorage.setItem(`crm-touch-${lead.key}`, iso);
+    } catch {
+      /* ignore */
+    }
+    setLastTouch(iso);
+  }
   // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
   // le numéro. Sinon : 1er contact, puis relance douce une fois contacté.
   const isIntention = lead.source === "intention";
@@ -366,6 +466,9 @@ function LeadCard({
           {src.emoji} {src.label}
         </span>
         {lead.relanceDue ? <span style={relanceBadge}>🔔 Relance due</span> : null}
+        {dupeFlag ? (
+          <span style={dupeFlag.kind === "client" ? clientBadge : dupeBadge}>⚠️ {dupeFlag.label}</span>
+        ) : null}
         <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
           {formatDate(lead.createdAt)}
         </span>
@@ -376,6 +479,9 @@ function LeadCard({
         {lead.extra ? <>{lead.extra} · </> : null}
         {lead.city ? <>{lead.city} · </> : null}
         {lead.contact ?? (isIntention ? "contact à demander au parrain" : "pas de contact")}
+        {lastTouch ? (
+          <span style={{ color: "var(--ls-teal)" }}> · 📨 contacté {relativeDays(lastTouch)}</span>
+        ) : null}
       </div>
 
       {/* Actions message pro */}
@@ -385,6 +491,7 @@ function LeadCard({
             href={buildCrmWhatsAppLink(lead.parrainPhone, message)}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={recordTouch}
             style={actionBtn("#25D366")}
             title={`Écrire à ${lead.viaName ?? "ton client"} pour obtenir le contact`}
           >
@@ -397,17 +504,29 @@ function LeadCard({
               href={buildCrmWhatsAppLink(lead.contact, message)}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={recordTouch}
               style={actionBtn("#25D366")}
               title={`${messageLabel} pré-rédigé`}
             >
               📱 WhatsApp
             </a>
-            <a href={buildCrmSmsLink(lead.contact, message)} style={actionBtn("var(--ls-purple)")}>
+            <a
+              href={buildCrmSmsLink(lead.contact, message)}
+              onClick={recordTouch}
+              style={actionBtn("var(--ls-purple)")}
+            >
               💬 SMS
             </a>
           </>
         ) : null}
-        <button type="button" onClick={() => onCopy(message)} style={actionBtn("var(--ls-gold)")}>
+        <button
+          type="button"
+          onClick={() => {
+            recordTouch();
+            onCopy(message);
+          }}
+          style={actionBtn("var(--ls-gold)")}
+        >
           📋 {messageLabel}
         </button>
         {lead.status !== "converted" && lead.status !== "lost" ? (
@@ -643,6 +762,68 @@ const relanceBadge: React.CSSProperties = {
   border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
   color: "var(--ls-coral)",
   whiteSpace: "nowrap",
+};
+
+const clientBadge: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 700,
+  padding: "2px 8px",
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+  color: "var(--ls-purple)",
+  whiteSpace: "nowrap",
+};
+
+const dupeBadge: React.CSSProperties = {
+  ...clientBadge,
+  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
+  color: "var(--ls-gold)",
+};
+
+const statsPanel: React.CSSProperties = {
+  marginBottom: 16,
+  padding: "14px 16px",
+  borderRadius: 14,
+  background: "var(--ls-surface)",
+  border: "0.5px solid var(--ls-border)",
+};
+
+const statsPanelHead: React.CSSProperties = {
+  fontFamily: "Syne, sans-serif",
+  fontWeight: 700,
+  fontSize: 13.5,
+  color: "var(--ls-text)",
+  marginBottom: 12,
+};
+
+const statsGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+  gap: 10,
+};
+
+const statsCard: React.CSSProperties = {
+  padding: "12px 14px",
+  borderRadius: 12,
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+};
+
+const statsBarTrack: React.CSSProperties = {
+  marginTop: 8,
+  width: "100%",
+  height: 5,
+  borderRadius: 100,
+  background: "color-mix(in srgb, var(--ls-text) 8%, transparent)",
+  overflow: "hidden",
+};
+
+const statsBarFill: React.CSSProperties = {
+  height: "100%",
+  borderRadius: 100,
+  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-gold))",
 };
 
 const actionBtn = (accent: string): React.CSSProperties => ({
