@@ -42,6 +42,7 @@ import {
   buildCrmWhatsAppLink,
 } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { getSupabaseClient } from "../services/supabaseClient";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -415,7 +416,12 @@ function LeadCard({
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
 }) {
+  const { currentUser } = useAppContext();
+  const { push: pushToast } = useToast();
   const src = CRM_SOURCE_META[lead.source];
+  // Wagon 3 chantier 8 : message généré par IA (Lor'Squad AI).
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
   // l'enregistre quand le coach déclenche un message, on l'affiche ici.
   const [lastTouch, setLastTouch] = useState<string | null>(() => {
@@ -433,6 +439,50 @@ function LeadCard({
       /* ignore */
     }
     setLastTouch(iso);
+  }
+
+  async function generateAi() {
+    setAiLoading(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data, error } = await sb.functions.invoke("lor-squad-ai", {
+        body: {
+          mode: lead.status === "contacted" ? "relance" : "first_contact",
+          coachFirstName: msgCtx.coachFirstName,
+          coachUserId: currentUser?.id,
+          bilanUrl: msgCtx.bilanUrl,
+          lead: {
+            firstName: lead.firstName,
+            source: lead.source,
+            sourceLabel: src.label,
+            viaName: lead.viaName,
+            city: lead.city,
+            status: lead.status,
+            extra: lead.extra,
+            notes: lead.notes,
+          },
+        },
+      });
+      const payload = data as { message?: string; error?: string; message_text?: string } | null;
+      if (error || !payload?.message) {
+        const reason =
+          (payload as { message?: string } | null)?.message ||
+          "IA indisponible — réessaie ou utilise le message pré-rédigé.";
+        pushToast({ tone: "warning", title: "IA", message: reason });
+        return;
+      }
+      setAiMessage(payload.message);
+      recordTouch();
+    } catch (e) {
+      pushToast({
+        tone: "warning",
+        title: "IA",
+        message: e instanceof Error ? e.message : "Erreur IA.",
+      });
+    } finally {
+      setAiLoading(false);
+    }
   }
   // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
   // le numéro. Sinon : 1er contact, puis relance douce une fois contacté.
@@ -544,7 +594,59 @@ function LeadCard({
             📂 Détails
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => void generateAi()}
+          disabled={aiLoading}
+          style={actionBtn("var(--ls-purple)")}
+          title="Générer un message personnalisé par IA (Lor'Squad AI)"
+        >
+          {aiLoading ? "✨ …" : "✨ IA"}
+        </button>
       </div>
+
+      {/* Message IA généré (wagon 3 chantier 8) */}
+      {aiMessage ? (
+        <div style={aiPanel}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>
+            ✨ Proposition IA — édite avant d'envoyer
+          </div>
+          <textarea
+            value={aiMessage}
+            onChange={(e) => setAiMessage(e.target.value)}
+            rows={6}
+            style={aiTextarea}
+          />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+            {lead.contactIsPhone ? (
+              <a
+                href={buildCrmWhatsAppLink(lead.contact, aiMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={actionBtn("#25D366")}
+              >
+                📱 WhatsApp
+              </a>
+            ) : null}
+            {isIntention && lead.parrainPhone ? (
+              <a
+                href={buildCrmWhatsAppLink(lead.parrainPhone, aiMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={actionBtn("#25D366")}
+              >
+                📱 Au parrain
+              </a>
+            ) : null}
+            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-gold)")}>
+              📋 Copier
+            </button>
+            <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>
+              ✕ Fermer
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Statut */}
       <select
@@ -841,6 +943,28 @@ const actionBtn = (accent: string): React.CSSProperties => ({
   textDecoration: "none",
   fontFamily: "DM Sans, sans-serif",
 });
+
+const aiPanel: React.CSSProperties = {
+  marginTop: 4,
+  padding: "10px 12px",
+  borderRadius: 10,
+  background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
+};
+
+const aiTextarea: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text)",
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  fontFamily: "DM Sans, sans-serif",
+  resize: "vertical",
+  outline: "none",
+};
 
 const statusSelect = (color: string): React.CSSProperties => ({
   padding: "6px 10px",
