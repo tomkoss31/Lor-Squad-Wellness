@@ -135,7 +135,8 @@ export function AppLayout() {
     if (p.startsWith("/formation/")) return "Formation";
     if (p === "/academy" || p.startsWith("/academy/")) return "Academy";
     if (p === "/prospection" || p.startsWith("/prospection")) return "Prospection";
-    if (p === "/outils-prospection") return "Outils";
+    if (p === "/outils-prospection" || p.startsWith("/outils-prospection/")) return "Prospection";
+    if (p === "/travaux") return "En travaux";
     if (p === "/business") return "Business";
     if (p === "/parametres" || p === "/settings") return "Paramètres";
     if (p === "/analytics") return "Analytics";

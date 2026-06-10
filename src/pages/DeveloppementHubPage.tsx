@@ -149,10 +149,10 @@ const CARDS: HubCard[] = [
   {
     id: "outils-prospection",
     emoji: "🎯",
-    title: "Outils prospection",
+    title: "Outil de prospection",
     description:
-      "Tous tes liens marketing en un endroit. Copier, partager, imprimer : page éducative, simulateur, PDF prospect, slides présentation. Avec ton ID coach embarqué (?ref=) pour le tracking des leads.",
-    cta: "Ouvrir la boîte",
+      "Ta machine à prospects, expliquée pas à pas : Mon bilan online (lien + fiche publique + leads), Mes liens marketing (docs, simulateur, vidéos) et la prospection internationale.",
+    cta: "Ouvrir l'outil",
     path: "/outils-prospection",
     accent: "var(--ls-teal)",
     section: "prospecter",

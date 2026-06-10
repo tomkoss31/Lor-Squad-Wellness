@@ -211,6 +211,22 @@ const OutilsProspectionPage = lazy(() =>
     default: module.OutilsProspectionPage,
   })),
 );
+// Page mère Outil de prospection + sous-pages (chantier 3 remaniement 2026-06-10).
+const OutilsProspectionMerePage = lazy(() =>
+  import("./pages/OutilsProspectionMerePage").then((module) => ({
+    default: module.OutilsProspectionMerePage,
+  })),
+);
+const OutilsProspectionBilanPage = lazy(() =>
+  import("./pages/OutilsProspectionBilanPage").then((module) => ({
+    default: module.OutilsProspectionBilanPage,
+  })),
+);
+const OutilsProspectionInternationalPage = lazy(() =>
+  import("./pages/OutilsProspectionInternationalPage").then((module) => ({
+    default: module.OutilsProspectionInternationalPage,
+  })),
+);
 const ProspectionPage = lazy(() =>
   import("./pages/ProspectionPage").then((module) => ({
     default: module.ProspectionPage,
@@ -654,8 +670,13 @@ export default function App() {
               <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
               <Route path="travaux" element={<TravauxPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
-              {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
-              <Route path="outils-prospection" element={<OutilsProspectionPage />} />
+              {/* Outil de prospection (chantier 3 remaniement 2026-06-10) —
+                  page mère éducative + 3 sous-pages. Admin only, distributeur
+                  redirigé vers /travaux dans chaque page. */}
+              <Route path="outils-prospection" element={<OutilsProspectionMerePage />} />
+              <Route path="outils-prospection/bilan-online" element={<OutilsProspectionBilanPage />} />
+              <Route path="outils-prospection/liens" element={<OutilsProspectionPage />} />
+              <Route path="outils-prospection/international" element={<OutilsProspectionInternationalPage />} />
               {/* Chantier #3 (2026-05-17) — Module Prospection cold mobile-first.
                   4 étapes : Marché → Profil → Hashtags → Messages multi-langues. */}
               <Route path="prospection" element={<ProspectionPage />} />
