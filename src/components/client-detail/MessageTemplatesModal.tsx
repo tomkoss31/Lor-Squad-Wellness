@@ -46,14 +46,18 @@ export function MessageTemplatesModal({
 
   const ctx = useMemo(
     () => {
-      // 3 lettres sponsor : dérivées du dernier mot du nom du coach (best-guess,
-      // éditable dans la textarea avant envoi). Cf. VIP-2 2026-06-10.
-      const parts = (currentUser?.name ?? "").trim().split(/\s+/).filter(Boolean);
-      const lastWord = parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
+      // 3 lettres sponsor : saisies par le coach dans Paramètres > Profil
+      // (localStorage, cf. VIP-2 2026-06-10). Pas dérivées du nom — « Thomas »
+      // donnerait THO ≠ HOU réel. Vide → placeholder clair dans le message.
+      const storedLetters =
+        typeof localStorage === "undefined"
+          ? ""
+          : (localStorage.getItem("ls-vip-sponsor-letters") || "").trim();
+      const firstWord = (currentUser?.name ?? "").trim().split(/\s+/)[0] || "Ton coach";
       return {
-        coachFirstName: parts[0] ?? "Ton coach",
+        coachFirstName: firstWord,
         coachSponsorId: currentUser?.herbalifeId || undefined,
-        coachSponsorLetters: lastWord ? lastWord.slice(0, 3).toUpperCase() : undefined,
+        coachSponsorLetters: storedLetters ? storedLetters.toUpperCase() : undefined,
         followUps: visibleFollowUps,
         now: new Date(),
       };

@@ -46,6 +46,9 @@ export function ClientVipPitchTab({
   const isAmbassador = status === "ambassador";
   const activeTier = CLIENT_TIERS.find((t) => t.statuses.includes(status)) ?? null;
   const hasSponsorId = Boolean(currentUser?.herbalifeId);
+  const hasLetters =
+    typeof localStorage !== "undefined" && Boolean(localStorage.getItem("ls-vip-sponsor-letters"));
+  const setupIncomplete = !hasSponsorId || !hasLetters;
   const fname = (client.firstName || "").trim() || "ce client";
 
   return (
@@ -98,11 +101,14 @@ export function ClientVipPitchTab({
         l'année, juste en consommant ce qui marche pour lui·elle.
       </div>
 
-      {/* Hint ID sponsor manquant */}
-      {!hasSponsorId ? (
+      {/* Hint setup sponsor incomplet (ID et/ou 3 lettres) */}
+      {setupIncomplete ? (
         <div style={warnBox}>
-          ⚠️ Renseigne ton <strong>ID Herbalife</strong> dans Paramètres &gt; Profil pour qu'il
-          s'ajoute automatiquement dans l'invitation (sinon tu devras le coller à la main).
+          ⚠️ Complète <strong>Paramètres &gt; Profil &gt; « 👑 Tes invitations Club VIP »</strong>
+          {" "}— ton {!hasSponsorId ? "ID sponsor" : ""}
+          {!hasSponsorId && !hasLetters ? " et tes " : ""}
+          {!hasLetters ? "3 lettres (ex HOU)" : ""} s'ajouteront alors automatiquement dans
+          l'invitation (sinon tu les colles à la main).
         </div>
       ) : null}
 
