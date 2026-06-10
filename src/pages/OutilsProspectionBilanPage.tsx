@@ -8,13 +8,13 @@
 //      depuis Paramètres > Profil (elle y reste aussi)
 //   C. Après le lead : push → onglet Leads → kanban → relance J+3 → conversion
 //
-// Accès : admin only (cohérent avec la page mère), distributeur → /travaux.
+// Accès : ouvert à tous les distri (révision Thomas 2026-06-10).
 // Slug = prénom normalisé, même règle que PublicProfileShareCard et
 // /bilan-online/:coachSlug.
 // =============================================================================
 
 import { useEffect, useMemo } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { PublicProfileShareCard } from "../components/settings/PublicProfileShareCard";
@@ -78,9 +78,7 @@ export function OutilsProspectionBilanPage() {
     return `${origin}/bilan-online/${slug}`;
   }, [slug]);
 
-  if (!currentUser || currentUser.role !== "admin") {
-    return <Navigate to="/travaux" replace />;
-  }
+  if (!currentUser) return null;
 
   const shareText =
     "Fais ton bilan bien-être gratuit en 2 minutes — je t'envoie mes conseils perso 🌿";

@@ -5,14 +5,16 @@
 // La méthode D'ABORD (résumé de la fiche prospection-explique), le kit ENSUITE
 // (porte d'entrée vers /prospection : 6 marchés × 4 profils × 10 sections).
 //
-// Accès : admin only (cohérent avec la page mère), distributeur → /travaux.
-// La fiche complète /developpement/prospection-explique reste accessible aux
-// distri (gate Academy 100%) via le hub Mon développement.
+// Accès (révision Thomas 2026-06-10) : verrou Academy 100% — la prospection
+// froide se mérite en finissant l'Academy (même règle que l'ancienne card du
+// hub). Admin bypass. Distri non qualifié → écran 🔒 motivant avec CTA
+// /academy (pas la page travaux : on veut donner envie de finir).
 // =============================================================================
 
 import { useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 
 const METHOD_POINTS: { emoji: string; title: string; detail: string }[] = [
   {
@@ -40,13 +42,47 @@ const MARKETS = ["🇫🇷 France", "🇬🇧 International EN", "🇲🇽 LatAm
 export function OutilsProspectionInternationalPage() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
+  const { view: academy } = useAcademyProgress();
 
   useEffect(() => {
     document.title = "La Base 360 — Prospection internationale";
   }, []);
 
-  if (!currentUser || currentUser.role !== "admin") {
-    return <Navigate to="/travaux" replace />;
+  if (!currentUser) return null;
+
+  const isAdmin = currentUser.role === "admin";
+  if (!isAdmin && academy.percentComplete < 100) {
+    return (
+      <div style={pageWrap}>
+        <button type="button" onClick={() => navigate("/outils-prospection")} style={backBtn}>
+          ← Outil de prospection
+        </button>
+        <div style={lockBox}>
+          <div aria-hidden="true" style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+          <h1 style={lockTitle}>Termine ton Academy pour débloquer</h1>
+          <p style={lockDesc}>
+            La prospection froide demande de la méthode — elle se débloque une
+            fois l'Academy terminée à 100 %. Tu en es à{" "}
+            <strong style={{ color: "var(--ls-gold)" }}>
+              {academy.percentComplete}%
+            </strong>{" "}
+            ({academy.completedCount}/{academy.totalCount} sections) : plus
+            grand-chose !
+          </p>
+          <div style={lockBarTrack}>
+            <div
+              style={{
+                ...lockBarFill,
+                width: `${Math.max(2, academy.percentComplete)}%`,
+              }}
+            />
+          </div>
+          <button type="button" onClick={() => navigate("/academy")} style={lockCta}>
+            🎓 {academy.hasStarted ? "Reprendre l'Academy" : "Démarrer l'Academy"} →
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -257,6 +293,61 @@ const ctaBtn: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 700,
   padding: "12px 20px",
+  borderRadius: 12,
+  cursor: "pointer",
+};
+
+// Écran verrou Academy (révision accès 2026-06-10).
+const lockBox: React.CSSProperties = {
+  textAlign: "center",
+  padding: "44px 26px",
+  borderRadius: 18,
+  background:
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 32%, var(--ls-border))",
+  maxWidth: 560,
+  margin: "30px auto 0",
+};
+
+const lockTitle: React.CSSProperties = {
+  margin: "0 0 10px",
+  fontFamily: "Syne, sans-serif",
+  fontSize: 23,
+  fontWeight: 800,
+  color: "var(--ls-text)",
+};
+
+const lockDesc: React.CSSProperties = {
+  margin: "0 0 18px",
+  fontSize: 13.5,
+  lineHeight: 1.6,
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+};
+
+const lockBarTrack: React.CSSProperties = {
+  width: "100%",
+  height: 7,
+  background: "color-mix(in srgb, var(--ls-text) 8%, transparent)",
+  borderRadius: 100,
+  overflow: "hidden",
+  marginBottom: 20,
+};
+
+const lockBarFill: React.CSSProperties = {
+  height: "100%",
+  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-gold))",
+  borderRadius: 100,
+};
+
+const lockCta: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--ls-purple) 14%, var(--ls-surface2))",
+  border: "1px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+  color: "var(--ls-text)",
+  fontFamily: "Syne, sans-serif",
+  fontSize: 14,
+  fontWeight: 700,
+  padding: "12px 22px",
   borderRadius: 12,
   cursor: "pointer",
 };

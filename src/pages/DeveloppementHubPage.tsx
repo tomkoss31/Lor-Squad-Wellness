@@ -63,7 +63,7 @@ const CARDS: HubCard[] = [
     emoji: "🎓",
     title: "Apprendre l'app La Base 360",
     description:
-      "Tour guidé pas à pas + Academy interactive pour maîtriser tous les outils de l'app : Co-pilote, Agenda, Bilan, Messagerie, Cahier de bord, Simulateur EBE.",
+      "Tour guidé + Academy interactive pour maîtriser tous les outils de l'app.",
     cta: "Apprendre l'app",
     path: "/academy",
     accent: "var(--ls-purple)",
@@ -75,7 +75,7 @@ const CARDS: HubCard[] = [
     emoji: "📚",
     title: "Formation distributeur Herbalife",
     description:
-      "La méthode complète La Base 360 pour construire ton activité Herbalife : 3 niveaux progressifs (Démarrer / Construire / Dupliquer) avec modules, leçons et quiz.",
+      "La méthode complète en 3 niveaux : Démarrer, Construire, Dupliquer.",
     cta: "Démarrer la formation",
     path: "/formation",
     accent: "var(--ls-gold)",
@@ -85,8 +85,7 @@ const CARDS: HubCard[] = [
     id: "outils",
     emoji: "🛠",
     title: "Boîte à outils",
-    description:
-      "Scripts, checklists, templates prêts à l'emploi pour chaque étape de ton activité.",
+    description: "Scripts, checklists et templates prêts à l'emploi.",
     cta: "Ouvrir la boîte",
     path: "/formation/boite-a-outils",
     accent: "var(--ls-teal)",
@@ -97,8 +96,7 @@ const CARDS: HubCard[] = [
     id: "cahier",
     emoji: "📔",
     title: "Cahier de bord",
-    description:
-      "Mes 21 jours cobaye, ma liste 100 connaissances, mon journal EBE perso.",
+    description: "21 jours cobaye, liste 100 connaissances, journal EBE perso.",
     cta: "Ouvrir mon cahier",
     path: "/cahier-de-bord",
     accent: "var(--ls-coral)",
@@ -109,8 +107,7 @@ const CARDS: HubCard[] = [
     id: "simulateur",
     emoji: "🎯",
     title: "Simulateur EBE",
-    description:
-      "Entraîne-toi à mener un EBE complet face à un faux prospect. 6 étapes, scoring, debrief.",
+    description: "Entraîne-toi face à un faux prospect : 6 étapes, scoring, debrief.",
     cta: "Démarrer un EBE",
     path: "/simulateur-ebe",
     accent: "var(--ls-purple)",
@@ -122,8 +119,7 @@ const CARDS: HubCard[] = [
     id: "routine-du-jour",
     emoji: "☀️",
     title: "Ma routine du jour",
-    description:
-      "Tes 5 actions de discipline matin/midi/soir : suivis protocole, Leads, dormants, RDV, liste 100. Score X/5, jamais bloquante, accessible quand tu veux.",
+    description: "Tes 5 actions de discipline du jour. Score X/5, jamais bloquante.",
     cta: "Ouvrir ma routine",
     path: "/routine-du-jour",
     accent: "var(--ls-gold)",
@@ -134,30 +130,21 @@ const CARDS: HubCard[] = [
   // 2026-06-10 (remaniement) : les fiches restent accessibles via le bouton
   // 📖 directement sur /routine-du-jour et /flex — doublon de navigation
   // supprimé pour aérer le hub.
-  {
-    id: "nouveautes",
-    emoji: "🆕",
-    title: "Nouveautés app",
-    description:
-      "Le journal des nouvelles features de l'app. Reste au courant des derniers ajouts.",
-    cta: "Voir le journal",
-    path: "/developpement/nouveautes",
-    accent: "var(--ls-teal)",
-    section: "quotidien",
-    tag: { label: "Live", color: "var(--ls-teal)" },
-  },
+  // Card "Nouveautés app" retirée 2026-06-10 (retour Thomas) : remplacée par
+  // la cloche 🔔 du header qui s'illumine quand il y a du non-lu (petite,
+  // mobile, visible partout). Le journal reste sur /developpement/nouveautes
+  // via "Voir tout" du dropdown cloche.
   {
     id: "outils-prospection",
     emoji: "🎯",
     title: "Outil de prospection",
     description:
-      "Tout au même endroit : comment marche la prospection (la méthode), Mon bilan online (lien + fiche publique + leads), Mes liens marketing (docs, simulateur, vidéos) et la prospection internationale.",
+      "La méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
     cta: "Ouvrir l'outil",
     path: "/outils-prospection",
     accent: "var(--ls-teal)",
     section: "prospecter",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
-    requireRole: "admin",
   },
   // Cartes "Prospection internationale" et "Comment marche la prospection"
   // retirées 2026-06-10 (retour recette Thomas) : tout passe par la page
@@ -167,32 +154,21 @@ const CARDS: HubCard[] = [
     id: "admin-prospection",
     emoji: "🛠",
     title: "Admin Prospection",
-    description:
-      "Édite les scripts et les briefs méthodo du module /prospection. Modifs visibles immédiatement par tous les distri.",
+    description: "Édite les scripts et briefs méthodo du kit prospection.",
     cta: "Ouvrir l'admin",
     path: "/admin/prospection",
     accent: "var(--ls-purple)",
     section: "admin",
     requireRole: "admin",
   },
-  {
-    id: "bilan-online",
-    emoji: "🌱",
-    title: "Mon bilan online",
-    description:
-      "Partage ton lien /bilan-online/<ton-prénom> : tes prospects remplissent un bilan en 2 min, tu reçois une push, tu retrouves le Lead dans /clients onglet Leads (kanban + templates + relance auto J+3).",
-    cta: "Voir mes Leads",
-    path: "/clients?tab=leads",
-    accent: "var(--ls-gold)",
-    section: "quotidien",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
+  // Card "Mon bilan online" retirée 2026-06-10 (retour Thomas) : doublon —
+  // le bilan online vit dans l'Outil de prospection (sous-page dédiée) et
+  // les leads dans Dossiers clients > onglet Leads.
   {
     id: "newsletters",
     emoji: "📰",
     title: "Newsletters",
-    description:
-      "Gère tes éditions de La Base 360 News (bi-mensuel). Crée, édite, envoie aux clients + distri, partage la version publique pour capter des leads.",
+    description: "Crée, édite et envoie les éditions La Base 360 News.",
     cta: "Ouvrir l'admin",
     path: "/admin/newsletters",
     accent: "var(--ls-coral)",
@@ -268,16 +244,16 @@ export function DeveloppementHubPage() {
         )}
       </div>
 
-      {/* Comment t'organiser — remonté en haut (demande Thomas 2026-06-10) */}
+      {/* Comment t'organiser — en haut, version courte (retours Thomas
+          2026-06-10 : remonté, puis allégé pour limiter la lecture). */}
       <div style={organiserBoxStyle}>
-        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: "var(--ls-text)" }}>
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5, marginBottom: 5, color: "var(--ls-text)" }}>
           💡 Comment t'organiser
         </div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "var(--ls-text-muted)" }}>
-          <li><strong>Tu débutes ?</strong> Commence par <em>Apprendre l'app La Base 360</em> (Academy) puis enchaîne avec <em>Formation distributeur Herbalife</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
-          <li><strong>Au quotidien :</strong> ouvre <em>Ma routine du jour</em> (5 min) et tiens ton <em>Cahier de bord</em> à jour après chaque prospection.</li>
-          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer (déverrouillé une fois Academy terminée).</li>
-          <li><strong>Une question sur FLEX ou la routine ?</strong> Le bouton <em>📖 Comment ça marche</em> est directement sur chaque page.</li>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.65, color: "var(--ls-text-muted)" }}>
+          <li><strong>Tu débutes ?</strong> Academy → Formation niveau 1 → Cahier de bord J0.</li>
+          <li><strong>Au quotidien :</strong> Ma routine du jour (5 min) + cahier à jour après chaque prospection.</li>
+          <li><strong>Une question sur un outil ?</strong> Le bouton 📖 est sur chaque page.</li>
         </ul>
       </div>
 
@@ -421,10 +397,12 @@ const heroSubtitle: React.CSSProperties = {
   maxWidth: 620,
 };
 
+// Compactage 2026-06-10 (retour Thomas : cards trop grosses, trop de
+// lecture) : icônes 40px, paddings et typos resserrés, grilles plus denses.
 const gridStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-  gap: 14,
+  gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
+  gap: 12,
 };
 
 const cardStyle = (accent: string): React.CSSProperties => ({
@@ -433,46 +411,46 @@ const cardStyle = (accent: string): React.CSSProperties => ({
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   borderTop: `3px solid ${accent}`,
-  borderRadius: 16,
-  padding: "20px 18px",
+  borderRadius: 14,
+  padding: "14px 14px 13px",
   cursor: "pointer",
   transition: "transform 0.22s ease, box-shadow 0.22s ease",
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 7,
 });
 
 const emojiCircleStyle = (accent: string): React.CSSProperties => ({
-  width: 52,
-  height: 52,
-  borderRadius: 14,
+  width: 40,
+  height: 40,
+  borderRadius: 11,
   background: `color-mix(in srgb, ${accent} 14%, var(--ls-surface2))`,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 26,
-  marginBottom: 4,
+  fontSize: 20,
+  marginBottom: 2,
 });
 
 const cardTitleStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: "Syne, sans-serif",
-  fontSize: 17,
+  fontSize: 15,
   fontWeight: 700,
   color: "var(--ls-text)",
 };
 
 const cardDescStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 13,
-  lineHeight: 1.55,
+  fontSize: 12.5,
+  lineHeight: 1.5,
   color: "var(--ls-text-muted)",
   flex: 1,
 };
 
 const ctaStyle = (accent: string): React.CSSProperties => ({
-  marginTop: 8,
-  fontSize: 12,
+  marginTop: 4,
+  fontSize: 11,
   fontFamily: "DM Sans, sans-serif",
   fontWeight: 700,
   color: accent,
@@ -493,7 +471,7 @@ const organiserBoxStyle: React.CSSProperties = {
 };
 
 const sectionBlockStyle: React.CSSProperties = {
-  marginBottom: 30,
+  marginBottom: 24,
 };
 
 const sectionHeaderStyle: React.CSSProperties = {
@@ -507,7 +485,7 @@ const sectionHeaderStyle: React.CSSProperties = {
 const sectionTitleStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: "Syne, sans-serif",
-  fontSize: 19,
+  fontSize: 17,
   fontWeight: 800,
   color: "var(--ls-text)",
 };

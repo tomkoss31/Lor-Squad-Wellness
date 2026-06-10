@@ -8,10 +8,10 @@
 //   - 3 sous-pages : /outils-prospection/bilan-online · /liens · /international
 //   - Bloc "Comment t'organiser" en bas
 //
-// Accès : ADMIN ONLY pour l'instant — un distributeur est redirigé vers
-// /travaux (décision Thomas). Le mode contextuel historique ?client=ID
-// (depuis SendBusinessPlanButton / ReferrerStatsCard) est forwardé vers la
-// sous-page Liens qui porte ce flow.
+// Accès (révision Thomas 2026-06-10) : OUVERT À TOUS les distri. Seule la
+// sous-page Internationale est verrouillée Academy 100% (admin bypass).
+// Le mode contextuel historique ?client=ID (depuis SendBusinessPlanButton /
+// ReferrerStatsCard) est forwardé vers la sous-page Liens qui porte ce flow.
 //
 // Tokens var(--ls-*) uniquement (règle app coach interne).
 // =============================================================================
@@ -84,10 +84,7 @@ export function OutilsProspectionMerePage() {
     document.title = "La Base 360 — Outil de prospection";
   }, []);
 
-  // Admin only (décision Thomas) : un distributeur tombe sur la page travaux.
-  if (!currentUser || currentUser.role !== "admin") {
-    return <Navigate to="/travaux" replace />;
-  }
+  if (!currentUser) return null;
 
   // Mode contextuel historique ?client=ID → porté par la sous-page Liens.
   if (params.get("client")) {

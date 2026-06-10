@@ -16,7 +16,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import type { Client } from "../types/domain";
@@ -221,10 +221,8 @@ export function OutilsProspectionPage() {
     window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(msg)}`;
   }
 
-  // ─── Auth check : admin only (cohérent page mère → page travaux) ─────────
-  if (!currentUser || currentUser.role !== "admin") {
-    return <Navigate to="/travaux" replace />;
-  }
+  // ─── Auth : ouvert à tous les distri (révision Thomas 2026-06-10) ────────
+  if (!currentUser) return null;
 
   return (
     <div className="op-page">
