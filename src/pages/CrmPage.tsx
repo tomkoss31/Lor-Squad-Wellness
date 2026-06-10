@@ -419,7 +419,7 @@ function LeadCard({
   const { currentUser } = useAppContext();
   const { push: pushToast } = useToast();
   const src = CRM_SOURCE_META[lead.source];
-  // Wagon 3 chantier 8 : message généré par IA (Lor'Squad AI).
+  // Wagon 3 chantier 8 : message généré par Noaly (l'IA de La Base 360).
   const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
@@ -446,7 +446,7 @@ function LeadCard({
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-      const { data, error } = await sb.functions.invoke("lor-squad-ai", {
+      const { data, error } = await sb.functions.invoke("noaly", {
         body: {
           mode: lead.status === "contacted" ? "relance" : "first_contact",
           coachFirstName: msgCtx.coachFirstName,
@@ -469,7 +469,7 @@ function LeadCard({
         const reason =
           (payload as { message?: string } | null)?.message ||
           "IA indisponible — réessaie ou utilise le message pré-rédigé.";
-        pushToast({ tone: "warning", title: "IA", message: reason });
+        pushToast({ tone: "warning", title: "Noaly", message: reason });
         return;
       }
       setAiMessage(payload.message);
@@ -477,7 +477,7 @@ function LeadCard({
     } catch (e) {
       pushToast({
         tone: "warning",
-        title: "IA",
+        title: "Noaly",
         message: e instanceof Error ? e.message : "Erreur IA.",
       });
     } finally {
@@ -599,9 +599,9 @@ function LeadCard({
           onClick={() => void generateAi()}
           disabled={aiLoading}
           style={actionBtn("var(--ls-purple)")}
-          title="Générer un message personnalisé par IA (Lor'Squad AI)"
+          title="Noaly génère un message personnalisé pour ce lead"
         >
-          {aiLoading ? "✨ …" : "✨ IA"}
+          {aiLoading ? "✨ …" : "✨ Noaly"}
         </button>
       </div>
 
@@ -609,7 +609,7 @@ function LeadCard({
       {aiMessage ? (
         <div style={aiPanel}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>
-            ✨ Proposition IA — édite avant d'envoyer
+            ✨ Proposition de Noaly — édite avant d'envoyer
           </div>
           <textarea
             value={aiMessage}
