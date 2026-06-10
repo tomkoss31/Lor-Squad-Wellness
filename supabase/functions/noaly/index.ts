@@ -1,20 +1,23 @@
 // =============================================================================
-// lor-squad-ai — génération IA d'un message de 1er contact / relance CRM
-// (wagon 3 chantier 8, 2026-06-10).
+// noaly — Noaly, l'IA de La Base 360 (ex « lor-squad-ai », renommée 2026-06-10
+// sur décision Thomas : l'app c'est La Base 360, et son IA s'appelle Noaly).
 //
-// Reçoit le contexte d'un lead + le coach, appelle l'API Claude (Messages),
-// renvoie un message personnalisé prêt à envoyer. Logge tokens + coût dans
-// ai_usage_log. Appelée depuis l'app coach (JWT) via sb.functions.invoke.
+// V1 (wagon 3 chantier 8) : génération d'un message de 1er contact / relance
+// CRM. Reçoit le contexte d'un lead + le coach, appelle l'API Claude
+// (Messages), renvoie un message personnalisé prêt à envoyer. Logge tokens +
+// coût dans ai_usage_log. Appelée depuis l'app coach (JWT) via
+// sb.functions.invoke("noaly").
 //
-// Modèle : variable d'env LORSQUAD_AI_MODEL (défaut claude-opus-4-8). Thomas
-// peut passer sur claude-haiku-4-5 (5× moins cher) ou claude-sonnet-4-6 via
-//   supabase secrets set LORSQUAD_AI_MODEL=claude-haiku-4-5
+// Modèle : variable d'env NOALY_MODEL (fallback legacy LORSQUAD_AI_MODEL,
+// défaut claude-opus-4-8). Passer sur claude-haiku-4-5 (5× moins cher) ou
+// claude-sonnet-4-6 via
+//   supabase secrets set NOALY_MODEL=claude-haiku-4-5
 // sans redéployer le code.
 //
 // Pré-requis : secret ANTHROPIC_API_KEY. Absent → 503 + message clair
 // (l'UI affiche « configure ta clé »).
 //
-// Déploiement : supabase functions deploy lor-squad-ai
+// Déploiement : supabase functions deploy noaly
 // =============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -23,7 +26,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-const MODEL = Deno.env.get("LORSQUAD_AI_MODEL") ?? "claude-opus-4-8";
+const MODEL =
+  Deno.env.get("NOALY_MODEL") ?? Deno.env.get("LORSQUAD_AI_MODEL") ?? "claude-opus-4-8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,7 +60,7 @@ interface LeadCtx {
   notes?: string | null;
 }
 
-const SYSTEM_PROMPT = `Tu es l'assistant de prospection de La Base 360, un club de coaching bien-être/nutrition (méthode Herbalife).
+const SYSTEM_PROMPT = `Tu es Noaly, l'assistante IA de La Base 360, un club de coaching bien-être/nutrition (méthode Herbalife).
 Tu rédiges des messages COURTS (4-6 lignes max) de premier contact ou de relance, à envoyer par WhatsApp/SMS à un prospect.
 Ton : chaleureux, naturel, jamais commercial agressif, jamais de jargon. Tutoiement. Quelques emojis bien placés (🌿 👋 🙂), pas plus de 3.
 Règles : pas de promesses santé, pas de "perte de poids garantie". On propose un échange ou un bilan, sans pression, avec une porte de sortie douce.
@@ -127,7 +131,7 @@ serve(async (req: Request) => {
 
     if (!aiRes.ok) {
       const errText = await aiRes.text();
-      console.warn("[lor-squad-ai] Anthropic error", aiRes.status, errText.slice(0, 200));
+      console.warn("[noaly] Anthropic error", aiRes.status, errText.slice(0, 200));
       return json({ error: "ai_error", message: `IA indisponible (${aiRes.status}).` }, 502);
     }
 
@@ -158,13 +162,13 @@ serve(async (req: Request) => {
         cost_eur: Number(costEur.toFixed(4)),
       });
     } catch (logErr) {
-      console.warn("[lor-squad-ai] log non critique:", logErr);
+      console.warn("[noaly] log non critique:", logErr);
     }
 
     return json({ message, model: MODEL, usage: { input_tokens: inTok, output_tokens: outTok } });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";
-    console.warn("[lor-squad-ai]", msg);
+    console.warn("[noaly]", msg);
     return json({ error: "server_error", message: msg }, 500);
   }
 });
