@@ -101,7 +101,47 @@ export function ClientFaqChatbot({ token, coachFirstName, onLaunchTutorial }: Pr
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
 
+  // Noaly client (chantier Noaly N-2, 2026-06-10) : chat IA dans la modale,
+  // contexte construit côté serveur (edge noaly mode client_chat), cap
+  // quotidien + garde-fous santé. Sans clé API → message « bientôt » propre.
+  const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
   const coach = coachFirstName || "Coach";
+
+  async function askNoaly() {
+    const q = aiInput.trim();
+    if (!q || aiLoading) return;
+    setAiInput("");
+    setAiLoading(true);
+    const next = [...aiMessages, { role: "user" as const, content: q }];
+    setAiMessages(next);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { data, error } = await sb.functions.invoke("noaly", {
+        body: { mode: "client_chat", client_token: token, messages: next },
+      });
+      const payload = data as { message?: string } | null;
+      const answer =
+        !error && payload?.message
+          ? payload.message
+          : (payload as { message?: string } | null)?.message ??
+            `Je ne suis pas encore disponible 🌿 En attendant, utilise « Écrire à ${coach} » juste en dessous !`;
+      setAiMessages((m) => [...m, { role: "assistant", content: answer }]);
+    } catch {
+      setAiMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: `Petit souci de connexion 🙈 Réessaie, ou écris directement à ${coach} en dessous.`,
+        },
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   async function askCoach(faq: FaqEntry) {
     if (sendingId) return;
@@ -385,6 +425,118 @@ export function ClientFaqChatbot({ token, coachFirstName, onLaunchTutorial }: Pr
                   </div>
                 );
               })}
+            </div>
+
+            {/* ✨ Demande à Noaly (chantier Noaly N-2, 2026-06-10) : question
+                libre → IA contextualisée (programme, RDV). Garde-fous santé
+                côté edge ; cap quotidien ; fallback gracieux sans clé API. */}
+            <div
+              style={{
+                marginBottom: 12,
+                padding: "12px 12px",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, rgba(139,92,246,0.07), rgba(16,185,129,0.07))",
+                border: "0.5px solid rgba(139,92,246,0.30)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: "Sora, system-ui, sans-serif",
+                  color: "#7C3AED",
+                  marginBottom: 6,
+                }}
+              >
+                ✨ Demande à Noaly
+              </div>
+              {aiMessages.length === 0 ? (
+                <p style={{ fontSize: 11.5, color: "#64748B", margin: "0 0 8px", lineHeight: 1.5 }}>
+                  Ta question ne figure pas au-dessus ? Pose-la à Noaly, l'assistante du club — elle
+                  connaît ton programme et ton prochain RDV.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    maxHeight: 220,
+                    overflowY: "auto",
+                    marginBottom: 8,
+                  }}
+                >
+                  {aiMessages.map((m, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                        maxWidth: "88%",
+                        padding: "8px 11px",
+                        borderRadius: 12,
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                        whiteSpace: "pre-wrap",
+                        background: m.role === "user" ? "rgba(16,185,129,0.14)" : "white",
+                        border:
+                          m.role === "user"
+                            ? "0.5px solid rgba(16,185,129,0.35)"
+                            : "0.5px solid rgba(15,23,42,0.10)",
+                        color: "#0F172A",
+                      }}
+                    >
+                      {m.content}
+                    </div>
+                  ))}
+                  {aiLoading ? (
+                    <div style={{ fontSize: 11.5, color: "#64748B", fontStyle: "italic" }}>
+                      ✨ Noaly réfléchit…
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 6 }}>
+                <input
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void askNoaly();
+                    }
+                  }}
+                  placeholder="Ex : je peux remplacer mon shake du soir ?"
+                  aria-label="Pose ta question à Noaly"
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: 10,
+                    border: "0.5px solid rgba(15,23,42,0.15)",
+                    fontSize: 12.5,
+                    outline: "none",
+                    background: "white",
+                    color: "#0F172A",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void askNoaly()}
+                  disabled={aiLoading || !aiInput.trim()}
+                  aria-label="Envoyer à Noaly"
+                  style={{
+                    width: 38,
+                    borderRadius: 10,
+                    border: "none",
+                    background: "linear-gradient(135deg, #10B981, #7C3AED)",
+                    color: "white",
+                    fontSize: 14,
+                    cursor: "pointer",
+                    opacity: aiLoading || !aiInput.trim() ? 0.5 : 1,
+                  }}
+                >
+                  ➤
+                </button>
+              </div>
             </div>
 
             {/* CTA "Faire le tour de l'app" — visible uniquement si la
