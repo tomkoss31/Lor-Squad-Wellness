@@ -28,6 +28,17 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 
+/** Sections du hub (remaniement 2026-06-10) : la grille à plat mélangeait
+    outils du quotidien, pédagogie, prospection et admin → illisible. */
+type HubSectionId = "quotidien" | "apprendre" | "prospecter" | "admin";
+
+const SECTIONS: { id: HubSectionId; title: string; sub?: string }[] = [
+  { id: "quotidien", title: "⚡ Mes outils du quotidien", sub: "Ce que tu ouvres tous les jours." },
+  { id: "apprendre", title: "🎓 Apprendre", sub: "Monter en compétence, à ton rythme." },
+  { id: "prospecter", title: "🎯 Prospecter", sub: "Trouver et convertir tes prochains clients." },
+  { id: "admin", title: "🛠 Admin", sub: "Réservé aux admins." },
+];
+
 interface HubCard {
   id: string;
   emoji: string;
@@ -36,6 +47,8 @@ interface HubCard {
   cta: string;
   path: string;
   accent: string;
+  /** Section de rattachement (remaniement 2026-06-10). */
+  section: HubSectionId;
   /** Tag affiché en haut à droite. */
   tag?: { label: string; color: string };
   /** Nécessite un rôle spécifique. */
@@ -54,6 +67,7 @@ const CARDS: HubCard[] = [
     cta: "Apprendre l'app",
     path: "/academy",
     accent: "var(--ls-purple)",
+    section: "apprendre",
     tag: { label: "Commence ici", color: "var(--ls-gold)" },
   },
   {
@@ -65,6 +79,7 @@ const CARDS: HubCard[] = [
     cta: "Démarrer la formation",
     path: "/formation",
     accent: "var(--ls-gold)",
+    section: "apprendre",
   },
   {
     id: "outils",
@@ -75,6 +90,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir la boîte",
     path: "/formation/boite-a-outils",
     accent: "var(--ls-teal)",
+    section: "apprendre",
     requireAcademyPercent: 50,
   },
   {
@@ -86,6 +102,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir mon cahier",
     path: "/cahier-de-bord",
     accent: "var(--ls-coral)",
+    section: "quotidien",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
@@ -97,6 +114,7 @@ const CARDS: HubCard[] = [
     cta: "Démarrer un EBE",
     path: "/simulateur-ebe",
     accent: "var(--ls-purple)",
+    section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireAcademyPercent: 100,
   },
@@ -109,28 +127,13 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir ma routine",
     path: "/routine-du-jour",
     accent: "var(--ls-gold)",
+    section: "quotidien",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
-  {
-    id: "check-list-explique",
-    emoji: "📖",
-    title: "Comment marche ma routine",
-    description:
-      "Fiche pédagogique : philosophie 5 min/jour, les 5 actions expliquées, le fallback prospection, la relance 20h, et comment l'utiliser intelligemment sans pression.",
-    cta: "Lire la fiche",
-    path: "/developpement/check-list-explique",
-    accent: "var(--ls-gold)",
-  },
-  {
-    id: "flex-explique",
-    emoji: "⚡",
-    title: "Comment marche FLEX",
-    description:
-      "Le moteur 5-3-1 expliqué pas à pas : pourquoi des cibles, comment les lire, quoi en faire.",
-    cta: "Comprendre FLEX",
-    path: "/developpement/flex-explique",
-    accent: "var(--ls-gold)",
-  },
+  // Cartes "Comment marche ma routine" et "Comment marche FLEX" retirées
+  // 2026-06-10 (remaniement) : les fiches restent accessibles via le bouton
+  // 📖 directement sur /routine-du-jour et /flex — doublon de navigation
+  // supprimé pour aérer le hub.
   {
     id: "nouveautes",
     emoji: "🆕",
@@ -140,6 +143,7 @@ const CARDS: HubCard[] = [
     cta: "Voir le journal",
     path: "/developpement/nouveautes",
     accent: "var(--ls-teal)",
+    section: "quotidien",
     tag: { label: "Live", color: "var(--ls-teal)" },
   },
   {
@@ -151,6 +155,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir la boîte",
     path: "/outils-prospection",
     accent: "var(--ls-teal)",
+    section: "prospecter",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
@@ -163,6 +168,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir le hub",
     path: "/prospection",
     accent: "var(--ls-teal)",
+    section: "prospecter",
     tag: { label: "Mis à jour", color: "var(--ls-gold)" },
     requireAcademyPercent: 100,
   },
@@ -175,6 +181,7 @@ const CARDS: HubCard[] = [
     cta: "Lire la fiche",
     path: "/developpement/prospection-explique",
     accent: "var(--ls-gold)",
+    section: "prospecter",
     requireAcademyPercent: 100,
   },
   {
@@ -186,6 +193,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir l'admin",
     path: "/admin/prospection",
     accent: "var(--ls-purple)",
+    section: "admin",
     requireRole: "admin",
   },
   {
@@ -197,6 +205,7 @@ const CARDS: HubCard[] = [
     cta: "Voir mes Leads",
     path: "/clients?tab=leads",
     accent: "var(--ls-gold)",
+    section: "quotidien",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
@@ -208,6 +217,7 @@ const CARDS: HubCard[] = [
     cta: "Ouvrir l'admin",
     path: "/admin/newsletters",
     accent: "var(--ls-coral)",
+    section: "admin",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
@@ -232,6 +242,12 @@ export function DeveloppementHubPage() {
       !isAdmin && required > 0 && academy.percentComplete < required;
     return { ...c, isLocked, requiredPercent: required };
   });
+
+  // Remaniement 2026-06-10 : grille à plat → sections thématiques.
+  const sections = SECTIONS.map((s) => ({
+    ...s,
+    cards: visibleCards.filter((c) => c.section === s.id),
+  })).filter((s) => s.cards.length > 0);
 
   const showAcademyBanner = !isAdmin && !academy.isCompleted;
 
@@ -273,9 +289,28 @@ export function DeveloppementHubPage() {
         )}
       </div>
 
-      {/* Grid cards */}
-      <div style={gridStyle}>
-        {visibleCards.map((card, i) => (
+      {/* Comment t'organiser — remonté en haut (demande Thomas 2026-06-10) */}
+      <div style={organiserBoxStyle}>
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: "var(--ls-text)" }}>
+          💡 Comment t'organiser
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "var(--ls-text-muted)" }}>
+          <li><strong>Tu débutes ?</strong> Commence par <em>Apprendre l'app La Base 360</em> (Academy) puis enchaîne avec <em>Formation distributeur Herbalife</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
+          <li><strong>Au quotidien :</strong> ouvre <em>Ma routine du jour</em> (5 min) et tiens ton <em>Cahier de bord</em> à jour après chaque prospection.</li>
+          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer (déverrouillé une fois Academy terminée).</li>
+          <li><strong>Une question sur FLEX ou la routine ?</strong> Le bouton <em>📖 Comment ça marche</em> est directement sur chaque page.</li>
+        </ul>
+      </div>
+
+      {/* Sections de cards */}
+      {sections.map((section) => (
+        <div key={section.id} style={sectionBlockStyle}>
+          <div style={sectionHeaderStyle}>
+            <h2 style={sectionTitleStyle}>{section.title}</h2>
+            {section.sub ? <span style={sectionSubStyle}>{section.sub}</span> : null}
+          </div>
+          <div style={gridStyle}>
+            {section.cards.map((card, i) => (
           <button
             key={card.id}
             type="button"
@@ -331,20 +366,10 @@ export function DeveloppementHubPage() {
               </div>
             )}
           </button>
-        ))}
-      </div>
-
-      {/* Footer help */}
-      <div style={footerHelpStyle}>
-        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: "var(--ls-text)" }}>
-          💡 Comment t'organiser
+            ))}
+          </div>
         </div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "var(--ls-text-muted)" }}>
-          <li><strong>Tu débutes ?</strong> Commence par <em>Apprendre l'app La Base 360</em> (Academy) puis enchaîne avec <em>Formation distributeur Herbalife</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
-          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer (déverrouillé une fois Academy terminée).</li>
-          <li><strong>Tu doutes sur FLEX ?</strong> <em>Comment marche FLEX</em> répond aux questions les plus fréquentes.</li>
-        </ul>
-      </div>
+      ))}
 
       <style>{`
         .ls-hub-card {
@@ -478,12 +503,40 @@ const ctaStyle = (accent: string): React.CSSProperties => ({
   alignItems: "center",
 });
 
-const footerHelpStyle: React.CSSProperties = {
-  marginTop: 26,
+// Remaniement 2026-06-10 — bloc "Comment t'organiser" remonté en haut
+// + en-têtes de sections thématiques.
+const organiserBoxStyle: React.CSSProperties = {
+  marginBottom: 26,
   padding: "16px 18px",
   background: "var(--ls-surface2)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 12,
+};
+
+const sectionBlockStyle: React.CSSProperties = {
+  marginBottom: 30,
+};
+
+const sectionHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "baseline",
+  gap: 10,
+  flexWrap: "wrap",
+  marginBottom: 12,
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: "Syne, sans-serif",
+  fontSize: 19,
+  fontWeight: 800,
+  color: "var(--ls-text)",
+};
+
+const sectionSubStyle: React.CSSProperties = {
+  fontSize: 12.5,
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
 };
 
 // ─── Banner Academy (chantier onboarding 2026-05-27) ───────────────────────
