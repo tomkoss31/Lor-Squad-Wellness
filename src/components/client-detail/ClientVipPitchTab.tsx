@@ -15,6 +15,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import type { Client } from "../../types/domain";
 import { MessageTemplatesModal } from "./MessageTemplatesModal";
@@ -39,6 +40,7 @@ export function ClientVipPitchTab({
   client: Client;
   onManage?: () => void;
 }) {
+  const navigate = useNavigate();
   const { currentUser } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -122,6 +124,14 @@ export function ClientVipPitchTab({
             ⚙️ Gérer le programme VIP
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => navigate("/developpement/club-vip-explique")}
+          style={ghostBtn}
+          title="Le workflow Club VIP en 5 étapes"
+        >
+          📖 Comment ça marche
+        </button>
       </div>
 
       <MessageTemplatesModal

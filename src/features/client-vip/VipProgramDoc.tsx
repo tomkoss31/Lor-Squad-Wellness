@@ -220,6 +220,39 @@ export function VipProgramDoc() {
         </p>
       </Card>
 
+      {/* VIP-5 (2026-06-10) : carte outils — tout le workflow Club VIP livré
+          dans l'app (onglet fiche client, PWA, page publique, CRM). */}
+      <Card className="space-y-3">
+        <p className="eyebrow-label">Tes outils dans l&apos;app</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Rule
+            number="1"
+            text="Fiche client > onglet 👑 Club VIP : montre l'escalier des remises au client en RDV (son palier en avant) et envoie l'invitation d'inscription pré-remplie (lien Herbalife + ton ID sponsor + tes 3 lettres) en 1 clic."
+          />
+          <Rule
+            number="2"
+            text="Paramètres > Profil > « 👑 Tes invitations Club VIP » : renseigne UNE FOIS ton ID sponsor et les 3 premières lettres de ton nom Herbalife — ils s'injectent automatiquement dans toutes tes invitations."
+          />
+          <Rule
+            number="3"
+            text="PWA client > onglet Recommander : ton client voit le simulateur (sa remise qui grimpe mois après mois) et te partage un proche en 2 champs. La reco arrive avec une push."
+          />
+          <Rule
+            number="4"
+            text="Ta page publique /vip/<ton-prénom> (dans Outil de prospection > Mon bilan online) : à partager dans ton groupe ou en story — le prospect découvre les remises et te laisse son contact."
+          />
+          <Rule
+            number="5"
+            text="CRM (sidebar 🎯) : toutes les recos et leads VIP arrivent dans le même pipeline, avec un message de 1er contact pro pré-rédigé (« X nous a partagé ton contact… ») et la relance douce."
+          />
+        </div>
+        <p style={{ fontSize: 11, color: "var(--ls-text-muted)", margin: "8px 0 0" }}>
+          💡 Côté client, l&apos;échelle affichée s&apos;arrête à <strong>-35 %</strong> (plafond
+          Client Privilégié). Les -42 % et -50 % sont présentés comme l&apos;étape « passer
+          distributeur » — c&apos;est ta passerelle recrutement.
+        </p>
+      </Card>
+
       <Card className="space-y-3">
         <p className="eyebrow-label">FAQ</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -146,6 +146,17 @@ const CARDS: HubCard[] = [
     section: "prospecter",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
+  {
+    id: "club-vip-explique",
+    emoji: "👑",
+    title: "Club VIP — mode d'emploi",
+    description: "Le workflow en 5 étapes : pitcher, inviter, activer, récolter les recos, convertir.",
+    cta: "Lire la fiche",
+    path: "/developpement/club-vip-explique",
+    accent: "var(--ls-gold)",
+    section: "prospecter",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
   // Cartes "Prospection internationale" et "Comment marche la prospection"
   // retirées 2026-06-10 (retour recette Thomas) : tout passe par la page
   // mère /outils-prospection — l'éducation y est mise en valeur et le kit

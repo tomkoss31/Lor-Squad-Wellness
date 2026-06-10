@@ -476,6 +476,12 @@ const TravauxPage = lazy(() =>
     default: module.TravauxPage,
   })),
 );
+// Fiche coach "Comment marche le Club VIP" (VIP-5 2026-06-10).
+const ClubVipExpliquePage = lazy(() =>
+  import("./pages/ClubVipExpliquePage").then((module) => ({
+    default: module.ClubVipExpliquePage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -680,6 +686,7 @@ export default function App() {
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
+              <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
               <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
               <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
               <Route path="travaux" element={<TravauxPage />} />
