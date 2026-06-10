@@ -45,11 +45,19 @@ export function MessageTemplatesModal({
   const { currentUser, visibleFollowUps } = useAppContext();
 
   const ctx = useMemo(
-    () => ({
-      coachFirstName: currentUser?.name?.split(/\s+/)[0] ?? "Ton coach",
-      followUps: visibleFollowUps,
-      now: new Date(),
-    }),
+    () => {
+      // 3 lettres sponsor : dérivées du dernier mot du nom du coach (best-guess,
+      // éditable dans la textarea avant envoi). Cf. VIP-2 2026-06-10.
+      const parts = (currentUser?.name ?? "").trim().split(/\s+/).filter(Boolean);
+      const lastWord = parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
+      return {
+        coachFirstName: parts[0] ?? "Ton coach",
+        coachSponsorId: currentUser?.herbalifeId || undefined,
+        coachSponsorLetters: lastWord ? lastWord.slice(0, 3).toUpperCase() : undefined,
+        followUps: visibleFollowUps,
+        now: new Date(),
+      };
+    },
     [currentUser, visibleFollowUps],
   );
 
