@@ -114,6 +114,28 @@ export function OutilsProspectionMerePage() {
         </div>
       </header>
 
+      {/* Éducation mise en valeur (retour recette Thomas 2026-06-10) : la
+          méthode AVANT les outils — c'était une card noyée dans le hub,
+          elle vit maintenant ici, en premier. */}
+      <button
+        type="button"
+        onClick={() => navigate("/developpement/prospection-explique")}
+        style={eduFeatureCard}
+        className="opm-card"
+      >
+        <span aria-hidden="true" style={eduFeatureEmoji}>📖</span>
+        <span style={{ flex: 1, minWidth: 200, textAlign: "left" }}>
+          <span style={eduFeatureTag}>Commence ici</span>
+          <span style={eduFeatureTitle}>Comment marche la prospection</span>
+          <span style={eduFeatureDesc}>
+            La méthode avant les outils : on trie, on ne convainc pas · les 5
+            erreurs débutant · des métriques réalistes. 5 minutes de lecture
+            qui changent tout.
+          </span>
+        </span>
+        <span style={eduFeatureCta}>Lire la fiche →</span>
+      </button>
+
       {/* Stats leads du mois */}
       <div style={{ margin: "18px 0" }}>
         <ReferrerStatsCard />
@@ -241,6 +263,78 @@ const stepDetail: React.CSSProperties = {
   lineHeight: 1.55,
   color: "var(--ls-text-muted)",
   fontFamily: "DM Sans, sans-serif",
+};
+
+// Card éducation mise en avant (retour recette Thomas 2026-06-10).
+const eduFeatureCard: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 16,
+  flexWrap: "wrap",
+  width: "100%",
+  marginTop: 16,
+  padding: "18px 20px",
+  background:
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)), var(--ls-surface))",
+  border: "1px solid color-mix(in srgb, var(--ls-gold) 45%, var(--ls-border))",
+  borderRadius: 16,
+  cursor: "pointer",
+  textAlign: "left",
+  transition: "transform 0.22s ease, box-shadow 0.22s ease",
+};
+
+const eduFeatureEmoji: React.CSSProperties = {
+  width: 52,
+  height: 52,
+  borderRadius: 14,
+  background: "color-mix(in srgb, var(--ls-gold) 16%, var(--ls-surface2))",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 26,
+  flexShrink: 0,
+};
+
+const eduFeatureTag: React.CSSProperties = {
+  display: "inline-block",
+  fontSize: 10,
+  fontFamily: "DM Sans, sans-serif",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: 0.8,
+  color: "var(--ls-gold)",
+  padding: "2px 8px",
+  borderRadius: 8,
+  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
+  marginBottom: 6,
+};
+
+const eduFeatureTitle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "Syne, sans-serif",
+  fontSize: 18,
+  fontWeight: 800,
+  color: "var(--ls-text)",
+  marginBottom: 4,
+};
+
+const eduFeatureDesc: React.CSSProperties = {
+  display: "block",
+  fontSize: 13,
+  lineHeight: 1.55,
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+};
+
+const eduFeatureCta: React.CSSProperties = {
+  fontSize: 12,
+  fontFamily: "DM Sans, sans-serif",
+  fontWeight: 700,
+  color: "var(--ls-gold)",
+  textTransform: "uppercase",
+  letterSpacing: 0.8,
+  whiteSpace: "nowrap",
 };
 
 const subGrid: React.CSSProperties = {

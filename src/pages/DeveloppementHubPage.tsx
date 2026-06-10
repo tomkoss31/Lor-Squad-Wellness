@@ -151,7 +151,7 @@ const CARDS: HubCard[] = [
     emoji: "🎯",
     title: "Outil de prospection",
     description:
-      "Ta machine à prospects, expliquée pas à pas : Mon bilan online (lien + fiche publique + leads), Mes liens marketing (docs, simulateur, vidéos) et la prospection internationale.",
+      "Tout au même endroit : comment marche la prospection (la méthode), Mon bilan online (lien + fiche publique + leads), Mes liens marketing (docs, simulateur, vidéos) et la prospection internationale.",
     cta: "Ouvrir l'outil",
     path: "/outils-prospection",
     accent: "var(--ls-teal)",
@@ -159,31 +159,10 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
-  {
-    id: "prospection-cold",
-    emoji: "🌍",
-    title: "Prospection internationale",
-    description:
-      "Kit prospection complet : 6 marchés (FR · EN · ES · PT · TR · HI) × 4 profils (Perte de poids Femmes/Hommes · Sport · Business) × 10 sections (mindset, hashtags, M1, arbres M2/M3, objections, suivi appel, closing, cas spéciaux, storytelling, routine). Tunnel onboarding la 1ère fois, hub à 10 modules ensuite.",
-    cta: "Ouvrir le hub",
-    path: "/prospection",
-    accent: "var(--ls-teal)",
-    section: "prospecter",
-    tag: { label: "Mis à jour", color: "var(--ls-gold)" },
-    requireAcademyPercent: 100,
-  },
-  {
-    id: "prospection-explique",
-    emoji: "📖",
-    title: "Comment marche la prospection",
-    description:
-      "Fiche pédagogique : philosophie du kit (tri pas convaincre, 5 erreurs débutant, métriques réalistes), structure des 10 sections, et comment utiliser le hub au quotidien.",
-    cta: "Lire la fiche",
-    path: "/developpement/prospection-explique",
-    accent: "var(--ls-gold)",
-    section: "prospecter",
-    requireAcademyPercent: 100,
-  },
+  // Cartes "Prospection internationale" et "Comment marche la prospection"
+  // retirées 2026-06-10 (retour recette Thomas) : tout passe par la page
+  // mère /outils-prospection — l'éducation y est mise en valeur et le kit
+  // international y a sa sous-page. Une seule porte d'entrée, zéro doublon.
   {
     id: "admin-prospection",
     emoji: "🛠",
