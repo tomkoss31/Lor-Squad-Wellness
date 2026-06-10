@@ -181,6 +181,12 @@ const CoachPublicProfilePage = lazy(() =>
     default: module.CoachPublicProfilePage,
   })),
 );
+// Page publique Club VIP partageable (VIP-3 2026-06-10).
+const VipClubPage = lazy(() =>
+  import("./pages/VipClubPage").then((module) => ({
+    default: module.VipClubPage,
+  })),
+);
 const RejoindreQuestionnairePage = lazy(() =>
   import("./pages/RejoindreQuestionnairePage").then((module) => ({
     default: module.RejoindreQuestionnairePage,
@@ -606,6 +612,8 @@ export default function App() {
               partagée par les coachs. /rejoindre[/<slug>] préserve ?ref=. Le
               questionnaire (étape 2) + scoring + mini-CRM arrivent ensuite. */}
           <Route path="/coach/:slug" element={<CoachPublicProfilePage />} />
+          {/* Club VIP public partageable (VIP-3) — capture lead source='vip'. */}
+          <Route path="/vip/:coachSlug" element={<VipClubPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />

@@ -106,6 +106,20 @@ export function OutilsProspectionBilanPage() {
 
   const waHref = `https://wa.me/?text=${encodeURIComponent(`${shareText} 👉 ${bilanUrl}`)}`;
 
+  // Lien public Club VIP (VIP-3 2026-06-10) — même slug que le bilan / la fiche.
+  const vipUrl = bilanUrl.replace("/bilan-online/", "/vip/");
+  const vipShareText =
+    "Profite de 15% à 35% de remise à vie sur ta nutrition 🌿 Je t'explique tout ici :";
+  const vipWaHref = `https://wa.me/?text=${encodeURIComponent(`${vipShareText} 👉 ${vipUrl}`)}`;
+  async function copyVipLink() {
+    try {
+      await navigator.clipboard.writeText(vipUrl);
+      pushToast({ tone: "success", title: "Lien Club VIP copié", message: "Colle-le où tu veux." });
+    } catch {
+      pushToast({ tone: "warning", title: "Copie impossible", message: vipUrl });
+    }
+  }
+
   return (
     <div style={pageWrap}>
       <button type="button" onClick={() => navigate("/outils-prospection")} style={backBtn}>
@@ -169,6 +183,31 @@ export function OutilsProspectionBilanPage() {
           retrouves aussi dans Paramètres &gt; Profil.)
         </p>
         <PublicProfileShareCard name={currentUser.name} />
+      </section>
+
+      {/* B bis — Ton lien Club VIP (VIP-3). Emplacement provisoire : à
+          déplacer selon préférence Thomas (page mère ? sous-page dédiée ?). */}
+      <section style={sectionBox}>
+        <h2 style={sectionTitle}>B bis · Ton lien Club VIP 👑</h2>
+        <p style={sectionLead}>
+          Une page publique qui explique la remise Client Privilégié (−15 % à
+          −35 %) avec un simulateur, et un formulaire qui te renvoie le contact
+          en lead. Parfait à partager sur ton groupe pour sonder et informer.
+        </p>
+        <div style={linkRow}>
+          <span style={linkText}>{vipUrl.replace(/^https?:\/\//, "")}</span>
+          <a href={vipUrl} target="_blank" rel="noopener noreferrer" style={linkOpen}>
+            Voir ↗
+          </a>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => void copyVipLink()} style={shareBtn("var(--ls-gold)")}>
+            📋 Copier le lien
+          </button>
+          <a href={vipWaHref} target="_blank" rel="noopener noreferrer" style={shareBtn("#25D366")}>
+            💬 WhatsApp
+          </a>
+        </div>
       </section>
 
       {/* C — Après le lead */}
