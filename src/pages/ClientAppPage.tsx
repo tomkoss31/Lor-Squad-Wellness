@@ -459,13 +459,41 @@ export function ClientAppPage() {
     try {
       const sb = await getSupabaseClient()
       if (!sb) return
-      await sb.from('client_referrals').insert({
-        from_client_id: data.client_id,
-        from_client_name: `${data.client_first_name} ${data.client_last_name}`,
-        coach_id: data.coach_id ?? '',
-        referred_name: referName,
-        referred_contact: referContact,
-      })
+      const fromClientName = `${data.client_first_name} ${data.client_last_name}`
+      // VIP-4 (2026-06-10) : pipeline unique — la reco passe par l'edge
+      // submit-prospect-lead (→ prospect_leads source 'reco-client' + push
+      // notif admins). L'edge exige un téléphone valide ; si le contact est
+      // un email/handle, fallback sur l'insert legacy client_referrals (le
+      // CRM lit les deux tables).
+      const isPhone = referContact.replace(/\D/g, '').length >= 6 && !referContact.includes('@')
+      let routed = false
+      if (isPhone) {
+        try {
+          const { error: fnErr } = await sb.functions.invoke('submit-prospect-lead', {
+            body: {
+              first_name: referName.trim(),
+              phone: referContact.trim(),
+              source: 'reco-client',
+              referrer_user_id: data.coach_id ?? undefined,
+              metadata: {
+                from_client_id: data.client_id,
+                from_client_name: fromClientName,
+                source_page: 'pwa-recommander',
+              },
+            },
+          })
+          routed = !fnErr
+        } catch { /* edge indispo → fallback legacy ci-dessous */ }
+      }
+      if (!routed) {
+        await sb.from('client_referrals').insert({
+          from_client_id: data.client_id,
+          from_client_name: fromClientName,
+          coach_id: data.coach_id ?? '',
+          referred_name: referName,
+          referred_contact: referContact,
+        })
+      }
       setReferSent(true); setReferName(''); setReferContact('')
     } catch { /* silencieux */ }
   }

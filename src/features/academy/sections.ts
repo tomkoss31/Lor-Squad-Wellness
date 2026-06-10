@@ -1423,13 +1423,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           "Entraîne-toi à mener un EBE complet face à un faux prospect scripté. 6 étapes, 3 choix par étape, scoring sur 60 et debrief par étape. Idéal AVANT un vrai RDV pour te chauffer, ou APRÈS pour identifier tes erreurs récurrentes.",
       },
       {
-        id: "hub-flex-explique",
-        target: '[data-tour-id="hub-card-flex-explique"]',
+        // Remaniement 2026-06-10 : la card "Comment marche FLEX" a quitté le
+        // hub (doublon) — l'étape cible désormais la routine du jour et
+        // explique le pattern 📖 par page.
+        id: "hub-routine-du-jour",
+        target: '[data-tour-id="hub-card-routine-du-jour"]',
         placement: "bottom",
         route: "/developpement",
-        title: "⚡ Comment marche FLEX",
+        title: "☀️ Ma routine du jour",
         body:
-          "Le moteur 5-3-1 expliqué pas à pas : pourquoi des cibles, comment lire les couleurs (vert/jaune/rouge), exemple concret. Lecture 7 minutes, à faire UNE FOIS pour comprendre l'outil.",
+          "Tes 5 actions de discipline quotidienne, score X/5, jamais bloquante. Et retiens le réflexe : sur chaque page outil (Routine, FLEX…), le bouton 📖 « Comment ça marche » ouvre la fiche explicative directement.",
       },
       {
         id: "hub-nouveautes",
@@ -1448,7 +1451,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         {
           id: "q1",
           question:
-            "Tu cherches Academy, Formation, Cahier de bord, Simulateur EBE et le tuto FLEX. Où vas-tu maintenant ?",
+            "Tu cherches Academy, Formation, Cahier de bord et Simulateur EBE. Où vas-tu maintenant ?",
           answers: [
             "Dans Paramètres, onglet 'Apprentissage'",
             "Sur Co-pilote, en scrollant tout en bas",
@@ -1462,7 +1465,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             3: "C'était l'ancien comportement (11 items en sidebar). Depuis mai 2026, tout est centralisé dans 'Mon développement' (1 seul item).",
           },
           explanation:
-            "La sidebar suit la règle 'Option B' : 1 entrée 'Mon développement' qui regroupe Academy + Formation + Boîte à outils + Cahier + Simulateur + tuto FLEX + Nouveautés. Sidebar passe de 11 à 8 items, plus claire pour les nouveaux.",
+            "La sidebar suit la règle 'Option B' : 1 entrée 'Mon développement' qui regroupe Academy + Formation + Boîte à outils + Cahier + Simulateur + Nouveautés, rangés par sections. Les tutos FLEX et Routine sont accessibles via le bouton 📖 directement sur leurs pages.",
         },
         {
           id: "q2",

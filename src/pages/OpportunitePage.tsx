@@ -302,9 +302,10 @@ export function OpportunitePage() {
             {[
               { num: "01", name: "Client privilégié", sub: "Premier accès au tarif préférentiel. Aucun engagement.", bar: 70, pct: "−15%", cls: "t1" },
               { num: "02", name: "Distributor", sub: "Tu commences à partager. Tarif distributeur officiel.", bar: 50, pct: "−25%", cls: "t2" },
-              { num: "03", name: "Senior Consultant", sub: "500 PV cumulés sur 2 mois consécutifs — activité régulière confirmée.", bar: 30, pct: "−35%", cls: "t3" },
-              { num: "04", name: "Success Builder", sub: "1 000 PV cumulés sur 3 mois consécutifs — tu construis une vraie clientèle.", bar: 16, pct: "−42%", cls: "t4" },
-              { num: "05", name: "Supervisor", sub: "4 000 PV en 1 mois OU 12 mois cumulés glissants — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
+              // Règles 2026 (2026-06-10) : SC 250 PV · SB 1000/3m ou QP 2500/6m · Sup 2500/3m voie rapide ou 4000/3-12m.
+              { num: "03", name: "Senior Consultant", sub: "250 PV cumulés sur 2 mois consécutifs — activité régulière confirmée.", bar: 30, pct: "−35%", cls: "t3" },
+              { num: "04", name: "Success Builder", sub: "1 000 PV cumulés sur 3 mois — ou Producteur Qualifié : 2 500 PV cumulés sur 6 mois.", bar: 16, pct: "−42%", cls: "t4" },
+              { num: "05", name: "Supervisor", sub: "2 500 PV en 3 mois (voie rapide) OU 4 000 PV cumulés sur 3 à 12 mois — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
             ].map((t) => (
               <div key={t.num} className={`tier ${t.cls} reveal`}>
                 <div className="tier-num">{t.num}</div>

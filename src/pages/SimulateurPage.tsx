@@ -59,9 +59,10 @@ function simulate(targetEuros: number, targetMonths: number): SimulationResult {
   const prospectsPerMonth = Math.ceil(newClientsPerMonth / PROSPECT_TO_CLIENT_RATIO);
   const caRetailMonthly = programsPerMonth * AVG_PROGRAM_PRICE;
 
-  // Palier suggere selon ambition cible :
+  // Palier suggere selon ambition cible (regles 2026) :
   // - jusqu'a ~600 EUR/mois : Success Builder 42% (default)
-  // - 600-1500 EUR/mois     : Supervisor 50% atteignable (4000 PV/mois)
+  // - 600-1500 EUR/mois     : Supervisor 50% atteignable (2500 PV/3 mois
+  //                           voie rapide, ou 4000 PV/3-12 mois)
   // - au-dela                : World Team / paliers eleves
   let targetTier = "Success Builder (42%)";
   if (targetEuros >= 1500) {

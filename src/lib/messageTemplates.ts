@@ -19,6 +19,11 @@ import type { Client, FollowUp } from "../types/domain";
 export interface TemplateContext {
   /** Coach courant (pour signature). */
   coachFirstName: string;
+  /** ID sponsor Herbalife du coach (users.herbalife_id) — pour l'invitation VIP.
+      Optionnel : les appelants hors fiche client ne le fournissent pas. */
+  coachSponsorId?: string;
+  /** 3 premières lettres du nom du sponsor (coach) — pour l'inscription VIP. */
+  coachSponsorLetters?: string;
   /** FollowUps du client pour detecter le RDV imminent. */
   followUps: FollowUp[];
   now: Date;
@@ -166,15 +171,31 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
   {
     id: "vip-privilege-pitch",
     emoji: "⭐",
-    label: "Devenir Client Privilégié Herbalife",
+    label: "Pitch Client Privilégié (teaser)",
     description:
-      "Pitch les 3 paliers (Bronze -15% / Silver -25% / Gold -35%) + parrainage.",
+      "Donne envie : remises -15% / -25% / -35% + parrainage. Plafond client honnête.",
     // Toujours applicable : tu peux pitcher le programme à n'importe quel client actif.
     applicable: (client) =>
       !client.vipHerbalifeId
       && (client.lifecycleStatus === "active" || client.lifecycleStatus === undefined),
     render: (client, ctx) => {
-      return `Salut ${firstName(client)} 👋\n\nJ'ai un programme à te proposer qui pourrait clairement te faire plaisir : devenir Client Privilégié Herbalife. Concrètement :\n\n🥉 Bronze · -15% dès ta 1ère commande + 2 cadeaux de bienvenue\n🥈 Silver · -25% à partir de 100 pts cumulés\n🥇 Gold · -35% à partir de 500 pts (max client privilégié)\n💎 Ambassadeur · -42% si 1 000 pts en 3 mois\n\nLes points = PV de tes commandes + celles de tes proches que tu sponsorises (famille, collègues, amis). Plus tu fais découvrir, plus ta remise grimpe. Pour activer : www.myherbalife.com — je t'envoie mon ID sponsor en privé pour la création de compte.\n\nÇa te dit qu'on regarde ensemble ?\n\n${ctx.coachFirstName}`;
+      return `Salut ${firstName(client)} 👋\n\nJ'ai un truc qui peut vraiment te plaire : devenir Client Privilégié Herbalife. Tu paies ta nutrition moins cher, à vie :\n\n🥉 -15% dès ta 1ère commande\n🥈 -25% en devenant régulier·e\n🥇 -35% le max client privilégié\n\nLe bonus : quand des proches que tu sponsorises (famille, collègues, amis) commandent aussi, ta remise grimpe plus vite. Et si un jour tu veux aller encore plus loin (-42% à -50%), c'est possible en passant distributeur — on en parle quand tu veux.\n\nÇa te dit qu'on regarde ensemble ?\n\n${ctx.coachFirstName}`;
+    },
+  },
+  {
+    id: "vip-inscription",
+    emoji: "📝",
+    label: "Invitation inscription Client Privilégié",
+    description:
+      "Le message complet pour s'enregistrer : lien + ton ID sponsor + 3 lettres + appli commandes.",
+    // Pour un client (ou prospect) chaud, prêt à s'inscrire et commander.
+    applicable: (client) =>
+      !client.vipHerbalifeId
+      && (client.lifecycleStatus === "active" || client.lifecycleStatus === undefined),
+    render: (client, ctx) => {
+      const sponsorId = ctx.coachSponsorId || "[renseigne ton ID Herbalife dans Paramètres > Profil]";
+      const letters = ctx.coachSponsorLetters || "[3 lettres de ton nom]";
+      return `Salut ${firstName(client)} ! 👋\n\nVoici le lien pour t'enregistrer en tant que Client Privilégié et profiter de tes remises :\n\nhttps://accounts.myherbalife.com/Account/Create?appId=1&locale=fr-FR&redirect=https://fr.myherbalife.com\n\nPendant l'inscription, on te demandera :\n☑️ ID sponsor : ${sponsorId}\n☑️ 3 premières lettres du nom : ${letters}\n☑️ Déjà en possession d'un pack de client privilégié : NON\n\nTu finalises en réglant ton kit de client privilégié.\n\nEnsuite, télécharge l'appli « Commandes Herbalife » :\n📌 Play Store : https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr\n📌 App Store : https://apps.apple.com/fr/app/commandes-herbalife-nutrition/id1154285940\n\nTu pourras alors commander ton programme avec 15% à 35% de remise à vie sur tous les produits Herbalife.\n\nUne question ? Je suis là 🌿\n${ctx.coachFirstName}`;
     },
   },
 ];

@@ -34,6 +34,12 @@ const ClientsPage = lazy(() =>
     default: module.ClientsPage
   }))
 );
+// CRM commun toutes sources de leads (VIP-4 2026-06-10).
+const CrmPage = lazy(() =>
+  import("./pages/CrmPage").then((module) => ({
+    default: module.CrmPage
+  }))
+);
 const UsersPage = lazy(() =>
   import("./pages/UsersPage").then((module) => ({
     default: module.UsersPage
@@ -181,6 +187,12 @@ const CoachPublicProfilePage = lazy(() =>
     default: module.CoachPublicProfilePage,
   })),
 );
+// Page publique Club VIP partageable (VIP-3 2026-06-10).
+const VipClubPage = lazy(() =>
+  import("./pages/VipClubPage").then((module) => ({
+    default: module.VipClubPage,
+  })),
+);
 const RejoindreQuestionnairePage = lazy(() =>
   import("./pages/RejoindreQuestionnairePage").then((module) => ({
     default: module.RejoindreQuestionnairePage,
@@ -209,6 +221,22 @@ const RedirectToBusiness = lazy(() =>
 const OutilsProspectionPage = lazy(() =>
   import("./pages/OutilsProspectionPage").then((module) => ({
     default: module.OutilsProspectionPage,
+  })),
+);
+// Page mère Outil de prospection + sous-pages (chantier 3 remaniement 2026-06-10).
+const OutilsProspectionMerePage = lazy(() =>
+  import("./pages/OutilsProspectionMerePage").then((module) => ({
+    default: module.OutilsProspectionMerePage,
+  })),
+);
+const OutilsProspectionBilanPage = lazy(() =>
+  import("./pages/OutilsProspectionBilanPage").then((module) => ({
+    default: module.OutilsProspectionBilanPage,
+  })),
+);
+const OutilsProspectionInternationalPage = lazy(() =>
+  import("./pages/OutilsProspectionInternationalPage").then((module) => ({
+    default: module.OutilsProspectionInternationalPage,
   })),
 );
 const ProspectionPage = lazy(() =>
@@ -442,6 +470,18 @@ const SuivisDuJourPage = lazy(() =>
     default: module.SuivisDuJourPage,
   })),
 );
+// Page "En travaux" (2026-06-10) — destination des contenus pas encore livrés.
+const TravauxPage = lazy(() =>
+  import("./pages/TravauxPage").then((module) => ({
+    default: module.TravauxPage,
+  })),
+);
+// Fiche coach "Comment marche le Club VIP" (VIP-5 2026-06-10).
+const ClubVipExpliquePage = lazy(() =>
+  import("./pages/ClubVipExpliquePage").then((module) => ({
+    default: module.ClubVipExpliquePage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -584,6 +624,8 @@ export default function App() {
               partagée par les coachs. /rejoindre[/<slug>] préserve ?ref=. Le
               questionnaire (étape 2) + scoring + mini-CRM arrivent ensuite. */}
           <Route path="/coach/:slug" element={<CoachPublicProfilePage />} />
+          {/* Club VIP public partageable (VIP-3) — capture lead source='vip'. */}
+          <Route path="/vip/:coachSlug" element={<VipClubPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
@@ -644,11 +686,18 @@ export default function App() {
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
+              <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
               <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
               <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
+              <Route path="travaux" element={<TravauxPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
-              {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
-              <Route path="outils-prospection" element={<OutilsProspectionPage />} />
+              {/* Outil de prospection (chantier 3 remaniement 2026-06-10) —
+                  page mère éducative + 3 sous-pages. Admin only, distributeur
+                  redirigé vers /travaux dans chaque page. */}
+              <Route path="outils-prospection" element={<OutilsProspectionMerePage />} />
+              <Route path="outils-prospection/bilan-online" element={<OutilsProspectionBilanPage />} />
+              <Route path="outils-prospection/liens" element={<OutilsProspectionPage />} />
+              <Route path="outils-prospection/international" element={<OutilsProspectionInternationalPage />} />
               {/* Chantier #3 (2026-05-17) — Module Prospection cold mobile-first.
                   4 étapes : Marché → Profil → Hashtags → Messages multi-langues. */}
               <Route path="prospection" element={<ProspectionPage />} />
@@ -701,6 +750,8 @@ export default function App() {
               <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
+              {/* CRM commun (VIP-4) — pipeline unifié de tous les leads. */}
+              <Route path="crm" element={<CrmPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}

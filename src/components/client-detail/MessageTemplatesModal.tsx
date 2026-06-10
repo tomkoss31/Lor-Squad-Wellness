@@ -45,11 +45,23 @@ export function MessageTemplatesModal({
   const { currentUser, visibleFollowUps } = useAppContext();
 
   const ctx = useMemo(
-    () => ({
-      coachFirstName: currentUser?.name?.split(/\s+/)[0] ?? "Ton coach",
-      followUps: visibleFollowUps,
-      now: new Date(),
-    }),
+    () => {
+      // 3 lettres sponsor : saisies par le coach dans Paramètres > Profil
+      // (localStorage, cf. VIP-2 2026-06-10). Pas dérivées du nom — « Thomas »
+      // donnerait THO ≠ HOU réel. Vide → placeholder clair dans le message.
+      const storedLetters =
+        typeof localStorage === "undefined"
+          ? ""
+          : (localStorage.getItem("ls-vip-sponsor-letters") || "").trim();
+      const firstWord = (currentUser?.name ?? "").trim().split(/\s+/)[0] || "Ton coach";
+      return {
+        coachFirstName: firstWord,
+        coachSponsorId: currentUser?.herbalifeId || undefined,
+        coachSponsorLetters: storedLetters ? storedLetters.toUpperCase() : undefined,
+        followUps: visibleFollowUps,
+        now: new Date(),
+      };
+    },
     [currentUser, visibleFollowUps],
   );
 
