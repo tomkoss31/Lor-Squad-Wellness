@@ -53,6 +53,9 @@ export interface CrmLead {
   viaName: string | null;
   /** Téléphone du client parrain (intentions : action « demander le contact »). */
   parrainPhone: string | null;
+  /** Id client du parrain (recos + intentions) — pour la push de gratification
+      à la conversion (wagon 2 chantier 5). */
+  parrainClientId: string | null;
   /** Info complémentaire courte (ex. relation famille/travail pour intentions). */
   extra: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
@@ -183,7 +186,7 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("client_referrals")
-          .select("id, from_client_name, referred_name, referred_contact, status, created_at")
+          .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -239,6 +242,7 @@ export function useCrmLeads() {
           ),
           viaName: null,
           parrainPhone: null,
+          parrainClientId: null,
           extra: null,
           relanceDue: Boolean(
             row.relance_due_at &&
@@ -267,6 +271,8 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status as string | null),
           viaName,
           parrainPhone: null,
+          parrainClientId:
+            typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
           extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
@@ -287,6 +293,7 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status as string | null),
           viaName: (row.from_client_name as string | null) ?? null,
           parrainPhone: null,
+          parrainClientId: (row.from_client_id as string | null) ?? null,
           extra: null,
           relanceDue: false,
           createdAt: row.created_at as string,
@@ -310,6 +317,7 @@ export function useCrmLeads() {
           status: mapSimpleStatus(row.status),
           viaName: parrain?.name ?? null,
           parrainPhone: parrain?.phone ?? null,
+          parrainClientId: row.referrer_client_id,
           extra: row.relationship ? RELATIONSHIP_LABELS[row.relationship] ?? row.relationship : null,
           relanceDue: false,
           createdAt: row.created_at,
@@ -372,6 +380,21 @@ export function useCrmLeads() {
         setLeads((prev) =>
           prev.map((l) => (l.key === lead.key ? { ...l, status: next, relanceDue: false } : l)),
         );
+        // Wagon 2 chantier 5 : conversion d'une reco/intention → push de
+        // gratification au client parrain (« 🎉 Ta reco a porté ses fruits »).
+        // Fire-and-forget : un échec ne bloque jamais le changement de statut.
+        if (next === "converted" && lead.parrainClientId) {
+          void sb.functions
+            .invoke("notify-referral-converted", {
+              body: {
+                parrain_client_id: lead.parrainClientId,
+                prospect_first_name: lead.firstName,
+              },
+            })
+            .catch(() => {
+              /* best-effort */
+            });
+        }
       }
       return err;
     },
