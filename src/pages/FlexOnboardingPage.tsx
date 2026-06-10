@@ -202,11 +202,44 @@ export function FlexOnboardingPage() {
 
   return (
     <div className="space-y-6" style={{ paddingBottom: 180 }}>
-      <PageHeading
-        eyebrow="FLEX La Base 360"
-        title="Construis ton plan d'action"
-        description={`6 questions pour calibrer tes cibles quotidiennes (formule 5-3-1). Ton rang actuel : ${RANK_LABELS[userRank]}.`}
-      />
+      {/* Éducation FLEX (2026-06-10) : boutons aussi sur l'onboarding — c'est
+          souvent ICI qu'on a besoin de comprendre FLEX (retour Thomas, la
+          modif dashboard seule ne suffisait pas). */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <PageHeading
+            eyebrow="FLEX La Base 360"
+            title="Construis ton plan d'action"
+            description={`6 questions pour calibrer tes cibles quotidiennes (formule 5-3-1). Ton rang actuel : ${RANK_LABELS[userRank]}.`}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/travaux")}
+            style={eduBtn}
+            title="Vidéo explicative FLEX (bientôt disponible)"
+          >
+            🎥 Vidéo explicative
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/developpement/flex-explique")}
+            style={eduBtn}
+            title="Comment marche FLEX, expliqué pas à pas"
+          >
+            📖 Comment marche FLEX
+          </button>
+        </div>
+      </div>
 
       {/* Question 1 — Objectif revenu */}
       <SectionCard
@@ -572,6 +605,20 @@ function KpiTile({ label, value }: { label: string; value: number }) {
     </div>
   );
 }
+
+// Boutons éducation header (2026-06-10) — même style que FlexDashboardPage.
+const eduBtn: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 38%, transparent)",
+  color: "var(--ls-teal)",
+  padding: "9px 14px",
+  borderRadius: 999,
+  fontSize: 12.5,
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "DM Sans, sans-serif",
+  whiteSpace: "nowrap",
+};
 
 // Note pour V2 : averageBasket pourra être pré-rempli depuis les
 // pv_transactions du distri (moyenne 3 derniers mois) au lieu du défaut.

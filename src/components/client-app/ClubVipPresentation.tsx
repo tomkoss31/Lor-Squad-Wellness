@@ -1,24 +1,33 @@
 // =============================================================================
 // ClubVipPresentation — présentation "Club VIP & Recommandations" dans la PWA
-// client (onglet Recommander). Chantier VIP 2026-06-09.
+// client (onglet Recommander). Chantier VIP 2026-06-09, refonte VIP-1 2026-06-10.
 //
 // Objectif (brief Thomas) : INFORMER de ce qui est possible — paliers de remise
-// (15→50 %) + effet cumulé des recommandations (toi + un ami + un collègue).
-// Message clé : « tu ne vends rien, tu en parles comme d'un bon resto — sauf que
-// là tu empoches la remise ». Outil : simulateur « où j'en suis / quelle remise
-// je veux ». Source chiffres : PDF Client VIP / Quick Start 2026.
+// CLIENT (15→35 %, plafond Client Privilégié) + effet cumulé des recommandations
+// sur PLUSIEURS MOIS. Message clé : « tu ne vends rien, tu en parles comme d'un
+// bon resto — sauf que là tu empoches la remise ».
 //
-// Bloc dark premium immersif (contraste avec l'app cliente claire) — effet
-// "reveal". CTA final = le formulaire de partage de contact au coach (déjà
-// présent dans ClientAppPage, on y scrolle).
+// Refonte VIP-1 (décisions Thomas 2026-06-10) :
+//   1. Échelle plafonnée à 35 % (vrai plafond Client Privilégié). 42-50 % =
+//      passer distributeur → marche d'évolution distincte "ouvre vers +".
+//   2. Simulateur MULTI-MOIS : frise M1 (toi) → M2 (+ tes proches) → M3 (tout
+//      le monde reconsomme) = PV cumulés → remise → gain €.
+//   3. Loupe "c'est quoi 130 PV ?" → panier-type d'un mois (vrais PV catalogue).
+//
+// Bloc dark premium immersif (contraste avec l'app cliente claire).
+// CTA final = formulaire de partage de contact au coach (dans ClientAppPage).
 // =============================================================================
 
 import { useMemo, useState } from "react";
 
-// 1 ami parrainé ≈ +130 PV (Booster pack du PDF).
+// 1 proche qui démarre ≈ +130 PV / mois (panier-type, cf. loupe ci-dessous).
 const FRIEND_PV = 130;
-// Programme de référence pour l'exemple de gain (PDF : ~200 € → net 15 %).
-const EXAMPLE_NET = 170;
+// Nutrition de référence pour le calcul du gain : ~200 € retail / mois.
+// Le gain CLIENT = l'économie sur SA propre nutrition quand sa remise grimpe
+// (pas une commission — ça, c'est le modèle distributeur, cf. marche 42-50 %).
+const REF_RETAIL = 200;
+// Horizon du simulateur multi-mois.
+const MONTHS = 3;
 
 interface Tier {
   pct: number;
@@ -26,23 +35,40 @@ interface Tier {
   label: string;
   emoji: string;
 }
-// Paliers officiels Herbalife (source : docs/HERBALIFE_PALIERS_REGLES.md +
-// src/lib/herbalifeFormulas.ts). PV requis sur fenêtre glissante (2→12 mois).
-const TIERS: Tier[] = [
-  { pct: 15, min: 0, label: "Préféré VIP · je démarre", emoji: "🙂" },
-  { pct: 25, min: 100, label: "Distributeur · je suis régulier·e", emoji: "😉" },
-  { pct: 35, min: 250, label: "Senior Consultant · j'en parle", emoji: "😃" },
-  { pct: 42, min: 1000, label: "Success Builder · je suis lancé·e", emoji: "🤩" },
-  { pct: 50, min: 4000, label: "Superviseur · le maximum", emoji: "🏆" },
+// Paliers CLIENT (Préféré / Client Privilégié) — plafond 35 % (décision Thomas
+// 2026-06-10). Au-delà (42-50 %) = passer distributeur, cf. DISTRI_STEP.
+const CLIENT_TIERS: Tier[] = [
+  { pct: 15, min: 0, label: "Préféré · tu démarres", emoji: "🙂" },
+  { pct: 25, min: 100, label: "Préféré · tu es régulier·e", emoji: "😃" },
+  { pct: 35, min: 250, label: "Préféré · le max client", emoji: "🤩" },
+];
+const CLIENT_MAX_PCT = 35;
+
+// Panier-type d'un mois ≈ 130 PV (vrais PV du catalogue herbalifeCatalog.ts).
+// L'alternative entre () montre qu'on peut adapter selon le profil (sans
+// surcharger l'affichage).
+const BASKET_130: { emoji: string; name: string; pv: number }[] = [
+  { emoji: "🥤", name: "Formula 1 — ton repas équilibré", pv: 32.75 },
+  { emoji: "💪", name: "Protéines PDM (ou créatine)", pv: 17.95 },
+  { emoji: "🌿", name: "Aloé Vera (ou immune booster)", pv: 24.95 },
+  { emoji: "🍵", name: "Thé concentré — énergie", pv: 34.95 },
+  { emoji: "🌾", name: "Multi-Fibres (ou phyto complet)", pv: 22.95 },
 ];
 
 function tierForPv(pv: number): Tier {
-  let cur = TIERS[0];
-  for (const t of TIERS) if (pv >= t.min) cur = t;
+  let cur = CLIENT_TIERS[0];
+  for (const t of CLIENT_TIERS) if (pv >= t.min) cur = t;
   return cur;
 }
 function nextTier(pv: number): Tier | null {
-  return TIERS.find((t) => t.min > pv) ?? null;
+  return CLIENT_TIERS.find((t) => t.min > pv) ?? null;
+}
+// PV cumulés au mois `m` : toi chaque mois + tes proches qui rejoignent à M2
+// et reconsomment chaque mois suivant.
+function cumulativePv(currentPv: number, friends: number, month: number): number {
+  const youPv = currentPv * month;
+  const friendsActiveMonths = Math.max(0, month - 1);
+  return Math.round(youPv + friends * FRIEND_PV * friendsActiveMonths);
 }
 
 const C = {
@@ -66,14 +92,33 @@ export function ClubVipPresentation({
   coachName: string;
   onShareContact: () => void;
 }) {
-  // Simulateur : nb d'amis ajoutés mentalement.
-  const [friends, setFriends] = useState(0);
-  const simulatedPv = currentPv + friends * FRIEND_PV;
-  const tier = useMemo(() => tierForPv(simulatedPv), [simulatedPv]);
-  const next = useMemo(() => nextTier(simulatedPv), [simulatedPv]);
-  const pvToNext = next ? next.min - simulatedPv : 0;
-  const friendsToNext = next ? Math.ceil(pvToNext / FRIEND_PV) : 0;
-  const gainPerFriend = Math.round(((tier.pct - 15) / 100) * EXAMPLE_NET);
+  // Simulateur : nb de proches qui rejoignent à M2.
+  const [friends, setFriends] = useState(3);
+  // Loupe "c'est quoi 130 PV ?".
+  const [showBasket, setShowBasket] = useState(false);
+
+  // Frise M1 → M2 → M3.
+  const timeline = useMemo(
+    () =>
+      Array.from({ length: MONTHS }, (_, i) => {
+        const month = i + 1;
+        const pv = cumulativePv(currentPv, friends, month);
+        return { month, pv, tier: tierForPv(pv) };
+      }),
+    [currentPv, friends],
+  );
+
+  const finalPv = timeline[timeline.length - 1].pv;
+  const finalTier = timeline[timeline.length - 1].tier;
+  const atClientMax = finalTier.pct >= CLIENT_MAX_PCT;
+  const next = nextTier(finalPv);
+  // Gain CLIENT = économie mensuelle sur sa propre nutrition au palier atteint,
+  // + le surplus gagné par rapport à son palier de départ (mois 1, sans proches).
+  const startTier = useMemo(() => tierForPv(currentPv), [currentPv]);
+  const savingFinal = Math.round((finalTier.pct / 100) * REF_RETAIL);
+  const savingStart = Math.round((startTier.pct / 100) * REF_RETAIL);
+  const savingDelta = Math.max(0, savingFinal - savingStart);
+  const basketTotal = Math.round(BASKET_130.reduce((s, p) => s + p.pv, 0));
 
   return (
     <div
@@ -135,11 +180,11 @@ export function ClubVipPresentation({
         </p>
       </div>
 
-      {/* ── L'ESCALIER DES PALIERS ─────────────────────────────────────── */}
-      <div style={{ padding: "4px 16px 18px" }}>
+      {/* ── L'ESCALIER DES PALIERS CLIENT (plafond 35 %) ───────────────── */}
+      <div style={{ padding: "4px 16px 6px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {TIERS.map((t) => {
-            const active = t.pct === tier.pct;
+          {CLIENT_TIERS.map((t) => {
+            const active = t.pct === finalTier.pct;
             return (
               <div
                 key={t.pct}
@@ -173,9 +218,7 @@ export function ClubVipPresentation({
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.cream }}>{t.label}</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>
-                    à partir de {t.min} PV
-                  </div>
+                  <div style={{ fontSize: 11, color: C.muted }}>à partir de {t.min} PV</div>
                 </div>
                 {active ? (
                   <span style={{ fontSize: 11, fontWeight: 700, color: C.emerald }}>TOI ICI</span>
@@ -186,45 +229,168 @@ export function ClubVipPresentation({
         </div>
       </div>
 
-      {/* ── SIMULATEUR : effet cumulé toi + amis ───────────────────────── */}
+      {/* ── MARCHE DISTRIBUTEUR : on ouvre vers + (42-50 %) ─────────────── */}
+      <div style={{ padding: "0 16px 16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "11px 14px",
+            borderRadius: 12,
+            background: `color-mix(in srgb, ${C.gold} 10%, ${C.ink2})`,
+            border: `1px dashed color-mix(in srgb, ${C.gold} 40%, transparent)`,
+          }}
+        >
+          <span style={{ fontSize: 20, width: 26, textAlign: "center" }} aria-hidden="true">
+            🚀
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
+              Tu veux aller plus loin&nbsp;? -42 % à -50 %
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>
+              C'est possible en passant distributeur — {coachName} t'explique tout quand tu veux.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SIMULATEUR MULTI-MOIS : M1 → M2 → M3 ───────────────────────── */}
       <div style={{ margin: "0 16px 16px", padding: 16, borderRadius: 14, background: C.ink2, border: `1px solid ${C.hair}` }}>
         <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
-          🧮 L'effet cumulé
+          🧮 L'effet cumulé, mois après mois
         </div>
-        <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 14 }}>
-          Toi + un ami + une collègue… Chaque proche qui rejoint via toi ≈{" "}
-          <strong style={{ color: C.cream }}>+{FRIEND_PV} PV</strong>. Regarde ta remise grimper :
+        <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 6 }}>
+          Toi ce mois-ci. Tes proches qui rejoignent le mois prochain. Puis tout
+          le monde qui reconsomme. Chaque proche ≈{" "}
+          <strong style={{ color: C.cream }}>+{FRIEND_PV} PV</strong>
+          <button
+            type="button"
+            onClick={() => setShowBasket((s) => !s)}
+            aria-label="C'est quoi 130 PV ?"
+            aria-expanded={showBasket}
+            style={loupeBtn}
+          >
+            🔍
+          </button>
+          .
         </div>
 
-        {/* Compteur amis */}
+        {/* Loupe : c'est quoi 130 PV ? */}
+        {showBasket ? (
+          <div
+            style={{
+              margin: "0 0 14px",
+              padding: "12px 14px",
+              borderRadius: 12,
+              background: `color-mix(in srgb, ${C.gold} 8%, ${C.ink})`,
+              border: `1px solid color-mix(in srgb, ${C.gold} 28%, transparent)`,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.gold, marginBottom: 8 }}>
+              130 PV, c'est à peu près un mois de programme complet&nbsp;:
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {BASKET_130.map((p) => (
+                <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                  <span aria-hidden="true">{p.emoji}</span>
+                  <span style={{ flex: 1, color: "rgba(248,250,252,0.85)" }}>{p.name}</span>
+                  <span style={{ color: C.muted, fontVariantNumeric: "tabular-nums" }}>
+                    {p.pv.toFixed(2).replace(".", ",")} PV
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                paddingTop: 8,
+                borderTop: `1px solid ${C.hair}`,
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12.5,
+                fontWeight: 700,
+              }}
+            >
+              <span>≈ un mois de nutrition</span>
+              <span style={{ color: C.gold }}>≈ {basketTotal} PV</span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Compteur proches */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 14 }}>
           <button
             type="button"
             onClick={() => setFriends((f) => Math.max(0, f - 1))}
-            aria-label="Retirer un ami"
+            aria-label="Retirer un proche"
             style={stepBtn}
           >
             −
           </button>
-          <div style={{ textAlign: "center", minWidth: 120 }}>
+          <div style={{ textAlign: "center", minWidth: 130 }}>
             <div style={{ fontSize: 26 }} aria-hidden="true">
               {"🙂".repeat(Math.min(friends, 6)) || "—"}
             </div>
             <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
-              {friends} ami{friends > 1 ? "s" : ""} qui en parlent
+              {friends} proche{friends > 1 ? "s" : ""} qui en parle{friends > 1 ? "nt" : ""}
             </div>
           </div>
           <button
             type="button"
             onClick={() => setFriends((f) => Math.min(20, f + 1))}
-            aria-label="Ajouter un ami"
+            aria-label="Ajouter un proche"
             style={{ ...stepBtn, background: C.emerald, color: "#04231a", borderColor: C.emerald }}
           >
             +
           </button>
         </div>
 
-        {/* Résultat */}
+        {/* Frise M1 → M2 → M3 */}
+        <div style={{ display: "flex", alignItems: "stretch", gap: 8, marginBottom: 14 }}>
+          {timeline.map((m, i) => {
+            const isLast = i === timeline.length - 1;
+            return (
+              <div
+                key={m.month}
+                style={{
+                  flex: 1,
+                  padding: "12px 8px",
+                  borderRadius: 12,
+                  textAlign: "center",
+                  background: isLast
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${C.emerald} 20%, ${C.ink}), color-mix(in srgb, ${C.cyan} 16%, ${C.ink}))`
+                    : C.ink,
+                  border: `1px solid ${isLast ? "color-mix(in srgb, " + C.emerald + " 45%, transparent)" : C.hair}`,
+                }}
+              >
+                <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, letterSpacing: 0.5 }}>
+                  MOIS {m.month}
+                </div>
+                <div style={{ fontSize: 10.5, color: C.muted, margin: "1px 0 6px" }}>
+                  {m.month === 1 ? "toi" : m.month === 2 ? "+ tes proches" : "tout le monde"}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "Sora, system-ui, sans-serif",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: C.cream,
+                    lineHeight: 1,
+                  }}
+                >
+                  -{m.tier.pct}%
+                </div>
+                <div style={{ fontSize: 10.5, color: C.gold, marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+                  {m.pv} PV
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Résultat final */}
         <div
           style={{
             display: "flex",
@@ -237,26 +403,30 @@ export function ClubVipPresentation({
           }}
         >
           <div>
-            <div style={{ fontSize: 11, color: C.muted }}>Ta remise simulée</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Ta remise après {MONTHS} mois</div>
             <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 30, fontWeight: 800, color: C.cream, lineHeight: 1 }}>
-              -{tier.pct}%
+              -{finalTier.pct}%
             </div>
           </div>
-          <div style={{ textAlign: "right", fontSize: 12, color: C.muted, maxWidth: 160 }}>
-            {next ? (
+          <div style={{ textAlign: "right", fontSize: 12, color: C.muted, maxWidth: 170 }}>
+            {atClientMax ? (
               <>
-                Plus que <strong style={{ color: C.gold }}>{friendsToNext} ami{friendsToNext > 1 ? "s" : ""}</strong>{" "}
-                (≈{pvToNext} PV) pour passer à <strong style={{ color: C.cream }}>-{next.pct}%</strong>
+                <strong style={{ color: C.gold }}>Le max client&nbsp;! 🏆</strong>
+                <br />
+                Pour aller plus loin&nbsp;: passe distributeur.
               </>
-            ) : (
-              <strong style={{ color: C.gold }}>Tu es au maximum 🏆</strong>
-            )}
+            ) : next ? (
+              <>
+                Plus que <strong style={{ color: C.gold }}>≈{next.min - finalPv} PV</strong> pour
+                passer à <strong style={{ color: C.cream }}>-{next.pct}%</strong>
+              </>
+            ) : null}
           </div>
         </div>
 
         <div style={{ fontSize: 10.5, color: "rgba(248,250,252,0.4)", marginTop: 8, textAlign: "center", lineHeight: 1.5 }}>
-          Base : ta consommation ≈ {currentPv} PV · estimation indicative. Les paliers
-          Herbalife se qualifient sur une fenêtre glissante (2 à 12 mois) — ton coach
+          Base&nbsp;: ta consommation ≈ {Math.round(currentPv)} PV/mois · estimation indicative.
+          Les paliers Herbalife se qualifient sur une fenêtre glissante — ton coach
           confirme ta remise exacte.
         </div>
       </div>
@@ -264,13 +434,20 @@ export function ClubVipPresentation({
       {/* ── LE GAIN (sans rien vendre) ─────────────────────────────────── */}
       <div style={{ margin: "0 16px 16px", padding: 16, borderRadius: 14, background: `color-mix(in srgb, ${C.coral} 12%, ${C.ink2})`, border: `1px solid color-mix(in srgb, ${C.coral} 30%, transparent)` }}>
         <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
-          💸 Et tu peux même y gagner
+          💸 Ce que ça te fait économiser
         </div>
         <div style={{ fontSize: 12.5, color: "rgba(248,250,252,0.85)", lineHeight: 1.6 }}>
-          À <strong>-{tier.pct}%</strong>, chaque proche que tu parraines te fait
-          empocher l'écart de remise — soit{" "}
-          <strong style={{ color: C.coral }}>≈ {gainPerFriend > 0 ? gainPerFriend : 17} € par personne</strong>, sur sa
-          nutrition. Sans rien vendre, juste en partageant ce qui marche pour toi.
+          À <strong>-{finalTier.pct}%</strong>, sur une nutrition à ~{REF_RETAIL} €/mois, ta remise
+          vaut <strong style={{ color: C.coral }}>≈ {savingFinal} € chaque mois</strong> dans ta poche.{" "}
+          {savingDelta > 0 ? (
+            <>
+              Grâce à tes {friends} proche{friends > 1 ? "s" : ""}, c'est{" "}
+              <strong style={{ color: C.coral }}>≈ {savingDelta} €/mois de plus qu'aujourd'hui</strong> —
+              sans rien vendre, juste en partageant ce qui marche pour toi.
+            </>
+          ) : (
+            <>Ajoute des proches ci-dessus&nbsp;: ta remise grimpe, ton panier baisse.</>
+          )}
         </div>
       </div>
 
@@ -313,5 +490,22 @@ const stepBtn: React.CSSProperties = {
   fontSize: 22,
   fontWeight: 700,
   cursor: "pointer",
+  lineHeight: 1,
+};
+
+const loupeBtn: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 22,
+  height: 22,
+  marginLeft: 5,
+  padding: 0,
+  borderRadius: 7,
+  background: "rgba(229,201,125,0.16)",
+  border: "1px solid rgba(229,201,125,0.4)",
+  fontSize: 11,
+  cursor: "pointer",
+  verticalAlign: "middle",
   lineHeight: 1,
 };

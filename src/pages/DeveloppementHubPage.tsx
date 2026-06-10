@@ -28,6 +28,17 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 
+/** Sections du hub (remaniement 2026-06-10) : la grille à plat mélangeait
+    outils du quotidien, pédagogie, prospection et admin → illisible. */
+type HubSectionId = "quotidien" | "apprendre" | "prospecter" | "admin";
+
+const SECTIONS: { id: HubSectionId; title: string; sub?: string }[] = [
+  { id: "quotidien", title: "⚡ Mes outils du quotidien", sub: "Ce que tu ouvres tous les jours." },
+  { id: "apprendre", title: "🎓 Apprendre", sub: "Monter en compétence, à ton rythme." },
+  { id: "prospecter", title: "🎯 Prospecter", sub: "Trouver et convertir tes prochains clients." },
+  { id: "admin", title: "🛠 Admin", sub: "Réservé aux admins." },
+];
+
 interface HubCard {
   id: string;
   emoji: string;
@@ -36,6 +47,8 @@ interface HubCard {
   cta: string;
   path: string;
   accent: string;
+  /** Section de rattachement (remaniement 2026-06-10). */
+  section: HubSectionId;
   /** Tag affiché en haut à droite. */
   tag?: { label: string; color: string };
   /** Nécessite un rôle spécifique. */
@@ -50,10 +63,11 @@ const CARDS: HubCard[] = [
     emoji: "🎓",
     title: "Apprendre l'app La Base 360",
     description:
-      "Tour guidé pas à pas + Academy interactive pour maîtriser tous les outils de l'app : Co-pilote, Agenda, Bilan, Messagerie, Cahier de bord, Simulateur EBE.",
+      "Tour guidé + Academy interactive pour maîtriser tous les outils de l'app.",
     cta: "Apprendre l'app",
     path: "/academy",
     accent: "var(--ls-purple)",
+    section: "apprendre",
     tag: { label: "Commence ici", color: "var(--ls-gold)" },
   },
   {
@@ -61,42 +75,43 @@ const CARDS: HubCard[] = [
     emoji: "📚",
     title: "Formation distributeur Herbalife",
     description:
-      "La méthode complète La Base 360 pour construire ton activité Herbalife : 3 niveaux progressifs (Démarrer / Construire / Dupliquer) avec modules, leçons et quiz.",
+      "La méthode complète en 3 niveaux : Démarrer, Construire, Dupliquer.",
     cta: "Démarrer la formation",
     path: "/formation",
     accent: "var(--ls-gold)",
+    section: "apprendre",
   },
   {
     id: "outils",
     emoji: "🛠",
     title: "Boîte à outils",
-    description:
-      "Scripts, checklists, templates prêts à l'emploi pour chaque étape de ton activité.",
+    description: "Scripts, checklists et templates prêts à l'emploi.",
     cta: "Ouvrir la boîte",
     path: "/formation/boite-a-outils",
     accent: "var(--ls-teal)",
+    section: "apprendre",
     requireAcademyPercent: 50,
   },
   {
     id: "cahier",
     emoji: "📔",
     title: "Cahier de bord",
-    description:
-      "Mes 21 jours cobaye, ma liste 100 connaissances, mon journal EBE perso.",
+    description: "21 jours cobaye, liste 100 connaissances, journal EBE perso.",
     cta: "Ouvrir mon cahier",
     path: "/cahier-de-bord",
     accent: "var(--ls-coral)",
+    section: "quotidien",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
     id: "simulateur",
     emoji: "🎯",
     title: "Simulateur EBE",
-    description:
-      "Entraîne-toi à mener un EBE complet face à un faux prospect. 6 étapes, scoring, debrief.",
+    description: "Entraîne-toi face à un faux prospect : 6 étapes, scoring, debrief.",
     cta: "Démarrer un EBE",
     path: "/simulateur-ebe",
     accent: "var(--ls-purple)",
+    section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireAcademyPercent: 100,
   },
@@ -104,110 +119,71 @@ const CARDS: HubCard[] = [
     id: "routine-du-jour",
     emoji: "☀️",
     title: "Ma routine du jour",
-    description:
-      "Tes 5 actions de discipline matin/midi/soir : suivis protocole, Leads, dormants, RDV, liste 100. Score X/5, jamais bloquante, accessible quand tu veux.",
+    description: "Tes 5 actions de discipline du jour. Score X/5, jamais bloquante.",
     cta: "Ouvrir ma routine",
     path: "/routine-du-jour",
     accent: "var(--ls-gold)",
+    section: "quotidien",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
-  {
-    id: "check-list-explique",
-    emoji: "📖",
-    title: "Comment marche ma routine",
-    description:
-      "Fiche pédagogique : philosophie 5 min/jour, les 5 actions expliquées, le fallback prospection, la relance 20h, et comment l'utiliser intelligemment sans pression.",
-    cta: "Lire la fiche",
-    path: "/developpement/check-list-explique",
-    accent: "var(--ls-gold)",
-  },
-  {
-    id: "flex-explique",
-    emoji: "⚡",
-    title: "Comment marche FLEX",
-    description:
-      "Le moteur 5-3-1 expliqué pas à pas : pourquoi des cibles, comment les lire, quoi en faire.",
-    cta: "Comprendre FLEX",
-    path: "/developpement/flex-explique",
-    accent: "var(--ls-gold)",
-  },
-  {
-    id: "nouveautes",
-    emoji: "🆕",
-    title: "Nouveautés app",
-    description:
-      "Le journal des nouvelles features de l'app. Reste au courant des derniers ajouts.",
-    cta: "Voir le journal",
-    path: "/developpement/nouveautes",
-    accent: "var(--ls-teal)",
-    tag: { label: "Live", color: "var(--ls-teal)" },
-  },
+  // Cartes "Comment marche ma routine" et "Comment marche FLEX" retirées
+  // 2026-06-10 (remaniement) : les fiches restent accessibles via le bouton
+  // 📖 directement sur /routine-du-jour et /flex — doublon de navigation
+  // supprimé pour aérer le hub.
+  // Card "Nouveautés app" retirée 2026-06-10 (retour Thomas) : remplacée par
+  // la cloche 🔔 du header qui s'illumine quand il y a du non-lu (petite,
+  // mobile, visible partout). Le journal reste sur /developpement/nouveautes
+  // via "Voir tout" du dropdown cloche.
   {
     id: "outils-prospection",
     emoji: "🎯",
-    title: "Outils prospection",
+    title: "Outil de prospection",
     description:
-      "Tous tes liens marketing en un endroit. Copier, partager, imprimer : page éducative, simulateur, PDF prospect, slides présentation. Avec ton ID coach embarqué (?ref=) pour le tracking des leads.",
-    cta: "Ouvrir la boîte",
+      "La méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
+    cta: "Ouvrir l'outil",
     path: "/outils-prospection",
     accent: "var(--ls-teal)",
+    section: "prospecter",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
-    requireRole: "admin",
   },
   {
-    id: "prospection-cold",
-    emoji: "🌍",
-    title: "Prospection internationale",
-    description:
-      "Kit prospection complet : 6 marchés (FR · EN · ES · PT · TR · HI) × 4 profils (Perte de poids Femmes/Hommes · Sport · Business) × 10 sections (mindset, hashtags, M1, arbres M2/M3, objections, suivi appel, closing, cas spéciaux, storytelling, routine). Tunnel onboarding la 1ère fois, hub à 10 modules ensuite.",
-    cta: "Ouvrir le hub",
-    path: "/prospection",
-    accent: "var(--ls-teal)",
-    tag: { label: "Mis à jour", color: "var(--ls-gold)" },
-    requireAcademyPercent: 100,
-  },
-  {
-    id: "prospection-explique",
-    emoji: "📖",
-    title: "Comment marche la prospection",
-    description:
-      "Fiche pédagogique : philosophie du kit (tri pas convaincre, 5 erreurs débutant, métriques réalistes), structure des 10 sections, et comment utiliser le hub au quotidien.",
+    id: "club-vip-explique",
+    emoji: "👑",
+    title: "Club VIP — mode d'emploi",
+    description: "Le workflow en 5 étapes : pitcher, inviter, activer, récolter les recos, convertir.",
     cta: "Lire la fiche",
-    path: "/developpement/prospection-explique",
+    path: "/developpement/club-vip-explique",
     accent: "var(--ls-gold)",
-    requireAcademyPercent: 100,
+    section: "prospecter",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
+  // Cartes "Prospection internationale" et "Comment marche la prospection"
+  // retirées 2026-06-10 (retour recette Thomas) : tout passe par la page
+  // mère /outils-prospection — l'éducation y est mise en valeur et le kit
+  // international y a sa sous-page. Une seule porte d'entrée, zéro doublon.
   {
     id: "admin-prospection",
     emoji: "🛠",
     title: "Admin Prospection",
-    description:
-      "Édite les scripts et les briefs méthodo du module /prospection. Modifs visibles immédiatement par tous les distri.",
+    description: "Édite les scripts et briefs méthodo du kit prospection.",
     cta: "Ouvrir l'admin",
     path: "/admin/prospection",
     accent: "var(--ls-purple)",
+    section: "admin",
     requireRole: "admin",
   },
-  {
-    id: "bilan-online",
-    emoji: "🌱",
-    title: "Mon bilan online",
-    description:
-      "Partage ton lien /bilan-online/<ton-prénom> : tes prospects remplissent un bilan en 2 min, tu reçois une push, tu retrouves le Lead dans /clients onglet Leads (kanban + templates + relance auto J+3).",
-    cta: "Voir mes Leads",
-    path: "/clients?tab=leads",
-    accent: "var(--ls-gold)",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
+  // Card "Mon bilan online" retirée 2026-06-10 (retour Thomas) : doublon —
+  // le bilan online vit dans l'Outil de prospection (sous-page dédiée) et
+  // les leads dans Dossiers clients > onglet Leads.
   {
     id: "newsletters",
     emoji: "📰",
     title: "Newsletters",
-    description:
-      "Gère tes éditions de La Base 360 News (bi-mensuel). Crée, édite, envoie aux clients + distri, partage la version publique pour capter des leads.",
+    description: "Crée, édite et envoie les éditions La Base 360 News.",
     cta: "Ouvrir l'admin",
     path: "/admin/newsletters",
     accent: "var(--ls-coral)",
+    section: "admin",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
@@ -232,6 +208,12 @@ export function DeveloppementHubPage() {
       !isAdmin && required > 0 && academy.percentComplete < required;
     return { ...c, isLocked, requiredPercent: required };
   });
+
+  // Remaniement 2026-06-10 : grille à plat → sections thématiques.
+  const sections = SECTIONS.map((s) => ({
+    ...s,
+    cards: visibleCards.filter((c) => c.section === s.id),
+  })).filter((s) => s.cards.length > 0);
 
   const showAcademyBanner = !isAdmin && !academy.isCompleted;
 
@@ -273,9 +255,28 @@ export function DeveloppementHubPage() {
         )}
       </div>
 
-      {/* Grid cards */}
-      <div style={gridStyle}>
-        {visibleCards.map((card, i) => (
+      {/* Comment t'organiser — en haut, version courte (retours Thomas
+          2026-06-10 : remonté, puis allégé pour limiter la lecture). */}
+      <div style={organiserBoxStyle}>
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5, marginBottom: 5, color: "var(--ls-text)" }}>
+          💡 Comment t'organiser
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.65, color: "var(--ls-text-muted)" }}>
+          <li><strong>Tu débutes ?</strong> Academy → Formation niveau 1 → Cahier de bord J0.</li>
+          <li><strong>Au quotidien :</strong> Ma routine du jour (5 min) + cahier à jour après chaque prospection.</li>
+          <li><strong>Une question sur un outil ?</strong> Le bouton 📖 est sur chaque page.</li>
+        </ul>
+      </div>
+
+      {/* Sections de cards */}
+      {sections.map((section) => (
+        <div key={section.id} style={sectionBlockStyle}>
+          <div style={sectionHeaderStyle}>
+            <h2 style={sectionTitleStyle}>{section.title}</h2>
+            {section.sub ? <span style={sectionSubStyle}>{section.sub}</span> : null}
+          </div>
+          <div style={gridStyle}>
+            {section.cards.map((card, i) => (
           <button
             key={card.id}
             type="button"
@@ -331,20 +332,10 @@ export function DeveloppementHubPage() {
               </div>
             )}
           </button>
-        ))}
-      </div>
-
-      {/* Footer help */}
-      <div style={footerHelpStyle}>
-        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: "var(--ls-text)" }}>
-          💡 Comment t'organiser
+            ))}
+          </div>
         </div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "var(--ls-text-muted)" }}>
-          <li><strong>Tu débutes ?</strong> Commence par <em>Apprendre l'app La Base 360</em> (Academy) puis enchaîne avec <em>Formation distributeur Herbalife</em> niveau 1 + remplis ton <em>Cahier de bord</em> jour J0.</li>
-          <li><strong>Tu prépares un RDV ?</strong> Lance le <em>Simulateur EBE</em> 1 fois pour te chauffer (déverrouillé une fois Academy terminée).</li>
-          <li><strong>Tu doutes sur FLEX ?</strong> <em>Comment marche FLEX</em> répond aux questions les plus fréquentes.</li>
-        </ul>
-      </div>
+      ))}
 
       <style>{`
         .ls-hub-card {
@@ -417,10 +408,12 @@ const heroSubtitle: React.CSSProperties = {
   maxWidth: 620,
 };
 
+// Compactage 2026-06-10 (retour Thomas : cards trop grosses, trop de
+// lecture) : icônes 40px, paddings et typos resserrés, grilles plus denses.
 const gridStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-  gap: 14,
+  gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
+  gap: 12,
 };
 
 const cardStyle = (accent: string): React.CSSProperties => ({
@@ -429,46 +422,46 @@ const cardStyle = (accent: string): React.CSSProperties => ({
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   borderTop: `3px solid ${accent}`,
-  borderRadius: 16,
-  padding: "20px 18px",
+  borderRadius: 14,
+  padding: "14px 14px 13px",
   cursor: "pointer",
   transition: "transform 0.22s ease, box-shadow 0.22s ease",
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 7,
 });
 
 const emojiCircleStyle = (accent: string): React.CSSProperties => ({
-  width: 52,
-  height: 52,
-  borderRadius: 14,
+  width: 40,
+  height: 40,
+  borderRadius: 11,
   background: `color-mix(in srgb, ${accent} 14%, var(--ls-surface2))`,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 26,
-  marginBottom: 4,
+  fontSize: 20,
+  marginBottom: 2,
 });
 
 const cardTitleStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: "Syne, sans-serif",
-  fontSize: 17,
+  fontSize: 15,
   fontWeight: 700,
   color: "var(--ls-text)",
 };
 
 const cardDescStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 13,
-  lineHeight: 1.55,
+  fontSize: 12.5,
+  lineHeight: 1.5,
   color: "var(--ls-text-muted)",
   flex: 1,
 };
 
 const ctaStyle = (accent: string): React.CSSProperties => ({
-  marginTop: 8,
-  fontSize: 12,
+  marginTop: 4,
+  fontSize: 11,
   fontFamily: "DM Sans, sans-serif",
   fontWeight: 700,
   color: accent,
@@ -478,12 +471,40 @@ const ctaStyle = (accent: string): React.CSSProperties => ({
   alignItems: "center",
 });
 
-const footerHelpStyle: React.CSSProperties = {
-  marginTop: 26,
+// Remaniement 2026-06-10 — bloc "Comment t'organiser" remonté en haut
+// + en-têtes de sections thématiques.
+const organiserBoxStyle: React.CSSProperties = {
+  marginBottom: 26,
   padding: "16px 18px",
   background: "var(--ls-surface2)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 12,
+};
+
+const sectionBlockStyle: React.CSSProperties = {
+  marginBottom: 24,
+};
+
+const sectionHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "baseline",
+  gap: 10,
+  flexWrap: "wrap",
+  marginBottom: 12,
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: "Syne, sans-serif",
+  fontSize: 17,
+  fontWeight: 800,
+  color: "var(--ls-text)",
+};
+
+const sectionSubStyle: React.CSSProperties = {
+  fontSize: 12.5,
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
 };
 
 // ─── Banner Academy (chantier onboarding 2026-05-27) ───────────────────────

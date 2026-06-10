@@ -37,15 +37,17 @@ export function RoutineDuJourPage() {
           convient. Coche au fur et à mesure, skippe ce que tu ne feras pas, et
           retrouve cette page quand tu veux. Tout revient demain si pas fini.
         </p>
+        {/* 2026-06-10 : ordre inversé sur demande Thomas — bouton éducatif
+            lisible à GAUCHE, score X/5 à DROITE. */}
         <div style={scoreRow}>
-          <ScoreBadge score={score} total={total} />
           <button
             type="button"
             onClick={() => navigate("/developpement/check-list-explique")}
-            style={ghostLinkBtn}
+            style={eduLinkBtn}
           >
-            Comment ça marche →
+            📖 Comment ça marche
           </button>
+          <ScoreBadge score={score} total={total} />
         </div>
       </header>
 
@@ -288,13 +290,15 @@ const scoreRow: React.CSSProperties = {
   marginTop: 6,
 };
 
-const ghostLinkBtn: React.CSSProperties = {
-  background: "transparent",
-  border: "0.5px solid var(--ls-border)",
-  color: "var(--ls-text-muted)",
-  fontSize: 12,
-  fontWeight: 600,
-  padding: "8px 14px",
+// 2026-06-10 : bouton éducation plus lisible (accent teal) — remplace
+// l'ancien ghostLinkBtn gris trop discret.
+const eduLinkBtn: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 38%, transparent)",
+  color: "var(--ls-teal)",
+  fontSize: 13,
+  fontWeight: 700,
+  padding: "10px 16px",
   borderRadius: 999,
   cursor: "pointer",
   fontFamily: "DM Sans, sans-serif",

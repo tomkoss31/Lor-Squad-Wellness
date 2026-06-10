@@ -50,6 +50,21 @@ export function ProfilTab() {
 
   const [name, setName] = useState(currentUser?.name ?? "");
   const [herbalifeId, setHerbalifeId] = useState(currentUser?.herbalifeId ?? "");
+  // 3 lettres sponsor pour les invitations Club VIP (VIP-2 2026-06-10).
+  // Stockées en localStorage en attendant la colonne DB (VIP-3) : impossible
+  // à dériver du nom affiché (« Thomas » → THO ≠ HOU réel).
+  const [vipLetters, setVipLetters] = useState(() =>
+    typeof localStorage === "undefined" ? "" : localStorage.getItem("ls-vip-sponsor-letters") ?? "",
+  );
+  function updateVipLetters(v: string) {
+    const up = v.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+    setVipLetters(up);
+    try {
+      localStorage.setItem("ls-vip-sponsor-letters", up);
+    } catch {
+      /* localStorage indisponible — silencieux */
+    }
+  }
   const [sponsorId, setSponsorId] = useState(currentUser?.sponsorId ?? "");
   const [coachReferentUserId, setCoachReferentUserId] = useState(
     currentUser?.coachReferentUserId ?? "",
@@ -704,6 +719,70 @@ export function ProfilTab() {
               </LabeledField>
             </>
           ) : null}
+
+          {/* 👑 Identité sponsor pour les invitations Club VIP (VIP-2 2026-06-10).
+              Visible à TOUS — l'ID Herbalife est masqué plus haut pour les admins,
+              or ils en ont besoin comme ID sponsor pour inviter leurs clients. */}
+          <LabeledField label="👑 Tes invitations Club VIP">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {currentUser.role === "admin" ? (
+                <div>
+                  <input
+                    value={herbalifeId}
+                    onChange={(e) => setHerbalifeId(e.target.value)}
+                    disabled={saving}
+                    placeholder="Ton ID sponsor — ex 21Y0103610"
+                    pattern={HERBALIFE_ID_PATTERN}
+                    maxLength={10}
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      border: "1px solid var(--ls-border)",
+                      background: "var(--ls-surface2)",
+                      color: "var(--ls-text)",
+                      fontSize: 14,
+                      fontFamily: "DM Sans, sans-serif",
+                      outline: "none",
+                    }}
+                  />
+                  <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                    Ton ID sponsor Herbalife — transmis à tes filleuls à l&apos;inscription.
+                  </div>
+                </div>
+              ) : null}
+              <div>
+                <input
+                  value={vipLetters}
+                  onChange={(e) => updateVipLetters(e.target.value)}
+                  placeholder="3 lettres — ex HOU"
+                  maxLength={3}
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface2)",
+                    color: "var(--ls-text)",
+                    fontSize: 14,
+                    fontFamily: "DM Sans, sans-serif",
+                    outline: "none",
+                    textTransform: "uppercase",
+                  }}
+                />
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                  Les 3 premières lettres de ton nom Herbalife (demandées à
+                  l&apos;inscription d&apos;un Client Privilégié). S&apos;ajoute
+                  automatiquement dans le message d&apos;invitation.
+                </div>
+              </div>
+            </div>
+          </LabeledField>
+
           <LabeledField label="Rôle">
             <div
               style={{

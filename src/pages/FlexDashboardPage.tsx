@@ -284,6 +284,26 @@ export function FlexDashboardPage() {
             description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
           />
         </div>
+        {/* Éducation FLEX (2026-06-10) : chaque page a son explication rapide.
+            La vidéo pointe sur /travaux tant que le lien YouTube n'est pas livré. */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignSelf: "flex-start" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/travaux")}
+            style={eduBtn}
+            title="Vidéo explicative FLEX (bientôt disponible)"
+          >
+            🎥 Vidéo explicative
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/developpement/flex-explique")}
+            style={eduBtn}
+            title="Comment marche FLEX, expliqué pas à pas"
+          >
+            📖 Comment marche FLEX
+          </button>
+        </div>
       </div>
 
       {/* V2.1 — Banner mi-parcours (auto-affiché entre 40-70% durée écoulée). */}
@@ -675,6 +695,21 @@ const btnGhost: React.CSSProperties = {
   fontSize: 12,
   cursor: "pointer",
   fontFamily: "DM Sans, sans-serif",
+};
+
+// Boutons éducation header (2026-06-10) — accent teal pour les distinguer
+// des actions du plan (btnGhost).
+const eduBtn: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 38%, transparent)",
+  color: "var(--ls-teal)",
+  padding: "9px 14px",
+  borderRadius: 999,
+  fontSize: 12.5,
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "DM Sans, sans-serif",
+  whiteSpace: "nowrap",
 };
 
 const fieldLabel: React.CSSProperties = {

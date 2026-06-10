@@ -64,16 +64,22 @@ const TERMS: GlossaryTerm[] = [
     short: "Premier rang : nouveau client privilégié (25% de réduction).",
   },
   {
-    term: "QP",
-    expansion: "Qualified Producer",
+    term: "Senior Consultant",
+    expansion: "SC",
     category: "volumes",
-    short: "2ᵉ rang : 1000 VP en 1 ou 2 mois consécutifs. Donne 35% de réduction.",
+    short: "2ᵉ rang : 250 VP cumulés sur 2 mois consécutifs. Donne 35% de réduction.",
+  },
+  {
+    term: "QP",
+    expansion: "Qualified Producer (Producteur Qualifié)",
+    category: "volumes",
+    short: "2 500 VP cumulés sur 6 mois. Donne 42% de réduction — voie alternative au Success Builder (1 000 VP / 3 mois).",
   },
   {
     term: "Supervisor",
     expansion: "Sup",
     category: "volumes",
-    short: "Le rang clé : 4000 VP en 1 mois. Donne 50% de réduction + accès aux RO.",
+    short: "Le rang clé : 2 500 VP en 3 mois (voie rapide) ou 4 000 VP cumulés sur 3 à 12 mois. Donne 50% de réduction + accès aux RO.",
     long: "Devenir Supervisor c'est passer pro. Tu touches 50% de marge sur les retail + tu commences à toucher les Royalty Overrides sur ta lignée. C'est le seuil minimum pour générer un revenu sérieux.",
   },
   {

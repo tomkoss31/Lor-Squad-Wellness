@@ -101,6 +101,8 @@ export function AppLayout() {
         { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda" },
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
         { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
+        // CRM commun (VIP-4 2026-06-10) — pipeline unifié de tous les leads.
+        { label: "CRM", path: "/crm", emoji: "🎯", badge: 0 },
         { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
@@ -122,6 +124,7 @@ export function AppLayout() {
     if (p === "/agenda") return "Agenda";
     if (p === "/messages") return "Messagerie";
     if (p === "/clients") return "Clients";
+    if (p === "/crm") return "CRM";
     if (p.startsWith("/clients/")) return "Fiche client";
     if (p === "/team" || p === "/users") return "Mon équipe";
     if (p.startsWith("/distributors/")) return "Distri";
@@ -135,7 +138,8 @@ export function AppLayout() {
     if (p.startsWith("/formation/")) return "Formation";
     if (p === "/academy" || p.startsWith("/academy/")) return "Academy";
     if (p === "/prospection" || p.startsWith("/prospection")) return "Prospection";
-    if (p === "/outils-prospection") return "Outils";
+    if (p === "/outils-prospection" || p.startsWith("/outils-prospection/")) return "Prospection";
+    if (p === "/travaux") return "En travaux";
     if (p === "/business") return "Business";
     if (p === "/parametres" || p === "/settings") return "Paramètres";
     if (p === "/analytics") return "Analytics";

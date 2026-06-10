@@ -144,7 +144,10 @@ serve(async (req) => {
 
     if (insertErr) throw insertErr;
 
-    // Notif push aux admins actifs (best-effort, non bloquant)
+    // Notif push aux admins actifs + au coach referrer (best-effort, non
+    // bloquant). Upgrade VIP-4 V1.1 (2026-06-10) : avant, seuls les admins
+    // étaient notifiés — un distri non-admin ne savait pas qu'un lead était
+    // arrivé via SON lien.
     try {
       const { data: admins } = await sb
         .from("users")
@@ -152,12 +155,15 @@ serve(async (req) => {
         .eq("role", "admin")
         .eq("active", true);
 
-      if (admins && admins.length > 0) {
-        const subsPromises = admins.map((a) =>
+      const targetIds = new Set<string>((admins ?? []).map((a) => (a as { id: string }).id));
+      if (effectiveReferrerUserId) targetIds.add(effectiveReferrerUserId);
+
+      if (targetIds.size > 0) {
+        const subsPromises = [...targetIds].map((id) =>
           sb
             .from("push_subscriptions")
             .select("endpoint, p256dh, auth")
-            .eq("user_id", (a as { id: string }).id),
+            .eq("user_id", id),
         );
         const subsResults = await Promise.all(subsPromises);
         const allSubs = subsResults.flatMap((r) => r.data ?? []);
@@ -191,7 +197,8 @@ serve(async (req) => {
               payload: {
                 title,
                 body: pushBody,
-                url: "/parametres?tab=leads",
+                // VIP-4 (2026-06-10) : le CRM commun est la destination.
+                url: "/crm",
                 icon: "/icon-192.png",
                 badge: "/badge-72.png",
               },

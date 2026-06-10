@@ -46,10 +46,38 @@ export function AnnouncementBell() {
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
+      {/* 2026-06-10 (retour Thomas) : la cloche s'illumine et se balance tant
+          qu'il y a des nouveautés non lues — remplace la grosse card
+          "Nouveautés app" retirée du hub Développement. */}
+      <style>{`
+        @keyframes ls-bell-glow {
+          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-gold) 40%, transparent); }
+          50% { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--ls-gold) 38%, transparent); }
+        }
+        @keyframes ls-bell-swing {
+          0%, 55%, 100% { transform: rotate(0); }
+          10% { transform: rotate(14deg); }
+          25% { transform: rotate(-10deg); }
+          40% { transform: rotate(5deg); }
+        }
+        .ls-bell-unread {
+          animation: ls-bell-glow 2.4s ease-in-out infinite;
+          border-color: color-mix(in srgb, var(--ls-gold) 55%, var(--ls-border)) !important;
+          color: var(--ls-gold) !important;
+        }
+        .ls-bell-unread svg {
+          animation: ls-bell-swing 2.4s ease-in-out infinite;
+          transform-origin: 50% 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-bell-unread, .ls-bell-unread svg { animation: none; }
+        }
+      `}</style>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Nouveautés ${unreadCount > 0 ? `(${unreadCount} non lues)` : ""}`}
+        className={unreadCount > 0 ? "ls-bell-unread" : undefined}
         style={bellBtn}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

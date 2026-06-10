@@ -1,26 +1,24 @@
 // =============================================================================
-// OutilsProspectionPage — boite a outils marketing prospection (chantier 2026-11-07)
+// OutilsProspectionPage — sous-page "Mes liens marketing" (chantier 2026-11-07,
+// remaniement chantier 3 2026-06-10 : devient une sous-page de la page mère
+// /outils-prospection → OutilsProspectionMerePage).
 // =============================================================================
 //
-// Page admin only qui regroupe TOUS les liens et docs marketing partageables
-// en un seul endroit. Permet :
-//   - Copier en 1 clic les liens /opportunite et /simulateur (?ref=user_id auto)
-//   - Ouvrir / imprimer les 3 docs HTML standalone
+// Route : /outils-prospection/liens (admin only — distributeur → /travaux)
+//   - Copier en 1 clic les liens /rejoindre, /opportunite, /simulateur
+//     (?ref=user_id auto)
+//   - Ouvrir / imprimer les 3 docs HTML standalone (chiffres 2026)
+//   - Section Vidéos : emplacements prêts → /travaux tant que non publiées
 //   - Partage rapide via WhatsApp / SMS / Email avec message pre-redige
 //   - Mode contextuel ?client=ID : envoi cible a un client precis (depuis
-//     SendBusinessPlanButton "Voir tous les outils")
-//
-// Acces : /outils-prospection (admin only)
-//   - Card sur /developpement (hub annexe distri)
-//   - Raccourci sur ReferrerStatsCard du Co-pilote
-//   - Lien "Voir tous les outils" depuis SendBusinessPlanButton fiche client
+//     SendBusinessPlanButton "Voir tous les outils" — la page mère forwarde
+//     ses ?client= ici)
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import { ReferrerStatsCard } from "../components/copilote/ReferrerStatsCard";
 import type { Client } from "../types/domain";
 
 interface ToolDef {
@@ -138,7 +136,7 @@ export function OutilsProspectionPage() {
   const [shareCustomMessage, setShareCustomMessage] = useState<string>("");
 
   useEffect(() => {
-    document.title = "La Base 360 — Outils Prospection";
+    document.title = "La Base 360 — Mes liens marketing";
   }, []);
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -223,21 +221,8 @@ export function OutilsProspectionPage() {
     window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(msg)}`;
   }
 
-  // ─── Auth check : admin only ──────────────────────────────────────────────
-  if (!currentUser || currentUser.role !== "admin") {
-    return (
-      <div className="op-page">
-        <style>{OP_STYLES}</style>
-        <div className="op-restricted">
-          <h2>🔒 Accès admin uniquement</h2>
-          <p>Cette page est réservée aux admins. Contacte ton coach référent.</p>
-          <button onClick={() => navigate("/co-pilote")} className="op-btn-ghost">
-            ← Retour Co-pilote
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // ─── Auth : ouvert à tous les distri (révision Thomas 2026-06-10) ────────
+  if (!currentUser) return null;
 
   return (
     <div className="op-page">
@@ -245,10 +230,14 @@ export function OutilsProspectionPage() {
 
       {/* Hero header */}
       <header className="op-hero">
-        <button onClick={() => navigate(-1)} className="op-back-btn" type="button">
-          ← Retour
+        <button
+          onClick={() => navigate("/outils-prospection")}
+          className="op-back-btn"
+          type="button"
+        >
+          ← Outil de prospection
         </button>
-        <div className="op-eyebrow">🎯 Outils Prospection</div>
+        <div className="op-eyebrow">🔗 Outil de prospection · Mes liens marketing</div>
         <h1>
           Tous tes <span className="op-accent">liens marketing</span> en un endroit
         </h1>
@@ -273,7 +262,7 @@ export function OutilsProspectionPage() {
             </div>
           </div>
           <button
-            onClick={() => navigate("/outils-prospection")}
+            onClick={() => navigate("/outils-prospection/liens")}
             className="op-btn-ghost-sm"
             type="button"
           >
@@ -282,10 +271,7 @@ export function OutilsProspectionPage() {
         </div>
       ) : null}
 
-      {/* Stats rappel (réutilise ReferrerStatsCard) */}
-      <div className="op-stats-wrap">
-        <ReferrerStatsCard />
-      </div>
+      {/* Stats leads : désormais affichées sur la page mère /outils-prospection. */}
 
       {/* Section Liens à partager */}
       <section className="op-section">
@@ -335,6 +321,56 @@ export function OutilsProspectionPage() {
               onEmail={() => shareViaEmail(tool.path, tool.title)}
             />
           ))}
+        </div>
+      </section>
+
+      {/* Section Vidéos (remaniement 2026-06-10) — emplacements prêts, les
+          liens YouTube seront branchés dès que Thomas les fournit. */}
+      <section className="op-section">
+        <h2>
+          🎥 Vidéos <span className="op-accent-gold">à partager</span>
+        </h2>
+        <p className="op-section-sub">
+          Les vidéos de présentation arrivent — les emplacements sont prêts,
+          elles seront branchées ici dès publication.
+        </p>
+        <div className="op-grid op-grid-2">
+          <article className="op-tool op-tool-gold">
+            <div className="op-tool-icon">🎥</div>
+            <h3 className="op-tool-title">Présentation du plan marketing</h3>
+            <p className="op-tool-desc">
+              La vidéo qui explique l'opportunité et les paliers 2026 — à envoyer
+              à un prospect intéressé par le business.
+            </p>
+            <div className="op-tool-usage">Bientôt disponible</div>
+            <div className="op-tool-actions">
+              <button
+                onClick={() => navigate("/travaux")}
+                className="op-action op-action-open"
+                type="button"
+              >
+                🚧 En travaux
+              </button>
+            </div>
+          </article>
+          <article className="op-tool op-tool-gold">
+            <div className="op-tool-icon">🎥</div>
+            <h3 className="op-tool-title">Présentation du bilan</h3>
+            <p className="op-tool-desc">
+              La vidéo qui montre ce qu'est un bilan bien-être — pour rassurer un
+              prospect avant son RDV.
+            </p>
+            <div className="op-tool-usage">Bientôt disponible</div>
+            <div className="op-tool-actions">
+              <button
+                onClick={() => navigate("/travaux")}
+                className="op-action op-action-open"
+                type="button"
+              >
+                🚧 En travaux
+              </button>
+            </div>
+          </article>
         </div>
       </section>
 

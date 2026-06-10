@@ -38,10 +38,11 @@ interface PalierTemplate {
 
 const DEFAULT_PALIERS: PalierTemplate[] = [
   { id: "first-client", emoji: "🌱", label: "1er client", tier: "starter" },
-  { id: "500-pv", emoji: "💧", label: "500 PV cumulés (Senior Consultant)", tier: "starter" },
+  // Labels MAJ règles 2026 (les ids restent stables, ils sont persistés).
+  { id: "500-pv", emoji: "💧", label: "250 PV cumulés (Senior Consultant)", tier: "starter" },
   { id: "first-distri", emoji: "🤝", label: "1er distributeur parrainé", tier: "starter" },
-  { id: "2500-pv", emoji: "🎯", label: "2 500 PV (QP)", tier: "mid" },
-  { id: "supervisor", emoji: "⭐", label: "Supervisor (4 000 PV)", tier: "mid" },
+  { id: "2500-pv", emoji: "🎯", label: "2 500 PV (Producteur Qualifié)", tier: "mid" },
+  { id: "supervisor", emoji: "⭐", label: "Supervisor (2 500 PV / 3 mois ou 4 000 PV)", tier: "mid" },
   { id: "first-royalty", emoji: "💰", label: "1er chèque royalties", tier: "mid" },
   { id: "world-team", emoji: "🌍", label: "World Team", tier: "mid" },
   { id: "first-event", emoji: "🎉", label: "1er événement majeur", tier: "mid" },

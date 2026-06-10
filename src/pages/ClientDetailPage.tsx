@@ -22,6 +22,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { PresentationClientButton } from "../features/academy/components/PresentationClientButton";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
+import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab";
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
@@ -473,6 +474,7 @@ export function ClientDetailPage() {
           { label: 'Historique', emoji: '📊', color: 'var(--ls-purple)', count: client.assessments.length },
           { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
           { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
+          { label: 'Club VIP', emoji: '👑', color: 'var(--ls-gold)' },
         ]).map((tab, i) => {
           const isActive = activeTab === i;
           return (
@@ -1298,6 +1300,15 @@ export function ClientDetailPage() {
           />
           {/* Chantier Prise de masse (2026-04-24) : résumé sport inline sous Actions */}
           <SportSummarySection client={client} />
+        </ErrorBoundary>
+      )}
+
+      {/* Onglet Club VIP (VIP-2 2026-06-10) : montre les remises + invitation. */}
+      {activeTab === 6 && (
+        <ErrorBoundary name="ClientDetailPage/ClientVipPitchTab" fallback={(
+          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Club VIP.</p></Card>
+        )}>
+          <ClientVipPitchTab client={client} onManage={() => setActiveTab(5)} />
         </ErrorBoundary>
       )}
 
