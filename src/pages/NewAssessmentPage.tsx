@@ -28,6 +28,7 @@ import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
+import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
@@ -820,6 +821,64 @@ export function NewAssessmentPage() {
     ...recommendationPlan.needs.flatMap((need) => need.products),
     ...recommendationPlan.optionalUpsells,
   ];
+
+  // Résumé du bilan pour Noaly (étape « Programme proposé »). Construit ici car
+  // toutes les données saisies + la logique déterministe (besoins/boosters/
+  // programme) sont en scope. Noaly ne reçoit QUE ce résumé : elle synthétise,
+  // ne modifie rien. Cf. NoalyBilanPanel + edge mode bilan_analysis.
+  const noalyBilanSummary = (() => {
+    const f = form;
+    const lines: string[] = [];
+    const objLabel: Record<string, string> = {
+      "weight-loss": "Perte de poids",
+      sport: "Sport / performance",
+      wellbeing: "Bien-être",
+      health: "Santé",
+    };
+    lines.push(`Objectif : ${objLabel[f.objective] ?? f.objective}`);
+    lines.push(
+      `Profil : ${f.sex === "male" ? "Homme" : "Femme"}, ${f.age || "?"} ans, ${f.weight || "?"} kg`,
+    );
+    const comp: string[] = [];
+    if (f.bodyFat) comp.push(`masse grasse ${f.bodyFat}%`);
+    if (f.muscleMass) comp.push(`masse musculaire ${f.muscleMass}%`);
+    if (f.visceralFat) comp.push(`graisse viscérale ${f.visceralFat}`);
+    if (f.hydration) comp.push(`hydratation ${f.hydration}%`);
+    if (f.metabolicAge) comp.push(`âge métabolique ${f.metabolicAge} ans`);
+    if (f.bmr) comp.push(`métabolisme ${f.bmr} kcal`);
+    if (comp.length) lines.push(`Composition (Tanita) : ${comp.join(", ")}`);
+    if (f.weight)
+      lines.push(
+        `Cible protéines indicative : ~${computeProteinTarget(f.weight, f.objective)} g/jour`,
+      );
+    if (f.sleepHours) lines.push(`Sommeil : ${f.sleepHours}h (${f.sleepQuality || "qualité ?"})`);
+    if (f.energyLevel) lines.push(`Énergie ressentie : ${f.energyLevel}`);
+    if (f.snackingFrequency) lines.push(`Grignotage : ${f.snackingFrequency}`);
+    if (f.waterIntake) lines.push(`Hydratation déclarée : ${f.waterIntake}`);
+    if (f.transitStatus) lines.push(`Transit : ${f.transitStatus}`);
+    if (f.healthNotes) lines.push(`Notes santé : ${f.healthNotes}`);
+    if (f.pathologyContext) lines.push(`Contexte pathologie : ${f.pathologyContext}`);
+    if (f.objective === "sport" && f.sportProfile) {
+      const sp = f.sportProfile;
+      lines.push(
+        `Sport : fréquence ${sp.frequency}, types ${(sp.types || []).join("/") || "?"}` +
+          `${sp.otherTypeLabel ? ` (${sp.otherTypeLabel})` : ""}, sous-objectif ${sp.subObjective}`,
+      );
+    }
+    const prog = getProgramById(f.programChoice);
+    if (prog) lines.push(`Programme choisi : ${prog.title}`);
+    const needs = recommendationPlan.needs.map((n) => n.label).filter(Boolean);
+    if (needs.length) lines.push(`Besoins détectés par le bilan : ${needs.join(", ")}`);
+    const upsells = recommendationPlan.optionalUpsells.map((p) => p.name).filter(Boolean);
+    if (upsells.length) lines.push(`Options proposées : ${upsells.join(", ")}`);
+    if (f.objective === "sport") {
+      const boosters = recommendBoosters(f.sportProfile, f.age)
+        .map((r) => BOOSTERS.find((b) => b.id === r.productId)?.title ?? r.productId)
+        .filter(Boolean);
+      if (boosters.length) lines.push(`Boosters sport suggérés : ${boosters.join(", ")}`);
+    }
+    return lines.join("\n");
+  })();
   const selectedRecommendationProducts = allRecommendableProducts
     .filter(
       (product, index, array) =>
@@ -3102,6 +3161,12 @@ export function NewAssessmentPage() {
                      4 sections numerotees uniformes avec BilanSectionDivider.
                      Structure narrative claire : besoins → programme → ajouts → suite. */}
                 <div className="space-y-7">
+
+                  {/* ─── Noaly — lecture du bilan + pitch (optionnel, en RDV) ─── */}
+                  <NoalyBilanPanel
+                    summary={noalyBilanSummary}
+                    disabled={!form.weight || form.weight <= 0}
+                  />
 
                   {/* ═══════════════════════════════════════════════════════
                       § 1 · TES BESOINS DETECTES (teal)

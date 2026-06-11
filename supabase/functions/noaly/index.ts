@@ -1,7 +1,7 @@
 // =============================================================================
 // noaly — Noaly, l'IA de La Base 360 (chantier Noaly complet, 2026-06-10).
 //
-// 3 modes (champ `mode` du body) :
+// 4 modes (champ `mode` du body) :
 //   - "crm_message" (défaut si `lead` présent) : génère un message de 1er
 //     contact / relance pour un lead CRM (V1 wagon 3 — inchangé).
 //   - "coach_chat" : chat multi-tours du FAB coach. Reçoit l'historique au
@@ -13,6 +13,10 @@
 //     token client (client_app_accounts) ; le contexte est construit CÔTÉ
 //     SERVEUR (jamais fourni par le client) ; garde-fous santé stricts +
 //     escalade vers le coach ; cap quotidien de messages par client.
+//   - "bilan_analysis" : assistant du bilan PHYSIQUE (étape « Programme
+//     proposé », en RDV). Reçoit un résumé du bilan construit côté front et
+//     renvoie synthèse + pitch à dire au client + points d'attention +
+//     focus programme/assiette (JSON). Ne modifie jamais le bilan. Cap coach.
 //
 // Tous les appels loggés dans ai_usage_log (tokens + coût €).
 // Modèle : NOALY_MODEL (fallback LORSQUAD_AI_MODEL, défaut claude-opus-4-8).
@@ -356,6 +360,97 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
   return json({ message, model: MODEL });
 }
 
+// ─── Mode 4 : bilan_analysis (assistant du bilan PHYSIQUE, côté coach) ───────
+//
+// Pendant le RDV, à l'étape « Programme proposé ». Noaly NE remplace PAS la
+// logique déterministe (besoins/boosters/assiette déjà calculés et affichés) :
+// elle la SYNTHÉTISE pour le coach et lui donne un pitch à dire au client.
+// Principe « assistant, pas pilote auto » : Noaly suggère, ne modifie jamais le
+// bilan. Le `summary` est construit côté front (le coach a déjà toutes les
+// données saisies). Coach-facing → modèle par défaut (Opus). Cap mensuel coach.
+
+const BILAN_SYSTEM = `Tu es Noaly, l'assistante IA de La Base 360 (club de coaching bien-être/nutrition, méthode Herbalife, Verdun).
+Tu assistes le COACH pendant un bilan physique, en RDV, AVEC le client en face. À l'étape « Programme proposé », le coach te demande une lecture du bilan pour mieux le présenter.
+Un programme a déjà été proposé par l'app (besoins détectés, boosters, assiette idéale, cible protéines/eau) : tu t'APPUIES dessus, tu ne le réinventes pas et tu ne le contredis pas sans raison.
+Ton rôle : (1) synthétiser le bilan en clair, (2) donner au coach un PITCH à dire À VOIX HAUTE au client (tutoiement, chaleureux, oral, relie le bilan au programme proposé, donne une direction motivante), (3) repérer d'éventuels points d'attention/incohérences du bilan formulés comme de simples SUGGESTIONS au coach (jamais d'ordre), (4) dire sur quoi insister dans le programme/l'assiette pour CE profil.
+RÈGLES : pas de conseil médical ni de diagnostic, pas de promesse de perte de poids chiffrée ni de délai garanti, pas de dosage. Tu peux mentionner le programme/les produits déjà proposés par l'app (c'est la méthode du club) mais sans en rajouter au-delà. Le pitch parle au client, pas au coach.
+Tu réponds UNIQUEMENT en JSON valide (aucun texte autour), avec EXACTEMENT ces clés :
+{
+  "synthese": "2-3 phrases factuelles : où en est le client, ce que révèlent composition corporelle, objectif et habitudes clés.",
+  "pitch": "4-7 lignes que le coach DIT au client (tutoiement, chaleureux, oral) : relie le bilan au programme proposé et donne une direction claire et motivante, sans chiffre promis.",
+  "points_attention": ["suggestion courte au coach (incohérence ou manque repéré dans le bilan)", "..."],
+  "programme_note": "1-2 phrases : sur quoi insister dans le programme et l'assiette pour ce profil précis."
+}
+Si rien à signaler en points d'attention, renvoie un tableau vide [].`;
+
+async function coachCapReached(sb: SupabaseClient, coachUserId: string): Promise<boolean> {
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const { data: rows } = await sb
+    .from("ai_usage_log")
+    .select("input_tokens, output_tokens")
+    .eq("user_id", coachUserId)
+    .gte("created_at", monthStart.toISOString())
+    .limit(5000);
+  const used = (rows ?? []).reduce(
+    (s, r) => s + (r.input_tokens as number) + (r.output_tokens as number),
+    0,
+  );
+  return used >= COACH_MONTHLY_TOKENS;
+}
+
+async function handleBilanAnalysis(sb: SupabaseClient, body: Record<string, unknown>) {
+  const coachUserId = (body.coachUserId as string) ?? null;
+  const summary = String(body.summary ?? "").trim();
+  if (!summary) return json({ error: "summary requis" }, 400);
+
+  if (coachUserId && (await coachCapReached(sb, coachUserId))) {
+    return json(
+      {
+        error: "cap_reached",
+        message:
+          "Tu as atteint ton quota Noaly du mois 🙏 Il se réinitialise le 1er. (L'admin peut l'augmenter.)",
+      },
+      429,
+    );
+  }
+
+  const refine = String(body.refine ?? "").trim();
+  const userPrompt =
+    `Voici les données du bilan physique (saisies par le coach) :\n\n${summary}\n\n` +
+    (refine
+      ? `Le coach souhaite affiner ta lecture : « ${refine} ». Tiens-en compte.\n\n`
+      : "") +
+    `Donne ta lecture au format JSON demandé.`;
+
+  const data = await callAnthropic({
+    max_tokens: 1500,
+    system: BILAN_SYSTEM,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const raw = (data.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("")
+    .trim();
+
+  // Parse tolérant : isole le 1er objet JSON même si le modèle a bavardé autour.
+  let analysis: Record<string, unknown> | null = null;
+  try {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) analysis = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    analysis = null;
+  }
+  if (!analysis) analysis = { synthese: raw, pitch: "", points_attention: [], programme_note: "" };
+
+  logUsage(sb, "bilan_analysis", data.usage, coachUserId, null);
+  return json({ analysis, model: MODEL, usage: data.usage });
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -369,6 +464,7 @@ serve(async (req: Request) => {
 
     if (body.mode === "coach_chat") return await handleCoachChat(sb, body);
     if (body.mode === "client_chat") return await handleClientChat(sb, body);
+    if (body.mode === "bilan_analysis") return await handleBilanAnalysis(sb, body);
     // Défaut / rétro-compat : génération message CRM (body.lead + mode first_contact/relance).
     return await handleCrmMessage(sb, body);
   } catch (e) {
