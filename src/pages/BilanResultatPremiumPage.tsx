@@ -14,7 +14,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   PublicShell,
   PUBLIC_TOKENS,
@@ -65,10 +65,47 @@ function capitalize(s: string) {
 
 export function BilanResultatPremiumPage() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  // Retour de la caisse Square (checkout_options.redirect_url → ?paid=1).
+  const justPaid = searchParams.get("paid") === "1";
   const [data, setData] = useState<ResultsDTO | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ok">("loading");
   const [selected, setSelected] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
+
+  // Phase 2 : « Je démarre » tente la caisse directe (create-payment-link →
+  // Square hosted checkout). Si le coach n'a pas d'encaissement configuré
+  // (fallback) ou en cas d'erreur → panneau Phase 1 « ton coach t'envoie le
+  // lien de paiement ». Le prix est recalculé CÔTÉ SERVEUR (pv_programs).
+  async function startCheckout(programId: string | null) {
+    if (!programId) {
+      setStarted(true);
+      return;
+    }
+    setPayLoading(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) {
+        setStarted(true);
+        return;
+      }
+      const redirectUrl = `${window.location.origin}/resultat-bilan/${token}?paid=1`;
+      const { data: res } = await sb.functions.invoke("create-payment-link", {
+        body: { token, program_id: programId, redirect_url: redirectUrl },
+      });
+      const payload = res as { url?: string; fallback?: boolean } | null;
+      if (payload?.url) {
+        window.location.href = payload.url;
+        return; // on quitte la page vers la caisse Square
+      }
+      setStarted(true);
+    } catch {
+      setStarted(true);
+    } finally {
+      setPayLoading(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -375,9 +412,22 @@ export function BilanResultatPremiumPage() {
                 ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>. On démarre quand tu veux.</>
                 : <>On démarre quand tu veux. La première étape, c'est juste un échange — sans pression.</>}
             </p>
-            {!started ? (
-              <button type="button" onClick={() => setStarted(true)} style={ctaPrimary}>
-                Je démarre mon programme →
+            {justPaid ? (
+              <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>🎉 Paiement reçu, merci {firstName} !</div>
+                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>
+                  C'est officiel, tu démarres. {coach.name} te contacte très vite pour ton
+                  programme, ta saveur et ta première pesée. Bienvenue 🌿
+                </p>
+              </div>
+            ) : !started ? (
+              <button
+                type="button"
+                disabled={payLoading}
+                onClick={() => void startCheckout(selected)}
+                style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
+              >
+                {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
               </button>
             ) : (
               <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>

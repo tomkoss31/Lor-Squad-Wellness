@@ -20,6 +20,7 @@ import {
   HERBALIFE_ID_PATTERN,
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
+import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 import { RankPinBadge } from "../rank/RankPinBadge";
 
@@ -782,6 +783,10 @@ export function ProfilTab() {
               </div>
             </div>
           </LabeledField>
+
+          {/* 💳 Encaissement direct — Phase 2 page Résultat Bilan (2026-06-11).
+              Carte autonome : lit/écrit coach_payment_settings (RLS own-row). */}
+          <PaymentSettingsCard />
 
           <LabeledField label="Rôle">
             <div
