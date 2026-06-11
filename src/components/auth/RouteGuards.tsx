@@ -83,14 +83,31 @@ export function NotPassiveRoute() {
 //
 // Bouton recovery apres 5s en mode discret.
 // =============================================================================
+const BOOT_MESSAGES = [
+  "On réveille ton Co-pilote…",
+  "Tes dossiers clients arrivent…",
+  "On prépare ta journée…",
+  "Le club s'allume… 🌿",
+];
+
 function AuthBootSplash() {
   const { forceResetSession } = useAppContext();
   const navigate = useNavigate();
   const [showRecovery, setShowRecovery] = useState(false);
+  const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setShowRecovery(true), 5000);
-    return () => window.clearTimeout(timer);
+    // Micro-messages rotatifs : le chargement raconte quelque chose au lieu
+    // d'un loader muet. Cycle 2.2s, s'arrête sur le dernier message.
+    const msgTimer = window.setInterval(
+      () => setMsgIndex((i) => Math.min(i + 1, BOOT_MESSAGES.length - 1)),
+      2200,
+    );
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(msgTimer);
+    };
   }, []);
 
   async function handleRecovery() {
@@ -117,9 +134,26 @@ function AuthBootSplash() {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes lb360-loader-dots {
-          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
+        @keyframes lb360-ring-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes lb360-shine {
+          0% { background-position: -200% center; }
+          60%, 100% { background-position: 200% center; }
+        }
+        @keyframes lb360-bar-sweep {
+          0% { transform: translateX(-100%); }
+          55% { transform: translateX(160%); }
+          100% { transform: translateX(160%); }
+        }
+        @keyframes lb360-msg-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes lb360-star-drift {
+          0%, 100% { opacity: 0.25; transform: translateY(0); }
+          50% { opacity: 0.7; transform: translateY(-6px); }
         }
         @media (prefers-reduced-motion: reduce) {
           .lb360-anim { animation: none !important; }
@@ -175,39 +209,86 @@ function AuthBootSplash() {
             gap: 18,
           }}
         >
-          {/* Orbe app-icon (SVG vectoriel, transparent propre) */}
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt="La Base 360"
+          {/* Logo + anneau gradient rotatif (signature premium).
+              L'anneau est un conic-gradient masqué en couronne via CSS mask —
+              zéro asset, tourne lentement derrière l'icône. */}
+          <div
             className="lb360-anim"
             style={{
-              width: 132,
-              height: 132,
-              borderRadius: 30,
-              animation:
-                "lb360-fade-in 600ms ease-out both, lb360-logo-breathe 4s ease-in-out infinite 600ms",
-              willChange: "transform, opacity",
-              filter:
-                "drop-shadow(0 0 28px rgba(16,185,129,0.30)) drop-shadow(0 12px 32px rgba(6,182,212,0.22))",
+              position: "relative",
+              width: 168,
+              height: 168,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              animation: "lb360-fade-in 600ms ease-out both",
             }}
-          />
+          >
+            <div
+              aria-hidden="true"
+              className="lb360-anim"
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background:
+                  "conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.0) 18%, #10B981 38%, #06B6D4 52%, #8B5CF6 66%, transparent 84%)",
+                WebkitMask:
+                  "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px))",
+                mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px))",
+                animation: "lb360-ring-spin 5s linear infinite",
+                willChange: "transform",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="lb360-anim"
+              style={{
+                position: "absolute",
+                inset: 6,
+                borderRadius: "50%",
+                background:
+                  "conic-gradient(from 180deg, transparent 0%, rgba(139,92,246,0.5) 30%, rgba(6,182,212,0.35) 50%, transparent 70%)",
+                WebkitMask:
+                  "radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px))",
+                mask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px))",
+                animation: "lb360-ring-spin 8s linear infinite reverse",
+                opacity: 0.55,
+                willChange: "transform",
+              }}
+            />
+            <img
+              src="/brand/labase360/app-icon-512.svg"
+              alt="La Base 360"
+              className="lb360-anim"
+              style={{
+                width: 116,
+                height: 116,
+                borderRadius: 26,
+                animation: "lb360-logo-breathe 4s ease-in-out infinite 600ms",
+                willChange: "transform, opacity",
+                filter:
+                  "drop-shadow(0 0 28px rgba(16,185,129,0.35)) drop-shadow(0 12px 32px rgba(6,182,212,0.25))",
+              }}
+            />
+          </div>
 
-          {/* Heritage pill */}
+          {/* Heritage pill — SANS backdrop-filter : bug Chromium/Windows PWA
+              (rendu blanc opaque → texte crème invisible, vu 2026-06-11). */}
           <div
             className="lb360-anim"
             style={{
               padding: "5px 16px",
               borderRadius: 100,
-              background: "rgba(255,255,255,0.05)",
-              border: "0.5px solid rgba(255,255,255,0.12)",
+              background: "rgba(16,185,129,0.08)",
+              border: "0.5px solid rgba(16,185,129,0.28)",
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 9.5,
               fontWeight: 600,
               letterSpacing: "0.32em",
               textTransform: "uppercase",
-              color: "rgba(240,237,232,0.65)",
+              color: "rgba(240,237,232,0.7)",
               animation: "lb360-fade-up 500ms ease-out 350ms both",
-              backdropFilter: "blur(8px)",
             }}
           >
             ★ Since 2022 ★
@@ -227,7 +308,22 @@ function AuthBootSplash() {
               animation: "lb360-fade-up 500ms ease-out 500ms both",
             }}
           >
-            La Base{" "}
+            <span
+              className="lb360-anim"
+              style={{
+                // Shine sweep : reflet lumineux qui balaie le texte (loop 3.5s)
+                background:
+                  "linear-gradient(110deg, #F0EDE8 35%, #FFFFFF 47%, #9be8d6 50%, #F0EDE8 63%)",
+                backgroundSize: "200% auto",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                display: "inline-block",
+                animation: "lb360-shine 3.5s ease-in-out infinite 1s",
+              }}
+            >
+              La Base
+            </span>{" "}
             <span
               style={{
                 fontStyle: "italic",
@@ -262,36 +358,64 @@ function AuthBootSplash() {
           </p>
         </div>
 
-        {/* Loader dots G3 sous le logo */}
+        {/* Loader : barre de progression indéterminée (sweep gradient) +
+            micro-message rotatif. Plus vivant que 3 points muets. */}
         <div
           className="lb360-anim"
           style={{
             position: "relative",
             zIndex: 1,
-            marginTop: 24,
+            marginTop: 28,
             display: "flex",
-            gap: 8,
-            animation: "lb360-fade-in 600ms ease-out 1200ms both",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 14,
+            animation: "lb360-fade-in 600ms ease-out 1100ms both",
           }}
           aria-label="Chargement…"
         >
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
+          <div
+            style={{
+              width: 180,
+              height: 3,
+              borderRadius: 99,
+              background: "rgba(255,255,255,0.08)",
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            <div
               className="lb360-anim"
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "62%",
+                height: "100%",
+                borderRadius: 99,
                 background:
-                  i === 0 ? "#10B981" : i === 1 ? "#06B6D4" : "#8B5CF6",
-                animation: `lb360-loader-dots 1.4s ease-in-out infinite ${i * 0.16}s`,
-                boxShadow: `0 0 12px ${
-                  i === 0 ? "rgba(16,185,129,0.5)" : i === 1 ? "rgba(6,182,212,0.5)" : "rgba(139,92,246,0.5)"
-                }`,
+                  "linear-gradient(90deg, transparent, #10B981 25%, #06B6D4 55%, #8B5CF6 85%, transparent)",
+                animation: "lb360-bar-sweep 1.8s ease-in-out infinite",
+                boxShadow: "0 0 14px rgba(6,182,212,0.45)",
+                willChange: "transform",
               }}
             />
-          ))}
+          </div>
+          <p
+            key={msgIndex}
+            className="lb360-anim"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 12.5,
+              color: "rgba(240,237,232,0.45)",
+              margin: 0,
+              letterSpacing: "0.02em",
+              animation: "lb360-msg-in 450ms ease-out both",
+              minHeight: 18,
+            }}
+          >
+            {BOOT_MESSAGES[msgIndex]}
+          </p>
         </div>
 
         {/* Recovery button (after 5s) */}
@@ -322,25 +446,26 @@ function AuthBootSplash() {
               type="button"
               onClick={() => void handleRecovery()}
               style={{
+                // SANS backdrop-filter : même bug Chromium/Windows que le pill
+                // heritage (rendu blanc opaque, texte invisible).
                 fontFamily: "Inter, system-ui, sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
-                color: "rgba(240,237,232,0.75)",
-                background: "rgba(255,255,255,0.04)",
-                border: "0.5px solid rgba(255,255,255,0.12)",
-                padding: "10px 20px",
+                color: "rgba(240,237,232,0.8)",
+                background: "rgba(16,185,129,0.07)",
+                border: "0.5px solid rgba(16,185,129,0.3)",
+                padding: "10px 22px",
                 borderRadius: 100,
                 cursor: "pointer",
                 transition: "all 0.2s ease",
-                backdropFilter: "blur(8px)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.background = "rgba(16,185,129,0.14)";
                 e.currentTarget.style.color = "#F0EDE8";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                e.currentTarget.style.color = "rgba(240,237,232,0.75)";
+                e.currentTarget.style.background = "rgba(16,185,129,0.07)";
+                e.currentTarget.style.color = "rgba(240,237,232,0.8)";
               }}
             >
               Revenir à la connexion
