@@ -387,6 +387,8 @@ export function AdminNewsletterEditPage() {
           tone: "success",
           title: `${mode === "resend" ? "🔁 Renvoyé" : "📨 Envoyé"} à ${result.sent_count}/${result.total} destinataires${
             result.failed_count ? ` · ${result.failed_count} échec(s)` : ""
+          }${
+            result.suppressed_bounced ? ` · ${result.suppressed_bounced} adresse(s) morte(s) ignorée(s) 🛡️` : ""
           }`,
         });
         setSendModalOpen(false);

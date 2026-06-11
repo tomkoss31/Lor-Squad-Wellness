@@ -335,15 +335,37 @@ serve(async (req) => {
     return json({ success: false, error: "no_recipients" }, 400);
   }
 
-  // Déduplication par email (un distri qui est aussi client = 1 seul envoi)
+  // Liste de SUPPRESSION (fix 2026-06-11) : tout email ayant déjà bouncé (sur
+  // N'IMPORTE quelle édition) est exclu DÉFINITIVEMENT des envois. Renvoyer à
+  // des adresses mortes fait exploser le taux de bounce → Resend dégrade la
+  // réputation et finit par bloquer le compte. C'était la vraie cause des
+  // "blocages" (40% de bounce à chaque renvoi sur ~30 adresses invalides).
+  const bouncedEmails = new Set<string>();
+  {
+    const { data: bounced } = await sb
+      .from("newsletter_recipients")
+      .select("email")
+      .not("bounced_at", "is", null);
+    for (const b of bounced ?? []) {
+      if (b?.email) bouncedEmails.add(String(b.email).toLowerCase());
+    }
+  }
+
+  // Déduplication par email + suppression des bouncés.
   const seen = new Set<string>();
   const dedup: Recipient[] = [];
+  let suppressedBounced = 0;
   for (const r of recipients) {
     const k = r.email.toLowerCase();
+    if (bouncedEmails.has(k)) { suppressedBounced++; continue; } // adresse morte → skip
     if (!seen.has(k)) {
       seen.add(k);
       dedup.push(r);
     }
+  }
+
+  if (dedup.length === 0) {
+    return json({ success: false, error: "no_valid_recipients", suppressed_bounced: suppressedBounced }, 400);
   }
 
   // 5. Envoi batch + insert newsletter_recipients
@@ -392,6 +414,7 @@ serve(async (req) => {
   return json({
     success: true,
     mode,
+    suppressed_bounced: suppressedBounced,
     sent_count: successCount,
     failed_count: failures.length,
     total: dedup.length,
