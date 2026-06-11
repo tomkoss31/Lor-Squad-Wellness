@@ -383,7 +383,10 @@ export function WelcomePage() {
             icon="✨"
             title="Je veux rejoindre l'aventure"
             subtitle="Découvrir le business La Base 360"
-            onClick={() => navigate("/opportunite")}
+            // Page d'accueil publique → tunnel recrutement /rejoindre avec
+            // attribution au coach par défaut (Thomas, owner). Le ?ref est
+            // préservé jusqu'au questionnaire (cf. RejoindreOpportunitePage).
+            onClick={() => navigate("/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423")}
             delayMs={1000}
             accent="magenta"
           />
