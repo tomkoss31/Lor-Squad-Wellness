@@ -244,10 +244,38 @@ export function BilanOnlinePage() {
     return null;
   }
 
+  // ONLINE-B « Curieux » : à la validation de l'étape 1 (prénom + contact), on
+  // enregistre un draft pour mesurer le taux de complétion (commencé vs fini).
+  // 1 seul appel (clé localStorage), non bloquant.
+  const draftKey = useMemo(() => `ls-bilan-draft-${slug || "none"}`, [slug]);
+  async function saveDraftIfNeeded() {
+    try {
+      if (localStorage.getItem(draftKey)) return;
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data } = await sb.functions.invoke("submit-online-bilan", {
+        body: {
+          draft: true,
+          coach_slug: slug || null,
+          first_name: form.first_name.trim(),
+          age: Number(form.age) || null,
+          height_cm: Number(form.height_cm) || null,
+          city: form.city.trim() || null,
+          phone: form.phone.trim() || null,
+          email: form.email.trim() || null,
+          last_step: 1,
+        },
+      });
+      const id = (data as { id?: string } | null)?.id;
+      if (id) localStorage.setItem(draftKey, id);
+    } catch { /* non bloquant — le bilan continue */ }
+  }
+
   function next() {
     const err = validateStep(step);
     if (err) { setErrorMsg(err); return; }
     setErrorMsg("");
+    if (step === 1) void saveDraftIfNeeded();
     if (step < TOTAL_STEPS) {
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -310,8 +338,12 @@ export function BilanOnlinePage() {
           ? form.active_daily_detail.trim() || null
           : null,
       };
+      // Complète le draft « Curieux » s'il existe (sinon insert normal côté edge).
+      let draftId: string | null = null;
+      try { draftId = localStorage.getItem(draftKey); } catch { /* */ }
       const { data, error } = await sb.functions.invoke("submit-online-bilan", {
         body: {
+          draft_id: draftId,
           coach_slug: slug || null,
           first_name: form.first_name.trim(),
           age: Number(form.age),
@@ -338,7 +370,7 @@ export function BilanOnlinePage() {
           ? "Trop de tentatives — réessaie dans une heure."
           : raw);
       }
-      try { localStorage.removeItem(storageKey); } catch { /* */ }
+      try { localStorage.removeItem(storageKey); localStorage.removeItem(draftKey); } catch { /* */ }
 
       // Chantier B (2026-05-27) : on stocke les inputs de scoring en sessionStorage
       // pour que la page résultats puisse les lire + calculer l'auto-éval.

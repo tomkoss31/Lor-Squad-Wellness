@@ -43,6 +43,7 @@ import {
 } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { useCuriousLeads } from "../hooks/useCuriousLeads";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -85,6 +86,9 @@ export function CrmPage() {
   const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
   // Wagon 3 chantier 6 : panneau stats par source (toggle).
   const [showStats, setShowStats] = useState(false);
+  // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
+  const { curious, completionRate, loading: curiousLoading } = useCuriousLeads();
+  const [showCurious, setShowCurious] = useState(false);
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -284,6 +288,69 @@ export function CrmPage() {
               </div>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {/* Section Curieux (ONLINE-B) : commencé le bilan, pas fini */}
+      {!curiousLoading && (curious.length > 0 || completionRate > 0) ? (
+        <div style={curiousPanel}>
+          <button
+            type="button"
+            onClick={() => setShowCurious((s) => !s)}
+            style={curiousHeader}
+            aria-expanded={showCurious}
+          >
+            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
+              💭 Curieux — {curious.length} {curious.length > 1 ? "ont commencé" : "a commencé"} sans finir
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
+              taux de complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
+            </span>
+            <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{showCurious ? "▲" : "▼"}</span>
+          </button>
+          {showCurious ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+              <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                Ces prospects ont saisi leur étape 1 mais n'ont pas terminé le bilan. Ils ne sont pas
+                dans ton pipeline qualifié — relance-les en douceur, sans pression.
+              </p>
+              {curious.length === 0 ? (
+                <div style={columnEmpty}>Aucun curieux en attente 👏</div>
+              ) : (
+                curious.map((c) => {
+                  const msg = `Salut ${c.firstName} ! 🌿 Tu as commencé ton bilan bien-être mais tu ne l'as pas terminé — pas de souci. Si tu veux, on le finit ensemble en 2 minutes, ça me permet de te faire un retour perso. Dis-moi 🙂\n${msgCtx.coachFirstName}`;
+                  return (
+                    <div key={c.id} style={curiousRow}>
+                      <span style={{ fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
+                        {c.firstName}
+                      </span>
+                      <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+                        {c.city ? `${c.city} · ` : ""}{c.contact ?? "—"}
+                      </span>
+                      <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
+                        {formatDate(c.createdAt)}
+                      </span>
+                      {c.contactIsPhone ? (
+                        <a
+                          href={buildCrmWhatsAppLink(c.contact, msg)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={actionBtn("#25D366")}
+                          title="Relancer en douceur"
+                        >
+                          📱 Relancer
+                        </a>
+                      ) : (
+                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-gold)")}>
+                          📋 Message
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -882,6 +949,40 @@ const dupeBadge: React.CSSProperties = {
   background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
   border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
   color: "var(--ls-gold)",
+};
+
+const curiousPanel: React.CSSProperties = {
+  marginBottom: 16,
+  padding: "12px 16px",
+  borderRadius: 14,
+  background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+};
+
+const curiousHeader: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  color: "var(--ls-text)",
+  padding: 0,
+  textAlign: "left",
+  flexWrap: "wrap",
+};
+
+const curiousRow: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  flexWrap: "wrap",
+  padding: "9px 12px",
+  borderRadius: 10,
+  background: "var(--ls-surface)",
+  border: "0.5px solid var(--ls-border)",
+  fontFamily: "DM Sans, sans-serif",
 };
 
 const statsPanel: React.CSSProperties = {
