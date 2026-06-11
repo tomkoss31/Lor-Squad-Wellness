@@ -143,6 +143,11 @@ interface SubmitBody {
   motivation_score?: number | null;
   payload?: Record<string, unknown>;
   consent?: boolean;
+  // ONLINE-B (Curieux) : draft=true → capture étape 1 (pas de consent/objectifs).
+  // draft_id → soumission finale qui complète le draft (au lieu d'un nouvel insert).
+  draft?: boolean;
+  draft_id?: string;
+  last_step?: number;
 }
 
 // Validation email simple (pas RFC-strict, juste sain).
@@ -186,14 +191,15 @@ serve(async (req) => {
     return json({ success: false, error: "Prénom invalide (2-50 caractères)." }, 400);
   }
 
-  if (body.consent !== true) {
+  // Un draft (Curieux) n'a ni consent ni objectif (étape 1 seulement).
+  if (body.draft !== true && body.consent !== true) {
     return json({ success: false, error: "Consentement RGPD obligatoire." }, 400);
   }
 
   const objectives = Array.isArray(body.objectives) ? body.objectives.filter(
     (o): o is string => typeof o === "string" && o.length > 0,
   ) : [];
-  if (objectives.length === 0) {
+  if (body.draft !== true && objectives.length === 0) {
     return json({ success: false, error: "Au moins un objectif requis." }, 400);
   }
 
@@ -277,11 +283,12 @@ serve(async (req) => {
     }
   }
 
-  const userAgent = req.headers.get("user-agent") ?? null;
-  const ipCountry = req.headers.get("cf-ipcountry") ?? req.headers.get("x-vercel-ip-country") ?? null;
-
-  try {
-    const { data: inserted, error: insertErr } = await sb
+  // ── ONLINE-B : capture « Curieux » (draft étape 1, bilan non terminé) ──────
+  if (body.draft === true) {
+    if (!phone && !email) {
+      return json({ success: false, error: "Un moyen de te recontacter (tél ou email)." }, 400);
+    }
+    const { data: draftRow, error: draftErr } = await sb
       .from("online_bilans")
       .insert({
         coach_user_id: coachUserId,
@@ -292,20 +299,76 @@ serve(async (req) => {
         city,
         phone,
         email,
-        objectives,
-        weight_loss_target_kg: weightLossKg,
-        current_weight_kg: currentWeightKg,
-        motivation_score: motivation,
-        payload: body.payload ?? {},
-        user_agent: userAgent,
-        ip_country: ipCountry,
-        assigned_to_user_id: coachUserId, // par défaut le coach assigné = coach matché
+        objectives: [],
+        assigned_to_user_id: coachUserId,
         lead_status: "new",
+        completed_at: null, // marqueur Curieux
+        last_step: typeof body.last_step === "number" ? body.last_step : 1,
+        user_agent: req.headers.get("user-agent") ?? null,
+        ip_country: req.headers.get("cf-ipcountry") ?? req.headers.get("x-vercel-ip-country") ?? null,
       })
       .select("id")
       .single();
+    if (draftErr) {
+      console.error("[submit-online-bilan] draft insert:", draftErr.message);
+      return json({ success: false, error: "draft_failed" }, 500);
+    }
+    return json({ success: true, id: (draftRow as { id: string }).id, draft: true });
+  }
 
-    if (insertErr) throw insertErr;
+  const userAgent = req.headers.get("user-agent") ?? null;
+  const ipCountry = req.headers.get("cf-ipcountry") ?? req.headers.get("x-vercel-ip-country") ?? null;
+
+  try {
+    // Ligne complète. Si un draft « Curieux » existe (draft_id), on le COMPLÈTE
+    // (update) au lieu de créer un doublon — sinon insert normal.
+    const fullRow = {
+      coach_user_id: coachUserId,
+      coach_slug: coachSlug,
+      first_name: firstName,
+      age,
+      height_cm: heightCm,
+      city,
+      phone,
+      email,
+      objectives,
+      weight_loss_target_kg: weightLossKg,
+      current_weight_kg: currentWeightKg,
+      motivation_score: motivation,
+      payload: body.payload ?? {},
+      user_agent: userAgent,
+      ip_country: ipCountry,
+      assigned_to_user_id: coachUserId,
+      lead_status: "new",
+      completed_at: new Date().toISOString(), // bilan terminé
+      last_step: typeof body.last_step === "number" ? body.last_step : null,
+    };
+
+    let inserted: { id: string };
+    const draftId = typeof body.draft_id === "string" && body.draft_id ? body.draft_id : null;
+    if (draftId) {
+      const { data: upd, error: updErr } = await sb
+        .from("online_bilans")
+        .update(fullRow)
+        .eq("id", draftId)
+        .is("completed_at", null) // ne complète qu'un draft pas déjà terminé
+        .select("id")
+        .maybeSingle();
+      if (updErr) throw updErr;
+      if (upd) {
+        inserted = upd as { id: string };
+      } else {
+        const { data: ins, error: insErr } = await sb
+          .from("online_bilans").insert(fullRow).select("id").single();
+        if (insErr) throw insErr;
+        inserted = ins as { id: string };
+      }
+    } else {
+      const { data: ins, error: insErr } = await sb
+        .from("online_bilans").insert(fullRow).select("id").single();
+      if (insErr) throw insErr;
+      inserted = ins as { id: string };
+    }
 
     // Notif push (best-effort, non bloquant). Cible :
     // - Si coach résolu → le coach + tous les admins actifs

@@ -210,9 +210,12 @@ export function useCrmLeads() {
       const [bilansRes, prospectsRes, referralsRes, intentionsRes] = await Promise.all([
         sb
           .from("online_bilans")
+          // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
+          // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
             "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, created_at, notes",
           )
+          .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
         sb
