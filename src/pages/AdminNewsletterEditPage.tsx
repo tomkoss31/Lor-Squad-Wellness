@@ -123,6 +123,7 @@ export function AdminNewsletterEditPage() {
   const [dirty, setDirty] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [resendModalOpen, setResendModalOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [generatingOg, setGeneratingOg] = useState(false);
 
@@ -345,7 +346,7 @@ export function AdminNewsletterEditPage() {
     }
   }
 
-  async function dispatch(mode: "test" | "send") {
+  async function dispatch(mode: "test" | "send" | "resend") {
     if (!data || sending) return;
     if (dirty) {
       alert("Enregistre tes modifications avant d'envoyer.");
@@ -384,11 +385,12 @@ export function AdminNewsletterEditPage() {
       } else {
         pushToast({
           tone: "success",
-          title: `📨 Envoyé à ${result.sent_count}/${result.total} destinataires${
+          title: `${mode === "resend" ? "🔁 Renvoyé" : "📨 Envoyé"} à ${result.sent_count}/${result.total} destinataires${
             result.failed_count ? ` · ${result.failed_count} échec(s)` : ""
           }`,
         });
         setSendModalOpen(false);
+        setResendModalOpen(false);
         await load();
       }
     } catch (e) {
@@ -612,19 +614,40 @@ export function AdminNewsletterEditPage() {
           </>
         )}
         {data.status === "sent" && (
-          <span
-            style={{
-              padding: "9px 14px",
-              background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
-              color: "var(--ls-teal)",
-              borderRadius: 10,
-              fontWeight: 700,
-              fontSize: 12,
-              letterSpacing: "0.06em",
-            }}
-          >
-            ✓ ENVOYÉ
-          </span>
+          <>
+            <span
+              style={{
+                padding: "9px 14px",
+                background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+                color: "var(--ls-teal)",
+                borderRadius: 10,
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: "0.06em",
+              }}
+            >
+              ✓ ENVOYÉ
+            </span>
+            <button
+              type="button"
+              onClick={() => setResendModalOpen(true)}
+              disabled={sending || dirty}
+              title={dirty ? "Sauvegarde d'abord" : "Renvoyer cette édition à toute l'audience"}
+              style={{
+                padding: "9px 16px",
+                background: "transparent",
+                border: "1px solid var(--ls-border)",
+                borderRadius: 10,
+                color: "var(--ls-text)",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: sending || dirty ? "not-allowed" : "pointer",
+                opacity: sending || dirty ? 0.5 : 1,
+              }}
+            >
+              🔁 Renvoyer
+            </button>
+          </>
         )}
       </div>
 
@@ -682,7 +705,7 @@ export function AdminNewsletterEditPage() {
                 lineHeight: 1.5,
               }}
             >
-              ⚠️ Action <strong>irréversible</strong> : une fois envoyée, la newsletter passe en statut <code>sent</code>. Tu ne pourras plus la modifier ni la re-envoyer.
+              ⚠️ Une fois envoyée, la newsletter passe en statut <code>sent</code> et n'est plus modifiable. Tu pourras la <strong>renvoyer</strong> plus tard si besoin (bouton 🔁 Renvoyer).
               <br />
               <br />
               💡 Si tu as un doute, clique d'abord <strong>🧪 Test à moi</strong> pour valider le rendu sur ta boîte mail.
@@ -713,6 +736,87 @@ export function AdminNewsletterEditPage() {
                 }}
               >
                 {sending ? "Envoi en cours…" : "Confirmer l'envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modale confirmation RENVOI (édition déjà sent) ─────────────── */}
+      {resendModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 1000,
+          }}
+          onClick={() => !sending && setResendModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 16,
+              padding: 24,
+              maxWidth: 480,
+              width: "100%",
+            }}
+          >
+            <h3 style={{ margin: "0 0 10px", fontFamily: "'Syne', serif", fontSize: 20, fontWeight: 700, color: "var(--ls-text)" }}>
+              🔁 Renvoyer cette édition ?
+            </h3>
+            <p style={{ margin: "0 0 16px", fontSize: 14, color: "var(--ls-text-muted)", lineHeight: 1.6 }}>
+              Tu vas <strong>renvoyer</strong> « {data.title} » à <strong>{audienceLabel(data.audience)}</strong>.
+              Les personnes qui l'ont déjà reçue la recevront à nouveau.
+            </p>
+            <div
+              style={{
+                padding: "12px 14px",
+                background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
+                borderRadius: 10,
+                fontSize: 13,
+                color: "var(--ls-text)",
+                marginBottom: 18,
+                lineHeight: 1.5,
+              }}
+            >
+              ✅ Envoi <strong>sécurisé</strong> : par lots de 100 max avec pause anti rate-limit Resend. Aucun risque de blocage.
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => !sending && setResendModalOpen(false)}
+                disabled={sending}
+                style={{ ...btnGhostStyle, opacity: sending ? 0.5 : 1 }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => dispatch("resend")}
+                disabled={sending}
+                style={{
+                  padding: "10px 20px",
+                  background: "var(--ls-teal)",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: sending ? "not-allowed" : "pointer",
+                  opacity: sending ? 0.6 : 1,
+                }}
+              >
+                {sending ? "Renvoi en cours…" : "Confirmer le renvoi"}
               </button>
             </div>
           </div>

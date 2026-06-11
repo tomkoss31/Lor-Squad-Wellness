@@ -219,7 +219,9 @@ serve(async (req) => {
   }
 
   const newsletterId = String(body.newsletter_id ?? "").trim();
-  const mode = body.mode === "test" ? "test" : "send";
+  // "test" = email à l'admin · "send" = 1er envoi (refusé si déjà sent) ·
+  // "resend" = renvoi explicite d'une édition déjà envoyée (bypass garde).
+  const mode = body.mode === "test" ? "test" : body.mode === "resend" ? "resend" : "send";
   if (!newsletterId) return json({ success: false, error: "missing_newsletter_id" }, 400);
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -281,8 +283,11 @@ serve(async (req) => {
     });
   }
 
-  // 3b. MODE SEND : envoie à tous les destinataires selon audience.
-  if (nl.status === "sent") {
+  // 3b. MODE SEND / RESEND : envoie à tous les destinataires selon audience.
+  // Le 1er envoi (send) refuse une édition déjà sent ; le renvoi (resend) le
+  // permet explicitement (l'admin a confirmé). L'upsert recipients reste
+  // idempotent et le batch throttlé évite tout rate-limit Resend.
+  if (mode === "send" && nl.status === "sent") {
     return json({ success: false, error: "already_sent" }, 400);
   }
 
@@ -384,7 +389,7 @@ serve(async (req) => {
 
   return json({
     success: true,
-    mode: "send",
+    mode,
     sent_count: successCount,
     failed_count: failures.length,
     total: dedup.length,
