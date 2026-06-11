@@ -44,8 +44,17 @@ arrive très bientôt » géré partout).
 
 ## 2. Ce qui reste à FAIRE
 
-### 🔴 Gros dossier — Page « Résultat Bilan » premium (LE chantier suivant)
-Voir §3. C'est la priorité décidée par Thomas le 2026-06-11.
+### 🟢 Gros dossier — Page « Résultat Bilan » premium : Phases 1 + 2 LIVRÉES dev
+**Phase 1 (commit 89c165a)** : `online_bilans.result_token` + edge
+`get-online-bilan-results` + page `/resultat-bilan/:token` (9 sections, prix
+réels DB, témoignages approved) + bouton « 🔗 Lien Résultat » dans le CRM.
+**Phase 2 (commit ef0a71e)** : caisse directe Square multi-fournisseur —
+`coach_payment_settings` (credentials par coach, own-row RLS) + `bilan_orders`
++ edge `create-payment-link` (prix serveur, fallback gracieux) + edge
+`square-payment-webhook` (signature HMAC multi-coach, paid + push 💶) + carte
+« 💳 Encaissement direct » dans Paramètres > Profil + retour `?paid=1` 🎉.
+**Reste à Thomas** : credentials Square (token/location/merchant/signature key
++ webhook payment.updated), recette dev, merge prod + annonce.
 
 ### 🟠 Chantier qualif — parcours d'onboarding post-lead (après la page Résultat)
 Page dédiée enchaînée après la proposition :
