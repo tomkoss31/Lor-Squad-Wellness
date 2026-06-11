@@ -27,6 +27,55 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Noaly (ONLINE-A 2026-06-10) : analyse IA du bilan. Même secret modèle que
+// l'edge noaly. Sans ANTHROPIC_API_KEY → analyse non générée (non bloquant).
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+const NOALY_MODEL =
+  Deno.env.get("NOALY_MODEL") ?? Deno.env.get("LORSQUAD_AI_MODEL") ?? "claude-opus-4-8";
+
+const NOALY_BILAN_SYSTEM = `Tu es Noaly, l'assistante bien-être de La Base 360. Un prospect vient de remplir un bilan nutrition en ligne et attend un retour personnalisé à l'écran.
+Tu lui écris une analyse CARRÉE et chaleureuse, structurée en 3 temps :
+1) Ce que tu observes de positif chez lui (1-2 points concrets tirés de ses réponses).
+2) LA priorité nutrition n°1 pour lui — une direction claire et actionnable (pas une liste).
+3) Une phrase qui donne envie d'aller plus loin : son coach va le recontacter pour construire ça ensemble.
+RÈGLES STRICTES : angle 100% nutrition/bien-être ; JAMAIS de marque ni de nom de produit (pas d'Herbalife, pas de complément nommé) ; JAMAIS de promesse de perte de poids chiffrée, de diagnostic ou de conseil médical (si un point semble médical, invite à en parler à un professionnel) ; tutoiement, bienveillant, 6 à 9 lignes, 2-3 emojis max.
+Termine en orientant vers « ton coach te recontacte très vite pour construire ton plan ensemble ».
+Tu réponds UNIQUEMENT avec le texte de l'analyse (pas de préambule, pas de titre).`;
+
+async function generateNoalyBilanAnalysis(summary: string): Promise<string | null> {
+  if (!ANTHROPIC_API_KEY) return null;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: AbortSignal.timeout(12000),
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: NOALY_MODEL,
+        max_tokens: 700,
+        system: NOALY_BILAN_SYSTEM,
+        messages: [{ role: "user", content: summary }],
+      }),
+    });
+    if (!res.ok) {
+      console.warn("[submit-online-bilan] Noaly", res.status, (await res.text()).slice(0, 120));
+      return null;
+    }
+    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const text = (data.content ?? [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("")
+      .trim();
+    return text || null;
+  } catch (e) {
+    console.warn("[submit-online-bilan] Noaly non critique:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -317,10 +366,48 @@ serve(async (req) => {
       console.error("[submit-online-bilan] Notif non critique:", notifErr);
     }
 
+    // ── Analyse Noaly (ONLINE-A) : 1× à la soumission, stockée + renvoyée.
+    // Non bloquant : si pas de clé / erreur / timeout → null, le bilan reste OK
+    // et la page résultats retombe sur le verdict déterministe.
+    let aiAnalysis: string | null = null;
+    if (ANTHROPIC_API_KEY) {
+      const p = (body.payload ?? {}) as Record<string, unknown>;
+      const objLabels = objectives.map((o) => objectiveLabel(o)).join(", ");
+      const summary =
+        `Prénom : ${firstName}\n` +
+        (age ? `Âge : ${age}\n` : "") +
+        `Objectif(s) : ${objLabels || "non précisé"}\n` +
+        (weightLossKg ? `Objectif perte : ${weightLossKg} kg\n` : "") +
+        (typeof motivation === "number" ? `Motivation : ${motivation}/10\n` : "") +
+        (p.meals_balanced ? `Repas équilibrés : ${p.meals_balanced}\n` : "") +
+        (p.water_per_day ? `Eau/jour : ${p.water_per_day}\n` : "") +
+        (p.coffee_per_day ? `Cafés/jour : ${p.coffee_per_day}\n` : "") +
+        (p.soda_per_day ? `Sodas/jour : ${p.soda_per_day}\n` : "") +
+        (p.alcohol_per_week ? `Alcool/semaine : ${p.alcohol_per_week}\n` : "") +
+        (p.sleep_quality ? `Qualité sommeil : ${p.sleep_quality}\n` : "") +
+        (p.sleep_hours ? `Heures de sommeil : ${p.sleep_hours}\n` : "") +
+        (p.stress_level ? `Stress : ${p.stress_level}\n` : "") +
+        (p.active_daily !== undefined ? `Actif au quotidien : ${p.active_daily ? "oui" : "non"}\n` : "") +
+        (p.sport_frequency ? `Sport : ${p.sport_frequency}\n` : "") +
+        (p.current_actions_detail ? `Ce qu'il fait déjà : ${p.current_actions_detail}\n` : "") +
+        `\nRédige son analyse personnalisée.`;
+      aiAnalysis = await generateNoalyBilanAnalysis(summary);
+      if (aiAnalysis) {
+        await sb
+          .from("online_bilans")
+          .update({ ai_analysis: aiAnalysis, ai_analysis_at: new Date().toISOString() })
+          .eq("id", (inserted as { id: string }).id)
+          .then(({ error }) => {
+            if (error) console.warn("[submit-online-bilan] update ai_analysis:", error.message);
+          });
+      }
+    }
+
     return json({
       success: true,
       id: (inserted as { id: string }).id,
       coach_resolved: !!coachUserId,
+      ai_analysis: aiAnalysis,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";

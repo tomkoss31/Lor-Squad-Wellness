@@ -55,6 +55,8 @@ export function BilanOnlineResultatsPage() {
 
   const [input, setInput] = useState<ScoringInput | null>(null);
   const [missing, setMissing] = useState(false);
+  // ONLINE-A : analyse personnalisée de Noaly (si générée à la soumission).
+  const [noalyAnalysis, setNoalyAnalysis] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -65,6 +67,7 @@ export function BilanOnlineResultatsPage() {
       }
       const parsed = JSON.parse(raw) as ScoringInput;
       setInput(parsed);
+      setNoalyAnalysis(sessionStorage.getItem(`ls-bilan-noaly-${slug || "none"}`));
     } catch {
       setMissing(true);
     }
@@ -144,6 +147,50 @@ export function BilanOnlineResultatsPage() {
             {results.verdict.body}
           </p>
         </div>
+
+        {/* === Analyse personnalisée de Noaly (ONLINE-A) === */}
+        {noalyAnalysis ? (
+          <div
+            className="ps-fade-in"
+            style={{
+              maxWidth: 520,
+              margin: "0 auto 30px",
+              padding: "18px 20px",
+              borderRadius: 18,
+              background:
+                "linear-gradient(135deg, color-mix(in srgb, var(--teal) 14%, transparent), color-mix(in srgb, var(--violet) 12%, transparent))",
+              border: "0.5px solid color-mix(in srgb, var(--teal) 32%, transparent)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 10,
+                fontFamily: PUBLIC_FONTS.mono,
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--teal)",
+              }}
+            >
+              <span aria-hidden="true">✨</span> Ton analyse par Noaly
+            </div>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--cream)",
+                lineHeight: 1.65,
+                whiteSpace: "pre-wrap",
+                margin: 0,
+                fontFamily: PUBLIC_FONTS.body,
+              }}
+            >
+              {noalyAnalysis}
+            </p>
+          </div>
+        ) : null}
 
         {/* === Score global + radar === */}
         <div style={{
