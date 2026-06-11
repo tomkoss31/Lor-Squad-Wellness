@@ -708,6 +708,10 @@ avec `supabase functions deploy <name>`.
 | `formation-relay-to-admin` | fetch front (coach) | Escalade question admin |
 | `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
+| `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis) |
+| `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
+| `create-payment-link` | fetch front (page publique) | Caisse directe : lien Square quick_pay, prix serveur (no-verify-jwt) |
+| `square-payment-webhook` | webhook Square | payment.updated → bilan_orders paid + push coach (auth = signature HMAC) |
 
 Toute nouvelle edge function = ajouter ici.
 
