@@ -36,8 +36,8 @@ export interface NewsletterCompileInput {
   // 'public' = page web /news/:slug → cache sections privées
   // 'email'  = envoi destinataires → tout visible (pas de paywall)
   mode: "public" | "email";
-  bilanCtaUrl?: string; // /bilan-online/admin par défaut
-  businessUrl?: string; // /business avec UTM
+  bilanCtaUrl?: string; // /bilan-online/thomas (coach attribué) + UTM
+  businessUrl?: string; // /rejoindre?ref=<id coach> + UTM
   unsubUrl?: string;    // pour footer email
   // Étape 8.10 : pour détecter les variantes saisonnières des CTAs
   sentAt?: string | null;
@@ -256,7 +256,8 @@ export function compileNewsletterHtml(input: NewsletterCompileInput): string {
     .join("");
 
   // CTA Business final (variant saisonnier étape 8.10)
-  const ctaBusinessUrl = input.businessUrl ?? "https://labase360.fr/business";
+  // Défaut → tunnel recrutement /rejoindre?ref=<id coach Thomas> (fix 2026-06-11).
+  const ctaBusinessUrl = input.businessUrl ?? "https://labase360.fr/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423";
   const ctasGlobal = CTAS[detectSeasonDeno(input.sentAt, input.templateKey)];
   const ctaBusiness = `<section style="margin:24px 20px;padding:22px 20px;background:linear-gradient(135deg,#0F766E 0%,#2DD4BF 100%);border-radius:16px;color:white;text-align:center;box-shadow:0 8px 24px rgba(13,118,110,0.25);">
     <div style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.18);margin-bottom:12px;">${escapeHtml(ctasGlobal.business.tag)}</div>
