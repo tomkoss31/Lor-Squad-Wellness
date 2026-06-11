@@ -89,20 +89,31 @@ cas »), (2) l'**éduque** avec les 5 stratégies, (3) **propose le programme**
 (valeur + bienfaits + prix), (4) donne **l'envie de démarrer ici** (communauté,
 accompagnement, app sport). C'est l'amont visuel du **chantier qualif** (§2).
 
-### 3.3 Structure de page proposée (à valider)
-1. **Hero perso** — « Salut [Prénom], voici l'analyse de ton bilan » + branding
-   coach (prénom, photo/club). Ton chaleureux. Thème public premium.
-2. **Ton bilan en un coup d'œil** — données réelles du client (objectif, poids,
-   composition si dispo). Honnête, pas de chiffres promis.
-3. **L'analyse de Noaly** — la synthèse personnalisée (réutilise
-   `ai_analysis` / `bilan_analysis`) posée sur le squelette fixe.
-4. **Tes 5 stratégies** — petit-déj / collations / repas / hydratation / activité
-   (contenu vidéo en annexe), avec mise en avant des 1-2 priorités du client.
-5. **La proposition / Le programme** — ce que ça apporte, bienfaits, **prix**,
-   ce qui est inclus.
-6. **Pourquoi démarrer avec nous** — groupes / communauté, « we do »
-   (accompagnement), **app de coaching sport**, défi 21 jours.
-7. **CTA** — démarrer / prendre RDV / rejoindre (porte d'entrée du chantier qualif).
+### 3.3 Structure de page — ✅ maquette V2 validée visuellement (2026-06-11)
+Maquette : `public/mockups/resultat-bilan-v1.html` (thème public dark, Sora/
+Inter/Syne, gradients teal/violet/coral). Ouvrable sur l'URL dev → `/mockups/
+resultat-bilan-v1.html`. **9 sections :**
+1. **Hero perso** — « Salut [Prénom], voici ce que ton bilan révèle » + coach.
+2. **Ton bilan en un coup d'œil** — données réelles (objectif, poids, profil,
+   signal clé). Honnête, pas de chiffres promis.
+3. **✨ L'analyse de Noaly** — synthèse perso (réutilise `ai_analysis` /
+   `bilan_analysis`).
+4. **Tes 5 stratégies** — petit-déj / collations (marquées « Ta priorité ») /
+   assiette / hydratation / activité + défi 21 j.
+5. **Les programmes** — vraie échelle alignée sur `src/data/programs.ts` :
+   **Découverte 159 € (prix d'appel)** / **Premium 234 € (best-seller)** /
+   **Booster dès 277 €**. ⚠️ **Règle durée** (Thomas) : ce sont des **packs
+   produits à prix fixe**, PAS des abonnements mensuels — ne jamais afficher
+   « /mois ». Durée d'un pack = ajustée au rythme du client, pas imposée.
+   **Travail commercial des prix d'appel / packs encore à faire avec Thomas.**
+6. **Pourquoi démarrer avec nous** — communauté / « We Do » / app sport / suivi.
+7. **Témoignages** — placeholder ; **brancher la section dédiée de Thomas**
+   (carrousel `TestimonialsCarousel` existant).
+8. **FAQ** — 5 questions (produits / résultats / repas / saveur / suivi).
+9. **CTA** — « Je démarre » + « Réserver un appel » (porte d'entrée chantier qualif).
+
+> Validé Thomas : rendu « très bien », ton chaleureux OK. Restent : finaliser le
+> commercial des programmes/prix, et brancher témoignages + données DB au build.
 
 ### 3.4 Décisions à trancher avant de coder
 - **Source / lien** : la page est rattachée à QUEL bilan ? online (`online_bilans`)
