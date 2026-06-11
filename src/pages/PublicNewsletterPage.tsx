@@ -86,8 +86,11 @@ export function PublicNewsletterPage() {
   const [leadPopupOpen, setLeadPopupOpen] = useState(false);
 
   // Build CTA URLs avec UTM (slug = utm_campaign)
-  const bilanUrl = `https://labase360.fr/bilan-online/admin?utm_source=newsletter&utm_medium=web&utm_campaign=${slug ?? "unknown"}`;
-  const businessUrl = `https://labase360.fr/business?utm_source=newsletter&utm_medium=web&utm_campaign=${slug ?? "unknown"}&leadcapture=1`;
+  // Fix 2026-06-11 : bilan attribué au coach "thomas" (le slug "admin" ne
+  // résolvait aucun coach → lead non attribué). Opportunité → tunnel /rejoindre
+  // avec ?ref (id coach) au lieu de /business.
+  const bilanUrl = `https://labase360.fr/bilan-online/thomas?utm_source=newsletter&utm_medium=web&utm_campaign=${slug ?? "unknown"}`;
+  const businessUrl = `https://labase360.fr/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423&utm_source=newsletter&utm_medium=web&utm_campaign=${slug ?? "unknown"}`;
 
   useEffect(() => {
     if (!slug) return;

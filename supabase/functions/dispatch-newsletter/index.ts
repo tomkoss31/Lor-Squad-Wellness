@@ -260,8 +260,10 @@ serve(async (req) => {
     slug: nl.slug,
     sections,
     mode: "email",
-    bilanCtaUrl: "https://labase360.fr/bilan-online/admin?utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug,
-    businessUrl: "https://labase360.fr/business?utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug + "&leadcapture=1",
+    // Fix 2026-06-11 : bilan → coach "thomas" (slug "admin" ne résolvait aucun
+    // coach). Opportunité → tunnel /rejoindre?ref=<id coach> au lieu de /business.
+    bilanCtaUrl: "https://labase360.fr/bilan-online/thomas?utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug,
+    businessUrl: "https://labase360.fr/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423&utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug,
     sentAt: nl.sent_at,
     templateKey: nl.template_key,
   });
