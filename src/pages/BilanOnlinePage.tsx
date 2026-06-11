@@ -380,6 +380,14 @@ export function BilanOnlinePage() {
           `ls-bilan-meta-${slug || "none"}`,
           JSON.stringify(meta),
         );
+        // ONLINE-A : analyse Noaly renvoyée par l'edge (null si pas de clé) —
+        // affichée sur la page résultats au-dessus du verdict déterministe.
+        const noaly = (data as { ai_analysis?: string | null }).ai_analysis;
+        if (noaly) {
+          sessionStorage.setItem(`ls-bilan-noaly-${slug || "none"}`, noaly);
+        } else {
+          sessionStorage.removeItem(`ls-bilan-noaly-${slug || "none"}`);
+        }
       } catch { /* sessionStorage indispo / quota */ }
 
       const params = new URLSearchParams({ firstName: form.first_name.trim() });
