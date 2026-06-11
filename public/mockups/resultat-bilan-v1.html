@@ -53,7 +53,9 @@
   section { padding-top: 56px; }
   .divider { height: 1px; background: var(--hair); margin-top: 56px; }
   .grid { display: grid; gap: 14px; }
-  @media (min-width: 620px) { .g2 { grid-template-columns: 1fr 1fr; } .g4 { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 620px) { .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); } }
+  .faq-q { font-family: "Sora", sans-serif; font-weight: 600; font-size: 15.5px; }
+  .price-tag { font-family: "Sora", sans-serif; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -174,39 +176,60 @@
 
   <div class="divider"></div>
 
-  <!-- ░░░ 5 · LA PROPOSITION / LE PROGRAMME ░░░ -->
+  <!-- ░░░ 5 · LA PROPOSITION / LES PROGRAMMES ░░░ -->
   <section>
     <div class="eyebrow">Ma proposition pour toi</div>
-    <h2 class="sec-title" style="margin:12px 0 8px;">Le programme <span class="grad">Équilibre</span></h2>
-    <p class="muted" style="font-size:15.5px;max-width:560px;margin-bottom:24px;">Pensé pour ton objectif perte de poids, sans frustration, en remettant simplement les bonnes briques au bon moment.</p>
+    <h2 class="sec-title" style="margin:12px 0 8px;">Le programme qui <span class="grad">te correspond</span></h2>
+    <p class="muted" style="font-size:15.5px;max-width:580px;margin-bottom:24px;">Pour ton objectif perte de poids, trois niveaux. On démarre où tu te sens prête — et on fait évoluer ton pack selon tes résultats.</p>
 
-    <div class="card" style="border:1px solid rgba(167,139,250,0.32);">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div style="font-family:'Sora';font-weight:700;font-size:20px;">Pack démarrage Équilibre</div>
-        <div><span style="font-family:'Sora';font-weight:800;font-size:30px;">119&nbsp;€</span><span class="muted" style="font-size:14px;"> / mois*</span></div>
+    <div class="grid g3">
+      <!-- Prix d'appel -->
+      <div class="card" style="display:flex;flex-direction:column;">
+        <div class="muted" style="font-size:12.5px;font-weight:600;">Pour démarrer en douceur</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:19px;margin-top:4px;">Découverte</div>
+        <div style="margin:12px 0;"><span class="price-tag" style="font-size:30px;">159&nbsp;€</span></div>
+        <ul style="list-style:none;display:grid;gap:8px;margin-top:2px;flex:1;">
+          <li class="soft" style="font-size:14px;">🥤 Formula 1 (tes petits-déj)</li>
+          <li class="soft" style="font-size:14px;">🍵 Extrait de thé — énergie douce</li>
+          <li class="soft" style="font-size:14px;">🌿 Aloé — digestion & transit</li>
+        </ul>
+        <div class="muted" style="font-size:12.5px;margin-top:14px;">Le pack idéal pour sentir la différence sur tes 2 priorités.</div>
       </div>
-      <div style="height:1px;background:var(--hair);margin:18px 0;"></div>
-      <div class="grid g2">
-        <div>
-          <div class="kicker" style="margin-bottom:10px;">Ce que ça t'apporte</div>
-          <ul style="list-style:none;display:grid;gap:9px;">
-            <li class="soft" style="font-size:14.5px;">✅ Plus d'énergie dès le matin, fini les coups de mou</li>
-            <li class="soft" style="font-size:14.5px;">✅ Des repas simples, rassasiants, sans calcul</li>
-            <li class="soft" style="font-size:14.5px;">✅ Une perte de poids progressive et durable</li>
-            <li class="soft" style="font-size:14.5px;">✅ Tu gardes ta masse musculaire</li>
-          </ul>
-        </div>
-        <div>
-          <div class="kicker" style="margin-bottom:10px;">Ce qui est inclus</div>
-          <ul style="list-style:none;display:grid;gap:9px;">
-            <li class="soft" style="font-size:14.5px;">🥤 Tes petits-déjeuners nutritionnels du mois</li>
-            <li class="soft" style="font-size:14.5px;">🍎 Tes collations structurées</li>
-            <li class="soft" style="font-size:14.5px;">📅 Ton suivi perso avec moi (pesées, ajustements)</li>
-            <li class="soft" style="font-size:14.5px;">📱 L'accès à l'app + le défi 21 jours</li>
-          </ul>
-        </div>
+
+      <!-- Best seller (highlight) -->
+      <div class="card" style="display:flex;flex-direction:column;border:1px solid var(--violet);background:linear-gradient(180deg, rgba(167,139,250,0.10), rgba(251,247,240,0.02));position:relative;">
+        <div style="position:absolute;top:-11px;left:22px;background:var(--grad-cta);color:#06241f;font-family:'Sora';font-weight:700;font-size:11px;letter-spacing:0.5px;padding:4px 11px;border-radius:999px;">★ BEST-SELLER</div>
+        <div class="muted" style="font-size:12.5px;font-weight:600;">Le choix le plus complet</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:19px;margin-top:4px;">Premium</div>
+        <div style="margin:12px 0;"><span class="price-tag" style="font-size:30px;">234&nbsp;€</span></div>
+        <ul style="list-style:none;display:grid;gap:8px;margin-top:2px;flex:1;">
+          <li class="soft" style="font-size:14px;">✨ Tout le pack Découverte</li>
+          <li class="soft" style="font-size:14px;">💪 + Boisson protéinée (satiété)</li>
+          <li class="soft" style="font-size:14px;">📅 Suivi perso renforcé avec moi</li>
+        </ul>
+        <div class="muted" style="font-size:12.5px;margin-top:14px;">Le meilleur équilibre résultats / accompagnement.</div>
       </div>
-      <p class="muted" style="font-size:12px;margin-top:18px;">*Tarif indicatif — le détail exact de ton pack est calculé avec toi selon tes besoins réels.</p>
+
+      <!-- Booster -->
+      <div class="card" style="display:flex;flex-direction:column;">
+        <div class="muted" style="font-size:12.5px;font-weight:600;">Pour accélérer</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:19px;margin-top:4px;">Booster</div>
+        <div style="margin:12px 0;"><span class="price-tag" style="font-size:30px;">dès 277&nbsp;€</span></div>
+        <ul style="list-style:none;display:grid;gap:8px;margin-top:2px;flex:1;">
+          <li class="soft" style="font-size:14px;">✨ Tout le pack Premium</li>
+          <li class="soft" style="font-size:14px;">🔥 + Ciblé ventre plat ou énergie</li>
+          <li class="soft" style="font-size:14px;">🚀 Pour un coup d'accélérateur</li>
+        </ul>
+        <div class="muted" style="font-size:12.5px;margin-top:14px;">Quand tu veux pousser un cran plus loin.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;display:flex;align-items:flex-start;gap:12px;background:rgba(45,212,191,0.05);border-color:rgba(45,212,191,0.2);">
+      <span style="font-size:20px;">⏳</span>
+      <div>
+        <div style="font-weight:600;font-size:14.5px;">Combien de temps dure un pack ?</div>
+        <p class="muted" style="font-size:13.5px;margin-top:4px;">Ça dépend de ton rythme et de comment tu l'utilises — on le calcule ensemble lors de ton démarrage, pas de durée imposée. L'idée : que ton pack te serve vraiment, sans gaspillage.</p>
+      </div>
     </div>
   </section>
 
@@ -238,7 +261,62 @@
     </div>
   </section>
 
-  <!-- ░░░ 7 · CTA ░░░ -->
+  <div class="divider"></div>
+
+  <!-- ░░░ 7 · TÉMOIGNAGES ░░░ -->
+  <section>
+    <div class="eyebrow">Ils ont commencé comme toi</div>
+    <h2 class="sec-title" style="margin:12px 0 22px;">Ce qu'en disent <span class="grad">les autres</span></h2>
+    <div class="grid g2">
+      <div class="card">
+        <div style="color:var(--gold-soft);font-size:15px;margin-bottom:8px;">★★★★★</div>
+        <p class="soft" style="font-size:14.5px;font-style:italic;">« J'ai retrouvé de l'énergie en 2 semaines, et surtout je ne grignote plus le soir. Thomas est dispo dès que j'ai une question. »</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--coral),var(--violet));display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:700;font-size:13px;color:#2a0d12;">S</div>
+          <div><div style="font-size:13.5px;font-weight:600;">Sandra, 41 ans</div><div class="muted" style="font-size:12px;">−6 kg en 3 mois</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:var(--gold-soft);font-size:15px;margin-bottom:8px;">★★★★★</div>
+        <p class="soft" style="font-size:14.5px;font-style:italic;">« Le groupe motive énormément. On se sent accompagné, jamais jugé. Les recettes sont simples, même avec mon boulot. »</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--violet));display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:700;font-size:13px;color:#06241f;">K</div>
+          <div><div style="font-size:13.5px;font-weight:600;">Karim, 36 ans</div><div class="muted" style="font-size:12px;">Objectif tenu, +1 défi 21 j</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:14px;text-align:center;">↪ Emplacement de ta section témoignages dédiée (carrousel existant à brancher ici).</div>
+  </section>
+
+  <!-- ░░░ 8 · FAQ ░░░ -->
+  <section>
+    <div class="eyebrow">Tout est clair ?</div>
+    <h2 class="sec-title" style="margin:12px 0 22px;">Tes questions, <span class="grad">mes réponses</span></h2>
+    <div style="display:grid;gap:12px;">
+      <div class="card">
+        <div class="faq-q">🥤 C'est des produits « miracle » ?</div>
+        <p class="muted" style="font-size:14px;margin-top:7px;">Non. Ce sont des compléments nutritionnels qui remplacent un petit-déj ou une collation mal équilibrés. Le vrai moteur, c'est tes habitudes — moi je t'aide à les replacer.</p>
+      </div>
+      <div class="card">
+        <div class="faq-q">⏱ En combien de temps des résultats ?</div>
+        <p class="muted" style="font-size:14px;margin-top:7px;">Beaucoup ressentent plus d'énergie dès les premières semaines. Pour le poids, on vise du progressif et durable — pas l'effet yo-yo. On mesure ensemble.</p>
+      </div>
+      <div class="card">
+        <div class="faq-q">🍽 Je dois arrêter de manger normalement ?</div>
+        <p class="muted" style="font-size:14px;margin-top:7px;">Pas du tout. Tu gardes de vrais repas (l'assiette équilibrée du plan). On structure juste le matin et les collations, là où ça pèche le plus.</p>
+      </div>
+      <div class="card">
+        <div class="faq-q">😋 Et si je n'aime pas le goût ?</div>
+        <p class="muted" style="font-size:14px;margin-top:7px;">Tu choisis ta saveur au démarrage (vanille, chocolat, cookies…). Et si une ne te plaît pas, on en change, simplement.</p>
+      </div>
+      <div class="card">
+        <div class="faq-q">🤝 Je suis suivie comment ?</div>
+        <p class="muted" style="font-size:14px;margin-top:7px;">Par moi, directement : messages, ajustements, pesées, et le groupe pour la motivation. Tu n'es jamais seule avec un PDF.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░░ 9 · CTA ░░░ -->
   <section>
     <div class="card" style="text-align:center;border:1px solid var(--hair-strong);background:linear-gradient(180deg, rgba(45,212,191,0.07), rgba(167,139,250,0.05));padding:40px 26px;">
       <h2 style="font-family:'Sora';font-weight:800;font-size:clamp(24px,4.6vw,32px);line-height:1.15;">Prête à démarrer, <span class="grad">Marie</span> ?</h2>
