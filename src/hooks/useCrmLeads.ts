@@ -60,6 +60,8 @@ export interface CrmLead {
   extra: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
   relanceDue: boolean;
+  /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
+  resultToken: string | null;
   createdAt: string;
   notes: string | null;
 }
@@ -213,7 +215,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, created_at, notes",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -289,6 +291,7 @@ export function useCrmLeads() {
               !row.relance_done_at &&
               new Date(row.relance_due_at as string).getTime() <= now,
           ),
+          resultToken: (row.result_token as string | null) ?? null,
           createdAt: row.created_at as string,
           notes: (row.notes as string | null) ?? null,
         });
@@ -315,6 +318,7 @@ export function useCrmLeads() {
             typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
           extra: null,
           relanceDue: false,
+          resultToken: null,
           createdAt: row.created_at as string,
           notes: (row.notes as string | null) ?? null,
         });
@@ -336,6 +340,7 @@ export function useCrmLeads() {
           parrainClientId: (row.from_client_id as string | null) ?? null,
           extra: null,
           relanceDue: false,
+          resultToken: null,
           createdAt: row.created_at as string,
           notes: null,
         });
@@ -360,6 +365,7 @@ export function useCrmLeads() {
           parrainClientId: row.referrer_client_id,
           extra: row.relationship ? RELATIONSHIP_LABELS[row.relationship] ?? row.relationship : null,
           relanceDue: false,
+          resultToken: null,
           createdAt: row.created_at,
           notes: row.notes ?? null,
         });

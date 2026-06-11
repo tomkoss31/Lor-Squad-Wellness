@@ -208,6 +208,11 @@ const BilanOnlineResultatsPage = lazy(() =>
     default: module.BilanOnlineResultatsPage,
   })),
 );
+const BilanResultatPremiumPage = lazy(() =>
+  import("./pages/BilanResultatPremiumPage").then((module) => ({
+    default: module.BilanResultatPremiumPage,
+  })),
+);
 const BusinessPage = lazy(() =>
   import("./pages/BusinessPage").then((module) => ({
     default: module.BusinessPage,
@@ -613,6 +618,7 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
           <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
+          <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />

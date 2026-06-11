@@ -661,6 +661,27 @@ function LeadCard({
             📂 Détails
           </button>
         ) : null}
+        {lead.resultToken ? (
+          <button
+            type="button"
+            onClick={() => {
+              recordTouch();
+              const origin = typeof window !== "undefined" ? window.location.origin : "";
+              const url = `${origin}/resultat-bilan/${lead.resultToken}`;
+              void navigator.clipboard?.writeText(url).then(() =>
+                pushToast({
+                  tone: "success",
+                  title: "Lien Résultat copié",
+                  message: "Page premium personnalisée — envoie-la à ton prospect 🌿",
+                }),
+              );
+            }}
+            style={actionBtn("var(--ls-gold)")}
+            title="Copier le lien de la page Résultat Bilan premium à envoyer au prospect"
+          >
+            🔗 Lien Résultat
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => void generateAi()}
