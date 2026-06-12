@@ -391,17 +391,15 @@ export function ClientDetailPage() {
               clientLastName={client.lastName}
               coachName={currentUser?.name ?? "Coach"}
             />
+            {/* « Suivi » = nouveau bilan DE CE client. Le « + Bilan » global
+                (/assessments/new = nouveau client) a été retiré d'ici : doublon
+                trompeur sur une fiche client existante (décision Thomas
+                2026-06-12). Il reste dans la sidebar pour démarrer un prospect. */}
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
-            >
-              📋 Suivi
-            </Link>
-            <Link
-              to="/assessments/new"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
             >
-              + Bilan
+              📋 Nouveau suivi
             </Link>
             {/* Menu ⋮ : actions rares repliées (désengorgement 2026-06-12).
                 Présentation client + Partage public retirés (décision Thomas). */}
