@@ -35,7 +35,7 @@ import {
   getLastAssessmentTime,
   exportClientsCsv,
 } from "../components/clients/clientsListHelpers";
-import { BentoStatsClients } from "../components/clients/BentoStatsClients";
+import { ClientsFiltersMenu } from "../components/clients/ClientsFiltersMenu";
 import { ClientsMobileView } from "../components/clients/ClientsMobileView";
 import type { FiltersSheetState } from "../components/clients/FiltersBottomSheet";
 import { getInitials } from "../lib/utils/getInitials";
@@ -351,6 +351,20 @@ export function ClientsPage() {
 
   // Compteurs pour les tabs mobile (réutilise les memo desktop existants)
   const leadsCount = 0; // TODO : récupérer count depuis useOnlineBilans si nécessaire (charge async côté LeadsKanban)
+
+  // Options responsables pour le menu Filtres (refonte archi 2026-06-12).
+  const ownerOptionsForMenu = ownerTabs.map((o) => ({
+    id: o.id,
+    name: o.name,
+    initials: getInitials(o.name),
+    count: getPortfolioMetrics(
+      o,
+      visibleClients,
+      visibleFollowUps,
+      users,
+      o.role === "referent" ? "network" : "personal",
+    ).clients.length,
+  }));
   const testimonialsCount = 0; // TODO : récupérer count depuis AdminTestimonialsPage
 
   // Owners pour le bottom sheet (admin only)
@@ -467,305 +481,63 @@ export function ClientsPage() {
 
       {activeTab === "clients" && (<>
 
-      {/* STATS PREMIUM V3 BENTO (refacto 2026-05-19 — extrait en BentoStatsClients) */}
-      <BentoStatsClients
-        visibleCount={filteredClients.length}
-        ownersCount={ownerTabs.length}
-        relanceCount={visibleRelanceCount}
-      />
-
-      {/* CHIPS FILTRES RAPIDES + TOGGLE VUE (Chantier C.1+C.2, 2026-04-29) */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 280 }}>
-          <QuickFiltersBar
-            activeFilter={quickFilter}
-            onChange={handleQuickFilterChange}
-            clients={clientsBeforeQuickFilter}
-            followUps={visibleFollowUps}
-          />
-        </div>
-        <div style={{ display: "flex", gap: 4, padding: 3, background: "var(--ls-surface2)", borderRadius: 10, border: "0.5px solid var(--ls-border)", marginTop: 18 }}>
-          <button
-            type="button"
-            onClick={() => handleViewModeChange("list")}
-            aria-pressed={viewMode === "list"}
-            title="Vue liste"
-            style={{
-              padding: "6px 12px",
-              borderRadius: 7,
-              border: "none",
-              fontSize: 11,
-              fontWeight: 500,
-              fontFamily: "DM Sans, sans-serif",
-              cursor: "pointer",
-              background: viewMode === "list" ? "var(--ls-surface)" : "transparent",
-              color: viewMode === "list" ? "var(--ls-text)" : "var(--ls-text-muted)",
-              boxShadow: viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
-            }}
-          >
-            ☰ Liste
-          </button>
-          <button
-            type="button"
-            onClick={() => handleViewModeChange("kanban")}
-            aria-pressed={viewMode === "kanban"}
-            title="Vue kanban"
-            style={{
-              padding: "6px 12px",
-              borderRadius: 7,
-              border: "none",
-              fontSize: 11,
-              fontWeight: 500,
-              fontFamily: "DM Sans, sans-serif",
-              cursor: "pointer",
-              background: viewMode === "kanban" ? "var(--ls-surface)" : "transparent",
-              color: viewMode === "kanban" ? "var(--ls-text)" : "var(--ls-text-muted)",
-              boxShadow: viewMode === "kanban" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
-            }}
-          >
-            ⚏ Kanban
-          </button>
-        </div>
+      {/* Mini-résumé (remplace les 3 grosses cartes KPI — refonte archi 2026-06-12) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginTop: 2 }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 999, background: "var(--ls-surface)", border: "0.5px solid var(--ls-border)", fontSize: 13, fontWeight: 600, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+          <span><strong>{filteredClients.length}</strong> <span style={{ color: "var(--ls-text-muted)", fontWeight: 500 }}>clients</span></span>
+          {visibleRelanceCount > 0 ? (
+            <>
+              <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--ls-border)" }} />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#FB7185" }}>🔥 <strong>{visibleRelanceCount}</strong> <span style={{ fontWeight: 500 }}>à reprendre</span></span>
+            </>
+          ) : null}
+        </span>
       </div>
 
-      {/* C V2 (2026-04-28) : sort selector pour la vue liste. */}
-      {viewMode === "list" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: "var(--ls-text-muted)", letterSpacing: 0.4 }}>
-            Trier :
-          </span>
-          {[
-            { id: "smart", label: "Intelligent" },
-            { id: "name-asc", label: "Nom A→Z" },
-            { id: "last-bilan-desc", label: "Dernier bilan ↓" },
-            { id: "last-bilan-asc", label: "Dernier bilan ↑" },
-            { id: "pv-month-desc", label: "PV ce mois ↓" },
-          ].map((opt) => {
-            const active = sortKey === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setSortKey(opt.id as SortKey)}
-                style={{
-                  padding: "5px 11px",
-                  border: active
-                    ? "0.5px solid var(--ls-gold)"
-                    : "0.5px solid var(--ls-border)",
-                  background: active
-                    ? "color-mix(in srgb, var(--ls-gold) 12%, transparent)"
-                    : "var(--ls-surface)",
-                  color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                  borderRadius: 7,
-                  fontSize: 11,
-                  fontFamily: "DM Sans, sans-serif",
-                  fontWeight: active ? 700 : 500,
-                  cursor: "pointer",
-                }}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* BARRE RECHERCHE + FILTRE STATUT */}
-      <div className="clients-search-bar" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 220, position: "relative" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5"
-            style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
+      {/* LIGNE D'ACTION UNIQUE : recherche + Filtres + vue (refonte archi 2026-06-12) */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 240px", minWidth: 200, position: "relative" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Nom, ville, programme..."
-            style={{
-              width: "100%", padding: "11px 14px 11px 36px",
-              border: "1px solid var(--ls-border)", borderRadius: 10,
-              fontFamily: "DM Sans, sans-serif", fontSize: 14,
-              background: "var(--ls-input-bg)", color: "var(--ls-text)",
-              outline: "none",
-            }}
+            placeholder="Rechercher un client, un programme..."
+            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "0 14px 0 36px", border: "1px solid var(--ls-border)", borderRadius: 12, fontFamily: "DM Sans, sans-serif", fontSize: 14, background: "var(--ls-input-bg)", color: "var(--ls-text)", outline: "none" }}
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | LifecycleStatus | "fragile")}
-          data-tour-id="clients-filter-active"
-          style={{
-            padding: "11px 14px", border: "1px solid var(--ls-border)",
-            borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
-            background: "var(--ls-input-bg)", color: "var(--ls-text-muted)",
-            outline: "none", cursor: "pointer", minWidth: 180,
-          }}
-        >
-          <option value="all">Tous les statuts</option>
-          <option value="active">Actifs</option>
-          <option value="not_started">Pas démarrés</option>
-          <option value="paused">En pause</option>
-          <option value="stopped">Arrêtés</option>
-          <option value="lost">Perdus</option>
-          <option value="fragile">⚠ Fragiles</option>
-        </select>
+        <ClientsFiltersMenu
+          sortKey={sortKey}
+          onSortChange={(k) => setSortKey(k as SortKey)}
+          statusFilter={statusFilter}
+          onStatusChange={(s) => setStatusFilter(s as "all" | LifecycleStatus | "fragile")}
+          ownerFilter={ownerFilter}
+          onOwnerChange={setOwnerFilter}
+          owners={ownerOptionsForMenu}
+          allOwnersCount={visibleClients.length}
+          showResponsable={isAdmin && ownerTabs.length > 0}
+        />
+        <div style={{ display: "flex", gap: 4, padding: 3, background: "var(--ls-surface2)", borderRadius: 12, border: "0.5px solid var(--ls-border)" }}>
+          <button type="button" onClick={() => handleViewModeChange("list")} aria-pressed={viewMode === "list"} title="Vue liste"
+            style={{ padding: "7px 13px", borderRadius: 9, border: "none", fontSize: 12.5, fontWeight: 600, fontFamily: "DM Sans, sans-serif", cursor: "pointer", background: viewMode === "list" ? "var(--ls-surface)" : "transparent", color: viewMode === "list" ? "var(--ls-text)" : "var(--ls-text-muted)", boxShadow: viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none" }}>
+            ☰ Liste
+          </button>
+          <button type="button" onClick={() => handleViewModeChange("kanban")} aria-pressed={viewMode === "kanban"} title="Vue kanban"
+            style={{ padding: "7px 13px", borderRadius: 9, border: "none", fontSize: 12.5, fontWeight: 600, fontFamily: "DM Sans, sans-serif", cursor: "pointer", background: viewMode === "kanban" ? "var(--ls-surface)" : "transparent", color: viewMode === "kanban" ? "var(--ls-text)" : "var(--ls-text-muted)", boxShadow: viewMode === "kanban" ? "0 1px 3px rgba(0,0,0,0.06)" : "none" }}>
+            ⚏ Kanban
+          </button>
+        </div>
       </div>
 
-      {/* PILLS RESPONSABLES — refonte premium 2026-04-29 */}
-      {ownerTabs.length > 0 && (
-        <div>
-          <div
-            style={{
-              fontSize: 9.5,
-              letterSpacing: 1.6,
-              textTransform: "uppercase",
-              color: "var(--ls-text-hint)",
-              fontWeight: 700,
-              marginBottom: 8,
-              fontFamily: "DM Sans, sans-serif",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <span style={{ fontSize: 11 }}>👥</span> Filtrer par responsable
-          </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button
-              onClick={() => setOwnerFilter("all")}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "7px 14px",
-                borderRadius: 999,
-                background:
-                  ownerFilter === "all"
-                    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
-                    : "var(--ls-surface)",
-                border:
-                  ownerFilter === "all"
-                    ? "0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)"
-                    : "0.5px solid var(--ls-border)",
-                color: ownerFilter === "all" ? "var(--ls-teal)" : "var(--ls-text-muted)",
-                fontSize: 11.5,
-                fontWeight: ownerFilter === "all" ? 700 : 500,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                fontFamily: "DM Sans, sans-serif",
-                transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
-                boxShadow: ownerFilter === "all" ? "0 2px 8px -3px rgba(13,148,136,0.30)" : "none",
-              }}
-              onMouseEnter={(e) => {
-                if (ownerFilter !== "all") {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (ownerFilter !== "all") e.currentTarget.style.transform = "none";
-              }}
-            >
-              🌐 Toute la base
-              <span
-                style={{
-                  fontSize: 10,
-                  padding: "1px 7px",
-                  borderRadius: 999,
-                  fontWeight: 800,
-                  fontFamily: "Syne, serif",
-                  background:
-                    ownerFilter === "all" ? "var(--ls-bg)" : "var(--ls-surface2)",
-                  color: ownerFilter === "all" ? "var(--ls-teal)" : "var(--ls-text-muted)",
-                  border: ownerFilter === "all" ? "0.5px solid var(--ls-teal)" : "0.5px solid transparent",
-                }}
-              >
-                {visibleClients.length}
-              </span>
-            </button>
-
-            {ownerTabs.map((owner) => {
-              const isActive = ownerFilter === owner.id;
-              const ownerMetrics = getPortfolioMetrics(
-                owner,
-                visibleClients,
-                visibleFollowUps,
-                users,
-                owner.role === "referent" ? "network" : "personal",
-              );
-              const avatar = getOwnerAvatarColors(owner.role);
-              return (
-                <button
-                  key={owner.id}
-                  onClick={() => setOwnerFilter(owner.id)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 7,
-                    padding: "5px 14px 5px 5px",
-                    borderRadius: 999,
-                    background: isActive
-                      ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
-                      : "var(--ls-surface)",
-                    border: isActive
-                      ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
-                      : "0.5px solid var(--ls-border)",
-                    color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                    fontSize: 11.5,
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    fontFamily: "DM Sans, sans-serif",
-                    transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
-                    boxShadow: isActive ? "0 2px 8px -3px rgba(184,146,42,0.30)" : "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.transform = "none";
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: "50%",
-                      background: avatar.bg,
-                      color: avatar.text,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "Syne, serif",
-                      fontWeight: 800,
-                      fontSize: 10,
-                      letterSpacing: "-0.02em",
-                      boxShadow: isActive ? "0 0 0 2px color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "none",
-                    }}
-                  >
-                    {getInitials(owner.name)}
-                  </span>
-                  {owner.name}
-                  <span
-                    style={{
-                      fontSize: 10,
-                      padding: "1px 7px",
-                      borderRadius: 999,
-                      fontWeight: 800,
-                      fontFamily: "Syne, serif",
-                      background: isActive ? "var(--ls-bg)" : "var(--ls-surface2)",
-                      color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                      border: isActive ? "0.5px solid var(--ls-gold)" : "0.5px solid transparent",
-                    }}
-                  >
-                    {ownerMetrics.clients.length}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* CHIPS FILTRES RAPIDES (1 ligne scrollable) */}
+      <QuickFiltersBar
+        activeFilter={quickFilter}
+        onChange={handleQuickFilterChange}
+        clients={clientsBeforeQuickFilter}
+        followUps={visibleFollowUps}
+      />
 
       {/* TOOLBAR BATCH LIFECYCLE (si au moins 1 sélectionné) */}
       {selectedIds.size > 0 && (
