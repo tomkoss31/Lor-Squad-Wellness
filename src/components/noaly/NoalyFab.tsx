@@ -305,11 +305,24 @@ export function NoalyFab() {
                 </div>
               </div>
             </div>
-            {uiLog.length > 0 ? (
-              <button type="button" onClick={resetChat} style={resetBtn} title="Nouvelle conversation">
-                ↺
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {uiLog.length > 0 ? (
+                <button type="button" onClick={resetChat} style={resetBtn} title="Nouvelle conversation">
+                  ↺
+                </button>
+              ) : null}
+              {/* Bouton fermer explicite (le FAB ✕ est masqué par la bottom-nav
+                  sur iPhone — fix mobile 2026-06-12). */}
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                style={resetBtn}
+                title="Fermer Noaly"
+                aria-label="Fermer Noaly"
+              >
+                ✕
               </button>
-            ) : null}
+            </div>
           </div>
 
           <div ref={scrollRef} style={chatScroll}>

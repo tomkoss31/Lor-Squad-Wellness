@@ -9,7 +9,8 @@
 // "Voir tout" → /developpement/nouveautes
 // =============================================================================
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useAnnouncements } from "../../hooks/useAnnouncements";
@@ -22,19 +23,17 @@ export function AnnouncementBell() {
     currentUser?.id ?? null,
   );
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  // Ancre de positionnement du dropdown — portalé vers <body> pour échapper au
+  // contexte d'empilement du header mobile (backdrop-filter) qui le rendait
+  // illisible sous la topbar sur iPhone (fix 2026-06-12).
+  const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 64, right: 8 });
 
-  // Click outside fermeture
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [open]);
+  const toggleOpen = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setAnchor({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) });
+    setOpen((o) => !o);
+  };
 
   const handleAnnouncementClick = async (id: string, linkPath: string | null) => {
     await markRead(id);
@@ -45,7 +44,7 @@ export function AnnouncementBell() {
   const top = announcements.slice(0, 5);
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div style={{ position: "relative", display: "inline-flex" }}>
       {/* 2026-06-10 (retour Thomas) : la cloche s'illumine et se balance tant
           qu'il y a des nouveautés non lues — remplace la grosse card
           "Nouveautés app" retirée du hub Développement. */}
@@ -74,8 +73,9 @@ export function AnnouncementBell() {
         }
       `}</style>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         aria-label={`Nouveautés ${unreadCount > 0 ? `(${unreadCount} non lues)` : ""}`}
         className={unreadCount > 0 ? "ls-bell-unread" : undefined}
         style={bellBtn}
@@ -89,8 +89,10 @@ export function AnnouncementBell() {
         )}
       </button>
 
-      {open && (
-        <div style={dropdownStyle}>
+      {open && createPortal(
+        <>
+          <div onClick={() => setOpen(false)} aria-hidden="true" style={scrimStyle} />
+          <div style={{ ...dropdownStyle, top: anchor.top, right: anchor.right }}>
           <div style={dropdownHeader}>
             <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
               ✨ Nouveautés
@@ -150,7 +152,9 @@ export function AnnouncementBell() {
           >
             Voir tout le journal →
           </button>
-        </div>
+          </div>
+        </>,
+        document.body,
       )}
     </div>
   );
@@ -192,16 +196,24 @@ const badgeStyle: React.CSSProperties = {
 };
 
 const dropdownStyle: React.CSSProperties = {
-  position: "absolute",
-  top: "calc(100% + 8px)",
-  right: 0,
+  position: "fixed",
+  // top/right injectés dynamiquement depuis l'ancre de la cloche (portal body).
   width: "min(360px, 92vw)",
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 14,
-  boxShadow: "0 16px 48px color-mix(in srgb, var(--ls-text) 18%, transparent)",
-  zIndex: 1000,
+  boxShadow: "0 16px 48px color-mix(in srgb, var(--ls-text) 30%, transparent)",
+  zIndex: 4000,
   overflow: "hidden",
+};
+
+// Scrim transparent plein écran : capte le clic-dehors pour fermer (remplace
+// l'ancien listener mousedown, cassé par le portal).
+const scrimStyle: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 3999,
+  background: "transparent",
 };
 
 const dropdownHeader: React.CSSProperties = {

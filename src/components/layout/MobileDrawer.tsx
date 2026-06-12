@@ -76,12 +76,12 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
   const isAdmin = currentUser.role === "admin";
 
   // Sépare la navigation en sections logiques selon le mockup :
-  // - Navigation (Co-pilote, FLEX, Agenda, Messagerie, Clients, Suivi PV)
+  // - Navigation (Co-pilote, FLEX, Agenda, Messagerie, Clients, CRM, Suivi PV)
   // - Équipe (Mon équipe, admin only)
   // - Développement (Mon développement)
   // - Compte (Paramètres, Sortir)
   const navMain = navItems.filter((item) =>
-    ["/co-pilote", "/flex", "/agenda", "/messages", "/clients", "/pv"].includes(item.path),
+    ["/co-pilote", "/flex", "/agenda", "/messages", "/clients", "/crm", "/pv"].includes(item.path),
   );
   const navTeam = navItems.filter((item) => item.path === "/team");
   const navDev = navItems.filter((item) => item.path === "/developpement");
