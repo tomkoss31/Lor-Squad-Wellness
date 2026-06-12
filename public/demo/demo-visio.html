@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>La Base 360 — Script démo visio</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --muted: #5b6470;
+    --hair: #e3e0d8;
+    --teal: #0F766E;
+    --violet: #6D28D9;
+    --gold: #9a7d1f;
+    --cream: #faf8f3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.42;
+    font-size: 12px;
+    padding: 26px 30px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 21px; letter-spacing: -0.4px; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .brandbar { display:flex; align-items:baseline; justify-content:space-between; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 14px; }
+  .logo { font-weight: 800; font-size: 14px; letter-spacing: 0.5px; }
+  .logo span { color: var(--teal); }
+  .box { border: 1px solid var(--hair); border-radius: 8px; padding: 10px 13px; margin-bottom: 12px; background: var(--cream); }
+  .box h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); margin-bottom: 6px; }
+  .chk { list-style: none; display: grid; gap: 3px; }
+  .chk li { padding-left: 20px; position: relative; }
+  .chk li::before { content: "☐"; position: absolute; left: 2px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 5px 6px; }
+  td { vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--hair); }
+  .step-n { font-weight: 800; font-size: 15px; color: var(--violet); width: 26px; }
+  .t { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; width: 42px; font-weight: 600; }
+  .show { width: 38%; }
+  .show b { color: var(--ink); }
+  .say { color: #2a2f38; font-style: italic; }
+  .say::before { content: "« "; color: var(--muted); font-style: normal; }
+  .say::after { content: " »"; color: var(--muted); font-style: normal; }
+  .pill { display:inline-block; font-size:10px; font-weight:700; padding:1px 7px; border-radius:99px; background: #eef4f3; color: var(--teal); border:1px solid #cfe3e0; }
+  .rule { border:1px solid #e9d9a8; background:#fcf8ea; }
+  .rule h3 { color: var(--gold); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .foot { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--hair); color: var(--muted); font-size: 10.5px; display:flex; justify-content:space-between; }
+  .close { font-size: 12.5px; font-weight: 600; }
+  @media print {
+    body { padding: 0; font-size: 10.8px; }
+    .box { background: #fff; }
+    .rule { background: #fff; }
+    @page { margin: 12mm; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="brandbar">
+    <div>
+      <h1>Script démo — <span style="color:var(--teal)">La Base 360</span></h1>
+      <div class="sub">Visio avec Axel · ~18 min · le fil = le parcours d'un lead, du clic au paiement</div>
+    </div>
+    <div class="logo">LA&nbsp;BASE&nbsp;<span>360</span></div>
+  </div>
+
+  <div class="two">
+    <div class="box">
+      <h3>✅ Avant de lancer (5 min)</h3>
+      <ul class="chk">
+        <li>Onglets ouverts : <b>/co-pilote · /crm · un bilan client · Paramètres</b></li>
+        <li>Un <b>bilan online déjà rempli</b> (pour avoir une vraie page Résultat à montrer)</li>
+        <li>App en <b>mode sombre</b> (effet premium en partage d'écran)</li>
+        <li>Téléphone à côté = montrer l'<b>app client (PWA)</b> en vrai</li>
+        <li>Couper notifs perso · une seule fenêtre · zoom écran lisible</li>
+      </ul>
+    </div>
+    <div class="box rule">
+      <h3>🎯 Garder le fil</h3>
+      <ul class="chk">
+        <li>Tu suis <b>les 8 étapes dans l'ordre</b>, point.</li>
+        <li>Une question hors-sujet → « super question, je te montre juste après »</li>
+        <li>Tu ne cliques <b>que ce qui est dans la colonne 👆</b></li>
+        <li>Objectif : qu'Axel voie <b>le funnel complet</b>, pas chaque bouton</li>
+      </ul>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th class="t">Temps</th><th class="show">👆 Ce que tu montres</th><th>💬 Ce que tu dis (l'idée)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="step-n">1</td><td class="t">1 min</td>
+        <td class="show"><b>Intro — pas l'app.</b> Tu poses le cadre, écran encore neutre.</td>
+        <td><span class="say">Axel, je t'ai construit un outil qui prend un lead et l'amène jusqu'au client payé, sans qu'on en perde un seul en route. Je te montre le chemin complet en 15 min.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">2</td><td class="t">2 min</td>
+        <td class="show"><b>Le Co-pilote</b> <span class="pill">/co-pilote</span><br>La jauge PV, le FLEX 5-3-1, la routine du jour, les clients dormants, la météo.</td>
+        <td><span class="say">Mon tableau de bord du matin : mes PV, mes invitations/conversations/bilans, qui relancer aujourd'hui. Je sais quoi faire en un écran, je ne navigue plus à l'aveugle.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">3</td><td class="t">3 min</td>
+        <td class="show"><b>La capture de leads → le CRM</b> <span class="pill">/crm</span><br>Un seul pipeline : bilan online, page Club VIP, recos clients. Les colonnes Nouveaux → Contactés → Qualifiés → Convertis.</td>
+        <td><span class="say">Tout ce qui rentre — bilan en ligne, recommandations, Club VIP — atterrit ici, dans un seul pipeline. Plus aucun contact qui se perd dans les messages. Et chaque coach a le sien.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">4</td><td class="t">3 min</td>
+        <td class="show"><b>Le bilan + Noaly (l'IA)</b> <span class="pill">un bilan → étape Programme</span><br>Tu montres le bilan, puis le bouton <b>✨ Demande à Noaly</b> → la synthèse + le pitch à dire.</td>
+        <td><span class="say">Voilà le cœur : le bilan. Et là, notre IA — Noaly — me sort une synthèse et le pitch exact à dire au client, en m'appuyant sur ses chiffres. Elle me brief avant que je parle. Un débutant est cadré dès le jour 1.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">5</td><td class="t">3 min</td>
+        <td class="show"><b>La page Résultat premium</b> <span class="pill">🔗 Lien Résultat</span><br>Depuis le CRM, tu copies le lien et tu ouvres <b>la vraie page</b> : analyse perso, 5 stratégies, programmes, prix, témoignages.</td>
+        <td><span class="say">Après le bilan, j'envoie ce lien au prospect. Il tombe sur SA page personnalisée — son analyse, le plan, les programmes au juste prix. C'est mon meilleur closing, et il tourne tout seul, 24h/24.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">6</td><td class="t">2 min</td>
+        <td class="show"><b>La caisse directe</b> <span class="pill">bouton « Je démarre »</span><br>Tu cliques, tu montres l'arrivée sur le paiement (ou le message « ton coach t'envoie le lien » si Square pas encore branché).</td>
+        <td><span class="say">Il choisit son pack, il clique, il paie en carte en ligne — et je reçois une notif « paiement reçu ». Zéro chèque, zéro relance de paiement, le client est lancé dans la foulée.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">7</td><td class="t">2 min</td>
+        <td class="show"><b>L'app client (PWA)</b> <span class="pill">sur ton téléphone</span><br>Onglets Évolution (courbe poids), Conseils (assiette, routine), Messages, Recommander.</td>
+        <td><span class="say">Et le client, lui, a son app : son évolution, ses conseils du jour, un chat avec moi, et même Noaly pour ses questions. Il reste engagé entre les RDV — c'est ça qui retient et qui fait recommander.</span></td>
+      </tr>
+      <tr>
+        <td class="step-n">8</td><td class="t">1 min</td>
+        <td class="show"><b>La duplication</b> <span class="pill">vue d'ensemble</span><br>Tu reviens au Co-pilote. Tu rappelles : chaque coach a CRM + pages publiques + Noaly + caisse.</td>
+        <td><span class="say">Le plus important : ce n'est pas que mon outil. Chaque coach de l'équipe a exactement la même chose — son CRM, ses pages, son IA. Ça se duplique, c'est ça qui fait grandir une organisation.</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box" style="margin-top:12px;">
+    <h3>🏁 Clôture (1 min)</h3>
+    <p class="close">« Voilà le chemin complet : un inconnu clique, fait son bilan, reçoit sa page premium, paie en ligne, et se retrouve accompagné dans son app — pendant que moi je pilote tout depuis un seul tableau de bord. Qu'est-ce que tu en penses, et où tu verrais qu'on pousse en premier ? »</p>
+    <p class="sub" style="margin-top:5px;">→ Tu rends la parole à Axel. Tu écoutes. Tu notes ses retours (il a 10 ans de recul, c'est de l'or).</p>
+  </div>
+
+  <div class="foot">
+    <span>La Base 360 · Verdun — Ne pas montrer : la config technique, les clés, les écrans admin. Reste sur le parcours.</span>
+    <span>Imprime : Ctrl/Cmd + P</span>
+  </div>
+
+</body>
+</html>
