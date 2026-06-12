@@ -1,11 +1,13 @@
 // Chantier MEGA app client v2 (2026-04-25).
 // Grid 2x2 — 4 indicateurs clés (poids/MG/muscle/eau). Spec figée.
 
+import { useState } from "react";
 import type { Assessment } from "../../lib/clientAppData";
 import {
   getStartingAssessment,
   getCurrentAssessment,
 } from "../../lib/clientAppData";
+import { ClientMetricChartModal, type MetricDef } from "./ClientMetricChartModal";
 
 interface Props {
   assessments: Assessment[];
@@ -18,6 +20,7 @@ interface MetricCardProps {
   delta: number | null;
   deltaLabel: string;
   color: string;
+  onClick?: () => void;
 }
 
 function MetricCard({
@@ -27,6 +30,7 @@ function MetricCard({
   delta,
   deltaLabel,
   color,
+  onClick,
 }: MetricCardProps) {
   const deltaColor =
     delta === null
@@ -40,13 +44,36 @@ function MetricCard({
 
   return (
     <div
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       style={{
         background: "#FFFFFF",
         borderRadius: "12px",
         padding: "14px",
         borderTop: `3px solid ${color}`,
+        cursor: onClick ? "pointer" : "default",
+        position: "relative",
       }}
     >
+      {onClick ? (
+        <span
+          aria-hidden
+          style={{ position: "absolute", top: 10, right: 11, fontSize: 13, opacity: 0.5 }}
+        >
+          📈
+        </span>
+      ) : null}
       <div
         style={{
           fontSize: "10px",
@@ -82,9 +109,19 @@ function MetricCard({
   );
 }
 
+const METRIC_DEFS: Record<"weight" | "bodyFat" | "muscleMass" | "hydration", MetricDef> = {
+  weight: { key: "weight", label: "Poids", unit: "kg", color: "#10B981", decimals: 1 },
+  bodyFat: { key: "bodyFat", label: "Masse grasse", unit: "%", color: "#D85A30", decimals: 1 },
+  muscleMass: { key: "muscleMass", label: "Muscle", unit: "kg", color: "#10B981", decimals: 1 },
+  hydration: { key: "hydration", label: "Eau", unit: "%", color: "#7F77DD", decimals: 1 },
+};
+
 export function ClientAppKeyMetricsGrid({ assessments }: Props) {
   const start = getStartingAssessment(assessments);
   const current = getCurrentAssessment(assessments);
+  const [selected, setSelected] = useState<MetricDef | null>(null);
+  // Au moins 2 bilans → la courbe a du sens, on rend les cartes cliquables.
+  const canChart = assessments.length >= 2;
 
   // Pour poids et masse grasse : delta favorable = perte → start - current.
   const calcLossDelta = (curr?: number, st?: number) => {
@@ -126,7 +163,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
           margin: "16px 4px 8px",
         }}
       >
-        TES 4 INDICATEURS CLÉS
+        TES 4 INDICATEURS CLÉS{canChart ? " · touche pour voir la courbe" : ""}
       </div>
       <div
         style={{
@@ -143,6 +180,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
           delta={deltaWeight}
           deltaLabel="depuis le départ"
           color="#10B981"
+          onClick={canChart ? () => setSelected(METRIC_DEFS.weight) : undefined}
         />
         <MetricCard
           label="MASSE GRASSE"
@@ -151,6 +189,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
           delta={deltaBodyFat}
           deltaLabel="depuis le départ"
           color="#D85A30"
+          onClick={canChart ? () => setSelected(METRIC_DEFS.bodyFat) : undefined}
         />
         <MetricCard
           label="MUSCLE"
@@ -161,6 +200,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
             deltaMuscle && deltaMuscle > 0 ? "gagné" : "depuis le départ"
           }
           color="#10B981"
+          onClick={canChart ? () => setSelected(METRIC_DEFS.muscleMass) : undefined}
         />
         <MetricCard
           label="EAU"
@@ -173,8 +213,17 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
               : "depuis le départ"
           }
           color="#7F77DD"
+          onClick={canChart ? () => setSelected(METRIC_DEFS.hydration) : undefined}
         />
       </div>
+
+      {selected ? (
+        <ClientMetricChartModal
+          metric={selected}
+          assessments={assessments}
+          onClose={() => setSelected(null)}
+        />
+      ) : null}
     </>
   );
 }

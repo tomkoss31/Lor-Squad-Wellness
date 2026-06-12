@@ -51,6 +51,7 @@ export interface ClientLiveData {
     current_program: string | null;
     notes: string | null;
     objective?: string | null;
+    birth_date?: string | null;
   } | null;
   next_follow_up: {
     id: string;
