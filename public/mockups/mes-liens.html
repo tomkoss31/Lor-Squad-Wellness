@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mes liens — maquette</title>
+<style>
+  :root{
+    --bg:#0F1318; --surface:#161C24; --surface2:#1D2530; --hair:rgba(236,234,227,.10);
+    --hair2:rgba(236,234,227,.18); --text:#ECEAE3; --muted:rgba(236,234,227,.55);
+    --gold:#C9A84C; --teal:#2DD4BF; --coral:#FB7185; --purple:#A78BFA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:26px 20px 60px;line-height:1.4}
+  .wrap{max-width:680px;margin:0 auto}
+  .eyebrow{font-family:"Syne",sans-serif;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal)}
+  h1{font-family:"Syne","Sora",sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px;margin:8px 0 4px}
+  h1 .g{background:linear-gradient(135deg,var(--teal),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .section{font-family:"Syne",sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:22px 4px 10px}
+  .card{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:13px 15px;margin-bottom:10px}
+  .ic{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .meta{flex:1;min-width:0}
+  .name{font-weight:700;font-size:14.5px}
+  .desc{font-size:12px;color:var(--muted);margin-top:1px}
+  .url{font-size:11px;color:var(--teal);font-family:ui-monospace,Menlo,monospace;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acts{flex:0 0 auto;display:flex;gap:6px}
+  .btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:7px 11px;border-radius:9px;border:1px solid var(--hair2);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap}
+  .btn.wa{background:#25D366;border:none;color:#06241f}
+  .btn.qr{padding:7px 10px}
+  @media(max-width:560px){ .card{flex-wrap:wrap} .acts{width:100%;margin-top:4px} .url{white-space:normal} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Tout au même endroit</div>
+  <h1>Mes <span class="g">liens</span></h1>
+  <div class="sub">Tous tes liens à partager, prêts à copier — fini de les chercher partout.</div>
+
+  <div class="section">🎯 Capter &amp; convertir</div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(45,212,191,.14)">🌱</div>
+    <div class="meta">
+      <div class="name">Bilan online</div>
+      <div class="desc">Le questionnaire 2 min qui transforme un curieux en lead.</div>
+      <div class="url">labase360.app/bilan-online/thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(201,168,76,.16)">💼</div>
+    <div class="meta">
+      <div class="name">Opportunité business</div>
+      <div class="desc">Présente l'opportunité La Base 360 à un prospect.</div>
+      <div class="url">labase360.app/business?ref=thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(251,113,133,.14)">🚪</div>
+    <div class="meta">
+      <div class="name">Rejoindre l'équipe</div>
+      <div class="desc">Le funnel de recrutement (questionnaire qualifiant).</div>
+      <div class="url">labase360.app/rejoindre/thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div class="section">🌟 Crédibilité &amp; preuve sociale</div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(167,139,250,.16)">👤</div>
+    <div class="meta">
+      <div class="name">Ma fiche coach</div>
+      <div class="desc">Ta vitrine publique (bio, badges, témoignages).</div>
+      <div class="url">labase360.app/coach/thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(201,168,76,.16)">👑</div>
+    <div class="meta">
+      <div class="name">Club VIP</div>
+      <div class="desc">La page des remises clients (15 → 35 %).</div>
+      <div class="url">labase360.app/vip/thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div class="card">
+    <div class="ic" style="background:rgba(45,212,191,.14)">💬</div>
+    <div class="meta">
+      <div class="name">Demander un témoignage</div>
+      <div class="desc">Le formulaire que tes clients remplissent en 30 s.</div>
+      <div class="url">labase360.app/temoignage/coach/thomas</div>
+    </div>
+    <div class="acts"><button class="btn">📋 Copier</button><button class="btn qr">⬚ QR</button><button class="btn wa">WhatsApp</button></div>
+  </div>
+
+  <div style="margin-top:20px;padding:12px 15px;border-radius:13px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.22);font-size:12.5px;color:var(--muted)">
+    💡 Chaque lien utilise <b style="color:var(--text)">ton slug</b> (ton prénom) automatiquement. Copier = lien dans le presse-papier · QR = code à scanner en présentiel · WhatsApp = message pré-rédigé.
+  </div>
+
+</div>
+</body>
+</html>

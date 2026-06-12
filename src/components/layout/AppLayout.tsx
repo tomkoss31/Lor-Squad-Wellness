@@ -108,6 +108,8 @@ export function AppLayout() {
         // CRM commun (VIP-4 2026-06-10) — pipeline unifié de tous les leads.
         // Badge = nouveaux + relances dues (toutes sources).
         { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount },
+        // Hub « Mes liens » — raccourci unique des liens publics du coach (audit 2026-06-12).
+        { label: "Mes liens", path: "/mes-liens", emoji: "🔗", badge: 0 },
         { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
