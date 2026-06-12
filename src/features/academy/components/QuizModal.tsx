@@ -82,7 +82,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
           padding: 26,
           maxWidth: 480,
           width: "100%",
-          maxHeight: "calc(100vh - 32px)",
+          maxHeight: "calc(100dvh - 32px)",
           overflowY: "auto",
           boxShadow: "0 16px 50px rgba(0,0,0,0.30)",
           animation: "ls-quiz-enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",

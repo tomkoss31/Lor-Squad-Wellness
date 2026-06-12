@@ -181,7 +181,7 @@ const modalStyle: CSSProperties = {
   position: "relative",
   width: "100%",
   maxWidth: 600,
-  maxHeight: "calc(100vh - 40px)",
+  maxHeight: "calc(100dvh - 40px)",
   overflowY: "auto",
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",

@@ -232,7 +232,7 @@ export function ProductCatalogModal({
             padding: 0 !important;
           }
           .ls-cat-panel {
-            max-height: 100vh !important;
+            max-height: 100dvh !important;
             max-height: 100dvh !important;
             height: 100% !important;
             border-radius: 0 !important;

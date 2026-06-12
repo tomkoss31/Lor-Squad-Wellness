@@ -115,7 +115,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
           borderRadius: 22,
           maxWidth: 720,
           width: "100%",
-          maxHeight: "calc(100vh - 32px)",
+          maxHeight: "calc(100dvh - 32px)",
           overflowY: "auto",
           boxShadow: `0 20px 60px -20px color-mix(in srgb, ${accent} 28%, rgba(0,0,0,0.40)), 0 4px 16px rgba(0,0,0,0.20)`,
           animation: "ls-toolkit-modal-in 360ms cubic-bezier(0.22, 1, 0.36, 1)",

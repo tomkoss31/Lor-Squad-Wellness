@@ -404,7 +404,7 @@ const panelStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
-  maxHeight: "min(560px, calc(100vh - 180px))",
+  maxHeight: "min(560px, calc(100dvh - 180px))",
 };
 
 const panelHeader: React.CSSProperties = {

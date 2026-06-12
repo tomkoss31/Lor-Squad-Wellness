@@ -105,7 +105,7 @@ export function TutorialTooltip({
         width: placement === "center" ? "calc(100% - 32px)" : "min(420px, calc(100% - 24px))",
         // Constraint vertical (V3.4 — 2026-04-29) : ne deborde plus du viewport
         // sur les longs contenus. Scroll interne au popup si necessaire.
-        maxHeight: "calc(100vh - 24px)",
+        maxHeight: "calc(100dvh - 24px)",
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
         // Theme-aware (V3.4 — 2026-04-29) : avant en hardcoded #FFFFFF + #111827

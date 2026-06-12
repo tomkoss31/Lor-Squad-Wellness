@@ -153,7 +153,7 @@ const overlayStyle: React.CSSProperties = {
 
 const modalStyle: React.CSSProperties = {
   position: "relative", width: "100%", maxWidth: 580,
-  maxHeight: "calc(100vh - 40px)", overflowY: "auto",
+  maxHeight: "calc(100dvh - 40px)", overflowY: "auto",
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 22, padding: "26px 24px",
