@@ -14,11 +14,6 @@ const GuidePage = lazy(() =>
     default: module.GuidePage
   }))
 );
-const RecommendationsPage = lazy(() =>
-  import("./pages/RecommendationsPage").then((module) => ({
-    default: module.RecommendationsPage
-  }))
-);
 const PvOverviewPage = lazy(() =>
   import("./pages/PvOverviewPage").then((module) => ({
     default: module.PvOverviewPage
@@ -749,7 +744,6 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="guide" element={<GuidePage />} />
               <Route path="guide-suivi" element={<FollowUpGuidePage />} />
-              <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
               {/* Chantier Messagerie finalisée (2026-04-23). */}
