@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fiche client — header avant/après</title>
+<style>
+  :root{
+    --bg:#0F1318; --surface:#161C24; --surface2:#1D2530; --hair:rgba(236,234,227,.10);
+    --hair2:rgba(236,234,227,.18); --text:#ECEAE3; --muted:rgba(236,234,227,.55);
+    --gold:#C9A84C; --gold2:#E5C97D; --teal:#2DD4BF; --coral:#FB7185; --purple:#A78BFA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:26px 22px 60px;line-height:1.4}
+  .wrap{max-width:780px;margin:0 auto}
+  .legend{text-align:center;color:var(--muted);font-size:12.5px;margin-bottom:20px}
+  .legend b{color:var(--gold)}
+  .panel{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:18px;margin-bottom:18px;position:relative}
+  .ribbon{position:absolute;top:-10px;left:18px;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:99px}
+  .r-before{background:#3a2330;color:#FB9DAE;border:1px solid rgba(251,113,133,.4)}
+  .r-after{background:#13322c;color:#7CE7D4;border:1px solid rgba(45,212,191,.4)}
+  /* identité client */
+  .idrow{display:flex;align-items:center;gap:12px;margin:8px 0 16px}
+  .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06241f;font-size:18px}
+  .name{font-weight:700;font-size:18px}
+  .meta{font-size:12px;color:var(--muted);margin-top:1px}
+  .chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:rgba(45,212,191,.12);color:var(--teal);border:1px solid rgba(45,212,191,.3);margin-left:8px}
+  /* boutons */
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:11px;border:1px solid var(--hair2);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407;border:none;font-weight:700}
+  .btn.kebab{padding:9px 12px;font-size:16px;font-weight:800}
+  /* dropdown */
+  .menuwrap{position:relative}
+  .menu{position:absolute;top:46px;right:0;width:240px;background:var(--surface2);border:1px solid var(--hair2);border-radius:13px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.5);z-index:5}
+  .menu::before{content:"";position:absolute;top:-6px;right:16px;width:11px;height:11px;background:var(--surface2);border-left:1px solid var(--hair2);border-top:1px solid var(--hair2);transform:rotate(45deg)}
+  .mi{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;font-size:13px;color:var(--text);cursor:pointer}
+  .mi:hover{background:rgba(236,234,227,.06)}
+  .mi .ic{width:18px;text-align:center}
+  .mi .sub{display:block;font-size:10.5px;color:var(--muted)}
+  .mlabel{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 11px 3px}
+  /* onglets */
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:18px;border-top:1px solid var(--hair);padding-top:12px}
+  .tab{font-size:12.5px;padding:7px 12px;border-radius:9px;color:var(--muted);background:transparent}
+  .tab.active{background:var(--surface2);color:var(--text);font-weight:600;border:1px solid var(--hair)}
+  .note{font-size:11.5px;color:var(--muted);margin-top:10px;display:flex;align-items:flex-start;gap:7px}
+  .note b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="legend">
+    Fiche client — <b>désengorger le header</b> · 8 boutons aujourd'hui → 3 + un menu « ⋮ »
+  </div>
+
+  <!-- ════════ AVANT ════════ -->
+  <div class="panel">
+    <span class="ribbon r-before">Aujourd'hui</span>
+    <div class="idrow">
+      <div class="avatar">M</div>
+      <div>
+        <span class="name">Marie Dupont</span><span class="chip">● Actif</span>
+        <div class="meta">Perte de poids · dernier bilan il y a 12 j · RDV jeudi 14h</div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn gold">🔗 Envoyer l'accès</button>
+      <button class="btn">📋 Suivi</button>
+      <button class="btn">＋ Nouveau bilan</button>
+      <button class="btn">🎬 Présentation client</button>
+      <button class="btn">👁️ Aperçu app</button>
+      <button class="btn">🌐 Partage public</button>
+      <button class="btn">💬 Demander un témoignage</button>
+      <button class="btn">📄 Rapport</button>
+    </div>
+    <div class="note">⚠️ <span>8 boutons sur 2-3 lignes : l'œil ne sait plus où aller, surtout pour un nouveau coach.</span></div>
+  </div>
+
+  <!-- ════════ APRÈS ════════ -->
+  <div class="panel">
+    <span class="ribbon r-after">Proposé</span>
+    <div class="idrow">
+      <div class="avatar">M</div>
+      <div>
+        <span class="name">Marie Dupont</span><span class="chip">● Actif</span>
+        <div class="meta">Perte de poids · dernier bilan il y a 12 j · RDV jeudi 14h</div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn gold">🔗 Envoyer l'accès</button>
+      <button class="btn">📋 Suivi</button>
+      <button class="btn">＋ Nouveau bilan</button>
+      <div class="menuwrap">
+        <button class="btn kebab">⋮</button>
+        <!-- menu ouvert (état au clic) -->
+        <div class="menu">
+          <div class="mlabel">Plus d'actions</div>
+          <div class="mi"><span class="ic">🎬</span><span>Présentation client<span class="sub">Diaporama plein écran</span></span></div>
+          <div class="mi"><span class="ic">👁️</span><span>Aperçu de son app<span class="sub">Voir ce que le client voit</span></span></div>
+          <div class="mi"><span class="ic">🌐</span><span>Partage public<span class="sub">Lien anonymisé</span></span></div>
+          <div class="mi"><span class="ic">💬</span><span>Demander un témoignage</span></div>
+          <div class="mi"><span class="ic">📄</span><span>Rapport d'évolution<span class="sub">PDF (dès 2 bilans)</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="note">✅ <span><b>3 actions quotidiennes</b> en accès direct ; les 5 actions rares repliées dans « ⋮ ». Même puissance, écran respirable.</span></div>
+  </div>
+
+  <!-- onglets (inchangés, juste pour le contexte) -->
+  <div class="panel" style="padding-top:14px">
+    <span class="ribbon r-after">Les onglets ne bougent pas</span>
+    <div class="tabs" style="border-top:none;padding-top:6px">
+      <span class="tab active">🏠 Vue</span>
+      <span class="tab">⚡ Body Scan</span>
+      <span class="tab">📐 Mensurations</span>
+      <span class="tab">📊 Historique</span>
+      <span class="tab">💊 Produits</span>
+      <span class="tab">🎯 Actions</span>
+      <span class="tab">👑 Club VIP</span>
+    </div>
+    <div class="note" style="margin-top:12px">💡 <span>Étape 2 possible (à voir) : regrouper aussi <b>Mensurations</b> dans <b>Body Scan</b>, et <b>Produits</b> reste seul → on passerait de 7 à 6 onglets. À décider après le header.</span></div>
+  </div>
+
+</div>
+</body>
+</html>
