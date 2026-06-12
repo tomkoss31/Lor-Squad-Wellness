@@ -545,6 +545,13 @@ export function AgendaPage() {
         .ls-agenda-stat:nth-child(1) { animation-delay: 50ms; }
         .ls-agenda-stat:nth-child(2) { animation-delay: 130ms; }
         .ls-agenda-stat:nth-child(3) { animation-delay: 210ms; }
+        /* Onde 4 (2026-06-12) : compaction mobile du hero agenda. */
+        @media (max-width: 720px) {
+          .ls-agenda-hero { padding: 18px 16px !important; border-radius: 18px !important; }
+          .ls-agenda-title { font-size: 24px !important; line-height: 1.1 !important; }
+          .ls-agenda-stats { gap: 6px !important; }
+          .ls-agenda-cta { padding: 11px 16px !important; font-size: 13px !important; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .ls-agenda-mesh, .ls-agenda-shine, .ls-agenda-cta, .ls-agenda-stat {
             animation: none !important;
@@ -585,6 +592,7 @@ export function AgendaPage() {
               Agenda · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
             </div>
             <h1
+              className="ls-agenda-title"
               style={{
                 fontFamily: "Syne, serif",
                 fontSize: 32,
@@ -656,6 +664,7 @@ export function AgendaPage() {
 
         {/* 3 stats horizontaux dans le hero */}
         <div
+          className="ls-agenda-stats"
           style={{
             position: "relative",
             display: "grid",
