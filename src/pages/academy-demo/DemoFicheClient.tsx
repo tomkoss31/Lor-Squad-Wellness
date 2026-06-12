@@ -665,7 +665,7 @@ function FakeAccessModal({
           padding: 22,
           fontFamily: "DM Sans, sans-serif",
           color: "#0B0D11",
-          maxHeight: "calc(100vh - 32px)",
+          maxHeight: "calc(100dvh - 32px)",
           overflowY: "auto",
         }}
       >

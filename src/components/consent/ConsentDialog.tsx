@@ -190,7 +190,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
             borderRadius: 22,
             width: "100%",
             maxWidth: 560,
-            maxHeight: "calc(100vh - 32px)",
+            maxHeight: "calc(100dvh - 32px)",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",

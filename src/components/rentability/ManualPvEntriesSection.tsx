@@ -597,7 +597,7 @@ const modalStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   maxWidth: 480,
-  maxHeight: "calc(100vh - 40px)",
+  maxHeight: "calc(100dvh - 40px)",
   overflowY: "auto",
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",

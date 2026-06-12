@@ -93,7 +93,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
             borderRadius: 22,
             width: '100%',
             maxWidth: 440,
-            maxHeight: 'calc(100vh - 32px)',
+            maxHeight: 'calc(100dvh - 32px)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
             boxShadow: '0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)',

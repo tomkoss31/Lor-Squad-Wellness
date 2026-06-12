@@ -1299,7 +1299,7 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
         border: "1px solid var(--ls-border)",
         borderRadius: 12,
         padding: 12,
-        maxHeight: "calc(100vh - 60px)",
+        maxHeight: "calc(100dvh - 60px)",
         overflowY: "auto",
       }}
     >

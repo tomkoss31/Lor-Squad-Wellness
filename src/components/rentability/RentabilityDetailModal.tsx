@@ -179,7 +179,7 @@ export function RentabilityDetailModal({
           .lr-rentab-modal {
             max-width: 100% !important;
             border-radius: 18px !important;
-            max-height: calc(100vh - 24px) !important;
+            max-height: calc(100dvh - 24px) !important;
           }
           .lr-rentab-modal-header {
             flex-direction: column !important;
@@ -871,7 +871,7 @@ const modalStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   maxWidth: 920,
-  maxHeight: "calc(100vh - 40px)",
+  maxHeight: "calc(100dvh - 40px)",
   display: "flex",
   flexDirection: "column",
   background: "var(--ls-rentab-bg-1)",

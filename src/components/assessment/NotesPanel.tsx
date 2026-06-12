@@ -508,7 +508,7 @@ export function NotesPanel({
         alignSelf: "flex-start",
         position: "sticky",
         top: 16,
-        maxHeight: "calc(100vh - 32px)",
+        maxHeight: "calc(100dvh - 32px)",
         overflowY: "auto",
       }}
     >

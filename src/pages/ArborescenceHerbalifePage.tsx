@@ -284,7 +284,7 @@ export function ArborescenceHerbalifePage() {
             margin-left: auto;
           }
           .lr-arbo-edit-btn { font-size: 11px !important; padding: 6px 10px !important; }
-          .lr-arbo-modal-content { max-width: 100% !important; max-height: calc(100vh - 32px) !important; overflow-y: auto !important; }
+          .lr-arbo-modal-content { max-width: 100% !important; max-height: calc(100dvh - 32px) !important; overflow-y: auto !important; }
         }
         @media (max-width: 480px) {
           .lr-arbo-tree { padding: 8px !important; }

@@ -111,7 +111,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
             borderRadius: 22,
             width: "100%",
             maxWidth: 460,
-            maxHeight: "calc(100vh - 32px)",
+            maxHeight: "calc(100dvh - 32px)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",

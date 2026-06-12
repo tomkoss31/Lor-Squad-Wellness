@@ -610,7 +610,7 @@ function FinalStage({
         transform: "translate(-50%, -50%)",
         width: "calc(100% - 32px)",
         maxWidth: 460,
-        maxHeight: "calc(100vh - 32px)",
+        maxHeight: "calc(100dvh - 32px)",
         overflowY: "auto",
         background:
           "linear-gradient(180deg, #FFFFFF 0%, #FFFEF5 60%, #FAF6E8 100%)",
