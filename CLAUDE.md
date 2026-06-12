@@ -712,6 +712,7 @@ avec `supabase functions deploy <name>`.
 | `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
 | `create-payment-link` | fetch front (page publique) | Caisse directe : lien Square quick_pay, prix serveur (no-verify-jwt) |
 | `square-payment-webhook` | webhook Square | payment.updated → bilan_orders paid + push coach (auth = signature HMAC) |
+| `client-rdv-reminder` | cron */30 | Rappel RDV AU CLIENT : veille 18h Paris + 2h avant (sendPushToClient, anti-doublon client_rdv_reminders_sent) |
 
 Toute nouvelle edge function = ajouter ici.
 

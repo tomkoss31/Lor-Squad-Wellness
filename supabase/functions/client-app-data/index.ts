@@ -206,7 +206,7 @@ serve(async (req) => {
     const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes] = await Promise.all([
       supabase
         .from("clients")
-        .select("current_program, notes, objective")
+        .select("current_program, notes, objective, birth_date")
         .eq("id", clientId)
         .maybeSingle(),
 
@@ -609,6 +609,8 @@ serve(async (req) => {
             current_program: (clientRes.data as { current_program?: string | null }).current_program ?? null,
             notes: (clientRes.data as { notes?: string | null }).notes ?? null,
             objective: (clientRes.data as { objective?: string | null }).objective ?? null,
+            // Date de naissance → âge auto-calculé côté front (toujours à jour).
+            birth_date: (clientRes.data as { birth_date?: string | null }).birth_date ?? null,
           }
         : null,
       next_follow_up: followUpRes.data

@@ -18,6 +18,7 @@ import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import { ClientConseilsTab } from '../components/client-app/ClientConseilsTab'
 import { ClubVipPresentation } from '../components/client-app/ClubVipPresentation'
 import { ClientAppEvolutionHero } from '../components/client-app/ClientAppEvolutionHero'
+import { calculateAge } from '../lib/age'
 import { ClientAppKeyMetricsGrid } from '../components/client-app/ClientAppKeyMetricsGrid'
 import { ClientAppWeightChart } from '../components/client-app/ClientAppWeightChart'
 import { ClientAppMotivationMessage } from '../components/client-app/ClientAppMotivationMessage'
@@ -910,6 +911,31 @@ export function ClientAppPage() {
                   En savoir plus →
                 </a>
               </div>
+              {/* Âge auto-calculé depuis la date de naissance (toujours à jour,
+                  jamais figé) — chantier PWA 2026-06-12. */}
+              {(() => {
+                const age = calculateAge(liveData?.client?.birth_date)
+                return age != null ? (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      alignSelf: 'flex-start',
+                      padding: '5px 12px',
+                      borderRadius: 999,
+                      background: 'var(--ls-surface2, #F1F5F9)',
+                      border: '0.5px solid var(--ls-border, #E2E8F0)',
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                      fontSize: 12,
+                      color: 'var(--ls-text, #0F172A)',
+                    }}
+                  >
+                    <span aria-hidden>👤</span>
+                    <strong>{age} ans</strong>
+                  </div>
+                ) : null
+              })()}
               <ClientAppEvolutionHero assessments={assessments} measurements={measurementsLive} />
               <ClientAppKeyMetricsGrid assessments={assessments} />
               <ClientAppWeightChart assessments={assessments} />
