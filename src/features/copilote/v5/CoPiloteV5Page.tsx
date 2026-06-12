@@ -162,7 +162,7 @@ export function CoPiloteV5Page() {
           </h1>
         </div>
 
-        <div style={topBarRightStyle}>
+        <div style={topBarRightStyle} data-v5-topbar-right>
           {/* Weather pill réelle (Open-Meteo, click → popup 5 jours).
               Si city manquante : pill discrète "Météo" qui ouvre le CTA
               "Renseigner ma ville". Chantier D 2026-05-05. */}
@@ -230,20 +230,20 @@ export function CoPiloteV5Page() {
             </div>
           ) : null}
 
-          {/* Cloche réelle (validation Thomas 2026-05-05) — composant
-              AnnouncementBell existant : badge unread + dropdown annonces. */}
-          <AnnouncementBell />
-
-          {/* Theme toggle V7 — pills harmonisees G3. */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            style={pillIconStyle}
-            aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
-            title={isDark ? "Mode clair" : "Mode sombre"}
-          >
-            <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
-          </button>
+          {/* Cloche + theme toggle = doublons du MobileHeader (Onde 1) →
+              masqués sur mobile via [data-v5-topbar-dups]. */}
+          <span data-v5-topbar-dups style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <AnnouncementBell />
+            <button
+              type="button"
+              onClick={toggleTheme}
+              style={pillIconStyle}
+              aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
+              title={isDark ? "Mode clair" : "Mode sombre"}
+            >
+              <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
+            </button>
+          </span>
         </div>
       </div>
 

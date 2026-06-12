@@ -310,6 +310,23 @@
     font-size: clamp(20px, 5.4vw, 24px) !important;
     line-height: 1.1 !important;
   }
+
+  /* Onde 3 (2026-06-12) : les pills (météo/heure/routine/streak) ne wrappent
+     plus → une seule ligne en scroll horizontal, scrollbar masquée. */
+  .copilote-v5 [data-v5-topbar-right] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px !important;
+    max-width: 100%;
+  }
+  .copilote-v5 [data-v5-topbar-right]::-webkit-scrollbar { display: none; }
+  .copilote-v5 [data-v5-topbar-right] > * { flex-shrink: 0; }
+  /* Cloche + theme toggle sont déjà dans le MobileHeader (Onde 1) → on retire
+     les doublons de la topbar V5 sur mobile pour désencombrer. */
+  .copilote-v5 [data-v5-topbar-dups] { display: none !important; }
 }
 
 /* iPhone SE et petits écrans : encore plus compact */
