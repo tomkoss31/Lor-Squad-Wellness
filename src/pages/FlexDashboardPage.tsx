@@ -283,6 +283,18 @@ export function FlexDashboardPage() {
             title="Ton pilotage du jour"
             description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
           />
+          {/* B6 (2026-06-13) : clarifie FLEX vs Rentabilité — les deux parlent
+              de chiffres mais pas de la même chose. Mini-lien croisé. */}
+          <p style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5, color: "var(--ls-text-muted)" }}>
+            FLEX = tes <strong style={{ color: "var(--ls-text)" }}>paliers Herbalife</strong> & la projection du mois.{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/rentabilite")}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--ls-teal)", fontWeight: 600, textDecoration: "underline" }}
+            >
+              Voir ta marge réelle →
+            </button>
+          </p>
         </div>
         {/* Éducation FLEX (2026-06-10) : chaque page a son explication rapide.
             La vidéo pointe sur /travaux tant que le lien YouTube n'est pas livré. */}

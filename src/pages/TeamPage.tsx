@@ -26,6 +26,7 @@ import { XpPodium } from "../components/team/XpPodium";
 import { EngagementTable } from "../components/team/EngagementTable";
 import { LearningGrid } from "../components/team/LearningGrid";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
+import { RentabilityTeamLeaderboard } from "../components/rentability/RentabilityTeamLeaderboard";
 import {
   useTeamTree,
   useDistributorStats,
@@ -84,7 +85,7 @@ function initialsOf(name: string): string {
 // Hub équipe (2026-05-04) : ajout de 3 onglets pour centraliser le pilotage
 // (overview XP, engagement par distri, apprentissage Academy + Formation).
 // Les 2 anciens onglets (team = arbre, gamification) restent compatibles.
-type TeamTab = "overview" | "engagement" | "learning" | "team" | "gamification";
+type TeamTab = "overview" | "rentabilite" | "engagement" | "learning" | "team" | "gamification";
 
 export function TeamPage() {
   const { currentUser, users, clients, prospects, followUps } = useAppContext();
@@ -270,6 +271,12 @@ export function TeamPage() {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
           { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-gold)" },
+          // Rentabilité d'équipe (chantier simplif 2026-06-13) : accès direct
+          // depuis « Mon équipe », réservé admin. Vue simple top-5 + lien vers
+          // la page complète, au lieu d'aller la chercher dans le Co-pilote.
+          ...(currentUser.role === "admin"
+            ? [{ key: "rentabilite" as TeamTab, label: "Rentabilité", icon: "💎", color: "var(--ls-purple)" }]
+            : []),
           { key: "engagement" as TeamTab, label: "Engagement", icon: "🔥", color: "var(--ls-coral)" },
           { key: "learning" as TeamTab, label: "Apprentissage", icon: "🎓", color: "var(--ls-purple)" },
           { key: "team" as TeamTab, label: "Arbre lignée", icon: "🌳", color: "var(--ls-teal)" },
@@ -360,6 +367,31 @@ export function TeamPage() {
             )}
           </Card>
         </>
+      ) : null}
+
+      {/* ═══ Onglet Rentabilité (NEW 2026-06-13) — vue simple équipe ═════ */}
+      {activeTab === "rentabilite" && currentUser.role === "admin" ? (
+        <Card className="space-y-4">
+          <div>
+            <p className="eyebrow-label">💎 Rentabilité de l'équipe</p>
+            <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+              Qui rapporte quoi, ce mois
+            </h2>
+            <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
+              Le gain réel de chaque membre (marge vente directe + override sur sa downline),
+              classé du plus fort au plus faible. Click sur un membre pour ouvrir le détail complet.
+            </p>
+          </div>
+          <RentabilityTeamLeaderboard />
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Link
+              to="/rentabilite"
+              style={{ fontSize: 12, color: "var(--ls-teal)", textDecoration: "none", fontWeight: 600 }}
+            >
+              Ouvrir ma rentabilité complète →
+            </Link>
+          </div>
+        </Card>
       ) : null}
 
       {/* ═══ Onglet Engagement (NEW 2026-05-04) — table sortable ══════════ */}

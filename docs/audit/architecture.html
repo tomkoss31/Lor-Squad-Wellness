@@ -196,6 +196,39 @@ Hub "Mon développement" (4 sections, ~10 cartes)
     <tr><td class="pri">7</td><td><strong>Devis</strong> — à décider (peut découler du Panier)</td><td>?</td><td>à évaluer</td></tr>
   </table>
 
+  <!-- ══════════ BACKLOG AJOUTÉ ══════════ -->
+  <h2>6 · Backlog simplification — idées à travailler <span style="font-weight:400;font-size:11px;color:var(--muted)">(ajouté 13/06, validé Thomas)</span></h2>
+  <p class="sub">Suite de l'audit : idées d'amélioration validées « toutes à travailler ». Classées par effort/risque. À prendre une par une.</p>
+
+  <h3>🟢 Quick wins — faible risque, gros gain ressenti</h3>
+  <table>
+    <tr><th>#</th><th>Idée</th><th>Détail</th></tr>
+    <tr><td class="pri">B1</td><td><strong>Fiche client 7 → 5 onglets</strong></td><td>Fusionner <em>Body Scan</em> + <em>Mensurations</em> → onglet « Mesures » ; intégrer <em>Historique</em> dans <em>Vue</em>. (page la + consultée)</td></tr>
+    <tr><td class="pri">B2</td><td><strong>« Outils » vs « Boîte à outils »</strong></td><td>Renommer le hub commerce <code>/outils</code> en « Business &amp; outils », pour lever la confusion avec la <em>Boîte à outils</em> pédagogique.</td></tr>
+    <tr><td class="pri">B3</td><td><strong>Paramètres : 8 → 5-6 onglets</strong></td><td>Regrouper <em>Transferts / Stats / Debug</em> sous un onglet « Admin ».</td></tr>
+  </table>
+
+  <h3>🟡 À cadrer — moyen, demande une décision</h3>
+  <table>
+    <tr><th>#</th><th>Idée</th><th>Détail</th></tr>
+    <tr><td class="pri">B4</td><td><strong>Prospection : une seule porte</strong></td><td>Fusionner <code>/prospection</code> + <code>/outils-prospection/*</code> + Business sous « Prospecter », et la sortir de « Mon développement ».</td></tr>
+    <tr><td class="pri">B5</td><td><strong>Hub « Apprendre » 100% pédago</strong></td><td>N'y garder que se-former (Academy / Formation / Boîte à outils / Nouveautés) ; déplacer le reste vers les bons hubs.</td></tr>
+    <tr><td class="pri">B6</td><td><strong>Clarifier FLEX vs Rentabilité</strong></td><td>Intro « FLEX = tes paliers Herbalife · Rentabilité = ta marge perso » ou bloc commun.</td></tr>
+  </table>
+
+  <h3>🔴 Plus tard — hygiène / structurel</h3>
+  <table>
+    <tr><th>#</th><th>Idée</th><th>Détail</th></tr>
+    <tr><td class="pri">B7</td><td><strong>Devis</strong> — décider</td><td>Retirer / garder « Bientôt » / brancher sur le Panier + export PDF. <em>(en attente)</em></td></tr>
+    <tr><td class="pri">B8</td><td><strong>Purger redirects de compat</strong></td><td><code>/dashboard</code>, <code>/co-pilote-legacy</code>, <code>/co-pilote-v5</code>, <code>/simulateur</code>, <code>/formation/charte</code> — ⚠️ <u>après</u> stabilisation de la V5 Co-pilote.</td></tr>
+    <tr><td class="pri">B9</td><td><strong>Règle anti-dérive (CLAUDE.md)</strong></td><td>« Une feature = un seul endroit · max 5 onglets/page · 2 hubs : Faire / Apprendre ».</td></tr>
+  </table>
+
+  <div class="box good" style="margin-top:10px">
+    <strong>Déjà bouclé depuis l'audit du 12/06 :</strong> actions #1→#6 du plan + leads→CRM à 100% + nettoyage code mort terminé (5 fichiers).
+    <strong>Bonus rentabilité (demandes vocales 13/06) :</strong> sélecteur de mois sur la saisie PV manuelle · Rentabilité dans Outils · onglet Rentabilité sous Mon équipe · sections repliables sur <code>/rentabilite</code>.
+  </div>
+
   <div class="foot">
     La Base 360 · Audit lecture seule — aucune ligne de code modifiée. Les actions ci-dessus attendent ta validation, une par une.
     &nbsp;·&nbsp; Imprimer : Ctrl/Cmd + P

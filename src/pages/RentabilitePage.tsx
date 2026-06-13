@@ -68,6 +68,14 @@ export function RentabilitePage() {
   const [calcView, setCalcView] = useState<"classic" | "flow">("classic");
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
 
+  // Sections repliables (chantier simplif 2026-06-13) : par défaut tout est
+  // replié pour ne montrer que l'essentiel (le hero = ton gain du mois).
+  // L'utilisateur déplie ce qu'il veut voir → fini le « plein de chiffres
+  // partout ». Le résumé reste visible sur l'en-tête replié.
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const toggleSection = (k: string) =>
+    setOpenSections((s) => ({ ...s, [k]: !s[k] }));
+
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
 
@@ -251,6 +259,20 @@ export function RentabilitePage() {
             </span>
           </div>
 
+          {/* B6 (2026-06-13) : clarifie Rentabilité vs FLEX. Mini-lien croisé. */}
+          <div className="lr-fadeup">
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "var(--ls-rentab-ink-3)" }}>
+              Rentabilité = ta <strong style={{ color: "var(--ls-rentab-ink)" }}>marge réelle</strong> : vente directe + overrides.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/flex")}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--ls-rentab-teal)", fontWeight: 600, textDecoration: "underline" }}
+              >
+                Voir tes paliers FLEX →
+              </button>
+            </p>
+          </div>
+
           {/* Wallet Card — format compact en rappel visuel (validé Thomas
               2026-05-20). Click = flip 3D vers le breakdown. */}
           <div className="lr-fadeup lr-d-1" style={{ display: "flex", justifyContent: "center" }}>
@@ -318,33 +340,34 @@ export function RentabilitePage() {
 
       {/* ─── SECTION 01 — Le calcul ──────────────────────────────────── */}
       {ownData && (
-        <>
-          <SectionHeader
-            index="01"
-            title="Le calcul"
-            hint={
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <span>D'où vient chaque euro</span>
-                <span style={viewToggleWrapStyle}>
-                  <button
-                    type="button"
-                    onClick={() => setCalcView("classic")}
-                    style={viewToggleBtnStyle(calcView === "classic")}
-                  >
-                    Vue classique
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCalcView("flow")}
-                    style={viewToggleBtnStyle(calcView === "flow")}
-                  >
-                    Vue flux
-                  </button>
-                </span>
+        <CollapsibleSection
+          index="01"
+          title="Le calcul"
+          open={!!openSections["calc"]}
+          onToggle={() => toggleSection("calc")}
+          summary={`Total net ${Math.round(totalMargin).toLocaleString("fr-FR")} €`}
+          hint={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span>D'où vient chaque euro</span>
+              <span style={viewToggleWrapStyle}>
+                <button
+                  type="button"
+                  onClick={() => setCalcView("classic")}
+                  style={viewToggleBtnStyle(calcView === "classic")}
+                >
+                  Vue classique
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalcView("flow")}
+                  style={viewToggleBtnStyle(calcView === "flow")}
+                >
+                  Vue flux
+                </button>
               </span>
-            }
-          />
-
+            </span>
+          }
+        >
           {calcView === "flow" ? (
             <RentabilitySankeyFlow
               caBrut={ownData.revenue_brut}
@@ -443,13 +466,19 @@ export function RentabilitePage() {
               </div>
             </div>
           </div>
-        </>
+        </CollapsibleSection>
       )}
 
       {/* ─── SECTION 02 — Mon équipe ──────────────────────────────────── */}
       {isAdminOrRef && otherMembers.length > 0 && ownData && (
-        <>
-          <SectionHeader index="02" title="Mon équipe" hint="Tri par contribution · clic pour ouvrir la fiche" />
+        <CollapsibleSection
+          index="02"
+          title="Mon équipe"
+          open={!!openSections["team"]}
+          onToggle={() => toggleSection("team")}
+          summary={`${otherMembers.length} distri actif${otherMembers.length > 1 ? "s" : ""}`}
+          hint="Tri par contribution · clic pour ouvrir la fiche"
+        >
           <div className="lr-rentab-team-grid" style={teamGridStyle}>
             {otherMembers.map((m, i) => (
               <TeamMemberCard
@@ -465,13 +494,19 @@ export function RentabilitePage() {
               />
             ))}
           </div>
-        </>
+        </CollapsibleSection>
       )}
 
       {/* ─── SECTION 03 — Top clients ─────────────────────────────────── */}
       {ownData && ownData.top_clients && ownData.top_clients.length > 0 && (
-        <>
-          <SectionHeader index="03" title="Top clients" hint="Survol pour voir les produits" />
+        <CollapsibleSection
+          index="03"
+          title="Top clients"
+          open={!!openSections["clients"]}
+          onToggle={() => toggleSection("clients")}
+          summary={`${ownData.top_clients.length} client${ownData.top_clients.length > 1 ? "s" : ""}`}
+          hint="Survol pour voir les produits"
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
             {ownData.top_clients.slice(0, 3).map((c, i) => (
               <PodiumRow key={c.client_id} client={c} rank={i + 1} />
@@ -484,7 +519,7 @@ export function RentabilitePage() {
               ))}
             </div>
           )}
-        </>
+        </CollapsibleSection>
       )}
 
       {/* ─── V3 — distri hors-app saisie manuelle ─────────────────────── */}
@@ -500,6 +535,7 @@ export function RentabilitePage() {
           directMargin={ownSelfMargin}
           downlineOverride={ownDownlineOverride}
           manualOverride={ownManualOverride}
+          overridePerMember={ownOverridePerMember}
         />
       )}
       {selectedMemberId && selectedData && (
@@ -509,6 +545,7 @@ export function RentabilitePage() {
           directMargin={selectedSelfMargin}
           downlineOverride={selectedDownlineOverride}
           manualOverride={0}
+          overridePerMember={selectedSummary.overridePerMember}
         />
       )}
 
@@ -521,14 +558,62 @@ export function RentabilitePage() {
 
 // ─── Sous-composants ────────────────────────────────────────────────────────
 
-function SectionHeader({ index, title, hint }: { index: string; title: string; hint?: React.ReactNode }) {
+function CollapsibleSection({
+  index,
+  title,
+  hint,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  index: string;
+  title: string;
+  hint?: React.ReactNode;
+  /** Affiché à la place du hint quand la section est repliée. */
+  summary?: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="lr-section-h">
-      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-        <span className="lr-section-num">{index}</span>
-        <span className="lr-section-title">{title}</span>
+    <div style={{ marginBottom: open ? 0 : 14 }}>
+      <div className="lr-section-h">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 14,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            fontFamily: "inherit",
+          }}
+        >
+          <span className="lr-section-num">{index}</span>
+          <span className="lr-section-title">{title}</span>
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: 13,
+              marginLeft: 6,
+              color: "var(--ls-rentab-ink-3)",
+              transition: "transform .2s",
+              transform: open ? "rotate(180deg)" : "none",
+            }}
+          >
+            ▾
+          </span>
+        </button>
+        {open
+          ? hint && <span className="lr-section-hint">{hint}</span>
+          : summary && <span className="lr-section-hint">{summary}</span>}
       </div>
-      {hint && <span className="lr-section-hint">{hint}</span>}
+      {open ? children : null}
     </div>
   );
 }

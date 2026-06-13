@@ -9,6 +9,7 @@
 // par ClientsPage (TODO Phase 2 si pas deja en place).
 // =============================================================================
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Client } from "../../types/domain";
 import { getInitials } from "../../lib/utils/getInitials";
@@ -18,6 +19,9 @@ export interface BusinessOpportunitiesCardProps {
 }
 
 export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCardProps) {
+  // Flèche dépliable (cohérence avec l'analyse détaillée Rentabilité, 2026-06-13).
+  const [showAll, setShowAll] = useState(false);
+
   // Filtre clients avec amount > 0 (0 = decline explicite, exclu)
   const candidates = clients
     .filter((c) => typeof c.businessInterestAmount === "number" && (c.businessInterestAmount ?? 0) > 0)
@@ -25,8 +29,8 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
 
   if (candidates.length === 0) return null;
 
-  const top3 = candidates.slice(0, 3);
-  const more = candidates.length - top3.length;
+  const shown = showAll ? candidates : candidates.slice(0, 3);
+  const more = candidates.length - 3;
 
   return (
     <div
@@ -77,7 +81,7 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {top3.map((c) => {
+        {shown.map((c) => {
           const amount = c.businessInterestAmount ?? 0;
           const dateLabel = c.businessInterestDate
             ? new Date(c.businessInterestDate).toLocaleDateString("fr-FR", {
@@ -163,24 +167,30 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
       </div>
 
       {more > 0 ? (
-        <Link
-          to="/clients?filter=business"
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
           style={{
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            width: "100%",
             marginTop: 12,
             padding: "8px 12px",
-            textAlign: "center",
             fontSize: 12,
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
             color: "var(--ls-gold)",
-            textDecoration: "none",
+            background: "transparent",
+            cursor: "pointer",
             borderRadius: 10,
             border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, transparent)",
           }}
         >
-          Voir tous ({candidates.length}) →
-        </Link>
+          <span aria-hidden="true" style={{ transition: "transform .15s", transform: showAll ? "rotate(180deg)" : "none" }}>▾</span>
+          {showAll ? "Réduire" : `Voir tous (${candidates.length})`}
+        </button>
       ) : null}
     </div>
   );

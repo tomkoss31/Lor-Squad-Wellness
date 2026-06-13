@@ -222,6 +222,22 @@ Composants : `AnnouncementBell`, `AnnouncementSpotlight`, `NouveautesPage`.
 
 ## Hub développement (sidebar Option B, 2026-05-04)
 
+> ### 🧭 Règle anti-dérive navigation (B9, 2026-06-13)
+> À relire avant d'ajouter **toute** entrée de menu, onglet ou page :
+> - **Une feature = un seul endroit.** Tout le reste n'est qu'un *raccourci*
+>   (deep-link), jamais une 2e implémentation.
+> - **Max 5 onglets par page.** Au-delà → regrouper (cf. fiche client B1 :
+>   7→5 ; Paramètres B3 : 8→6 via un onglet « Admin » à sous-onglets).
+> - **2 hubs, pas plus** : « Mon business » (faire / piloter : prospecter,
+>   rentabilité, outils) et « Mon développement » (apprendre : Academy,
+>   Formation, tutos). Ne pas mélanger « faire » et « apprendre ».
+> - **Avant d'ajouter une entrée**, vérifier qu'elle n'existe pas déjà
+>   ailleurs. Si oui → raccourci vers l'existant, pas de doublon.
+> - **Deep-links robustes** : mapper les `?tab=<slug>` via une table
+>   slug→index/clé (cf. `ClientDetailPage` `TAB_SLUG_TO_INDEX`,
+>   `ParametresPage` `LEGACY_ADMIN_SLUGS`) pour qu'une re-indexation ne
+>   casse pas les vieux liens (Co-pilote, Agenda, push notif).
+
 La sidebar suit le pattern **Option B** : 1 entrée "Mon développement"
 qui regroupe Academy / Formation / Boîte à outils / Cahier de bord /
 Simulateur EBE / FLEX expliqué / Nouveautés. Toutes les routes existantes
