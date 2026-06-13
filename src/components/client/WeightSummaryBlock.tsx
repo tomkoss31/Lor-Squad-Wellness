@@ -14,6 +14,9 @@ interface WeightSummaryBlockProps {
   firstMuscleMass: number | null;
   latestMuscleMass: number | null;
   targetWeight: number | null;
+  /** Nb de bilans comptés dans l'évolution (après filtre re-baseline).
+   *  Si omis, on retombe sur le total des bilans du client. */
+  comparisonCount?: number;
 }
 
 const TEAL = "#0F6E56";
@@ -104,6 +107,7 @@ export function WeightSummaryBlock({
   firstMuscleMass,
   latestMuscleMass,
   targetWeight,
+  comparisonCount,
 }: WeightSummaryBlockProps) {
   const hasEvolution =
     firstWeight != null && latestWeight != null && firstWeight !== latestWeight;
@@ -148,7 +152,7 @@ export function WeightSummaryBlock({
       ? latestMusclePct - firstMusclePct
       : null;
 
-  const firstAssessmentCount = client.assessments?.length ?? 0;
+  const firstAssessmentCount = comparisonCount ?? client.assessments?.length ?? 0;
   const noComparison = firstAssessmentCount < 2;
 
   // --- Column 1: Perte totale

@@ -82,6 +82,10 @@ export function ClientDetailPage() {
   const [searchParams] = useSearchParams();
   const initialTabFromQuery = searchParams.get("tab") === "actions" ? 5 : 0;
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
+  // Re-baseline évolution (2026-06-13, demande Mélanie) : override local des
+  // bilans exclus du calcul d'évolution (effectif = override sinon flag jsonb).
+  // Permet de recalculer la Vue instantanément sans recharger la page.
+  const [excludeOverride, setExcludeOverride] = useState<Record<string, boolean>>({});
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   // Chantier Client access unification (2026-04-24)
@@ -211,6 +215,47 @@ export function ClientDetailPage() {
   const firstAssessment =
     client.assessments.find((entry) => entry.type === "initial") ?? getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
+
+  // ─── Évolution re-baseline (2026-06-13) ─────────────────────────────────
+  // Les bilans « comptés » dans l'évolution de la Vue = ceux non exclus.
+  // Le point de départ = le plus ancien compté. L'historique reste complet.
+  const includedEvolutionAssessments = client.assessments.filter(
+    (a) => !(excludeOverride[a.id] ?? (a.questionnaire?.excludeFromEvolution === true)),
+  );
+  const evolutionFirst = includedEvolutionAssessments.length
+    ? [...includedEvolutionAssessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+    : firstAssessment;
+  const evolutionLatest = includedEvolutionAssessments.length
+    ? [...includedEvolutionAssessments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : getLatestAssessment(client);
+  const evolutionBaselineId = includedEvolutionAssessments.length ? evolutionFirst.id : null;
+
+  async function handleToggleEvolution(assessmentId: string, include: boolean) {
+    if (!client) return;
+    const target = client.assessments.find((a) => a.id === assessmentId);
+    if (!target) return;
+    const exclude = !include;
+    setExcludeOverride((prev) => ({ ...prev, [assessmentId]: exclude }));
+    try {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        const nextQuestionnaire = { ...(target.questionnaire ?? {}), excludeFromEvolution: exclude };
+        const { error } = await sb
+          .from("assessments")
+          .update({ questionnaire: nextQuestionnaire })
+          .eq("id", assessmentId);
+        if (error) throw error;
+      }
+    } catch (err) {
+      // Revert vers la vérité DB en cas d'échec.
+      setExcludeOverride((prev) => ({
+        ...prev,
+        [assessmentId]: target.questionnaire?.excludeFromEvolution === true,
+      }));
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre à jour l'évolution"));
+    }
+  }
+
   const latestQuestionnaire = getLatestQuestionnaire(client);
   // Fix target weight (2026-04-20) : le poids cible est saisi sur le bilan
   // INITIAL (via "Modifier la fiche de départ"). Si les follow-ups ont été
@@ -555,13 +600,14 @@ export function ClientDetailPage() {
               en haut, au-dessus des 4 MetricTiles. */}
           <WeightSummaryBlock
             client={client}
-            firstWeight={firstAssessment.bodyScan?.weight ?? null}
-            latestWeight={latestBodyScan.weight ?? null}
-            firstBodyFatPct={firstAssessment.bodyScan?.bodyFat ?? null}
-            latestBodyFatPct={latestBodyScan.bodyFat ?? null}
-            firstMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
-            latestMuscleMass={latestBodyScan.muscleMass ?? null}
+            firstWeight={evolutionFirst.bodyScan?.weight ?? null}
+            latestWeight={evolutionLatest.bodyScan?.weight ?? null}
+            firstBodyFatPct={evolutionFirst.bodyScan?.bodyFat ?? null}
+            latestBodyFatPct={evolutionLatest.bodyScan?.bodyFat ?? null}
+            firstMuscleMass={evolutionFirst.bodyScan?.muscleMass ?? null}
+            latestMuscleMass={evolutionLatest.bodyScan?.muscleMass ?? null}
             targetWeight={resolvedTargetWeight ?? null}
+            comparisonCount={includedEvolutionAssessments.length}
           />
 
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
@@ -809,21 +855,35 @@ export function ClientDetailPage() {
             </Link>
           </div>
 
+          <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
+            Décoche un bilan pour l'exclure du calcul d'évolution (Vue) — utile si
+            le client reprend de zéro après une pause. Il reste visible ici. Le
+            <span className="text-[#C9A84C] font-semibold"> point de départ</span> devient
+            automatiquement le plus ancien bilan coché.
+          </p>
+
           <HistoryTimeline
             entries={[...client.assessments]
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .map((assessment) => ({
-                id: assessment.id ?? assessment.date,
-                date: assessment.date,
-                summary: assessment.summary,
-                weight: assessment.bodyScan?.weight,
-                hydration: assessment.bodyScan?.hydration,
-                editTo: assessment.type === "initial"
-                  ? `/clients/${client.id}/start-assessment/edit`
-                  : `/clients/${client.id}/assessments/${assessment.id}/edit`,
-                typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
-                canDelete: assessment.type !== "initial",
-              }))}
+              .map((assessment) => {
+                const id = assessment.id ?? assessment.date;
+                const included = !(excludeOverride[assessment.id] ?? (assessment.questionnaire?.excludeFromEvolution === true));
+                return {
+                  id,
+                  date: assessment.date,
+                  summary: assessment.summary,
+                  weight: assessment.bodyScan?.weight,
+                  hydration: assessment.bodyScan?.hydration,
+                  editTo: assessment.type === "initial"
+                    ? `/clients/${client.id}/start-assessment/edit`
+                    : `/clients/${client.id}/assessments/${assessment.id}/edit`,
+                  typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
+                  canDelete: assessment.type !== "initial",
+                  includedInEvolution: included,
+                  isEvolutionBaseline: assessment.id === evolutionBaselineId,
+                };
+              })}
+            onToggleInclude={handleToggleEvolution}
             onDelete={async (assessmentId) => {
               try {
                 const sb = await getSupabaseClient();
