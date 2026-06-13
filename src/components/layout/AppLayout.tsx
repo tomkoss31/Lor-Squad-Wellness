@@ -100,16 +100,15 @@ export function AppLayout() {
         { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0 },
       ]
     : [
-        // Refonte nav par sections (audit 2026-06-12) : la sidebar = quotidien.
-        // Les outils ponctuels (Mes liens, Panier, futurs) vivent dans le hub /outils.
-        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote", section: "Pilotage" },
-        { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex", section: "Pilotage" },
-        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Pilotage" },
-        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Pilotage" },
-        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients", section: "Clients & prospection" },
-        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & prospection" },
-        { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv", section: "Clients & prospection" },
-        { label: "Outils", path: "/outils", emoji: "🧰", badge: 0, section: "Mon espace" },
+        // Refonte nav (2026-06-13) : la sidebar = le quotidien de la relation
+        // client. FLEX + Suivi PV (consultation rare, décision Thomas) sortent
+        // de la sidebar et vivent dans le hub /outils (page + déroulé).
+        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
+        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients", section: "Clients & relation" },
+        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & relation" },
+        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Clients & relation" },
+        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Clients & relation" },
+        { label: "Outils", path: "/outils", emoji: "🧰", badge: 0, tourId: "nav-outils", section: "Mon espace" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace" }]
           : []),
@@ -119,6 +118,10 @@ export function AppLayout() {
   // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
   void urgentRelanceCount;
+  // pvOverdueCount n'alimente plus de badge sidebar (Suivi PV déplacé dans
+  // /outils). L'alerte PV en retard reste portée par Co-pilote (PvDismissAlert
+  // / PvActionPlanAlert). On conserve le calcul au cas où.
+  void pvOverdueCount;
 
   // Crumb court pour le MobileHeader (chip dans le header mobile). Doit
   // tenir en 1 mot court pour ne pas écraser le logo. Distinct de la
@@ -178,12 +181,16 @@ export function AppLayout() {
   const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
     { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
     { label: "Panier", path: "/panier", emoji: "🛒" },
+    { label: "FLEX", path: "/flex", emoji: "⚡" },
+    { label: "Suivi PV", path: "/pv", emoji: "💰" },
     { label: "Devis", path: "/outils", emoji: "📄", soon: true },
   ];
   const onOutilsRoute =
     location.pathname === "/outils" ||
     location.pathname === "/mes-liens" ||
-    location.pathname === "/panier";
+    location.pathname === "/panier" ||
+    location.pathname.startsWith("/flex") ||
+    location.pathname.startsWith("/pv");
   const [outilsOpen, setOutilsOpen] = useState(onOutilsRoute);
   const outilsExpanded = outilsOpen || onOutilsRoute;
 

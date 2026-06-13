@@ -75,17 +75,16 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
 
   const isAdmin = currentUser.role === "admin";
 
-  // Sépare la navigation en sections logiques selon le mockup :
-  // - Navigation (Co-pilote, FLEX, Agenda, Messagerie, Clients, CRM, Suivi PV)
-  // - Équipe (Mon équipe, admin only)
-  // - Développement (Mon développement)
-  // - Compte (Paramètres, Sortir)
-  const navMain = navItems.filter((item) =>
-    ["/co-pilote", "/flex", "/agenda", "/messages", "/clients", "/crm", "/pv"].includes(item.path),
-  );
+  // Sépare la navigation en sections logiques :
+  // - Équipe (Mon équipe, admin only) / Développement / Compte sont des
+  //   buckets ciblés ; le reste tombe dans « Navigation » (catch-all, pour
+  //   que tout nouvel item — ex. Outils — y apparaisse sans oubli).
   const navTeam = navItems.filter((item) => item.path === "/team");
   const navDev = navItems.filter((item) => item.path === "/developpement");
   const navAccount = navItems.filter((item) => item.path === "/parametres");
+  const navMain = navItems.filter(
+    (item) => !["/team", "/developpement", "/parametres"].includes(item.path),
+  );
 
   const isItemActive = (path: string) =>
     currentPath === path ||
