@@ -22,12 +22,10 @@ Légende effort : 🟢 < 1h · 🟡 ~0,5 j · 🔴 ~1 j+ · ⚠️ = décision T
 
 ---
 
-## B2 — Renommer « Outils » → « Business & outils » 🟢 ⚠️(nom à valider)
+## B2 — Renommer « Outils » → « Mon business 💼 » ✅ LIVRÉ (2026-06-13)
 **Objectif** : lever la confusion avec la « Boîte à outils » pédagogique.
-**Fichiers** : `src/components/layout/AppLayout.tsx` (label nav + `pageTitle` de `/outils`), `src/pages/OutilsPage.tsx` (eyebrow + titre hero). Vérifier aussi `MobileDrawer`/`BottomNav` si le label y est repris.
-**Étapes** : changer le libellé (l'**URL `/outils` ne bouge pas**) ; ajuster le hero ; option emoji 🧰 → 💼.
-**Risque** : faible (cosmétique). Surveiller le wrap du label dans la sidebar étroite.
-**Décision** : nom exact → « Business & outils » · « Mon business » · « Pilotage » ?
+**Fichiers** : `AppLayout.tsx` (label nav + emoji 💼 + `pageTitle` de `/outils`), `OutilsPage.tsx` (eyebrow « Pilote ton activité » + titre « Mon business » + sous-titre). MobileDrawer suit via `navItems`.
+**Décision Thomas** : nom retenu = **« Mon business »**. URL `/outils` inchangée.
 
 ---
 
@@ -66,11 +64,11 @@ Légende effort : 🟢 < 1h · 🟡 ~0,5 j · 🔴 ~1 j+ · ⚠️ = décision T
 
 ---
 
-## B6 — Clarifier FLEX vs Rentabilité 🟢
+## B6 — Clarifier FLEX vs Rentabilité ✅ LIVRÉ (2026-06-13)
 **Objectif** : enlever l'ambiguïté « les deux montrent de la marge ».
-**Fichiers** : `src/pages/FlexDashboardPage.tsx` (sous le hero, eyebrow l.282), `src/pages/RentabilitePage.tsx` (sous le hero).
-**Étapes** : 1 sous-titre par page — FLEX = « tes **paliers Herbalife** & la projection du mois » ; Rentabilité = « ta **marge réelle** : vente directe + overrides ». Option : mini-lien croisé.
-**Risque** : ~0 (texte).
+**Livré** : sous-titre sous le hero de chaque page + **mini-lien croisé**.
+- `FlexDashboardPage.tsx` : « FLEX = tes **paliers Herbalife** & la projection du mois » + lien « Voir ta marge réelle → » (/rentabilite).
+- `RentabilitePage.tsx` : « Rentabilité = ta **marge réelle** : vente directe + overrides » + lien « Voir tes paliers FLEX → » (/flex).
 
 ---
 

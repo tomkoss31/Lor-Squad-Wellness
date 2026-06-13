@@ -259,6 +259,20 @@ export function RentabilitePage() {
             </span>
           </div>
 
+          {/* B6 (2026-06-13) : clarifie Rentabilité vs FLEX. Mini-lien croisé. */}
+          <div className="lr-fadeup">
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "var(--ls-rentab-ink-3)" }}>
+              Rentabilité = ta <strong style={{ color: "var(--ls-rentab-ink)" }}>marge réelle</strong> : vente directe + overrides.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/flex")}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--ls-rentab-teal)", fontWeight: 600, textDecoration: "underline" }}
+              >
+                Voir tes paliers FLEX →
+              </button>
+            </p>
+          </div>
+
           {/* Wallet Card — format compact en rappel visuel (validé Thomas
               2026-05-20). Click = flip 3D vers le breakdown. */}
           <div className="lr-fadeup lr-d-1" style={{ display: "flex", justifyContent: "center" }}>
