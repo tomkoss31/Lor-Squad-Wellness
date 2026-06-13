@@ -27,6 +27,9 @@ interface RentabilityDetailModalProps {
   directMargin: number;
   downlineOverride: number;
   manualOverride: number;
+  /** Override ventilé par membre downline (userId → EUR) — pour le détail
+      « de qui vient le montant » dans le filtre Distri. */
+  overridePerMember?: Map<string, number>;
 }
 
 type FilterTab = "all" | "public" | "vip" | "distri";
@@ -56,8 +59,21 @@ export function RentabilityDetailModal({
   directMargin,
   downlineOverride,
   manualOverride,
+  overridePerMember,
 }: RentabilityDetailModalProps) {
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
+
+  // Détail override par distributeur (résolu en noms), trié décroissant.
+  const overrideBreakdown = useMemo(() => {
+    if (!overridePerMember) return [];
+    return [...overridePerMember.entries()]
+      .filter(([, eur]) => eur > 0.5)
+      .map(([id, eur]) => {
+        const u = users.find((x) => x.id === id);
+        return { id, name: u?.name?.trim() || "Distributeur", eur };
+      })
+      .sort((a, b) => b.eur - a.eur);
+  }, [overridePerMember, users]);
   const total = directMargin + downlineOverride + manualOverride;
   const [tab, setTab] = useState<"mois" | "12m">("12m");
   const [filter, setFilter] = useState<FilterTab>("all");
@@ -261,6 +277,7 @@ export function RentabilityDetailModal({
               total={total}
               topClients={data.top_clients ?? []}
               marginPct={data.margin_pct}
+              overrideBreakdown={overrideBreakdown}
             />
           )}
 
@@ -592,6 +609,7 @@ function CurrentMonthView({
   total,
   topClients,
   marginPct,
+  overrideBreakdown,
 }: {
   filter: FilterTab;
   setFilter: (f: FilterTab) => void;
@@ -602,7 +620,10 @@ function CurrentMonthView({
   total: number;
   topClients: RentabilityTopClient[];
   marginPct: number;
+  overrideBreakdown: { id: string; name: string; eur: number }[];
 }) {
+  const [showAllClients, setShowAllClients] = useState(false);
+  const [showOverrideDetail, setShowOverrideDetail] = useState(false);
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -680,24 +701,25 @@ function CurrentMonthView({
         </div>
       </div>
 
-      {/* Top 3 clients (si pertinent pour ce filtre) */}
-      {(filter === "all" || filter === "public" || filter === "vip") && topClients.length > 0 && (
-        <div>
-          <div style={{ ...miniLabelStyle, marginBottom: 10 }}>Top 3 clients</div>
-          <div style={{ display: "grid", gap: 8 }}>
-            {topClients
-              .filter((c) => (filter === "vip" ? c.is_vip : filter === "public" ? !c.is_vip : true))
-              .slice(0, 3)
-              .map((c, i) => (
+      {/* Top clients — dépliable (demande Thomas 2026-06-13 : flèche pour voir
+          toute la liste, pas juste le top 3). La RPC plafonne à 5 clients. */}
+      {(filter === "all" || filter === "public" || filter === "vip") && (() => {
+        const list = topClients.filter((c) =>
+          filter === "vip" ? c.is_vip : filter === "public" ? !c.is_vip : true,
+        );
+        if (list.length === 0) return null;
+        const shown = showAllClients ? list : list.slice(0, 3);
+        return (
+          <div>
+            <div style={{ ...miniLabelStyle, marginBottom: 10 }}>
+              {filter === "vip" ? "Clients VIP" : filter === "public" ? "Clients grand public" : "Top clients"}
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {shown.map((c, i) => (
                 <div
                   key={c.client_id}
                   className="lr-card-2"
-                  style={{
-                    padding: "12px 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                  }}
+                  style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}
                 >
                   <span
                     style={{
@@ -718,6 +740,7 @@ function CurrentMonthView({
                   </span>
                   <span style={{ flex: 1, fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "var(--ls-rentab-ink)" }}>
                     {c.client_name}
+                    {c.is_vip && <span aria-hidden="true" title="VIP" style={{ marginLeft: 6 }}>👑</span>}
                   </span>
                   <span
                     data-stealth
@@ -734,10 +757,117 @@ function CurrentMonthView({
                   </span>
                 </div>
               ))}
+            </div>
+            {list.length > 3 && (
+              <ExpandToggle
+                open={showAllClients}
+                onClick={() => setShowAllClients((v) => !v)}
+                closedLabel={`Voir tout (${list.length})`}
+              />
+            )}
           </div>
+        );
+      })()}
+
+      {/* Détail override par distributeur — dépliable (demande Thomas 2026-06-13 :
+          savoir de qui vient le montant override). */}
+      {filter === "distri" && (
+        <div>
+          <div style={{ ...miniLabelStyle, marginBottom: 10 }}>D'où vient ton override</div>
+          {overrideBreakdown.length === 0 ? (
+            <div
+              className="lr-card-2"
+              style={{ padding: "14px 16px", fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "var(--ls-rentab-ink-3)" }}
+            >
+              Aucun override ce mois — tes distributeurs n'ont pas encore généré de ventes.
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "grid", gap: 8 }}>
+                {(showOverrideDetail ? overrideBreakdown : overrideBreakdown.slice(0, 3)).map((m, i) => (
+                  <div
+                    key={m.id}
+                    className="lr-card-2"
+                    style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        background: i === 0 ? "var(--ls-rentab-purple-tint)" : "var(--ls-rentab-bg-2)",
+                        color: i === 0 ? "var(--ls-rentab-purple)" : "var(--ls-rentab-ink-3)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "Syne, sans-serif",
+                        fontWeight: 700,
+                        fontSize: 12,
+                      }}
+                    >
+                      #{i + 1}
+                    </span>
+                    <span style={{ flex: 1, fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "var(--ls-rentab-ink)" }}>
+                      {m.name}
+                    </span>
+                    <span
+                      data-stealth
+                      className="lr-num"
+                      style={{
+                        fontFamily: "Syne, sans-serif",
+                        fontStyle: "italic",
+                        fontWeight: 700,
+                        fontSize: 18,
+                        color: "var(--ls-rentab-ink)",
+                      }}
+                    >
+                      {Math.round(m.eur)} €
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {overrideBreakdown.length > 3 && (
+                <ExpandToggle
+                  open={showOverrideDetail}
+                  onClick={() => setShowOverrideDetail((v) => !v)}
+                  closedLabel={`Voir tout (${overrideBreakdown.length})`}
+                />
+              )}
+            </>
+          )}
         </div>
       )}
     </>
+  );
+}
+
+// Flèche dépliable réutilisable (chevron ▾ / ▴).
+function ExpandToggle({ open, onClick, closedLabel }: { open: boolean; onClick: () => void; closedLabel: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        marginTop: 8,
+        width: "100%",
+        height: 34,
+        borderRadius: 12,
+        border: "1px solid var(--ls-rentab-line)",
+        background: "var(--ls-rentab-bg-2)",
+        color: "var(--ls-rentab-ink-2)",
+        fontFamily: "DM Sans, sans-serif",
+        fontSize: 12.5,
+        fontWeight: 600,
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+      }}
+    >
+      <span aria-hidden="true" style={{ transition: "transform .15s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
+      {open ? "Réduire" : closedLabel}
+    </button>
   );
 }
 

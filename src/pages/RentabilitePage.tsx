@@ -535,6 +535,7 @@ export function RentabilitePage() {
           directMargin={ownSelfMargin}
           downlineOverride={ownDownlineOverride}
           manualOverride={ownManualOverride}
+          overridePerMember={ownOverridePerMember}
         />
       )}
       {selectedMemberId && selectedData && (
@@ -544,6 +545,7 @@ export function RentabilitePage() {
           directMargin={selectedSelfMargin}
           downlineOverride={selectedDownlineOverride}
           manualOverride={0}
+          overridePerMember={selectedSummary.overridePerMember}
         />
       )}
 
