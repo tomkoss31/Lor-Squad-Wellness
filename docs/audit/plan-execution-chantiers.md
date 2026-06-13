@@ -113,13 +113,20 @@ annonce « all » serait du bruit pour les distri.
 
 ---
 
-## B9 — Règle anti-dérive dans CLAUDE.md 🟢
+## B9 — Règle anti-dérive dans CLAUDE.md ✅ LIVRÉ (2026-06-13)
+Encadré ajouté en tête de la section « Hub développement » de `CLAUDE.md`
+(une feature = un endroit · max 5 onglets · 2 hubs · vérifier avant d'ajouter ·
+deep-links via table slug→clé).
+
+<details><summary>Spec d'origine (archivée)</summary>
+🟢
 **Fichier** : `CLAUDE.md` (section « Hub développement »).
 **Contenu** : encadré —
 > *Une feature = un seul endroit (le reste = raccourci) · max 5 onglets par page ·
 > 2 hubs : « Business & outils » (faire/piloter) et « Mon développement » (apprendre) ·
 > avant d'ajouter une entrée de menu, vérifier qu'elle n'existe pas déjà ailleurs.*
 **Risque** : 0.
+</details>
 
 ---
 
