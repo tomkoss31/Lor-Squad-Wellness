@@ -2,30 +2,30 @@
 // PlanDuJour — Co-pilote refonte « Plan du jour » (chantier 1, 2026-06-13).
 //
 // Implémentation FIDÈLE du design Claude Design validé par Thomas
-// (bundle co-pilote-v6 / « Plan du jour.dc.html »). On reprend pixel pour
-// pixel le héros : warm dark + gradient G3 (emerald→cyan→violet), titre
-// Fraunces italic, médaillon de rang or tournant + « 360 » filigrane gradient,
-// glows emerald/violet, états « journée pleine » / « journée calme », file de
-// tâches priorisée (badge MAINTENANT sur la 1re), anneau rentabilité G3,
-// animation de validation (pop + particules).
+// (bundle co-pilote-v6 / « Plan du jour.dc.html »). Warm dark + gradient G3,
+// titre Fraunces italic, vrai pin de rang en filigrane + « 360 », glows,
+// états « journée pleine » / « journée calme », file de tâches priorisée
+// (badge MAINTENANT), anneau rentabilité G3, anim de validation.
+//
+// THÈME : piloté par les variables CSS `--pdj-*` définies sur :root (sombre)
+// et html.theme-light (clair) — donc il SUIT automatiquement le thème de l'app
+// (le même mécanisme que globals.css). On NE dépend PAS de useTheme (qui est un
+// useState local non partagé → désync). Fix bug 2026-06-13.
+//
+// PIN : vrai composant PinAWTCinematic (pin .webp du rang réel du coach), placé
+// en filigrane CENTRÉ-DROITE discret (placement du design) pour ne PAS chevaucher
+// la jauge rentabilité en haut-droite. Le « 360 » est rendu séparément.
 //
 // Branché sur les VRAIES données : relances propres (useDormantClients, RPC
-// nettoyée chantier 0), rentabilité (useRentabilitySummary), RDV du jour
-// (CopiloteData.todayAgenda). Suit le thème de l'app (useTheme dark/light).
-//
-// On n'inclut PAS le faux shell du design (sidebar/header/barre de contrôle/
-// palette) : l'AppLayout fournit déjà le vrai shell.
+// nettoyée chantier 0), rentabilité (useRentabilitySummary), RDV du jour.
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../../../context/AppContext";
-import { useTheme } from "../../../../hooks/useTheme";
 import { useDormantClients, URGENCY_META, type DormantUrgency } from "../../../../hooks/useDormantClients";
 import { useRentabilitySummary } from "../../../../hooks/useRentabilitySummary";
 import type { CopiloteData } from "../../../../hooks/useCopiloteData";
-// Vrai pin de rang du coach (.webp selon current_rank) + « 360 » filigrane —
-// signature visuelle de progression. Important pour Thomas (2026-06-13).
 import { PinAWTCinematic } from "./PinAWTCinematic";
 
 type Status = "active" | "later" | "done" | "completing";
@@ -45,28 +45,6 @@ function prioOf(u: DormantUrgency): Prio {
   return u === "never" || u === "high" ? "urgent" : u === "medium" ? "todo" : "ok";
 }
 
-function themeVars(isLight: boolean): Record<string, string> {
-  return isLight
-    ? {
-        "--pdj-text-strong": "#211B16", "--pdj-text": "#2E2722", "--pdj-text-sec": "rgba(46,39,34,0.62)", "--pdj-text-faint": "rgba(46,39,34,0.46)",
-        "--pdj-hero-bg": "linear-gradient(135deg,#FFFDFB 0%,#FBF6F1 50%,#F7F3FA 100%)", "--pdj-hero-border": "rgba(46,39,34,0.10)", "--pdj-hero-shadow": "0 40px 100px rgba(46,39,34,0.16)",
-        "--pdj-card-bg": "#FFFFFF", "--pdj-card-border": "rgba(46,39,34,0.09)", "--pdj-card-shadow": "0 1px 2px rgba(46,39,34,0.05)", "--pdj-divider": "rgba(46,39,34,0.12)",
-        "--pdj-ghost-border": "rgba(46,39,34,0.16)", "--pdj-checkbox-border": "rgba(46,39,34,0.28)",
-        "--pdj-rdv-bg": "rgba(6,182,212,0.09)", "--pdj-rdv-border": "rgba(6,182,212,0.28)", "--pdj-calm-bg": "rgba(16,185,129,0.09)", "--pdj-calm-border": "rgba(16,185,129,0.30)",
-        "--pdj-glow-em": "rgba(16,185,129,0.16)", "--pdj-glow-vi": "rgba(139,92,246,0.14)", "--pdj-medallion-op": "0.10", "--pdj-ten-op": "0.12", "--pdj-ring-track": "rgba(46,39,34,0.12)",
-        "--pdj-row-hover-border": "rgba(46,39,34,0.18)", "--pdj-ghost-bg": "rgba(46,39,34,0.04)",
-      }
-    : {
-        "--pdj-text-strong": "#F8FAFC", "--pdj-text": "#F1F5F9", "--pdj-text-sec": "rgba(241,245,249,0.6)", "--pdj-text-faint": "rgba(241,245,249,0.42)",
-        "--pdj-hero-bg": "linear-gradient(135deg,#1A1410 0%,#1C1817 50%,#15131A 100%)", "--pdj-hero-border": "rgba(241,245,249,0.07)", "--pdj-hero-shadow": "0 50px 120px rgba(0,0,0,0.55)",
-        "--pdj-card-bg": "rgba(241,245,249,0.03)", "--pdj-card-border": "rgba(241,245,249,0.08)", "--pdj-card-shadow": "none", "--pdj-divider": "rgba(241,245,249,0.1)",
-        "--pdj-ghost-border": "rgba(241,245,249,0.14)", "--pdj-checkbox-border": "rgba(241,245,249,0.22)",
-        "--pdj-rdv-bg": "rgba(6,182,212,0.06)", "--pdj-rdv-border": "rgba(6,182,212,0.18)", "--pdj-calm-bg": "rgba(16,185,129,0.06)", "--pdj-calm-border": "rgba(16,185,129,0.20)",
-        "--pdj-glow-em": "rgba(16,185,129,0.22)", "--pdj-glow-vi": "rgba(139,92,246,0.20)", "--pdj-medallion-op": "0.09", "--pdj-ten-op": "0.13", "--pdj-ring-track": "rgba(241,245,249,0.12)",
-        "--pdj-row-hover-border": "rgba(241,245,249,0.16)", "--pdj-ghost-bg": "rgba(241,245,249,0.05)",
-      };
-}
-
 function useIsMobile(): boolean {
   const [m, setM] = useState(typeof window !== "undefined" ? window.matchMedia("(max-width: 768px)").matches : false);
   useEffect(() => {
@@ -81,16 +59,38 @@ function useIsMobile(): boolean {
 const PARTICLE_DIRS = [[0, -24], [17, -17], [24, 0], [17, 17], [0, 24], [-17, 17], [-24, 0], [-17, -17]];
 const PARTICLE_COLS = ["#10B981", "#06B6D4", "#8B5CF6", "#C9A84C", "#FB7185", "#06B6D4", "#8B5CF6", "#10B981"];
 
+// Variables de thème (sombre = :root, clair = html.theme-light) → suit l'app.
+const PDJ_THEME_CSS = `
+:root{
+  --pdj-text-strong:#F8FAFC;--pdj-text:#F1F5F9;--pdj-text-sec:rgba(241,245,249,0.6);--pdj-text-faint:rgba(241,245,249,0.42);
+  --pdj-hero-bg:linear-gradient(135deg,#1A1410 0%,#1C1817 50%,#15131A 100%);--pdj-hero-border:rgba(241,245,249,0.07);--pdj-hero-shadow:0 40px 100px rgba(0,0,0,0.5);
+  --pdj-card-bg:rgba(241,245,249,0.03);--pdj-card-border:rgba(241,245,249,0.08);--pdj-card-shadow:none;--pdj-divider:rgba(241,245,249,0.1);
+  --pdj-ghost-border:rgba(241,245,249,0.14);--pdj-ghost-bg:rgba(241,245,249,0.05);--pdj-checkbox-border:rgba(241,245,249,0.22);
+  --pdj-rdv-bg:rgba(6,182,212,0.06);--pdj-rdv-border:rgba(6,182,212,0.18);--pdj-calm-bg:rgba(16,185,129,0.06);--pdj-calm-border:rgba(16,185,129,0.20);
+  --pdj-glow-em:rgba(16,185,129,0.20);--pdj-glow-vi:rgba(139,92,246,0.18);--pdj-ring-track:rgba(241,245,249,0.12);--pdj-ring-text:#F8FAFC;
+  --pdj-pin-op:0.13;--pdj-ten-op:0.13;
+}
+html.theme-light{
+  --pdj-text-strong:#211B16;--pdj-text:#2E2722;--pdj-text-sec:rgba(46,39,34,0.62);--pdj-text-faint:rgba(46,39,34,0.46);
+  --pdj-hero-bg:linear-gradient(135deg,#FFFDFB 0%,#FBF6F1 50%,#F7F3FA 100%);--pdj-hero-border:rgba(46,39,34,0.10);--pdj-hero-shadow:0 30px 80px rgba(46,39,34,0.14);
+  --pdj-card-bg:#FFFFFF;--pdj-card-border:rgba(46,39,34,0.09);--pdj-card-shadow:0 1px 2px rgba(46,39,34,0.05);--pdj-divider:rgba(46,39,34,0.12);
+  --pdj-ghost-border:rgba(46,39,34,0.16);--pdj-ghost-bg:rgba(46,39,34,0.04);--pdj-checkbox-border:rgba(46,39,34,0.28);
+  --pdj-rdv-bg:rgba(6,182,212,0.09);--pdj-rdv-border:rgba(6,182,212,0.28);--pdj-calm-bg:rgba(16,185,129,0.09);--pdj-calm-border:rgba(16,185,129,0.30);
+  --pdj-glow-em:rgba(16,185,129,0.14);--pdj-glow-vi:rgba(139,92,246,0.12);--pdj-ring-track:rgba(46,39,34,0.13);--pdj-ring-text:#211B16;
+  --pdj-pin-op:0.07;--pdj-ten-op:0.09;
+}
+@keyframes pdj-sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pdj-pop{0%{transform:scale(0.2)}55%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes pdj-burst{from{transform:translate(-50%,-50%) translate(0,0) scale(1);opacity:1}to{transform:translate(-50%,-50%) translate(var(--tx),var(--ty)) scale(0.2);opacity:0}}
+`;
+
 export function PlanDuJour({ data }: { data: CopiloteData }) {
   const { currentUser, unreadMessageCount } = useAppContext();
-  const { isDark } = useTheme();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { clients: dormants } = useDormantClients(currentUser?.id ?? null);
   const { totalMargin, projection } = useRentabilitySummary(currentUser?.id ?? null);
 
-  // Statuts locaux des tâches (id → status). v1 : non persistant (brique
-  // suivante = petite table). Réinitialisé si la liste de dormants change.
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   useEffect(() => () => { Object.values(timers.current).forEach(clearTimeout); }, []);
@@ -105,7 +105,6 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
   const pct = projection > 0 ? Math.min(100, Math.round((totalMargin / projection) * 100)) : 0;
   const amount = `${Math.round(totalMargin).toLocaleString("fr-FR")} €`;
 
-  // RDV du jour (vrai agenda)
   const rdvs = useMemo(
     () => data.todayAgenda.map((r) => ({
       id: r.id, clientId: r.clientId,
@@ -116,7 +115,6 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
     [data.todayAgenda]
   );
 
-  // Tâches = relances propres + inbox
   const inboxCount = (unreadMessageCount ?? 0) + data.pendingFollowups.length;
   const allTasks = useMemo(() => {
     const relances = dormants.map((c) => ({
@@ -155,32 +153,30 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
     complete(t.id);
   }
 
-  const tv = themeVars(!isDark);
   const eyebrow = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" }).format(new Date()).toUpperCase();
 
   const heroStyle: React.CSSProperties = {
     position: "relative", overflow: "hidden", background: "var(--pdj-hero-bg)",
-    border: "1px solid var(--pdj-hero-border)", borderRadius: isMobile ? 24 : 24,
+    border: "1px solid var(--pdj-hero-border)", borderRadius: 24,
     padding: isMobile ? "24px 20px 30px" : "40px 38px 44px", boxShadow: "var(--pdj-hero-shadow)",
-    ...tv,
   };
 
   return (
     <section style={heroStyle} aria-label="Ton plan du jour">
-      <style>{`
-        @keyframes pdj-sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
-        @keyframes pdj-pop{0%{transform:scale(0.2)}55%{transform:scale(1.18)}100%{transform:scale(1)}}
-        @keyframes pdj-burst{from{transform:translate(-50%,-50%) translate(0,0) scale(1);opacity:1}to{transform:translate(-50%,-50%) translate(var(--tx),var(--ty)) scale(0.2);opacity:0}}
-      `}</style>
+      <style>{PDJ_THEME_CSS}</style>
 
       {/* Glows */}
       <div aria-hidden="true" style={{ position: "absolute", left: -120, top: -120, width: 440, height: 440, background: "radial-gradient(circle, var(--pdj-glow-em), transparent 70%)", filter: "blur(18px)", pointerEvents: "none" }} />
       <div aria-hidden="true" style={{ position: "absolute", right: -150, bottom: -150, width: 500, height: 500, background: "radial-gradient(circle, var(--pdj-glow-vi), transparent 70%)", filter: "blur(18px)", pointerEvents: "none" }} />
 
-      {/* Vrai pin AWT du rang du coach (top-right, rotation 60s + heart-beat)
-          + « 360 » filigrane gradient G3 — composant signature (le même que le
-          hero éditorial). Remplace le médaillon générique du design. */}
-      <PinAWTCinematic opacity={isDark ? 0.18 : 0.12} />
+      {/* Vrai pin de rang en filigrane, centré-droite discret (placement du
+          design) → ne chevauche PAS la jauge en haut-droite. */}
+      <div aria-hidden="true" style={{ position: "absolute", right: -34, top: "50%", transform: "translateY(-50%)", width: 360, height: 360, opacity: "var(--pdj-pin-op)" as unknown as number, pointerEvents: "none", zIndex: 0 }}>
+        <PinAWTCinematic positioned={false} size={360} opacity={1} />
+      </div>
+
+      {/* « 360 » filigrane gradient G3 (bas-droite) */}
+      <div aria-hidden="true" style={{ position: "absolute", right: 18, bottom: -48, fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 300, lineHeight: 0.8, background: "linear-gradient(135deg,#10B981 0%,#06B6D4 50%,#8B5CF6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", opacity: "var(--pdj-ten-op)" as unknown as number, pointerEvents: "none", userSelect: "none", zIndex: 0 }}>360</div>
 
       <div style={{ position: "relative", zIndex: 2 }}>
         {/* Ligne Noaly */}
@@ -212,7 +208,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
             ? { display: "flex", flexDirection: "row", alignItems: "center", padding: "14px 16px", background: "var(--pdj-card-bg)", border: "1px solid var(--pdj-card-border)", boxShadow: "var(--pdj-card-shadow)", borderRadius: 14 }
             : { display: "flex", flexDirection: "column", alignItems: "flex-end", flex: "0 0 auto", maxWidth: 232, marginLeft: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <Ring pct={pct} size={isMobile ? 72 : 78} isDark={isDark} />
+              <Ring pct={pct} size={isMobile ? 72 : 78} />
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 26, color: "var(--pdj-text-strong)", lineHeight: 1 }}>{amount}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--pdj-text-faint)" }}>ce mois · {pct} % proj.</span>
@@ -324,10 +320,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.14em", color: "var(--pdj-text-faint)", marginBottom: 12, textTransform: "uppercase" }}>{children}</div>;
 }
 
-function Ring({ pct, size, isDark }: { pct: number; size: number; isDark: boolean }) {
+function Ring({ pct, size }: { pct: number; size: number }) {
   const R = 34, C = 2 * Math.PI * R, off = C * (1 - pct / 100);
-  const textColor = isDark ? "#F8FAFC" : "#211B16";
-  const trackColor = isDark ? "rgba(241,245,249,0.12)" : "rgba(46,39,34,0.13)";
   return (
     <svg width={size} height={size} viewBox="0 0 88 88" style={{ display: "block", flex: "0 0 auto" }} aria-hidden="true">
       <defs>
@@ -337,9 +331,9 @@ function Ring({ pct, size, isDark }: { pct: number; size: number; isDark: boolea
           <stop offset="100%" stopColor="#8B5CF6" />
         </linearGradient>
       </defs>
-      <circle cx={44} cy={44} r={R} fill="none" stroke={trackColor} strokeWidth={7} />
+      <circle cx={44} cy={44} r={R} fill="none" stroke="var(--pdj-ring-track)" strokeWidth={7} />
       <circle cx={44} cy={44} r={R} fill="none" stroke="url(#pdj-g3ring)" strokeWidth={7} strokeLinecap="round" strokeDasharray={C} strokeDashoffset={off} transform="rotate(-90 44 44)" />
-      <text x={44} y={45} textAnchor="middle" dominantBaseline="central" fontFamily="Sora, sans-serif" fontSize={21} fontWeight={800} fill={textColor}>{pct}%</text>
+      <text x={44} y={45} textAnchor="middle" dominantBaseline="central" fontFamily="Sora, sans-serif" fontSize={21} fontWeight={800} fill="var(--pdj-ring-text)">{pct}%</text>
     </svg>
   );
 }
