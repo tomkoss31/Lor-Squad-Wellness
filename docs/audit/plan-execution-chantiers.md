@@ -8,7 +8,20 @@ Légende effort : 🟢 < 1h · 🟡 ~0,5 j · 🔴 ~1 j+ · ⚠️ = décision T
 
 ---
 
-## B1 — Fiche client : 7 → 5 onglets 🟡
+## B1 — Fiche client : 7 → 5 onglets ✅ LIVRÉ (2026-06-13)
+**Implémentation retenue** (plus simple que le plan d'origine, zéro déplacement de
+gros JSX) : les blocs `activeTab === N` étant déjà des frères au même niveau sous
+le wrapper racine `space-y-6`, il a suffi de **rebasculer les gardes** au lieu de
+déplacer le JSX. Résultat : **0** Vue (+ Historique rapatrié) · **1** Mesures
+(Body Scan + Mensurations, 2 sous-titres déjà portés par chaque bloc) · **2**
+Produits · **3** Actions · **4** Club VIP. Mapping query centralisé
+`TAB_SLUG_TO_INDEX` (vue/mesures/produits/actions/vip) → deep-links `?tab=actions`
+(Co-pilote `HeroActionCard`/`PendingFollowupsCard`, `FollowUpsDueWidget`,
+`SuivisDuJourPage`) préservés. `setActiveTab` internes re-numérotés (5→3).
+`npx tsc -b --noEmit` ✅.
+
+<details><summary>Plan d'origine (archivé)</summary>
+🟡
 **Objectif** : fusionner *Body Scan* + *Mensurations* → **« Mesures »**, et remonter *Historique* dans *Vue*.
 **Fichier** : `src/pages/ClientDetailPage.tsx` (un seul).
 **État actuel** : onglets **par index** (0 Vue · 1 Body Scan · 2 Mensurations · 3 Historique · 4 Produits · 5 Actions · 6 Club VIP), rendus par `activeTab === N` (lignes 552→). Query : `?tab=actions` → index 5 (ligne 83).
@@ -19,6 +32,7 @@ Légende effort : 🟢 < 1h · 🟡 ~0,5 j · 🔴 ~1 j+ · ⚠️ = décision T
 4. Re-numéroter : Produits 4→2, Actions 5→3, Club VIP 6→4.
 5. Mettre à jour le mapping query (l.83) : `?tab=actions` → **3** ; ajouter `?tab=mesures` → 1.
 **Risque** : moyen — re-indexation + **deep links** `?tab=actions` (utilisés par Agenda / Co-pilote / CLAUDE.md). Tester chaque lien.
+</details>
 
 ---
 

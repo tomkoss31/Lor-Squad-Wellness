@@ -79,8 +79,14 @@ export function ClientDetailPage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
   // arriver directement sur l'onglet Actions depuis le widget dashboard.
+  // B1 (2026-06-13) : fiche 7→5 onglets. Mapping slug→index centralisé pour
+  // garder les deep-links robustes à la re-indexation (Co-pilote/Agenda
+  // pointent ?tab=actions ; ?tab=mesures dispo pour les futurs liens).
   const [searchParams] = useSearchParams();
-  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 5 : 0;
+  const TAB_SLUG_TO_INDEX: Record<string, number> = {
+    vue: 0, mesures: 1, produits: 2, actions: 3, vip: 4,
+  };
+  const initialTabFromQuery = TAB_SLUG_TO_INDEX[searchParams.get("tab") ?? ""] ?? 0;
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   // Re-baseline évolution (2026-06-13, demande Mélanie) : override local des
   // bilans exclus du calcul d'évolution (effectif = override sinon flag jsonb).
@@ -520,9 +526,7 @@ export function ClientDetailPage() {
       <div className="client-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {([
           { label: 'Vue', emoji: '🏠', color: 'var(--ls-gold)' },
-          { label: 'Body Scan', emoji: '⚡', color: 'var(--ls-coral)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Mensurations', emoji: '📐', color: 'var(--ls-teal)' },
-          { label: 'Historique', emoji: '📊', color: 'var(--ls-purple)', count: client.assessments.length },
+          { label: 'Mesures', emoji: '📐', color: 'var(--ls-teal)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
           { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
           { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
           { label: 'Club VIP', emoji: '👑', color: 'var(--ls-gold)' },
@@ -580,8 +584,8 @@ export function ClientDetailPage() {
       {/* Bandeau Prochain RDV (V3) */}
       <NextAppointmentBanner
         nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(5)}
-        onViewDetails={() => setActiveTab(5)}
+        onPlan={() => setActiveTab(3)}
+        onViewDetails={() => setActiveTab(3)}
       />
       </div>
 
@@ -651,7 +655,9 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 1: Body Scan dédié */}
+      {/* Tab 1: Mesures — B1 (2026-06-13) : Body Scan + Mensurations fusionnés
+          (fiche 7→5 onglets). Body Scan en premier, Mensurations dessous (chaque
+          bloc porte son propre sous-titre). */}
       {activeTab === 1 && (
         <Card className="space-y-6">
           <div className="flex items-center justify-between">
@@ -826,8 +832,9 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 2: Mensurations — Chantier Module Mensurations (2026-04-24) */}
-      {activeTab === 2 && (
+      {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté
+          sous l'onglet « Mesures » (activeTab === 1), juste après le Body Scan. */}
+      {activeTab === 1 && (
         <MeasurementsPanel
           clientId={client.id}
           gender={client.sex}
@@ -837,8 +844,9 @@ export function ClientDetailPage() {
         />
       )}
 
-      {/* Tab 3: Historique bilans */}
-      {activeTab === 3 && (
+      {/* Historique bilans — B1 (2026-06-13) : rapatrié en bas de l'onglet Vue
+          (activeTab === 0), plus d'onglet dédié. */}
+      {activeTab === 0 && (
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -910,11 +918,11 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 3: Produits — wrapped in an ErrorBoundary to prevent a crash
-          inside ProductAdder or recommendations logic from breaking the
-          entire fiche. Sectional fallback = discreet card, user can navigate
-          to another tab without reloading. */}
-      {activeTab === 4 && (
+      {/* Tab 2: Produits (B1 : index 4→2) — wrapped in an ErrorBoundary to
+          prevent a crash inside ProductAdder or recommendations logic from
+          breaking the entire fiche. Sectional fallback = discreet card, user
+          can navigate to another tab without reloading. */}
+      {activeTab === 2 && (
         <ErrorBoundary
           name="ClientDetailPage/Tab3-Produits"
           fallback={(
@@ -1338,11 +1346,12 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Tab 5: Actions - Refonte chirurgicale Actions premium (Chantier 2026-04-26).
-          Composant externalise dans src/components/client-detail/ActionsTab.tsx.
-          Tous les connecteurs metier (lifecycle, toggles, transfert, delete,
-          coordonnees) utilisent les hooks AppContext existants. */}
-      {activeTab === 5 && (
+      {/* Tab 3: Actions (B1 : index 5→3) - Refonte chirurgicale Actions premium
+          (Chantier 2026-04-26). Composant externalise dans
+          src/components/client-detail/ActionsTab.tsx. Tous les connecteurs metier
+          (lifecycle, toggles, transfert, delete, coordonnees) utilisent les hooks
+          AppContext existants. */}
+      {activeTab === 3 && (
         <ErrorBoundary name="ClientDetailPage/ActionsTab" fallback={(
           <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Actions.</p></Card>
         )}>
@@ -1356,12 +1365,12 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Onglet Club VIP (VIP-2 2026-06-10) : montre les remises + invitation. */}
-      {activeTab === 6 && (
+      {/* Onglet Club VIP (VIP-2 2026-06-10 ; B1 : index 6→4) : remises + invitation. */}
+      {activeTab === 4 && (
         <ErrorBoundary name="ClientDetailPage/ClientVipPitchTab" fallback={(
           <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Club VIP.</p></Card>
         )}>
-          <ClientVipPitchTab client={client} onManage={() => setActiveTab(5)} />
+          <ClientVipPitchTab client={client} onManage={() => setActiveTab(3)} />
         </ErrorBoundary>
       )}
 
