@@ -1,5 +1,6 @@
 // =============================================================================
-// OutilsPage — hub « 🧰 Outils » (refonte nav 2026-06-13).
+// OutilsPage — hub « 💼 Mon business » (ex-« Outils », renommé B2 2026-06-13).
+// URL inchangée (/outils) pour ne casser aucun lien.
 //
 // La sidebar ne garde que le quotidien. Les outils ponctuels du coach vivent
 // ici, en cards, pour ne pas multiplier les lignes de menu. Quand on ajoute un
@@ -92,16 +93,16 @@ export function OutilsPage() {
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 60px" }}>
       {/* Hero */}
       <div style={{ fontFamily: "Syne, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: "var(--ls-teal)" }}>
-        Ta boîte à outils
+        Pilote ton activité
       </div>
       <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(26px,5vw,32px)", letterSpacing: "-0.5px", margin: "8px 0 4px", color: "var(--ls-text)" }}>
-        Mes{" "}
+        Mon{" "}
         <span style={{ background: "linear-gradient(135deg,var(--ls-teal),var(--ls-purple))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          outils
+          business
         </span>
       </h1>
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif" }}>
-        Tes outils du quotidien, regroupés ici pour garder la sidebar légère.
+        Tes liens, ton panier et tes chiffres (rentabilité, FLEX, PV) regroupés ici pour piloter ton activité.
       </p>
 
       {TOOLS.map((grp) => (
