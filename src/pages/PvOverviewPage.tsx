@@ -13,6 +13,7 @@ import { usePvCheckedTracker } from "../hooks/usePvCheckedTracker";
 import { usePvColumnOverride } from "../hooks/usePvColumnOverride";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
+import { isDeadLifecycle } from "../types/domain";
 import { DormantClientsWidget } from "../components/dormant/DormantClientsWidget";
 
 export function PvOverviewPage() {
@@ -81,7 +82,20 @@ export function PvOverviewPage() {
   const sourceClients = useMemo(
     () => {
       const base = isAdmin ? clients : visibleClients;
-      const filtered = base.filter((c) => !c.freePvTracking);
+      // Chantier 0 « connecteur » (2026-06-13) : le Suivi PV ne montre QUE de
+      // vraies personnes sur programme actif. On exclut, en plus de freePvTracking :
+      //  - les clients en « suivi libre » (achats hors-suivi, ex Lydie/Joël),
+      //  - les arrêtés / perdus (isDeadLifecycle),
+      //  - les clients en pause.
+      // ⚠️ Filtre d'AFFICHAGE seulement : la rentabilité reste calculée sur toutes
+      // les commandes (pv_client_products), exclure d'ici ne retire aucun €.
+      const filtered = base.filter(
+        (c) =>
+          !c.freePvTracking &&
+          !c.freeFollowUp &&
+          c.lifecycleStatus !== "paused" &&
+          !isDeadLifecycle(c.lifecycleStatus ?? "active")
+      );
       if (isAdmin && currentUser?.id) {
         return [...filtered].sort((a, b) => {
           const aMine = a.distributorId === currentUser.id ? 0 : 1;
