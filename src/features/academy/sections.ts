@@ -255,10 +255,10 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "flex",
-        target: '[data-tour-id="nav-flex"]',
+        target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "2️⃣ FLEX — ton moteur 5-3-1",
-        body: "Ton plan d'action quotidien calibré sur tes objectifs : combien de personnes inviter, combien de conversations à tenir, combien de bilans à caler, combien de closings viser. Tu fais ton check-in quotidien (30 sec) et tu vois en couleurs si tu es dans les clous. Pour comprendre la formule en détail : Mon développement → Comment marche FLEX.",
+        title: "FLEX — ton moteur 5-3-1 (dans Outils)",
+        body: "Ton plan d'action quotidien calibré sur tes objectifs : combien de personnes inviter, combien de conversations à tenir, combien de bilans à caler, combien de closings viser. Tu fais ton check-in quotidien (30 sec) et tu vois en couleurs si tu es dans les clous. 👉 Tu y accèdes depuis le hub « Outils » (déroulé de la sidebar ou page). Pour comprendre la formule : Mon développement → Comment marche FLEX.",
         manualAdvance: true,
       },
       {
@@ -287,10 +287,10 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "pv",
-        target: '[data-tour-id="nav-pv"]',
+        target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "6️⃣ Suivi PV — ton volume Herbalife",
-        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. Badge rouge si tu as des produits en retard à renouveler.",
+        title: "Suivi PV — ton volume Herbalife (dans Outils)",
+        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. 👉 Range avec FLEX dans le hub « Outils ». L'alerte produits en retard reste affichée sur le Co-pilote.",
         manualAdvance: true,
         crossRefs: [
           { label: "Comment lire la jauge PV", sectionId: "rituals" },
@@ -1258,9 +1258,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "pv-detail",
-        target: '[data-tour-id="nav-pv"]',
+        target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "L'onglet Suivi PV — le détail produit par produit",
+        title: "Suivi PV (dans Outils) — le détail produit par produit",
         body: "Pour creuser : historique mensuel, projection sur la fin du mois (en fonction du rythme actuel), liste des produits actifs par client (durée de stock restante, dates de relance auto). Si un client n'a pas reçu sa commande renouvelée à temps, il apparaît en alerte rouge — c'est ton signal pour le contacter AVANT qu'il décroche. C'est aussi cet onglet qui te dit quels produits tournent le mieux dans ta base : si tu vois 80 % de Formula 1 et 0 % de boosters sport, tu sais que tu rates un upsell évident sur tes clients sportifs. La régularité PV se construit ici, pas dans la prospection — fidéliser un client coûte 5× moins que d'en trouver un nouveau.",
         manualAdvance: true,
       },
