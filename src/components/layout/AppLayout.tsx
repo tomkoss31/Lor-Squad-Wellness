@@ -92,7 +92,7 @@ export function AppLayout() {
   // pas de fiches clients, pas de PV, pas de team. Juste rentab perso +
   // équipe (visible passive) + Académie + messagerie + paramètres.
   const isPassive = currentUser.isPassiveSupervisor === true;
-  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string }> = isPassive
+  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string; section?: string }> = isPassive
     ? [
         { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
@@ -100,23 +100,21 @@ export function AppLayout() {
         { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0 },
       ]
     : [
-        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
-        { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex" },
-        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda" },
-        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
-        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
-        // CRM commun (VIP-4 2026-06-10) — pipeline unifié de tous les leads.
-        // Badge = nouveaux + relances dues (toutes sources).
-        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount },
-        // Hub « Mes liens » — raccourci unique des liens publics du coach (audit 2026-06-12).
-        { label: "Mes liens", path: "/mes-liens", emoji: "🔗", badge: 0 },
-        { label: "Panier", path: "/panier", emoji: "🛒", badge: 0 },
-        { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
+        // Refonte nav par sections (audit 2026-06-12) : la sidebar = quotidien.
+        // Les outils ponctuels (Mes liens, Panier, futurs) vivent dans le hub /outils.
+        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote", section: "Pilotage" },
+        { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex", section: "Pilotage" },
+        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Pilotage" },
+        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Pilotage" },
+        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients", section: "Clients & prospection" },
+        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & prospection" },
+        { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv", section: "Clients & prospection" },
+        { label: "Outils", path: "/outils", emoji: "🧰", badge: 0, section: "Mon espace" },
         ...(currentUser.role === "admin"
-          ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
+          ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace" }]
           : []),
-        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement" },
-        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0 },
+        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement", section: "Mon espace" },
+        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0, section: "Mon espace" },
       ];
   // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
@@ -249,16 +247,7 @@ export function AppLayout() {
           {/* ZONE 2 — Navigation (grid row = minmax(0, 1fr) → peut shrink
               sous la taille naturelle, scroll interne si débordement) */}
           <nav style={{ minHeight: 0, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-            <div style={{
-              fontSize: 9,
-              color: 'var(--ls-text-hint)',
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              padding: '0 12px',
-              marginBottom: 6,
-              marginTop: 8,
-            }}>Navigation</div>
-            {navigation.map((item) => {
+            {navigation.map((item, idx) => {
               const isActive =
                 location.pathname === item.path ||
                 (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
@@ -279,9 +268,15 @@ export function AppLayout() {
               // "/formation" obsolète, l'item s'appelle désormais "Mon
               // développement" et pointe sur /developpement).
               const insertNewBilanBefore = item.path === "/developpement";
+              const showSection = !!item.section && item.section !== navigation[idx - 1]?.section;
 
               return (
                 <div key={item.path} style={{ display: 'contents' }}>
+                  {showSection ? (
+                    <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 12px', marginTop: idx === 0 ? 8 : 16, marginBottom: 6 }}>
+                      {item.section}
+                    </div>
+                  ) : null}
                   {insertNewBilanBefore ? (
                     <NavLink
                       key="new-bilan-cta"

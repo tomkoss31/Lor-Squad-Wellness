@@ -110,7 +110,31 @@
       "Bash(grep -rn 'to={`/clients/${.*Id\\\\|to={\"/clients/' src/components/copilote/ src/components/pv/ src/pages/PvOverviewPage.tsx)",
       "Bash(grep -n \"      </button>$\\\\|^    </div>$\" src/pages/AgendaPage.tsx)",
       "Bash(git gc *)",
-      "Bash(grep -n \"          </button>$\" src/pages/ClientDetailPage.tsx)"
+      "Bash(grep -n \"          </button>$\" src/pages/ClientDetailPage.tsx)",
+      "Bash(git branch *)",
+      "Bash(git merge-base *)",
+      "Bash(break)",
+      "Bash(git mv *)",
+      "Read(//c/Users/tomko/.claude/projects/C--Users-tomko-Documents-Lor-Squad-Wellness/memory/**)",
+      "Bash(sed -i 's/Lor'\"'\"'Squad AI/Noaly \\(IA La Base 360\\)/g; s/lor-squad-ai/noaly/g; s/LORSQUAD_AI_MODEL/NOALY_MODEL/g' project_presentation_vip_zoom.md)",
+      "Bash(Select-Object -First 30)",
+      "Bash(git rev-list *)",
+      "mcp__visualize__read_me",
+      "WebFetch(domain:developer.squareup.com)",
+      "Bash(cd \"C:/Users/tomko/Documents/Lor'Squad Wellness/.claude/worktrees/goofy-bassi-1d8512\")",
+      "Bash(grep -hoE \"VITE_SUPABASE_URL=.*\" .env .env.local)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); a=d.get\\('analysis',{}\\); print\\('=== SYNTHESE ===\\\\n'+str\\(a.get\\('synthese',''\\)\\)+'\\\\n\\\\n=== PITCH ===\\\\n'+str\\(a.get\\('pitch',''\\)\\)+'\\\\n\\\\n=== POINTS ===\\\\n'+str\\(a.get\\('points_attention',''\\)\\)+'\\\\n\\\\n=== PROGRAMME ===\\\\n'+str\\(a.get\\('programme_note',''\\)\\)+'\\\\n\\\\n[modele: '+str\\(d.get\\('model',''\\)\\)+']'\\)\")",
+      "Bash(git rebase *)",
+      "Bash(grep -nE \"from\\\\\\\\\\(.clients|current_program|birth_date|first_name|\\\\\\\\.select\\\\\\\\\\(\" supabase/functions/client-app-data/index.ts)",
+      "Bash(git cherry-pick *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(tar -xf raw.out)",
+      "Bash(cd /tmp/design/page-client && echo \"=== CHAT \\(intention\\) ===\" && cat chats/chat1.md && echo \"\" && echo \"=== TAILLES ===\" && wc -l project/*.dc.html)",
+      "Bash(cd /tmp/design/page-client && cat \"project/BaseClientsHeader.dc.html\")",
+      "Bash(python -)",
+      "Bash(cd \"C:/Users/tomko/Documents/Lor'Squad Wellness/.claude/worktrees/goofy-bassi-1d8512\" && cp public/mockups/mes-liens.html \"/c/Users/tomko/Downloads/LaBase360-maquette-mes-liens.html\" && echo \"copié dans Téléchargements\")",
+      "Bash(cd /tmp/panier/panier && echo \"=== CHAT ===\" && cat chats/chat1.md && echo \"\" && echo \"=== TAILLE design ===\" && wc -l project/Panier.dc.html)",
+      "Bash(cd /tmp/panier/panier && cat project/Panier.dc.html)"
     ]
   }
 }
