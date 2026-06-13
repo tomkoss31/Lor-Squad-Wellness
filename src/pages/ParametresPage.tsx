@@ -8,7 +8,8 @@
 //
 // Chaque tab est un composant autonome pour rester lisible.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 // PageHeading remplace par PremiumHero (2026-04-29)
 import { PremiumHero } from "../components/ui/PremiumHero";
@@ -17,12 +18,14 @@ import { EquipeTab } from "../components/settings/EquipeTab";
 import { TransfertsTab } from "../components/settings/TransfertsTab";
 import { StatistiquesTab } from "../components/settings/StatistiquesTab";
 import { DebugTab } from "../components/settings/DebugTab";
-import { LeadsTab } from "../components/settings/LeadsTab";
 import { VipProgramTab } from "../components/settings/VipProgramTab";
 import { LegalTab } from "../components/settings/LegalTab";
 import { NotificationsTab } from "../components/settings/NotificationsTab";
 
-type TabKey = "profil" | "vip" | "notifs" | "legal" | "equipe" | "leads" | "transferts" | "stats" | "debug";
+// Leads → CRM (chantier 2026-06-13) : l'onglet « Leads » des Paramètres
+// faisait doublon avec /crm (qui agrège prospect_leads + online_bilans + recos).
+// /crm est désormais LA source unique. /parametres?tab=leads redirige vers /crm.
+type TabKey = "profil" | "vip" | "notifs" | "legal" | "equipe" | "transferts" | "stats" | "debug";
 
 const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
@@ -34,7 +37,6 @@ const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: bo
   // RGPD Phase 1 (2026-04-30) : tous users peuvent voir
   { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
-  { key: "leads", label: "Leads", icon: "🔥", adminOnly: true },
   { key: "transferts", label: "Transferts", icon: "🔀", adminOnly: true },
   { key: "stats", label: "Statistiques", icon: "📊", adminOnly: true },
   { key: "debug", label: "Debug", icon: "🔧", adminOnly: true },
@@ -42,6 +44,7 @@ const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: bo
 
 export function ParametresPage() {
   const { currentUser } = useAppContext();
+  const navigate = useNavigate();
   // Chantier Academy section 1 (2026-04-27) : /parametres ouverte aux
   // non-admins, mais seul l onglet "Profil" est visible pour eux.
   const isAdmin = currentUser?.role === "admin";
@@ -51,6 +54,14 @@ export function ParametresPage() {
     const fromQuery = new URLSearchParams(window.location.search).get("tab") as TabKey;
     return fromQuery && TABS.some((t) => t.key === fromQuery) ? fromQuery : "profil";
   });
+
+  // Ancien lien /parametres?tab=leads → /crm (source unique des leads).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("tab") === "leads") {
+      navigate("/crm", { replace: true });
+    }
+  }, [navigate]);
 
   if (!currentUser) return null;
 
@@ -110,7 +121,6 @@ export function ParametresPage() {
       {tab === "notifs" ? <NotificationsTab /> : null}
       {tab === "legal" ? <LegalTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
-      {tab === "leads" ? <LeadsTab /> : null}
       {tab === "transferts" ? <TransfertsTab /> : null}
       {tab === "stats" ? <StatistiquesTab /> : null}
       {tab === "debug" ? <DebugTab /> : null}
