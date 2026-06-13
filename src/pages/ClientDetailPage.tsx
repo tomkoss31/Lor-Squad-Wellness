@@ -20,13 +20,12 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
-import { PresentationClientButton } from "../features/academy/components/PresentationClientButton";
+import { KebabMenu } from "../components/ui/KebabMenu";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab";
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
-import { SharePublicButton } from "../components/client/SharePublicButton";
 import { getEffectiveAge } from "../lib/age";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
@@ -384,63 +383,70 @@ export function ClientDetailPage() {
             >
               🔗 Envoyer l'accès à l'app
             </button>
-            <PresentationClientButton onShowQr={() => setAccessModalOpen(true)} />
+            {/* Aperçu app (œil) reste en accès direct — utilisé souvent pour
+                vérifier les modifs de la PWA client. */}
             <ClientAppPreviewButton
               clientId={client.id}
               clientFirstName={client.firstName}
               clientLastName={client.lastName}
               coachName={currentUser?.name ?? "Coach"}
             />
-            <SharePublicButton
-              clientId={client.id}
-              clientFirstName={client.firstName}
-              publicShareConsent={client.publicShareConsent ?? false}
-              publicShareRevokedAt={client.publicShareRevokedAt}
-            />
+            {/* « Suivi » = nouveau bilan DE CE client. Le « + Bilan » global
+                (/assessments/new = nouveau client) a été retiré d'ici : doublon
+                trompeur sur une fiche client existante (décision Thomas
+                2026-06-12). Il reste dans la sidebar pour démarrer un prospect. */}
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
-            >
-              📋 Suivi
-            </Link>
-            {/* Quality fix C (2026-05-18) : bouton demander un témoignage.
-                Copie l'URL générique du coach + ouvre WhatsApp pré-rempli
-                avec un message au prénom du client. */}
-            <button
-              type="button"
-              onClick={() => {
-                const slugSource = (currentUser?.name ?? "").split(/\s+/)[0] ?? "";
-                const slug = slugSource
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[̀-ͯ]/g, "")
-                  .replace(/[^a-z0-9]/g, "")
-                  .trim();
-                if (!slug) {
-                  alert("Impossible de générer ton slug coach. Vérifie ton prénom dans les paramètres.");
-                  return;
-                }
-                const url = `${window.location.origin}/temoignage/coach/${slug}`;
-                const firstName = client.firstName || "toi";
-                const message = `Salut ${firstName} 👋\n\nEst-ce que tu pourrais m'aider à grandir en partageant ton ressenti sur notre accompagnement ? Ça prend 30 secondes : ${url}\n\nMerci infiniment 🙏`;
-                navigator.clipboard?.writeText(url).catch(() => {});
-                const waPhone = (client.phone ?? "").replace(/[^0-9]/g, "");
-                const waUrl = waPhone
-                  ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
-                  : `https://wa.me/?text=${encodeURIComponent(message)}`;
-                window.open(waUrl, "_blank", "noopener");
-              }}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
-              title="Copie le lien témoignage + ouvre WhatsApp avec un message pré-rempli"
-            >
-              💬 Demander un témoignage
-            </button>
-            <Link
-              to="/assessments/new"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
             >
-              + Bilan
+              📋 Nouveau suivi
             </Link>
+            {/* Menu ⋮ : actions rares repliées (désengorgement 2026-06-12).
+                Présentation client + Partage public retirés (décision Thomas). */}
+            <KebabMenu
+              items={[
+                {
+                  icon: "💬",
+                  label: "Demander un témoignage",
+                  sublabel: "Copie le lien + ouvre WhatsApp",
+                  onClick: () => {
+                    const slugSource = (currentUser?.name ?? "").split(/\s+/)[0] ?? "";
+                    const slug = slugSource
+                      .toLowerCase()
+                      .normalize("NFD")
+                      .replace(/[̀-ͯ]/g, "")
+                      .replace(/[^a-z0-9]/g, "")
+                      .trim();
+                    if (!slug) {
+                      alert("Impossible de générer ton slug coach. Vérifie ton prénom dans les paramètres.");
+                      return;
+                    }
+                    const url = `${window.location.origin}/temoignage/coach/${slug}`;
+                    const firstName = client.firstName || "toi";
+                    const message = `Salut ${firstName} 👋\n\nEst-ce que tu pourrais m'aider à grandir en partageant ton ressenti sur notre accompagnement ? Ça prend 30 secondes : ${url}\n\nMerci infiniment 🙏`;
+                    navigator.clipboard?.writeText(url).catch(() => {});
+                    const waPhone = (client.phone ?? "").replace(/[^0-9]/g, "");
+                    const waUrl = waPhone
+                      ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
+                      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    window.open(waUrl, "_blank", "noopener");
+                  },
+                },
+                ...((client.assessments?.length ?? 0) >= 2
+                  ? [
+                      {
+                        icon: "📄",
+                        label: generatingReport ? "Génération…" : "Rapport d'évolution",
+                        sublabel: "PDF de progression",
+                        disabled: generatingReport,
+                        onClick: () => {
+                          void generateReport();
+                        },
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </div>
         </div>
 
@@ -523,20 +529,7 @@ export function ClientDetailPage() {
           </button>
           );
         })}
-        {/* Bouton rapport inline avec les onglets */}
-        {(client.assessments?.length ?? 0) >= 2 && (
-          <button onClick={() => void generateReport()} disabled={generatingReport}
-            className="client-tab transition-all duration-150"
-            style={{
-              padding: '7px 14px', borderRadius: 8, border: 'none', cursor: generatingReport ? 'wait' : 'pointer',
-              fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 400,
-              background: 'transparent', color: 'var(--ls-gold)',
-              display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4,
-            }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            {generatingReport ? 'Génération...' : 'Rapport'}
-          </button>
-        )}
+        {/* Rapport déplacé dans le menu ⋮ du header (désengorgement 2026-06-12). */}
       </div>
 
       {/* Bandeau Prochain RDV (V3) */}

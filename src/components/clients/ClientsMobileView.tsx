@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { useHaptic } from "../../hooks/useHaptic";
 import { FiltersBottomSheet, type FiltersSheetState, type OwnerOption } from "./FiltersBottomSheet";
-import { LeadsKanban } from "../leads/LeadsKanban";
 import { AdminTestimonialsPage } from "../../pages/AdminTestimonialsPage";
 
 interface ClientsMobileViewProps {
@@ -32,7 +31,6 @@ interface ClientsMobileViewProps {
   /** Gate l'onglet Témoignages comme la vue desktop (admin only). */
   isAdmin: boolean;
   clientsCount: number;
-  leadsCount: number;
   testimonialsCount: number;
   filteredClients: Client[];
   pvByClient: Map<string, number>;
@@ -118,7 +116,6 @@ export function ClientsMobileView({
   onTabChange,
   isAdmin,
   clientsCount,
-  leadsCount,
   testimonialsCount,
   filteredClients,
   pvByClient,
@@ -158,16 +155,6 @@ export function ClientsMobileView({
         >
           Clients
           <span className="count">{clientsCount}</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "leads"}
-          className={`lb-tab${activeTab === "leads" ? " active" : ""}`}
-          onClick={() => onTabChange("leads")}
-        >
-          Leads
-          {leadsCount > 0 ? <span className="count">{leadsCount}</span> : null}
         </button>
         {isAdmin ? (
           <button
@@ -301,11 +288,6 @@ export function ClientsMobileView({
       {/* Tab Leads : kanban autonome (scroll-x), responsive mobile.
           Fix 2026-06-01 — la vue mobile rendait les onglets Leads/Témoignages
           mais aucun contenu → écran blanc sur iPhone/iPad. */}
-      {activeTab === "leads" ? (
-        <div className="lb-embed">
-          <LeadsKanban />
-        </div>
-      ) : null}
 
       {/* Tab Témoignages : admin only (comme la vue desktop). */}
       {activeTab === "temoignages" && isAdmin ? (

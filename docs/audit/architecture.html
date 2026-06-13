@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>La Base 360 — Audit architecture & navigation</title>
+<style>
+  :root{
+    --ink:#14181f; --muted:#5b6470; --hair:#e4e1d9; --cream:#faf8f3;
+    --teal:#0F766E; --violet:#6D28D9; --gold:#9a7d1f;
+    --green:#15803D; --amber:#B45309; --orange:#C2410C; --red:#B91C1C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff;line-height:1.45;font-size:12.5px;padding:28px 32px;max-width:1000px;margin:0 auto}
+  h1{font-size:23px;letter-spacing:-.5px}
+  h2{font-size:16px;margin:26px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--ink);letter-spacing:-.2px}
+  h3{font-size:13.5px;margin:16px 0 6px;color:var(--teal)}
+  .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .brandbar{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:8px}
+  .logo{font-weight:800;font-size:14px;letter-spacing:.5px}
+  .logo span{color:var(--teal)}
+  table{width:100%;border-collapse:collapse;margin:8px 0}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:6px 7px}
+  td{vertical-align:top;padding:7px;border-bottom:1px solid var(--hair);font-size:12px}
+  code{background:#f3f1ea;border-radius:4px;padding:1px 5px;font-size:11.5px;font-family:ui-monospace,Menlo,monospace}
+  .tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;white-space:nowrap}
+  .t-green{background:#e7f3ea;color:var(--green)}
+  .t-amber{background:#fbf0db;color:var(--amber)}
+  .t-orange{background:#fbe8df;color:var(--orange)}
+  .t-red{background:#fbe6e6;color:var(--red)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px;font-size:11.5px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .box{border:1px solid var(--hair);border-radius:9px;padding:11px 14px;margin:10px 0;background:var(--cream)}
+  .box.warn{background:#fdf6ec;border-color:#eedcbe}
+  .box.bad{background:#fcefef;border-color:#f0d2d2}
+  .box.good{background:#eef6f0;border-color:#cfe6d6}
+  .box h3{margin-top:0}
+  ul{margin:4px 0 4px 18px}
+  li{margin:2px 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pri{font-weight:800;color:var(--violet);font-size:14px;width:24px}
+  .foot{margin-top:22px;padding-top:9px;border-top:1px solid var(--hair);color:var(--muted);font-size:10.5px}
+  .tree{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.7;white-space:pre;background:var(--cream);border:1px solid var(--hair);border-radius:9px;padding:12px 14px;overflow-x:auto}
+  @media print{
+    body{padding:0;font-size:10.6px} .box,.tree{background:#fff} h2{page-break-after:avoid}
+    table,.box{page-break-inside:avoid} @page{margin:11mm}
+  }
+</style>
+</head>
+<body>
+
+  <div class="brandbar">
+    <div>
+      <h1>Audit architecture &amp; navigation</h1>
+      <div class="sub">La Base 360 · état au 12 juin 2026 · lecture seule (rien n'a été modifié)</div>
+    </div>
+    <div class="logo">LA&nbsp;BASE&nbsp;<span>360</span></div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot t-green" style="background:#15803D"></i> Utilisé / sain</span>
+    <span><i class="dot" style="background:#B45309"></i> Mal rangé / à clarifier</span>
+    <span><i class="dot" style="background:#C2410C"></i> Doublon</span>
+    <span><i class="dot" style="background:#B91C1C"></i> Mort / inutile</span>
+  </div>
+
+  <!-- ══════════ VERDICT ══════════ -->
+  <h2>1 · Le verdict en 30 secondes</h2>
+  <div class="box">
+    <p>L'ossature est <strong>saine</strong> : la sidebar (10 entrées) et le hub « Mon développement » (regroupé en 4 sections au remaniement du 10/06) sont logiques, et les routes publiques (bilan, opportunité, VIP, client) sont bien <strong>isolées</strong> du coach.</p>
+    <p style="margin-top:6px">Le vrai sujet n'est pas l'arbo de la sidebar — c'est la <strong>densité localisée</strong> et <strong>3-4 résidus</strong> qui datent du début :</p>
+    <ul>
+      <li>🟠 <strong>Deux systèmes de leads en parallèle</strong> (<code>/clients?tab=leads</code> + <code>/crm</code>) — le plus gênant.</li>
+      <li>🔴 <strong>Du code mort</strong> confirmé (page <code>/recommendations</code>, composant <code>EnrichedAssessmentHistory</code>, route <code>/co-pilote-legacy</code>).</li>
+      <li>🟡 <strong>La fiche client est surchargée</strong> : 7 onglets + 8 boutons dans le header → candidat n°1 au menu « ⋮ ».</li>
+      <li>🟡 <strong>Les liens à partager sont éparpillés</strong> (bilan dans le CRM, business/partage/rapport dans la fiche client, coach/vip/rejoindre nulle part) → besoin d'un hub « Mes liens ».</li>
+    </ul>
+    <p style="margin-top:6px"><strong>Conclusion :</strong> pas de grande refonte. On <em>nettoie</em> (code mort), on <em>tranche</em> (leads → CRM), et on <em>aère</em> (menus ⋮ + hub Liens). Détail et plan d'action ci-dessous.</p>
+  </div>
+
+  <!-- ══════════ ARBO ACTUELLE ══════════ -->
+  <h2>2 · L'arborescence actuelle (sidebar coach)</h2>
+  <div class="tree">Sidebar (10 items)
+├─ ▦  Co-pilote            /co-pilote              🟢
+├─ ⚡ FLEX                 /flex                   🟢
+├─ 📅 Agenda               /agenda                 🟢
+├─ ✉️  Messagerie           /messages               🟢
+├─ 👥 Dossiers clients     /clients                🟢  ⚠️ contient un onglet "Leads" (doublon /crm)
+├─ 🎯 CRM                  /crm                    🟢  ⚠️ doublonne l'onglet Leads ci-dessus
+├─ 💰 Suivi PV             /pv                     🟢
+├─ 🛟 Mon équipe (admin)   /team                   🟢
+├─ 🎓 Mon développement    /developpement          🟡  porte 4 intentions (voir ci-dessous)
+└─ ⚙️  Paramètres           /parametres             🟢
+   + bouton "＋ Nouveau bilan"  /assessments/new   🟢
+
+Hub "Mon développement" (4 sections, ~10 cartes)
+├─ ⚡ Mon quotidien   → Cahier de bord · Routine du jour
+├─ 🎓 Apprendre       → Academy · Formation · Boîte à outils · Simulateur EBE
+├─ 🎯 Prospecter      → Outil de prospection · Club VIP (mode d'emploi)
+└─ 🛠 Admin           → Admin prospection · Newsletters</div>
+  <p class="sub">→ La sidebar est bonne. Le seul accroc structurel : <strong>Dossiers clients</strong> et <strong>CRM</strong> gèrent tous deux des leads.</p>
+
+  <!-- ══════════ CARTE DES PROBLÈMES ══════════ -->
+  <h2>3 · Carte des problèmes</h2>
+
+  <h3>🔴 Code mort confirmé (à supprimer)</h3>
+  <table>
+    <tr><th>Élément</th><th>Type</th><th>Preuve</th><th>Action</th></tr>
+    <tr><td><code>/recommendations</code> · RecommendationsPage</td><td>Page</td><td>Aucun lien entrant (grep = 0)</td><td><span class="tag t-red">Supprimer</span></td></tr>
+    <tr><td><code>EnrichedAssessmentHistory.tsx</code></td><td>Composant</td><td>Importé nulle part</td><td><span class="tag t-red">Supprimer</span></td></tr>
+    <tr><td><code>/co-pilote-legacy</code> · CoPilotePage</td><td>Route</td><td>Aucun lien (fallback manuel jamais utilisé)</td><td><span class="tag t-amber">Retirer ou documenter</span></td></tr>
+    <tr><td><code>/guide</code> · GuidePage</td><td>Page</td><td>Aucun lien réel (juste matching d'état actif). <code>/guide-suivi</code> reste utilisé.</td><td><span class="tag t-amber">À confirmer puis retirer</span></td></tr>
+  </table>
+  <p class="sub">Redirections legacy (<code>/co-pilote-v5</code>, <code>/dashboard</code>, <code>/opportunite</code>, <code>/simulateur</code>, <code>/formation/charte</code>) : inoffensives, on les garde — elles évitent de casser de vieux liens partagés.</p>
+
+  <h3>🟠 Doublon réel — les leads à deux endroits</h3>
+  <div class="box bad">
+    <p><strong>Constat :</strong> <code>/clients</code> garde un onglet <code>?tab=leads</code> (composant <code>LeadsKanban</code>), alors que <code>/crm</code> (chantier VIP-4) a été créé pour être <em>« le CRM commun de toutes les sources de leads »</em>. Les deux affichent des leads. C'est exactement le genre de « lego empilé » que tu décris.</p>
+    <p style="margin-top:6px"><strong>Reco :</strong> faire de <code>/crm</code> la <u>source unique</u> des leads, et retirer l'onglet Leads de <code>/clients</code> (qui ne garde que les vrais clients). Un clic sur l'ancien <code>?tab=leads</code> → redirection vers <code>/crm</code>.</p>
+  </div>
+
+  <h3>🟡 Densité — la fiche client (le candidat n°1 au menu « ⋮ »)</h3>
+  <p>La fiche client porte <strong>7 onglets</strong> (Vue · Body Scan · Mensurations · Historique · Produits · Actions · Club VIP) <strong>+ 8 boutons</strong> dans le header. C'est là que « ça part dans tous les sens ».</p>
+  <table>
+    <tr><th>Bouton header</th><th>Fréquence</th><th>Reco</th></tr>
+    <tr><td>🔗 Envoyer l'accès</td><td>Quotidien</td><td><span class="tag t-green">Garder visible</span></td></tr>
+    <tr><td>📋 Suivi</td><td>Quotidien</td><td><span class="tag t-green">Garder visible</span></td></tr>
+    <tr><td>＋ Bilan</td><td>Quotidien</td><td><span class="tag t-green">Garder visible</span></td></tr>
+    <tr><td>🎬 Présentation client</td><td>Occasionnel</td><td><span class="tag t-amber">→ menu ⋮</span></td></tr>
+    <tr><td>👁️ Aperçu app</td><td>Occasionnel</td><td><span class="tag t-amber">→ menu ⋮</span></td></tr>
+    <tr><td>🌐 Partage public</td><td>Rare</td><td><span class="tag t-amber">→ menu ⋮</span></td></tr>
+    <tr><td>💬 Demander un témoignage</td><td>Mensuel</td><td><span class="tag t-amber">→ menu ⋮</span></td></tr>
+    <tr><td>📄 Rapport d'évolution</td><td>Mensuel</td><td><span class="tag t-amber">→ menu ⋮</span></td></tr>
+  </table>
+  <p class="sub">→ 3 boutons quotidiens restent en accès direct ; <strong>5 actions rares</strong> se replient dans un « ⋮ ». Header aéré, zéro perte de fonction.</p>
+
+  <h3>🟡 Les liens publics sont éparpillés (besoin d'un hub « Mes liens »)</h3>
+  <table>
+    <tr><th>Lien à partager</th><th>Où on le copie aujourd'hui</th></tr>
+    <tr><td>Bilan online <code>/bilan-online/:slug</code></td><td>CRM → carte « Mon lien bilan »</td></tr>
+    <tr><td>Opportunité <code>/business?ref=</code></td><td>Fiche client → onglet Actions</td></tr>
+    <tr><td>Fiche coach <code>/coach/:slug</code></td><td>Nulle part (partage manuel)</td></tr>
+    <tr><td>Club VIP <code>/vip/:slug</code></td><td>Nulle part (partage manuel)</td></tr>
+    <tr><td>Rejoindre <code>/rejoindre/:slug</code></td><td>Nulle part (partage manuel)</td></tr>
+    <tr><td>Témoignage <code>/temoignage/coach/:slug</code></td><td>Nulle part / fiche client (per-client)</td></tr>
+  </table>
+  <p class="sub">→ 6 liens « identité coach » dispersés sur 3 endroits, ou introuvables. C'est le cas d'usage parfait du menu « Liens » que tu décris.</p>
+
+  <h3>🟡 Formation vs Academy vs… (perçu confus, mais séparé à juste titre)</h3>
+  <div class="box">
+    <p>Tu ressens un mélange — en réalité ce sont <strong>2 pédagogies distinctes</strong> bien rangées sous le hub : <strong>Academy</strong> = apprendre <u>l'app</u> ; <strong>Formation</strong> = apprendre <u>le métier Herbalife</u>. Pas un doublon. Mais le hub mélange « apprendre » avec « prospecter » et « admin » → on peut clarifier les <strong>libellés</strong> (voir arbo cible) sans tout refondre.</p>
+  </div>
+
+  <!-- ══════════ ARBO CIBLE ══════════ -->
+  <h2>4 · Proposition d'arborescence simplifiée</h2>
+  <div class="two">
+    <div class="box good">
+      <h3>Ce qui ne bouge pas (c'est bon)</h3>
+      <ul>
+        <li>Les 10 entrées de la sidebar</li>
+        <li>Les routes publiques (bilan, business, vip, coach, client)</li>
+        <li>Les 4 sections du hub développement</li>
+        <li>Les 4 flux de bilan (initial / édition / suivi / online)</li>
+      </ul>
+    </div>
+    <div class="box warn">
+      <h3>Ce qu'on change</h3>
+      <ul>
+        <li><strong>Leads → CRM</strong> : un seul endroit. <code>/clients</code> = clients ; <code>/crm</code> = leads.</li>
+        <li><strong>Menu « ⋮ »</strong> sur la fiche client (5 actions rares repliées).</li>
+        <li><strong>Hub « Mes liens »</strong> : une page (ou un ⋮ topbar) qui réunit les 6 liens du coach + Copier / QR / WhatsApp.</li>
+        <li><strong>Nettoyage</strong> : on supprime le code mort confirmé.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>🔮 Chantiers à part (pour plus tard, hors nettoyage)</h3>
+    <ul>
+      <li><strong>Page Panier</strong> — produits + PV + total + code remise (5/10/15 %…) → prix client instantané, sans passer par Bizworks.</li>
+      <li><strong>Devis</strong> — à trancher : utile pour formaliser une proposition produits ? (peut réutiliser le Panier + un export PDF). <em>À décider ensemble.</em></li>
+    </ul>
+  </div>
+
+  <!-- ══════════ PLAN ══════════ -->
+  <h2>5 · Plan d'action priorisé</h2>
+  <table>
+    <tr><th>#</th><th>Action</th><th>Effort</th><th>Effet ressenti</th></tr>
+    <tr><td class="pri">1</td><td><strong>Menu « ⋮ » sur la fiche client</strong> (replie 5 actions rares)</td><td>Léger</td><td>⭐⭐⭐ aère l'écran le + chargé</td></tr>
+    <tr><td class="pri">2</td><td><strong>Hub « Mes liens »</strong> (page raccourci : bilan, coach, vip, rejoindre, business, témoignage)</td><td>Moyen</td><td>⭐⭐⭐ fin de la chasse aux liens</td></tr>
+    <tr><td class="pri">3</td><td><strong>Trancher Leads → CRM</strong> (retirer l'onglet de <code>/clients</code>, rediriger)</td><td>Léger</td><td>⭐⭐ fin du doublon</td></tr>
+    <tr><td class="pri">4</td><td><strong>Supprimer le code mort</strong> (<code>/recommendations</code>, EnrichedAssessmentHistory, <code>/co-pilote-legacy</code>, <code>/guide</code>)</td><td>Léger</td><td>⭐ hygiène (invisible mais sain)</td></tr>
+    <tr><td class="pri">5</td><td><strong>Clarifier les libellés du hub</strong> (Apprendre vs Prospecter vs Admin)</td><td>Léger</td><td>⭐ lisibilité nouveau venu</td></tr>
+    <tr><td class="pri">6</td><td><strong>Page Panier (PV + remise)</strong> — chantier dédié</td><td>Gros</td><td>⭐⭐⭐ gain de temps quotidien</td></tr>
+    <tr><td class="pri">7</td><td><strong>Devis</strong> — à décider (peut découler du Panier)</td><td>?</td><td>à évaluer</td></tr>
+  </table>
+
+  <div class="foot">
+    La Base 360 · Audit lecture seule — aucune ligne de code modifiée. Les actions ci-dessus attendent ta validation, une par une.
+    &nbsp;·&nbsp; Imprimer : Ctrl/Cmd + P
+  </div>
+
+</body>
+</html>

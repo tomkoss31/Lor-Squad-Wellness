@@ -14,11 +14,6 @@ const GuidePage = lazy(() =>
     default: module.GuidePage
   }))
 );
-const RecommendationsPage = lazy(() =>
-  import("./pages/RecommendationsPage").then((module) => ({
-    default: module.RecommendationsPage
-  }))
-);
 const PvOverviewPage = lazy(() =>
   import("./pages/PvOverviewPage").then((module) => ({
     default: module.PvOverviewPage
@@ -38,6 +33,21 @@ const ClientsPage = lazy(() =>
 const CrmPage = lazy(() =>
   import("./pages/CrmPage").then((module) => ({
     default: module.CrmPage
+  }))
+);
+const MesLiensPage = lazy(() =>
+  import("./pages/MesLiensPage").then((module) => ({
+    default: module.MesLiensPage
+  }))
+);
+const PanierPage = lazy(() =>
+  import("./pages/PanierPage").then((module) => ({
+    default: module.PanierPage
+  }))
+);
+const OutilsPage = lazy(() =>
+  import("./pages/OutilsPage").then((module) => ({
+    default: module.OutilsPage
   }))
 );
 const UsersPage = lazy(() =>
@@ -749,7 +759,6 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="guide" element={<GuidePage />} />
               <Route path="guide-suivi" element={<FollowUpGuidePage />} />
-              <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
               {/* Chantier Messagerie finalisée (2026-04-23). */}
@@ -758,6 +767,9 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               {/* CRM commun (VIP-4) — pipeline unifié de tous les leads. */}
               <Route path="crm" element={<CrmPage />} />
+              <Route path="outils" element={<OutilsPage />} />
+              <Route path="mes-liens" element={<MesLiensPage />} />
+              <Route path="panier" element={<PanierPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
