@@ -32,18 +32,12 @@ import { useFormationStreak } from "../../../hooks/useFormationStreak";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
-import { HeroEditorial } from "./components/HeroEditorial";
+import { PlanDuJour } from "./components/PlanDuJour";
+// RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
-import { ReferrerStatsCard } from "../../../components/copilote/ReferrerStatsCard";
-import { StatsRow3 } from "./components/StatsRow3";
-import { TodayTimeline } from "./components/TodayTimeline";
-import { SideStack } from "./components/SideStack";
 
 import { DistriOnboardingChecklist } from "../../../components/formation/DistriOnboardingChecklist";
 import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
-import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
-import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
-import { DormantClientsWidget } from "../../../components/dormant/DormantClientsWidget";
 import { useDailyActionChecklist } from "../../../hooks/useDailyActionChecklist";
 import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
@@ -120,18 +114,6 @@ export function CoPiloteV5Page() {
   if (currentUser.isPassiveSupervisor) {
     return <CoPilotePassiveView firstName={firstName} />;
   }
-
-  // Données pour StatsRow3 (à raffiner via vrais KPIs si dispo, sinon
-  // valeurs dérivées de useCopiloteData)
-  const todoCount = (data.pendingFollowups?.length ?? 0);
-  const todoSubtitle =
-    todoCount > 0
-      ? `${todoCount} suivi${todoCount > 1 ? "s" : ""} à traiter`
-      : "Inbox à jour 👌";
-
-  // Bilans semaine : approximation via todayAgenda count × 5 jours (très
-  // grossier, à raffiner avec un vrai compteur week)
-  const bilansWeekDone = Math.min(6, data.todayAppointmentsCount * 2);
 
   return (
     <div className="copilote-v5" style={pageWrapStyle}>
@@ -256,47 +238,14 @@ export function CoPiloteV5Page() {
           si aucun event. Bouton WhatsApp avec message pre-rempli. */}
       <CelebrationCard />
 
-      {/* Raccourci direct Liste 100 (Phase 0.8 Égypte 2026-05) — 1 clic
-          au lieu de 3-4. Card avec compteur live X/100 + barre progress. */}
-      <Liste100ShortcutCard />
-
-      {/* Hero éditorial */}
-      <HeroEditorial />
-
-      {/* Rentab parcours */}
-      <RentabJourney />
-
-      {/* V2 funnel business : stats referrer leads (masque si 0 lead ce mois) */}
-      <ReferrerStatsCard />
-
-      {/* Stats 3 colonnes */}
-      <StatsRow3
-        todoCount={todoCount}
-        todoSubtitle={todoSubtitle}
-        bilansWeekDone={bilansWeekDone}
-        bilansWeekTarget={6}
-        bilansTrend={bilansWeekDone > 0 ? "↗ Cette semaine" : "—"}
-      />
-
-      {/* Widget dormants (chantier B livré, câblé 2026-05-20).
-          Auto-hidden si aucun client dormant. Place juste avant
-          PvActionPlanAlert pour grouper les alertes business
-          actionables (relance + plan PV). */}
-      <DormantClientsWidget />
-
-      {/* Bandeau alerte PV — V7 Phase 7 (2026-05-08) deplacement.
-          Avant : place en INTRO (juste apres TopBar) → angoissant pour
-          un nouveau distri a 0 PV qui voit "tu es en retard" en haut.
-          Apres : place ICI sous les stats row, vu seulement quand on
-          scroll. Le composant reste auto-conditionnel : il retourne
-          null si data.status !== "delayed" (deja le cas). */}
-      {currentUser.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
-
-      {/* Row bottom : Timeline + Side stack */}
-      <section style={rowBottomStyle} data-v5-row-bottom>
-        <TodayTimeline />
-        <SideStack />
-      </section>
+      {/* ═══ PLAN DU JOUR (refonte chantier 1, design Claude Design validé) ═══
+          Le nouveau héros : file d'actions priorisée (RDV + relances propres +
+          inbox) dans le shell premium (warm dark + G3 + Fraunces + médaillon
+          tournant + 360). Remplace : hero éditorial, RentabJourney (gros bloc +
+          leaderboard → Mon équipe ch.4), ReferrerStatsCard (« Tes leads » =
+          doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
+          Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
+      <PlanDuJour data={data} />
 
       {/* Footer légal */}
       <LegalFooter />
@@ -482,12 +431,8 @@ const pillDimStyle: React.CSSProperties = {
   fontWeight: 500,
 };
 // Note 2026-05-05 : notifBtnStyle supprimé (remplacé par AnnouncementBell).
-
-const rowBottomStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1.7fr) minmax(0, 1fr)",
-  gap: 14,
-};
+// Note 2026-06-13 : rowBottomStyle supprimé (rangée TodayTimeline+SideStack
+// retirée par le Plan du jour).
 
 // =============================================================================
 // CoPilotePassiveView — Vue Light pour Supervisor passif (2026-05-22)
