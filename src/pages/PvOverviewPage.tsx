@@ -15,6 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
 import { isDeadLifecycle } from "../types/domain";
 import { DormantClientsWidget } from "../components/dormant/DormantClientsWidget";
+import { PvFiltersMenu } from "../components/pv/PvFiltersMenu";
 
 export function PvOverviewPage() {
   const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts } = useAppContext();
@@ -236,33 +237,32 @@ export function PvOverviewPage() {
           {/* Retrait des 4 cartes stats (surcharge, retour Thomas 2026-06-13).
               Le hero affiche déjà « N clients actifs » et le widget « à
               reconquérir » porte les relances. */}
-          {isAdmin && responsibleOptions.length > 1 && (
-            <div>
-              <select
-                value={responsibleFilter}
-                onChange={(e) => handleResponsibleChange(e.target.value)}
-                style={{
-                  padding: "10px 14px", borderRadius: 10,
-                  border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)",
-                  color: "var(--ls-text-muted)", fontSize: 13, fontFamily: "DM Sans, sans-serif",
-                  cursor: "pointer", minWidth: 220, outline: "none",
-                }}
-              >
-                <option value="all">Tous les portefeuilles</option>
-                {responsibleOptions.map((o) => (
-                  <option key={o.id} value={o.id}>{o.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
+          {/* Ligne d'action unifiée (chantier 2, même dynamique que la page
+              Clients) : recherche + bouton « ⚙️ Filtres » (statut + responsable)
+              + toggle Liste/Kanban. Remplace le select responsable séparé. */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <PvSearchFilters
-              search={search}
-              onSearchChange={setSearch}
-              status={statusFilter}
-              onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, flexWrap: "wrap", minWidth: 240 }}>
+              <div style={{ flex: 1, position: "relative", minWidth: 200 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher un client..."
+                  style={{ width: "100%", padding: "11px 14px 11px 36px", border: "1px solid var(--ls-border)", borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 14, background: "var(--ls-input-bg)", color: "var(--ls-text)", outline: "none" }}
+                />
+              </div>
+              <PvFiltersMenu
+                statusFilter={statusFilter}
+                onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                responsibleFilter={responsibleFilter}
+                onResponsibleChange={handleResponsibleChange}
+                responsibleOptions={responsibleOptions}
+                showResponsable={isAdmin && responsibleOptions.length > 1}
+              />
+            </div>
             {/* Toggle Liste / Kanban (2026-04-29) */}
             <div
               style={{
@@ -354,47 +354,6 @@ export function PvOverviewPage() {
 }
 
 // ─── Sous-composants ────────────────────────────────────────────────────
-
-function PvSearchFilters({ search, onSearchChange, status, onStatusChange }: { search: string; onSearchChange: (s: string) => void; status: string; onStatusChange: (s: string) => void }) {
-  return (
-    <div className="pv-filters" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-      <div style={{ flex: 1, position: "relative", minWidth: 200 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5"
-          style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher un client..."
-          style={{
-            width: "100%", padding: "11px 14px 11px 36px",
-            border: "1px solid var(--ls-border)", borderRadius: 10,
-            fontFamily: "DM Sans, sans-serif", fontSize: 14,
-            background: "var(--ls-input-bg)", color: "var(--ls-text)",
-            outline: "none",
-          }}
-        />
-      </div>
-      <select
-        value={status}
-        onChange={(e) => onStatusChange(e.target.value)}
-        style={{
-          padding: "11px 14px", border: "1px solid var(--ls-border)",
-          borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
-          background: "var(--ls-input-bg)", color: "var(--ls-text-muted)",
-          outline: "none", cursor: "pointer", minWidth: 180,
-        }}
-      >
-        <option value="all">Tous les statuts</option>
-        <option value="ok">OK</option>
-        <option value="relaunch">À relancer</option>
-        <option value="overdue">En retard</option>
-      </select>
-    </div>
-  );
-}
 
 function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId, isChecked }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void; isAdmin: boolean; currentUserId: string | null; isChecked: (clientId: string) => boolean }) {
   return (
