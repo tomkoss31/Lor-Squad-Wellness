@@ -16,13 +16,14 @@
 // Styles : classes lb-drawer, lb-scrim, lb-drawer-* dans globals.css
 // =============================================================================
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
 import { useFormationStreak } from "../../hooks/useFormationStreak";
 import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
+import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -130,14 +131,25 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
         {/* Body : sections */}
         <div className="lb-drawer-body">
           <DrawerSection label="Navigation">
-            {navMain.map((item) => (
-              <DrawerItem
-                key={item.path}
-                item={item}
-                active={isItemActive(item.path)}
-                onSelect={onClose}
-              />
-            ))}
+            {navMain.map((item) =>
+              item.path === "/outils" ? (
+                // « Mon business » dépliable, mêmes raccourcis que la sidebar PC
+                // (décision Thomas 2026-06-13 : aligner PC/mobile).
+                <DrawerBusinessGroup
+                  key={item.path}
+                  item={item}
+                  currentPath={currentPath}
+                  onSelect={onClose}
+                />
+              ) : (
+                <DrawerItem
+                  key={item.path}
+                  item={item}
+                  active={isItemActive(item.path)}
+                  onSelect={onClose}
+                />
+              ),
+            )}
           </DrawerSection>
 
           {isAdmin && navTeam.length > 0 ? (
@@ -224,6 +236,75 @@ function DrawerSection({ label, children }: { label: string; children: React.Rea
       <div className="lb-drawer-section-label">{label}</div>
       {children}
     </section>
+  );
+}
+
+// « Mon business » dépliable dans le tiroir — miroir du sous-menu sidebar PC.
+function DrawerBusinessGroup({
+  item,
+  currentPath,
+  onSelect,
+}: {
+  item: { label: string; path: string; emoji: string };
+  currentPath: string;
+  onSelect: () => void;
+}) {
+  const haptic = useHaptic();
+  const [expanded, setExpanded] = useState(() => isBusinessRoute(currentPath));
+  const subActive = (p: string) => currentPath === p || currentPath.startsWith(p + "/");
+
+  return (
+    <div>
+      <button
+        type="button"
+        className={`lb-drawer-item${currentPath === "/outils" ? " active" : ""}`}
+        aria-expanded={expanded}
+        onClick={() => {
+          haptic("select");
+          setExpanded((v) => !v);
+        }}
+      >
+        <span className="icon" aria-hidden="true">{item.emoji}</span>
+        <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
+        <span
+          aria-hidden="true"
+          style={{ fontSize: 11, opacity: 0.7, transition: "transform 0.2s ease", transform: expanded ? "rotate(180deg)" : "none" }}
+        >
+          ▾
+        </span>
+      </button>
+      {expanded ? (
+        <div style={{ paddingLeft: 14, display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
+          {BUSINESS_SHORTCUTS.map((sub) => (
+            <NavLink
+              key={sub.path}
+              to={sub.path}
+              onClick={() => {
+                haptic("select");
+                onSelect();
+              }}
+              className={`lb-drawer-item${subActive(sub.path) ? " active" : ""}`}
+              style={{ fontSize: 13 }}
+            >
+              <span className="icon" aria-hidden="true">{sub.emoji}</span>
+              <span style={{ flex: 1 }}>{sub.label}</span>
+            </NavLink>
+          ))}
+          <NavLink
+            to="/outils"
+            onClick={() => {
+              haptic("select");
+              onSelect();
+            }}
+            className={`lb-drawer-item${currentPath === "/outils" ? " active" : ""}`}
+            style={{ fontSize: 13, opacity: 0.85 }}
+          >
+            <span className="icon" aria-hidden="true">⊞</span>
+            <span style={{ flex: 1 }}>Tout voir</span>
+          </NavLink>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
