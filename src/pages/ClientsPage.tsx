@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 // PageHeading remplace par PremiumHero (2026-04-29)
 import { PremiumHero } from "../components/ui/PremiumHero";
 import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
@@ -24,7 +24,6 @@ import {
 import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
 import type { LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_TONES } from "../types/domain";
-import { LeadsKanban } from "../components/leads/LeadsKanban";
 import { AdminTestimonialsPage } from "./AdminTestimonialsPage";
 // Refacto 2026-05-19 (Phase 3.5) : helpers + bento stats extraits.
 import {
@@ -53,16 +52,21 @@ export function ClientsPage() {
   // Chantier #1 Bilan Online étape 1.6 (2026-05-17) : tab toggle entre
   // la vue Clients (existante) et la vue Leads bilan online. Persisté
   // via ?tab=leads pour les liens directs depuis push notif (étape 1.7).
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"clients" | "leads" | "temoignages">(() => {
     const t = searchParams.get("tab");
-    if (t === "leads") return "leads";
     if (t === "temoignages") return "temoignages";
     return "clients";
   });
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "leads" || t === "clients" || t === "temoignages") setActiveTab(t);
-  }, [searchParams]);
+    // Leads consolides dans le CRM (audit 2026-06-12) — l'ancien ?tab=leads redirige.
+    if (t === "leads") {
+      navigate("/crm", { replace: true });
+      return;
+    }
+    if (t === "clients" || t === "temoignages") setActiveTab(t);
+  }, [searchParams, navigate]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
@@ -350,7 +354,6 @@ export function ClientsPage() {
   };
 
   // Compteurs pour les tabs mobile (réutilise les memo desktop existants)
-  const leadsCount = 0; // TODO : récupérer count depuis useOnlineBilans si nécessaire (charge async côté LeadsKanban)
 
   // Options responsables pour le menu Filtres (refonte archi 2026-06-12).
   const ownerOptionsForMenu = ownerTabs.map((o) => ({
@@ -389,7 +392,6 @@ export function ClientsPage() {
         onTabChange={setActiveTab}
         isAdmin={isAdmin}
         clientsCount={filteredClients.length}
-        leadsCount={leadsCount}
         testimonialsCount={testimonialsCount}
         filteredClients={filteredClients}
         pvByClient={pvByClientThisMonth}
@@ -454,15 +456,6 @@ export function ClientsPage() {
         >
           👥 Clients
         </button>
-        <button
-          type="button"
-          role="tab"
-          className={`cp-tab ${activeTab === "leads" ? "cp-tab-active" : ""}`}
-          aria-selected={activeTab === "leads"}
-          onClick={() => setActiveTab("leads")}
-        >
-          🌱 Leads
-        </button>
         {isAdmin && (
           <button
             type="button"
@@ -476,7 +469,6 @@ export function ClientsPage() {
         )}
       </div>
 
-      {activeTab === "leads" && <LeadsKanban />}
       {activeTab === "temoignages" && isAdmin && <AdminTestimonialsPage />}
 
       {activeTab === "clients" && (<>
