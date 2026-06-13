@@ -179,13 +179,16 @@ export function AppLayout() {
   // Accordéon « Outils » (refonte nav 2026-06-13) : un clic simple sur la
   // ligne déplie les outils en dessous (pas de double-clic — mauvaise UX
   // tactile/PWA). Auto-ouvert si on est déjà sur une route outil.
+  // Raccourcis du hub « Mon business » — DOIT refléter OutilsPage (B9 : une
+  // feature = un endroit, le menu n'est qu'un raccourci). Synchro 2026-06-13 :
+  // + Prospecter (B4), − Devis (B7).
   const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
+    { label: "Prospecter", path: "/outils-prospection", emoji: "🎯" },
     { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
     { label: "Panier", path: "/panier", emoji: "🛒" },
     { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },
     { label: "FLEX", path: "/flex", emoji: "⚡" },
     { label: "Suivi PV", path: "/pv", emoji: "💰" },
-    { label: "Devis", path: "/outils", emoji: "📄", soon: true },
   ];
   const onOutilsRoute =
     location.pathname === "/outils" ||
