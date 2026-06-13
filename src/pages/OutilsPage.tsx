@@ -25,6 +25,18 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
     section: "🔗 Partage & prospection",
     items: [
       {
+        // B4 (2026-06-13) : porte UNIQUE « Prospecter » depuis Mon business
+        // (faire/piloter). Pointe vers la page mère /outils-prospection qui
+        // regroupe méthode, bilan online, liens marketing et international.
+        // Retiré du hub « Mon développement » (qui redevient 100 % pédago).
+        id: "prospecter",
+        icon: "🎯",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Prospecter",
+        desc: "Ta machine à prospects : la méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
+        path: "/outils-prospection",
+      },
+      {
         id: "mes-liens",
         icon: "🔗",
         iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
@@ -35,7 +47,9 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
     ],
   },
   {
-    section: "🛒 Vente & devis",
+    // B7 (2026-06-13) : carte « Devis » retirée (décision Thomas). Réversible —
+    // le placeholder « Bientôt » a été supprimé pour aérer.
+    section: "🛒 Vente",
     items: [
       {
         id: "panier",
@@ -44,14 +58,6 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Panier",
         desc: "Calcule un panier produits : total €, total PV, remise client (5 → 35 %), récap copiable.",
         path: "/panier",
-      },
-      {
-        id: "devis",
-        icon: "📄",
-        iconBg: "color-mix(in srgb, var(--ls-purple) 16%, transparent)",
-        name: "Devis",
-        desc: "Proposition formelle export PDF avant achat. Bientôt disponible.",
-        soon: true,
       },
     ],
   },
@@ -102,7 +108,7 @@ export function OutilsPage() {
         </span>
       </h1>
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif" }}>
-        Tes liens, ton panier et tes chiffres (rentabilité, FLEX, PV) regroupés ici pour piloter ton activité.
+        Prospecter, tes liens, ton panier et tes chiffres (rentabilité, FLEX, PV) regroupés ici pour piloter ton activité.
       </p>
 
       {TOOLS.map((grp) => (

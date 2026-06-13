@@ -67,7 +67,18 @@ annonce « all » serait du bruit pour les distri.
 
 ---
 
-## B4 — Prospection : une seule porte 🔴 ⚠️(structurel)
+## B4 — Prospection : une seule porte ✅ LIVRÉ (2026-06-13)
+**Décision Thomas** : « Prospecter » vit **sous « Mon business »** (carte unique).
+**Implémentation** : carte « 🎯 Prospecter » ajoutée dans `OutilsPage.tsx` (section
+« Partage & prospection ») → pointe vers la page mère `/outils-prospection`
+(`OutilsProspectionMerePage`) qui agrège déjà méthode + bilan online + liens
+marketing + international. La page mère reste référencée par le Co-pilote
+(`ReferrerStatsCard`), Noaly et `time-context` (inchangé). `tsc` ✅.
+**Note** : on n'a PAS fusionné les sous-pages prospection entre elles (hors décision,
+risqué) — juste créé la porte unique depuis Mon business + retiré du hub dev (B5).
+
+<details><summary>Plan d'origine (archivé)</summary>
+🔴 ⚠️(structurel)
 **Objectif** : fin de l'éclatement `/prospection` (froide) + `/outils-prospection/*` (admin) + Business.
 **Fichiers** : `src/App.tsx` (routes), `src/pages/OutilsProspectionMerePage.tsx` (page mère), `src/pages/DeveloppementHubPage.tsx` (retirer la section « prospecter »).
 **Étapes**
@@ -76,17 +87,22 @@ annonce « all » serait du bruit pour les distri.
 3. Retirer ces accès de « Mon développement » (cohérent avec B5).
 **Risque** : moyen. **Décision** : où vit l'entrée « Prospecter » → nouvelle entrée sidebar, ou sous « Business & outils », ou carte unique du hub ?
 **Couplé à B5.**
+</details>
 
 ---
 
-## B5 — Hub « Apprendre » 100 % pédago 🟡 (couplé B4)
-**Objectif** : ne garder dans `/developpement` que *se former*.
-**Fichier** : `src/pages/DeveloppementHubPage.tsx` (SECTIONS l.35-39 + CARDS).
-**Étapes**
-1. Retirer la section **prospecter** (→ B4) et **admin** (Admin prospection → B4 ; Newsletters → Paramètres/Admin).
-2. Trancher la section **quotidien** (Cahier de bord, Routine) : pédago perso ? → garder, sinon déplacer vers Co-pilote/Outils.
-3. Résultat cible : Academy · Formation · Boîte à outils · Club VIP (mode d'emploi) · Nouveautés.
-**Risque** : faible (déplacement de cartes).
+## B5 — Hub « Apprendre » 100 % pédago 🟡 PARTIEL (2026-06-13)
+**Fait** : section **prospecter** retirée du hub `/developpement` (la carte « Outil
+de prospection » vit maintenant sous Mon business — B4) ; carte « Club VIP — mode
+d'emploi » reclassée en section **Apprendre** ; type `HubSectionId` nettoyé ; bandeau
+Academy ne mentionne plus « Prospection ». `tsc` ✅.
+**Reste (⚠️ décisions Thomas)** :
+1. Section **quotidien** (Cahier de bord, Routine du jour) : la garder dans le hub
+   dev, ou la déplacer (Co-pilote / Mon business) ?
+2. Section **admin** (Admin prospection, Newsletters) : la laisser dans le hub dev
+   (admin-only), ou déplacer Newsletters → `/admin/newsletters` via Paramètres ?
+**Résultat cible (si on tranche tout)** : Academy · Formation · Boîte à outils ·
+Club VIP (mode d'emploi) · Nouveautés.
 
 ---
 
@@ -98,10 +114,16 @@ annonce « all » serait du bruit pour les distri.
 
 ---
 
-## B7 — Devis 🟢/🔴 ⚠️(à décider)
-**Fichiers** : `src/pages/OutilsPage.tsx` (carte « Bientôt »), `src/components/layout/AppLayout.tsx` (sous-item Outils).
+## B7 — Devis ✅ LIVRÉ (2026-06-13)
+**Décision Thomas** : option (a) **retirer** la carte.
+**Fait** : carte « Devis » supprimée de `OutilsPage.tsx` ; section « 🛒 Vente & devis »
+renommée « 🛒 Vente » (Panier seul). Réversible — la logique Panier + export PDF
+(jsPDF/html2canvas) reste dispo si on veut construire la page un jour. `tsc` ✅.
+
+<details><summary>Options d'origine (archivées)</summary>
+🟢/🔴 ⚠️(à décider)
 **Options** : (a) **retirer** la carte · (b) **garder** « Bientôt » · (c) **construire** : nouvelle `DevisPage` qui réutilise la logique `PanierPage` + export PDF (jsPDF/html2canvas déjà dans le repo).
-**Effort** : (a)(b) 🟢 · (c) 🔴 ~1 j.
+</details>
 
 ---
 
