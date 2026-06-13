@@ -17,6 +17,7 @@ import { RankSelectorModal } from "../rank/RankSelectorModal";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
+import { BUSINESS_SHORTCUTS } from "./businessShortcuts";
 import { useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
 import { NoalyFab } from "../noaly/NoalyFab";
@@ -179,15 +180,9 @@ export function AppLayout() {
   // Accordéon « Outils » (refonte nav 2026-06-13) : un clic simple sur la
   // ligne déplie les outils en dessous (pas de double-clic — mauvaise UX
   // tactile/PWA). Auto-ouvert si on est déjà sur une route outil.
-  // Aligné sur la page « Mon business » (B2/B4/B7) : Prospecter ajouté, Devis retiré.
-  const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
-    { label: "Prospecter", path: "/outils-prospection", emoji: "🎯" },
-    { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
-    { label: "Panier", path: "/panier", emoji: "🛒" },
-    { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },
-    { label: "FLEX", path: "/flex", emoji: "⚡" },
-    { label: "Suivi PV", path: "/pv", emoji: "💰" },
-  ];
+  // Raccourcis du hub « Mon business » — source UNIQUE partagée avec le tiroir
+  // mobile (businessShortcuts.ts), pour que PC et mobile restent synchro.
+  const OUTILS_SUBITEMS = BUSINESS_SHORTCUTS;
   const onOutilsRoute =
     location.pathname === "/outils" ||
     location.pathname.startsWith("/outils-prospection") ||
