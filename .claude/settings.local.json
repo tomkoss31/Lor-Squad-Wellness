@@ -134,7 +134,11 @@
       "Bash(python -)",
       "Bash(cd \"C:/Users/tomko/Documents/Lor'Squad Wellness/.claude/worktrees/goofy-bassi-1d8512\" && cp public/mockups/mes-liens.html \"/c/Users/tomko/Downloads/LaBase360-maquette-mes-liens.html\" && echo \"copié dans Téléchargements\")",
       "Bash(cd /tmp/panier/panier && echo \"=== CHAT ===\" && cat chats/chat1.md && echo \"\" && echo \"=== TAILLE design ===\" && wc -l project/Panier.dc.html)",
-      "Bash(cd /tmp/panier/panier && cat project/Panier.dc.html)"
+      "Bash(cd /tmp/panier/panier && cat project/Panier.dc.html)",
+      "Bash(git revert *)",
+      "Bash(xxd)",
+      "Bash(gunzip -c bundle.bin)",
+      "Bash(tar -xf raw.tar)"
     ]
   }
 }

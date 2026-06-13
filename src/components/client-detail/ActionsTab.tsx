@@ -765,8 +765,8 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               <LifecycleToggle
                 icon="✦"
                 title="Suivi libre"
-                metaOff="Désactivé · relances auto actives"
-                metaOn="Activé · hors agenda auto, pas de relance"
+                metaOff="Désactivé · apparaît dans le plan de relance"
+                metaOn="Activé · exclu du plan de relance et des PV en retard (la rentabilité reste comptée)"
                 active={client.freeFollowUp ?? false}
                 busy={togglingFreeFollow}
                 onToggle={() => void handleToggleFreeFollow()}
