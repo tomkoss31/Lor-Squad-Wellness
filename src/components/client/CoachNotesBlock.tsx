@@ -367,7 +367,7 @@ export function CoachNotesBlock({
               padding: "8px 14px",
               borderRadius: 8,
               background: draftContent.trim() ? "#BA7517" : "var(--ls-border)",
-              color: "#FFFFFF",
+              color: draftContent.trim() ? "#FFFFFF" : "var(--ls-text-hint)",
               border: "none",
               fontSize: 12,
               fontFamily: "DM Sans, sans-serif",
