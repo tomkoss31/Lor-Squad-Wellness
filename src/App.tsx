@@ -40,6 +40,11 @@ const MesLiensPage = lazy(() =>
     default: module.MesLiensPage
   }))
 );
+const PanierPage = lazy(() =>
+  import("./pages/PanierPage").then((module) => ({
+    default: module.PanierPage
+  }))
+);
 const UsersPage = lazy(() =>
   import("./pages/UsersPage").then((module) => ({
     default: module.UsersPage
@@ -758,6 +763,7 @@ export default function App() {
               {/* CRM commun (VIP-4) — pipeline unifié de tous les leads. */}
               <Route path="crm" element={<CrmPage />} />
               <Route path="mes-liens" element={<MesLiensPage />} />
+              <Route path="panier" element={<PanierPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}

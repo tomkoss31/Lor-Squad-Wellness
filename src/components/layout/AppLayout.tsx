@@ -110,6 +110,7 @@ export function AppLayout() {
         { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount },
         // Hub « Mes liens » — raccourci unique des liens publics du coach (audit 2026-06-12).
         { label: "Mes liens", path: "/mes-liens", emoji: "🔗", badge: 0 },
+        { label: "Panier", path: "/panier", emoji: "🛒", badge: 0 },
         { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
