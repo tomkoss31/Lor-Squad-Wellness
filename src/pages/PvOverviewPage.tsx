@@ -233,8 +233,9 @@ export function PvOverviewPage() {
       {/* Vue TABLEAU */}
       {(!selectedClientId || !selectedRecord) && (
         <>
-          <PvStatsGrid stats={stats} />
-
+          {/* Retrait des 4 cartes stats (surcharge, retour Thomas 2026-06-13).
+              Le hero affiche déjà « N clients actifs » et le widget « à
+              reconquérir » porte les relances. */}
           {isAdmin && responsibleOptions.length > 1 && (
             <div>
               <select
@@ -353,35 +354,6 @@ export function PvOverviewPage() {
 }
 
 // ─── Sous-composants ────────────────────────────────────────────────────
-
-function PvStatsGrid({ stats }: { stats: { totalClients: number; pvMonth: number; toRelaunch: number; overdue: number } }) {
-  const cards = [
-    { label: "Clients actifs", value: stats.totalClients, borderColor: "transparent", textColor: "var(--ls-text)" },
-    { label: "PV ce mois", value: stats.pvMonth.toFixed(0), borderColor: "#0D9488", textColor: "var(--ls-teal)" },
-    { label: "À relancer", value: stats.toRelaunch, borderColor: "#B8922A", textColor: "var(--ls-gold)" },
-    { label: "En retard", value: stats.overdue, borderColor: "#DC2626", textColor: "var(--ls-coral)" },
-  ];
-  return (
-    <div className="pv-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-      {cards.map(({ label, value, borderColor, textColor }) => (
-        <div key={label} style={{
-          background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderTop: borderColor !== "transparent" ? `2px solid ${borderColor}` : "1px solid var(--ls-border)",
-          borderRadius: 14,
-          padding: "14px 16px",
-        }}>
-          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
-            {label}
-          </div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: textColor, lineHeight: 1 }}>
-            {value}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function PvSearchFilters({ search, onSearchChange, status, onStatusChange }: { search: string; onSearchChange: (s: string) => void; status: string; onStatusChange: (s: string) => void }) {
   return (
