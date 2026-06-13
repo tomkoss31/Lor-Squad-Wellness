@@ -44,6 +44,16 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "Tous tes liens publics (bilan, business, coach, VIP…) prêts à copier, QR, WhatsApp.",
         path: "/mes-liens",
       },
+      {
+        // Raccroché ici (2026-06-13) : la carte Liste 100 du Co-pilote a été
+        // retirée par le Plan du jour → on garde l'accès rapide via Mon business.
+        id: "liste-100",
+        icon: "📒",
+        iconBg: "color-mix(in srgb, var(--ls-purple) 16%, transparent)",
+        name: "Ma Liste 100",
+        desc: "Ta liste de connaissances (méthode FRANK) : ajoute, qualifie et transforme tes contacts en prospects.",
+        path: "/cahier-de-bord?tab=liste",
+      },
     ],
   },
   {
