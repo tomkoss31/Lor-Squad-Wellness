@@ -16,7 +16,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import type { RentabilityData, RentabilityTopClient } from "../../hooks/useUserRentability";
-import { useRentabilityHistory } from "../../hooks/useRentabilityHistory";
+import { useRentabilityHistory, type MonthHistoryPoint } from "../../hooks/useRentabilityHistory";
 import { BarChart } from "./shared/BarChart";
 import { RentabilityPdfReport } from "./RentabilityPdfReport";
 import { useAppContext } from "../../context/AppContext";
@@ -237,6 +237,7 @@ export function RentabilityDetailModal({
         <div className="lr-rentab-modal-body" style={bodyStyle}>
           {tab === "12m" ? (
             <TwelveMonthsView
+              points={history.data}
               bars={historyBars}
               labels={historyLabels}
               peakIdx={peakIdx}
@@ -342,6 +343,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function TwelveMonthsView({
+  points,
   bars,
   labels,
   peakIdx,
@@ -354,6 +356,7 @@ function TwelveMonthsView({
   daysLeft,
   projection,
 }: {
+  points: MonthHistoryPoint[];
   bars: number[];
   labels: string[];
   peakIdx: number;
@@ -366,6 +369,7 @@ function TwelveMonthsView({
   daysLeft: number;
   projection: number;
 }) {
+  const peakValue = bars.length > 0 ? Math.max(...bars, 1) : 1;
   return (
     <>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
@@ -423,6 +427,7 @@ function TwelveMonthsView({
             height={220}
             current={currentIdx}
             peak={peakIdx}
+            showValues
           />
         )}
       </div>
@@ -460,6 +465,119 @@ function TwelveMonthsView({
           tone="teal"
         />
       </div>
+
+      {/* Récap mois par mois (demande Thomas 2026-06-13) : chaque mois lisible,
+          montant + évolution vs mois précédent + mini-barre. Mois récent en haut. */}
+      {!loading && points.length > 0 && (
+        <div>
+          <div style={{ ...miniLabelStyle, marginBottom: 10 }}>Récap mois par mois</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {points
+              .map((p, i) => ({ p, i }))
+              .reverse()
+              .map(({ p, i }) => {
+                const value = p.margin_eur;
+                const prev = i > 0 ? points[i - 1].margin_eur : null;
+                const delta = prev != null ? value - prev : null;
+                const deltaPct =
+                  prev != null && prev > 0 ? Math.round((delta! / prev) * 100) : null;
+                const isCurrent = i === currentIdx;
+                const isPeak = i === peakIdx && value > 0;
+                return (
+                  <div
+                    key={p.month}
+                    className="lr-card-2"
+                    style={{
+                      padding: "10px 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      border: isCurrent
+                        ? "1px solid color-mix(in oklab, var(--ls-rentab-teal) 40%, transparent)"
+                        : undefined,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 104,
+                        flexShrink: 0,
+                        fontFamily: "DM Sans, sans-serif",
+                        fontSize: 13,
+                        fontWeight: isCurrent ? 700 : 500,
+                        color: isCurrent ? "var(--ls-rentab-ink)" : "var(--ls-rentab-ink-2)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                      }}
+                    >
+                      {monthLabel(p.month)}
+                      {isPeak && <span aria-hidden="true" title="Record">✦</span>}
+                    </span>
+
+                    {/* mini-barre relative au record */}
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 6,
+                        background: "var(--ls-rentab-bg-2)",
+                        borderRadius: 999,
+                        overflow: "hidden",
+                        minWidth: 40,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${Math.round((value / peakValue) * 100)}%`,
+                          height: "100%",
+                          background: isPeak
+                            ? "var(--ls-rentab-gold)"
+                            : isCurrent
+                            ? "linear-gradient(90deg, var(--ls-rentab-teal), var(--ls-rentab-purple))"
+                            : "var(--ls-rentab-ink-3)",
+                          borderRadius: 999,
+                        }}
+                      />
+                    </div>
+
+                    {/* évolution vs mois précédent */}
+                    {delta != null && Math.abs(delta) >= 1 ? (
+                      <span
+                        style={{
+                          fontFamily: "DM Sans, sans-serif",
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          color:
+                            delta >= 0 ? "var(--ls-rentab-teal)" : "var(--ls-rentab-coral)",
+                        }}
+                      >
+                        {delta >= 0 ? "↑" : "↓"} {deltaPct != null ? `${Math.abs(deltaPct)}%` : `${Math.round(Math.abs(delta))}€`}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 11.5, color: "var(--ls-rentab-ink-3)", whiteSpace: "nowrap" }}>—</span>
+                    )}
+
+                    <span
+                      data-stealth
+                      className="lr-num"
+                      style={{
+                        width: 78,
+                        textAlign: "right",
+                        flexShrink: 0,
+                        fontFamily: "Syne, sans-serif",
+                        fontWeight: 700,
+                        fontSize: 15,
+                        color: "var(--ls-rentab-ink)",
+                      }}
+                    >
+                      {Math.round(value).toLocaleString("fr-FR")} €
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
     </>
   );
 }

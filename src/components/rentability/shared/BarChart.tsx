@@ -10,6 +10,17 @@ interface BarChartProps {
   height?: number;
   current?: number; // index of current month (gradient bar)
   peak?: number;    // index of peak month (gold bar)
+  showValues?: boolean; // affiche le montant court au-dessus de chaque barre
+}
+
+// Format court pour les étiquettes au-dessus des barres : 1234 → "1,2k", 850 → "850".
+function shortAmount(v: number): string {
+  if (v >= 1000) {
+    const k = v / 1000;
+    const s = k >= 10 ? String(Math.round(k)) : k.toFixed(1).replace(/\.0$/, "");
+    return s.replace(".", ",") + "k";
+  }
+  return String(Math.round(v));
 }
 
 export function BarChart({
@@ -19,10 +30,11 @@ export function BarChart({
   height = 220,
   current = -1,
   peak = -1,
+  showValues = false,
 }: BarChartProps) {
   if (!data || data.length === 0) return null;
   const max = Math.max(...data, 1);
-  const padding = { top: 28, right: 16, bottom: 30, left: 16 };
+  const padding = { top: showValues ? 34 : 28, right: 16, bottom: 30, left: 16 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
   const gap = 8;
@@ -67,6 +79,26 @@ export function BarChart({
                 transformOrigin: `${x + barW / 2}px ${padding.top + chartH}px`,
               }}
             />
+            {/* Étiquette montant au-dessus de la barre (lisibilité — 2026-06-13). */}
+            {showValues && v > 0 && (
+              <text
+                x={x + barW / 2}
+                y={isPeak ? y - 18 : y - 6}
+                textAnchor="middle"
+                style={{
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 9.5,
+                  fontWeight: isCurrent || isPeak ? 700 : 500,
+                  fill: isCurrent
+                    ? "var(--ls-rentab-ink)"
+                    : isPeak
+                    ? "var(--ls-rentab-gold)"
+                    : "var(--ls-rentab-ink-3)",
+                }}
+              >
+                {shortAmount(v)}€
+              </text>
+            )}
             {isPeak && (
               <text
                 x={x + barW / 2}
