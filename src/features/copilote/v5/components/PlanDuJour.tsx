@@ -24,6 +24,9 @@ import { useTheme } from "../../../../hooks/useTheme";
 import { useDormantClients, URGENCY_META, type DormantUrgency } from "../../../../hooks/useDormantClients";
 import { useRentabilitySummary } from "../../../../hooks/useRentabilitySummary";
 import type { CopiloteData } from "../../../../hooks/useCopiloteData";
+// Vrai pin de rang du coach (.webp selon current_rank) + « 360 » filigrane —
+// signature visuelle de progression. Important pour Thomas (2026-06-13).
+import { PinAWTCinematic } from "./PinAWTCinematic";
 
 type Status = "active" | "later" | "done" | "completing";
 type Prio = "urgent" | "todo" | "ok";
@@ -165,28 +168,19 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
   return (
     <section style={heroStyle} aria-label="Ton plan du jour">
       <style>{`
-        @keyframes pdj-spin{to{transform:rotate(360deg)}}
         @keyframes pdj-sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
         @keyframes pdj-pop{0%{transform:scale(0.2)}55%{transform:scale(1.18)}100%{transform:scale(1)}}
         @keyframes pdj-burst{from{transform:translate(-50%,-50%) translate(0,0) scale(1);opacity:1}to{transform:translate(-50%,-50%) translate(var(--tx),var(--ty)) scale(0.2);opacity:0}}
-        @media (prefers-reduced-motion: reduce){.pdj-medallion{animation:none!important}}
       `}</style>
 
       {/* Glows */}
       <div aria-hidden="true" style={{ position: "absolute", left: -120, top: -120, width: 440, height: 440, background: "radial-gradient(circle, var(--pdj-glow-em), transparent 70%)", filter: "blur(18px)", pointerEvents: "none" }} />
       <div aria-hidden="true" style={{ position: "absolute", right: -150, bottom: -150, width: 500, height: 500, background: "radial-gradient(circle, var(--pdj-glow-vi), transparent 70%)", filter: "blur(18px)", pointerEvents: "none" }} />
 
-      {/* Médaillon de rang or tournant */}
-      <div aria-hidden="true" style={{ position: "absolute", right: -26, top: "50%", transform: "translateY(-50%)", width: 380, height: 380, opacity: "var(--pdj-medallion-op)" as unknown as number, pointerEvents: "none" }}>
-        <div className="pdj-medallion" style={{ width: "100%", height: "100%", position: "relative", animation: "pdj-spin 100s linear infinite" }}>
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "conic-gradient(from 0deg,#8a6f2a,#efe2b0,#C9A84C,#7a5e22,#efe2b0,#C9A84C,#8a6f2a,#efe2b0,#8a6f2a)", WebkitMask: "radial-gradient(circle at center, transparent 39%, #000 41%, #000 60%, transparent 62%)", mask: "radial-gradient(circle at center, transparent 39%, #000 41%, #000 60%, transparent 62%)" }} />
-          <div style={{ position: "absolute", inset: "14%", borderRadius: "50%", background: "conic-gradient(from 90deg,#C9A84C,#efe2b0,#8a6f2a,#C9A84C,#efe2b0,#8a6f2a,#C9A84C)", WebkitMask: "radial-gradient(circle at center, transparent 64%, #000 66%, #000 72%, transparent 74%)", mask: "radial-gradient(circle at center, transparent 64%, #000 66%, #000 72%, transparent 74%)" }} />
-          <div style={{ position: "absolute", inset: "31%", background: "linear-gradient(135deg,#efe2b0,#C9A84C,#8a6f2a)", clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)" }} />
-        </div>
-      </div>
-
-      {/* « 360 » filigrane gradient G3 */}
-      <div aria-hidden="true" style={{ position: "absolute", right: 18, bottom: -48, fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 300, lineHeight: 0.8, background: "linear-gradient(135deg,#10B981 0%,#06B6D4 50%,#8B5CF6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", opacity: "var(--pdj-ten-op)" as unknown as number, pointerEvents: "none", userSelect: "none" }}>360</div>
+      {/* Vrai pin AWT du rang du coach (top-right, rotation 60s + heart-beat)
+          + « 360 » filigrane gradient G3 — composant signature (le même que le
+          hero éditorial). Remplace le médaillon générique du design. */}
+      <PinAWTCinematic opacity={isDark ? 0.18 : 0.12} />
 
       <div style={{ position: "relative", zIndex: 2 }}>
         {/* Ligne Noaly */}
