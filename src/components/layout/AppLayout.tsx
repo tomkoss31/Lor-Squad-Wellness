@@ -171,6 +171,22 @@ export function AppLayout() {
   // users (existants + nouveaux). Skip si on est déjà sur l'onboarding
   // distri (où le rang est demandé inline).
   const [rankConfirmed, setRankConfirmed] = useState(false);
+
+  // Accordéon « Outils » (refonte nav 2026-06-13) : un clic simple sur la
+  // ligne déplie les outils en dessous (pas de double-clic — mauvaise UX
+  // tactile/PWA). Auto-ouvert si on est déjà sur une route outil.
+  const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
+    { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
+    { label: "Panier", path: "/panier", emoji: "🛒" },
+    { label: "Devis", path: "/outils", emoji: "📄", soon: true },
+  ];
+  const onOutilsRoute =
+    location.pathname === "/outils" ||
+    location.pathname === "/mes-liens" ||
+    location.pathname === "/panier";
+  const [outilsOpen, setOutilsOpen] = useState(onOutilsRoute);
+  const outilsExpanded = outilsOpen || onOutilsRoute;
+
   const needsRankConfirmation =
     !rankConfirmed &&
     !currentUser.rankSetAt &&
@@ -269,6 +285,7 @@ export function AppLayout() {
               // développement" et pointe sur /developpement).
               const insertNewBilanBefore = item.path === "/developpement";
               const showSection = !!item.section && item.section !== navigation[idx - 1]?.section;
+              const isOutils = item.path === "/outils";
 
               return (
                 <div key={item.path} style={{ display: 'contents' }}>
@@ -319,7 +336,88 @@ export function AppLayout() {
                       <span>Nouveau bilan</span>
                     </NavLink>
                   ) : null}
-                  <NavLink
+                  {isOutils ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setOutilsOpen((v) => !v)}
+                        data-tour-id={item.tourId}
+                        aria-expanded={outilsExpanded}
+                        className="ls-nav-item flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
+                        style={{
+                          position: 'relative',
+                          width: '100%',
+                          padding: '10px 12px 10px 14px',
+                          marginLeft: -2,
+                          borderLeft: '2px solid transparent',
+                          border: 'none',
+                          background: onOutilsRoute
+                            ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                            : 'transparent',
+                          color: onOutilsRoute ? 'var(--ls-text)' : 'var(--ls-text-muted)',
+                          fontWeight: onOutilsRoute ? 600 : 500,
+                          fontFamily: "'Inter', system-ui, sans-serif",
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          letterSpacing: '-0.005em',
+                          transition: 'background 0.18s ease, color 0.18s ease',
+                        }}
+                        onMouseEnter={e => { if (!onOutilsRoute) e.currentTarget.style.background = 'var(--ls-surface2)' }}
+                        onMouseLeave={e => { if (!onOutilsRoute) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {onOutilsRoute ? (
+                          <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 6, bottom: 6, width: 3, borderRadius: 999, background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)', boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)' }} />
+                        ) : null}
+                        <span aria-hidden="true" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, fontSize: 16, lineHeight: 1, opacity: onOutilsRoute ? 1 : 0.78 }}>
+                          {item.emoji}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <span aria-hidden="true" style={{ flexShrink: 0, fontSize: 11, opacity: 0.7, transition: 'transform 0.2s ease', transform: outilsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                          ▾
+                        </span>
+                      </button>
+                      {outilsExpanded ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, margin: '2px 0 6px', paddingLeft: 20 }}>
+                          {OUTILS_SUBITEMS.map((sub) =>
+                            sub.soon ? (
+                              <div key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', fontSize: 12.5, color: 'var(--ls-text-hint)', fontFamily: "'Inter', system-ui, sans-serif", cursor: 'default' }}>
+                                <span aria-hidden="true" style={{ fontSize: 14, opacity: 0.6 }}>{sub.emoji}</span>
+                                <span style={{ flex: 1 }}>{sub.label}</span>
+                                <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))', background: 'color-mix(in srgb, #8B5CF6 14%, transparent)', padding: '2px 6px', borderRadius: 20 }}>Bientôt</span>
+                              </div>
+                            ) : (
+                              <NavLink
+                                key={sub.path}
+                                to={sub.path}
+                                style={({ isActive: subActive }) => ({
+                                  display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', borderRadius: 9,
+                                  fontSize: 12.5, textDecoration: 'none',
+                                  fontFamily: "'Inter', system-ui, sans-serif",
+                                  fontWeight: subActive ? 600 : 500,
+                                  color: subActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
+                                  background: subActive ? 'var(--ls-surface2)' : 'transparent',
+                                })}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--ls-surface2)' }}
+                                onMouseLeave={e => { if (location.pathname !== sub.path) e.currentTarget.style.background = 'transparent' }}
+                              >
+                                <span aria-hidden="true" style={{ fontSize: 14 }}>{sub.emoji}</span>
+                                <span>{sub.label}</span>
+                              </NavLink>
+                            )
+                          )}
+                          <NavLink
+                            to="/outils"
+                            end
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', fontSize: 11.5, fontWeight: 600, textDecoration: 'none', color: 'color-mix(in srgb, var(--ls-teal) 85%, var(--ls-text))', fontFamily: "'Inter', system-ui, sans-serif" }}
+                          >
+                            <span aria-hidden="true" style={{ fontSize: 13 }}>⊞</span>
+                            <span>Tout voir</span>
+                          </NavLink>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <NavLink
                     to={item.path}
                     data-tour-id={item.tourId}
                     className="ls-nav-item flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
@@ -424,6 +522,7 @@ export function AppLayout() {
                       </span>
                     ) : null}
                   </NavLink>
+                  )}
                 </div>
               );
             })}

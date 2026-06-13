@@ -54,6 +54,27 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
       },
     ],
   },
+  {
+    section: "📊 Suivi & business",
+    items: [
+      {
+        id: "flex",
+        icon: "⚡",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "FLEX",
+        desc: "Ta marge, tes paliers Herbalife et la projection du mois en un coup d'œil.",
+        path: "/flex",
+      },
+      {
+        id: "pv",
+        icon: "💰",
+        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        name: "Suivi PV",
+        desc: "L'historique de tes points de volume, échéances et relances à faire.",
+        path: "/pv",
+      },
+    ],
+  },
 ];
 
 export function OutilsPage() {
