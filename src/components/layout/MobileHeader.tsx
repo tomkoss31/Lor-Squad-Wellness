@@ -17,6 +17,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useTheme } from "../../hooks/useTheme";
 import { useHaptic } from "../../hooks/useHaptic";
@@ -80,8 +81,15 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
           </svg>
         </button>
 
-        {/* Logo + crumb */}
-        <div className="lb-logo-wrap">
+        {/* Logo + crumb — tap = retour Co-pilote (accueil). Remplace l'item
+            « Co-pilote » retiré de la barre du bas (refonte 2026-06-13). */}
+        <Link
+          to="/co-pilote"
+          className="lb-logo-wrap"
+          aria-label="Retour au Co-pilote"
+          style={{ textDecoration: "none", color: "inherit" }}
+          onClick={() => haptic("tap")}
+        >
           <img
             src="/brand/labase360/app-icon-512.svg"
             alt="La Base 360"
@@ -93,7 +101,7 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
             <span className="lb-logo-text">La Base 360</span>
             {crumb ? <span className="lb-crumb">{crumb}</span> : null}
           </div>
-        </div>
+        </Link>
 
         {/* Cloche annonces */}
         <AnnouncementBell />
