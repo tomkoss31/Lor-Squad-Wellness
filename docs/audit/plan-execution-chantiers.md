@@ -43,7 +43,18 @@ Produits · **3** Actions · **4** Club VIP. Mapping query centralisé
 
 ---
 
-## B3 — Paramètres : 8 → 6 onglets (regrouper sous « Admin ») 🟡
+## B3 — Paramètres : 8 → 6 onglets (regrouper sous « Admin ») ✅ LIVRÉ (2026-06-13)
+**Implémentation** : nouveau `src/components/settings/AdminTab.tsx` (3 sous-onglets
+internes Transferts/Stats/Debug, réutilise les composants existants sans modif) ;
+`ParametresPage.tsx` passe de 8 à 6 onglets (profil · vip · notifs · legal · equipe ·
+**admin** 🛠️). Rétro-compat : `?tab=transferts|stats|debug` → onglet Admin + bon
+sous-onglet via `LEGACY_ADMIN_SLUGS`. `?tab=equipe` (seul deep-link existant, depuis
+`FormationMyTeamPage`) inchangé. `npx tsc -b --noEmit` ✅.
+**Pas d'annonce distri** : ces onglets sont **adminOnly** (Mélanie/Thomas) — une
+annonce « all » serait du bruit pour les distri.
+
+<details><summary>Plan d'origine (archivé)</summary>
+🟡
 **Objectif** : regrouper *Transferts / Stats / Debug* sous un onglet **Admin**.
 **Fichiers** : `src/pages/ParametresPage.tsx` (+ nouveau `src/components/settings/AdminTab.tsx`).
 **État** : 8 onglets (profil, vip, notifs, legal, equipe, transferts, stats, debug).
@@ -52,6 +63,7 @@ Produits · **3** Actions · **4** Club VIP. Mapping query centralisé
 2. Remplacer les 3 entrées par 1 entrée « Admin » (adminOnly).
 3. Rétro-compat : `?tab=stats|transferts|debug` → ouvrir Admin + bon sous-onglet.
 **Risque** : faible-moyen. Build TS + test des anciens liens.
+</details>
 
 ---
 

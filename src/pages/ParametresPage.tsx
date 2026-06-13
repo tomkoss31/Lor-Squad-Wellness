@@ -15,9 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import { PremiumHero } from "../components/ui/PremiumHero";
 import { ProfilTab } from "../components/settings/ProfilTab";
 import { EquipeTab } from "../components/settings/EquipeTab";
-import { TransfertsTab } from "../components/settings/TransfertsTab";
-import { StatistiquesTab } from "../components/settings/StatistiquesTab";
-import { DebugTab } from "../components/settings/DebugTab";
+import { AdminTab, type AdminSection } from "../components/settings/AdminTab";
 import { VipProgramTab } from "../components/settings/VipProgramTab";
 import { LegalTab } from "../components/settings/LegalTab";
 import { NotificationsTab } from "../components/settings/NotificationsTab";
@@ -25,7 +23,12 @@ import { NotificationsTab } from "../components/settings/NotificationsTab";
 // Leads → CRM (chantier 2026-06-13) : l'onglet « Leads » des Paramètres
 // faisait doublon avec /crm (qui agrège prospect_leads + online_bilans + recos).
 // /crm est désormais LA source unique. /parametres?tab=leads redirige vers /crm.
-type TabKey = "profil" | "vip" | "notifs" | "legal" | "equipe" | "transferts" | "stats" | "debug";
+//
+// Simplification B3 (2026-06-13) : Transferts / Statistiques / Debug regroupés
+// sous un seul onglet « Admin » (sous-onglets internes, cf. AdminTab). On passe
+// de 8 à 6 onglets. Les anciens liens ?tab=transferts|stats|debug restent
+// valides (mappés vers Admin + le bon sous-onglet).
+type TabKey = "profil" | "vip" | "notifs" | "legal" | "equipe" | "admin";
 
 const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
@@ -37,10 +40,15 @@ const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: bo
   // RGPD Phase 1 (2026-04-30) : tous users peuvent voir
   { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
-  { key: "transferts", label: "Transferts", icon: "🔀", adminOnly: true },
-  { key: "stats", label: "Statistiques", icon: "📊", adminOnly: true },
-  { key: "debug", label: "Debug", icon: "🔧", adminOnly: true },
+  { key: "admin", label: "Admin", icon: "🛠️", adminOnly: true },
 ];
+
+// Mapping rétro-compat : anciens slugs techniques → onglet Admin + sous-onglet.
+const LEGACY_ADMIN_SLUGS: Record<string, AdminSection> = {
+  transferts: "transferts",
+  stats: "stats",
+  debug: "debug",
+};
 
 export function ParametresPage() {
   const { currentUser } = useAppContext();
@@ -49,10 +57,18 @@ export function ParametresPage() {
   // non-admins, mais seul l onglet "Profil" est visible pour eux.
   const isAdmin = currentUser?.role === "admin";
   const TABS = ALL_TABS.filter((t) => isAdmin || !t.adminOnly);
+  // Sous-onglet Admin initial déduit des anciens liens ?tab=transferts|stats|debug.
+  const [adminSection] = useState<AdminSection>(() => {
+    if (typeof window === "undefined") return "transferts";
+    const fromQuery = new URLSearchParams(window.location.search).get("tab") ?? "";
+    return LEGACY_ADMIN_SLUGS[fromQuery] ?? "transferts";
+  });
   const [tab, setTab] = useState<TabKey>(() => {
     if (typeof window === "undefined") return "profil";
-    const fromQuery = new URLSearchParams(window.location.search).get("tab") as TabKey;
-    return fromQuery && TABS.some((t) => t.key === fromQuery) ? fromQuery : "profil";
+    const fromQuery = new URLSearchParams(window.location.search).get("tab") ?? "";
+    // Anciens liens techniques → onglet Admin (le sous-onglet est géré ci-dessus).
+    if (LEGACY_ADMIN_SLUGS[fromQuery]) return "admin";
+    return TABS.some((t) => t.key === fromQuery) ? (fromQuery as TabKey) : "profil";
   });
 
   // Ancien lien /parametres?tab=leads → /crm (source unique des leads).
@@ -72,7 +88,7 @@ export function ParametresPage() {
         eyebrow="Paramètres · espace admin"
         titleAccent="Tes réglages"
         titleSuffix=" ⚙️"
-        subtitle="Profil, équipe, transferts, statistiques et outils techniques."
+        subtitle="Profil, équipe et outils d'administration."
       />
 
       {/* Tabs pills */}
@@ -121,9 +137,7 @@ export function ParametresPage() {
       {tab === "notifs" ? <NotificationsTab /> : null}
       {tab === "legal" ? <LegalTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
-      {tab === "transferts" ? <TransfertsTab /> : null}
-      {tab === "stats" ? <StatistiquesTab /> : null}
-      {tab === "debug" ? <DebugTab /> : null}
+      {tab === "admin" ? <AdminTab initialSection={adminSection} /> : null}
     </div>
   );
 }
