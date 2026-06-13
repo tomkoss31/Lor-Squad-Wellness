@@ -30,14 +30,14 @@ import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress
 
 /** Sections du hub (remaniement 2026-06-10) : la grille à plat mélangeait
     outils du quotidien, pédagogie, prospection et admin → illisible. */
-type HubSectionId = "quotidien" | "apprendre" | "admin";
+type HubSectionId = "quotidien" | "apprendre";
 
 const SECTIONS: { id: HubSectionId; title: string; sub?: string }[] = [
   { id: "quotidien", title: "⚡ Mes outils du quotidien", sub: "Ce que tu ouvres tous les jours." },
   { id: "apprendre", title: "🎓 Apprendre", sub: "Monter en compétence, à ton rythme." },
-  // Section "prospecter" retirée 2026-06-13 (B4/B5) : « Prospecter » vit sous
-  // « Mon business ». Le hub développement = apprendre + quotidien + admin.
-  { id: "admin", title: "🛠 Admin", sub: "Réservé aux admins." },
+  // Sections "prospecter" et "admin" retirées 2026-06-13 (B4/B5) : « Prospecter »
+  // vit sous « Mon business » ; les pages admin (prospection, newsletters) sous
+  // Paramètres > Admin. Le hub développement = apprendre + quotidien (pédago perso).
 ];
 
 interface HubCard {
@@ -151,32 +151,9 @@ const CARDS: HubCard[] = [
     section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
-  {
-    id: "admin-prospection",
-    emoji: "🛠",
-    title: "Admin Prospection",
-    description: "Édite les scripts et briefs méthodo du kit prospection.",
-    cta: "Ouvrir l'admin",
-    path: "/admin/prospection",
-    accent: "var(--ls-purple)",
-    section: "admin",
-    requireRole: "admin",
-  },
-  // Card "Mon bilan online" retirée 2026-06-10 (retour Thomas) : doublon —
-  // le bilan online vit dans l'Outil de prospection (sous-page dédiée) et
-  // les leads dans Dossiers clients > onglet Leads.
-  {
-    id: "newsletters",
-    emoji: "📰",
-    title: "Newsletters",
-    description: "Crée, édite et envoie les éditions La Base 360 News.",
-    cta: "Ouvrir l'admin",
-    path: "/admin/newsletters",
-    accent: "var(--ls-coral)",
-    section: "admin",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-    requireRole: "admin",
-  },
+  // Cartes admin (Admin Prospection + Newsletters) retirées 2026-06-13 (B5,
+  // décision Thomas) : rapatriées dans Paramètres > Admin. Le hub
+  // « Mon développement » ne contient plus que de la pédagogie + le quotidien.
   // Cartes "Témoignages clients" et "Fiche distri enrichie" retirées
   // 2026-05-27 (chantier onboarding plan A) : flux déjà accessibles via
   // fiche client (request-testimonial) et via Mon équipe / Paramètres >

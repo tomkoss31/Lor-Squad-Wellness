@@ -91,18 +91,22 @@ risqué) — juste créé la porte unique depuis Mon business + retiré du hub d
 
 ---
 
-## B5 — Hub « Apprendre » 100 % pédago 🟡 PARTIEL (2026-06-13)
-**Fait** : section **prospecter** retirée du hub `/developpement` (la carte « Outil
-de prospection » vit maintenant sous Mon business — B4) ; carte « Club VIP — mode
-d'emploi » reclassée en section **Apprendre** ; type `HubSectionId` nettoyé ; bandeau
-Academy ne mentionne plus « Prospection ». `tsc` ✅.
-**Reste (⚠️ décisions Thomas)** :
-1. Section **quotidien** (Cahier de bord, Routine du jour) : la garder dans le hub
-   dev, ou la déplacer (Co-pilote / Mon business) ?
-2. Section **admin** (Admin prospection, Newsletters) : la laisser dans le hub dev
-   (admin-only), ou déplacer Newsletters → `/admin/newsletters` via Paramètres ?
-**Résultat cible (si on tranche tout)** : Academy · Formation · Boîte à outils ·
-Club VIP (mode d'emploi) · Nouveautés.
+## B5 — Hub « Apprendre » 100 % pédago ✅ LIVRÉ (2026-06-13)
+**Décisions Thomas** : (1) section **quotidien** (Cahier, Routine) → **gardée** dans
+le hub dev (développement perso) ; (2) cartes **admin** (Admin Prospection,
+Newsletters) → **déplacées vers Paramètres > Admin**.
+**Fait** :
+- Section **prospecter** retirée (carte « Outil de prospection » → Mon business, B4).
+- Carte « Club VIP — mode d'emploi » reclassée en section **Apprendre**.
+- Cartes **Admin Prospection + Newsletters** retirées du hub → recâblées dans
+  `AdminTab.tsx` (bloc « Pages admin » avec navigation `/admin/prospection` et
+  `/admin/newsletters`). ⚠️ Le hub dev était leur **seule** porte d'entrée — vérifié,
+  pas d'orphelin.
+- Sections `prospecter` + `admin` retirées de `SECTIONS` ; type `HubSectionId`
+  réduit à `quotidien | apprendre` ; bandeau Academy ne mentionne plus « Prospection ».
+- `tsc` ✅.
+**Résultat hub dev** : Apprendre (Academy, Formation, Boîte à outils, Simulateur EBE,
+Club VIP mode d'emploi) + Quotidien (Cahier de bord, Routine du jour).
 
 ---
 
