@@ -58,6 +58,14 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
     section: "📊 Suivi & business",
     items: [
       {
+        id: "rentabilite",
+        icon: "💎",
+        iconBg: "color-mix(in srgb, var(--ls-purple) 16%, transparent)",
+        name: "Rentabilité",
+        desc: "Ta marge du mois, ta projection et le détail complet (vente directe + overrides équipe). Vue avant réservée au Co-pilote.",
+        path: "/rentabilite",
+      },
+      {
         id: "flex",
         icon: "⚡",
         iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",

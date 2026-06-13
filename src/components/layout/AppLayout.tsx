@@ -181,6 +181,7 @@ export function AppLayout() {
   const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
     { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
     { label: "Panier", path: "/panier", emoji: "🛒" },
+    { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },
     { label: "FLEX", path: "/flex", emoji: "⚡" },
     { label: "Suivi PV", path: "/pv", emoji: "💰" },
     { label: "Devis", path: "/outils", emoji: "📄", soon: true },
@@ -189,6 +190,7 @@ export function AppLayout() {
     location.pathname === "/outils" ||
     location.pathname === "/mes-liens" ||
     location.pathname === "/panier" ||
+    location.pathname === "/rentabilite" ||
     location.pathname.startsWith("/flex") ||
     location.pathname.startsWith("/pv");
   const [outilsOpen, setOutilsOpen] = useState(onOutilsRoute);
