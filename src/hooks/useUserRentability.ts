@@ -8,7 +8,7 @@
 // Retourne :
 //   - Total revenue + marge agrégée
 //   - Split Public vs VIP (revenue + marge + nb clients distincts)
-//   - Top 5 clients (group by client_id, pas par produit)
+//   - Top clients (group by client_id, pas par produit ; jusqu'à 50 depuis 2026-06-13)
 //   - Mois précédent + projection fin de mois
 // =============================================================================
 

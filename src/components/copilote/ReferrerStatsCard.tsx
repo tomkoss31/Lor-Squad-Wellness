@@ -130,11 +130,10 @@ export function ReferrerStatsCard() {
     stats.leads_total > 0 ? Math.round((stats.leads_converted / stats.leads_total) * 100) : 0;
 
   // Les cellules ne sont cliquables que pour les admins : la gestion des leads
-  // (/parametres?tab=leads) est réservée aux admins. Pour les autres, stats
+  // se fait dans /crm (source unique depuis 2026-06-13). Pour les autres, stats
   // en lecture seule.
   const isAdmin = currentUser?.role === "admin";
-  const leadsHref = (status?: string) =>
-    isAdmin ? `/parametres?tab=leads${status ? `&status=${status}` : ""}` : undefined;
+  const leadsHref = (_status?: string) => (isAdmin ? "/crm" : undefined);
 
   return (
     <div

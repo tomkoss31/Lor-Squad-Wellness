@@ -259,6 +259,12 @@ export interface BodyScanMetrics {
 
 export interface AssessmentQuestionnaire {
   referredByName?: string;
+  // Chantier re-baseline évolution (2026-06-13, demande Mélanie) : si true,
+  // ce bilan est EXCLU du calcul d'évolution de la Vue (perte totale / graisse
+  // / muscle) — utile quand un client reprend de zéro après une longue pause.
+  // Il reste 100% visible dans l'Historique. Stocké dans le jsonb questionnaire
+  // (pas de migration). Le point de départ = le plus ancien bilan NON exclu.
+  excludeFromEvolution?: boolean;
   currentClothingSize?: string;
   targetClothingSize?: string;
   optionalProductsUsed?: string;

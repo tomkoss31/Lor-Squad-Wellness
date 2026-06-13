@@ -108,7 +108,7 @@ export function AppLayout() {
         { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & relation" },
         { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Clients & relation" },
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Clients & relation" },
-        { label: "Outils", path: "/outils", emoji: "🧰", badge: 0, tourId: "nav-outils", section: "Mon espace" },
+        { label: "Mon business", path: "/outils", emoji: "💼", badge: 0, tourId: "nav-outils", section: "Mon espace" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace" }]
           : []),
@@ -139,6 +139,7 @@ export function AppLayout() {
     if (p.startsWith("/distributors/")) return "Distri";
     if (p.startsWith("/pv")) return "Suivi PV";
     if (p === "/rentabilite") return "Rentabilité";
+    if (p === "/outils") return "Mon business";
     if (p === "/routine-du-jour") return "Routine";
     if (p === "/cahier-de-bord") return "Cahier de bord";
     if (p === "/developpement") return "Développement";
@@ -178,17 +179,21 @@ export function AppLayout() {
   // Accordéon « Outils » (refonte nav 2026-06-13) : un clic simple sur la
   // ligne déplie les outils en dessous (pas de double-clic — mauvaise UX
   // tactile/PWA). Auto-ouvert si on est déjà sur une route outil.
+  // Aligné sur la page « Mon business » (B2/B4/B7) : Prospecter ajouté, Devis retiré.
   const OUTILS_SUBITEMS: Array<{ label: string; path: string; emoji: string; soon?: boolean }> = [
+    { label: "Prospecter", path: "/outils-prospection", emoji: "🎯" },
     { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
     { label: "Panier", path: "/panier", emoji: "🛒" },
+    { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },
     { label: "FLEX", path: "/flex", emoji: "⚡" },
     { label: "Suivi PV", path: "/pv", emoji: "💰" },
-    { label: "Devis", path: "/outils", emoji: "📄", soon: true },
   ];
   const onOutilsRoute =
     location.pathname === "/outils" ||
+    location.pathname.startsWith("/outils-prospection") ||
     location.pathname === "/mes-liens" ||
     location.pathname === "/panier" ||
+    location.pathname === "/rentabilite" ||
     location.pathname.startsWith("/flex") ||
     location.pathname.startsWith("/pv");
   const [outilsOpen, setOutilsOpen] = useState(onOutilsRoute);

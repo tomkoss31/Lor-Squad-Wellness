@@ -116,6 +116,11 @@ export function MesLiensPage() {
       push({ tone: "success", title: "Lien copié", message: link.name }),
     );
   }
+  // Prévisualiser/ouvrir la page publique dans un nouvel onglet (demande Thomas
+  // 2026-06-13 : voir son bilan, sa page opportunité, sa fiche VIP avant de partager).
+  function openLink(link: LinkDef) {
+    window.open(link.url, "_blank", "noopener");
+  }
   function whatsapp(link: LinkDef) {
     const text = `${link.waIntro}\n${link.url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
@@ -177,6 +182,7 @@ export function MesLiensPage() {
                 </div>
               </div>
               <div style={{ flex: "0 0 auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <ActionBtn onClick={() => openLink(link)}>👁 Ouvrir</ActionBtn>
                 <ActionBtn onClick={() => copy(link)}>📋 Copier</ActionBtn>
                 <ActionBtn onClick={() => setQr(link)}>⬚ QR</ActionBtn>
                 <button

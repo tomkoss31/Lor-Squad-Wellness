@@ -79,9 +79,19 @@ export function ClientDetailPage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
   // arriver directement sur l'onglet Actions depuis le widget dashboard.
+  // B1 (2026-06-13) : fiche 7→5 onglets. Mapping slug→index centralisé pour
+  // garder les deep-links robustes à la re-indexation (Co-pilote/Agenda
+  // pointent ?tab=actions ; ?tab=mesures dispo pour les futurs liens).
   const [searchParams] = useSearchParams();
-  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 5 : 0;
+  const TAB_SLUG_TO_INDEX: Record<string, number> = {
+    vue: 0, mesures: 1, produits: 2, actions: 3, vip: 4,
+  };
+  const initialTabFromQuery = TAB_SLUG_TO_INDEX[searchParams.get("tab") ?? ""] ?? 0;
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
+  // Re-baseline évolution (2026-06-13, demande Mélanie) : override local des
+  // bilans exclus du calcul d'évolution (effectif = override sinon flag jsonb).
+  // Permet de recalculer la Vue instantanément sans recharger la page.
+  const [excludeOverride, setExcludeOverride] = useState<Record<string, boolean>>({});
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   // Chantier Client access unification (2026-04-24)
@@ -211,6 +221,47 @@ export function ClientDetailPage() {
   const firstAssessment =
     client.assessments.find((entry) => entry.type === "initial") ?? getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
+
+  // ─── Évolution re-baseline (2026-06-13) ─────────────────────────────────
+  // Les bilans « comptés » dans l'évolution de la Vue = ceux non exclus.
+  // Le point de départ = le plus ancien compté. L'historique reste complet.
+  const includedEvolutionAssessments = client.assessments.filter(
+    (a) => !(excludeOverride[a.id] ?? (a.questionnaire?.excludeFromEvolution === true)),
+  );
+  const evolutionFirst = includedEvolutionAssessments.length
+    ? [...includedEvolutionAssessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+    : firstAssessment;
+  const evolutionLatest = includedEvolutionAssessments.length
+    ? [...includedEvolutionAssessments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : getLatestAssessment(client);
+  const evolutionBaselineId = includedEvolutionAssessments.length ? evolutionFirst.id : null;
+
+  async function handleToggleEvolution(assessmentId: string, include: boolean) {
+    if (!client) return;
+    const target = client.assessments.find((a) => a.id === assessmentId);
+    if (!target) return;
+    const exclude = !include;
+    setExcludeOverride((prev) => ({ ...prev, [assessmentId]: exclude }));
+    try {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        const nextQuestionnaire = { ...(target.questionnaire ?? {}), excludeFromEvolution: exclude };
+        const { error } = await sb
+          .from("assessments")
+          .update({ questionnaire: nextQuestionnaire })
+          .eq("id", assessmentId);
+        if (error) throw error;
+      }
+    } catch (err) {
+      // Revert vers la vérité DB en cas d'échec.
+      setExcludeOverride((prev) => ({
+        ...prev,
+        [assessmentId]: target.questionnaire?.excludeFromEvolution === true,
+      }));
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre à jour l'évolution"));
+    }
+  }
+
   const latestQuestionnaire = getLatestQuestionnaire(client);
   // Fix target weight (2026-04-20) : le poids cible est saisi sur le bilan
   // INITIAL (via "Modifier la fiche de départ"). Si les follow-ups ont été
@@ -475,9 +526,7 @@ export function ClientDetailPage() {
       <div className="client-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {([
           { label: 'Vue', emoji: '🏠', color: 'var(--ls-gold)' },
-          { label: 'Body Scan', emoji: '⚡', color: 'var(--ls-coral)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Mensurations', emoji: '📐', color: 'var(--ls-teal)' },
-          { label: 'Historique', emoji: '📊', color: 'var(--ls-purple)', count: client.assessments.length },
+          { label: 'Mesures', emoji: '📐', color: 'var(--ls-teal)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
           { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
           { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
           { label: 'Club VIP', emoji: '👑', color: 'var(--ls-gold)' },
@@ -535,8 +584,8 @@ export function ClientDetailPage() {
       {/* Bandeau Prochain RDV (V3) */}
       <NextAppointmentBanner
         nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(5)}
-        onViewDetails={() => setActiveTab(5)}
+        onPlan={() => setActiveTab(3)}
+        onViewDetails={() => setActiveTab(3)}
       />
       </div>
 
@@ -555,13 +604,14 @@ export function ClientDetailPage() {
               en haut, au-dessus des 4 MetricTiles. */}
           <WeightSummaryBlock
             client={client}
-            firstWeight={firstAssessment.bodyScan?.weight ?? null}
-            latestWeight={latestBodyScan.weight ?? null}
-            firstBodyFatPct={firstAssessment.bodyScan?.bodyFat ?? null}
-            latestBodyFatPct={latestBodyScan.bodyFat ?? null}
-            firstMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
-            latestMuscleMass={latestBodyScan.muscleMass ?? null}
+            firstWeight={evolutionFirst.bodyScan?.weight ?? null}
+            latestWeight={evolutionLatest.bodyScan?.weight ?? null}
+            firstBodyFatPct={evolutionFirst.bodyScan?.bodyFat ?? null}
+            latestBodyFatPct={evolutionLatest.bodyScan?.bodyFat ?? null}
+            firstMuscleMass={evolutionFirst.bodyScan?.muscleMass ?? null}
+            latestMuscleMass={evolutionLatest.bodyScan?.muscleMass ?? null}
             targetWeight={resolvedTargetWeight ?? null}
+            comparisonCount={includedEvolutionAssessments.length}
           />
 
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
@@ -605,7 +655,9 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 1: Body Scan dédié */}
+      {/* Tab 1: Mesures — B1 (2026-06-13) : Body Scan + Mensurations fusionnés
+          (fiche 7→5 onglets). Body Scan en premier, Mensurations dessous (chaque
+          bloc porte son propre sous-titre). */}
       {activeTab === 1 && (
         <Card className="space-y-6">
           <div className="flex items-center justify-between">
@@ -780,8 +832,9 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 2: Mensurations — Chantier Module Mensurations (2026-04-24) */}
-      {activeTab === 2 && (
+      {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté
+          sous l'onglet « Mesures » (activeTab === 1), juste après le Body Scan. */}
+      {activeTab === 1 && (
         <MeasurementsPanel
           clientId={client.id}
           gender={client.sex}
@@ -791,8 +844,9 @@ export function ClientDetailPage() {
         />
       )}
 
-      {/* Tab 3: Historique bilans */}
-      {activeTab === 3 && (
+      {/* Historique bilans — B1 (2026-06-13) : rapatrié en bas de l'onglet Vue
+          (activeTab === 0), plus d'onglet dédié. */}
+      {activeTab === 0 && (
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -809,21 +863,35 @@ export function ClientDetailPage() {
             </Link>
           </div>
 
+          <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
+            Décoche un bilan pour l'exclure du calcul d'évolution (Vue) — utile si
+            le client reprend de zéro après une pause. Il reste visible ici. Le
+            <span className="text-[#C9A84C] font-semibold"> point de départ</span> devient
+            automatiquement le plus ancien bilan coché.
+          </p>
+
           <HistoryTimeline
             entries={[...client.assessments]
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .map((assessment) => ({
-                id: assessment.id ?? assessment.date,
-                date: assessment.date,
-                summary: assessment.summary,
-                weight: assessment.bodyScan?.weight,
-                hydration: assessment.bodyScan?.hydration,
-                editTo: assessment.type === "initial"
-                  ? `/clients/${client.id}/start-assessment/edit`
-                  : `/clients/${client.id}/assessments/${assessment.id}/edit`,
-                typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
-                canDelete: assessment.type !== "initial",
-              }))}
+              .map((assessment) => {
+                const id = assessment.id ?? assessment.date;
+                const included = !(excludeOverride[assessment.id] ?? (assessment.questionnaire?.excludeFromEvolution === true));
+                return {
+                  id,
+                  date: assessment.date,
+                  summary: assessment.summary,
+                  weight: assessment.bodyScan?.weight,
+                  hydration: assessment.bodyScan?.hydration,
+                  editTo: assessment.type === "initial"
+                    ? `/clients/${client.id}/start-assessment/edit`
+                    : `/clients/${client.id}/assessments/${assessment.id}/edit`,
+                  typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
+                  canDelete: assessment.type !== "initial",
+                  includedInEvolution: included,
+                  isEvolutionBaseline: assessment.id === evolutionBaselineId,
+                };
+              })}
+            onToggleInclude={handleToggleEvolution}
             onDelete={async (assessmentId) => {
               try {
                 const sb = await getSupabaseClient();
@@ -850,11 +918,11 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 3: Produits — wrapped in an ErrorBoundary to prevent a crash
-          inside ProductAdder or recommendations logic from breaking the
-          entire fiche. Sectional fallback = discreet card, user can navigate
-          to another tab without reloading. */}
-      {activeTab === 4 && (
+      {/* Tab 2: Produits (B1 : index 4→2) — wrapped in an ErrorBoundary to
+          prevent a crash inside ProductAdder or recommendations logic from
+          breaking the entire fiche. Sectional fallback = discreet card, user
+          can navigate to another tab without reloading. */}
+      {activeTab === 2 && (
         <ErrorBoundary
           name="ClientDetailPage/Tab3-Produits"
           fallback={(
@@ -1278,11 +1346,12 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Tab 5: Actions - Refonte chirurgicale Actions premium (Chantier 2026-04-26).
-          Composant externalise dans src/components/client-detail/ActionsTab.tsx.
-          Tous les connecteurs metier (lifecycle, toggles, transfert, delete,
-          coordonnees) utilisent les hooks AppContext existants. */}
-      {activeTab === 5 && (
+      {/* Tab 3: Actions (B1 : index 5→3) - Refonte chirurgicale Actions premium
+          (Chantier 2026-04-26). Composant externalise dans
+          src/components/client-detail/ActionsTab.tsx. Tous les connecteurs metier
+          (lifecycle, toggles, transfert, delete, coordonnees) utilisent les hooks
+          AppContext existants. */}
+      {activeTab === 3 && (
         <ErrorBoundary name="ClientDetailPage/ActionsTab" fallback={(
           <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Actions.</p></Card>
         )}>
@@ -1296,12 +1365,12 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Onglet Club VIP (VIP-2 2026-06-10) : montre les remises + invitation. */}
-      {activeTab === 6 && (
+      {/* Onglet Club VIP (VIP-2 2026-06-10 ; B1 : index 6→4) : remises + invitation. */}
+      {activeTab === 4 && (
         <ErrorBoundary name="ClientDetailPage/ClientVipPitchTab" fallback={(
           <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Club VIP.</p></Card>
         )}>
-          <ClientVipPitchTab client={client} onManage={() => setActiveTab(5)} />
+          <ClientVipPitchTab client={client} onManage={() => setActiveTab(3)} />
         </ErrorBoundary>
       )}
 

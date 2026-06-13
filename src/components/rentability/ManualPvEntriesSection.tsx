@@ -9,7 +9,7 @@
 // estime) + bouton "+ Ajouter" qui ouvre un formulaire modal.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import {
@@ -68,8 +68,18 @@ const EMPTY_FORM: FormState = {
 export function ManualPvEntriesSection() {
   const { currentUser } = useAppContext();
   const { push: pushToast } = useToast();
-  const monthIso = useMemo(() => currentMonthIso(), []);
-  const { entries, loading } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  // Mois de travail (chantier volume 2026-06-13) : avant, la saisie était
+  // figée sur le mois courant — impossible de corriger / saisir un mois passé.
+  // Le sélecteur ci-dessous pilote à la fois la liste affichée ET le mois
+  // attaché aux entrées créées ou modifiées.
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthIso());
+  const currentMonth = currentMonthIso();
+  const monthLabel = new Date(`${selectedMonth}-01T00:00:00`).toLocaleDateString("fr-FR", {
+    month: "long",
+    year: "numeric",
+  });
+  const isCurrentMonth = selectedMonth === currentMonth;
+  const { entries, loading } = useManualPvEntries(currentUser?.id ?? null, selectedMonth);
 
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -123,7 +133,7 @@ export function ManualPvEntriesSection() {
         depth: form.depth,
         ownTierPct: form.ownTierPct,
         intermediateTiers: form.intermediateTiers,
-        month: monthIso,
+        month: selectedMonth,
         pv15: parse(form.pv15),
         pv25: parse(form.pv25),
         pv35: parse(form.pv35),
@@ -180,10 +190,39 @@ export function ManualPvEntriesSection() {
         Tu transcris depuis ta fiche RO mensuelle.
       </p>
 
+      <div style={monthPickerRowStyle}>
+        <label htmlFor="manual-pv-month" style={monthPickerLabelStyle}>
+          Mois de travail
+        </label>
+        <input
+          id="manual-pv-month"
+          type="month"
+          value={selectedMonth}
+          max={currentMonth}
+          onChange={(e) => setSelectedMonth(e.target.value || currentMonth)}
+          style={monthPickerInputStyle}
+        />
+        {!isCurrentMonth ? (
+          <button
+            type="button"
+            onClick={() => setSelectedMonth(currentMonth)}
+            style={monthPickerTodayStyle}
+          >
+            Revenir au mois en cours
+          </button>
+        ) : null}
+      </div>
+      {!isCurrentMonth ? (
+        <p style={monthPickerHintStyle}>
+          📅 Tu saisis / corriges un mois passé ({monthLabel}). Les entrées créées ou
+          modifiées ici seront rattachées à ce mois.
+        </p>
+      ) : null}
+
       {entries.length === 0 && !loading ? (
         <div style={emptyBoxStyle}>
           <p style={{ margin: "0 0 12px", color: "var(--ls-text-muted)", fontSize: 13 }}>
-            Aucune entrée manuelle pour {monthIso}. Ajoute tes distri hors-app pour
+            Aucune entrée manuelle pour {monthLabel}. Ajoute tes distri hors-app pour
             une rentabilité totale juste.
           </p>
           <button type="button" onClick={startCreate} style={primaryBtnStyle}>
@@ -222,7 +261,7 @@ export function ManualPvEntriesSection() {
           <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => setFormOpen(false)} style={closeBtnStyle}>×</button>
             <h3 style={modalTitleStyle}>
-              {form.id ? "Modifier" : "Ajouter"} une entrée · {monthIso}
+              {form.id ? "Modifier" : "Ajouter"} une entrée · {monthLabel}
             </h3>
             <FormBody form={form} setForm={setForm} viewerTierPct={viewerTierPct} />
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
@@ -520,6 +559,56 @@ const sectionSubStyle: React.CSSProperties = {
   margin: "0 0 18px",
   fontSize: 13,
   color: "var(--ls-text-muted)",
+  lineHeight: 1.5,
+};
+
+const monthPickerRowStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  flexWrap: "wrap",
+  marginBottom: 14,
+};
+
+const monthPickerLabelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+  color: "var(--ls-text-muted)",
+};
+
+const monthPickerInputStyle: React.CSSProperties = {
+  padding: "7px 11px",
+  borderRadius: 10,
+  border: "1px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text)",
+  fontSize: 13,
+  fontFamily: "Inter, system-ui, sans-serif",
+  colorScheme: "light dark",
+};
+
+const monthPickerTodayStyle: React.CSSProperties = {
+  padding: "6px 12px",
+  borderRadius: 9,
+  border: "0.5px solid var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-teal)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const monthPickerHintStyle: React.CSSProperties = {
+  margin: "0 0 16px",
+  padding: "9px 12px",
+  borderRadius: 10,
+  background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
+  color: "var(--ls-text-muted)",
+  fontSize: 12,
   lineHeight: 1.5,
 };
 
