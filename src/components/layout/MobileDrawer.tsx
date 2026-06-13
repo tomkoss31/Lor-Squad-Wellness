@@ -23,6 +23,7 @@ import { getRoleLabel } from "../../lib/auth";
 import { useFormationStreak } from "../../hooks/useFormationStreak";
 import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
+import { ThemeToggle } from "./ThemeToggle";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 
 interface MobileDrawerProps {
@@ -185,6 +186,10 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
                 onSelect={onClose}
               />
             ))}
+            {/* Bascule clair/sombre — manquait sur mobile (2026-06-13). */}
+            <div style={{ padding: "4px 12px 2px" }}>
+              <ThemeToggle />
+            </div>
             <button
               type="button"
               className="lb-drawer-item danger"
