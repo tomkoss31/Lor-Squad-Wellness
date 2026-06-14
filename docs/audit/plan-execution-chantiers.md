@@ -131,11 +131,20 @@ renommée « 🛒 Vente » (Panier seul). Réversible — la logique Panier + ex
 
 ---
 
-## B8 — Purger les redirects de compat 🟡 ⚠️(APRÈS la V5 Co-pilote)
+## B8 — Purger les redirects de compat ✅ LIVRÉ (2026-06-14)
+**Fait** : retiré `co-pilote-v5` + `co-pilote-legacy` (V5 stable en prod) → **dead-code
+supprimé** : `CoPilotePage.tsx`, `RentabilityWidget.tsx`, `RentabilityGauge.tsx`
+(usage unique vérifié). **Gardés volontairement** (protègent des liens partagés) :
+`/dashboard`, `/opportunite`, `/simulateur`, `formation/charte` → restent des
+redirects. Rollback V5 éventuel = historique git. `tsc` ✅.
+
+<details><summary>Plan d'origine (archivé)</summary>
+🟡 ⚠️(APRÈS la V5 Co-pilote)
 **Fichier** : `src/App.tsx` — `/opportunite` (l.650), `/simulateur` (l.651), `co-pilote-v5` (l.676), `co-pilote-legacy` (l.677), `dashboard` (l.678), `formation/charte` (l.690).
 **Étapes** : retirer les routes obsolètes. ⚠️ **Effet de chaîne** : supprimer `co-pilote-legacy` rend `CoPilotePage.tsx` mort → et `RentabilityWidget` (utilisé **uniquement** par `CoPilotePage`) devient mort aussi → à supprimer dans la foulée.
 **Garder probablement** `/dashboard` (vieux lien courant).
 **Risque** : moyen (vieux liens partagés). **À planifier après ton chantier Co-pilote.**
+</details>
 
 ---
 

@@ -308,12 +308,6 @@ const BienvenueDistriPage = lazy(() =>
     default: module.BienvenueDistriPage
   }))
 );
-// Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
-const CoPilotePage = lazy(() =>
-  import("./pages/CoPilotePage").then((module) => ({
-    default: module.CoPilotePage
-  }))
-);
 // Co-pilote V5 Editoriale Premium (2026-05-05) — preview parallele,
 // remplace /co-pilote quand validation Thomas.
 const CoPiloteV5Page = lazy(() =>
@@ -676,13 +670,11 @@ export default function App() {
               <Route index element={<Navigate to="/co-pilote" replace />} />
               {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
                   /dashboard redirige pour ne pas casser les liens existants. */}
-              {/* V5 Editoriale = route principale depuis 2026-05-05
-                  (validation Thomas). L'ancien CoPilotePage reste
-                  accessible sur /co-pilote-legacy pour rollback rapide
-                  si bug bloquant — sera retiré quand V5 stable 2 semaines. */}
+              {/* V5 Editoriale = route principale depuis 2026-05-05. B8
+                  (2026-06-14) : co-pilote-legacy + co-pilote-v5 retirés (V5
+                  stable en prod) → CoPilotePage/RentabilityWidget/Gauge supprimés.
+                  Rollback éventuel = historique git. */}
               <Route path="co-pilote" element={<CoPiloteV5Page />} />
-              <Route path="co-pilote-v5" element={<Navigate to="/co-pilote" replace />} />
-              <Route path="co-pilote-legacy" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =
