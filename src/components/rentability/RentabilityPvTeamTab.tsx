@@ -11,7 +11,7 @@
 // paliers / qualification n'est touchée (formules Herbalife inchangées).
 // =============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { PvOverrideBlock, PvBizworksBlock } from "../distributor-blocks";
 import { ManualPvEntriesSection } from "./ManualPvEntriesSection";
@@ -32,7 +32,19 @@ export function RentabilityPvTeamTab({
   onApplied?: () => void;
 }) {
   const { users } = useAppContext();
-  const [openId, setOpenId] = useState<string | null>(null);
+  // Ciblage d'un distri précis via ?member=<id> (raccourci depuis fiche distri /
+  // drill-down) : on ouvre sa carte d'emblée + scroll dessus.
+  const targetMember =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("member")
+      : null;
+  const [openId, setOpenId] = useState<string | null>(targetMember);
+
+  useEffect(() => {
+    if (!targetMember) return;
+    const el = document.getElementById(`pv-member-${targetMember}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [targetMember]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -80,15 +92,19 @@ export function RentabilityPvTeamTab({
             {members.map((m) => {
               const u = users.find((x) => x.id === m.user_id);
               const isOpen = openId === m.user_id;
+              const isTarget = targetMember === m.user_id;
               const hasOverride =
                 typeof u?.monthlyPvOverride === "number" &&
                 u.monthlyPvOverrideMonth === monthIso;
               return (
                 <div
                   key={m.user_id}
+                  id={`pv-member-${m.user_id}`}
                   style={{
                     borderRadius: 14,
-                    border: "1px solid var(--ls-border)",
+                    border: isTarget
+                      ? "1px solid color-mix(in srgb, var(--ls-teal) 55%, transparent)"
+                      : "1px solid var(--ls-border)",
                     background: "var(--ls-surface)",
                     overflow: "hidden",
                   }}

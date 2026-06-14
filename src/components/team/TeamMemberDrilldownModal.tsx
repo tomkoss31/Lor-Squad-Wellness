@@ -126,7 +126,7 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
               type="button"
               onClick={() => {
                 onClose();
-                navigate("/rentabilite?tab=pv-equipe");
+                navigate(`/rentabilite?tab=pv-equipe&member=${member.user_id}`);
               }}
               style={{
                 width: "100%",

@@ -517,7 +517,7 @@ export function DistributorPortfolioPage() {
                   « PV équipe » de Rentabilité — source unique, zéro double-saisie. */}
               <button
                 type="button"
-                onClick={() => navigate("/rentabilite?tab=pv-equipe")}
+                onClick={() => navigate(`/rentabilite?tab=pv-equipe&member=${distributorId}`)}
                 style={{
                   width: "100%",
                   textAlign: "left",
