@@ -34,6 +34,18 @@ import {
 
 const SESSION_KEY = (slug: string) => `ls-bilan-results-${slug || "none"}`;
 
+// Value-stack « ton accompagnement inclut » (recap, 2026-06-14).
+// ⚠️ Thomas : ajuste librement les montants ici — ce sont des valeurs perçues de
+// SERVICES (jamais de produits/prix nutrition, cf. règle métier). Total auto.
+const ACCOMPAGNEMENT_INCLUS: { label: string; value: number }[] = [
+  { label: "Bilan bien-être complet & personnalisé", value: 45 },
+  { label: "Analyse perso par Noaly (IA)", value: 39 },
+  { label: "Plan d'action sur-mesure avec ton coach", value: 60 },
+  { label: "Suivi & ajustements réguliers", value: 60 },
+  { label: "Ton espace client (suivi de progression)", value: 49 },
+];
+const ACCOMPAGNEMENT_TOTAL = ACCOMPAGNEMENT_INCLUS.reduce((s, i) => s + i.value, 0);
+
 function capitalize(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -261,6 +273,63 @@ export function BilanOnlineResultatsPage() {
             Ton coach va décortiquer chaque point avec toi et te proposer un plan
             <strong style={{ color: "var(--cream)" }}> personnalisé, progressif et tenable</strong>.
             Pas de régime extrême, pas de tout-en-même-temps.
+          </p>
+        </div>
+
+        {/* === Value-stack : ce que comprend l'accompagnement (recap, 2026-06-14) ===
+            Services uniquement (pas de produits/prix). Cadre « offert » validé
+            Thomas. Disclaimer anti-allégation en bas. */}
+        <div style={{
+          marginTop: 28,
+          background: "var(--glass)",
+          border: "1px solid var(--hair)",
+          borderRadius: 18,
+          padding: "20px 18px",
+        }}>
+          <h2 style={{
+            fontFamily: PUBLIC_FONTS.display,
+            fontSize: 13, fontWeight: 600,
+            color: "var(--cream-muted)",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            margin: "0 0 16px",
+            textAlign: "center",
+          }}>
+            🎁 Ton accompagnement inclut
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px", display: "flex", flexDirection: "column", gap: 11 }}>
+            {ACCOMPAGNEMENT_INCLUS.map((it) => (
+              <li key={it.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "var(--cream-soft)", lineHeight: 1.4 }}>
+                  <span aria-hidden="true" style={{
+                    width: 20, height: 20, minWidth: 20, borderRadius: "50%",
+                    background: PUBLIC_TOKENS.gradCta, color: "white",
+                    fontSize: 11, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>✓</span>
+                  {it.label}
+                </span>
+                <span style={{ fontSize: 13, color: "var(--cream-hint)", textDecoration: "line-through", fontFamily: PUBLIC_FONTS.mono, whiteSpace: "nowrap" }}>
+                  {it.value} €
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap",
+            padding: "12px 16px", borderRadius: 12,
+            background: "color-mix(in srgb, var(--teal) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--teal) 35%, transparent)",
+          }}>
+            <span style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 13, color: "var(--cream-hint)", textDecoration: "line-through" }}>
+              {ACCOMPAGNEMENT_TOTAL} €
+            </span>
+            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 15, fontWeight: 700, color: "var(--cream)" }}>
+              offert avec ton suivi
+            </span>
+          </div>
+          <p style={{ margin: "12px 4px 0", fontSize: 11, lineHeight: 1.5, color: "var(--cream-hint)", textAlign: "center", fontStyle: "italic" }}>
+            Accompagnement humain · valeurs des services indicatives. Aucun résultat garanti — ta progression dépend de ton engagement.
           </p>
         </div>
       </div>
