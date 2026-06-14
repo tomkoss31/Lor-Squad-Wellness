@@ -213,6 +213,11 @@ const BilanOnlineMerciPage = lazy(() =>
     default: module.BilanOnlineMerciPage,
   })),
 );
+const RdvBookingPage = lazy(() =>
+  import("./pages/RdvBookingPage").then((module) => ({
+    default: module.RdvBookingPage,
+  })),
+);
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -629,6 +634,9 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
+          {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
+          <Route path="/rdv" element={<RdvBookingPage />} />
+          <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />

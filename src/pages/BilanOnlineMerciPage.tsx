@@ -282,26 +282,35 @@ export function BilanOnlineMerciPage() {
               Ouvre un brouillon pré-rempli (récap de tes objectifs et de ton bilan) — tu pourras l'envoyer à ton coach dès qu'il te recontactera.
             </p>
 
-            {/* CTA RDV : sera activé au chantier « prise de RDV » (présentiel/visio
-                + agenda anti-doublon). Honnête (disabled) tant que non livré. */}
+            {/* CTA RDV (V1 manuelle 2026-06-14) : prise de RDV présentiel/visio
+                → ajout manuel à Google Agenda sur la page /rdv. */}
             <button
               type="button"
-              disabled
+              onClick={() => navigate(`/rdv${slug ? `/${slug}` : ""}${firstName ? `?firstName=${encodeURIComponent(firstName)}` : ""}`)}
               style={{
                 display: "block",
-                padding: "12px 20px",
-                background: "var(--glass-input)",
-                border: "1px dashed var(--hair-strong)",
-                color: "var(--cream-hint)",
+                width: "100%",
+                padding: "13px 20px",
+                background: "var(--glass)",
+                border: "1px solid var(--hair-strong)",
+                color: "var(--cream)",
                 borderRadius: 14,
                 fontFamily: PUBLIC_FONTS.body,
-                fontSize: 13.5, fontWeight: 500,
+                fontSize: 14, fontWeight: 500,
                 textAlign: "center",
-                cursor: "not-allowed",
+                cursor: "pointer",
+                transition: "background 0.18s, border-color 0.18s",
               }}
-              title="Bientôt : choisis un créneau (présentiel ou visio) dans l'agenda du coach"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--glass-strong)";
+                e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--glass)";
+                e.currentTarget.style.borderColor = "var(--hair-strong)";
+              }}
             >
-              📅 Prendre RDV (présentiel ou visio) <span style={{ opacity: 0.7, fontSize: 11 }}>(bientôt)</span>
+              📅 Prendre RDV (présentiel ou visio)
             </button>
           </div>
         </div>
