@@ -78,7 +78,8 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         aria-modal="true"
         aria-labelledby="birthday-dialog-title"
         style={{
-          background: "white",
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
           borderRadius: "16px",
           maxWidth: "480px",
           width: "100%",
@@ -90,7 +91,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
           <div style={{
             fontSize: "10px",
-            color: "#888",
+            color: "var(--ls-text-muted)",
             letterSpacing: "1.5px",
             fontWeight: 500,
             textTransform: "uppercase",
@@ -104,7 +105,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
               background: "transparent",
               border: "none",
               fontSize: "20px",
-              color: "#888",
+              color: "var(--ls-text-muted)",
               cursor: "pointer",
               padding: 0,
               lineHeight: 1,
@@ -120,7 +121,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
           style={{
             fontSize: "22px",
             fontWeight: 500,
-            color: "#2C2C2A",
+            color: "var(--ls-text)",
             marginBottom: "20px",
             fontFamily: "Syne, serif",
           }}
@@ -130,7 +131,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
 
         <div style={{
           fontSize: "10px",
-          color: "#888",
+          color: "var(--ls-text-muted)",
           letterSpacing: "1.2px",
           fontWeight: 500,
           marginBottom: "8px",
@@ -140,12 +141,12 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         </div>
 
         <div style={{
-          background: "#FAF6E8",
+          background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface2))",
           borderRadius: "12px",
           padding: "16px",
           fontSize: "15px",
           lineHeight: 1.5,
-          color: "#444441",
+          color: "var(--ls-text)",
           marginBottom: "16px",
           whiteSpace: "pre-wrap",
         }}>
@@ -157,9 +158,9 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
             type="button"
             onClick={handleCopy}
             style={{
-              background: copied ? "#E1F5EE" : "white",
-              color: copied ? "#0F6E56" : "#444441",
-              border: "0.5px solid rgba(0,0,0,0.15)",
+              background: copied ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "var(--ls-surface2)",
+              color: copied ? "var(--ls-teal)" : "var(--ls-text)",
+              border: "0.5px solid var(--ls-border)",
               padding: "10px 8px",
               borderRadius: "8px",
               fontSize: "12px",
@@ -198,7 +199,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
             </a>
           ) : (
             <button type="button" disabled style={{
-              background: "#F8F8F8", color: "#999", border: "0.5px solid rgba(0,0,0,0.05)",
+              background: "var(--ls-surface2)", color: "var(--ls-text-hint)", border: "0.5px solid var(--ls-border)",
               padding: "10px 8px", borderRadius: "8px", fontSize: "12px", cursor: "not-allowed",
             }}>
               WhatsApp
@@ -208,9 +209,9 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
             <a
               href={smsUrl}
               style={{
-                background: "white",
-                color: "#444441",
-                border: "0.5px solid rgba(0,0,0,0.15)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                border: "0.5px solid var(--ls-border)",
                 padding: "10px 8px",
                 borderRadius: "8px",
                 fontSize: "12px",
@@ -226,7 +227,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
             </a>
           ) : (
             <button type="button" disabled style={{
-              background: "#F8F8F8", color: "#999", border: "0.5px solid rgba(0,0,0,0.05)",
+              background: "var(--ls-surface2)", color: "var(--ls-text-hint)", border: "0.5px solid var(--ls-border)",
               padding: "10px 8px", borderRadius: "8px", fontSize: "12px", cursor: "not-allowed",
             }}>
               SMS
@@ -235,7 +236,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         </div>
 
         <div style={{
-          background: "#E1F5EE",
+          background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
           borderRadius: "10px",
           padding: "12px 14px",
           marginBottom: "16px",
@@ -245,10 +246,10 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         }}>
           <span style={{ fontSize: "16px" }}>💡</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "12px", fontWeight: 500, color: "#0F6E56" }}>
+            <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--ls-teal)" }}>
               Petit tip pour anniversaire ?
             </div>
-            <div style={{ fontSize: "11px", color: "#0F6E56", opacity: 0.85, marginTop: "2px" }}>
+            <div style={{ fontSize: "11px", color: "var(--ls-teal)", opacity: 0.85, marginTop: "2px" }}>
               Pense à proposer un café ou un appel rapide.
             </div>
           </div>
@@ -260,13 +261,13 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
           disabled={sending}
           style={{
             width: "100%",
-            background: sending ? "#888" : "#B8922A",
-            color: "white",
+            background: sending ? "var(--ls-text-hint)" : "var(--ls-gold)",
+            color: sending ? "var(--ls-surface)" : "#1a1407",
             border: "none",
             padding: "14px",
             borderRadius: "10px",
             fontSize: "14px",
-            fontWeight: 500,
+            fontWeight: 600,
             cursor: sending ? "wait" : "pointer",
           }}
         >

@@ -108,6 +108,17 @@ const INITIAL: FormState = {
 };
 
 const TOTAL_STEPS = 7;
+// Titre court par étape (polish 2026-06-14) : oriente le visiteur, parcours plus
+// rassurant/premium qu'un simple « Étape X/7 ». Index = step - 1.
+const STEP_TITLES = [
+  "Faisons connaissance",
+  "Tes objectifs",
+  "Tes habitudes actuelles",
+  "Ton assiette & ton hydratation",
+  "Ton sommeil & ton mental",
+  "Ton quotidien",
+  "Dernière ligne droite",
+];
 const MOTIV_LABELS = [
   "", "Pas trop", "Hésitant(e)", "Hésitant(e)", "Curieux(se)",
   "Curieux(se)", "Motivé(e)", "Plutôt motivé(e)", "Très motivé(e)",
@@ -486,6 +497,18 @@ export function BilanOnlinePage() {
             borderRadius: 2,
             transition: "width 0.45s cubic-bezier(.2,.7,.2,1)",
           }} />
+        </div>
+        {/* Titre de l'étape (polish 2026-06-14) — parcours guidé. */}
+        <div style={{
+          marginTop: 10,
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 14.5,
+          fontWeight: 600,
+          color: "var(--cream)",
+          textAlign: "center",
+          letterSpacing: "-0.01em",
+        }}>
+          {STEP_TITLES[step - 1]}
         </div>
       </div>
 

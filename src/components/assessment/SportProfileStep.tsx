@@ -43,7 +43,9 @@ const CARD_STYLE_BASE: React.CSSProperties = {
   padding: "14px 16px",
   borderRadius: 14,
   border: "1px solid var(--ls-border)",
-  background: "#fff",
+  // Fix thème 2026-06-14 : "#fff" figé → texte var(--ls-text) invisible en sombre
+  // (étape bilan vue en RDV). Suit désormais la surface du thème.
+  background: "var(--ls-surface)",
   cursor: "pointer",
   textAlign: "left" as const,
   fontFamily: "'DM Sans', sans-serif",
@@ -55,7 +57,7 @@ function activeStyle(active: boolean): React.CSSProperties {
   return active
     ? {
         border: "2px solid var(--ls-gold)",
-        background: "color-mix(in srgb, var(--ls-gold) 8%, #fff)",
+        background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
         boxShadow: "0 2px 8px rgba(201,168,76,0.15)",
       }
     : {};

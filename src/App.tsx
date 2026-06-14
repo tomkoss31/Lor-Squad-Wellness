@@ -213,6 +213,11 @@ const BilanOnlineMerciPage = lazy(() =>
     default: module.BilanOnlineMerciPage,
   })),
 );
+const RdvBookingPage = lazy(() =>
+  import("./pages/RdvBookingPage").then((module) => ({
+    default: module.RdvBookingPage,
+  })),
+);
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -301,12 +306,6 @@ const BienvenuePage = lazy(() =>
 const BienvenueDistriPage = lazy(() =>
   import("./pages/BienvenueDistriPage").then((module) => ({
     default: module.BienvenueDistriPage
-  }))
-);
-// Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
-const CoPilotePage = lazy(() =>
-  import("./pages/CoPilotePage").then((module) => ({
-    default: module.CoPilotePage
   }))
 );
 // Co-pilote V5 Editoriale Premium (2026-05-05) — preview parallele,
@@ -629,6 +628,9 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
+          {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
+          <Route path="/rdv" element={<RdvBookingPage />} />
+          <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
@@ -668,13 +670,11 @@ export default function App() {
               <Route index element={<Navigate to="/co-pilote" replace />} />
               {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
                   /dashboard redirige pour ne pas casser les liens existants. */}
-              {/* V5 Editoriale = route principale depuis 2026-05-05
-                  (validation Thomas). L'ancien CoPilotePage reste
-                  accessible sur /co-pilote-legacy pour rollback rapide
-                  si bug bloquant — sera retiré quand V5 stable 2 semaines. */}
+              {/* V5 Editoriale = route principale depuis 2026-05-05. B8
+                  (2026-06-14) : co-pilote-legacy + co-pilote-v5 retirés (V5
+                  stable en prod) → CoPilotePage/RentabilityWidget/Gauge supprimés.
+                  Rollback éventuel = historique git. */}
               <Route path="co-pilote" element={<CoPiloteV5Page />} />
-              <Route path="co-pilote-v5" element={<Navigate to="/co-pilote" replace />} />
-              <Route path="co-pilote-legacy" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =

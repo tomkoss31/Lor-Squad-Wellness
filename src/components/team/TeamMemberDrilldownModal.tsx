@@ -22,8 +22,6 @@ import {
   EngagementBlock,
   EngagementTotalBlock,
   ProgressionRangBlock,
-  PvBizworksBlock,
-  PvOverrideBlock,
   RangHerbalifeBlock,
 } from "../distributor-blocks";
 import { RankPinBadge } from "../rank/RankPinBadge";
@@ -122,18 +120,38 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
               onApplied={refresh}
             />
             <ProgressionRangBlock memberId={member.user_id} fullUser={fullUser} />
-            <PvOverrideBlock
-              memberId={member.user_id}
-              memberName={member.name}
-              initialOverride={fullUser?.monthlyPvOverride ?? null}
-              initialOverrideMonth={fullUser?.monthlyPvOverrideMonth ?? null}
-              onApplied={refresh}
-            />
-            <PvBizworksBlock
-              memberId={member.user_id}
-              memberName={member.name}
-              onApplied={refresh}
-            />
+            {/* Raccourci PV (consolidation 2026-06-14) : édition PV centralisée
+                dans l'onglet « PV équipe » de Rentabilité. */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate(`/rentabilite?tab=pv-equipe&member=${member.user_id}`);
+              }}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "14px 16px",
+                borderRadius: 14,
+                background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+                border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
+                cursor: "pointer",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 22 }}>📊</span>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: "block", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                  Gérer les PV
+                </span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                  Override Bizworks + saisie hors-app → onglet « PV équipe »
+                </span>
+              </span>
+              <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700 }}>→</span>
+            </button>
           </>
         )}
 

@@ -212,29 +212,63 @@ export function BilanOnlineMerciPage() {
           </h3>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {/* CTA primary : mailto pré-rempli avec récap */}
+            {/* CTA primary : revoir son bilan + analyse Noaly — action utile qui
+                MARCHE (remplace l'ancien mailto sans destinataire en hero). */}
+            {results && (
+              <button
+                type="button"
+                onClick={onSeeResults}
+                style={{
+                  display: "block",
+                  padding: "14px 20px",
+                  background: PUBLIC_TOKENS.gradCta,
+                  color: PUBLIC_TOKENS.cream,
+                  border: "none",
+                  borderRadius: 14,
+                  fontFamily: PUBLIC_FONTS.display,
+                  fontSize: 15, fontWeight: 600,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  boxShadow: "0 12px 32px -8px rgba(45,212,191,0.55)",
+                  transition: "transform 0.18s, box-shadow 0.18s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 16px 36px -6px rgba(45,212,191,0.65)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 12px 32px -8px rgba(45,212,191,0.55)";
+                }}
+              >
+                🔍 Revoir mon bilan &amp; mon analyse ({results.globalScore}/100)
+              </button>
+            )}
+
+            {/* CTA secondary : brouillon mailto (optionnel, sans destinataire :
+                le coach reste à l'initiative du contact — privacy). */}
             <a
               href={mailtoHref}
               style={{
                 display: "block",
-                padding: "14px 20px",
-                background: PUBLIC_TOKENS.gradCta,
-                color: PUBLIC_TOKENS.cream,
+                padding: "12px 20px",
+                background: "var(--glass)",
+                border: "1px solid var(--hair-strong)",
+                color: "var(--cream)",
                 borderRadius: 14,
                 textDecoration: "none",
-                fontFamily: PUBLIC_FONTS.display,
-                fontSize: 15, fontWeight: 600,
+                fontFamily: PUBLIC_FONTS.body,
+                fontSize: 14, fontWeight: 500,
                 textAlign: "center",
-                boxShadow: "0 12px 32px -8px rgba(45,212,191,0.55)",
-                transition: "transform 0.18s, box-shadow 0.18s",
+                transition: "background 0.18s, border-color 0.18s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 16px 36px -6px rgba(45,212,191,0.65)";
+                e.currentTarget.style.background = "var(--glass-strong)";
+                e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 12px 32px -8px rgba(45,212,191,0.55)";
+                e.currentTarget.style.background = "var(--glass)";
+                e.currentTarget.style.borderColor = "var(--hair-strong)";
               }}
             >
               ✍️ Préparer un message pour mon coach
@@ -245,60 +279,38 @@ export function BilanOnlineMerciPage() {
               color: "var(--cream-hint)",
               fontStyle: "italic",
             }}>
-              Ouvre ton client mail avec un brouillon pré-rempli (récap de tes objectifs et de ton bilan). Tu pourras le compléter et l'envoyer à ton coach dès qu'il te recontactera.
+              Ouvre un brouillon pré-rempli (récap de tes objectifs et de ton bilan) — tu pourras l'envoyer à ton coach dès qu'il te recontactera.
             </p>
 
-            {/* CTA secondary : revoir bilan */}
-            {results && (
-              <button
-                type="button"
-                onClick={onSeeResults}
-                style={{
-                  display: "block",
-                  padding: "12px 20px",
-                  background: "var(--glass)",
-                  border: "1px solid var(--hair-strong)",
-                  color: "var(--cream)",
-                  borderRadius: 14,
-                  fontFamily: PUBLIC_FONTS.body,
-                  fontSize: 14, fontWeight: 500,
-                  textAlign: "center",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  transition: "background 0.18s, border-color 0.18s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--glass-strong)";
-                  e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--glass)";
-                  e.currentTarget.style.borderColor = "var(--hair-strong)";
-                }}
-              >
-                🔍 Revoir mon bilan ({results.globalScore}/100)
-              </button>
-            )}
-
-            {/* CTA tertiaire : placeholder RDV (chantier D) */}
+            {/* CTA RDV (V1 manuelle 2026-06-14) : prise de RDV présentiel/visio
+                → ajout manuel à Google Agenda sur la page /rdv. */}
             <button
               type="button"
-              disabled
+              onClick={() => navigate(`/rdv${slug ? `/${slug}` : ""}${firstName ? `?firstName=${encodeURIComponent(firstName)}` : ""}`)}
               style={{
                 display: "block",
-                padding: "12px 20px",
-                background: "var(--glass-input)",
-                border: "1px dashed var(--hair-strong)",
-                color: "var(--cream-hint)",
+                width: "100%",
+                padding: "13px 20px",
+                background: "var(--glass)",
+                border: "1px solid var(--hair-strong)",
+                color: "var(--cream)",
                 borderRadius: 14,
                 fontFamily: PUBLIC_FONTS.body,
-                fontSize: 13.5, fontWeight: 500,
+                fontSize: 14, fontWeight: 500,
                 textAlign: "center",
-                cursor: "not-allowed",
+                cursor: "pointer",
+                transition: "background 0.18s, border-color 0.18s",
               }}
-              title="Bientôt disponible — booking direct dans l'agenda du coach"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--glass-strong)";
+                e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--glass)";
+                e.currentTarget.style.borderColor = "var(--hair-strong)";
+              }}
             >
-              📅 Prendre RDV en ligne <span style={{ opacity: 0.7, fontSize: 11 }}>(bientôt)</span>
+              📅 Prendre RDV (présentiel ou visio)
             </button>
           </div>
         </div>
@@ -329,10 +341,9 @@ export function BilanOnlineMerciPage() {
             href="https://instagram.com/labase360"
             icon="📷" label="Suis-nous sur Instagram"
           />
-          <SocialBtn
-            href="https://wa.me/33000000000"
-            icon="💬" label="Rejoins notre WhatsApp"
-          />
+          {/* Bouton WhatsApp retiré 2026-06-14 : le numéro était un placeholder
+              (wa.me/33000000000 = lien mort). À ré-ajouter avec le vrai lien
+              communauté quand Thomas le fournit. */}
         </div>
 
         {/* Microfooter Sora mono */}

@@ -620,7 +620,7 @@ function ShareModal({
                 borderRadius: 12,
                 background: "rgba(251,113,133,0.12)",
                 border: "1px solid rgba(251,113,133,0.3)",
-                color: "#FBBFC8",
+                color: "var(--ls-coral)",
                 fontSize: 13,
               }}
             >

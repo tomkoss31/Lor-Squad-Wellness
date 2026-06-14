@@ -44,6 +44,7 @@ import {
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
+import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -211,6 +212,10 @@ export function CrmPage() {
           ))}
         </div>
       </header>
+
+      {/* RDV demandés via le bilan en ligne (RDV V2 brique 4, 2026-06-14) —
+          masqué s'il n'y en a pas. */}
+      <RdvBookingsWidget />
 
       {error ? (
         <div style={errorBanner}>
