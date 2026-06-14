@@ -757,6 +757,7 @@ avec `supabase functions deploy <name>`.
 | `create-payment-link` | fetch front (page publique) | Caisse directe : lien Square quick_pay, prix serveur (no-verify-jwt) |
 | `square-payment-webhook` | webhook Square | payment.updated → bilan_orders paid + push coach (auth = signature HMAC) |
 | `client-rdv-reminder` | cron */30 | Rappel RDV AU CLIENT : veille 18h Paris + 2h avant (sendPushToClient, anti-doublon client_rdv_reminders_sent) |
+| `book-rdv` | fetch front (page publique /rdv) | Réservation RDV funnel : résout coach par slug, re-check anti-doublon, insert `rdv_bookings`, notif push coach (no-verify-jwt) |
 
 Toute nouvelle edge function = ajouter ici.
 
