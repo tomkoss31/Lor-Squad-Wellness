@@ -24,6 +24,8 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lines, setLines] = useState<ClientLine[]>([]);
+  // Tendance achats 6 mois (unités commandées par mois) — 2026-06-14.
+  const [trend, setTrend] = useState<{ label: string; value: number }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +63,30 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
             start_date: r.start_date,
           })),
         );
+
+        // Tendance 6 mois : unités commandées par mois (toutes commandes, pas
+        // seulement actives) sur ce produit.
+        const now = new Date();
+        const buckets = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          return {
+            key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+            label: d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
+            value: 0,
+          };
+        });
+        const { data: trendData } = await sb
+          .from("pv_client_products")
+          .select("start_date, quantity")
+          .eq("product_name", productName)
+          .gte("start_date", `${buckets[0].key}-01`)
+          .limit(2000);
+        for (const tr of (trendData ?? []) as Array<{ start_date: string | null; quantity: number | null }>) {
+          if (!tr.start_date) continue;
+          const b = buckets.find((x) => x.key === tr.start_date!.slice(0, 7));
+          if (b) b.value += tr.quantity ?? 1;
+        }
+        if (!cancelled) setTrend(buckets.map((b) => ({ label: b.label, value: b.value })));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erreur inconnue.");
       } finally {
@@ -110,6 +136,41 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
               <Stat label="Quantité totale" value={totals.quantity} />
               <Stat label="PV total" value={totals.pv} accent />
             </div>
+
+            {/* Tendance achats 6 mois */}
+            {trend.some((t) => t.value > 0) && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700, marginBottom: 10 }}>
+                  Tendance achats · 6 mois
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 92, padding: "0 2px" }}>
+                  {(() => {
+                    const max = Math.max(...trend.map((x) => x.value), 1);
+                    return trend.map((t, i) => {
+                      const h = Math.round((t.value / max) * 60);
+                      return (
+                        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif", minHeight: 14 }}>
+                            {t.value > 0 ? t.value : ""}
+                          </div>
+                          <div
+                            style={{
+                              width: "100%",
+                              maxWidth: 28,
+                              height: Math.max(h, 3),
+                              borderRadius: 6,
+                              background: t.value > 0 ? "var(--ls-gold)" : "var(--ls-surface2)",
+                              transition: "height 400ms ease",
+                            }}
+                          />
+                          <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>{t.label}</div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Liste */}
             {lines.length === 0 ? (
