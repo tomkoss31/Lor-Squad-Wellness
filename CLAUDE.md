@@ -44,9 +44,9 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 
 ### 🟡 À faire (moyen / long terme)
 
-- **Chantier C — Paiement Square** (2-3j+) : edge function + SMS Twilio + webhook
-- **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
-- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (audit 2026-06-03)
+- ~~**Chantier C — Paiement Square**~~ ✅ **LIVRÉ** (audit 2026-06-14) : edges `create-payment-link` + `square-payment-webhook`, migration `payment_settings_and_orders` (tables `coach_payment_settings` + `bilan_orders`), UI `PaymentSettingsCard` (ProfilTab) + CTA caisse sur `BilanResultatPremiumPage`. Socle Square fonctionnel (prospect paie son programme depuis la page Résultat Bilan). Reste optionnel : flow « clôture panier au comptoir POS » du mémo d'origine.
+- ~~**Lor'Squad AI**~~ ✅ **LIVRÉ** sous le nom **Noaly** (audit 2026-06-14) : edge `noaly` 4 modes (crm_message / coach_chat / client_chat / bilan_analysis) + FAB `NoalyFab` (câblé `AppLayout`) + table `ai_usage_log` (cost tracking). L'ancien « PAS FAIT / aucun code amorcé » était faux.
+- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur). **Aucun code amorcé** (confirmé audit 2026-06-14 : pas de i18next, pas de locales).
 - ~~**#8 Newsletter — volet PUBLIC lead-magnet**~~ ✅ **LIVRÉ EN PROD** (2026-06-02) : chantier #8 COMPLET (étapes 8.1→8.12). Route publique `/news/:slug` (`PublicNewsletterPage`) + popup capture lead + image OG dynamique (html2canvas + Supabase Storage) + tracking webhooks Resend + page stats + envoi batch Resend (fix faux bounces). Admin : `/admin/newsletters` + éditeur + `/admin/newsletters/:id/stats`. (Audit 2026-06-05 : la ligne « reste à faire » était périmée.)
 - **#6 Vidéos pédagogiques** : 🟢 **Infra livrée sur dev/thomas-test (2026-06-09)** — composant réutilisable `TutorialLink` (`src/components/tutorial/`) + `TutorialVideoModal` + **registre central `src/data/tutorials.ts`** (Thomas n'édite que ce fichier : coller l'URL YouTube dans `youtubeUrl` de la clé voulue). État vide = chip « 🎬 bientôt » non cliquable. Exemple câblé : `FlexExpliquePage` hero (clé `flex`). **Reste (Thomas)** : remplir les URLs + placer `<TutorialLink tutorialKey="…" />` où il veut. (le `VideoModal` interne de `FormationCategoryPage` reste pour la Formation.)
 - **#13 Fiche distri** (clarifié audit 2026-06-08) : ⚠️ « #13 » recouvre 2 choses.
@@ -57,7 +57,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 ### 🟢 Polish opportuniste
 
 - ~~Export PDF rapport mensuel Analytics~~ ✅ LIVRÉ (`AnalyticsPdfReport`)
-- Drill-down produit Analytics
+- ~~Drill-down produit Analytics~~ ✅ LIVRÉ (`ProductDrilldownModal` câblé dans `AnalyticsPage` : liste clients + tendance achats 6 mois ajoutée 2026-06-14)
 - ~~Tri par PV mois sur `/clients`~~ ✅ déjà livré (C V3, option « PV ce mois ↓ »). Corrigé audit 2026-06-09.
 - Hydratation `selectedProductQuantities` dans Edit/Follow-up
 - ~~Messagerie `AppContext` `limit(50)` global~~ ✅ déjà à `limit(1000)` (`AppContext.tsx:319`, depuis 2026-05-20). Ligne périmée — corrigé audit 2026-06-08.
@@ -68,7 +68,7 @@ _(plus aucun chantier court terme validé — tout livré, voir section moyen/lo
 
 ### ❓ À décider
 
-- Bizworks : champ admin override PV mensuel (1h) ?
+- ~~Bizworks : champ admin override PV mensuel~~ ✅ **LIVRÉ** (audit 2026-06-14) : migration `20261107080000_user_pv_override.sql` (`users.monthly_pv_override` + RPC `set_user_pv_override`) + UI `PvOverrideBlock` / `PvBizworksBlock`, consommé par la jauge Co-pilote.
 - Push notif 20h check-list : garder, ou désactivable par default ?
 
 ---
@@ -98,9 +98,16 @@ Co-pilote. Seul le hero éditorial reste dark dans les 2 modes
 
 ---
 
-## 🚀 Chantier Paiement Square (en attente)
+## 🚀 Chantier Paiement Square — ✅ SOCLE LIVRÉ (audit 2026-06-14)
 
-### Chantier C — Intégration paiement Square
+> Le socle Square est **en prod** : edges `create-payment-link` +
+> `square-payment-webhook`, tables `coach_payment_settings` + `bilan_orders`
+> (migration `20261202080000`), UI `PaymentSettingsCard` + caisse sur
+> `BilanResultatPremiumPage`. Le prospect paie son programme depuis la page
+> Résultat Bilan. **Reste optionnel** : le flow « clôture panier au comptoir
+> POS » décrit ci-dessous (vision d'origine, non implémenté tel quel).
+
+### Chantier C — Intégration paiement Square (vision d'origine)
 **Pour qui** : tous les distri (Mandy → client direct).
 **Idée** : Mandy clôture panier programme → bouton "Demander paiement"
 → Lor'Squad génère un Square Payment Link via API + envoie SMS au
@@ -394,7 +401,11 @@ modale popup multi-canal (WhatsApp/SMS/Telegram/Copier), aperçu éditable,
 - Templates personnalisables par coach (ajout / édition / favoris).
 - Historique d'envois par client (table `client_message_log`).
 
-### 🔴 A. Onboarding CLIENT (PWA) — PAS FAIT
+### ✅ A. Onboarding CLIENT (PWA) — LIVRÉ (audit 2026-06-14 : ligne « PAS FAIT » périmée, contradisait la section « Livrés en prod »)
+> Livré : `ClientOnboardingTour` (consommé par `ClientAppPage`) + edge
+> `client-app-mark-onboarded` + colonne `client_app_accounts.onboarded_at`.
+> Le descriptif d'origine est conservé ci-dessous pour mémoire.
+
 3-4 sections courtes (~30 sec chacune) côté app client `/client/:token` :
 1. "Bienvenue [Prénom]" — Hero + RDV + ce qu'on y fait
 2. "Comment lire ton évolution" — graphique poids, points de départ
@@ -409,7 +420,12 @@ modale popup multi-canal (WhatsApp/SMS/Telegram/Copier), aperçu éditable,
 
 **Effort** : 1.5-2 jours. ROI rétention élevé.
 
-### 🔴 B. Lor'Squad AI (Assistant IA intégré) — PAS FAIT
+### ✅ B. Lor'Squad AI (Assistant IA intégré) — LIVRÉ sous le nom « Noaly » (audit 2026-06-14)
+> Livré : edge `noaly` (4 modes crm_message / coach_chat / client_chat /
+> bilan_analysis) + FAB `NoalyFab` (câblé `AppLayout`) + table `ai_usage_log`
+> (cost tracking, migrations `20261202030000`/`040000`). La vision ci-dessous
+> est la spec d'origine, désormais réalisée.
+
 **Vision** : FAB en bas à droite app coach → modale chat type ChatGPT
 avec contexte automatique du client courant.
 
