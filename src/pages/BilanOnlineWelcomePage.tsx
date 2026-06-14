@@ -319,6 +319,7 @@ export function BilanOnlineWelcomePage() {
             </div>
             <input
               type="text"
+              aria-label="Prénom du coach qui t'a invité"
               placeholder="Prénom du coach (ex : Thomas)"
               value={inputName}
               onChange={(e) => setInputName(e.target.value)}
@@ -353,17 +354,22 @@ export function BilanOnlineWelcomePage() {
               }}
             >
               Tu n'as pas été invité par un coach ?{" "}
-              <a
+              <button
+                type="button"
                 onClick={() => setShowFreeBilan(true)}
                 style={{
                   color: PUBLIC_TOKENS.teal,
                   textDecoration: "underline",
                   cursor: "pointer",
                   fontWeight: 500,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  font: "inherit",
                 }}
               >
                 Continuer en bilan libre
-              </a>
+              </button>
             </div>
           </>
         )}
