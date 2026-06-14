@@ -121,7 +121,7 @@ serve(async (req: Request) => {
       payload: {
         title: "🗓️ Nouveau RDV demandé",
         body: `${firstName} — ${whenParis} (${mode === "visio" ? "visio" : "présentiel"})`,
-        url: "/agenda",
+        url: "/crm",
         type: "rdv_booking",
       },
     });
