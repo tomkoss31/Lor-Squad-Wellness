@@ -37,12 +37,14 @@ const SESSION_KEY = (slug: string) => `ls-bilan-results-${slug || "none"}`;
 // Value-stack « ton accompagnement inclut » (recap, 2026-06-14).
 // ⚠️ Thomas : ajuste librement les montants ici — ce sont des valeurs perçues de
 // SERVICES (jamais de produits/prix nutrition, cf. règle métier). Total auto.
+// Libellés orientés bénéfice + ancrage croissant pour l'impact perçu.
 const ACCOMPAGNEMENT_INCLUS: { label: string; value: number }[] = [
-  { label: "Bilan bien-être complet & personnalisé", value: 45 },
-  { label: "Analyse perso par Noaly (IA)", value: 39 },
-  { label: "Plan d'action sur-mesure avec ton coach", value: 60 },
-  { label: "Suivi & ajustements réguliers", value: 60 },
-  { label: "Ton espace client (suivi de progression)", value: 49 },
+  { label: "Bilan bien-être complet (corps + habitudes)", value: 49 },
+  { label: "Analyse personnalisée par Noaly (IA)", value: 39 },
+  { label: "Programme nutrition & activité sur-mesure", value: 79 },
+  { label: "Suivi rapproché & ajustements avec ton coach", value: 69 },
+  { label: "Ton app de coaching (suivi, conseils, messagerie)", value: 59 },
+  { label: "Accès au club & à la communauté", value: 29 },
 ];
 const ACCOMPAGNEMENT_TOTAL = ACCOMPAGNEMENT_INCLUS.reduce((s, i) => s + i.value, 0);
 
@@ -321,11 +323,15 @@ export function BilanOnlineResultatsPage() {
             background: "color-mix(in srgb, var(--teal) 12%, transparent)",
             border: "1px solid color-mix(in srgb, var(--teal) 35%, transparent)",
           }}>
-            <span style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 13, color: "var(--cream-hint)", textDecoration: "line-through" }}>
+            <span style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 14, color: "var(--cream-hint)", textDecoration: "line-through" }}>
               {ACCOMPAGNEMENT_TOTAL} €
             </span>
-            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 15, fontWeight: 700, color: "var(--cream)" }}>
-              offert avec ton suivi
+            <span aria-hidden="true" style={{ color: "var(--cream-hint)", fontSize: 14 }}>→</span>
+            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 18, fontWeight: 800, color: PUBLIC_TOKENS.teal }}>
+              0 €
+            </span>
+            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 14, fontWeight: 600, color: "var(--cream)" }}>
+              offert avec ton accompagnement
             </span>
           </div>
           <p style={{ margin: "12px 4px 0", fontSize: 11, lineHeight: 1.5, color: "var(--cream-hint)", textAlign: "center", fontStyle: "italic" }}>
