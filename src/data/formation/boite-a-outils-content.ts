@@ -12,11 +12,12 @@
 //   - Scripts copier-coller dans le champ scripts[] (label + text + note).
 //   - Calibrage France respecté : 1 VP = 1,50 € · marge Sup 50% · DMO 5-3-1.
 //
-// CONTENU :
-//   - 🎯 Prospection & Recrutement : 4 outils
-//   - 📊 Bilan & Body Scan : 3 outils (focus présentiel, l'app fait le reste)
-//   - 💪 Suivi & Fidélisation : 4 outils
-//   - 🚀 Business & 100 clubs : 5 outils (dont la pièce maîtresse : Visio à 3)
+// CONTENU (total = FORMATION_TOOLKIT.length, source de vérité — pas de compte
+// figé ici pour éviter la dérive) :
+//   - 🎯 Prospection & Recrutement
+//   - 📊 Bilan & Body Scan (focus présentiel, l'app fait le reste)
+//   - 💪 Suivi & Fidélisation
+//   - 🚀 Business & 100 clubs (dont la pièce maîtresse : Visio à 3)
 //
 // Livré par Claude (atelier Notion) le 03/05/2026.
 // =============================================================================
@@ -110,7 +111,7 @@ T'es toujours motivé.e côté sport ? J'ai découvert un truc qui change la vie
         label: "👨‍👩‍👧 Parents — angle famille",
         text: `Salut [Prénom] !
 
-Comment vous gérez les repas en famille en ce moment ? J'ai trouvé un système qui m'a vachement simplifié la vie côté petit-déj' + récup' énergie. Ça t'intéresserait qu'on en parle ?`,
+Comment tu gères les repas en famille en ce moment ? J'ai trouvé un système qui m'a vachement simplifié la vie côté petit-déj' + récup' énergie. Ça t'intéresserait qu'on en parle ?`,
         note: "Marche très bien sur les parents qui galèrent à concilier boulot + enfants + alimentation."
       },
       {
@@ -428,7 +429,7 @@ Pendant que tu prépares la boisson :
 
 - **Sors ta tablette** ou ton téléphone, ouvre l'app La Base 360.
 - Crée le nouveau bilan, mets le prénom du client.
-- L'app va te guider sur les 13 étapes — tu n'as plus à improviser.
+- L'app va te guider sur les 10 étapes — tu n'as plus à improviser.
 
 > Aujourd'hui, l'app **remplace la fiche papier**. Tu gardes une fiche papier en backup au cas où ça rame, mais c'est l'app qui pilote.
 
@@ -852,7 +853,7 @@ Pour chaque produit : **phrase clé** + **pour qui**. Apprends-les. Si tu hésit
 
 > *« Le coup de boost de l'aprèm sans le coup de barre du café. »*
 
-**Pour qui** : anti-fatigue 15h-18h · qui veut réduire son café · hydratation goutue (mieux qu'un soda)
+**Pour qui** : anti-fatigue 15h-18h · qui veut réduire son café · hydratation goûteuse (mieux qu'un soda)
 
 6-10 cal/cup · chaud ou froid · 4-6 saveurs
 
@@ -1428,7 +1429,7 @@ Vocal ou message rapide :
 Ton sponsor arrive sans contexte → il improvise → conversion divisée par 2.
 
 **2. Parler pendant la visio.**
-Tu interviens, tu sur-explique, tu confirmes ce que dit le sponsor. STOP. **Tais-toi.**
+Tu interviens, tu sur-expliques, tu confirmes ce que dit le sponsor. STOP. **Tais-toi.**
 
 **3. Programmer une visio sans avoir un VRAI prospect.**
 Pas un curieux. Pas un ami que tu veux convaincre. **Un prospect qualifié, prêt à closer**, avec un blocage identifié.
@@ -1457,7 +1458,7 @@ Tu apprends rien. Tu refais les mêmes erreurs. Le post-brief c'est ton bootcamp
 
 Pour les **gros prospects business** (= candidats coach potentiels). C'est la cavalerie. 3 niveaux de hiérarchie qui parlent à 1 seul prospect = **conversion ~85%** dans les pratiques observées.
 
-À utiliser parcimonieusement, sinon tu t'épuises tout le monde.
+À utiliser parcimonieusement, sinon tu t'épuises et tu épuises tout le monde.
 
 ---
 

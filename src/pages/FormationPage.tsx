@@ -25,7 +25,7 @@ import { ParcoursLevelCard } from "../components/formation/ParcoursLevelCard";
 import { FormationRoadmapCard } from "../components/formation/FormationRoadmapCard";
 import { FormationStreakBadge } from "../components/formation/FormationStreakBadge";
 import { FormationSearchBar } from "../components/formation/FormationSearchBar";
-import { FORMATION_LEVELS } from "../data/formation";
+import { FORMATION_LEVELS, FORMATION_TOOLKIT } from "../data/formation";
 import { useFormationProgress } from "../hooks/useFormationProgress";
 
 // Stages dynamiques bases sur la progression reelle (2026-11-04)
@@ -216,7 +216,7 @@ export function FormationPage() {
                 marginBottom: 4,
               }}
             >
-              ✦ Pièce maîtresse · 16 outils
+              ✦ Pièce maîtresse · {FORMATION_TOOLKIT.length} outils
             </div>
             <div
               style={{
@@ -239,7 +239,7 @@ export function FormationPage() {
               }}
             >
               Scripts d&apos;invitation, méthode FRANK, Visio à 3, templates de suivi, objections…
-              16 outils prêts à copier-coller pour passer à l&apos;acte.
+              {FORMATION_TOOLKIT.length} outils prêts à copier-coller pour passer à l&apos;acte.
             </div>
           </div>
           <span style={{ color: "var(--ls-gold)", fontSize: 22, flexShrink: 0, position: "relative" }}>
