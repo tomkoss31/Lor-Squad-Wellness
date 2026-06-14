@@ -135,6 +135,18 @@ webhooks Vercel + numéro SMS).
 
 ## 🧠 Mémo PV / Bizworks (2026-05-05)
 
+> ### 📊 Consolidation mise à jour PV (2026-06-14)
+> La mise à jour des PV était éclatée en 4 endroits (fiche distri, drill-down
+> équipe, Paramètres > Équipe, saisie manuelle Rentabilité). Désormais **source
+> unique = onglet « PV équipe » de `/rentabilite`** (`RentabilityPvTeamTab`) :
+> override Bizworks par distri de l'app (`PvOverrideBlock`/`PvBizworksBlock`) +
+> saisie distri hors-app avec remise (`ManualPvEntriesSection`). Deep-link
+> `?tab=pv-equipe`. Les 3 autres endroits sont devenus des **raccourcis** vers
+> cet onglet (zéro double-saisie, cf. règle B9). ⚠️ **Aucune logique de calcul
+> PV / paliers / qualification touchée** (formules `herbalifeFormulas.ts` +
+> `docs/HERBALIFE_PALIERS_REGLES.md` intactes, dont la règle 2500 PV superviseur
+> 3 mois) — c'était purement de la réorganisation d'UI.
+
 **Bizworks** = l'app officielle Herbalife qui détaille les commandes
 (perso, club, clients VIP, distri downline). Source de vérité PV
 chez Herbalife.
