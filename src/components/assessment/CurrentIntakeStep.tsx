@@ -80,7 +80,9 @@ export function CurrentIntakeStep({ value, onChange, weightKg, subObjective }: P
               padding: "14px 16px",
               borderRadius: 14,
               border: "1px solid var(--ls-border)",
-              background: "#fff",
+              // Fix thème 2026-06-14 : "#fff" figé → texte var(--ls-text) invisible
+              // en sombre (étape bilan). Suit la surface du thème.
+              background: "var(--ls-surface)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
