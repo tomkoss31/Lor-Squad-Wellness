@@ -35,8 +35,6 @@ import {
   EngagementBlock,
   EngagementTotalBlock,
   ProgressionRangBlock,
-  PvBizworksBlock,
-  PvOverrideBlock,
   RangHerbalifeBlock,
 } from "../components/distributor-blocks";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
@@ -514,19 +512,36 @@ export function DistributorPortfolioPage() {
                 fullUser={fullUser}
                 monthIso={pvMonth}
               />
-              <PvOverrideBlock
-                memberId={distributorId}
-                memberName={portfolioUser.name}
-                initialOverride={fullUser?.monthlyPvOverride ?? null}
-                initialOverrideMonth={fullUser?.monthlyPvOverrideMonth ?? null}
-                onApplied={refresh}
-              />
-              <PvBizworksBlock
-                memberId={distributorId}
-                memberName={portfolioUser.name}
-                monthIso={pvMonth}
-                onApplied={refresh}
-              />
+              {/* Raccourci PV (consolidation 2026-06-14) : l'édition des PV
+                  (override Bizworks + hors-app) vit désormais dans l'onglet
+                  « PV équipe » de Rentabilité — source unique, zéro double-saisie. */}
+              <button
+                type="button"
+                onClick={() => navigate(`/rentabilite?tab=pv-equipe&member=${distributorId}`)}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+                  border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
+                  cursor: "pointer",
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 22 }}>📊</span>
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: "block", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                    Gérer les PV
+                  </span>
+                  <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                    Override Bizworks + saisie hors-app → onglet « PV équipe »
+                  </span>
+                </span>
+                <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700 }}>→</span>
+              </button>
             </>
           ) : (
             <Card>

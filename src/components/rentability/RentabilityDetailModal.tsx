@@ -15,6 +15,7 @@
 // =============================================================================
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { RentabilityData, RentabilityTopClient } from "../../hooks/useUserRentability";
 import { useRentabilityHistory, type MonthHistoryPoint } from "../../hooks/useRentabilityHistory";
 import { BarChart } from "./shared/BarChart";
@@ -62,6 +63,12 @@ export function RentabilityDetailModal({
   overridePerMember,
 }: RentabilityDetailModalProps) {
   const { currentUser, users } = useAppContext();
+  const navigate = useNavigate();
+  // Navigation depuis le Plan d'action : ferme la modale puis route.
+  const handleNudgeNavigate = (route: string) => {
+    onClose();
+    navigate(route);
+  };
 
   // Détail override par distributeur (résolu en noms), trié décroissant.
   const overrideBreakdown = useMemo(() => {
@@ -288,6 +295,7 @@ export function RentabilityDetailModal({
             daysLeft={data.days_in_month - data.days_elapsed}
             projection={data.projection_eur}
             downlineOverride={downlineOverride}
+            onNavigate={handleNudgeNavigate}
           />
         </div>
       </div>
@@ -946,23 +954,27 @@ function ActionPlan({
   daysLeft,
   projection,
   downlineOverride,
+  onNavigate,
 }: {
   delta: number;
   prevMonthEur: number;
   daysLeft: number;
   projection: number;
   downlineOverride: number;
+  onNavigate: (route: string) => void;
 }) {
-  // Heuristiques V1 — IA viendra plus tard (chantier Lor'Squad AI)
-  const nudges: Array<{ id: string; title: string; body: string; cta: string; muted?: boolean }> = [];
+  // Heuristiques V1 — IA viendra plus tard (chantier Lor'Squad AI).
+  // `route` = destination du CTA (les boutons étaient décoratifs avant 2026-06-14).
+  const nudges: Array<{ id: string; title: string; body: string; cta: string; route: string; muted?: boolean }> = [];
 
   if (delta < 0 && prevMonthEur > 0) {
     const pct = Math.round((Math.abs(delta) / prevMonthEur) * 100);
     nudges.push({
       id: "decroche",
       title: `Tes ventes baissent de ${pct}% vs M-1`,
-      body: "Relance tes 3 clients dormants en priorité. Un message court suffit pour reconnecter.",
+      body: "Relance tes clients dormants en priorité. Un message court suffit pour reconnecter.",
       cta: "Voir les dormants",
+      route: "/clients?filter=inactive-30d",
     });
   }
 
@@ -971,7 +983,8 @@ function ActionPlan({
       id: "explose",
       title: "Tu vas exploser ton mois 🚀",
       body: `À ce rythme tu finis à ${Math.round(projection).toLocaleString("fr-FR")}€ — pousse les ${daysLeft} derniers jours.`,
-      cta: "Continuer",
+      cta: "Qui relancer",
+      route: "/clients?filter=to-followup",
     });
   }
 
@@ -981,6 +994,7 @@ function ActionPlan({
       title: "Tes distri n'ont rien généré ce mois",
       body: "Coach 1 distri cette semaine → +PV royalty pour toi et un boost pour eux.",
       cta: "Mon équipe",
+      route: "/team",
       muted: true,
     });
   }
@@ -991,6 +1005,7 @@ function ActionPlan({
       title: "Planifie 3 RDV bilan cette semaine",
       body: "Chaque bilan = 1 programme vendu en moyenne. Direct sur ta marge directe.",
       cta: "Nouveau bilan",
+      route: "/assessments/new",
       muted: nudges.length > 0,
     });
   }
@@ -1001,6 +1016,7 @@ function ActionPlan({
       title: "Tout est sous contrôle",
       body: "Reviens demain pour de nouveaux conseils. En attendant, prépare ton prochain bilan.",
       cta: "Nouveau bilan",
+      route: "/assessments/new",
       muted: true,
     });
   }
@@ -1041,14 +1057,14 @@ function ActionPlan({
       </div>
       <div style={{ display: "grid", gap: 10 }}>
         {nudges.slice(0, 3).map((n, idx) => (
-          <Nudge key={n.id} index={idx + 1} title={n.title} body={n.body} cta={n.cta} muted={n.muted} />
+          <Nudge key={n.id} index={idx + 1} title={n.title} body={n.body} cta={n.cta} muted={n.muted} onClick={() => onNavigate(n.route)} />
         ))}
       </div>
     </div>
   );
 }
 
-function Nudge({ index, title, body, cta, muted }: { index: number; title: string; body: string; cta: string; muted?: boolean }) {
+function Nudge({ index, title, body, cta, muted, onClick }: { index: number; title: string; body: string; cta: string; muted?: boolean; onClick: () => void }) {
   return (
     <div
       className="lr-card-2"
@@ -1089,6 +1105,7 @@ function Nudge({ index, title, body, cta, muted }: { index: number; title: strin
       </div>
       <button
         type="button"
+        onClick={onClick}
         className="lr-cta"
         style={{ height: 30, padding: "0 12px", fontSize: 12 }}
       >

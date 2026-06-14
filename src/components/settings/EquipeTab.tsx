@@ -84,6 +84,40 @@ export function EquipeTab() {
         </Card>
       )}
 
+      {/* Raccourci PV (consolidation 2026-06-14) : la mise à jour des PV
+          (override Bizworks + saisie hors-app) est centralisée dans l'onglet
+          « PV équipe » de Rentabilité. */}
+      {currentUser.role === "admin" && (
+        <Card className="space-y-2">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <p className="eyebrow-label" style={{ color: "var(--ls-gold)" }}>📊 Mise à jour des PV</p>
+              <p style={{ fontSize: 14, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                Override mensuel des distri de l'app + saisie des distri hors-app (avec remise) — tout au même endroit.
+              </p>
+            </div>
+            <Link
+              to="/rentabilite?tab=pv-equipe"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "10px 16px",
+                borderRadius: 999,
+                background: "var(--ls-gold)",
+                color: "var(--ls-bg)",
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Gérer les PV →
+            </Link>
+          </div>
+        </Card>
+      )}
+
       <Card className="space-y-4">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>

@@ -22,7 +22,9 @@ interface Props {
 const CARD_STYLE: React.CSSProperties = {
   padding: "16px 20px",
   borderRadius: 14,
-  background: "#fff",
+  // Fix thème 2026-06-13 : était "#fff" figé → texte var(--ls-text) invisible
+  // (blanc sur blanc) en mode sombre. Suit maintenant la surface du thème.
+  background: "var(--ls-surface)",
   border: "1px solid var(--ls-border)",
   fontFamily: "'DM Sans', sans-serif",
 };

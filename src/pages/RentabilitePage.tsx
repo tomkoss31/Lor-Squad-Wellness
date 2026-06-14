@@ -26,7 +26,7 @@ import { resolveCoupleUserIds } from "../config/teamConfig";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
 import { useManualPvEntries } from "../hooks/useManualPvEntries";
 import { useStealthMode } from "../hooks/useStealthMode";
-import { ManualPvEntriesSection } from "../components/rentability/ManualPvEntriesSection";
+import { RentabilityPvTeamTab } from "../components/rentability/RentabilityPvTeamTab";
 import {
   computeViewerDownlineOverride,
   currentMonthIso,
@@ -92,7 +92,17 @@ export function RentabilitePage() {
     dataWithOverride: ownDataWithOverride,
     overridePerMember: ownOverridePerMember,
     fallbackOverrideForUser,
+    refetch: refetchOwn,
   } = useRentabilitySummary(currentUser?.id ?? null);
+
+  // Onglet « PV équipe » (consolidation PV 2026-06-14). Deep-link ?tab=pv-equipe
+  // pour les raccourcis depuis fiche distri / drill-down / Paramètres Équipe.
+  const [rentabTab, setRentabTab] = useState<"rentab" | "pv">(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("tab") === "pv-equipe"
+      ? "pv"
+      : "rentab",
+  );
 
   // Tableau des entrées manuelles (compteur "N distri saisis" + Sankey).
   const { entries: manualEntries } = useManualPvEntries(
@@ -230,6 +240,45 @@ export function RentabilitePage() {
         </div>
       </div>
 
+      {/* ─── Onglets (admin/ref) : Ma rentabilité · PV équipe ──────────── */}
+      {isAdminOrRef && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+          {([
+            { id: "rentab" as const, label: "Ma rentabilité", emoji: "💎" },
+            { id: "pv" as const, label: "PV équipe", emoji: "📊" },
+          ]).map((t) => {
+            const active = rentabTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setRentabTab(t.id)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 13,
+                  fontWeight: active ? 700 : 500,
+                  background: active ? "var(--ls-rentab-ink)" : "var(--ls-rentab-bg-1)",
+                  color: active ? "var(--ls-rentab-bg-1)" : "var(--ls-rentab-ink-2)",
+                  border: `1px solid ${active ? "transparent" : "var(--ls-rentab-line-2)"}`,
+                  transition: "all .15s",
+                }}
+              >
+                <span aria-hidden="true">{t.emoji}</span>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {rentabTab === "rentab" && (
+      <>
       {/* ─── HERO ──────────────────────────────────────────────────────── */}
       <section className="lr-rentab-hero" style={heroStyle}>
         <div className="lr-mesh" />
@@ -522,10 +571,14 @@ export function RentabilitePage() {
         </CollapsibleSection>
       )}
 
-      {/* ─── V3 — distri hors-app saisie manuelle ─────────────────────── */}
-      <div style={{ marginTop: 48 }}>
-        <ManualPvEntriesSection />
-      </div>
+      </>
+      )}
+
+      {/* ─── Onglet PV équipe (consolidation 2026-06-14) : distri app + hors-app
+          au même endroit. Composition pure des briques existantes. ─────────── */}
+      {rentabTab === "pv" && isAdminOrRef && (
+        <RentabilityPvTeamTab members={otherMembers} monthIso={monthIso} onApplied={refetchOwn} />
+      )}
 
       {/* ─── Modals ────────────────────────────────────────────────────── */}
       {detailOpen && ownData && (

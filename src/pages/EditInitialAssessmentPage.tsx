@@ -9,6 +9,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
+import { QuantityStepper } from "../components/assessment/QuantityStepper";
 import { PROGRAM_CHOICES } from "../data/programs";
 import { refreshClientRecap } from "../services/supabaseService";
 // import { getSupabaseClient } from "../services/supabaseClient"; // remplacé par updateClientInfo (2026-05-22)
@@ -103,6 +104,9 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     optionalProductsUsed: questionnaire.optionalProductsUsed ?? "",
     detectedNeedIds: questionnaire.detectedNeedIds ?? [],
     selectedProductIds: questionnaire.selectedProductIds ?? [],
+    // Hydratation quantités (2026-06-14) : sans ce pass-through, éditer un bilan
+    // réinitialisait les quantités produits à 1 (perte silencieuse).
+    selectedProductQuantities: questionnaire.selectedProductQuantities ?? {},
     healthStatus: questionnaire.healthStatus ?? "",
     healthNotes: questionnaire.healthNotes ?? "",
     allergies: questionnaire.allergies ?? "",
@@ -938,35 +942,52 @@ export function EditInitialAssessmentPage() {
             <div className="grid gap-2 md:grid-cols-2">
               {pvProductCatalog.filter((p) => p.active).map((product) => {
                 const selected = (questionnaire.selectedProductIds ?? []).includes(product.id);
+                const qty = (questionnaire.selectedProductQuantities ?? {})[product.id] ?? 1;
                 return (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => {
-                      const current = questionnaire.selectedProductIds ?? [];
-                      const next = current.includes(product.id)
-                        ? current.filter((id) => id !== product.id)
-                        : [...current, product.id];
-                      updateQuestionnaire("selectedProductIds", next);
-                    }}
-                    className={`flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 text-left transition ${
-                      selected
-                        ? "border-[rgba(45,212,191,0.35)] bg-[rgba(45,212,191,0.1)]"
-                        : "border-white/10 bg-[var(--ls-surface2)] hover:border-white/20"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-[var(--ls-text)] truncate">{product.name}</div>
-                      <div className="text-xs text-[var(--ls-text-hint)]">{product.category} · {product.pv} PV</div>
-                    </div>
-                    <div
-                      className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                        selected ? "bg-[var(--ls-teal)] text-white" : "bg-[var(--ls-surface)] text-[var(--ls-text-muted)]"
+                  <div key={product.id} className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = questionnaire.selectedProductIds ?? [];
+                        const next = current.includes(product.id)
+                          ? current.filter((id) => id !== product.id)
+                          : [...current, product.id];
+                        updateQuestionnaire("selectedProductIds", next);
+                      }}
+                      className={`flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 text-left transition ${
+                        selected
+                          ? "border-[rgba(45,212,191,0.35)] bg-[rgba(45,212,191,0.1)]"
+                          : "border-white/10 bg-[var(--ls-surface2)] hover:border-white/20"
                       }`}
                     >
-                      {selected ? "✓ Ajouté" : "+ Ajouter"}
-                    </div>
-                  </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-[var(--ls-text)] truncate">{product.name}</div>
+                        <div className="text-xs text-[var(--ls-text-hint)]">{product.category} · {product.pv} PV</div>
+                      </div>
+                      <div
+                        className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                          selected ? "bg-[var(--ls-teal)] text-white" : "bg-[var(--ls-surface)] text-[var(--ls-text-muted)]"
+                        }`}
+                      >
+                        {selected ? "✓ Ajouté" : "+ Ajouter"}
+                      </div>
+                    </button>
+                    {/* Stepper quantité (hydratation 2026-06-14) : visible quand le
+                        produit est retenu, pré-rempli avec la quantité enregistrée. */}
+                    {selected && (
+                      <div className="flex items-center justify-between gap-2 rounded-[12px] bg-[var(--ls-surface2)] px-3 py-1.5">
+                        <span className="text-xs text-[var(--ls-text-muted)]">Quantité</span>
+                        <QuantityStepper
+                          value={qty}
+                          onChange={(n) => {
+                            const map = { ...(questionnaire.selectedProductQuantities ?? {}) };
+                            map[product.id] = n;
+                            updateQuestionnaire("selectedProductQuantities", map);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
