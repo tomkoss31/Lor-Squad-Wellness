@@ -59,6 +59,14 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "Calcule un panier produits : total €, total PV, remise client (5 → 35 %), récap copiable.",
         path: "/panier",
       },
+      {
+        id: "encaissement",
+        icon: "💳",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Encaissement",
+        desc: "Encaisse tes clients en CB à la fin du bilan, sur TON compte Stripe. Tu le configures une fois — l'argent va direct chez toi.",
+        path: "/encaissement",
+      },
     ],
   },
   {

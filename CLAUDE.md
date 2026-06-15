@@ -98,14 +98,25 @@ Co-pilote. Seul le hero éditorial reste dark dans les 2 modes
 
 ---
 
-## 🚀 Chantier Paiement Square — ✅ SOCLE LIVRÉ (audit 2026-06-14)
+## 🚀 Chantier Paiement — ✅ SQUARE + STRIPE LIVRÉS
 
-> Le socle Square est **en prod** : edges `create-payment-link` +
+> **Stripe distri (2026-06-15)** : chaque distri encaisse avec SON PROPRE compte
+> Stripe. **Modèle (décision Thomas)** : le distri crée lui-même son compte,
+> l'argent va 100 % chez lui, **jamais sur un compte plateforme**. Pas de Stripe
+> Connect, pas de commission, pas d'intermédiaire. Onboarding = il colle sa clé
+> secrète (`sk_live_…`) dans **Mon business → Encaissement** (`/encaissement`,
+> `EncaissementPage` + `PaymentSettingsCard`). L'edge `create-payment-link` crée
+> une Checkout Session **sur le compte du distri** ; au retour, l'edge
+> `confirm-stripe-payment` revérifie le statut via la clé secrète du distri →
+> `bilan_orders` paid + push (aucun webhook à configurer côté distri). Schéma
+> inchangé (`coach_payment_settings.stripe_secret_key` existait déjà).
+>
+> **Socle Square (2026-06-14)** : edges `create-payment-link` +
 > `square-payment-webhook`, tables `coach_payment_settings` + `bilan_orders`
-> (migration `20261202080000`), UI `PaymentSettingsCard` + caisse sur
-> `BilanResultatPremiumPage`. Le prospect paie son programme depuis la page
-> Résultat Bilan. **Reste optionnel** : le flow « clôture panier au comptoir
-> POS » décrit ci-dessous (vision d'origine, non implémenté tel quel).
+> (migration `20261202080000`), caisse sur `BilanResultatPremiumPage`. Le
+> prospect paie son programme depuis la page Résultat Bilan. **Reste optionnel** :
+> le flow « clôture panier au comptoir POS » décrit ci-dessous (vision d'origine,
+> non implémenté tel quel).
 
 ### Chantier C — Intégration paiement Square (vision d'origine)
 **Pour qui** : tous les distri (Mandy → client direct).
@@ -754,8 +765,9 @@ avec `supabase functions deploy <name>`.
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
 | `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis) |
 | `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
-| `create-payment-link` | fetch front (page publique) | Caisse directe : lien Square quick_pay, prix serveur (no-verify-jwt) |
+| `create-payment-link` | fetch front (page publique) | Caisse directe : Square quick_pay OU Stripe Checkout Session (compte du distri), prix serveur (no-verify-jwt) |
 | `square-payment-webhook` | webhook Square | payment.updated → bilan_orders paid + push coach (auth = signature HMAC) |
+| `confirm-stripe-payment` | fetch front (page publique, retour caisse) | Vérifie la Checkout Session via la clé secrète DU distri → bilan_orders paid + push coach. Pas de webhook à configurer côté distri (no-verify-jwt) |
 | `client-rdv-reminder` | cron */30 | Rappel RDV AU CLIENT : veille 18h Paris + 2h avant (sendPushToClient, anti-doublon client_rdv_reminders_sent) |
 | `book-rdv` | fetch front (page publique /rdv) | Réservation RDV funnel : résout coach par slug, re-check anti-doublon, insert `rdv_bookings`, notif push coach (no-verify-jwt) |
 

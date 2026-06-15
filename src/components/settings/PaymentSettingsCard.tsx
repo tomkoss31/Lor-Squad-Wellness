@@ -20,6 +20,7 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 interface SettingsRow {
   provider: "square" | "stripe";
   active: boolean;
+  stripe_secret_key: string;
   square_access_token: string;
   square_location_id: string;
   square_merchant_id: string;
@@ -27,9 +28,12 @@ interface SettingsRow {
   square_env: "sandbox" | "production";
 }
 
+// Stripe par défaut : c'est la voie « la plus simple » pour un distri (créer son
+// compte + coller une clé). Square reste dispo pour ceux qui ont déjà un compte.
 const EMPTY: SettingsRow = {
-  provider: "square",
+  provider: "stripe",
   active: false,
+  stripe_secret_key: "",
   square_access_token: "",
   square_location_id: "",
   square_merchant_id: "",
@@ -58,15 +62,16 @@ export function PaymentSettingsCard() {
       const { data } = await sb
         .from("coach_payment_settings")
         .select(
-          "provider, active, square_access_token, square_location_id, square_merchant_id, square_webhook_signature_key, square_env",
+          "provider, active, stripe_secret_key, square_access_token, square_location_id, square_merchant_id, square_webhook_signature_key, square_env",
         )
         .eq("coach_user_id", currentUser.id)
         .maybeSingle();
       if (!alive) return;
       if (data) {
         setRow({
-          provider: (data.provider as SettingsRow["provider"]) ?? "square",
+          provider: (data.provider as SettingsRow["provider"]) ?? "stripe",
           active: Boolean(data.active),
+          stripe_secret_key: (data.stripe_secret_key as string) ?? "",
           square_access_token: (data.square_access_token as string) ?? "",
           square_location_id: (data.square_location_id as string) ?? "",
           square_merchant_id: (data.square_merchant_id as string) ?? "",
@@ -109,7 +114,9 @@ export function PaymentSettingsCard() {
     setRow((r) => ({ ...r, [k]: v }));
 
   const canActivate =
-    row.square_access_token.trim().length > 0 && row.square_location_id.trim().length > 0;
+    row.provider === "stripe"
+      ? row.stripe_secret_key.trim().startsWith("sk_")
+      : row.square_access_token.trim().length > 0 && row.square_location_id.trim().length > 0;
 
   if (!currentUser) return null;
 
@@ -129,8 +136,8 @@ export function PaymentSettingsCard() {
           </div>
           <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 3, maxWidth: 520 }}>
             Quand c&apos;est actif, le bouton « Je démarre » de ta page Résultat envoie le prospect
-            directement à ta caisse Square. Sans config, il voit « ton coach t&apos;envoie le lien » —
-            rien ne casse.
+            directement à ta caisse. L&apos;argent arrive <strong>sur TON compte</strong> (jamais le
+            nôtre). Sans config, il voit « ton coach t&apos;envoie le lien » — rien ne casse.
           </div>
         </div>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ls-text)", cursor: "pointer" }}>
@@ -154,8 +161,8 @@ export function PaymentSettingsCard() {
               onChange={(e) => set("provider", e.target.value as SettingsRow["provider"])}
               style={inputStyle}
             >
+              <option value="stripe">Stripe (recommandé)</option>
               <option value="square">Square</option>
-              <option value="stripe">Stripe (bientôt)</option>
             </select>
             {row.provider === "square" && (
               <select
@@ -236,10 +243,65 @@ export function PaymentSettingsCard() {
               ) : null}
             </>
           ) : (
-            <div style={{ fontSize: 13, color: "var(--ls-text-muted)", padding: "10px 12px", borderRadius: 10, background: "var(--ls-surface2)" }}>
-              Stripe arrive pour les distri — en attendant, le flow « ton coach t&apos;envoie le lien »
-              reste actif. 🌿
-            </div>
+            <>
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "var(--ls-surface2)",
+                  border: "1px solid var(--ls-border)",
+                }}
+              >
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)" }}>
+                  3 étapes (≈ 5 min, une seule fois) :
+                </div>
+                <Step n={1}>
+                  Crée ton compte Stripe (gratuit, c&apos;est <em>ton</em> compte, l&apos;argent va
+                  chez toi) :{" "}
+                  <a
+                    href="https://dashboard.stripe.com/register"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "var(--ls-teal)", fontWeight: 600 }}
+                  >
+                    dashboard.stripe.com/register ↗
+                  </a>
+                </Step>
+                <Step n={2}>
+                  Une fois connecté, va dans <strong>Développeurs → Clés API</strong> et copie ta
+                  <strong> clé secrète</strong> (commence par <code>sk_live_</code>).{" "}
+                  <a
+                    href="https://dashboard.stripe.com/apikeys"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "var(--ls-teal)", fontWeight: 600 }}
+                  >
+                    Ouvrir mes clés ↗
+                  </a>
+                </Step>
+                <Step n={3}>Colle-la ci-dessous, enregistre, active. C&apos;est tout. 🌿</Step>
+              </div>
+
+              <Field
+                label="Clé secrète Stripe"
+                hint="Stripe → Développeurs → Clés API → « Clé secrète ». Reste privée — on ne l'affiche jamais en clair ailleurs."
+              >
+                <input
+                  type="password"
+                  value={row.stripe_secret_key}
+                  onChange={(e) => set("stripe_secret_key", e.target.value)}
+                  placeholder="sk_live_…"
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+              </Field>
+              <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>
+                Aucun webhook à configurer, aucune commission, aucun compte intermédiaire. Le
+                paiement se fait directement sur ton compte Stripe à la fin du bilan.
+              </div>
+            </>
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -266,6 +328,31 @@ export function PaymentSettingsCard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: 12.5, color: "var(--ls-text)", lineHeight: 1.5 }}>
+      <span
+        style={{
+          flex: "0 0 auto",
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 11,
+          fontWeight: 700,
+          color: "var(--ls-teal)",
+          background: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        }}
+      >
+        {n}
+      </span>
+      <span>{children}</span>
     </div>
   );
 }
