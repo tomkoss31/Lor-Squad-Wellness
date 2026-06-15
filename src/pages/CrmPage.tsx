@@ -315,7 +315,7 @@ export function CrmPage() {
               Ligne 1 ({line1Ids.size})
             </button>
           )}
-          {line2Ids.size > 0 && (
+          {isAdmin && line2Ids.size > 0 && (
             <button type="button" onClick={() => setScope("l2")} style={sourceChip(scope === "l2", "var(--ls-teal)")}>
               Ligne 2 ({line2Ids.size})
             </button>
@@ -325,7 +325,7 @@ export function CrmPage() {
               Tous
             </button>
           )}
-          {downlineMembers.length > 0 && (
+          {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line === 1)).length > 0 && (
             <select
               value={["me", "l1", "l2", "all"].includes(scope) ? "" : scope}
               onChange={(e) => e.target.value && setScope(e.target.value)}
@@ -343,7 +343,7 @@ export function CrmPage() {
               }}
             >
               <option value="">Un distributeur…</option>
-              {downlineMembers.map((m) => (
+              {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line === 1)).map((m) => (
                 <option key={m.id} value={m.id}>
                   L{m.line} · {m.name}
                 </option>
