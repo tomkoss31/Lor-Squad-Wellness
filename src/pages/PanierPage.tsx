@@ -195,31 +195,42 @@ export function PanierPage() {
             />
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-            {cats.map((c) => {
-              const on = cat === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCat(c)}
-                  style={{
-                    padding: "7px 14px",
-                    borderRadius: 999,
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    fontFamily: "DM Sans, sans-serif",
-                    border: on ? "1px solid transparent" : "1px solid var(--ls-border)",
-                    background: on ? "var(--ls-text)" : "var(--ls-surface)",
-                    color: on ? "var(--ls-bg)" : "var(--ls-text-muted)",
-                  }}
-                >
-                  {c}
-                </button>
-              );
-            })}
+          {/* Catégorie en menu déroulant (gain de place mobile vs chips) */}
+          <div style={{ position: "relative", marginBottom: 18 }}>
+            <select
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              aria-label="Filtrer par catégorie"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                padding: "12px 40px 12px 16px",
+                borderRadius: 14,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-input-bg)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              {cats.map((c) => (
+                <option key={c} value={c}>
+                  {c === "Tous" ? "Toutes les catégories" : c}
+                </option>
+              ))}
+            </select>
+            <span
+              aria-hidden="true"
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--ls-text-muted)", fontSize: 12, pointerEvents: "none" }}
+            >
+              ▾
+            </span>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 9 }}>
