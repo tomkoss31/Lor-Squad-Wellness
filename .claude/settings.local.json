@@ -138,7 +138,8 @@
       "Bash(git revert *)",
       "Bash(xxd)",
       "Bash(gunzip -c bundle.bin)",
-      "Bash(tar -xf raw.tar)"
+      "Bash(tar -xf raw.tar)",
+      "Bash(grep -n \"import.*Card\\\\|</div>\\\\s*$\\\\|return \\(\\\\|PublicProfileShareCard\\\\|PaymentSettingsCard\\\\|RdvAvailabilityCard\\\\|<section\\\\|</section>\" src/components/settings/ProfilTab.tsx)"
     ]
   }
 }
