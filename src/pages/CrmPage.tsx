@@ -74,12 +74,34 @@ function relativeDays(iso: string): string {
 
 export function CrmPage() {
   const navigate = useNavigate();
-  const { currentUser, clients } = useAppContext();
+  const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, refetch, updateStatus, setDormant, deleteLead } = useCrmLeads();
   // Vue Actifs (kanban) vs Endormis (archive — bibliothèque dormante, 2026-06-14).
   const [view, setView] = useState<"active" | "archived">("active");
   const isAdmin = currentUser?.role === "admin";
+
+  // ── Filtre par ligne (2026-06-15) : par défaut chacun voit SES leads. Un
+  // admin / référent (= a une downline) peut élargir à ligne 1, ligne 2, un
+  // distri précis, ou tout. Empêche un membre (ex. Mandy) de voir les
+  // prospects de son upline.
+  const { line1Ids, line2Ids, downlineMembers, canFilterTeam } = useMemo(() => {
+    const l1 = new Set<string>();
+    const l2 = new Set<string>();
+    const uid = currentUser?.id;
+    if (uid) {
+      for (const u of users ?? []) if (u.sponsorId === uid) l1.add(u.id);
+      for (const u of users ?? []) if (u.sponsorId && l1.has(u.sponsorId)) l2.add(u.id);
+    }
+    const members = (users ?? [])
+      .filter((u) => l1.has(u.id) || l2.has(u.id))
+      .map((u) => ({ id: u.id, name: u.name, line: l1.has(u.id) ? 1 : 2 }))
+      .sort((a, b) => a.line - b.line || a.name.localeCompare(b.name));
+    return { line1Ids: l1, line2Ids: l2, downlineMembers: members, canFilterTeam: isAdmin || l1.size > 0 };
+  }, [users, currentUser?.id, isAdmin]);
+
+  // "me" | "l1" | "l2" | "all" | <userId>
+  const [scope, setScope] = useState<string>("me");
 
   const [filterSource, setFilterSource] = useState<CrmSource | "all">("all");
   const [search, setSearch] = useState("");
@@ -141,6 +163,20 @@ export function CrmPage() {
       leads.filter((l) => {
         // Vue : Actifs = on masque les endormis ; Endormis = on ne montre qu'eux.
         if (view === "archived" ? !l.dormant : !!l.dormant) return false;
+        // Périmètre par ligne. Sans droit d'équipe → toujours "moi".
+        const effScope = canFilterTeam ? scope : "me";
+        const owner = l.ownerUserId;
+        if (effScope === "me") {
+          if (owner !== currentUser?.id) return false;
+        } else if (effScope === "l1") {
+          if (!owner || !line1Ids.has(owner)) return false;
+        } else if (effScope === "l2") {
+          if (!owner || !line2Ids.has(owner)) return false;
+        } else if (effScope === "all") {
+          /* admin : aucun filtre propriétaire */
+        } else {
+          if (owner !== effScope) return false; // distributeur précis
+        }
         if (filterSource !== "all" && l.source !== filterSource) return false;
         if (search.trim()) {
           const q = search.trim().toLowerCase();
@@ -153,15 +189,24 @@ export function CrmPage() {
         }
         return true;
       }),
-    [leads, filterSource, search, view],
+    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, line1Ids, line2Ids],
   );
 
-  // Compteurs cohérents avec la vue Actifs (les endormis sont hors flux).
+  // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
     const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
-    for (const l of leads) if (!l.dormant) by[l.status] += 1;
+    const effScope = canFilterTeam ? scope : "me";
+    for (const l of leads) {
+      if (l.dormant) continue;
+      const owner = l.ownerUserId;
+      if (effScope === "me") { if (owner !== currentUser?.id) continue; }
+      else if (effScope === "l1") { if (!owner || !line1Ids.has(owner)) continue; }
+      else if (effScope === "l2") { if (!owner || !line2Ids.has(owner)) continue; }
+      else if (effScope !== "all") { if (owner !== effScope) continue; }
+      by[l.status] += 1;
+    }
     return by;
-  }, [leads]);
+  }, [leads, scope, canFilterTeam, currentUser?.id, line1Ids, line2Ids]);
   const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
 
   const sourcesPresent = useMemo(() => {
@@ -259,6 +304,54 @@ export function CrmPage() {
           </button>
         </div>
       ) : null}
+
+      {/* Filtre par ligne (admin / référent uniquement) */}
+      {canFilterTeam && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "12px 0 0" }}>
+          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
+          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-gold)")}>👤 Moi</button>
+          {line1Ids.size > 0 && (
+            <button type="button" onClick={() => setScope("l1")} style={sourceChip(scope === "l1", "var(--ls-teal)")}>
+              Ligne 1 ({line1Ids.size})
+            </button>
+          )}
+          {line2Ids.size > 0 && (
+            <button type="button" onClick={() => setScope("l2")} style={sourceChip(scope === "l2", "var(--ls-teal)")}>
+              Ligne 2 ({line2Ids.size})
+            </button>
+          )}
+          {isAdmin && (
+            <button type="button" onClick={() => setScope("all")} style={sourceChip(scope === "all", "var(--ls-purple)")}>
+              Tous
+            </button>
+          )}
+          {downlineMembers.length > 0 && (
+            <select
+              value={["me", "l1", "l2", "all"].includes(scope) ? "" : scope}
+              onChange={(e) => e.target.value && setScope(e.target.value)}
+              aria-label="Filtrer par distributeur"
+              style={{
+                height: 32,
+                padding: "0 10px",
+                borderRadius: 999,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface)",
+                color: "var(--ls-text)",
+                fontSize: 12.5,
+                fontFamily: "DM Sans, sans-serif",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">Un distributeur…</option>
+              {downlineMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  L{m.line} · {m.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {/* Filtres */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }}>
