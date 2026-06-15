@@ -15,7 +15,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FORMATION_LEVELS, FORMATION_CATEGORIES, formatModuleShort } from "../../data/formation";
+import { FORMATION_LEVELS, formatModuleShort } from "../../data/formation";
 
 interface SearchResult {
   type: "module" | "resource";
@@ -116,32 +116,8 @@ export function FormationSearchBar() {
       }
     }
 
-    // 2. Resources biblio
-    for (const cat of FORMATION_CATEGORIES) {
-      const catAccent =
-        cat.accent === "gold"
-          ? "var(--ls-gold)"
-          : cat.accent === "teal"
-            ? "var(--ls-teal)"
-            : cat.accent === "purple"
-              ? "var(--ls-purple)"
-              : "var(--ls-coral)";
-      for (const r of cat.resources) {
-        const fullText = [r.title, r.description, r.tag ?? ""].join(" ");
-        if (matchAll(fullText, words)) {
-          out.push({
-            type: "resource",
-            id: r.id,
-            title: r.title,
-            context: `Bibliothèque · ${cat.title}`,
-            snippet: makeSnippet(fullText, words),
-            href: `/formation/${cat.slug}`,
-            accent: catAccent,
-          });
-        }
-      }
-    }
-
+    // Bibliothèque par thème retirée 2026-06-14 (audit Formation) : code mort +
+    // liens cassés. La recherche ne porte plus que sur les modules du parcours.
     return out.slice(0, 12);
   }, [words]);
 

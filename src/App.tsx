@@ -358,18 +358,10 @@ const DemoAgenda = lazy(() =>
   }))
 );
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
-// FormationPage (catalogue avec progression), /formation/:slug pointe
-// vers FormationCategoryPage.
+// FormationPage (catalogue avec progression).
 const FormationPage = lazy(() =>
   import("./pages/FormationPage").then((module) => ({
     default: module.FormationPage
-  }))
-);
-// Formation gate (2026-11-04) : direct import (lightweight) pour l afficher
-// sans Suspense supplementaire au cas ou un distri tente d acceder.
-const FormationCategoryPage = lazy(() =>
-  import("./pages/FormationCategoryPage").then((module) => ({
-    default: module.FormationCategoryPage
   }))
 );
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
@@ -753,7 +745,6 @@ export default function App() {
               <Route path="formation/reconnaissance" element={<FormationRecognitionPage />} />
               <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationModuleDetailPage />} />
-              <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}
               <Route path="settings" element={<SettingsPage />} />

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { Card } from "../components/ui/Card";
-import { GuideCompletionFooter } from "../components/formation/GuideCompletionFooter";
 import { useToast } from "../context/ToastContext";
 import {
   FOLLOW_UP_PROTOCOL,
@@ -80,8 +79,6 @@ export function FollowUpGuidePage() {
         ))}
       </div>
 
-      {/* Chantier Centre de Formation V1 (2026-04-23). */}
-      <GuideCompletionFooter resourceSlug="guide-suivi" title="J'ai terminé ce guide" />
     </div>
   );
 }

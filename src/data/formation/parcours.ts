@@ -5,8 +5,8 @@
 // Dupliquer (Leader & royalties).
 //
 // Phase F (2026-05-02) : modules importes depuis parcours-content.ts (livre
-// par l atelier Notion Thomas). Format : 5 N1 + 4 N2 + 4 N3 modules avec
-// idee_force / ancrage / action + lecons text + quiz QCM/free_text.
+// par l atelier Notion Thomas). Modules N1/N2/N3 (compte = FORMATION_LEVELS,
+// source de vérité) avec idee_force / ancrage / action + lecons + quiz.
 //
 // Hierarchie de deblocage :
 //   - N1 toujours debloque
