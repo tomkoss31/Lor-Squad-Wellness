@@ -17,7 +17,7 @@ import { useCrmBadge } from "../../hooks/useCrmBadge";
 
 export function BottomNav() {
   const location = useLocation();
-  const { currentUser, unreadMessageCount } = useAppContext();
+  const { currentUser } = useAppContext();
   const { count: crmBadgeCount } = useCrmBadge(currentUser?.isPassiveSupervisor !== true);
 
   // Masquer pendant le bilan (plein écran).
@@ -176,19 +176,22 @@ export function BottomNav() {
         "nav-new-bilan",
       )}
 
-      {/* 4 — Messagerie (bulle de chat) */}
+      {/* 4 — Panier (mis en avant : ajouter au panier, créer un client +
+          lien de paiement rapidement). Messagerie reste dans le menu hamburger. */}
       {renderItem(
-        "/messages",
-        "Messagerie",
+        "/panier",
+        "Panier",
         (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.7 8.7 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z" />
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
         ),
-        isActive("/messages"),
-        unreadMessageCount,
+        isActive("/panier"),
+        undefined,
         false,
-        "nav-messagerie",
+        "nav-panier",
       )}
 
       {/* 5 — Agenda (calendrier) */}
