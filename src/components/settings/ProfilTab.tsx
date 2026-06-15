@@ -21,7 +21,6 @@ import {
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
 import { RdvAvailabilityCard } from "./RdvAvailabilityCard";
-import { NoalyUsageCard } from "./NoalyUsageCard";
 import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 import { RankPinBadge } from "../rank/RankPinBadge";
 
@@ -975,9 +974,6 @@ export function ProfilTab() {
 
       {/* Fiche publique partageable (#13-B 2026-06-08) */}
       <PublicProfileShareCard name={currentUser.name} />
-
-      {/* Compteur conso Noaly du mois (2026-06-15) */}
-      <NoalyUsageCard />
 
       <Card className="space-y-3">
         <p className="eyebrow-label">Session</p>
