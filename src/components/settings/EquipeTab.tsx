@@ -126,7 +126,7 @@ export function EquipeTab() {
               {teamMembers.length} membre{teamMembers.length > 1 ? "s" : ""} dans ta ligne.
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Link
               to="/users"
               style={{
