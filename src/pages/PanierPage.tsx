@@ -39,6 +39,48 @@ function bucket(cat: string): string {
 
 const CAT_ORDER = ["Shakes", "Protéines", "Hydratation", "Boosters", "Gélules", "Digestion", "Sommeil", "Routine", "Autres"];
 
+// Emoji par produit (même logique que le ticket du bilan) → identité visuelle.
+const PRODUCT_EMOJI_MAP: Array<{ match: RegExp; emoji: string }> = [
+  { match: /formula\s*1|f1\b|boisson nutritionnelle/i, emoji: "🥛" },
+  { match: /melange.*proteine|formula\s*3|ppp\b|pdm/i, emoji: "💪" },
+  { match: /formula\s*2|multivit/i, emoji: "💊" },
+  { match: /aloe/i, emoji: "🌿" },
+  { match: /\bthe\b|th[eé]\b|tea\b/i, emoji: "🍵" },
+  { match: /hydrate/i, emoji: "💧" },
+  { match: /calcium|xtra[-\s]?cal/i, emoji: "🦴" },
+  { match: /collag/i, emoji: "✨" },
+  { match: /liftoff/i, emoji: "⚡" },
+  { match: /cr7|n-r-g|nrg/i, emoji: "🏆" },
+  { match: /cell.*activ/i, emoji: "🧬" },
+  { match: /niteworks|night|sommeil/i, emoji: "🌙" },
+  { match: /omega|fish/i, emoji: "🐟" },
+  { match: /iron|roseguard/i, emoji: "🛡️" },
+  { match: /skin|beaut/i, emoji: "💎" },
+  { match: /snack|barre|bar\b/i, emoji: "🍫" },
+  { match: /soup|soupe/i, emoji: "🍲" },
+  { match: /fibre|cell.*u.*loss|digest|transit/i, emoji: "🌾" },
+  { match: /shaker|gourde/i, emoji: "🥤" },
+  { match: /creatine/i, emoji: "💥" },
+];
+function getEmoji(name: string): string {
+  for (const { match, emoji } of PRODUCT_EMOJI_MAP) if (match.test(name)) return emoji;
+  return "💊";
+}
+
+// Couleur d'accent par catégorie (barre gauche + teinte avatar).
+const BUCKET_COLOR: Record<string, string> = {
+  Shakes: "var(--ls-teal)",
+  Protéines: "var(--ls-purple)",
+  Hydratation: "var(--ls-teal)",
+  Boosters: "var(--ls-gold)",
+  Gélules: "var(--ls-purple)",
+  Digestion: "var(--ls-teal)",
+  Sommeil: "var(--ls-purple)",
+  Routine: "var(--ls-gold)",
+  Autres: "var(--ls-text-muted)",
+};
+const bucketColor = (b: string) => BUCKET_COLOR[b] ?? "var(--ls-teal)";
+
 interface CatProduct {
   id: string;
   name: string;
@@ -158,6 +200,12 @@ export function PanierPage() {
       <style>{`
         .panier-title { font-size: clamp(28px, 5.5vw, 46px); }
         .panier-mobilebar { display: none; }
+        @keyframes panier-pop {
+          0% { opacity: 0; transform: translateY(6px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .panier-line-anim { animation: panier-pop 0.28s cubic-bezier(0.22,1,0.36,1); }
+        @media (prefers-reduced-motion: reduce) { .panier-line-anim { animation: none; } }
         @media (max-width: 760px) {
           .panier-title { font-size: 26px; }
           .panier-lead { display: none; }
@@ -237,20 +285,43 @@ export function PanierPage() {
             {filtered.map((p) => {
               const qty = cart[p.id] ?? 0;
               const active = qty > 0;
+              const accent = bucketColor(p.bucket);
               return (
                 <div
                   key={p.id}
                   style={{
+                    position: "relative",
+                    overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
-                    background: active ? "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))" : "var(--ls-surface)",
-                    border: active ? "1px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))" : "1px solid var(--ls-border)",
+                    gap: 11,
+                    background: active ? `color-mix(in srgb, ${accent} 8%, var(--ls-surface))` : "var(--ls-surface)",
+                    border: active ? `1px solid color-mix(in srgb, ${accent} 42%, var(--ls-border))` : "1px solid var(--ls-border)",
                     borderRadius: 14,
-                    padding: "10px 12px",
+                    padding: "10px 12px 10px 16px",
                     transition: "background .15s ease, border-color .15s ease",
                   }}
                 >
+                  {/* Barre d'accent catégorie */}
+                  <span aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: accent, opacity: active ? 1 : 0.65 }} />
+                  {/* Avatar emoji produit */}
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      flex: "0 0 auto",
+                      width: 38,
+                      height: 38,
+                      borderRadius: 11,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 19,
+                      background: `color-mix(in srgb, ${accent} 14%, var(--ls-surface2))`,
+                      border: `0.5px solid color-mix(in srgb, ${accent} 28%, transparent)`,
+                    }}
+                  >
+                    {getEmoji(p.name)}
+                  </div>
                   {/* Gauche : nom + PV dessous */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
@@ -346,7 +417,24 @@ export function PanierPage() {
 
                 <div style={{ maxHeight: 300, overflow: "auto", margin: "0 -4px", padding: "0 4px" }}>
                   {lines.map((p) => (
-                    <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--ls-border)" }}>
+                    <div key={p.id} className="panier-line-anim" style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 0", borderBottom: "1px solid var(--ls-border)" }}>
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          flex: "0 0 auto",
+                          width: 32,
+                          height: 32,
+                          borderRadius: 9,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 16,
+                          background: `color-mix(in srgb, ${bucketColor(p.bucket)} 14%, var(--ls-surface2))`,
+                          border: `0.5px solid color-mix(in srgb, ${bucketColor(p.bucket)} 28%, transparent)`,
+                        }}
+                      >
+                        {getEmoji(p.name)}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", lineHeight: 1.3 }}>{p.name}</div>
                         <div style={{ color: "var(--ls-text-hint)", fontSize: 12.5, marginTop: 3 }}>× {cart[p.id]}</div>
@@ -456,7 +544,15 @@ export function PanierPage() {
                 </div>
 
                 {/* Prix client */}
-                <div style={{ marginTop: 18, background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)", borderRadius: 18, padding: "16px 18px" }}>
+                <div style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  marginTop: 18,
+                  background: "radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--ls-purple) 12%, transparent), transparent 55%), radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--ls-teal) 12%, transparent), transparent 55%), color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
+                  borderRadius: 18,
+                  padding: "16px 18px",
+                }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--ls-text-muted)" }}>Prix client</span>
                     {disc > 0 ? (
