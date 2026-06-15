@@ -348,10 +348,13 @@ function computePosition(
     return {
       left: margin,
       right: margin,
-      bottom: margin,
+      // iOS fix (2026-06-15) : on remonte au-dessus de la safe-area (barre
+      // Safari + home indicator) sinon le bouton "Suivant" tombe sous la
+      // zone tactile et devient intapable.
+      bottom: `calc(${margin}px + env(safe-area-inset-bottom, 0px))`,
       top: "auto",
       width: "auto",
-      maxHeight: "65vh",
+      maxHeight: "calc(80dvh - env(safe-area-inset-bottom, 0px))",
     };
   }
 

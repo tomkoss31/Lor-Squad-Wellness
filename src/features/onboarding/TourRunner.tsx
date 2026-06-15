@@ -185,6 +185,13 @@ export function TourRunner({
     const startedAt = Date.now();
     let cleared = false;
     let timeoutId: number | null = null;
+    // iOS fix (2026-06-15) : ne scroller vers la cible qu'UNE fois par step.
+    // Avant, compute() (appelé toutes les 500 ms + à chaque scroll) rappelait
+    // scrollIntoView({behavior:"smooth"}) → le smooth-scroll émet des events
+    // scroll → re-compute → re-scroll : boucle de jitter sur iOS Safari qui
+    // décalait toute la page et rendait le bouton "Suivant" intapable. On
+    // garde le recalcul du rect (alignement spotlight) mais sans re-scroller.
+    let hasScrolled = false;
 
     const compute = () => {
       const el = findVisibleTarget(targetSelector);
@@ -208,10 +215,13 @@ export function TourRunner({
       const rect = el.getBoundingClientRect();
       setTargetRect(rect);
       setTargetEl(el);
-      try {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      } catch {
-        // no-op
+      if (!hasScrolled) {
+        hasScrolled = true;
+        try {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        } catch {
+          // no-op
+        }
       }
     };
 
