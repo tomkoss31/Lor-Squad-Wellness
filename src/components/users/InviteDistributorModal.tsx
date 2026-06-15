@@ -136,6 +136,8 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
           borderRadius: 18,
           maxWidth: 440,
           width: "100%",
+          maxHeight: "calc(100dvh - 32px)",
+          overflowY: "auto",
           padding: 24,
           boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
           fontFamily: "DM Sans, sans-serif",

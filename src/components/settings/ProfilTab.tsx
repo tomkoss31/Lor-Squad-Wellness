@@ -20,7 +20,6 @@ import {
   HERBALIFE_ID_PATTERN,
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
-import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { RdvAvailabilityCard } from "./RdvAvailabilityCard";
 import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 import { RankPinBadge } from "../rank/RankPinBadge";
@@ -785,9 +784,35 @@ export function ProfilTab() {
             </div>
           </LabeledField>
 
-          {/* 💳 Encaissement direct — Phase 2 page Résultat Bilan (2026-06-11).
-              Carte autonome : lit/écrit coach_payment_settings (RLS own-row). */}
-          <PaymentSettingsCard />
+          {/* 💳 Encaissement : page canonique déplacée dans « Mon business »
+              (B9 : une feature = un seul endroit). Ici, simple raccourci. */}
+          <button
+            type="button"
+            onClick={() => navigate("/encaissement")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+              textAlign: "left",
+              borderRadius: 14,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface)",
+              padding: 16,
+              cursor: "pointer",
+            }}
+          >
+            <span style={{ fontSize: 22 }}>💳</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--ls-text)" }}>
+                Encaissement direct
+              </span>
+              <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                Configure ton compte Stripe pour encaisser tes clients à la fin du bilan → Mon business
+              </span>
+            </span>
+            <span style={{ color: "var(--ls-teal)", fontSize: 18 }}>→</span>
+          </button>
 
           {/* 🗓️ Disponibilités RDV (chantier RDV V2, 2026-06-14) : le coach
               déclare ses créneaux → alimentent la page publique /rdv. */}
