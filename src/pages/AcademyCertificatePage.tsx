@@ -578,6 +578,23 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         }}
       />
 
+      {/* Filigrane logo (premium, derrière le contenu) */}
+      <img
+        src={LOGO_URL}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "62%",
+          opacity: 0.05,
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      />
+
       {/* Ornements 4 coins */}
       <CornerOrnament position="tl" />
       <CornerOrnament position="tr" />
@@ -607,7 +624,19 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         />
         <div
           style={{
-            marginTop: 14,
+            marginTop: 12,
+            fontFamily: "Georgia, serif",
+            fontSize: 26,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            color: "#5C4A0F",
+          }}
+        >
+          La Base 360
+        </div>
+        <div
+          style={{
+            marginTop: 6,
             fontFamily: "system-ui, sans-serif",
             fontSize: 10,
             letterSpacing: "0.32em",
@@ -741,6 +770,18 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         >
           {completedDate}
         </div>
+        <div
+          style={{
+            marginTop: 8,
+            fontFamily: "system-ui, sans-serif",
+            fontSize: 10,
+            letterSpacing: "0.28em",
+            color: "#B8922A",
+            fontWeight: 600,
+          }}
+        >
+          PROMOTION 2026
+        </div>
       </div>
 
       {/* Sceau central + halo doré (wahou) */}
@@ -858,7 +899,19 @@ function CertificateStory({ userName, completedDate }: CertProps) {
         />
         <div
           style={{
-            marginTop: 12,
+            marginTop: 10,
+            fontFamily: "Georgia, serif",
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            color: "#5C4A0F",
+          }}
+        >
+          La Base 360
+        </div>
+        <div
+          style={{
+            marginTop: 5,
             fontFamily: "system-ui, sans-serif",
             fontSize: 9,
             letterSpacing: "0.32em",
