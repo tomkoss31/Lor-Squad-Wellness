@@ -15,6 +15,7 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { getSupabaseClient } from "../../services/supabaseClient";
 import "./ThankYouStep.css";
 
 // Lien officiel de sollicitation d'avis Google (La Base Verdun) — fourni par
@@ -27,10 +28,64 @@ interface Props {
   appUrl: string; // URL complète /client/<token>
   coachName: string;
   onBack: () => void;
+  /** Total du panier programme (€) → encaissement direct si l'encaissement
+   *  Stripe du coach est configuré (chantier Encaissement distri 2026-06-15). */
+  amount?: number;
 }
 
-export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack }: Props) {
+export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack, amount }: Props) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  // ─── Encaissement direct (lien Stripe « montant libre » du panier) ─────────
+  const [payLoading, setPayLoading] = useState(false);
+  const [payLink, setPayLink] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [payCopied, setPayCopied] = useState(false);
+  const canCharge = typeof amount === "number" && amount > 0;
+
+  const handleGeneratePayLink = async () => {
+    if (!canCharge) return;
+    setPayLoading(true);
+    setPayError(null);
+    setPayLink(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { data, error } = await sb.functions.invoke("create-manual-payment-link", {
+        body: {
+          amount_euros: amount,
+          description: `Programme La Base 360 — ${clientFirstName}`.trim(),
+          client_name: clientFirstName,
+        },
+      });
+      const payload = data as { url?: string; error?: string } | null;
+      if (error || !payload) throw new Error("Erreur réseau");
+      if (payload.error === "not_configured") {
+        throw new Error("Configure d'abord ton encaissement Stripe (Mon business → Encaissement).");
+      }
+      if (payload.error || !payload.url) throw new Error("Lien indisponible — vérifie ta clé Stripe.");
+      setPayLink(payload.url);
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
+  const handleCopyPayLink = async () => {
+    if (!payLink) return;
+    try {
+      await navigator.clipboard.writeText(payLink);
+      setPayCopied(true);
+      window.setTimeout(() => setPayCopied(false), 2000);
+    } catch {
+      /* noop */
+    }
+  };
+
+  const payWaMessage = encodeURIComponent(
+    `Voici ton lien de paiement sécurisé ${clientFirstName} 👇\n${payLink ?? ""}`,
+  );
 
   const shareMessage = `Salut ! Je viens de faire mon bilan La Base 360, super expérience. Si tu veux tester : ${appUrl}`;
   const referralMessage = `Hello ! Je t'invite à faire ton bilan La Base 360 avec ${coachName} — on gagne tous les 2 une séance bilan gratuite si tu t'inscris via mon lien : ${appUrl}`;
@@ -94,6 +149,52 @@ export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack }: Pro
           <p className="thank-you-subtitle">Ta transformation commence maintenant</p>
           <div className="thank-you-divider" aria-hidden="true" />
         </header>
+
+        {/* S1.5 — Encaissement direct (panier du programme) */}
+        {canCharge && (
+          <section className="thank-you-section">
+            <div className="thank-you-pay-card">
+              <div className="thank-you-pay-head">
+                <span className="thank-you-pay-emoji" aria-hidden="true">💶</span>
+                <div>
+                  <div className="thank-you-pay-title">Encaisser maintenant</div>
+                  <div className="thank-you-pay-amount">{(amount as number).toFixed(2)} €</div>
+                </div>
+              </div>
+              {!payLink ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleGeneratePayLink()}
+                    disabled={payLoading}
+                    className="thank-you-pay-cta"
+                  >
+                    {payLoading ? "Génération du lien…" : "Générer le lien de paiement →"}
+                  </button>
+                  {payError ? <p className="thank-you-pay-error">{payError}</p> : null}
+                </>
+              ) : (
+                <div className="thank-you-pay-result">
+                  <p className="thank-you-pay-result-label">✅ Lien prêt :</p>
+                  <div className="thank-you-pay-actions">
+                    <a className="thank-you-pay-open" href={payLink} target="_blank" rel="noopener noreferrer">
+                      💳 Ouvrir la caisse
+                    </a>
+                    <button type="button" className="thank-you-pay-pill" onClick={() => void handleCopyPayLink()}>
+                      {payCopied ? "✅ Copié" : "📋 Copier"}
+                    </button>
+                    <a className="thank-you-pay-pill" href={`https://wa.me/?text=${payWaMessage}`} target="_blank" rel="noopener noreferrer">
+                      💬 WhatsApp
+                    </a>
+                  </div>
+                  <p className="thank-you-pay-hint">
+                    Le client peut payer ici tout de suite, ou via le lien. L&apos;argent arrive sur ton compte Stripe.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* S2 — QR code */}
         <section className="thank-you-qr-section">

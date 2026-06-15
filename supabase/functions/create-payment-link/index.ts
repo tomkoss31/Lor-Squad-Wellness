@@ -153,7 +153,75 @@ serve(async (req: Request) => {
       return json({ url: link.url, provider: "square" });
     }
 
-    // Stripe : décision distri pas encore prise (« on verra ») — fallback poli.
+    // 4-bis. Stripe — chaque distri a SON propre compte Stripe (clé secrète à
+    // lui). On crée une Checkout Session SUR SON compte : l'argent va 100 % chez
+    // le distri, jamais sur un compte plateforme. Pas de Connect, pas de
+    // commission. Confirmation au retour via confirm-stripe-payment (aucun
+    // webhook à configurer côté distri → onboarding le plus simple possible).
+    if (settings.provider === "stripe") {
+      const secret = String(settings.stripe_secret_key ?? "").trim();
+      if (!secret.startsWith("sk_")) {
+        return json({ fallback: true, reason: "incomplete_config" });
+      }
+
+      // success_url DOIT contenir {CHECKOUT_SESSION_ID} (placeholder Stripe) pour
+      // que la page retour puisse confirmer le paiement côté serveur.
+      const base = body.redirect_url || `${SUPABASE_URL}`;
+      const sep = base.includes("?") ? "&" : "?";
+      const successUrl = `${base}${sep}session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = base.replace(/[?&]paid=1/, "");
+
+      const form = new URLSearchParams();
+      form.set("mode", "payment");
+      form.set("success_url", successUrl);
+      form.set("cancel_url", cancelUrl);
+      form.set("line_items[0][quantity]", "1");
+      form.set("line_items[0][price_data][currency]", "eur");
+      form.set("line_items[0][price_data][unit_amount]", String(amountCents));
+      form.set("line_items[0][price_data][product_data][name]", `${program.name} — La Base 360`);
+      form.set(
+        "payment_intent_data[description]",
+        `Bilan ${bilan.first_name ?? ""} · ${program.name}`.slice(0, 500),
+      );
+      form.set("locale", "fr");
+
+      const stRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: form.toString(),
+      });
+
+      if (!stRes.ok) {
+        const errText = await stRes.text();
+        console.warn("[create-payment-link] Stripe error", stRes.status, errText.slice(0, 300));
+        return json({ fallback: true, reason: "provider_error" });
+      }
+
+      const stData = (await stRes.json()) as { id?: string; url?: string };
+      if (!stData.url) return json({ fallback: true, reason: "provider_error" });
+
+      const { error: insErr } = await sb.from("bilan_orders").insert({
+        online_bilan_id: bilan.id,
+        coach_user_id: bilan.coach_user_id,
+        prospect_first_name: bilan.first_name ?? "",
+        program_id: program.id,
+        program_name: program.name,
+        amount_cents: amountCents,
+        currency: "EUR",
+        provider: "stripe",
+        provider_payment_link_id: stData.id ?? null,
+        provider_order_id: stData.id ?? null,
+        payment_url: stData.url,
+      });
+      if (insErr) console.warn("[create-payment-link] order insert:", insErr.message);
+
+      return json({ url: stData.url, provider: "stripe" });
+    }
+
     return json({ fallback: true, reason: "provider_not_supported" });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";

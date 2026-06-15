@@ -1097,6 +1097,78 @@ export async function upsertSupabasePvClientProduct(product: PvClientProductReco
 }
 
 /**
+ * Vente rapide hors-app (chantier Panier → Rentabilité 2026-06-15).
+ *
+ * Crée un client léger (non-app, non-VIP) + enregistre les produits du panier
+ * comme ventes (pv_client_products) → remontent AUTOMATIQUEMENT dans la
+ * rentabilité (marge directe + nombre de clients) via la même RPC que les
+ * ventes du bilan. AUCUNE logique de calcul PV/paliers touchée : on écrit juste
+ * des lignes pv_client_products standard (prix + PV catalogue).
+ *
+ * Champs obligatoires du schéma `clients` couverts avec des valeurs sûres ;
+ * `sex` est NOT NULL CHECK (female|male) sans défaut → 'female' par défaut
+ * (invisible pour un client de vente rapide, pas de body-scan).
+ */
+export async function recordQuickSale(payload: {
+  clientName: string;
+  distributorId: string;
+  distributorName: string;
+  lines: { id: string; name: string; price: number; pv: number; quantity: number }[];
+}): Promise<{ clientId: string }> {
+  const client = await requireSupabase();
+  const today = new Date().toISOString().slice(0, 10);
+  const nextFollowUp = new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString();
+  const name = payload.clientName.trim() || "Client direct";
+
+  const { data: inserted, error } = await client
+    .from("clients")
+    .insert({
+      first_name: name,
+      last_name: "",
+      sex: "female",
+      distributor_id: payload.distributorId,
+      distributor_name: payload.distributorName,
+      status: "active",
+      objective: "weight-loss",
+      started: true,
+      start_date: today,
+      next_follow_up: nextFollowUp,
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (error || !inserted) {
+    throw new Error(`Création du client impossible : ${error?.message ?? "réponse vide"}`);
+  }
+  const clientId = inserted.id;
+
+  const products = payload.lines
+    .filter((l) => l.quantity > 0)
+    .map((l) => ({
+      client_id: clientId,
+      responsible_id: payload.distributorId,
+      responsible_name: payload.distributorName,
+      program_id: "custom",
+      product_id: l.id,
+      product_name: l.name,
+      quantity_start: Math.max(1, Math.round(l.quantity)),
+      start_date: today,
+      pv_per_unit: l.pv,
+      price_public_per_unit: l.price,
+      active: true,
+    }));
+
+  if (products.length > 0) {
+    const { error: pErr } = await client.from("pv_client_products").insert(products);
+    if (pErr) {
+      const pvSetupError = getPvModuleSetupError(pErr);
+      throw new Error(pvSetupError ?? `Enregistrement des produits impossible : ${pErr.message}`);
+    }
+  }
+
+  return { clientId };
+}
+
+/**
  * Corrige la date de démarrage d'UN produit actif (fiche Suivi PV).
  * Cas d'usage : erreur de saisie du délai de réception à la commande
  * (ex: "aujourd'hui" au lieu de "+3 jours"). Cible la ligne par son id

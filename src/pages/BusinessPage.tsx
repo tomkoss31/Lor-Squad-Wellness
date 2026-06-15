@@ -782,7 +782,7 @@ export function BusinessPage() {
                   <li><span className="biz-pack__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Kit produits de découverte</strong> — tu testes la gamme avant de la recommander.</span></li>
                   <li><span className="biz-pack__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Site personnalisé à ton nom</strong> — commandes en direct, traitement automatisé.</span></li>
                   <li><span className="biz-pack__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Backoffice complet</strong> — suivi commandes, marges, clients, bilans.</span></li>
-                  <li><span className="biz-pack__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Accès à l'Académie La Base 360</strong> — 60+ modules vidéo, scripts, certifications.</span></li>
+                  <li><span className="biz-pack__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Accès à la Formation La Base 360</strong> — 60+ modules vidéo, scripts, certifications.</span></li>
                 </ul>
               </div>
             </div>
@@ -798,7 +798,7 @@ export function BusinessPage() {
               <p className="biz-section__lead" style={{marginLeft:"auto",marginRight:"auto"}}>Quatre piliers d'accompagnement, tout au long de ton parcours.</p>
             </div>
             <div className="biz-support biz-reveal">
-              <div className="biz-support__card"><div className="biz-support__icon" aria-hidden="true">🎓</div><h4>Académie La Base 360</h4><p>Formations vidéo, scripts, certifications. Tu apprends à ton rythme, depuis ton canapé.</p></div>
+              <div className="biz-support__card"><div className="biz-support__icon" aria-hidden="true">🎓</div><h4>Formation La Base 360</h4><p>Formations vidéo, scripts, certifications. Tu apprends à ton rythme, depuis ton canapé.</p></div>
               <div className="biz-support__card"><div className="biz-support__icon" aria-hidden="true">🤝</div><h4>Mentor dédié</h4><p>Un partenaire expérimenté t'accompagne en 1-to-1. Visio hebdo les 3 premiers mois.</p></div>
               <div className="biz-support__card"><div className="biz-support__icon" aria-hidden="true">📱</div><h4>App coach</h4><p>App dédiée pour gérer tes clients, leurs bilans et leurs commandes. Pensée pour le mobile.</p></div>
               <div className="biz-support__card"><div className="biz-support__icon" aria-hidden="true">💬</div><h4>Communauté privée</h4><p>Groupe WhatsApp + événements présentiels. Tu n'es jamais seul·e face à une question.</p></div>

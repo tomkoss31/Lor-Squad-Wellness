@@ -553,7 +553,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
               Mon développement
             </div>
             <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Académie, formation, ressources
+              Academy, formation, ressources
             </div>
           </div>
           <span style={{ color: "var(--ls-text-muted)" }}>→</span>

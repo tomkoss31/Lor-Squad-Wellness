@@ -49,6 +49,10 @@ export function BilanTermineePage() {
 
   const coachName = currentUser?.name?.split(/\s+/)[0] ?? "Ton coach";
 
+  // Total du panier programme (passé par NewAssessmentPage) → encaissement direct.
+  const amountParam = searchParams.get("amount");
+  const amount = amountParam ? Number(amountParam) : undefined;
+
   if (!clientId || !clientFirstName) {
     // Fallback gracieux : pas de bilan identifiable → retour liste clients
     navigate("/clients", { replace: true });
@@ -60,6 +64,7 @@ export function BilanTermineePage() {
       clientFirstName={clientFirstName}
       appUrl={appUrl}
       coachName={coachName}
+      amount={Number.isFinite(amount) ? amount : undefined}
       onBack={() => navigate(`/clients/${clientId}`)}
     />
   );

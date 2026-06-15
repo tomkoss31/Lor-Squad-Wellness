@@ -429,7 +429,7 @@ export function OpportunitePage() {
 
           <div className="support">
             {[
-              ["🎓", "Formation Académie", "12 modules vidéo pas-à-pas, du démarrage à l'autonomie complète."],
+              ["🎓", "Formation La Base 360", "12 modules vidéo pas-à-pas, du démarrage à l'autonomie complète."],
               ["🧭", "Mentor 1-to-1", "Un référent humain qui te suit, te débloque, et t'aide à fixer tes objectifs."],
               ["📱", "App La Base 360", "Suivi clients, rentabilité en temps réel, formations — tout dans ta poche."],
               ["💎", "Communauté entraide", "Un groupe actif. On célèbre les wins. On débloque les blocages, ensemble."],

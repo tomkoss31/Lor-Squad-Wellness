@@ -66,8 +66,27 @@ function capitalize(s: string) {
 export function BilanResultatPremiumPage() {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
-  // Retour de la caisse Square (checkout_options.redirect_url → ?paid=1).
+  // Retour de la caisse (redirect_url → ?paid=1). Stripe ajoute &session_id=cs_…
   const justPaid = searchParams.get("paid") === "1";
+  const stripeSessionId = searchParams.get("session_id");
+
+  // Retour Stripe : on confirme le paiement CÔTÉ SERVEUR (pas de webhook à
+  // configurer côté distri). L'edge revérifie le statut réel via la clé secrète
+  // du distri puis notifie le coach. Best-effort, n'affecte pas l'affichage.
+  useEffect(() => {
+    if (!token || !stripeSessionId || !stripeSessionId.startsWith("cs_")) return;
+    (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        await sb.functions.invoke("confirm-stripe-payment", {
+          body: { token, session_id: stripeSessionId },
+        });
+      } catch {
+        /* silencieux : le coach verra la commande de toute façon */
+      }
+    })();
+  }, [token, stripeSessionId]);
   const [data, setData] = useState<ResultsDTO | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ok">("loading");
   const [selected, setSelected] = useState<string | null>(null);
