@@ -20,6 +20,7 @@ import type { RentabilityData, RentabilityTopClient } from "../../hooks/useUserR
 import { useRentabilityHistory, type MonthHistoryPoint } from "../../hooks/useRentabilityHistory";
 import { BarChart } from "./shared/BarChart";
 import { RentabilityPdfReport } from "./RentabilityPdfReport";
+import { QuickSaleEditModal } from "./QuickSaleEditModal";
 import { useAppContext } from "../../context/AppContext";
 
 interface RentabilityDetailModalProps {
@@ -31,6 +32,10 @@ interface RentabilityDetailModalProps {
   /** Override ventilé par membre downline (userId → EUR) — pour le détail
       « de qui vient le montant » dans le filtre Distri. */
   overridePerMember?: Map<string, number>;
+  /** Active le crayon ✏️ d'édition des ventes (uniquement sur SA rentabilité). */
+  editable?: boolean;
+  /** Appelé après une édition réussie → la page refetch la RPC. */
+  onEdited?: () => void;
 }
 
 type FilterTab = "all" | "public" | "vip" | "distri";
@@ -61,6 +66,8 @@ export function RentabilityDetailModal({
   downlineOverride,
   manualOverride,
   overridePerMember,
+  editable = false,
+  onEdited,
 }: RentabilityDetailModalProps) {
   const { currentUser, users } = useAppContext();
   const navigate = useNavigate();
@@ -285,6 +292,8 @@ export function RentabilityDetailModal({
               topClients={data.top_clients ?? []}
               marginPct={data.margin_pct}
               overrideBreakdown={overrideBreakdown}
+              editable={editable}
+              onEdited={onEdited}
             />
           )}
 
@@ -618,6 +627,8 @@ function CurrentMonthView({
   topClients,
   marginPct,
   overrideBreakdown,
+  editable,
+  onEdited,
 }: {
   filter: FilterTab;
   setFilter: (f: FilterTab) => void;
@@ -629,9 +640,12 @@ function CurrentMonthView({
   topClients: RentabilityTopClient[];
   marginPct: number;
   overrideBreakdown: { id: string; name: string; eur: number }[];
+  editable?: boolean;
+  onEdited?: () => void;
 }) {
   const [showAllClients, setShowAllClients] = useState(false);
   const [showOverrideDetail, setShowOverrideDetail] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -763,6 +777,28 @@ function CurrentMonthView({
                   >
                     {Math.round(c.revenue)} €
                   </span>
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ id: c.client_id, name: c.client_name })}
+                      aria-label={`Modifier la vente de ${c.client_name}`}
+                      title="Modifier (nom, produits, quantités)"
+                      style={{
+                        width: 30,
+                        height: 30,
+                        flexShrink: 0,
+                        borderRadius: 9,
+                        border: "1px solid var(--ls-rentab-line)",
+                        background: "var(--ls-rentab-bg-2)",
+                        color: "var(--ls-rentab-ink-2)",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        lineHeight: 1,
+                      }}
+                    >
+                      ✏️
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -844,6 +880,15 @@ function CurrentMonthView({
             </>
           )}
         </div>
+      )}
+
+      {editing && (
+        <QuickSaleEditModal
+          clientId={editing.id}
+          initialName={editing.name}
+          onClose={() => setEditing(null)}
+          onSaved={onEdited}
+        />
       )}
     </>
   );

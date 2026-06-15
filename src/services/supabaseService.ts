@@ -1118,47 +1118,95 @@ export async function recordQuickSale(payload: {
   const client = await requireSupabase();
   const today = new Date().toISOString().slice(0, 10);
   const nextFollowUp = new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString();
-  const name = payload.clientName.trim() || "Client direct";
+  const rawName = payload.clientName.trim();
+  const name = rawName || "Client direct";
 
-  const { data: inserted, error } = await client
-    .from("clients")
-    .insert({
-      first_name: name,
-      last_name: "",
-      sex: "female",
-      distributor_id: payload.distributorId,
-      distributor_name: payload.distributorName,
-      status: "active",
-      objective: "weight-loss",
-      started: true,
-      start_date: today,
-      next_follow_up: nextFollowUp,
-    })
-    .select("id")
-    .single<{ id: string }>();
-  if (error || !inserted) {
-    throw new Error(`Création du client impossible : ${error?.message ?? "réponse vide"}`);
+  // ── Anti-doublon (2026-06-15) : si une vente existe déjà pour ce MÊME nom
+  // chez ce distributeur, on RÉUTILISE le client (pas de 2e ligne au même nom)
+  // et on ADDITIONNE les quantités produit. On ne dédoublonne QUE si un vrai
+  // nom est fourni (sinon deux "Client direct" anonymes fusionneraient à tort).
+  let clientId: string | null = null;
+  if (rawName) {
+    const { data: existing } = await client
+      .from("clients")
+      .select("id")
+      .eq("distributor_id", payload.distributorId)
+      .ilike("first_name", rawName)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) clientId = existing.id as string;
   }
-  const clientId = inserted.id;
 
-  const products = payload.lines
-    .filter((l) => l.quantity > 0)
-    .map((l) => ({
-      client_id: clientId,
-      responsible_id: payload.distributorId,
-      responsible_name: payload.distributorName,
-      program_id: "custom",
-      product_id: l.id,
-      product_name: l.name,
-      quantity_start: Math.max(1, Math.round(l.quantity)),
-      start_date: today,
-      pv_per_unit: l.pv,
-      price_public_per_unit: l.price,
-      active: true,
-    }));
+  if (!clientId) {
+    const { data: inserted, error } = await client
+      .from("clients")
+      .insert({
+        first_name: name,
+        last_name: "",
+        sex: "female",
+        distributor_id: payload.distributorId,
+        distributor_name: payload.distributorName,
+        status: "active",
+        objective: "weight-loss",
+        started: true,
+        start_date: today,
+        next_follow_up: nextFollowUp,
+      })
+      .select("id")
+      .single<{ id: string }>();
+    if (error || !inserted) {
+      throw new Error(`Création du client impossible : ${error?.message ?? "réponse vide"}`);
+    }
+    clientId = inserted.id;
+  }
 
-  if (products.length > 0) {
-    const { error: pErr } = await client.from("pv_client_products").insert(products);
+  // Produits déjà enregistrés pour ce client (pour additionner les quantités).
+  const { data: existingProds } = await client
+    .from("pv_client_products")
+    .select("id, product_id, quantity_start")
+    .eq("client_id", clientId);
+  const byProduct = new Map<string, { id: string; quantity_start: number }>();
+  for (const p of existingProds ?? []) {
+    byProduct.set(p.product_id as string, {
+      id: p.id as string,
+      quantity_start: Number(p.quantity_start) || 0,
+    });
+  }
+
+  const toInsert: Record<string, unknown>[] = [];
+  for (const l of payload.lines.filter((l) => l.quantity > 0)) {
+    const qty = Math.max(1, Math.round(l.quantity));
+    const existing = byProduct.get(l.id);
+    if (existing) {
+      // Même produit déjà pris ce mois → on additionne (rachat).
+      const { error: upErr } = await client
+        .from("pv_client_products")
+        .update({
+          quantity_start: existing.quantity_start + qty,
+          active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+      if (upErr) console.warn("[recordQuickSale] update qty:", upErr.message);
+    } else {
+      toInsert.push({
+        client_id: clientId,
+        responsible_id: payload.distributorId,
+        responsible_name: payload.distributorName,
+        program_id: "custom",
+        product_id: l.id,
+        product_name: l.name,
+        quantity_start: qty,
+        start_date: today,
+        pv_per_unit: l.pv,
+        price_public_per_unit: l.price,
+        active: true,
+      });
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error: pErr } = await client.from("pv_client_products").insert(toInsert);
     if (pErr) {
       const pvSetupError = getPvModuleSetupError(pErr);
       throw new Error(pvSetupError ?? `Enregistrement des produits impossible : ${pErr.message}`);
@@ -1166,6 +1214,91 @@ export async function recordQuickSale(payload: {
   }
 
   return { clientId };
+}
+
+/**
+ * Édition d'une vente depuis Rentabilité → Analyse détaillée (crayon ✏️).
+ * Réconcilie le client + ses produits avec l'état désiré :
+ *   - renomme le client (corrige un nom oublié),
+ *   - met à jour les quantités (valeur directe, pas additive — on édite),
+ *   - ajoute les nouveaux produits,
+ *   - supprime les lignes retirées.
+ * Ici quantity = valeur exacte voulue (contrairement à recordQuickSale qui
+ * additionne lors d'une nouvelle commande).
+ */
+export async function updateQuickSale(payload: {
+  clientId: string;
+  clientName: string;
+  distributorId: string;
+  distributorName: string;
+  lines: { id: string; name: string; price: number; pv: number; quantity: number }[];
+}): Promise<void> {
+  const client = await requireSupabase();
+  const today = new Date().toISOString().slice(0, 10);
+  const name = payload.clientName.trim() || "Client direct";
+
+  const { error: nameErr } = await client
+    .from("clients")
+    .update({ first_name: name })
+    .eq("id", payload.clientId);
+  if (nameErr) throw new Error(`Renommage impossible : ${nameErr.message}`);
+
+  const { data: existingProds } = await client
+    .from("pv_client_products")
+    .select("id, product_id")
+    .eq("client_id", payload.clientId);
+  const existingByProduct = new Map<string, string>();
+  for (const p of existingProds ?? []) existingByProduct.set(p.product_id as string, p.id as string);
+
+  const desired = payload.lines.filter((l) => l.quantity > 0);
+  const desiredIds = new Set(desired.map((l) => l.id));
+
+  // Supprime les lignes retirées.
+  for (const [productId, id] of existingByProduct) {
+    if (!desiredIds.has(productId)) {
+      const { error: delErr } = await client.from("pv_client_products").delete().eq("id", id);
+      if (delErr) console.warn("[updateQuickSale] delete:", delErr.message);
+    }
+  }
+
+  // Met à jour / insère les lignes désirées.
+  const toInsert: Record<string, unknown>[] = [];
+  for (const l of desired) {
+    const qty = Math.max(1, Math.round(l.quantity));
+    const existingId = existingByProduct.get(l.id);
+    if (existingId) {
+      const { error: upErr } = await client
+        .from("pv_client_products")
+        .update({
+          quantity_start: qty,
+          price_public_per_unit: l.price,
+          pv_per_unit: l.pv,
+          product_name: l.name,
+          active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingId);
+      if (upErr) console.warn("[updateQuickSale] update:", upErr.message);
+    } else {
+      toInsert.push({
+        client_id: payload.clientId,
+        responsible_id: payload.distributorId,
+        responsible_name: payload.distributorName,
+        program_id: "custom",
+        product_id: l.id,
+        product_name: l.name,
+        quantity_start: qty,
+        start_date: today,
+        pv_per_unit: l.pv,
+        price_public_per_unit: l.price,
+        active: true,
+      });
+    }
+  }
+  if (toInsert.length > 0) {
+    const { error: insErr } = await client.from("pv_client_products").insert(toInsert);
+    if (insErr) throw new Error(`Ajout produit impossible : ${insErr.message}`);
+  }
 }
 
 /**
