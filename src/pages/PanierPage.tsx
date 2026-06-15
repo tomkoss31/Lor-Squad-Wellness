@@ -81,6 +81,21 @@ const BUCKET_COLOR: Record<string, string> = {
 };
 const bucketColor = (b: string) => BUCKET_COLOR[b] ?? "var(--ls-teal)";
 
+// Emoji par catégorie (cohérent avec l'univers produits de l'app).
+const CAT_EMOJI: Record<string, string> = {
+  Tous: "🛍️",
+  Shakes: "🥤",
+  Protéines: "💪",
+  Hydratation: "💧",
+  Boosters: "⚡",
+  Gélules: "💊",
+  Digestion: "🌾",
+  Sommeil: "🌙",
+  Routine: "✨",
+  Autres: "📦",
+};
+const catEmoji = (c: string) => CAT_EMOJI[c] ?? "🏷️";
+
 interface CatProduct {
   id: string;
   name: string;
@@ -269,7 +284,7 @@ export function PanierPage() {
             >
               {cats.map((c) => (
                 <option key={c} value={c}>
-                  {c === "Tous" ? "Toutes les catégories" : c}
+                  {catEmoji(c)}  {c === "Tous" ? "Toutes les catégories" : c}
                 </option>
               ))}
             </select>
