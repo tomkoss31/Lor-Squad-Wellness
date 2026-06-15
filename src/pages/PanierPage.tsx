@@ -51,6 +51,7 @@ export function PanierPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [discount, setDiscount] = useState(0);
   const [customText, setCustomText] = useState("");
+  const [clientName, setClientName] = useState("");
 
   const products: CatProduct[] = useMemo(
     () =>
@@ -98,12 +99,14 @@ export function PanierPage() {
     setCart({});
     setDiscount(0);
     setCustomText("");
+    setClientName("");
   };
 
   function copyRecap() {
     if (!hasItems) return;
     const body = lines.map((p) => `• ${p.name} × ${cart[p.id]} — ${euro(p.price * cart[p.id])}`).join("\n");
-    let txt = `Coucou 🌿 voici la sélection qu'on a préparée ensemble :\n\n${body}\n\nTotal : ${euro(totalPrice)}`;
+    const hello = clientName.trim() ? `Coucou ${clientName.trim()} 🌿` : "Coucou 🌿";
+    let txt = `${hello} voici la sélection qu'on a préparée ensemble :\n\n${body}\n\nTotal : ${euro(totalPrice)}`;
     if (disc > 0) txt += `\nAvec ta remise de ${disc} % : ${euro(clientPrice)}\nTu économises ${euro(savings)} 🎉`;
     txt += `\n\nDis-moi si tu veux ajuster quelque chose, je suis là 💛`;
     void navigator.clipboard?.writeText(txt).then(() =>
@@ -113,16 +116,24 @@ export function PanierPage() {
 
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "4px 4px 90px" }}>
+      <style>{`
+        .panier-title { font-size: clamp(28px, 5.5vw, 46px); }
+        @media (max-width: 760px) {
+          .panier-title { font-size: 26px; }
+          .panier-lead { display: none; }
+          .panier-aside { position: static !important; flex: 1 1 100% !important; }
+        }
+      `}</style>
       {/* Hero */}
       <div style={{ fontFamily: "Syne, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.4, textTransform: "uppercase", color: "var(--ls-text-muted)" }}>
         La Base 360 · Calculateur
       </div>
-      <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(32px,6vw,52px)", lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
+      <h1 className="panier-title" style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
         <span style={{ background: "linear-gradient(100deg,var(--ls-teal),var(--ls-purple))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           Panier
         </span>
       </h1>
-      <p style={{ margin: "8px 0 26px", color: "var(--ls-text-muted)", fontSize: 15, maxWidth: 440, fontFamily: "DM Sans, sans-serif" }}>
+      <p className="panier-lead" style={{ margin: "8px 0 26px", color: "var(--ls-text-muted)", fontSize: 15, maxWidth: 440, fontFamily: "DM Sans, sans-serif" }}>
         Compose, applique une remise, obtiens le prix client en 2 secondes.
       </p>
 
@@ -169,28 +180,78 @@ export function PanierPage() {
             })}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(198px,1fr))", gap: 13 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 9 }}>
             {filtered.map((p) => {
               const qty = cart[p.id] ?? 0;
+              const active = qty > 0;
               return (
-                <div key={p.id} style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 18, padding: 15, display: "flex", flexDirection: "column", gap: 11 }}>
-                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase", color: "var(--ls-text-hint)" }}>{p.bucket}</div>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 600, fontSize: 14.5, lineHeight: 1.28, color: "var(--ls-text)", minHeight: 36 }}>{p.name}</div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                    <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 18, color: "var(--ls-text)" }}>{euro(p.price)}</span>
-                    <span style={pvBadge}>{pvf(p.pv)}<span style={{ fontSize: 9, letterSpacing: 0.5, opacity: 0.85 }}>PV</span></span>
-                  </div>
-                  {qty === 0 ? (
-                    <button type="button" onClick={() => add(p.id)} style={{ width: "100%", padding: 9, borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)", fontWeight: 600, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "DM Sans, sans-serif" }}>
-                      <span style={{ color: "var(--ls-teal)", fontSize: 16, fontWeight: 700 }}>＋</span>Ajouter
-                    </button>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", borderRadius: 12, padding: 5 }}>
-                      <button type="button" onClick={() => dec(p.id)} style={stepBtn(false)}>−</button>
-                      <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)" }}>{qty}</span>
-                      <button type="button" onClick={() => add(p.id)} style={stepBtn(true)}>＋</button>
+                <div
+                  key={p.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    background: active ? "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))" : "var(--ls-surface)",
+                    border: active ? "1px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))" : "1px solid var(--ls-border)",
+                    borderRadius: 14,
+                    padding: "10px 12px",
+                    transition: "background .15s ease, border-color .15s ease",
+                  }}
+                >
+                  {/* Gauche : nom + PV dessous */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: "Syne, sans-serif",
+                        fontWeight: 600,
+                        fontSize: 14,
+                        lineHeight: 1.25,
+                        color: "var(--ls-text)",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {p.name}
                     </div>
-                  )}
+                    <span style={{ ...pvBadge, marginTop: 5, fontSize: 10.5, padding: "2px 8px" }}>
+                      {pvf(p.pv)}
+                      <span style={{ fontSize: 8.5, letterSpacing: 0.4, opacity: 0.85 }}>PV</span>
+                    </span>
+                  </div>
+
+                  {/* Droite : prix + stepper / ajouter */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, flex: "none" }}>
+                    <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-gold)" }}>{euro(p.price)}</span>
+                    {!active ? (
+                      <button
+                        type="button"
+                        onClick={() => add(p.id)}
+                        aria-label={`Ajouter ${p.name}`}
+                        style={{
+                          width: 34,
+                          height: 30,
+                          borderRadius: 9,
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: 18,
+                          lineHeight: 1,
+                          background: "var(--ls-teal)",
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ＋
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 10, padding: 3 }}>
+                        <button type="button" onClick={() => dec(p.id)} aria-label="Retirer un" style={stepBtn(false)}>−</button>
+                        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)", minWidth: 18, textAlign: "center" }}>{qty}</span>
+                        <button type="button" onClick={() => add(p.id)} aria-label="Ajouter un" style={stepBtn(true)}>＋</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -210,13 +271,26 @@ export function PanierPage() {
             </div>
 
             {!hasItems ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 13, padding: "26px 6px 12px" }}>
-                <div style={{ width: 100, height: 100, borderRadius: 999, background: "var(--ls-surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44 }}>🛒</div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 10, padding: "18px 6px 8px" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 999, background: "var(--ls-surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>🛒</div>
                 <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)" }}>Ton panier est vide</div>
                 <div style={{ color: "var(--ls-text-muted)", fontSize: 13.5, lineHeight: 1.5, maxWidth: 220 }}>Ajoute des produits pour calculer le prix client.</div>
               </div>
             ) : (
               <>
+                {/* Nom du client (ventes hors-app) */}
+                <label style={{ display: "block", marginBottom: 14 }}>
+                  <span style={{ display: "block", fontSize: 11.5, fontWeight: 600, color: "var(--ls-text-muted)", marginBottom: 5 }}>
+                    Nom du client <span style={{ color: "var(--ls-text-hint)", fontWeight: 400 }}>(optionnel)</span>
+                  </span>
+                  <input
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="Ex : Marie D."
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
+                  />
+                </label>
+
                 <div style={{ maxHeight: 300, overflow: "auto", margin: "0 -4px", padding: "0 4px" }}>
                   {lines.map((p) => (
                     <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--ls-border)" }}>
