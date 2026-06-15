@@ -154,13 +154,16 @@ export function PanierPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "4px 4px 90px" }}>
+    <div className="panier-root" style={{ maxWidth: 1180, margin: "0 auto", padding: "4px 4px 90px" }}>
       <style>{`
         .panier-title { font-size: clamp(28px, 5.5vw, 46px); }
+        .panier-mobilebar { display: none; }
         @media (max-width: 760px) {
           .panier-title { font-size: 26px; }
           .panier-lead { display: none; }
           .panier-aside { position: static !important; flex: 1 1 100% !important; }
+          .panier-root { padding-bottom: 150px !important; }
+          .panier-mobilebar { display: flex !important; }
         }
       `}</style>
       {/* Hero */}
@@ -298,7 +301,7 @@ export function PanierPage() {
         </section>
 
         {/* Panier */}
-        <aside style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start" }} className="panier-aside">
+        <aside id="panier-recap" style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start" }} className="panier-aside">
           <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 22, padding: 22 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
               <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "var(--ls-text)" }}>Ton panier</span>
@@ -497,6 +500,49 @@ export function PanierPage() {
           </div>
         </aside>
       </div>
+
+      {/* Barre total flottante (mobile) — toujours visible pendant qu'on ajoute */}
+      {hasItems ? (
+        <button
+          type="button"
+          className="panier-mobilebar"
+          onClick={() =>
+            document.getElementById("panier-recap")?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+          style={{
+            position: "fixed",
+            left: 10,
+            right: 10,
+            bottom: "calc(64px + env(safe-area-inset-bottom, 0px))",
+            zIndex: 49,
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "12px 16px",
+            borderRadius: 16,
+            border: "1px solid var(--ls-border)",
+            background: "color-mix(in srgb, var(--ls-surface) 88%, transparent)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            boxShadow: "0 10px 28px -10px rgba(0,0,0,0.45)",
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🛒</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+              {itemCount} article{itemCount > 1 ? "s" : ""}
+            </span>
+          </span>
+          <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            {disc > 0 ? (
+              <span style={{ fontSize: 12, color: "var(--ls-text-hint)", textDecoration: "line-through" }}>{euro(totalPrice)}</span>
+            ) : null}
+            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 18, color: "var(--ls-gold)" }}>{euro(clientPrice)}</span>
+            <span aria-hidden="true" style={{ fontSize: 15, color: "var(--ls-teal)" }}>↓</span>
+          </span>
+        </button>
+      ) : null}
     </div>
   );
 }
