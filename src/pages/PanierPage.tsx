@@ -362,7 +362,21 @@ export function PanierPage() {
 
                 {/* Remise */}
                 <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--ls-border)" }}>
-                  <span style={{ display: "block", color: "var(--ls-text-muted)", fontSize: 13.5, fontWeight: 600, marginBottom: 10 }}>Remise client</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ color: "var(--ls-text-muted)", fontSize: 13.5, fontWeight: 600 }}>Remise client</span>
+                    {disc > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDiscount(0);
+                          setCustomText("");
+                        }}
+                        style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
+                      >
+                        ✕ Enlever
+                      </button>
+                    ) : null}
+                  </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center" }}>
                     {[5, 10, 15, 25, 35].map((v) => {
                       const on = discount === v && customText === "";
@@ -371,8 +385,12 @@ export function PanierPage() {
                           key={v}
                           type="button"
                           onClick={() => {
-                            setDiscount(v);
-                            setCustomText("");
+                            if (on) {
+                              setDiscount(0); // re-clic = on retire la remise
+                            } else {
+                              setDiscount(v);
+                              setCustomText("");
+                            }
                           }}
                           style={{
                             padding: "7px 13px",
@@ -390,17 +408,36 @@ export function PanierPage() {
                         </button>
                       );
                     })}
-                    <input
-                      value={customText}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setCustomText(v);
-                        setDiscount(clamp(parseFloat(v.replace(",", ".")) || 0, 0, 100));
-                      }}
-                      placeholder="%"
-                      inputMode="decimal"
-                      style={{ width: 62, padding: "8px 10px", borderRadius: 999, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 13, textAlign: "center", fontWeight: 600 }}
-                    />
+                  </div>
+                  {/* Saisie libre : n'importe quel % (8, 12, 18…) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 11 }}>
+                    <span style={{ fontSize: 12.5, color: "var(--ls-text-muted)" }}>ou saisis&nbsp;:</span>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        value={customText}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCustomText(v);
+                          setDiscount(clamp(parseFloat(v.replace(",", ".")) || 0, 0, 100));
+                        }}
+                        placeholder="ex : 8"
+                        inputMode="decimal"
+                        aria-label="Remise personnalisée en pourcentage"
+                        style={{
+                          width: 104,
+                          boxSizing: "border-box",
+                          padding: "9px 28px 9px 12px",
+                          borderRadius: 12,
+                          border: customText ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)",
+                          background: "var(--ls-input-bg)",
+                          color: "var(--ls-text)",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          outline: "none",
+                        }}
+                      />
+                      <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ls-text-muted)", fontSize: 14, fontWeight: 600, pointerEvents: "none" }}>%</span>
+                    </div>
                   </div>
                 </div>
 
