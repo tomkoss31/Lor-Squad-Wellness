@@ -63,7 +63,7 @@ export interface AcademyQuiz {
 export const ACADEMY_SECTIONS: AcademySection[] = [
   {
     id: "welcome",
-    title: "Bienvenue & profil distri",
+    title: "🚀 Démarrer",
     shortLabel: "Profil",
     description: "Renseigne ton profil pour que ton coach et ton équipe te reconnaissent.",
     estimatedDurationMinutes: 2,
@@ -231,7 +231,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "app-tour",
-    title: "L'app en 60 secondes",
+    title: "🧭 L'app en un coup d'œil",
     shortLabel: "Tour",
     description: "Découvre la sidebar (Co-pilote, Clients, CRM, Agenda, Messagerie, Mon business…), Noaly et où chaque chose se trouve.",
     estimatedDurationMinutes: 2,
@@ -437,7 +437,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "first-bilan",
-    title: "Crée ton premier bilan (et ton premier client)",
+    title: "🥗 Bilan → 1er client",
     shortLabel: "Premier bilan",
     description: "Le bouton + Nouveau bilan crée le client et le bilan initial en un seul flow.",
     estimatedDurationMinutes: 4,
@@ -590,7 +590,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "program",
-    title: "Le Programme bilan",
+    title: "🥗 Programme, panier & ticket PV",
     shortLabel: "Programme",
     description: "Recommande des produits, ajoute des boosters, génère le récap à envoyer au client.",
     estimatedDurationMinutes: 3,
@@ -747,7 +747,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "agenda",
-    title: "Agenda & RDV",
+    title: "🎯 Capter & convertir",
     shortLabel: "Agenda",
     description: "Cale un rendez-vous, marque-le comme fait, comprends le suivi automatique.",
     estimatedDurationMinutes: 2,
@@ -886,7 +886,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "messages-and-clients",
-    title: "Messagerie & dossiers clients",
+    title: "💬 Fidéliser",
     shortLabel: "Messages",
     description: "Envoie un message multi-canal, filtre tes clients, archive ceux qui ne suivent plus.",
     estimatedDurationMinutes: 3,
@@ -1057,7 +1057,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "client-app",
-    title: "L'app client (la vitrine)",
+    title: "💬 L'app client",
     shortLabel: "App client",
     description: "Active le partage, copie le lien, comprends comment ton client laisse un avis Google.",
     estimatedDurationMinutes: 2,
@@ -1222,7 +1222,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   },
   {
     id: "rituals",
-    title: "Les rituels du distri",
+    title: "💎 Piloter & grandir",
     shortLabel: "Rituels",
     description: "Installe l'app sur ton téléphone et apprends à suivre ton volume PV.",
     estimatedDurationMinutes: 2,
@@ -1380,162 +1380,10 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       ],
     },
   },
-  // ─── Sections Académie nouveaux outils (mai 2026) ──────────────────────
-  // Splitté en 4 sections distinctes pour rendre chaque feature visible
-  // dans le parcours Academy (au lieu d'1 seule section globale).
-  //
-  // 1. new-tools-2026 (overview)
-  // 2. cahier-de-bord-tour
-  // 3. simulateur-ebe-tour
-  // 4. liste-100-agenda-tour
-  //
-  // Chaque section : 1 step intro ciblé + quiz court 3-4 QCM + ancrage
-  // pédagogique. Validation = 75 % (3/4 ou 2/3).
-  {
-    id: "new-tools-2026",
-    title: "Tes nouveaux outils — vue d'ensemble",
-    shortLabel: "Nouveaux outils",
-    description:
-      "Découvre les 4 features livrées en mai 2026 : Hub Développement, Cahier de bord, Simulateur EBE, connexion Liste 100 → Agenda. Tour guidé + quiz overview.",
-    estimatedDurationMinutes: 5,
-    icon: "🛠️",
-    steps: [
-      {
-        id: "intro",
-        title: "4 nouveaux outils livrés en mai 2026 ✨",
-        body:
-          "La Base 360 a sorti 4 features majeures ce mois-ci. On va les survoler ensemble en 30 secondes, puis tu plongeras dans chacune dans les 3 sections suivantes. Le but de cette section : que tu saches OÙ trouver quoi, pas comment tout maîtriser.",
-        placement: "center",
-        route: "/developpement",
-        illustrationKey: "wave",
-      },
-      {
-        id: "hub-cahier",
-        target: '[data-tour-id="hub-card-cahier"]',
-        placement: "bottom",
-        route: "/developpement",
-        title: "📔 Le Cahier de bord",
-        body:
-          "Ton journal personnel : tracker 21 jours cobaye + liste 100 connaissances (méthode FRANK) + journal EBE post-bilan. Strictement perso, mais ton coach (admin) peut te l'ouvrir pour t'accompagner. Section dédiée juste après celle-ci.",
-      },
-      {
-        id: "hub-simulateur",
-        target: '[data-tour-id="hub-card-simulateur"]',
-        placement: "bottom",
-        route: "/developpement",
-        title: "🎯 Le Simulateur EBE",
-        body:
-          "Entraîne-toi à mener un EBE complet face à un faux prospect scripté. 6 étapes, 3 choix par étape, scoring sur 60 et debrief par étape. Idéal AVANT un vrai RDV pour te chauffer, ou APRÈS pour identifier tes erreurs récurrentes.",
-      },
-      {
-        // Remaniement 2026-06-10 : la card "Comment marche FLEX" a quitté le
-        // hub (doublon) — l'étape cible désormais la routine du jour et
-        // explique le pattern 📖 par page.
-        id: "hub-routine-du-jour",
-        target: '[data-tour-id="hub-card-routine-du-jour"]',
-        placement: "bottom",
-        route: "/developpement",
-        title: "☀️ Ma routine du jour",
-        body:
-          "Tes 5 actions de discipline quotidienne, score X/5, jamais bloquante. Et retiens le réflexe : sur chaque page outil (Routine, FLEX…), le bouton 📖 « Comment ça marche » ouvre la fiche explicative directement.",
-      },
-      {
-        id: "hub-nouveautes",
-        target: '[data-tour-id="hub-card-nouveautes"]',
-        placement: "bottom",
-        route: "/developpement",
-        title: "🆕 Et le journal des nouveautés",
-        body:
-          "À chaque feature livrée, une annonce apparaît dans la cloche du header (compteur unread) + une popup auto à la 1ère ouverture (skippable). La page Nouveautés liste tout l'historique. Aucune feature ne passe inaperçue.",
-        isLast: true,
-      },
-    ],
-    quiz: {
-      passThreshold: 0.75,
-      questions: [
-        {
-          id: "q1",
-          question:
-            "Tu cherches Academy, Formation, Cahier de bord et Simulateur EBE. Où vas-tu maintenant ?",
-          answers: [
-            "Dans Paramètres, onglet 'Apprentissage'",
-            "Sur Co-pilote, en scrollant tout en bas",
-            "Dans la sidebar, rubrique 'Mon développement'",
-            "Chaque outil a son entrée séparée dans la sidebar",
-          ],
-          correctIndex: 2,
-          wrongAnswerHints: {
-            0: "Pas dans Paramètres — Paramètres est pour ton compte/profil/RGPD.",
-            1: "Co-pilote est pour ton pilotage business du jour, pas pour apprendre.",
-            3: "C'était l'ancien comportement (11 items en sidebar). Depuis mai 2026, tout est centralisé dans 'Mon développement' (1 seul item).",
-          },
-          explanation:
-            "La sidebar suit la règle 'Option B' : 1 entrée 'Mon développement' qui regroupe Academy + Formation + Boîte à outils + Cahier + Simulateur + Nouveautés, rangés par sections. Les tutos FLEX et Routine sont accessibles via le bouton 📖 directement sur leurs pages.",
-        },
-        {
-          id: "q2",
-          question:
-            "Une nouvelle feature est livrée. Comment je suis informé ?",
-          answers: [
-            "Email automatique de Mélanie à toute l'équipe",
-            "Cloche dans le header avec compteur + popup auto à la 1ère ouverture + page /developpement/nouveautes",
-            "Message WhatsApp dans le groupe distri",
-            "Je dois suivre le compte LinkedIn La Base 360",
-          ],
-          correctIndex: 1,
-          wrongAnswerHints: {
-            0: "Pas d'email auto. Mel peut écrire si besoin mais ce n'est pas le canal officiel.",
-            2: "Le WhatsApp existe mais c'est pas le canal officiel — risque de scroll/oubli.",
-            3: "Pas dédié à l'app interne.",
-          },
-          explanation:
-            "Spotlights officiels : 🔔 cloche header avec unread, ✨ popup auto à la 1ère ouverture (max 1×/jour/annonce), 📰 page /developpement/nouveautes. Aucune feature ne passe inaperçue.",
-        },
-        {
-          id: "q3",
-          question:
-            "Les 4 features livrées en mai 2026 sont :",
-          answers: [
-            "Hub Développement, Bilan v3, Statistiques avancées, Notifications push",
-            "Refonte UI, Refonte sidebar, Refonte agenda, Refonte messagerie",
-            "Cahier coach, Cahier client, Cahier équipe, Cahier sponsor",
-            "Hub Développement, Cahier de bord, Simulateur EBE, Liste 100 → Agenda",
-          ],
-          correctIndex: 3,
-          wrongAnswerHints: {
-            0: "Pas Bilan v3 ni Stats avancées — d'autres chantiers, pas mai 2026.",
-            1: "La sidebar a bien été refondue (Option B) mais le reste n'a pas changé.",
-            2: "Il n'y a qu'UN cahier de bord — perso au distri.",
-          },
-          explanation:
-            "4 features mai 2026 : (1) Hub Développement consolide la sidebar, (2) Cahier de bord = 21j cobaye + liste 100 + journal EBE, (3) Simulateur EBE pour s'entraîner, (4) Liste 100 → Agenda automatique au passage 'RDV calé'.",
-        },
-        {
-          id: "q4",
-          question:
-            "Pour vraiment maîtriser ces 4 features, l'idéal c'est de :",
-          answers: [
-            "Faire les 3 sections Academy suivantes (Cahier, Simulateur, Liste 100→Agenda)",
-            "Lire 2-3 fois cette section overview et c'est bon",
-            "Attendre que mon coach m'explique tout en visio",
-            "Tester en production directement avec un vrai client",
-          ],
-          correctIndex: 0,
-          wrongAnswerHints: {
-            1: "L'overview ne suffit pas — chaque feature a ses subtilités.",
-            2: "Ton coach a aussi ses limites de temps. Autonomie d'abord.",
-            3: "Mauvaise idée — entraîne-toi sur le Simulateur d'abord.",
-          },
-          explanation:
-            "Plan recommandé : finir cette section overview, puis enchaîner les 3 sections suivantes (Cahier de bord, Simulateur EBE, Liste 100 → Agenda). 5-7 minutes par section, quiz de validation à la fin de chaque.",
-        },
-      ],
-    },
-  },
   // ─── Section : Cahier de bord (2026-05-04) ─────────────────────────────
   {
     id: "cahier-de-bord-tour",
-    title: "Le Cahier de bord — 21j cobaye + Liste 100 + Journal EBE",
+    title: "🧰 Outils perso",
     shortLabel: "Cahier de bord",
     description:
       "Ton journal personnel : tracker 21 jours cobaye, méthode FRANK pour ta liste 100, journal EBE post-bilan. Strictement perso (admin peut voir pour t'accompagner).",
@@ -1653,7 +1501,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   // ─── Section : Simulateur EBE (2026-05-04) ─────────────────────────────
   {
     id: "simulateur-ebe-tour",
-    title: "Le Simulateur EBE — entraîne-toi sans risque",
+    title: "🧰 Simulateur EBE",
     shortLabel: "Simulateur EBE",
     description:
       "Mène un EBE complet face à un faux prospect scripté : 6 étapes, 3 choix par étape, scoring sur 60 et debrief par étape. Idéal avant un vrai RDV.",
@@ -1773,7 +1621,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
   // ─── Section : Liste 100 → Agenda (2026-05-04) ──────────────────────────
   {
     id: "liste-100-agenda-tour",
-    title: "Connexion Liste 100 → Agenda",
+    title: "🎯 Liste 100 → Agenda",
     shortLabel: "Liste 100 → Agenda",
     description:
       "Comment ta liste 100 connaissances alimente automatiquement ton agenda dès qu'un contact passe en 'RDV calé'. Le funnel La Base 360 expliqué.",
