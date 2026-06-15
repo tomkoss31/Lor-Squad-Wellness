@@ -141,7 +141,7 @@ export function DistributorPortfolioPage() {
           {isPassive ? (
             <>
               <strong>Ce distri se connecte avec ses identifiants</strong> (email + password)
-              et voit une interface allégée : sa rentabilité, l'équipe, l'académie, la messagerie.
+              et voit une interface allégée : sa rentabilité, l'équipe, la formation, la messagerie.
               Pas d'accès aux fiches clients (par design).
             </>
           ) : (
