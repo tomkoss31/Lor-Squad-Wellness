@@ -967,6 +967,33 @@ export function NewAssessmentPage() {
     }));
   }
 
+  // Total du panier programme (= ProgrammeTicket : program.price + Σ addOns).
+  // Sert à pré-remplir l'encaissement Stripe sur la page « Bilan terminé »
+  // (chantier Encaissement distri 2026-06-15) — même formule que le ticket.
+  const programmeTotalEuros = (() => {
+    const chosen = getProgramById(form.programChoice);
+    const base = chosen?.price ?? 0;
+    const boosterAddOns = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).map(
+      (b) => ({ id: b.id, price: b.price }),
+    );
+    const knownIds = new Set([
+      ...addOnProducts.map((p) => p.id),
+      ...boosterAddOns.map((b) => b.id),
+    ]);
+    const catalogExtra = effectiveSelectedProductIds
+      .filter((id) => !knownIds.has(id))
+      .map((id) => pvProductCatalog.find((p) => p.id === id))
+      .filter((p): p is NonNullable<typeof p> => !!p)
+      .map((p) => ({ id: p.id, price: p.pricePublic }));
+    const allAddOns = [
+      ...addOnProducts.map((p) => ({ id: p.id, price: p.prixPublic })),
+      ...boosterAddOns,
+      ...catalogExtra,
+    ].filter((v, i, arr) => arr.findIndex((x) => x.id === v.id) === i);
+    const addOnsTotal = allAddOns.reduce((s, a) => s + a.price * getQty(a.id), 0);
+    return Math.round((base + addOnsTotal) * 100) / 100;
+  })();
+
 
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
@@ -1428,8 +1455,9 @@ export function NewAssessmentPage() {
             const accessKind = magicToken ? accessKindToUse : "recap";
             const tokenParam = encodeURIComponent(useToken);
             const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
+            const amountParam = programmeTotalEuros > 0 ? `&amount=${programmeTotalEuros}` : "";
             navigate(
-              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}&accessKind=${accessKind}`,
+              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}&accessKind=${accessKind}${amountParam}`,
             );
             return;
           }
