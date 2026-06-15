@@ -12,8 +12,11 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { useToast } from "../context/ToastContext";
+import { useAppContext } from "../context/AppContext";
+import { recordQuickSale } from "../services/supabaseService";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
@@ -46,6 +49,9 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
+  const { currentUser, reloadClients } = useAppContext();
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("Tous");
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -112,6 +118,39 @@ export function PanierPage() {
     void navigator.clipboard?.writeText(txt).then(() =>
       push({ tone: "success", title: "Récap copié", message: "Prêt à coller dans ta messagerie." }),
     );
+  }
+
+  // Valider la vente → crée un client léger (hors-app, non-VIP) + enregistre les
+  // produits → remonte direct dans la Rentabilité (marge + nombre de clients).
+  async function validateSale() {
+    if (!hasItems || saving) return;
+    if (!currentUser) {
+      push({ tone: "error", title: "Connecte-toi", message: "Session expirée, reconnecte-toi." });
+      return;
+    }
+    setSaving(true);
+    try {
+      await recordQuickSale({
+        clientName,
+        distributorId: currentUser.id,
+        distributorName: currentUser.name,
+        lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
+      });
+      await reloadClients();
+      push({
+        tone: "success",
+        title: "Vente enregistrée 🎉",
+        message: clientName.trim()
+          ? `${clientName.trim()} ajouté·e à ta rentabilité.`
+          : "Ajoutée à ta rentabilité.",
+      });
+      reset();
+      navigate("/rentabilite");
+    } catch (e) {
+      push({ tone: "error", title: "Erreur", message: e instanceof Error ? e.message : "Réessaie." });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -381,12 +420,38 @@ export function PanierPage() {
                   ) : null}
                 </div>
 
-                {/* Actions */}
-                <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                  <button type="button" onClick={copyRecap} style={{ flex: 1, padding: 13, borderRadius: 14, border: "none", background: "linear-gradient(100deg,var(--ls-teal),var(--ls-purple))", color: "#fff", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5, cursor: "pointer" }}>
+                {/* Action principale : enregistrer la vente → rentabilité */}
+                <button
+                  type="button"
+                  onClick={() => void validateSale()}
+                  disabled={saving}
+                  style={{
+                    width: "100%",
+                    marginTop: 16,
+                    padding: 14,
+                    borderRadius: 14,
+                    border: "none",
+                    background: "var(--ls-gold)",
+                    color: "#1a1407",
+                    fontFamily: "Syne, sans-serif",
+                    fontWeight: 800,
+                    fontSize: 14.5,
+                    cursor: saving ? "wait" : "pointer",
+                    opacity: saving ? 0.65 : 1,
+                  }}
+                >
+                  {saving ? "Enregistrement…" : "✅ Valider la vente → Rentabilité"}
+                </button>
+                <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)", textAlign: "center", marginTop: 7, lineHeight: 1.45 }}>
+                  Crée le client (hors-app) et ajoute la vente à ta rentabilité.
+                </div>
+
+                {/* Actions secondaires */}
+                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                  <button type="button" onClick={copyRecap} style={{ flex: 1, padding: 12, borderRadius: 14, border: "none", background: "linear-gradient(100deg,var(--ls-teal),var(--ls-purple))", color: "#fff", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                     📋 Copier le récap
                   </button>
-                  <button type="button" onClick={reset} style={{ padding: "13px 16px", borderRadius: 14, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
+                  <button type="button" onClick={reset} style={{ padding: "12px 16px", borderRadius: 14, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
                     Réinitialiser
                   </button>
                 </div>
