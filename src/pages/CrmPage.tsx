@@ -77,8 +77,8 @@ export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, refetch, updateStatus, setDormant, deleteLead } = useCrmLeads();
-  // Vue Actifs (kanban) vs Endormis (archive — bibliothèque dormante, 2026-06-14).
-  const [view, setView] = useState<"active" | "archived">("active");
+  // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
+  const [view, setView] = useState<"active" | "historique" | "archived">("active");
   const isAdmin = currentUser?.role === "admin";
 
   // ── Filtre par ligne (2026-06-15) : par défaut chacun voit SES leads. Un
@@ -161,8 +161,18 @@ export function CrmPage() {
   const filtered = useMemo(
     () =>
       leads.filter((l) => {
-        // Vue : Actifs = on masque les endormis ; Endormis = on ne montre qu'eux.
-        if (view === "archived" ? !l.dormant : !!l.dormant) return false;
+        // Répartition par vue :
+        //   - Endormis  → uniquement les archivés (dormant)
+        //   - Historique→ non-dormant + statut clos (converti / perdu)
+        //   - Actifs    → non-dormant + pipeline ouvert (nouveau/contacté/qualifié)
+        const closed = l.status === "converted" || l.status === "lost";
+        if (l.dormant) {
+          if (view !== "archived") return false;
+        } else {
+          if (view === "archived") return false;
+          if (view === "historique" && !closed) return false;
+          if (view === "active" && closed) return false;
+        }
         // Périmètre par ligne. Sans droit d'équipe → toujours "moi".
         const effScope = canFilterTeam ? scope : "me";
         const owner = l.ownerUserId;
@@ -208,6 +218,10 @@ export function CrmPage() {
     return by;
   }, [leads, scope, canFilterTeam, currentUser?.id, line1Ids, line2Ids]);
   const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
+  const historiqueCount = useMemo(
+    () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
+    [leads],
+  );
 
   const sourcesPresent = useMemo(() => {
     const set = new Set<CrmSource>();
@@ -486,10 +500,11 @@ export function CrmPage() {
         </div>
       ) : null}
 
-      {/* Toggle Actifs / Endormis (archive — bibliothèque dormante) */}
+      {/* Toggle Actifs / Historique / Endormis */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         {([
           { id: "active" as const, label: "📋 Actifs" },
+          { id: "historique" as const, label: `📜 Historique${historiqueCount ? ` (${historiqueCount})` : ""}` },
           { id: "archived" as const, label: `💤 Endormis${dormantCount ? ` (${dormantCount})` : ""}` },
         ]).map((t) => (
           <button
@@ -520,6 +535,8 @@ export function CrmPage() {
         <div style={emptyState}>
           {view === "archived"
             ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
+            : view === "historique"
+            ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
             : leads.length === 0
             ? "Aucun lead pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir le pipeline 🌱"
             : "Aucun lead ne correspond aux filtres."}
@@ -544,7 +561,10 @@ export function CrmPage() {
         </div>
       ) : (
         <div style={columnsWrap}>
-          {STATUS_ORDER.map((status) => {
+          {(view === "historique"
+            ? (["converted", "lost"] as CrmStatus[])
+            : (["new", "contacted", "qualified"] as CrmStatus[])
+          ).map((status) => {
             const col = filtered.filter((l) => l.status === status);
             const isDragOver = dragOverStatus === status;
             return (
