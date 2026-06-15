@@ -12,6 +12,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { PaymentSettingsCard } from "../components/settings/PaymentSettingsCard";
+import { ManualPaymentLinkCard } from "../components/settings/ManualPaymentLinkCard";
 
 const STEPS = [
   {
@@ -90,6 +91,9 @@ export function EncaissementPage() {
 
       {/* Config (carte autonome) */}
       <PaymentSettingsCard />
+
+      {/* Génération de lien manuel (montant libre, hors bilan) */}
+      <ManualPaymentLinkCard />
 
       <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 18, lineHeight: 1.5, maxWidth: 560 }}>
         💡 Stripe est gratuit à l&apos;ouverture : tu ne payes qu&apos;une petite commission Stripe par
