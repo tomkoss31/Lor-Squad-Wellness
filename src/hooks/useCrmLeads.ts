@@ -58,6 +58,10 @@ export interface CrmLead {
   parrainClientId: string | null;
   /** Info complémentaire courte (ex. relation famille/travail pour intentions). */
   extra: string | null;
+  /** Propriétaire du lead (distributeur/coach) — pour le filtre par ligne.
+      online_bilans.coach_user_id · prospect_leads.referrer_user_id ·
+      referrals/intentions → distributeur du client parrain. Null = non attribué. */
+  ownerUserId: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
   relanceDue: boolean;
   /** Lead « endormi » (archivé) — sorti du flux actif, zéro relance. */
@@ -217,7 +221,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -225,7 +229,7 @@ export function useCrmLeads() {
         sb
           // prospect_leads n'a pas de colonne email (uniquement phone).
           .from("prospect_leads")
-          .select("id, first_name, phone, city, source, status, metadata, created_at, notes")
+          .select("id, first_name, phone, city, source, status, metadata, created_at, notes, referrer_user_id")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -249,20 +253,29 @@ export function useCrmLeads() {
       // Résolution des parrains (nom + téléphone) pour les intentions —
       // 1 seule requête clients sur les ids référents.
       const intentionRows = (intentionsRes.data ?? []) as IntentionRow[];
+      // Ids des clients parrains (intentions ET recos) → résolution nom/tel +
+      // distributeur (= propriétaire du lead, pour le filtre par ligne).
       const parrainIds = [
-        ...new Set(intentionRows.map((r) => r.referrer_client_id).filter(Boolean)),
-      ] as string[];
+        ...new Set(
+          [
+            ...intentionRows.map((r) => r.referrer_client_id),
+            ...(referralsRes.data ?? []).map((r) => r.from_client_id as string | null),
+          ].filter(Boolean) as string[],
+        ),
+      ];
       const parrains = new Map<string, { name: string; phone: string | null }>();
+      const clientDistributor = new Map<string, string | null>();
       if (parrainIds.length > 0) {
         const { data: parrainData } = await sb
           .from("clients")
-          .select("id, first_name, last_name, phone")
+          .select("id, first_name, last_name, phone, distributor_id")
           .in("id", parrainIds);
         for (const c of parrainData ?? []) {
           parrains.set(c.id as string, {
             name: `${(c.first_name as string) ?? ""} ${(c.last_name as string) ?? ""}`.trim(),
             phone: (c.phone as string | null) ?? null,
           });
+          clientDistributor.set(c.id as string, (c.distributor_id as string | null) ?? null);
         }
       }
 
@@ -288,6 +301,7 @@ export function useCrmLeads() {
           parrainPhone: null,
           parrainClientId: null,
           extra: null,
+          ownerUserId: (row.coach_user_id as string | null) ?? null,
           relanceDue: Boolean(
             row.relance_due_at &&
               !row.relance_done_at &&
@@ -319,6 +333,7 @@ export function useCrmLeads() {
           parrainClientId:
             typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
           extra: null,
+          ownerUserId: (row.referrer_user_id as string | null) ?? null,
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at as string,
@@ -341,6 +356,9 @@ export function useCrmLeads() {
           parrainPhone: null,
           parrainClientId: (row.from_client_id as string | null) ?? null,
           extra: null,
+          ownerUserId: row.from_client_id
+            ? clientDistributor.get(row.from_client_id as string) ?? null
+            : null,
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at as string,
@@ -366,6 +384,9 @@ export function useCrmLeads() {
           parrainPhone: parrain?.phone ?? null,
           parrainClientId: row.referrer_client_id,
           extra: row.relationship ? RELATIONSHIP_LABELS[row.relationship] ?? row.relationship : null,
+          ownerUserId: row.referrer_client_id
+            ? clientDistributor.get(row.referrer_client_id) ?? null
+            : null,
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at,

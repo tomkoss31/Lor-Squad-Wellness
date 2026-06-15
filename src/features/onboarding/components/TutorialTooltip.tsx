@@ -90,9 +90,32 @@ export function TutorialTooltip({
           transform: translateY(0);
           box-shadow: 0 2px 6px rgba(186,117,23,0.25);
         }
+        /* iOS/mobile fix (2026-06-15) : sur petit écran, la bulle est TOUJOURS
+           un panneau bas pleine largeur, lisible, avec les boutons à l'écran —
+           peu importe le calcul de position JS (window.innerWidth peut être
+           faussé sur iOS Safari et placer la bulle hors écran). Le CSS utilise
+           la vraie largeur visuelle, donc c'est fiable. */
+        @media (max-width: 700px) {
+          .ls-tutorial-dialog {
+            left: 12px !important;
+            right: 12px !important;
+            bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+            top: auto !important;
+            transform: none !important;
+            max-width: none !important;
+            width: auto !important;
+            max-height: 82dvh !important;
+            animation: ls-tooltip-fade-in-mobile 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+          }
+        }
+        @keyframes ls-tooltip-fade-in-mobile {
+          0% { opacity: 0; transform: translate3d(0, 10px, 0); }
+          100% { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
       `}</style>
     <div
       ref={dialogRef}
+      className="ls-tutorial-dialog"
       role="dialog"
       aria-modal="true"
       aria-labelledby="ls-tutorial-title"
@@ -348,10 +371,13 @@ function computePosition(
     return {
       left: margin,
       right: margin,
-      bottom: margin,
+      // iOS fix (2026-06-15) : on remonte au-dessus de la safe-area (barre
+      // Safari + home indicator) sinon le bouton "Suivant" tombe sous la
+      // zone tactile et devient intapable.
+      bottom: `calc(${margin}px + env(safe-area-inset-bottom, 0px))`,
       top: "auto",
       width: "auto",
-      maxHeight: "65vh",
+      maxHeight: "calc(80dvh - env(safe-area-inset-bottom, 0px))",
     };
   }
 

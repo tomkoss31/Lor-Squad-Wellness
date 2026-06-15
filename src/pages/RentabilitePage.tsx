@@ -589,6 +589,8 @@ export function RentabilitePage() {
           downlineOverride={ownDownlineOverride}
           manualOverride={ownManualOverride}
           overridePerMember={ownOverridePerMember}
+          editable
+          onEdited={refetchOwn}
         />
       )}
       {selectedMemberId && selectedData && (
@@ -599,6 +601,8 @@ export function RentabilitePage() {
           downlineOverride={selectedDownlineOverride}
           manualOverride={0}
           overridePerMember={selectedSummary.overridePerMember}
+          editable
+          onEdited={selectedSummary.refetch}
         />
       )}
 
