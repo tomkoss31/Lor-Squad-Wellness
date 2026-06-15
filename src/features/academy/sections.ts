@@ -1,7 +1,6 @@
-// Chantier Academy Phase 1 (2026-04-26).
-// Definition statique des 8 sections du parcours La Base 360 Academy.
-// Les `steps` sont vides en Phase 1 — ils seront remplis section par section
-// en Phase 2 (un chantier par section).
+// Chantier Academy (2026-04-26 ; maj contenu 2026-06-15).
+// Définition statique des sections du parcours La Base 360 Academy
+// (ACADEMY_SECTIONS) — steps + quiz remplis.
 
 import type { TutorialStep } from "../onboarding/types";
 /**
@@ -241,7 +240,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "La Base 360 en 60 secondes, {firstName}",
-        body: "Tour rapide des 8 sections principales de la sidebar + le CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
+        body: "Tour rapide des sections principales de la sidebar + le CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
         placement: "center",
         illustrationKey: "ring-progress",
       },
@@ -257,8 +256,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "flex",
         target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "FLEX — ton moteur 5-3-1 (dans Outils)",
-        body: "Ton plan d'action quotidien calibré sur tes objectifs : combien de personnes inviter, combien de conversations à tenir, combien de bilans à caler, combien de closings viser. Tu fais ton check-in quotidien (30 sec) et tu vois en couleurs si tu es dans les clous. 👉 Tu y accèdes depuis le hub « Outils » (déroulé de la sidebar ou page). Pour comprendre la formule : Mon développement → Comment marche FLEX.",
+        title: "FLEX — ton moteur 5-3-1 (dans Mon business)",
+        body: "Ton plan d'action quotidien calibré sur tes objectifs : combien de personnes inviter, combien de conversations à tenir, combien de bilans à caler, combien de closings viser. Tu fais ton check-in quotidien (30 sec) et tu vois en couleurs si tu es dans les clous. 👉 Tu y accèdes depuis le hub « Mon business » (déroulé de la sidebar ou page). Pour comprendre la formule : Mon développement → Comment marche FLEX.",
         manualAdvance: true,
       },
       {
@@ -289,8 +288,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "pv",
         target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "Suivi PV — ton volume Herbalife (dans Outils)",
-        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. 👉 Range avec FLEX dans le hub « Outils ». L'alerte produits en retard reste affichée sur le Co-pilote.",
+        title: "Suivi PV — ton volume Herbalife (dans Mon business)",
+        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. 👉 Range avec FLEX dans le hub « Mon business ». L'alerte produits en retard reste affichée sur le Co-pilote.",
         manualAdvance: true,
         crossRefs: [
           { label: "Comment lire la jauge PV", sectionId: "rituals" },
@@ -366,15 +365,15 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         },
         {
           id: "q4",
-          question: "L'onglet Messagerie a combien de sous-onglets pour organiser les conversations ?",
-          answers: ["1 (Toutes)", "2 (Toutes / Non-lues)", "3 (Inbox / À traiter / Archive)", "5"],
+          question: "La Messagerie sépare les conversations en combien de pills (types de demandes) ?",
+          answers: ["1 (Tout mélangé)", "2 (Lues / Non-lues)", "3 (Demandes clients / Demandes produits / Recommandations)", "5"],
           correctIndex: 2,
           wrongAnswerHints: {
-            0: "Trop simple — au-delà de 10 conversations on noie l'info.",
-            1: "Proche, mais La Base 360 sépare en plus les conversations à traiter (besoin d'une réponse).",
-            3: "Trop fragmenté, on n'a pas besoin de 5 onglets.",
+            0: "Trop simple — on noierait les commandes et les recos dans la masse.",
+            1: "Non — le tri est par TYPE de demande, pas par statut de lecture.",
+            3: "Trop fragmenté, 3 types suffisent.",
           },
-          explanation: "3 sous-onglets : Inbox (tout) / À traiter (où le client attend ta réponse) / Archive (terminé). Le badge sur l'onglet montre le nombre de non-lues.",
+          explanation: "3 pills : Demandes clients (questions, RDV, ressentis) / Demandes produits (commandes en attente) / Recommandations (un client te recommande). Chaque pill affiche son compteur de non-lus.",
         },
         {
           id: "q5",
@@ -395,7 +394,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         },
         {
           id: "q6",
-          question: "L'onglet FLEX dans la sidebar, c'est pour quoi faire ?",
+          question: "FLEX (dans le hub Mon business), c'est pour quoi faire ?",
           answers: [
             "Suivre mon plan d'action quotidien (cibles invitations / conversations / bilans / closings)",
             "Configurer mes notifications push",
@@ -981,20 +980,20 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         },
         {
           id: "q2",
-          question: "Sur l'onglet À traiter de la messagerie, qu'est-ce qui apparaît ?",
+          question: "Dans la Messagerie, où atterrissent les commandes de produits en attente ?",
           answers: [
-            "Toutes les conversations sans exception",
-            "Uniquement les conversations où le client attend ta réponse",
-            "Uniquement les conversations archivées",
-            "Tes messages envoyés",
+            "Dans « Demandes clients »",
+            "Dans « Demandes produits »",
+            "Dans « Recommandations »",
+            "Elles n'apparaissent pas dans la Messagerie",
           ],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Trop large — c'est l'onglet Inbox qui montre tout.",
-            2: "L'archive est dans son propre onglet, pas À traiter.",
-            3: "Tes envois sont dans Inbox aussi, mais marqués « lus ».",
+            0: "Non — « Demandes clients » = questions, RDV, ressentis.",
+            2: "« Recommandations » = un client qui te recommande à un proche.",
+            3: "Si — elles ont leur propre pill dédiée.",
           },
-          explanation: "L'onglet À traiter filtre les conversations où c'est ton tour de répondre (dernier message = client, non lu par toi). Vue prioritaire pour ne jamais laisser un client en attente.",
+          explanation: "La pill « Demandes produits » regroupe les commandes en attente, séparées des questions (Demandes clients) et des recos (Recommandations) — tu traites chaque type sans rien mélanger.",
         },
         {
           id: "q3",
@@ -1260,7 +1259,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "pv-detail",
         target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
-        title: "Suivi PV (dans Outils) — le détail produit par produit",
+        title: "Suivi PV (dans Mon business) — le détail produit par produit",
         body: "Pour creuser : historique mensuel, projection sur la fin du mois (en fonction du rythme actuel), liste des produits actifs par client (durée de stock restante, dates de relance auto). Si un client n'a pas reçu sa commande renouvelée à temps, il apparaît en alerte rouge — c'est ton signal pour le contacter AVANT qu'il décroche. C'est aussi cet onglet qui te dit quels produits tournent le mieux dans ta base : si tu vois 80 % de Formula 1 et 0 % de boosters sport, tu sais que tu rates un upsell évident sur tes clients sportifs. La régularité PV se construit ici, pas dans la prospection — fidéliser un client coûte 5× moins que d'en trouver un nouveau.",
         manualAdvance: true,
       },

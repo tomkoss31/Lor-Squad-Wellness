@@ -72,7 +72,7 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
     sectionId: "app-tour",
     pageTitle: "L'app en 60 secondes",
     subtitle:
-      "Co-pilote, Agenda, Messagerie, Clients, Suivi PV : 5 onglets qui couvrent 80 % de ton activité quotidienne.",
+      "Co-pilote, Dossiers clients, Agenda, Messagerie, Mon business, Mon développement : la sidebar couvre 80 % de ton activité quotidienne.",
     icon: "🧭",
     takeaways: [
       {
@@ -89,9 +89,9 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
       },
       {
         emoji: "💬",
-        title: "Messagerie : 3 sous-onglets",
+        title: "Messagerie : 3 pills par type de demande",
         detail:
-          "Inbox (tout) / À traiter (où le client attend ta réponse) / Archive. Badge de non-lues sur l'onglet.",
+          "Demandes clients (questions, RDV, ressentis) / Demandes produits (commandes) / Recommandations. Compteur de non-lus par pill.",
       },
       {
         emoji: "✨",
