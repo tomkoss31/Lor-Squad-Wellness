@@ -91,9 +91,38 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
   const { clients: dormants } = useDormantClients(currentUser?.id ?? null);
   const { totalMargin, projection } = useRentabilitySummary(currentUser?.id ?? null);
 
-  const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  // Persistance par jour (fix 2026-06-15) : les actions traitées/reportées
+  // restaient en mémoire locale uniquement → tout revenait « à faire » au
+  // refresh. On persiste en localStorage, clé datée → reset auto le lendemain.
+  const dayKey = new Date().toISOString().slice(0, 10);
+  const STORAGE_KEY = `pdj-status-${dayKey}`;
+  const [statuses, setStatuses] = useState<Record<string, Status>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, Status>) : {};
+    } catch {
+      return {};
+    }
+  });
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   useEffect(() => () => { Object.values(timers.current).forEach(clearTimeout); }, []);
+
+  // Sauvegarde : on ne persiste que les états stables (done / later) ;
+  // « completing » (animation) est enregistré comme « done ».
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const persist: Record<string, Status> = {};
+      for (const [k, v] of Object.entries(statuses)) {
+        if (v === "done" || v === "completing") persist[k] = "done";
+        else if (v === "later") persist[k] = "later";
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persist));
+    } catch {
+      /* quota / mode privé : non bloquant */
+    }
+  }, [statuses, STORAGE_KEY]);
 
   const setStatus = (id: string, s: Status) => setStatuses((prev) => ({ ...prev, [id]: s }));
   const complete = (id: string) => {
@@ -259,7 +288,18 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                               <span style={{ fontSize: 9.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", fontWeight: 600, color: "#fff", background: "linear-gradient(135deg,#10B981,#06B6D4,#8B5CF6)", padding: "3px 8px", borderRadius: 6 }}>MAINTENANT</span>
                             ) : null}
                           </div>
-                          <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)", marginTop: 5 }}>{t.name}</div>
+                          <div
+                            onClick={() => t.kind === "relance" ? navigate(`/clients/${t.id}?tab=actions`) : navigate("/messages")}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === "Enter") { t.kind === "relance" ? navigate(`/clients/${t.id}?tab=actions`) : navigate("/messages"); } }}
+                            title={t.kind === "relance" ? "Ouvrir la fiche client" : "Ouvrir la messagerie"}
+                            style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)", marginTop: 5, cursor: "pointer", textDecoration: "underline", textDecorationColor: "transparent", textUnderlineOffset: 3, transition: "text-decoration-color .15s" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.textDecorationColor = "currentColor"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
+                          >
+                            {t.name}
+                          </div>
                           <div style={{ fontSize: 13, color: "var(--pdj-text-sec)", marginTop: 2 }}>{t.sub}</div>
                         </div>
                       </div>
