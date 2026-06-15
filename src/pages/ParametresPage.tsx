@@ -19,6 +19,7 @@ import { AdminTab, type AdminSection } from "../components/settings/AdminTab";
 import { VipProgramTab } from "../components/settings/VipProgramTab";
 import { LegalTab } from "../components/settings/LegalTab";
 import { NotificationsTab } from "../components/settings/NotificationsTab";
+import { NoalyUsageCard } from "../components/settings/NoalyUsageCard";
 
 // Leads → CRM (chantier 2026-06-13) : l'onglet « Leads » des Paramètres
 // faisait doublon avec /crm (qui agrège prospect_leads + online_bilans + recos).
@@ -28,7 +29,7 @@ import { NotificationsTab } from "../components/settings/NotificationsTab";
 // sous un seul onglet « Admin » (sous-onglets internes, cf. AdminTab). On passe
 // de 8 à 6 onglets. Les anciens liens ?tab=transferts|stats|debug restent
 // valides (mappés vers Admin + le bon sous-onglet).
-type TabKey = "profil" | "vip" | "notifs" | "legal" | "equipe" | "admin";
+type TabKey = "profil" | "vip" | "notifs" | "noaly" | "legal" | "equipe" | "admin";
 
 const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
@@ -37,6 +38,9 @@ const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: bo
   { key: "vip", label: "Programme VIP", icon: "⭐" },
   // Notif push V2 (2026-04-30) : tous users peuvent personnaliser
   { key: "notifs", label: "Notifications", icon: "🔔" },
+  // Conso Noaly (2026-06-15) : compteur tokens + coût IA, visible par tous
+  // (chacun voit la sienne, l'admin voit aussi via la RLS).
+  { key: "noaly", label: "Noaly", icon: "✨" },
   // RGPD Phase 1 (2026-04-30) : tous users peuvent voir
   { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
@@ -135,6 +139,11 @@ export function ParametresPage() {
       {tab === "profil" ? <ProfilTab /> : null}
       {tab === "vip" ? <VipProgramTab /> : null}
       {tab === "notifs" ? <NotificationsTab /> : null}
+      {tab === "noaly" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <NoalyUsageCard />
+        </div>
+      ) : null}
       {tab === "legal" ? <LegalTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
       {tab === "admin" ? <AdminTab initialSection={adminSection} /> : null}
