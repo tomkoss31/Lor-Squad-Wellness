@@ -497,9 +497,74 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Page remerciement = effet wahou",
         body: "Une fois validé, tu arrives sur une page plein écran : QR code géant à scanner + boutons WhatsApp / SMS / Telegram + parrainage + lien Avis Google. Le client a son app personnelle en 1 scan, son programme s'y affiche, ses RDV aussi. Astuce : bascule en mode sombre juste avant cette page, le QR ressort spectaculaire.",
         placement: "center",
+        illustrationKey: "mockup-thank-you",
+      },
+      {
+        id: "prog-intro",
+        title: "Le Programme — recommandation auto",
+        body: "La Base 360 génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
+        placement: "center",
+        illustrationKey: "mockup-program-card",
+      },
+      {
+        id: "prog-open-program",
+        target: '[data-tour-id="nav-clients"]',
+        placement: "bottom",
+        title: "Étape 1 — ouvre une fiche client",
+        body: "Depuis Dossiers clients, ouvre n'importe quelle fiche pour voir son programme actuel. La même page contient bilan, body scan, produits actifs, RDV, conseils sport et messagerie.",
+        manualAdvance: true,
+      },
+      {
+        id: "prog-recommendations",
+        target: '[data-tour-id="program-recommendations"]',
+        placement: "top",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "Le bloc Programme actuel",
+        body: "Sur la fiche client, ce bloc liste les produits que le client utilise actuellement (avec quantités, durée de stock, points volume). Tu peux ajouter / retirer / modifier directement. Pour les sportifs, une section « Sport Summary » apparaît avec 3 cards : Besoins (protéines, eau, sommeil), Plan jour (sport vs repos) et Programme + boosters + lien WhatsApp pré-rempli.",
+        manualAdvance: true,
+      },
+      {
+        id: "prog-boosters",
+        target: '[data-tour-id="program-sport-summary"]',
+        placement: "bottom",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "Sport Summary — 3 cards live",
+        body: "Pour les clients en objectif sport, ce bloc apparaît automatiquement avec 3 cards : Besoins (protéines/eau/sommeil calculés sur son poids), Plan jour (les bons produits avant/après séance), Boosters recommandés (CR7, créatine, etc. selon sous-objectif). Tu peux ajouter les boosters cliquables au programme depuis le bilan en 1 clic.",
+        manualAdvance: true,
+      },
+      {
+        id: "prog-alerts",
+        title: "Détection auto de 6 alertes sport",
+        body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
+        placement: "center",
+        illustrationKey: "mockup-sport-alerts",
+        crossRefs: [
+          { label: "Profil sport saisi en bilan", sectionId: "first-bilan" },
+        ],
+      },
+      {
+        id: "prog-recommended",
+        target: '[data-tour-id="program-recommended-not-taken"]',
+        placement: "top",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "Recommandés non pris",
+        body: "La Base 360 détecte automatiquement les produits recommandés par son objectif que le client n'a PAS encore. Bouton WhatsApp gold avec message pré-rempli pour les proposer en 1 clic. C'est ton outil d'upsell auto — basé sur les vrais besoins du client, pas du push commercial.",
+        manualAdvance: true,
+      },
+      {
+        id: "prog-generate",
+        title: "Récap final — page remerciement",
+        body: "À la fin du bilan, génération automatique d'une page plein écran avec : QR code géant, message WhatsApp pré-rempli (« Voici ton programme + lien d'accès »), boutons SMS, Telegram, parrainage, et lien Avis Google. Tu peux aussi re-éditer un bilan plus tard depuis la fiche client (mode édition complet, pas un nouveau bilan).",
+        placement: "center",
+      },
+      {
+        id: "prog-outro",
+        title: "Programme = différenciation",
+        body: "Ton client reçoit un programme nominatif, calibré sur ses chiffres réels, avec ses produits, ses ressentis et son plan jour. C'est ça que tes concurrents distri n'ont pas. C'est ça qui fidélise.",
+        placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
-        illustrationKey: "mockup-thank-you",
+        illustrationKey: "sparkles",
       },
     ],
     quiz: {
@@ -585,90 +650,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           },
           explanation: "Après validation, ouverture automatique de la page « Bilan terminé » avec QR code + boutons WhatsApp/SMS/Telegram + lien parrainage. C'est ton moment WAOUH en RDV.",
         },
-      ],
-    },
-  },
-  {
-    id: "program",
-    title: "🥗 Programme, panier & ticket PV",
-    shortLabel: "Programme",
-    description: "Recommande des produits, ajoute des boosters, génère le récap à envoyer au client.",
-    estimatedDurationMinutes: 3,
-    icon: "🛒",
-    steps: [
-      {
-        id: "intro",
-        title: "Le Programme — recommandation auto",
-        body: "La Base 360 génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
-        placement: "center",
-        illustrationKey: "mockup-program-card",
-      },
-      {
-        id: "open-program",
-        target: '[data-tour-id="nav-clients"]',
-        placement: "bottom",
-        title: "Étape 1 — ouvre une fiche client",
-        body: "Depuis Dossiers clients, ouvre n'importe quelle fiche pour voir son programme actuel. La même page contient bilan, body scan, produits actifs, RDV, conseils sport et messagerie.",
-        manualAdvance: true,
-      },
-      {
-        id: "recommendations",
-        target: '[data-tour-id="program-recommendations"]',
-        placement: "top",
-        route: DEMO_FICHE_CLIENT_ROUTE,
-        title: "Le bloc Programme actuel",
-        body: "Sur la fiche client, ce bloc liste les produits que le client utilise actuellement (avec quantités, durée de stock, points volume). Tu peux ajouter / retirer / modifier directement. Pour les sportifs, une section « Sport Summary » apparaît avec 3 cards : Besoins (protéines, eau, sommeil), Plan jour (sport vs repos) et Programme + boosters + lien WhatsApp pré-rempli.",
-        manualAdvance: true,
-      },
-      {
-        id: "boosters",
-        target: '[data-tour-id="program-sport-summary"]',
-        placement: "bottom",
-        route: DEMO_FICHE_CLIENT_ROUTE,
-        title: "Sport Summary — 3 cards live",
-        body: "Pour les clients en objectif sport, ce bloc apparaît automatiquement avec 3 cards : Besoins (protéines/eau/sommeil calculés sur son poids), Plan jour (les bons produits avant/après séance), Boosters recommandés (CR7, créatine, etc. selon sous-objectif). Tu peux ajouter les boosters cliquables au programme depuis le bilan en 1 clic.",
-        manualAdvance: true,
-      },
-      {
-        id: "alerts",
-        title: "Détection auto de 6 alertes sport",
-        body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
-        placement: "center",
-        illustrationKey: "mockup-sport-alerts",
-        crossRefs: [
-          { label: "Profil sport saisi en bilan", sectionId: "first-bilan" },
-        ],
-      },
-      {
-        id: "recommended",
-        target: '[data-tour-id="program-recommended-not-taken"]',
-        placement: "top",
-        route: DEMO_FICHE_CLIENT_ROUTE,
-        title: "Recommandés non pris",
-        body: "La Base 360 détecte automatiquement les produits recommandés par son objectif que le client n'a PAS encore. Bouton WhatsApp gold avec message pré-rempli pour les proposer en 1 clic. C'est ton outil d'upsell auto — basé sur les vrais besoins du client, pas du push commercial.",
-        manualAdvance: true,
-      },
-      {
-        id: "generate",
-        title: "Récap final — page remerciement",
-        body: "À la fin du bilan, génération automatique d'une page plein écran avec : QR code géant, message WhatsApp pré-rempli (« Voici ton programme + lien d'accès »), boutons SMS, Telegram, parrainage, et lien Avis Google. Tu peux aussi re-éditer un bilan plus tard depuis la fiche client (mode édition complet, pas un nouveau bilan).",
-        placement: "center",
-      },
-      {
-        id: "outro",
-        title: "Programme = différenciation",
-        body: "Ton client reçoit un programme nominatif, calibré sur ses chiffres réels, avec ses produits, ses ressentis et son plan jour. C'est ça que tes concurrents distri n'ont pas. C'est ça qui fidélise.",
-        placement: "center",
-        isLast: true,
-        nextLabel: "Section terminée",
-        illustrationKey: "sparkles",
-      },
-    ],
-    quiz: {
-      passThreshold: 0.8,
-      questions: [
         {
-          id: "q1",
+          id: "prog-q1",
           question: "Combien d'alertes Sport peuvent bloquer la validation du bilan ?",
           answers: ["3 alertes", "4 alertes", "6 alertes", "8 alertes"],
           correctIndex: 2,
@@ -680,7 +663,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "La Base 360 détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente. Acquittement obligatoire avant validation.",
         },
         {
-          id: "q2",
+          id: "prog-q2",
           question: "Pour un client en prise de masse, quel booster recommander en priorité ?",
           answers: ["Aloe Vera", "Formula 1 Vanille", "Rebuild Strength", "Liftoff"],
           correctIndex: 2,
@@ -692,7 +675,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Rebuild Strength est conçu pour la récupération musculaire et la prise de masse. À prendre dans les 30 min après l'entraînement, mélangé à de l'eau ou du lait.",
         },
         {
-          id: "q3",
+          id: "prog-q3",
           question: "Quelle est la différence entre les boosters proposés et les produits standards dans le ticket bilan ?",
           answers: [
             "Aucune, tous sont au même tarif",
@@ -709,7 +692,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Les boosters apparaissent avec une étoile ⭐ + fond teal pour signaler que la recommandation vient des règles métier (sport, hydratation, etc.). Ça t'aide à les expliquer au client : « voilà pourquoi je te le propose ».",
         },
         {
-          id: "q4",
+          id: "prog-q4",
           question: "Le ticket du jour à droite du Programme affiche quoi en temps réel ?",
           answers: [
             "Juste le total prix",
@@ -726,7 +709,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Le ticket affiche prix total ET PV total qui s'actualisent à chaque ajout / retrait. Indispensable pour suivre ton volume PV mensuel en direct pendant le RDV.",
         },
         {
-          id: "q5",
+          id: "prog-q5",
           question: "Sur un produit retenu, tu peux ajuster quoi avant de générer le programme ?",
           answers: [
             "Le prix unitaire",
@@ -798,9 +781,53 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le rythme sous contrôle",
         body: "Tu sais caler, exporter, suivre, relancer. Plus aucun client ne passe entre les mailles, plus aucun RDV oublié. C'est ce qui transforme un coach occupé en un coach pro.",
         placement: "center",
-        isLast: true,
-        nextLabel: "Section terminée",
         illustrationKey: "rocket",
+      },
+      {
+        id: "liste-intro",
+        title: "Liste 100 et Agenda : un seul funnel 🔗",
+        body:
+          "Avant : ta liste 100 et ton agenda étaient 2 silos séparés. Tu devais re-saisir le nom du prospect quand il acceptait un RDV. Résultat : tu oubliais, ou tu perdais 5 minutes par création manuelle.\n\nMaintenant c'est un seul funnel automatisé. On va voir ensemble comment ça marche.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "calendar-glow",
+      },
+      {
+        id: "liste-open-liste",
+        target: '[data-tour-id="cahier-tab-liste"]',
+        placement: "bottom",
+        route: "/cahier-de-bord",
+        title: "1️⃣ Ouvre l'onglet Liste 100",
+        body:
+          "Clique sur l'onglet 'Liste 100' du Cahier de bord. C'est là que vit toute ta liste de connaissances classées en méthode FRANK.",
+      },
+      {
+        id: "liste-le-funnel",
+        title: "2️⃣ Le funnel en 5 statuts",
+        body:
+          "Chaque contact passe par 5 statuts dans l'ordre :\n\n⚪ **Non contacté** → tu n'as encore rien fait\n💬 **Contacté** → tu lui as envoyé un 1er message\n📅 **RDV calé** → il a accepté un EBE, date fixée\n📊 **EBE fait** → tu as mené l'EBE, en attente décision\n✅ **Client** → il a signé un programme\n\n(+ ❌ Refus si pas intéressé, à mettre en froid 6 mois)\n\nLe statut se change directement dans le select de chaque ligne de la liste. Pas de double-saisie, pas de perte d'info.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "ring-progress",
+      },
+      {
+        id: "liste-magic-rdv-cale",
+        title: "3️⃣ La magie au passage 'RDV calé' ✨",
+        body:
+          "Quand tu changes le statut d'un contact de 'Contacté' à 'RDV calé', voilà ce qui se passe automatiquement :\n\n1. La popup ProspectFormModal s'ouvre\n2. Elle est **pré-remplie** avec :\n   • firstName / lastName splités depuis full_name\n   • Téléphone + email du contact\n   • Source = 'Bouche à oreille'\n   • SourceDetail = 'Liste 100'\n   • Date du RDV par défaut = demain 14h (modifiable)\n3. Tu valides → le prospect est créé dans /agenda\n4. Le contact **reste** dans la liste 100 avec son nouveau statut (il ne disparaît pas)\n\nRésultat : 1 clic au lieu de 5 minutes de re-saisie.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "sparkles",
+      },
+      {
+        id: "liste-annulation",
+        title: "4️⃣ Si tu changes d'avis",
+        body:
+          "La popup est **opt-in** : si tu fermes sans valider, AUCUN prospect n'est créé en agenda. Le statut Liste 100 reste sur 'RDV calé' (tu peux le re-changer manuellement).\n\nIdem si tu cliques 'RDV calé' par erreur : ferme la popup, puis remet le statut sur 'Contacté' depuis le select. Pas de panique.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "alert-shield",
+        isLast: true,
       },
     ],
     quiz: {
@@ -881,6 +908,63 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           },
           explanation: "L'export client génère un fichier complet (bilans, programme, suivis) pour transfert intra-club ou archive personnelle. Utile quand un client change de coach référent ou pour ses propres archives.",
         },
+        {
+          id: "liste-q1",
+          question:
+            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
+          answers: [
+            "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
+            "Le contact disparaît automatiquement de la liste 100",
+            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
+            "Une notification est envoyée au sponsor pour valider le RDV",
+          ],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Avant mai 2026 c'était le cas. Depuis la connexion, c'est automatisé.",
+            1: "Le contact RESTE dans la liste 100 avec son nouveau statut.",
+            3: "Pas de notification sponsor — c'est ta liste perso.",
+          },
+          explanation:
+            "Connexion Liste 100 → Agenda : passage en 'RDV calé' déclenche une modale ProspectFormModal pré-remplie. 1 clic et c'est dans ton agenda. Tu peux toujours fermer si tu veux pas créer le prospect tout de suite.",
+        },
+        {
+          id: "liste-q2",
+          question:
+            "Quel est l'ordre logique du funnel La Base 360 ?",
+          answers: [
+            "Prospect Agenda → Liste 100 → EBE fait → Client",
+            "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",
+            "Liste 100 → EBE fait → Client → RDV calé",
+            "Tout fonctionne en parallèle, pas d'ordre",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "L'agenda vient APRÈS la liste 100, pas avant. La liste 100 = mes connaissances, l'agenda = les RDV calés.",
+            2: "L'EBE vient avant le client (l'EBE est ce qui CONVERTIT le prospect en client).",
+            3: "Faux — il y a un ordre clair, c'est ce qui fait l'efficacité du funnel.",
+          },
+          explanation:
+            "Funnel : (1) Liste 100 = toutes mes connaissances. (2) 'Contacté' = je lui ai écrit. (3) 'RDV calé' = il a accepté un EBE → devient prospect dans /agenda. (4) 'EBE fait' = je l'ai mené, en attente décision. (5) 'Client' = il a signé un programme.",
+        },
+        {
+          id: "liste-q3",
+          question:
+            "Tu cliques 'RDV calé' par erreur sur un contact. Comment annuler la création du prospect agenda ?",
+          answers: [
+            "Impossible — la création est instantanée, il faut supprimer manuellement le prospect dans /agenda",
+            "Je dois rebasculer le statut sur 'Contacté' pour annuler",
+            "Je clique sur Echap, ça remet tout à zéro y compris le statut",
+            "Je ferme la popup — le statut Liste 100 reste mais aucun prospect n'est créé en agenda",
+          ],
+          correctIndex: 3,
+          wrongAnswerHints: {
+            0: "Pas instantanée — la popup propose, tu valides ou tu fermes.",
+            1: "Le rebasculement de statut ne supprime pas un prospect déjà créé.",
+            2: "Echap ferme la popup mais ne change pas le statut Liste 100.",
+          },
+          explanation:
+            "La popup ProspectFormModal te DEMANDE de valider la création. Si tu fermes, le statut Liste 100 reste sur 'RDV calé' (tu peux le changer manuellement) mais aucun prospect agenda n'est créé. Logique 'opt-in' explicite.",
+        },
       ],
     },
   },
@@ -959,9 +1043,72 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Plus jamais perdu de fil",
         body: "Tes échanges sont historisés par client, tes dossiers organisés par cycle de vie, tes notifs centralisées sur ton téléphone. C'est ça la différence entre un coach qui court après ses clients et un coach qui pilote son activité.",
         placement: "center",
+        illustrationKey: "rocket",
+      },
+      {
+        id: "client-intro",
+        title: "L'app client — vitrine premium PWA",
+        body: "Chaque client a sa propre Progressive Web App, installable sur l'écran d'accueil sans passer par un store. Il y voit son bilan, son évolution body scan dans le temps, ses RDV avec export Google Calendar / .ics, ses produits actifs, ses conseils sport personnalisés et un onglet Mensurations pour photos avant/après. C'est ton meilleur outil de fidélisation et de référencement (avis Google intégré).",
+        placement: "center",
+        illustrationKey: "phone-pwa",
+      },
+      {
+        id: "client-open-clients",
+        target: '[data-tour-id="nav-clients"]',
+        placement: "bottom",
+        title: "Étape 1 — ouvre une fiche client",
+        body: "Pour activer l'app d'un client, on part toujours de sa fiche. Ouvre Dossiers clients, clique sur le client concerné. La fiche affiche bilan, body scan, programme, agenda, mensurations, conversations.",
+        manualAdvance: true,
+      },
+      {
+        id: "client-send-access",
+        target: '[data-tour-id="client-send-access"]',
+        placement: "bottom",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "« Envoyer l'accès » — bouton gold",
+        body: "Sur la fiche client, ce CTA gold lance la génération d'un token UUID unique (valide 1 an). Il ouvre une modale unifiée avec 4 canaux : QR code (scan en RDV), WhatsApp (lien préformaté), SMS (lien court), Copier-coller (paste manuel). Tu peux régénérer le token à tout moment si compromis.",
+        manualAdvance: true,
+      },
+      {
+        id: "client-qr-code",
+        target: '[data-tour-id="client-access-qr"]',
+        placement: "bottom",
+        route: DEMO_FICHE_CLIENT_WITH_ACCESS_MODAL,
+        title: "Le QR code — démo en RDV",
+        body: "Quand tu cliques « Envoyer l'accès », la modale s'ouvre avec un QR code 180×180. En RDV physique, ton client le scanne avec l'appareil photo de son téléphone — l'app s'ouvre instantanément sur son espace personnel, prêt à être ajouté à l'écran d'accueil. Effet wahou garanti.",
+        manualAdvance: true,
+      },
+      {
+        id: "client-share-buttons",
+        target: '[data-tour-id="client-access-share"]',
+        placement: "top",
+        title: "WhatsApp / SMS — partage à distance",
+        body: "Si pas de RDV physique, deux boutons : WhatsApp (vert, ouvre une conversation pré-rempllie avec le lien et un message), SMS (teal, native iOS/Android avec le lien). Le bouton gold « Copier le lien » couvre tous les autres canaux (Telegram, Messenger, mail). Le client clique, son app s'ouvre, ton job est fait.",
+        manualAdvance: true,
+      },
+      {
+        id: "client-client-experience",
+        title: "Côté client — ce qu'il voit dans l'app",
+        body: "Hero personnalisé (« Bonjour Sarah »), card RDV avec 4 actions (Google Calendar, .ics, Maps, Modifier), bloc Évolution avec graphique poids/MG depuis le départ, onglet Conseils avec 6 alertes sport personnalisées + assiette idéale 3 secteurs SVG (protéines / glucides / légumes), onglet Produits avec son programme actuel + section « Recommandés pour ta progression », onglet Mensurations avec photos avant/après et tour de taille/cuisses/bras.",
+        placement: "center",
+      },
+      {
+        id: "client-google-review",
+        title: "Avis Google — croissance organique",
+        body: "Dans la page remerciement et le menu profil de l'app client, un bouton « Laisser un avis Google » envoie le client directement sur ta fiche Google My Business. Le timing parfait : juste après la transformation visible dans son onglet Évolution. Plus tes clients progressent, plus tu collectes d'avis 5 étoiles, plus tu remontes en référencement local.",
+        placement: "center",
+      },
+      {
+        id: "client-outro",
+        title: "App client = ton multiplicateur",
+        body: "PWA installable, fonctionne offline (cache 30s), résiliente aux pannes Supabase (fallback snapshot avec bandeau orange si l'edge plante). Plus le client l'utilise, plus il progresse. Plus il progresse, plus il en parle. C'est le levier qui transforme un coach actif en un coach reconnu.",
+        placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
         illustrationKey: "rocket",
+        crossRefs: [
+          { label: "Comment installer la PWA côté coach", sectionId: "rituals" },
+        ],
       },
     ],
     quiz: {
@@ -1052,88 +1199,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           },
           explanation: "5 templates : confirmation RDV imminent, félicitation perte poids, relance douce silence ≥14j, rappel commande produit, anniversaire programme (1/3/6 mois). Chacun a un applicable(client, ctx) qui détermine la pertinence. Badge PERTINENT affiché si applicable.",
         },
-      ],
-    },
-  },
-  {
-    id: "client-app",
-    title: "💬 L'app client",
-    shortLabel: "App client",
-    description: "Active le partage, copie le lien, comprends comment ton client laisse un avis Google.",
-    estimatedDurationMinutes: 2,
-    icon: "✨",
-    steps: [
-      {
-        id: "intro",
-        title: "L'app client — vitrine premium PWA",
-        body: "Chaque client a sa propre Progressive Web App, installable sur l'écran d'accueil sans passer par un store. Il y voit son bilan, son évolution body scan dans le temps, ses RDV avec export Google Calendar / .ics, ses produits actifs, ses conseils sport personnalisés et un onglet Mensurations pour photos avant/après. C'est ton meilleur outil de fidélisation et de référencement (avis Google intégré).",
-        placement: "center",
-        illustrationKey: "phone-pwa",
-      },
-      {
-        id: "open-clients",
-        target: '[data-tour-id="nav-clients"]',
-        placement: "bottom",
-        title: "Étape 1 — ouvre une fiche client",
-        body: "Pour activer l'app d'un client, on part toujours de sa fiche. Ouvre Dossiers clients, clique sur le client concerné. La fiche affiche bilan, body scan, programme, agenda, mensurations, conversations.",
-        manualAdvance: true,
-      },
-      {
-        id: "send-access",
-        target: '[data-tour-id="client-send-access"]',
-        placement: "bottom",
-        route: DEMO_FICHE_CLIENT_ROUTE,
-        title: "« Envoyer l'accès » — bouton gold",
-        body: "Sur la fiche client, ce CTA gold lance la génération d'un token UUID unique (valide 1 an). Il ouvre une modale unifiée avec 4 canaux : QR code (scan en RDV), WhatsApp (lien préformaté), SMS (lien court), Copier-coller (paste manuel). Tu peux régénérer le token à tout moment si compromis.",
-        manualAdvance: true,
-      },
-      {
-        id: "qr-code",
-        target: '[data-tour-id="client-access-qr"]',
-        placement: "bottom",
-        route: DEMO_FICHE_CLIENT_WITH_ACCESS_MODAL,
-        title: "Le QR code — démo en RDV",
-        body: "Quand tu cliques « Envoyer l'accès », la modale s'ouvre avec un QR code 180×180. En RDV physique, ton client le scanne avec l'appareil photo de son téléphone — l'app s'ouvre instantanément sur son espace personnel, prêt à être ajouté à l'écran d'accueil. Effet wahou garanti.",
-        manualAdvance: true,
-      },
-      {
-        id: "share-buttons",
-        target: '[data-tour-id="client-access-share"]',
-        placement: "top",
-        title: "WhatsApp / SMS — partage à distance",
-        body: "Si pas de RDV physique, deux boutons : WhatsApp (vert, ouvre une conversation pré-rempllie avec le lien et un message), SMS (teal, native iOS/Android avec le lien). Le bouton gold « Copier le lien » couvre tous les autres canaux (Telegram, Messenger, mail). Le client clique, son app s'ouvre, ton job est fait.",
-        manualAdvance: true,
-      },
-      {
-        id: "client-experience",
-        title: "Côté client — ce qu'il voit dans l'app",
-        body: "Hero personnalisé (« Bonjour Sarah »), card RDV avec 4 actions (Google Calendar, .ics, Maps, Modifier), bloc Évolution avec graphique poids/MG depuis le départ, onglet Conseils avec 6 alertes sport personnalisées + assiette idéale 3 secteurs SVG (protéines / glucides / légumes), onglet Produits avec son programme actuel + section « Recommandés pour ta progression », onglet Mensurations avec photos avant/après et tour de taille/cuisses/bras.",
-        placement: "center",
-      },
-      {
-        id: "google-review",
-        title: "Avis Google — croissance organique",
-        body: "Dans la page remerciement et le menu profil de l'app client, un bouton « Laisser un avis Google » envoie le client directement sur ta fiche Google My Business. Le timing parfait : juste après la transformation visible dans son onglet Évolution. Plus tes clients progressent, plus tu collectes d'avis 5 étoiles, plus tu remontes en référencement local.",
-        placement: "center",
-      },
-      {
-        id: "outro",
-        title: "App client = ton multiplicateur",
-        body: "PWA installable, fonctionne offline (cache 30s), résiliente aux pannes Supabase (fallback snapshot avec bandeau orange si l'edge plante). Plus le client l'utilise, plus il progresse. Plus il progresse, plus il en parle. C'est le levier qui transforme un coach actif en un coach reconnu.",
-        placement: "center",
-        isLast: true,
-        nextLabel: "Section terminée",
-        illustrationKey: "rocket",
-        crossRefs: [
-          { label: "Comment installer la PWA côté coach", sectionId: "rituals" },
-        ],
-      },
-    ],
-    quiz: {
-      passThreshold: 0.8,
-      questions: [
         {
-          id: "q1",
+          id: "client-q1",
           question: "Le QR code dans la modale d'accès client, c'est utile quand ?",
           answers: [
             "Jamais, c'est juste pour faire joli",
@@ -1150,7 +1217,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "QR code 180×180 dans la modale Accès client : en RDV physique, le client scanne avec son appareil photo, son app s'ouvre instantanément sur son espace perso. Moment WAOUH qui ferme la vente sur le service.",
         },
         {
-          id: "q2",
+          id: "client-q2",
           question: "Côté client dans son app, qu'est-ce qu'il voit en priorité sur l'onglet Accueil ?",
           answers: [
             "Un compteur de PV",
@@ -1167,7 +1234,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Hero perso (« Bonjour Sarah ») + card RDV gold avec 4 CTAs : Ajouter à Google Calendar, télécharger .ics, ouvrir Maps, contacter pour modifier. C'est ce qui rend le RDV vivant pour le client.",
         },
         {
-          id: "q3",
+          id: "client-q3",
           question: "L'app client utilise quelle stratégie data pour ne pas casser les RLS ?",
           answers: [
             "Elle fait des SELECT directs sur les tables Supabase",
@@ -1184,7 +1251,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "L'edge function client-app-data valide le token uuid (client_app_accounts.token), fait les SELECT en service_role (bypass RLS propre), et renvoie un payload normalisé. Aucun SELECT direct côté front client.",
         },
         {
-          id: "q4",
+          id: "client-q4",
           question: "Si l'edge function client-app-data plante, qu'est-ce qui se passe côté client ?",
           answers: [
             "L'app crash et affiche une erreur 500",
@@ -1201,7 +1268,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Fallback snapshot : si l'edge plante, l'app affiche les snapshots figés de client_app_accounts (program_title, next_follow_up). Bandeau orange en haut pour signaler le mode dégradé. UX préservée.",
         },
         {
-          id: "q5",
+          id: "client-q5",
           question: "Le bouton « Laisser un avis Google » côté client est placé à quel moment optimal ?",
           answers: [
             "Dès l'ouverture de l'app (avant qu'il voie son programme)",
@@ -1380,7 +1447,6 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       ],
     },
   },
-  // ─── Section : Cahier de bord (2026-05-04) ─────────────────────────────
   {
     id: "cahier-de-bord-tour",
     title: "🧰 Outils perso",
@@ -1433,6 +1499,51 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           "C'est **TON** cahier. Personne d'autre que toi (et l'admin La Base 360 pour t'accompagner si tu galères) ne le voit. Tu peux y mettre des notes brutes, des doutes, des prénoms — c'est privé.\n\nLa promesse La Base 360 : tu rentres tes données → tu retrouves un journal complet de ta progression dans 3, 6, 12 mois. Tu vois où tu pars de zéro et où tu arrives.",
         placement: "center",
         route: "/cahier-de-bord",
+        illustrationKey: "trophy",
+      },
+      {
+        id: "simu-intro",
+        title: "Le Simulateur EBE 🎯",
+        body:
+          "Tu vas voir comment t'entraîner à un EBE complet sans risquer un vrai prospect. Le simulateur te met en scène avec 1 faux prospect scripté pendant 6 étapes. À chaque étape, 3 choix de réponse — feedback immédiat sur ton choix. Score final + debrief.",
+        placement: "center",
+        route: "/simulateur-ebe",
+        illustrationKey: "rocket",
+      },
+      {
+        id: "simu-scenarios",
+        target: '[data-tour-id="simulateur-scenarios"]',
+        placement: "top",
+        route: "/simulateur-ebe",
+        title: "1️⃣ Choisir un scénario",
+        body:
+          "2 scénarios disponibles (difficulté moyen pour les 2) :\n\n🙋‍♀️ **Sophie · 32 ans** — prof sceptique, perte de poids + énergie, 3 régimes ratés\n💪 **Karim · 28 ans** — sportif BTP, prise de masse, stagne depuis 3 mois\n\nClique sur un scénario pour démarrer. Tu peux refaire autant que tu veux.",
+      },
+      {
+        id: "simu-trame-6-etapes",
+        title: "2️⃣ Les 6 étapes de la trame EBE",
+        body:
+          "C'est la trame OFFICIELLE La Base 360, la même que tu suis en RDV réel :\n\n1. **Accueil & rapport** (5 min) — mettre à l'aise, créer la confiance\n2. **Découverte** (10 min) — comprendre le vrai besoin\n3. **Body scan / Tanita** (10 min) — mesurer le présent objectivement\n4. **Présentation solution** (10 min) — connecter besoin → programme\n5. **Closing & objections** (10 min) — engager sur une décision\n6. **Recommandations** (5 min) — générer 2-3 prénoms qualifiés\n\nLe simulateur respecte cette trame à la lettre.",
+        placement: "center",
+        route: "/simulateur-ebe",
+        illustrationKey: "ring-progress",
+      },
+      {
+        id: "simu-scoring",
+        title: "3️⃣ Le scoring : 0 / 5 / 10 par étape",
+        body:
+          "À chaque étape, 3 choix de réponse :\n\n✨ **Excellent** = 10 pts (le bon réflexe La Base 360)\n⚠️ **Moyen** = 5 pts (acceptable mais pas optimal)\n❌ **À éviter** = 0 pt (erreur classique qui plante l'EBE)\n\nFeedback immédiat avec explication pédagogique : tu comprends POURQUOI ton choix était bon ou mauvais. Tu apprends en jouant.\n\nScore final sur 60 (6 étapes × 10).",
+        placement: "center",
+        route: "/simulateur-ebe",
+        illustrationKey: "sparkles",
+      },
+      {
+        id: "simu-debrief",
+        title: "4️⃣ Le debrief final + sauvegarde journal",
+        body:
+          "À la fin, tu obtiens un verdict :\n\n🏆 ≥ 50 pts : **Maître EBE** — tu peux closer en RDV réel\n✅ ≥ 35 pts : **EBE solide** — encore quelques détails\n📝 ≥ 20 pts : **À retravailler**\n🔄 < 20 pts : **Reprendre les bases**\n\nPlus un recap par étape (ton choix + le feedback). Bouton **« Sauvegarder dans mon journal EBE »** qui crée auto une entrée tagguée [Simulation] dans /cahier-de-bord onglet EBE — pour suivre tes progrès dans le temps.",
+        placement: "center",
+        route: "/simulateur-ebe",
         illustrationKey: "trophy",
         isLast: true,
       },
@@ -1495,71 +1606,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation:
             "Auto-journal EBE post-bilan : à chaque save dans handleSaveAssessment, une row ebe_journal_entries est créée avec assessment_id + prospect_name. Tu retrouves l'entrée dans /cahier-de-bord onglet EBE, prête à compléter (self_score, what_went_well, what_to_improve, recos_count).",
         },
-      ],
-    },
-  },
-  // ─── Section : Simulateur EBE (2026-05-04) ─────────────────────────────
-  {
-    id: "simulateur-ebe-tour",
-    title: "🧰 Simulateur EBE",
-    shortLabel: "Simulateur EBE",
-    description:
-      "Mène un EBE complet face à un faux prospect scripté : 6 étapes, 3 choix par étape, scoring sur 60 et debrief par étape. Idéal avant un vrai RDV.",
-    estimatedDurationMinutes: 5,
-    icon: "🎯",
-    steps: [
-      {
-        id: "intro",
-        title: "Le Simulateur EBE 🎯",
-        body:
-          "Tu vas voir comment t'entraîner à un EBE complet sans risquer un vrai prospect. Le simulateur te met en scène avec 1 faux prospect scripté pendant 6 étapes. À chaque étape, 3 choix de réponse — feedback immédiat sur ton choix. Score final + debrief.",
-        placement: "center",
-        route: "/simulateur-ebe",
-        illustrationKey: "rocket",
-      },
-      {
-        id: "scenarios",
-        target: '[data-tour-id="simulateur-scenarios"]',
-        placement: "top",
-        route: "/simulateur-ebe",
-        title: "1️⃣ Choisir un scénario",
-        body:
-          "2 scénarios disponibles (difficulté moyen pour les 2) :\n\n🙋‍♀️ **Sophie · 32 ans** — prof sceptique, perte de poids + énergie, 3 régimes ratés\n💪 **Karim · 28 ans** — sportif BTP, prise de masse, stagne depuis 3 mois\n\nClique sur un scénario pour démarrer. Tu peux refaire autant que tu veux.",
-      },
-      {
-        id: "trame-6-etapes",
-        title: "2️⃣ Les 6 étapes de la trame EBE",
-        body:
-          "C'est la trame OFFICIELLE La Base 360, la même que tu suis en RDV réel :\n\n1. **Accueil & rapport** (5 min) — mettre à l'aise, créer la confiance\n2. **Découverte** (10 min) — comprendre le vrai besoin\n3. **Body scan / Tanita** (10 min) — mesurer le présent objectivement\n4. **Présentation solution** (10 min) — connecter besoin → programme\n5. **Closing & objections** (10 min) — engager sur une décision\n6. **Recommandations** (5 min) — générer 2-3 prénoms qualifiés\n\nLe simulateur respecte cette trame à la lettre.",
-        placement: "center",
-        route: "/simulateur-ebe",
-        illustrationKey: "ring-progress",
-      },
-      {
-        id: "scoring",
-        title: "3️⃣ Le scoring : 0 / 5 / 10 par étape",
-        body:
-          "À chaque étape, 3 choix de réponse :\n\n✨ **Excellent** = 10 pts (le bon réflexe La Base 360)\n⚠️ **Moyen** = 5 pts (acceptable mais pas optimal)\n❌ **À éviter** = 0 pt (erreur classique qui plante l'EBE)\n\nFeedback immédiat avec explication pédagogique : tu comprends POURQUOI ton choix était bon ou mauvais. Tu apprends en jouant.\n\nScore final sur 60 (6 étapes × 10).",
-        placement: "center",
-        route: "/simulateur-ebe",
-        illustrationKey: "sparkles",
-      },
-      {
-        id: "debrief",
-        title: "4️⃣ Le debrief final + sauvegarde journal",
-        body:
-          "À la fin, tu obtiens un verdict :\n\n🏆 ≥ 50 pts : **Maître EBE** — tu peux closer en RDV réel\n✅ ≥ 35 pts : **EBE solide** — encore quelques détails\n📝 ≥ 20 pts : **À retravailler**\n🔄 < 20 pts : **Reprendre les bases**\n\nPlus un recap par étape (ton choix + le feedback). Bouton **« Sauvegarder dans mon journal EBE »** qui crée auto une entrée tagguée [Simulation] dans /cahier-de-bord onglet EBE — pour suivre tes progrès dans le temps.",
-        placement: "center",
-        route: "/simulateur-ebe",
-        illustrationKey: "trophy",
-        isLast: true,
-      },
-    ],
-    quiz: {
-      passThreshold: 0.66,
-      questions: [
         {
-          id: "q1",
+          id: "simu-q1",
           question:
             "Combien d'étapes a la trame d'un EBE La Base 360 (et donc le Simulateur) ?",
           answers: [
@@ -1578,7 +1626,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Trame fixe en 6 étapes : 1) Accueil & rapport, 2) Découverte besoin, 3) Body scan/Tanita, 4) Présentation solution, 5) Closing & objections, 6) Recommandations.",
         },
         {
-          id: "q2",
+          id: "simu-q2",
           question:
             "Tu fais 50/60 points dans le Simulateur. Quel est ton verdict ?",
           answers: [
@@ -1597,7 +1645,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Bandes : ≥ 50 Maître 🏆 / ≥ 35 Solide ✅ / ≥ 20 À retravailler 📝 / < 20 Reprendre les bases 🔄. Score sur 60 max (6 étapes × 10pts).",
         },
         {
-          id: "q3",
+          id: "simu-q3",
           question:
             "Quand utiliser le Simulateur EBE ?",
           answers: [
@@ -1614,126 +1662,6 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           },
           explanation:
             "Le Simulateur n'est pas un test ponctuel. Tu le lances avant chaque RDV important pour te chauffer ET après chaque RDV raté pour identifier ce que tu as zappé. Coût marginal : 5 minutes. ROI : énorme.",
-        },
-      ],
-    },
-  },
-  // ─── Section : Liste 100 → Agenda (2026-05-04) ──────────────────────────
-  {
-    id: "liste-100-agenda-tour",
-    title: "🎯 Liste 100 → Agenda",
-    shortLabel: "Liste 100 → Agenda",
-    description:
-      "Comment ta liste 100 connaissances alimente automatiquement ton agenda dès qu'un contact passe en 'RDV calé'. Le funnel La Base 360 expliqué.",
-    estimatedDurationMinutes: 5,
-    icon: "🔗",
-    steps: [
-      {
-        id: "intro",
-        title: "Liste 100 et Agenda : un seul funnel 🔗",
-        body:
-          "Avant : ta liste 100 et ton agenda étaient 2 silos séparés. Tu devais re-saisir le nom du prospect quand il acceptait un RDV. Résultat : tu oubliais, ou tu perdais 5 minutes par création manuelle.\n\nMaintenant c'est un seul funnel automatisé. On va voir ensemble comment ça marche.",
-        placement: "center",
-        route: "/cahier-de-bord",
-        illustrationKey: "calendar-glow",
-      },
-      {
-        id: "open-liste",
-        target: '[data-tour-id="cahier-tab-liste"]',
-        placement: "bottom",
-        route: "/cahier-de-bord",
-        title: "1️⃣ Ouvre l'onglet Liste 100",
-        body:
-          "Clique sur l'onglet 'Liste 100' du Cahier de bord. C'est là que vit toute ta liste de connaissances classées en méthode FRANK.",
-      },
-      {
-        id: "le-funnel",
-        title: "2️⃣ Le funnel en 5 statuts",
-        body:
-          "Chaque contact passe par 5 statuts dans l'ordre :\n\n⚪ **Non contacté** → tu n'as encore rien fait\n💬 **Contacté** → tu lui as envoyé un 1er message\n📅 **RDV calé** → il a accepté un EBE, date fixée\n📊 **EBE fait** → tu as mené l'EBE, en attente décision\n✅ **Client** → il a signé un programme\n\n(+ ❌ Refus si pas intéressé, à mettre en froid 6 mois)\n\nLe statut se change directement dans le select de chaque ligne de la liste. Pas de double-saisie, pas de perte d'info.",
-        placement: "center",
-        route: "/cahier-de-bord",
-        illustrationKey: "ring-progress",
-      },
-      {
-        id: "magic-rdv-cale",
-        title: "3️⃣ La magie au passage 'RDV calé' ✨",
-        body:
-          "Quand tu changes le statut d'un contact de 'Contacté' à 'RDV calé', voilà ce qui se passe automatiquement :\n\n1. La popup ProspectFormModal s'ouvre\n2. Elle est **pré-remplie** avec :\n   • firstName / lastName splités depuis full_name\n   • Téléphone + email du contact\n   • Source = 'Bouche à oreille'\n   • SourceDetail = 'Liste 100'\n   • Date du RDV par défaut = demain 14h (modifiable)\n3. Tu valides → le prospect est créé dans /agenda\n4. Le contact **reste** dans la liste 100 avec son nouveau statut (il ne disparaît pas)\n\nRésultat : 1 clic au lieu de 5 minutes de re-saisie.",
-        placement: "center",
-        route: "/cahier-de-bord",
-        illustrationKey: "sparkles",
-      },
-      {
-        id: "annulation",
-        title: "4️⃣ Si tu changes d'avis",
-        body:
-          "La popup est **opt-in** : si tu fermes sans valider, AUCUN prospect n'est créé en agenda. Le statut Liste 100 reste sur 'RDV calé' (tu peux le re-changer manuellement).\n\nIdem si tu cliques 'RDV calé' par erreur : ferme la popup, puis remet le statut sur 'Contacté' depuis le select. Pas de panique.",
-        placement: "center",
-        route: "/cahier-de-bord",
-        illustrationKey: "alert-shield",
-        isLast: true,
-      },
-    ],
-    quiz: {
-      passThreshold: 0.66,
-      questions: [
-        {
-          id: "q1",
-          question:
-            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
-          answers: [
-            "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
-            "Le contact disparaît automatiquement de la liste 100",
-            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
-            "Une notification est envoyée au sponsor pour valider le RDV",
-          ],
-          correctIndex: 2,
-          wrongAnswerHints: {
-            0: "Avant mai 2026 c'était le cas. Depuis la connexion, c'est automatisé.",
-            1: "Le contact RESTE dans la liste 100 avec son nouveau statut.",
-            3: "Pas de notification sponsor — c'est ta liste perso.",
-          },
-          explanation:
-            "Connexion Liste 100 → Agenda : passage en 'RDV calé' déclenche une modale ProspectFormModal pré-remplie. 1 clic et c'est dans ton agenda. Tu peux toujours fermer si tu veux pas créer le prospect tout de suite.",
-        },
-        {
-          id: "q2",
-          question:
-            "Quel est l'ordre logique du funnel La Base 360 ?",
-          answers: [
-            "Prospect Agenda → Liste 100 → EBE fait → Client",
-            "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",
-            "Liste 100 → EBE fait → Client → RDV calé",
-            "Tout fonctionne en parallèle, pas d'ordre",
-          ],
-          correctIndex: 1,
-          wrongAnswerHints: {
-            0: "L'agenda vient APRÈS la liste 100, pas avant. La liste 100 = mes connaissances, l'agenda = les RDV calés.",
-            2: "L'EBE vient avant le client (l'EBE est ce qui CONVERTIT le prospect en client).",
-            3: "Faux — il y a un ordre clair, c'est ce qui fait l'efficacité du funnel.",
-          },
-          explanation:
-            "Funnel : (1) Liste 100 = toutes mes connaissances. (2) 'Contacté' = je lui ai écrit. (3) 'RDV calé' = il a accepté un EBE → devient prospect dans /agenda. (4) 'EBE fait' = je l'ai mené, en attente décision. (5) 'Client' = il a signé un programme.",
-        },
-        {
-          id: "q3",
-          question:
-            "Tu cliques 'RDV calé' par erreur sur un contact. Comment annuler la création du prospect agenda ?",
-          answers: [
-            "Impossible — la création est instantanée, il faut supprimer manuellement le prospect dans /agenda",
-            "Je dois rebasculer le statut sur 'Contacté' pour annuler",
-            "Je clique sur Echap, ça remet tout à zéro y compris le statut",
-            "Je ferme la popup — le statut Liste 100 reste mais aucun prospect n'est créé en agenda",
-          ],
-          correctIndex: 3,
-          wrongAnswerHints: {
-            0: "Pas instantanée — la popup propose, tu valides ou tu fermes.",
-            1: "Le rebasculement de statut ne supprime pas un prospect déjà créé.",
-            2: "Echap ferme la popup mais ne change pas le statut Liste 100.",
-          },
-          explanation:
-            "La popup ProspectFormModal te DEMANDE de valider la création. Si tu fermes, le statut Liste 100 reste sur 'RDV calé' (tu peux le changer manuellement) mais aucun prospect agenda n'est créé. Logique 'opt-in' explicite.",
         },
       ],
     },
