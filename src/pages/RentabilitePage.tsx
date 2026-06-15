@@ -601,6 +601,8 @@ export function RentabilitePage() {
           downlineOverride={selectedDownlineOverride}
           manualOverride={0}
           overridePerMember={selectedSummary.overridePerMember}
+          editable
+          onEdited={selectedSummary.refetch}
         />
       )}
 

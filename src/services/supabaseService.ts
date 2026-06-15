@@ -1243,6 +1243,16 @@ export async function updateQuickSale(payload: {
     .eq("id", payload.clientId);
   if (nameErr) throw new Error(`Renommage impossible : ${nameErr.message}`);
 
+  // Owner des nouvelles lignes = le distributeur DU CLIENT (pas celui qui édite,
+  // pour qu'un admin corrigeant la vente d'un membre garde le bon responsable).
+  const { data: clientRow } = await client
+    .from("clients")
+    .select("distributor_id, distributor_name")
+    .eq("id", payload.clientId)
+    .maybeSingle();
+  const respId = (clientRow?.distributor_id as string) || payload.distributorId;
+  const respName = (clientRow?.distributor_name as string) || payload.distributorName;
+
   const { data: existingProds } = await client
     .from("pv_client_products")
     .select("id, product_id")
@@ -1282,8 +1292,8 @@ export async function updateQuickSale(payload: {
     } else {
       toInsert.push({
         client_id: payload.clientId,
-        responsible_id: payload.distributorId,
-        responsible_name: payload.distributorName,
+        responsible_id: respId,
+        responsible_name: respName,
         program_id: "custom",
         product_id: l.id,
         product_name: l.name,

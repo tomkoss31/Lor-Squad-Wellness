@@ -40,6 +40,9 @@ interface RentabilityDetailModalProps {
 
 type FilterTab = "all" | "public" | "vip" | "distri";
 
+/** Shape minimale d'une ligne client affichée (sous-ensemble de RentabilityTopClient). */
+type ClientRow = Pick<RentabilityTopClient, "client_id" | "client_name" | "revenue" | "is_vip">;
+
 function monthLabel(iso: string): string {
   try {
     const d = new Date(iso + "T12:00:00Z");
@@ -69,8 +72,36 @@ export function RentabilityDetailModal({
   editable = false,
   onEdited,
 }: RentabilityDetailModalProps) {
-  const { currentUser, users } = useAppContext();
+  const { currentUser, users, clients, pvClientProducts } = useAppContext();
   const navigate = useNavigate();
+
+  // Liste COMPLÈTE des clients du mois (pas le top 5 de la RPC) pour l'édition.
+  // Dérivée d'AppContext, scopée aux distributeurs du périmètre de la modale.
+  const monthClients = useMemo<ClientRow[]>(() => {
+    const monthKey = (data.month_start ?? "").slice(0, 7);
+    const scope = new Set(data.scope_user_ids ?? []);
+    const revByClient = new Map<string, number>();
+    for (const p of pvClientProducts) {
+      if (!p.active) continue;
+      if ((p.startDate ?? "").slice(0, 7) !== monthKey) continue;
+      const rev = (Number(p.pricePublicPerUnit) || 0) * (Number(p.quantityStart) || 0);
+      if (rev <= 0) continue;
+      revByClient.set(p.clientId, (revByClient.get(p.clientId) ?? 0) + rev);
+    }
+    const list: ClientRow[] = [];
+    for (const c of clients) {
+      if (!scope.has(c.distributorId)) continue;
+      const revenue = revByClient.get(c.id);
+      if (!revenue) continue;
+      list.push({
+        client_id: c.id,
+        client_name: `${c.firstName} ${c.lastName}`.trim() || "Client",
+        revenue,
+        is_vip: (c.vipStatus ?? "none") !== "none",
+      });
+    }
+    return list.sort((a, b) => b.revenue - a.revenue);
+  }, [clients, pvClientProducts, data.month_start, data.scope_user_ids]);
   // Navigation depuis le Plan d'action : ferme la modale puis route.
   const handleNudgeNavigate = (route: string) => {
     onClose();
@@ -290,6 +321,7 @@ export function RentabilityDetailModal({
               manualOverride={manualOverride}
               total={total}
               topClients={data.top_clients ?? []}
+              editableClients={monthClients}
               marginPct={data.margin_pct}
               overrideBreakdown={overrideBreakdown}
               editable={editable}
@@ -625,6 +657,7 @@ function CurrentMonthView({
   manualOverride,
   total,
   topClients,
+  editableClients,
   marginPct,
   overrideBreakdown,
   editable,
@@ -637,7 +670,8 @@ function CurrentMonthView({
   downlineOverride: number;
   manualOverride: number;
   total: number;
-  topClients: RentabilityTopClient[];
+  topClients: ClientRow[];
+  editableClients?: ClientRow[];
   marginPct: number;
   overrideBreakdown: { id: string; name: string; eur: number }[];
   editable?: boolean;
@@ -726,7 +760,10 @@ function CurrentMonthView({
       {/* Top clients — dépliable (demande Thomas 2026-06-13 : flèche pour voir
           toute la liste, pas juste le top 3). La RPC plafonne à 5 clients. */}
       {(filter === "all" || filter === "public" || filter === "vip") && (() => {
-        const list = topClients.filter((c) =>
+        // En mode édition : liste COMPLÈTE des clients du mois (AppContext),
+        // sinon le top 5 de la RPC (lecture seule).
+        const source = editable && editableClients && editableClients.length > 0 ? editableClients : topClients;
+        const list = source.filter((c) =>
           filter === "vip" ? c.is_vip : filter === "public" ? !c.is_vip : true,
         );
         if (list.length === 0) return null;
@@ -734,7 +771,7 @@ function CurrentMonthView({
         return (
           <div>
             <div style={{ ...miniLabelStyle, marginBottom: 10 }}>
-              {filter === "vip" ? "Clients VIP" : filter === "public" ? "Clients grand public" : "Top clients"}
+              {filter === "vip" ? "Clients VIP" : filter === "public" ? "Clients grand public" : editable ? "Clients du mois — ✏️ modifiables" : "Top clients"}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               {shown.map((c, i) => (
