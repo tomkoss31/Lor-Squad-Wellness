@@ -76,7 +76,10 @@ export function CrmPage() {
   const navigate = useNavigate();
   const { currentUser, clients } = useAppContext();
   const { push: pushToast } = useToast();
-  const { leads, loading, error, counts, refetch, updateStatus } = useCrmLeads();
+  const { leads, loading, error, refetch, updateStatus, setDormant, deleteLead } = useCrmLeads();
+  // Vue Actifs (kanban) vs Endormis (archive — bibliothèque dormante, 2026-06-14).
+  const [view, setView] = useState<"active" | "archived">("active");
+  const isAdmin = currentUser?.role === "admin";
 
   const [filterSource, setFilterSource] = useState<CrmSource | "all">("all");
   const [search, setSearch] = useState("");
@@ -136,6 +139,8 @@ export function CrmPage() {
   const filtered = useMemo(
     () =>
       leads.filter((l) => {
+        // Vue : Actifs = on masque les endormis ; Endormis = on ne montre qu'eux.
+        if (view === "archived" ? !l.dormant : !!l.dormant) return false;
         if (filterSource !== "all" && l.source !== filterSource) return false;
         if (search.trim()) {
           const q = search.trim().toLowerCase();
@@ -148,8 +153,16 @@ export function CrmPage() {
         }
         return true;
       }),
-    [leads, filterSource, search],
+    [leads, filterSource, search, view],
   );
+
+  // Compteurs cohérents avec la vue Actifs (les endormis sont hors flux).
+  const counts = useMemo(() => {
+    const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
+    for (const l of leads) if (!l.dormant) by[l.status] += 1;
+    return by;
+  }, [leads]);
+  const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
 
   const sourcesPresent = useMemo(() => {
     const set = new Set<CrmSource>();
@@ -162,6 +175,27 @@ export function CrmPage() {
     if (err) {
       pushToast({ tone: "warning", title: "Statut non enregistré", message: err });
     }
+  }
+
+  async function handleDormant(lead: CrmLead, value: boolean) {
+    const err = await setDormant(lead, value);
+    pushToast(
+      err
+        ? { tone: "warning", title: "Action impossible", message: err }
+        : { tone: "success", title: value ? "Lead endormi 💤" : "Lead réveillé", message: lead.firstName },
+    );
+  }
+
+  async function handleDelete(lead: CrmLead) {
+    if (typeof window !== "undefined" && !window.confirm(`Supprimer définitivement ${lead.firstName} ? Cette action est irréversible.`)) {
+      return;
+    }
+    const err = await deleteLead(lead);
+    pushToast(
+      err
+        ? { tone: "warning", title: "Suppression impossible", message: err }
+        : { tone: "success", title: "Lead supprimé", message: lead.firstName },
+    );
   }
 
   function handleDrop(leadKey: string, target: CrmStatus) {
@@ -359,14 +393,61 @@ export function CrmPage() {
         </div>
       ) : null}
 
+      {/* Toggle Actifs / Endormis (archive — bibliothèque dormante) */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        {([
+          { id: "active" as const, label: "📋 Actifs" },
+          { id: "archived" as const, label: `💤 Endormis${dormantCount ? ` (${dormantCount})` : ""}` },
+        ]).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setView(t.id)}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 999,
+              cursor: "pointer",
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: view === t.id ? 700 : 500,
+              background: view === t.id ? "var(--ls-text)" : "var(--ls-surface)",
+              color: view === t.id ? "var(--ls-bg)" : "var(--ls-text-muted)",
+              border: "1px solid var(--ls-border)",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {/* Pipeline */}
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
       ) : filtered.length === 0 ? (
         <div style={emptyState}>
-          {leads.length === 0
+          {view === "archived"
+            ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
+            : leads.length === 0
             ? "Aucun lead pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir le pipeline 🌱"
             : "Aucun lead ne correspond aux filtres."}
+        </div>
+      ) : view === "archived" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 560 }}>
+          {filtered.map((lead) => (
+            <LeadCard
+              key={lead.key}
+              lead={lead}
+              msgCtx={msgCtx}
+              onStatusChange={(s) => void handleStatusChange(lead, s)}
+              onCopy={(text) => void copyMessage(text)}
+              onOpenBilans={() => navigate("/clients?tab=leads")}
+              onAgenda={() => setAgendaLead(lead)}
+              dupeFlag={dupeFlagFor(lead)}
+              archived
+              onWake={() => void handleDormant(lead, false)}
+              onDelete={isAdmin ? () => void handleDelete(lead) : undefined}
+            />
+          ))}
         </div>
       ) : (
         <div style={columnsWrap}>
@@ -413,6 +494,8 @@ export function CrmPage() {
                       onOpenBilans={() => navigate("/clients?tab=leads")}
                       onAgenda={() => setAgendaLead(lead)}
                       dupeFlag={dupeFlagFor(lead)}
+                      onDormant={() => void handleDormant(lead, true)}
+                      onDelete={isAdmin ? () => void handleDelete(lead) : undefined}
                     />
                   ))}
                   {col.length === 0 ? <div style={columnEmpty}>—</div> : null}
@@ -479,6 +562,10 @@ function LeadCard({
   onOpenBilans,
   onAgenda,
   dupeFlag,
+  onDormant,
+  onWake,
+  onDelete,
+  archived,
 }: {
   lead: CrmLead;
   msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
@@ -487,6 +574,10 @@ function LeadCard({
   onOpenBilans: () => void;
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
+  onDormant?: () => void;
+  onWake?: () => void;
+  onDelete?: () => void;
+  archived?: boolean;
 }) {
   const { currentUser } = useAppContext();
   const { push: pushToast } = useToast();
@@ -760,9 +851,42 @@ function LeadCard({
           </option>
         ) : null}
       </select>
+
+      {/* Actions endormir / réveiller / supprimer (2026-06-14) */}
+      {(onDormant || onWake || onDelete) && (
+        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+          {archived && onWake ? (
+            <button type="button" onClick={onWake} style={cardActionBtn}>
+              ☀️ Réveiller
+            </button>
+          ) : null}
+          {!archived && onDormant ? (
+            <button type="button" onClick={onDormant} style={cardActionBtn} title="Mettre de côté — sort du flux, plus de relance">
+              💤 Endormir
+            </button>
+          ) : null}
+          {onDelete ? (
+            <button type="button" onClick={onDelete} style={{ ...cardActionBtn, color: "var(--ls-coral)", borderColor: "color-mix(in srgb, var(--ls-coral) 35%, var(--ls-border))" }}>
+              🗑 Supprimer
+            </button>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
+
+const cardActionBtn: React.CSSProperties = {
+  padding: "5px 10px",
+  borderRadius: 8,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text-muted)",
+  fontSize: 11.5,
+  fontWeight: 600,
+  cursor: "pointer",
+  fontFamily: "DM Sans, sans-serif",
+};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 

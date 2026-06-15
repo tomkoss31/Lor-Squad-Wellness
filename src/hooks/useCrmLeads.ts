@@ -60,6 +60,8 @@ export interface CrmLead {
   extra: string | null;
   /** Relance J+3 due (online_bilans uniquement). */
   relanceDue: boolean;
+  /** Lead « endormi » (archivé) — sorti du flux actif, zéro relance. */
+  dormant?: boolean;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
   createdAt: string;
@@ -371,6 +373,20 @@ export function useCrmLeads() {
         });
       }
 
+      // Archive « endormi » (flag orthogonal, table crm_archived_leads).
+      const { data: arch } = await sb.from("crm_archived_leads").select("lead_table, lead_id");
+      const archSet = new Set(
+        ((arch ?? []) as Array<{ lead_table: string; lead_id: string }>).map(
+          (a) => `${a.lead_table}:${a.lead_id}`,
+        ),
+      );
+      for (const l of all) {
+        if (archSet.has(`${l.table}:${l.id}`)) {
+          l.dormant = true;
+          l.relanceDue = false; // un endormi ne déclenche aucune relance
+        }
+      }
+
       all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setLeads(all);
     } catch (err) {
@@ -447,6 +463,46 @@ export function useCrmLeads() {
     [],
   );
 
+  // Endormir / réveiller un lead (archive orthogonale).
+  const setDormant = useCallback(async (lead: CrmLead, value: boolean): Promise<string | null> => {
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    if (value) {
+      const { error: e } = await sb
+        .from("crm_archived_leads")
+        .upsert({ lead_table: lead.table, lead_id: lead.id }, { onConflict: "lead_table,lead_id" });
+      if (e) return e.message;
+    } else {
+      const { error: e } = await sb
+        .from("crm_archived_leads")
+        .delete()
+        .eq("lead_table", lead.table)
+        .eq("lead_id", lead.id);
+      if (e) return e.message;
+    }
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.key === lead.key ? { ...l, dormant: value, relanceDue: value ? false : l.relanceDue } : l,
+      ),
+    );
+    return null;
+  }, []);
+
+  // Suppression définitive (admin) depuis la table source + nettoyage archive.
+  const deleteLead = useCallback(async (lead: CrmLead): Promise<string | null> => {
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    const { error: e } = await sb.from(lead.table).delete().eq("id", lead.id);
+    if (e) return e.message;
+    await sb
+      .from("crm_archived_leads")
+      .delete()
+      .eq("lead_table", lead.table)
+      .eq("lead_id", lead.id);
+    setLeads((prev) => prev.filter((l) => l.key !== lead.key));
+    return null;
+  }, []);
+
   const counts = useMemo(() => {
     const byStatus: Record<CrmStatus, number> = {
       new: 0,
@@ -459,5 +515,5 @@ export function useCrmLeads() {
     return byStatus;
   }, [leads]);
 
-  return { leads, loading, error, counts, refetch: fetchAll, updateStatus };
+  return { leads, loading, error, counts, refetch: fetchAll, updateStatus, setDormant, deleteLead };
 }
