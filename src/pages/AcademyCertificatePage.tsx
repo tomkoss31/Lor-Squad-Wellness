@@ -685,9 +685,31 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         <strong style={{ color: "#B8922A", fontStyle: "normal", fontWeight: 500 }}>
           La Base 360 Academy
         </strong>{" "}
-        — les 8 sections de formation au métier de distributeur Herbalife, à
-        la gestion d&apos;activité et à l&apos;accompagnement client.
+        — les <strong style={{ color: "#B8922A", fontStyle: "normal", fontWeight: 600 }}>7 chapitres</strong> qui couvrent tout le métier : démarrage,
+        maîtrise de l&apos;app, bilan &amp; premier client, prospection &amp; conversion,
+        fidélisation, pilotage &amp; croissance, et outils personnels.
       </p>
+
+      {/* Bandeau « 100% maîtrisé » — accent wahou (2026-06-15) */}
+      <div
+        style={{
+          marginTop: 22,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "8px 22px",
+          borderRadius: 999,
+          background: "linear-gradient(135deg, #B8922A, #E8C667 50%, #B8922A)",
+          color: "#2C2C2A",
+          fontFamily: "system-ui, sans-serif",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.22em",
+          boxShadow: "0 4px 14px rgba(184,146,42,0.35)",
+        }}
+      >
+        ★ PARCOURS 100&nbsp;% MAÎTRISÉ ★
+      </div>
 
       {/* Date */}
       <div
@@ -721,9 +743,20 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         </div>
       </div>
 
-      {/* Sceau central */}
-      <div style={{ marginTop: 36 }}>
-        <OfficialSeal size={130} />
+      {/* Sceau central + halo doré (wahou) */}
+      <div style={{ marginTop: 26, position: "relative", display: "flex", justifyContent: "center" }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: "-34px",
+            background: "radial-gradient(circle, rgba(184,146,42,0.28) 0%, rgba(184,146,42,0) 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ position: "relative" }}>
+          <OfficialSeal size={130} />
+        </div>
       </div>
 
       {/* Signatures */}
@@ -926,7 +959,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
           fontStyle: "italic",
         }}
       >
-        Pour avoir complété les 8 sections du parcours de formation au métier
+        Pour avoir complété les 7 chapitres du parcours de formation au métier
         de distributeur Herbalife
       </p>
 
