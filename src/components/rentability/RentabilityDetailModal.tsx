@@ -43,6 +43,16 @@ type FilterTab = "all" | "public" | "vip" | "distri";
 /** Shape minimale d'une ligne client affichée (sous-ensemble de RentabilityTopClient). */
 type ClientRow = Pick<RentabilityTopClient, "client_id" | "client_name" | "revenue" | "is_vip">;
 
+// Facteur VIP = ce que le client paie réellement (= 1 - remise). MÊMES valeurs
+// que la RPC get_users_rentability (source de vérité). Non-VIP = 1.0.
+const VIP_FACTOR: Record<string, number> = {
+  ambassador: 0.5835,
+  gold: 0.636,
+  silver: 0.7189,
+  bronze: 0.8018,
+};
+const vipFactor = (status: string | null | undefined) => VIP_FACTOR[status ?? "none"] ?? 1;
+
 function monthLabel(iso: string): string {
   try {
     const d = new Date(iso + "T12:00:00Z");
@@ -80,19 +90,22 @@ export function RentabilityDetailModal({
   const monthClients = useMemo<ClientRow[]>(() => {
     const monthKey = (data.month_start ?? "").slice(0, 7);
     const scope = new Set(data.scope_user_ids ?? []);
-    const revByClient = new Map<string, number>();
+    // Brut catalogue par client (prix public × qté), mois courant + actif.
+    const grossByClient = new Map<string, number>();
     for (const p of pvClientProducts) {
       if (!p.active) continue;
       if ((p.startDate ?? "").slice(0, 7) !== monthKey) continue;
-      const rev = (Number(p.pricePublicPerUnit) || 0) * (Number(p.quantityStart) || 0);
-      if (rev <= 0) continue;
-      revByClient.set(p.clientId, (revByClient.get(p.clientId) ?? 0) + rev);
+      const g = (Number(p.pricePublicPerUnit) || 0) * (Number(p.quantityStart) || 0);
+      if (g <= 0) continue;
+      grossByClient.set(p.clientId, (grossByClient.get(p.clientId) ?? 0) + g);
     }
     const list: ClientRow[] = [];
     for (const c of clients) {
       if (!scope.has(c.distributorId)) continue;
-      const revenue = revByClient.get(c.id);
-      if (!revenue) continue;
+      const gross = grossByClient.get(c.id);
+      if (!gross) continue;
+      // Revenue NET = ce que le client paie (remise VIP appliquée), comme la RPC.
+      const revenue = Math.round(gross * vipFactor(c.vipStatus) * 100) / 100;
       list.push({
         client_id: c.id,
         client_name: `${c.firstName} ${c.lastName}`.trim() || "Client",
@@ -322,6 +335,7 @@ export function RentabilityDetailModal({
               total={total}
               topClients={data.top_clients ?? []}
               editableClients={monthClients}
+              monthKey={(data.month_start ?? "").slice(0, 7)}
               marginPct={data.margin_pct}
               overrideBreakdown={overrideBreakdown}
               editable={editable}
@@ -658,6 +672,7 @@ function CurrentMonthView({
   total,
   topClients,
   editableClients,
+  monthKey,
   marginPct,
   overrideBreakdown,
   editable,
@@ -672,6 +687,7 @@ function CurrentMonthView({
   total: number;
   topClients: ClientRow[];
   editableClients?: ClientRow[];
+  monthKey?: string;
   marginPct: number;
   overrideBreakdown: { id: string; name: string; eur: number }[];
   editable?: boolean;
@@ -770,8 +786,11 @@ function CurrentMonthView({
         const shown = showAllClients ? list : list.slice(0, 3);
         return (
           <div>
-            <div style={{ ...miniLabelStyle, marginBottom: 10 }}>
+            <div style={{ ...miniLabelStyle, marginBottom: 2 }}>
               {filter === "vip" ? "Clients VIP" : filter === "public" ? "Clients grand public" : editable ? "Clients du mois — ✏️ modifiables" : "Top clients"}
+            </div>
+            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, color: "var(--ls-rentab-ink-3)", marginBottom: 10 }}>
+              Montant = ce que le client paie (remise 👑 VIP incluse)
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               {shown.map((c, i) => (
@@ -923,6 +942,7 @@ function CurrentMonthView({
         <QuickSaleEditModal
           clientId={editing.id}
           initialName={editing.name}
+          monthKey={monthKey}
           onClose={() => setEditing(null)}
           onSaved={onEdited}
         />

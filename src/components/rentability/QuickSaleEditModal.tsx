@@ -28,20 +28,43 @@ interface Line {
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const pvf = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+
+// Facteur VIP (= ce que le client paie). Mêmes valeurs que la RPC rentabilité.
+const VIP_FACTOR: Record<string, number> = {
+  ambassador: 0.5835,
+  gold: 0.636,
+  silver: 0.7189,
+  bronze: 0.8018,
+};
+const VIP_LABEL: Record<string, string> = {
+  ambassador: "Ambassadeur",
+  gold: "Gold",
+  silver: "Silver",
+  bronze: "Bronze",
+};
 
 export function QuickSaleEditModal({
   clientId,
   initialName,
+  monthKey,
   onClose,
   onSaved,
 }: {
   clientId: string;
   initialName: string;
+  /** YYYY-MM : ne montre que les produits de ce mois (cohérent avec la liste). */
+  monthKey?: string;
   onClose: () => void;
   onSaved?: () => void;
 }) {
-  const { currentUser, pvClientProducts, reloadClients } = useAppContext();
+  const { currentUser, clients, pvClientProducts, reloadClients } = useAppContext();
   const { push } = useToast();
+
+  // Statut VIP du client → remise appliquée (affichage du prix réellement payé).
+  const vipStatus = clients.find((c) => c.id === clientId)?.vipStatus ?? "none";
+  const vipFactor = VIP_FACTOR[vipStatus] ?? 1;
+  const isVip = vipFactor < 1;
 
   const [name, setName] = useState(initialName === "Client direct" ? "" : initialName);
   const [query, setQuery] = useState("");
@@ -52,6 +75,8 @@ export function QuickSaleEditModal({
     const map: Record<string, Line> = {};
     for (const p of pvClientProducts) {
       if (p.clientId !== clientId || !p.active) continue;
+      // Cohérent avec la liste rentabilité : on n'édite que le mois courant.
+      if (monthKey && (p.startDate ?? "").slice(0, 7) !== monthKey) continue;
       map[p.productId] = {
         id: p.productId,
         name: p.productName,
@@ -227,9 +252,23 @@ export function QuickSaleEditModal({
         </div>
 
         {/* Total */}
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--ls-border)" }}>
-          <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>Total ({totalPv} PV)</span>
-          <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 24, color: "var(--ls-gold)" }}>{euro(total)}</span>
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--ls-border)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
+              Total catalogue <span style={{ color: "var(--ls-text-hint)" }}>({pvf(totalPv)} PV)</span>
+            </span>
+            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 24, color: "var(--ls-gold)" }}>{euro(total)}</span>
+          </div>
+          {isVip ? (
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontSize: 12, color: "var(--ls-teal)", fontWeight: 600 }}>
+                👑 Prix VIP {VIP_LABEL[vipStatus] ?? ""} (−{Math.round((1 - vipFactor) * 100)} %)
+              </span>
+              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-teal)" }}>
+                {euro(total * vipFactor)}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {/* Actions */}
