@@ -389,7 +389,7 @@ function OfficialSeal({ size = 130 }: { size?: number }) {
         <path d="M28 38 Q32 28 38 26 Q35 32 32 35 Q38 33 42 31 Q37 37 32 38 Q38 39 42 41 Q35 41 32 38 Z" />
         <path d="M28 56 Q32 50 38 48 Q35 54 32 57 Q38 55 42 53 Q37 59 32 60 Q38 61 42 63 Q35 63 32 60 Z" />
       </g>
-      <text x="50" y="44" textAnchor="middle" fontFamily="Georgia, serif" fontSize="7" fontWeight="500" fill="#5C4A0F" letterSpacing="0.18em">LOR&apos;SQUAD</text>
+      <text x="50" y="44" textAnchor="middle" fontFamily="Georgia, serif" fontSize="6.4" fontWeight="500" fill="#5C4A0F" letterSpacing="0.06em">LA BASE 360</text>
       <text x="50" y="55" textAnchor="middle" fontFamily="Georgia, serif" fontSize="9" fontWeight="500" fill="#B8922A" fontStyle="italic">Academy</text>
       <text x="50" y="66" textAnchor="middle" fontFamily="Georgia, serif" fontSize="5.5" fill="#888780" letterSpacing="0.15em">EST. 2026</text>
     </svg>
@@ -644,7 +644,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
             fontWeight: 500,
           }}
         >
-          LOR&apos;SQUAD WELLNESS
+          THE WELLNESS CLUB
         </div>
       </div>
 
@@ -919,7 +919,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
             fontWeight: 500,
           }}
         >
-          LOR&apos;SQUAD WELLNESS
+          THE WELLNESS CLUB
         </div>
       </div>
 
