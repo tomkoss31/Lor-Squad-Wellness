@@ -86,6 +86,16 @@ async function downloadPdf(node: HTMLElement, filename: string, format: CertForm
   pdf.save(filename);
 }
 
+// Fusionne les mots CONSÉCUTIFS identiques (insensible à la casse) d'un nom.
+// « Victoria Cavalec Cavalec » → « Victoria Cavalec ». Garde les répétitions
+// non consécutives au cas où (rare).
+function dedupeConsecutiveWords(s: string): string {
+  const words = s.trim().split(/\s+/).filter(Boolean);
+  return words
+    .filter((w, i) => i === 0 || w.toLowerCase() !== words[i - 1].toLowerCase())
+    .join(" ");
+}
+
 export function AcademyCertificatePage() {
   const navigate = useNavigate();
   const { view } = useAcademyProgress();
@@ -126,7 +136,10 @@ export function AcademyCertificatePage() {
     return null;
   }
 
-  const userName = currentUser?.name ?? APP_FALLBACK_DISTRI;
+  // Robustesse nom (2026-06-16) : certaines fiches ont un nom de famille
+  // dupliqué (ex. « Victoria Cavalec Cavalec »). On fusionne les mots
+  // consécutifs identiques pour un rendu propre sur le diplôme.
+  const userName = dedupeConsecutiveWords(currentUser?.name ?? APP_FALLBACK_DISTRI);
   const completedAt = new Date();
   const dateLabel = completedAt.toLocaleDateString("fr-FR", {
     day: "numeric",
