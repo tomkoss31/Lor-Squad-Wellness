@@ -21,7 +21,6 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
@@ -44,6 +43,8 @@ import {
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
+import { useOnlineBilans } from "../hooks/useOnlineBilans";
+import { LeadDetailModal } from "../components/leads/LeadDetailModal";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
@@ -73,7 +74,6 @@ function relativeDays(iso: string): string {
 }
 
 export function CrmPage() {
-  const navigate = useNavigate();
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, refetch, updateStatus, setDormant, deleteLead } = useCrmLeads();
@@ -115,6 +115,14 @@ export function CrmPage() {
   // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
   const { curious, completionRate, loading: curiousLoading } = useCuriousLeads();
   const [showCurious, setShowCurious] = useState(false);
+
+  // Détail d'un lead bilan online (responses + conversion) — ouvert en place
+  // dans le CRM (l'ancien kanban /clients?tab=leads a été consolidé ici).
+  const onlineBilans = useOnlineBilans();
+  const [detailBilanId, setDetailBilanId] = useState<string | null>(null);
+  const detailBilan = detailBilanId
+    ? onlineBilans.bilans.find((b) => b.id === detailBilanId) ?? null
+    : null;
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -267,7 +275,7 @@ export function CrmPage() {
         title: "Pas par ici",
         message:
           lead.table === "online_bilans" && target === "converted"
-            ? "Pour convertir un bilan en fiche client, passe par Dossiers clients > Leads (bouton 📂 Détails)."
+            ? "Pour convertir un bilan en fiche client, ouvre-le avec le bouton 📂 Détails."
             : "Ce statut n'est pas disponible pour cette source.",
       });
       return;
@@ -550,7 +558,7 @@ export function CrmPage() {
               msgCtx={msgCtx}
               onStatusChange={(s) => void handleStatusChange(lead, s)}
               onCopy={(text) => void copyMessage(text)}
-              onOpenBilans={() => navigate("/clients?tab=leads")}
+              onOpenBilans={() => setDetailBilanId(lead.id)}
               onAgenda={() => setAgendaLead(lead)}
               dupeFlag={dupeFlagFor(lead)}
               archived
@@ -604,7 +612,7 @@ export function CrmPage() {
                       msgCtx={msgCtx}
                       onStatusChange={(s) => void handleStatusChange(lead, s)}
                       onCopy={(text) => void copyMessage(text)}
-                      onOpenBilans={() => navigate("/clients?tab=leads")}
+                      onOpenBilans={() => setDetailBilanId(lead.id)}
                       onAgenda={() => setAgendaLead(lead)}
                       dupeFlag={dupeFlagFor(lead)}
                       onDormant={() => void handleDormant(lead, true)}
@@ -652,13 +660,44 @@ export function CrmPage() {
         />
       ) : null}
 
+      {/* Détail lead bilan online (responses + conversion) — ouvert depuis 📂 Détails */}
+      {detailBilan ? (
+        <LeadDetailModal
+          bilan={detailBilan}
+          onClose={() => setDetailBilanId(null)}
+          onStatusChange={async (s) => {
+            await onlineBilans.updateStatus(detailBilan.id, s);
+            await refetch();
+          }}
+          onNotesChange={async (n) => {
+            await onlineBilans.updateNotes(detailBilan.id, n);
+          }}
+          onRefresh={async () => {
+            await onlineBilans.refetch();
+            await refetch();
+          }}
+          onDelete={
+            isAdmin
+              ? async () => {
+                  await onlineBilans.deleteBilan(detailBilan.id);
+                  setDetailBilanId(null);
+                  await refetch();
+                }
+              : undefined
+          }
+          onConverted={async (clientId) => {
+            await onlineBilans.convertLead(detailBilan.id, clientId);
+            setDetailBilanId(null);
+            await refetch();
+            pushToast({ tone: "success", title: "Lead converti", message: "Fiche client créée ✅" });
+          }}
+        />
+      ) : null}
+
       <footer style={footerHint}>
-        💡 Les leads <strong>Bilan online</strong> ont aussi leur kanban détaillé (réponses
-        complètes + conversion en fiche client) dans{" "}
-        <button type="button" onClick={() => navigate("/clients?tab=leads")} style={inlineLink}>
-          Dossiers clients &gt; Leads
-        </button>
-        . Les <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients dans leur
+        💡 Sur un lead <strong>Bilan online</strong>, le bouton <strong>📂 Détails</strong> ouvre
+        toutes ses réponses et permet de le convertir en fiche client. Les{" "}
+        <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients dans leur
         simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au parrain.
       </footer>
     </div>
@@ -1373,13 +1412,3 @@ const footerHint: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
 };
 
-const inlineLink: React.CSSProperties = {
-  background: "transparent",
-  border: "none",
-  color: "var(--ls-teal)",
-  fontSize: 12.5,
-  fontWeight: 700,
-  cursor: "pointer",
-  padding: 0,
-  fontFamily: "DM Sans, sans-serif",
-};
