@@ -17,8 +17,6 @@ import {
 import { CoachCredibilityBadges, type CoachCredibility } from "../components/bilan-online/CoachCredibilityBadges";
 import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
 import { LaBase360Logo } from "../components/public/LaBase360Logo";
-import { RankPinBadge } from "../components/rank/RankPinBadge";
-import type { HerbalifeRank } from "../types/domain";
 
 function normalizeSlug(input: string): string {
   return input
@@ -52,7 +50,6 @@ export function BilanOnlineWelcomePage() {
     return fallbackCoachName;
   }, [coachData, fallbackCoachName]);
 
-  const coachRank = (coachData?.rank ?? null) as HerbalifeRank | null;
 
   function startWithSlug() {
     navigate(`/bilan-online/${slug}/formulaire`);
@@ -167,9 +164,6 @@ export function BilanOnlineWelcomePage() {
                   }}
                 >
                   <span>{coachDisplayName || "—"}</span>
-                  {coachRank && (
-                    <RankPinBadge rank={coachRank} size="xs" />
-                  )}
                 </div>
               </div>
             </div>
@@ -180,6 +174,7 @@ export function BilanOnlineWelcomePage() {
           <CoachCredibilityBadges
             coachSlug={slug}
             variant="welcome"
+            hideRank
             onResolved={setCoachData}
           />
         )}
