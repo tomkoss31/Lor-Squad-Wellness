@@ -143,6 +143,8 @@ async function handleCrmMessage(sb: SupabaseClient, body: Record<string, unknown
   const coach = String(body.coachFirstName ?? "ton coach").trim();
   const bilanUrl = String(body.bilanUrl ?? "").trim();
   const mode = body.mode === "relance" ? "relance" : "first_contact";
+  // Un lead « bilan-online » a DÉJÀ rempli son bilan → ne pas reproposer un bilan.
+  const bilanDone = body.bilanDone === true || lead.source === "bilan-online";
 
   const userPrompt =
     `Rédige un message de ${mode === "relance" ? "RELANCE DOUCE (le prospect n'a pas répondu à un 1er message)" : "PREMIER CONTACT"}.\n\n` +
@@ -153,7 +155,11 @@ async function handleCrmMessage(sb: SupabaseClient, body: Record<string, unknown
     (lead.extra ? `Relation/contexte : ${lead.extra}\n` : "") +
     (lead.city ? `Ville : ${lead.city}\n` : "") +
     (lead.notes ? `Notes : ${lead.notes}\n` : "") +
-    (bilanUrl ? `\nSi pertinent, tu peux proposer ce questionnaire bilan rapide (2 min) : ${bilanUrl}\n` : "") +
+    (bilanDone
+      ? `\nIMPORTANT : ce prospect a DÉJÀ rempli son bilan en ligne — NE propose PAS de (re)faire un bilan ni un questionnaire. Propose plutôt un court échange (appel/RDV) pour lui présenter ses résultats personnalisés et la suite, en douceur.\n`
+      : bilanUrl
+        ? `\nSi pertinent, tu peux proposer ce questionnaire bilan rapide (2 min) : ${bilanUrl}\n`
+        : "") +
     (lead.source === "reco-client" || lead.source === "intention"
       ? `\nC'est une recommandation : remercie d'avoir été mis en relation, mentionne la personne qui a recommandé si connue, reste léger.\n`
       : "") +

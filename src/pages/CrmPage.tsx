@@ -767,6 +767,8 @@ function LeadCard({
           coachFirstName: msgCtx.coachFirstName,
           coachUserId: currentUser?.id,
           bilanUrl: msgCtx.bilanUrl,
+          // Bilan déjà fait (lead bilan online) → Noaly ne reproposera pas un bilan.
+          bilanDone: lead.source === "bilan-online" || !!lead.resultToken,
           lead: {
             firstName: lead.firstName,
             source: lead.source,
