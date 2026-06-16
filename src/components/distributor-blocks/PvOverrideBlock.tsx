@@ -117,6 +117,12 @@ export function PvOverrideBlock({
         Override la jauge Co-pilote du distri (sinon calcul auto basé uniquement
         sur les commandes passées dans l'app, systématiquement sous-estimé).
       </p>
+      <p style={{ ...hintStyle, marginTop: 6, color: "var(--ls-gold)" }}>
+        ⚠️ Ce total pilote <strong>uniquement la jauge</strong>. Le <strong>rang/qualification</strong> (ex.
+        Superviseur 2500/3 mois) et la <strong>commission</strong> se calculent sur le
+        <strong> breakdown par tier</strong> ci-dessous — pense à le renseigner (il met aussi ce total à
+        jour automatiquement).
+      </p>
 
       <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginTop: 10, flexWrap: "wrap" }}>
         <input
