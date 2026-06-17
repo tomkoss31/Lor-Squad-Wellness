@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 
-export function useCrmBadge(userId: string | null, enabled: boolean = true) {
+export function useCrmBadge(userId: string | null, enabled: boolean = true, includeUnassigned: boolean = false) {
   const [count, setCount] = useState(0);
   const lastFetchRef = useRef(0);
 
@@ -30,8 +30,10 @@ export function useCrmBadge(userId: string | null, enabled: boolean = true) {
       // moi) → fini le badge fantôme qui additionnait toute l'équipe pour un
       // admin. Owner : online_bilans=coach/assigned, prospect_leads=referrer/
       // assigned, referrals=coach_id. (Intentions hors badge — visibles au CRM.)
-      const bilanOwner = `coach_user_id.eq.${userId},assigned_to_user_id.eq.${userId}`;
-      const prospectOwner = `referrer_user_id.eq.${userId},assigned_to_user_id.eq.${userId}`;
+      // includeUnassigned (admin) : on compte aussi les leads non attribués
+      // (coach/referrer null) — sinon un lien /bilan-online sans slug = lead perdu.
+      const bilanOwner = `coach_user_id.eq.${userId},assigned_to_user_id.eq.${userId}${includeUnassigned ? ",coach_user_id.is.null" : ""}`;
+      const prospectOwner = `referrer_user_id.eq.${userId},assigned_to_user_id.eq.${userId}${includeUnassigned ? ",referrer_user_id.is.null" : ""}`;
       const [bilansNew, bilansRelance, prospects, referrals] = await Promise.all([
         sb
           .from("online_bilans")
@@ -64,7 +66,7 @@ export function useCrmBadge(userId: string | null, enabled: boolean = true) {
     } catch {
       // Badge best-effort : on garde la dernière valeur connue.
     }
-  }, [enabled, userId]);
+  }, [enabled, userId, includeUnassigned]);
 
   useEffect(() => {
     void fetchCounts();

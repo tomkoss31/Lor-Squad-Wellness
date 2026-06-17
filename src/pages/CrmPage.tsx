@@ -186,7 +186,10 @@ export function CrmPage() {
         const effScope = canFilterTeam ? scope : "me";
         const owner = l.ownerUserId;
         if (effScope === "me") {
-          if (owner !== currentUser?.id) return false;
+          // Admin : voit aussi les leads NON attribués (coach null) — sinon un
+          // lien /bilan-online sans slug donne un lead invisible.
+          const isMine = owner === currentUser?.id || (isAdmin && !owner);
+          if (!isMine) return false;
         } else if (effScope === "l1") {
           if (!owner || !line1Ids.has(owner)) return false;
         } else if (effScope === "l2") {
@@ -208,7 +211,7 @@ export function CrmPage() {
         }
         return true;
       }),
-    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, line1Ids, line2Ids],
+    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids],
   );
 
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
@@ -218,14 +221,14 @@ export function CrmPage() {
     for (const l of leads) {
       if (l.dormant) continue;
       const owner = l.ownerUserId;
-      if (effScope === "me") { if (owner !== currentUser?.id) continue; }
+      if (effScope === "me") { if (!(owner === currentUser?.id || (isAdmin && !owner))) continue; }
       else if (effScope === "l1") { if (!owner || !line1Ids.has(owner)) continue; }
       else if (effScope === "l2") { if (!owner || !line2Ids.has(owner)) continue; }
       else if (effScope !== "all") { if (owner !== effScope) continue; }
       by[l.status] += 1;
     }
     return by;
-  }, [leads, scope, canFilterTeam, currentUser?.id, line1Ids, line2Ids]);
+  }, [leads, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids]);
   const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
   const historiqueCount = useMemo(
     () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
