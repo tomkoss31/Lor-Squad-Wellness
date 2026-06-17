@@ -88,7 +88,7 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   opportunite: { label: "Opportunité", emoji: "🚪" },
   simulateur: { label: "Simulateur", emoji: "✨" },
   business: { label: "Business", emoji: "💼" },
-  welcome: { label: "Page d'accueil", emoji: "🌿" },
+  welcome: { label: "Site web", emoji: "🌐" },
 };
 
 const RELATIONSHIP_LABELS: Record<string, string> = {

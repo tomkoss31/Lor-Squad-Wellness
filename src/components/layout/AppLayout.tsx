@@ -38,7 +38,7 @@ export function AppLayout() {
   // Tracking session pour stats activite admin (2026-04-29)
   useSessionTracker();
   // Badge 🎯 CRM : leads à traiter (wagon 2 chantier 1, 2026-06-10).
-  const { count: crmBadgeCount } = useCrmBadge(currentUser?.isPassiveSupervisor !== true);
+  const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true);
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;

@@ -878,19 +878,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       // (= accessible au viewer selon RLS / scope coach).
       unreadMessageCount: (() => {
         if (!currentUser) return 0;
-        const visible = getVisibleClients(currentUser, clients, users);
-        const visibleIds = new Set(visible.map((c) => c.id));
+        // Scopé sur MOI (2026-06-16) : un admin ne compte plus les messages des
+        // clients de toute l'équipe (badge fantôme). On compte les non-lus des
+        // clients dont JE suis le distributeur, ou taggés sur mon id.
+        const ownClientIds = new Set(
+          clients.filter((c) => c.distributorId === currentUser.id).map((c) => c.id),
+        );
         return clientMessages.filter((m) => {
           if (m.read || m.archived_at) return false;
           if ((m.sender ?? 'client') !== 'client') return false;
-          const distrMatch =
+          const mine =
+            (m.client_id ? ownClientIds.has(m.client_id) : false) ||
             m.distributor_id === currentUser.id ||
-            m.distributor_id === currentUser.name ||
-            currentUser.role === 'admin';
-          if (!distrMatch) return false;
-          // Si le message est rattaché à un client, exiger qu'il soit visible.
-          if (m.client_id && !visibleIds.has(m.client_id)) return false;
-          return true;
+            m.distributor_id === currentUser.name;
+          return mine;
         }).length;
       })(),
       // ─── Agenda Prospects ─────────────────────────────────────────────

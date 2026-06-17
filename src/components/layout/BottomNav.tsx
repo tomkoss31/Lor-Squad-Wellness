@@ -18,7 +18,7 @@ import { useCrmBadge } from "../../hooks/useCrmBadge";
 export function BottomNav() {
   const location = useLocation();
   const { currentUser } = useAppContext();
-  const { count: crmBadgeCount } = useCrmBadge(currentUser?.isPassiveSupervisor !== true);
+  const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true);
 
   // Masquer pendant le bilan (plein écran).
   if (location.pathname.includes("/assessments/new")) return null;

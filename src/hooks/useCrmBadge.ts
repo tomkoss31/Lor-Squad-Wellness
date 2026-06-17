@@ -12,51 +12,59 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 
-export function useCrmBadge(enabled: boolean = true) {
+export function useCrmBadge(userId: string | null, enabled: boolean = true) {
   const [count, setCount] = useState(0);
   const lastFetchRef = useRef(0);
 
   const fetchCounts = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || !userId) {
+      setCount(0);
+      return;
+    }
     lastFetchRef.current = Date.now();
     try {
       const sb = await getSupabaseClient();
       if (!sb) return;
       const nowIso = new Date().toISOString();
-      const [bilansNew, bilansRelance, prospects, referrals, intentions] = await Promise.all([
+      // Scopé sur MOI (2026-06-16) : on ne compte que MES leads (propriétaire =
+      // moi) → fini le badge fantôme qui additionnait toute l'équipe pour un
+      // admin. Owner : online_bilans=coach/assigned, prospect_leads=referrer/
+      // assigned, referrals=coach_id. (Intentions hors badge — visibles au CRM.)
+      const bilanOwner = `coach_user_id.eq.${userId},assigned_to_user_id.eq.${userId}`;
+      const prospectOwner = `referrer_user_id.eq.${userId},assigned_to_user_id.eq.${userId}`;
+      const [bilansNew, bilansRelance, prospects, referrals] = await Promise.all([
         sb
           .from("online_bilans")
           .select("id", { count: "exact", head: true })
-          .eq("lead_status", "new"),
+          .eq("lead_status", "new")
+          .or(bilanOwner),
         sb
           .from("online_bilans")
           .select("id", { count: "exact", head: true })
           .lte("relance_due_at", nowIso)
-          .is("relance_done_at", null),
+          .is("relance_done_at", null)
+          .or(bilanOwner),
         sb
           .from("prospect_leads")
           .select("id", { count: "exact", head: true })
-          .eq("status", "new"),
+          .eq("status", "new")
+          .or(prospectOwner),
         sb
           .from("client_referrals")
           .select("id", { count: "exact", head: true })
-          .eq("status", "new"),
-        sb
-          .from("client_referral_intentions")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending"),
+          .eq("status", "new")
+          .eq("coach_id", userId),
       ]);
       setCount(
         (bilansNew.count ?? 0) +
           (bilansRelance.count ?? 0) +
           (prospects.count ?? 0) +
-          (referrals.count ?? 0) +
-          (intentions.count ?? 0),
+          (referrals.count ?? 0),
       );
     } catch {
       // Badge best-effort : on garde la dernière valeur connue.
     }
-  }, [enabled]);
+  }, [enabled, userId]);
 
   useEffect(() => {
     void fetchCounts();

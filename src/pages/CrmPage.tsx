@@ -737,6 +737,7 @@ function LeadCard({
   // Wagon 3 chantier 8 : message généré par Noaly (l'IA de La Base 360).
   const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
   // l'enregistre quand le coach déclenche un message, on l'affiche ici.
   const [lastTouch, setLastTouch] = useState<string | null>(() => {
@@ -851,106 +852,119 @@ function LeadCard({
         ) : null}
       </div>
 
-      {/* Actions message pro */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {isIntention && lead.parrainPhone ? (
-          <a
-            href={buildCrmWhatsAppLink(lead.parrainPhone, message)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={recordTouch}
-            style={actionBtn("#25D366")}
-            title={`Écrire à ${lead.viaName ?? "ton client"} pour obtenir le contact`}
-          >
-            📱 Demander à {(lead.viaName ?? "").split(/\s+/)[0] || "ton client"}
-          </a>
-        ) : null}
-        {!isIntention && lead.contactIsPhone ? (
+      {/* Actions — menu déroulant (aéré sur mobile, Noaly explicite) */}
+      <div style={{ position: "relative" }}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-expanded={menuOpen}
+          style={{ ...actionBtn("var(--ls-teal)"), fontWeight: 700 }}
+        >
+          ⚡ Actions {menuOpen ? "▴" : "▾"}
+        </button>
+        {menuOpen ? (
           <>
-            <a
-              href={buildCrmWhatsAppLink(lead.contact, message)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={recordTouch}
-              style={actionBtn("#25D366")}
-              title={`${messageLabel} pré-rédigé`}
-            >
-              📱 WhatsApp
-            </a>
-            <a
-              href={buildCrmSmsLink(lead.contact, message)}
-              onClick={recordTouch}
-              style={actionBtn("var(--ls-purple)")}
-            >
-              💬 SMS
-            </a>
+            <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} aria-hidden="true" />
+            <div style={actionMenu}>
+              {isIntention && lead.parrainPhone ? (
+                <MenuItem
+                  onClick={() => {
+                    recordTouch();
+                    window.open(buildCrmWhatsAppLink(lead.parrainPhone!, message), "_blank", "noopener,noreferrer");
+                    setMenuOpen(false);
+                  }}
+                >
+                  📱 Demander à {(lead.viaName ?? "").split(/\s+/)[0] || "ton client"}
+                </MenuItem>
+              ) : null}
+              {!isIntention && lead.contactIsPhone ? (
+                <>
+                  <MenuItem
+                    onClick={() => {
+                      recordTouch();
+                      window.open(buildCrmWhatsAppLink(lead.contact, message), "_blank", "noopener,noreferrer");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    📱 WhatsApp
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      recordTouch();
+                      window.location.href = buildCrmSmsLink(lead.contact, message);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    💬 SMS
+                  </MenuItem>
+                </>
+              ) : null}
+              <MenuItem
+                onClick={() => {
+                  recordTouch();
+                  onCopy(message);
+                  setMenuOpen(false);
+                }}
+              >
+                📋 Copier {messageLabel.toLowerCase()}
+              </MenuItem>
+              {lead.status !== "converted" && lead.status !== "lost" ? (
+                <MenuItem
+                  onClick={() => {
+                    onAgenda();
+                    setMenuOpen(false);
+                  }}
+                >
+                  📅 Caler un RDV
+                </MenuItem>
+              ) : null}
+              {lead.table === "online_bilans" ? (
+                <MenuItem
+                  onClick={() => {
+                    onOpenBilans();
+                    setMenuOpen(false);
+                  }}
+                >
+                  📂 Détails du bilan
+                </MenuItem>
+              ) : null}
+              {lead.resultToken ? (
+                <MenuItem
+                  onClick={() => {
+                    recordTouch();
+                    const origin = typeof window !== "undefined" ? window.location.origin : "";
+                    void navigator.clipboard?.writeText(`${origin}/resultat-bilan/${lead.resultToken}`).then(() =>
+                      pushToast({
+                        tone: "success",
+                        title: "Lien Résultat copié",
+                        message: "Page premium personnalisée — envoie-la à ton prospect 🌿",
+                      }),
+                    );
+                    setMenuOpen(false);
+                  }}
+                >
+                  🔗 Copier le lien Résultat
+                </MenuItem>
+              ) : null}
+              <MenuItem
+                disabled={aiLoading}
+                onClick={() => {
+                  setMenuOpen(false);
+                  // Anti-gaspillage IA : génération seulement si confirmée.
+                  if (
+                    !window.confirm(
+                      "✨ Noaly va rédiger un message personnalisé avec l'IA. Ça consomme des crédits — générer ?",
+                    )
+                  )
+                    return;
+                  void generateAi();
+                }}
+              >
+                ✨ {aiLoading ? "Noaly écrit…" : "Noaly écrit un message IA"}
+              </MenuItem>
+            </div>
           </>
         ) : null}
-        <button
-          type="button"
-          onClick={() => {
-            recordTouch();
-            onCopy(message);
-          }}
-          style={actionBtn("var(--ls-gold)")}
-        >
-          📋 {messageLabel}
-        </button>
-        {lead.status !== "converted" && lead.status !== "lost" ? (
-          <button
-            type="button"
-            onClick={onAgenda}
-            style={actionBtn("var(--ls-coral)")}
-            title="Caler un RDV — prospect agenda pré-rempli"
-          >
-            📅 RDV
-          </button>
-        ) : null}
-        {lead.table === "online_bilans" ? (
-          <button type="button" onClick={onOpenBilans} style={actionBtn("var(--ls-teal)")}>
-            📂 Détails
-          </button>
-        ) : null}
-        {lead.resultToken ? (
-          <button
-            type="button"
-            onClick={() => {
-              recordTouch();
-              const origin = typeof window !== "undefined" ? window.location.origin : "";
-              const url = `${origin}/resultat-bilan/${lead.resultToken}`;
-              void navigator.clipboard?.writeText(url).then(() =>
-                pushToast({
-                  tone: "success",
-                  title: "Lien Résultat copié",
-                  message: "Page premium personnalisée — envoie-la à ton prospect 🌿",
-                }),
-              );
-            }}
-            style={actionBtn("var(--ls-gold)")}
-            title="Copier le lien de la page Résultat Bilan premium à envoyer au prospect"
-          >
-            🔗 Lien Résultat
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => {
-            // Anti-gaspillage de crédits IA : génération uniquement si voulue
-            // (avant, un clic accidentel consommait des tokens pour rien).
-            if (
-              !window.confirm(
-                "✨ Noaly va rédiger un message personnalisé avec l'IA. Ça consomme des crédits — générer ?",
-              )
-            )
-              return;
-            void generateAi();
-          }}
-          disabled={aiLoading}
-          style={actionBtn("var(--ls-purple)")}
-          title="Noaly rédige un message IA personnalisé (consomme des crédits)"
-        >
-          {aiLoading ? "✨ …" : "✨ Noaly écrit"}
-        </button>
       </div>
 
       {/* Message IA généré (wagon 3 chantier 8) */}
@@ -1358,6 +1372,68 @@ const actionBtn = (accent: string): React.CSSProperties => ({
   textDecoration: "none",
   fontFamily: "DM Sans, sans-serif",
 });
+
+const actionMenu: React.CSSProperties = {
+  position: "absolute",
+  top: "100%",
+  left: 0,
+  marginTop: 6,
+  minWidth: 220,
+  maxWidth: "min(260px, 90vw)",
+  zIndex: 41,
+  background: "var(--ls-surface)",
+  border: "1px solid var(--ls-border)",
+  borderRadius: 12,
+  boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
+  padding: 6,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+};
+
+function MenuItem({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        width: "100%",
+        textAlign: "left",
+        padding: "10px 12px",
+        borderRadius: 9,
+        border: "none",
+        background: "transparent",
+        color: "var(--ls-text)",
+        fontSize: 13,
+        fontWeight: 500,
+        fontFamily: "DM Sans, sans-serif",
+        cursor: disabled ? "wait" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        minHeight: 40,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--ls-surface2)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 const aiPanel: React.CSSProperties = {
   marginTop: 4,
