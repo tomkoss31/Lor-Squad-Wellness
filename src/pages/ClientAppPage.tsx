@@ -239,11 +239,40 @@ export function ClientAppPage() {
   }, [liveData])
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const link = document.createElement('link')
-      link.rel = 'manifest'
-      link.href = '/manifest-client.json'
-      document.head.appendChild(link)
+    if (typeof document !== 'undefined' && token) {
+      // Manifest CLIENT dynamique (2026-06-16) : start_url = l'app de CE client.
+      // Avant, on AJOUTAIT un 2e <link manifest> (ignoré par le navigateur → il
+      // gardait le manifest coach start_url:/login), donc l'icône PWA lançait
+      // /login puis /client → le bouton retour Android retombait sur /login.
+      // On REMPLACE le manifest existant par celui du client (start_url correct).
+      const manifest = {
+        name: 'La Base 360',
+        short_name: 'La Base 360',
+        description: 'Mon espace bien-être personnalisé · The wellness nutrition club',
+        start_url: `/client/${token}`,
+        scope: '/client/',
+        display: 'standalone',
+        background_color: '#FFFFFF',
+        theme_color: '#10B981',
+        orientation: 'portrait',
+        icons: [
+          { src: '/brand/labase360/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/brand/labase360/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/brand/labase360/pwa-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/brand/labase360/pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      }
+      const blobUrl = URL.createObjectURL(
+        new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }),
+      )
+      let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null
+      const prevHref = link?.getAttribute('href') ?? null
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'manifest'
+        document.head.appendChild(link)
+      }
+      link.href = blobUrl
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
@@ -254,11 +283,34 @@ export function ClientAppPage() {
       appleMeta.name = 'apple-mobile-web-app-capable'
       appleMeta.content = 'yes'
       document.head.appendChild(appleMeta)
+
+      // Au démontage (le coach quitte la preview), on rend son manifest.
+      const linkRef = link
+      const cleanup = () => {
+        URL.revokeObjectURL(blobUrl)
+        if (prevHref) linkRef.href = prevHref
+      }
+      void loadClientData()
+      return cleanup
     }
 
     void loadClientData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
+
+  // Android PWA (2026-06-16) : le bouton retour système sortait de l'app client
+  // vers /login (l'app coach était au fond de l'historique). Les onglets de
+  // l'app client sont gérés en state (pas en routes) → on "piège" le retour
+  // pour rester dans l'app au lieu de partir sur l'écran de connexion.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href)
+    }
+    window.history.pushState(null, '', window.location.href)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   // Détection iOS / Android pour proposer l'installation PWA
   useEffect(() => {
