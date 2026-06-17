@@ -88,7 +88,19 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   opportunite: { label: "Opportunité", emoji: "🚪" },
   simulateur: { label: "Simulateur", emoji: "✨" },
   business: { label: "Business", emoji: "💼" },
-  welcome: { label: "Page d'accueil", emoji: "🌿" },
+  welcome: { label: "Site web", emoji: "🌐" },
+};
+
+// Re-catégorisation manuelle (A, 2026-06-16) : sources éditables pour un lead
+// prospect + mapping vers la valeur stockée en base (prospect_leads.source).
+export const CRM_EDITABLE_SOURCES: CrmSource[] = ["welcome", "opportunite", "business", "vip", "simulateur", "reco-client"];
+const CRM_SOURCE_TO_DB: Partial<Record<CrmSource, string>> = {
+  welcome: "welcome_page",
+  opportunite: "opportunite",
+  business: "business",
+  vip: "vip",
+  simulateur: "simulateur",
+  "reco-client": "reco-client",
 };
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
@@ -484,6 +496,22 @@ export function useCrmLeads() {
     [],
   );
 
+  // Re-catégoriser la source d'un lead prospect (A, 2026-06-16). Les autres
+  // tables ont une source intrinsèque (bilan online, reco client, intention).
+  const updateSource = useCallback(async (lead: CrmLead, next: CrmSource): Promise<string | null> => {
+    if (lead.table !== "prospect_leads") {
+      return "La source n'est modifiable que pour les leads prospect.";
+    }
+    const dbVal = CRM_SOURCE_TO_DB[next];
+    if (!dbVal) return "Source invalide.";
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    const { error: e } = await sb.from("prospect_leads").update({ source: dbVal }).eq("id", lead.id);
+    if (e) return e.message;
+    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, source: next } : l)));
+    return null;
+  }, []);
+
   // Endormir / réveiller un lead (archive orthogonale).
   const setDormant = useCallback(async (lead: CrmLead, value: boolean): Promise<string | null> => {
     const sb = await getSupabaseClient();
@@ -536,5 +564,5 @@ export function useCrmLeads() {
     return byStatus;
   }, [leads]);
 
-  return { leads, loading, error, counts, refetch: fetchAll, updateStatus, setDormant, deleteLead };
+  return { leads, loading, error, counts, refetch: fetchAll, updateStatus, updateSource, setDormant, deleteLead };
 }
