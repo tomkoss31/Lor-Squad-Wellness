@@ -25,6 +25,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
   computeCrmStats,
+  CRM_EDITABLE_SOURCES,
   CRM_SOURCE_META,
   CRM_STATUS_META,
   statusOptionsFor,
@@ -76,7 +77,7 @@ function relativeDays(iso: string): string {
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
-  const { leads, loading, error, refetch, updateStatus, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
   const isAdmin = currentUser?.role === "admin";
@@ -242,6 +243,12 @@ export function CrmPage() {
     if (err) {
       pushToast({ tone: "warning", title: "Statut non enregistré", message: err });
     }
+  }
+
+  async function handleSourceChange(lead: CrmLead, next: CrmSource) {
+    const err = await updateSource(lead, next);
+    if (err) pushToast({ tone: "warning", title: "Source non modifiée", message: err });
+    else pushToast({ tone: "success", title: "Source mise à jour", message: CRM_SOURCE_META[next].label });
   }
 
   async function handleDormant(lead: CrmLead, value: boolean) {
@@ -557,6 +564,7 @@ export function CrmPage() {
               lead={lead}
               msgCtx={msgCtx}
               onStatusChange={(s) => void handleStatusChange(lead, s)}
+              onSourceChange={(s) => void handleSourceChange(lead, s)}
               onCopy={(text) => void copyMessage(text)}
               onOpenBilans={() => setDetailBilanId(lead.id)}
               onAgenda={() => setAgendaLead(lead)}
@@ -611,6 +619,7 @@ export function CrmPage() {
                       lead={lead}
                       msgCtx={msgCtx}
                       onStatusChange={(s) => void handleStatusChange(lead, s)}
+              onSourceChange={(s) => void handleSourceChange(lead, s)}
                       onCopy={(text) => void copyMessage(text)}
                       onOpenBilans={() => setDetailBilanId(lead.id)}
                       onAgenda={() => setAgendaLead(lead)}
@@ -710,6 +719,7 @@ function LeadCard({
   lead,
   msgCtx,
   onStatusChange,
+  onSourceChange,
   onCopy,
   onOpenBilans,
   onAgenda,
@@ -722,6 +732,7 @@ function LeadCard({
   lead: CrmLead;
   msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
   onStatusChange: (s: CrmStatus) => void;
+  onSourceChange?: (s: CrmSource) => void;
   onCopy: (text: string) => void;
   onOpenBilans: () => void;
   onAgenda: () => void;
@@ -830,9 +841,24 @@ function LeadCard({
         <strong style={{ fontFamily: "Syne, sans-serif", fontSize: 14, color: "var(--ls-text)" }}>
           {lead.firstName}
         </strong>
-        <span style={srcBadge}>
-          {src.emoji} {src.label}
-        </span>
+        {lead.table === "prospect_leads" && onSourceChange ? (
+          <select
+            value={lead.source}
+            onChange={(e) => onSourceChange(e.target.value as CrmSource)}
+            title="Re-catégoriser la source de ce lead"
+            style={{ ...srcBadge, cursor: "pointer", appearance: "none", WebkitAppearance: "none", paddingRight: 18 }}
+          >
+            {CRM_EDITABLE_SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {CRM_SOURCE_META[s].emoji} {CRM_SOURCE_META[s].label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span style={srcBadge}>
+            {src.emoji} {src.label}
+          </span>
+        )}
         {lead.relanceDue ? <span style={relanceBadge}>🔔 Relance due</span> : null}
         {dupeFlag ? (
           <span style={dupeFlag.kind === "client" ? clientBadge : dupeBadge}>⚠️ {dupeFlag.label}</span>
