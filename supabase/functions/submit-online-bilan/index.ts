@@ -283,6 +283,22 @@ serve(async (req) => {
     }
   }
 
+  // Fallback ADMIN (2026-06-16, décision Thomas) : un lien /bilan-online SANS
+  // slug (ou slug introuvable) ne doit JAMAIS produire un lead orphelin — sinon
+  // la page ne sert à rien. On rattache alors le lead à l'admin (le plus ancien
+  // compte admin actif = compte « maison »), qui pourra le dispatcher.
+  if (!coachUserId) {
+    const { data: admin } = await sb
+      .from("users")
+      .select("id")
+      .eq("role", "admin")
+      .eq("active", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (admin) coachUserId = (admin as { id: string }).id;
+  }
+
   // ── ONLINE-B : capture « Curieux » (draft étape 1, bilan non terminé) ──────
   if (body.draft === true) {
     if (!phone && !email) {
