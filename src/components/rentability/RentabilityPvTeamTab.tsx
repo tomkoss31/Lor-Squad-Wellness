@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { PvOverrideBlock, PvBizworksBlock } from "../distributor-blocks";
 import { ManualPvEntriesSection } from "./ManualPvEntriesSection";
+import { RANK_LABELS } from "../../types/domain";
 
 interface PvTeamMember {
   user_id: string;
@@ -129,6 +130,12 @@ export function RentabilityPvTeamTab({
                       <span style={{ display: "block", fontWeight: 600, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
                         {m.name}
                       </span>
+                      {u?.currentRank?.endsWith("_50") && u.rankSetAt && (
+                        <span style={{ display: "block", fontSize: 11, color: "var(--ls-gold)", marginTop: 2 }}>
+                          👑 {RANK_LABELS[u.currentRank] ?? "Superviseur"} depuis le{" "}
+                          {new Date(u.rankSetAt).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
                       {hasOverride && (
                         <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-teal)", marginTop: 2 }}>
                           Override ce mois : {u?.monthlyPvOverride} PV

@@ -122,20 +122,28 @@ export function RentabilitePage() {
     const coupleIds = isCoupleAggregated ? resolveCoupleUserIds(users) : [currentUser.id];
     const excludeSet = new Set(coupleIds);
     const fromEngagement = members.filter((m) => !excludeSet.has(m.user_id));
-    // Chantier "frozen contributifs" 2026-05-22 : un distri gelé (Prisca/Alex)
-    // n'apparaît pas dans get_team_engagement (RPC filtre les inactifs) mais
-    // s'il a un breakdown PV saisi ce mois, ses royalties remontent à Thomas.
-    // On le réintègre côté front pour qu'il soit visible dans la grid team.
+    // 2026-06-16 : on réintègre TOUS les distri de l'app de l'équipe absents de
+    // l'engagement (inactifs / jamais connectés comme Alexandre, ou gelés) pour
+    // pouvoir saisir leurs PV Bizworks. get_team_engagement ne renvoie que les
+    // membres actifs → sans ça, impossible d'ajouter le PV d'un distri inactif.
     const knownIds = new Set(fromEngagement.map((m) => m.user_id));
-    const frozenContrib = users
-      .filter((u) =>
-        !excludeSet.has(u.id) &&
-        !knownIds.has(u.id) &&
-        u.frozenAt &&
-        breakdowns.some((b) =>
-          b.userId === u.id &&
-          ((b.pv15 ?? 0) + (b.pv25 ?? 0) + (b.pv35 ?? 0) + (b.pv42 ?? 0) + (b.pvRoyalty ?? 0)) > 0,
-        ),
+    const isAdmin = currentUser.role === "admin";
+    const isInDownline = (uid: string): boolean => {
+      let cur = users.find((x) => x.id === uid)?.sponsorId ?? null;
+      let guard = 0;
+      while (cur && guard++ < 30) {
+        if (cur === currentUser.id) return true;
+        cur = users.find((x) => x.id === cur)?.sponsorId ?? null;
+      }
+      return false;
+    };
+    const teamExtra = users
+      .filter(
+        (u) =>
+          !excludeSet.has(u.id) &&
+          !knownIds.has(u.id) &&
+          (u.role === "distributor" || u.role === "referent") &&
+          (isAdmin || isInDownline(u.id)),
       )
       .map((u) => ({
         user_id: u.id,
@@ -152,7 +160,7 @@ export function RentabilitePage() {
         last_seen_at: null, lifetime_login_count: 0,
         status: "decroche" as const,
       }));
-    return [...fromEngagement, ...frozenContrib];
+    return [...fromEngagement, ...teamExtra];
   }, [members, isAdminOrRef, currentUser, isCoupleAggregated, users, breakdowns]);
 
   // ─── Count-up values pour les 3 stats hero ─────────────────────────────
