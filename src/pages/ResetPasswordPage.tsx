@@ -55,7 +55,9 @@ export function ResetPasswordPage() {
       const { error } = await sb.auth.updateUser({ password });
       if (error) throw error;
       setPhase("success");
-      window.setTimeout(() => navigate("/login", { replace: true }), 2500);
+      // Pas de redirection forcée vers /login (= connexion COACH) : un CLIENT
+      // accède à son app via son lien /client/<token> ou l'icône PWA, pas par
+      // /login → ça le perdait (bug de redirection signalé). On laisse le choix.
     } catch (err) {
       setPhase("error");
       setErrorMsg(err instanceof Error ? err.message : "Erreur inconnue.");
@@ -149,15 +151,37 @@ export function ResetPasswordPage() {
               background: "rgba(29,158,117,0.14)",
               border: "1px solid rgba(29,158,117,0.4)",
               borderRadius: 12,
-              padding: 14,
+              padding: 16,
               fontSize: 13,
               color: "#1D9E75",
               lineHeight: 1.55,
             }}
           >
             ✅ <strong>Mot de passe mis à jour !</strong>
-            <br />
-            Redirection vers la connexion…
+            <div style={{ color: "rgba(240,237,232,0.75)", marginTop: 10 }}>
+              <strong style={{ color: "#F0EDE8" }}>Client ?</strong> Rouvre simplement
+              ton app <strong>La Base 360</strong> (l'icône sur ton écran d'accueil, ou
+              le lien que ton coach t'a envoyé).
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/login", { replace: true })}
+              style={{
+                marginTop: 14,
+                width: "100%",
+                background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 12,
+                padding: "12px 16px",
+                fontFamily: "Syne, sans-serif",
+                fontSize: 13.5,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Je suis coach → me connecter
+            </button>
           </div>
         ) : null}
 
