@@ -20,6 +20,7 @@ import {
   type PvMonthlyBreakdown,
 } from "../../lib/herbalifeFormulas";
 import { setUserPvBreakdown } from "../../services/supabaseService";
+import { getSupabaseClient } from "../../services/supabaseClient";
 import { AdminCard, hintStyle, PvTierRow } from "./_shared";
 
 interface Props {
@@ -97,6 +98,22 @@ export function PvBizworksBlock({ memberId, memberName, monthIso, onApplied }: P
         pv25IsVip: draftBreakdown.pv25IsVip,
         pv35IsVip: draftBreakdown.pv35IsVip,
       });
+      // Unification (2026-06-16) : le total du breakdown pilote AUSSI la jauge
+      // Co-pilote (users.monthly_pv_override) → plus de divergence entre les
+      // deux saisies. Le breakdown reste la source du rang + de la commission
+      // (formules inchangées) ; on aligne juste l'affichage de la jauge.
+      try {
+        const sb = await getSupabaseClient();
+        if (sb) {
+          await sb.rpc("set_user_pv_override", {
+            p_user_id: memberId,
+            p_month: month,
+            p_pv: draftTotalPv > 0 ? draftTotalPv : null,
+          });
+        }
+      } catch {
+        /* best-effort : la jauge se resynchronisera au prochain enregistrement */
+      }
       const isCleared = draftTotalPv === 0;
       pushToast({
         tone: "success",
