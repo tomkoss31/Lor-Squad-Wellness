@@ -78,7 +78,7 @@ export function useDailyActionChecklist(now: Date = new Date()): UseDailyActionC
   const { contacts: liste100Contacts } = useCahierDeBord(currentUser?.id ?? null);
   // Wagon 2 chantier 2 (2026-06-10) : l'action Leads couvre désormais TOUT le
   // pipeline CRM (bilans + prospects + recos + intentions), pas que les bilans.
-  const { count: crmCount } = useCrmBadge(Boolean(currentUser?.id));
+  const { count: crmCount } = useCrmBadge(currentUser?.id ?? null, Boolean(currentUser?.id));
 
   const [persisted, setPersisted] = useState<Record<DailyActionKey, DailyActionStatus>>({
     f1_f21: "pending",
