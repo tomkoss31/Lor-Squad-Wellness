@@ -934,12 +934,22 @@ function LeadCard({
         ) : null}
         <button
           type="button"
-          onClick={() => void generateAi()}
+          onClick={() => {
+            // Anti-gaspillage de crédits IA : génération uniquement si voulue
+            // (avant, un clic accidentel consommait des tokens pour rien).
+            if (
+              !window.confirm(
+                "✨ Noaly va rédiger un message personnalisé avec l'IA. Ça consomme des crédits — générer ?",
+              )
+            )
+              return;
+            void generateAi();
+          }}
           disabled={aiLoading}
           style={actionBtn("var(--ls-purple)")}
-          title="Noaly génère un message personnalisé pour ce lead"
+          title="Noaly rédige un message IA personnalisé (consomme des crédits)"
         >
-          {aiLoading ? "✨ …" : "✨ Noaly"}
+          {aiLoading ? "✨ …" : "✨ Noaly écrit"}
         </button>
       </div>
 
