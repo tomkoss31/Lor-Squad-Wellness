@@ -1017,12 +1017,22 @@ export function buildPvTrackingRecords(
     const nextProbableOrderDate =
       activeProducts[0]?.nextProbableOrderDate ??
       addDays(startDate, program.mainReferenceDurationDays);
+    // Règle « sur place = 0 PV » (2026-06-16, décision Thomas) : une vente prise
+    // sur place (au comptoir du club) ne doit JAMAIS ajouter de PV au compteur
+    // du client — le volume est déjà compté côté club/Bizworks, on ne le
+    // double-compte pas. On exclut donc les transactions « reprise-sur-place »
+    // du PV cumulé et du PV du mois. La rentabilité (€) n'est pas concernée
+    // (elle marche sur le prix, pas sur le PV).
+    const countsPv = (t: { type: PvTransactionType }) => t.type !== "reprise-sur-place";
     const pvCumulative = Number(
-      clientTransactions.reduce((total, transaction) => total + transaction.pv, 0).toFixed(2)
+      clientTransactions
+        .filter(countsPv)
+        .reduce((total, transaction) => total + transaction.pv, 0)
+        .toFixed(2)
     );
     const monthlyPv = Number(
       clientTransactions
-        .filter((transaction) => isSameMonth(transaction.date))
+        .filter((transaction) => countsPv(transaction) && isSameMonth(transaction.date))
         .reduce((total, transaction) => total + transaction.pv, 0)
         .toFixed(2)
     );

@@ -857,7 +857,10 @@ function PremiumOrderBuilder({
           productId: product.id,
           productName: product.name,
           quantity: line.quantity,
-          pv: Number((product.pv * line.quantity).toFixed(2)),
+          // Règle « sur place = 0 PV » (2026-06-16) : une reprise au comptoir
+          // n'ajoute jamais de PV au compteur du client (déjà compté côté club).
+          // Le prix reste enregistré normalement (rentabilité € inchangée).
+          pv: type === "reprise-sur-place" ? 0 : Number((product.pv * line.quantity).toFixed(2)),
           price: Number((product.pricePublic * line.quantity).toFixed(2)),
           type,
           note:
@@ -874,8 +877,14 @@ function PremiumOrderBuilder({
       setConfettiVisible(true);
       pushToast({
         tone: "success",
-        title: `+${totals.pv.toFixed(1)} PV enregistrés 🎉`,
-        message: `${cart.length} produit${cart.length > 1 ? "s" : ""} pour ${record.clientName}`,
+        title:
+          type === "reprise-sur-place"
+            ? `Vente sur place enregistrée 🏪`
+            : `+${totals.pv.toFixed(1)} PV enregistrés 🎉`,
+        message:
+          type === "reprise-sur-place"
+            ? `${cart.length} produit${cart.length > 1 ? "s" : ""} pour ${record.clientName} · sans PV (déjà compté au comptoir)`
+            : `${cart.length} produit${cart.length > 1 ? "s" : ""} pour ${record.clientName}`,
       });
       // Laisse les confettis tourner 1.2s avant de fermer
       window.setTimeout(() => {
