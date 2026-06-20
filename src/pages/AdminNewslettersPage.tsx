@@ -535,6 +535,19 @@ function NewsletterCard({
 }) {
   const statusBadge = STATUS_BADGES[row.status];
   const audienceBadge = AUDIENCE_BADGES[row.audience];
+  const [copied, setCopied] = useState(false);
+  const publicUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/news/${row.slug}` : `/news/${row.slug}`;
+  const copyLink = () => {
+    void navigator.clipboard?.writeText(publicUrl).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    });
+  };
+  const shareTelegram = () => {
+    const url = `https://t.me/share/url?url=${encodeURIComponent(publicUrl)}&text=${encodeURIComponent(row.title)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
   const created = new Date(row.created_at).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "short",
@@ -645,6 +658,16 @@ function NewsletterCard({
           <ActionButton variant="ghost" onClick={onPreview} disabled={busy}>
             🌐 Voir publique
           </ActionButton>
+        )}
+        {row.is_public && (
+          <>
+            <ActionButton variant="ghost" onClick={copyLink} disabled={busy}>
+              {copied ? "✅ Lien copié" : "🔗 Copier le lien"}
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={shareTelegram} disabled={busy}>
+              ✈️ Telegram
+            </ActionButton>
+          </>
         )}
         {row.status !== "archived" && row.status !== "draft" && (
           <ActionButton variant="ghost" onClick={onArchive} disabled={busy}>
