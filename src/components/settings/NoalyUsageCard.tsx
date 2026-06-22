@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { JargonTip } from "../ui/JargonTip";
 
 interface Usage {
   calls: number;
@@ -61,7 +62,7 @@ export function NoalyUsageCard() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <div aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 9, flex: "0 0 auto", background: "linear-gradient(135deg, var(--ls-purple), var(--ls-teal))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>✨</div>
         <div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)" }}>Noaly · ma conso</div>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)" }}>Noaly · ma conso<JargonTip term="noaly" /></div>
           <div style={{ fontSize: 12, color: "var(--ls-text-muted)", textTransform: "capitalize" }}>{monthLabel}</div>
         </div>
       </div>

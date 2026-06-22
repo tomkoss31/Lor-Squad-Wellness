@@ -2265,6 +2265,14 @@ button, a, [role="button"] { min-height: 44px; }
   60%  { transform: scale(1.15) rotate(0deg); opacity: 1; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
+/* Bulle d'explication JargonTip (composant ⓘ) */
+@keyframes ls-jargon-pop {
+  0%   { transform: translateY(-4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [role="tooltip"] { animation: none !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   .ls-pill__check { animation: none; }
   .ls-pill, .ls-pill--selected, .ls-pill:hover { transform: none !important; transition-duration: 100ms !important; }

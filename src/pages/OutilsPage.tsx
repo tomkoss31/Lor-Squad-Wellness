@@ -9,6 +9,8 @@
 // =============================================================================
 
 import { useNavigate } from "react-router-dom";
+import { JargonTip } from "../components/ui/JargonTip";
+import type { JargonKey } from "../data/jargon";
 
 interface ToolCard {
   id: string;
@@ -18,6 +20,8 @@ interface ToolCard {
   desc: string;
   path?: string;
   soon?: boolean;
+  /** Si défini, ajoute une bulle ⓘ à côté du nom pour expliquer le mot. */
+  infoTerm?: JargonKey;
 }
 
 const TOOLS: { section: string; items: ToolCard[] }[] = [
@@ -35,6 +39,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Prospecter",
         desc: "Ta machine à prospects : la méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
         path: "/outils-prospection",
+        infoTerm: "prospect",
       },
       {
         id: "mes-liens",
@@ -89,6 +94,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Rentabilité",
         desc: "Ta marge du mois, ta projection et le détail complet (vente directe + overrides équipe). Vue avant réservée au Co-pilote.",
         path: "/rentabilite",
+        infoTerm: "rentabilite",
       },
       {
         id: "flex",
@@ -97,6 +103,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "FLEX",
         desc: "Ta marge, tes paliers Herbalife et la projection du mois en un coup d'œil.",
         path: "/flex",
+        infoTerm: "flex",
       },
       {
         id: "pv",
@@ -105,6 +112,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Suivi PV",
         desc: "L'historique de tes points de volume, échéances et relances à faire.",
         path: "/pv",
+        infoTerm: "pv",
       },
     ],
   },
@@ -170,6 +178,7 @@ export function OutilsPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>{tool.name}</span>
+                    {tool.infoTerm ? <JargonTip term={tool.infoTerm} /> : null}
                     {tool.soon ? (
                       <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: "var(--ls-purple)", background: "color-mix(in srgb, var(--ls-purple) 14%, transparent)", padding: "2px 7px", borderRadius: 20 }}>
                         Bientôt

@@ -27,6 +27,8 @@
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
+import { JargonTip } from "../components/ui/JargonTip";
+import type { JargonKey } from "../data/jargon";
 
 /** Sections du hub (remaniement 2026-06-10) : la grille à plat mélangeait
     outils du quotidien, pédagogie, prospection et admin → illisible. */
@@ -56,6 +58,8 @@ interface HubCard {
   requireRole?: "admin";
   /** Nécessite Academy complétée à X% (0-100). Bypass admin. */
   requireAcademyPercent?: number;
+  /** Si défini, ajoute une bulle ⓘ à côté du titre pour expliquer le mot. */
+  infoTerm?: JargonKey;
 }
 
 const CARDS: HubCard[] = [
@@ -115,6 +119,7 @@ const CARDS: HubCard[] = [
     section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireAcademyPercent: 100,
+    infoTerm: "ebe",
   },
   {
     id: "routine-du-jour",
@@ -150,6 +155,7 @@ const CARDS: HubCard[] = [
     // B5 (2026-06-13) : c'est un « mode d'emploi » → pédago, donc section Apprendre.
     section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    infoTerm: "vip",
   },
   // Cartes admin (Admin Prospection + Newsletters) retirées 2026-06-13 (B5,
   // décision Thomas) : rapatriées dans Paramètres > Admin. Le hub
@@ -287,7 +293,7 @@ export function DeveloppementHubPage() {
             <div style={emojiCircleStyle(card.accent)}>
               {card.isLocked ? "🔒" : card.emoji}
             </div>
-            <h3 style={cardTitleStyle}>{card.title}</h3>
+            <h3 style={cardTitleStyle}>{card.title}{card.infoTerm ? <JargonTip term={card.infoTerm} /> : null}</h3>
             <p style={cardDescStyle}>{card.description}</p>
             {card.isLocked ? (
               <div style={ctaStyle("var(--ls-text-muted)")}>

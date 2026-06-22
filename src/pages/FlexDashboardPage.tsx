@@ -281,6 +281,7 @@ export function FlexDashboardPage() {
           <PageHeading
             eyebrow="FLEX La Base 360"
             title="Ton pilotage du jour"
+            infoTerm="flex"
             description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
           />
           {/* B6 (2026-06-13) : clarifie FLEX vs Rentabilité — les deux parlent

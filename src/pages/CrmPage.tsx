@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
+import { JargonTip } from "../components/ui/JargonTip";
 import {
   computeCrmStats,
   CRM_EDITABLE_SOURCES,
@@ -306,8 +307,8 @@ export function CrmPage() {
     <div style={pageWrap}>
       {/* Hero */}
       <header style={heroBox}>
-        <div style={heroEyebrow}>🎯 CRM · Tous tes leads</div>
-        <h1 style={heroTitle}>Un seul pipeline, toutes tes sources</h1>
+        <div style={heroEyebrow}>🎯 CRM · Tous tes contacts<JargonTip term="crm" /></div>
+        <h1 style={heroTitle}>Tous tes contacts, au même endroit</h1>
         <p style={heroSubtitle}>
           Bilan online, Club VIP, opportunité, recos de tes clients — tout
           arrive ici. Contacte avec un message pro pré-rédigé, classe, convertis.
@@ -427,7 +428,7 @@ export function CrmPage() {
       {showStats ? (
         <div style={statsPanel}>
           <div style={statsPanelHead}>
-            📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis (
+            📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis<JargonTip term="conversion" /> (
             {Math.round(stats.overall.conversionRate * 100)}%)
           </div>
           <div style={statsGrid}>
@@ -476,7 +477,7 @@ export function CrmPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
               <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.5 }}>
                 Ces prospects ont saisi leur étape 1 mais n'ont pas terminé le bilan. Ils ne sont pas
-                dans ton pipeline qualifié — relance-les en douceur, sans pression.
+                dans ta liste de prospects qualifiés — relance-les en douceur, sans pression.
               </p>
               {curious.length === 0 ? (
                 <div style={columnEmpty}>Aucun curieux en attente 👏</div>
@@ -556,7 +557,7 @@ export function CrmPage() {
             : view === "historique"
             ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
             : leads.length === 0
-            ? "Aucun lead pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir le pipeline 🌱"
+            ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
             : "Aucun lead ne correspond aux filtres."}
         </div>
       ) : view === "archived" ? (
