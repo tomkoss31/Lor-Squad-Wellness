@@ -233,14 +233,14 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     id: "app-tour",
     title: "🧭 L'app en un coup d'œil",
     shortLabel: "Tour",
-    description: "Découvre la sidebar (Co-pilote, Clients, CRM, Agenda, Messagerie, Mon business…), Noaly et où chaque chose se trouve.",
+    description: "Découvre la navigation (Co-pilote, Clients, CRM, Agenda, Messagerie, Mon business…), Noaly et où chaque chose se trouve.",
     estimatedDurationMinutes: 2,
     icon: "🧭",
     steps: [
       {
         id: "intro",
         title: "La Base 360 en 60 secondes, {firstName}",
-        body: "Tour rapide des sections principales de la sidebar + le CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
+        body: "Tour rapide des sections principales de l'app + le bouton gold central. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
         placement: "center",
         illustrationKey: "ring-progress",
       },
@@ -249,7 +249,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-copilote"]',
         placement: "bottom",
         title: "1️⃣ Co-pilote — ton dashboard du jour",
-        body: "Hero action (prochain RDV ou suivi à faire), agenda du jour, suivis protocole en attente, jauge PV mensuelle, 3 mini-stats (clients actifs, semaine, conversion prospects). L'horloge en haut affiche un mood emoji selon l'intensité de ta journée. Admin : un toggle « Vue équipe » permet de voir tout le monde.",
+        body: "Hero action (prochain RDV ou suivi à faire), agenda du jour, suivis protocole en attente, ta progression du mois, 3 mini-stats (clients actifs, semaine, conversion prospects). L'horloge en haut affiche un mood emoji selon l'intensité de ta journée. Admin : un toggle « Vue équipe » permet de voir tout le monde.",
         manualAdvance: true,
       },
       {
@@ -314,7 +314,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-new-bilan"]',
         placement: "top",
         title: "Le CTA gold qui sert tous les jours",
-        body: "« + Nouveau bilan » : ton geste central. Crée un client + son bilan initial + son programme produits + son lien d'app personnelle, en un seul flow guidé. C'est le sujet entier de la section suivante de l'Academy.",
+        body: "« + Nouveau bilan » : ton geste central. Crée un client + son bilan initial + son programme produits + son lien d'app personnelle, d'un coup, étape par étape. C'est le sujet entier de la section suivante de l'Academy.",
         isLast: true,
         manualAdvance: true,
         nextLabel: "Section terminée",
@@ -328,7 +328,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question: "Le Co-pilote, c'est quoi exactement ?",
           answers: [
             "Une page de configuration",
-            "Le dashboard principal avec jauge PV, mini-stats et accès rapide",
+            "Ton tableau de bord du jour : actions à faire, mini-stats et accès rapides",
             "Un mode pilote automatique qui répond aux clients",
             "L'onglet d'aide en ligne",
           ],
@@ -338,11 +338,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             2: "Faux — pas d'IA qui répond aux clients à ta place. C'est toi le coach.",
             3: "Le guide est ailleurs (/guide). Le co-pilote c'est ton tableau de bord.",
           },
-          explanation: "Le Co-pilote est ton dashboard quotidien : jauge PV mensuelle, 3 mini-stats (clients actifs / RDV semaine / conversion), CTAs rapides. C'est la page que tu regardes le matin avec ton café.",
+          explanation: "Le Co-pilote est ton tableau de bord quotidien : ton action prioritaire, l'agenda du jour, 3 mini-stats (clients actifs / RDV semaine / conversion) et des accès rapides. C'est la page que tu regardes le matin avec ton café. (Tes vrais points de volume, eux, sont sur MyHerbalife — l'app suit surtout les commandes de tes clients.)",
         },
         {
           id: "q2",
-          question: "Dans la sidebar, où trouves-tu rapidement tous tes RDV à venir ?",
+          question: "Dans l'app, quel onglet regroupe tous tes RDV à venir ?",
           answers: ["Onglet Clients", "Onglet Messagerie", "Onglet Agenda", "Paramètres"],
           correctIndex: 2,
           wrongAnswerHints: {
@@ -354,7 +354,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         },
         {
           id: "q3",
-          question: "Le bouton « + Nouveau bilan » fait quoi en un seul flow ?",
+          question: "Le bouton « + Nouveau bilan », il fait quoi ?",
           answers: [
             "Crée juste un client vide",
             "Crée client + bilan initial + programme + lien d'app personnelle",
@@ -363,11 +363,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Trop limité — le wizard fait bien plus que créer un client.",
+            0: "Trop limité — il fait bien plus que créer un client.",
             2: "Aucun email envoyé à ton coach lors d'un bilan.",
             3: "Le RDV se fixe APRÈS le bilan, pas pendant.",
           },
-          explanation: "« + Nouveau bilan » est ton geste central. Un seul wizard guidé crée le client + son bilan + son programme + son lien d'app perso (auto-login token). C'est le sujet entier de la section « Premier bilan ».",
+          explanation: "« + Nouveau bilan » est ton geste central : il crée d'un coup, étape par étape, le client + son bilan + son programme + son lien d'app perso. C'est le sujet entier de la section « Premier bilan ».",
         },
         {
           id: "q4",
