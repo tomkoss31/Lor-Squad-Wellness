@@ -185,6 +185,7 @@ export function AppLayout() {
   const OUTILS_SUBITEMS = BUSINESS_SHORTCUTS;
   const onOutilsRoute =
     location.pathname === "/outils" ||
+    location.pathname.startsWith("/outils-prospection") ||
     location.pathname === "/mes-liens" ||
     location.pathname === "/panier" ||
     location.pathname === "/rentabilite" ||

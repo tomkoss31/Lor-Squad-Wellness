@@ -86,6 +86,16 @@ async function downloadPdf(node: HTMLElement, filename: string, format: CertForm
   pdf.save(filename);
 }
 
+// Fusionne les mots CONSÉCUTIFS identiques (insensible à la casse) d'un nom.
+// « Victoria Cavalec Cavalec » → « Victoria Cavalec ». Garde les répétitions
+// non consécutives au cas où (rare).
+function dedupeConsecutiveWords(s: string): string {
+  const words = s.trim().split(/\s+/).filter(Boolean);
+  return words
+    .filter((w, i) => i === 0 || w.toLowerCase() !== words[i - 1].toLowerCase())
+    .join(" ");
+}
+
 export function AcademyCertificatePage() {
   const navigate = useNavigate();
   const { view } = useAcademyProgress();
@@ -126,7 +136,10 @@ export function AcademyCertificatePage() {
     return null;
   }
 
-  const userName = currentUser?.name ?? APP_FALLBACK_DISTRI;
+  // Robustesse nom (2026-06-16) : certaines fiches ont un nom de famille
+  // dupliqué (ex. « Victoria Cavalec Cavalec »). On fusionne les mots
+  // consécutifs identiques pour un rendu propre sur le diplôme.
+  const userName = dedupeConsecutiveWords(currentUser?.name ?? APP_FALLBACK_DISTRI);
   const completedAt = new Date();
   const dateLabel = completedAt.toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -389,7 +402,7 @@ function OfficialSeal({ size = 130 }: { size?: number }) {
         <path d="M28 38 Q32 28 38 26 Q35 32 32 35 Q38 33 42 31 Q37 37 32 38 Q38 39 42 41 Q35 41 32 38 Z" />
         <path d="M28 56 Q32 50 38 48 Q35 54 32 57 Q38 55 42 53 Q37 59 32 60 Q38 61 42 63 Q35 63 32 60 Z" />
       </g>
-      <text x="50" y="44" textAnchor="middle" fontFamily="Georgia, serif" fontSize="7" fontWeight="500" fill="#5C4A0F" letterSpacing="0.18em">LOR&apos;SQUAD</text>
+      <text x="50" y="44" textAnchor="middle" fontFamily="Georgia, serif" fontSize="6.4" fontWeight="500" fill="#5C4A0F" letterSpacing="0.06em">LA BASE 360</text>
       <text x="50" y="55" textAnchor="middle" fontFamily="Georgia, serif" fontSize="9" fontWeight="500" fill="#B8922A" fontStyle="italic">Academy</text>
       <text x="50" y="66" textAnchor="middle" fontFamily="Georgia, serif" fontSize="5.5" fill="#888780" letterSpacing="0.15em">EST. 2026</text>
     </svg>
@@ -644,7 +657,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
             fontWeight: 500,
           }}
         >
-          LOR&apos;SQUAD WELLNESS
+          THE WELLNESS CLUB
         </div>
       </div>
 
@@ -919,7 +932,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
             fontWeight: 500,
           }}
         >
-          LOR&apos;SQUAD WELLNESS
+          THE WELLNESS CLUB
         </div>
       </div>
 
