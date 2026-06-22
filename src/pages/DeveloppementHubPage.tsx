@@ -98,6 +98,19 @@ const CARDS: HubCard[] = [
     requireAcademyPercent: 50,
   },
   {
+    // Glossaire rendu visible (2026-06-22) : raccourci vers la page existante
+    // FormationGlossaryPage. Complète les bulles ⓘ — ici, TOUS les mots-clés au
+    // même endroit (PV, EBE, royalty, palier…), décodés en français simple.
+    id: "glossaire",
+    emoji: "📖",
+    title: "Tous les mots-clés",
+    description: "PV, EBE, palier, royalty, lignée… le vocabulaire Herbalife & La Base 360 décodé en français simple.",
+    cta: "Ouvrir le glossaire",
+    path: "/formation/glossaire",
+    accent: "var(--ls-teal)",
+    section: "apprendre",
+  },
+  {
     id: "cahier",
     emoji: "📔",
     title: "Cahier de bord",
