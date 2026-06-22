@@ -45,7 +45,7 @@ export function DormantClientsWidget() {
           <div style={eyebrowStyle}>🔥 Plan de relance · aujourd'hui</div>
           <h3 style={titleStyle}>
             <strong style={{ color: "var(--ls-coral)" }}>{clients.length}</strong>
-            {" "}client{clients.length > 1 ? "s" : ""} dormant{clients.length > 1 ? "s" : ""}
+            {" "}client{clients.length > 1 ? "s" : ""} inactif{clients.length > 1 ? "s" : ""}
             {" = "}
             <strong style={{ color: "var(--ls-gold)" }}>~{totalPv.toLocaleString("fr-FR")} PV</strong>
             {" à reconquérir"}
@@ -57,10 +57,10 @@ export function DormantClientsWidget() {
               <Badge color={URGENCY_META.never.color} label={`${counts.never} jamais commandé`} emoji={URGENCY_META.never.emoji} />
             )}
             {counts.high > 0 && (
-              <Badge color={URGENCY_META.high.color} label={`${counts.high} très dormants`} emoji={URGENCY_META.high.emoji} />
+              <Badge color={URGENCY_META.high.color} label={`${counts.high} très inactifs`} emoji={URGENCY_META.high.emoji} />
             )}
             {counts.medium > 0 && (
-              <Badge color={URGENCY_META.medium.color} label={`${counts.medium} dormants`} emoji={URGENCY_META.medium.emoji} />
+              <Badge color={URGENCY_META.medium.color} label={`${counts.medium} inactifs`} emoji={URGENCY_META.medium.emoji} />
             )}
             {counts.recent > 0 && (
               <Badge color={URGENCY_META.recent.color} label={`${counts.recent} récents`} emoji={URGENCY_META.recent.emoji} />

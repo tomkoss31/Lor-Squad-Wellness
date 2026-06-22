@@ -13,7 +13,7 @@ export function PvModuleHeader({
 }) {
   return (
     <div className="space-y-5">
-      <PageHeading eyebrow="Suivi PV" title={title} description={description} />
+      <PageHeading eyebrow="Suivi PV" title={title} description={description} infoTerm="pv" />
       <PvModuleTabs currentUser={currentUser} />
     </div>
   );

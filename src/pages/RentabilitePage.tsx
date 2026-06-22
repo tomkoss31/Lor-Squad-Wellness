@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useUserRentability } from "../hooks/useUserRentability";
+import { JargonTip } from "../components/ui/JargonTip";
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import { RentabilityDetailModal } from "../components/rentability/RentabilityDetailModal";
 import { RentabilityWalletCard } from "../components/rentability/RentabilityWalletCard";
@@ -307,6 +308,7 @@ export function RentabilitePage() {
             <span className="lr-eyebrow">
               <span aria-hidden="true">◆</span>
               Ma rentabilité
+              <JargonTip term="rentabilite" />
               <span style={{ color: "var(--ls-rentab-ink-3)" }}>· {month}</span>
               {isCoupleAggregated && (
                 <span className="lr-chip" style={{ height: 22, padding: "0 8px", fontSize: 10.5, marginLeft: 4 }}>
