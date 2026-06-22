@@ -4,6 +4,7 @@
 // bouton gold "marquer comme envoye").
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Client } from "../../types/domain";
 import { calculateAge } from "../../lib/age";
 import {
@@ -54,7 +55,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
   const waUrl = client.phone ? buildBirthdayWhatsAppUrl(client.phone, message) : null;
   const smsUrl = client.phone ? buildBirthdaySmsUrl(client.phone, message) : null;
 
-  return (
+  const overlay = (
     // Audit a11y 2026-04-30 : backdrop souris (ESC clavier au niveau dialog).
     <div
       role="presentation"
@@ -67,7 +68,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: 10050,
         padding: "16px",
       }}
     >
@@ -276,4 +277,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
       </div>
     </div>
   );
+
+  // Portail vers <body> : passe au-dessus du hero Noaly / contextes d'empilement.
+  return typeof document !== "undefined" ? createPortal(overlay, document.body) : overlay;
 }
