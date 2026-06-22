@@ -2,6 +2,16 @@
 // Définition statique des sections du parcours La Base 360 Academy
 // (ACADEMY_SECTIONS) — steps + quiz remplis.
 //
+// ⚡ Réinjection interactivité (2026-06-22) : après la refonte « langage simple »,
+// le parcours était devenu trop passif (que des bulles + bouton « Suivant »).
+// Les étapes qui surlignent un VRAI élément de navigation sont repassées en clic
+// réel (advanceOn:{event:"click"}) au lieu de manualAdvance : l'utilisateur clique
+// vraiment l'élément pour avancer (le bouton « Suivant » reste un secours). Règle
+// de sûreté : on ne convertit que les steps « nav » dont l'étape suivante n'impose
+// pas une autre `route` (sinon double navigation). Les autres restent manualAdvance.
+// Le bac à sable interactif (/academy/sandbox, « Mode pratique ») est aussi relié
+// depuis l'intro du chapitre Bilan.
+//
 // ⚠️ RÈGLE D'ÉCRITURE (refonte 2026-06-22, validée Thomas) : on écrit comme
 // on parle à un pote qui débute. Tutoiement, phrases courtes (~15 mots max),
 // zéro jargon (pas de « lignage », « scope », « upsell », « cron », « RLS »…),
@@ -210,16 +220,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-copilote"]',
         placement: "bottom",
         title: "1️⃣ Co-pilote — ton tableau de bord du jour",
-        body: "Ta page du matin : ton prochain RDV, tes suivis à faire, ta jauge de points du mois et 3 chiffres clés. En un coup d'œil, tu sais quoi faire aujourd'hui.",
-        manualAdvance: true,
+        body: "Ta page du matin : ton prochain RDV, tes suivis à faire, ta jauge de points du mois et 3 chiffres clés. En un coup d'œil, tu sais quoi faire aujourd'hui.\n\n👆 Clique sur **Co-pilote** dans le menu pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "clients",
         target: '[data-tour-id="nav-clients"]',
         placement: "bottom",
         title: "2️⃣ Dossiers clients — ta base",
-        body: "Tous tes clients, triés par statut (actifs, en pause, arrêtés…). Ouvre une fiche : elle a **5 onglets** — Vue, Mesures, Produits, Actions, Club VIP. C'est ton outil de tous les jours.",
-        manualAdvance: true,
+        body: "Tous tes clients, triés par statut (actifs, en pause, arrêtés…). Ouvre une fiche : elle a **5 onglets** — Vue, Mesures, Produits, Actions, Club VIP. C'est ton outil de tous les jours.\n\n👆 Clique sur **Dossiers clients** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "crm",
@@ -233,24 +243,24 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-agenda"]',
         placement: "bottom",
         title: "4️⃣ Agenda — bilans, suivis, prospects",
-        body: "Tous tes rendez-vous au même endroit, avec des filtres (clients, prospects, suivis). 💡 Tes prospects peuvent même réserver un créneau eux-mêmes via ton lien (à activer dans Paramètres > Profil).",
-        manualAdvance: true,
+        body: "Tous tes rendez-vous au même endroit, avec des filtres (clients, prospects, suivis). 💡 Tes prospects peuvent même réserver un créneau eux-mêmes via ton lien (à activer dans Paramètres > Profil).\n\n👆 Clique sur **Agenda** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "messagerie",
         target: '[data-tour-id="nav-messagerie"]',
         placement: "bottom",
         title: "5️⃣ Messagerie — tes échanges",
-        body: "Tous les messages de tes clients arrivent ici. Pastille rouge = non lus. Le bouton doré « + Démarrer une conversation » te permet d'écrire en premier. Alerte sur ton téléphone à chaque message.",
-        manualAdvance: true,
+        body: "Tous les messages de tes clients arrivent ici. Pastille rouge = non lus. Le bouton doré « + Démarrer une conversation » te permet d'écrire en premier. Alerte sur ton téléphone à chaque message.\n\n👆 Clique sur **Messagerie** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "mon-business",
         target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
         title: "6️⃣ Mon business — ton QG",
-        body: "Tout ce qui sert à faire tourner ton activité :\n\n🎯 **Prospecter**\n🔗 **Mes liens** (bilan, VIP, coach…)\n🛒 **Panier** (prix + points + remise)\n💎 **Rentabilité** (ta marge + les points de l'équipe)\n⚡ **FLEX** (ton rythme du jour)\n💰 **Suivi PV** (tes points du mois)\n\nUn seul endroit, fini de chercher.",
-        manualAdvance: true,
+        body: "Tout ce qui sert à faire tourner ton activité :\n\n🎯 **Prospecter**\n🔗 **Mes liens** (bilan, VIP, coach…)\n🛒 **Panier** (prix + points + remise)\n💎 **Rentabilité** (ta marge + les points de l'équipe)\n⚡ **FLEX** (ton rythme du jour)\n💰 **Suivi PV** (tes points du mois)\n\nUn seul endroit, fini de chercher.\n\n👆 Clique sur **Mon business** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
         crossRefs: [
           { label: "Lire ta progression du mois", sectionId: "rituals" },
         ],
@@ -260,8 +270,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-developpement"]',
         placement: "bottom",
         title: "7️⃣ Mon développement — pour apprendre",
-        body: "Tout ce qui sert à apprendre et progresser :\n\n🎓 Academy\n📚 Formation Herbalife\n🛠 Boîte à outils (scripts, checklists)\n📔 Cahier de bord\n🎯 Simulateur EBE (entraînement)\n⚡ Comment marche FLEX\n🆕 Nouveautés de l'app\n\nTout est au même endroit.",
-        manualAdvance: true,
+        body: "Tout ce qui sert à apprendre et progresser :\n\n🎓 Academy\n📚 Formation Herbalife\n🛠 Boîte à outils (scripts, checklists)\n📔 Cahier de bord\n🎯 Simulateur EBE (entraînement)\n⚡ Comment marche FLEX\n🆕 Nouveautés de l'app\n\nTout est au même endroit.\n\n👆 Clique sur **Mon développement** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "noaly",
@@ -339,7 +349,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Le bilan, ta porte d'entrée",
-        body: "Le bilan, c'est le cœur de ton activité. En un seul parcours guidé, il crée le client et son premier état des lieux. Compte 8 à 12 minutes en vrai RDV — l'app gère l'administratif, toi tu écoutes.",
+        body: "Le bilan, c'est le cœur de ton activité. En un seul parcours guidé, il crée le client et son premier état des lieux. Compte 8 à 12 minutes en vrai RDV — l'app gère l'administratif, toi tu écoutes.\n\n🎮 Envie de t'entraîner pour de vrai ? Le bouton **« Mode pratique »** en haut de l'Academy te fait simuler un bilan complet, sans toucher à tes vraies données.",
         placement: "center",
         illustrationKey: "person-card",
       },
@@ -684,8 +694,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-messagerie"]',
         placement: "bottom",
         title: "La Messagerie",
-        body: "Toutes les demandes de tes clients arrivent ici. Pastille rouge = non lus. Tu reçois aussi une alerte sur ton téléphone à chaque nouveau message.",
-        manualAdvance: true,
+        body: "Toutes les demandes de tes clients arrivent ici. Pastille rouge = non lus. Tu reçois aussi une alerte sur ton téléphone à chaque nouveau message.\n\n👆 Clique sur **Messagerie** pour l'ouvrir.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "messages-tabs",
@@ -904,8 +914,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-outils"]',
         placement: "bottom",
         title: "Suivi PV — le détail produit par produit",
-        body: "Pour creuser : ton historique, ta projection de fin de mois, et les produits de chaque client (stock restant, dates de relance). Un client en retard de commande passe en rouge : c'est ton signal pour l'appeler avant qu'il décroche. Fidéliser coûte 5× moins cher que trouver un nouveau client.",
-        manualAdvance: true,
+        body: "Pour creuser : ton historique, ta projection de fin de mois, et les produits de chaque client (stock restant, dates de relance). Un client en retard de commande passe en rouge : c'est ton signal pour l'appeler avant qu'il décroche. Fidéliser coûte 5× moins cher que trouver un nouveau client.\n\n👆 Clique sur **Mon business** pour continuer.",
+        advanceOn: { event: "click", debounceMs: 250 },
       },
       {
         id: "monthly-rhythm",
