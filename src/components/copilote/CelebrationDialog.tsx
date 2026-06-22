@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { KIND_META, type Celebration } from "./CelebrationCard";
 
 interface Props {
@@ -87,7 +88,7 @@ export function CelebrationDialog({ celebration, phone, coachFirstName, onClose 
 
   const titleEyebrow = `${meta.emoji} ${meta.label(celebration)} · ${celebration.first_name} ${celebration.last_name}`;
 
-  return (
+  const overlay = (
     <div
       role="presentation"
       aria-hidden="true"
@@ -95,7 +96,7 @@ export function CelebrationDialog({ celebration, phone, coachFirstName, onClose 
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 1000,
+        zIndex: 10050,
         background: "rgba(0,0,0,0.45)",
         backdropFilter: "blur(4px)",
         display: "flex",
@@ -240,6 +241,10 @@ export function CelebrationDialog({ celebration, phone, coachFirstName, onClose 
       </div>
     </div>
   );
+
+  // Portail vers <body> : sort de tout contexte d'empilement du Co-pilote
+  // (hero Noaly, etc.) → la modale passe TOUJOURS au premier plan.
+  return typeof document !== "undefined" ? createPortal(overlay, document.body) : overlay;
 }
 
 interface ChannelButtonProps {

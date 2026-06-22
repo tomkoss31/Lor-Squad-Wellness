@@ -194,7 +194,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     id: "app-tour",
     title: "🧭 L'app en un coup d'œil",
     shortLabel: "Tour",
-    description: "Découvre la sidebar (Co-pilote, Clients, CRM, Agenda, Messagerie…), Noaly et où trouver chaque chose.",
+    description: "Découvre la navigation (Co-pilote, Clients, CRM, Agenda, Messagerie…), Noaly et où trouver chaque chose.",
     estimatedDurationMinutes: 2,
     icon: "🧭",
     steps: [
@@ -252,7 +252,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         body: "Tout ce qui sert à faire tourner ton activité :\n\n🎯 **Prospecter**\n🔗 **Mes liens** (bilan, VIP, coach…)\n🛒 **Panier** (prix + points + remise)\n💎 **Rentabilité** (ta marge + les points de l'équipe)\n⚡ **FLEX** (ton rythme du jour)\n💰 **Suivi PV** (tes points du mois)\n\nUn seul endroit, fini de chercher.",
         manualAdvance: true,
         crossRefs: [
-          { label: "Comment lire la jauge PV", sectionId: "rituals" },
+          { label: "Lire ta progression du mois", sectionId: "rituals" },
         ],
       },
       {
