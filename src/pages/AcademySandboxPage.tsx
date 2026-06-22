@@ -68,49 +68,49 @@ export function AcademySandboxPage() {
     if (state.objective === "weight-loss" || state.objective === "fitness") {
       products.push({
         emoji: "🥤",
-        name: "Formula 1 Vanille",
-        reason: "Repas équilibré 220 kcal — la base du programme",
+        name: "Formula 1 — Vanille",
+        reason: "Repas équilibré ~220 kcal — la base du programme",
       });
       products.push({
-        emoji: "💧",
-        name: "Hydrate Pamplemousse",
-        reason: `Atteindre ${waterTarget} mL/jour avec plaisir`,
+        emoji: "🍵",
+        name: "Boisson Aloe Vera — Mangue",
+        reason: `Confort digestif + hydratation (objectif ~${waterTarget} mL/j)`,
       });
     }
     if (state.objective === "sport-mass") {
       products.push({
         emoji: "🥤",
-        name: "Formula 1 Sport Chocolat",
-        reason: "Base protéinée sport, 30g protéines / portion",
+        name: "Formula 1 Sport",
+        reason: "Base nutritionnelle du sportif",
       });
       products.push({
         emoji: "⚡",
-        name: "Liftoff Mojito",
-        reason: "Booster pré-entraînement, focus + énergie",
+        name: "LiftOff — Pamplemousse",
+        reason: "Boost énergie + focus avant l'effort",
       });
       products.push({
         emoji: "🧱",
-        name: "Personalized Protein Powder",
+        name: "Mélange pour Boisson Protéinée (PDM)",
         reason: `Compléter pour atteindre ${proteinTarget} g de protéines`,
       });
     }
     if (state.objective === "wellness") {
       products.push({
         emoji: "🌿",
-        name: "Tea Mix Original",
-        reason: "Énergie douce, brûle-graisse léger",
+        name: "Boisson Thé Herbalife — Citron",
+        reason: "Énergie douce + coup de pouce métabolisme",
       });
       products.push({
         emoji: "🍵",
-        name: "Aloe Mangue",
-        reason: "Confort digestif + hydratation premium",
+        name: "Boisson Aloe Vera — Mangue",
+        reason: "Confort digestif + hydratation",
       });
     }
     if (products.length < 3) {
       products.push({
         emoji: "🍫",
-        name: "Barre Protéinée",
-        reason: "Snack 10g protéines, anti-fringale 16h",
+        name: "Barres Protéinées Achieve H24",
+        reason: "Collation ~21 g de protéines, anti-fringale",
       });
     }
 

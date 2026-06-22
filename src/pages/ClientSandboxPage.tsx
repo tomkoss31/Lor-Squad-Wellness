@@ -70,9 +70,9 @@ const OBJECTIVES: ObjectiveDef[] = [
     label: "Perdre du poids",
     desc: "Programme nutrition + hydratation + collations malines",
     products: [
-      { emoji: "🥤", name: "Formula 1 Vanille", reason: "Repas équilibré 220 kcal" },
-      { emoji: "💧", name: "Hydrate Pamplemousse", reason: "Hydratation plaisir", recommended: true },
-      { emoji: "🍫", name: "Barre protéinée", reason: "Snack 16h anti-fringale" },
+      { emoji: "🥤", name: "Formula 1 — Vanille", reason: "Repas équilibré ~220 kcal" },
+      { emoji: "🍵", name: "Boisson Aloe Vera — Mangue", reason: "Hydratation + confort digestif", recommended: true },
+      { emoji: "🍫", name: "Barres Protéinées Achieve H24", reason: "Snack anti-fringale 16h" },
     ],
   },
   {
@@ -81,9 +81,9 @@ const OBJECTIVES: ObjectiveDef[] = [
     label: "Forme et tonicité",
     desc: "Énergie, équilibre, vitalité",
     products: [
-      { emoji: "🥤", name: "Formula 1 Sport Chocolat", reason: "Base protéinée sport" },
-      { emoji: "⚡", name: "Liftoff Mojito", reason: "Booster pré-entraînement", recommended: true },
-      { emoji: "🌿", name: "Tea Mix", reason: "Énergie douce" },
+      { emoji: "🥤", name: "Formula 1 Sport", reason: "Base nutritionnelle du sportif" },
+      { emoji: "⚡", name: "LiftOff — Pamplemousse", reason: "Boost énergie + focus", recommended: true },
+      { emoji: "🍵", name: "Boisson Thé Herbalife — Citron", reason: "Énergie douce" },
     ],
   },
   {
@@ -92,9 +92,9 @@ const OBJECTIVES: ObjectiveDef[] = [
     label: "Bien-être global",
     desc: "Vitalité, digestion, équilibre intérieur",
     products: [
-      { emoji: "🌿", name: "Tea Mix Original", reason: "Brûle-graisse léger" },
-      { emoji: "🍵", name: "Aloe Mangue", reason: "Confort digestif", recommended: true },
-      { emoji: "🍫", name: "Barre Protéinée", reason: "Encas équilibré" },
+      { emoji: "🌿", name: "Boisson Thé Herbalife — Citron", reason: "Coup de pouce métabolisme" },
+      { emoji: "🍵", name: "Boisson Aloe Vera — Mangue", reason: "Confort digestif", recommended: true },
+      { emoji: "🍫", name: "Barres Protéinées Achieve H24", reason: "Encas équilibré" },
     ],
   },
 ];
