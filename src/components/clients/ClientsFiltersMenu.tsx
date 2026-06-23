@@ -95,16 +95,26 @@ export function ClientsFiltersMenu({
       setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    const onMove = () => setOpen(false);
+    // Fix 2026-06-23 : la liste du menu est scrollable (overflowY:auto, ex.
+    // section Responsable en bas). Le listener scroll en capture se déclenchait
+    // AUSSI sur le scroll INTERNE du menu → fermeture instantanée dès qu'on
+    // essayait de descendre (desktop). On ne ferme que sur le scroll de la PAGE
+    // (popover position:fixed qui se détacherait du bouton).
+    const onScroll = (e: Event) => {
+      const t = e.target as Node | null;
+      if (t && menuRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onResize = () => setOpen(false);
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onMove, true);
-    window.addEventListener("resize", onMove);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", onMove, true);
-      window.removeEventListener("resize", onMove);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
