@@ -350,6 +350,15 @@ export function PanierPage() {
         }
         .panier-line-anim { animation: panier-pop 0.28s cubic-bezier(0.22,1,0.36,1); }
         @media (prefers-reduced-motion: reduce) { .panier-line-anim { animation: none; } }
+        /* Scrollbar fine premium sur le récap */
+        .panier-aside { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ls-text-hint) 32%, transparent) transparent; }
+        .panier-aside::-webkit-scrollbar { width: 8px; }
+        .panier-aside::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ls-text-hint) 30%, transparent); border-radius: 999px; }
+        .panier-aside::-webkit-scrollbar-track { background: transparent; }
+        /* CTA premium */
+        .panier-cta { transition: transform .15s ease, filter .15s ease, box-shadow .15s ease; }
+        .panier-cta:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .panier-cta:not(:disabled):active { transform: translateY(0); }
         @media (max-width: 760px) {
           .panier-title { font-size: 26px; }
           .panier-lead { display: none; }
@@ -527,7 +536,7 @@ export function PanierPage() {
         </section>
 
         {/* Panier */}
-        <aside id="panier-recap" style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }} className="panier-aside">
+        <aside id="panier-recap" style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start", maxHeight: "calc(100dvh - 112px)", overflowY: "auto", paddingBottom: 14 }} className="panier-aside">
           <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 22, padding: 22 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
               <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "var(--ls-text)" }}>Ton panier</span>
@@ -791,21 +800,25 @@ export function PanierPage() {
                     <>
                       <button
                         type="button"
+                        className="panier-cta"
                         onClick={() => void validateSale()}
                         disabled={blocked}
                         style={{
                           width: "100%",
                           marginTop: 16,
-                          padding: 14,
+                          padding: 15,
                           borderRadius: 14,
                           border: "none",
-                          background: "var(--ls-gold)",
-                          color: "#1a1407",
+                          background: blocked
+                            ? "var(--ls-surface2)"
+                            : "linear-gradient(135deg, #EFB23C 0%, #C98A1E 100%)",
+                          color: blocked ? "var(--ls-text-hint)" : "#1a1407",
                           fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
-                          fontSize: 14.5,
+                          fontSize: 15,
+                          letterSpacing: "-0.01em",
                           cursor: blocked ? "not-allowed" : "pointer",
-                          opacity: blocked ? 0.5 : 1,
+                          boxShadow: blocked ? "none" : "0 10px 22px -10px rgba(186,117,23,0.6)",
                         }}
                       >
                         {saving
