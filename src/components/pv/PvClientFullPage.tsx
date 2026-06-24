@@ -438,7 +438,7 @@ function ProductsTab({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {products.map((p) => (
-            <ActiveProductCard key={p.id} p={p} />
+            <ActiveProductCard key={p.id} p={p} record={record} />
           ))}
         </div>
       )}
@@ -459,12 +459,45 @@ function toDateInputValue(d: string | Date | null | undefined): string {
   return `${y}-${m}-${day}`;
 }
 
-function ActiveProductCard({ p }: { p: PvProductUsage }) {
-  const { updatePvProductStartDate } = useAppContext();
+function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientTrackingRecord }) {
+  const { updatePvProductStartDate, savePvClientProduct, currentUser } = useAppContext();
   const { push: pushToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [draftDate, setDraftDate] = useState(() => toDateInputValue(p.startDate));
   const [savingDate, setSavingDate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Retire la ligne du suivi (soft-delete : on pose active=false). Marche aussi
+  // pour les produits "seed" du programme (upsert onConflict client+produit).
+  // L'historique PV (transactions) n'est pas touché.
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await savePvClientProduct({
+        id: p.recordId,
+        clientId: record.clientId,
+        responsibleId: record.responsibleId || currentUser?.id || "",
+        responsibleName: record.responsibleName || currentUser?.name || "Coach",
+        programId: p.programId,
+        productId: p.productId,
+        productName: p.productName,
+        quantityStart: p.quantityStart,
+        startDate: p.startDate,
+        durationReferenceDays: p.durationReferenceDays,
+        pvPerUnit: p.pvPerUnit,
+        pricePublicPerUnit: p.pricePublicPerUnit,
+        quantiteLabel: p.quantiteLabel,
+        noteMetier: p.noteMetier,
+        active: false,
+      });
+      pushToast({ tone: "success", title: "Produit retiré", message: `${p.productName} retiré du suivi.` });
+    } catch (e) {
+      pushToast({ tone: "error", title: "Échec", message: e instanceof Error ? e.message : "Réessaie." });
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   async function handleSaveStartDate() {
     if (!draftDate) {
@@ -714,6 +747,19 @@ function ActiveProductCard({ p }: { p: PvProductUsage }) {
             {formatDateLocal(p.nextProbableOrderDate)}
           </div>
         </div>
+      </div>
+
+      {/* Supprimer la ligne du suivi (garde l'historique PV) */}
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+        {confirmDelete ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>Retirer du suivi ?</span>
+            <button type="button" onClick={() => void handleDelete()} disabled={deleting} style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: "var(--ls-coral)", color: "#fff", fontSize: 11.5, fontWeight: 700, cursor: deleting ? "wait" : "pointer", fontFamily: "DM Sans, sans-serif" }}>{deleting ? "…" : "Oui, supprimer"}</button>
+            <button type="button" onClick={() => setConfirmDelete(false)} disabled={deleting} style={{ padding: "5px 10px", borderRadius: 8, border: "0.5px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontSize: 11.5, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Annuler</button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setConfirmDelete(true)} title="Retirer ce produit du suivi" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 999, border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, var(--ls-border))", background: "transparent", color: "var(--ls-coral)", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>🗑 Supprimer</button>
+        )}
       </div>
     </div>
   );
