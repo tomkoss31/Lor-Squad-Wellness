@@ -21,7 +21,7 @@ import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { tierPctForRank } from "../lib/herbalifeFormulas";
-import type { Client } from "../types/domain";
+import type { Client, User } from "../types/domain";
 import type { PvClientTransaction } from "../types/pv";
 
 const euro = (n: number) =>
@@ -130,7 +130,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts } = useAppContext();
+  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts, users } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -207,6 +207,29 @@ export function PanierPage() {
 
   const isVipClient = (c: Client) =>
     Boolean(c.vipStartedAt) || (c.vipStatus != null && c.vipStatus !== "none");
+
+  // Détection « cette cliente est aussi distributrice » : on rapproche la fiche
+  // d'un compte coach par email (prioritaire) ou nom complet. Permet badge +
+  // avertissement « ses PV vont sur son volume distri » (pas de vente cliente).
+  const coachByKey = useMemo(() => {
+    const m = new Map<string, User>();
+    for (const u of users) {
+      if (u.active === false) continue;
+      const e = (u.email ?? "").trim().toLowerCase();
+      if (e) m.set("e:" + e, u);
+      const n = (u.name ?? "").trim().toLowerCase();
+      if (n) m.set("n:" + n, u);
+    }
+    return m;
+  }, [users]);
+  const coachOf = (c: Client): User | null => {
+    const e = (c.email ?? "").trim().toLowerCase();
+    if (e && coachByKey.has("e:" + e)) return coachByKey.get("e:" + e)!;
+    const n = `${c.firstName} ${c.lastName}`.trim().toLowerCase();
+    if (n && coachByKey.has("n:" + n)) return coachByKey.get("n:" + n)!;
+    return null;
+  };
+  const selectedClientCoach = selectedClient ? coachOf(selectedClient) : null;
 
   // Attribution prête = client existant choisi OU nom direct saisi.
   const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
@@ -784,6 +807,16 @@ export function PanierPage() {
                               })}
                             </div>
 
+                            {selectedClientCoach && saleType === "commande" ? (
+                              <div style={{ marginBottom: 12, padding: "9px 11px", borderRadius: 10, background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)" }}>
+                                <div style={{ fontSize: 11.5, color: "var(--ls-text)", fontWeight: 700 }}>👩‍💼 {selectedClient?.firstName} est aussi distributrice</div>
+                                <div style={{ fontSize: 10.5, color: "var(--ls-text-muted)", lineHeight: 1.4, marginTop: 3 }}>
+                                  Ses commandes comptent normalement sur SON volume distri (sa qualif), pas comme vente cliente. Tu peux quand même valider ici.
+                                </div>
+                                <button type="button" onClick={() => navigate("/rentabilite?tab=pv-equipe")} style={{ marginTop: 7, padding: "5px 10px", borderRadius: 8, border: "1px solid color-mix(in srgb, var(--ls-purple) 40%, var(--ls-border))", background: "transparent", color: "var(--ls-purple)", fontSize: 11.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>→ Saisir côté PV équipe</button>
+                              </div>
+                            ) : null}
+
                             {saleType === "commande" ? (
                               <div>
                                 <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>Démarrage de la cure</div>
@@ -1139,6 +1172,7 @@ export function PanierPage() {
                       <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                         {isVipClient(c) ? <span title="Client VIP" style={{ color: "var(--ls-gold)", flex: "0 0 auto" }}>⭐</span> : null}
                         <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.firstName} {c.lastName}</span>
+                        {coachOf(c) ? <span title="Aussi distributrice" style={{ flex: "0 0 auto" }}>👩‍💼</span> : null}
                       </div>
                       <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
                         {(() => {
