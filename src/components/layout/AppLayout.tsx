@@ -110,7 +110,6 @@ export function AppLayout() {
         { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Clients & relation" },
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Clients & relation" },
         { label: "Mon business", path: "/outils", emoji: "💼", badge: 0, tourId: "nav-outils", section: "Mon espace" },
-        { label: "Plan Marketing", path: "/plan-marketing", emoji: "🪜", badge: 0, section: "Mon espace" },
         ...(currentUser.role === "admin"
           ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace" }]
           : []),

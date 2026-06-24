@@ -114,6 +114,14 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         path: "/pv",
         infoTerm: "pv",
       },
+      {
+        id: "plan-marketing",
+        icon: "🪜",
+        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        name: "Plan Marketing",
+        desc: "L'échelle des rangs Herbalife (Distributor → President's) : où tu en es, comment passer chaque palier, ce que ça rapporte.",
+        path: "/plan-marketing",
+      },
     ],
   },
 ];
