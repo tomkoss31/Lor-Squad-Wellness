@@ -145,6 +145,10 @@ export function PanierPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [onlyMine, setOnlyMine] = useState(true);
+  // Accordéons : une fois l'attribution / la remise choisie, on replie en
+  // résumé compact pour que le bas du panier (prix + valider) reste visible.
+  const [attribOpen, setAttribOpen] = useState(true);
+  const [remiseOpen, setRemiseOpen] = useState(false);
 
   const products: CatProduct[] = useMemo(
     () =>
@@ -190,6 +194,9 @@ export function PanierPage() {
   const isVipClient = (c: Client) =>
     Boolean(c.vipStartedAt) || (c.vipStatus != null && c.vipStatus !== "none");
 
+  // Attribution prête = client existant choisi OU nom direct saisi.
+  const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
+
   // Liste du sélecteur de client : par défaut les clients du distri connecté
   // (Mélanie voit les siens), l'admin peut basculer « Tous ». Mes clients d'abord.
   const myId = currentUser?.id;
@@ -232,6 +239,8 @@ export function PanierPage() {
     setSaleType("commande");
     setDelayDays(0);
     setPickerQuery("");
+    setAttribOpen(true);
+    setRemiseOpen(false);
   };
 
   const attribName =
@@ -555,89 +564,116 @@ export function PanierPage() {
               </div>
             ) : (
               <>
-                {/* Attribution de la vente (obligatoire) */}
-                <div style={{ marginBottom: 14, padding: 12, borderRadius: 14, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                    {([["existing", "👤 Client existant"], ["direct", "✍️ Client direct"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
-                      const on = attribMode === m;
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => setAttribMode(m)}
-                          style={{ flex: 1, padding: "8px 10px", borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-teal)" : "var(--ls-surface)", color: on ? "#fff" : "var(--ls-text-muted)" }}
-                        >
-                          {l}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {attribMode === "existing" ? (
-                    selectedClient ? (
+                {/* Attribution de la vente — accordéon (replié une fois choisi) */}
+                <div style={{ marginBottom: 14, borderRadius: 16, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", overflow: "hidden" }}>
+                  {/* En-tête cliquable = résumé + chevron */}
+                  <button
+                    type="button"
+                    onClick={() => setAttribOpen((o) => !o)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}
+                  >
+                    {attribReady ? (
                       <>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 999, background: "var(--ls-teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
-                            {selectedClient.firstName.charAt(0)}{selectedClient.lastName.charAt(0)}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {isVipClient(selectedClient) ? <span title="Client VIP" style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}
-                            </div>
-                            <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
-                              {(() => {
-                                const pv = pvByClient.get(selectedClient.id);
-                                const pvTxt = pv && pv > 0 ? `${Math.round(pv)} PV` : "";
-                                return [pvTxt, selectedClient.distributorName || ""].filter(Boolean).join(" · ") || "—";
-                              })()}
-                            </div>
-                          </div>
-                          <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
+                        <div style={{ width: 32, height: 32, flex: "0 0 auto", borderRadius: 999, background: attribMode === "existing" ? "var(--ls-teal)" : "var(--ls-purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 12 }}>
+                          {attribMode === "existing" && selectedClient ? `${selectedClient.firstName.charAt(0)}${selectedClient.lastName.charAt(0)}` : "✍️"}
                         </div>
-
-                        <div style={{ display: "flex", gap: 6, marginBottom: saleType === "commande" ? 12 : 0 }}>
-                          {([["commande", "💳 Sur son compte"], ["reprise-sur-place", "🏪 Sur place"]] as Array<["commande" | "reprise-sur-place", string]>).map(([v, l]) => {
-                            const on = saleType === v;
-                            return (
-                              <button key={v} type="button" onClick={() => setSaleType(v)} style={{ flex: 1, padding: "7px 8px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-gold)" : "var(--ls-surface)", color: on ? "#1a1407" : "var(--ls-text-muted)" }}>{l}</button>
-                            );
-                          })}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {attribMode === "existing" && selectedClient ? (
+                              <>{isVipClient(selectedClient) ? <span style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}</>
+                            ) : clientName.trim()}
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-hint)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {attribMode === "existing"
+                              ? `${saleType === "commande" ? "💳 Sur son compte" : "🏪 Sur place"}${saleType === "commande" ? ` · ${delayDays === 0 ? "Aujourd'hui" : `+${delayDays} j`}` : ""}`
+                              : "Vente rapide hors-app"}
+                          </div>
                         </div>
+                      </>
+                    ) : (
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ls-text)" }}>👤 À qui est cette vente ?</div>
+                        <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>Obligatoire pour valider</div>
+                      </div>
+                    )}
+                    <span aria-hidden="true" style={{ flex: "0 0 auto", color: "var(--ls-text-hint)", fontSize: 11, transform: attribOpen ? "rotate(180deg)" : "none", transition: "transform .2s ease" }}>▼</span>
+                  </button>
 
-                        {saleType === "commande" ? (
-                          <div>
-                            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>Démarrage de la cure</div>
-                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              {([[0, "Aujourd'hui"], [3, "+3 j"], [5, "+5 j"], [7, "+7 j"]] as Array<[number, string]>).map(([d, l]) => {
-                                const on = delayDays === d;
+                  {/* Corps déroulable */}
+                  {attribOpen ? (
+                    <div style={{ padding: "2px 12px 12px" }}>
+                      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                        {([["existing", "👤 Client existant"], ["direct", "✍️ Client direct"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
+                          const on = attribMode === m;
+                          return (
+                            <button key={m} type="button" onClick={() => setAttribMode(m)} style={{ flex: 1, padding: "8px 10px", borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-teal)" : "var(--ls-surface)", color: on ? "#fff" : "var(--ls-text-muted)" }}>{l}</button>
+                          );
+                        })}
+                      </div>
+
+                      {attribMode === "existing" ? (
+                        selectedClient ? (
+                          <>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                              <div style={{ width: 34, height: 34, borderRadius: 999, background: "var(--ls-teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
+                                {selectedClient.firstName.charAt(0)}{selectedClient.lastName.charAt(0)}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {isVipClient(selectedClient) ? <span title="Client VIP" style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}
+                                </div>
+                                <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
+                                  {(() => {
+                                    const pv = pvByClient.get(selectedClient.id);
+                                    const pvTxt = pv && pv > 0 ? `${Math.round(pv)} PV` : "";
+                                    return [pvTxt, selectedClient.distributorName || ""].filter(Boolean).join(" · ") || "—";
+                                  })()}
+                                </div>
+                              </div>
+                              <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
+                            </div>
+
+                            <div style={{ display: "flex", gap: 6, marginBottom: saleType === "commande" ? 12 : 0 }}>
+                              {([["commande", "💳 Sur son compte"], ["reprise-sur-place", "🏪 Sur place"]] as Array<["commande" | "reprise-sur-place", string]>).map(([v, l]) => {
+                                const on = saleType === v;
                                 return (
-                                  <button key={d} type="button" onClick={() => setDelayDays(d)} style={{ padding: "6px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)", background: on ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "var(--ls-surface)", color: on ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>{l}</button>
+                                  <button key={v} type="button" onClick={() => setSaleType(v)} style={{ flex: 1, padding: "7px 8px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-gold)" : "var(--ls-surface)", color: on ? "#1a1407" : "var(--ls-text-muted)" }}>{l}</button>
                                 );
                               })}
                             </div>
-                            <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginTop: 8, lineHeight: 1.4 }}>
-                              Atterrit sur la fiche de {selectedClient.firstName}, dans son app et ta rentabilité.
-                            </div>
-                          </div>
+
+                            {saleType === "commande" ? (
+                              <div>
+                                <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>Démarrage de la cure</div>
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                  {([[0, "Aujourd'hui"], [3, "+3 j"], [5, "+5 j"], [7, "+7 j"]] as Array<[number, string]>).map(([d, l]) => {
+                                    const on = delayDays === d;
+                                    return (
+                                      <button key={d} type="button" onClick={() => setDelayDays(d)} style={{ padding: "6px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)", background: on ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "var(--ls-surface)", color: on ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>{l}</button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            <button type="button" onClick={() => setAttribOpen(false)} style={{ width: "100%", marginTop: 12, padding: "8px", borderRadius: 10, border: "none", background: "var(--ls-surface)", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>✓ OK, replier</button>
+                          </>
                         ) : (
-                          <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
-                            Vente comptoir : 0 PV pour {selectedClient.firstName}, mais le montant remonte dans ta rentabilité.
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <button type="button" onClick={() => setPickerOpen(true)} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px dashed var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
-                        👤 Choisir un client…
-                      </button>
-                    )
-                  ) : (
-                    <input
-                      value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      placeholder="Nom du client (ex : Marie D.)"
-                      style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
-                    />
-                  )}
+                          <button type="button" onClick={() => setPickerOpen(true)} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px dashed var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
+                            👤 Choisir un client…
+                          </button>
+                        )
+                      ) : (
+                        <input
+                          value={clientName}
+                          onChange={(e) => setClientName(e.target.value)}
+                          onBlur={() => { if (clientName.trim()) setAttribOpen(false); }}
+                          placeholder="Nom du client (ex : Marie D.)"
+                          style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
+                        />
+                      )}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div style={{ margin: "0 -4px", padding: "0 4px" }}>
@@ -687,85 +723,51 @@ export function PanierPage() {
                   </div>
                 </div>
 
-                {/* Remise */}
-                <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--ls-border)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                    <span style={{ color: "var(--ls-text-muted)", fontSize: 13.5, fontWeight: 600 }}>Remise client</span>
-                    {disc > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDiscount(0);
-                          setCustomText("");
-                        }}
-                        style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
-                      >
-                        ✕ Enlever
-                      </button>
-                    ) : null}
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center" }}>
-                    {[5, 10, 15, 25, 35].map((v) => {
-                      const on = discount === v && customText === "";
-                      return (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => {
-                            if (on) {
-                              setDiscount(0); // re-clic = on retire la remise
-                            } else {
-                              setDiscount(v);
-                              setCustomText("");
-                            }
-                          }}
-                          style={{
-                            padding: "7px 13px",
-                            borderRadius: 999,
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            fontFamily: "Syne, sans-serif",
-                            border: on ? "1px solid transparent" : "1px solid var(--ls-border)",
-                            background: on ? "var(--ls-text)" : "var(--ls-surface2)",
-                            color: on ? "var(--ls-bg)" : "var(--ls-text-muted)",
-                          }}
-                        >
-                          {v} %
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {/* Saisie libre : n'importe quel % (8, 12, 18…) */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 11 }}>
-                    <span style={{ fontSize: 12.5, color: "var(--ls-text-muted)" }}>ou saisis&nbsp;:</span>
-                    <div style={{ position: "relative" }}>
-                      <input
-                        value={customText}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setCustomText(v);
-                          setDiscount(clamp(parseFloat(v.replace(",", ".")) || 0, 0, 100));
-                        }}
-                        placeholder="ex : 8"
-                        inputMode="decimal"
-                        aria-label="Remise personnalisée en pourcentage"
-                        style={{
-                          width: 104,
-                          boxSizing: "border-box",
-                          padding: "9px 28px 9px 12px",
-                          borderRadius: 12,
-                          border: customText ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)",
-                          background: "var(--ls-input-bg)",
-                          color: "var(--ls-text)",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          outline: "none",
-                        }}
-                      />
-                      <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ls-text-muted)", fontSize: 14, fontWeight: 600, pointerEvents: "none" }}>%</span>
+                {/* Remise — accordéon (repliée par défaut, optionnelle) */}
+                <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", overflow: "hidden" }}>
+                  <button type="button" onClick={() => setRemiseOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "11px 12px", background: "transparent", border: "none", cursor: "pointer" }}>
+                    <span style={{ color: "var(--ls-text-muted)", fontSize: 13, fontWeight: 600 }}>Remise client</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: disc > 0 ? "var(--ls-gold)" : "var(--ls-text-hint)" }}>{disc > 0 ? `−${disc} %` : "Aucune"}</span>
+                      <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 11, transform: remiseOpen ? "rotate(180deg)" : "none", transition: "transform .2s ease" }}>▼</span>
+                    </span>
+                  </button>
+                  {remiseOpen ? (
+                    <div style={{ padding: "2px 12px 12px" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center" }}>
+                        {[5, 10, 15, 25, 35].map((v) => {
+                          const on = discount === v && customText === "";
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => { if (on) { setDiscount(0); } else { setDiscount(v); setCustomText(""); } }}
+                              style={{ padding: "7px 13px", borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Syne, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-text)" : "var(--ls-surface)", color: on ? "var(--ls-bg)" : "var(--ls-text-muted)" }}
+                            >
+                              {v} %
+                            </button>
+                          );
+                        })}
+                        {disc > 0 ? (
+                          <button type="button" onClick={() => { setDiscount(0); setCustomText(""); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "0 4px" }}>✕ Enlever</button>
+                        ) : null}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 11 }}>
+                        <span style={{ fontSize: 12.5, color: "var(--ls-text-muted)" }}>ou saisis&nbsp;:</span>
+                        <div style={{ position: "relative" }}>
+                          <input
+                            value={customText}
+                            onChange={(e) => { const v = e.target.value; setCustomText(v); setDiscount(clamp(parseFloat(v.replace(",", ".")) || 0, 0, 100)); }}
+                            placeholder="ex : 8"
+                            inputMode="decimal"
+                            aria-label="Remise personnalisée en pourcentage"
+                            style={{ width: 104, boxSizing: "border-box", padding: "9px 28px 9px 12px", borderRadius: 12, border: customText ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontWeight: 600, outline: "none" }}
+                          />
+                          <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ls-text-muted)", fontSize: 14, fontWeight: 600, pointerEvents: "none" }}>%</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
 
                 {/* Prix client */}
@@ -794,7 +796,6 @@ export function PanierPage() {
 
                 {/* Action principale : enregistrer la vente */}
                 {(() => {
-                  const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
                   const blocked = saving || !attribReady;
                   return (
                     <>
@@ -932,7 +933,7 @@ export function PanierPage() {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => { setSelectedClient(c); setAttribMode("existing"); setPickerOpen(false); setPickerQuery(""); }}
+                    onClick={() => { setSelectedClient(c); setAttribMode("existing"); setPickerOpen(false); setPickerQuery(""); setAttribOpen(false); }}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: 12, border: "none", background: "transparent", cursor: "pointer", textAlign: "left" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--ls-surface2)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
