@@ -511,7 +511,52 @@ export function TeamPage() {
             Chargement de l&apos;arbre…
           </div>
         ) : tree ? (
-          <div className="team-tree" style={{ overflowX: "auto", paddingBottom: 8 }}>
+          <div className="team-tree" style={{ overflowX: "auto" }}>
+            <style>{`
+              .team-tree {
+                --ls-tree-line: color-mix(in srgb, var(--ls-teal) 34%, var(--ls-border));
+                padding: 30px 18px 24px;
+                border-radius: 18px;
+                background:
+                  radial-gradient(130% 70% at 50% -8%, color-mix(in srgb, var(--ls-gold) 7%, transparent), transparent 58%),
+                  radial-gradient(70% 60% at 100% 112%, color-mix(in srgb, var(--ls-purple) 6%, transparent), transparent 60%),
+                  radial-gradient(70% 60% at 0% 112%, color-mix(in srgb, var(--ls-teal) 6%, transparent), transparent 60%);
+                box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ls-text) 5%, transparent);
+              }
+              .team-tree .ls-org-root { display: flex; flex-direction: column; align-items: center; width: max-content; min-width: 100%; }
+              .team-tree .ls-org-row { display: flex; justify-content: center; padding-top: 28px; position: relative; }
+              /* trait vertical du parent vers la barre des enfants */
+              .team-tree .ls-org-row::before {
+                content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-1px);
+                width: 2px; height: 28px;
+                background: linear-gradient(to bottom, color-mix(in srgb, var(--ls-teal) 55%, transparent), var(--ls-tree-line));
+                border-radius: 2px;
+              }
+              .team-tree .ls-org-item {
+                position: relative; padding: 28px 10px 0;
+                display: flex; flex-direction: column; align-items: center;
+              }
+              /* coudes : 2 moitiés de barre horizontale + montant vertical */
+              .team-tree .ls-org-item::before,
+              .team-tree .ls-org-item::after {
+                content: ""; position: absolute; top: 0; right: 50%;
+                width: 50%; height: 28px;
+                border-top: 2px solid var(--ls-tree-line);
+              }
+              .team-tree .ls-org-item::after { right: auto; left: 50%; border-left: 2px solid var(--ls-tree-line); }
+              /* enfant unique : pas de barre horizontale, juste le montant du row::before */
+              .team-tree .ls-org-item:only-child { padding-top: 0; }
+              .team-tree .ls-org-item:only-child::before,
+              .team-tree .ls-org-item:only-child::after { display: none; }
+              /* bords extérieurs : on coupe la moitié sortante + on arrondit le coude */
+              .team-tree .ls-org-item:first-child::before,
+              .team-tree .ls-org-item:last-child::after { border: 0 none; }
+              .team-tree .ls-org-item:first-child::after { border-radius: 9px 0 0 0; }
+              .team-tree .ls-org-item:last-child::before { border-right: 2px solid var(--ls-tree-line); border-radius: 0 9px 0 0; }
+              @media (prefers-reduced-motion: no-preference) {
+                .team-tree .ls-org-item, .team-tree .ls-org-root > button { will-change: transform; }
+              }
+            `}</style>
             <TreeLevel
               node={tree}
               isRoot
@@ -709,10 +754,7 @@ function TreeLevel({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-      {!isRoot ? (
-        <div aria-hidden="true" style={{ width: 2, height: 14, background: "color-mix(in srgb, var(--ls-teal) 30%, transparent)", borderRadius: 2 }} />
-      ) : null}
+    <div className={isRoot ? "ls-org-root" : "ls-org-item"}>
       <TreeCard
         node={node}
         isRoot={isRoot}
@@ -720,39 +762,16 @@ function TreeLevel({
         onSelect={() => onSelect(node.row.user_id)}
       />
       {node.children.length > 0 ? (
-        <>
-          <div aria-hidden="true" style={{ width: 2, height: 18, background: "linear-gradient(to bottom, color-mix(in srgb, var(--ls-teal) 50%, transparent), color-mix(in srgb, var(--ls-teal) 18%, transparent))", borderRadius: 2 }} />
-          {node.children.length > 1 ? (
-            <div
-              aria-hidden="true"
-              style={{
-                height: 2,
-                background: "color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
-                width: "100%",
-                maxWidth: node.children.length * 172,
-                borderRadius: 2,
-              }}
+        <div className="ls-org-row">
+          {node.children.map((child) => (
+            <TreeLevel
+              key={child.row.user_id}
+              node={child}
+              selectedId={selectedId}
+              onSelect={onSelect}
             />
-          ) : null}
-          <div
-            style={{
-              display: "flex",
-              gap: 14,
-              justifyContent: "center",
-              flexWrap: "nowrap",
-              paddingTop: node.children.length > 1 ? 0 : 0,
-            }}
-          >
-            {node.children.map((child) => (
-              <TreeLevel
-                key={child.row.user_id}
-                node={child}
-                selectedId={selectedId}
-                onSelect={onSelect}
-              />
-            ))}
-          </div>
-        </>
+          ))}
+        </div>
       ) : null}
     </div>
   );
