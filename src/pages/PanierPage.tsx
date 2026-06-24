@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { pvProductCatalog, buildPvTrackingRecords } from "../data/pvCatalog";
+import { getLatestAssessment } from "../lib/calculations";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
@@ -306,6 +307,30 @@ export function PanierPage() {
       (p) => p.clientId === selectedClient.id && p.active && pvProductCatalog.some((c) => c.id === p.productId),
     );
   }, [selectedClient, pvClientProducts]);
+
+  // Cross-sell : produits de SON programme (dernier bilan) qu'il ne prend pas
+  // activement et pas déjà au panier → à proposer en 1 tap.
+  const crossSell = useMemo(() => {
+    if (!selectedClient) return [];
+    let recoIds: string[] = [];
+    try {
+      recoIds = getLatestAssessment(selectedClient)?.questionnaire?.selectedProductIds ?? [];
+    } catch {
+      recoIds = [];
+    }
+    const activeIds = new Set(clientActiveProducts.map((p) => p.productId));
+    const seen = new Set<string>();
+    const out: { id: string; name: string; price: number }[] = [];
+    for (const id of recoIds) {
+      if (activeIds.has(id) || (cart[id] ?? 0) > 0 || seen.has(id)) continue;
+      const prod = pvProductCatalog.find((c) => c.id === id && c.active);
+      if (!prod) continue;
+      seen.add(id);
+      out.push({ id: prod.id, name: prod.name, price: prod.pricePublic });
+      if (out.length >= 5) break;
+    }
+    return out;
+  }, [selectedClient, clientActiveProducts, cart]);
 
   function refillFromClient() {
     if (!clientActiveProducts.length) return;
@@ -718,6 +743,20 @@ export function PanierPage() {
                               <button type="button" onClick={refillFromClient} style={{ width: "100%", marginBottom: 12, padding: "8px 10px", borderRadius: 10, border: "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)", background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
                                 🔁 Reprendre sa dernière commande ({clientActiveProducts.length})
                               </button>
+                            ) : null}
+
+                            {crossSell.length > 0 ? (
+                              <div style={{ marginBottom: 12 }}>
+                                <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>💡 De son programme, pas repris</div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {crossSell.map((s) => (
+                                    <button key={s.id} type="button" onClick={() => add(s.id)} title={`Ajouter ${s.name}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, maxWidth: "100%", padding: "6px 10px", borderRadius: 999, border: "1px solid color-mix(in srgb, var(--ls-purple) 35%, transparent)", background: "color-mix(in srgb, var(--ls-purple) 8%, transparent)", color: "var(--ls-text)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
+                                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{s.name}</span>
+                                      <span style={{ color: "var(--ls-purple)", fontWeight: 800 }}>＋</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             ) : null}
 
                             <div style={{ display: "flex", gap: 6, marginBottom: saleType === "commande" ? 12 : 0 }}>
