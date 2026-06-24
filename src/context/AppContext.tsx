@@ -37,6 +37,7 @@ import {
   reassignSupabaseClientOwner,
   upsertSupabasePvClientProduct,
   updateSupabasePvClientProductStartDate,
+  setSupabaseClientLinkedUser,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
   updateSupabaseClientLifecycleStatus,
@@ -240,6 +241,7 @@ interface AppContextValue {
   savePvClientProduct: (product: PvClientProductRecord) => Promise<void>;
   /** Corrige la date de démarrage d'un produit actif (fiche Suivi PV). */
   updatePvProductStartDate: (recordId: string, startDateIso: string) => Promise<void>;
+  linkClientToUser: (clientId: string, userId: string | null) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -848,6 +850,11 @@ export function AppProvider({ children }: PropsWithChildren) {
     await refreshRemoteData(currentUser);
   }
 
+  async function linkClientToUser(clientId: string, userId: string | null) {
+    await setSupabaseClientLinkedUser(clientId, userId);
+    await refreshRemoteData(currentUser);
+  }
+
   const value = useMemo(
     () => ({
       authReady,
@@ -1215,6 +1222,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       addPvTransaction,
       savePvClientProduct,
       updatePvProductStartDate,
+      linkClientToUser,
     }),
     // Les handlers (addFollowUpAssessment, etc.) sont volontairement absents
     // des deps : ils capturent state/setters stables, ré-exécuter le useMemo

@@ -455,6 +455,11 @@ export interface Client {
   vipStartedAt?: string | null;
   /** Cache du niveau VIP courant (recalculé live via RPC get_client_vip_status). */
   vipStatus?: "none" | "bronze" | "silver" | "gold" | "ambassador";
+  /** Si cette fiche cliente est AUSSI un compte coach/distri (users.id).
+   *  NULL = cliente seulement. Sert au badge + avertissement PV dans le panier
+   *  (une cliente devenue coach : ses commandes comptent sur SON volume distri).
+   *  Chantier 2026-06-24. */
+  linkedUserId?: string | null;
   // Pop-up business bilan (2026-11-03) — interet pour un complement de revenu.
   /** Reponse a la question legere etape 1 du bilan. NULL = pas demande. */
   businessCuriosity?: "never" | "sometimes" | "often" | null;

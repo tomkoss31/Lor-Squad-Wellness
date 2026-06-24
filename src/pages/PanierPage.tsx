@@ -130,7 +130,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts, users } = useAppContext();
+  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts, users, linkClientToUser } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -223,6 +223,12 @@ export function PanierPage() {
     return m;
   }, [users]);
   const coachOf = (c: Client): User | null => {
+    // 1) Lien manuel explicite (prioritaire, fiable même sans email commun).
+    if (c.linkedUserId) {
+      const linked = users.find((u) => u.id === c.linkedUserId);
+      if (linked) return linked;
+    }
+    // 2) Détection auto par email puis nom complet.
     const e = (c.email ?? "").trim().toLowerCase();
     if (e && coachByKey.has("e:" + e)) return coachByKey.get("e:" + e)!;
     const n = `${c.firstName} ${c.lastName}`.trim().toLowerCase();
@@ -230,6 +236,19 @@ export function PanierPage() {
     return null;
   };
   const selectedClientCoach = selectedClient ? coachOf(selectedClient) : null;
+
+  // Lien manuel cliente -> compte coach (persisté en base). Optimiste : on met
+  // à jour selectedClient localement pour que badge/avertissement réagissent.
+  async function handleLinkCoach(userId: string | null) {
+    if (!selectedClient) return;
+    try {
+      await linkClientToUser(selectedClient.id, userId);
+      setSelectedClient({ ...selectedClient, linkedUserId: userId });
+      push({ tone: "success", title: userId ? "Liée à un compte coach 👩‍💼" : "Lien retiré" });
+    } catch (e) {
+      push({ tone: "error", title: "Lien impossible", message: e instanceof Error ? e.message : "Réessaie." });
+    }
+  }
 
   // Attribution prête = client existant choisi OU nom direct saisi.
   const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
@@ -776,6 +795,25 @@ export function PanierPage() {
                                 </div>
                               </div>
                               <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
+                            </div>
+
+                            <div style={{ marginBottom: 12 }}>
+                              <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>👩‍💼 Aussi distributrice ? (lier à son compte coach)</div>
+                              <select
+                                value={selectedClient.linkedUserId ?? ""}
+                                onChange={(e) => void handleLinkCoach(e.target.value || null)}
+                                style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 13, fontFamily: "DM Sans, sans-serif", outline: "none", cursor: "pointer" }}
+                              >
+                                <option value="">— Non, cliente seulement —</option>
+                                {users.filter((u) => u.active !== false).map((u) => (
+                                  <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                              </select>
+                              {selectedClientCoach && !selectedClient.linkedUserId ? (
+                                <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginTop: 4 }}>
+                                  Détecté auto : {selectedClientCoach.name}. Sélectionne-le pour confirmer le lien.
+                                </div>
+                              ) : null}
                             </div>
 
                             {clientActiveProducts.length > 0 ? (
