@@ -26,26 +26,36 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 /** Regroupe les catégories texte-libre du catalogue en buckets lisibles. */
 function bucket(cat: string): string {
   const c = (cat ?? "").toLowerCase();
+  // Soins & Sport en tête : ces familles contiennent parfois des mots
+  // génériques (« sport / hydratation », « soin / corps ») qui seraient sinon
+  // happés par Hydratation/Routine. On les attrape d'abord.
+  if (/soin|skin|visage|peau|corps|cheveux|collag|beaut/.test(c)) return "Soins";
+  if (/sport|muscle|creatine|cr7|rebuild|achieve|prolong|h24/.test(c)) return "Sport";
   if (/shake|repas|formula 1/.test(c)) return "Shakes";
   if (/prot/.test(c)) return "Protéines";
   if (/hydrat|th[eé]|aloe/.test(c)) return "Hydratation";
   if (/g[eé]lul/.test(c)) return "Gélules";
-  if (/energie|énergie|concentration|liftoff|workout/.test(c)) return "Boosters";
+  if (/energie|énergie|liftoff|workout|booster/.test(c)) return "Boosters";
   if (/fibre|digest|transit|microbiotic/.test(c)) return "Digestion";
   if (/sommeil|night/.test(c)) return "Sommeil";
-  if (/calcium|visceral|encas|barre|cal/.test(c)) return "Routine";
+  if (/encas|en-cas|chips|snack|barre/.test(c)) return "Snacks";
+  if (/complement|vitamine|omega|mineral|immun|vascul|gummies|enfant|concentration/.test(c)) return "Compléments";
+  if (/calcium|visceral|routine|cal/.test(c)) return "Routine";
   return "Autres";
 }
 
-const CAT_ORDER = ["Shakes", "Protéines", "Hydratation", "Boosters", "Gélules", "Digestion", "Sommeil", "Routine", "Autres"];
+const CAT_ORDER = ["Shakes", "Protéines", "Hydratation", "Sport", "Boosters", "Gélules", "Digestion", "Snacks", "Sommeil", "Compléments", "Routine", "Soins", "Autres"];
 
 // Emoji par produit (même logique que le ticket du bilan) → identité visuelle.
 const PRODUCT_EMOJI_MAP: Array<{ match: RegExp; emoji: string }> = [
   { match: /formula\s*1|f1\b|boisson nutritionnelle/i, emoji: "🥛" },
   { match: /melange.*proteine|formula\s*3|ppp\b|pdm/i, emoji: "💪" },
   { match: /formula\s*2|multivit/i, emoji: "💊" },
+  { match: /hl\s*\/?\s*skin/i, emoji: "💎" },
+  { match: /serum|sérum|cr[èe]me|hydratant|masque|gommage|exfoliant|lotion|nettoyant|contour|tension|niacinamide|fps|tonique/i, emoji: "🧴" },
+  { match: /savon|shampoing|shampooing|apr[èe]s-shampoing|gel apaisant/i, emoji: "🧴" },
   { match: /aloe/i, emoji: "🌿" },
-  { match: /\bthe\b|th[eé]\b|tea\b/i, emoji: "🍵" },
+  { match: /\bthe\b|th[eé]|tea\b/i, emoji: "🍵" },
   { match: /hydrate/i, emoji: "💧" },
   { match: /calcium|xtra[-\s]?cal/i, emoji: "🦴" },
   { match: /collag/i, emoji: "✨" },
@@ -72,11 +82,15 @@ const BUCKET_COLOR: Record<string, string> = {
   Shakes: "var(--ls-teal)",
   Protéines: "var(--ls-purple)",
   Hydratation: "var(--ls-teal)",
+  Sport: "var(--ls-teal)",
   Boosters: "var(--ls-gold)",
   Gélules: "var(--ls-purple)",
   Digestion: "var(--ls-teal)",
+  Snacks: "var(--ls-coral)",
   Sommeil: "var(--ls-purple)",
+  Compléments: "var(--ls-gold)",
   Routine: "var(--ls-gold)",
+  Soins: "var(--ls-coral)",
   Autres: "var(--ls-text-muted)",
 };
 const bucketColor = (b: string) => BUCKET_COLOR[b] ?? "var(--ls-teal)";
@@ -87,11 +101,15 @@ const CAT_EMOJI: Record<string, string> = {
   Shakes: "🥤",
   Protéines: "💪",
   Hydratation: "💧",
+  Sport: "💪",
   Boosters: "⚡",
   Gélules: "💊",
   Digestion: "🌾",
+  Snacks: "🍫",
   Sommeil: "🌙",
+  Compléments: "🛡️",
   Routine: "✨",
+  Soins: "💎",
   Autres: "📦",
 };
 const catEmoji = (c: string) => CAT_EMOJI[c] ?? "🏷️";
