@@ -11,10 +11,11 @@
 // Tokens var(--ls-*) → suit le thème clair/sombre de l'app.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { pvProductCatalog, buildPvTrackingRecords } from "../data/pvCatalog";
 import { getLatestAssessment } from "../lib/calculations";
+import { getVipMeta } from "../features/client-vip/useClientVip";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
@@ -209,6 +210,21 @@ export function PanierPage() {
 
   // Attribution prête = client existant choisi OU nom direct saisi.
   const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
+
+  // Remise VIP : un client privilégié a un tarif préférentiel à VIE
+  // (bronze 15 / silver 25 / gold 35 / ambassadeur 42 %). On l'applique
+  // AUTOMATIQUEMENT à la sélection — le coach ne touche que l'écart.
+  const selectedVip =
+    selectedClient && selectedClient.vipStatus && selectedClient.vipStatus !== "none"
+      ? getVipMeta(selectedClient.vipStatus)
+      : null;
+
+  useEffect(() => {
+    if (!selectedClient) return;
+    const lvl = selectedClient.vipStatus;
+    setDiscount(lvl && lvl !== "none" ? getVipMeta(lvl).discount : 0);
+    setCustomText("");
+  }, [selectedClient]);
 
   // Liste du sélecteur de client : par défaut les clients du distri connecté
   // (Mélanie voit les siens), l'admin peut basculer « Tous ». Mes clients d'abord.
@@ -856,7 +872,10 @@ export function PanierPage() {
                 {/* Remise — accordéon (repliée par défaut, optionnelle) */}
                 <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", overflow: "hidden" }}>
                   <button type="button" onClick={() => setRemiseOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "11px 12px", background: "transparent", border: "none", cursor: "pointer" }}>
-                    <span style={{ color: "var(--ls-text-muted)", fontSize: 13, fontWeight: 600 }}>Remise client</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ls-text-muted)", fontSize: 13, fontWeight: 600 }}>
+                      Remise client
+                      {selectedVip ? <span style={{ color: selectedVip.color, fontWeight: 700 }}>· {selectedVip.badge} VIP {selectedVip.label}</span> : null}
+                    </span>
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: disc > 0 ? "var(--ls-gold)" : "var(--ls-text-hint)" }}>{disc > 0 ? `−${disc} %` : "Aucune"}</span>
                       <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 11, transform: remiseOpen ? "rotate(180deg)" : "none", transition: "transform .2s ease" }}>▼</span>
@@ -864,6 +883,11 @@ export function PanierPage() {
                   </button>
                   {remiseOpen ? (
                     <div className="panier-acc" style={{ padding: "2px 12px 12px" }}>
+                      {selectedVip ? (
+                        <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 8, lineHeight: 1.4 }}>
+                          Tarif VIP {selectedVip.label} <b>−{selectedVip.discount}%</b> appliqué automatiquement (à vie). Tu peux ajuster si besoin.
+                        </div>
+                      ) : null}
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center" }}>
                         {[5, 10, 15, 25, 35].map((v) => {
                           const on = discount === v && customText === "";
@@ -924,7 +948,7 @@ export function PanierPage() {
                   ) : null}
                   {coachMargin > 0.005 ? (
                     <div style={{ marginTop: 10, fontSize: 12, color: "var(--ls-text-muted)" }}>
-                      💰 Toi tu gagnes ≈ <span style={{ fontWeight: 800, fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>{euro(coachMargin)}</span>
+                      💰 Toi tu gagnes ≈ <span style={{ fontWeight: 800, fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>{euro(coachMargin)}</span>{selectedVip ? <span style={{ color: "var(--ls-text-hint)" }}> · écart VIP</span> : null}
                     </div>
                   ) : null}
                 </div>
