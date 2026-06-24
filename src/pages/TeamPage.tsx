@@ -710,6 +710,9 @@ function TreeLevel({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+      {!isRoot ? (
+        <div aria-hidden="true" style={{ width: 2, height: 14, background: "color-mix(in srgb, var(--ls-teal) 30%, transparent)", borderRadius: 2 }} />
+      ) : null}
       <TreeCard
         node={node}
         isRoot={isRoot}
@@ -718,25 +721,26 @@ function TreeLevel({
       />
       {node.children.length > 0 ? (
         <>
-          <div aria-hidden="true" style={{ width: 1, height: 16, background: "var(--ls-border)" }} />
+          <div aria-hidden="true" style={{ width: 2, height: 18, background: "linear-gradient(to bottom, color-mix(in srgb, var(--ls-teal) 50%, transparent), color-mix(in srgb, var(--ls-teal) 18%, transparent))", borderRadius: 2 }} />
           {node.children.length > 1 ? (
             <div
               aria-hidden="true"
               style={{
-                height: 1,
-                background: "var(--ls-border)",
+                height: 2,
+                background: "color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
                 width: "100%",
-                maxWidth: node.children.length * 160,
+                maxWidth: node.children.length * 172,
+                borderRadius: 2,
               }}
             />
           ) : null}
           <div
             style={{
               display: "flex",
-              gap: 12,
+              gap: 14,
               justifyContent: "center",
               flexWrap: "nowrap",
-              paddingTop: node.children.length > 1 ? 16 : 0,
+              paddingTop: node.children.length > 1 ? 0 : 0,
             }}
           >
             {node.children.map((child) => (
@@ -755,6 +759,16 @@ function TreeLevel({
 }
 
 // ═══ Card distri dans l'arbre ════════════════════════════════════════════
+// Couleur d'accent par rôle (lisibilité d'un coup d'œil dans l'arbre).
+function treeRoleAccent(row: TeamTreeRow): { color: string; label: string } {
+  const t = (row.title ?? "").toLowerCase();
+  if (row.role === "admin") return { color: "#BA7517", label: row.title || "Admin" };
+  if (/référent|referent/.test(t)) return { color: "var(--ls-purple)", label: row.title || "Référent d'équipe" };
+  if (/externe|hors[\s-]?app/.test(t)) return { color: "var(--ls-text-hint)", label: row.title || "Distributeur externe" };
+  if (/portefeuille|terrain/.test(t)) return { color: "var(--ls-teal)", label: row.title || "Portefeuille terrain" };
+  return { color: "var(--ls-teal)", label: row.title || "Distributeur" };
+}
+
 function TreeCard({
   node,
   isRoot,
@@ -768,34 +782,42 @@ function TreeCard({
 }) {
   const row = node.row;
   const isCouple = isCoupleVirtualId(row.user_id);
-  const rootStyle: React.CSSProperties = isRoot
+  const meta = treeRoleAccent(row);
+  const accent = isRoot ? "#BA7517" : meta.color;
+
+  const baseShadow = isRoot
+    ? "0 12px 32px -12px rgba(186,117,23,0.50)"
+    : isSelected
+      ? "0 10px 24px -10px color-mix(in srgb, var(--ls-teal) 60%, transparent)"
+      : "0 4px 14px -8px rgba(0,0,0,0.20)";
+
+  const cardStyle: React.CSSProperties = isRoot
     ? {
-        background: "linear-gradient(135deg, rgba(239,159,39,0.18), rgba(186,117,23,0.06))",
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface)), var(--ls-surface))",
         border: "1px solid #BA7517",
-        padding: "10px 16px",
-        minWidth: 170,
+        padding: "13px 18px 12px",
+        minWidth: 184,
       }
     : isSelected
       ? {
-          background: "rgba(15,110,86,0.12)",
-          border: "1px solid #0F6E56",
-          boxShadow: "0 0 0 3px rgba(15,110,86,0.15)",
-          padding: "8px 14px",
-          minWidth: 150,
+          background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
+          border: "1px solid var(--ls-teal)",
+          padding: "11px 15px 10px",
+          minWidth: 160,
         }
       : {
           background: "var(--ls-surface)",
           border: "1px solid var(--ls-border)",
-          padding: "8px 14px",
-          minWidth: 150,
+          padding: "11px 15px 10px",
+          minWidth: 160,
         };
 
-  const avatarColor = isRoot
+  const avatarBg = isRoot
     ? "linear-gradient(135deg, #EF9F27, #BA7517)"
     : isSelected
-      ? "#0F6E56"
-      : "rgba(211,209,199,0.9)";
-  const avatarText = isRoot ? "#fff" : isSelected ? "#fff" : "#444441";
+      ? "var(--ls-teal)"
+      : `color-mix(in srgb, ${accent} 24%, var(--ls-surface2))`;
+  const avatarText = isRoot || isSelected ? "#fff" : "var(--ls-text)";
   const avatarLabel = isCouple ? COUPLE_INITIALS : initialsOf(row.name);
 
   return (
@@ -805,8 +827,11 @@ function TreeCard({
       role="button"
       tabIndex={0}
       style={{
-        ...rootStyle,
-        borderRadius: 12,
+        ...cardStyle,
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: 14,
+        boxShadow: baseShadow,
         cursor: "pointer",
         fontFamily: "inherit",
         color: "inherit",
@@ -814,46 +839,76 @@ function TreeCard({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 6,
-        transition: "transform 150ms ease-out",
+        gap: 7,
+        transition: "transform 160ms ease-out, box-shadow 160ms ease-out",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = isRoot
+          ? "0 16px 38px -12px rgba(186,117,23,0.6)"
+          : "0 12px 26px -8px rgba(0,0,0,0.28)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = baseShadow;
+      }}
     >
+      {/* Liseré d'accent en haut (couleur du rôle) */}
+      <span aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: accent, opacity: isRoot ? 1 : 0.85 }} />
+
       <div
         style={{
-          width: isRoot ? 40 : 32,
-          height: isRoot ? 40 : 32,
+          width: isRoot ? 44 : 36,
+          height: isRoot ? 44 : 36,
           borderRadius: "50%",
-          background: avatarColor,
+          background: avatarBg,
           color: avatarText,
           fontFamily: "Syne, sans-serif",
-          fontSize: isRoot ? (isCouple ? 13 : 15) : 12,
+          fontSize: isRoot ? (isCouple ? 13 : 15) : 12.5,
           fontWeight: 700,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
+          marginTop: 3,
           letterSpacing: isCouple ? "0.02em" : undefined,
+          boxShadow: `0 0 0 3px color-mix(in srgb, ${accent} 16%, transparent)`,
         }}
         aria-label={isCouple ? `Couple ${row.name}` : row.name}
       >
         {avatarLabel}
       </div>
-      <div style={{ fontSize: isRoot ? 13 : 12, fontWeight: 600, color: "var(--ls-text)" }}>
+
+      <div style={{ fontSize: isRoot ? 13.5 : 12.5, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, sans-serif", lineHeight: 1.2 }}>
         {row.name}
       </div>
-      <div
+
+      <span
         style={{
-          fontSize: 10,
-          color: isRoot ? "#854F0B" : "var(--ls-text-hint)",
-          letterSpacing: "0.02em",
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: "0.03em",
+          padding: "2px 9px",
+          borderRadius: 999,
+          background: `color-mix(in srgb, ${accent} 14%, transparent)`,
+          color: accent,
+          border: `0.5px solid color-mix(in srgb, ${accent} 30%, transparent)`,
+          maxWidth: 152,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
         }}
       >
-        {isRoot ? `${row.title || "World Team"} · ${row.role === "admin" ? "Admin" : ""}`.trim() : row.title || "Distributeur"}
-      </div>
-      <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
-        {row.clients_count} client{row.clients_count > 1 ? "s" : ""} · {row.prospects_count} prospect{row.prospects_count > 1 ? "s" : ""}
+        {isRoot ? row.title || "World Team" : meta.label}
+      </span>
+
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "center" }}>
+        <span style={{ fontSize: 9.5, fontWeight: 600, padding: "2px 7px", borderRadius: 999, background: "color-mix(in srgb, var(--ls-teal) 11%, transparent)", color: "var(--ls-text-muted)" }}>
+          👥 {row.clients_count}
+        </span>
+        <span style={{ fontSize: 9.5, fontWeight: 600, padding: "2px 7px", borderRadius: 999, background: "color-mix(in srgb, var(--ls-purple) 11%, transparent)", color: "var(--ls-text-muted)" }}>
+          🎯 {row.prospects_count}
+        </span>
       </div>
     </button>
   );
