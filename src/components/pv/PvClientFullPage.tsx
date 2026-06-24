@@ -60,10 +60,15 @@ function relativeDays(d: string | Date | null | undefined): string {
 const CATEGORY_GROUPS: Array<{ id: string; label: string; emoji: string; matches: (cat: string) => boolean }> = [
   { id: "shake", label: "Shakes & repas", emoji: "🥤", matches: (c) => c.includes("shake") || c.includes("repas") },
   { id: "proteine", label: "Protéines", emoji: "💪", matches: (c) => c.includes("prot") },
+  // Soins AVANT aloe/sport : « soin / corps & cheveux » (Herbal Aloe) ne doit
+  // pas tomber dans Aloe Vera, et « soin / peau collagène » pas dans Sport.
+  { id: "soins", label: "Beauté & Soins", emoji: "💎", matches: (c) => c.includes("soin") || c.includes("visage") || c.includes("peau") || c.includes("cheveux") || c.includes("corps") || c.includes("skin") || c.includes("beaut") || c.includes("collag") },
+  // Sport AVANT aloe/hydratation/énergie : « sport / hydratation » (CR7, H24)
+  // et « sport / energie » (LiftOff Max, Prolong) doivent rester groupés Sport.
+  { id: "sport", label: "Sport & muscle", emoji: "🏋️", matches: (c) => c.includes("sport") || c.includes("muscle") },
   { id: "aloe", label: "Aloe Vera", emoji: "🌵", matches: (c) => c.includes("aloe") },
   { id: "hydratation", label: "Hydratation & thé", emoji: "💧", matches: (c) => c.includes("hydrat") || c.includes("routine") },
   { id: "energie", label: "Énergie", emoji: "⚡", matches: (c) => c.includes("energ") || c.includes("énerg") || c.includes("concentration") },
-  { id: "sport", label: "Sport & muscle", emoji: "🏋️", matches: (c) => c.includes("sport") || c.includes("muscle") || c.includes("collagen") },
   { id: "encas", label: "En-cas", emoji: "🍫", matches: (c) => c.includes("encas") || c.includes("en-cas") },
   { id: "digestif", label: "Digestif & fibres", emoji: "🌿", matches: (c) => c.includes("digest") || c.includes("fibres") || c.includes("visceral") },
   { id: "sommeil", label: "Sommeil & calme", emoji: "🌙", matches: (c) => c.includes("sommeil") },
