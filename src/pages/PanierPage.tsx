@@ -13,7 +13,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { pvProductCatalog } from "../data/pvCatalog";
+import { pvProductCatalog, buildPvTrackingRecords } from "../data/pvCatalog";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
@@ -126,7 +126,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, reloadClients, clients, addPvTransaction } = useAppContext();
+  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -172,6 +172,23 @@ export function PanierPage() {
   const savings = totalPrice - clientPrice;
   const itemCount = lines.reduce((a, p) => a + cart[p.id], 0);
   const hasItems = lines.length > 0;
+
+  // PV cumulé par client (pour l'afficher sous le nom dans le sélecteur).
+  // Même source que la rentabilité / fiche PV → chiffre cohérent partout.
+  const pvByClient = useMemo(() => {
+    const m = new Map<string, number>();
+    try {
+      for (const r of buildPvTrackingRecords(clients, pvTransactions, pvClientProducts)) {
+        m.set(r.clientId, r.pvCumulative);
+      }
+    } catch {
+      /* tracking indisponible → on n'affiche juste pas le PV */
+    }
+    return m;
+  }, [clients, pvTransactions, pvClientProducts]);
+
+  const isVipClient = (c: Client) =>
+    Boolean(c.vipStartedAt) || (c.vipStatus != null && c.vipStatus !== "none");
 
   // Liste du sélecteur de client : par défaut les clients du distri connecté
   // (Mélanie voit les siens), l'admin peut basculer « Tous ». Mes clients d'abord.
@@ -336,7 +353,7 @@ export function PanierPage() {
         @media (max-width: 760px) {
           .panier-title { font-size: 26px; }
           .panier-lead { display: none; }
-          .panier-aside { position: static !important; flex: 1 1 100% !important; }
+          .panier-aside { position: static !important; flex: 1 1 100% !important; max-height: none !important; overflow: visible !important; }
           .panier-root { padding-bottom: 150px !important; }
           .panier-mobilebar { display: flex !important; }
         }
@@ -510,7 +527,7 @@ export function PanierPage() {
         </section>
 
         {/* Panier */}
-        <aside id="panier-recap" style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start" }} className="panier-aside">
+        <aside id="panier-recap" style={{ flex: "0 0 372px", maxWidth: "100%", position: "sticky", top: 16, alignSelf: "flex-start", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }} className="panier-aside">
           <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 22, padding: 22 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
               <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "var(--ls-text)" }}>Ton panier</span>
@@ -555,8 +572,16 @@ export function PanierPage() {
                             {selectedClient.firstName.charAt(0)}{selectedClient.lastName.charAt(0)}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selectedClient.firstName} {selectedClient.lastName}</div>
-                            <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>{selectedClient.distributorName}</div>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {isVipClient(selectedClient) ? <span title="Client VIP" style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}
+                            </div>
+                            <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
+                              {(() => {
+                                const pv = pvByClient.get(selectedClient.id);
+                                const pvTxt = pv && pv > 0 ? `${Math.round(pv)} PV` : "";
+                                return [pvTxt, selectedClient.distributorName || ""].filter(Boolean).join(" · ") || "—";
+                              })()}
+                            </div>
                           </div>
                           <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
                         </div>
@@ -606,7 +631,7 @@ export function PanierPage() {
                   )}
                 </div>
 
-                <div style={{ maxHeight: 300, overflow: "auto", margin: "0 -4px", padding: "0 4px" }}>
+                <div style={{ margin: "0 -4px", padding: "0 4px" }}>
                   {lines.map((p) => (
                     <div key={p.id} className="panier-line-anim" style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 0", borderBottom: "1px solid var(--ls-border)" }}>
                       <div
@@ -903,8 +928,17 @@ export function PanierPage() {
                       {c.firstName.charAt(0)}{c.lastName.charAt(0)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.firstName} {c.lastName}</div>
-                      <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>{c.distributorName || "—"}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                        {isVipClient(c) ? <span title="Client VIP" style={{ color: "var(--ls-gold)", flex: "0 0 auto" }}>⭐</span> : null}
+                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.firstName} {c.lastName}</span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
+                        {(() => {
+                          const pv = pvByClient.get(c.id);
+                          const pvTxt = pv && pv > 0 ? `${Math.round(pv)} PV` : "";
+                          return [pvTxt, c.distributorName || ""].filter(Boolean).join(" · ") || "—";
+                        })()}
+                      </div>
                     </div>
                   </button>
                 ))
