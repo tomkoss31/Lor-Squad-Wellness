@@ -19,8 +19,11 @@ const PRODUCT_EMOJI_MAP: Array<{ match: RegExp; emoji: string }> = [
   { match: /formula\s*1|f1\b|boisson nutritionnelle/i, emoji: "🥛" },
   { match: /melange.*proteine|formula\s*3|ppp\b|pdm\b/i, emoji: "💪" },
   { match: /formula\s*2|multivit/i, emoji: "💊" },
+  { match: /hl\s*\/?\s*skin/i, emoji: "💎" },
+  { match: /serum|sérum|cr[èe]me|hydratant|masque|gommage|exfoliant|lotion|nettoyant|contour|tension|niacinamide|fps|tonique/i, emoji: "🧴" },
+  { match: /savon|shampoing|shampooing|apr[èe]s-shampoing|gel apaisant/i, emoji: "🧴" },
   { match: /aloe/i, emoji: "🌿" },
-  { match: /\bthe\b|tea\b/i, emoji: "🍵" },
+  { match: /\bthe\b|th[eé]|tea\b/i, emoji: "🍵" },
   { match: /hydrate/i, emoji: "💧" },
   { match: /calcium|xtra[-\s]?cal/i, emoji: "🦴" },
   { match: /collag/i, emoji: "✨" },
@@ -123,6 +126,16 @@ export function ProductCatalogModal({
         matches: [/shake/i, /repas/i, /proteine/i, /protéine/i, /fibre/i],
       },
       {
+        // Sport AVANT hydratation/snacks : un produit « sport / hydratation »
+        // (CR7, H24 Hydrate) ou « sport / encas » (barres Achieve) doit rester
+        // dans la famille Sport, pas se faire happer par Hydratation/Snacks.
+        id: "sport",
+        label: "Sport & Énergie",
+        emoji: "💪",
+        color: "var(--ls-teal)",
+        matches: [/sport/i],
+      },
+      {
         id: "snacks",
         label: "Snacks & En-cas",
         emoji: "🍫",
@@ -137,25 +150,22 @@ export function ProductCatalogModal({
         matches: [/hydratation/i, /aloe/i],
       },
       {
-        id: "sport",
-        label: "Sport & Énergie",
-        emoji: "💪",
-        color: "var(--ls-teal)",
-        matches: [/sport/i, /muscle/i, /énergie/i, /energie/i, /concentration/i, /creatine/i],
-      },
-      {
         id: "vitalite",
         label: "Vitalité & Compléments",
         emoji: "🛡️",
         color: "var(--ls-gold)",
-        matches: [/calcium/i, /immunité/i, /immunite/i, /gelule/i, /digestif/i, /sommeil/i, /visceral/i],
+        matches: [
+          /calcium/i, /immunit/i, /gelule/i, /digest/i, /sommeil/i, /visceral/i,
+          /complement/i, /vitamine/i, /omega/i, /mineral/i, /vasculaire/i,
+          /gummies/i, /enfant/i, /routine/i, /energie/i, /énergie/i, /concentration/i,
+        ],
       },
       {
         id: "beaute",
-        label: "Beauté & Bien-être",
+        label: "Beauté & Soins",
         emoji: "💎",
         color: "var(--ls-coral)",
-        matches: [/collag/i, /skin/i, /beaut/i, /night/i],
+        matches: [/collag/i, /skin/i, /beaut/i, /soin/i, /visage/i, /peau/i, /corps/i, /cheveux/i, /night/i],
       },
     ],
     [],
