@@ -1109,6 +1109,15 @@ export function PanierPage() {
                 <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
                 Seulement mes clients
               </label>
+              {currentUser?.role === "admin" || currentUser?.role === "referent" ? (
+                <button
+                  type="button"
+                  onClick={() => { setPickerOpen(false); navigate("/rentabilite?tab=pv-equipe"); }}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px dashed color-mix(in srgb, var(--ls-purple) 40%, var(--ls-border))", background: "color-mix(in srgb, var(--ls-purple) 6%, transparent)", color: "var(--ls-purple)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", textAlign: "left" }}
+                >
+                  ➕ Client hors-app / downline → saisie PV équipe
+                </button>
+              ) : null}
             </div>
             <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "8px 10px" }}>
               {pickerClients.length === 0 ? (
