@@ -17,6 +17,8 @@ import { pvProductCatalog, buildPvTrackingRecords } from "../data/pvCatalog";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
+import { getSupabaseClient } from "../services/supabaseClient";
+import { tierPctForRank } from "../lib/herbalifeFormulas";
 import type { Client } from "../types/domain";
 import type { PvClientTransaction } from "../types/pv";
 
@@ -149,6 +151,11 @@ export function PanierPage() {
   // résumé compact pour que le bas du panier (prix + valider) reste visible.
   const [attribOpen, setAttribOpen] = useState(true);
   const [remiseOpen, setRemiseOpen] = useState(false);
+  // Encaissement CB (lien Stripe sur le compte du distri).
+  const [payLoading, setPayLoading] = useState(false);
+  const [payLink, setPayLink] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [payCopied, setPayCopied] = useState(false);
 
   const products: CatProduct[] = useMemo(
     () =>
@@ -174,6 +181,11 @@ export function PanierPage() {
   const disc = clamp(discount, 0, 100);
   const clientPrice = totalPrice * (1 - disc / 100);
   const savings = totalPrice - clientPrice;
+  // Marge coach estimée : il achète à -tier% du public (tier = son rang),
+  // revend au prix client → marge = prix client − coût d'achat. Même barème
+  // que la rentabilité (tierPctForRank). C'est un repère, hors override downline.
+  const tierPct = tierPctForRank(currentUser?.currentRank) / 100;
+  const coachMargin = Math.max(0, clientPrice - totalPrice * (1 - tierPct));
   const itemCount = lines.reduce((a, p) => a + cart[p.id], 0);
   const hasItems = lines.length > 0;
 
@@ -241,7 +253,72 @@ export function PanierPage() {
     setPickerQuery("");
     setAttribOpen(true);
     setRemiseOpen(false);
+    setPayLink(null);
+    setPayError(null);
   };
+
+  // Encaissement : crée un lien de paiement Stripe (montant = prix client après
+  // remise) sur le compte du distri, à envoyer au client. Réutilise l'edge
+  // create-manual-payment-link (même que Mon business → Encaissement).
+  async function generatePayLink() {
+    if (!hasItems || payLoading) return;
+    setPayLoading(true);
+    setPayError(null);
+    setPayLink(null);
+    setPayCopied(false);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const desc =
+        lines.map((p) => `${p.name}×${cart[p.id]}`).join(", ").slice(0, 180) || "Panier La Base 360";
+      const { data, error } = await sb.functions.invoke("create-manual-payment-link", {
+        body: { amount_euros: Number(clientPrice.toFixed(2)), description: desc, client_name: attribName },
+      });
+      const payload = data as { url?: string; error?: string } | null;
+      if (error || !payload) throw new Error("Erreur réseau");
+      if (payload.error === "not_configured") {
+        throw new Error("Active d'abord ton encaissement (Mon business → Encaissement).");
+      }
+      if (payload.error || !payload.url) {
+        throw new Error("Lien impossible — vérifie ta clé Stripe.");
+      }
+      setPayLink(payload.url);
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setPayLoading(false);
+    }
+  }
+
+  function copyPayLink() {
+    if (!payLink) return;
+    void navigator.clipboard?.writeText(payLink).then(() => {
+      setPayCopied(true);
+      setTimeout(() => setPayCopied(false), 1800);
+    });
+  }
+
+  // Rachat express : re-remplit le panier avec les produits actifs du client
+  // sélectionné (sa « dernière commande »), en additionnant au panier courant.
+  const clientActiveProducts = useMemo(() => {
+    if (!selectedClient) return [];
+    return pvClientProducts.filter(
+      (p) => p.clientId === selectedClient.id && p.active && pvProductCatalog.some((c) => c.id === p.productId),
+    );
+  }, [selectedClient, pvClientProducts]);
+
+  function refillFromClient() {
+    if (!clientActiveProducts.length) return;
+    setCart((prev) => {
+      const next = { ...prev };
+      for (const p of clientActiveProducts) {
+        const qty = Math.max(1, Math.round(Number(p.quantityStart) || 1));
+        next[p.productId] = (next[p.productId] ?? 0) + qty;
+      }
+      return next;
+    });
+    push({ tone: "success", title: "Panier rempli 🔁", message: `Dernière commande de ${selectedClient?.firstName} ajoutée.` });
+  }
 
   const attribName =
     attribMode === "existing" && selectedClient
@@ -368,6 +445,10 @@ export function PanierPage() {
         .panier-cta { transition: transform .15s ease, filter .15s ease, box-shadow .15s ease; }
         .panier-cta:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.05); }
         .panier-cta:not(:disabled):active { transform: translateY(0); }
+        /* Ouverture douce des accordéons */
+        @keyframes panier-acc-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .panier-acc { animation: panier-acc-in 0.22s ease-out; }
+        @media (prefers-reduced-motion: reduce) { .panier-acc { animation: none; } }
         @media (max-width: 760px) {
           .panier-title { font-size: 26px; }
           .panier-lead { display: none; }
@@ -601,7 +682,7 @@ export function PanierPage() {
 
                   {/* Corps déroulable */}
                   {attribOpen ? (
-                    <div style={{ padding: "2px 12px 12px" }}>
+                    <div className="panier-acc" style={{ padding: "2px 12px 12px" }}>
                       <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
                         {([["existing", "👤 Client existant"], ["direct", "✍️ Client direct"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
                           const on = attribMode === m;
@@ -632,6 +713,12 @@ export function PanierPage() {
                               </div>
                               <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
                             </div>
+
+                            {clientActiveProducts.length > 0 ? (
+                              <button type="button" onClick={refillFromClient} style={{ width: "100%", marginBottom: 12, padding: "8px 10px", borderRadius: 10, border: "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)", background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
+                                🔁 Reprendre sa dernière commande ({clientActiveProducts.length})
+                              </button>
+                            ) : null}
 
                             <div style={{ display: "flex", gap: 6, marginBottom: saleType === "commande" ? 12 : 0 }}>
                               {([["commande", "💳 Sur son compte"], ["reprise-sur-place", "🏪 Sur place"]] as Array<["commande" | "reprise-sur-place", string]>).map(([v, l]) => {
@@ -698,7 +785,11 @@ export function PanierPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", lineHeight: 1.3 }}>{p.name}</div>
-                        <div style={{ color: "var(--ls-text-hint)", fontSize: 12.5, marginTop: 3 }}>× {cart[p.id]}</div>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 5, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", borderRadius: 9, padding: "2px 4px" }}>
+                          <button type="button" onClick={() => dec(p.id)} aria-label="Retirer un" style={{ width: 24, height: 22, borderRadius: 6, border: "none", background: "transparent", color: "var(--ls-text)", cursor: "pointer", fontSize: 16, lineHeight: 1 }}>−</button>
+                          <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "var(--ls-text)", minWidth: 14, textAlign: "center" }}>{cart[p.id]}</span>
+                          <button type="button" onClick={() => add(p.id)} aria-label="Ajouter un" style={{ width: 24, height: 22, borderRadius: 6, border: "none", background: "transparent", color: "var(--ls-teal)", cursor: "pointer", fontSize: 15, lineHeight: 1 }}>＋</button>
+                        </div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                         <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--ls-text)" }}>{euro(p.price * cart[p.id])}</span>
@@ -733,7 +824,7 @@ export function PanierPage() {
                     </span>
                   </button>
                   {remiseOpen ? (
-                    <div style={{ padding: "2px 12px 12px" }}>
+                    <div className="panier-acc" style={{ padding: "2px 12px 12px" }}>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center" }}>
                         {[5, 10, 15, 25, 35].map((v) => {
                           const on = discount === v && customText === "";
@@ -792,6 +883,11 @@ export function PanierPage() {
                       <span style={{ fontSize: 14 }}>↓</span>Tu économises {euro(savings)}
                     </div>
                   ) : null}
+                  {coachMargin > 0.005 ? (
+                    <div style={{ marginTop: 10, fontSize: 12, color: "var(--ls-text-muted)" }}>
+                      💰 Toi tu gagnes ≈ <span style={{ fontWeight: 800, fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>{euro(coachMargin)}</span>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Action principale : enregistrer la vente */}
@@ -838,6 +934,32 @@ export function PanierPage() {
                     </>
                   );
                 })()}
+
+                {/* Encaissement CB — lien Stripe sur le compte du distri */}
+                <button
+                  type="button"
+                  className="panier-cta"
+                  onClick={() => void generatePayLink()}
+                  disabled={payLoading}
+                  style={{ width: "100%", marginTop: 10, padding: 13, borderRadius: 14, border: "1px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)", background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)", color: "var(--ls-teal)", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 14, cursor: payLoading ? "wait" : "pointer" }}
+                >
+                  {payLoading ? "Génération du lien…" : `💳 Encaisser ${euro(clientPrice)} par carte`}
+                </button>
+                {payError ? (
+                  <div style={{ fontSize: 11.5, color: "var(--ls-coral, #f87171)", textAlign: "center", marginTop: 6, lineHeight: 1.4 }}>{payError}</div>
+                ) : null}
+                {payLink ? (
+                  <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: 14, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ls-text)", marginBottom: 8 }}>✅ Lien de paiement prêt — envoie-le</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button type="button" onClick={copyPayLink} style={{ flex: 1, minWidth: 90, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>{payCopied ? "✅ Copié" : "📋 Copier"}</button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(`Voici ton lien de paiement sécurisé${attribName ? ` ${attribName}` : ""} 👇\n${payLink}`)}`} target="_blank" rel="noreferrer" style={{ flex: 1, minWidth: 90, textAlign: "center", padding: "8px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 700, textDecoration: "none" }}>💬 WhatsApp</a>
+                    </div>
+                    <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginTop: 8, lineHeight: 1.4 }}>
+                      L'argent arrive sur ton compte Stripe. Le « Valider » ci-dessus enregistre la vente côté fiche/rentabilité — les deux sont complémentaires.
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* Actions secondaires */}
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
