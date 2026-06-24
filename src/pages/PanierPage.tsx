@@ -17,6 +17,8 @@ import { pvProductCatalog } from "../data/pvCatalog";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
 import { recordQuickSale } from "../services/supabaseService";
+import type { Client } from "../types/domain";
+import type { PvClientTransaction } from "../types/pv";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
@@ -124,7 +126,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, reloadClients } = useAppContext();
+  const { currentUser, reloadClients, clients, addPvTransaction } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -133,6 +135,16 @@ export function PanierPage() {
   const [discount, setDiscount] = useState(0);
   const [customText, setCustomText] = useState("");
   const [clientName, setClientName] = useState("");
+  // Attribution de la vente (2026-06-24) : client existant (→ atterrit sur sa
+  // fiche + son app + rentabilité, même chemin que le réassort) OU client direct
+  // (vente rapide hors-app). Règle : pas de validation sans attribution.
+  const [attribMode, setAttribMode] = useState<"existing" | "direct">("existing");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [saleType, setSaleType] = useState<"commande" | "reprise-sur-place">("commande");
+  const [delayDays, setDelayDays] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [onlyMine, setOnlyMine] = useState(true);
 
   const products: CatProduct[] = useMemo(
     () =>
@@ -161,6 +173,23 @@ export function PanierPage() {
   const itemCount = lines.reduce((a, p) => a + cart[p.id], 0);
   const hasItems = lines.length > 0;
 
+  // Liste du sélecteur de client : par défaut les clients du distri connecté
+  // (Mélanie voit les siens), l'admin peut basculer « Tous ». Mes clients d'abord.
+  const myId = currentUser?.id;
+  const pickerClients = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    const base = clients.filter((c) => (onlyMine ? c.distributorId === myId : true));
+    const matched = q
+      ? base.filter((c) => `${c.firstName} ${c.lastName}`.toLowerCase().includes(q))
+      : base;
+    return [...matched].sort((a, b) => {
+      const ao = a.distributorId === myId ? 0 : 1;
+      const bo = b.distributorId === myId ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+    });
+  }, [clients, onlyMine, pickerQuery, myId]);
+
   const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
   const dec = (id: string) =>
     setCart((c) => {
@@ -181,12 +210,22 @@ export function PanierPage() {
     setDiscount(0);
     setCustomText("");
     setClientName("");
+    setAttribMode("existing");
+    setSelectedClient(null);
+    setSaleType("commande");
+    setDelayDays(0);
+    setPickerQuery("");
   };
+
+  const attribName =
+    attribMode === "existing" && selectedClient
+      ? selectedClient.firstName
+      : clientName.trim();
 
   function copyRecap() {
     if (!hasItems) return;
     const body = lines.map((p) => `• ${p.name} × ${cart[p.id]} — ${euro(p.price * cart[p.id])}`).join("\n");
-    const hello = clientName.trim() ? `Coucou ${clientName.trim()} 🌿` : "Coucou 🌿";
+    const hello = attribName ? `Coucou ${attribName} 🌿` : "Coucou 🌿";
     let txt = `${hello} voici la sélection qu'on a préparée ensemble :\n\n${body}\n\nTotal : ${euro(totalPrice)}`;
     if (disc > 0) txt += `\nAvec ta remise de ${disc} % : ${euro(clientPrice)}\nTu économises ${euro(savings)} 🎉`;
     txt += `\n\nDis-moi si tu veux ajuster quelque chose, je suis là 💛`;
@@ -195,32 +234,87 @@ export function PanierPage() {
     );
   }
 
-  // Valider la vente → crée un client léger (hors-app, non-VIP) + enregistre les
-  // produits → remonte direct dans la Rentabilité (marge + nombre de clients).
+  // Valider la vente. Deux chemins selon l'attribution :
+  //  • Client existant → addPvTransaction par ligne (MÊME chemin que le réassort) :
+  //    atterrit sur sa fiche + son app + rentabilité, incrémenté à l'identique.
+  //    « Sur son compte » = commande (PV au client) ; « Sur place » = 0 PV pour
+  //    le client mais le € remonte quand même dans la rentabilité du distri.
+  //  • Client direct → recordQuickSale (vente rapide hors-app).
+  // Règle ferme : pas de validation sans attribution (client existant OU nom).
   async function validateSale() {
     if (!hasItems || saving) return;
     if (!currentUser) {
       push({ tone: "error", title: "Connecte-toi", message: "Session expirée, reconnecte-toi." });
       return;
     }
+    if (attribMode === "existing" && !selectedClient) {
+      push({ tone: "error", title: "Choisis un client", message: "Sélectionne un client existant (ou passe en « Client direct »)." });
+      return;
+    }
+    if (attribMode === "direct" && !clientName.trim()) {
+      push({ tone: "error", title: "Nom requis", message: "Ajoute le nom du client (ou choisis un client existant)." });
+      return;
+    }
     setSaving(true);
     try {
-      await recordQuickSale({
-        clientName,
-        distributorId: currentUser.id,
-        distributorName: currentUser.name,
-        lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
-      });
-      await reloadClients();
-      push({
-        tone: "success",
-        title: "Vente enregistrée 🎉",
-        message: clientName.trim()
-          ? `${clientName.trim()} ajouté·e à ta rentabilité.`
-          : "Ajoutée à ta rentabilité.",
-      });
-      reset();
-      navigate("/rentabilite");
+      if (attribMode === "existing" && selectedClient) {
+        const now = new Date().toISOString();
+        const startOverride =
+          saleType === "commande" && delayDays > 0
+            ? new Date(Date.now() + delayDays * 24 * 3600 * 1000).toISOString()
+            : undefined;
+        const respId = selectedClient.distributorId || currentUser.id;
+        const respName = selectedClient.distributorName || currentUser.name;
+        const isPlace = saleType === "reprise-sur-place";
+        const fullName = `${selectedClient.firstName} ${selectedClient.lastName}`.trim();
+        for (let i = 0; i < lines.length; i += 1) {
+          const p = lines[i];
+          const qty = cart[p.id];
+          const tx: PvClientTransaction = {
+            id: `local-${Date.now()}-${i}`,
+            date: now,
+            clientId: selectedClient.id,
+            clientName: fullName,
+            responsibleId: respId,
+            responsibleName: respName,
+            productId: p.id,
+            productName: p.name,
+            quantity: qty,
+            // Sur place = 0 PV pour le client (déjà compté au comptoir) ; le prix
+            // reste enregistré → rentabilité € inchangée.
+            pv: isPlace ? 0 : Number((p.pv * qty).toFixed(2)),
+            price: Number((p.price * qty).toFixed(2)),
+            type: saleType,
+            note: isPlace
+              ? `Vente sur place (panier) — ${lines.length} ligne${lines.length > 1 ? "s" : ""}`
+              : `Commande (panier) — ${lines.length} ligne${lines.length > 1 ? "s" : ""}${startOverride ? ` · cure démarre J+${delayDays}` : ""}`,
+            ...(startOverride ? { startDateOverride: startOverride } : {}),
+          };
+          await addPvTransaction(tx);
+        }
+        push({
+          tone: "success",
+          title: isPlace ? "Vente sur place enregistrée 🏪" : `+${totalPV.toFixed(1)} PV pour ${selectedClient.firstName} 🎉`,
+          message: `${lines.length} produit${lines.length > 1 ? "s" : ""} sur la fiche de ${selectedClient.firstName}.`,
+        });
+        reset();
+        navigate(`/clients/${selectedClient.id}`);
+      } else {
+        await recordQuickSale({
+          clientName,
+          distributorId: currentUser.id,
+          distributorName: currentUser.name,
+          lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
+        });
+        await reloadClients();
+        push({
+          tone: "success",
+          title: "Vente enregistrée 🎉",
+          message: `${clientName.trim()} ajouté·e à ta rentabilité.`,
+        });
+        reset();
+        navigate("/rentabilite");
+      }
     } catch (e) {
       push({ tone: "error", title: "Erreur", message: e instanceof Error ? e.message : "Réessaie." });
     } finally {
@@ -435,18 +529,82 @@ export function PanierPage() {
               </div>
             ) : (
               <>
-                {/* Nom du client (ventes hors-app) */}
-                <label style={{ display: "block", marginBottom: 14 }}>
-                  <span style={{ display: "block", fontSize: 11.5, fontWeight: 600, color: "var(--ls-text-muted)", marginBottom: 5 }}>
-                    Nom du client <span style={{ color: "var(--ls-text-hint)", fontWeight: 400 }}>(optionnel)</span>
-                  </span>
-                  <input
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Ex : Marie D."
-                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
-                  />
-                </label>
+                {/* Attribution de la vente (obligatoire) */}
+                <div style={{ marginBottom: 14, padding: 12, borderRadius: 14, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                    {([["existing", "👤 Client existant"], ["direct", "✍️ Client direct"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
+                      const on = attribMode === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setAttribMode(m)}
+                          style={{ flex: 1, padding: "8px 10px", borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-teal)" : "var(--ls-surface)", color: on ? "#fff" : "var(--ls-text-muted)" }}
+                        >
+                          {l}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {attribMode === "existing" ? (
+                    selectedClient ? (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 999, background: "var(--ls-teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
+                            {selectedClient.firstName.charAt(0)}{selectedClient.lastName.charAt(0)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selectedClient.firstName} {selectedClient.lastName}</div>
+                            <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>{selectedClient.distributorName}</div>
+                          </div>
+                          <button type="button" onClick={() => { setSelectedClient(null); setPickerOpen(true); }} style={{ background: "none", border: "none", color: "var(--ls-teal)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Changer</button>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 6, marginBottom: saleType === "commande" ? 12 : 0 }}>
+                          {([["commande", "💳 Sur son compte"], ["reprise-sur-place", "🏪 Sur place"]] as Array<["commande" | "reprise-sur-place", string]>).map(([v, l]) => {
+                            const on = saleType === v;
+                            return (
+                              <button key={v} type="button" onClick={() => setSaleType(v)} style={{ flex: 1, padding: "7px 8px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-gold)" : "var(--ls-surface)", color: on ? "#1a1407" : "var(--ls-text-muted)" }}>{l}</button>
+                            );
+                          })}
+                        </div>
+
+                        {saleType === "commande" ? (
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>Démarrage de la cure</div>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {([[0, "Aujourd'hui"], [3, "+3 j"], [5, "+5 j"], [7, "+7 j"]] as Array<[number, string]>).map(([d, l]) => {
+                                const on = delayDays === d;
+                                return (
+                                  <button key={d} type="button" onClick={() => setDelayDays(d)} style={{ padding: "6px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)", background: on ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "var(--ls-surface)", color: on ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>{l}</button>
+                                );
+                              })}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginTop: 8, lineHeight: 1.4 }}>
+                              Atterrit sur la fiche de {selectedClient.firstName}, dans son app et ta rentabilité.
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
+                            Vente comptoir : 0 PV pour {selectedClient.firstName}, mais le montant remonte dans ta rentabilité.
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <button type="button" onClick={() => setPickerOpen(true)} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px dashed var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>
+                        👤 Choisir un client…
+                      </button>
+                    )
+                  ) : (
+                    <input
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Nom du client (ex : Marie D.)"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
+                    />
+                  )}
+                </div>
 
                 <div style={{ maxHeight: 300, overflow: "auto", margin: "0 -4px", padding: "0 4px" }}>
                   {lines.map((p) => (
@@ -600,31 +758,47 @@ export function PanierPage() {
                   ) : null}
                 </div>
 
-                {/* Action principale : enregistrer la vente → rentabilité */}
-                <button
-                  type="button"
-                  onClick={() => void validateSale()}
-                  disabled={saving}
-                  style={{
-                    width: "100%",
-                    marginTop: 16,
-                    padding: 14,
-                    borderRadius: 14,
-                    border: "none",
-                    background: "var(--ls-gold)",
-                    color: "#1a1407",
-                    fontFamily: "Syne, sans-serif",
-                    fontWeight: 800,
-                    fontSize: 14.5,
-                    cursor: saving ? "wait" : "pointer",
-                    opacity: saving ? 0.65 : 1,
-                  }}
-                >
-                  {saving ? "Enregistrement…" : "✅ Valider la vente → Rentabilité"}
-                </button>
-                <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)", textAlign: "center", marginTop: 7, lineHeight: 1.45 }}>
-                  Crée le client (hors-app) et ajoute la vente à ta rentabilité.
-                </div>
+                {/* Action principale : enregistrer la vente */}
+                {(() => {
+                  const attribReady = attribMode === "existing" ? !!selectedClient : !!clientName.trim();
+                  const blocked = saving || !attribReady;
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void validateSale()}
+                        disabled={blocked}
+                        style={{
+                          width: "100%",
+                          marginTop: 16,
+                          padding: 14,
+                          borderRadius: 14,
+                          border: "none",
+                          background: "var(--ls-gold)",
+                          color: "#1a1407",
+                          fontFamily: "Syne, sans-serif",
+                          fontWeight: 800,
+                          fontSize: 14.5,
+                          cursor: blocked ? "not-allowed" : "pointer",
+                          opacity: blocked ? 0.5 : 1,
+                        }}
+                      >
+                        {saving
+                          ? "Enregistrement…"
+                          : attribMode === "existing"
+                            ? "✅ Valider → fiche client"
+                            : "✅ Valider la vente → Rentabilité"}
+                      </button>
+                      <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)", textAlign: "center", marginTop: 7, lineHeight: 1.45 }}>
+                        {!attribReady
+                          ? "Choisis un client (existant ou direct) pour valider."
+                          : attribMode === "existing"
+                            ? `Enregistré sur la fiche de ${selectedClient?.firstName} + ta rentabilité.`
+                            : "Crée le client (hors-app) et ajoute la vente à ta rentabilité."}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Actions secondaires */}
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
@@ -682,6 +856,62 @@ export function PanierPage() {
             <span aria-hidden="true" style={{ fontSize: 15, color: "var(--ls-teal)" }}>↓</span>
           </span>
         </button>
+      ) : null}
+
+      {/* Sélecteur de client existant */}
+      {pickerOpen ? (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choisir un client"
+          onClick={(e) => { if (e.target === e.currentTarget) setPickerOpen(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 9000, background: "color-mix(in srgb, var(--ls-bg) 70%, transparent)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 12px", fontFamily: "DM Sans, sans-serif" }}
+        >
+          <div style={{ width: "100%", maxWidth: 460, maxHeight: "86vh", display: "flex", flexDirection: "column", background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 20, overflow: "hidden", boxShadow: "0 24px 64px -16px rgba(0,0,0,0.45)" }}>
+            <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--ls-border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 17, color: "var(--ls-text)" }}>Choisir un client</span>
+              <button type="button" onClick={() => setPickerOpen(false)} aria-label="Fermer" style={{ width: 32, height: 32, borderRadius: 999, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 15 }}>✕</button>
+            </div>
+            <div style={{ padding: "12px 18px", borderBottom: "1px solid var(--ls-border)", display: "flex", flexDirection: "column", gap: 10 }}>
+              <input
+                value={pickerQuery}
+                onChange={(e) => setPickerQuery(e.target.value)}
+                placeholder="Rechercher un client…"
+                autoFocus
+                style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)", color: "var(--ls-text)", fontSize: 14, outline: "none" }}
+              />
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ls-text-muted)", cursor: "pointer" }}>
+                <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
+                Seulement mes clients
+              </label>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "8px 10px" }}>
+              {pickerClients.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "30px 16px", color: "var(--ls-text-muted)", fontSize: 13.5 }}>Aucun client trouvé.</div>
+              ) : (
+                pickerClients.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => { setSelectedClient(c); setAttribMode("existing"); setPickerOpen(false); setPickerQuery(""); }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: 12, border: "none", background: "transparent", cursor: "pointer", textAlign: "left" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--ls-surface2)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <div style={{ width: 36, height: 36, flex: "0 0 auto", borderRadius: 999, background: c.distributorId === myId ? "var(--ls-teal)" : "var(--ls-surface2)", color: c.distributorId === myId ? "#fff" : "var(--ls-text-muted)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13, border: c.distributorId === myId ? "none" : "1px solid var(--ls-border)" }}>
+                      {c.firstName.charAt(0)}{c.lastName.charAt(0)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.firstName} {c.lastName}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>{c.distributorName || "—"}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
