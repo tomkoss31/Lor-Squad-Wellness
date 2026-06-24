@@ -65,6 +65,11 @@ const TeamPage = lazy(() =>
     default: module.TeamPage
   }))
 );
+const PlanMarketingPage = lazy(() =>
+  import("./pages/PlanMarketingPage").then((module) => ({
+    default: module.PlanMarketingPage
+  }))
+);
 const DistributorPortfolioPage = lazy(() =>
   import("./pages/DistributorPortfolioPage").then((module) => ({
     default: module.DistributorPortfolioPage
@@ -737,6 +742,7 @@ export default function App() {
               {/* Formation distributeur Herbalife — ouverte à tous les distri
                   depuis 2026-05-27 (chantier onboarding plan A). Seul
                   /formation/admin reste gardé pour l'édition de contenu. */}
+              <Route path="plan-marketing" element={<PlanMarketingPage />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>

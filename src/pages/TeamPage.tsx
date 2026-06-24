@@ -17,7 +17,8 @@ import { WeeklyBilansChallenge } from "../features/gamification/components/Weekl
 import { MonthlySeasonCard } from "../features/gamification/components/MonthlySeasonCard";
 import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecapCard";
 import { useAppContext } from "../context/AppContext";
-import type { Client, Prospect } from "../types/domain";
+import type { Client, Prospect, HerbalifeRank } from "../types/domain";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { DistriQuickModal } from "../components/team/DistriQuickModal";
 // Hub équipe centralisé (2026-05-04) — 5 onglets : Vue d'ensemble (XP),
 // Engagement, Apprentissage, Arbre lignée, Gamification.
@@ -47,12 +48,12 @@ import {
 } from "../config/teamConfig";
 
 // ─── Tree builder à partir des rows RPC plates ────────────────────────────
-interface TreeNode {
+export interface TreeNode {
   row: TeamTreeRow;
   children: TreeNode[];
 }
 
-function buildTreeFromRows(rows: TeamTreeRow[], rootId: string): TreeNode | null {
+export function buildTreeFromRows(rows: TeamTreeRow[], rootId: string): TreeNode | null {
   const byId = new Map(rows.map((r) => [r.user_id, r] as const));
   const rootRow = byId.get(rootId);
   if (!rootRow) return null;
@@ -121,6 +122,12 @@ export function TeamPage() {
   }, [currentUser, users]);
 
   const rootId = rootUser?.id ?? null;
+  // Map user_id -> rang Herbalife (pour le pin sur chaque card de l'arbre).
+  const rankByUserId = useMemo(() => {
+    const m = new Map<string, HerbalifeRank | null | undefined>();
+    for (const u of users) m.set(u.id, u.currentRank ?? null);
+    return m;
+  }, [users]);
   // Si le currentUser est dans le couple, on affiche le tree "fusionné"
   // des 2 membres. Sinon on reste sur le tree classique du rootUser.
   const currentUserIsCoupleMember =
@@ -560,6 +567,7 @@ export function TeamPage() {
             <TreeLevel
               node={tree}
               isRoot
+              rankByUserId={rankByUserId}
               selectedId={effectiveSelectedId}
               onSelect={(id) => {
                 setSelectedId(id);
@@ -742,16 +750,19 @@ function buildRecentActivity(
 }
 
 // ═══ Composant : un niveau de l'arbre (récursif) ═════════════════════════
-function TreeLevel({
+export function TreeLevel({
   node,
   isRoot,
   selectedId,
   onSelect,
+  rankByUserId,
 }: {
   node: TreeNode;
   isRoot?: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Map user_id -> rang Herbalife pour afficher le pin sur chaque card. */
+  rankByUserId?: Map<string, HerbalifeRank | null | undefined>;
 }) {
   return (
     <div className={isRoot ? "ls-org-root" : "ls-org-item"}>
@@ -760,6 +771,7 @@ function TreeLevel({
         isRoot={isRoot}
         isSelected={selectedId === node.row.user_id}
         onSelect={() => onSelect(node.row.user_id)}
+        rank={rankByUserId?.get(node.row.user_id) ?? null}
       />
       {node.children.length > 0 ? (
         <div className="ls-org-row">
@@ -769,6 +781,7 @@ function TreeLevel({
               node={child}
               selectedId={selectedId}
               onSelect={onSelect}
+              rankByUserId={rankByUserId}
             />
           ))}
         </div>
@@ -793,11 +806,13 @@ function TreeCard({
   isRoot,
   isSelected,
   onSelect,
+  rank,
 }: {
   node: TreeNode;
   isRoot?: boolean;
   isSelected: boolean;
   onSelect: () => void;
+  rank?: HerbalifeRank | null;
 }) {
   const row = node.row;
   const isCouple = isCoupleVirtualId(row.user_id);
@@ -874,6 +889,13 @@ function TreeCard({
     >
       {/* Liseré d'accent en haut (couleur du rôle) */}
       <span aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: accent, opacity: isRoot ? 1 : 0.85 }} />
+
+      {/* Pin de rang Herbalife (Plan Marketing) — coin haut-droit */}
+      {rank ? (
+        <div style={{ position: "absolute", top: 6, right: 6, lineHeight: 0 }}>
+          <RankPinBadge rank={rank} size="xs" />
+        </div>
+      ) : null}
 
       <div
         style={{
