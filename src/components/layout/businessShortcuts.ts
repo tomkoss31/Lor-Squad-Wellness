@@ -20,6 +20,7 @@ export const BUSINESS_SHORTCUTS: BusinessShortcut[] = [
   { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },
   { label: "FLEX", path: "/flex", emoji: "⚡" },
   { label: "Suivi PV", path: "/pv", emoji: "💰" },
+  { label: "Plan Marketing", path: "/plan-marketing", emoji: "🪜" },
 ];
 
 // Vrai si la route courante appartient au hub « Mon business » (pour auto-ouvrir
