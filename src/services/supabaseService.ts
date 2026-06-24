@@ -456,6 +456,10 @@ function mapClient(row: ClientRow): Client {
     vipSponsorClientId: row.vip_sponsor_client_id ?? null,
     vipStartedAt: row.vip_started_at ?? null,
     vipStatus: (row.vip_status as Client["vipStatus"]) ?? "none",
+    // Lien fiche cliente <-> compte coach/distri (chantier 2026-06-24). Lecture
+    // tolérante : si la colonne n'existe pas encore (migration non appliquée),
+    // le champ est simplement absent -> null (pas d'erreur, select * ).
+    linkedUserId: (row as { linked_user_id?: string | null }).linked_user_id ?? null,
     // Pop-up business bilan (2026-11-03)
     businessCuriosity: (row.business_curiosity as Client["businessCuriosity"]) ?? null,
     businessInterestAmount: row.business_interest_amount ?? null,
@@ -1320,6 +1324,30 @@ export async function updateQuickSale(payload: {
  * @param recordId   pv_client_products.id
  * @param startDateIso  YYYY-MM-DD
  */
+/**
+ * Lie (ou délie) une fiche cliente à un compte coach/distri (chantier
+ * 2026-06-24). userId null = retire le lien. Si la colonne linked_user_id
+ * n'existe pas encore (migration non appliquée), Supabase renvoie une erreur
+ * explicite "column ... does not exist" -> remontée au front pour un toast clair.
+ */
+export async function setSupabaseClientLinkedUser(
+  clientId: string,
+  userId: string | null,
+): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client
+    .from("clients")
+    .update({ linked_user_id: userId })
+    .eq("id", clientId);
+  if (error) {
+    throw new Error(
+      /linked_user_id/.test(error.message)
+        ? "La colonne linked_user_id n'existe pas encore — applique la migration Supabase."
+        : error.message,
+    );
+  }
+}
+
 export async function updateSupabasePvClientProductStartDate(
   recordId: string,
   startDateIso: string,
