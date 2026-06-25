@@ -1819,6 +1819,10 @@ export async function setUserPvOverride(
   if (error) {
     throw new Error(`Impossible d'enregistrer l'override PV : ${error.message}`);
   }
+  // Même event que setUserPvBreakdown : refresh des jauges/rentabilité sans reload.
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("lor-squad:pv-breakdown-updated"));
+  }
 }
 
 /**

@@ -231,7 +231,9 @@ export function computeQualifyingPersonalPv(
   for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
   const childrenBySponsor = new Map<string, typeof users>();
   for (const u of users) {
-    if (u.frozenAt) continue;
+    // NB : on n'exclut PLUS les distri gelés ici (2026-06-25). Un gelé pour
+    // qui le sponsor a SAISI un PV Bizworks explicite doit produire son
+    // override. Le gel ne coupe que le fallback ventes-app (cf. plus bas).
     if (!u.sponsorId) continue;
     const arr = childrenBySponsor.get(u.sponsorId) ?? [];
     arr.push(u);
@@ -403,7 +405,9 @@ export function computeViewerDownlineOverride(
   // Index sponsor -> children pour walk efficace
   const childrenBySponsor = new Map<string, typeof users>();
   for (const u of users) {
-    if (u.frozenAt) continue;
+    // NB : on n'exclut PLUS les distri gelés ici (2026-06-25). Un gelé pour
+    // qui le sponsor a SAISI un PV Bizworks explicite doit produire son
+    // override. Le gel ne coupe que le fallback ventes-app (cf. plus bas).
     if (!u.sponsorId) continue;
     const arr = childrenBySponsor.get(u.sponsorId) ?? [];
     arr.push(u);
@@ -429,7 +433,7 @@ export function computeViewerDownlineOverride(
     // Une row vide (tout à 0) ne doit PAS court-circuiter le fallback ventes app.
     if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
       total += computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
-    } else if (fallbackOverrideForUser) {
+    } else if (fallbackOverrideForUser && !u.frozenAt) {
       const fb = fallbackOverrideForUser(u.id);
       if (fb && fb.totalPv > 0) {
         const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
@@ -488,7 +492,9 @@ export function computeViewerOverridePerMember(
 
   const childrenBySponsor = new Map<string, typeof users>();
   for (const u of users) {
-    if (u.frozenAt) continue;
+    // NB : on n'exclut PLUS les distri gelés ici (2026-06-25). Un gelé pour
+    // qui le sponsor a SAISI un PV Bizworks explicite doit produire son
+    // override. Le gel ne coupe que le fallback ventes-app (cf. plus bas).
     if (!u.sponsorId) continue;
     const arr = childrenBySponsor.get(u.sponsorId) ?? [];
     arr.push(u);
@@ -512,7 +518,7 @@ export function computeViewerOverridePerMember(
     let cut = 0;
     if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
       cut = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
-    } else if (fallbackOverrideForUser) {
+    } else if (fallbackOverrideForUser && !u.frozenAt) {
       const fb = fallbackOverrideForUser(u.id);
       if (fb && fb.totalPv > 0) {
         const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
