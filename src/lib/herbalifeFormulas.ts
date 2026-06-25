@@ -109,6 +109,15 @@ export function tierPctForRank(rank: string | null | undefined): number {
   return 50; // tous les paliers Supervisor+ sont a 50%
 }
 
+/** Production Bonus % par rang : G.E.T. 2%, Millionaire 4%, President's 6%.
+ *  0 en dessous du G.E.T. (le PB démarre au G.E.T. Team). */
+export function productionBonusPctForRank(rank: string | null | undefined): number {
+  if (rank === "presidents_50") return 6;
+  if (rank === "millionaire_50" || rank === "millionaire_7500_50") return 4;
+  if (rank === "get_team_50" || rank === "get_team_2500_50") return 2;
+  return 0;
+}
+
 /** Mappe un nom de tier (15/25/35/42) vers son pourcentage 0-100. */
 export const TIER_LABELS: Array<{ key: keyof PvMonthlyBreakdown; pct: number }> = [
   { key: "pv15", pct: 15 },
@@ -442,6 +451,10 @@ export function computeViewerOverridePerMember(
     ...viewerIds.map((uid) => tierPctForRank(users.find((x) => x.id === uid)?.currentRank)),
   );
   const viewerIsSupervisor = viewerTierPct >= SUPERVISOR_TIER;
+  // Production Bonus % du viewer (0 si < G.E.T.).
+  const viewerPbPct = Math.max(
+    ...viewerIds.map((uid) => productionBonusPctForRank(users.find((x) => x.id === uid)?.currentRank)),
+  );
 
   // Index sponsor -> children (gelés INCLUS : un PV Bizworks saisi compte).
   const childrenBySponsor = new Map<string, typeof users>();
@@ -496,16 +509,17 @@ export function computeViewerOverridePerMember(
     intermediateTiers: number[];
     anchorId: string | null; // Superviseur ancre le plus proche au-dessus
     supDepth: number;        // niveau de Superviseur courant (1 = 1er Sup downline)
+    maxPbAbove: number;      // max PB% des leaders G.E.T.+ au-dessus (différentiel)
   }
   const queue: Frame[] = [];
   for (const ownerId of viewerIds) {
     for (const u of childrenBySponsor.get(ownerId) ?? []) {
-      queue.push({ user: u, intermediateTiers: [], anchorId: null, supDepth: 0 });
+      queue.push({ user: u, intermediateTiers: [], anchorId: null, supDepth: 0, maxPbAbove: 0 });
     }
   }
 
   while (queue.length > 0) {
-    const { user: u, intermediateTiers, anchorId, supDepth } = queue.shift()!;
+    const { user: u, intermediateTiers, anchorId, supDepth, maxPbAbove } = queue.shift()!;
     const uTier = tierPctForRank(u.currentRank);
     const isSup = uTier >= SUPERVISOR_TIER;
     const pv = totalPvFor(u);
@@ -533,12 +547,25 @@ export function computeViewerOverridePerMember(
       if (cut > 0) perMember.set(u.id, (perMember.get(u.id) ?? 0) + cut);
     }
 
+    // PB le plus haut de la chaîne JUSQU'À u inclus : un leader absorbe son
+    // propre PB% sur son propre volume (ex. President touche 6−4% sur le volume
+    // d'un Millionaire, pas 6%).
+    const childPbAbove = Math.max(maxPbAbove, productionBonusPctForRank(u.currentRank));
+
+    // Production Bonus (G.E.T.+ : 2/4/6%) : le viewer leader touche son PB% sur
+    // le volume de CHAQUE membre de l'org, en différentiel vs les leaders
+    // G.E.T.+ (eux + au-dessus). Cumulable avec royalty + vente de gros.
+    if (viewerPbPct > 0 && pv > 0) {
+      const pbCut = (pv * Math.max(0, viewerPbPct - childPbAbove)) / 100 * PV_TO_EUR_RATIO;
+      if (pbCut > 0) perMember.set(u.id, (perMember.get(u.id) ?? 0) + pbCut);
+    }
     for (const child of childrenBySponsor.get(u.id) ?? []) {
       queue.push({
         user: child,
         intermediateTiers: [...intermediateTiers, uTier],
         anchorId: nextAnchorId,
         supDepth: nextSupDepth,
+        maxPbAbove: childPbAbove,
       });
     }
   }
