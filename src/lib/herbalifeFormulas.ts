@@ -391,64 +391,16 @@ export function computeViewerDownlineOverride(
   breakdowns: PvMonthlyBreakdown[],
   fallbackOverrideForUser?: (userId: string) => { totalPv: number; tierPct: number } | null,
 ): number {
-  const breakdownByUserId = new Map<string, PvMonthlyBreakdown>();
-  for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
-
-  // Viewer tier = max des tiers du scope (couple : on prend le plus haut).
-  const viewerTierPct = Math.max(
-    ...viewerIds.map((uid) => {
-      const u = users.find((x) => x.id === uid);
-      return tierPctForRank(u?.currentRank);
-    }),
-  );
-
-  // Index sponsor -> children pour walk efficace
-  const childrenBySponsor = new Map<string, typeof users>();
-  for (const u of users) {
-    // NB : on n'exclut PLUS les distri gelés ici (2026-06-25). Un gelé pour
-    // qui le sponsor a SAISI un PV Bizworks explicite doit produire son
-    // override. Le gel ne coupe que le fallback ventes-app (cf. plus bas).
-    if (!u.sponsorId) continue;
-    const arr = childrenBySponsor.get(u.sponsorId) ?? [];
-    arr.push(u);
-    childrenBySponsor.set(u.sponsorId, arr);
-  }
-
-  interface Frame {
-    user: typeof users[0];
-    intermediateTiers: number[];
-  }
-  const queue: Frame[] = [];
-  for (const ownerId of viewerIds) {
-    const directs = childrenBySponsor.get(ownerId) ?? [];
-    for (const u of directs) queue.push({ user: u, intermediateTiers: [] });
-  }
-
+  // Total = somme de la ventilation par membre (même règle organisation /
+  // royalty, cohérence garantie — cf. computeViewerOverridePerMember).
   let total = 0;
-  while (queue.length > 0) {
-    const frame = queue.shift()!;
-    const { user: u, intermediateTiers } = frame;
-    const breakdown = breakdownByUserId.get(u.id);
-    // Un breakdown Bizworks manuel n'a la priorité que s'il porte du PV.
-    // Une row vide (tout à 0) ne doit PAS court-circuiter le fallback ventes app.
-    if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
-      total += computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
-    } else if (fallbackOverrideForUser && !u.frozenAt) {
-      const fb = fallbackOverrideForUser(u.id);
-      if (fb && fb.totalPv > 0) {
-        const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
-        const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
-        total += fb.totalPv * cutPct * PV_TO_EUR_RATIO;
-      }
-    }
-    const yTierPct = tierPctForRank(u.currentRank);
-    const childList = childrenBySponsor.get(u.id) ?? [];
-    for (const child of childList) {
-      queue.push({
-        user: child,
-        intermediateTiers: [...intermediateTiers, yTierPct],
-      });
-    }
+  for (const v of computeViewerOverridePerMember(
+    viewerIds,
+    users,
+    breakdowns,
+    fallbackOverrideForUser,
+  ).values()) {
+    total += v;
   }
   return total;
 }
@@ -479,64 +431,126 @@ export function computeViewerOverridePerMember(
   breakdowns: PvMonthlyBreakdown[],
   fallbackOverrideForUser?: (userId: string) => { totalPv: number; tierPct: number } | null,
 ): Map<string, number> {
+  const SUPERVISOR_TIER = 50;
+  const MAX_ROYALTY_SUP_LEVELS = 3;
+
   const perMember = new Map<string, number>();
   const breakdownByUserId = new Map<string, PvMonthlyBreakdown>();
   for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
 
   const viewerTierPct = Math.max(
-    ...viewerIds.map((uid) => {
-      const u = users.find((x) => x.id === uid);
-      return tierPctForRank(u?.currentRank);
-    }),
+    ...viewerIds.map((uid) => tierPctForRank(users.find((x) => x.id === uid)?.currentRank)),
   );
+  const viewerIsSupervisor = viewerTierPct >= SUPERVISOR_TIER;
 
+  // Index sponsor -> children (gelés INCLUS : un PV Bizworks saisi compte).
   const childrenBySponsor = new Map<string, typeof users>();
   for (const u of users) {
-    // NB : on n'exclut PLUS les distri gelés ici (2026-06-25). Un gelé pour
-    // qui le sponsor a SAISI un PV Bizworks explicite doit produire son
-    // override. Le gel ne coupe que le fallback ventes-app (cf. plus bas).
     if (!u.sponsorId) continue;
     const arr = childrenBySponsor.get(u.sponsorId) ?? [];
     arr.push(u);
     childrenBySponsor.set(u.sponsorId, arr);
   }
 
+  // Volume PV total d'un membre (breakdown s'il porte du PV, sinon fallback
+  // ventes-app — sauf gelé : un gelé sans saisie ne tire pas d'override auto).
+  const totalPvFor = (u: typeof users[0]): number => {
+    const b = breakdownByUserId.get(u.id);
+    if (b && totalPvFromBreakdown(b) > 0) return totalPvFromBreakdown(b);
+    if (fallbackOverrideForUser && !u.frozenAt) {
+      const fb = fallbackOverrideForUser(u.id);
+      if (fb && fb.totalPv > 0) return fb.totalPv;
+    }
+    return 0;
+  };
+
+  // Vente de gros (tiers uniquement) pour un non-Sup SANS Superviseur au-dessus.
+  const wholesaleCut = (u: typeof users[0], intermediateTiers: number[]): number => {
+    const maxIntermediate = intermediateTiers.length > 0 ? Math.max(...intermediateTiers) : 0;
+    const b = breakdownByUserId.get(u.id);
+    if (b && totalPvFromBreakdown(b) > 0) {
+      let cutEur = 0;
+      for (const tier of TIER_LABELS) {
+        const pv = (b[tier.key] as number) ?? 0;
+        if (pv <= 0) continue;
+        const maxUpstream = Math.max(tier.pct, maxIntermediate);
+        cutEur += (pv * Math.max(0, viewerTierPct - maxUpstream)) / 100 * PV_TO_EUR_RATIO;
+      }
+      return cutEur;
+    }
+    if (fallbackOverrideForUser && !u.frozenAt) {
+      const fb = fallbackOverrideForUser(u.id);
+      if (fb && fb.totalPv > 0) {
+        const maxUpstream = Math.max(fb.tierPct, maxIntermediate);
+        return (fb.totalPv * Math.max(0, viewerTierPct - maxUpstream)) / 100 * PV_TO_EUR_RATIO;
+      }
+    }
+    return 0;
+  };
+
+  // Volume d'ORGANISATION par Superviseur ancre (≤ 3 niveaux de Sup).
+  const orgVolByAnchor = new Map<string, number>();
+
   interface Frame {
     user: typeof users[0];
     intermediateTiers: number[];
+    anchorId: string | null; // Superviseur ancre le plus proche au-dessus
+    supDepth: number;        // niveau de Superviseur courant (1 = 1er Sup downline)
   }
   const queue: Frame[] = [];
   for (const ownerId of viewerIds) {
-    const directs = childrenBySponsor.get(ownerId) ?? [];
-    for (const u of directs) queue.push({ user: u, intermediateTiers: [] });
+    for (const u of childrenBySponsor.get(ownerId) ?? []) {
+      queue.push({ user: u, intermediateTiers: [], anchorId: null, supDepth: 0 });
+    }
   }
 
   while (queue.length > 0) {
-    const frame = queue.shift()!;
-    const { user: u, intermediateTiers } = frame;
-    const breakdown = breakdownByUserId.get(u.id);
-    let cut = 0;
-    if (breakdown && totalPvFromBreakdown(breakdown) > 0) {
-      cut = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
-    } else if (fallbackOverrideForUser && !u.frozenAt) {
-      const fb = fallbackOverrideForUser(u.id);
-      if (fb && fb.totalPv > 0) {
-        const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
-        const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
-        cut = fb.totalPv * cutPct * PV_TO_EUR_RATIO;
-      }
-    }
-    if (cut > 0) perMember.set(u.id, (perMember.get(u.id) ?? 0) + cut);
+    const { user: u, intermediateTiers, anchorId, supDepth } = queue.shift()!;
+    const uTier = tierPctForRank(u.currentRank);
+    const isSup = uTier >= SUPERVISOR_TIER;
+    const pv = totalPvFor(u);
 
-    const yTierPct = tierPctForRank(u.currentRank);
-    const childList = childrenBySponsor.get(u.id) ?? [];
-    for (const child of childList) {
+    let nextAnchorId = anchorId;
+    let nextSupDepth = supDepth;
+
+    if (isSup) {
+      // u ouvre un nouveau niveau de Superviseur — base royalty pour le viewer.
+      nextSupDepth = supDepth + 1;
+      nextAnchorId = u.id;
+      if (viewerIsSupervisor && nextSupDepth <= MAX_ROYALTY_SUP_LEVELS && pv > 0) {
+        orgVolByAnchor.set(u.id, (orgVolByAnchor.get(u.id) ?? 0) + pv);
+      }
+      // un Superviseur ne rapporte pas de vente de gros au viewer (→ royalty).
+    } else if (anchorId && viewerIsSupervisor) {
+      // non-Sup sous un Superviseur → son volume remonte au royalty de l'ancre.
+      if (pv > 0 && supDepth <= MAX_ROYALTY_SUP_LEVELS) {
+        orgVolByAnchor.set(anchorId, (orgVolByAnchor.get(anchorId) ?? 0) + pv);
+      }
+      // pas de vente de gros : absorbé par la chaîne de Superviseurs.
+    } else {
+      // non-Sup sans Superviseur intermédiaire → vente de gros au viewer.
+      const cut = wholesaleCut(u, intermediateTiers);
+      if (cut > 0) perMember.set(u.id, (perMember.get(u.id) ?? 0) + cut);
+    }
+
+    for (const child of childrenBySponsor.get(u.id) ?? []) {
       queue.push({
         user: child,
-        intermediateTiers: [...intermediateTiers, yTierPct],
+        intermediateTiers: [...intermediateTiers, uTier],
+        anchorId: nextAnchorId,
+        supDepth: nextSupDepth,
       });
     }
   }
+
+  // 5% de royalty par Superviseur ancre, crédité AU Superviseur.
+  if (viewerIsSupervisor) {
+    for (const [aid, orgVol] of orgVolByAnchor) {
+      if (orgVol <= 0) continue;
+      perMember.set(aid, (perMember.get(aid) ?? 0) + orgVol * ROYALTY_OVERRIDE_PCT * PV_TO_EUR_RATIO);
+    }
+  }
+
   return perMember;
 }
 
