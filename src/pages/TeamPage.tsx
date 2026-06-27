@@ -19,6 +19,7 @@ import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecap
 import { useAppContext } from "../context/AppContext";
 import type { Client, Prospect } from "../types/domain";
 import { DistriQuickModal } from "../components/team/DistriQuickModal";
+import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 // Hub équipe centralisé (2026-05-04) — 5 onglets : Vue d'ensemble (XP),
 // Engagement, Apprentissage, Arbre lignée, Gamification.
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
@@ -966,6 +967,10 @@ function DistributorDetailCard({
               {row.title || "Distributeur"}
               {sponsorName ? ` · Parrainé·e par ${sponsorName}` : ""}
               {!isCouple && row.created_at ? ` · Depuis ${memberSince}` : ""}
+            </div>
+            {/* Moteur d'équipe PR3 : niveau de pilotage (masqué pour les couples). */}
+            <div style={{ marginTop: 6 }}>
+              <PilotageLevelBadge userId={row.user_id} />
             </div>
           </div>
         </div>

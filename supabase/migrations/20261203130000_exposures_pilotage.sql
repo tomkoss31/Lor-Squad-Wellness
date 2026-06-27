@@ -62,14 +62,34 @@ as $$
 declare
   v_distributor uuid;
 begin
-  select distributor_id into v_distributor from public.clients where id = new.client_id;
-  if v_distributor is null then
-    return new; -- pas de distri rattaché → on ne loggue rien
-  end if;
+  -- GARDE ABSOLUE : ce trigger ne doit JAMAIS faire échouer l'INSERT d'un
+  -- assessment. L'exposition est un bonus best-effort. Au moindre souci
+  -- (distri NULL/inconnu, date NULL, erreur inattendue) → on SKIP en silence.
+  begin
+    select c.distributor_id into v_distributor
+    from public.clients c
+    where c.id = new.client_id;
 
-  insert into public.exposures (user_id, type, occurred_at, source_table, source_id)
-  values (v_distributor, 'bilan', new.date::timestamptz, 'assessments', new.id)
-  on conflict (source_table, source_id) do nothing;
+    -- distributor_id NULL ou non résolvable vers users.id → on ne loggue rien.
+    if v_distributor is null
+       or not exists (select 1 from public.users u where u.id = v_distributor) then
+      return new;
+    end if;
+
+    insert into public.exposures (user_id, type, occurred_at, source_table, source_id)
+    values (
+      v_distributor,
+      'bilan',
+      coalesce(new.date::timestamptz, new.created_at, now()),  -- jamais NULL (colonne not null)
+      'assessments',
+      new.id
+    )
+    on conflict (source_table, source_id) do nothing;
+  exception
+    when others then
+      -- On avale toute erreur : jamais bloquer la création du bilan.
+      return new;
+  end;
 
   return new;
 end;
@@ -89,16 +109,24 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.status = 'confirmed' and new.coach_user_id is not null then
-    insert into public.exposures (user_id, type, occurred_at, source_table, source_id)
-    values (new.coach_user_id, 'rdv_decouverte', new.slot_start, 'rdv_bookings', new.id)
-    on conflict (source_table, source_id) do update
-      set occurred_at = excluded.occurred_at,
-          user_id     = excluded.user_id;
-  elsif new.status = 'canceled' then
-    delete from public.exposures
-      where source_table = 'rdv_bookings' and source_id = new.id;
-  end if;
+  -- GARDE ABSOLUE : ne jamais faire échouer l'INSERT/UPDATE d'un rdv_bookings.
+  begin
+    if new.status = 'confirmed'
+       and new.coach_user_id is not null
+       and exists (select 1 from public.users u where u.id = new.coach_user_id) then
+      insert into public.exposures (user_id, type, occurred_at, source_table, source_id)
+      values (new.coach_user_id, 'rdv_decouverte', new.slot_start, 'rdv_bookings', new.id)
+      on conflict (source_table, source_id) do update
+        set occurred_at = excluded.occurred_at,
+            user_id     = excluded.user_id;
+    elsif new.status = 'canceled' then
+      delete from public.exposures
+        where source_table = 'rdv_bookings' and source_id = new.id;
+    end if;
+  exception
+    when others then
+      return new;
+  end;
   return new;
 end;
 $$;
@@ -314,3 +342,24 @@ end;
 $$;
 
 grant execute on function public.get_pilotage_level(uuid) to authenticated;
+
+-- Override admin du niveau de pilotage (NULL = retour au calcul auto).
+create or replace function public.set_pilotage_override(p_user_id uuid, p_level text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.users where id = auth.uid() and role = 'admin') then
+    raise exception 'admin_only';
+  end if;
+  if p_level is not null
+     and p_level not in ('nouveau','actif','ambassadeur','leader','dort') then
+    raise exception 'invalid level %', p_level;
+  end if;
+  update public.users set pilotage_level_override = p_level where id = p_user_id;
+end;
+$$;
+
+grant execute on function public.set_pilotage_override(uuid, text) to authenticated;

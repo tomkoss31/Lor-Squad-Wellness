@@ -44,6 +44,9 @@ import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
 import { useWeatherForecast } from "./hooks/useWeatherForecast";
+// Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
+import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
+import { StarterPlanCard } from "../../../components/team/StarterPlanCard";
 
 import "./copilote-v5.css";
 
@@ -231,6 +234,10 @@ export function CoPiloteV5Page() {
 
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
+
+      {/* Moteur d'équipe PR3 : nudge démarrage (tant que pas activé) + métrique-reine. */}
+      <StarterPlanCard />
+      <ExposuresWeekCard />
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv
