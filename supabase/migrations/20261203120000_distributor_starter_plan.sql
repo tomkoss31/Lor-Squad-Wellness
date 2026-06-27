@@ -58,10 +58,12 @@ grant select on public.distributor_starter_progress to authenticated;
 revoke insert, update, delete on public.distributor_starter_progress from anon, authenticated;
 
 -- 4) RPC : marquer une tâche (self only) + recalcul de l'activation ----------
+-- Les tâches-portes sont définies CÔTÉ SERVEUR (constante ci-dessous) : on
+-- IGNORE volontairement toute liste envoyée par le front. Portes = 5 actions
+-- comportementales prouvant un vrai démarrage (pas "a vu une vidéo").
 create or replace function public.mark_starter_task(
   p_task_key text,
-  p_status text,
-  p_activation_keys text[]   -- tâches-portes (fournies par le template front)
+  p_status text
 ) returns timestamptz
 language plpgsql
 security definer
@@ -71,7 +73,10 @@ declare
   v_uid uuid := auth.uid();
   v_activated timestamptz;
   v_gate_done int;
-  v_gate_total int := coalesce(array_length(p_activation_keys, 1), 0);
+  -- Source de vérité serveur des tâches-portes d'activation.
+  v_gate_keys text[] := array[
+    'liste_50', 'premiere_story', 'premier_bilan', 'premier_hom', 'premier_pv_pack'
+  ];
 begin
   if v_uid is null then
     raise exception 'not authenticated';
@@ -87,19 +92,17 @@ begin
         done_at    = case when excluded.status = 'done' then now() else null end,
         updated_at = now();
 
-  -- Activation : toutes les tâches-portes sont-elles 'done' ?
-  if v_gate_total > 0 then
-    select count(*) into v_gate_done
-    from public.distributor_starter_progress
-    where user_id = v_uid
-      and status = 'done'
-      and task_key = any(p_activation_keys);
+  -- Activation : toutes les tâches-portes (serveur) sont-elles 'done' ?
+  select count(*) into v_gate_done
+  from public.distributor_starter_progress
+  where user_id = v_uid
+    and status = 'done'
+    and task_key = any(v_gate_keys);
 
-    if v_gate_done >= v_gate_total then
-      update public.users
-        set activated_at = now()
-        where id = v_uid and activated_at is null;
-    end if;
+  if v_gate_done >= array_length(v_gate_keys, 1) then
+    update public.users
+      set activated_at = now()
+      where id = v_uid and activated_at is null;
   end if;
 
   select activated_at into v_activated from public.users where id = v_uid;
@@ -107,7 +110,7 @@ begin
 end;
 $$;
 
-grant execute on function public.mark_starter_task(text, text, text[]) to authenticated;
+grant execute on function public.mark_starter_task(text, text) to authenticated;
 
 -- 5) Annonce distri (règle "livrable complet") ------------------------------
 insert into public.app_announcements

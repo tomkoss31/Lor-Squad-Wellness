@@ -97,10 +97,10 @@ export function useStarterPlan(): UseStarterPlanResult {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
+        // Portes d'activation décidées CÔTÉ SERVEUR (le front n'envoie plus la liste).
         const { data, error } = await sb.rpc("mark_starter_task", {
           p_task_key: taskKey,
           p_status: nextStatus,
-          p_activation_keys: STARTER_ACTIVATION_KEYS,
         });
         if (!error) {
           // Le RPC renvoie users.activated_at (timestamptz ou null).
