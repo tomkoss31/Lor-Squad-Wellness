@@ -11,6 +11,11 @@ import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
 
+/** Ouvre l'assistant Noaly (écouté par NoalyFab via l'event window). */
+function askNoaly(prompt?: string) {
+  window.dispatchEvent(new CustomEvent("noaly:ask", { detail: { prompt } }));
+}
+
 const PHASES = OPS_PHASES.map((p) => p.short);
 
 // Données de démonstration (statique) quand aucune vue réelle n'est passée.
@@ -44,7 +49,7 @@ export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
           <span className="ls-ops-dot" />
           <span style={{ color: "var(--ls-ops-text3)" }}>La Base · Verdun (55)</span>
           <span style={{ color: "var(--ls-ops-border-active)" }}>/</span>
-          <span style={{ color: "var(--ls-ops-accent-text)" }}>Jour 2 / 90</span>
+          <span style={{ color: "var(--ls-ops-accent-text)" }}>Jour {view ? view.dayNumber : 2} / 90</span>
         </div>
 
         <div style={hair} />
@@ -101,33 +106,39 @@ export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
           </div>
         )}
 
-        {/* ── 3 actions du jour ── */}
-        <SectionLabel>3 actions du jour · 1 faite</SectionLabel>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <CheckRow state="done" label="Publier ta photo « avant »" />
-          <CheckRow state="active" label="Écrire à Karim" />
-          <CheckRow state="todo" label="Inviter 1 personne à la soirée" />
-        </div>
+        {/* ── Sections de DÉMO (référence design) — masquées en mode live tant
+            qu'elles ne sont pas branchées au réel (qui inviter / script). ── */}
+        {!view && (
+          <>
+            {/* 3 actions du jour */}
+            <SectionLabel>3 actions du jour · 1 faite</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <CheckRow state="done" label="Publier ta photo « avant »" />
+              <CheckRow state="active" label="Écrire à Karim" />
+              <CheckRow state="todo" label="Inviter 1 personne à la soirée" />
+            </div>
 
-        {/* ── Qui inviter ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "30px 0 14px" }}>
-          <span style={{ ...MONO, fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>Qui inviter · 3 chauds</span>
-          <span style={{ ...MONO, fontSize: 10.5, color: "var(--ls-ops-faint)" }}>↓ score</span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <InviteRow initial="K" name="Karim B." status="Très chaud · a réagi hier" tone="hot" />
-          <InviteRow initial="L" name="Léa D." status="En attente · à relancer" tone="warm" />
-          <InviteRow initial="M" name="Mehdi T." status="Curieux · à tester" tone="muted" />
-        </div>
+            {/* Qui inviter */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "30px 0 14px" }}>
+              <span style={{ ...MONO, fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>Qui inviter · 3 chauds</span>
+              <span style={{ ...MONO, fontSize: 10.5, color: "var(--ls-ops-faint)" }}>↓ score</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <InviteRow initial="K" name="Karim B." status="Très chaud · a réagi hier" tone="hot" />
+              <InviteRow initial="L" name="Léa D." status="En attente · à relancer" tone="warm" />
+              <InviteRow initial="M" name="Mehdi T." status="Curieux · à tester" tone="muted" />
+            </div>
 
-        {/* ── Script 1-tap ── */}
-        <div style={{ ...card, marginTop: 18, padding: "17px 18px", borderRadius: 18 }}>
-          <div style={{ ...MONO, fontSize: 10.5, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 9 }}>Script prêt · 1 tap</div>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--ls-ops-text2)", margin: "0 0 14px", fontStyle: "italic" }}>
-            « Salut Karim ! T'as réagi à ma story 😄 J'ai commencé un truc qui me fait du bien, ça te dit qu'on en parle 5 min ? »
-          </p>
-          <button type="button" style={ghostCta}>Copier · l'envoyer</button>
-        </div>
+            {/* Script 1-tap */}
+            <div style={{ ...card, marginTop: 18, padding: "17px 18px", borderRadius: 18 }}>
+              <div style={{ ...MONO, fontSize: 10.5, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 9 }}>Script prêt · 1 tap</div>
+              <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--ls-ops-text2)", margin: "0 0 14px", fontStyle: "italic" }}>
+                « Salut Karim ! T'as réagi à ma story 😄 J'ai commencé un truc qui me fait du bien, ça te dit qu'on en parle 5 min ? »
+              </p>
+              <button type="button" style={ghostCta}>Copier · l'envoyer</button>
+            </div>
+          </>
+        )}
 
         {/* ── Noaly ── */}
         <div style={{ ...card, marginTop: 18, padding: 18, borderRadius: 20, background: "var(--ls-ops-surface)" }}>
@@ -142,10 +153,10 @@ export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
           <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--ls-ops-text3)", margin: "13px 0 13px" }}>
             « Bloqué·e sur un message ? Demande-moi. Je te le réécris en 2 secondes. »
           </p>
-          <div style={noalyInput}>
-            <span style={{ flex: 1, fontSize: 13, color: "var(--ls-ops-faint)" }}>Pose ta question…</span>
+          <button type="button" onClick={() => askNoaly()} style={noalyInput} aria-label="Ouvrir Noaly et poser une question">
+            <span style={{ flex: 1, fontSize: 13, color: "var(--ls-ops-faint)", textAlign: "left" }}>Pose ta question…</span>
             <span style={noalySend} aria-hidden="true">↑</span>
-          </div>
+          </button>
         </div>
 
         {/* ── Progression 5 étapes ── */}
@@ -351,10 +362,13 @@ const noalyInput: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 10,
+  width: "100%",
   background: "var(--ls-ops-bg)",
   border: "1px solid var(--ls-ops-border)",
   borderRadius: 12,
   padding: "12px 14px",
+  cursor: "pointer",
+  fontFamily: "inherit",
 };
 
 const noalySend: React.CSSProperties = {

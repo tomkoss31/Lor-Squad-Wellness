@@ -77,11 +77,15 @@ export interface SalleOpsView {
   activeIndex: number;
   phase: OpsPhase;
   phaseIndex: number;
+  /** Jour X / 90 depuis l'ancre J0 (1 si non posée). */
+  dayNumber: number;
   toggle: (taskKey: string) => Promise<void>;
 }
 
+const DAY_MS = 86_400_000;
+
 export function useSalleOps(): SalleOpsView {
-  const { tasks, activatedAt, loading, toggle } = useStarterPlan();
+  const { tasks, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
 
   return useMemo(() => {
     const doneByKey: Record<string, boolean> = {};
@@ -107,6 +111,15 @@ export function useSalleOps(): SalleOpsView {
     const phase: OpsPhase = activated ? "profondeur" : bilanDone ? "acceleration" : "allumage";
     const phaseIndex = OPS_PHASES.findIndex((p) => p.key === phase);
 
+    // Jour X / 90 depuis l'ancre J0. Non posée → Jour 1. Clampé [1, 90].
+    let dayNumber = 1;
+    if (starterStartedAt) {
+      const start = new Date(starterStartedAt).getTime();
+      if (!Number.isNaN(start)) {
+        dayNumber = Math.min(90, Math.max(1, Math.floor((Date.now() - start) / DAY_MS) + 1));
+      }
+    }
+
     return {
       loading,
       activated,
@@ -117,7 +130,8 @@ export function useSalleOps(): SalleOpsView {
       activeIndex,
       phase,
       phaseIndex,
+      dayNumber,
       toggle,
     };
-  }, [tasks, activatedAt, loading, toggle]);
+  }, [tasks, activatedAt, starterStartedAt, loading, toggle]);
 }

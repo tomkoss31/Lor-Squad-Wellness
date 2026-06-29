@@ -34,6 +34,8 @@ interface UseStarterPlanResult {
   gateTotal: number;
   /** Date d'activation (recrue activée) ou null. */
   activatedAt: string | null;
+  /** Ancre Jour 0 (date de sponsoring) ou null. */
+  starterStartedAt: string | null;
   loading: boolean;
   /** Coche / décoche une tâche (toggle done ↔ pending). */
   toggle: (taskKey: string) => Promise<void>;
@@ -44,6 +46,7 @@ export function useStarterPlan(): UseStarterPlanResult {
   const { currentUser } = useAppContext();
   const [statuses, setStatuses] = useState<Record<string, StarterStatus>>({});
   const [activatedAt, setActivatedAt] = useState<string | null>(null);
+  const [starterStartedAt, setStarterStartedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -63,7 +66,7 @@ export function useStarterPlan(): UseStarterPlanResult {
           .from("distributor_starter_progress")
           .select("task_key, status")
           .eq("user_id", currentUser.id),
-        sb.from("users").select("activated_at").eq("id", currentUser.id).single(),
+        sb.from("users").select("activated_at, starter_started_at").eq("id", currentUser.id).single(),
       ]);
 
       if (!progressRes.error) {
@@ -74,7 +77,9 @@ export function useStarterPlan(): UseStarterPlanResult {
         setStatuses(next);
       }
       if (!userRes.error && userRes.data) {
-        setActivatedAt((userRes.data as { activated_at: string | null }).activated_at ?? null);
+        const u = userRes.data as { activated_at: string | null; starter_started_at: string | null };
+        setActivatedAt(u.activated_at ?? null);
+        setStarterStartedAt(u.starter_started_at ?? null);
       }
     } catch {
       // Silent fail (migration peut ne pas être appliquée)
@@ -136,6 +141,7 @@ export function useStarterPlan(): UseStarterPlanResult {
     gateDone,
     gateTotal: STARTER_ACTIVATION_KEYS.length,
     activatedAt,
+    starterStartedAt,
     loading,
     toggle,
     refetch,

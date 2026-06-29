@@ -111,6 +111,18 @@ export function NoalyFab() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [uiLog, open]);
 
+  // Ouverture programmatique depuis ailleurs (ex : Salle des Opérations) via
+  // window.dispatchEvent(new CustomEvent("noaly:ask", { detail: { prompt } })).
+  useEffect(() => {
+    function onAsk(e: Event) {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail;
+      setOpen(true);
+      if (detail?.prompt) setInput(detail.prompt);
+    }
+    window.addEventListener("noaly:ask", onAsk as EventListener);
+    return () => window.removeEventListener("noaly:ask", onAsk as EventListener);
+  }, []);
+
   const clientSummary = useMemo(() => {
     const m = location.pathname.match(/^\/clients\/([^/]+)/);
     if (!m) return undefined;

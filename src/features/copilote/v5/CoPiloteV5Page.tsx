@@ -47,6 +47,9 @@ import { useWeatherForecast } from "./hooks/useWeatherForecast";
 // Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
 import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
 import { StarterPlanCard } from "../../../components/team/StarterPlanCard";
+// Salle des Opérations (onboarding distri) : switch de rendu §3.
+import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
+import { useSalleOps } from "../salle-ops/useSalleOps";
 
 import "./copilote-v5.css";
 
@@ -73,6 +76,9 @@ export function CoPiloteV5Page() {
   // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
   // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
   const timeContext = useTimeContext();
+
+  // Switch §3 — Salle des Opérations : vue cockpit pour la recrue non activée.
+  const ops = useSalleOps();
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -116,6 +122,14 @@ export function CoPiloteV5Page() {
   // checklist onboarding — un passif ne fait pas le business.
   if (currentUser.isPassiveSupervisor) {
     return <CoPilotePassiveView firstName={firstName} />;
+  }
+
+  // ═══ Switch §3 — Salle des Opérations (incorporation onboarding) ═══
+  // Tant qu'une recrue (distributeur) n'est pas « activée » (5 portes franchies),
+  // son Co-pilote EST le cockpit plein écran : 1 action du jour, pas l'app lourde.
+  // Les distri activés + admins/référents gardent le Co-pilote complet.
+  if (currentUser.role === "distributor" && !ops.loading && !ops.activated) {
+    return <SalleOpsQuotidien view={ops} />;
   }
 
   return (
