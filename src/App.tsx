@@ -329,8 +329,8 @@ const CoPiloteV5Page = lazy(() =>
 // route preview provisoire pour recetter le look pixel-fidèle de la maquette.
 // Le switch de rendu sur /co-pilote (§3) viendra une fois le look validé.
 const SalleDesOperationsPage = lazy(() =>
-  import("./features/copilote/salle-ops/SalleDesOperations").then((module) => ({
-    default: module.SalleDesOperations,
+  import("./features/copilote/salle-ops/SalleOpsPreview").then((module) => ({
+    default: module.SalleOpsPreview,
   }))
 );
 // Chantier La Base 360 Academy Phase 1 (2026-04-26) : parcours onboarding
