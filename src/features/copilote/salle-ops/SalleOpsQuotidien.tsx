@@ -8,6 +8,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
+import { QuiInviterLive } from "./QuiInviterLive";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
@@ -26,7 +27,16 @@ const DEMO = {
   activated: false,
 };
 
-export function SalleOpsQuotidien({ view, onEscape }: { view?: SalleOpsView; onEscape?: () => void }) {
+export function SalleOpsQuotidien({
+  view,
+  onEscape,
+  fullscreen,
+}: {
+  view?: SalleOpsView;
+  onEscape?: () => void;
+  /** Overlay plein écran (couvre la sidebar de l'app) — utilisé par le switch. */
+  fullscreen?: boolean;
+}) {
   const navigate = useNavigate();
 
   // Clé de l'étape active (pour cocher les actions auto-déclarées sans lien).
@@ -60,7 +70,7 @@ export function SalleOpsQuotidien({ view, onEscape }: { view?: SalleOpsView; onE
     : ["done", "active", "todo", "todo", "todo"];
 
   return (
-    <div className="ls-ops-root" style={pageWrap}>
+    <div className="ls-ops-root" style={fullscreen ? { ...pageWrap, ...fixedOverlay } : pageWrap}>
       <div style={column}>
         {/* ── Bandeau ops ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 9, ...MONO, fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>
@@ -157,6 +167,9 @@ export function SalleOpsQuotidien({ view, onEscape }: { view?: SalleOpsView; onE
             </div>
           </>
         )}
+
+        {/* ── Qui inviter (données réelles) — mode live uniquement ── */}
+        {view && <QuiInviterLive />}
 
         {/* ── Noaly ── */}
         <div style={{ ...card, marginTop: 18, padding: 18, borderRadius: 20, background: "var(--ls-ops-surface)" }}>
@@ -295,6 +308,16 @@ const pageWrap: React.CSSProperties = {
   background: "var(--ls-ops-bg)",
   minHeight: "100%",
   padding: "calc(16px + env(safe-area-inset-top)) 0 calc(40px + env(safe-area-inset-bottom))",
+};
+
+// Overlay plein écran : couvre la sidebar + topbar de l'app (focus total,
+// « il ne peut pas se perdre »). La barre basse OPS / Plus tard reste l'échappatoire.
+const fixedOverlay: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 50,
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
 };
 
 const column: React.CSSProperties = {

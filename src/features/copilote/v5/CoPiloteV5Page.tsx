@@ -135,6 +135,7 @@ export function CoPiloteV5Page() {
     return (
       <SalleOpsQuotidien
         view={ops}
+        fullscreen
         onEscape={() => {
           sessionStorage.setItem("ls-ops-escape", "1");
           setOpsEscaped(true);
