@@ -139,7 +139,13 @@
       "Bash(xxd)",
       "Bash(gunzip -c bundle.bin)",
       "Bash(tar -xf raw.tar)",
-      "Bash(grep -n \"import.*Card\\\\|</div>\\\\s*$\\\\|return \\(\\\\|PublicProfileShareCard\\\\|PaymentSettingsCard\\\\|RdvAvailabilityCard\\\\|<section\\\\|</section>\" src/components/settings/ProfilTab.tsx)"
+      "Bash(grep -n \"import.*Card\\\\|</div>\\\\s*$\\\\|return \\(\\\\|PublicProfileShareCard\\\\|PaymentSettingsCard\\\\|RdvAvailabilityCard\\\\|<section\\\\|</section>\" src/components/settings/ProfilTab.tsx)",
+      "WebFetch(domain:claude.ai)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "Bash(find /c/Users/tomko/Downloads /c/Users/tomko/Desktop /c/Users/tomko/Documents -maxdepth 3 -iname \"*salle*op*onboard*.zip\" 2>/dev/null; echo \"---also any recent zip---\"; ls -lt /c/Users/tomko/Downloads/*.zip 2>/dev/null | head -10)",
+      "Bash(mkdir -p /c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/salle-ops)",
+      "Bash(unzip -o '/c/Users/tomko/Downloads/Salle des opérations onboarding-handoff.zip' -d /c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/salle-ops)",
+      "Read(//c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/**)"
     ]
   }
 }
