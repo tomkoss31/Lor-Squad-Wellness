@@ -6,15 +6,36 @@
 // câblage réel (next_action, phases, qui inviter, Noaly) aux slices suivantes.
 // =============================================================================
 
+import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
 
-const PHASES = ["Setup", "Allumage", "Accél.", "Profond.", "Levier"] as const;
-const PHASE_ACTIVE = 1; // 0-based : « Allumage »
-const PHASE_DONE = 2;   // segments lime
+const PHASES = OPS_PHASES.map((p) => p.short);
 
-export function SalleOpsQuotidien() {
+// Données de démonstration (statique) quand aucune vue réelle n'est passée.
+const DEMO = {
+  phaseIndex: 1, // « Allumage »
+  activeStepNumber: 2,
+  activated: false,
+};
+
+export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
+  // Index de phase + segments lime (phases franchies = phaseIndex + 1).
+  const phaseIndex = view ? view.phaseIndex : DEMO.phaseIndex;
+  const phaseLabel = OPS_PHASES[phaseIndex]?.label ?? "Allumage";
+  const limeSegments = phaseIndex + 1;
+
+  // Étape courante (numéro 1-based) + progression.
+  const activeStepNumber = view
+    ? view.activated
+      ? view.total
+      : view.activeIndex + 1
+    : DEMO.activeStepNumber;
+  const stepStates: ("done" | "active" | "todo")[] = view
+    ? view.steps.map((s) => (s.done ? "done" : s.active ? "active" : "todo"))
+    : ["done", "active", "todo", "todo", "todo"];
+
   return (
     <div className="ls-ops-root" style={pageWrap}>
       <div style={column}>
@@ -36,33 +57,49 @@ export function SalleOpsQuotidien() {
         {/* ── Tracker de phases ── */}
         <div style={{ marginTop: 22 }}>
           <div style={{ display: "flex", justifyContent: "space-between", ...MONO, fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 9 }}>
-            <span>Phase · <span style={{ color: "var(--ls-ops-accent-text)" }}>Allumage</span></span>
-            <span style={{ color: "var(--ls-ops-faint)" }}>2 / 5</span>
+            <span>Phase · <span style={{ color: "var(--ls-ops-accent-text)" }}>{phaseLabel}</span></span>
+            <span style={{ color: "var(--ls-ops-faint)" }}>{phaseIndex + 1} / 5</span>
           </div>
           <div style={{ display: "flex", gap: 5 }}>
             {PHASES.map((_, i) => (
-              <div key={i} style={{ flex: 1, height: 6, borderRadius: 3, background: i < PHASE_DONE ? "var(--ls-ops-accent)" : "var(--ls-ops-hair)" }} />
+              <div key={i} style={{ flex: 1, height: 6, borderRadius: 3, background: i < limeSegments ? "var(--ls-ops-accent)" : "var(--ls-ops-hair)" }} />
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 7, ...MONO, fontSize: 11, letterSpacing: ".03em", textTransform: "uppercase" }}>
             {PHASES.map((p, i) => (
-              <span key={p} style={{ color: i === PHASE_ACTIVE ? "var(--ls-ops-accent-text)" : "var(--ls-ops-faint)" }}>{p}</span>
+              <span key={p} style={{ color: i === phaseIndex ? "var(--ls-ops-accent-text)" : "var(--ls-ops-faint)" }}>{p}</span>
             ))}
           </div>
         </div>
 
-        {/* ── Ton action maintenant (dominante) ── */}
-        <div style={limeCard}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-on-accent2)" }}>
-            <span>Ton action · maintenant</span>
-            <span className="ls-ops-dot" style={{ background: "var(--ls-ops-on-accent)" }} />
+        {/* ── Dominante : célébration si activé, sinon l'action du jour ── */}
+        {view && view.activated ? (
+          <div style={{ ...limeCard, background: "var(--ls-ops-accent)" }}>
+            <div style={{ fontSize: 40, lineHeight: 1 }} aria-hidden="true">🚀</div>
+            <div className="ls-ops-display" style={{ ...limeTitle, fontSize: 44, marginTop: 10 }}>Tu es<br />lancé·e</div>
+            <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--ls-ops-on-accent2)", margin: "14px 0 0", maxWidth: 300 }}>
+              Tes 5 étapes sont franchies. Place au rythme : une exposition par jour.
+            </p>
           </div>
-          <div className="ls-ops-display" style={limeTitle}>Écris à Karim</div>
-          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: "var(--ls-ops-on-accent3)", margin: "12px 0 0", maxWidth: 300 }}>
-            Il a aimé ta story hier. C'est chaud. Un message, maintenant — pas demain.
-          </p>
-          <button type="button" style={limeCta}>Lui envoyer le message</button>
-        </div>
+        ) : (
+          <div style={limeCard}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-on-accent2)" }}>
+              <span>Ton action · maintenant</span>
+              <span className="ls-ops-dot" style={{ background: "var(--ls-ops-on-accent)" }} />
+            </div>
+            <div className="ls-ops-display" style={limeTitle}>
+              {view ? view.nextAction?.title ?? "Aujourd'hui" : "Écris à Karim"}
+            </div>
+            <p style={{ fontSize: 13.5, lineHeight: 1.45, color: "var(--ls-ops-on-accent3)", margin: "12px 0 0", maxWidth: 300 }}>
+              {view
+                ? view.nextAction?.sub ?? ""
+                : "Il a aimé ta story hier. C'est chaud. Un message, maintenant — pas demain."}
+            </p>
+            <button type="button" style={limeCta}>
+              {view ? view.nextAction?.cta ?? "Continuer" : "Lui envoyer le message"}
+            </button>
+          </div>
+        )}
 
         {/* ── 3 actions du jour ── */}
         <SectionLabel>3 actions du jour · 1 faite</SectionLabel>
@@ -112,16 +149,24 @@ export function SalleOpsQuotidien() {
         </div>
 
         {/* ── Progression 5 étapes ── */}
-        <SectionLabel>Ta progression · étape 2 sur 5</SectionLabel>
+        <SectionLabel>Ta progression · étape {activeStepNumber} sur 5</SectionLabel>
         <div style={{ ...card, padding: "18px 16px", borderRadius: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            {[1, 2, 3, 4, 5].map((n, i) => (
-              <Step key={n} n={n} state={n === 1 ? "done" : n === 2 ? "active" : "todo"} last={i === 4} />
+            {stepStates.map((st, i) => (
+              <Step key={i} n={i + 1} state={st} connectorDone={st === "done"} last={i === stepStates.length - 1} />
             ))}
           </div>
           <div style={{ marginTop: 14, textAlign: "center" }}>
-            <div style={{ fontSize: 15, color: "var(--ls-ops-ink)", fontWeight: 600 }}>Étape 2 sur 5 · ton lancement</div>
-            <div style={{ fontSize: 13, color: "var(--ls-ops-muted)", marginTop: 3, lineHeight: 1.4 }}>Encore 1 invitation et tu es lancé·e 🚀</div>
+            <div style={{ fontSize: 15, color: "var(--ls-ops-ink)", fontWeight: 600 }}>
+              Étape {activeStepNumber} sur 5 · {view && view.activated ? "tu es lancé·e" : "ton lancement"}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--ls-ops-muted)", marginTop: 3, lineHeight: 1.4 }}>
+              {view
+                ? view.activated
+                  ? "Toutes tes étapes sont franchies. 🎉"
+                  : `Plus que ${Math.max(0, view.total - view.doneCount)} étape${view.total - view.doneCount > 1 ? "s" : ""} et tu es lancé·e 🚀`
+                : "Encore 1 invitation et tu es lancé·e 🚀"}
+            </div>
           </div>
         </div>
       </div>
@@ -170,7 +215,7 @@ function InviteRow({ initial, name, status, tone }: { initial: string; name: str
   );
 }
 
-function Step({ n, state, last }: { n: number; state: "done" | "active" | "todo"; last: boolean }) {
+function Step({ n, state, connectorDone, last }: { n: number; state: "done" | "active" | "todo"; connectorDone: boolean; last: boolean }) {
   const done = state === "done";
   const active = state === "active";
   return (
@@ -195,7 +240,7 @@ function Step({ n, state, last }: { n: number; state: "done" | "active" | "todo"
       >
         {done ? "✓" : n}
       </div>
-      {!last && <div style={{ height: 2, flex: 1, background: n < 2 ? "var(--ls-ops-accent)" : "var(--ls-ops-hair)", margin: "0 6px" }} />}
+      {!last && <div style={{ height: 2, flex: 1, background: connectorDone ? "var(--ls-ops-accent)" : "var(--ls-ops-hair)", margin: "0 6px" }} />}
     </>
   );
 }

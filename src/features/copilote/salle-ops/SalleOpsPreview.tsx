@@ -9,17 +9,20 @@
 import { useState } from "react";
 import { SalleDesOperations } from "./SalleDesOperations";
 import { SalleOpsQuotidien } from "./SalleOpsQuotidien";
+import { useSalleOps } from "./useSalleOps";
 import "./salle-ops.css";
 
-type Screen = "jour0" | "quotidien";
+type Screen = "jour0" | "quotidien" | "live";
 
 const TABS: { key: Screen; label: string }[] = [
   { key: "jour0", label: "Jour 0 · S'équiper" },
-  { key: "quotidien", label: "Quotidien" },
+  { key: "quotidien", label: "Quotidien (démo)" },
+  { key: "live", label: "Live · mes données" },
 ];
 
 export function SalleOpsPreview() {
   const [screen, setScreen] = useState<Screen>("jour0");
+  const ops = useSalleOps();
 
   return (
     <div style={{ background: "var(--ls-ops-bg)", minHeight: "100vh" }}>
@@ -43,7 +46,9 @@ export function SalleOpsPreview() {
           );
         })}
       </div>
-      {screen === "jour0" ? <SalleDesOperations /> : <SalleOpsQuotidien />}
+      {screen === "jour0" && <SalleDesOperations />}
+      {screen === "quotidien" && <SalleOpsQuotidien />}
+      {screen === "live" && <SalleOpsQuotidien view={ops} />}
     </div>
   );
 }
