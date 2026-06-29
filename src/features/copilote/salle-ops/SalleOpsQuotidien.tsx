@@ -6,6 +6,7 @@
 // câblage réel (next_action, phases, qui inviter, Noaly) aux slices suivantes.
 // =============================================================================
 
+import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import "./salle-ops.css";
 
@@ -26,6 +27,23 @@ const DEMO = {
 };
 
 export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
+  const navigate = useNavigate();
+
+  // Clé de l'étape active (pour cocher les actions auto-déclarées sans lien).
+  const activeKey =
+    view && view.activeIndex >= 0 ? view.steps[view.activeIndex]?.key : undefined;
+
+  // CTA dominant : navigue vers l'outil si lien, sinon coche l'étape (auto-déclaré).
+  function runDominant() {
+    if (!view) return;
+    const link = view.nextAction?.linkPath;
+    if (link) {
+      navigate(link);
+    } else if (activeKey) {
+      void view.toggle(activeKey);
+    }
+  }
+
   // Index de phase + segments lime (phases franchies = phaseIndex + 1).
   const phaseIndex = view ? view.phaseIndex : DEMO.phaseIndex;
   const phaseLabel = OPS_PHASES[phaseIndex]?.label ?? "Allumage";
@@ -100,7 +118,7 @@ export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
                 ? view.nextAction?.sub ?? ""
                 : "Il a aimé ta story hier. C'est chaud. Un message, maintenant — pas demain."}
             </p>
-            <button type="button" style={limeCta}>
+            <button type="button" style={limeCta} onClick={runDominant}>
               {view ? view.nextAction?.cta ?? "Continuer" : "Lui envoyer le message"}
             </button>
           </div>
