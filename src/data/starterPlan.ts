@@ -67,14 +67,17 @@ export const STARTER_TASKS: StarterTask[] = [
     linkLabel: "Signer ma charte",
   },
   {
+    // key historique « liste_50 » conservée (persistée en DB :
+    // distributor_starter_progress.task_key) — l'intitulé s'aligne désormais
+    // sur la « Liste 100 » (méthode FRANK) utilisée partout dans l'app.
     key: "liste_50",
     week: 1,
     emoji: "📒",
-    title: "Écris ta liste de 50 contacts",
-    why: "Ta matière première. Sans liste, pas d'activité.",
+    title: "Écris ta Liste 100",
+    why: "Ta matière première : 100 contacts. Sans liste, pas d'activité.",
     isActivationGate: true,
-    linkPath: "/cahier-de-bord",
-    linkLabel: "Ouvrir ma liste 100",
+    linkPath: "/cahier-de-bord?tab=liste",
+    linkLabel: "Ouvrir ma Liste 100",
   },
   {
     key: "cobaye_demarre",
@@ -82,7 +85,7 @@ export const STARTER_TASKS: StarterTask[] = [
     emoji: "🥤",
     title: "Démarre tes 21 jours cobaye",
     why: "Teste les produits sur toi pour parler de ton vécu, pas d'un script.",
-    linkPath: "/cahier-de-bord",
+    linkPath: "/cahier-de-bord?tab=cobaye",
     linkLabel: "Ouvrir mon cahier",
   },
 
@@ -139,8 +142,8 @@ export const STARTER_TASKS: StarterTask[] = [
     emoji: "👑",
     title: "Invite 1 personne au Club",
     why: "Le Club, c'est l'expérience produit vécue en vrai.",
-    linkPath: "/vip",
-    linkLabel: "Ma page Club VIP",
+    linkPath: "/developpement/club-vip-explique",
+    linkLabel: "Comprendre le Club VIP",
   },
   {
     key: "premier_pv_pack",
