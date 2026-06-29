@@ -11,6 +11,8 @@ import { useExposuresWeek, type ManualExposureType } from "../../hooks/useExposu
 
 export function ExposuresWeekCard() {
   const { mine, downline, target, loading, logExposure } = useExposuresWeek();
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamQuery, setTeamQuery] = useState("");
 
   if (loading) return null;
   // Rien à afficher tant que le moteur ne renvoie pas ma ligne (migration PR2
@@ -63,24 +65,65 @@ export function ExposuresWeekCard() {
         <TypePill emoji="🎬" label="vidéos" n={mine.exp_video} />
       </div>
 
-      {/* Downline */}
+      {/* Downline — repliée par défaut + filtre (façon Dossiers clients).
+          Évite l'effet « liste à plat illisible » quand l'équipe grandit. */}
       {downline.length > 0 ? (
         <div style={downlineBox}>
-          <div style={downlineTitle}>Mon équipe cette semaine</div>
-          {downline
-            .slice()
-            .sort((a, b) => b.exposures - a.exposures)
-            .map((r) => (
-              <div key={r.user_id} style={downlineRow}>
-                <span style={downlineName}>{r.name}</span>
-                <span style={downlineMeta}>
-                  <strong style={{ color: "var(--ls-text)" }}>{r.exposures}</strong> expo
-                  {r.recruits_activated > 0 ? (
-                    <span style={activatedChip}>+{r.recruits_activated} activé{r.recruits_activated > 1 ? "s" : ""}</span>
-                  ) : null}
-                </span>
-              </div>
-            ))}
+          <button
+            type="button"
+            onClick={() => setTeamOpen((v) => !v)}
+            style={downlineToggle}
+            aria-expanded={teamOpen}
+          >
+            <span style={downlineTitle}>
+              Mon équipe cette semaine
+              <span style={teamCount}>{downline.length}</span>
+            </span>
+            <span
+              aria-hidden="true"
+              style={{ ...chevron, transform: teamOpen ? "rotate(90deg)" : "none" }}
+            >
+              ›
+            </span>
+          </button>
+
+          {teamOpen ? (
+            <div style={{ marginTop: 10 }}>
+              {downline.length > 4 ? (
+                <input
+                  type="text"
+                  value={teamQuery}
+                  onChange={(e) => setTeamQuery(e.target.value)}
+                  placeholder="Rechercher un distributeur…"
+                  style={teamSearch}
+                />
+              ) : null}
+              {(() => {
+                const rows = downline
+                  .slice()
+                  .sort((a, b) => b.exposures - a.exposures)
+                  .filter((r) =>
+                    r.name.toLowerCase().includes(teamQuery.trim().toLowerCase()),
+                  );
+                if (rows.length === 0) {
+                  return (
+                    <div style={teamEmpty}>Aucun distributeur ne correspond.</div>
+                  );
+                }
+                return rows.map((r) => (
+                  <div key={r.user_id} style={downlineRow}>
+                    <span style={downlineName}>{r.name}</span>
+                    <span style={downlineMeta}>
+                      <strong style={{ color: "var(--ls-text)" }}>{r.exposures}</strong> expo
+                      {r.recruits_activated > 0 ? (
+                        <span style={activatedChip}>+{r.recruits_activated} activé{r.recruits_activated > 1 ? "s" : ""}</span>
+                      ) : null}
+                    </span>
+                  </div>
+                ));
+              })()}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -265,13 +308,66 @@ const downlineBox: React.CSSProperties = {
   borderTop: "0.5px solid var(--ls-border)",
 };
 
+const downlineToggle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  padding: 0,
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
 const downlineTitle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: 0.8,
   textTransform: "uppercase",
   color: "var(--ls-text-muted)",
-  marginBottom: 8,
+};
+
+const teamCount: React.CSSProperties = {
+  fontSize: 10.5,
+  fontWeight: 700,
+  letterSpacing: 0,
+  color: "var(--ls-text)",
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+  borderRadius: 999,
+  padding: "1px 7px",
+};
+
+const chevron: React.CSSProperties = {
+  fontSize: 18,
+  lineHeight: 1,
+  color: "var(--ls-text-muted)",
+  transition: "transform 0.2s ease",
+};
+
+const teamSearch: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 11px",
+  marginBottom: 4,
+  borderRadius: 10,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text)",
+  fontSize: 13,
+  fontFamily: "inherit",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const teamEmpty: React.CSSProperties = {
+  padding: "10px 2px",
+  fontSize: 12.5,
+  color: "var(--ls-text-muted)",
+  fontStyle: "italic",
 };
 
 const downlineRow: React.CSSProperties = {

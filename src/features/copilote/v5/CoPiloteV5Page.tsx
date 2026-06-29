@@ -235,9 +235,10 @@ export function CoPiloteV5Page() {
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
 
-      {/* Moteur d'équipe PR3 : nudge démarrage (tant que pas activé) + métrique-reine. */}
+      {/* Moteur d'équipe PR3 : nudge démarrage (tant que pas activé) reste en haut.
+          La métrique-reine « Mes expositions » est reléguée en bas de page
+          (recette Thomas 2026-06-29 : trop lourde au-dessus du Plan du jour). */}
       <StarterPlanCard />
-      <ExposuresWeekCard />
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv
@@ -253,6 +254,10 @@ export function CoPiloteV5Page() {
           doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
       <PlanDuJour data={data} />
+
+      {/* Métrique-reine équipe : expositions de la semaine, reléguée tout en bas
+          (sous le Plan du jour). Liste équipe repliée + filtre à l'intérieur. */}
+      <ExposuresWeekCard />
 
       {/* Footer légal */}
       <LegalFooter />
