@@ -26,7 +26,7 @@ const DEMO = {
   activated: false,
 };
 
-export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
+export function SalleOpsQuotidien({ view, onEscape }: { view?: SalleOpsView; onEscape?: () => void }) {
   const navigate = useNavigate();
 
   // Clé de l'étape active (pour cocher les actions auto-déclarées sans lien).
@@ -199,6 +199,21 @@ export function SalleOpsQuotidien({ view }: { view?: SalleOpsView }) {
           </div>
         </div>
       </div>
+
+      {/* Barre basse : OPS (focus) / Plus tard (échappatoire vers l'app complète).
+          « Réduit, pas verrouillé » — personne n'est jamais bloqué. */}
+      {onEscape && (
+        <div style={bottomNav}>
+          <div style={bottomNavInner}>
+            <span style={{ ...navItem, color: "var(--ls-ops-accent-text)" }}>
+              <span style={navDotOn} /> OPS
+            </span>
+            <button type="button" onClick={onEscape} style={{ ...navItem, ...navBtn, color: "var(--ls-ops-muted)" }}>
+              <span style={navDotOff} /> Plus tard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -400,4 +415,62 @@ const noalySend: React.CSSProperties = {
   justifyContent: "center",
   fontWeight: 700,
   flex: "none",
+};
+
+const bottomNav: React.CSSProperties = {
+  position: "sticky",
+  bottom: 0,
+  zIndex: 5,
+  padding: "12px 24px calc(14px + env(safe-area-inset-bottom))",
+  background: "linear-gradient(180deg, transparent, var(--ls-ops-bg) 38%)",
+};
+
+const bottomNavInner: React.CSSProperties = {
+  maxWidth: 460,
+  margin: "0 auto",
+  display: "flex",
+  justifyContent: "space-around",
+  alignItems: "center",
+  gap: 8,
+  background: "var(--ls-ops-surface)",
+  border: "1px solid var(--ls-ops-border)",
+  borderRadius: 18,
+  padding: 8,
+};
+
+const navItem: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  padding: "10px 8px",
+  fontFamily: "var(--ls-ops-font-mono)",
+  fontSize: 11,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  fontWeight: 500,
+};
+
+const navBtn: React.CSSProperties = {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  borderRadius: 12,
+};
+
+const navDotOn: React.CSSProperties = {
+  width: 18,
+  height: 18,
+  borderRadius: 5,
+  border: "2px solid var(--ls-ops-accent)",
+  boxSizing: "border-box",
+};
+
+const navDotOff: React.CSSProperties = {
+  width: 18,
+  height: 18,
+  borderRadius: "50%",
+  border: "2px solid var(--ls-ops-faint)",
+  boxSizing: "border-box",
 };

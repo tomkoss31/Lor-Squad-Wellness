@@ -46,7 +46,6 @@ import { WeatherPopup } from "./components/WeatherPopup";
 import { useWeatherForecast } from "./hooks/useWeatherForecast";
 // Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
 import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
-import { StarterPlanCard } from "../../../components/team/StarterPlanCard";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
 import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
 import { useSalleOps } from "../salle-ops/useSalleOps";
@@ -79,6 +78,10 @@ export function CoPiloteV5Page() {
 
   // Switch §3 — Salle des Opérations : vue cockpit pour la recrue non activée.
   const ops = useSalleOps();
+  // Échappatoire « Plus tard » (par session) : ne verrouille jamais l'app.
+  const [opsEscaped, setOpsEscaped] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem("ls-ops-escape") === "1",
+  );
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -125,11 +128,19 @@ export function CoPiloteV5Page() {
   }
 
   // ═══ Switch §3 — Salle des Opérations (incorporation onboarding) ═══
-  // Tant qu'une recrue (distributeur) n'est pas « activée » (5 portes franchies),
-  // son Co-pilote EST le cockpit plein écran : 1 action du jour, pas l'app lourde.
-  // Les distri activés + admins/référents gardent le Co-pilote complet.
-  if (currentUser.role === "distributor" && !ops.loading && !ops.activated) {
-    return <SalleOpsQuotidien view={ops} />;
+  // Tant qu'un membre n'est pas « activé » (5 portes franchies), son Co-pilote EST
+  // le cockpit plein écran : 1 action du jour, pas l'app lourde. Tous les rôles
+  // (« on est tous nouveaux sur l'app ») — sauf échappatoire « Plus tard ».
+  if (!ops.loading && !ops.activated && !opsEscaped) {
+    return (
+      <SalleOpsQuotidien
+        view={ops}
+        onEscape={() => {
+          sessionStorage.setItem("ls-ops-escape", "1");
+          setOpsEscaped(true);
+        }}
+      />
+    );
   }
 
   return (
@@ -231,6 +242,20 @@ export function CoPiloteV5Page() {
 
           {/* Cloche + theme toggle = doublons du MobileHeader (Onde 1) →
               masqués sur mobile via [data-v5-topbar-dups]. */}
+          {opsEscaped && !ops.activated ? (
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem("ls-ops-escape");
+                setOpsEscaped(false);
+              }}
+              style={pillIconStyle}
+              aria-label="Revenir à la Salle des Opérations"
+              title="Revenir à la Salle des Opérations"
+            >
+              <span aria-hidden="true">▦</span>
+            </button>
+          ) : null}
           <span data-v5-topbar-dups style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <AnnouncementBell />
             <button
@@ -249,10 +274,9 @@ export function CoPiloteV5Page() {
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
 
-      {/* Moteur d'équipe PR3 : nudge démarrage (tant que pas activé) reste en haut.
-          La métrique-reine « Mes expositions » est reléguée en bas de page
-          (recette Thomas 2026-06-29 : trop lourde au-dessus du Plan du jour). */}
-      <StarterPlanCard />
+      {/* L'ancien « Mon démarrage 30 jours » (StarterPlanCard) est retiré :
+          remplacé par la Salle des Opérations (switch §3 ci-dessus). Le distri
+          non activé voit le cockpit ; l'activé n'a plus de nudge ici. */}
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv

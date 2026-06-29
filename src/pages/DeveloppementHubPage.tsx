@@ -135,17 +135,6 @@ const CARDS: HubCard[] = [
     infoTerm: "ebe",
   },
   {
-    id: "demarrage",
-    emoji: "🚀",
-    title: "Mon démarrage 30 jours",
-    description: "Ta check-list pas-à-pas pour bien lancer ton activité et devenir « activé ».",
-    cta: "Voir mon démarrage",
-    path: "/demarrage",
-    accent: "var(--ls-gold)",
-    section: "quotidien",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
-  {
     id: "routine-du-jour",
     emoji: "☀️",
     title: "Ma routine du jour",

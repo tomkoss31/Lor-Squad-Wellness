@@ -488,13 +488,6 @@ const RoutineDuJourPage = lazy(() =>
     default: module.RoutineDuJourPage,
   })),
 );
-// Démarrage 30 jours (chantier Moteur d'équipe PR1, 2026-06-27) — checklist
-// duplicable par recrue + flag d'activation.
-const DemarragePage = lazy(() =>
-  import("./pages/DemarragePage").then((module) => ({
-    default: module.DemarragePage,
-  })),
-);
 // Suivis du jour (2026-06-03) — page dédiée destination du digest matinal.
 const SuivisDuJourPage = lazy(() =>
   import("./pages/SuivisDuJourPage").then((module) => ({
@@ -723,7 +716,9 @@ export default function App() {
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
               <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
-              <Route path="demarrage" element={<DemarragePage />} />
+              {/* Ancien « Mon démarrage 30 jours » retiré (remplacé par la Salle
+                  des Opérations sur /co-pilote). Redirige les vieux liens. */}
+              <Route path="demarrage" element={<Navigate to="/co-pilote" replace />} />
               <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
               <Route path="travaux" element={<TravauxPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
