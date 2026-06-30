@@ -124,7 +124,7 @@ serve(async (req) => {
     const clientIds = [...new Set(rows.map((f) => f.client_id as string))];
     const { data: clients } = await sb
       .from("clients")
-      .select("id, distributor_id, name, email")
+      .select("id, distributor_id, first_name, last_name, email")
       .in("id", clientIds);
     const coachByClient = new Map<string, string | null>();
     const clientEmail = new Map<string, string | null>();
@@ -133,7 +133,7 @@ serve(async (req) => {
     for (const c of clients ?? []) {
       coachByClient.set(c.id as string, (c.distributor_id as string) ?? null);
       clientEmail.set(c.id as string, (c.email as string) ?? null);
-      clientFirst.set(c.id as string, String((c.name as string) ?? "").split(/\s+/)[0] || "");
+      clientFirst.set(c.id as string, String((c.first_name as string) ?? "").trim());
       if (c.distributor_id) distributorIds.add(c.distributor_id as string);
     }
 

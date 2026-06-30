@@ -109,7 +109,7 @@ serve(async (req) => {
 
     const { data: client } = await sb
       .from("clients")
-      .select("id, name, email, distributor_id")
+      .select("id, first_name, last_name, email, distributor_id")
       .eq("id", fu.client_id as string)
       .single();
     const to = String((client?.email as string) ?? "").trim();
@@ -128,7 +128,7 @@ serve(async (req) => {
     }
 
     const html = confirmEmailHtml({
-      firstName: String((client?.name as string) ?? "").split(/\s+/)[0] || "",
+      firstName: String((client?.first_name as string) ?? "").trim(),
       coachName,
       dateLabel: parisDateLabel(fu.due_date as string),
       hour: parisHourLabel(fu.due_date as string),
