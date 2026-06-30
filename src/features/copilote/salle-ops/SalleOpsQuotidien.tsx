@@ -109,7 +109,28 @@ export function SalleOpsQuotidien({
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
                 </div>
+                {/* Auto-déclaration : indispensable pour les étapes à lien (sinon
+                    on resterait coincé dessus, faute de trigger serveur). */}
+                {view.currentGateKey ? (
+                  <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
+                    ✓ C'est fait — étape suivante
+                  </button>
+                ) : null}
               </div>
+
+              {/* Réponses prêtes (« comment répondre ») */}
+              {lesson.repondre && lesson.repondre.length > 0 ? (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", margin: "8px 0 10px" }}>
+                    Réponses prêtes · comment répondre
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {lesson.repondre.map((r) => (
+                      <Repondre key={r.situation} situation={r.situation} reponse={r.reponse} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -286,6 +307,21 @@ function RailSteps({ view }: { view: SalleOpsView }) {
   );
 }
 
+function Repondre({ situation, reponse }: { situation: string; reponse: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ ...softCard, padding: "13px 15px", cursor: "pointer" }} onClick={() => setOpen((v) => !v)}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ flex: 1, fontSize: 14, color: "var(--ls-ops-ink)", fontWeight: 500 }}>{situation}</span>
+        <span style={{ ...MONO, fontSize: 14, color: "var(--ls-ops-accent-text)" }} aria-hidden="true">{open ? "−" : "+"}</span>
+      </div>
+      {open ? (
+        <p style={{ fontSize: 13.5, lineHeight: 1.55, color: "var(--ls-ops-text3)", margin: "10px 0 0" }}>{reponse}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function ScriptBox({ script }: { script: string }) {
   const [copied, setCopied] = useState(false);
   function copy() {
@@ -428,6 +464,20 @@ const limeCard: React.CSSProperties = {
   background: "var(--ls-ops-accent)",
   borderRadius: 18,
   padding: "18px 18px 16px",
+};
+
+const doneBtn: React.CSSProperties = {
+  width: "100%",
+  marginTop: 14,
+  background: "transparent",
+  border: "1px solid var(--ls-ops-border-active)",
+  color: "var(--ls-ops-accent-text)",
+  borderRadius: 12,
+  padding: 12,
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: "pointer",
+  fontFamily: "inherit",
 };
 
 const scriptBox: React.CSSProperties = {

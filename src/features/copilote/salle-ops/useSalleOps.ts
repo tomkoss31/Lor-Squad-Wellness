@@ -34,12 +34,13 @@ interface GoProDef {
 }
 
 const GOPRO: GoProDef[] = [
-  { n: 1, key: "trouver", label: "Trouver", gates: ["liste_50"] },
-  { n: 2, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
-  { n: 3, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
-  { n: 4, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
-  { n: 5, key: "demarrer", label: "Démarrer ta recrue", gates: [], locked: true },
-  { n: 6, key: "dupliquer", label: "Dupliquer", gates: [], locked: true },
+  { n: 1, key: "sequiper", label: "S'équiper", gates: ["commande_250pv"] },
+  { n: 2, key: "trouver", label: "Trouver", gates: ["liste_50"] },
+  { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
+  { n: 4, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
+  { n: 5, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
+  { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], locked: true },
+  { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], locked: true },
 ];
 
 export type StepState = "done" | "active" | "todo" | "locked";
