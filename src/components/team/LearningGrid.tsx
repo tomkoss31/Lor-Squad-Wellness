@@ -1,30 +1,22 @@
 // =============================================================================
-// LearningGrid — progression Academy + Formation par membre (2026-05-04)
+// LearningGrid — progression APPRENTISSAGE par membre (refonte 2026-06-30).
 //
-// Carte par membre avec deux progress bars : Academy (sur 12 sections) et
-// Formation pyramide (modules N1/N2/N3 validés). Permet à l'admin (Thomas/
-// Mel) de voir d'un coup d'œil qui en est où côté apprentissage.
+// Carte pilotée par le PARCOURS « La Base Académie » (cockpit onboarding) :
+// mini-progression 7 étapes + Jour X/90 + phase + étape en cours + badge.
+// Academy (12 sections) + Formation + XP en ligne secondaire compacte.
+// L'admin/référent voit d'un coup d'œil où en est chaque recrue dans son
+// démarrage RÉEL. Identité reliée au cockpit (accent lime --ls-ops-accent).
 // =============================================================================
 
 import type { TeamMemberEngagement } from "../../hooks/useTeamEngagement";
 import { STATUS_META } from "../../hooks/useTeamEngagement";
-import { useTeamStarterProgress, type MemberStarter } from "../../hooks/useTeamStarterProgress";
+import { useTeamStarterProgress, type MemberAcademy, type AcademyStepState } from "../../hooks/useTeamStarterProgress";
 
 interface LearningGridProps {
   members: TeamMemberEngagement[];
   excludeRootId?: string | null;
   onMemberClick?: (memberId: string) => void;
 }
-
-// Total modules par niveau (cf. parcours-content.ts) :
-// N1 = 7 (M1.1, M1.A, M1.B, M1.C, M1.D, M1.E, M1.F, plus l'EBE legacy 1.6)
-// N2 = 5
-// N3 = 4
-// On utilise des cibles approximatives — l'important c'est le visuel
-// progressif, pas le chiffre exact.
-const N1_TOTAL = 7;
-const N2_TOTAL = 5;
-const N3_TOTAL = 4;
 
 function initialsOf(name: string): string {
   if (!name) return "?";
@@ -38,17 +30,13 @@ export function LearningGrid({ members, excludeRootId, onMemberClick }: Learning
   const { byUser } = useTeamStarterProgress();
 
   if (visible.length === 0) {
-    return (
-      <div style={emptyStyle}>
-        Aucun membre dans ton équipe pour le moment.
-      </div>
-    );
+    return <div style={emptyStyle}>Aucun membre dans ton équipe pour le moment.</div>;
   }
 
   return (
     <div style={gridStyle}>
       {visible.map((m) => (
-        <LearningCard key={m.user_id} member={m} starter={byUser[m.user_id]} onClick={() => onMemberClick?.(m.user_id)} />
+        <LearningCard key={m.user_id} member={m} acad={byUser[m.user_id]} onClick={() => onMemberClick?.(m.user_id)} />
       ))}
     </div>
   );
@@ -56,148 +44,108 @@ export function LearningGrid({ members, excludeRootId, onMemberClick }: Learning
 
 function LearningCard({
   member,
-  starter,
+  acad,
   onClick,
 }: {
   member: TeamMemberEngagement;
-  starter?: MemberStarter;
+  acad?: MemberAcademy;
   onClick?: () => void;
 }) {
-  const academyColor =
-    member.academy_percent >= 100
-      ? "var(--ls-teal)"
-      : member.academy_percent >= 50
-        ? "var(--ls-gold)"
-        : "var(--ls-text-muted)";
-
   const status = STATUS_META[member.status];
+  const roleLabel = member.role === "admin" ? "Admin" : member.role === "referent" ? "Référent" : "Distributeur";
+  const started = Boolean(acad?.started);
+
+  const badge = !started
+    ? { text: "pas démarré", color: "var(--ls-text-muted)" }
+    : acad!.activated
+      ? { text: "lancé·e 🚀", color: "var(--ls-teal)" }
+      : { text: `étape ${acad!.activeStepNumber}/7`, color: "var(--ls-gold)" };
+
+  const sub = started
+    ? `${roleLabel} · Jour ${acad!.dayNumber || 1}/90 · ${acad!.phaseLabel}`
+    : `${roleLabel}${member.current_rank ? ` · ${member.current_rank}` : ""}`;
 
   return (
     <button type="button" onClick={onClick} style={cardStyle}>
-      {/* Header : avatar + nom + statut */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <div style={avatarStyle}>{initialsOf(member.name)}</div>
         <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
           <div style={nameStyle}>{member.name}</div>
-          <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
-            {member.role === "admin" ? "Admin" : member.role === "referent" ? "Référent" : "Distributeur"}
-            {member.current_rank && ` · ${member.current_rank}`}
-          </div>
+          <div style={metaStyle}>{sub}</div>
         </div>
-        <span style={statusBadgeStyle(status.color)}>{status.emoji}</span>
+        <span style={pillBadge(badge.color)}>{badge.text}</span>
       </div>
 
-      {/* La Base Académie (cockpit onboarding) */}
-      <div style={blockStyle}>
-        <div style={blockLabelStyle}>
-          <span>🚀 La Base Académie</span>
-          {starter ? (
-            starter.activated ? (
-              <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>lancé·e ✓</span>
-            ) : (
-              <span style={{ color: starter.done > 0 ? "var(--ls-gold)" : "var(--ls-text-muted)", fontWeight: 700 }}>
-                {starter.done}/{starter.total}
-              </span>
-            )
-          ) : (
-            <span style={{ color: "var(--ls-text-muted)" }}>pas démarré</span>
-          )}
-        </div>
-        <div style={progressBarBgStyle}>
-          <div
-            style={{
-              ...progressBarFillStyle,
-              background: starter?.activated ? "var(--ls-teal)" : "var(--ls-gold)",
-              width: `${starter ? Math.round((starter.done / starter.total) * 100) : 0}%`,
-            }}
-          />
-        </div>
+      {/* Parcours La Base Académie (héros) */}
+      <div style={journeyLabel}>La Base Académie · parcours</div>
+      <MiniJourney steps={acad?.steps} />
+      <div style={journeyActive}>
+        {!started ? (
+          "Pas encore démarré son cockpit"
+        ) : acad!.activated ? (
+          "Activée — au rythme (faire faire)"
+        ) : (
+          <>
+            En cours · étape <b style={{ color: "var(--ls-text)" }}>{acad!.activeStepLabel}</b>
+          </>
+        )}
+        {status?.emoji ? <span style={{ marginLeft: 6 }}>{status.emoji}</span> : null}
       </div>
 
-      {/* Academy progress */}
-      <div style={blockStyle}>
-        <div style={blockLabelStyle}>
-          <span>🎓 Academy</span>
-          <span style={{ color: academyColor, fontWeight: 700 }}>
-            {member.academy_step}/12
-          </span>
-        </div>
-        <div style={progressBarBgStyle}>
-          <div
-            style={{
-              ...progressBarFillStyle,
-              background: academyColor,
-              width: `${Math.min(member.academy_percent, 100)}%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Formation pyramide N1 / N2 / N3 */}
-      <div style={blockStyle}>
-        <div style={blockLabelStyle}>
-          <span>📚 Formation</span>
-          <span style={{ color: "var(--ls-text-muted)" }}>
-            {member.formation_total_validated} validés
-            {member.formation_pending > 0 && ` · ${member.formation_pending} en attente`}
-          </span>
-        </div>
-        <div style={pyramidRowStyle}>
-          <PyramidStep
-            label="Démarrer"
-            validated={member.formation_validated_n1}
-            total={N1_TOTAL}
-            color="var(--ls-gold)"
-          />
-          <PyramidStep
-            label="Construire"
-            validated={member.formation_validated_n2}
-            total={N2_TOTAL}
-            color="var(--ls-teal)"
-          />
-          <PyramidStep
-            label="Dupliquer"
-            validated={member.formation_validated_n3}
-            total={N3_TOTAL}
-            color="var(--ls-purple)"
-          />
-        </div>
-      </div>
-
-      {/* Footer : XP + Level */}
-      <div style={footerStyle}>
-        <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-          ⚡ Niv. <strong style={{ color: "var(--ls-text)" }}>{member.xp_level}</strong>
-        </span>
-        <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-          {member.xp_total.toLocaleString("fr-FR")} XP
-        </span>
+      {/* Secondaire compact : Academy + Formation + XP */}
+      <div style={secondaryRow}>
+        <span>🎓 Academy <b style={bStrong}>{member.academy_step}/12</b></span>
+        <span>📚 Formation <b style={bStrong}>{member.formation_total_validated}</b></span>
+        <span>⚡ <b style={bStrong}>{member.xp_total.toLocaleString("fr-FR")} XP</b></span>
       </div>
     </button>
   );
 }
 
-function PyramidStep({
-  label,
-  validated,
-  total,
-  color,
-}: {
-  label: string;
-  validated: number;
-  total: number;
-  color: string;
-}) {
-  const ratio = total > 0 ? Math.min(validated / total, 1) : 0;
+function MiniJourney({ steps }: { steps?: AcademyStepState[] }) {
+  const s = steps ?? (Array(7).fill("todo") as AcademyStepState[]);
   return (
-    <div style={pyramidStepStyle(ratio > 0 ? color : "var(--ls-border)")}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: ratio > 0 ? color : "var(--ls-text-muted)" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-text)" }}>
-        {validated}/{total}
-      </div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+      {s.flatMap((st, i) => {
+        const dot = <StepDot key={`d${i}`} state={st} n={i + 1} />;
+        if (i >= s.length - 1) return [dot];
+        const conn = (
+          <span
+            key={`c${i}`}
+            style={{ height: 2, flex: 1, margin: "0 3px", background: st === "done" ? "var(--ls-ops-accent)" : "var(--ls-border)" }}
+          />
+        );
+        return [dot, conn];
+      })}
     </div>
+  );
+}
+
+function StepDot({ state, n }: { state: AcademyStepState; n: number }) {
+  const done = state === "done";
+  const active = state === "active";
+  return (
+    <span
+      style={{
+        width: active ? 22 : 18,
+        height: active ? 22 : 18,
+        borderRadius: "50%",
+        flex: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 10,
+        fontWeight: 700,
+        boxSizing: "border-box",
+        boxShadow: active ? "0 0 0 3px rgba(var(--ls-ops-rgb-accent), 0.22)" : "none",
+        ...(done || active
+          ? { background: "var(--ls-ops-accent)", color: "var(--ls-ops-on-accent)" }
+          : { border: "2px solid var(--ls-border)", color: "var(--ls-text-muted)" }),
+      }}
+    >
+      {done ? "✓" : n}
+    </span>
   );
 }
 
@@ -205,7 +153,7 @@ function PyramidStep({
 
 const gridStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
   gap: 12,
 };
 
@@ -213,10 +161,9 @@ const cardStyle: React.CSSProperties = {
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 14,
-  padding: "16px 16px",
+  padding: "16px",
   cursor: "pointer",
   textAlign: "left",
-  transition: "transform 0.18s, box-shadow 0.18s",
   display: "flex",
   flexDirection: "column",
   gap: 0,
@@ -248,71 +195,57 @@ const nameStyle: React.CSSProperties = {
   textOverflow: "ellipsis",
 };
 
-const statusBadgeStyle = (color: string): React.CSSProperties => ({
-  width: 28,
-  height: 28,
-  borderRadius: 9,
-  background: `color-mix(in srgb, ${color} 14%, var(--ls-surface2))`,
-  border: `0.5px solid ${color}`,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 14,
-});
-
-const blockStyle: React.CSSProperties = {
-  marginBottom: 10,
-};
-
-const blockLabelStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-  fontSize: 11,
-  fontFamily: "DM Sans, sans-serif",
-  color: "var(--ls-text)",
-  marginBottom: 6,
-  fontWeight: 600,
-};
-
-const progressBarBgStyle: React.CSSProperties = {
-  width: "100%",
-  height: 8,
-  background: "var(--ls-surface2)",
-  borderRadius: 4,
+const metaStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 10,
+  letterSpacing: ".03em",
+  color: "var(--ls-text-muted)",
+  whiteSpace: "nowrap",
   overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
-const progressBarFillStyle: React.CSSProperties = {
-  height: "100%",
-  borderRadius: 4,
-  transition: "width 0.4s ease",
-};
-
-const pyramidRowStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr",
-  gap: 6,
-};
-
-const pyramidStepStyle = (color: string): React.CSSProperties => ({
-  padding: "8px 6px",
-  background: "var(--ls-surface2)",
+const pillBadge = (color: string): React.CSSProperties => ({
+  background: `color-mix(in srgb, ${color} 14%, transparent)`,
   border: `0.5px solid ${color}`,
+  color,
   borderRadius: 8,
-  textAlign: "center",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 2,
+  padding: "3px 9px",
+  fontSize: 11,
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+  flexShrink: 0,
 });
 
-const footerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  paddingTop: 10,
-  borderTop: "0.5px solid var(--ls-border)",
+const journeyLabel: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 10,
+  letterSpacing: ".14em",
+  textTransform: "uppercase",
+  color: "var(--ls-text-muted)",
+  marginBottom: 2,
 };
+
+const journeyActive: React.CSSProperties = {
+  fontSize: 12.5,
+  color: "var(--ls-text-muted)",
+  marginTop: 8,
+  lineHeight: 1.4,
+};
+
+const secondaryRow: React.CSSProperties = {
+  display: "flex",
+  gap: 14,
+  flexWrap: "wrap",
+  marginTop: 12,
+  paddingTop: 12,
+  borderTop: "0.5px solid var(--ls-border)",
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 11,
+  color: "var(--ls-text-muted)",
+};
+
+const bStrong: React.CSSProperties = { color: "var(--ls-text)" };
 
 const emptyStyle: React.CSSProperties = {
   padding: "30px 20px",
