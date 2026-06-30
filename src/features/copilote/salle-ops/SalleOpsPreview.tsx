@@ -9,8 +9,31 @@
 import { useState } from "react";
 import { SalleDesOperations } from "./SalleDesOperations";
 import { SalleOpsQuotidien } from "./SalleOpsQuotidien";
-import { useSalleOps } from "./useSalleOps";
+import { useSalleOps, type SalleOpsView } from "./useSalleOps";
+import { ACADEMY_LESSONS } from "./academyLessons";
 import "./salle-ops.css";
+
+// Vue synthétique pour l'onglet démo (référence design, sans données réelles).
+const DEMO_VIEW: SalleOpsView = {
+  loading: false,
+  activated: false,
+  steps: [
+    { n: 1, label: "Trouver", state: "done" },
+    { n: 2, label: "Inviter", state: "active" },
+    { n: 3, label: "Présenter", state: "todo" },
+    { n: 4, label: "Relancer", state: "todo" },
+    { n: 5, label: "Démarrer ta recrue", state: "locked" },
+    { n: 6, label: "Dupliquer", state: "locked" },
+  ],
+  totalSteps: 6,
+  activeStepNumber: 2,
+  currentLesson: ACADEMY_LESSONS.premiere_story,
+  currentGateKey: "premiere_story",
+  phase: "allumage",
+  phaseIndex: 0,
+  dayNumber: 2,
+  toggle: async () => {},
+};
 
 type Screen = "jour0" | "quotidien" | "live";
 
@@ -47,7 +70,7 @@ export function SalleOpsPreview() {
         })}
       </div>
       {screen === "jour0" && <SalleDesOperations />}
-      {screen === "quotidien" && <SalleOpsQuotidien />}
+      {screen === "quotidien" && <SalleOpsQuotidien view={DEMO_VIEW} />}
       {screen === "live" && <SalleOpsQuotidien view={ops} />}
     </div>
   );

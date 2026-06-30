@@ -1,80 +1,67 @@
 // =============================================================================
-// useSalleOps — dérivation front du cockpit « Salle des Opérations ».
+// useSalleOps — dérivation front du cockpit « La Base Académie ».
 //
-// Slice 4 : transforme la progression réelle (useStarterPlan : les 5 étapes-
-// portes + activated_at) en vue cockpit : étapes, phase, action dominante.
-// 100 % dérivé front, AUCUN appel DB en plus, AUCUNE modif des 5 portes serveur
-// (garde-fou §14). Les sources non encore branchées (qui inviter, script,
-// expositions) restent statiques côté composant — slices suivantes.
+// Transforme la progression réelle (useStarterPlan : portes serveur +
+// activated_at) en parcours pédagogique des 6 étapes Go Pro, chacune portant
+// sa leçon (academyLessons). 100 % dérivé front, AUCUN appel DB en plus, AUCUNE
+// modif des portes serveur (garde-fou §14).
 // =============================================================================
 
 import { useMemo } from "react";
 import { useStarterPlan } from "../../../hooks/useStarterPlan";
+import { ACADEMY_LESSONS, type AcademyLesson } from "./academyLessons";
 
-export type OpsPhase = "setup" | "allumage" | "acceleration" | "profondeur" | "levier";
+export type OpsPhase = "allumage" | "acceleration" | "profondeur" | "levier";
 
 export const OPS_PHASES: { key: OpsPhase; label: string; short: string }[] = [
-  { key: "setup", label: "Setup", short: "Setup" },
   { key: "allumage", label: "Allumage", short: "Allumage" },
   { key: "acceleration", label: "Accélération", short: "Accél." },
   { key: "profondeur", label: "Profondeur", short: "Profond." },
   { key: "levier", label: "Levier", short: "Levier" },
 ];
 
-export interface OpsAction {
-  title: string;
-  sub: string;
-  cta: string;
-  linkPath?: string;
-}
-
-// Ordre conseillé (§8) — les clés sont FIGÉES (garde-fou). Le libellé/sous-texte
-// est l'habillage cockpit « langage simple ».
-const OPS_STEPS: { key: string; label: string; action: OpsAction }[] = [
-  {
-    key: "liste_50",
-    label: "Ta Liste 100",
-    action: { title: "Fais ta Liste 100", sub: "100 noms : ta matière première. Sans liste, pas d'activité.", cta: "Ouvrir ma Liste 100", linkPath: "/cahier-de-bord?tab=liste" },
-  },
-  {
-    key: "premiere_story",
-    label: "Ta 1ʳᵉ story",
-    action: { title: "Publie ta 1ʳᵉ story", sub: "Tu annonces ton démarrage, tu crées la curiosité.", cta: "C'est publié" },
-  },
-  {
-    key: "premier_bilan",
-    label: "Ton 1ᵉʳ bilan",
-    action: { title: "Décroche ton 1ᵉʳ bilan", sub: "Le cœur du métier. Un bilan = une porte qui s'ouvre.", cta: "Démarrer un bilan", linkPath: "/clients" },
-  },
-  {
-    key: "premier_hom",
-    label: "Ton 1ᵉʳ HOM",
-    action: { title: "Amène 1 invité au HOM", sub: "Vois comment on présente l'opportunité, tu dupliqueras ça.", cta: "Marquer une présence HOM" },
-  },
-  {
-    key: "premier_pv_pack",
-    label: "Ton 1ᵉʳ pack",
-    action: { title: "Signe ton 1ᵉʳ pack", sub: "Ta première vente : tes 1ers PV, ton déclic.", cta: "Ouvrir le panier", linkPath: "/panier" },
-  },
-];
-
-export interface OpsStepView {
+// Les 6 étapes Go Pro = la colonne vertébrale du parcours (décision Thomas).
+// Chaque étape « apprendre à faire » mappe une ou plusieurs portes serveur.
+// Les étapes 5-6 (« faire faire ») arrivent en V2 → verrouillées pour l'instant.
+interface GoProDef {
+  n: number;
   key: string;
   label: string;
-  done: boolean;
-  active: boolean;
+  gates: string[];
+  /** Clé de leçon quand l'étape n'a pas de porte (ex. relancer). */
+  lessonKey?: string;
+  locked?: boolean;
+}
+
+const GOPRO: GoProDef[] = [
+  { n: 1, key: "trouver", label: "Trouver", gates: ["liste_50"] },
+  { n: 2, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
+  { n: 3, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
+  { n: 4, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
+  { n: 5, key: "demarrer", label: "Démarrer ta recrue", gates: [], locked: true },
+  { n: 6, key: "dupliquer", label: "Dupliquer", gates: [], locked: true },
+];
+
+export type StepState = "done" | "active" | "todo" | "locked";
+
+export interface GoProStepView {
+  n: number;
+  label: string;
+  state: StepState;
 }
 
 export interface SalleOpsView {
   loading: boolean;
   activated: boolean;
-  doneCount: number;
-  total: number;
-  steps: OpsStepView[];
-  /** Action dominante = 1ʳᵉ étape non fermée (ou null si tout est fait). */
-  nextAction: OpsAction | null;
-  /** Index de l'étape active (0-based) ou -1 si activé. */
-  activeIndex: number;
+  /** Parcours 6 étapes Go Pro. */
+  steps: GoProStepView[];
+  totalSteps: number;
+  /** Numéro (1-based) de l'étape active. */
+  activeStepNumber: number;
+  /** Leçon de l'étape/porte courante (apprendre→faire→preuve). */
+  currentLesson: AcademyLesson | null;
+  /** Porte serveur à cocher si l'action est auto-déclarée (pas de linkPath). */
+  currentGateKey: string | null;
   phase: OpsPhase;
   phaseIndex: number;
   /** Jour X / 90 depuis l'ancre J0 (1 si non posée). */
@@ -88,30 +75,42 @@ export function useSalleOps(): SalleOpsView {
   const { tasks, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
 
   return useMemo(() => {
-    const doneByKey: Record<string, boolean> = {};
-    for (const t of tasks) doneByKey[t.key] = t.status === "done";
+    const doneByGate: Record<string, boolean> = {};
+    for (const t of tasks) doneByGate[t.key] = t.status === "done";
 
     const activated = Boolean(activatedAt);
-    const activeIndex = activated ? -1 : OPS_STEPS.findIndex((s) => !doneByKey[s.key]);
+    const stepDone = (g: GoProDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate[k]);
 
-    const steps: OpsStepView[] = OPS_STEPS.map((s, i) => ({
-      key: s.key,
-      label: s.label,
-      done: Boolean(doneByKey[s.key]),
-      active: i === activeIndex,
+    // Étape active = 1ʳᵉ étape ni faite ni verrouillée (relancer n'est jamais
+    // « done » → devient le focus une fois les portes 1-3 franchies).
+    const activeIndex = GOPRO.findIndex((g) => !g.locked && !stepDone(g));
+    const safeActiveIndex = activeIndex === -1 ? 3 : activeIndex; // fallback relancer
+
+    const steps: GoProStepView[] = GOPRO.map((g, i) => ({
+      n: g.n,
+      label: g.label,
+      state: g.locked
+        ? "locked"
+        : stepDone(g)
+          ? "done"
+          : i === safeActiveIndex
+            ? "active"
+            : "todo",
     }));
 
-    const doneCount = steps.filter((s) => s.done).length;
-    const nextAction = activeIndex >= 0 ? OPS_STEPS[activeIndex].action : null;
+    // Porte + leçon courantes.
+    const activeStep = GOPRO[safeActiveIndex];
+    const currentGateKey = activeStep.gates.find((k) => !doneByGate[k]) ?? null;
+    const lessonKey = currentGateKey ?? activeStep.lessonKey ?? null;
+    const currentLesson = lessonKey ? ACADEMY_LESSONS[lessonKey] ?? null : null;
 
-    // Phase (dérivée simplifiée §7a — setup omis tant que les clés setup
-    // n'existent pas ; profondeur/levier nécessitent la downline → 'profondeur'
-    // par défaut une fois activé, affiné plus tard).
-    const bilanDone = Boolean(doneByKey["premier_bilan"]);
-    const phase: OpsPhase = activated ? "profondeur" : bilanDone ? "acceleration" : "allumage";
+    // Phase 90j (tableau de marche) — dérivée simple sur les portes franchies.
+    const bilanDone = Boolean(doneByGate["premier_bilan"]);
+    const packDone = Boolean(doneByGate["premier_pv_pack"]);
+    const phase: OpsPhase = activated || packDone ? "profondeur" : bilanDone ? "acceleration" : "allumage";
     const phaseIndex = OPS_PHASES.findIndex((p) => p.key === phase);
 
-    // Jour X / 90 depuis l'ancre J0. Non posée → Jour 1. Clampé [1, 90].
+    // Jour X / 90 depuis l'ancre J0.
     let dayNumber = 1;
     if (starterStartedAt) {
       const start = new Date(starterStartedAt).getTime();
@@ -123,11 +122,11 @@ export function useSalleOps(): SalleOpsView {
     return {
       loading,
       activated,
-      doneCount,
-      total: OPS_STEPS.length,
       steps,
-      nextAction,
-      activeIndex,
+      totalSteps: GOPRO.length,
+      activeStepNumber: safeActiveIndex + 1,
+      currentLesson,
+      currentGateKey,
       phase,
       phaseIndex,
       dayNumber,

@@ -251,8 +251,8 @@ export function CoPiloteV5Page() {
                 setOpsEscaped(false);
               }}
               style={pillIconStyle}
-              aria-label="Revenir à la Salle des Opérations"
-              title="Revenir à la Salle des Opérations"
+              aria-label="Revenir à La Base Académie"
+              title="Revenir à La Base Académie"
             >
               <span aria-hidden="true">▦</span>
             </button>
