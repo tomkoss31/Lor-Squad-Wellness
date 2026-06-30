@@ -30,7 +30,7 @@ export function SalleDesOperations() {
 
         {/* ── Titre ── */}
         <div style={{ ...MONO, fontSize: 11, letterSpacing: ".2em", color: "var(--ls-ops-muted)", textTransform: "uppercase", marginBottom: 4 }}>
-          Salle des opérations
+          La Base Académie
         </div>
         <h1 className="ls-ops-display" style={title}>S'équiper</h1>
 
