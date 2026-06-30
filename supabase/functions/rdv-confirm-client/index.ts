@@ -101,7 +101,10 @@ serve(async (req) => {
       .eq("id", followUpId)
       .single();
     if (!fu || !fu.client_id || !fu.due_date) return jsonResponse({ ok: true, skipped: "no_rdv" });
-    if (fu.status !== "scheduled") return jsonResponse({ ok: true, skipped: "not_scheduled" });
+    // On confirme tout RDV à venir SAUF s'il est terminé / annulé / inactif.
+    if (["completed", "dismissed", "inactive"].includes(String(fu.status))) {
+      return jsonResponse({ ok: true, skipped: `status_${fu.status}` });
+    }
     if (new Date(fu.due_date as string).getTime() <= Date.now()) return jsonResponse({ ok: true, skipped: "past" });
 
     const { data: client } = await sb
