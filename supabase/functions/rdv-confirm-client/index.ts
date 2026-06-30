@@ -15,15 +15,13 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getServiceClient, corsHeaders, jsonResponse } from "../_shared/push.ts";
+import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "contact@labase360.fr";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function esc(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
-}
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris",
@@ -48,36 +46,6 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   } catch {
     return false;
   }
-}
-
-function confirmEmailHtml(p: {
-  firstName: string;
-  coachName: string;
-  dateLabel: string;
-  hour: string;
-  location: string;
-}): string {
-  return `
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#0B0D11;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#F0EDE8;">
-  <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
-    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#2DD4BF;font-weight:700;">La Base 360</div>
-    <h1 style="font-size:24px;margin:14px 0 4px;color:#F0EDE8;">C'est noté, ${esc(p.firstName)} ✅</h1>
-    <p style="font-size:15px;line-height:1.55;color:#C3CCC0;margin:8px 0 22px;">
-      Ton prochain rendez-vous avec <b style="color:#F0EDE8;">${esc(p.coachName)}</b> est bien calé. On continue ta progression 🌿
-    </p>
-    <div style="background:#13161C;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 20px;">
-      <div style="font-size:13px;color:#7A8099;text-transform:uppercase;letter-spacing:.08em;">Quand</div>
-      <div style="font-size:18px;font-weight:700;color:#C9A84C;margin:2px 0 14px;">${esc(p.dateLabel)} · ${esc(p.hour)}</div>
-      <div style="font-size:13px;color:#7A8099;text-transform:uppercase;letter-spacing:.08em;">Où</div>
-      <div style="font-size:16px;font-weight:600;color:#F0EDE8;margin-top:2px;">${esc(p.location)}</div>
-    </div>
-    <p style="font-size:14px;line-height:1.55;color:#C3CCC0;margin:20px 0 0;">
-      Un rappel t'arrivera la veille. Un empêchement ? Réponds à cet email, on s'arrange 💬
-    </p>
-    <p style="font-size:12px;color:#4A5068;margin:26px 0 0;">La Base 360 · The wellness nutrition club</p>
-  </div>
-</body></html>`.trim();
 }
 
 serve(async (req) => {
@@ -127,7 +95,8 @@ serve(async (req) => {
       location = String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || location;
     }
 
-    const html = confirmEmailHtml({
+    const html = rdvEmailHtml({
+      kind: "confirm",
       firstName: String((client?.first_name as string) ?? "").trim(),
       coachName,
       dateLabel: parisDateLabel(fu.due_date as string),

@@ -20,6 +20,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
+import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
@@ -51,10 +52,6 @@ function parisDateLabel(iso: string): string {
     month: "long",
   }).format(new Date(iso));
 }
-function esc(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
-}
-
 async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
@@ -69,35 +66,6 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
 }
 
-function rdvEmailHtml(p: {
-  clientFirst: string;
-  coachName: string;
-  dateLabel: string;
-  hour: string;
-  location: string;
-}): string {
-  return `
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#0B0D11;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#F0EDE8;">
-  <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
-    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#2DD4BF;font-weight:700;">La Base 360</div>
-    <h1 style="font-size:24px;margin:14px 0 4px;color:#F0EDE8;">À demain, ${esc(p.clientFirst)} 🌿</h1>
-    <p style="font-size:15px;line-height:1.55;color:#C3CCC0;margin:8px 0 22px;">
-      Petit rappel : ton rendez-vous avec <b style="color:#F0EDE8;">${esc(p.coachName)}</b> c'est demain.
-    </p>
-    <div style="background:#13161C;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 20px;">
-      <div style="font-size:13px;color:#7A8099;text-transform:uppercase;letter-spacing:.08em;">Quand</div>
-      <div style="font-size:18px;font-weight:700;color:#C9A84C;margin:2px 0 14px;">${esc(p.dateLabel)} · ${esc(p.hour)}</div>
-      <div style="font-size:13px;color:#7A8099;text-transform:uppercase;letter-spacing:.08em;">Où</div>
-      <div style="font-size:16px;font-weight:600;color:#F0EDE8;margin-top:2px;">${esc(p.location)}</div>
-    </div>
-    <p style="font-size:14px;line-height:1.55;color:#C3CCC0;margin:20px 0 0;">
-      Pense à bien t'hydrater d'ici là 💧 Une question, un empêchement ? Réponds à cet email, on s'arrange.
-    </p>
-    <p style="font-size:12px;color:#4A5068;margin:26px 0 0;">La Base 360 · The wellness nutrition club</p>
-  </div>
-</body></html>`.trim();
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -212,7 +180,8 @@ serve(async (req) => {
         const to = clientEmail.get(clientId);
         if (to) {
           const html = rdvEmailHtml({
-            clientFirst: clientFirst.get(clientId) || "",
+            kind: "reminder",
+            firstName: clientFirst.get(clientId) || "",
             coachName: (dist && coachFull.get(dist)) || "ton coach",
             dateLabel: parisDateLabel(fu.due_date as string),
             hour,
@@ -262,7 +231,8 @@ serve(async (req) => {
             ? "En visio — le lien te sera envoyé avant le RDV"
             : ((cid && cLoc.get(cid)) || "ton club La Base");
           const html = rdvEmailHtml({
-            clientFirst: String((b.first_name as string) ?? "").split(/\s+/)[0] || "",
+            kind: "reminder",
+            firstName: String((b.first_name as string) ?? "").split(/\s+/)[0] || "",
             coachName: (cid && cFull.get(cid)) || "ton coach",
             dateLabel: parisDateLabel(b.slot_start as string),
             hour: parisHourLabel(b.slot_start as string),
