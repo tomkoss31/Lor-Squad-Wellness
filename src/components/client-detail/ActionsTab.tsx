@@ -19,6 +19,7 @@ import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
+import { ClientRelanceButton } from "../reminders/ClientRelanceButton";
 import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
 import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
@@ -426,6 +427,21 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
             Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
             — édite et envoie via WhatsApp, SMS, Telegram ou copie.
+          </div>
+        </div>
+      </div>
+
+      {/* À relancer — rappel PRIVÉ coach (in-app only). N'envoie RIEN au client,
+          contrairement à « Planifier un RDV ». Liste sur le Co-pilote. */}
+      <div className="at-card" style={{ marginTop: 12 }}>
+        <div className="at-label" style={{ marginBottom: 10 }}>
+          À relancer
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <ClientRelanceButton client={client} />
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
+            Note privée « penser à le recontacter ». Apparaît sur ton Co-pilote.
+            Le client ne reçoit ni email ni notification.
           </div>
         </div>
       </div>
