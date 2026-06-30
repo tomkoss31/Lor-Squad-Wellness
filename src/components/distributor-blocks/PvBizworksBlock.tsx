@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
+import { usePvBreakdowns, PV_BREAKDOWN_UPDATED_EVENT } from "../../hooks/usePvBreakdowns";
 import {
   COMMISSION_PCT_BY_TIER,
   PV_TO_EUR_RATIO,
@@ -19,7 +19,7 @@ import {
   totalPvFromBreakdown,
   type PvMonthlyBreakdown,
 } from "../../lib/herbalifeFormulas";
-import { setUserPvBreakdown } from "../../services/supabaseService";
+import { setUserPvBreakdown, setUserPvRealTotal } from "../../services/supabaseService";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { AdminCard, hintStyle, PvTierRow } from "./_shared";
 
@@ -46,6 +46,7 @@ export function PvBizworksBlock({ memberId, memberName, monthIso, onApplied }: P
     pv25IsVip: false,
     pv35IsVip: false,
   });
+  const [pvReal, setPvReal] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Hydrate inputs quand le breakdown est fetched
@@ -60,8 +61,14 @@ export function PvBizworksBlock({ memberId, memberName, monthIso, onApplied }: P
         pv25IsVip: existingBreakdown.pv25IsVip,
         pv35IsVip: existingBreakdown.pv35IsVip,
       });
+      setPvReal(existingBreakdown.pvRealTotal ? String(existingBreakdown.pvRealTotal) : "");
     }
   }, [existingBreakdown?.userId, existingBreakdown?.month, existingBreakdown]);
+
+  const pvRealNum = useMemo(() => {
+    const n = Number(pvReal.replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [pvReal]);
 
   const draftBreakdown = useMemo<PvMonthlyBreakdown>(() => {
     const parse = (s: string) => {
@@ -114,7 +121,12 @@ export function PvBizworksBlock({ memberId, memberName, monthIso, onApplied }: P
       } catch {
         /* best-effort : la jauge se resynchronisera au prochain enregistrement */
       }
-      const isCleared = draftTotalPv === 0;
+      // PV réel Bizworks (pilote la qualif / jauge paliers). 0 = efface.
+      await setUserPvRealTotal({ userId: memberId, month, value: pvRealNum > 0 ? pvRealNum : null });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(PV_BREAKDOWN_UPDATED_EVENT));
+      }
+      const isCleared = draftTotalPv === 0 && pvRealNum === 0;
       pushToast({
         tone: "success",
         title: isCleared ? "Breakdown efface" : "PV Bizworks enregistres",
@@ -167,6 +179,42 @@ export function PvBizworksBlock({ memberId, memberName, monthIso, onApplied }: P
         Transcris depuis ta fiche RO Herbalife le PV de {memberName} par palier.
         Mid-month rank-up : si le distri etait a 25% puis a 35%, repartis. Tout a 0 = clear.
       </div>
+
+      {/* PV réel Bizworks — pilote la jauge de palier (anti sous-comptage) */}
+      <div
+        style={{
+          marginBottom: 12,
+          padding: "10px 12px",
+          borderRadius: 10,
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+          border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, transparent)",
+        }}
+      >
+        <label
+          style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--ls-teal)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}
+        >
+          🎯 PV réel Bizworks · {month}
+        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={pvReal}
+            onChange={(e) => setPvReal(e.target.value)}
+            placeholder="ex : 1182,95"
+            style={{
+              flex: 1, minWidth: 0, padding: "9px 11px", borderRadius: 8,
+              background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
+              color: "var(--ls-text)", fontSize: 14, fontFamily: "Sora, system-ui, sans-serif", outline: "none",
+            }}
+          />
+          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", whiteSpace: "nowrap" }}>PV</span>
+        </div>
+        <div style={{ fontSize: 10.5, color: "var(--ls-text-muted)", marginTop: 6, lineHeight: 1.45 }}>
+          Copie le PV total que Bizworks affiche pour ce mois. <strong>S'il est renseigné, il pilote la jauge de palier</strong> (fini le sous-comptage). Vide = on somme les tiers ci-dessous. Les tiers servent toujours à la commission.
+        </div>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
         <PvTierRow
           label="PV à 15% (Préféré VIP)"

@@ -151,7 +151,11 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('avec J0:', sum\\(1 for u in d if u['starter_started_at']\\),'/',len\\(d\\)\\)\")",
       "mcp__63642766-4e3c-4390-a4af-54079c45f737__notion-search",
       "mcp__63642766-4e3c-4390-a4af-54079c45f737__notion-fetch",
-      "Bash(grep -nE \"^  \\\\{$|^    id: \\\\\"\" src/features/academy/sections.ts)"
+      "Bash(grep -nE \"^  \\\\{$|^    id: \\\\\"\" src/features/academy/sections.ts)",
+      "Bash(cd \"C:/Users/tomko/Documents/Lor'Squad Wellness/.claude/worktrees/sleepy-heisenberg-dda4bc\" && cat .vercel/project.json 2>/dev/null || find . -maxdepth 3 -name \"project.json\" -path \"*vercel*\" 2>/dev/null | head; echo \"---\"; cat ../../../.vercel/project.json 2>/dev/null || echo \"pas de .vercel ici\")",
+      "mcp__81d57a87-be8a-4a96-ba5d-3b44bccaa743__list_teams",
+      "mcp__81d57a87-be8a-4a96-ba5d-3b44bccaa743__list_projects",
+      "mcp__81d57a87-be8a-4a96-ba5d-3b44bccaa743__list_deployments"
     ]
   }
 }

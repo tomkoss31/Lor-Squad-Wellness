@@ -53,6 +53,10 @@ export interface PvMonthlyBreakdown {
   pv25IsVip: boolean;
   /** Flag UI : si true, les PV 35% sont des Gold VIP (sinon Senior Consultant). */
   pv35IsVip: boolean;
+  /** PV total RÉEL du mois (copié de Bizworks). Si renseigné (>0), il REMPLACE
+   *  la somme des tiers dans les fenêtres de qualification (jauge paliers).
+   *  Les tiers restent pour la commission. NULL = on somme les tiers. */
+  pvRealTotal?: number | null;
   declaredBy: string | null;
   declaredAt: string | null;
 }
@@ -86,6 +90,7 @@ export function emptyBreakdown(userId: string, month: string): PvMonthlyBreakdow
     pvRoyalty: 0,
     pv25IsVip: false,
     pv35IsVip: false,
+    pvRealTotal: null,
     declaredBy: null,
     declaredAt: null,
   };
@@ -657,6 +662,9 @@ export function rankProgressionFromWindows(
 
   let pvCurrent: number;
   let windowMonths: number;
+  let pvNeeded = threshold.pvNeeded;
+  let pvSource: "personal" | "personal_extended" = threshold.source;
+
   if (rank === "distributor_25") {
     pvCurrent = windows.pv_2m;
     windowMonths = 2;
@@ -664,22 +672,31 @@ export function rankProgressionFromWindows(
     pvCurrent = windows.pv_3m;
     windowMonths = 3;
   } else {
-    // success_builder_42 → supervisor_50 : 4000 PV / 12 mois glissants.
-    // PV étendu (self + downline non-Sup) calculé côté SQL, source unique.
-    pvCurrent = windows.pv_12m_extended;
-    windowMonths = 12;
+    // success_builder_42 → supervisor_50 : DEUX voies, la VITESSE décide
+    // (règle Herbalife 2026, cf. HERBALIFE_PALIERS_REGLES.md) :
+    //   - voie rapide   : 2500 PV PERSO    / 3 mois glissants
+    //   - voie standard : 4000 PV ÉTENDU   / 12 mois glissants (self + downline non-Sup)
+    // On affiche la voie où le distri est LE PLUS AVANCÉ (% le plus haut), pour
+    // ne pas le faire paraître plus loin du Sup qu'il ne l'est réellement.
+    const fast = { pv: windows.pv_3m, needed: 2500, win: 3, source: "personal" as const };
+    const std = { pv: windows.pv_12m_extended, needed: 4000, win: 12, source: "personal_extended" as const };
+    const chosen = fast.pv / fast.needed >= std.pv / std.needed ? fast : std;
+    pvCurrent = chosen.pv;
+    windowMonths = chosen.win;
+    pvNeeded = chosen.needed;
+    pvSource = chosen.source;
   }
 
-  const pct = Math.min(100, Math.round((pvCurrent / threshold.pvNeeded) * 100));
+  const pct = Math.min(100, Math.round((pvCurrent / pvNeeded) * 100));
   return {
     currentLabel: RANK_LABEL_FALLBACK[rank] ?? rank,
     nextRank: threshold.nextKey,
     nextLabel: RANK_LABEL_FALLBACK[threshold.nextKey] ?? threshold.nextKey,
-    pvNeeded: threshold.pvNeeded,
+    pvNeeded,
     pvCurrent: Math.max(0, pvCurrent),
     pct,
-    remaining: Math.max(0, threshold.pvNeeded - pvCurrent),
-    pvSource: threshold.source as "personal" | "personal_extended",
+    remaining: Math.max(0, pvNeeded - pvCurrent),
+    pvSource,
     windowMonths,
   };
 }

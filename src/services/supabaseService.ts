@@ -1880,6 +1880,7 @@ export async function loadPvBreakdownsForMonth(
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pvRealTotal: number | null;
   pv25IsVip: boolean;
   pv35IsVip: boolean;
   declaredBy: string | null;
@@ -1888,7 +1889,7 @@ export async function loadPvBreakdownsForMonth(
   const client = await requireSupabase();
   const { data, error } = await client
     .from("pv_monthly_breakdown")
-    .select("user_id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_25_is_vip, pv_35_is_vip, declared_by, declared_at")
+    .select("user_id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_real_total, pv_25_is_vip, pv_35_is_vip, declared_by, declared_at")
     .eq("month", month);
   if (error || !data) return [];
   return data.map((r: {
@@ -1899,6 +1900,7 @@ export async function loadPvBreakdownsForMonth(
     pv_35: number | null;
     pv_42: number | null;
     pv_royalty: number | null;
+    pv_real_total: number | null;
     pv_25_is_vip: boolean | null;
     pv_35_is_vip: boolean | null;
     declared_by: string | null;
@@ -1911,11 +1913,27 @@ export async function loadPvBreakdownsForMonth(
     pv35: Number(r.pv_35 ?? 0),
     pv42: Number(r.pv_42 ?? 0),
     pvRoyalty: Number(r.pv_royalty ?? 0),
+    pvRealTotal: r.pv_real_total == null ? null : Number(r.pv_real_total),
     pv25IsVip: !!r.pv_25_is_vip,
     pv35IsVip: !!r.pv_35_is_vip,
     declaredBy: r.declared_by ?? null,
     declaredAt: r.declared_at ?? null,
   }));
+}
+
+/** Saisie du PV réel Bizworks d'un distri pour un mois (RPC admin). 0/null efface. */
+export async function setUserPvRealTotal(params: {
+  userId: string;
+  month: string;
+  value: number | null;
+}): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("set_user_pv_real_total", {
+    p_user_id: params.userId,
+    p_month: params.month,
+    p_value: params.value ?? 0,
+  });
+  if (error) throw error;
 }
 
 // ─── Distributor qualifications (fenêtres glissantes 2/3/6/12 mois) ──────
