@@ -150,3 +150,6 @@ vite.config.d.ts
 .design-import-pwa-v2/
 
 .design-imports/
+
+# Claude Code local settings (machine-specific, ne pas committer)
+.claude/settings.local.json
