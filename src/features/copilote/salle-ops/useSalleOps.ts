@@ -49,6 +49,10 @@ export interface GoProStepView {
   n: number;
   label: string;
   state: StepState;
+  /** Leçon de l'étape (pour pouvoir revisiter n'importe quelle étape). */
+  lesson: AcademyLesson | null;
+  /** Porte serveur représentative de l'étape (active = 1ʳᵉ non faite). */
+  gateKey: string | null;
 }
 
 export interface SalleOpsView {
@@ -90,23 +94,26 @@ export function useSalleOps(): SalleOpsView {
     const activeIndex = GOPRO.findIndex((g) => !g.locked && !stepDone(g));
     const safeActiveIndex = activeIndex === -1 ? relancerIndex : activeIndex;
 
-    const steps: GoProStepView[] = GOPRO.map((g, i) => ({
-      n: g.n,
-      label: g.label,
-      state: g.locked
-        ? "locked"
-        : stepDone(g)
-          ? "done"
-          : i === safeActiveIndex
-            ? "active"
-            : "todo",
-    }));
+    const steps: GoProStepView[] = GOPRO.map((g, i) => {
+      const active = i === safeActiveIndex;
+      // Porte mise en avant : pour l'étape active = 1ʳᵉ porte non faite ; pour
+      // une étape revisitée = sa 1ʳᵉ porte (lecture).
+      const gateKey = active
+        ? g.gates.find((k) => !doneByGate(k)) ?? null
+        : g.gates[0] ?? null;
+      const lessonKey = gateKey ?? g.lessonKey ?? null;
+      return {
+        n: g.n,
+        label: g.label,
+        state: g.locked ? "locked" : stepDone(g) ? "done" : active ? "active" : "todo",
+        lesson: lessonKey ? ACADEMY_LESSONS[lessonKey] ?? null : null,
+        gateKey,
+      };
+    });
 
-    // Porte + leçon courantes.
-    const activeStep = GOPRO[safeActiveIndex];
-    const currentGateKey = activeStep.gates.find((k) => !doneByGate(k)) ?? null;
-    const lessonKey = currentGateKey ?? activeStep.lessonKey ?? null;
-    const currentLesson = lessonKey ? ACADEMY_LESSONS[lessonKey] ?? null : null;
+    // Étape active (rétro-compat).
+    const currentGateKey = steps[safeActiveIndex]?.gateKey ?? null;
+    const currentLesson = steps[safeActiveIndex]?.lesson ?? null;
 
     // Phase 90j (tableau de marche) — dérivée simple sur les portes franchies.
     const bilanDone = doneByGate("premier_bilan");

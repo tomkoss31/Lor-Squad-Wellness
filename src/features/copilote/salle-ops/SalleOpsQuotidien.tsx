@@ -33,15 +33,31 @@ export function SalleOpsQuotidien({
   fullscreen?: boolean;
 }) {
   const navigate = useNavigate();
-  const lesson = view.currentLesson;
+  // Étape consultée : null = on suit l'étape en cours ; sinon on revoit une
+  // étape (avant/après) sans la valider.
+  const [viewedN, setViewedN] = useState<number | null>(null);
+  const activeN = view.activeStepNumber;
+  const shownN = viewedN ?? activeN;
+  const shownStep = view.steps.find((s) => s.n === shownN) ?? view.steps[0];
+  const lesson = shownStep?.lesson ?? null;
+  const isActiveShown = shownN === activeN;
+  const shownGateKey = isActiveShown ? view.currentGateKey : shownStep?.gateKey ?? null;
+
   const phaseIndex = Math.max(0, view.phaseIndex);
   const phaseLabel = OPS_PHASES[phaseIndex]?.label ?? "Allumage";
   const activeLabel = view.steps.find((s) => s.state === "active")?.label ?? "";
 
+  /** Clic sur une étape du parcours → on la revoit (sauf verrouillée). */
+  function pickStep(n: number) {
+    const s = view.steps.find((x) => x.n === n);
+    if (!s || s.state === "locked") return;
+    setViewedN(n === activeN ? null : n);
+  }
+
   function runFaire() {
     if (!lesson) return;
     if (lesson.faire.linkPath) navigate(lesson.faire.linkPath);
-    else if (view.currentGateKey) void view.toggle(view.currentGateKey);
+    else if (shownGateKey) void view.toggle(shownGateKey);
   }
 
   return (
@@ -87,6 +103,17 @@ export function SalleOpsQuotidien({
               </div>
               <h2 className="ls-ops-display" style={lessonTitle}>{lesson.title}</h2>
 
+              {!isActiveShown ? (
+                <div style={reviewBanner}>
+                  <span style={{ flex: 1 }}>
+                    {shownStep?.state === "done" ? "✓ Étape déjà validée — tu la revois." : "Aperçu d'une étape à venir."}
+                  </span>
+                  <button type="button" style={reviewBack} onClick={() => setViewedN(null)}>
+                    ← Mon étape
+                  </button>
+                </div>
+              ) : null}
+
               <div style={{ ...softCard, marginTop: 14 }}>
                 <div style={stepTag}>1 · Apprendre · 30 sec</div>
                 <p style={lessonText}>{lesson.apprendre}</p>
@@ -112,16 +139,22 @@ export function SalleOpsQuotidien({
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
                 </div>
-                {/* AVANCEMENT — toujours visible :
-                    • autoOnly (vrai bilan / vraie commande) → se valide TOUT SEUL
-                      (trigger), pas de coche manuelle = garde-fou anti-triche.
+                {/* AVANCEMENT :
+                    • étape revisitée → on ne valide pas, juste l'état + retour.
+                    • autoOnly (vrai bilan/commande) → se valide TOUT SEUL (trigger).
                     • sinon → gros bouton « ✓ C'est fait » (seul moyen d'avancer). */}
-                {lesson.autoOnly ? (
+                {!isActiveShown ? (
+                  <div style={autoNote}>
+                    {shownStep?.state === "done"
+                      ? "✓ Cette étape est validée."
+                      : "Tu pourras valider cette étape quand ce sera son tour."}
+                  </div>
+                ) : lesson.autoOnly ? (
                   <div style={autoNote}>
                     ⏳ Pas besoin de cocher : cette étape se valide <strong style={{ color: "var(--ls-ops-accent-text)" }}>toute seule</strong> dès que l'acte réel est enregistré (anti-triche).
                   </div>
-                ) : view.currentGateKey ? (
-                  <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
+                ) : shownGateKey ? (
+                  <button type="button" style={doneBtn} onClick={() => shownGateKey && void view.toggle(shownGateKey)}>
                     ✓ C'est fait — passer à l'étape suivante
                   </button>
                 ) : null}
@@ -170,7 +203,7 @@ export function SalleOpsQuotidien({
           {/* Progression — inline mobile, masqué desktop (→ rail) */}
           <div className="ls-ops-hide-desktop">
             <SectionLabel>Ton parcours · {view.totalSteps} étapes</SectionLabel>
-            <Progression view={view} activeLabel={activeLabel} />
+            <Progression view={view} activeLabel={activeLabel} shownN={shownN} onPick={pickStep} />
           </div>
         </div>
 
@@ -181,7 +214,7 @@ export function SalleOpsQuotidien({
           <div style={{ ...MONO, fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 16 }}>
             Ton parcours · {view.activeStepNumber}/{view.totalSteps}
           </div>
-          <RailSteps view={view} />
+          <RailSteps view={view} shownN={shownN} onPick={pickStep} />
           <div style={{ height: 1, background: "var(--ls-ops-border-soft)", margin: "26px 0" }} />
           <div style={{ ...MONO, fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 8 }}>
             Fil de sécurité
@@ -231,12 +264,12 @@ function PhaseTracker({ phaseIndex, phaseLabel }: { phaseIndex: number; phaseLab
   );
 }
 
-function Progression({ view, activeLabel }: { view: SalleOpsView; activeLabel: string }) {
+function Progression({ view, activeLabel, shownN, onPick }: { view: SalleOpsView; activeLabel: string; shownN: number; onPick: (n: number) => void }) {
   return (
     <div style={{ ...card, padding: "18px 16px", borderRadius: 18 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {view.steps.map((s, i) => (
-          <Step key={s.n} n={s.n} state={s.state} connectorDone={s.state === "done"} last={i === view.steps.length - 1} />
+          <Step key={s.n} n={s.n} state={s.state} picked={s.n === shownN} connectorDone={s.state === "done"} last={i === view.steps.length - 1} onPick={onPick} />
         ))}
       </div>
       <div style={{ marginTop: 14, textAlign: "center" }}>
@@ -248,13 +281,16 @@ function Progression({ view, activeLabel }: { view: SalleOpsView; activeLabel: s
             ? "Tes fondations sont posées. Place au rythme : une exposition par jour."
             : "Apprends, fais, prouve. Une étape à la fois."}
         </div>
+        <div style={{ ...MONO, fontSize: 10, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ls-ops-faint)", marginTop: 8 }}>
+          Touche une étape pour la revoir
+        </div>
       </div>
     </div>
   );
 }
 
-/** Liste verticale des 6 étapes Go Pro (rail desktop). */
-function RailSteps({ view }: { view: SalleOpsView }) {
+/** Liste verticale des étapes Go Pro (rail desktop), cliquable pour revisiter. */
+function RailSteps({ view, shownN, onPick }: { view: SalleOpsView; shownN: number; onPick: (n: number) => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       {view.steps.map((s, i) => {
@@ -263,7 +299,25 @@ function RailSteps({ view }: { view: SalleOpsView }) {
         const locked = s.state === "locked";
         const last = i === view.steps.length - 1;
         return (
-          <div key={s.n} style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
+          <button
+            type="button"
+            key={s.n}
+            disabled={locked}
+            onClick={() => onPick(s.n)}
+            style={{
+              display: "flex",
+              gap: 13,
+              alignItems: "flex-start",
+              width: "100%",
+              textAlign: "left",
+              background: s.n === shownN && !active ? "var(--ls-ops-surface)" : "transparent",
+              border: "none",
+              borderRadius: 10,
+              padding: s.n === shownN && !active ? "4px 6px" : "0",
+              cursor: locked ? "default" : "pointer",
+              fontFamily: "inherit",
+            }}
+          >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: "none" }}>
               <div
                 className={active ? "ls-ops-ring" : undefined}
@@ -296,7 +350,7 @@ function RailSteps({ view }: { view: SalleOpsView }) {
                 </div>
               ) : null}
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -341,14 +395,18 @@ function ScriptBox({ script }: { script: string }) {
   );
 }
 
-function Step({ n, state, connectorDone, last }: { n: number; state: "done" | "active" | "todo" | "locked"; connectorDone: boolean; last: boolean }) {
+function Step({ n, state, connectorDone, last, picked, onPick }: { n: number; state: "done" | "active" | "todo" | "locked"; connectorDone: boolean; last: boolean; picked: boolean; onPick: (n: number) => void }) {
   const done = state === "done";
   const active = state === "active";
   const locked = state === "locked";
   return (
     <>
-      <div
+      <button
+        type="button"
+        disabled={locked}
+        onClick={() => onPick(n)}
         className={active ? "ls-ops-ring" : undefined}
+        aria-label={`Étape ${n}`}
         style={{
           width: active ? 30 : 26,
           height: active ? 30 : 26,
@@ -360,13 +418,17 @@ function Step({ n, state, connectorDone, last }: { n: number; state: "done" | "a
           fontSize: active ? 15 : 13,
           fontFamily: active ? "var(--ls-ops-font-display)" : "inherit",
           boxSizing: "border-box",
+          cursor: locked ? "default" : "pointer",
+          outline: picked && !active ? "2px solid var(--ls-ops-accent-text)" : "none",
+          outlineOffset: 2,
+          padding: 0,
           ...(done || active
-            ? { background: "var(--ls-ops-accent)", color: "var(--ls-ops-on-accent)", fontWeight: 700 }
-            : { border: "2px solid var(--ls-ops-disabled)", color: "var(--ls-ops-faint)" }),
+            ? { background: "var(--ls-ops-accent)", color: "var(--ls-ops-on-accent)", border: "none", fontWeight: 700 }
+            : { background: "transparent", border: "2px solid var(--ls-ops-disabled)", color: "var(--ls-ops-faint)" }),
         }}
       >
         {done ? "✓" : locked ? "🔒" : n}
-      </div>
+      </button>
       {!last && <div style={{ height: 2, flex: 1, background: connectorDone ? "var(--ls-ops-accent)" : "var(--ls-ops-hair)", margin: "0 6px" }} />}
     </>
   );
@@ -462,6 +524,32 @@ const limeCard: React.CSSProperties = {
   background: "var(--ls-ops-accent)",
   borderRadius: 18,
   padding: "18px 18px 16px",
+};
+
+const reviewBanner: React.CSSProperties = {
+  marginTop: 12,
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  background: "var(--ls-ops-surface)",
+  border: "1px solid var(--ls-ops-border-active)",
+  borderRadius: 12,
+  padding: "10px 12px",
+  fontSize: 12.5,
+  color: "var(--ls-ops-text3)",
+};
+
+const reviewBack: React.CSSProperties = {
+  flex: "none",
+  fontFamily: "var(--ls-ops-font-mono)",
+  fontSize: 11,
+  letterSpacing: ".04em",
+  color: "var(--ls-ops-accent-text)",
+  background: "transparent",
+  border: "1px solid var(--ls-ops-border-active)",
+  borderRadius: 999,
+  padding: "6px 11px",
+  cursor: "pointer",
 };
 
 const autoNote: React.CSSProperties = {
