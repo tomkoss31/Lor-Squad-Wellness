@@ -79,7 +79,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     faire: {
       instruction: "Poste ta story (photo + phrase ci-dessous) ET envoie le message cobaye à 5-10 personnes de ta liste.",
       script:
-        "Coucou [Prénom] ! Je me forme comme coach bien-être à La Base et je cherche quelques cobayes pour m'entraîner à faire des bilans (offert, 0 pression). Ça te dit de tester ? 🙌",
+        "Coucou [Prénom] ! Je me forme comme coach bien-être (à La Base) et je cherche quelques cobayes pour m'entraîner à faire des bilans (offert, 0 pression). Ça te dit de tester ? 🙌",
       ctaLabel: "C'est posté",
     },
     preuve: "C'est gagné quand ta story est en ligne ET tu as envoyé 5 messages cobaye.",
@@ -135,7 +135,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     goProLabel: "Présenter",
     title: "Ton 1er HOM",
     apprendre:
-      "Le HOM (45 min), c'est le rendez-vous qui DUPLIQUE : tes invités voient l'opportunité, et toi tu apprends par mimétisme — tes recrues invitent, tu présentes. Règle d'or : amène TOUS tes contacts curieux au HOM, pas seulement « ceux qui sont chauds ».",
+      "HOM = Herbalife Opportunity Meeting : LA présentation (~45 min) où l'on montre la nutrition ET l'opportunité — générer un revenu complémentaire, voire une reconversion pro. C'est le rendez-vous qui DUPLIQUE : tes invités voient l'opportunité, et toi tu apprends par mimétisme — tes recrues invitent, tu présentes. Règle d'or : amène TOUS tes contacts curieux, pas seulement « ceux qui sont chauds ».",
     faire: {
       instruction: "Amène au moins 1 invité au prochain HOM hebdo.",
       ctaLabel: "J'ai amené un invité",
