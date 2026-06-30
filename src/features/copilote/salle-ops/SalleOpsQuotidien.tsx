@@ -49,12 +49,19 @@ export function SalleOpsQuotidien({
       <div className="ls-ops-shell">
         {/* ── COLONNE FOCUS ── */}
         <div className="ls-ops-main" style={column}>
-          {/* Bandeau */}
-          <div style={{ display: "flex", alignItems: "center", gap: 9, ...MONO, fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>
-            <span className="ls-ops-dot" />
-            <span style={{ color: "var(--ls-ops-text3)" }}>La Base · Verdun (55)</span>
-            <span style={{ color: "var(--ls-ops-border-active)" }}>/</span>
-            <span style={{ color: "var(--ls-ops-accent-text)" }}>Jour {view.dayNumber} / 90</span>
+          {/* Bandeau + sortie toujours visible (anti-piège). */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, ...MONO, fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>
+              <span className="ls-ops-dot" />
+              <span style={{ color: "var(--ls-ops-text3)" }}>La Base · Verdun (55)</span>
+              <span style={{ color: "var(--ls-ops-border-active)" }}>/</span>
+              <span style={{ color: "var(--ls-ops-accent-text)" }}>Jour {view.dayNumber} / 90</span>
+            </div>
+            {onEscape ? (
+              <button type="button" onClick={onEscape} style={topEscape}>
+                Plus tard →
+              </button>
+            ) : null}
           </div>
 
           <div style={hair} />
@@ -355,6 +362,20 @@ const column: React.CSSProperties = {
   margin: "0 auto",
   padding: "0 24px",
   boxSizing: "border-box",
+};
+
+const topEscape: React.CSSProperties = {
+  flex: "none",
+  fontFamily: "var(--ls-ops-font-mono)",
+  fontSize: 11,
+  letterSpacing: ".06em",
+  textTransform: "uppercase",
+  color: "var(--ls-ops-text3)",
+  background: "var(--ls-ops-surface)",
+  border: "1px solid var(--ls-ops-border)",
+  borderRadius: 999,
+  padding: "7px 13px",
+  cursor: "pointer",
 };
 
 const hair: React.CSSProperties = {
