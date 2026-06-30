@@ -73,19 +73,22 @@ export interface SalleOpsView {
 const DAY_MS = 86_400_000;
 
 export function useSalleOps(): SalleOpsView {
-  const { tasks, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
+  const { statuses, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
 
   return useMemo(() => {
-    const doneByGate: Record<string, boolean> = {};
-    for (const t of tasks) doneByGate[t.key] = t.status === "done";
+    // État LU SUR LES CLÉS BRUTES (statuses) — inclut les clés hors
+    // STARTER_TASKS comme le setup `commande_250pv`. Sinon une étape dont la
+    // clé n'est pas dans les 15 tâches ne se validerait jamais (bug 2026-06-30).
+    const doneByGate = (k: string) => statuses[k] === "done";
 
     const activated = Boolean(activatedAt);
-    const stepDone = (g: GoProDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate[k]);
+    const stepDone = (g: GoProDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate(k));
 
     // Étape active = 1ʳᵉ étape ni faite ni verrouillée (relancer n'est jamais
-    // « done » → devient le focus une fois les portes 1-3 franchies).
+    // « done » → devient le focus une fois les portes franchies).
+    const relancerIndex = GOPRO.findIndex((g) => g.key === "relancer");
     const activeIndex = GOPRO.findIndex((g) => !g.locked && !stepDone(g));
-    const safeActiveIndex = activeIndex === -1 ? 3 : activeIndex; // fallback relancer
+    const safeActiveIndex = activeIndex === -1 ? relancerIndex : activeIndex;
 
     const steps: GoProStepView[] = GOPRO.map((g, i) => ({
       n: g.n,
@@ -101,13 +104,13 @@ export function useSalleOps(): SalleOpsView {
 
     // Porte + leçon courantes.
     const activeStep = GOPRO[safeActiveIndex];
-    const currentGateKey = activeStep.gates.find((k) => !doneByGate[k]) ?? null;
+    const currentGateKey = activeStep.gates.find((k) => !doneByGate(k)) ?? null;
     const lessonKey = currentGateKey ?? activeStep.lessonKey ?? null;
     const currentLesson = lessonKey ? ACADEMY_LESSONS[lessonKey] ?? null : null;
 
     // Phase 90j (tableau de marche) — dérivée simple sur les portes franchies.
-    const bilanDone = Boolean(doneByGate["premier_bilan"]);
-    const packDone = Boolean(doneByGate["premier_pv_pack"]);
+    const bilanDone = doneByGate("premier_bilan");
+    const packDone = doneByGate("premier_pv_pack");
     const phase: OpsPhase = activated || packDone ? "profondeur" : bilanDone ? "acceleration" : "allumage";
     const phaseIndex = OPS_PHASES.findIndex((p) => p.key === phase);
 
@@ -133,5 +136,5 @@ export function useSalleOps(): SalleOpsView {
       dayNumber,
       toggle,
     };
-  }, [tasks, activatedAt, starterStartedAt, loading, toggle]);
+  }, [statuses, activatedAt, starterStartedAt, loading, toggle]);
 }

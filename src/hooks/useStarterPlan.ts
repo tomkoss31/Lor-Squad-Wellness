@@ -27,6 +27,9 @@ export interface StarterTaskState extends StarterTask {
 
 interface UseStarterPlanResult {
   tasks: StarterTaskState[];
+  /** État brut par clé (inclut les clés HORS STARTER_TASKS, ex. setup
+      `commande_250pv` du cockpit). Source de vérité pour useSalleOps. */
+  statuses: Record<string, StarterStatus>;
   doneCount: number;
   total: number;
   /** Tâches-portes cochées / total des portes. */
@@ -136,6 +139,7 @@ export function useStarterPlan(): UseStarterPlanResult {
 
   return {
     tasks,
+    statuses,
     doneCount,
     total: STARTER_TASKS.length,
     gateDone,
