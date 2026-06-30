@@ -20,9 +20,10 @@ export const OPS_PHASES: { key: OpsPhase; label: string; short: string }[] = [
   { key: "levier", label: "Levier", short: "Levier" },
 ];
 
-// Les 6 étapes Go Pro = la colonne vertébrale du parcours (décision Thomas).
-// Chaque étape « apprendre à faire » mappe une ou plusieurs portes serveur.
-// Les étapes 5-6 (« faire faire ») arrivent en V2 → verrouillées pour l'instant.
+// Le parcours = S'équiper + 6 étapes Go Pro (décision Thomas). Chaque étape
+// « apprendre à faire » mappe une ou plusieurs portes serveur. Les étapes
+// « faire faire » (Démarrer ta recrue / Dupliquer) n'ont pas de porte : ce sont
+// des compétences post-activation, navigables en lecture (V2).
 interface GoProDef {
   n: number;
   key: string;
@@ -39,8 +40,8 @@ const GOPRO: GoProDef[] = [
   { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
   { n: 4, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
   { n: 5, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
-  { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], locked: true },
-  { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], locked: true },
+  { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], lessonKey: "demarrer_recrue" },
+  { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], lessonKey: "dupliquer" },
 ];
 
 export type StepState = "done" | "active" | "todo" | "locked";

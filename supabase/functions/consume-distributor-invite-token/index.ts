@@ -180,6 +180,9 @@ serve(async (req) => {
       coaching_since: coachingSince,
       herbalife_id: herbalifeId,
       avatar_url: avatarUrl,
+      // Ancre Jour 0 de La Base Académie = moment du sponsoring (création du
+      // compte recrue). Alimente le compteur « Jour X / 90 » du cockpit.
+      starter_started_at: new Date().toISOString(),
     });
 
     if (userInsertErr) {

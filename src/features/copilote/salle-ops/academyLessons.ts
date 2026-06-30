@@ -175,4 +175,45 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     preuve: "C'est gagné quand tu as relancé 3 contacts cette semaine.",
     noalyPrompt: "Écris-moi un message de relance léger pour quelqu'un qui n'a pas répondu, sans mettre la pression.",
   },
+
+  // ── Étape 5 · DÉMARRER TA RECRUE (faire faire) ───────────────────────────
+  demarrer_recrue: {
+    goProStep: 5,
+    goProLabel: "Démarrer ta recrue",
+    title: "Démarre ta 1ʳᵉ recrue",
+    apprendre:
+      "Le vrai déclic : tu deviens « ouvreur de ligne ». Tu fais vivre à ta recrue le MÊME parcours que toi — tu lui ouvres ce cockpit (elle a son propre Jour 0). Méthode Show → Try → Do : tu co-animes ses 4 premiers clients ENSEMBLE (tu fais → vous faites à deux → elle fait, tu observes). Et la certification : personne n'est « formé » sans avoir exécuté le flow une fois, observé. Tu tiens le cadre 90 jours, mais tu ne la portes pas à bout de bras.",
+    faire: {
+      instruction: "Parraine ta 1ʳᵉ recrue, ouvre-lui son cockpit et cale son RDV de démarrage (30-45 min).",
+      ctaLabel: "Parrainer une recrue",
+    },
+    preuve: "C'est gagné quand ta recrue a passé sa commande 250 PV et démarré sa Liste 100 — avec toi.",
+    repondre: [
+      {
+        situation: "« Je sais pas comment démarrer quelqu'un »",
+        reponse: "Tu n'inventes rien : tu lui ouvres ce même cockpit et tu fais ses 4 premiers clients AVEC elle (Show-Try-Do). Le parcours fait le travail.",
+      },
+      {
+        situation: "« Ma recrue ne fait rien »",
+        reponse: "Tu ne veux pas plus qu'elle. Tu proposes le cadre 90 j, tu coaches les ACTIONS (combien d'invitations ? de bilans ?), et si elle ne joue pas le jeu, elle reste cliente — c'est ok aussi.",
+      },
+    ],
+    noalyPrompt: "Comment je démarre ma 1ʳᵉ recrue avec la méthode Show-Try-Do, étape par étape ?",
+  },
+
+  // ── Étape 6 · DUPLIQUER (faire faire) ────────────────────────────────────
+  dupliquer: {
+    goProStep: 6,
+    goProLabel: "Dupliquer",
+    title: "Dupliquer",
+    apprendre:
+      "Dupliquer = créer des coachs qui ont leurs propres coachs. Profondeur d'abord : tu installes LA méthode dans une ligne jusqu'à trouver 1 vrai leader (une jambe profonde = sécurité + preuve duplicable). La largeur fait le revenu, mais seulement après avoir prouvé la profondeur. Vision en grand (Club, leaders), étapes en petit.",
+    faire: {
+      instruction: "Aide ta recrue à parrainer SA 1ʳᵉ recrue (ta 2ᵉ génération). C'est là que le revenu décolle.",
+      ctaLabel: "Voir mon équipe",
+      linkPath: "/team",
+    },
+    preuve: "C'est gagné quand ta recrue a démarré quelqu'un à son tour — ta 1ʳᵉ duplication.",
+    noalyPrompt: "Comment j'aide ma recrue à dupliquer (parrainer et démarrer quelqu'un à son tour) ?",
+  },
 };

@@ -277,7 +277,37 @@ export function CoPiloteV5Page() {
 
       {/* L'ancien « Mon démarrage 30 jours » (StarterPlanCard) est retiré :
           remplacé par la Salle des Opérations (switch §3 ci-dessus). Le distri
-          non activé voit le cockpit ; l'activé n'a plus de nudge ici. */}
+          non activé voit le cockpit ; l'activé garde un accès « continuer ». */}
+      {currentUser.role === "distributor" && ops.activated ? (
+        <button
+          type="button"
+          onClick={() => navigate("/salle-ops")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+            textAlign: "left",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 16,
+            padding: "14px 16px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
+              La Base Académie — continuer
+            </span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Étapes « faire faire » : démarrer ta recrue, dupliquer.
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--ls-text-muted)" }}>→</span>
+        </button>
+      ) : null}
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv

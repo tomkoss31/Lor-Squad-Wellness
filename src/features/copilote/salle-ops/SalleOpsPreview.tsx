@@ -45,7 +45,7 @@ const TABS: { key: Screen; label: string }[] = [
 ];
 
 export function SalleOpsPreview() {
-  const [screen, setScreen] = useState<Screen>("jour0");
+  const [screen, setScreen] = useState<Screen>("live");
   const ops = useSalleOps();
 
   return (
