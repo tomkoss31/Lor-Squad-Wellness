@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
+import { InviteDistributorModal } from "../../../components/users/InviteDistributorModal";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
@@ -36,6 +37,7 @@ export function SalleOpsQuotidien({
   // Étape consultée : null = on suit l'étape en cours ; sinon on revoit une
   // étape (avant/après) sans la valider.
   const [viewedN, setViewedN] = useState<number | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const activeN = view.activeStepNumber;
   const shownN = viewedN ?? activeN;
   const shownStep = view.steps.find((s) => s.n === shownN) ?? view.steps[0];
@@ -56,6 +58,10 @@ export function SalleOpsQuotidien({
 
   function runFaire() {
     if (!lesson) return;
+    if (lesson.faire.opensInvite) {
+      setInviteOpen(true);
+      return;
+    }
     if (lesson.faire.linkPath) navigate(lesson.faire.linkPath);
     else if (shownGateKey) void view.toggle(shownGateKey);
   }
@@ -127,8 +133,8 @@ export function SalleOpsQuotidien({
                   {lesson.faire.instruction}
                 </p>
                 {lesson.faire.script ? <ScriptBox script={lesson.faire.script} /> : null}
-                {/* CTA outil : seulement si l'étape mène à un outil (lien). */}
-                {lesson.faire.linkPath ? (
+                {/* CTA : outil (lien) OU ouverture du parrainage. */}
+                {lesson.faire.linkPath || lesson.faire.opensInvite ? (
                   <button type="button" style={limeCta} onClick={runFaire}>{lesson.faire.ctaLabel} →</button>
                 ) : null}
               </div>
@@ -228,6 +234,9 @@ export function SalleOpsQuotidien({
         </aside>
       </div>
 
+      {/* Parrainage d'une recrue (étape « Démarrer ta recrue »). Le coach
+          connecté devient le sponsor — l'edge dérive le parrain de l'auth. */}
+      <InviteDistributorModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }

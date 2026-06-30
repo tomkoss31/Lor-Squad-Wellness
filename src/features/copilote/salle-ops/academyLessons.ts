@@ -24,6 +24,8 @@ export interface AcademyLesson {
     ctaLabel: string;
     /** Lien outil ; absent = action auto-déclarée (coche l'étape). */
     linkPath?: string;
+    /** Ouvre le modal d'invitation distributeur (le coach connecté = parrain). */
+    opensInvite?: boolean;
   };
   /** 3 · PREUVE — « c'est gagné quand… » (un acte réel, pas « j'ai lu »). */
   preuve: string;
@@ -186,6 +188,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     faire: {
       instruction: "Parraine ta 1ʳᵉ recrue, ouvre-lui son cockpit et cale son RDV de démarrage (30-45 min).",
       ctaLabel: "Parrainer une recrue",
+      opensInvite: true,
     },
     preuve: "C'est gagné quand ta recrue a passé sa commande 250 PV et démarré sa Liste 100 — avec toi.",
     repondre: [
