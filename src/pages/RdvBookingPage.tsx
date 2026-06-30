@@ -22,6 +22,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 
 type Mode = "presentiel" | "visio";
 const SLOT_MINUTES = 30;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function capitalize(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -64,6 +65,7 @@ export function RdvBookingPage() {
   const [mode, setMode] = useState<Mode>("visio");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -103,7 +105,8 @@ export function RdvBookingPage() {
   useEffect(() => { void loadSlots(); }, [loadSlots]);
 
   const selectedGroup = groups.find((g) => g.key === selectedKey) ?? null;
-  const canConfirm = selectedSlot !== null && !submitting;
+  const emailValid = EMAIL_RE.test(email.trim());
+  const canConfirm = selectedSlot !== null && emailValid && !submitting;
 
   const slotEnd = useMemo(
     () => (selectedSlot ? new Date(selectedSlot.getTime() + SLOT_MINUTES * 60_000) : null),
@@ -129,7 +132,7 @@ export function RdvBookingPage() {
     const sb = await getSupabaseClient();
     if (!sb) { setBookingError("Connexion indisponible."); setSubmitting(false); return; }
     const { data, error } = await sb.functions.invoke("book-rdv", {
-      body: { coachSlug: slug, mode, slotStart: selectedSlot.toISOString(), firstName },
+      body: { coachSlug: slug, mode, slotStart: selectedSlot.toISOString(), firstName, contact: email.trim() },
     });
     const res = data as { success?: boolean; error?: string } | null;
     if (error || !res?.success) {
@@ -167,7 +170,7 @@ export function RdvBookingPage() {
             {prettyWhen} · {mode === "visio" ? "en visio" : "en présentiel"}.
           </p>
           <p style={{ fontSize: 13.5, color: "var(--cream-hint)", lineHeight: 1.6, maxWidth: 420, margin: "0 auto 28px" }}>
-            Ton coach{coachName ? ` ${coachName}` : ""} a été prévenu. Ajoute le créneau à ton agenda pour ne pas l'oublier.
+            Ton coach{coachName ? ` ${coachName}` : ""} a été prévenu et un email de confirmation vient de partir vers {email.trim() || "ta boîte mail"}. Ajoute le créneau à ton agenda pour ne pas l'oublier.
           </p>
           <a
             href={gcalHref}
@@ -307,6 +310,35 @@ export function RdvBookingPage() {
         {bookingError && (
           <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(251,113,133,0.12)", color: PUBLIC_TOKENS.coral, fontSize: 13, border: "1px solid rgba(251,113,133,0.4)" }}>
             {bookingError}
+          </div>
+        )}
+
+        {groups.length > 0 && selectedSlot && (
+          <div style={{ marginBottom: 18 }}>
+            <label
+              htmlFor="rdv-email"
+              style={{ display: "block", fontFamily: PUBLIC_FONTS.display, fontSize: 13, fontWeight: 600, color: "var(--cream-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}
+            >
+              Ton email
+            </label>
+            <input
+              id="rdv-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setBookingError(null); }}
+              placeholder="prenom@email.com"
+              style={{
+                width: "100%", boxSizing: "border-box", padding: "14px 16px", borderRadius: 14,
+                background: "var(--glass)",
+                border: `1px solid ${email.length > 0 && !emailValid ? PUBLIC_TOKENS.coral : "var(--hair)"}`,
+                color: "var(--cream)", fontFamily: PUBLIC_FONTS.body, fontSize: 15, outline: "none",
+              }}
+            />
+            <p style={{ marginTop: 8, fontSize: 12.5, color: "var(--cream-hint)", fontFamily: PUBLIC_FONTS.body, lineHeight: 1.5 }}>
+              Pour recevoir ta confirmation et un rappel la veille. 🌿
+            </p>
           </div>
         )}
 
