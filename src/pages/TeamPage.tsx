@@ -438,8 +438,8 @@ export function TeamPage() {
                 Academy & Formation par membre
               </h2>
               <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
-                Visualise en 1 vue la progression Academy (12 sections) et Formation pyramide (N1/N2/N3).
-                Click sur une carte pour voir le détail XP + activité.
+                Visualise en 1 vue le démarrage La Base Académie, l'Academy (12 sections) et la Formation
+                (Démarrer · Construire · Dupliquer). Clique sur une carte pour voir le détail XP + activité.
               </p>
             </div>
             {engagementLoading ? (

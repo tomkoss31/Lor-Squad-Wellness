@@ -8,6 +8,7 @@
 
 import type { TeamMemberEngagement } from "../../hooks/useTeamEngagement";
 import { STATUS_META } from "../../hooks/useTeamEngagement";
+import { useTeamStarterProgress, type MemberStarter } from "../../hooks/useTeamStarterProgress";
 
 interface LearningGridProps {
   members: TeamMemberEngagement[];
@@ -34,6 +35,7 @@ function initialsOf(name: string): string {
 
 export function LearningGrid({ members, excludeRootId, onMemberClick }: LearningGridProps) {
   const visible = members.filter((m) => !excludeRootId || m.user_id !== excludeRootId);
+  const { byUser } = useTeamStarterProgress();
 
   if (visible.length === 0) {
     return (
@@ -46,7 +48,7 @@ export function LearningGrid({ members, excludeRootId, onMemberClick }: Learning
   return (
     <div style={gridStyle}>
       {visible.map((m) => (
-        <LearningCard key={m.user_id} member={m} onClick={() => onMemberClick?.(m.user_id)} />
+        <LearningCard key={m.user_id} member={m} starter={byUser[m.user_id]} onClick={() => onMemberClick?.(m.user_id)} />
       ))}
     </div>
   );
@@ -54,9 +56,11 @@ export function LearningGrid({ members, excludeRootId, onMemberClick }: Learning
 
 function LearningCard({
   member,
+  starter,
   onClick,
 }: {
   member: TeamMemberEngagement;
+  starter?: MemberStarter;
   onClick?: () => void;
 }) {
   const academyColor =
@@ -81,6 +85,33 @@ function LearningCard({
           </div>
         </div>
         <span style={statusBadgeStyle(status.color)}>{status.emoji}</span>
+      </div>
+
+      {/* La Base Académie (cockpit onboarding) */}
+      <div style={blockStyle}>
+        <div style={blockLabelStyle}>
+          <span>🚀 La Base Académie</span>
+          {starter ? (
+            starter.activated ? (
+              <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>lancé·e ✓</span>
+            ) : (
+              <span style={{ color: starter.done > 0 ? "var(--ls-gold)" : "var(--ls-text-muted)", fontWeight: 700 }}>
+                {starter.done}/{starter.total}
+              </span>
+            )
+          ) : (
+            <span style={{ color: "var(--ls-text-muted)" }}>pas démarré</span>
+          )}
+        </div>
+        <div style={progressBarBgStyle}>
+          <div
+            style={{
+              ...progressBarFillStyle,
+              background: starter?.activated ? "var(--ls-teal)" : "var(--ls-gold)",
+              width: `${starter ? Math.round((starter.done / starter.total) * 100) : 0}%`,
+            }}
+          />
+        </div>
       </div>
 
       {/* Academy progress */}
@@ -113,19 +144,19 @@ function LearningCard({
         </div>
         <div style={pyramidRowStyle}>
           <PyramidStep
-            label="N1"
+            label="Démarrer"
             validated={member.formation_validated_n1}
             total={N1_TOTAL}
             color="var(--ls-gold)"
           />
           <PyramidStep
-            label="N2"
+            label="Construire"
             validated={member.formation_validated_n2}
             total={N2_TOTAL}
             color="var(--ls-teal)"
           />
           <PyramidStep
-            label="N3"
+            label="Dupliquer"
             validated={member.formation_validated_n3}
             total={N3_TOTAL}
             color="var(--ls-purple)"
