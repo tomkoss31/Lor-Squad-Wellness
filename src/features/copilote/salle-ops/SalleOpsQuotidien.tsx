@@ -109,12 +109,18 @@ export function SalleOpsQuotidien({
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
                 </div>
-                {/* Auto-déclaration : indispensable pour les étapes à lien (sinon
-                    on resterait coincé dessus, faute de trigger serveur). */}
-                {view.currentGateKey ? (
-                  <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
-                    ✓ C'est fait — étape suivante
-                  </button>
+                {/* Validation = on avance. Pour les étapes à OUTIL (lien), le CTA
+                    t'emmène faire l'action ; tu reviens cocher ici pour passer à
+                    la suite. Pour les étapes auto-déclarées, le CTA suffit déjà. */}
+                {lesson.faire.linkPath && view.currentGateKey ? (
+                  <>
+                    <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
+                      ✓ C'est fait — passer à l'étape suivante
+                    </button>
+                    <div style={{ ...MONO, fontSize: 10.5, letterSpacing: ".04em", color: "var(--ls-ops-faint)", textAlign: "center", marginTop: 8 }}>
+                      Fais l'action ci-dessus, puis reviens cocher ici.
+                    </div>
+                  </>
                 ) : null}
               </div>
 
@@ -469,15 +475,16 @@ const limeCard: React.CSSProperties = {
 const doneBtn: React.CSSProperties = {
   width: "100%",
   marginTop: 14,
-  background: "transparent",
-  border: "1px solid var(--ls-ops-border-active)",
-  color: "var(--ls-ops-accent-text)",
+  background: "var(--ls-ops-accent)",
+  border: "none",
+  color: "var(--ls-ops-on-accent)",
   borderRadius: 12,
-  padding: 12,
-  fontSize: 14,
-  fontWeight: 600,
+  padding: 14,
+  fontSize: 15,
+  fontWeight: 700,
   cursor: "pointer",
   fontFamily: "inherit",
+  minHeight: 44,
 };
 
 const scriptBox: React.CSSProperties = {
