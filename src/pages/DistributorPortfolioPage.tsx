@@ -40,6 +40,7 @@ import {
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
 import { currentMonthIso } from "../lib/herbalifeFormulas";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
+import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 import type { HerbalifeRank } from "../types/domain";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
@@ -270,6 +271,8 @@ export function DistributorPortfolioPage() {
             <div className="ls-portfolio-hero__meta">
               <RoleBadge role={portfolioUser.role} />
               <span>{portfolioUser.title || "La Base 360"}</span>
+              {/* Moteur d'équipe PR3 : niveau de pilotage dérivé + override admin. */}
+              <PilotageLevelBadge userId={portfolioUser.id} editable={isAdmin} />
             </div>
           </div>
         </div>

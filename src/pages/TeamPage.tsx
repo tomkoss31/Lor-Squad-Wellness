@@ -20,6 +20,7 @@ import { useAppContext } from "../context/AppContext";
 import type { Client, Prospect, HerbalifeRank } from "../types/domain";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { DistriQuickModal } from "../components/team/DistriQuickModal";
+import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 // Hub équipe centralisé (2026-05-04) — 5 onglets : Vue d'ensemble (XP),
 // Engagement, Apprentissage, Arbre lignée, Gamification.
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
@@ -437,8 +438,8 @@ export function TeamPage() {
                 Academy & Formation par membre
               </h2>
               <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
-                Visualise en 1 vue la progression Academy (12 sections) et Formation pyramide (N1/N2/N3).
-                Click sur une carte pour voir le détail XP + activité.
+                Visualise en 1 vue le démarrage La Base Académie, l'Academy (12 sections) et la Formation
+                (Démarrer · Construire · Dupliquer). Clique sur une carte pour voir le détail XP + activité.
               </p>
             </div>
             {engagementLoading ? (
@@ -1062,6 +1063,10 @@ function DistributorDetailCard({
               {row.title || "Distributeur"}
               {sponsorName ? ` · Parrainé·e par ${sponsorName}` : ""}
               {!isCouple && row.created_at ? ` · Depuis ${memberSince}` : ""}
+            </div>
+            {/* Moteur d'équipe PR3 : niveau de pilotage (masqué pour les couples). */}
+            <div style={{ marginTop: 6 }}>
+              <PilotageLevelBadge userId={row.user_id} />
             </div>
           </div>
         </div>

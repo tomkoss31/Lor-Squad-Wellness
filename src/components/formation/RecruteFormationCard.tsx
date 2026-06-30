@@ -134,7 +134,7 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
                   flexShrink: 0,
                 }}
               >
-                N{level.order} {level.title}
+                {level.title}
               </span>
               <div
                 style={{

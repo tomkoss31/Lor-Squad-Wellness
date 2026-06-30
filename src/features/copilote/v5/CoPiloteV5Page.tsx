@@ -44,6 +44,11 @@ import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
 import { useWeatherForecast } from "./hooks/useWeatherForecast";
+// Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
+import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
+// Salle des Opérations (onboarding distri) : switch de rendu §3.
+import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
+import { useSalleOps } from "../salle-ops/useSalleOps";
 
 import "./copilote-v5.css";
 
@@ -70,6 +75,13 @@ export function CoPiloteV5Page() {
   // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
   // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
   const timeContext = useTimeContext();
+
+  // Switch §3 — Salle des Opérations : vue cockpit pour la recrue non activée.
+  const ops = useSalleOps();
+  // Échappatoire « Plus tard » (par session) : ne verrouille jamais l'app.
+  const [opsEscaped, setOpsEscaped] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem("ls-ops-escape") === "1",
+  );
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -113,6 +125,23 @@ export function CoPiloteV5Page() {
   // checklist onboarding — un passif ne fait pas le business.
   if (currentUser.isPassiveSupervisor) {
     return <CoPilotePassiveView firstName={firstName} />;
+  }
+
+  // ═══ Switch §3 — Salle des Opérations (incorporation onboarding) ═══
+  // Tant qu'un membre n'est pas « activé » (5 portes franchies), son Co-pilote EST
+  // le cockpit plein écran : 1 action du jour, pas l'app lourde. Tous les rôles
+  // (« on est tous nouveaux sur l'app ») — sauf échappatoire « Plus tard ».
+  if (!ops.loading && !ops.activated && !opsEscaped) {
+    return (
+      <SalleOpsQuotidien
+        view={ops}
+        fullscreen
+        onEscape={() => {
+          sessionStorage.setItem("ls-ops-escape", "1");
+          setOpsEscaped(true);
+        }}
+      />
+    );
   }
 
   return (
@@ -214,6 +243,20 @@ export function CoPiloteV5Page() {
 
           {/* Cloche + theme toggle = doublons du MobileHeader (Onde 1) →
               masqués sur mobile via [data-v5-topbar-dups]. */}
+          {opsEscaped && !ops.activated ? (
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem("ls-ops-escape");
+                setOpsEscaped(false);
+              }}
+              style={pillIconStyle}
+              aria-label="Revenir à La Base Académie"
+              title="Revenir à La Base Académie"
+            >
+              <span aria-hidden="true">▦</span>
+            </button>
+          ) : null}
           <span data-v5-topbar-dups style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <AnnouncementBell />
             <button
@@ -232,6 +275,40 @@ export function CoPiloteV5Page() {
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
 
+      {/* L'ancien « Mon démarrage 30 jours » (StarterPlanCard) est retiré :
+          remplacé par la Salle des Opérations (switch §3 ci-dessus). Le distri
+          non activé voit le cockpit ; l'activé garde un accès « continuer ». */}
+      {currentUser.role === "distributor" && ops.activated ? (
+        <button
+          type="button"
+          onClick={() => navigate("/salle-ops")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+            textAlign: "left",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 16,
+            padding: "14px 16px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
+              La Base Académie — continuer
+            </span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Étapes « faire faire » : démarrer ta recrue, dupliquer.
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--ls-text-muted)" }}>→</span>
+        </button>
+      ) : null}
+
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv
           aujourd hui (naissance ou +1m/+3m/+6m programme). Auto-hidden
@@ -246,6 +323,10 @@ export function CoPiloteV5Page() {
           doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
       <PlanDuJour data={data} />
+
+      {/* Métrique-reine équipe : expositions de la semaine, reléguée tout en bas
+          (sous le Plan du jour). Liste équipe repliée + filtre à l'intérieur. */}
+      <ExposuresWeekCard />
 
       {/* Footer légal */}
       <LegalFooter />

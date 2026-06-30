@@ -325,6 +325,14 @@ const CoPiloteV5Page = lazy(() =>
     default: module.CoPiloteV5Page,
   }))
 );
+// Chantier « Salle des Opérations » (onboarding distri, 2026-06-29) — slice 1 :
+// route preview provisoire pour recetter le look pixel-fidèle de la maquette.
+// Le switch de rendu sur /co-pilote (§3) viendra une fois le look validé.
+const SalleDesOperationsPage = lazy(() =>
+  import("./features/copilote/salle-ops/SalleOpsPreview").then((module) => ({
+    default: module.SalleOpsPreview,
+  }))
+);
 // Chantier La Base 360 Academy Phase 1 (2026-04-26) : parcours onboarding
 // distri en 8 sections. Overview = liste + progression, /academy/:sectionId
 // = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
@@ -677,6 +685,8 @@ export default function App() {
                   stable en prod) → CoPilotePage/RentabilityWidget/Gauge supprimés.
                   Rollback éventuel = historique git. */}
               <Route path="co-pilote" element={<CoPiloteV5Page />} />
+              {/* Preview provisoire Salle des Opérations (slice 1, recette look). */}
+              <Route path="salle-ops" element={<SalleDesOperationsPage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =
@@ -706,6 +716,9 @@ export default function App() {
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
               <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
+              {/* Ancien « Mon démarrage 30 jours » retiré (remplacé par la Salle
+                  des Opérations sur /co-pilote). Redirige les vieux liens. */}
+              <Route path="demarrage" element={<Navigate to="/co-pilote" replace />} />
               <Route path="suivis-du-jour" element={<SuivisDuJourPage />} />
               <Route path="travaux" element={<TravauxPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />

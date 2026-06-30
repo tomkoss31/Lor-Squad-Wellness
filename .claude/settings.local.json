@@ -139,7 +139,19 @@
       "Bash(xxd)",
       "Bash(gunzip -c bundle.bin)",
       "Bash(tar -xf raw.tar)",
-      "Bash(grep -n \"import.*Card\\\\|</div>\\\\s*$\\\\|return \\(\\\\|PublicProfileShareCard\\\\|PaymentSettingsCard\\\\|RdvAvailabilityCard\\\\|<section\\\\|</section>\" src/components/settings/ProfilTab.tsx)"
+      "Bash(grep -n \"import.*Card\\\\|</div>\\\\s*$\\\\|return \\(\\\\|PublicProfileShareCard\\\\|PaymentSettingsCard\\\\|RdvAvailabilityCard\\\\|<section\\\\|</section>\" src/components/settings/ProfilTab.tsx)",
+      "WebFetch(domain:claude.ai)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "Bash(find /c/Users/tomko/Downloads /c/Users/tomko/Desktop /c/Users/tomko/Documents -maxdepth 3 -iname \"*salle*op*onboard*.zip\" 2>/dev/null; echo \"---also any recent zip---\"; ls -lt /c/Users/tomko/Downloads/*.zip 2>/dev/null | head -10)",
+      "Bash(mkdir -p /c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/salle-ops)",
+      "Bash(unzip -o '/c/Users/tomko/Downloads/Salle des opérations onboarding-handoff.zip' -d /c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/salle-ops)",
+      "Read(//c/Users/tomko/AppData/Local/Temp/claude/C--Users-tomko-Documents-Lor-Squad-Wellness--claude-worktrees-sleepy-heisenberg-dda4bc/355c21f7-aa48-4c1b-8d4f-318c883e9d0b/scratchpad/**)",
+      "mcp__visualize__show_widget",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('total',len\\(d\\)\\); from collections import Counter; print\\('roles',Counter\\(u['role'] for u in d\\)\\); print\\('activated', sum\\(1 for u in d if u['activated_at']\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('avec J0:', sum\\(1 for u in d if u['starter_started_at']\\),'/',len\\(d\\)\\)\")",
+      "mcp__63642766-4e3c-4390-a4af-54079c45f737__notion-search",
+      "mcp__63642766-4e3c-4390-a4af-54079c45f737__notion-fetch",
+      "Bash(grep -nE \"^  \\\\{$|^    id: \\\\\"\" src/features/academy/sections.ts)"
     ]
   }
 }

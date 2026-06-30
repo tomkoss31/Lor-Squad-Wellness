@@ -17,6 +17,53 @@ function fmtWhen(iso: string): string {
   }).format(d);
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function fmtShort(iso: string): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris",
+  }).format(new Date(iso));
+}
+
+// Statut des mails (confirmation + rappel J-1) pour 1 RDV prospect.
+function EmailStatus({ booking }: { booking: RdvBooking }) {
+  const hasEmail = Boolean(booking.contact && EMAIL_RE.test(booking.contact));
+
+  if (!hasEmail) {
+    return (
+      <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5, display: "flex", alignItems: "center", gap: 5 }}>
+        <span aria-hidden="true">📵</span>
+        Pas d'email — relance par tél / WhatsApp
+      </div>
+    );
+  }
+
+  const confirmed = Boolean(booking.confirm_email_sent_at);
+  const reminded = Boolean(booking.reminder_email_sent_at);
+
+  const chip = (ok: boolean, label: string, sentAt: string | null) => (
+    <span
+      title={ok && sentAt ? `Envoyé le ${fmtShort(sentAt)}` : undefined}
+      style={{
+        fontSize: 11, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4,
+        padding: "2px 8px", borderRadius: 999,
+        background: ok ? "color-mix(in srgb, var(--ls-teal) 13%, transparent)" : "var(--ls-surface)",
+        color: ok ? "var(--ls-teal)" : "var(--ls-text-muted)",
+        border: ok ? "none" : "0.5px solid var(--ls-border)",
+      }}
+    >
+      {ok ? "✓" : "•"} {label}
+    </span>
+  );
+
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+      {chip(confirmed, "Confirmation mail", booking.confirm_email_sent_at)}
+      {chip(reminded, reminded ? "Rappel J-1 envoyé" : "Rappel J-1 prévu", booking.reminder_email_sent_at)}
+    </div>
+  );
+}
+
 function googleCalUrl(b: RdvBooking): string {
   const fmt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const modeLabel = b.mode === "visio" ? "Visio" : "Présentiel";
@@ -82,6 +129,7 @@ export function RdvBookingsWidget() {
               <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 3 }}>
                 {fmtWhen(b.slot_start)}{b.contact ? ` · ${b.contact}` : ""}
               </div>
+              <EmailStatus booking={b} />
             </div>
 
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

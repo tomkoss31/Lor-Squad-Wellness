@@ -1,0 +1,64 @@
+/* =============================================================================
+   Salle des Opérations — animations + helpers (chantier onboarding distri).
+   Palette = tokens --ls-ops-* (globals.css). Aucun hex en dur ici.
+   Maquette Claude Design validée 2026-06-29.
+   ============================================================================= */
+
+@keyframes ls-ops-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .35; transform: scale(.82); }
+}
+
+@keyframes ls-ops-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--ls-ops-rgb-accent), .55); }
+  70%  { box-shadow: 0 0 0 7px rgba(var(--ls-ops-rgb-accent), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--ls-ops-rgb-accent), 0); }
+}
+
+.ls-ops-root {
+  background: var(--ls-ops-bg);
+  color: var(--ls-ops-ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+.ls-ops-mono { font-family: var(--ls-ops-font-mono); }
+.ls-ops-display { font-family: var(--ls-ops-font-display); font-weight: 400; text-transform: uppercase; }
+
+.ls-ops-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ls-ops-accent);
+  animation: ls-ops-pulse 1.8s ease-in-out infinite;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-ops-dot { animation: none; }
+  .ls-ops-ring { animation: none !important; }
+}
+
+/* ── Responsive : mobile = colonne unique · desktop = focus + rail latéral ── */
+.ls-ops-rail { display: none; }
+
+@media (min-width: 1000px) {
+  .ls-ops-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 36px;
+    max-width: 1120px;
+    margin: 0 auto;
+    align-items: start;
+    padding: 0 32px;
+  }
+  .ls-ops-main { padding-left: 0; padding-right: 0; }
+  .ls-ops-rail {
+    display: block;
+    position: sticky;
+    top: 24px;
+    border-left: 1px solid var(--ls-ops-border-soft);
+    padding-left: 28px;
+  }
+  /* Sur desktop, ces sections vivent dans le rail → on masque leur version inline. */
+  .ls-ops-hide-desktop { display: none !important; }
+}

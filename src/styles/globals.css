@@ -129,6 +129,37 @@
   --ls-radius-lg: 16px;
   --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
   --ls-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+
+  /* ── Salle des Opérations (war-room onboarding distri) — namespace dédié, DARK.
+     Palette de la maquette Claude Design validée (2026-06-29). Isolé du reste de
+     l'app (comme --biz-* pour BusinessPage) → ne recolore rien d'autre.
+     Polices : Anton (titres CAPS) + JetBrains Mono (labels terminal). */
+  --ls-ops-bg: #0a0c0a;
+  --ls-ops-surface: #141813;
+  --ls-ops-surface2: #101510;
+  --ls-ops-rail: #0c0f0c;
+  --ls-ops-border: #20261e;
+  --ls-ops-border-soft: #1c211b;
+  --ls-ops-border-active: #2a3326;
+  --ls-ops-hair: #23291f;
+  --ls-ops-ink: #f6f6f1;
+  --ls-ops-text2: #c3ccc0;
+  --ls-ops-text3: #aeb8ac;
+  --ls-ops-muted: #8a948a;
+  --ls-ops-faint: #5f6a5d;
+  --ls-ops-disabled: #353d31;
+  --ls-ops-accent: #c5f82a;
+  --ls-ops-accent2: #a6d40a;
+  --ls-ops-accent-text: #c5f82a;   /* texte lime — lisible sur fond sombre */
+  --ls-ops-on-accent: #0a1400;     /* texte foncé posé SUR un bloc lime */
+  --ls-ops-on-accent2: #1c3300;
+  --ls-ops-on-accent3: #234500;
+  --ls-ops-hot: #ff8453;
+  --ls-ops-warm: #ffc14d;
+  --ls-ops-cta-bg: #0a0c0a;        /* bouton sombre posé sur un bloc lime */
+  --ls-ops-rgb-accent: 197, 248, 42;
+  --ls-ops-font-display: 'Anton', 'Syne', sans-serif;
+  --ls-ops-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 html.theme-light {
@@ -161,6 +192,33 @@ html.theme-light {
   --ls-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
   --ls-icon: #6B7280;
   --ls-icon-active: #111827;
+
+  /* ── Salle des Opérations — CLAIR (theme-aware). Le fill lime reste vif, mais
+     le TEXTE lime fonce (#56770a) pour rester lisible sur fond clair. */
+  --ls-ops-bg: #eef1e8;
+  --ls-ops-surface: #ffffff;
+  --ls-ops-surface2: #f6f8f0;
+  --ls-ops-rail: #e7ebdd;
+  --ls-ops-border: #e3e7db;
+  --ls-ops-border-soft: #dde1d4;
+  --ls-ops-border-active: #9fc62e;
+  --ls-ops-hair: #d3d9c6;
+  --ls-ops-ink: #15180f;
+  --ls-ops-text2: #495143;
+  --ls-ops-text3: #5b6450;
+  --ls-ops-muted: #8a917e;
+  --ls-ops-faint: #9aa28e;
+  --ls-ops-disabled: #cdd3c0;
+  --ls-ops-accent: #c5f82a;
+  --ls-ops-accent2: #a6d40a;
+  --ls-ops-accent-text: #56770a;   /* texte lime foncé — lisible sur fond clair */
+  --ls-ops-on-accent: #0a1400;
+  --ls-ops-on-accent2: #1c3300;
+  --ls-ops-on-accent3: #234500;
+  --ls-ops-hot: #c2571c;
+  --ls-ops-warm: #a07e00;
+  --ls-ops-cta-bg: #15180f;        /* bouton sombre sur lime — version claire */
+  --ls-ops-rgb-accent: 197, 248, 42;
 }
 
 /* Classes utilitaires thème */
