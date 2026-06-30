@@ -33,6 +33,7 @@ const DEMO_VIEW: SalleOpsView = {
   phase: "allumage",
   phaseIndex: 0,
   dayNumber: 2,
+  jalonPlanMarketing: false,
   toggle: async () => {},
 };
 

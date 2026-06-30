@@ -96,6 +96,22 @@ export function SalleOpsQuotidien({
             Coach en formation {view.activated ? "· lancé·e 🚀" : `· étape ${view.activeStepNumber}/${view.totalSteps}`}
           </div>
 
+          {/* Jalon J30-45 : prêt pour le plan marketing. */}
+          {view.jalonPlanMarketing ? (
+            <button type="button" onClick={() => navigate("/plan-marketing")} style={jalonCard}>
+              <span aria-hidden="true" style={{ fontSize: 20 }}>🎯</span>
+              <span style={{ flex: 1, textAlign: "left" }}>
+                <span style={{ display: "block", ...MONO, fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-on-accent2)" }}>
+                  Jalon J30-45
+                </span>
+                <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: "var(--ls-ops-on-accent)", marginTop: 2 }}>
+                  Tu es prêt·e pour le plan marketing
+                </span>
+              </span>
+              <span aria-hidden="true" style={{ color: "var(--ls-ops-on-accent)" }}>→</span>
+            </button>
+          ) : null}
+
           {/* Phases — inline mobile, masqué desktop (→ rail) */}
           <div className="ls-ops-hide-desktop">
             <PhaseTracker phaseIndex={phaseIndex} phaseLabel={phaseLabel} />
@@ -533,6 +549,20 @@ const limeCard: React.CSSProperties = {
   background: "var(--ls-ops-accent)",
   borderRadius: 18,
   padding: "18px 18px 16px",
+};
+
+const jalonCard: React.CSSProperties = {
+  marginTop: 16,
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  background: "var(--ls-ops-accent)",
+  border: "none",
+  borderRadius: 16,
+  padding: "13px 16px",
+  cursor: "pointer",
+  fontFamily: "inherit",
 };
 
 const reviewBanner: React.CSSProperties = {

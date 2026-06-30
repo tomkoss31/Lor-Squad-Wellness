@@ -113,9 +113,9 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     apprendre:
       "Le bilan, c'est le cœur du métier : tu fais vivre l'expérience. Comment tu l'expliques en 2 phrases : « Je regarde avec toi ton hydratation, ta masse musculaire, ton énergie — et je te donne un plan simple. C'est offert et sans engagement. » Au début tu le fais AVEC ton parrain — méthode Show → Try → Do : il fait, vous faites à deux, puis tu fais seul. Vise ton 1er client décroché ensemble sous 7 jours.",
     faire: {
-      instruction: "Cale ton 1er bilan d'entraînement (club ou visio) avec un cobaye, et demande à ton parrain de le co-animer.",
-      ctaLabel: "Démarrer un bilan",
-      linkPath: "/clients",
+      instruction: "Entraîne-toi : ouvre un nouveau bilan et fais-le avec un cobaye (club ou visio). Demande à ton parrain de le co-animer.",
+      ctaLabel: "Faire un bilan",
+      linkPath: "/assessments/new",
     },
     preuve: "C'est gagné quand tu as RÉALISÉ ton 1er bilan (pas juste calé un RDV).",
     autoOnly: true,

@@ -72,6 +72,8 @@ export interface SalleOpsView {
   phaseIndex: number;
   /** Jour X / 90 depuis l'ancre J0 (1 si non posée). */
   dayNumber: number;
+  /** Jalon J30-45 : prêt pour le plan marketing (≥ J30 + 1er bilan réalisé). */
+  jalonPlanMarketing: boolean;
   toggle: (taskKey: string) => Promise<void>;
 }
 
@@ -131,6 +133,11 @@ export function useSalleOps(): SalleOpsView {
       }
     }
 
+    // Jalon J30-45 : autour de J30, une fois un vrai bilan posé, on pousse le
+    // plan marketing (palier suivant). Borne basse J30 ; pas de borne haute pour
+    // ne pas faire disparaître le rappel.
+    const jalonPlanMarketing = dayNumber >= 30 && doneByGate("premier_bilan");
+
     return {
       loading,
       activated,
@@ -142,6 +149,7 @@ export function useSalleOps(): SalleOpsView {
       phase,
       phaseIndex,
       dayNumber,
+      jalonPlanMarketing,
       toggle,
     };
   }, [statuses, activatedAt, starterStartedAt, loading, toggle]);
