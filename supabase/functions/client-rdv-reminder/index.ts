@@ -24,6 +24,7 @@ import {
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "contact@labase360.fr";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parisHour(d: Date): number {
   return Number(
@@ -226,7 +227,57 @@ serve(async (req) => {
       }
     }
 
-    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, skipped });
+    // ─── Mail J-1 aux PROSPECTS (rdv_bookings, funnel public) ───────────────
+    // Pas de push (le prospect n'est pas sur la PWA) — uniquement l'email, et
+    // seulement si un email a été laissé. Anti-doublon = reminder_email_sent_at.
+    let prospectEmails = 0;
+    if (hourParis === 18) {
+      const dayStart = new Date(`${tomorrowParis}T00:00:00+02:00`).toISOString();
+      const dayEnd = new Date(`${tomorrowParis}T23:59:59+02:00`).toISOString();
+      const { data: bookings } = await sb
+        .from("rdv_bookings")
+        .select("id, coach_user_id, first_name, contact, mode, slot_start")
+        .neq("status", "canceled")
+        .is("reminder_email_sent_at", null)
+        .gte("slot_start", dayStart)
+        .lte("slot_start", dayEnd);
+
+      const validBookings = (bookings ?? []).filter(
+        (b) => b.contact && EMAIL_RE.test(String(b.contact)),
+      );
+      if (validBookings.length > 0) {
+        const coachIds = [...new Set(validBookings.map((b) => b.coach_user_id).filter(Boolean))] as string[];
+        const cFull = new Map<string, string>();
+        const cLoc = new Map<string, string>();
+        if (coachIds.length > 0) {
+          const { data: us } = await sb.from("users").select("id, name, rdv_location, city").in("id", coachIds);
+          for (const u of us ?? []) {
+            cFull.set(u.id as string, String((u.name as string) ?? "").trim() || "ton coach");
+            cLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
+          }
+        }
+        for (const b of validBookings) {
+          const cid = b.coach_user_id as string | null;
+          const where = (b.mode as string) === "visio"
+            ? "En visio — le lien te sera envoyé avant le RDV"
+            : ((cid && cLoc.get(cid)) || "ton club La Base");
+          const html = rdvEmailHtml({
+            clientFirst: String((b.first_name as string) ?? "").split(/\s+/)[0] || "",
+            coachName: (cid && cFull.get(cid)) || "ton coach",
+            dateLabel: parisDateLabel(b.slot_start as string),
+            hour: parisHourLabel(b.slot_start as string),
+            location: where,
+          });
+          const ok = await sendViaResend(String(b.contact), "📅 Ton rendez-vous, c'est demain", html);
+          if (ok) {
+            await sb.from("rdv_bookings").update({ reminder_email_sent_at: new Date().toISOString() }).eq("id", b.id);
+            prospectEmails += 1;
+          } else skipped += 1;
+        }
+      }
+    }
+
+    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, prospectEmails, skipped });
   } catch (err) {
     return jsonResponse({ error: err instanceof Error ? err.message : "unknown" }, 500);
   }
