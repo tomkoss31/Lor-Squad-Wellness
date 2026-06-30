@@ -21,6 +21,7 @@ import { BUSINESS_SHORTCUTS } from "./businessShortcuts";
 import { useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
 import { NoalyFab } from "../noaly/NoalyFab";
+import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
@@ -728,6 +729,9 @@ export function AppLayout() {
       <AnnouncementSpotlight />
       {/* Noaly (2026-06-10) : FAB ✨ assistante IA, sur toutes les pages coach. */}
       <NoalyFab />
+      {/* Popup d'activation des notifications (2026-06-30) : à l'ouverture pour
+          toute personne connectée pas encore abonnée (mobile + PC). */}
+      <NotificationOptInPopup />
     </div>
   );
 }
