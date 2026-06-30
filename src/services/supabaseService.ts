@@ -51,6 +51,7 @@ type UserRow = {
   formation_beta_access?: boolean | null;
   city?: string | null;
   coaching_since?: string | null;
+  rdv_location?: string | null;
   frozen_at?: string | null;
   frozen_by?: string | null;
   frozen_reason?: string | null;
@@ -339,6 +340,7 @@ function mapUser(row: UserRow): User {
     formationBetaAccess: row.formation_beta_access ?? false,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
+    rdvLocation: row.rdv_location ?? null,
     frozenAt: row.frozen_at ?? null,
     frozenBy: row.frozen_by ?? null,
     frozenReason: row.frozen_reason ?? null,

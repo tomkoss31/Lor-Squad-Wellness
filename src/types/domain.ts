@@ -157,6 +157,8 @@ export interface User {
    *  Sert au badge ancienneté Welcome bilan. NULL = pas affiché.
    *  Chantier #10 V2 — 2026-05-17. */
   coachingSince?: string | null;
+  /** Lieu / adresse de RDV du coach — affiché dans les emails de rappel RDV. */
+  rdvLocation?: string | null;
   /** Compte gelé par admin. NULL = actif, ISO timestamp = gelé.
    *  Effets : redirige sur /frozen + exclu des stats XP/team.
    *  Chantier freeze 2026-05-06. */

@@ -89,6 +89,8 @@ export function ProfilTab() {
   const [coachingSince, setCoachingSince] = useState<string>(
     currentUser?.coachingSince ?? "",
   );
+  // Lieu de RDV (club/cabinet/adresse) — affiché dans les emails de rappel RDV.
+  const [rdvLocation, setRdvLocation] = useState<string>(currentUser?.rdvLocation ?? "");
   // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
   // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
   const [currentRank, setCurrentRank] = useState<HerbalifeRank>(
@@ -204,6 +206,8 @@ export function ProfilTab() {
           // Chantier #10 V2 badges (2026-05-17) : date début coaching
           // Herbalife → badge ancienneté Welcome bilan. Null si vide.
           coaching_since: coachingSince.trim() || null,
+          // Lieu de RDV → emails de rappel RDV (confirmation + veille).
+          rdv_location: rdvLocation.trim() || null,
           // FLEX rank-aware (2026-11-05) : update rank + set rank_set_at
           // (peut être déjà rempli, on le maintient en sync à chaque save).
           current_rank: currentRank,
@@ -536,6 +540,52 @@ export function ProfilTab() {
             }}
           >
             Utilisée par la météo 5 jours sur le Co-pilote et affichée sur ta page bilan online publique.
+          </div>
+        </div>
+
+        {/* Lieu de RDV — affiché dans les emails de rappel RDV (2026-06-30). */}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--ls-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: 1.2,
+              marginBottom: 6,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Lieu de tes RDV (optionnel)
+          </label>
+          <input
+            type="text"
+            value={rdvLocation}
+            onChange={(e) => setRdvLocation(e.target.value)}
+            placeholder="Ex. Club La Base, 12 rue X, Verdun"
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface2)",
+              color: "var(--ls-text)",
+              fontSize: 14,
+              fontFamily: "DM Sans, sans-serif",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "var(--ls-text-hint)",
+              marginTop: 4,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Adresse où tu reçois tes clients. Affichée dans les emails de rappel de RDV. Vide = ta ville.
           </div>
         </div>
 
