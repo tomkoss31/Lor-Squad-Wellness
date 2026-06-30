@@ -14,6 +14,8 @@ export interface RdvBooking {
   slot_start: string;
   slot_end: string;
   status: "requested" | "confirmed" | "canceled";
+  confirm_email_sent_at: string | null;
+  reminder_email_sent_at: string | null;
 }
 
 interface Result {
@@ -42,7 +44,7 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
     }
     const { data, error } = await sb
       .from("rdv_bookings")
-      .select("id, first_name, contact, mode, slot_start, slot_end, status")
+      .select("id, first_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at")
       .eq("coach_user_id", coachUserId)
       .neq("status", "canceled")
       .gte("slot_start", new Date().toISOString())

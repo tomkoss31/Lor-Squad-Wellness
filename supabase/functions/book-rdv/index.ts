@@ -215,6 +215,12 @@ serve(async (req: Request) => {
         whereLine,
       });
       confirmEmailSent = await sendViaResend(contact, "✅ Ton rendez-vous est bien noté", html);
+      if (confirmEmailSent) {
+        await sb
+          .from("rdv_bookings")
+          .update({ confirm_email_sent_at: new Date().toISOString() })
+          .eq("id", (inserted as { id: string }).id);
+      }
     } catch (_e) {
       // email best-effort — la résa est déjà enregistrée
     }

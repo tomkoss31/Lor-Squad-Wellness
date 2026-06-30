@@ -132,6 +132,12 @@ serve(async (req) => {
       location,
     });
     const ok = await sendViaResend(to, "✅ Ton prochain rendez-vous est confirmé", html);
+    if (ok) {
+      await sb.from("client_rdv_reminders_sent").upsert(
+        { follow_up_id: followUpId, kind: "confirm_email" },
+        { onConflict: "follow_up_id,kind", ignoreDuplicates: true },
+      );
+    }
     return jsonResponse({ ok: true, sent: ok });
   } catch (err) {
     return jsonResponse({ ok: false, error: err instanceof Error ? err.message : "unknown" }, 500);
