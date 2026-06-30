@@ -100,7 +100,10 @@ export function SalleOpsQuotidien({
                   {lesson.faire.instruction}
                 </p>
                 {lesson.faire.script ? <ScriptBox script={lesson.faire.script} /> : null}
-                <button type="button" style={limeCta} onClick={runFaire}>{lesson.faire.ctaLabel}</button>
+                {/* CTA outil : seulement si l'étape mène à un outil (lien). */}
+                {lesson.faire.linkPath ? (
+                  <button type="button" style={limeCta} onClick={runFaire}>{lesson.faire.ctaLabel} →</button>
+                ) : null}
               </div>
 
               <div style={{ ...softCard, marginTop: 12 }}>
@@ -109,18 +112,18 @@ export function SalleOpsQuotidien({
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
                 </div>
-                {/* Validation = on avance. Pour les étapes à OUTIL (lien), le CTA
-                    t'emmène faire l'action ; tu reviens cocher ici pour passer à
-                    la suite. Pour les étapes auto-déclarées, le CTA suffit déjà. */}
-                {lesson.faire.linkPath && view.currentGateKey ? (
-                  <>
-                    <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
-                      ✓ C'est fait — passer à l'étape suivante
-                    </button>
-                    <div style={{ ...MONO, fontSize: 10.5, letterSpacing: ".04em", color: "var(--ls-ops-faint)", textAlign: "center", marginTop: 8 }}>
-                      Fais l'action ci-dessus, puis reviens cocher ici.
-                    </div>
-                  </>
+                {/* AVANCEMENT — toujours visible :
+                    • autoOnly (vrai bilan / vraie commande) → se valide TOUT SEUL
+                      (trigger), pas de coche manuelle = garde-fou anti-triche.
+                    • sinon → gros bouton « ✓ C'est fait » (seul moyen d'avancer). */}
+                {lesson.autoOnly ? (
+                  <div style={autoNote}>
+                    ⏳ Pas besoin de cocher : cette étape se valide <strong style={{ color: "var(--ls-ops-accent-text)" }}>toute seule</strong> dès que l'acte réel est enregistré (anti-triche).
+                  </div>
+                ) : view.currentGateKey ? (
+                  <button type="button" style={doneBtn} onClick={() => view.currentGateKey && void view.toggle(view.currentGateKey)}>
+                    ✓ C'est fait — passer à l'étape suivante
+                  </button>
                 ) : null}
               </div>
 
@@ -470,6 +473,17 @@ const limeCard: React.CSSProperties = {
   background: "var(--ls-ops-accent)",
   borderRadius: 18,
   padding: "18px 18px 16px",
+};
+
+const autoNote: React.CSSProperties = {
+  marginTop: 14,
+  background: "color-mix(in srgb, var(--ls-ops-accent) 8%, transparent)",
+  border: "1px solid var(--ls-ops-border-active)",
+  borderRadius: 12,
+  padding: "12px 14px",
+  fontSize: 13,
+  lineHeight: 1.5,
+  color: "var(--ls-ops-text3)",
 };
 
 const doneBtn: React.CSSProperties = {

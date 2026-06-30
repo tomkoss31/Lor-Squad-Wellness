@@ -29,6 +29,10 @@ export interface AcademyLesson {
   preuve: string;
   /** Réponses prêtes aux situations courantes (« si ça → alors ça »). */
   repondre?: { situation: string; reponse: string }[];
+  /** Validée UNIQUEMENT par un acte réel (trigger serveur) — pas de coche
+      manuelle (garde-fou anti-triche : on ne valide pas un vrai bilan/commande
+      en cochant une case). */
+  autoOnly?: boolean;
   /** Pré-prompt injecté quand on demande à Noaly sur cette étape. */
   noalyPrompt: string;
 }
@@ -112,6 +116,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
       linkPath: "/clients",
     },
     preuve: "C'est gagné quand tu as RÉALISÉ ton 1er bilan (pas juste calé un RDV).",
+    autoOnly: true,
     repondre: [
       {
         situation: "« Ça coûte combien ? »",
@@ -151,6 +156,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
       linkPath: "/panier",
     },
     preuve: "C'est gagné quand un 1er pack est signé et tes 1ers PV enregistrés.",
+    autoOnly: true,
     noalyPrompt: "Comment je propose un pack produits à un client juste après son bilan, sans être lourd ?",
   },
 
