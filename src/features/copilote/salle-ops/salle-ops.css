@@ -37,3 +37,28 @@
   .ls-ops-dot { animation: none; }
   .ls-ops-ring { animation: none !important; }
 }
+
+/* ── Responsive : mobile = colonne unique · desktop = focus + rail latéral ── */
+.ls-ops-rail { display: none; }
+
+@media (min-width: 1000px) {
+  .ls-ops-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 36px;
+    max-width: 1120px;
+    margin: 0 auto;
+    align-items: start;
+    padding: 0 32px;
+  }
+  .ls-ops-main { padding-left: 0; padding-right: 0; }
+  .ls-ops-rail {
+    display: block;
+    position: sticky;
+    top: 24px;
+    border-left: 1px solid var(--ls-ops-border-soft);
+    padding-left: 28px;
+  }
+  /* Sur desktop, ces sections vivent dans le rail → on masque leur version inline. */
+  .ls-ops-hide-desktop { display: none !important; }
+}
