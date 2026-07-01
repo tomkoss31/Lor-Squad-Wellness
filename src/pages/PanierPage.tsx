@@ -146,6 +146,8 @@ export function PanierPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [saleType, setSaleType] = useState<"commande" | "reprise-sur-place">("commande");
   const [delayDays, setDelayDays] = useState(0);
+  // Date de la commande (rétroactif). Défaut = aujourd'hui.
+  const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [onlyMine, setOnlyMine] = useState(true);
@@ -309,6 +311,7 @@ export function PanierPage() {
     setSelectedClient(null);
     setSaleType("commande");
     setDelayDays(0);
+    setSaleDate(new Date().toISOString().slice(0, 10));
     setPickerQuery("");
     setAttribOpen(true);
     setRemiseOpen(false);
@@ -444,10 +447,13 @@ export function PanierPage() {
     setSaving(true);
     try {
       if (attribMode === "existing" && selectedClient) {
-        const now = new Date().toISOString();
+        // Date de la commande (rétroactif possible) — midi pour éviter les
+        // décalages de fuseau au passage en ISO.
+        const saleBase = new Date(`${saleDate}T12:00:00`).getTime();
+        const now = new Date(saleBase).toISOString();
         const startOverride =
           saleType === "commande" && delayDays > 0
-            ? new Date(Date.now() + delayDays * 24 * 3600 * 1000).toISOString()
+            ? new Date(saleBase + delayDays * 24 * 3600 * 1000).toISOString()
             : undefined;
         const respId = selectedClient.distributorId || currentUser.id;
         const respName = selectedClient.distributorName || currentUser.name;
@@ -491,6 +497,7 @@ export function PanierPage() {
           distributorId: currentUser.id,
           distributorName: currentUser.name,
           lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
+          saleDate,
         });
         await reloadClients();
         push({
@@ -939,6 +946,29 @@ export function PanierPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Date de la commande — défaut aujourd'hui, rétroactif possible
+                    (clôturer une commande du mois précédent, ex. 29/30 juin). */}
+                {(() => {
+                  const todayIso = new Date().toISOString().slice(0, 10);
+                  const isBackdated = saleDate !== todayIso;
+                  return (
+                    <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: `1px solid ${isBackdated ? "var(--ls-teal)" : "var(--ls-border)"}`, padding: "11px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ls-text-muted)", fontSize: 13, fontWeight: 600 }}>
+                        <span aria-hidden="true">📅</span> Date de la commande
+                        {isBackdated ? <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>· rétroactif</span> : null}
+                      </span>
+                      <input
+                        type="date"
+                        value={saleDate}
+                        max={todayIso}
+                        onChange={(e) => setSaleDate(e.target.value || todayIso)}
+                        aria-label="Date de la commande"
+                        style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 9, color: "var(--ls-text)", padding: "8px 10px", fontFamily: "DM Sans, sans-serif", fontSize: 13.5, colorScheme: "dark" }}
+                      />
+                    </div>
+                  );
+                })()}
 
                 {/* Remise — accordéon (repliée par défaut, optionnelle) */}
                 <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", overflow: "hidden" }}>
