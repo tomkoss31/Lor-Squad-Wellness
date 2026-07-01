@@ -9,7 +9,6 @@
 // =============================================================================
 
 import type { TeamMemberEngagement } from "../../hooks/useTeamEngagement";
-import { STATUS_META } from "../../hooks/useTeamEngagement";
 import { useTeamStarterProgress, type MemberAcademy, type AcademyStepState } from "../../hooks/useTeamStarterProgress";
 
 interface LearningGridProps {
@@ -51,19 +50,21 @@ function LearningCard({
   acad?: MemberAcademy;
   onClick?: () => void;
 }) {
-  const status = STATUS_META[member.status];
   const roleLabel = member.role === "admin" ? "Admin" : member.role === "referent" ? "Référent" : "Distributeur";
   const started = Boolean(acad?.started);
 
+  // Identité v2 : lime = « lancé·e » (win), teal = en cours, muté = pas démarré.
   const badge = !started
     ? { text: "pas démarré", color: "var(--ls-text-muted)" }
     : acad!.activated
-      ? { text: "lancé·e 🚀", color: "var(--ls-teal)" }
-      : { text: `étape ${acad!.activeStepNumber}/7`, color: "var(--ls-gold)" };
+      ? { text: "lancé·e ✓", color: "var(--ls-lime)" }
+      : { text: `étape ${acad!.activeStepNumber}/7`, color: "var(--ls-teal)" };
 
+  // Ligne meta courte (plus de troncature) : le jour + la phase suffisent ;
+  // le rôle passe en micro-chip à côté du nom.
   const sub = started
-    ? `${roleLabel} · Jour ${acad!.dayNumber || 1}/90 · ${acad!.phaseLabel}`
-    : `${roleLabel}${member.current_rank ? ` · ${member.current_rank}` : ""}`;
+    ? `Jour ${acad!.dayNumber || 1}/90 · ${acad!.phaseLabel}`
+    : member.current_rank || "Pas encore démarré";
 
   return (
     <button type="button" onClick={onClick} style={cardStyle}>
@@ -72,7 +73,10 @@ function LearningCard({
         <div style={avatarStyle}>{initialsOf(member.name)}</div>
         <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
           <div style={nameStyle}>{member.name}</div>
-          <div style={metaStyle}>{sub}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, minWidth: 0 }}>
+            <span style={roleChip}>{roleLabel}</span>
+            <span style={metaStyle}>{sub}</span>
+          </div>
         </div>
         <span style={pillBadge(badge.color)}>{badge.text}</span>
       </div>
@@ -84,13 +88,12 @@ function LearningCard({
         {!started ? (
           "Pas encore démarré son cockpit"
         ) : acad!.activated ? (
-          "Activée — au rythme (faire faire)"
+          "Activé·e — au rythme (faire faire)"
         ) : (
           <>
             En cours · étape <b style={{ color: "var(--ls-text)" }}>{acad!.activeStepLabel}</b>
           </>
         )}
-        {status?.emoji ? <span style={{ marginLeft: 6 }}>{status.emoji}</span> : null}
       </div>
 
       {/* Secondaire compact : Academy + Formation + XP */}
@@ -203,6 +206,21 @@ const metaStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
+  minWidth: 0,
+};
+
+const roleChip: React.CSSProperties = {
+  flexShrink: 0,
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 8.5,
+  fontWeight: 700,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  color: "var(--ls-text-muted)",
+  background: "var(--ls-surface2)",
+  border: "0.5px solid var(--ls-border)",
+  borderRadius: 5,
+  padding: "2px 6px",
 };
 
 const pillBadge = (color: string): React.CSSProperties => ({
