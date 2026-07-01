@@ -44,6 +44,8 @@ import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
 import { useWeatherForecast } from "./hooks/useWeatherForecast";
+// Liste privée « à relancer » (in-app, sans email/push) — 2026-06-30.
+import { CoachRemindersWidget } from "../../../components/reminders/CoachRemindersWidget";
 // Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
 import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
@@ -314,6 +316,9 @@ export function CoPiloteV5Page() {
           aujourd hui (naissance ou +1m/+3m/+6m programme). Auto-hidden
           si aucun event. Bouton WhatsApp avec message pre-rempli. */}
       <CelebrationCard />
+
+      {/* Liste privée « à relancer » (in-app only, jamais d'email/push au client). */}
+      <CoachRemindersWidget />
 
       {/* ═══ PLAN DU JOUR (refonte chantier 1, design Claude Design validé) ═══
           Le nouveau héros : file d'actions priorisée (RDV + relances propres +
