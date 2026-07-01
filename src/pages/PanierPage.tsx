@@ -146,6 +146,8 @@ export function PanierPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [saleType, setSaleType] = useState<"commande" | "reprise-sur-place">("commande");
   const [delayDays, setDelayDays] = useState(0);
+  // Date de la commande (rétroactif). Défaut = aujourd'hui.
+  const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [onlyMine, setOnlyMine] = useState(true);
@@ -309,6 +311,7 @@ export function PanierPage() {
     setSelectedClient(null);
     setSaleType("commande");
     setDelayDays(0);
+    setSaleDate(new Date().toISOString().slice(0, 10));
     setPickerQuery("");
     setAttribOpen(true);
     setRemiseOpen(false);
@@ -444,10 +447,13 @@ export function PanierPage() {
     setSaving(true);
     try {
       if (attribMode === "existing" && selectedClient) {
-        const now = new Date().toISOString();
+        // Date de la commande (rétroactif possible) — midi pour éviter les
+        // décalages de fuseau au passage en ISO.
+        const saleBase = new Date(`${saleDate}T12:00:00`).getTime();
+        const now = new Date(saleBase).toISOString();
         const startOverride =
           saleType === "commande" && delayDays > 0
-            ? new Date(Date.now() + delayDays * 24 * 3600 * 1000).toISOString()
+            ? new Date(saleBase + delayDays * 24 * 3600 * 1000).toISOString()
             : undefined;
         const respId = selectedClient.distributorId || currentUser.id;
         const respName = selectedClient.distributorName || currentUser.name;
@@ -491,6 +497,7 @@ export function PanierPage() {
           distributorId: currentUser.id,
           distributorName: currentUser.name,
           lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
+          saleDate,
         });
         await reloadClients();
         push({
@@ -545,7 +552,7 @@ export function PanierPage() {
         La Base 360 · Calculateur
       </div>
       <h1 className="panier-title" style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
-        <span style={{ background: "linear-gradient(100deg,var(--ls-teal),var(--ls-purple))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+        <span style={{ color: "var(--ls-teal)" }}>
           Panier
         </span>
       </h1>
@@ -607,7 +614,7 @@ export function PanierPage() {
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 9 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 13 }}>
             {filtered.map((p) => {
               const qty = cart[p.id] ?? 0;
               const active = qty > 0;
@@ -934,11 +941,34 @@ export function PanierPage() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 11 }}>
                     <span style={{ color: "var(--ls-text-muted)", fontSize: 13.5 }}>Volume</span>
-                    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 5, padding: "6px 13px", borderRadius: 999, background: "linear-gradient(100deg, color-mix(in srgb, var(--ls-teal) 14%, transparent), color-mix(in srgb, var(--ls-purple) 16%, transparent))", border: "1px solid var(--ls-border)", color: "var(--ls-teal)", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15 }}>
+                    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 5, padding: "6px 13px", borderRadius: 999, background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-teal) 24%, transparent)", color: "var(--ls-teal)", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15 }}>
                       {pvf(totalPV)}<span style={{ fontSize: 10, letterSpacing: 0.5, opacity: 0.85 }}>PV</span>
                     </span>
                   </div>
                 </div>
+
+                {/* Date de la commande — défaut aujourd'hui, rétroactif possible
+                    (clôturer une commande du mois précédent, ex. 29/30 juin). */}
+                {(() => {
+                  const todayIso = new Date().toISOString().slice(0, 10);
+                  const isBackdated = saleDate !== todayIso;
+                  return (
+                    <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: `1px solid ${isBackdated ? "var(--ls-teal)" : "var(--ls-border)"}`, padding: "11px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ls-text-muted)", fontSize: 13, fontWeight: 600 }}>
+                        <span aria-hidden="true">📅</span> Date de la commande
+                        {isBackdated ? <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>· rétroactif</span> : null}
+                      </span>
+                      <input
+                        type="date"
+                        value={saleDate}
+                        max={todayIso}
+                        onChange={(e) => setSaleDate(e.target.value || todayIso)}
+                        aria-label="Date de la commande"
+                        style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 9, color: "var(--ls-text)", padding: "8px 10px", fontFamily: "DM Sans, sans-serif", fontSize: 13.5, colorScheme: "dark" }}
+                      />
+                    </div>
+                  );
+                })()}
 
                 {/* Remise — accordéon (repliée par défaut, optionnelle) */}
                 <div style={{ marginTop: 16, borderRadius: 16, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", overflow: "hidden" }}>
@@ -1000,7 +1030,7 @@ export function PanierPage() {
                   position: "relative",
                   overflow: "hidden",
                   marginTop: 18,
-                  background: "radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--ls-purple) 12%, transparent), transparent 55%), radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--ls-teal) 12%, transparent), transparent 55%), color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+                  background: "radial-gradient(130% 150% at 100% 0%, color-mix(in srgb, var(--ls-teal) 13%, transparent), transparent 60%), color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
                   border: "1px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
                   borderRadius: 18,
                   padding: "16px 18px",
@@ -1042,14 +1072,14 @@ export function PanierPage() {
                           border: "none",
                           background: blocked
                             ? "var(--ls-surface2)"
-                            : "linear-gradient(135deg, #EFB23C 0%, #C98A1E 100%)",
-                          color: blocked ? "var(--ls-text-hint)" : "#1a1407",
+                            : "linear-gradient(135deg, var(--ls-lime) 0%, #a6d40a 100%)",
+                          color: blocked ? "var(--ls-text-hint)" : "#0a1400",
                           fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
                           fontSize: 15,
                           letterSpacing: "-0.01em",
                           cursor: blocked ? "not-allowed" : "pointer",
-                          boxShadow: blocked ? "none" : "0 10px 22px -10px rgba(186,117,23,0.6)",
+                          boxShadow: blocked ? "none" : "0 10px 22px -10px rgba(197,248,42,0.55)",
                         }}
                       >
                         {saving
@@ -1097,7 +1127,7 @@ export function PanierPage() {
 
                 {/* Actions secondaires */}
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                  <button type="button" onClick={copyRecap} style={{ flex: 1, padding: 12, borderRadius: 14, border: "none", background: "linear-gradient(100deg,var(--ls-teal),var(--ls-purple))", color: "#fff", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                  <button type="button" onClick={copyRecap} style={{ flex: 1, padding: 12, borderRadius: 14, border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)", background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))", color: "var(--ls-teal)", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                     📋 Copier le récap
                   </button>
                   <button type="button" onClick={reset} style={{ padding: "12px 16px", borderRadius: 14, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>

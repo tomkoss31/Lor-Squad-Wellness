@@ -140,6 +140,18 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     active: true
   },
   {
+    id: "fibre-concentrate",
+    name: "Fibre Concentrate — Orange & Baies de Goji 500ml",
+    category: "fibres",
+    pricePublic: 58.68,
+    pv: 30,
+    quantiteLabel: "500 ml",
+    dureeReferenceJours: 30,
+    noteMetier: "Fibres concentrees + calcium + enzymes digestives + vitamine C. Nouveaute (SKU 201K).",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
     id: "microbiotic-max",
     name: "Microbiotic Max",
     category: "digestif",

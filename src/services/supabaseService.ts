@@ -1120,9 +1120,14 @@ export async function recordQuickSale(payload: {
   distributorId: string;
   distributorName: string;
   lines: { id: string; name: string; price: number; pv: number; quantity: number }[];
+  /** Date de la commande (YYYY-MM-DD). Défaut = aujourd'hui. Permet de saisir
+   *  une vente rétroactive (ex. clôturer les commandes du mois précédent). */
+  saleDate?: string;
 }): Promise<{ clientId: string }> {
   const client = await requireSupabase();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (payload.saleDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.saleDate))
+    ? payload.saleDate
+    : new Date().toISOString().slice(0, 10);
   const nextFollowUp = new Date(Date.now() + 21 * 24 * 3600 * 1000).toISOString();
   const rawName = payload.clientName.trim();
   const name = rawName || "Client direct";
