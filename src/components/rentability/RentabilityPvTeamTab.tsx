@@ -11,11 +11,12 @@
 // paliers / qualification n'est touchée (formules Herbalife inchangées).
 // =============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { PvOverrideBlock, PvBizworksBlock } from "../distributor-blocks";
 import { ManualPvEntriesSection } from "./ManualPvEntriesSection";
 import { RANK_LABELS } from "../../types/domain";
+import { currentMonthIso } from "../../lib/herbalifeFormulas";
 
 interface PvTeamMember {
   user_id: string;
@@ -40,6 +41,24 @@ export function RentabilityPvTeamTab({
       ? new URLSearchParams(window.location.search).get("member")
       : null;
   const [openId, setOpenId] = useState<string | null>(targetMember);
+
+  // Sélecteur de mois : par défaut le mois passé en prop (= mois courant),
+  // mais on peut remonter pour SAISIR un mois passé (ex. clôturer juin le 1er
+  // juillet). Le breakdown par tier est stocké PAR MOIS → rétroactif propre.
+  const nowMonth = currentMonthIso();
+  const [selectedMonth, setSelectedMonth] = useState(monthIso || nowMonth);
+  const monthOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i += 1) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+      opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    }
+    return opts;
+  }, []);
+  const isPastMonth = selectedMonth !== nowMonth;
 
   useEffect(() => {
     if (!targetMember) return;
@@ -66,6 +85,35 @@ export function RentabilityPvTeamTab({
           Bizworks par membre) et <strong style={{ color: "var(--ls-text)" }}>distri hors-app</strong> (saisie manuelle + remise selon
           le rang). Les ventes in-app remontent automatiquement.
         </div>
+      </div>
+
+      {/* Sélecteur de mois — SAISIR un mois passé (ex. clôturer juin le 1er juillet). */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <label htmlFor="pv-team-month" style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text-muted)" }}>
+          📅 Mois à saisir
+        </label>
+        <select
+          id="pv-team-month"
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          style={{
+            flex: "0 1 220px",
+            padding: "9px 12px",
+            borderRadius: 10,
+            background: "var(--ls-surface)",
+            border: `1px solid ${isPastMonth ? "var(--ls-teal)" : "var(--ls-border)"}`,
+            color: "var(--ls-text)",
+            fontSize: 13.5,
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          {monthOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {isPastMonth ? (
+          <span style={{ fontSize: 12, color: "var(--ls-teal)", fontWeight: 700 }}>· mois passé (rétroactif)</span>
+        ) : null}
       </div>
 
       {/* ── Distributeurs de l'app ─────────────────────────────────────── */}
@@ -96,7 +144,7 @@ export function RentabilityPvTeamTab({
               const isTarget = targetMember === m.user_id;
               const hasOverride =
                 typeof u?.monthlyPvOverride === "number" &&
-                u.monthlyPvOverrideMonth === monthIso;
+                u.monthlyPvOverrideMonth === selectedMonth;
               return (
                 <div
                   key={m.user_id}
@@ -151,17 +199,27 @@ export function RentabilityPvTeamTab({
                   </button>
                   {isOpen && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 14px 14px" }}>
-                      <PvOverrideBlock
-                        memberId={m.user_id}
-                        memberName={m.name}
-                        initialOverride={u?.monthlyPvOverride ?? null}
-                        initialOverrideMonth={u?.monthlyPvOverrideMonth ?? null}
-                        onApplied={onApplied}
-                      />
+                      {isPastMonth ? (
+                        // L'override pilote la jauge Co-pilote du MOIS COURANT
+                        // uniquement → inutile/trompeur pour un mois passé. Pour
+                        // clôturer un mois passé, on utilise le breakdown ci-dessous
+                        // (stocké par mois, il alimente rang + qualif + commission).
+                        <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", lineHeight: 1.5, padding: "10px 12px", borderRadius: 10, background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))", border: "1px solid var(--ls-border)" }}>
+                          📅 Mois passé — saisis directement le <strong style={{ color: "var(--ls-text)" }}>breakdown / PV réel Bizworks</strong> ci-dessous (c'est lui qui est stocké par mois). L'« override jauge » ne concerne que le mois en cours.
+                        </div>
+                      ) : (
+                        <PvOverrideBlock
+                          memberId={m.user_id}
+                          memberName={m.name}
+                          initialOverride={u?.monthlyPvOverride ?? null}
+                          initialOverrideMonth={u?.monthlyPvOverrideMonth ?? null}
+                          onApplied={onApplied}
+                        />
+                      )}
                       <PvBizworksBlock
                         memberId={m.user_id}
                         memberName={m.name}
-                        monthIso={monthIso}
+                        monthIso={selectedMonth}
                         onApplied={onApplied}
                       />
                     </div>
