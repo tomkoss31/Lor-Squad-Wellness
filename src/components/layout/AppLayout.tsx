@@ -314,22 +314,22 @@ export function AppLayout() {
                         margin: '8px 6px 10px',
                         padding: '11px 14px',
                         borderRadius: 12,
-                        background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
-                        color: '#FFFFFF',
+                        background: 'linear-gradient(135deg, var(--ls-lime) 0%, #a6d40a 100%)',
+                        color: '#0a1400',
                         fontFamily: 'DM Sans, sans-serif',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         letterSpacing: 0.2,
                         textDecoration: 'none',
-                        boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                        boxShadow: '0 2px 8px rgba(197,248,42,0.28)',
                         justifyContent: 'center',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.boxShadow =
-                          '0 4px 12px rgba(186,117,23,0.35)';
+                          '0 4px 14px rgba(197,248,42,0.4)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.boxShadow =
-                          '0 2px 6px rgba(186,117,23,0.25)';
+                          '0 2px 8px rgba(197,248,42,0.28)';
                       }}
                     >
                       <span

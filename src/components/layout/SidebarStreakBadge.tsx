@@ -52,10 +52,10 @@ export function SidebarStreakBadge() {
 
   const tierBg =
     streak.count < 7
-      ? "color-mix(in srgb, var(--ls-gold) 8%, transparent)"
+      ? "color-mix(in srgb, var(--ls-lime) 9%, transparent)"
       : streak.count < 30
-        ? "color-mix(in srgb, var(--ls-gold) 14%, transparent)"
-        : "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 18%, transparent), color-mix(in srgb, var(--ls-gold) 18%, transparent))";
+        ? "color-mix(in srgb, var(--ls-lime) 15%, transparent)"
+        : "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 18%, transparent), color-mix(in srgb, var(--ls-lime) 20%, transparent))";
 
   return (
     <div
@@ -65,7 +65,7 @@ export function SidebarStreakBadge() {
         gap: 8,
         padding: "7px 10px",
         background: tierBg,
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-lime) 32%, transparent)",
         borderRadius: 10,
         fontSize: 11,
         fontFamily: "DM Sans, sans-serif",
@@ -74,7 +74,7 @@ export function SidebarStreakBadge() {
       title={`Streak ${streak.count} jour${streak.count > 1 ? "s" : ""} consécutif${streak.count > 1 ? "s" : ""}${xp ? ` · Niveau ${xp.level} (${xp.total_xp} XP)` : ""}`}
     >
       <span style={{ fontSize: 14 }}>🔥</span>
-      <span style={{ fontWeight: 600, color: "var(--ls-gold)" }}>{streak.count}j</span>
+      <span style={{ fontWeight: 700, color: "var(--ls-lime)" }}>{streak.count}j</span>
       {xp && (
         <>
           <span style={{ color: "var(--ls-text-hint)", fontSize: 10 }}>·</span>
