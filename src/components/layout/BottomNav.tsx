@@ -20,8 +20,21 @@ export function BottomNav() {
   const { currentUser } = useAppContext();
   const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true, currentUser?.role === "admin");
 
-  // Masquer pendant le bilan (plein écran).
-  if (location.pathname.includes("/assessments/new")) return null;
+  // Masquer sur les écrans immersifs / profonds où la barre gêne (décision
+  // Thomas 2026-07-01) : flux bilan, fiche client + sous-routes, et les
+  // pages-outils où l'on est concentré sur une tâche (FLEX / Rentabilité /
+  // Suivi PV / Panier). Elle reste sur les sections principales.
+  const p = location.pathname;
+  if (
+    p.includes("/assessments/new") ||
+    /^\/clients\/[^/]+/.test(p) ||
+    p.startsWith("/flex") ||
+    p.startsWith("/rentabilite") ||
+    p.startsWith("/pv") ||
+    p.startsWith("/panier")
+  ) {
+    return null;
+  }
 
   const isActive = (path: string) =>
     location.pathname === path ||
@@ -36,9 +49,11 @@ export function BottomNav() {
     highlight?: boolean,
     tourId?: string,
   ) {
+    // Identité v2 (2026-07-01) : teal = actif/structure, lime = l'action reine
+    // (le « + » Bilan central, seul éclat de lime de la barre). Fini le gold.
     const color = active
-      ? highlight ? "#BA7517" : "var(--ls-gold)"
-      : highlight ? "#BA7517" : "var(--ls-text-hint)";
+      ? highlight ? "var(--ls-lime)" : "var(--ls-teal)"
+      : highlight ? "var(--ls-lime)" : "var(--ls-text-hint)";
     return (
       <NavLink
         key={path}
@@ -105,7 +120,7 @@ export function BottomNav() {
               width: 16,
               height: 2,
               borderRadius: 2,
-              background: highlight ? "#BA7517" : "var(--ls-gold)",
+              background: highlight ? "var(--ls-lime)" : "var(--ls-teal)",
             }}
           />
         ) : null}
