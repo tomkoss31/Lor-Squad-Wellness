@@ -252,7 +252,7 @@ function SortableHeader({
     >
       <span
         style={{
-          color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+          color: isActive ? "var(--ls-teal)" : "var(--ls-text-muted)",
           display: "inline-flex",
           alignItems: "center",
           gap: 4,
@@ -268,9 +268,9 @@ function SortableHeader({
 function AcademyMiniProgress({ percent, step }: { percent: number; step: number }) {
   const color =
     percent >= 100
-      ? "var(--ls-teal)"
+      ? "var(--ls-lime)"
       : percent >= 50
-        ? "var(--ls-gold)"
+        ? "var(--ls-teal)"
         : "var(--ls-text-muted)";
   return (
     <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -302,9 +302,9 @@ const filterRowStyle: React.CSSProperties = {
 const filterChipStyle = (active: boolean): React.CSSProperties => ({
   padding: "6px 12px",
   borderRadius: 999,
-  border: active ? "1.5px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
-  background: active ? "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface))" : "var(--ls-surface)",
-  color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+  border: active ? "1.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+  background: active ? "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface))" : "var(--ls-surface)",
+  color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
   fontSize: 12,
   fontFamily: "DM Sans, sans-serif",
   fontWeight: active ? 700 : 500,
@@ -319,7 +319,7 @@ const chipCounterStyle = (active: boolean): React.CSSProperties => ({
   fontWeight: 700,
   padding: "1px 6px",
   borderRadius: 6,
-  background: active ? "var(--ls-gold)" : "var(--ls-surface2)",
+  background: active ? "var(--ls-teal)" : "var(--ls-surface2)",
   color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
   marginLeft: 2,
 });

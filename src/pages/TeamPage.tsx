@@ -278,7 +278,7 @@ export function TeamPage() {
       {/* Tabs hub équipe (2026-05-04) — 5 onglets pour centraliser le pilotage */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
-          { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-gold)" },
+          { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-teal)" },
           // Rentabilité d'équipe (chantier simplif 2026-06-13) : accès direct
           // depuis « Mon équipe », réservé admin. Vue simple top-5 + lien vers
           // la page complète, au lieu d'aller la chercher dans le Co-pilote.
@@ -288,7 +288,7 @@ export function TeamPage() {
           { key: "engagement" as TeamTab, label: "Engagement", icon: "🔥", color: "var(--ls-coral)" },
           { key: "learning" as TeamTab, label: "Apprentissage", icon: "🎓", color: "var(--ls-purple)" },
           { key: "team" as TeamTab, label: "Arbre lignée", icon: "🌳", color: "var(--ls-teal)" },
-          { key: "gamification" as TeamTab, label: "Gamification", icon: "🎮", color: "var(--ls-gold)" },
+          { key: "gamification" as TeamTab, label: "Gamification", icon: "🎮", color: "var(--ls-lime)" },
         ]).map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -526,7 +526,7 @@ export function TeamPage() {
                 padding: 30px 18px 24px;
                 border-radius: 18px;
                 background:
-                  radial-gradient(130% 70% at 50% -8%, color-mix(in srgb, var(--ls-gold) 7%, transparent), transparent 58%),
+                  radial-gradient(130% 70% at 50% -8%, color-mix(in srgb, var(--ls-teal) 8%, transparent), transparent 58%),
                   radial-gradient(70% 60% at 100% 112%, color-mix(in srgb, var(--ls-purple) 6%, transparent), transparent 60%),
                   radial-gradient(70% 60% at 0% 112%, color-mix(in srgb, var(--ls-teal) 6%, transparent), transparent 60%);
                 box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ls-text) 5%, transparent);
@@ -1184,7 +1184,7 @@ function DistributorDetailCard({
           >
             🏆 Classement · Équipe {rootUserName}
           </div>
-          <div style={{ fontSize: 10, color: "var(--ls-gold)", fontWeight: 600 }}>
+          <div style={{ fontSize: 10, color: "var(--ls-teal)", fontWeight: 600 }}>
             {period === "week" ? "Semaine" : period === "month" ? "Mois" : "Année"} en cours
           </div>
         </div>
@@ -1509,7 +1509,7 @@ function TeamHeroStats({
   const upcomingProspects = teamProspects.filter((p) => p.status === "scheduled").length;
 
   const stats: Array<{ label: string; value: number | string; emoji: string; color: string }> = [
-    { label: "Membres équipe", value: membersCount, emoji: "👥", color: "#B8922A" },
+    { label: "Membres équipe", value: membersCount, emoji: "👥", color: "#2DD4BF" },
     { label: "Clients actifs", value: activeClients, emoji: "🌱", color: "#1D9E75" },
     { label: "Prospects programmés", value: upcomingProspects, emoji: "🎯", color: "#7F77DD" },
     { label: "À ré-engager", value: fragileClients, emoji: "⚡", color: "#D85A30" },

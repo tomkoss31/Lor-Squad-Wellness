@@ -45,7 +45,7 @@ export function ExposuresWeekCard() {
               style={{
                 ...barFill,
                 width: `${Math.max(3, pct)}%`,
-                background: reached ? "var(--ls-teal)" : "var(--ls-gold)",
+                background: reached ? "var(--ls-lime)" : "var(--ls-teal)",
               }}
             />
           </div>
@@ -229,7 +229,7 @@ const eyebrow: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 3,
 };
 
@@ -409,7 +409,7 @@ const activatedChip: React.CSSProperties = {
 const logBtn: React.CSSProperties = {
   flexShrink: 0,
   padding: "8px 13px",
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   color: "var(--ls-bg)",
   border: "none",
   borderRadius: 10,
