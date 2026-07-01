@@ -180,7 +180,7 @@ export function UsersPage() {
           { label: "Actifs", value: userStats.active, borderColor: "#0D9488", textColor: "var(--ls-teal)" },
           { label: "Total", value: userStats.total, borderColor: "transparent", textColor: "var(--ls-text)" },
           { label: "Admins", value: userStats.admins, borderColor: "#378ADD", textColor: "#378ADD" },
-          { label: "Référents", value: userStats.referents, borderColor: "#BA7517", textColor: "#BA7517" },
+          { label: "Référents", value: userStats.referents, borderColor: "#A78BFA", textColor: "#A78BFA" },
           { label: "Distrib.", value: userStats.distributors, borderColor: "#639922", textColor: "#639922" },
         ].map(({ label, value, borderColor, textColor }) => (
           <div
@@ -249,11 +249,11 @@ export function UsersPage() {
                   padding: "12px 18px",
                   border: "none",
                   background: "transparent",
-                  color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                  color: isActive ? "var(--ls-teal)" : "var(--ls-text-muted)",
                   fontSize: 13,
                   fontWeight: isActive ? 600 : 400,
                   cursor: "pointer",
-                  borderBottom: isActive ? "2px solid var(--ls-gold)" : "2px solid transparent",
+                  borderBottom: isActive ? "2px solid var(--ls-teal)" : "2px solid transparent",
                   marginBottom: -1,
                   fontFamily: "DM Sans, sans-serif",
                   display: "inline-flex",
@@ -283,14 +283,14 @@ export function UsersPage() {
                     style={{
                       padding: "10px 16px",
                       borderRadius: 10,
-                      background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                      background: "linear-gradient(135deg, var(--ls-lime) 0%, #a6d40a 100%)",
                       border: "none",
-                      color: "#FFFFFF",
+                      color: "#0a1400",
                       cursor: "pointer",
                       fontSize: 13,
                       fontFamily: "DM Sans, sans-serif",
-                      fontWeight: 600,
-                      boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+                      fontWeight: 700,
+                      boxShadow: "0 2px 8px rgba(197,248,42,0.3)",
                     }}
                   >
                     + Inviter un distributeur
@@ -344,9 +344,9 @@ export function UsersPage() {
                       onClick={() => setRoleFilter(key)}
                       style={{
                         padding: "8px 12px",
-                        border: isActive ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                        border: isActive ? "1.5px solid var(--ls-teal)" : "1px solid var(--ls-border)",
                         background: isActive ? "rgba(184,146,42,0.08)" : "transparent",
-                        color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                        color: isActive ? "var(--ls-teal)" : "var(--ls-text-muted)",
                         borderRadius: 9,
                         fontSize: 11,
                         fontWeight: isActive ? 600 : 400,
@@ -384,7 +384,7 @@ export function UsersPage() {
                       key={user.id}
                       style={{
                         background: "var(--ls-surface)",
-                        border: isExpanded ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                        border: isExpanded ? "1.5px solid var(--ls-teal)" : "1px solid var(--ls-border)",
                         borderRadius: 11,
                         overflow: "hidden",
                         opacity: user.active ? 1 : 0.65,
@@ -437,7 +437,7 @@ export function UsersPage() {
                         {/* Infos centrales */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: isExpanded ? "var(--ls-gold)" : "var(--ls-text)" }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: isExpanded ? "var(--ls-teal)" : "var(--ls-text)" }}>
                               {user.name}
                             </span>
                             <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: rc.chipBg, color: rc.chipText }}>
@@ -476,7 +476,7 @@ export function UsersPage() {
                             alignItems: "center",
                             gap: 6,
                             fontSize: 10,
-                            color: isExpanded ? "var(--ls-gold)" : "var(--ls-text-hint)",
+                            color: isExpanded ? "var(--ls-teal)" : "var(--ls-text-hint)",
                             fontWeight: isExpanded ? 600 : 400,
                             flexShrink: 0,
                           }}
@@ -532,7 +532,7 @@ export function UsersPage() {
                               style={{
                                 padding: "8px 14px",
                                 border: "none",
-                                background: "var(--ls-gold)",
+                                background: "var(--ls-teal)",
                                 color: "#fff",
                                 borderRadius: 9,
                                 fontSize: 12,
@@ -851,7 +851,7 @@ function UserInlineAttachmentForm({
           style={{
             padding: "8px 14px",
             border: "none",
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             color: "#fff",
             borderRadius: 8,
             fontSize: 11,
@@ -1048,7 +1048,7 @@ function PasswordChangeModal({
                   flex: 1,
                   padding: 11,
                   border: "none",
-                  background: "var(--ls-gold)",
+                  background: "var(--ls-teal)",
                   color: "#fff",
                   borderRadius: 10,
                   fontSize: 13,
@@ -1125,7 +1125,7 @@ function UserInlineRankForm({ user }: { user: User }) {
         style={{
           padding: "8px 14px",
           border: "none",
-          background: saving ? "var(--ls-border)" : "var(--ls-gold)",
+          background: saving ? "var(--ls-border)" : "var(--ls-teal)",
           color: "#fff",
           borderRadius: 8,
           fontSize: 12,
