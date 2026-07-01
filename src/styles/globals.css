@@ -2799,7 +2799,7 @@ body.ls-stealth-active [data-stealth]:focus-within {
   background: linear-gradient(135deg, var(--ls-teal), #0d736b);
   color: #052420; font-family: var(--syne); font-weight: 700;
   display: grid; place-items: center; font-size: 12px;
-  border: 1.5px solid color-mix(in srgb, var(--ls-gold) 32%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ls-teal) 34%, transparent);
   cursor: pointer; flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
@@ -2830,7 +2830,7 @@ body.ls-stealth-active [data-stealth]:focus-within {
   padding: 14px 16px;
   display: flex; align-items: center; gap: 12px;
   border-bottom: 1px solid var(--ls-border);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)), var(--ls-surface));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 9%, var(--ls-surface)), var(--ls-surface));
 }
 .lb-drawer-head .lb-avatar { width: 44px; height: 44px; font-size: 15px; }
 .lb-drawer-name {
@@ -2883,19 +2883,19 @@ body.ls-stealth-active [data-stealth]:focus-within {
   color: var(--ls-teal);
 }
 .lb-drawer-item.active {
-  background: color-mix(in srgb, var(--ls-gold) 14%, transparent);
-  color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  color: var(--ls-teal);
 }
 .lb-drawer-item.active::before {
   content: ''; position: absolute; left: -10px;
   top: 8px; bottom: 8px; width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--ls-gold);
-  box-shadow: 0 0 8px var(--ls-gold);
+  background: var(--ls-teal);
+  box-shadow: 0 0 8px var(--ls-teal);
 }
 .lb-drawer-item.active .icon {
-  color: var(--ls-gold);
-  background: color-mix(in srgb, var(--ls-gold) 10%, transparent);
+  color: var(--ls-teal);
+  background: color-mix(in srgb, var(--ls-teal) 10%, transparent);
 }
 .lb-drawer-item.danger { color: var(--ls-coral); }
 .lb-drawer-item.danger .icon { color: var(--ls-coral); }
