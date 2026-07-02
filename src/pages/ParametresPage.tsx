@@ -15,7 +15,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { PremiumHero } from "../components/ui/PremiumHero";
 import { ProfilTab } from "../components/settings/ProfilTab";
 import { EquipeTab } from "../components/settings/EquipeTab";
 import { AdminTab, type AdminSection } from "../components/settings/AdminTab";
@@ -97,51 +96,66 @@ export function ParametresPage() {
 
   const moreActive = tab === "notifs" || tab === "legal";
 
+  // Style cockpit (2026-07-02) : onglets en JetBrains Mono capitales, actif =
+  // pastille teal. Couleurs via tokens → suit le toggle clair/sombre.
   const pillStyle = (active: boolean) => ({
-    padding: "8px 14px",
-    borderRadius: 8,
-    border: "none",
+    padding: "9px 13px",
+    borderRadius: 9,
+    border: "1px solid transparent",
     cursor: "pointer",
-    fontSize: 13,
-    fontFamily: "DM Sans, sans-serif",
-    fontWeight: active ? 600 : 400,
-    background: active ? "var(--ls-surface2)" : "transparent",
-    color: active ? "var(--ls-text)" : "var(--ls-text-muted)",
+    fontSize: 11,
+    fontFamily: "'JetBrains Mono', monospace",
+    fontWeight: active ? 600 : 500,
+    letterSpacing: "0.13em",
+    textTransform: "uppercase" as const,
+    background: active ? "var(--ls-teal)" : "transparent",
+    color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
     display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: 7,
     transition: "all 0.15s",
     whiteSpace: "nowrap" as const,
   });
 
   return (
     <div className="space-y-6">
-      <PremiumHero
-        identity="neutral"
-        eyebrow="Paramètres · espace admin"
-        titleAccent="Tes réglages"
-        titleSuffix=" ⚙️"
-        subtitle="Profil, encaissement, disponibilités et outils d'administration."
-      />
-
-      {/* Tabs pills + menu « ⋯ Plus » */}
+      {/* Hero cockpit (refonte 2026-07-02) — halo teal + titre Anton + onglets
+          mono. Couleurs via tokens → suit le toggle clair/sombre. */}
       <div
         style={{
-          display: "flex",
-          gap: 6,
           background: "var(--ls-surface)",
+          backgroundImage:
+            "radial-gradient(120% 90% at 8% 0%, color-mix(in srgb, var(--ls-teal) 12%, transparent) 0%, transparent 45%)",
           border: "1px solid var(--ls-border)",
-          borderRadius: 12,
-          padding: 4,
-          width: "fit-content",
-          maxWidth: "100%",
-          flexWrap: "wrap",
-          position: "relative",
+          borderRadius: 18,
+          padding: "26px 26px 22px",
+          overflow: "hidden",
         }}
       >
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+          <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ls-teal)", display: "inline-block" }} />
+          Paramètres · espace admin
+        </div>
+        <h1 style={{ fontFamily: "Anton, sans-serif", fontSize: "clamp(34px, 6vw, 46px)", lineHeight: 0.98, letterSpacing: "0.01em", textTransform: "uppercase", color: "var(--ls-text)", margin: "10px 0 6px" }}>
+          Tes réglages
+        </h1>
+        <div style={{ fontSize: 13.5, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", maxWidth: "52ch" }}>
+          Profil, encaissement, disponibilités et outils d'administration.
+        </div>
+
+        {/* Onglets cockpit + menu « ⋯ Plus » */}
+        <div
+          style={{
+            display: "flex",
+            gap: 7,
+            marginTop: 20,
+            flexWrap: "wrap",
+            position: "relative",
+          }}
+        >
         {mainTabs.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)} style={pillStyle(tab === t.key)}>
-            <span aria-hidden="true">{t.icon}</span>
+            <span aria-hidden="true" style={{ fontSize: 14 }}>{t.icon}</span>
             {t.label}
           </button>
         ))}
@@ -153,9 +167,9 @@ export function ParametresPage() {
               type="button"
               onClick={() => setMoreOpen((o) => !o)}
               aria-expanded={moreOpen}
-              style={pillStyle(moreActive || moreOpen)}
+              style={{ ...pillStyle(moreActive || moreOpen), border: "1px solid var(--ls-border)" }}
             >
-              <span aria-hidden="true">⋯</span>
+              <span aria-hidden="true" style={{ fontSize: 14 }}>⋯</span>
               Plus
             </button>
             {moreOpen ? (
@@ -210,7 +224,7 @@ export function ParametresPage() {
                         width: "100%",
                       }}
                     >
-                      <span aria-hidden="true">{it.icon}</span>
+                      <span aria-hidden="true" style={{ fontSize: 14 }}>{it.icon}</span>
                       {it.label}
                     </button>
                   ))}
@@ -219,6 +233,7 @@ export function ParametresPage() {
             ) : null}
           </div>
         ) : null}
+        </div>
       </div>
 
       {/* Contenu conditionnel */}
