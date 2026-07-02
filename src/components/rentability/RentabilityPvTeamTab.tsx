@@ -12,9 +12,9 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { PvOverrideBlock, PvBizworksBlock } from "../distributor-blocks";
-import { ManualPvEntriesSection } from "./ManualPvEntriesSection";
 import { RANK_LABELS } from "../../types/domain";
 import { currentMonthIso } from "../../lib/herbalifeFormulas";
 
@@ -34,6 +34,7 @@ export function RentabilityPvTeamTab({
   onApplied?: () => void;
 }) {
   const { users } = useAppContext();
+  const navigate = useNavigate();
   // Ciblage d'un distri précis via ?member=<id> (raccourci depuis fiche distri /
   // drill-down) : on ouvre sa carte d'emblée + scroll dessus.
   const targetMember =
@@ -231,12 +232,44 @@ export function RentabilityPvTeamTab({
         )}
       </section>
 
-      {/* ── Distributeurs hors-app (saisie manuelle + remise) ──────────── */}
+      {/* ── Distributeurs hors-app → raccourci vers Arborescence ──────────
+          Consolidation (2026-07-01) : la saisie des distris hors-app vit
+          UNIQUEMENT dans l'Arborescence Herbalife (table pv_monthly_breakdown,
+          celle qui alimente les paliers). L'ancien bloc ManualPvEntriesSection
+          écrivait dans la table legacy manual_pv_entries → on ne le propose plus
+          ici pour éviter la double-saisie / la table morte. */}
       <section>
         <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, margin: "0 2px 10px" }}>
           Distributeurs hors-app
         </div>
-        <ManualPvEntriesSection />
+        <button
+          type="button"
+          onClick={() => navigate("/parametres/arborescence-herbalife")}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            textAlign: "left",
+            padding: "14px 16px",
+            borderRadius: 14,
+            background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 22 }}>🌳</span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14 }}>
+              Gérer mes distris hors-app → Arborescence
+            </span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Reconstruis ta downline historique (Virgile, Aurélie…) et saisis leur PV mensuel. C'est le seul endroit — l'override remonte tout seul.
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700 }}>→</span>
+        </button>
       </section>
     </div>
   );
