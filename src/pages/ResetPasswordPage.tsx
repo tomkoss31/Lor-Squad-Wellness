@@ -17,24 +17,87 @@ export function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Vérifier qu'on a bien une session "recovery" au montage
+  // Vérifier qu'on a bien une session "recovery" au montage.
+  //
+  // Robustesse (2026-07-02) : l'ancien code faisait UN seul `getSession()`
+  // immédiat → il ratait la session quand Supabase traitait encore le hash de
+  // l'URL de façon asynchrone (race), et ne gérait que le format implicite
+  // (`#access_token`). Résultat : « Lien expiré ou invalide » alors que le lien
+  // était bon (bug signalé sur la cliente Maeva). On gère désormais les 3
+  // formats de lien recovery + on attend l'event auth avant de déclarer l'échec.
   useEffect(() => {
+    let settled = false;
+    let unsub: (() => void) | undefined;
+
+    // Délai de grâce : on ne déclare « expiré » qu'après avoir laissé Supabase
+    // traiter l'URL et émettre son event (sinon faux négatif immédiat).
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      setPhase("error");
+      setErrorMsg("Lien expiré ou invalide. Redemande un nouveau lien.");
+    }, 4500);
+
+    const markReady = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      setPhase("ready");
+    };
+
     void (async () => {
       const sb = await getSupabaseClient();
       if (!sb) {
+        settled = true;
+        window.clearTimeout(timer);
         setPhase("error");
         setErrorMsg("Service indisponible.");
         return;
       }
-      // Laisse Supabase traiter le hash URL (auto via detectSessionInUrl)
-      const { data } = await sb.auth.getSession();
-      if (data?.session) {
-        setPhase("ready");
-      } else {
-        setPhase("error");
-        setErrorMsg("Lien expiré ou invalide. Redemande un nouveau lien.");
+
+      // 1) Écoute l'event recovery — Supabase traite le hash de manière async
+      //    et émet PASSWORD_RECOVERY / SIGNED_IN quand la session est prête.
+      const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
+        if (
+          session &&
+          (event === "PASSWORD_RECOVERY" ||
+            event === "SIGNED_IN" ||
+            event === "TOKEN_REFRESHED" ||
+            event === "INITIAL_SESSION")
+        ) {
+          markReady();
+        }
+      });
+      unsub = () => sub.subscription.unsubscribe();
+
+      // 2) Formats de lien alternatifs selon la config du projet Supabase :
+      //    - PKCE : `?code=…` → exchangeCodeForSession
+      //    - OTP  : `?token_hash=…&type=recovery` → verifyOtp
+      //    (le format implicite `#access_token` est géré par detectSessionInUrl
+      //     + le listener ci-dessus.)
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+        const tokenHash = url.searchParams.get("token_hash");
+        const type = url.searchParams.get("type");
+        if (code) {
+          await sb.auth.exchangeCodeForSession(code);
+        } else if (tokenHash && type === "recovery") {
+          await sb.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+        }
+      } catch {
+        /* lien déjà consommé / invalide → on retombe sur le timeout d'erreur */
       }
+
+      // 3) Session déjà établie (refresh de page, hash déjà traité) ?
+      const { data } = await sb.auth.getSession();
+      if (data?.session) markReady();
     })();
+
+    return () => {
+      window.clearTimeout(timer);
+      unsub?.();
+    };
   }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
