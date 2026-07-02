@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
+import { RdvAvailabilityCard } from "../components/settings/RdvAvailabilityCard";
 
 interface LinkDef {
   id: string;
@@ -201,6 +202,18 @@ export function MesLiensPage() {
       <div style={{ marginTop: 20, padding: "12px 15px", borderRadius: 13, background: "color-mix(in srgb, var(--ls-teal) 6%, transparent)", border: "0.5px solid color-mix(in srgb, var(--ls-teal) 22%, transparent)", fontSize: 12.5, color: "var(--ls-text-muted)" }}>
         💡 Chaque lien utilise <strong style={{ color: "var(--ls-text)" }}>ton slug</strong> ({slug}) automatiquement. <strong style={{ color: "var(--ls-text)" }}>QR</strong> = à scanner en présentiel · <strong style={{ color: "var(--ls-text)" }}>WhatsApp</strong> = message pré-rédigé.
       </div>
+
+      {/* Disponibilités RDV (refonte Paramètres 2026-07-02) : accessibles ici
+          car elles alimentent la réservation depuis le bilan online / le lien.
+          Même composant que Paramètres → Disponibilités (édition synchronisée). */}
+      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--ls-text-muted)", margin: "26px 4px 10px" }}>
+        🗓️ Tes disponibilités RDV
+      </div>
+      <p style={{ color: "var(--ls-text-muted)", fontSize: 13, margin: "0 4px 12px", fontFamily: "DM Sans, sans-serif", lineHeight: 1.5 }}>
+        Déclare tes créneaux ici : les prospects qui terminent ton bilan online peuvent réserver dans ces plages
+        (aussi éditable dans Paramètres → Disponibilités).
+      </p>
+      <RdvAvailabilityCard />
 
       {/* Modale QR */}
       {qr ? (

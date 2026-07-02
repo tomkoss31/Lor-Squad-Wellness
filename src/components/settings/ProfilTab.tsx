@@ -337,6 +337,10 @@ export function ProfilTab() {
       <ProgressGauges />
 
       <Card className="space-y-5">
+        {/* Refonte 2026-07-02 : en-tête Anton (identité onboarding v2). */}
+        <div style={{ fontFamily: "Anton, sans-serif", fontSize: 20, letterSpacing: "0.02em", textTransform: "uppercase", color: "var(--ls-text)" }}>
+          Ton profil
+        </div>
         {/* Avatar uploader (V2 — 2026-04-30) */}
         <AvatarUploader
           currentUrl={avatarUrl}
