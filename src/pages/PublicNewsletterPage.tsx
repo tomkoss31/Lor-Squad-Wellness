@@ -15,7 +15,7 @@
 // OG tags : injectés via useEffect (V1). Pour vrai preview social → 8.8.
 // =============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useParams } from "react-router-dom";
 import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -272,14 +272,26 @@ export function PublicNewsletterPage() {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        background: PV.cream,
-        fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
-        color: PV.text,
-        lineHeight: 1.6,
-        fontSize: 16,
-      }}
+      style={
+        {
+          minHeight: "100vh",
+          background: PV.cream,
+          fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+          color: PV.text,
+          lineHeight: 1.6,
+          fontSize: 16,
+          // Rescope les vars --ls-* consommées par MarkdownRenderer (composant
+          // interne app coach) sur la palette PV de cette page publique —
+          // sinon héritage de --ls-text du thème app (dark par défaut) =
+          // texte des sections quasi invisible sur fond clair.
+          "--ls-text": PV.text,
+          "--ls-text-muted": PV.textMuted,
+          "--ls-gold": PV.gold,
+          "--ls-teal": PV.teal,
+          "--ls-surface": PV.surface,
+          "--ls-surface2": PV.surface2,
+        } as CSSProperties
+      }
     >
       <div
         style={{
