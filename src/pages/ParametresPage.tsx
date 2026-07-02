@@ -15,6 +15,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import { getHeroGradient } from "../lib/heroGradient";
 import { ProfilTab } from "../components/settings/ProfilTab";
 import { EquipeTab } from "../components/settings/EquipeTab";
 import { AdminTab, type AdminSection } from "../components/settings/AdminTab";
@@ -117,30 +118,68 @@ export function ParametresPage() {
     whiteSpace: "nowrap" as const,
   });
 
+  // Couleur identitaire teal + variation selon l'heure (mesh + dégradé titre).
+  const g = getHeroGradient("teal");
+
   return (
     <div className="space-y-6">
-      {/* Hero cockpit (refonte 2026-07-02) — halo teal + titre Anton + onglets
-          mono. Couleurs via tokens → suit le toggle clair/sombre. */}
+      {/* Hero cockpit (refonte 2026-07-02, couleur 2026-07-02b) — typo cockpit
+          (Anton + mono) MAIS on garde la richesse couleur du PremiumHero :
+          dégradé de titre + mesh animé + palette qui varie selon l'heure.
+          100 % via tokens/gradient → suit le toggle clair/sombre. */}
       <div
         style={{
+          position: "relative",
           background: "var(--ls-surface)",
-          backgroundImage:
-            "radial-gradient(120% 90% at 8% 0%, color-mix(in srgb, var(--ls-teal) 12%, transparent) 0%, transparent 45%)",
           border: "1px solid var(--ls-border)",
           borderRadius: 18,
           padding: "26px 26px 22px",
           overflow: "hidden",
+          boxShadow: `0 1px 0 0 ${g.glow}, 0 12px 36px -14px rgba(0,0,0,0.14)`,
         }}
       >
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
-          <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ls-teal)", display: "inline-block" }} />
-          Paramètres · espace admin
-        </div>
-        <h1 style={{ fontFamily: "Anton, sans-serif", fontSize: "clamp(34px, 6vw, 46px)", lineHeight: 0.98, letterSpacing: "0.01em", textTransform: "uppercase", color: "var(--ls-text)", margin: "10px 0 6px" }}>
-          Tes réglages
-        </h1>
-        <div style={{ fontSize: 13.5, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", maxWidth: "52ch" }}>
-          Profil, encaissement, disponibilités et outils d'administration.
+        <style>{`
+          @keyframes ls-param-mesh { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(-10px,6px) scale(1.05)} 100%{transform:translate(8px,-4px) scale(1)} }
+          @media (prefers-reduced-motion: reduce){ .ls-param-mesh{animation:none!important} }
+        `}</style>
+        <div
+          className="ls-param-mesh"
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: "-20%",
+            opacity: 0.6,
+            pointerEvents: "none",
+            animation: "ls-param-mesh 22s ease-in-out infinite alternate",
+            background: `radial-gradient(circle at 0% 0%, ${g.glow} 0%, transparent 45%), radial-gradient(circle at 100% 120%, ${g.glow} 0%, transparent 50%), radial-gradient(circle at 100% 0%, color-mix(in srgb, ${g.tertiary} 22%, transparent) 0%, transparent 60%)`,
+          }}
+        />
+
+        <div style={{ position: "relative" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: g.secondary, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: g.primary, boxShadow: `0 0 8px ${g.glow}`, display: "inline-block" }} />
+            Paramètres · espace admin
+          </div>
+          <h1
+            style={{
+              fontFamily: "Anton, sans-serif",
+              fontSize: "clamp(34px, 6vw, 46px)",
+              lineHeight: 0.98,
+              letterSpacing: "0.01em",
+              textTransform: "uppercase",
+              margin: "10px 0 6px",
+              background: `linear-gradient(120deg, ${g.primary} 0%, ${g.secondary} 55%, ${g.tertiary} 100%)`,
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              color: g.secondary,
+            }}
+          >
+            Tes réglages
+          </h1>
+          <div style={{ fontSize: 13.5, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", maxWidth: "52ch" }}>
+            Profil, encaissement, disponibilités et outils d'administration.
+          </div>
         </div>
 
         {/* Onglets cockpit + menu « ⋯ Plus » */}
