@@ -95,6 +95,19 @@ function levelTitle(level: number): string {
   return LEVEL_TITLES[level] ?? `Niveau ${level}`;
 }
 
+// Fix bug niveau (2026-07-02) : le niveau + le seuil suivant sont TOUJOURS
+// dérivés du total XP côté client. La RPC get_user_xp ne renvoie pas de façon
+// fiable `level` / `xp_for_next_level` → l'ancien fallback affichait « Niveau 1
+// / 100 XP » et « Niveau 2 dans −1653 XP » alors que total_xp = 1753.
+// Formule : seuil pour atteindre le niveau N = (N-1)²×100 ; donc
+// level = floor(√(xp/100)) + 1, et le seuil du niveau suivant = level²×100.
+export function deriveLevelFromXp(totalXp: number): { level: number; xpForNextLevel: number } {
+  const safe = Math.max(0, Math.round(totalXp));
+  const level = Math.floor(Math.sqrt(safe / 100)) + 1;
+  const xpForNextLevel = level * level * 100; // seuil pour atteindre level+1
+  return { level, xpForNextLevel };
+}
+
 export function XpProgressCard() {
   const { currentUser } = useAppContext();
   const userId = currentUser?.id ?? null;
@@ -133,12 +146,14 @@ export function XpProgressCard() {
           setData((d) => ({ ...d, loading: false }));
           return;
         }
+        const totalXp = (row as { total_xp?: number }).total_xp ?? 0;
+        const derived = deriveLevelFromXp(totalXp);
         setData({
           loading: false,
           error: null,
-          totalXp: (row as { total_xp?: number }).total_xp ?? 0,
-          level: (row as { level?: number }).level ?? 1,
-          xpForNextLevel: (row as { xp_for_next_level?: number }).xp_for_next_level ?? 100,
+          totalXp,
+          level: derived.level,
+          xpForNextLevel: derived.xpForNextLevel,
           academyXp: (row as { academy_xp?: number }).academy_xp ?? 0,
           bilansXp: (row as { bilans_xp?: number }).bilans_xp ?? 0,
           rdvXp: (row as { rdv_xp?: number }).rdv_xp ?? 0,

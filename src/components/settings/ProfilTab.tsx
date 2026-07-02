@@ -11,16 +11,13 @@ import { Button } from "../ui/Button";
 import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
-import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
-import { UserActivityPanel } from "../../features/gamification/components/UserActivityPanel";
+import { ProgressGauges } from "../../features/gamification/components/ProgressGauges";
 import { AvatarUploader } from "./AvatarUploader";
-import { PublicProfileShareCard } from "./PublicProfileShareCard";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
-import { RdvAvailabilityCard } from "./RdvAvailabilityCard";
 import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 import { RankPinBadge } from "../rank/RankPinBadge";
 
@@ -334,13 +331,10 @@ export function ProfilTab() {
         </Card>
       )}
 
-      {/* Gamification 5 (2026-04-29) : niveau + XP en haut du profil. */}
-      <XpProgressCard />
-
-      {/* V2 ProfilTab (2026-04-30) : panel activite (sessions, streak,
-          temps passe) inline pour que chaque distri voie ses propres stats
-          sans aller dans /team. */}
-      {currentUser?.id ? <UserActivityPanel userId={currentUser.id} /> : null}
+      {/* Refonte Paramètres (2026-07-02) : les gros blocs XP + Activité qui
+          surchargeaient le profil sont remplacés par 2 jauges compactes
+          cliquables → le détail complet s'ouvre en modale. */}
+      <ProgressGauges />
 
       <Card className="space-y-5">
         {/* Avatar uploader (V2 — 2026-04-30) */}
@@ -834,39 +828,9 @@ export function ProfilTab() {
             </div>
           </LabeledField>
 
-          {/* 💳 Encaissement : page canonique déplacée dans « Mon business »
-              (B9 : une feature = un seul endroit). Ici, simple raccourci. */}
-          <button
-            type="button"
-            onClick={() => navigate("/encaissement")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              textAlign: "left",
-              borderRadius: 14,
-              border: "1px solid var(--ls-border)",
-              background: "var(--ls-surface)",
-              padding: 16,
-              cursor: "pointer",
-            }}
-          >
-            <span style={{ fontSize: 22 }}>💳</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--ls-text)" }}>
-                Encaissement direct
-              </span>
-              <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                Configure ton compte Stripe pour encaisser tes clients à la fin du bilan → Mon business
-              </span>
-            </span>
-            <span style={{ color: "var(--ls-teal)", fontSize: 18 }}>→</span>
-          </button>
-
-          {/* 🗓️ Disponibilités RDV (chantier RDV V2, 2026-06-14) : le coach
-              déclare ses créneaux → alimentent la page publique /rdv. */}
-          <RdvAvailabilityCard />
+          {/* Refonte 2026-07-02 : Encaissement (Stripe) + Disponibilités RDV
+              déplacés dans leurs propres onglets Paramètres (icône dédiée) —
+              ils ne surchargent plus le profil. */}
 
           <LabeledField label="Rôle">
             <div
@@ -1022,8 +986,8 @@ export function ProfilTab() {
         </div>
       </Card>
 
-      {/* Fiche publique partageable (#13-B 2026-06-08) */}
-      <PublicProfileShareCard name={currentUser.name} />
+      {/* Fiche publique retirée du profil (refonte 2026-07-02) : elle vit
+          côté prospection / Mes liens, pas dans les réglages. */}
 
       <Card className="space-y-3">
         <p className="eyebrow-label">Session</p>

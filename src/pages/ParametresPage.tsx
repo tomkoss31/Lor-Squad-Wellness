@@ -1,50 +1,56 @@
-// Chantier Paramètres Admin (2026-04-23) — commit 2/7.
+// Page /parametres — refonte 2026-07-02.
 //
-// Shell de la page /parametres (admin-only). 5 tabs pills horizontaux :
-//   Profil · Équipe · Transferts · Statistiques · Debug
+// Objectif : « une icône = un écran ». On sort de 7 onglets surchargés vers une
+// structure claire :
+//   Pills : 👤 Profil · 💳 Encaissement · 📅 Disponibilités · ✨ Noaly ·
+//           👥 Équipe (admin) · 🛠️ Admin (admin)
+//   Menu « ⋯ Plus » : 🔔 Notifications · 🛡️ Confidentialité & RGPD ·
+//                     📰 Newsletters (admin → /admin/newsletters)
 //
-// Le guard admin vit sur la route (RoleRoute allowedRoles=['admin']) dans
-// App.tsx. Cette page suppose donc que currentUser est admin.
+// Retirés de Paramètres : ⭐ Programme VIP (vit dans Mon développement /
+// ClubVipExpliquePage) · 🔗 Fiche publique (côté prospection).
 //
-// Chaque tab est un composant autonome pour rester lisible.
+// Le guard admin vit sur la route (RoleRoute) dans App.tsx.
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-// PageHeading remplace par PremiumHero (2026-04-29)
 import { PremiumHero } from "../components/ui/PremiumHero";
 import { ProfilTab } from "../components/settings/ProfilTab";
 import { EquipeTab } from "../components/settings/EquipeTab";
 import { AdminTab, type AdminSection } from "../components/settings/AdminTab";
-import { VipProgramTab } from "../components/settings/VipProgramTab";
 import { LegalTab } from "../components/settings/LegalTab";
 import { NotificationsTab } from "../components/settings/NotificationsTab";
 import { NoalyUsageCard } from "../components/settings/NoalyUsageCard";
+import { EncaissementTab } from "../components/settings/EncaissementTab";
+import { DisposTab } from "../components/settings/DisposTab";
 
-// Leads → CRM (chantier 2026-06-13) : l'onglet « Leads » des Paramètres
-// faisait doublon avec /crm (qui agrège prospect_leads + online_bilans + recos).
-// /crm est désormais LA source unique. /parametres?tab=leads redirige vers /crm.
-//
-// Simplification B3 (2026-06-13) : Transferts / Statistiques / Debug regroupés
-// sous un seul onglet « Admin » (sous-onglets internes, cf. AdminTab). On passe
-// de 8 à 6 onglets. Les anciens liens ?tab=transferts|stats|debug restent
-// valides (mappés vers Admin + le bon sous-onglet).
-type TabKey = "profil" | "vip" | "notifs" | "noaly" | "legal" | "equipe" | "admin";
+type TabKey =
+  | "profil"
+  | "encaissement"
+  | "dispos"
+  | "noaly"
+  | "equipe"
+  | "admin"
+  | "notifs"
+  | "legal";
 
-const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
+// Pills principales (onglets visibles en permanence).
+const MAIN_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
-  // Tier B Premium VIP (2026-04-28) : doc programme Client Privilegie pour
-  // tous les coachs (distri/referent/admin). Pas adminOnly.
-  { key: "vip", label: "Programme VIP", icon: "⭐" },
-  // Notif push V2 (2026-04-30) : tous users peuvent personnaliser
-  { key: "notifs", label: "Notifications", icon: "🔔" },
-  // Conso Noaly (2026-06-15) : compteur tokens + coût IA, visible par tous
-  // (chacun voit la sienne, l'admin voit aussi via la RLS).
+  { key: "encaissement", label: "Encaissement", icon: "💳" },
+  { key: "dispos", label: "Disponibilités", icon: "📅" },
   { key: "noaly", label: "Noaly", icon: "✨" },
-  // RGPD Phase 1 (2026-04-30) : tous users peuvent voir
-  { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
   { key: "admin", label: "Admin", icon: "🛠️", adminOnly: true },
+];
+
+// Items du menu « ⋯ Plus » (regroupés pour désencombrer la barre).
+type MoreItem = { key: TabKey | "newsletters"; label: string; icon: string; adminOnly?: boolean };
+const MORE_ITEMS: MoreItem[] = [
+  { key: "notifs", label: "Notifications", icon: "🔔" },
+  { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
+  { key: "newsletters", label: "Newsletters", icon: "📰", adminOnly: true },
 ];
 
 // Mapping rétro-compat : anciens slugs techniques → onglet Admin + sous-onglet.
@@ -57,11 +63,12 @@ const LEGACY_ADMIN_SLUGS: Record<string, AdminSection> = {
 export function ParametresPage() {
   const { currentUser } = useAppContext();
   const navigate = useNavigate();
-  // Chantier Academy section 1 (2026-04-27) : /parametres ouverte aux
-  // non-admins, mais seul l onglet "Profil" est visible pour eux.
   const isAdmin = currentUser?.role === "admin";
-  const TABS = ALL_TABS.filter((t) => isAdmin || !t.adminOnly);
-  // Sous-onglet Admin initial déduit des anciens liens ?tab=transferts|stats|debug.
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const mainTabs = MAIN_TABS.filter((t) => isAdmin || !t.adminOnly);
+  const moreItems = MORE_ITEMS.filter((t) => isAdmin || !t.adminOnly);
+
   const [adminSection] = useState<AdminSection>(() => {
     if (typeof window === "undefined") return "transferts";
     const fromQuery = new URLSearchParams(window.location.search).get("tab") ?? "";
@@ -72,18 +79,40 @@ export function ParametresPage() {
     const fromQuery = new URLSearchParams(window.location.search).get("tab") ?? "";
     // Anciens liens techniques → onglet Admin (le sous-onglet est géré ci-dessus).
     if (LEGACY_ADMIN_SLUGS[fromQuery]) return "admin";
-    return TABS.some((t) => t.key === fromQuery) ? (fromQuery as TabKey) : "profil";
+    // Ancien slug « vip » → redirigé plus bas vers l'explication dans Mon dév.
+    const all = [...MAIN_TABS, ...MORE_ITEMS].map((t) => t.key);
+    return all.includes(fromQuery as TabKey) ? (fromQuery as TabKey) : "profil";
   });
 
-  // Ancien lien /parametres?tab=leads → /crm (source unique des leads).
+  // Redirections d'anciens liens.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("tab") === "leads") {
-      navigate("/crm", { replace: true });
-    }
+    const q = new URLSearchParams(window.location.search).get("tab");
+    if (q === "leads") navigate("/crm", { replace: true });
+    // ⭐ Programme VIP : retiré des Paramètres → l'explication vit dans Mon dév.
+    if (q === "vip") navigate("/developpement/club-vip-explique", { replace: true });
   }, [navigate]);
 
   if (!currentUser) return null;
+
+  const moreActive = tab === "notifs" || tab === "legal";
+
+  const pillStyle = (active: boolean) => ({
+    padding: "8px 14px",
+    borderRadius: 8,
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "DM Sans, sans-serif",
+    fontWeight: active ? 600 : 400,
+    background: active ? "var(--ls-surface2)" : "transparent",
+    color: active ? "var(--ls-text)" : "var(--ls-text-muted)",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    transition: "all 0.15s",
+    whiteSpace: "nowrap" as const,
+  });
 
   return (
     <div className="space-y-6">
@@ -92,10 +121,10 @@ export function ParametresPage() {
         eyebrow="Paramètres · espace admin"
         titleAccent="Tes réglages"
         titleSuffix=" ⚙️"
-        subtitle="Profil, équipe et outils d'administration."
+        subtitle="Profil, encaissement, disponibilités et outils d'administration."
       />
 
-      {/* Tabs pills */}
+      {/* Tabs pills + menu « ⋯ Plus » */}
       <div
         style={{
           display: "flex",
@@ -105,48 +134,106 @@ export function ParametresPage() {
           borderRadius: 12,
           padding: 4,
           width: "fit-content",
+          maxWidth: "100%",
           flexWrap: "wrap",
+          position: "relative",
         }}
       >
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "DM Sans, sans-serif",
-              fontWeight: tab === t.key ? 600 : 400,
-              background: tab === t.key ? "var(--ls-surface2)" : "transparent",
-              color: tab === t.key ? "var(--ls-text)" : "var(--ls-text-muted)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "all 0.15s",
-            }}
-          >
+        {mainTabs.map((t) => (
+          <button key={t.key} type="button" onClick={() => setTab(t.key)} style={pillStyle(tab === t.key)}>
             <span aria-hidden="true">{t.icon}</span>
             {t.label}
           </button>
         ))}
+
+        {/* ⋯ Plus */}
+        {moreItems.length > 0 ? (
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setMoreOpen((o) => !o)}
+              aria-expanded={moreOpen}
+              style={pillStyle(moreActive || moreOpen)}
+            >
+              <span aria-hidden="true">⋯</span>
+              Plus
+            </button>
+            {moreOpen ? (
+              <>
+                {/* backdrop pour fermer au clic extérieur */}
+                <div
+                  onClick={() => setMoreOpen(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 6px)",
+                    right: 0,
+                    zIndex: 41,
+                    minWidth: 230,
+                    background: "var(--ls-surface)",
+                    border: "1px solid var(--ls-border)",
+                    borderRadius: 12,
+                    padding: 6,
+                    boxShadow: "0 16px 40px -16px rgba(0,0,0,0.5)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  {moreItems.map((it) => (
+                    <button
+                      key={it.key}
+                      type="button"
+                      onClick={() => {
+                        setMoreOpen(false);
+                        if (it.key === "newsletters") {
+                          navigate("/admin/newsletters");
+                        } else {
+                          setTab(it.key as TabKey);
+                        }
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 9,
+                        padding: "9px 11px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: tab === it.key ? "var(--ls-surface2)" : "transparent",
+                        color: "var(--ls-text)",
+                        fontFamily: "DM Sans, sans-serif",
+                        fontSize: 13,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <span aria-hidden="true">{it.icon}</span>
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Contenu conditionnel */}
       {tab === "profil" ? <ProfilTab /> : null}
-      {tab === "vip" ? <VipProgramTab /> : null}
-      {tab === "notifs" ? <NotificationsTab /> : null}
+      {tab === "encaissement" ? <EncaissementTab /> : null}
+      {tab === "dispos" ? <DisposTab /> : null}
       {tab === "noaly" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <NoalyUsageCard />
         </div>
       ) : null}
-      {tab === "legal" ? <LegalTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
       {tab === "admin" ? <AdminTab initialSection={adminSection} /> : null}
+      {tab === "notifs" ? <NotificationsTab /> : null}
+      {tab === "legal" ? <LegalTab /> : null}
     </div>
   );
 }
