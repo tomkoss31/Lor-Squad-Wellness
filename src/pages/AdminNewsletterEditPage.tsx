@@ -15,7 +15,7 @@
 // Save : bouton manuel (pas d'autosave V1 — éviter conflits multi-onglets).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -1385,14 +1385,25 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
   return (
     <div
       data-newsletter-preview="true"
-      style={{
-        background: PV.surface2,
-        border: "1px solid var(--ls-border)",
-        borderRadius: 12,
-        padding: 12,
-        maxHeight: "calc(100dvh - 60px)",
-        overflowY: "auto",
-      }}
+      style={
+        {
+          background: PV.surface2,
+          border: "1px solid var(--ls-border)",
+          borderRadius: 12,
+          padding: 12,
+          maxHeight: "calc(100dvh - 60px)",
+          overflowY: "auto",
+          // Rescope les vars --ls-* consommées par MarkdownRenderer sur la
+          // palette PV (cream/light) de cet aperçu — sinon héritage de
+          // --ls-text du thème app (souvent sombre) = texte quasi invisible.
+          "--ls-text": PV.text,
+          "--ls-text-muted": PV.textMuted,
+          "--ls-gold": PV.gold,
+          "--ls-teal": PV.teal,
+          "--ls-surface": PV.surface,
+          "--ls-surface2": PV.surface2,
+        } as CSSProperties
+      }
     >
       <div
         style={{

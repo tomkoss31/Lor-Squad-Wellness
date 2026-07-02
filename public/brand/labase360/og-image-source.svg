@@ -48,20 +48,16 @@
           letter-spacing="-6">B</text>
   </g>
 
-  <!-- Wordmark "La Base 360" -->
+  <!-- Wordmark "La Base 360" — un seul <text> avec tspans qui s'enchaînent
+       (fix 2026-07-02 : positions x hardcodées séparées causaient un
+       chevauchement "360" sur "Base" selon la police de rendu réelle) -->
   <text x="500" y="275"
         font-family="Sora, system-ui, sans-serif"
         font-weight="800"
         font-size="92"
-        fill="#0F172A"
-        letter-spacing="-3">La Base</text>
-  <text x="864" y="275"
-        font-family="Sora, system-ui, sans-serif"
-        font-weight="400"
-        font-style="italic"
-        font-size="92"
-        fill="url(#vitalFusion)"
-        letter-spacing="-1">360</text>
+        letter-spacing="-3">
+    <tspan fill="#0F172A">La Base </tspan><tspan font-weight="400" font-style="italic" fill="url(#vitalFusion)">360</tspan>
+  </text>
 
   <!-- Tagline -->
   <text x="500" y="335"
