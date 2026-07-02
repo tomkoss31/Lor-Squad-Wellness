@@ -337,9 +337,15 @@ export function ProfilTab() {
       <ProgressGauges />
 
       <Card className="space-y-5">
-        {/* Refonte 2026-07-02 : en-tête Anton (identité onboarding v2). */}
-        <div style={{ fontFamily: "Anton, sans-serif", fontSize: 20, letterSpacing: "0.02em", textTransform: "uppercase", color: "var(--ls-text)" }}>
-          Ton profil
+        {/* Refonte 2026-07-02 : eyebrow mono + en-tête Anton (identité v2). */}
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 500, display: "flex", alignItems: "center", gap: 7 }}>
+            <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--ls-teal)", display: "inline-block" }} />
+            Profil · identité
+          </div>
+          <div style={{ fontFamily: "Anton, sans-serif", fontSize: 22, letterSpacing: "0.02em", textTransform: "uppercase", color: "var(--ls-text)", marginTop: 4 }}>
+            Ton profil
+          </div>
         </div>
         {/* Avatar uploader (V2 — 2026-04-30) */}
         <AvatarUploader
@@ -637,6 +643,7 @@ export function ProfilTab() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          <div style={{ gridColumn: "1 / -1", fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600 }}>— Identité</div>
           <LabeledField label="Prénom et nom">
             <input
               value={name}
@@ -836,6 +843,7 @@ export function ProfilTab() {
               déplacés dans leurs propres onglets Paramètres (icône dédiée) —
               ils ne surchargent plus le profil. */}
 
+          <div style={{ gridColumn: "1 / -1", marginTop: 4, fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-lime)", fontWeight: 600 }}>— Activité Herbalife</div>
           <LabeledField label="Rôle">
             <div
               style={{
@@ -1057,10 +1065,11 @@ function LabeledField({
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span
         style={{
-          fontSize: 11,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 9.5,
           fontWeight: 500,
-          color: "var(--ls-text-muted)",
-          letterSpacing: "0.03em",
+          color: "var(--ls-text-hint)",
+          letterSpacing: "0.13em",
           textTransform: "uppercase",
         }}
       >
