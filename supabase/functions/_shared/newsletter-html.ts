@@ -22,6 +22,7 @@ export interface NewsletterSection {
   position: number;
   emoji: string;
   tag_label: string;
+  image_url: string; // URL d'un visuel affiché en tête de section (vide = aucun)
   saviez_vous_md: string;
   saviez_vous_label: string;
   show_cta_bilan: boolean;
@@ -188,6 +189,10 @@ function renderSection(
       )}</span>`
     : "";
 
+  const imageHtml = section.image_url
+    ? `<img src="${section.image_url}" alt="${escapeHtml(section.title)}" style="display:block;width:100%;max-width:380px;height:auto;margin:0 auto 18px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.10);" />`
+    : "";
+
   const emojiSpan = section.emoji
     ? `<span style="font-size:26px;margin-right:4px;">${escapeHtml(section.emoji)}</span>`
     : "";
@@ -232,6 +237,7 @@ function renderSection(
   return `<section style="padding:24px 20px ${sectionPaddingBottom};border-bottom:1px solid rgba(11,13,17,0.10);position:relative;${
     isPaywall && input.mode === "public" ? "overflow:hidden;" : ""
   }">
+    ${imageHtml}
     ${tagPill}
     ${titleH2}
     ${bodyHtml}

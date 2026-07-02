@@ -61,6 +61,20 @@ export function RentabilityPvTeamTab({
   }, []);
   const isPastMonth = selectedMonth !== nowMonth;
 
+  // Consolidation 2026-07-02 : les distris HORS-APP (users.isExternal) sont
+  // désormais éditables ICI, en ligne, avec le MÊME breakdown que les distris
+  // de l'app (même table pv_monthly_breakdown, même RPC). Fini le saut vers
+  // l'Arborescence pour saisir un PV → un seul endroit pour toute l'équipe.
+  // L'Arborescence ne sert plus qu'à CONSTRUIRE la structure (créer/déplacer).
+  const externals = useMemo(
+    () =>
+      users
+        .filter((u) => u.isExternal)
+        .map((u) => ({ user_id: u.id, name: u.name, current_rank: u.currentRank ?? null }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [users],
+  );
+
   useEffect(() => {
     if (!targetMember) return;
     const el = document.getElementById(`pv-member-${targetMember}`);
@@ -232,43 +246,117 @@ export function RentabilityPvTeamTab({
         )}
       </section>
 
-      {/* ── Distributeurs hors-app → raccourci vers Arborescence ──────────
-          Consolidation (2026-07-01) : la saisie des distris hors-app vit
-          UNIQUEMENT dans l'Arborescence Herbalife (table pv_monthly_breakdown,
-          celle qui alimente les paliers). L'ancien bloc ManualPvEntriesSection
-          écrivait dans la table legacy manual_pv_entries → on ne le propose plus
-          ici pour éviter la double-saisie / la table morte. */}
+      {/* ── Distributeurs hors-app — ÉDITABLES ICI (consolidation 2026-07-02)
+          Même breakdown, même table que les distris de l'app. Plus besoin
+          d'aller dans l'Arborescence pour saisir un PV. */}
       <section>
         <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, margin: "0 2px 10px" }}>
           Distributeurs hors-app
         </div>
+        {externals.length === 0 ? (
+          <div
+            style={{
+              padding: 20,
+              textAlign: "center",
+              color: "var(--ls-text-muted)",
+              fontSize: 13,
+              fontStyle: "italic",
+              background: "var(--ls-surface2)",
+              borderRadius: 12,
+              border: "1px dashed var(--ls-border)",
+            }}
+          >
+            Aucun distri hors-app pour l'instant. Ajoute-les via l'Arborescence ci-dessous.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {externals.map((m) => {
+              const isOpen = openId === m.user_id;
+              return (
+                <div
+                  key={m.user_id}
+                  id={`pv-member-${m.user_id}`}
+                  style={{
+                    borderRadius: 14,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(isOpen ? null : m.user_id)}
+                    aria-expanded={isOpen}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "12px 14px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontWeight: 600, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                        {m.name}
+                        <span style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginLeft: 7, fontWeight: 500 }}>hors-app</span>
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      style={{ fontSize: 12, color: "var(--ls-text-muted)", transition: "transform .2s", transform: isOpen ? "rotate(180deg)" : "none" }}
+                    >
+                      ▾
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 14px 14px" }}>
+                      <PvBizworksBlock
+                        memberId={m.user_id}
+                        memberName={m.name}
+                        monthIso={selectedMonth}
+                        onApplied={onApplied}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Arborescence démote en « construire la structure » (pas de saisie PV ici). */}
         <button
           type="button"
           onClick={() => navigate("/parametres/arborescence-herbalife")}
           style={{
             width: "100%",
+            marginTop: 10,
             display: "flex",
             alignItems: "center",
-            gap: 12,
+            gap: 10,
             textAlign: "left",
-            padding: "14px 16px",
-            borderRadius: 14,
-            background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
-            border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
+            padding: "11px 14px",
+            borderRadius: 12,
+            background: "transparent",
+            border: "1px dashed var(--ls-border)",
             cursor: "pointer",
             fontFamily: "inherit",
           }}
         >
-          <span aria-hidden="true" style={{ fontSize: 22 }}>🌳</span>
+          <span aria-hidden="true" style={{ fontSize: 18 }}>🌳</span>
           <span style={{ flex: 1 }}>
-            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14 }}>
-              Gérer mes distris hors-app → Arborescence
+            <span style={{ display: "block", fontWeight: 600, color: "var(--ls-text)", fontSize: 13 }}>
+              Ajouter / déplacer un distri hors-app
             </span>
-            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Reconstruis ta downline historique (Virgile, Aurélie…) et saisis leur PV mensuel. C'est le seul endroit — l'override remonte tout seul.
+            <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 1 }}>
+              Construire l'arborescence (créer Virgile, Aurélie…, rattacher un parrain). La saisie PV, elle, se fait ici.
             </span>
           </span>
-          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700 }}>→</span>
+          <span aria-hidden="true" style={{ color: "var(--ls-text-muted)", fontWeight: 700 }}>→</span>
         </button>
       </section>
     </div>

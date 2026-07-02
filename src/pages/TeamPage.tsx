@@ -18,12 +18,14 @@ import { MonthlySeasonCard } from "../features/gamification/components/MonthlySe
 import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecapCard";
 import { useAppContext } from "../context/AppContext";
 import type { Client, Prospect, HerbalifeRank } from "../types/domain";
+import { RANK_ORDER, RANK_LABELS } from "../types/domain";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { DistriQuickModal } from "../components/team/DistriQuickModal";
 import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 // Hub équipe centralisé (2026-05-04) — 5 onglets : Vue d'ensemble (XP),
 // Engagement, Apprentissage, Arbre lignée, Gamification.
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
+import type { TeamMemberEngagement } from "../hooks/useTeamEngagement";
 import { XpPodium } from "../components/team/XpPodium";
 import { EngagementTable } from "../components/team/EngagementTable";
 import { LearningGrid } from "../components/team/LearningGrid";
@@ -87,7 +89,11 @@ function initialsOf(name: string): string {
 // Hub équipe (2026-05-04) : ajout de 3 onglets pour centraliser le pilotage
 // (overview XP, engagement par distri, apprentissage Academy + Formation).
 // Les 2 anciens onglets (team = arbre, gamification) restent compatibles.
-type TeamTab = "overview" | "rentabilite" | "engagement" | "learning" | "team" | "gamification";
+// Restructure 2026-07-02 : « membres » fusionne apprentissage + engagement +
+// rentabilité en UNE liste à lentilles (fini les 3 onglets qui re-listent les
+// mêmes membres). Les anciennes clés restent dans l'union pour compat.
+type TeamTab = "overview" | "membres" | "rentabilite" | "engagement" | "learning" | "team" | "gamification";
+type MembresLens = "demarrage" | "activite" | "rang" | "pv";
 
 export function TeamPage() {
   const { currentUser, users, clients, prospects, followUps } = useAppContext();
@@ -98,6 +104,8 @@ export function TeamPage() {
   // Hub équipe (2026-05-04) : 5 onglets, défaut "overview" pour donner la
   // vue d'ensemble en premier (KPIs + podium XP).
   const [activeTab, setActiveTab] = useState<TeamTab>("overview");
+  // Lentille de la vue « Membres » : mêmes membres, info différente.
+  const [lens, setLens] = useState<MembresLens>("demarrage");
   // Drill-down modale au click sur un membre (depuis n'importe quel onglet).
   const [drilldownMemberId, setDrilldownMemberId] = useState<string | null>(null);
 
@@ -279,16 +287,11 @@ export function TeamPage() {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
           { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-teal)" },
-          // Rentabilité d'équipe (chantier simplif 2026-06-13) : accès direct
-          // depuis « Mon équipe », réservé admin. Vue simple top-5 + lien vers
-          // la page complète, au lieu d'aller la chercher dans le Co-pilote.
-          ...(currentUser.role === "admin"
-            ? [{ key: "rentabilite" as TeamTab, label: "Rentabilité", icon: "💎", color: "var(--ls-purple)" }]
-            : []),
-          { key: "engagement" as TeamTab, label: "Engagement", icon: "🔥", color: "var(--ls-coral)" },
-          { key: "learning" as TeamTab, label: "Apprentissage", icon: "🎓", color: "var(--ls-purple)" },
+          // « Membres » (restructure 2026-07-02) : fusionne Apprentissage +
+          // Engagement + Rentabilité en une liste à lentilles (voir plus bas).
+          { key: "membres" as TeamTab, label: "Membres", icon: "👥", color: "var(--ls-teal)" },
           { key: "team" as TeamTab, label: "Arbre lignée", icon: "🌳", color: "var(--ls-teal)" },
-          { key: "gamification" as TeamTab, label: "Gamification", icon: "🎮", color: "var(--ls-lime)" },
+          { key: "gamification" as TeamTab, label: "Podium", icon: "🎮", color: "var(--ls-lime)" },
         ]).map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -378,7 +381,81 @@ export function TeamPage() {
       ) : null}
 
       {/* ═══ Onglet Rentabilité (NEW 2026-06-13) — vue simple équipe ═════ */}
-      {activeTab === "rentabilite" && currentUser.role === "admin" ? (
+      {/* ═══ Onglet MEMBRES (restructure 2026-07-02) — liste à lentilles ═══
+          Une seule liste de membres ; la lentille change juste l'info affichée
+          (Démarrage = LearningGrid · Activité = EngagementTable · PV = rentab).
+          Fini les 3 onglets qui re-listaient les mêmes membres. */}
+      {activeTab === "membres" ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", borderRadius: 12, padding: 5, width: "fit-content" }}>
+          {([
+            { k: "demarrage" as MembresLens, label: "🚀 Démarrage" },
+            { k: "activite" as MembresLens, label: "🔥 Activité" },
+            { k: "rang" as MembresLens, label: "🏅 Rang" },
+            ...(currentUser.role === "admin" ? [{ k: "pv" as MembresLens, label: "💰 PV" }] : []),
+          ]).map((l) => {
+            const on = lens === l.k;
+            return (
+              <button
+                key={l.k}
+                type="button"
+                onClick={() => setLens(l.k)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 9,
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  background: on ? "var(--ls-teal)" : "transparent",
+                  color: on ? "var(--ls-bg)" : "var(--ls-text-muted)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {l.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* Bande « À piloter » (restructure 2026-07-02, étape 2) — le réflexe
+          coach : qui décroche à relancer, qui cartonne à féliciter. Visible
+          dans toute la vue Membres, quelle que soit la lentille. Click sur un
+          nom = drill-down du membre. */}
+      {activeTab === "membres" && !engagementLoading ? (
+        <PilotageStrip
+          members={engagementMembers.filter((m) => m.user_id !== engagementRootId)}
+          onMemberClick={setDrilldownMemberId}
+        />
+      ) : null}
+
+      {/* Lentille Rang (nouveau 2026-07-02) — qui est à quel palier Herbalife */}
+      {activeTab === "membres" && lens === "rang" ? (
+        <Card className="space-y-4">
+          <div>
+            <p className="eyebrow-label">🏅 Paliers de l'équipe</p>
+            <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+              Qui est à quel rang
+            </h2>
+            <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
+              Le palier Herbalife de chaque membre, du plus élevé au plus bas. Click sur un membre pour son détail complet.
+            </p>
+          </div>
+          {engagementLoading ? (
+            <div style={{ padding: "30px 20px", textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+              Chargement…
+            </div>
+          ) : (
+            <RangLensList
+              members={engagementMembers.filter((m) => m.user_id !== engagementRootId)}
+              onMemberClick={setDrilldownMemberId}
+            />
+          )}
+        </Card>
+      ) : null}
+
+      {activeTab === "membres" && lens === "pv" && currentUser.role === "admin" ? (
         <Card className="space-y-4">
           <div>
             <p className="eyebrow-label">💎 Rentabilité de l'équipe</p>
@@ -402,8 +479,8 @@ export function TeamPage() {
         </Card>
       ) : null}
 
-      {/* ═══ Onglet Engagement (NEW 2026-05-04) — table sortable ══════════ */}
-      {activeTab === "engagement" ? (
+      {/* Lentille Activité (ex-onglet Engagement) — table sortable */}
+      {activeTab === "membres" && lens === "activite" ? (
         <Card className="space-y-4">
           <div>
             <p className="eyebrow-label">🔥 Pilotage engagement</p>
@@ -428,8 +505,8 @@ export function TeamPage() {
         </Card>
       ) : null}
 
-      {/* ═══ Onglet Apprentissage (NEW 2026-05-04) — Academy + Formation ══ */}
-      {activeTab === "learning" ? (
+      {/* Lentille Démarrage (ex-onglet Apprentissage) — Academy + Formation */}
+      {activeTab === "membres" && lens === "demarrage" ? (
         <>
           <Card className="space-y-4">
             <div>
@@ -1607,6 +1684,187 @@ function TeamHeroStats({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ═══ Bande « À piloter » (restructure 2026-07-02) ═══════════════════════════
+// Le réflexe coach en un coup d'œil : qui décroche (à relancer, orange), qui
+// cartonne (à féliciter, lime), qui n'a jamais démarré. Chaque nom est
+// cliquable → drill-down du membre. Rien à afficher = « tout roule ».
+function PilotageStrip({
+  members,
+  onMemberClick,
+}: {
+  members: TeamMemberEngagement[];
+  onMemberClick: (id: string) => void;
+}) {
+  const aRelancer = members.filter((m) => m.status === "decroche" || m.status === "stuck");
+  const cartonnent = members.filter(
+    (m) => m.status === "active" && (m.bilans_30d > 0 || m.rdv_30d > 0),
+  );
+  const pasDemarres = members.filter((m) => m.status === "never_started");
+
+  const groups: {
+    key: string;
+    label: string;
+    color: string;
+    emoji: string;
+    list: TeamMemberEngagement[];
+  }[] = [
+    { key: "relancer", label: "À relancer", color: "var(--ls-coral)", emoji: "🔻", list: aRelancer },
+    { key: "cartonnent", label: "Ça cartonne", color: "var(--ls-lime)", emoji: "🔥", list: cartonnent },
+    { key: "jamais", label: "Pas démarré", color: "var(--ls-text-muted)", emoji: "⚪", list: pasDemarres },
+  ].filter((g) => g.list.length > 0);
+
+  if (groups.length === 0) {
+    return (
+      <div
+        style={{
+          padding: "14px 18px",
+          borderRadius: 14,
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+          border: "1px solid color-mix(in srgb, var(--ls-teal) 24%, var(--ls-border))",
+          fontSize: 13.5,
+          color: "var(--ls-text-muted)",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        <span aria-hidden="true">✅</span> Tout roule — personne ne décroche en ce moment.
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: 10,
+        gridTemplateColumns: `repeat(auto-fit, minmax(220px, 1fr))`,
+      }}
+    >
+      {groups.map((g) => (
+        <div
+          key={g.key}
+          style={{
+            padding: "13px 15px",
+            borderRadius: 14,
+            background: `color-mix(in srgb, ${g.color} 8%, var(--ls-surface))`,
+            border: `1px solid color-mix(in srgb, ${g.color} 30%, var(--ls-border))`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+            <span aria-hidden="true" style={{ fontSize: 15 }}>{g.emoji}</span>
+            <span
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 700,
+                fontSize: 22,
+                color: g.color,
+                lineHeight: 1,
+              }}
+            >
+              {g.list.length}
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ls-text)" }}>{g.label}</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {g.list.slice(0, 4).map((m) => (
+              <button
+                key={m.user_id}
+                type="button"
+                onClick={() => onMemberClick(m.user_id)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  border: `1px solid color-mix(in srgb, ${g.color} 35%, var(--ls-border))`,
+                  background: "var(--ls-surface2)",
+                  color: "var(--ls-text)",
+                  fontSize: 12,
+                  fontFamily: "DM Sans, sans-serif",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {m.name.split(/\s+/)[0]}
+              </button>
+            ))}
+            {g.list.length > 4 ? (
+              <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", alignSelf: "center" }}>
+                +{g.list.length - 4}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══ Lentille Rang (restructure 2026-07-02) ═════════════════════════════════
+// Liste des membres triée par palier Herbalife (du plus élevé au plus bas).
+// Pin + libellé + rôle ; ligne cliquable = drill-down.
+function RangLensList({
+  members,
+  onMemberClick,
+}: {
+  members: TeamMemberEngagement[];
+  onMemberClick: (id: string) => void;
+}) {
+  const sorted = [...members].sort((a, b) => {
+    const ia = a.current_rank ? RANK_ORDER.indexOf(a.current_rank as HerbalifeRank) : -1;
+    const ib = b.current_rank ? RANK_ORDER.indexOf(b.current_rank as HerbalifeRank) : -1;
+    if (ib !== ia) return ib - ia;
+    return a.name.localeCompare(b.name);
+  });
+
+  if (sorted.length === 0) {
+    return (
+      <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+        Aucun membre dans ton équipe.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {sorted.map((m) => {
+        const rank = (m.current_rank as HerbalifeRank | null) ?? null;
+        return (
+          <button
+            key={m.user_id}
+            type="button"
+            onClick={() => onMemberClick(m.user_id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+              padding: "11px 14px",
+              borderRadius: 12,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface)",
+              cursor: "pointer",
+              textAlign: "left",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            <RankPinBadge rank={rank ?? "distributor_25"} size="xs" />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontWeight: 600, fontSize: 14, color: "var(--ls-text)" }}>
+                {m.name}
+              </span>
+              <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-text-hint)", marginTop: 2 }}>
+                {m.role === "admin" ? "Admin" : m.role === "referent" ? "Référent" : "Distributeur"}
+              </span>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: rank ? "var(--ls-teal)" : "var(--ls-text-hint)" }}>
+              {rank ? RANK_LABELS[rank] : "Rang non défini"}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
