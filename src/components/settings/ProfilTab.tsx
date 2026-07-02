@@ -368,75 +368,45 @@ export function ProfilTab() {
           </p>
         </div>
 
-        {/* Bio (V2 — 2026-04-30) */}
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--ls-text-muted)",
-              textTransform: "uppercase",
-              letterSpacing: 1.2,
-              marginBottom: 6,
-              fontFamily: "DM Sans, sans-serif",
-            }}
-          >
-            Bio courte (max 200 caractères)
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value.slice(0, 200))}
-            placeholder="Ex: Coach Herbalife passionnée par le bien-être. J'accompagne mes clients depuis 2020..."
-            rows={3}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              background: "var(--ls-surface2)",
-              border: "0.5px solid var(--ls-border)",
-              borderRadius: 12,
-              fontSize: 13,
-              fontFamily: "DM Sans, sans-serif",
-              color: "var(--ls-text)",
-              resize: "vertical",
-              outline: "none",
-              minHeight: 70,
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 50%, transparent)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-gold) 14%, transparent)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--ls-border)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          />
-          <div
-            style={{
-              fontSize: 10.5,
-              color: bio.length > 180 ? "var(--ls-coral)" : "var(--ls-text-hint)",
-              marginTop: 4,
-              fontFamily: "DM Sans, sans-serif",
-              textAlign: "right",
-            }}
-          >
-            {bio.length} / 200
-          </div>
+        {/* Réorg 2026-07-02 : essentiel en haut. Prénom + Email (identité)
+            remontés ici ; Ville + Lieu (contact) juste après ; la bio descend
+            tout en bas. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          <div style={{ gridColumn: "1 / -1", fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600 }}>— Identité</div>
+          <LabeledField label="Prénom et nom">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={saving}
+              data-tour-id="profile-name"
+              className="ls-input"
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
+            />
+          </LabeledField>
+          <LabeledField label="Email (lecture seule)">
+            <div style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text-muted)", fontSize: 14 }}>
+              {currentUser.email}
+            </div>
+          </LabeledField>
         </div>
+
+        {/* Contact & lieu (réorg 2026-07-02) : Ville + Lieu RDV + Coach depuis
+            groupés en 2 colonnes. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          <div style={{ gridColumn: "1 / -1", fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600 }}>— Contact &amp; lieu</div>
 
         {/* Ville (Chantier D météo 2026-05-05) — alimente la météo Co-pilote V5 */}
         <div>
           <label
             style={{
               display: "block",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--ls-text-muted)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              fontWeight: 500,
+              color: "var(--ls-text-hint)",
               textTransform: "uppercase",
-              letterSpacing: 1.2,
+              letterSpacing: "0.13em",
               marginBottom: 6,
-              fontFamily: "DM Sans, sans-serif",
             }}
           >
             Ville (météo Co-pilote)
@@ -552,13 +522,13 @@ export function ProfilTab() {
           <label
             style={{
               display: "block",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--ls-text-muted)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              fontWeight: 500,
+              color: "var(--ls-text-hint)",
               textTransform: "uppercase",
-              letterSpacing: 1.2,
+              letterSpacing: "0.13em",
               marginBottom: 6,
-              fontFamily: "DM Sans, sans-serif",
             }}
           >
             Lieu de tes RDV (optionnel)
@@ -600,13 +570,13 @@ export function ProfilTab() {
           <label
             style={{
               display: "block",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--ls-text-muted)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              fontWeight: 500,
+              color: "var(--ls-text-hint)",
               textTransform: "uppercase",
-              letterSpacing: 1.2,
+              letterSpacing: "0.13em",
               marginBottom: 6,
-              fontFamily: "DM Sans, sans-serif",
             }}
           >
             Coach Herbalife depuis (optionnel)
@@ -641,43 +611,10 @@ export function ProfilTab() {
             Ta vraie date de début d'activité Herbalife (pas la date d'arrivée sur l'app). Affichée comme badge ancienneté sur ta page bilan online. Laisse vide pour ne rien afficher.
           </div>
         </div>
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
-          <div style={{ gridColumn: "1 / -1", fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600 }}>— Identité</div>
-          <LabeledField label="Prénom et nom">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={saving}
-              data-tour-id="profile-name"
-              className="ls-input"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                outline: "none",
-              }}
-            />
-          </LabeledField>
-          <LabeledField label="Email (lecture seule)">
-            <div
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text-muted)",
-                fontSize: 14,
-              }}
-            >
-              {currentUser.email}
-            </div>
-          </LabeledField>
+          <div style={{ gridColumn: "1 / -1", fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-lime)", fontWeight: 600 }}>— Références Herbalife</div>
           {/* Travail 2 (2026-04-27) : champs herbalife/sponsor/coach
               referent caches pour les admins (Thomas, Mel) — ils n en ont
               pas besoin (ce sont eux les coachs). Affiches pour referents
@@ -972,6 +909,43 @@ export function ProfilTab() {
               {formatDate(currentUser.createdAt)}
             </div>
           </LabeledField>
+        </div>
+
+        {/* Bio descendue tout en bas (réorg 2026-07-02) — confort, pas une info
+            essentielle → elle ne squatte plus le haut du profil. */}
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 600, marginBottom: 8 }}>— À propos · bio publique</div>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 200))}
+            placeholder="Ex: Coach Herbalife passionnée par le bien-être. J'accompagne mes clients depuis 2020..."
+            rows={3}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              background: "var(--ls-surface2)",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 12,
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--ls-text)",
+              resize: "vertical",
+              outline: "none",
+              minHeight: 70,
+              boxSizing: "border-box",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 50%, transparent)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-teal) 14%, transparent)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--ls-border)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+          <div style={{ fontSize: 10.5, color: bio.length > 180 ? "var(--ls-coral)" : "var(--ls-text-hint)", marginTop: 4, fontFamily: "DM Sans, sans-serif", textAlign: "right" }}>
+            {bio.length} / 200
+          </div>
         </div>
 
         {error ? (
