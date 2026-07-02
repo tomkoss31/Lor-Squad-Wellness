@@ -87,7 +87,11 @@ function initialsOf(name: string): string {
 // Hub équipe (2026-05-04) : ajout de 3 onglets pour centraliser le pilotage
 // (overview XP, engagement par distri, apprentissage Academy + Formation).
 // Les 2 anciens onglets (team = arbre, gamification) restent compatibles.
-type TeamTab = "overview" | "rentabilite" | "engagement" | "learning" | "team" | "gamification";
+// Restructure 2026-07-02 : « membres » fusionne apprentissage + engagement +
+// rentabilité en UNE liste à lentilles (fini les 3 onglets qui re-listent les
+// mêmes membres). Les anciennes clés restent dans l'union pour compat.
+type TeamTab = "overview" | "membres" | "rentabilite" | "engagement" | "learning" | "team" | "gamification";
+type MembresLens = "demarrage" | "activite" | "pv";
 
 export function TeamPage() {
   const { currentUser, users, clients, prospects, followUps } = useAppContext();
@@ -98,6 +102,8 @@ export function TeamPage() {
   // Hub équipe (2026-05-04) : 5 onglets, défaut "overview" pour donner la
   // vue d'ensemble en premier (KPIs + podium XP).
   const [activeTab, setActiveTab] = useState<TeamTab>("overview");
+  // Lentille de la vue « Membres » : mêmes membres, info différente.
+  const [lens, setLens] = useState<MembresLens>("demarrage");
   // Drill-down modale au click sur un membre (depuis n'importe quel onglet).
   const [drilldownMemberId, setDrilldownMemberId] = useState<string | null>(null);
 
@@ -279,16 +285,11 @@ export function TeamPage() {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
           { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-teal)" },
-          // Rentabilité d'équipe (chantier simplif 2026-06-13) : accès direct
-          // depuis « Mon équipe », réservé admin. Vue simple top-5 + lien vers
-          // la page complète, au lieu d'aller la chercher dans le Co-pilote.
-          ...(currentUser.role === "admin"
-            ? [{ key: "rentabilite" as TeamTab, label: "Rentabilité", icon: "💎", color: "var(--ls-purple)" }]
-            : []),
-          { key: "engagement" as TeamTab, label: "Engagement", icon: "🔥", color: "var(--ls-coral)" },
-          { key: "learning" as TeamTab, label: "Apprentissage", icon: "🎓", color: "var(--ls-purple)" },
+          // « Membres » (restructure 2026-07-02) : fusionne Apprentissage +
+          // Engagement + Rentabilité en une liste à lentilles (voir plus bas).
+          { key: "membres" as TeamTab, label: "Membres", icon: "👥", color: "var(--ls-teal)" },
           { key: "team" as TeamTab, label: "Arbre lignée", icon: "🌳", color: "var(--ls-teal)" },
-          { key: "gamification" as TeamTab, label: "Gamification", icon: "🎮", color: "var(--ls-lime)" },
+          { key: "gamification" as TeamTab, label: "Podium", icon: "🎮", color: "var(--ls-lime)" },
         ]).map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -378,7 +379,44 @@ export function TeamPage() {
       ) : null}
 
       {/* ═══ Onglet Rentabilité (NEW 2026-06-13) — vue simple équipe ═════ */}
-      {activeTab === "rentabilite" && currentUser.role === "admin" ? (
+      {/* ═══ Onglet MEMBRES (restructure 2026-07-02) — liste à lentilles ═══
+          Une seule liste de membres ; la lentille change juste l'info affichée
+          (Démarrage = LearningGrid · Activité = EngagementTable · PV = rentab).
+          Fini les 3 onglets qui re-listaient les mêmes membres. */}
+      {activeTab === "membres" ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "var(--ls-surface2)", border: "1px solid var(--ls-border)", borderRadius: 12, padding: 5, width: "fit-content" }}>
+          {([
+            { k: "demarrage" as MembresLens, label: "🚀 Démarrage" },
+            { k: "activite" as MembresLens, label: "🔥 Activité" },
+            ...(currentUser.role === "admin" ? [{ k: "pv" as MembresLens, label: "💰 PV" }] : []),
+          ]).map((l) => {
+            const on = lens === l.k;
+            return (
+              <button
+                key={l.k}
+                type="button"
+                onClick={() => setLens(l.k)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 9,
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  background: on ? "var(--ls-teal)" : "transparent",
+                  color: on ? "var(--ls-bg)" : "var(--ls-text-muted)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {l.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {activeTab === "membres" && lens === "pv" && currentUser.role === "admin" ? (
         <Card className="space-y-4">
           <div>
             <p className="eyebrow-label">💎 Rentabilité de l'équipe</p>
@@ -402,8 +440,8 @@ export function TeamPage() {
         </Card>
       ) : null}
 
-      {/* ═══ Onglet Engagement (NEW 2026-05-04) — table sortable ══════════ */}
-      {activeTab === "engagement" ? (
+      {/* Lentille Activité (ex-onglet Engagement) — table sortable */}
+      {activeTab === "membres" && lens === "activite" ? (
         <Card className="space-y-4">
           <div>
             <p className="eyebrow-label">🔥 Pilotage engagement</p>
@@ -428,8 +466,8 @@ export function TeamPage() {
         </Card>
       ) : null}
 
-      {/* ═══ Onglet Apprentissage (NEW 2026-05-04) — Academy + Formation ══ */}
-      {activeTab === "learning" ? (
+      {/* Lentille Démarrage (ex-onglet Apprentissage) — Academy + Formation */}
+      {activeTab === "membres" && lens === "demarrage" ? (
         <>
           <Card className="space-y-4">
             <div>
