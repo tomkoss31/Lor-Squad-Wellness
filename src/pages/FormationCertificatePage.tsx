@@ -30,7 +30,7 @@ import {
   downloadCertPdf,
 } from "../lib/certificateExport";
 
-const LOGO_URL = "/icons/lor-squad-icon-180.png";
+const LOGO_URL = "/brand/labase360/apple-touch-icon-180.png";
 
 interface LevelMeta {
   id: FormationLevelId;

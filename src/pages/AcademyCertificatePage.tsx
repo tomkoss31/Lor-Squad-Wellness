@@ -11,7 +11,7 @@ import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress
 import { useAppContext } from "../context/AppContext";
 import { APP_NAME, APP_FALLBACK_DISTRI } from "../lib/branding";
 
-const LOGO_URL = "/icons/lor-squad-icon-180.png";
+const LOGO_URL = "/brand/labase360/apple-touch-icon-180.png";
 type CertFormat = "a4" | "story";
 
 /** Convertit un nom user en slug fichier safe. */

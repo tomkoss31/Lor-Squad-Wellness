@@ -19,7 +19,7 @@ import {
   type PlaybookSection,
 } from "../features/academy/playbookContent";
 
-const LOGO_URL = "/icons/lor-squad-icon-180.png";
+const LOGO_URL = "/brand/labase360/apple-touch-icon-180.png";
 
 function slugify(name: string): string {
   return (name || "playbook")

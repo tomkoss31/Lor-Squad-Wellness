@@ -24,7 +24,7 @@ function buildInvitationUrl(token: string): string {
   const origin =
     typeof window !== "undefined" && window.location.origin
       ? window.location.origin
-      : "https://lor-squad-wellness.vercel.app";
+      : "https://www.labase360.fr";
   return `${origin}/bienvenue?token=${token}`;
 }
 

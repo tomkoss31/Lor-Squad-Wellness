@@ -95,7 +95,7 @@ export function useAutoNotifications() {
           const reg = await navigator.serviceWorker.ready
           await reg.showNotification(title, {
             body,
-            icon: '/icons/lor-squad-icon-192.png',
+            icon: '/brand/labase360/pwa-192.png',
             tag: `lor-${type}-${Date.now()}`,
             data: { url },
           })
