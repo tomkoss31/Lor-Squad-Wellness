@@ -14,12 +14,14 @@ import { useNavigate } from "react-router-dom";
 import { TransfertsTab } from "./TransfertsTab";
 import { StatistiquesTab } from "./StatistiquesTab";
 import { DebugTab } from "./DebugTab";
+import { AdminPaymentStatusTab } from "./AdminPaymentStatusTab";
 
-export type AdminSection = "transferts" | "stats" | "debug";
+export type AdminSection = "transferts" | "stats" | "encaissement" | "debug";
 
 const SECTIONS: Array<{ key: AdminSection; label: string; icon: string }> = [
   { key: "transferts", label: "Transferts", icon: "🔀" },
   { key: "stats", label: "Statistiques", icon: "📊" },
+  { key: "encaissement", label: "Encaissement", icon: "💳" },
   { key: "debug", label: "Debug", icon: "🔧" },
 ];
 
@@ -127,6 +129,7 @@ export function AdminTab({ initialSection = "transferts" }: { initialSection?: A
       {/* Contenu du sous-onglet actif */}
       {section === "transferts" ? <TransfertsTab /> : null}
       {section === "stats" ? <StatistiquesTab /> : null}
+      {section === "encaissement" ? <AdminPaymentStatusTab /> : null}
       {section === "debug" ? <DebugTab /> : null}
     </div>
   );

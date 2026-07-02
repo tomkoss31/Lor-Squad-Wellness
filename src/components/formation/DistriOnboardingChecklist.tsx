@@ -22,6 +22,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
+import { getSupabaseClient } from "../../services/supabaseClient";
 
 const STORAGE_PREFIX = "ls-onboarding-checks-";
 
@@ -32,6 +33,7 @@ interface OnboardingStep {
   description: string;
   cta?: { label: string; to: string };
   copySnippet?: string; // Texte template a copier pour message prospect
+  paymentStep?: boolean; // Étape encaissement : CTA configurer + « je passe »
 }
 
 const STEPS: OnboardingStep[] = [
@@ -67,6 +69,15 @@ const STEPS: OnboardingStep[] = [
       "Choisis 1 personne dans ta liste. Pas la plus facile, pas la plus difficile. Envoie ce message.",
     copySnippet:
       "Salut {prénom} ! Je teste un truc bien-être en ce moment, et j'ai pensé à toi. Pas pour te vendre quoi que ce soit — juste partager. Tu serais ouvert·e à un café 15 min cette semaine ?",
+  },
+  {
+    day: 4,
+    emoji: "💳",
+    title: "Encaissement direct (Stripe)",
+    description:
+      "En fin de bilan, ton client veut souvent payer en CB — pas de chèque ni virement. Configure Stripe en 2 min et encaisse direct (l'argent va 100 % sur ton compte). Ou passe pour l'instant.",
+    paymentStep: true,
+    cta: { label: "Configurer l'encaissement", to: "/parametres?tab=encaissement" },
   },
   {
     day: 5,
@@ -155,6 +166,23 @@ export function DistriOnboardingChecklist() {
       setCopied(day);
       window.setTimeout(() => setCopied(null), 1800);
     });
+  }
+
+  // Encaissement : « je passe pour l'instant » → trace le refus côté DB (visible
+  // par l'admin) + marque l'étape comme faite pour ne plus la reproposer.
+  function handleDeclinePayment(day: number) {
+    if (!userId) return;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        try {
+          await sb.rpc("set_payment_onboarding_declined", { p_declined: true });
+        } catch {
+          /* silencieux : l'UX locale (étape cochée) reste prioritaire */
+        }
+      }
+    })();
+    if (!checks[String(day)]) toggle(day);
   }
 
   return (
@@ -411,6 +439,32 @@ export function DistriOnboardingChecklist() {
                     >
                       {step.cta.label} →
                     </Link>
+                  ) : null}
+
+                  {/* Encaissement : « je passe pour l'instant » (trace le refus) */}
+                  {step.paymentStep && !isOn ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeclinePayment(step.day)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginTop: 10,
+                        marginLeft: 8,
+                        padding: "6px 12px",
+                        borderRadius: 999,
+                        background: "transparent",
+                        border: "0.5px solid var(--ls-border)",
+                        color: "var(--ls-text-muted)",
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        fontFamily: "DM Sans, sans-serif",
+                      }}
+                    >
+                      Je passe pour l'instant
+                    </button>
                   ) : null}
 
                   {/* Copy template */}
