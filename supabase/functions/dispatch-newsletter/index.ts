@@ -248,6 +248,7 @@ serve(async (req) => {
     position: s.position ?? i + 1,
     emoji: s.emoji ?? "",
     tag_label: s.tag_label ?? "",
+    image_url: s.image_url ?? "",
     saviez_vous_md: s.saviez_vous_md ?? "",
     saviez_vous_label: s.saviez_vous_label ?? "Le saviez-vous ?",
     show_cta_bilan: s.show_cta_bilan === true,

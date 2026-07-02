@@ -37,6 +37,7 @@ interface SectionData {
   // Champs riches alignés sur docs/mockups/newsletter-mai-juin.html (8.4b)
   emoji: string;             // ex: "💧"
   tag_label: string;         // ex: "Conseil #1 · Hydratation" (vide = pas de pill)
+  image_url: string;         // visuel affiché en tête de section (vide = aucun)
   saviez_vous_md: string;    // markdown callout (vide = pas de callout)
   saviez_vous_label: string; // ex: "Le saviez-vous ?" ou "Côté coach 👋"
   show_cta_bilan: boolean;   // affiche le CTA Bilan inline gold
@@ -54,6 +55,7 @@ function normalizeSection(raw: Partial<SectionData> & { id?: string }, fallbackP
     position: raw.position ?? fallbackPos,
     emoji: raw.emoji ?? "",
     tag_label: raw.tag_label ?? "",
+    image_url: raw.image_url ?? "",
     saviez_vous_md: raw.saviez_vous_md ?? "",
     saviez_vous_label: raw.saviez_vous_label ?? "Le saviez-vous ?",
     show_cta_bilan: raw.show_cta_bilan ?? false,
@@ -1041,6 +1043,38 @@ function SectionEditor({
   const [showAdvanced, setShowAdvanced] = useState(
     Boolean(section.saviez_vous_md || section.show_cta_bilan || section.paywall_mode !== "none"),
   );
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function uploadImage(file: File) {
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Image trop lourde (max 3 Mo).");
+      return;
+    }
+    setUploadingImg(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée.");
+      const supabaseUrl = (sb as unknown as { supabaseUrl: string }).supabaseUrl;
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      const res = await fetch(`${supabaseUrl}/functions/v1/upload-newsletter-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
+      const result = await res.json();
+      if (!res.ok || !result?.success) throw new Error(result?.error ?? `HTTP ${res.status}`);
+      onChange({ image_url: result.public_url });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur d'upload.");
+    } finally {
+      setUploadingImg(false);
+    }
+  }
 
   return (
     <div
@@ -1156,6 +1190,63 @@ function SectionEditor({
         placeholder="Titre de la section…"
         style={{ ...inputStyle, fontWeight: 600, marginTop: 8, marginBottom: 8 }}
       />
+
+      {/* Visuel de la section (image en tête) */}
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+        {section.image_url && (
+          <img
+            src={section.image_url}
+            alt=""
+            style={{
+              width: 64,
+              height: 64,
+              objectFit: "cover",
+              borderRadius: 8,
+              border: "1px solid var(--ls-border)",
+              flex: "0 0 64px",
+            }}
+          />
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <input
+            type="text"
+            value={section.image_url}
+            onChange={(e) => onChange({ image_url: e.target.value.trim() })}
+            placeholder="URL d'un visuel produit (ou uploade →)"
+            style={{ ...inputStyle, marginBottom: 6, fontSize: 12 }}
+          />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => imgInputRef.current?.click()}
+              disabled={uploadingImg}
+              style={{ ...btnGhostStyle, fontSize: 12, padding: "6px 12px" }}
+            >
+              {uploadingImg ? "⏳ Upload…" : "🖼 Uploader une image"}
+            </button>
+            {section.image_url && (
+              <button
+                type="button"
+                onClick={() => onChange({ image_url: "" })}
+                style={{ ...btnGhostStyle, fontSize: 12, padding: "6px 12px", color: "var(--ls-coral)" }}
+              >
+                Retirer
+              </button>
+            )}
+          </div>
+          <input
+            ref={imgInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadImage(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+      </div>
 
       {/* Body markdown */}
       <textarea
@@ -1618,6 +1709,23 @@ function NewsletterPreviewSection({
         >
           🔒 MASQUÉE (PUBLIC)
         </span>
+      )}
+
+      {/* Visuel en tête */}
+      {section.image_url && (
+        <img
+          src={section.image_url}
+          alt={section.title}
+          style={{
+            display: "block",
+            width: "100%",
+            maxWidth: 380,
+            height: "auto",
+            margin: "0 auto 18px",
+            borderRadius: 14,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
+          }}
+        />
       )}
 
       {/* Tag pill */}
