@@ -29,6 +29,7 @@ interface SectionData {
   position: number;
   emoji: string;
   tag_label: string;
+  image_url: string;
   saviez_vous_md: string;
   saviez_vous_label: string;
   show_cta_bilan: boolean;
@@ -71,6 +72,7 @@ function normalizeSection(raw: Partial<SectionData>, idx: number): SectionData {
     position: raw.position ?? idx + 1,
     emoji: raw.emoji ?? "",
     tag_label: raw.tag_label ?? "",
+    image_url: raw.image_url ?? "",
     saviez_vous_md: raw.saviez_vous_md ?? "",
     saviez_vous_label: raw.saviez_vous_label ?? "Le saviez-vous ?",
     show_cta_bilan: raw.show_cta_bilan === true,
@@ -503,6 +505,21 @@ function PublicSection({
         paddingBottom: isPaywall ? 80 : 20,
       }}
     >
+      {section.image_url && (
+        <img
+          src={section.image_url}
+          alt={section.title}
+          style={{
+            display: "block",
+            width: "100%",
+            maxWidth: 380,
+            height: "auto",
+            margin: "0 auto 18px",
+            borderRadius: 14,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
+          }}
+        />
+      )}
       {section.tag_label && (
         <span
           style={{
