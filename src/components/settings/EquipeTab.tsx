@@ -91,7 +91,7 @@ export function EquipeTab() {
         <Card className="space-y-2">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
-              <p className="eyebrow-label" style={{ color: "var(--ls-gold)" }}>📊 Mise à jour des PV</p>
+              <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>📊 Mise à jour des PV</p>
               <p style={{ fontSize: 14, color: "var(--ls-text-muted)", marginTop: 4 }}>
                 Override mensuel des distri de l'app + saisie des distri hors-app (avec remise) — tout au même endroit.
               </p>
@@ -103,7 +103,7 @@ export function EquipeTab() {
                 alignItems: "center",
                 padding: "10px 16px",
                 borderRadius: 999,
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "var(--ls-bg)",
                 fontSize: 13,
                 fontWeight: 600,
@@ -246,7 +246,7 @@ function MemberCard({
           width: 36,
           height: 36,
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #C9A84C, #2DD4BF)",
+          background: "linear-gradient(135deg, var(--ls-teal), #0d736b)",
           color: "#0B0D11",
           display: "flex",
           alignItems: "center",
