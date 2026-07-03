@@ -207,6 +207,7 @@ export function PvOverviewPage() {
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       <PremiumHero
+        variant="cockpit"
         identity="gold"
         eyebrow={`Suivi PV · ${stats.totalClients} client${stats.totalClients > 1 ? "s" : ""} actif${stats.totalClients > 1 ? "s" : ""}`}
         titleAccent="Ton suivi"

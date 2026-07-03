@@ -428,6 +428,7 @@ export function ClientsPage() {
       {/* Vue desktop (et tablette horizontale) — masquée sur < xl */}
       <div className="hidden xl:flex" style={{ flexDirection: "column", gap: 18 }}>
       <PremiumHero
+        variant="cockpit"
         identity="teal"
         eyebrow={`Dossiers clients · ${filteredClients.length} visible${filteredClients.length > 1 ? "s" : ""}`}
         titleAccent="Ta base"
