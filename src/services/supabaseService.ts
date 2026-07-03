@@ -1445,6 +1445,8 @@ export async function updateSupabaseClientSchedule(
     followUpId?: string;
     followUpType?: string;
     followUpStatus?: FollowUp["status"];
+    /** false = modifier le RDV en silence (aucune notif client). Défaut true. */
+    notifyClient?: boolean;
   }
 ) {
   const client = await requireSupabase();
@@ -1452,7 +1454,8 @@ export async function updateSupabaseClientSchedule(
   const followUpUpdatePayload = {
     due_date: payload.nextFollowUp,
     ...(payload.followUpType ? { type: payload.followUpType } : {}),
-    ...(payload.followUpStatus ? { status: payload.followUpStatus } : {})
+    ...(payload.followUpStatus ? { status: payload.followUpStatus } : {}),
+    ...(payload.notifyClient === undefined ? {} : { notify_client: payload.notifyClient })
   };
 
   const { error: directClientError } = await client

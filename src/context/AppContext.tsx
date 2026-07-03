@@ -229,6 +229,7 @@ interface AppContextValue {
       followUpId?: string;
       followUpType?: string;
       followUpStatus?: FollowUp["status"];
+      notifyClient?: boolean;
     }
   ) => Promise<void>;
   reassignClientOwner: (
@@ -755,6 +756,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       followUpId?: string;
       followUpType?: string;
       followUpStatus?: FollowUp["status"];
+      notifyClient?: boolean;
     }
   ) {
     const targetClient = clients.find((client) => client.id === clientId);

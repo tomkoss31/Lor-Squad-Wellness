@@ -81,6 +81,7 @@ serve(async (req) => {
       .from("follow_ups")
       .select("id, client_id, due_date, type, status")
       .eq("status", "scheduled")
+      .neq("notify_client", false) // opt-out : RDV modifié en silence = pas de rappel
       .gte("due_date", now.toISOString())
       .lte("due_date", coarseEnd);
     if (fuErr) return jsonResponse({ error: fuErr.message }, 500);

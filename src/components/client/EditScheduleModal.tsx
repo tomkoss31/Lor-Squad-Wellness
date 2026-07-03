@@ -35,6 +35,8 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
   const [followUpType, setFollowUpType] = useState(currentFollowUp?.type ?? "Suivi terrain");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  // Opt-out notif client (2026-07-03) : décoché = modifier le RDV en silence.
+  const [notifyClient, setNotifyClient] = useState(true);
 
   // Restore draft
   useEffect(() => {
@@ -67,7 +69,8 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
       await updateClientSchedule(client.id, {
         nextFollowUp: serializeDateTimeForStorage(nextFollowUp),
         followUpType,
-        followUpStatus: currentFollowUp?.status ?? "scheduled"
+        followUpStatus: currentFollowUp?.status ?? "scheduled",
+        notifyClient
       });
       window.localStorage.removeItem(`${DRAFT_PREFIX}-${client.id}`);
       onSaved();
@@ -159,6 +162,24 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
             </select>
           </div>
         </div>
+
+        {/* Opt-out notif client (2026-07-03) — « façon Square ». */}
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 16, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={notifyClient}
+            onChange={(e) => setNotifyClient(e.target.checked)}
+            style={{ marginTop: 2, width: 16, height: 16, accentColor: "var(--ls-teal)", cursor: "pointer", flex: "0 0 auto" }}
+          />
+          <span style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.45 }}>
+            Prévenir le client de ce changement
+            <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              {notifyClient
+                ? "Le client reçoit la confirmation + les rappels du RDV."
+                : "Modification en silence — le client ne reçoit ni mail, ni rappel."}
+            </span>
+          </span>
+        </label>
 
         {error && (
           <div style={{
