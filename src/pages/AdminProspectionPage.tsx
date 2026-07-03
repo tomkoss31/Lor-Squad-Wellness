@@ -43,8 +43,8 @@ export function AdminProspectionPage() {
   return (
     <div style={{ padding: "20px", maxWidth: 980, margin: "0 auto" }}>
       <h1 style={{
-        fontFamily: "'Syne', serif",
-        fontSize: 26, fontWeight: 700,
+        fontFamily: "Anton, sans-serif", textTransform: "uppercase",
+        fontSize: 26, fontWeight: 400,
         margin: 0, marginBottom: 6,
         color: "var(--ls-text)",
       }}>

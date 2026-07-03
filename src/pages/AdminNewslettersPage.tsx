@@ -239,9 +239,9 @@ export function AdminNewslettersPage() {
     <div style={{ padding: 20, maxWidth: 1100, margin: "0 auto" }}>
       <h1
         style={{
-          fontFamily: "'Syne', serif",
+          fontFamily: "Anton, sans-serif", textTransform: "uppercase",
           fontSize: 26,
-          fontWeight: 700,
+          fontWeight: 400,
           margin: 0,
           marginBottom: 6,
           color: "var(--ls-text)",

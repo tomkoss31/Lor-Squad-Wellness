@@ -1384,9 +1384,9 @@ const eyebrowStyle: React.CSSProperties = {
 
 const h1Style: React.CSSProperties = {
   margin: "6px 0 8px",
-  fontFamily: "Syne, sans-serif",
+  fontFamily: "Anton, sans-serif", textTransform: "uppercase", letterSpacing: "0.01em",
   fontSize: 28,
-  fontWeight: 800,
+  fontWeight: 400,
   color: "var(--ls-text)",
 };
 
