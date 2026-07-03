@@ -1359,6 +1359,7 @@ export function ClientDetailPage() {
             client={client}
             onEditRdv={() => setShowScheduleModal(true)}
             onGoToVueComplete={() => setActiveTab(0)}
+            onGoToClubVip={() => setActiveTab(4)}
           />
           {/* Chantier Prise de masse (2026-04-24) : résumé sport inline sous Actions */}
           <SportSummarySection client={client} />

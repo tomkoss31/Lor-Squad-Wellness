@@ -63,9 +63,31 @@ interface Props {
   onEditRdv: () => void;
   onOpenSharePublic?: () => void;
   onGoToVueComplete?: () => void;
+  onGoToClubVip?: () => void;
 }
 
-export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete }: Props) {
+/** Panneaux focalisés du lanceur « Gérer le dossier ». */
+type ManagePanel = "edit" | "lifecycle" | "access" | "uplink" | "admin";
+
+/** Tuiles du lanceur. `vip` n'ouvre pas de panneau : raccourci vers l'onglet Club VIP. */
+const MANAGE_TILES: { id: "vip" | ManagePanel; ico: string; title: string; sub: string; bg: string }[] = [
+  { id: "vip", ico: "👑", title: "Programme VIP", sub: "Remises · invitation · gestion", bg: "var(--ls-actions-gold-bg)" },
+  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · date de départ", bg: "var(--ls-actions-teal-bg)" },
+  { id: "lifecycle", ico: "🔄", title: "Cycle de vie & suivi", sub: "Statut · fragile · suivi/PV libre", bg: "color-mix(in srgb, #6C8CFF 22%, transparent)" },
+  { id: "access", ico: "🔗", title: "Accès & partage", sub: "Partage public de la fiche", bg: "var(--ls-actions-teal-bg)" },
+  { id: "uplink", ico: "🌿", title: "Herbalife uplink", sub: "Sponsor · lignée distributeur", bg: "color-mix(in srgb, #A78BFA 24%, transparent)" },
+  { id: "admin", ico: "⚙️", title: "Zone admin", sub: "Transférer · supprimer le dossier", bg: "var(--ls-actions-red-bg)" },
+];
+
+const PANEL_TITLES: Record<ManagePanel, string> = {
+  edit: "Modifier le dossier",
+  lifecycle: "Cycle de vie & suivi",
+  access: "Accès & partage",
+  uplink: "Herbalife uplink",
+  admin: "Zone admin",
+};
+
+export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete, onGoToClubVip }: Props) {
   const navigate = useNavigate();
   const {
     currentUser,
@@ -88,9 +110,9 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [transferTo, setTransferTo] = useState<string>("");
-  // Lanceur (2026-07-03) : la gestion du dossier est repliée par défaut pour
-  // désencombrer l'onglet Actions (fini le scroll de 10 sections).
-  const [showManage, setShowManage] = useState(false);
+  // Lanceur (2026-07-03) : la gestion du dossier est présentée en tuiles ;
+  // chaque tuile ouvre UN panneau focalisé (fini le mur de 10 sections).
+  const [activePanel, setActivePanel] = useState<ManagePanel | null>(null);
   const [transferring, setTransferring] = useState(false);
   const [togglingFragile, setTogglingFragile] = useState(false);
   const [togglingFreeFollow, setTogglingFreeFollow] = useState(false);
@@ -388,11 +410,126 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         }
         .at-row-clickable:last-child { border-bottom: none; }
         .at-row-clickable:hover { background: var(--ls-actions-soft); }
+
+        /* ─── Lanceur : eyebrow + tuiles → panneaux (2026-07-03) ─── */
+        .at-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--ls-actions-text-muted);
+          margin: 26px 2px 12px;
+        }
+        .at-eyebrow.is-live { color: var(--ls-actions-teal-text); }
+        .at-eyebrow-dot {
+          width: 7px; height: 7px; border-radius: 999px;
+          background: var(--ls-actions-teal-text);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-actions-teal-text) 22%, transparent);
+          flex: 0 0 auto;
+        }
+        .at-tiles {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        .at-tile {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 16px 16px;
+          border-radius: 16px;
+          background: var(--ls-actions-card);
+          border: 0.5px solid var(--ls-actions-border);
+          text-align: left;
+          cursor: pointer;
+          width: 100%;
+          font-family: var(--font-sans);
+          transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+        }
+        .at-tile:hover {
+          transform: translateY(-2px);
+          border-color: color-mix(in srgb, var(--ls-actions-teal-text) 45%, var(--ls-actions-border));
+          background: var(--ls-actions-soft);
+        }
+        .at-tile:focus-visible {
+          outline: 2px solid var(--ls-actions-teal-text);
+          outline-offset: 2px;
+        }
+        .at-tile-ico {
+          width: 42px; height: 42px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 20px; flex: 0 0 auto;
+        }
+        .at-tile-body { flex: 1; min-width: 0; }
+        .at-tile-title {
+          display: block;
+          font-size: 14px; font-weight: 700; line-height: 1.25;
+          color: var(--ls-actions-text);
+        }
+        .at-tile-sub {
+          display: block;
+          font-size: 11.5px; line-height: 1.35; margin-top: 3px;
+          color: var(--ls-actions-text-muted);
+        }
+        .at-tile-arrow {
+          font-size: 17px; color: var(--ls-actions-text-muted);
+          flex: 0 0 auto; transition: transform 140ms ease, color 140ms ease;
+        }
+        .at-tile:hover .at-tile-arrow {
+          transform: translateX(3px);
+          color: var(--ls-actions-teal-text);
+        }
+        .at-panel {
+          margin-top: 12px;
+          border: 0.5px dashed color-mix(in srgb, var(--ls-actions-teal-text) 50%, var(--ls-actions-border));
+          border-radius: 16px;
+          padding: 14px;
+          background: color-mix(in srgb, var(--ls-actions-teal-text) 5%, var(--ls-actions-bg));
+          display: flex; flex-direction: column; gap: 12px;
+          animation: atPanelIn 180ms ease;
+        }
+        @keyframes atPanelIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: none; }
+        }
+        .at-panel-head {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 12px; padding-bottom: 2px;
+        }
+        .at-panel-title {
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+          text-transform: uppercase; color: var(--ls-actions-teal-text);
+          display: flex; align-items: center; gap: 8px; min-width: 0;
+        }
+        .at-panel-back {
+          border: 0.5px solid var(--ls-actions-border);
+          background: var(--ls-actions-card);
+          color: var(--ls-actions-text);
+          font-size: 12px; font-weight: 600;
+          padding: 7px 13px; border-radius: 999px; cursor: pointer;
+          flex: 0 0 auto; font-family: var(--font-sans);
+          transition: background 140ms ease;
+        }
+        .at-panel-back:hover { background: var(--ls-actions-soft); }
+        @media (prefers-reduced-motion: reduce) {
+          .at-tile, .at-tile-arrow, .at-panel { transition: none; animation: none; }
+        }
         @media (max-width: 767px) {
           .at-grid-2 { grid-template-columns: 1fr !important; }
+          .at-tiles { grid-template-columns: 1fr; }
         }
       `}</style>
 
+
+      <div className="at-eyebrow is-live" style={{ marginTop: 2 }}>
+        <span className="at-eyebrow-dot" aria-hidden="true" />
+        Actions rapides · le quotidien
+      </div>
 
       {/* ═══ BLOC 2 — CARTE "À FAIRE MAINTENANT" ═════════════════════════ */}
       <ActionsRdvBlock
@@ -453,61 +590,57 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       {/* VIP déplacé (2026-07-03) : toute la gestion Programme Client Privilégié
           vit désormais UNIQUEMENT dans l'onglet « Club VIP » (décision Thomas). */}
 
-      {/* 🗂 Lanceur (2026-07-03) : la gestion du dossier (modifier, cycle de vie,
-          accès, uplink, admin) est repliée par défaut. Fini le scroll de 10
-          sections — on ne déplie que quand on en a besoin. */}
-      <button
-        type="button"
-        onClick={() => setShowManage((v) => !v)}
-        className="at-card"
-        aria-expanded={showManage}
-        style={{
-          marginTop: 12,
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          cursor: "pointer",
-          background: "var(--ls-actions-card)",
-          border: "0.5px solid var(--ls-actions-border)",
-          textAlign: "left",
-          fontFamily: "var(--font-sans)",
-        }}
-      >
-        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span aria-hidden="true" style={{ fontSize: 20 }}>🗂</span>
-          <span>
-            <span style={{ display: "block", fontWeight: 700, fontSize: 14, color: "var(--ls-actions-text)" }}>
-              Gérer le dossier
+      {/* 🗂 Lanceur (2026-07-03) : la gestion du dossier est présentée en tuiles ;
+          chaque tuile ouvre UN panneau focalisé (mockup Thomas). */}
+      <div className="at-eyebrow">
+        <span aria-hidden="true">🗂</span>
+        Gérer le dossier · s&apos;ouvre au clic
+      </div>
+      <div className="at-tiles">
+        {MANAGE_TILES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className="at-tile"
+            aria-expanded={t.id !== "vip" && activePanel === t.id}
+            onClick={
+              t.id === "vip"
+                ? () => onGoToClubVip?.()
+                : () => setActivePanel((p) => (p === t.id ? null : (t.id as ManagePanel)))
+            }
+          >
+            <span className="at-tile-ico" aria-hidden="true" style={{ background: t.bg }}>
+              {t.ico}
             </span>
-            <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-actions-text-muted)", marginTop: 1 }}>
-              Modifier · cycle de vie · accès · Herbalife uplink · admin
+            <span className="at-tile-body">
+              <span className="at-tile-title">{t.title}</span>
+              <span className="at-tile-sub">{t.sub}</span>
             </span>
-          </span>
-        </span>
-        <span aria-hidden="true" style={{ fontSize: 13, color: "var(--ls-actions-text-muted)", transition: "transform .2s", transform: showManage ? "rotate(180deg)" : "none" }}>▾</span>
-      </button>
+            <span className="at-tile-arrow" aria-hidden="true">→</span>
+          </button>
+        ))}
+      </div>
 
-      {showManage ? (
-        <>
-      {/* Chantier uplink HL (2026-05-21) : override le distri uplink HL
-          réel pour les clients orphelins repris (ex: Stéphanie sous
-          Ophélie 42% mais suivie par Mélanie). */}
-      <HerbalifeUplinkPanel client={client} />
+      {activePanel ? (
+        <div className="at-panel">
+          <div className="at-panel-head">
+            <span className="at-panel-title">
+              <span aria-hidden="true">▸</span>
+              {PANEL_TITLES[activePanel]}
+            </span>
+            <button type="button" className="at-panel-back" onClick={() => setActivePanel(null)}>
+              ← Fermer
+            </button>
+          </div>
 
-      {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
-      <div
-        className="at-grid-2"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 12,
-          marginTop: 12,
-        }}
-      >
-        {/* ─── COLONNE GAUCHE ─── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {activePanel === "uplink" ? (
+            /* Chantier uplink HL (2026-05-21) : override le distri uplink HL réel
+               pour les clients orphelins repris (ex: Stéphanie sous Ophélie 42%). */
+            <HerbalifeUplinkPanel client={client} />
+          ) : null}
+
+          {activePanel === "edit" ? (
+            <>
           {/* Bloc 3A : Modifier le dossier */}
           <div className="at-card">
             <div className="at-label" style={{ marginBottom: 14 }}>
@@ -762,7 +895,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               </div>
             );
           })()}
+          </>
+          ) : null}
 
+          {activePanel === "lifecycle" ? (
+            <>
           {/* Bloc 3B : Cycle de vie + toggles */}
           <div className="at-card">
             <div
@@ -837,10 +974,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               />
             </div>
           </div>
-        </div>
+          </>
+          ) : null}
 
-        {/* ─── COLONNE DROITE ─── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {activePanel === "access" ? (
+            <>
           {/* Bloc 4A : Accès client */}
           <div className="at-card">
             <div className="at-label" style={{ marginBottom: 12 }}>
@@ -873,7 +1011,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               <SharePublicPill client={client} />
             </button>
           </div>
+          </>
+          ) : null}
 
+          {activePanel === "admin" ? (
+            <>
           {/* Bloc 4B : Propriété du dossier */}
           <div className="at-card">
             <div className="at-label" style={{ marginBottom: 12 }}>
@@ -1149,9 +1291,9 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               </div>
             </div>
           ) : null}
+          </>
+          ) : null}
         </div>
-      </div>
-        </>
       ) : null}
 
       {/* ─── Modales ─── */}
