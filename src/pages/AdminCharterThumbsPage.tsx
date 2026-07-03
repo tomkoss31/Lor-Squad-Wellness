@@ -109,7 +109,7 @@ export function AdminCharterThumbsPage() {
         <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700, marginBottom: 6 }}>
           Outil admin
         </div>
-        <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 24, margin: 0, color: "var(--ls-text)" }}>
+        <h1 style={{ fontFamily: "Anton, sans-serif", textTransform: "uppercase", fontSize: 24, margin: 0, color: "var(--ls-text)" }}>
           Génération des thumbnails charter
         </h1>
         <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: "8px 0 0", lineHeight: 1.55 }}>

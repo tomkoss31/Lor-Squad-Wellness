@@ -384,7 +384,7 @@ export function ClientDetailPage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: 4 }}>
                 <h1 style={{
-                  fontFamily: 'Syne, serif', fontSize: 28, fontWeight: 800,
+                  fontFamily: 'Anton, sans-serif', fontSize: 28, fontWeight: 400,
                   color: 'var(--ls-text)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.05,
                 }}>
                   <span
