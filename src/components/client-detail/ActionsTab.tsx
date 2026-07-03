@@ -17,10 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
-import { ClientAccessModal } from "../client/ClientAccessModal";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { ClientRelanceButton } from "../reminders/ClientRelanceButton";
-import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
 import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
@@ -86,11 +84,13 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const { push: pushToast } = useToast();
 
   const [editCoordinatesOpen, setEditCoordinatesOpen] = useState(false);
-  const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [transferTo, setTransferTo] = useState<string>("");
+  // Lanceur (2026-07-03) : la gestion du dossier est repliée par défaut pour
+  // désencombrer l'onglet Actions (fini le scroll de 10 sections).
+  const [showManage, setShowManage] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [togglingFragile, setTogglingFragile] = useState(false);
   const [togglingFreeFollow, setTogglingFreeFollow] = useState(false);
@@ -450,12 +450,47 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         </div>
       </div>
 
-      {/* ⭐ Programme Client VIP Herbalife (Tier B 2026-04-28) :
-          status + ID + parrain + arbre filleuls + intentions clients. */}
-      <div style={{ marginTop: 12 }}>
-        <ClientVipCoachPanel client={client} />
-      </div>
+      {/* VIP déplacé (2026-07-03) : toute la gestion Programme Client Privilégié
+          vit désormais UNIQUEMENT dans l'onglet « Club VIP » (décision Thomas). */}
 
+      {/* 🗂 Lanceur (2026-07-03) : la gestion du dossier (modifier, cycle de vie,
+          accès, uplink, admin) est repliée par défaut. Fini le scroll de 10
+          sections — on ne déplie que quand on en a besoin. */}
+      <button
+        type="button"
+        onClick={() => setShowManage((v) => !v)}
+        className="at-card"
+        aria-expanded={showManage}
+        style={{
+          marginTop: 12,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          cursor: "pointer",
+          background: "var(--ls-actions-card)",
+          border: "0.5px solid var(--ls-actions-border)",
+          textAlign: "left",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span aria-hidden="true" style={{ fontSize: 20 }}>🗂</span>
+          <span>
+            <span style={{ display: "block", fontWeight: 700, fontSize: 14, color: "var(--ls-actions-text)" }}>
+              Gérer le dossier
+            </span>
+            <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-actions-text-muted)", marginTop: 1 }}>
+              Modifier · cycle de vie · accès · Herbalife uplink · admin
+            </span>
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ fontSize: 13, color: "var(--ls-actions-text-muted)", transition: "transform .2s", transform: showManage ? "rotate(180deg)" : "none" }}>▾</span>
+      </button>
+
+      {showManage ? (
+        <>
       {/* Chantier uplink HL (2026-05-21) : override le distri uplink HL
           réel pour les clients orphelins repris (ex: Stéphanie sous
           Ophélie 42% mais suivie par Mélanie). */}
@@ -811,71 +846,9 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
             <div className="at-label" style={{ marginBottom: 12 }}>
               Accès client
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                background: "var(--ls-actions-gold-bg)",
-                borderRadius: 10,
-                marginBottom: 8,
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  background: "var(--ls-actions-card)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13,
-                  flexShrink: 0,
-                }}
-              >
-                🔗
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--ls-actions-text)",
-                  }}
-                >
-                  Envoyer l&apos;accès app
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-text-muted)",
-                    marginTop: 2,
-                  }}
-                >
-                  Lien d&apos;invitation à partager au client
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAccessModalOpen(true)}
-                style={{
-                  padding: "7px 12px",
-                  fontSize: 11,
-                  borderRadius: 7,
-                  background: "#EF9F27",
-                  color: "#fff",
-                  border: "none",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                Envoyer →
-              </button>
-            </div>
+            {/* Accès app retiré d'ici (2026-07-03) : l'invitation PWA se gère
+                depuis le hero de la fiche + la page d'accueil client. On ne
+                garde ici que le partage public (lien vitrine anonymisé). */}
 
             {/* Ligne partage public */}
             <button
@@ -1178,6 +1151,8 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           ) : null}
         </div>
       </div>
+        </>
+      ) : null}
 
       {/* ─── Modales ─── */}
       {editCoordinatesOpen ? (
@@ -1206,16 +1181,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           }}
         />
       ) : null}
-
-      <ClientAccessModal
-        open={accessModalOpen}
-        onClose={() => setAccessModalOpen(false)}
-        clientId={client.id}
-        clientFirstName={client.firstName}
-        clientLastName={client.lastName}
-        clientPhone={client.phone}
-        clientEmail={client.email}
-      />
     </div>
   );
 }

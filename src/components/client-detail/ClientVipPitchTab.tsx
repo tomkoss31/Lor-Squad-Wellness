@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import type { Client } from "../../types/domain";
 import { MessageTemplatesModal } from "./MessageTemplatesModal";
+import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
 
 interface ClientTier {
   pct: number;
@@ -35,9 +36,9 @@ const CLIENT_TIERS: ClientTier[] = [
 
 export function ClientVipPitchTab({
   client,
-  onManage,
 }: {
   client: Client;
+  /** @deprecated la gestion VIP est désormais inline dans cet onglet. */
   onManage?: () => void;
 }) {
   const navigate = useNavigate();
@@ -119,11 +120,6 @@ export function ClientVipPitchTab({
         <button type="button" onClick={() => setModalOpen(true)} style={primaryBtn}>
           📲 Envoyer l'invitation à {fname}
         </button>
-        {onManage ? (
-          <button type="button" onClick={onManage} style={ghostBtn}>
-            ⚙️ Gérer le programme VIP
-          </button>
-        ) : null}
         <button
           type="button"
           onClick={() => navigate("/developpement/club-vip-explique")}
@@ -132,6 +128,12 @@ export function ClientVipPitchTab({
         >
           📖 Comment ça marche
         </button>
+      </div>
+
+      {/* Gestion VIP complète (2026-07-03) : rapatriée ici depuis l'onglet
+          Actions (décision Thomas — tout le VIP dans Club VIP only). */}
+      <div style={{ marginTop: 20, paddingTop: 18, borderTop: "0.5px dashed var(--ls-border)" }}>
+        <ClientVipCoachPanel client={client} />
       </div>
 
       <MessageTemplatesModal
