@@ -8,6 +8,7 @@ import { BulkMessageModal } from "../components/clients/BulkMessageModal";
 import { EmptyState } from "../components/ui/EmptyState";
 import { LegalFooter } from "../components/ui/LegalFooter";
 import { useAppContext } from "../context/AppContext";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
   getActivePortfolioUsers,
@@ -48,6 +49,26 @@ export function ClientsPage() {
   // de l'arborescence, mais ses clients perso sont tries EN PREMIER
   // (tri intelligent, pas filtrage). Plus de toggle.
   const isAdmin = currentUser?.role === "admin";
+
+  // Badge témoignages à modérer (fix TODO 2026-07-03) : compte réel des
+  // témoignages en attente (client_testimonials.status='pending'), admin only.
+  const [testimonialsCount, setTestimonialsCount] = useState(0);
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { count } = await sb
+        .from("client_testimonials")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (!cancelled) setTestimonialsCount(count ?? 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   // Chantier #1 Bilan Online étape 1.6 (2026-05-17) : tab toggle entre
   // la vue Clients (existante) et la vue Leads bilan online. Persisté
@@ -368,8 +389,6 @@ export function ClientsPage() {
       o.role === "referent" ? "network" : "personal",
     ).clients.length,
   }));
-  const testimonialsCount = 0; // TODO : récupérer count depuis AdminTestimonialsPage
-
   // Owners pour le bottom sheet (admin only)
   const mobileOwners = isAdmin
     ? ownerTabs.map((u) => ({ id: u.id, name: u.name }))
@@ -409,6 +428,7 @@ export function ClientsPage() {
       {/* Vue desktop (et tablette horizontale) — masquée sur < xl */}
       <div className="hidden xl:flex" style={{ flexDirection: "column", gap: 18 }}>
       <PremiumHero
+        variant="cockpit"
         identity="teal"
         eyebrow={`Dossiers clients · ${filteredClients.length} visible${filteredClients.length > 1 ? "s" : ""}`}
         titleAccent="Ta base"

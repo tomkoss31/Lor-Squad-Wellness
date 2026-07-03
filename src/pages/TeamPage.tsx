@@ -276,6 +276,7 @@ export function TeamPage() {
   return (
     <div className="space-y-5">
       <PremiumHero
+        variant="cockpit"
         identity="teal"
         eyebrow="Mon équipe · ton organisation"
         titleAccent="Ton équipe"

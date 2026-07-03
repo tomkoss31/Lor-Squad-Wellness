@@ -65,7 +65,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
             </div>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 30,
                 fontWeight: 600,
                 color: "#111827",
@@ -161,7 +161,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
               <div key={cell.label} style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 24,
                     fontWeight: 700,
                     color: "#5C4A0F",
@@ -354,7 +354,7 @@ function KpiBox({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 22,
           fontWeight: 700,
           color: colors.text,
@@ -384,7 +384,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div style={{ marginBottom: 18 }}>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 13,
           fontWeight: 700,
           color: "#5C4A0F",

@@ -391,7 +391,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: togglingActivation ? "wait" : "pointer",
                 boxShadow: "0 4px 14px rgba(186,117,23,0.35)",
                 opacity: togglingActivation ? 0.7 : 1,
@@ -552,7 +552,7 @@ export function ClientVipCoachPanel({ client }: Props) {
             <div>
               <span
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 18,
                   fontWeight: 700,
                   color: meta?.color ?? "var(--ls-text)",
@@ -673,7 +673,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: savingId ? "wait" : "pointer",
               }}
             >
@@ -787,7 +787,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: savingSponsor ? "wait" : "pointer",
               }}
             >
@@ -893,7 +893,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: savingPv ? "wait" : "pointer",
               }}
             >

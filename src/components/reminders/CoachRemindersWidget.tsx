@@ -9,10 +9,6 @@ import { useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { useCoachReminders, type CoachReminder } from "../../hooks/useCoachReminders";
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export function CoachRemindersWidget() {
   const { clients } = useAppContext();
   const { reminders, loading, add, markDone, remove } = useCoachReminders(true);
@@ -30,8 +26,6 @@ export function CoachRemindersWidget() {
     return m;
   }, [clients]);
 
-  const today = todayISO();
-
   function nameOf(r: CoachReminder): string {
     if (r.client_id && clientById.has(r.client_id)) return clientById.get(r.client_id)!.name;
     return r.label || "Contact";
@@ -44,7 +38,7 @@ export function CoachRemindersWidget() {
   async function submitAdd() {
     if (!label.trim() && !note.trim()) return;
     setSaving(true);
-    const ok = await add({ label, note, remindOn: remindOn || null });
+    const ok = await add({ label, note, remindAt: remindOn ? new Date(remindOn).toISOString() : null });
     setSaving(false);
     if (ok) {
       setLabel("");
@@ -74,16 +68,19 @@ export function CoachRemindersWidget() {
 
       <div style={listStyle}>
         {reminders.map((r) => {
-          const due = r.remind_on != null && r.remind_on <= today;
+          const dueDate = r.remind_at ?? (r.remind_on ? `${r.remind_on}T09:00:00` : null);
+          const due = dueDate != null && new Date(dueDate) <= new Date();
           const phone = phoneOf(r);
           return (
             <div key={r.id} style={rowStyle}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={rowTop}>
                   <span style={nameStyle}>{nameOf(r)}</span>
-                  {r.remind_on ? (
+                  {dueDate ? (
                     <span style={due ? dueBadge : dateBadge}>
-                      {due ? "à relancer" : new Date(r.remind_on).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                      {due
+                        ? "à relancer"
+                        : new Date(dueDate).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   ) : null}
                 </div>
@@ -131,7 +128,7 @@ export function CoachRemindersWidget() {
           />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <label style={dateLabel}>Rappelle-moi le</label>
-            <input type="date" value={remindOn} onChange={(e) => setRemindOn(e.target.value)} style={dateInput} />
+            <input type="datetime-local" value={remindOn} onChange={(e) => setRemindOn(e.target.value)} style={dateInput} />
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" disabled={saving} onClick={() => void submitAdd()} style={saveBtn}>

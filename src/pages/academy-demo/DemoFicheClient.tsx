@@ -77,7 +77,7 @@ export function DemoFicheClient() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 20,
               fontWeight: 600,
               flexShrink: 0,
@@ -88,7 +88,7 @@ export function DemoFicheClient() {
           <div style={{ flex: 1, minWidth: 200 }}>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 24,
                 fontWeight: 500,
                 color: "var(--ls-text)",
@@ -143,7 +143,7 @@ export function DemoFicheClient() {
         </p>
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 500,
             color: "var(--ls-text)",
@@ -226,7 +226,7 @@ export function DemoFicheClient() {
             </p>
             <h2
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 20,
                 fontWeight: 500,
                 color: "var(--ls-text)",
@@ -242,7 +242,7 @@ export function DemoFicheClient() {
           <div style={{ textAlign: "right" }}>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 22,
                 fontWeight: 600,
                 color: "#B8922A",
@@ -283,7 +283,7 @@ export function DemoFicheClient() {
               <div style={{ textAlign: "right" }}>
                 <p
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
                     color: "#B8922A",
@@ -325,7 +325,7 @@ export function DemoFicheClient() {
           </p>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 18,
               fontWeight: 500,
               color: "var(--ls-text)",
@@ -363,7 +363,7 @@ export function DemoFicheClient() {
             </p>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 15,
                 fontWeight: 600,
                 color: "var(--ls-text)",
@@ -397,7 +397,7 @@ export function DemoFicheClient() {
             </p>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 15,
                 fontWeight: 600,
                 color: "var(--ls-text)",
@@ -431,7 +431,7 @@ export function DemoFicheClient() {
             </p>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 15,
                 fontWeight: 600,
                 color: "var(--ls-text)",
@@ -459,7 +459,7 @@ export function DemoFicheClient() {
       >
         <p
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 15,
             fontWeight: 600,
             color: "var(--ls-text)",
@@ -606,7 +606,7 @@ function MetricTile({
       </div>
       <p
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 22,
           fontWeight: 600,
           color,
@@ -678,7 +678,7 @@ function FakeAccessModal({
           }}
         >
           <div>
-            <h2 style={{ fontFamily: "Syne, serif", fontSize: 18, fontWeight: 500, margin: 0 }}>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 500, margin: 0 }}>
               Envoyer l&apos;accès à {firstName}
             </h2>
             <p style={{ fontSize: 12, color: "#6b6f7a", margin: "4px 0 0" }}>

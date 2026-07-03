@@ -83,7 +83,7 @@ export function BilanSectionDivider({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 17,
             letterSpacing: "-0.02em",
@@ -125,7 +125,7 @@ export function BilanSectionDivider({
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 19,
               letterSpacing: "-0.015em",

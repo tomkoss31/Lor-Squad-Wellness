@@ -30,6 +30,8 @@ interface Props {
   titleSuffix?: ReactNode;
   subtitle?: string;
   rightSlot?: ReactNode;
+  /** "classic" (Syne) ou "cockpit" (Anton + eyebrow mono, identité v2). */
+  variant?: "classic" | "cockpit";
   /** Contenu sous le header (typiquement une grid de stats). */
   children?: ReactNode;
 }
@@ -41,8 +43,10 @@ export function PremiumHero({
   titleSuffix,
   subtitle,
   rightSlot,
+  variant = "classic",
   children,
 }: Props) {
+  const cockpit = variant === "cockpit";
   const g = getHeroGradient(identity);
   const uid = useId().replace(/:/g, "");
   const meshClass = `ls-hero-mesh-${uid}`;
@@ -106,10 +110,11 @@ export function PremiumHero({
           {eyebrow ? (
             <div
               style={{
-                fontSize: 10,
-                letterSpacing: 2,
+                fontFamily: cockpit ? "'JetBrains Mono', monospace" : undefined,
+                fontSize: cockpit ? 11 : 10,
+                letterSpacing: cockpit ? "0.22em" : 2,
                 textTransform: "uppercase",
-                fontWeight: 700,
+                fontWeight: cockpit ? 500 : 700,
                 color: g.secondary,
                 marginBottom: 6,
                 display: "flex",
@@ -133,15 +138,28 @@ export function PremiumHero({
 
           {titleAccent || titleSuffix ? (
             <h1
-              style={{
-                fontFamily: "Syne, serif",
-                fontSize: 32,
-                fontWeight: 800,
-                color: "var(--ls-text)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.02em",
-                margin: 0,
-              }}
+              style={
+                cockpit
+                  ? {
+                      fontFamily: "Anton, sans-serif",
+                      fontSize: "clamp(30px, 5vw, 42px)",
+                      fontWeight: 400,
+                      color: "var(--ls-text)",
+                      lineHeight: 0.98,
+                      letterSpacing: "0.01em",
+                      textTransform: "uppercase",
+                      margin: 0,
+                    }
+                  : {
+                      fontFamily: "Syne, sans-serif",
+                      fontSize: 32,
+                      fontWeight: 800,
+                      color: "var(--ls-text)",
+                      lineHeight: 1.05,
+                      letterSpacing: "-0.02em",
+                      margin: 0,
+                    }
+              }
             >
               {titleAccent ? (
                 <span

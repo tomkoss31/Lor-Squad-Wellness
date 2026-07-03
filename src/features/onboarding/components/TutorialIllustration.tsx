@@ -93,7 +93,7 @@ function renderSvg(kind: TutorialIllustrationKind) {
         <svg width="240" height="140" viewBox="0 0 240 140" fill="none">
           <rect x="40" y="30" width="160" height="80" rx="14" fill={CREAM} stroke={GOLD} strokeWidth="2" />
           <circle cx="70" cy="60" r="14" fill={GOLD} />
-          <text x="70" y="65" fontFamily="Syne, serif" fontSize="13" fontWeight="600" fill="white" textAnchor="middle">
+          <text x="70" y="65" fontFamily="Syne, sans-serif" fontSize="13" fontWeight="600" fill="white" textAnchor="middle">
             SM
           </text>
           <rect x="92" y="50" width="90" height="6" rx="3" fill={INK} opacity="0.75" />
@@ -205,7 +205,7 @@ function renderSvg(kind: TutorialIllustrationKind) {
           <rect x="98" y="52" width="14" height="14" rx="3" fill={PURPLE} />
           {/* Logo La Base 360 agrandi */}
           <rect x="116" y="52" width="32" height="32" rx="7" fill={GOLD} />
-          <text x="132" y="73" fontFamily="Syne, serif" fontSize="14" fontWeight="700" fill="white" textAnchor="middle">
+          <text x="132" y="73" fontFamily="Syne, sans-serif" fontSize="14" fontWeight="700" fill="white" textAnchor="middle">
             L
           </text>
           <text x="120" y="100" fontFamily="DM Sans" fontSize="6" fill={INK} textAnchor="middle" opacity="0.7">
@@ -296,7 +296,7 @@ function renderSvg(kind: TutorialIllustrationKind) {
           <text
             x="120"
             y="76"
-            fontFamily="Syne, serif"
+            fontFamily="Syne, sans-serif"
             fontSize="22"
             fontWeight="600"
             fill={INK}
@@ -434,31 +434,31 @@ function renderSvg(kind: TutorialIllustrationKind) {
           <text x="32" y="32" fontFamily="DM Sans" fontSize="9" fontWeight="500" fill={INK} opacity="0.55" letterSpacing="1">
             PROGRAMME ACTUEL
           </text>
-          <text x="32" y="48" fontFamily="Syne, serif" fontSize="14" fontWeight="500" fill={INK}>
+          <text x="32" y="48" fontFamily="Syne, sans-serif" fontSize="14" fontWeight="500" fill={INK}>
             Produits du client
           </text>
           {/* PV total à droite */}
           <text x="248" y="32" fontFamily="DM Sans" fontSize="8" fill={INK} opacity="0.5" textAnchor="end">
             Total
           </text>
-          <text x="248" y="50" fontFamily="Syne, serif" fontSize="20" fontWeight="700" fill={GOLD} textAnchor="end">
+          <text x="248" y="50" fontFamily="Syne, sans-serif" fontSize="20" fontWeight="700" fill={GOLD} textAnchor="end">
             80 PV
           </text>
           {/* 3 produits */}
           <rect x="32" y="62" width="216" height="20" rx="6" fill="white" stroke={CREAM_DARK} strokeWidth="0.5" />
           <text x="42" y="76" fontSize="11">🥤</text>
           <text x="60" y="76" fontFamily="DM Sans" fontSize="10" fontWeight="500" fill={INK}>Formula 1 Vanille × 2</text>
-          <text x="240" y="76" fontFamily="Syne, serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">23 PV</text>
+          <text x="240" y="76" fontFamily="Syne, sans-serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">23 PV</text>
 
           <rect x="32" y="86" width="216" height="20" rx="6" fill="white" stroke={CREAM_DARK} strokeWidth="0.5" />
           <text x="42" y="100" fontSize="11">🍵</text>
           <text x="60" y="100" fontFamily="DM Sans" fontSize="10" fontWeight="500" fill={INK}>Thé Concentré 50g</text>
-          <text x="240" y="100" fontFamily="Syne, serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">17 PV</text>
+          <text x="240" y="100" fontFamily="Syne, sans-serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">17 PV</text>
 
           <rect x="32" y="110" width="216" height="20" rx="6" fill="white" stroke={CREAM_DARK} strokeWidth="0.5" />
           <text x="42" y="124" fontSize="11">🌿</text>
           <text x="60" y="124" fontFamily="DM Sans" fontSize="10" fontWeight="500" fill={INK}>Aloe Vera Original</text>
-          <text x="240" y="124" fontFamily="Syne, serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">19 PV</text>
+          <text x="240" y="124" fontFamily="Syne, sans-serif" fontSize="11" fontWeight="600" fill={GOLD} textAnchor="end">19 PV</text>
 
           {/* Annotation flèche vers PV total */}
           <path
@@ -481,7 +481,7 @@ function renderSvg(kind: TutorialIllustrationKind) {
           {/* Page bg */}
           <rect x="14" y="10" width="252" height="140" rx="10" fill={CREAM} stroke={CREAM_DARK} strokeWidth="0.5" />
           {/* Header titre + CTA */}
-          <text x="26" y="28" fontFamily="Syne, serif" fontSize="12" fontWeight="500" fill={INK}>
+          <text x="26" y="28" fontFamily="Syne, sans-serif" fontSize="12" fontWeight="500" fill={INK}>
             Ton agenda
           </text>
           <rect x="186" y="18" width="64" height="16" rx="8" fill={GOLD} />
@@ -514,21 +514,21 @@ function renderSvg(kind: TutorialIllustrationKind) {
           <rect x="36" y="68" width="22" height="8" rx="2" fill={GOLD} />
           <text x="47" y="74" fontFamily="DM Sans" fontSize="6" fontWeight="700" fill="white" textAnchor="middle">CLIENT</text>
           <text x="62" y="75" fontFamily="DM Sans" fontSize="9" fontWeight="500" fill={INK}>Bilan Sarah Martin</text>
-          <text x="244" y="75" fontFamily="Syne, serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">14:30</text>
+          <text x="244" y="75" fontFamily="Syne, sans-serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">14:30</text>
 
           <rect x="26" y="90" width="228" height="22" rx="6" fill="white" stroke={CREAM_DARK} strokeWidth="0.5" />
           <rect x="26" y="90" width="3" height="22" rx="1.5" fill={PURPLE} />
           <rect x="36" y="96" width="28" height="8" rx="2" fill={PURPLE} />
           <text x="50" y="102" fontFamily="DM Sans" fontSize="6" fontWeight="700" fill="white" textAnchor="middle">PROSPECT</text>
           <text x="68" y="103" fontFamily="DM Sans" fontSize="9" fontWeight="500" fill={INK}>1er contact Lucas</text>
-          <text x="244" y="103" fontFamily="Syne, serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">10:00</text>
+          <text x="244" y="103" fontFamily="Syne, sans-serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">10:00</text>
 
           <rect x="26" y="118" width="228" height="22" rx="6" fill="white" stroke={CREAM_DARK} strokeWidth="0.5" />
           <rect x="26" y="118" width="3" height="22" rx="1.5" fill={TEAL} />
           <rect x="36" y="124" width="22" height="8" rx="2" fill={TEAL} />
           <text x="47" y="130" fontFamily="DM Sans" fontSize="6" fontWeight="700" fill="white" textAnchor="middle">SUIVI</text>
           <text x="62" y="131" fontFamily="DM Sans" fontSize="9" fontWeight="500" fill={INK}>J+7 VIP Emma</text>
-          <text x="244" y="131" fontFamily="Syne, serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">16:00</text>
+          <text x="244" y="131" fontFamily="Syne, sans-serif" fontSize="9" fontWeight="600" fill={GOLD} textAnchor="end">16:00</text>
         </svg>
       );
 
@@ -543,7 +543,7 @@ function renderSvg(kind: TutorialIllustrationKind) {
           {/* Header */}
           <circle cx="68" cy="32" r="10" fill={CORAL} opacity="0.18" />
           <text x="68" y="36" fontFamily="DM Sans" fontSize="13" fontWeight="700" fill={CORAL} textAnchor="middle">!</text>
-          <text x="86" y="29" fontFamily="Syne, serif" fontSize="11" fontWeight="500" fill={INK}>
+          <text x="86" y="29" fontFamily="Syne, sans-serif" fontSize="11" fontWeight="500" fill={INK}>
             6 alertes détectées
           </text>
           <text x="86" y="40" fontFamily="DM Sans" fontSize="8" fill={INK} opacity="0.55">

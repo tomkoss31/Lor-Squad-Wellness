@@ -16,6 +16,7 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { FormField } from "../ui/FormField";
 
 interface SettingsRow {
   provider: "square" | "stripe";
@@ -358,12 +359,12 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  // Délègue au composant partagé (dedup 2026-07-03). mono={false} = look DM Sans
+  // d'origine préservé.
   return (
-    <div>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ls-text)", marginBottom: 4 }}>{label}</div>
+    <FormField label={label} hint={hint} mono={false}>
       {children}
-      {hint ? <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 3 }}>{hint}</div> : null}
-    </div>
+    </FormField>
   );
 }
 

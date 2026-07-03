@@ -105,7 +105,7 @@ export function StartConversationModal({ onClose }: Props) {
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <h2 style={{ fontFamily: "Syne, serif", fontSize: 20, fontWeight: 500, margin: 0, color: "#2C2C2A" }}>
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 500, margin: 0, color: "#2C2C2A" }}>
             Démarrer une conversation
           </h2>
           <button

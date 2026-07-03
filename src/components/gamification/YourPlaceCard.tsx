@@ -75,7 +75,7 @@ export function YourPlaceCard({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           letterSpacing: "-0.02em",
           boxShadow: `0 6px 16px -6px ${primary}80, inset 0 1px 0 rgba(255,255,255,0.30)`,
@@ -116,7 +116,7 @@ export function YourPlaceCard({
         </div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 16,
             color: "var(--ls-text)",

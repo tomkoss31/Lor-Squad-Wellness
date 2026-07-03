@@ -103,7 +103,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
           position: "absolute",
           top: 10,
           right: "clamp(-4px, 1vw, 14px)",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: "clamp(48px, 16vw, 72px)",
           fontWeight: 900,
           color: `color-mix(in srgb, ${accentVar} 12%, transparent)`,
@@ -135,7 +135,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
           </div>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: "clamp(16px, 4.5vw, 19px)",
               fontWeight: 800,
               color: "var(--ls-text)",
@@ -219,7 +219,7 @@ export function ParcoursLevelCard({ level, stats }: Props) {
           fontSize: 13,
           fontWeight: 700,
           color: isLocked ? "var(--ls-text-muted)" : accentVar,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           letterSpacing: "0.01em",
         }}
       >

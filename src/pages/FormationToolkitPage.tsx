@@ -212,7 +212,7 @@ export function FormationToolkitPage() {
         </div>
         <h1
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 32,
             fontWeight: 800,
             margin: 0,
@@ -383,7 +383,7 @@ export function FormationToolkitPage() {
           <div style={{ fontSize: 36, marginBottom: 8 }} aria-hidden="true">
             🔍
           </div>
-          <div style={{ fontFamily: "Syne, serif", fontSize: 18, color: "var(--ls-text)", marginBottom: 4 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 18, color: "var(--ls-text)", marginBottom: 4 }}>
             {activeCategory === "favorites" ? "Aucun favori encore" : "Rien trouvé"}
           </div>
           <div style={{ fontSize: 13 }}>
@@ -560,7 +560,7 @@ function FeaturedCard({
           </div>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 16,
               fontWeight: 700,
               margin: 0,
@@ -637,7 +637,7 @@ function ToolkitCard({
       </div>
       <h3
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 15,
           fontWeight: 700,
           margin: "0 0 6px 0",

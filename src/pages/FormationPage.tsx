@@ -220,7 +220,7 @@ export function FormationPage() {
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: "clamp(16px, 2vw, 19px)",
                 color: "var(--ls-text)",
@@ -360,7 +360,7 @@ function SectionHeader({
         <div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 18,
               letterSpacing: "-0.012em",
@@ -459,7 +459,7 @@ function SecondaryToolCard({
         </div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 15,
             color: "var(--ls-text)",

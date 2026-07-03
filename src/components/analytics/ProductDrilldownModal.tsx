@@ -150,7 +150,7 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
                       const h = Math.round((t.value / max) * 60);
                       return (
                         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif", minHeight: 14 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, sans-serif", minHeight: 14 }}>
                             {t.value > 0 ? t.value : ""}
                           </div>
                           <div
@@ -191,7 +191,7 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
                       <div style={{ fontSize: 13, color: "var(--ls-text)" }}>
                         × {l.quantity}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif" }}>
+                      <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif" }}>
                         {l.pv_total} PV
                       </div>
                     </div>
@@ -216,7 +216,7 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
         style={{
           fontSize: 22,
           fontWeight: 800,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           color: accent ? "var(--ls-gold)" : "var(--ls-text)",
           marginTop: 4,
         }}

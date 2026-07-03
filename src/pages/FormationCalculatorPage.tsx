@@ -239,7 +239,7 @@ export function FormationCalculatorPage() {
           </p>
           <h1
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: "clamp(22px, 4vw, 32px)",
               letterSpacing: "-0.02em",
@@ -794,7 +794,7 @@ function Stat({
       <div
         style={{
           fontSize: 22,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           color,
           letterSpacing: "-0.02em",

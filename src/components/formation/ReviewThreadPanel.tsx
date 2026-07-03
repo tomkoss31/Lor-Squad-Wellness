@@ -171,7 +171,7 @@ export function ReviewThreadPanel({ progressId, compact = false }: Props) {
               background:
                 "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, #000) 100%)",
               color: "white",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 13,
               cursor: busy || !draft.trim() ? "not-allowed" : "pointer",

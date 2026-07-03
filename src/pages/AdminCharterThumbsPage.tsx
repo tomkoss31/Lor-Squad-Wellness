@@ -109,7 +109,7 @@ export function AdminCharterThumbsPage() {
         <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700, marginBottom: 6 }}>
           Outil admin
         </div>
-        <h1 style={{ fontFamily: "Syne, serif", fontSize: 24, margin: 0, color: "var(--ls-text)" }}>
+        <h1 style={{ fontFamily: "Anton, sans-serif", textTransform: "uppercase", fontSize: 24, margin: 0, color: "var(--ls-text)" }}>
           Génération des thumbnails charter
         </h1>
         <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: "8px 0 0", lineHeight: 1.55 }}>
@@ -141,7 +141,7 @@ export function AdminCharterThumbsPage() {
               gap: 10,
             }}
           >
-            <h2 style={{ fontFamily: "Syne, serif", fontSize: 18, margin: 0, color: "var(--ls-text)" }}>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 18, margin: 0, color: "var(--ls-text)" }}>
               ✦ {t.label}
             </h2>
             <button
@@ -154,7 +154,7 @@ export function AdminCharterThumbsPage() {
                 color: "var(--ls-bg)",
                 border: "none",
                 borderRadius: 10,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 13,
                 cursor: downloading === t.id ? "wait" : "pointer",

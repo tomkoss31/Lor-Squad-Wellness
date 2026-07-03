@@ -112,7 +112,7 @@ export function CahierDeBordPage() {
         </div>
         <h1
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 28,
             fontWeight: 800,
             margin: 0,
@@ -280,7 +280,7 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
             >
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 18,
                   fontWeight: 800,
                   color: filled ? "var(--ls-teal)" : isMilestone ? "var(--ls-gold)" : "var(--ls-text)",
@@ -338,7 +338,7 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
               fontFamily: "DM Sans, sans-serif",
             }}
           >
-            <h2 style={{ fontFamily: "Syne, serif", fontSize: 22, margin: 0, color: "var(--ls-teal)" }}>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, margin: 0, color: "var(--ls-teal)" }}>
               Mon J{editingDay}
             </h2>
             <p style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 4 }}>
@@ -1156,7 +1156,7 @@ function StatCard({ label, value, target, accent }: { label: string; value: numb
         fontFamily: "DM Sans, sans-serif",
       }}
     >
-      <div style={{ fontFamily: "Syne, serif", fontSize: 26, fontWeight: 800, color: accent, lineHeight: 1 }}>
+      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 26, fontWeight: 800, color: accent, lineHeight: 1 }}>
         {value}
         {target !== undefined && <span style={{ fontSize: 14, color: "var(--ls-text-muted)", fontWeight: 500 }}> / {target}</span>}
       </div>

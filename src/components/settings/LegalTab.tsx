@@ -45,7 +45,7 @@ export function LegalTab() {
         </div>
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 19,
             color: "var(--ls-text)",
@@ -258,7 +258,7 @@ function LinkCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 14.5,
             color: "var(--ls-text)",

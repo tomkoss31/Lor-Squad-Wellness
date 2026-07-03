@@ -114,7 +114,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
                 <p
                   id="quiz-title"
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     color: "#2C2C2A",
@@ -142,7 +142,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
             {/* Question */}
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 18,
                 fontWeight: 500,
                 color: "#2C2C2A",
@@ -330,7 +330,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
               </div>
               <p
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 22,
                   fontWeight: 500,
                   color: "#2C2C2A",

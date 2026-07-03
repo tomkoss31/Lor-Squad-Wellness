@@ -227,7 +227,7 @@ export function PodiumTop3({ entries, accent, scoreSuffix = "", currentUserId }:
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: rank === 1 ? 22 : 18,
                   color: entry ? "#FFFFFF" : "var(--ls-text-hint)",
@@ -248,7 +248,7 @@ export function PodiumTop3({ entries, accent, scoreSuffix = "", currentUserId }:
               <div style={{ textAlign: "center", minWidth: 0, width: "100%" }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 700,
                     fontSize: rank === 1 ? 13.5 : 12.5,
                     color: "var(--ls-text)",
@@ -325,7 +325,7 @@ export function PodiumTop3({ entries, accent, scoreSuffix = "", currentUserId }:
                 <div
                   style={{
                     position: "relative",
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 800,
                     fontSize: rank === 1 ? 30 : 24,
                     color: "#FFFFFF",
@@ -343,7 +343,7 @@ export function PodiumTop3({ entries, accent, scoreSuffix = "", currentUserId }:
                   <div
                     style={{
                       position: "relative",
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontWeight: 800,
                       fontSize: rank === 1 ? 22 : 17,
                       color: "#FFFFFF",

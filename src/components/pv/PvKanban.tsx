@@ -222,7 +222,7 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 13,
                 color: col.color,
@@ -235,7 +235,7 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
               style={{
                 fontSize: 11,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 color: col.color,
                 background: "var(--ls-surface)",
                 padding: "2px 8px",

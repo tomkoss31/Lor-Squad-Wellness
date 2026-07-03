@@ -307,7 +307,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                     }}
                   >
                     <span style={{ color: "var(--ls-text)", flex: 1 }}>{p.name}</span>
-                    <span style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif", marginRight: 6 }}>
+                    <span style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif", marginRight: 6 }}>
                       {p.total_pv} PV
                     </span>
                     <span style={{ fontSize: 10, color: "var(--ls-text-hint)" }} aria-hidden="true">
@@ -440,7 +440,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                       fontSize: 13,
                       fontWeight: 700,
                       color: "var(--ls-text)",
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                     }}
                   >
                     {s.name}
@@ -459,7 +459,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
                   <div
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontSize: 16,
                       fontWeight: 700,
                       color: "var(--ls-coral)",
@@ -718,7 +718,7 @@ function ChartTooltip(props: TooltipProps<number, string>) {
       }}
     >
       <div style={{ color: "var(--ls-text-muted)", marginBottom: 2 }}>{item.payload?.month}</div>
-      <div style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif", fontSize: 14 }}>
+      <div style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif", fontSize: 14 }}>
         {item.value} bilan{Number(item.value) > 1 ? "s" : ""}
       </div>
     </div>

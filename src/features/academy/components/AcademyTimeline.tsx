@@ -144,7 +144,7 @@ export function AcademyTimeline({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 13,
                   fontWeight: 600,
                   animation: isCurrent

@@ -241,7 +241,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             </div>
             <h2
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: "clamp(20px, 5.5vw, 24px)",
                 fontWeight: 800,
                 margin: "0 0 8px",
@@ -281,7 +281,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
                   <span>Bonnes réponses QCM</span>
                   <span
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontWeight: 800,
                       fontSize: 16,
                       color: heroAccent,
@@ -394,7 +394,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
                     >
                       <span
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
                           fontSize: 12,
                           color: "var(--ls-text)",
@@ -463,7 +463,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
                 background:
                   "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
                 color: "var(--ls-bg)",
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 14,
                 cursor: "pointer",
@@ -543,7 +543,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
         </div>
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 22,
             fontWeight: 800,
             margin: "0 0 10px",
@@ -600,7 +600,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
               background:
                 "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
               color: "var(--ls-bg)",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 14,
               cursor: "pointer",
@@ -686,7 +686,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
           </span>
           <span
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               color: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-gold)",
               fontVariantNumeric: "tabular-nums",
@@ -742,7 +742,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             style={{
               cursor: "pointer",
               padding: "14px 18px",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 14,
               color: "var(--ls-text)",
@@ -804,7 +804,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             background:
               "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, #000) 100%)",
             color: "var(--ls-gold-contrast, #FFFFFF)",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 14,
             cursor: canSubmit ? "pointer" : "not-allowed",
@@ -847,7 +847,7 @@ function QcmPanel({
     >
       <legend
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 13,
           color: "var(--ls-text)",
@@ -943,7 +943,7 @@ function FreeTextPanel({
     >
       <legend
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 13,
           color: "var(--ls-purple)",

@@ -147,7 +147,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
               <h2
                 id="ls-pwa-title"
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 19,
                   letterSpacing: "-0.02em",
@@ -416,7 +416,7 @@ const IosStage1Svg = (
         <div style={{ fontSize: 36 }}>⭐</div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 11,
             color: "#FFFFFF",

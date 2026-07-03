@@ -223,7 +223,7 @@ export function DistriOnboardingChecklist() {
           </div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 18,
               color: "var(--ls-text)",
@@ -247,7 +247,7 @@ export function DistriOnboardingChecklist() {
         >
           <span
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 18,
               color: "var(--ls-gold)",
@@ -258,7 +258,7 @@ export function DistriOnboardingChecklist() {
           </span>
           <span
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 13,
               color: "var(--ls-text-muted)",
               fontWeight: 600,
@@ -345,7 +345,7 @@ export function DistriOnboardingChecklist() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 800,
                     fontSize: 11,
                     cursor: "pointer",
@@ -380,7 +380,7 @@ export function DistriOnboardingChecklist() {
                     </span>
                     <span
                       style={{
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         fontWeight: 700,
                         fontSize: 14,
                         color: isOn ? "var(--ls-text-muted)" : "var(--ls-text)",

@@ -198,7 +198,7 @@ export function WeeklyRecapCard() {
         </p>
         <h3
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 500,
             color: "var(--ls-text)",
@@ -297,7 +297,7 @@ export function WeeklyRecapCard() {
         >
           <div style={{ background: "white", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
             <div style={{ fontSize: 22 }}>📋</div>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 700, color: "#B8922A", lineHeight: 1.1, marginTop: 2 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#B8922A", lineHeight: 1.1, marginTop: 2 }}>
               {data.totalBilans}
             </div>
             <div style={{ fontSize: 9, color: "#888780", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
@@ -306,7 +306,7 @@ export function WeeklyRecapCard() {
           </div>
           <div style={{ background: "white", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
             <div style={{ fontSize: 22 }}>💬</div>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 700, color: "#1D9E75", lineHeight: 1.1, marginTop: 2 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#1D9E75", lineHeight: 1.1, marginTop: 2 }}>
               {data.totalMessages}
             </div>
             <div style={{ fontSize: 9, color: "#888780", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
@@ -315,7 +315,7 @@ export function WeeklyRecapCard() {
           </div>
           <div style={{ background: "white", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
             <div style={{ fontSize: 22 }}>🌱</div>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 700, color: "#7F77DD", lineHeight: 1.1, marginTop: 2 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#7F77DD", lineHeight: 1.1, marginTop: 2 }}>
               {data.totalNewClients}
             </div>
             <div style={{ fontSize: 9, color: "#888780", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
@@ -353,7 +353,7 @@ export function WeeklyRecapCard() {
                     <span style={{ flex: 1, fontSize: 12, color: "#2C2C2A", fontWeight: 500, fontFamily: "system-ui, sans-serif" }}>
                       {r.name}
                     </span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#B8922A", fontFamily: "Syne, serif" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#B8922A", fontFamily: "Syne, sans-serif" }}>
                       {r.count}
                     </span>
                   </div>

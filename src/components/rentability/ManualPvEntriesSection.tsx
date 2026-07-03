@@ -17,6 +17,7 @@ import {
   deleteManualPvEntry,
 } from "../../services/supabaseService";
 import { useManualPvEntries } from "../../hooks/useManualPvEntries";
+import { FormField } from "../ui/FormField";
 import {
   PV_TO_EUR_RATIO,
   computeSponsorCutOnDownstream,
@@ -482,13 +483,11 @@ function FormBody({
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  // Délègue au composant partagé (dedup 2026-07-03).
   return (
-    <div>
-      <label style={{ display: "block", fontSize: 11, color: "var(--ls-text)", fontWeight: 600, marginBottom: 4 }}>
-        {label}
-      </label>
+    <FormField label={label} mono={false}>
       {children}
-    </div>
+    </FormField>
   );
 }
 

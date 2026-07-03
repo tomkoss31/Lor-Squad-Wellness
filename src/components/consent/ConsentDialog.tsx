@@ -241,7 +241,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               <h2
                 id="ls-consent-title"
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 22,
                   letterSpacing: "-0.02em",
@@ -298,7 +298,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
             {/* Texte legal client */}
             <h3
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 17,
                 fontWeight: 700,
                 color: "var(--ls-text)",

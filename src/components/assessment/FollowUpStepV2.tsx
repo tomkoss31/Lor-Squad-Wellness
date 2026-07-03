@@ -132,7 +132,7 @@ export function FollowUpStepV2({
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 16,
                 color: "var(--ls-text)",
@@ -250,7 +250,7 @@ export function FollowUpStepV2({
                       fontSize: 14.5,
                       fontWeight: 700,
                       color: isActive ? opt.color : "var(--ls-text)",
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       letterSpacing: "-0.01em",
                     }}
                   >
@@ -349,7 +349,7 @@ export function FollowUpStepV2({
           </div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: "clamp(22px, 3vw, 30px)",
               letterSpacing: "-0.025em",
@@ -656,7 +656,7 @@ function AutoActionCard({
         </div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 15,
             color: "var(--ls-text)",
@@ -732,7 +732,7 @@ function PromiseCard({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
           fontSize: 14,
           color: "var(--ls-text)",

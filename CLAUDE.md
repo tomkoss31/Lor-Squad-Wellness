@@ -774,6 +774,22 @@ avec `supabase functions deploy <name>`.
 
 Toute nouvelle edge function = ajouter ici.
 
+> **MAJ audit 2026-07-03 — 48 edge functions réelles** (la table ci-dessus en
+> documentait ~30). Fonctions actives qui manquaient (livrées en prod sans passer
+> par la doc) :
+> - `crm-relance-notifier` — notif relance CRM
+> - `notify-referral-converted` — notif quand un parrainage se convertit
+> - `pv-month-end-reminder` — rappel PV fin de mois
+> - `rank-threshold-notifier` — notif seuil de rang approché/atteint
+> - `submit-prospect-lead` — création lead prospect (funnel `/rejoindre` + form Welcome). Partagée, ne PAS supprimer.
+> - `submit-testimonial` · `request-testimonial` · `get-testimonial-context` — chaîne témoignages (#11)
+> - `submit-online-bilan` · `get-online-bilan-results` — bilan online (#1)
+> - `dispatch-newsletter` · `send-newsletter-email` · `track-newsletter-view` · `resend-webhook` · `upload-newsletter-image` · `upload-newsletter-og` — chaîne newsletter (#8)
+> - `create-public-share-token` · `resolve-public-share` — partage anonymisé
+>
+> Chantiers non documentés révélés par l'audit : **parrainage**, **seuils de rang**,
+> **rappel PV fin de mois**, funnel **`/rejoindre` gated**.
+
 ---
 
 ## Chantier Prise de masse (2026-04-24)

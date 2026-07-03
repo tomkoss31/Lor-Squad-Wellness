@@ -16,7 +16,8 @@ export interface CoachReminder {
   client_id: string | null;
   label: string | null;
   note: string | null;
-  remind_on: string | null; // YYYY-MM-DD
+  remind_on: string | null; // YYYY-MM-DD (legacy)
+  remind_at: string | null; // ISO date+heure (pilote le push coach)
   status: "pending" | "done";
   created_at: string;
   done_at: string | null;
@@ -26,7 +27,8 @@ export interface AddReminderInput {
   clientId?: string | null;
   label?: string | null;
   note?: string | null;
-  remindOn?: string | null;
+  /** ISO date+heure (datetime-local converti). Déclenche le push coach le jour J. */
+  remindAt?: string | null;
 }
 
 interface UseCoachRemindersResult {
@@ -58,10 +60,10 @@ export function useCoachReminders(autoFetch = true): UseCoachRemindersResult {
       }
       const { data, error } = await sb
         .from("coach_reminders")
-        .select("id, coach_id, client_id, label, note, remind_on, status, created_at, done_at")
+        .select("id, coach_id, client_id, label, note, remind_on, remind_at, status, created_at, done_at")
         .eq("coach_id", currentUser.id)
         .eq("status", "pending")
-        .order("remind_on", { ascending: true, nullsFirst: false })
+        .order("remind_at", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (!error && Array.isArray(data)) setReminders(data as CoachReminder[]);
     } catch {
@@ -81,12 +83,15 @@ export function useCoachReminders(autoFetch = true): UseCoachRemindersResult {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return false;
+        // remind_at = date+heure ISO ; on garde aussi remind_on (jour) pour l'affichage legacy.
+        const remindAt = input.remindAt || null;
         const { error } = await sb.from("coach_reminders").insert({
           coach_id: currentUser.id,
           client_id: input.clientId ?? null,
           label: input.label?.trim() ? input.label.trim() : null,
           note: input.note?.trim() ? input.note.trim() : null,
-          remind_on: input.remindOn || null,
+          remind_at: remindAt,
+          remind_on: remindAt ? remindAt.slice(0, 10) : null,
           status: "pending",
         });
         if (error) return false;

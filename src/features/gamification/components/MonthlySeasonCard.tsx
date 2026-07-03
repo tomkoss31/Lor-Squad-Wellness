@@ -147,7 +147,7 @@ export function MonthlySeasonCard() {
           </div>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 800,
               color: "var(--ls-text)",
@@ -262,7 +262,7 @@ export function MonthlySeasonCard() {
                         style={{
                           width: 32,
                           flexShrink: 0,
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontSize: 13,
                           fontWeight: 800,
                           color: "var(--ls-text-hint)",
@@ -283,7 +283,7 @@ export function MonthlySeasonCard() {
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: 11,
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
                           color: "var(--ls-purple)",
                           border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, transparent)",
@@ -332,7 +332,7 @@ export function MonthlySeasonCard() {
                           fontSize: 14,
                           fontWeight: 800,
                           color: "var(--ls-purple)",
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           flexShrink: 0,
                           letterSpacing: "-0.02em",
                         }}

@@ -97,7 +97,7 @@ export function BusinessAmbitionStep({
         </span>
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: "clamp(22px, 4vw, 30px)",
             lineHeight: 1.15,
@@ -142,7 +142,7 @@ export function BusinessAmbitionStep({
       <div style={{ textAlign: "center" }}>
         <p
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 18,
             color: "var(--ls-text)",
@@ -208,7 +208,7 @@ export function BusinessAmbitionStep({
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 15,
                   letterSpacing: "-0.01em",

@@ -41,7 +41,7 @@ export function ClientVipBadge({ level, size = "compact", showDiscount = false }
         borderRadius: 999,
         fontSize: compact ? 10 : 12,
         fontWeight: 700,
-        fontFamily: compact ? "DM Sans, sans-serif" : "Syne, serif",
+        fontFamily: compact ? "DM Sans, sans-serif" : "Syne, sans-serif",
         color: meta.color,
         letterSpacing: 0.3,
         whiteSpace: "nowrap",

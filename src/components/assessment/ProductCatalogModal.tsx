@@ -345,7 +345,7 @@ export function ProductCatalogModal({
                   <h2
                     id="ls-cat-title"
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontWeight: 800,
                       fontSize: 22,
                       letterSpacing: "-0.02em",
@@ -482,7 +482,7 @@ export function ProductCatalogModal({
                 ✨ Tout
                 <span
                   style={{
-                    fontSize: 10, fontWeight: 800, fontFamily: "Syne, serif",
+                    fontSize: 10, fontWeight: 800, fontFamily: "Syne, sans-serif",
                     padding: "1px 6px", borderRadius: 999,
                     background: activeCategory === "all" ? "var(--ls-bg)" : "var(--ls-surface2)",
                     color: activeCategory === "all" ? "var(--ls-gold)" : "var(--ls-text-hint)",
@@ -534,7 +534,7 @@ export function ProductCatalogModal({
                     {section.label}
                     <span
                       style={{
-                        fontSize: 10, fontWeight: 800, fontFamily: "Syne, serif",
+                        fontSize: 10, fontWeight: 800, fontFamily: "Syne, sans-serif",
                         padding: "1px 6px", borderRadius: 999,
                         background: isActive ? "var(--ls-bg)" : "var(--ls-surface2)",
                         color: isActive ? section.color : "var(--ls-text-hint)",
@@ -602,7 +602,7 @@ export function ProductCatalogModal({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
-                            fontFamily: "Syne, serif",
+                            fontFamily: "Syne, sans-serif",
                             fontSize: 15,
                             fontWeight: 800,
                             color: "var(--ls-text)",
@@ -721,7 +721,7 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 13.5,
                 fontWeight: 700,
                 color: "var(--ls-text)",

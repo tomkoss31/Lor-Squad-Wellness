@@ -166,9 +166,9 @@ export function AdminNewsletterStatsPage() {
 
       <h1
         style={{
-          fontFamily: "'Syne', serif",
+          fontFamily: "Anton, sans-serif", textTransform: "uppercase",
           fontSize: 26,
-          fontWeight: 700,
+          fontWeight: 400,
           margin: "0 0 4px",
           color: "var(--ls-text)",
         }}

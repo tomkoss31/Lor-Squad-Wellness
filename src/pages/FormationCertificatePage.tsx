@@ -389,7 +389,7 @@ function CertA4({
       <h1
         style={{
           fontSize: 30,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           color: "#3A2F0F",
           margin: "4px 0 4px 0",
@@ -430,7 +430,7 @@ function CertA4({
         <div style={{ fontSize: 32, lineHeight: 1 }}>{levelMeta.emoji}</div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 28,
             letterSpacing: "-0.03em",
@@ -471,7 +471,7 @@ function CertA4({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 28,
           color: "#2A2418",
@@ -505,7 +505,7 @@ function CertA4({
           fontSize: 11.5,
           fontStyle: "italic",
           color: levelMeta.accentDark,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           maxWidth: 380,
           lineHeight: 1.6,
           margin: "8px 0 24px",
@@ -535,7 +535,7 @@ function CertA4({
           <div style={{ letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600, marginBottom: 2 }}>
             Délivré le
           </div>
-          <div style={{ fontSize: 13, color: "#3A2F0F", fontFamily: "Syne, serif", fontWeight: 700 }}>
+          <div style={{ fontSize: 13, color: "#3A2F0F", fontFamily: "Syne, sans-serif", fontWeight: 700 }}>
             {completedDate}
           </div>
         </div>
@@ -611,7 +611,7 @@ function CertStory({
       <h1
         style={{
           fontSize: 26,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           color: "#F5EFDC",
           margin: "4px 0 6px 0",
@@ -651,7 +651,7 @@ function CertStory({
         <div style={{ fontSize: 28, lineHeight: 1 }}>{levelMeta.emoji}</div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 24,
             letterSpacing: "-0.03em",
@@ -677,7 +677,7 @@ function CertStory({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 22,
           color: "#FAF7E8",
@@ -707,7 +707,7 @@ function CertStory({
           fontSize: 10,
           fontStyle: "italic",
           color: levelMeta.accent,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           lineHeight: 1.6,
           padding: "10px 12px",
           borderTop: `0.5px solid ${levelMeta.accent}66`,

@@ -170,7 +170,7 @@ export function ClientDetailPage() {
     return (
       <Card>
         <div className="flex flex-col gap-3 items-start">
-          <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+          <p className="text-lg text-[var(--ls-text)]">Client introuvable ou accès indisponible.</p>
           <p className="text-sm" style={{ color: "var(--ls-fg-mute)" }}>
             Si tu viens de créer ce client, la base est peut-être en train de se synchroniser.
           </p>
@@ -384,7 +384,7 @@ export function ClientDetailPage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: 4 }}>
                 <h1 style={{
-                  fontFamily: 'Syne, serif', fontSize: 28, fontWeight: 800,
+                  fontFamily: 'Anton, sans-serif', fontSize: 28, fontWeight: 400,
                   color: 'var(--ls-text)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.05,
                 }}>
                   <span

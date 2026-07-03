@@ -113,7 +113,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 18,
                 color: "var(--ls-text)",
@@ -127,7 +127,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
           {/* Step name */}
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 15,
               color: "var(--ls-text)",
@@ -243,7 +243,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
             >
               <span
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 28,
                   letterSpacing: "-0.03em",
@@ -356,7 +356,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                         justifyContent: "center",
                         fontSize: 11,
                         fontWeight: 800,
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         background: isDone
                           ? `linear-gradient(135deg, ${color} 0%, color-mix(in srgb, ${color} 70%, #000) 100%)`
                           : isActive

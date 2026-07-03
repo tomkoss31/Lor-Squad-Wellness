@@ -73,7 +73,7 @@ export function LessonCard({ lesson, index }: Props) {
       >
         <span
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 13,
             fontWeight: 800,
             color: "var(--ls-gold)",
@@ -89,7 +89,7 @@ export function LessonCard({ lesson, index }: Props) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 16,
               fontWeight: 700,
               margin: 0,
@@ -159,7 +159,7 @@ export function LessonCard({ lesson, index }: Props) {
             color: "white",
             borderRadius: 999,
             textDecoration: "none",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 13,
           }}

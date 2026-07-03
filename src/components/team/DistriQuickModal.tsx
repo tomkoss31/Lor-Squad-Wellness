@@ -231,7 +231,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose, coupleMemb
                   border: "1px solid rgba(255,255,255,0.40)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 20,
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   letterSpacing: "-0.02em",
                   backdropFilter: "blur(6px)",
@@ -246,7 +246,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose, coupleMemb
                 <h2
                   id="ls-distri-title"
                   style={{
-                    fontFamily: "Syne, serif", fontWeight: 800, fontSize: 22,
+                    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22,
                     letterSpacing: "-0.02em", margin: "2px 0 0",
                     textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -563,7 +563,7 @@ function QuickStat({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 16,
           fontWeight: 800,
           color: "var(--ls-text)",

@@ -21,7 +21,7 @@ export function VipProgramDoc() {
           <p className="eyebrow-label">Programme Client Privilégié</p>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 700,
               color: "var(--ls-text)",
@@ -83,7 +83,7 @@ export function VipProgramDoc() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 15,
                     fontWeight: 700,
                     color: "var(--ls-text)",
@@ -295,7 +295,7 @@ function Rule({ number, text }: { number: string; text: string }) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
           fontSize: 12,
           flexShrink: 0,

@@ -336,7 +336,7 @@ export function FormationModuleDetailPage() {
               border: "none",
               background: `linear-gradient(135deg, ${accentVar} 0%, color-mix(in srgb, ${accentVar} 70%, #000) 100%)`,
               color: "white",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 15,
               cursor: "pointer",
@@ -574,7 +574,7 @@ function ReviewThreadSection({ progressId }: { progressId: string }) {
           fontSize: 13,
           fontWeight: 600,
           color: "var(--ls-text)",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           listStyle: "none",
           outline: "none",
         }}

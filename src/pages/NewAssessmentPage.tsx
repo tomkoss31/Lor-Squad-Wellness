@@ -2129,7 +2129,7 @@ export function NewAssessmentPage() {
                       </div>
                       <span
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
                           fontSize: 22,
                           letterSpacing: "-0.02em",
@@ -2989,7 +2989,7 @@ export function NewAssessmentPage() {
                 {/* Tagline coach */}
                 <p
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 2.4vw, 18px)",
                     color: "var(--ls-text)",
@@ -3233,7 +3233,7 @@ export function NewAssessmentPage() {
                             </div>
                             <div
                               style={{
-                                fontFamily: "Syne, serif",
+                                fontFamily: "Syne, sans-serif",
                                 fontSize: 22,
                                 fontWeight: 800,
                                 color: "var(--ls-text)",
@@ -3249,7 +3249,7 @@ export function NewAssessmentPage() {
                             </div>
                             <div
                               style={{
-                                fontFamily: "Syne, serif",
+                                fontFamily: "Syne, sans-serif",
                                 fontSize: 22,
                                 fontWeight: 800,
                                 color: "var(--ls-text)",
@@ -3266,7 +3266,7 @@ export function NewAssessmentPage() {
                               </div>
                               <div
                                 style={{
-                                  fontFamily: "Syne, serif",
+                                  fontFamily: "Syne, sans-serif",
                                   fontSize: 14,
                                   fontWeight: 700,
                                   color: "var(--ls-text)",
@@ -3389,13 +3389,13 @@ export function NewAssessmentPage() {
                                 <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
                                   Boosters sport
                                 </div>
-                                <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                                <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                                   Pour pousser tes performances
                                 </div>
                               </div>
                               {selectedCount > 0 && (
                                 <span style={{
-                                  fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                                  fontSize: 11, fontWeight: 800, fontFamily: "Syne, sans-serif",
                                   padding: "3px 10px", borderRadius: 999,
                                   background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
                                   color: "var(--ls-coral)",
@@ -3466,13 +3466,13 @@ export function NewAssessmentPage() {
                             <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
                               Besoins detectes
                             </div>
-                            <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                               Ce que le bilan fait ressortir en priorite
                             </div>
                           </div>
                           {recommendationPlan.needs.length > 0 && (
                             <span style={{
-                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, sans-serif",
                               padding: "3px 10px", borderRadius: 999,
                               background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
                               color: "var(--ls-coral)",
@@ -3542,12 +3542,12 @@ export function NewAssessmentPage() {
                               <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
                                 Options en plus
                               </div>
-                              <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                              <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                                 Quelques ajouts utiles
                               </div>
                             </div>
                             <span style={{
-                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, sans-serif",
                               padding: "3px 10px", borderRadius: 999,
                               background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
                               color: "var(--ls-coral)",
@@ -3680,7 +3680,7 @@ export function NewAssessmentPage() {
                                 {opt.emoji}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? opt.color : "var(--ls-text)", fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? opt.color : "var(--ls-text)", fontFamily: "Syne, sans-serif", letterSpacing: "-0.01em" }}>
                                   {opt.label}
                                 </div>
                                 <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.35 }}>

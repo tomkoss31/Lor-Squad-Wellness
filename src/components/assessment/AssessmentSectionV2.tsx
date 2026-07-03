@@ -142,7 +142,7 @@ export function AssessmentSectionV2({
         </div>
         <h3
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: "clamp(18px, 2.2vw, 22px)",
             letterSpacing: "-0.018em",

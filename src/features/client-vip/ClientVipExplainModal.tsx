@@ -101,7 +101,7 @@ export function ClientVipExplainModal({
           </div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 700,
               color: "#5C4A0F",
@@ -161,7 +161,7 @@ export function ClientVipExplainModal({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontSize: 15,
                       fontWeight: 700,
                       color: "#1F2937",
@@ -307,7 +307,7 @@ export function ClientVipExplainModal({
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
                 boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
               }}
@@ -331,7 +331,7 @@ export function ClientVipExplainModal({
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
               }}
             >
@@ -372,7 +372,7 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
           fontSize: 13,
           flexShrink: 0,
@@ -384,7 +384,7 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
       <div style={{ flex: 1 }}>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 14,
             color: "#1F2937",

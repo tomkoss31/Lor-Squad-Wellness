@@ -116,7 +116,7 @@ function SectionHeader({
       <div>
         <h3
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 14,
             margin: 0,

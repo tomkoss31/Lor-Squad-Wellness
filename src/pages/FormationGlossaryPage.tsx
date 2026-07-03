@@ -348,7 +348,7 @@ export function FormationGlossaryPage() {
                 </span>
                 <h3
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 700,
                     fontSize: 16,
                     margin: 0,
@@ -398,7 +398,7 @@ export function FormationGlossaryPage() {
                     >
                       <span
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontWeight: 800,
                           fontSize: 16,
                           color: meta.color,

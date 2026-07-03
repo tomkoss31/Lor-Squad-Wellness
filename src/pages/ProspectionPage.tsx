@@ -479,9 +479,9 @@ function Header() {
         Prospection
       </div>
       <h1 style={{
-        fontFamily: "'Syne', serif",
+        fontFamily: "Anton, sans-serif", textTransform: "uppercase",
         fontSize: "clamp(26px, 6vw, 36px)",
-        fontWeight: 700,
+        fontWeight: 400,
         lineHeight: 1.15,
         margin: 0,
         marginBottom: 10,

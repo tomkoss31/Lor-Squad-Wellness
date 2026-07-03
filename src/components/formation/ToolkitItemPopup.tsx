@@ -253,7 +253,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
             <div style={{ flex: 1, minWidth: 0, paddingRight: "clamp(12px, 3vw, 32px)" }}>
               <h2
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: "clamp(20px, 3vw, 26px)",
                   letterSpacing: "-0.02em",
@@ -312,7 +312,7 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
                 </span>
                 <h3
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 700,
                     fontSize: 15,
                     margin: 0,
@@ -531,7 +531,7 @@ function InteractiveChecklist({ itemId, markdown, accent }: InteractiveChecklist
           </span>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 14,
               margin: 0,

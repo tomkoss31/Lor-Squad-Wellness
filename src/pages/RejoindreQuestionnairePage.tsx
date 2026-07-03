@@ -8,9 +8,10 @@
 //   - branches conditionnelles selon le profil (curieux / complément / reconversion)
 //   - transitions slide + prefers-reduced-motion
 //
-// ÉTAPE 2 = UI + collecte d'état uniquement. Le SUBMIT + scoring + écriture
-// `prospect_leads` + sorties routées « après » = étapes 3-4 (à venir).
-// Pour l'instant l'écran final est un récap « merci » (stub, pas d'écriture DB).
+// ✅ LIVRÉ (maj commentaire 2026-07-03) : le SUBMIT + scoring + écriture réelle
+// dans `prospect_leads` (via l'edge `submit-prospect-lead`) sont implémentés et
+// fonctionnels (cf. plus bas). L'ancien commentaire « stub, pas d'écriture DB »
+// était périmé.
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";

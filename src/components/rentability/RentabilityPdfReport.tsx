@@ -64,7 +64,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
             <div style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#B8922A", fontWeight: 700 }}>
               La Base 360 · Rentabilité
             </div>
-            <div style={{ fontSize: 26, fontFamily: "Syne, serif", fontWeight: 700, color: "#1A1612", marginTop: 6, letterSpacing: "-0.01em" }}>
+            <div style={{ fontSize: 26, fontFamily: "Syne, sans-serif", fontWeight: 700, color: "#1A1612", marginTop: 6, letterSpacing: "-0.01em" }}>
               {monthLabel(data.month_start)}
             </div>
             <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
@@ -88,7 +88,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
           <div style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.85, fontWeight: 600 }}>
             Total net ce mois
           </div>
-          <div style={{ fontSize: 64, fontFamily: "Syne, serif", fontStyle: "italic", fontWeight: 700, marginTop: 8, lineHeight: 1, letterSpacing: "-0.02em" }}>
+          <div style={{ fontSize: 64, fontFamily: "Syne, sans-serif", fontStyle: "italic", fontWeight: 700, marginTop: 8, lineHeight: 1, letterSpacing: "-0.02em" }}>
             {fmtEur(total)}
           </div>
           {data.prev_month_eur > 0 && (
@@ -100,7 +100,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
 
         {/* Calcul détaillé */}
         <div style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 18, fontFamily: "Syne, serif", fontWeight: 600, color: "#1A1612", marginBottom: 14, letterSpacing: "-0.01em" }}>
+          <h2 style={{ fontSize: 18, fontFamily: "Syne, sans-serif", fontWeight: 600, color: "#1A1612", marginBottom: 14, letterSpacing: "-0.01em" }}>
             01 · Le calcul
           </h2>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -120,7 +120,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
                     Total net
                   </div>
                 </td>
-                <td style={{ paddingTop: 14, paddingBottom: 14, borderTop: "2px solid #1A1612", textAlign: "right", fontFamily: "Syne, serif", fontStyle: "italic", fontWeight: 700, fontSize: 28, color: "#1A1612" }}>
+                <td style={{ paddingTop: 14, paddingBottom: 14, borderTop: "2px solid #1A1612", textAlign: "right", fontFamily: "Syne, sans-serif", fontStyle: "italic", fontWeight: 700, fontSize: 28, color: "#1A1612" }}>
                   {fmtEur(total)}
                 </td>
               </tr>
@@ -138,7 +138,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
         {/* Top clients */}
         {topClients.length > 0 && (
           <div>
-            <h2 style={{ fontSize: 18, fontFamily: "Syne, serif", fontWeight: 600, color: "#1A1612", marginBottom: 14, letterSpacing: "-0.01em" }}>
+            <h2 style={{ fontSize: 18, fontFamily: "Syne, sans-serif", fontWeight: 600, color: "#1A1612", marginBottom: 14, letterSpacing: "-0.01em" }}>
               02 · Top clients du mois
             </h2>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
@@ -202,7 +202,7 @@ function StatBlock({ label, value, sub, color }: { label: string; value: string;
       <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#6B7280", fontWeight: 600 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontFamily: "Syne, serif", fontWeight: 700, color, marginTop: 6, letterSpacing: "-0.02em" }}>
+      <div style={{ fontSize: 22, fontFamily: "Syne, sans-serif", fontWeight: 700, color, marginTop: 6, letterSpacing: "-0.02em" }}>
         {value}
       </div>
       <div style={{ fontSize: 10, color: "#6B7280", marginTop: 4 }}>{sub}</div>

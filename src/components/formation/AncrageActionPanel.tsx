@@ -24,7 +24,7 @@ export function AncrageActionPanel({ ancrage, action }: Props) {
             background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface))",
             border: "0.5px solid color-mix(in srgb, var(--ls-purple) 28%, transparent)",
             borderRadius: 16,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 17,
             fontWeight: 600,
             fontStyle: "italic",

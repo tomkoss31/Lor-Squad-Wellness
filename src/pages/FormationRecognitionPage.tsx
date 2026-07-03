@@ -171,7 +171,7 @@ export function FormationRecognitionPage() {
           </span>
           <span
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 24,
               color: "var(--ls-text)",
@@ -226,7 +226,7 @@ export function FormationRecognitionPage() {
             >
               <h3
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: 16,
                   margin: 0,
@@ -364,7 +364,7 @@ function PalierCard({
         <div style={{ flex: 1, minWidth: 200 }}>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 14,
               color: isReached ? "var(--ls-text-muted)" : "var(--ls-text)",
