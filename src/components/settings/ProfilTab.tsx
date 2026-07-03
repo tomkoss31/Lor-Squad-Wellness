@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { FormField as LabeledField } from "../ui/FormField";
 import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
@@ -1028,31 +1029,6 @@ export function ProfilTab() {
   );
 }
 
-function LabeledField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 9.5,
-          fontWeight: 500,
-          color: "var(--ls-text-hint)",
-          letterSpacing: "0.13em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
 
 function PasswordModal({
   onClose,
