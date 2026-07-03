@@ -195,7 +195,7 @@ export function PlanMarketingPage() {
       <div style={{ fontFamily: "Syne, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.4, textTransform: "uppercase", color: "var(--ls-text-muted)" }}>
         La Base 360 · Herbalife
       </div>
-      <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(28px, 5vw, 44px)", lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
+      <h1 style={{ fontFamily: "Anton, sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: "clamp(28px, 5vw, 44px)", lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
         <span style={{ background: "linear-gradient(100deg, var(--ls-gold), var(--ls-teal))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>Plan Marketing</span>
       </h1>
       <p style={{ margin: "8px 0 24px", color: "var(--ls-text-muted)", fontSize: 15, maxWidth: 560, fontFamily: "DM Sans, sans-serif" }}>

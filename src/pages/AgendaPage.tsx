@@ -568,10 +568,11 @@ export function AgendaPage() {
           <div style={{ flex: 1, minWidth: 240 }}>
             <div
               style={{
-                fontSize: 10,
-                letterSpacing: 2,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 11,
+                letterSpacing: "0.22em",
                 textTransform: "uppercase",
-                fontWeight: 700,
+                fontWeight: 500,
                 color: heroGradient.secondary,
                 marginBottom: 6,
                 display: "flex",
@@ -594,12 +595,13 @@ export function AgendaPage() {
             <h1
               className="ls-agenda-title"
               style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: 32,
-                fontWeight: 800,
+                fontFamily: "Anton, sans-serif",
+                fontSize: "clamp(30px, 5vw, 40px)",
+                fontWeight: 400,
                 color: "var(--ls-text)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.02em",
+                lineHeight: 0.98,
+                letterSpacing: "0.01em",
+                textTransform: "uppercase",
                 margin: 0,
               }}
             >

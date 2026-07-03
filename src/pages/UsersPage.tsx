@@ -166,7 +166,7 @@ export function UsersPage() {
         <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
           Équipe
         </div>
-        <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(20px, 4vw, 26px)", color: "var(--ls-text)", margin: "0 0 6px", letterSpacing: "-0.3px" }}>
+        <h1 style={{ fontFamily: "Anton, sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: "clamp(20px, 4vw, 26px)", color: "var(--ls-text)", margin: "0 0 6px", letterSpacing: "-0.3px" }}>
           Structure & accès
         </h1>
         <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: 0 }}>
