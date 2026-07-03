@@ -83,7 +83,7 @@ export function FormationRoadmapCard({
           </div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: "clamp(20px, 3vw, 26px)",
               letterSpacing: "-0.02em",
@@ -204,7 +204,7 @@ export function FormationRoadmapCard({
           </div>
           <h2
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: "clamp(17px, 2.4vw, 22px)",
               letterSpacing: "-0.018em",

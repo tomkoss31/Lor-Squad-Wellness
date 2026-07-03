@@ -127,7 +127,7 @@ export function ConfirmDialog({
         <h3
           id="confirm-dialog-title"
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 19,
             fontWeight: 800,
             letterSpacing: "-0.01em",

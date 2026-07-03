@@ -65,7 +65,7 @@ export function FormationReviewCard({ row, isAdminRelay = false, onActionDone }:
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 14,
                 flexShrink: 0,
@@ -77,7 +77,7 @@ export function FormationReviewCard({ row, isAdminRelay = false, onActionDone }:
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 14,
                   fontWeight: 800,
                   color: "var(--ls-text)",
@@ -118,7 +118,7 @@ export function FormationReviewCard({ row, isAdminRelay = false, onActionDone }:
               border: "none",
               background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
               color: "var(--ls-teal-contrast, #FFFFFF)",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 12.5,
               cursor: "pointer",

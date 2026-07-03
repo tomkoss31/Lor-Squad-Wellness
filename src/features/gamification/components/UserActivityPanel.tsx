@@ -192,7 +192,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
           </div>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: variant === "compact" ? 16 : 19,
               fontWeight: 800,
               color: "var(--ls-text)",
@@ -401,7 +401,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
                   <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
                     {d.label}
                   </div>
-                  <div style={{ fontFamily: "Syne, serif", fontSize: 14, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.01em" }}>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.01em" }}>
                     {formatDuration(data.last_7d_seconds)}
                   </div>
                   <div style={{ fontSize: 10, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
@@ -435,7 +435,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
         </div>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 14,
             fontWeight: 800,
             color: "var(--ls-gold)",
@@ -532,7 +532,7 @@ function DayDetailModal({
               <div style={{ fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase", fontWeight: 800, color: "rgba(255,255,255,0.90)" }}>
                 Détail du jour
               </div>
-              <div style={{ fontFamily: "Syne, serif", fontSize: 18, fontWeight: 800, marginTop: 2, letterSpacing: "-0.01em", textTransform: "capitalize" }}>
+              <div style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 800, marginTop: 2, letterSpacing: "-0.01em", textTransform: "capitalize" }}>
                 {dateLabel}
               </div>
             </div>
@@ -573,7 +573,7 @@ function DayDetailModal({
                 <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "var(--ls-text-muted)", fontWeight: 600, marginBottom: 4 }}>
                   ⏱️ Total
                 </div>
-                <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
+                <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
                   {formatDuration(totalSec)}
                 </div>
               </div>
@@ -581,7 +581,7 @@ function DayDetailModal({
                 <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "var(--ls-text-muted)", fontWeight: 600, marginBottom: 4 }}>
                   🔢 Sessions
                 </div>
-                <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
+                <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
                   {sessions.length}
                 </div>
               </div>
@@ -638,7 +638,7 @@ function DayDetailModal({
                           color: "var(--ls-teal)",
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 11, fontWeight: 800,
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                         }}
                       >
                         {idx + 1}
@@ -650,7 +650,7 @@ function DayDetailModal({
                       </div>
                       <div
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontSize: 14,
                           fontWeight: 800,
                           color: "var(--ls-teal)",
@@ -714,7 +714,7 @@ function StatCard({
       </div>
       <div
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 18,
           fontWeight: 800,
           color: "var(--ls-text)",

@@ -79,7 +79,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
 
       <h1
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: "clamp(20px, 5.5vw, 26px)",
           fontWeight: 800,
           letterSpacing: "-0.02em",

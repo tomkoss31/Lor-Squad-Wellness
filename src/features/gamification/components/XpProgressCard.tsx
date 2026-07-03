@@ -261,7 +261,7 @@ export function XpProgressCard() {
           </p>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 500,
               color: "var(--ls-text)",
@@ -277,7 +277,7 @@ export function XpProgressCard() {
             color: "white",
             padding: "8px 16px",
             borderRadius: 10,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 22,
             fontWeight: 700,
             boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
@@ -374,7 +374,7 @@ export function XpProgressCard() {
             </div>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 16,
                 fontWeight: 600,
                 color: s.color,
@@ -484,7 +484,7 @@ export function XpProgressCard() {
                     </div>
                     <span
                       style={{
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         fontSize: 14,
                         fontWeight: 700,
                         color: "var(--ls-gold)",
@@ -555,7 +555,7 @@ export function XpProgressCard() {
                     >
                       <span
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
                           color: isCurrent ? "var(--ls-gold)" : "var(--ls-text-muted)",

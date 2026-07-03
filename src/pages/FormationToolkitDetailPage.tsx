@@ -209,7 +209,7 @@ export function FormationToolkitDetailPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: "clamp(22px, 3.6vw, 32px)",
                 letterSpacing: "-0.025em",
@@ -265,7 +265,7 @@ export function FormationToolkitDetailPage() {
             </span>
             <h2
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 18,
                 margin: 0,

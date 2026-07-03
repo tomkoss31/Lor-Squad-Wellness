@@ -132,7 +132,7 @@ export function DemoAgenda() {
           </p>
           <h1
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 24,
               fontWeight: 500,
               color: "var(--ls-text)",
@@ -346,7 +346,7 @@ function EventCard({ event }: { event: DemoEvent }) {
       <div style={{ textAlign: "right" }}>
         <p
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 14,
             fontWeight: 600,
             color: "var(--ls-text)",

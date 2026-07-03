@@ -224,7 +224,7 @@ export function ClientSandboxPage() {
           <div style={{ fontSize: 42, marginBottom: 8 }}>🎮</div>
           <h1
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 24,
               fontWeight: 600,
               color: "#111827",
@@ -367,7 +367,7 @@ function Quest1Pesee({
               width: 120,
               padding: "8px 10px",
               fontSize: 28,
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               color: "#111827",
               border: "none",
@@ -381,7 +381,7 @@ function Quest1Pesee({
               fontSize: 16,
               fontWeight: 600,
               color: "#6B6B62",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
             }}
           >
             kg
@@ -428,7 +428,7 @@ function Quest1Pesee({
               border: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               cursor:
                 value === null || value <= 0 ? "not-allowed" : "pointer",
               boxShadow:
@@ -563,7 +563,7 @@ function Quest2Assiette({
                     <span style={{ fontSize: 18 }}>{zone.emoji}</span>
                     <span
                       style={{
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         fontSize: 14,
                         fontWeight: 700,
                         color: zone.color,
@@ -749,7 +749,7 @@ function Quest3Programme({
                     fontSize: 11,
                     fontWeight: 700,
                     color: "#111827",
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     textAlign: "center",
                     lineHeight: 1.2,
                   }}
@@ -791,7 +791,7 @@ function Quest3Programme({
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 600,
                 fontSize: 14,
                 color: "#111827",
@@ -825,7 +825,7 @@ function Quest3Programme({
                         fontSize: 12,
                         fontWeight: 700,
                         color: "#111827",
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                       }}
                     >
                       {p.name}
@@ -853,7 +853,7 @@ function Quest3Programme({
               border: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               cursor: "pointer",
               alignSelf: "center",
               boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
@@ -920,7 +920,7 @@ function Quest4Message({
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 13,
               flexShrink: 0,
@@ -1024,7 +1024,7 @@ function Quest4Message({
                 border: "none",
                 fontSize: 12,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: text.trim().length === 0 ? "not-allowed" : "pointer",
                 flexShrink: 0,
               }}
@@ -1092,7 +1092,7 @@ function SandboxFinal({ onClose }: { onClose: () => void }) {
       </div>
       <h2
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 28,
           fontWeight: 600,
           color: "#111827",
@@ -1181,7 +1181,7 @@ function SandboxFinal({ onClose }: { onClose: () => void }) {
             background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
             color: "#FFFFFF",
             border: "none",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 15,
             fontWeight: 700,
             cursor: "pointer",
@@ -1263,7 +1263,7 @@ function QuestCard({
             alignItems: "center",
             justifyContent: "center",
             fontSize: 18,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             flexShrink: 0,
           }}
@@ -1273,7 +1273,7 @@ function QuestCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 15,
               fontWeight: 700,
               color: "#111827",

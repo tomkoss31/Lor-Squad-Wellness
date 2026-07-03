@@ -125,7 +125,7 @@ export function WeeklyBilansChallenge() {
           </p>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 18,
               fontWeight: 500,
               color: "var(--ls-text)",

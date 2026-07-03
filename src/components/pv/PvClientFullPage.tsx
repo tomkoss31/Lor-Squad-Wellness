@@ -187,7 +187,7 @@ export function PvClientFullPage({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 22,
               color: "white",
@@ -201,7 +201,7 @@ export function PvClientFullPage({
           <div style={{ flex: 1, minWidth: 200 }}>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 24,
                 color: "var(--ls-text)",
@@ -298,7 +298,7 @@ export function PvClientFullPage({
                   color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
                   borderBottom: isActive ? "2px solid var(--ls-gold)" : "2px solid transparent",
                   marginBottom: -1,
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   transition: "all 0.15s",
                 }}
               >
@@ -351,7 +351,7 @@ function StatChip({
       </span>
       <span
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 16,
           fontWeight: 800,
           color: colorVar,
@@ -392,7 +392,7 @@ function ProductsTab({
             fontSize: 14,
             fontWeight: 700,
             cursor: "pointer",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             marginBottom: 16,
             display: "flex",
             alignItems: "center",
@@ -570,7 +570,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
           {cat.emoji}
         </div>
         <div style={{ flex: 1, minWidth: 140 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, sans-serif" }}>
             {p.productName}
           </div>
           <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -667,7 +667,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
               fontSize: 12,
               fontWeight: 700,
               cursor: savingDate ? "wait" : "pointer",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               opacity: savingDate ? 0.7 : 1,
             }}
           >
@@ -735,7 +735,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
           <div style={{ color: "var(--ls-text-hint)", marginBottom: 2, fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", fontWeight: 600 }}>
             Reste estimé
           </div>
-          <div style={{ fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif", fontSize: 13 }}>
+          <div style={{ fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, sans-serif", fontSize: 13 }}>
             {remaining} jour{Math.abs(remaining) > 1 ? "s" : ""}
           </div>
         </div>
@@ -743,7 +743,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
           <div style={{ color: "var(--ls-text-hint)", marginBottom: 2, fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", fontWeight: 600 }}>
             Prochaine commande
           </div>
-          <div style={{ fontWeight: 700, color: "var(--ls-gold)", fontFamily: "Syne, serif", fontSize: 13 }}>
+          <div style={{ fontWeight: 700, color: "var(--ls-gold)", fontFamily: "Syne, sans-serif", fontSize: 13 }}>
             {formatDateLocal(p.nextProbableOrderDate)}
           </div>
         </div>
@@ -1019,7 +1019,7 @@ function PremiumOrderBuilder({
         <div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 18,
               color: "var(--ls-text)",
@@ -1135,7 +1135,7 @@ function PremiumOrderBuilder({
                 style={{
                   fontSize: 11,
                   color: "var(--ls-teal)",
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                 }}
               >
@@ -1271,7 +1271,7 @@ function PremiumOrderBuilder({
                       borderRadius: 999,
                       background: "var(--ls-gold)",
                       color: "white",
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 3,
@@ -1287,7 +1287,7 @@ function PremiumOrderBuilder({
                   fontWeight: 700,
                   color: "var(--ls-text)",
                   lineHeight: 1.25,
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                 }}
               >
                 {p.name}
@@ -1295,7 +1295,7 @@ function PremiumOrderBuilder({
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: "auto" }}>
                 <span
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontWeight: 800,
                     fontSize: 14,
                     color: "var(--ls-gold)",
@@ -1377,7 +1377,7 @@ function PremiumOrderBuilder({
                       style={{
                         minWidth: 28,
                         textAlign: "center",
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         fontWeight: 800,
                         fontSize: 14,
                         color: "var(--ls-text)",
@@ -1438,7 +1438,7 @@ function PremiumOrderBuilder({
                 className="pv-cart-total"
                 style={{ display: "flex", alignItems: "baseline", gap: 10 }}
               >
-                <span style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 22, color: "var(--ls-gold)" }}>
+                <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: "var(--ls-gold)" }}>
                   {totals.pv.toFixed(1)} PV
                 </span>
                 <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
@@ -1519,7 +1519,7 @@ function PremiumOrderBuilder({
             fontSize: 13,
             fontWeight: 700,
             cursor: submitting ? "wait" : cart.length === 0 ? "not-allowed" : "pointer",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             opacity: submitting ? 0.7 : 1,
             boxShadow: cart.length > 0 ? "0 4px 14px rgba(186,117,23,0.40)" : "none",
             transition: "all 0.15s",
@@ -1551,7 +1551,7 @@ const stepperBtnStyle: React.CSSProperties = {
   justifyContent: "center",
   padding: 0,
   lineHeight: 1,
-  fontFamily: "Syne, serif",
+  fontFamily: "Syne, sans-serif",
 };
 
 // ─── Confetti overlay (simple emoji rain) ────────────────────────────────────

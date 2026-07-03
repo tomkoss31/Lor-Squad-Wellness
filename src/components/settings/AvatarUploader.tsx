@@ -163,7 +163,7 @@ export function AvatarUploader({ currentUrl, initials, onUploaded, onRemoved }: 
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 30,
           letterSpacing: "-0.02em",
@@ -204,7 +204,7 @@ export function AvatarUploader({ currentUrl, initials, onUploaded, onRemoved }: 
       <div style={{ flex: 1, minWidth: 200 }}>
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 15,
             color: "var(--ls-text)",

@@ -209,7 +209,7 @@ export function ClientVipSandbox({
             </div>
             <h2
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 22,
                 fontWeight: 700,
                 color: "#5C4A0F",
@@ -294,7 +294,7 @@ export function ClientVipSandbox({
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
                 boxShadow: "0 6px 18px rgba(186,117,23,0.40)",
               }}
@@ -392,7 +392,7 @@ export function ClientVipSandbox({
                   borderRadius: 10,
                   fontSize: 13,
                   fontWeight: 700,
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   cursor:
                     submitting || prospects.every((p) => !p.firstName.trim())
                       ? "not-allowed"
@@ -418,7 +418,7 @@ export function ClientVipSandbox({
             </div>
             <p
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 20,
                 fontWeight: 700,
                 color: "#5C4A0F",
@@ -467,7 +467,7 @@ export function ClientVipSandbox({
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
                 boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
               }}
@@ -513,7 +513,7 @@ function SliderRow({
         <span style={{ fontSize: 13, fontWeight: 600, color: "#5C4A0F" }}>{label}</span>
         <span
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 700,
             color: "#B8922A",
@@ -575,7 +575,7 @@ function ResultPanel({
         <span style={{ fontSize: 24 }}>{meta.badge}</span>
         <span
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 700,
             color: meta.color,
@@ -586,7 +586,7 @@ function ResultPanel({
         <span
           style={{
             marginLeft: "auto",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 22,
             fontWeight: 800,
             color: meta.color,
@@ -620,7 +620,7 @@ function ResultPanel({
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 700,
               color: "#5C4A0F",
@@ -647,7 +647,7 @@ function ResultPanel({
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 22,
               fontWeight: 700,
               color: "#0F6E56",
@@ -721,7 +721,7 @@ function ProspectInput({
             justifyContent: "center",
             fontSize: 12,
             fontWeight: 700,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             flexShrink: 0,
           }}
         >

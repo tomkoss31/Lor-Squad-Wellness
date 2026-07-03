@@ -187,7 +187,7 @@ function FallbackPin({ rank, px }: { rank: HerbalifeRank; px: number }) {
         alignItems: "center",
         justifyContent: "center",
         color: "rgba(255,255,255,0.85)",
-        fontFamily: "Syne, serif",
+        fontFamily: "Syne, sans-serif",
         fontWeight: 700,
         fontSize: px * 0.32,
       }}

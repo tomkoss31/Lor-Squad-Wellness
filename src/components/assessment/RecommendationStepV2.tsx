@@ -196,7 +196,7 @@ export function RecommendationStepV2({
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: "clamp(16px, 2vw, 19px)",
                   color: "var(--ls-text)",
@@ -233,7 +233,7 @@ export function RecommendationStepV2({
           >
             <span
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 28,
                 letterSpacing: "-0.03em",
@@ -245,7 +245,7 @@ export function RecommendationStepV2({
             </span>
             <span
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 16,
                 color: "var(--ls-text-muted)",
                 fontWeight: 600,
@@ -574,7 +574,7 @@ function ProspectCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 13,
             color: accentColor ? "var(--ls-bg)" : "var(--ls-text-hint)",

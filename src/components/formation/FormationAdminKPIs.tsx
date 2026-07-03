@@ -59,7 +59,7 @@ export function FormationAdminKPIs({ data, loading }: Props) {
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 26,
                 fontWeight: 800,
                 color: "var(--ls-text)",

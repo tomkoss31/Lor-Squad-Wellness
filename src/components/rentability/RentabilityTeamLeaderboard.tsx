@@ -55,7 +55,7 @@ function MemberRowItem({
         transition: "background .15s",
       }}
     >
-      <span style={{ width: 22, fontFamily: "Syne, serif", fontWeight: 700, fontSize: 12, color: isLeader ? "var(--ls-gold)" : "var(--ls-text-muted)" }}>
+      <span style={{ width: 22, fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 12, color: isLeader ? "var(--ls-gold)" : "var(--ls-text-muted)" }}>
         #{rank}
       </span>
       <Avatar initials={initialsOf(name)} hue={avatarHue(name)} size={28} />
@@ -66,7 +66,7 @@ function MemberRowItem({
         <span
           data-stealth
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontStyle: "italic",
             fontWeight: 700,
             fontSize: 14,
@@ -189,7 +189,7 @@ export function RentabilityTeamLeaderboard() {
           <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700 }}>
             🏆 Leaderboard team
           </div>
-          <div style={{ fontFamily: "Syne, serif", fontWeight: 600, fontSize: 16, color: "var(--ls-text)", marginTop: 2 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 600, fontSize: 16, color: "var(--ls-text)", marginTop: 2 }}>
             Top {top5.length} ce mois
           </div>
         </div>

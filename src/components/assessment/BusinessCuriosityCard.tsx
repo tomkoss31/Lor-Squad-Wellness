@@ -93,7 +93,7 @@ export function BusinessCuriosityCard({ value, onChange }: BusinessCuriosityCard
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: 14,
                   letterSpacing: "-0.01em",

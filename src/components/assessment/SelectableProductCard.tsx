@@ -256,7 +256,7 @@ export function SelectableProductCard({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 15,
                 fontWeight: 700,
                 color: "var(--ls-text)",

@@ -77,7 +77,7 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 14,
             flexShrink: 0,
@@ -89,7 +89,7 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 15,
               color: "var(--ls-text)",

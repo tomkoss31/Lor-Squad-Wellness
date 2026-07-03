@@ -211,7 +211,7 @@ export function ModuleNotesPanel({ moduleId, moduleNumber }: ModuleNotesPanelPro
       {/* Titre + helper */}
       <h3
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
           fontSize: 16,
           letterSpacing: "-0.012em",

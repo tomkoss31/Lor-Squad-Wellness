@@ -134,7 +134,7 @@ export function PremiumHero({
           {titleAccent || titleSuffix ? (
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 32,
                 fontWeight: 800,
                 color: "var(--ls-text)",

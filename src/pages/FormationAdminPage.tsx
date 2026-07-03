@@ -182,7 +182,7 @@ function SectionHeader({
       <div>
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 15,
             margin: 0,

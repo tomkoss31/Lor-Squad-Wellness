@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
 
         <h1
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 32,
             fontWeight: 800,
             color: "var(--ls-text)",
@@ -242,7 +242,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <section style={{ marginBottom: 28 }}>
       <h2
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 19,
           fontWeight: 700,
           color: "var(--ls-text)",

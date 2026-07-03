@@ -303,7 +303,7 @@ const PlaybookCoverPage = forwardRef<HTMLDivElement, CoverProps>(
         >
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 42,
               fontWeight: 500,
               lineHeight: 1.1,
@@ -317,7 +317,7 @@ const PlaybookCoverPage = forwardRef<HTMLDivElement, CoverProps>(
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 36,
               fontWeight: 700,
               color: "#5C4A0F",
@@ -429,7 +429,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
             </div>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 26,
                 fontWeight: 600,
                 color: "#2C2C2A",
@@ -503,7 +503,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 13,
                     fontWeight: 600,
                     color: "#2C2C2A",
@@ -543,7 +543,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
           >
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 28,
                 fontWeight: 700,
                 color: "#B8922A",
@@ -572,7 +572,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
             background: "linear-gradient(135deg, #FCF5E1, #FAEEDA)",
             borderLeft: "3px solid #B8922A",
             borderRadius: 8,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 13,
             fontStyle: "italic",
             color: "#5C4A0F",

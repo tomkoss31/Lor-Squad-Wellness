@@ -120,7 +120,7 @@ export function ValidationDecisionDialog({
             <h2
               id="ls-formation-validation-title"
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 17,
                 fontWeight: 800,
                 margin: 0,
@@ -305,7 +305,7 @@ function ActionPanel({
     <div style={{ padding: "12px 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
       <h3
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 15,
           margin: 0,
@@ -374,7 +374,7 @@ function primaryButtonStyle(accentVar: string): React.CSSProperties {
     border: "none",
     background: `linear-gradient(135deg, ${accentVar} 0%, color-mix(in srgb, ${accentVar} 70%, #000) 100%)`,
     color: "white",
-    fontFamily: "Syne, serif",
+    fontFamily: "Syne, sans-serif",
     fontWeight: 700,
     fontSize: 13,
     cursor: "pointer",

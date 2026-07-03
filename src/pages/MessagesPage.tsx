@@ -528,7 +528,7 @@ export function MessagesPage() {
             </div>
             <h1
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 32,
                 fontWeight: 800,
                 color: "var(--ls-text)",
@@ -680,7 +680,7 @@ export function MessagesPage() {
                   >
                     <span
                       style={{
-                        fontFamily: "Syne, serif",
+                        fontFamily: "Syne, sans-serif",
                         fontSize: 22,
                         fontWeight: 800,
                         color: s.color,

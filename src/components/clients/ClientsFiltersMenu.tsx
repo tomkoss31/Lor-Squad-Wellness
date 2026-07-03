@@ -401,7 +401,7 @@ function OwnerRow({
           justifyContent: "center",
           fontSize: 10.5,
           fontWeight: 700,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           color: "#fff",
           background: "linear-gradient(135deg,var(--ls-teal),var(--ls-purple))",
         }}

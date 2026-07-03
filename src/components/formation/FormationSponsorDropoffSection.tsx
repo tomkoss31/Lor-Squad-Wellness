@@ -75,7 +75,7 @@ export function FormationSponsorDropoffSection({ dropoffs }: Props) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 13,
               flexShrink: 0,
@@ -87,7 +87,7 @@ export function FormationSponsorDropoffSection({ dropoffs }: Props) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 14,
                 color: "var(--ls-text)",

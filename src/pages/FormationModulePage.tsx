@@ -276,7 +276,7 @@ function ModuleRow({
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
           <span
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 11,
               fontWeight: 800,
               color: accentVar,
@@ -287,7 +287,7 @@ function ModuleRow({
           </span>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 14.5,
               fontWeight: 700,
               margin: 0,
@@ -354,7 +354,7 @@ function EmptyModuleState({ accentVar, levelTitle }: { accentVar: string; levelT
       <div style={{ fontSize: 44, marginBottom: 12 }} aria-hidden="true">🛠️</div>
       <h3
         style={{
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 19,
           fontWeight: 800,
           color: "var(--ls-text)",

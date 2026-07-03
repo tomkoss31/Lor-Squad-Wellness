@@ -153,7 +153,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
                 fontSize: 20,
                 color: "#5C4A0F",
@@ -181,7 +181,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 800,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 boxShadow: "0 4px 12px rgba(186,117,23,0.35)",
                 flexShrink: 0,
               }}
@@ -250,7 +250,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
               borderRadius: 12,
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               cursor: "pointer",
               boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
             }}
@@ -271,7 +271,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
                 borderRadius: 12,
                 fontSize: 13,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
               }}
             >
@@ -291,7 +291,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
               borderRadius: 12,
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               cursor: "pointer",
             }}
           >

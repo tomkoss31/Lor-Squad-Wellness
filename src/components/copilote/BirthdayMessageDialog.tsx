@@ -124,7 +124,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
             fontWeight: 500,
             color: "var(--ls-text)",
             marginBottom: "20px",
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
           }}
         >
           Joyeux anniversaire ! 🎂{age !== null ? ` ${age} ans` : ""}

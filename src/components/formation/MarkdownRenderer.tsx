@@ -307,7 +307,7 @@ function BlockRenderer({ block }: { block: Block }) {
       return (
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 800,
             color: "var(--ls-text)",
@@ -322,7 +322,7 @@ function BlockRenderer({ block }: { block: Block }) {
       return (
         <h3
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontSize: 15,
             fontWeight: 700,
             color: "var(--ls-text)",
@@ -470,7 +470,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
           border: "0.5px solid var(--ls-gold)",
           borderLeft: "4px solid var(--ls-gold)",
           borderRadius: 12,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontSize: 17,
           fontStyle: "italic",
           fontWeight: 500,

@@ -169,7 +169,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 19,
                   letterSpacing: "-0.02em",
@@ -253,7 +253,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 14,
                     fontWeight: 700,
                     color: "var(--ls-text)",
@@ -277,7 +277,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 16,
                   color: "var(--ls-gold)",
@@ -399,7 +399,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                       </div>
                       <div
                         style={{
-                          fontFamily: "Syne, serif",
+                          fontFamily: "Syne, sans-serif",
                           fontWeight: 700,
                           fontSize: 13,
                           color: "var(--ls-text)",
@@ -515,7 +515,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
             </div>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 28,
                 letterSpacing: "-0.03em",

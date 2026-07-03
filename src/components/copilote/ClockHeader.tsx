@@ -240,7 +240,7 @@ export function ClockHeader({
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 30,
               fontWeight: 800,
               color: "var(--ls-text)",
@@ -325,7 +325,7 @@ export function ClockHeader({
             key={formatTime(now)}
             className="ls-time-digits-v3 ls-clock-card"
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontSize: 56,
               fontWeight: 700,
               letterSpacing: "-0.05em",

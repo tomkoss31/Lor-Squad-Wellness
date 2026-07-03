@@ -56,7 +56,7 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
         <div style={{ flex: 1 }}>
           <h3
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 14,
               margin: 0,
@@ -116,7 +116,7 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: 12,
                   color: "var(--ls-gold)",
@@ -152,7 +152,7 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 14,
                   color: "var(--ls-gold)",

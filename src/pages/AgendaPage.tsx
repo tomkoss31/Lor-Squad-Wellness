@@ -594,7 +594,7 @@ export function AgendaPage() {
             <h1
               className="ls-agenda-title"
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontSize: 32,
                 fontWeight: 800,
                 color: "var(--ls-text)",
@@ -715,7 +715,7 @@ export function AgendaPage() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Syne, sans-serif",
                     fontSize: 22,
                     fontWeight: 800,
                     color: s.color,
@@ -802,7 +802,7 @@ export function AgendaPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 color: "white",
-                fontFamily: "Syne, serif",
+                fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 16,
                 flexShrink: 0,
@@ -826,7 +826,7 @@ export function AgendaPage() {
               </div>
               <div
                 style={{
-                  fontFamily: "Syne, serif",
+                  fontFamily: "Syne, sans-serif",
                   fontSize: 20,
                   fontWeight: 800,
                   color: "var(--ls-text)",
@@ -1301,7 +1301,7 @@ function ProtocolAgendaCard({
       >
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 14,
             color: accentColor,
@@ -1329,7 +1329,7 @@ function ProtocolAgendaCard({
           alignItems: "center",
           justifyContent: "center",
           color: "white",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 13,
           flexShrink: 0,
@@ -1351,7 +1351,7 @@ function ProtocolAgendaCard({
             fontWeight: 700,
             color: "var(--ls-text)",
             marginBottom: 2,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             letterSpacing: "-0.01em",
             flexWrap: "wrap",
           }}
@@ -1499,7 +1499,7 @@ function EntityTab({
           padding: "2px 9px",
           borderRadius: 999,
           fontWeight: 800,
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           background: active
             ? "var(--ls-bg)"
             : "var(--ls-surface2)",
@@ -1604,7 +1604,7 @@ function ClientFollowUpCard({
       >
         <div
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 14,
             color: "var(--ls-gold)",
@@ -1632,7 +1632,7 @@ function ClientFollowUpCard({
           alignItems: "center",
           justifyContent: "center",
           color: "white",
-          fontFamily: "Syne, serif",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 800,
           fontSize: 13,
           flexShrink: 0,
@@ -1654,7 +1654,7 @@ function ClientFollowUpCard({
             fontWeight: 700,
             color: "var(--ls-text)",
             marginBottom: 2,
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             letterSpacing: "-0.01em",
           }}
         >

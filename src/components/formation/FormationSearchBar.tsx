@@ -322,7 +322,7 @@ export function FormationSearchBar() {
                   </div>
                   <div
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Syne, sans-serif",
                       fontWeight: 700,
                       fontSize: 14,
                       color: "var(--ls-text)",

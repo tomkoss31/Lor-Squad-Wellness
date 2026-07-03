@@ -58,7 +58,7 @@ export function FormationStreakBadge() {
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, flex: 1, minWidth: 200 }}>
         <span
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 30,
             letterSpacing: "-0.03em",
