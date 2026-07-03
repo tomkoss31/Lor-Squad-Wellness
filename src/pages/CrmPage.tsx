@@ -1124,11 +1124,13 @@ const heroEyebrow: React.CSSProperties = {
 
 const heroTitle: React.CSSProperties = {
   margin: 0,
-  fontFamily: "Syne, sans-serif",
-  fontSize: 25,
-  fontWeight: 800,
+  fontFamily: "Anton, sans-serif",
+  fontSize: "clamp(26px, 5vw, 34px)",
+  fontWeight: 400,
+  letterSpacing: "0.01em",
+  textTransform: "uppercase",
   color: "var(--ls-text)",
-  lineHeight: 1.15,
+  lineHeight: 1.02,
 };
 
 const heroSubtitle: React.CSSProperties = {
