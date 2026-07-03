@@ -99,7 +99,7 @@ export function DistributorPortfolioPage() {
   if (!canAccessPortfolioUser(currentUser, targetUser)) {
     return (
       <Card>
-        <p className="text-lg text-white">Ce portefeuille n&apos;est pas accessible avec cet accès.</p>
+        <p className="text-lg text-[var(--ls-text)]">Ce portefeuille n&apos;est pas accessible avec cet accès.</p>
       </Card>
     );
   }
@@ -179,7 +179,7 @@ export function DistributorPortfolioPage() {
   if (!portfolioUser) {
     return (
       <Card>
-        <p className="text-lg text-white">Responsable introuvable pour ce portefeuille.</p>
+        <p className="text-lg text-[var(--ls-text)]">Responsable introuvable pour ce portefeuille.</p>
       </Card>
     );
   }

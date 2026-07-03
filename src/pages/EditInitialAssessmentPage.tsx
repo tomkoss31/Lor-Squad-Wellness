@@ -319,14 +319,14 @@ export function EditInitialAssessmentPage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+        <p className="text-lg text-[var(--ls-text)]">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
   if (!targetAssessment) {
     return (
       <Card>
-        <p className="text-lg text-white">Bilan introuvable sur ce dossier.</p>
+        <p className="text-lg text-[var(--ls-text)]">Bilan introuvable sur ce dossier.</p>
       </Card>
     );
   }

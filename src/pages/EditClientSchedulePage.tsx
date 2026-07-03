@@ -117,7 +117,7 @@ export function EditClientSchedulePage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+        <p className="text-lg text-[var(--ls-text)]">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
