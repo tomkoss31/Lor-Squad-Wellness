@@ -318,24 +318,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       }}
     >
       <style>{`
+        /* Fix dark (2026-07-03) : l'app est DARK par défaut (:root) et LIGHT via
+           html.theme-light — PAS data-theme. L'ancien code inversait + utilisait
+           le mauvais sélecteur → override dark jamais appliqué → carte blanche
+           en mode sombre. Corrigé. */
         :root {
-          --ls-actions-bg: #FBF9F4;
-          --ls-actions-card: #FFFFFF;
-          --ls-actions-soft: #FBF9F4;
-          --ls-actions-border: rgba(211,209,199,0.6);
-          --ls-actions-border-soft: rgba(211,209,199,0.4);
-          --ls-actions-text: #2C2C2A;
-          --ls-actions-text-muted: #888780;
-          --ls-actions-text-tertiary: #5F5E5A;
-          --ls-actions-gold-bg: #FAEEDA;
-          --ls-actions-gold-text: #854F0B;
-          --ls-actions-teal-bg: #E1F5EE;
-          --ls-actions-teal-text: #085041;
-          --ls-actions-red-bg: #FCEBEB;
-          --ls-actions-red-text: #A32D2D;
-          --ls-actions-red-text-dark: #791F1F;
-        }
-        html[data-theme='dark'] {
           --ls-actions-bg: #1A1916;
           --ls-actions-card: #252421;
           --ls-actions-soft: #1A1916;
@@ -351,6 +338,23 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           --ls-actions-red-bg: rgba(224,75,75,0.15);
           --ls-actions-red-text: #F09595;
           --ls-actions-red-text-dark: #F09595;
+        }
+        html.theme-light {
+          --ls-actions-bg: #FBF9F4;
+          --ls-actions-card: #FFFFFF;
+          --ls-actions-soft: #FBF9F4;
+          --ls-actions-border: rgba(211,209,199,0.6);
+          --ls-actions-border-soft: rgba(211,209,199,0.4);
+          --ls-actions-text: #2C2C2A;
+          --ls-actions-text-muted: #888780;
+          --ls-actions-text-tertiary: #5F5E5A;
+          --ls-actions-gold-bg: #FAEEDA;
+          --ls-actions-gold-text: #854F0B;
+          --ls-actions-teal-bg: #E1F5EE;
+          --ls-actions-teal-text: #085041;
+          --ls-actions-red-bg: #FCEBEB;
+          --ls-actions-red-text: #A32D2D;
+          --ls-actions-red-text-dark: #791F1F;
         }
         .client-actions-tab {
           background: var(--ls-actions-bg);
@@ -1249,9 +1253,9 @@ const LIFECYCLE_PILL_STYLES: Record<
     border: "#E24B4A",
   },
   lost: {
-    background: "#F1EFE8",
-    color: "#444441",
-    border: "#B4B2A9",
+    background: "var(--ls-actions-soft)",
+    color: "var(--ls-actions-text-muted)",
+    border: "var(--ls-actions-border)",
   },
 };
 
