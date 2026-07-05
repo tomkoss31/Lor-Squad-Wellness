@@ -13,7 +13,7 @@
 // Tous les connecteurs métier sont réutilisés depuis AppContext — aucune
 // mutation n'est recréée ici, on branche sur ce qui existe.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
@@ -69,22 +69,37 @@ interface Props {
 /** Panneaux focalisés du lanceur « Gérer le dossier ». */
 type ManagePanel = "edit" | "lifecycle" | "access" | "uplink" | "admin";
 
+/** Teintes des tuiles/panneaux (design Claude design, tokens globals réels). */
+const TILE_TINTS: Record<string, { bg: string; col: string }> = {
+  purple: { bg: "var(--ls-purple-bg)", col: "var(--ls-purple)" },
+  teal: { bg: "var(--ls-teal-bg)", col: "var(--ls-teal)" },
+  lime: { bg: "color-mix(in srgb, var(--ls-lime) 16%, transparent)", col: "var(--ls-lime)" },
+  coral: { bg: "var(--ls-coral-bg)", col: "var(--ls-coral)" },
+};
+
 /** Tuiles du lanceur. `vip` n'ouvre pas de panneau : raccourci vers l'onglet Club VIP. */
-const MANAGE_TILES: { id: "vip" | ManagePanel; ico: string; title: string; sub: string; bg: string }[] = [
-  { id: "vip", ico: "👑", title: "Programme VIP", sub: "Remises · invitation · gestion", bg: "var(--ls-actions-gold-bg)" },
-  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · date de départ", bg: "var(--ls-actions-teal-bg)" },
-  { id: "lifecycle", ico: "🔄", title: "Cycle de vie & suivi", sub: "Statut · fragile · suivi/PV libre", bg: "color-mix(in srgb, #6C8CFF 22%, transparent)" },
-  { id: "access", ico: "🔗", title: "Accès & partage", sub: "Partage public de la fiche", bg: "var(--ls-actions-teal-bg)" },
-  { id: "uplink", ico: "🌿", title: "Herbalife uplink", sub: "Sponsor · lignée distributeur", bg: "color-mix(in srgb, #A78BFA 24%, transparent)" },
-  { id: "admin", ico: "⚙️", title: "Zone admin", sub: "Transférer · supprimer le dossier", bg: "var(--ls-actions-red-bg)" },
+const MANAGE_TILES: {
+  id: "vip" | ManagePanel;
+  ico: string;
+  title: string;
+  sub: string;
+  tint: keyof typeof TILE_TINTS;
+  danger?: boolean;
+}[] = [
+  { id: "vip", ico: "👑", title: "Programme VIP", sub: "Remises · invitation · gestion", tint: "purple" },
+  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · date de départ", tint: "teal" },
+  { id: "lifecycle", ico: "🔄", title: "Cycle de vie & suivi", sub: "Statut · fragile · suivi/PV libre", tint: "teal" },
+  { id: "access", ico: "🔗", title: "Accès & partage", sub: "Partage public de la fiche", tint: "teal" },
+  { id: "uplink", ico: "🌿", title: "Herbalife uplink", sub: "Sponsor · lignée distributeur", tint: "lime" },
+  { id: "admin", ico: "⚙️", title: "Zone admin", sub: "Transférer · supprimer le dossier", tint: "coral", danger: true },
 ];
 
-const PANEL_TITLES: Record<ManagePanel, string> = {
-  edit: "Modifier le dossier",
-  lifecycle: "Cycle de vie & suivi",
-  access: "Accès & partage",
-  uplink: "Herbalife uplink",
-  admin: "Zone admin",
+const PANEL_META: Record<ManagePanel, { title: string; ico: string; tint: keyof typeof TILE_TINTS }> = {
+  edit: { title: "Modifier le dossier", ico: "📝", tint: "teal" },
+  lifecycle: { title: "Cycle de vie & suivi", ico: "🔄", tint: "teal" },
+  access: { title: "Accès & partage", ico: "🔗", tint: "teal" },
+  uplink: { title: "Herbalife uplink", ico: "🌿", tint: "lime" },
+  admin: { title: "Zone admin", ico: "⚙️", tint: "coral" },
 };
 
 export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete, onGoToClubVip }: Props) {
@@ -110,9 +125,35 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [transferTo, setTransferTo] = useState<string>("");
-  // Lanceur (2026-07-03) : la gestion du dossier est présentée en tuiles ;
-  // chaque tuile ouvre UN panneau focalisé (fini le mur de 10 sections).
+  // Lanceur (design Claude design 2026-07-03) : gestion en tuiles → panneau
+  // tiroir focalisé (fini le mur de 10 sections).
   const [activePanel, setActivePanel] = useState<ManagePanel | null>(null);
+  const [vipNote, setVipNote] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const vipNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // VIP = raccourci vers l'onglet Club VIP (toast bref puis switch d'onglet).
+  function handleTileClick(id: "vip" | ManagePanel) {
+    if (id === "vip") {
+      setVipNote(true);
+      if (vipNoteTimer.current) clearTimeout(vipNoteTimer.current);
+      vipNoteTimer.current = setTimeout(() => {
+        setVipNote(false);
+        onGoToClubVip?.();
+      }, 900);
+      return;
+    }
+    setActivePanel((p) => (p === id ? null : id));
+  }
+  useEffect(() => () => { if (vipNoteTimer.current) clearTimeout(vipNoteTimer.current); }, []);
+
+  // Scroll doux du panneau dans la vue à l'ouverture (design).
+  useEffect(() => {
+    if (!activePanel || !panelRef.current) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const rect = panelRef.current.getBoundingClientRect();
+    window.scrollTo({ top: window.scrollY + rect.top - 90, behavior: reduce ? "auto" : "smooth" });
+  }, [activePanel]);
   const [transferring, setTransferring] = useState(false);
   const [togglingFragile, setTogglingFragile] = useState(false);
   const [togglingFreeFollow, setTogglingFreeFollow] = useState(false);
@@ -411,111 +452,83 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         .at-row-clickable:last-child { border-bottom: none; }
         .at-row-clickable:hover { background: var(--ls-actions-soft); }
 
-        /* ─── Lanceur : eyebrow + tuiles → panneaux (2026-07-03) ─── */
+        /* ─── Lanceur : eyebrow + tuiles → tiroir (design Claude design 2026-07-03) ─── */
         .at-eyebrow {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          display: flex; align-items: center; gap: 8px;
           font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 10.5px;
-          font-weight: 600;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--ls-actions-text-muted);
-          margin: 26px 2px 12px;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+          text-transform: uppercase; color: var(--ls-text-muted);
+          margin: 22px 2px 12px;
         }
-        .at-eyebrow.is-live { color: var(--ls-actions-teal-text); }
         .at-eyebrow-dot {
-          width: 7px; height: 7px; border-radius: 999px;
-          background: var(--ls-actions-teal-text);
-          box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-actions-teal-text) 22%, transparent);
-          flex: 0 0 auto;
+          width: 7px; height: 7px; border-radius: 999px; flex: 0 0 auto;
+          background: var(--ls-teal); box-shadow: 0 0 8px var(--ls-teal);
         }
-        .at-tiles {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
+        .at-eyebrow-dot--lime { background: var(--ls-lime); box-shadow: 0 0 8px var(--ls-lime); }
+        .at-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .at-tile {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 16px 16px;
-          border-radius: 16px;
-          background: var(--ls-actions-card);
-          border: 0.5px solid var(--ls-actions-border);
-          text-align: left;
-          cursor: pointer;
-          width: 100%;
-          font-family: var(--font-sans);
-          transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+          display: flex; align-items: center; gap: 12px; width: 100%;
+          padding: 15px 16px; border-radius: 12px; cursor: pointer; min-height: 44px;
+          background: var(--ls-surface); border: 1px solid var(--ls-border);
+          text-align: left; font-family: var(--font-sans);
+          transition: transform .16s ease, border-color .16s ease, opacity .2s ease;
+          --arw-c: var(--ls-text-hint); --arw-x: 0px;
         }
+        .at-tile.is-on { border-color: var(--ls-teal); }
+        .at-tile--danger { border-left: 2px solid color-mix(in srgb, var(--ls-coral) 55%, transparent); }
         .at-tile:hover {
-          transform: translateY(-2px);
-          border-color: color-mix(in srgb, var(--ls-actions-teal-text) 45%, var(--ls-actions-border));
-          background: var(--ls-actions-soft);
+          transform: translateY(-2px); opacity: 1 !important;
+          border-color: var(--ls-teal); --arw-c: var(--ls-lime); --arw-x: 3px;
         }
-        .at-tile:focus-visible {
-          outline: 2px solid var(--ls-actions-teal-text);
-          outline-offset: 2px;
-        }
+        .at-tile--danger:hover { border-color: var(--ls-coral); }
+        .at-tile:focus-visible { outline: 2px solid var(--ls-teal); outline-offset: 2px; }
         .at-tile-ico {
-          width: 42px; height: 42px; border-radius: 12px;
+          width: 38px; height: 38px; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
-          font-size: 20px; flex: 0 0 auto;
+          font-size: 17px; flex: 0 0 auto;
         }
         .at-tile-body { flex: 1; min-width: 0; }
-        .at-tile-title {
-          display: block;
-          font-size: 14px; font-weight: 700; line-height: 1.25;
-          color: var(--ls-actions-text);
-        }
-        .at-tile-sub {
-          display: block;
-          font-size: 11.5px; line-height: 1.35; margin-top: 3px;
-          color: var(--ls-actions-text-muted);
-        }
+        .at-tile-title { display: block; font-size: 14px; font-weight: 700; line-height: 1.25; color: var(--ls-text); }
+        .at-tile-sub { display: block; font-size: 11.5px; line-height: 1.35; margin-top: 2px; color: var(--ls-text-muted); }
         .at-tile-arrow {
-          font-size: 17px; color: var(--ls-actions-text-muted);
-          flex: 0 0 auto; transition: transform 140ms ease, color 140ms ease;
-        }
-        .at-tile:hover .at-tile-arrow {
-          transform: translateX(3px);
-          color: var(--ls-actions-teal-text);
+          font-size: 17px; flex: 0 0 auto; color: var(--arw-c);
+          transform: translateX(var(--arw-x)); transition: transform .15s ease, color .15s ease;
         }
         .at-panel {
-          margin-top: 12px;
-          border: 0.5px dashed color-mix(in srgb, var(--ls-actions-teal-text) 50%, var(--ls-actions-border));
-          border-radius: 16px;
-          padding: 14px;
-          background: color-mix(in srgb, var(--ls-actions-teal-text) 5%, var(--ls-actions-bg));
+          margin-top: 14px; background: var(--ls-surface);
+          border: 1px solid var(--ls-border); border-top: 2px solid var(--ls-teal);
+          border-radius: 12px; padding: 22px;
           display: flex; flex-direction: column; gap: 12px;
-          animation: atPanelIn 180ms ease;
+          animation: atPanelIn .22s ease;
         }
         @keyframes atPanelIn {
-          from { opacity: 0; transform: translateY(-4px); }
+          from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: none; }
         }
         .at-panel-head {
           display: flex; align-items: center; justify-content: space-between;
-          gap: 12px; padding-bottom: 2px;
+          gap: 12px; margin-bottom: 6px;
         }
         .at-panel-title {
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
-          text-transform: uppercase; color: var(--ls-actions-teal-text);
-          display: flex; align-items: center; gap: 8px; min-width: 0;
+          font-family: 'Anton', 'Syne', sans-serif;
+          font-size: 20px; letter-spacing: 0.02em; text-transform: uppercase;
+          color: var(--ls-text);
+          display: flex; align-items: center; gap: 12px; min-width: 0;
+        }
+        .at-panel-chip {
+          width: 36px; height: 36px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 17px; flex: 0 0 auto;
         }
         .at-panel-back {
-          border: 0.5px solid var(--ls-actions-border);
-          background: var(--ls-actions-card);
-          color: var(--ls-actions-text);
-          font-size: 12px; font-weight: 600;
-          padding: 7px 13px; border-radius: 999px; cursor: pointer;
-          flex: 0 0 auto; font-family: var(--font-sans);
-          transition: background 140ms ease;
+          min-height: 38px; padding: 9px 15px; border-radius: 9px;
+          border: 1px solid var(--ls-border); background: var(--ls-surface2);
+          color: var(--ls-text-muted);
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 11px; font-weight: 600; cursor: pointer; flex: 0 0 auto;
+          transition: border-color .15s ease, color .15s ease;
         }
-        .at-panel-back:hover { background: var(--ls-actions-soft); }
+        .at-panel-back:hover { border-color: var(--ls-teal); color: var(--ls-text); }
         @media (prefers-reduced-motion: reduce) {
           .at-tile, .at-tile-arrow, .at-panel { transition: none; animation: none; }
         }
@@ -590,43 +603,57 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       {/* VIP déplacé (2026-07-03) : toute la gestion Programme Client Privilégié
           vit désormais UNIQUEMENT dans l'onglet « Club VIP » (décision Thomas). */}
 
-      {/* 🗂 Lanceur (2026-07-03) : la gestion du dossier est présentée en tuiles ;
-          chaque tuile ouvre UN panneau focalisé (mockup Thomas). */}
+      {/* 🗂 Lanceur (design Claude design 2026-07-03) : gestion en tuiles → tiroir focalisé. */}
       <div className="at-eyebrow">
-        <span aria-hidden="true">🗂</span>
+        <span className="at-eyebrow-dot at-eyebrow-dot--lime" aria-hidden="true" />
         Gérer le dossier · s&apos;ouvre au clic
       </div>
       <div className="at-tiles">
-        {MANAGE_TILES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className="at-tile"
-            aria-expanded={t.id !== "vip" && activePanel === t.id}
-            onClick={
-              t.id === "vip"
-                ? () => onGoToClubVip?.()
-                : () => setActivePanel((p) => (p === t.id ? null : (t.id as ManagePanel)))
-            }
-          >
-            <span className="at-tile-ico" aria-hidden="true" style={{ background: t.bg }}>
-              {t.ico}
-            </span>
-            <span className="at-tile-body">
-              <span className="at-tile-title">{t.title}</span>
-              <span className="at-tile-sub">{t.sub}</span>
-            </span>
-            <span className="at-tile-arrow" aria-hidden="true">→</span>
-          </button>
-        ))}
+        {MANAGE_TILES.map((t) => {
+          const on = activePanel === t.id;
+          const dim = activePanel != null && !on;
+          const tint = TILE_TINTS[t.tint];
+          return (
+            <button
+              key={t.id}
+              type="button"
+              className={`at-tile${t.danger ? " at-tile--danger" : ""}${on ? " is-on" : ""}`}
+              aria-expanded={t.id !== "vip" ? on : undefined}
+              onClick={() => handleTileClick(t.id)}
+              style={{ opacity: dim ? 0.45 : 1 }}
+            >
+              <span className="at-tile-ico" aria-hidden="true" style={{ background: tint.bg, color: tint.col }}>
+                {t.ico}
+              </span>
+              <span className="at-tile-body">
+                <span className="at-tile-title">{t.title}</span>
+                <span className="at-tile-sub">{t.sub}</span>
+              </span>
+              <span className="at-tile-arrow" aria-hidden="true">{t.id === "vip" ? "↗" : "→"}</span>
+            </button>
+          );
+        })}
       </div>
 
       {activePanel ? (
-        <div className="at-panel">
+        <div
+          className="at-panel"
+          ref={panelRef}
+          style={{ borderTopColor: TILE_TINTS[PANEL_META[activePanel].tint].col }}
+        >
           <div className="at-panel-head">
             <span className="at-panel-title">
-              <span aria-hidden="true">▸</span>
-              {PANEL_TITLES[activePanel]}
+              <span
+                className="at-panel-chip"
+                aria-hidden="true"
+                style={{
+                  background: TILE_TINTS[PANEL_META[activePanel].tint].bg,
+                  color: TILE_TINTS[PANEL_META[activePanel].tint].col,
+                }}
+              >
+                {PANEL_META[activePanel].ico}
+              </span>
+              {PANEL_META[activePanel].title}
             </span>
             <button type="button" className="at-panel-back" onClick={() => setActivePanel(null)}>
               ← Fermer
@@ -1293,6 +1320,30 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           ) : null}
           </>
           ) : null}
+        </div>
+      ) : null}
+
+      {/* Toast VIP (design) : bref feedback avant le switch vers l'onglet Club VIP. */}
+      {vipNote ? (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 28,
+            transform: "translateX(-50%)",
+            zIndex: 60,
+            background: "var(--ls-surface2)",
+            border: "1px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+            color: "var(--ls-text)",
+            padding: "10px 16px",
+            borderRadius: 999,
+            fontSize: 12.5,
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+          }}
+        >
+          👑 Ouverture de l&apos;onglet Club VIP →
         </div>
       ) : null}
 
