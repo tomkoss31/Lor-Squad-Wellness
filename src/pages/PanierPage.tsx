@@ -864,7 +864,7 @@ export function PanierPage() {
 
                             {saleType === "commande" ? (
                               <div>
-                                <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>Démarrage de la cure</div>
+                                <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginBottom: 6 }}>📦 Réception du colis <span style={{ opacity: 0.7 }}>(départ de la cure)</span></div>
                                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                                   {([[0, "Aujourd'hui"], [3, "+3 j"], [5, "+5 j"], [7, "+7 j"]] as Array<[number, string]>).map(([d, l]) => {
                                     const on = delayDays === d;
