@@ -28,7 +28,6 @@ import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
 import { isClientProgramStarted } from "../../lib/calculations";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
-import { LIFECYCLE_LABELS } from "../../types/domain";
 
 // Ordre des pills (mockup) : Actif / Pause / Pas démarré / Arrêté / Perdu
 const LIFECYCLE_ORDER: LifecycleStatus[] = [
@@ -38,6 +37,15 @@ const LIFECYCLE_ORDER: LifecycleStatus[] = [
   "stopped",
   "lost",
 ];
+
+/** Libellés courts pour les pills du panneau Cycle de vie (design PanelBody). */
+const LC_SHORT: Record<LifecycleStatus, string> = {
+  active: "ACTIF",
+  paused: "PAUSE",
+  not_started: "PAS DÉM.",
+  stopped: "ARRÊTÉ",
+  lost: "PERDU",
+};
 
 function formatDateShort(iso?: string | null): string {
   if (!iso) return "—";
@@ -186,7 +194,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const currentStatus: LifecycleStatus =
     client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
 
-  const lifecycleUpdatedDays = daysSince(client.lifecycleUpdatedAt);
 
   const latestAssessment = [...(client.assessments ?? [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -498,7 +505,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           margin-top: 14px; background: var(--ls-surface);
           border: 1px solid var(--ls-border); border-top: 2px solid var(--ls-teal);
           border-radius: 12px; padding: 22px;
-          display: flex; flex-direction: column; gap: 12px;
           animation: atPanelIn .22s ease;
         }
         @keyframes atPanelIn {
@@ -529,6 +535,21 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           transition: border-color .15s ease, color .15s ease;
         }
         .at-panel-back:hover { border-color: var(--ls-teal); color: var(--ls-text); }
+        /* Intérieurs de panneaux (design PanelBody) */
+        .pb-row {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          width: 100%; text-align: left; background: transparent; border: none;
+          border-bottom: 1px solid var(--ls-border); padding: 14px 4px; cursor: pointer;
+          min-height: 44px; transition: background .15s ease;
+        }
+        .pb-row:last-child { border-bottom: none; }
+        .pb-row:hover { background: var(--ls-surface2); }
+        .pb-pill {
+          padding: 10px 4px; border-radius: 8px; text-align: center; cursor: pointer;
+          font-size: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+          letter-spacing: 0.03em; transition: border-color .15s ease;
+        }
+        .pb-pill:hover { border-color: var(--ls-teal); }
         @media (prefers-reduced-motion: reduce) {
           .at-tile, .at-tile-arrow, .at-panel { transition: none; animation: none; }
         }
@@ -668,656 +689,127 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 
           {activePanel === "edit" ? (
             <>
-          {/* Bloc 3A : Modifier le dossier */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 14 }}>
-              Modifier le dossier
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <RowClickable
-                label="Bilan de départ"
-                meta={formatDateShort(initialAssessment?.date)}
-                onClick={() => navigate(`/clients/${client.id}/start-assessment/edit`)}
-              />
-              <RowClickable
-                label="Dernier bilan"
-                meta={
-                  latestAssessmentDays != null
-                    ? `il y a ${latestAssessmentDays} j`
-                    : "Aucun bilan"
-                }
-                onClick={() =>
-                  latestAssessment?.id
-                    ? navigate(`/clients/${client.id}/assessments/${latestAssessment.id}/edit`)
-                    : navigate(`/clients/${client.id}/start-assessment/edit`)
-                }
-              />
-              <RowClickable
-                label="Coordonnées"
-                meta={formatPhone(client.phone)}
-                onClick={() => setEditCoordinatesOpen(true)}
-              />
-              <RowClickable
-                label="Fiche point volume"
-                meta={`${pvThisMonth.toFixed(1)} PV ce mois`}
-                onClick={() =>
-                  navigate(
-                    `/pv/clients?responsable=${encodeURIComponent(
-                      client.distributorId,
-                    )}&client=${encodeURIComponent(client.id)}`,
-                  )
-                }
-              />
-            </div>
-          </div>
+            {[
+              { label: "Bilan de départ", meta: formatDateShort(initialAssessment?.date), onClick: () => navigate(`/clients/${client.id}/start-assessment/edit`) },
+              { label: "Dernier bilan", meta: latestAssessmentDays != null ? `il y a ${latestAssessmentDays} j` : "Aucun bilan", onClick: () => (latestAssessment?.id ? navigate(`/clients/${client.id}/assessments/${latestAssessment.id}/edit`) : navigate(`/clients/${client.id}/start-assessment/edit`)) },
+              { label: "Coordonnées", meta: formatPhone(client.phone), onClick: () => setEditCoordinatesOpen(true) },
+              { label: "Fiche point volume", meta: `${pvThisMonth.toFixed(1)} PV ce mois`, onClick: () => navigate(`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`) },
+            ].map((r) => (
+              <button key={r.label} type="button" onClick={r.onClick} className="pb-row">
+                <span style={{ fontSize: 14, color: "var(--ls-text)", fontWeight: 500 }}>{r.label}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'JetBrains Mono',ui-monospace,monospace" }}>{r.meta}</span>
+                  <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 16 }}>&rsaquo;</span>
+                </span>
+              </button>
+            ))}
 
-          {/* Bloc 3A-bis : Activator démarrage programme (chantier 2026-05-05).
-              Cas Mandy : bilan le 29/04 mais cliente reçoit produits le 05/05.
-              Sans cet activator, J+7 et usure produits partent du 29/04
-              → décalage en réalité. Click "Démarrer le programme" pose la
-              date de départ et ré-aligne pv_client_products + protocole. */}
-          {(() => {
-            const initialDate = initialAssessment?.date ?? null;
-            const startDateIso = client.startDate ?? null;
-            const lifecycleClosed =
-              currentStatus === "stopped" || currentStatus === "lost";
-            // On masque le bloc si client mort/perdu (pas pertinent).
-            if (lifecycleClosed) return null;
-            // On masque aussi si pas de bilan initial (pas de programme à démarrer).
-            if (!initialDate) return null;
-
-            const daysSinceStart = daysSince(startDateIso ?? initialDate);
-            const initialDateFormatted = formatDateShort(initialDate);
-            const startDateFormatted = startDateIso
-              ? formatDateShort(startDateIso)
-              : null;
-            const isMisaligned =
-              !!initialDate &&
-              !startDateIso &&
-              daysSince(initialDate) !== null &&
-              (daysSince(initialDate) ?? 0) >= 1;
-
-            return (
-              <div
-                className="at-card"
-                style={{
-                  borderLeft: isMisaligned
-                    ? "3px solid var(--ls-coral)"
-                    : undefined,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 10,
-                    gap: 12,
-                  }}
-                >
-                  <div className="at-label">
-                    🚀 Démarrage du programme
-                  </div>
-                  {startDateFormatted ? (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--ls-text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Démarré le {startDateFormatted} · J+
-                      {daysSinceStart ?? 0}
-                    </div>
-                  ) : null}
+            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-gold)", background: "var(--ls-gold-bg)" }}>
+              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-gold)", marginBottom: 6 }}>🚀 Démarrage du programme</div>
+              <p style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.5, color: "var(--ls-text-muted)" }}>
+                {client.startDate ? `Démarré le ${new Date(client.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}. ` : ""}
+                Le compteur J+1 / J+7 / J+14 et l&apos;usure des produits partent de la date de départ.
+              </p>
+              {activatorOpen ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <input type="date" value={activatorDate} onChange={(e) => setActivatorDate(e.target.value)} style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 13 }} />
+                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer le départ"}</button>
+                  <button type="button" onClick={() => setActivatorOpen(false)} style={{ background: "transparent", border: "1px solid var(--ls-border)", color: "var(--ls-text-muted)", padding: "11px 16px", borderRadius: 10, fontSize: 13, cursor: "pointer", minHeight: 44 }}>Annuler</button>
                 </div>
-
-                {!startDateIso ? (
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ls-text-muted)",
-                      margin: "0 0 10px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {isMisaligned ? (
-                      <>
-                        ⚠️ Bilan fait le <strong>{initialDateFormatted}</strong>
-                        {" "}({daysSince(initialDate)} j) mais aucune date de
-                        démarrage produits enregistrée. Le compteur J+1/J+7/J+14
-                        et l'usure des produits partent donc du bilan.
-                        Activer ici pour réaligner sur le vrai départ.
-                      </>
-                    ) : (
-                      <>
-                        Marque le départ effectif des produits — le compteur
-                        J+1/J+7/J+14/J+21 et l'usure des produits partent
-                        de cette date.
-                      </>
-                    )}
-                  </p>
-                ) : (
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ls-text-muted)",
-                      margin: "0 0 10px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Si la cliente a redémarré ou si la date est mauvaise, tu
-                    peux la corriger ici. Bilan initial :
-                    {" "}
-                    <strong>{initialDateFormatted}</strong>.
-                  </p>
-                )}
-
-                {!activatorOpen ? (
-                  <button
-                    type="button"
-                    onClick={() => setActivatorOpen(true)}
-                    style={{
-                      background: !startDateIso
-                        ? "linear-gradient(180deg, #EF9F27, #BA7517)"
-                        : "var(--ls-surface2)",
-                      color: !startDateIso ? "white" : "var(--ls-text)",
-                      border: !startDateIso
-                        ? "none"
-                        : "1px solid var(--ls-border)",
-                      padding: "10px 16px",
-                      borderRadius: 10,
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "DM Sans, sans-serif",
-                    }}
-                  >
-                    {!startDateIso
-                      ? "Démarrer le programme"
-                      : "Modifier la date de départ"}
-                  </button>
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      background: "var(--ls-surface2)",
-                      padding: 12,
-                      borderRadius: 10,
-                      border: "1px solid var(--ls-border)",
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4,
-                        fontSize: 12,
-                        color: "var(--ls-text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Date de démarrage effectif
-                      <input
-                        type="date"
-                        value={activatorDate}
-                        max={new Date().toISOString().slice(0, 10)}
-                        onChange={(e) => setActivatorDate(e.target.value)}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 8,
-                          border: "1px solid var(--ls-border)",
-                          fontSize: 14,
-                          fontFamily: "DM Sans, sans-serif",
-                          background: "var(--ls-surface)",
-                          color: "var(--ls-text)",
-                        }}
-                      />
-                    </label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        type="button"
-                        onClick={() => void handleActivateProgram()}
-                        disabled={activatorSaving}
-                        style={{
-                          flex: 1,
-                          background:
-                            "linear-gradient(180deg, #EF9F27, #BA7517)",
-                          color: "white",
-                          border: "none",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          fontWeight: 700,
-                          fontSize: 13,
-                          cursor: activatorSaving ? "not-allowed" : "pointer",
-                          opacity: activatorSaving ? 0.6 : 1,
-                          fontFamily: "DM Sans, sans-serif",
-                        }}
-                      >
-                        {activatorSaving ? "Activation…" : "Confirmer"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActivatorOpen(false)}
-                        disabled={activatorSaving}
-                        style={{
-                          background: "transparent",
-                          color: "var(--ls-text-muted)",
-                          border: "1px solid var(--ls-border)",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          fontWeight: 600,
-                          fontSize: 13,
-                          cursor: "pointer",
-                          fontFamily: "DM Sans, sans-serif",
-                        }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+              ) : (
+                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de départ" : "Démarrer le programme"}</button>
+              )}
+            </div>
           </>
           ) : null}
 
           {activePanel === "lifecycle" ? (
             <>
-          {/* Bloc 3B : Cycle de vie + toggles */}
-          <div className="at-card">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 14,
-              }}
-            >
-              <div className="at-label">Cycle de vie</div>
-              {lifecycleUpdatedDays != null ? (
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-teal-text)",
-                  }}
-                >
-                  Modifié il y a {lifecycleUpdatedDays} j
-                </div>
-              ) : null}
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Statut du client</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, marginBottom: 20 }}>
+              {LIFECYCLE_ORDER.map((st) => {
+                const on = currentStatus === st;
+                return (
+                  <button key={st} type="button" disabled={lifecycleSaving} onClick={() => void handleLifecycleChange(st)} className="pb-pill" style={{ background: on ? "var(--ls-teal-bg)" : "var(--ls-surface2)", border: `1px solid ${on ? "var(--ls-teal)" : "var(--ls-border)"}`, color: on ? "var(--ls-teal)" : "var(--ls-text-muted)", fontWeight: on ? 700 : 600 }}>{LC_SHORT[st]}</button>
+                );
+              })}
             </div>
-
-            {/* 5 pills statut */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, 1fr)",
-                gap: 5,
-                marginBottom: 14,
-              }}
-            >
-              {LIFECYCLE_ORDER.map((st) => (
-                <LifecyclePill
-                  key={st}
-                  status={st}
-                  active={currentStatus === st}
-                  disabled={lifecycleSaving}
-                  onClick={() => void handleLifecycleChange(st)}
-                />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { icon: "🛡️", title: "Marquer fragile", meta: "Client hésitant · attention particulière", on: client.isFragile ?? false, busy: togglingFragile, onToggle: () => void handleToggleFragile() },
+                { icon: "✦", title: "Suivi libre", meta: "Exclu du plan de relance · rentabilité comptée", on: client.freeFollowUp ?? false, busy: togglingFreeFollow, onToggle: () => void handleToggleFreeFollow() },
+                { icon: "◇", title: "PV volume libre", meta: "Exclu des listes de réassort et alertes PV", on: client.freePvTracking ?? false, busy: togglingFreePv, onToggle: () => void handleToggleFreePv() },
+              ].map((t) => (
+                <button key={t.title} type="button" onClick={t.onToggle} disabled={t.busy} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "12px 14px", borderRadius: 12, width: "100%", textAlign: "left", cursor: t.busy ? "wait" : "pointer", background: t.on ? "var(--ls-teal-bg)" : "var(--ls-surface2)", border: `1px solid ${t.on ? "color-mix(in srgb,var(--ls-teal) 30%,transparent)" : "transparent"}` }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                    <span aria-hidden="true" style={{ fontSize: 15 }}>{t.icon}</span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: t.on ? "var(--ls-teal)" : "var(--ls-text)" }}>{t.title}</span>
+                      <span style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginTop: 1 }}>{t.meta}</span>
+                    </span>
+                  </span>
+                  <span aria-hidden="true" style={{ width: 38, height: 22, borderRadius: 999, background: t.on ? "var(--ls-teal)" : "var(--ls-border2)", flexShrink: 0, padding: 2, display: "flex", justifyContent: t.on ? "flex-end" : "flex-start", transition: "background .15s" }}>
+                    <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,.3)" }} />
+                  </span>
+                </button>
               ))}
             </div>
-
-            {/* 3 toggles */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <LifecycleToggle
-                icon="🛡️"
-                title="Marquer fragile"
-                metaOff="Client hésitant · attention particulière"
-                metaOn="Activé · attention particulière au suivi"
-                active={client.isFragile ?? false}
-                busy={togglingFragile}
-                onToggle={() => void handleToggleFragile()}
-              />
-              <LifecycleToggle
-                icon="✦"
-                title="Suivi libre"
-                metaOff="Désactivé · apparaît dans le plan de relance"
-                metaOn="Activé · exclu du plan de relance et des PV en retard (la rentabilité reste comptée)"
-                active={client.freeFollowUp ?? false}
-                busy={togglingFreeFollow}
-                onToggle={() => void handleToggleFreeFollow()}
-              />
-              <LifecycleToggle
-                icon="◇"
-                title="PV volume libre"
-                metaOff="Inclus dans les listes de réassort et alertes PV"
-                metaOn="Exclu des listes de réassort et alertes PV · bilans normaux"
-                active={client.freePvTracking ?? false}
-                busy={togglingFreePv}
-                onToggle={() => void handleToggleFreePv()}
-              />
-            </div>
-          </div>
           </>
           ) : null}
 
           {activePanel === "access" ? (
             <>
-          {/* Bloc 4A : Accès client */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 12 }}>
-              Accès client
-            </div>
-            {/* Accès app retiré d'ici (2026-07-03) : l'invitation PWA se gère
-                depuis le hero de la fiche + la page d'accueil client. On ne
-                garde ici que le partage public (lien vitrine anonymisé). */}
-
-            {/* Ligne partage public */}
-            <button
-              type="button"
-              onClick={onOpenSharePublic}
-              disabled={!onOpenSharePublic}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "8px 10px",
-                fontSize: 12,
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                cursor: onOpenSharePublic ? "pointer" : "default",
-                color: "var(--ls-actions-text)",
-              }}
-            >
-              <span>Partage public</span>
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Partage public de la fiche</div>
+            <button type="button" onClick={onOpenSharePublic} disabled={!onOpenSharePublic} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", width: "100%", textAlign: "left", cursor: onOpenSharePublic ? "pointer" : "default" }}>
+              <span>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>Lien vitrine anonymisé</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>Partage une version publique sans données sensibles.</span>
+              </span>
               <SharePublicPill client={client} />
             </button>
-          </div>
+            <p style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.5, color: "var(--ls-text-hint)" }}>L&apos;accès à l&apos;app client se gère depuis le hero de la fiche + la page d&apos;accueil client — pas ici.</p>
           </>
           ) : null}
 
           {activePanel === "admin" ? (
             <>
-          {/* Bloc 4B : Propriété du dossier */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 12 }}>
-              Propriété du dossier
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 0",
-                fontSize: 12,
-                marginBottom: 8,
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  background:
-                    currentOwner?.role === "admin" ? "#0F6E56" : "#888780",
-                  color: "#fff",
-                  fontSize: 10,
-                  fontWeight: 500,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                {(currentOwner?.name?.[0] ?? "?").toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "var(--ls-actions-text)", fontWeight: 500 }}>
-                  {currentOwner?.name ?? client.distributorName ?? "Non assigné"}
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-text-muted)",
-                    marginTop: 1,
-                  }}
-                >
-                  Distributeur actuel
-                </div>
-              </div>
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Propriété du dossier</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", marginBottom: 10 }}>
+              <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--ls-teal)", color: "var(--ls-teal-contrast)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{(currentOwner?.name ?? "?").slice(0, 1).toUpperCase()}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, color: "var(--ls-text)", fontWeight: 600 }}>{currentOwner?.name ?? "—"}</span>
+                <span style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)" }}>Distributeur actuel</span>
+              </span>
             </div>
             {canTransfer ? (
-              <>
-                <select
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
-                  disabled={transferring}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    fontSize: 12,
-                    borderRadius: 8,
-                    border: "0.5px solid var(--ls-actions-border)",
-                    background: "var(--ls-actions-soft)",
-                    color: "var(--ls-actions-text-tertiary)",
-                  }}
-                >
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)} style={{ flex: 1, minWidth: 180, minHeight: 44, padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)", fontSize: 13 }}>
                   <option value="">Transférer à…</option>
-                  {assignableOwners.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
+                  {assignableOwners.map((u) => (<option key={u.id} value={u.id}>{u.name}</option>))}
                 </select>
-                {transferTo ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleTransfer()}
-                    disabled={transferring}
-                    style={{
-                      width: "100%",
-                      marginTop: 8,
-                      padding: "8px 10px",
-                      fontSize: 12,
-                      borderRadius: 8,
-                      background: "#0F6E56",
-                      color: "#fff",
-                      border: "none",
-                      cursor: transferring ? "wait" : "pointer",
-                    }}
-                  >
-                    {transferring ? "Transfert…" : "Confirmer le transfert"}
+                <button type="button" onClick={() => void handleTransfer()} disabled={!transferTo || transferring} style={{ minHeight: 44, padding: "10px 16px", borderRadius: 12, border: "1px solid var(--ls-teal)", background: "var(--ls-teal-bg)", color: "var(--ls-teal)", fontSize: 13, fontWeight: 700, cursor: !transferTo || transferring ? "not-allowed" : "pointer", opacity: !transferTo ? 0.5 : 1 }}>{transferring ? "…" : "Transférer"}</button>
+              </div>
+            ) : null}
+            {canDelete ? (
+              <div style={{ padding: 16, borderRadius: 12, background: "var(--ls-coral-bg)", border: "1px solid color-mix(in srgb,var(--ls-coral) 30%,transparent)" }}>
+                <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-coral)", marginBottom: 10 }}>⚠ Zone sensible</div>
+                {deleteStep === 0 ? (
+                  <button type="button" onClick={() => setDeleteStep(1)} style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: "1px solid color-mix(in srgb,var(--ls-coral) 40%,transparent)", background: "transparent", color: "var(--ls-coral)", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+                    <span>Supprimer ce dossier</span><span aria-hidden="true">🗑</span>
                   </button>
-                ) : null}
-              </>
-            ) : (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--ls-actions-text-muted)",
-                  fontStyle: "italic",
-                }}
-              >
-                Transfert réservé aux admins et référents.
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 12, color: "var(--ls-coral)" }}>Tape <strong>SUPPRIMER</strong> pour confirmer.</div>
+                    <input type="text" value={deleteInput} onChange={(e) => setDeleteInput(e.target.value)} placeholder="SUPPRIMER" style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid color-mix(in srgb,var(--ls-coral) 40%,transparent)", background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 13 }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button type="button" onClick={() => { setDeleteStep(0); setDeleteInput(""); }} style={{ flex: 1, minHeight: 44, borderRadius: 10, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                      <button type="button" onClick={() => void handleDelete()} disabled={deleteInput.trim().toUpperCase() !== "SUPPRIMER" || deleting} style={{ flex: 1, minHeight: 44, borderRadius: 10, border: "none", background: "var(--ls-coral)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: deleteInput.trim().toUpperCase() !== "SUPPRIMER" || deleting ? "not-allowed" : "pointer", opacity: deleteInput.trim().toUpperCase() !== "SUPPRIMER" ? 0.5 : 1 }}>{deleting ? "Suppression…" : "Supprimer définitivement"}</button>
+                    </div>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: "var(--ls-coral)", opacity: 0.7, marginTop: 8 }}>Action irréversible · réservé admin / référent</div>
               </div>
-            )}
-          </div>
-
-          {/* Bloc 4C : Zone sensible */}
-          {canDelete ? (
-            <div
-              style={{
-                background: "var(--ls-actions-red-bg)",
-                borderRadius: 14,
-                padding: "14px 18px",
-                border: "0.5px solid rgba(224,75,75,0.15)",
-              }}
-            >
-              <div
-                className="at-label"
-                style={{
-                  color: "var(--ls-actions-red-text-dark)",
-                  marginBottom: 8,
-                }}
-              >
-                Zone sensible
-              </div>
-              {deleteStep === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setDeleteStep(1)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "0.5px solid rgba(224,75,75,0.3)",
-                    background: "var(--ls-actions-card)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    color: "var(--ls-actions-red-text)",
-                    fontSize: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>Supprimer ce dossier</span>
-                  <span aria-hidden="true" style={{ fontSize: 11 }}>
-                    🗑
-                  </span>
-                </button>
-              ) : deleteStep === 1 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ls-actions-red-text-dark)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Êtes-vous sûr·e ? Cette action est <strong>irréversible</strong>. Tous
-                    les bilans, mensurations, messages et données liées seront perdus.
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStep(0)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "0.5px solid var(--ls-actions-border)",
-                        background: "var(--ls-actions-card)",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStep(2)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "none",
-                        background: "#A32D2D",
-                        color: "#fff",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Je confirme
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ls-actions-red-text-dark)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Tape <strong>SUPPRIMER</strong> pour confirmer définitivement.
-                  </div>
-                  <input
-                    type="text"
-                    value={deleteInput}
-                    onChange={(e) => setDeleteInput(e.target.value)}
-                    placeholder="SUPPRIMER"
-                    style={{
-                      width: "100%",
-                      padding: "7px 10px",
-                      borderRadius: 7,
-                      border: "0.5px solid rgba(224,75,75,0.3)",
-                      background: "var(--ls-actions-card)",
-                      fontSize: 12,
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteStep(0);
-                        setDeleteInput("");
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "0.5px solid var(--ls-actions-border)",
-                        background: "var(--ls-actions-card)",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete()}
-                      disabled={deleteInput.trim() !== "SUPPRIMER" || deleting}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "none",
-                        background:
-                          deleteInput.trim() === "SUPPRIMER" ? "#A32D2D" : "rgba(211,209,199,0.4)",
-                        color: "#fff",
-                        fontSize: 11,
-                        cursor:
-                          deleteInput.trim() === "SUPPRIMER" && !deleting
-                            ? "pointer"
-                            : "not-allowed",
-                      }}
-                    >
-                      {deleting ? "Suppression…" : "Supprimer définitivement"}
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "var(--ls-actions-red-text-dark)",
-                  opacity: 0.7,
-                  marginTop: 6,
-                }}
-              >
-                Action irréversible · toutes les données seront perdues
-              </div>
-            </div>
-          ) : null}
+            ) : null}
           </>
           ) : null}
         </div>
@@ -1381,198 +873,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 // ═══════════════════════════════════════════════════════════════════════
 // Sous-composants
 // ═══════════════════════════════════════════════════════════════════════
-
-// StatusPill supprimé (utilisé uniquement par BLOC 1 Header identité
-// retiré dans la refonte RDV premium 2026-04-26). LIFECYCLE_PILL_STYLES
-// reste utilisé par LifecyclePill ci-dessous.
-
-const LIFECYCLE_PILL_STYLES: Record<
-  LifecycleStatus,
-  { background: string; color: string; border: string }
-> = {
-  active: {
-    background: "var(--ls-actions-teal-bg)",
-    color: "var(--ls-actions-teal-text)",
-    border: "#1D9E75",
-  },
-  paused: {
-    background: "var(--ls-actions-gold-bg)",
-    color: "var(--ls-actions-gold-text)",
-    border: "#EF9F27",
-  },
-  not_started: {
-    background: "var(--ls-actions-gold-bg)",
-    color: "var(--ls-actions-gold-text)",
-    border: "#EF9F27",
-  },
-  stopped: {
-    background: "var(--ls-actions-red-bg)",
-    color: "var(--ls-actions-red-text)",
-    border: "#E24B4A",
-  },
-  lost: {
-    background: "var(--ls-actions-soft)",
-    color: "var(--ls-actions-text-muted)",
-    border: "var(--ls-actions-border)",
-  },
-};
-
-function LifecyclePill({
-  status,
-  active,
-  disabled,
-  onClick,
-}: {
-  status: LifecycleStatus;
-  active: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  const styles = LIFECYCLE_PILL_STYLES[status];
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "9px 4px",
-        borderRadius: 8,
-        textAlign: "center",
-        cursor: disabled ? "wait" : "pointer",
-        fontSize: 10,
-        fontWeight: 500,
-        background: active ? styles.background : "var(--ls-actions-soft)",
-        border: active
-          ? `0.5px solid ${styles.border}`
-          : "0.5px solid var(--ls-actions-border)",
-        color: active ? styles.color : "var(--ls-actions-text-tertiary)",
-        transition: "background 150ms ease, border-color 150ms ease",
-      }}
-    >
-      {LIFECYCLE_LABELS[status]}
-    </button>
-  );
-}
-
-function LifecycleToggle({
-  icon,
-  title,
-  metaOff,
-  metaOn,
-  active,
-  busy,
-  onToggle,
-}: {
-  icon: string;
-  title: string;
-  metaOff: string;
-  metaOn: string;
-  active: boolean;
-  busy?: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      style={{
-        padding: "10px 12px",
-        background: active
-          ? "var(--ls-actions-teal-bg)"
-          : "var(--ls-actions-soft)",
-        borderRadius: 10,
-        border: active ? "0.5px solid rgba(29,158,117,0.2)" : "0.5px solid transparent",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-        <span aria-hidden="true" style={{ fontSize: 14 }}>
-          {icon}
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              color: active
-                ? "var(--ls-actions-teal-text)"
-                : "var(--ls-actions-text)",
-            }}
-          >
-            {title}
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              color: active ? "#0F6E56" : "var(--ls-actions-text-muted)",
-              marginTop: 1,
-            }}
-          >
-            {active ? metaOn : metaOff}
-          </div>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={busy}
-        aria-label={title}
-        aria-pressed={active}
-        style={{
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          border: "none",
-          background: active ? "#1D9E75" : "#D3D1C7",
-          position: "relative",
-          cursor: busy ? "wait" : "pointer",
-          transition: "background 200ms ease",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: 2,
-            left: active ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "#fff",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
-            transition: "left 200ms ease",
-          }}
-        />
-      </button>
-    </div>
-  );
-}
-
-function RowClickable({
-  label,
-  meta,
-  onClick,
-}: {
-  label: string;
-  meta: string;
-  onClick: () => void;
-}) {
-  return (
-    <button type="button" className="at-row-clickable" onClick={onClick}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, color: "var(--ls-actions-text)" }}>{label}</div>
-        <div style={{ fontSize: 10, color: "var(--ls-actions-text-muted)", marginTop: 1 }}>
-          {meta}
-        </div>
-      </div>
-      <span aria-hidden="true" style={{ fontSize: 12, color: "#B4B2A9" }}>
-        →
-      </span>
-    </button>
-  );
-}
 
 // PriorityCard supprimé (2026-04-26) : la priorité est maintenant rendue
 // par ActionsRdvBlock (fusion intelligente priorités + état RDV).
