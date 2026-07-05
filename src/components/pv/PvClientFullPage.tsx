@@ -501,13 +501,13 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
 
   async function handleSaveStartDate() {
     if (!draftDate) {
-      pushToast({ tone: "error", title: "Choisis une date de démarrage." });
+      pushToast({ tone: "error", title: "Choisis une date de réception." });
       return;
     }
     setSavingDate(true);
     try {
       await updatePvProductStartDate(p.recordId, draftDate);
-      pushToast({ tone: "success", title: "✅ Date de démarrage corrigée" });
+      pushToast({ tone: "success", title: "✅ Date de réception corrigée" });
       setEditing(false);
     } catch (e) {
       pushToast({
@@ -583,7 +583,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
                 setDraftDate(toDateInputValue(p.startDate));
                 setEditing((v) => !v);
               }}
-              title="Corriger la date de démarrage"
+              title="Corriger la date de réception du colis"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -637,7 +637,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
           }}
         >
           <span style={{ fontSize: 11, color: "var(--ls-text-muted)", fontWeight: 600 }}>
-            Démarrage :
+            Réception :
           </span>
           <input
             type="date"
