@@ -21,7 +21,14 @@ function defaultRemind(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function ClientRelanceButton({ client }: { client: Client }) {
+export function ClientRelanceButton({
+  client,
+  variant = "default",
+}: {
+  client: Client;
+  /** tile = tuile design (zone quotidien Actions) ; default = bouton pleine largeur. */
+  variant?: "default" | "tile";
+}) {
   const { add } = useCoachReminders(false);
   const [state, setState] = useState<"idle" | "form" | "saving" | "done">("idle");
   const [when, setWhen] = useState(defaultRemind());
@@ -49,6 +56,22 @@ export function ClientRelanceButton({ client }: { client: Client }) {
   }
 
   if (state === "idle") {
+    if (variant === "tile") {
+      return (
+        <button type="button" onClick={() => setState("form")} className="at-quick-tile">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <span aria-hidden="true" className="at-quick-tile-ico">🔔</span>
+              <span style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ls-text)" }}>Relancer</span>
+            </div>
+            <span aria-hidden="true" className="at-quick-arrow">→</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", fontFamily: "'JetBrains Mono', ui-monospace, monospace", marginTop: 8 }}>
+            Rappel privé daté
+          </div>
+        </button>
+      );
+    }
     return (
       <button type="button" onClick={() => setState("form")} style={btnStyle(false)}>
         🔔 Me rappeler de le relancer

@@ -13,7 +13,7 @@
 // Tous les connecteurs métier sont réutilisés depuis AppContext — aucune
 // mutation n'est recréée ici, on branche sur ce qui existe.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
@@ -21,8 +21,8 @@ import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { ClientRelanceButton } from "../reminders/ClientRelanceButton";
 import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
-import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
-import { ActionsRdvBlock } from "./ActionsRdvBlock";
+import { useClientPriorityAction, type PriorityAction } from "../../hooks/useClientPriorityAction";
+import { createIcsDataUri, createGoogleCalendarLink } from "../../lib/googleCalendar";
 import { SendBusinessPlanButton } from "./SendBusinessPlanButton";
 import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
@@ -109,6 +109,229 @@ const PANEL_META: Record<ManagePanel, { title: string; ico: string; tint: keyof 
   uplink: { title: "Herbalife uplink", ico: "🌿", tint: "lime" },
   admin: { title: "Zone admin", ico: "⚙️", tint: "coral" },
 };
+
+// ═══════════════════════════════════════════════════════════════════════
+// RdvHeroTile — tuile RDV gold dominante (design Claude design). 3 états :
+// planifier / prochain RDV programmé / priorité à faire. Logique réelle
+// (priorité + agenda Google/ICS/WhatsApp).
+// ═══════════════════════════════════════════════════════════════════════
+const AT_MONO = "'JetBrains Mono', ui-monospace, monospace";
+
+function RdvHeroTile({
+  priority,
+  activeFollowUp,
+  clientFirstName,
+  clientLastName,
+  clientPhone,
+  onPriorityCta,
+  onEditRdv,
+}: {
+  priority: PriorityAction;
+  activeFollowUp: FollowUp | null;
+  clientFirstName: string;
+  clientLastName: string;
+  clientPhone?: string;
+  onPriorityCta: () => void;
+  onEditRdv: () => void;
+}) {
+  const heroBase: CSSProperties = {
+    background:
+      "linear-gradient(150deg,color-mix(in srgb,var(--ls-gold) 26%,var(--ls-surface)),var(--ls-surface) 78%)",
+    border: "1px solid color-mix(in srgb,var(--ls-gold) 45%,transparent)",
+  };
+  const goldBtn: CSSProperties = {
+    position: "relative",
+    alignSelf: "flex-start",
+    marginTop: 18,
+    minHeight: 44,
+    padding: "11px 20px",
+    borderRadius: 11,
+    border: "none",
+    cursor: "pointer",
+    background: "linear-gradient(135deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 65%,#000))",
+    color: "var(--ls-gold-contrast)",
+    fontFamily: AT_MONO,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    boxShadow: "0 4px 16px color-mix(in srgb,var(--ls-gold) 30%,transparent)",
+  };
+  const eyebrow: CSSProperties = {
+    fontFamily: AT_MONO,
+    fontSize: 10,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    fontWeight: 600,
+  };
+  const Glow = (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        top: -40,
+        right: -30,
+        width: 220,
+        height: 220,
+        borderRadius: "50%",
+        background:
+          "radial-gradient(circle,color-mix(in srgb,var(--ls-gold) 22%,transparent),transparent 68%)",
+        pointerEvents: "none",
+      }}
+    />
+  );
+  const goldChip = (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        background: "linear-gradient(135deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 60%,#000))",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--ls-gold-contrast)",
+        flexShrink: 0,
+      }}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <line x1="8" y1="3" x2="8" y2="7" />
+        <line x1="16" y1="3" x2="16" y2="7" />
+        <line x1="3" y1="11" x2="21" y2="11" />
+      </svg>
+    </span>
+  );
+
+  const hasRdv = Boolean(
+    activeFollowUp && !Number.isNaN(new Date(activeFollowUp.dueDate).getTime()),
+  );
+
+  // ── État : RDV programmé ───────────────────────────────────────────────
+  if (hasRdv) {
+    const d = new Date(activeFollowUp!.dueDate);
+    const dateLabel = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+    const timeLabel = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const diffDays = Math.round((d.getTime() - Date.now()) / 86400000);
+    const countdown =
+      d.getTime() < Date.now() ? "Passé" : diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Demain" : `Dans ${diffDays} j`;
+    const cal = {
+      title: `RDV La Base 360 · ${clientFirstName} ${clientLastName}`,
+      startDate: d,
+      endDate: new Date(d.getTime() + 45 * 60000),
+      location: "La Base · Verdun",
+    };
+    const googleUrl = createGoogleCalendarLink(cal);
+    const icsUri = createIcsDataUri(cal);
+    const icsName = `rdv-labase-${d.toISOString().slice(0, 10)}.ics`;
+    const digits = (clientPhone ?? "").replace(/\D/g, "");
+    const wa = digits
+      ? `https://wa.me/${digits}?text=${encodeURIComponent(
+          `Bonjour ${clientFirstName}, je te rappelle notre RDV ${d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à ${timeLabel} chez La Base 360. À très vite ! 💪`,
+        )}`
+      : null;
+    const chip: CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      minHeight: 40,
+      padding: "8px 12px",
+      borderRadius: 10,
+      border: "1px solid var(--ls-border)",
+      background: "var(--ls-surface)",
+      color: "var(--ls-text)",
+      fontFamily: AT_MONO,
+      fontSize: 10,
+      fontWeight: 600,
+      cursor: "pointer",
+      textDecoration: "none",
+    };
+    return (
+      <div className="rdv-hero" style={heroBase}>
+        {Glow}
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            {goldChip}
+            <span style={{ ...eyebrow, color: "var(--ls-gold)" }}>Prochain RDV</span>
+          </div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 26, lineHeight: 1, textTransform: "uppercase", color: "var(--ls-text)" }}>
+            {dateLabel}
+            <br />
+            <span style={{ color: "var(--ls-gold)" }}>{timeLabel}</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--ls-teal)", marginTop: 10, fontFamily: AT_MONO, fontWeight: 600 }}>{countdown}</div>
+        </div>
+        <div style={{ position: "relative", display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <a href={googleUrl} target="_blank" rel="noopener noreferrer" style={chip}>📅 Google</a>
+          <a href={icsUri} download={icsName} style={chip}>🍎 .ics</a>
+          <button type="button" onClick={onEditRdv} style={chip}>✏️ Modifier</button>
+          {wa ? (
+            <a href={wa} target="_blank" rel="noopener noreferrer" style={chip}>💬 WhatsApp</a>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  // ── État : à planifier ─────────────────────────────────────────────────
+  if (priority.type === "plan_rdv" || priority.type === "ok") {
+    return (
+      <div className="rdv-hero" style={heroBase}>
+        {Glow}
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            {goldChip}
+            <span style={{ ...eyebrow, color: "var(--ls-gold)" }}>À faire maintenant</span>
+          </div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 30, lineHeight: 0.98, textTransform: "uppercase", color: "var(--ls-text)" }}>
+            Planifier
+            <br />
+            un RDV
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 10, fontFamily: AT_MONO }}>
+            {priority.meta || "Aucun RDV programmé"}
+          </div>
+        </div>
+        <button type="button" onClick={onPriorityCta} style={goldBtn}>PLANIFIER →</button>
+      </div>
+    );
+  }
+
+  // ── État : priorité (bilan à compléter, suivi à envoyer, consentement…) ─
+  return (
+    <div className="rdv-hero" style={heroBase}>
+      {Glow}
+      <div style={{ position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: "var(--ls-coral-bg)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 19,
+              flexShrink: 0,
+            }}
+          >
+            {priority.icon || "⚠️"}
+          </span>
+          <span style={{ ...eyebrow, color: "var(--ls-coral)" }}>Priorité · à faire</span>
+        </div>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 25, lineHeight: 1.02, textTransform: "uppercase", color: "var(--ls-text)" }}>
+          {priority.title}
+        </div>
+        <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 10, fontFamily: AT_MONO }}>{priority.meta}</div>
+      </div>
+      <button type="button" onClick={onPriorityCta} style={goldBtn}>
+        {(priority.ctaLabel || "Y aller →").toUpperCase()}
+      </button>
+    </div>
+  );
+}
 
 export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete, onGoToClubVip }: Props) {
   const navigate = useNavigate();
@@ -472,6 +695,37 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           background: var(--ls-teal); box-shadow: 0 0 8px var(--ls-teal);
         }
         .at-eyebrow-dot--lime { background: var(--ls-lime); box-shadow: 0 0 8px var(--ls-lime); }
+        /* Zone quotidien : hero RDV gold + tuiles Message/Relancer (design) */
+        .at-quick {
+          display: grid;
+          grid-template-columns: 1.7fr 1fr;
+          grid-template-rows: auto auto;
+          gap: 12px;
+        }
+        .rdv-hero {
+          grid-row: 1 / span 2;
+          position: relative; overflow: hidden;
+          border-radius: 16px; padding: 22px;
+          display: flex; flex-direction: column; justify-content: space-between;
+          min-height: 196px;
+        }
+        .at-quick-tile {
+          display: block; width: 100%; text-align: left;
+          border-radius: 14px; padding: 15px;
+          background: var(--ls-surface); border: 1px solid var(--ls-border);
+          cursor: pointer; font-family: var(--font-sans);
+          transition: transform .15s ease, border-color .15s ease;
+        }
+        .at-quick-tile:hover { transform: translateY(-2px); border-color: var(--ls-teal); }
+        .at-quick-tile:focus-visible { outline: 2px solid var(--ls-teal); outline-offset: 2px; }
+        .at-quick-tile-ico {
+          width: 28px; height: 28px; border-radius: 9px;
+          background: var(--ls-teal-bg); color: var(--ls-teal);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 15px; flex: 0 0 auto;
+        }
+        .at-quick-arrow { color: var(--ls-text-hint); font-size: 15px; transition: color .15s ease; }
+        .at-quick-tile:hover .at-quick-arrow { color: var(--ls-lime); }
         .at-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .at-tile {
           display: flex; align-items: center; gap: 12px; width: 100%;
@@ -556,70 +810,39 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         @media (max-width: 767px) {
           .at-grid-2 { grid-template-columns: 1fr !important; }
           .at-tiles { grid-template-columns: 1fr; }
+          .at-quick { grid-template-columns: 1fr; }
+          .rdv-hero { grid-row: auto; }
         }
       `}</style>
 
 
-      <div className="at-eyebrow is-live" style={{ marginTop: 2 }}>
+      <div className="at-eyebrow" style={{ marginTop: 2 }}>
         <span className="at-eyebrow-dot" aria-hidden="true" />
-        Actions rapides · le quotidien
+        Actions rapides &middot; le quotidien
       </div>
 
-      {/* ═══ BLOC 2 — CARTE "À FAIRE MAINTENANT" ═════════════════════════ */}
-      <ActionsRdvBlock
-        priority={priority}
-        activeFollowUp={activeFollowUp}
-        clientFirstName={client.firstName}
-        clientLastName={client.lastName}
-        clientPhone={client.phone}
-        onPriorityCta={() => void handlePriorityCta()}
-        onEditRdv={onEditRdv}
-      />
+      <div className="at-quick">
+        <RdvHeroTile
+          priority={priority}
+          activeFollowUp={activeFollowUp}
+          clientFirstName={client.firstName}
+          clientLastName={client.lastName}
+          clientPhone={client.phone}
+          onPriorityCta={() => void handlePriorityCta()}
+          onEditRdv={onEditRdv}
+        />
+        <MessageTemplatesButton client={client} variant="tile" />
+        <ClientRelanceButton client={client} variant="tile" />
+      </div>
 
-      {/* ═══ BLOC 2bis — PROTOCOLE DE SUIVI J+1 / J+3 / J+7 / J+10 / J+14
-          Restauré (2026-04-27) après régression du commit 3b3604e du 25/04
-          qui l'avait retiré de ClientDetailPage lors de l'extraction en
-          ActionsTab. Le composant gère sa propre modale d'envoi + log DB.
-          L'ancre id permet au handlePriorityCta de scroller directement
-          ici quand priority.type === 'send_followup'. */}
+      {/* Protocole de suivi J+1 -> J+14 (composant reel : envoi + log DB). Ancre
+          pour handlePriorityCta (priority send_followup). */}
       <div id="follow-up-protocol-anchor" style={{ marginTop: 12 }}>
         <FollowUpProtocolCard client={client} />
       </div>
 
-      {/* V3 funnel business (chantier 2026-11-07) — bouton envoyer le plan
-          d'opportunite si le client a coche un montant > 0 dans son bilan.
-          Le composant masque automatiquement si businessInterestAmount <= 0. */}
+      {/* Plan business (auto-masque si businessInterestAmount <= 0). */}
       <SendBusinessPlanButton client={client} />
-
-      {/* Messages rapides — hoisted en haut (Polish 2026-04-29) :
-          le CTA gold est tjr visible direct, plus enterre en bas sur mobile. */}
-      <div className="at-card" style={{ marginTop: 12 }}>
-        <div className="at-label" style={{ marginBottom: 10 }}>
-          Messages rapides
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <MessageTemplatesButton client={client} />
-          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
-            Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
-            — édite et envoie via WhatsApp, SMS, Telegram ou copie.
-          </div>
-        </div>
-      </div>
-
-      {/* À relancer — rappel PRIVÉ coach (in-app only). N'envoie RIEN au client,
-          contrairement à « Planifier un RDV ». Liste sur le Co-pilote. */}
-      <div className="at-card" style={{ marginTop: 12 }}>
-        <div className="at-label" style={{ marginBottom: 10 }}>
-          À relancer
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ClientRelanceButton client={client} />
-          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
-            Note privée « penser à le recontacter ». Apparaît sur ton Co-pilote.
-            Le client ne reçoit ni email ni notification.
-          </div>
-        </div>
-      </div>
 
       {/* VIP déplacé (2026-07-03) : toute la gestion Programme Client Privilégié
           vit désormais UNIQUEMENT dans l'onglet « Club VIP » (décision Thomas). */}

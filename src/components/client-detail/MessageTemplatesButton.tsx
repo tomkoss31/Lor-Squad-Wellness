@@ -17,8 +17,9 @@ interface MessageTemplatesButtonProps {
   client: Client;
   /** Pre-selectionne un template a l ouverture (ex: relance-douce). */
   preselectedTemplateId?: string;
-  /** Variante d affichage : full = CTA gold large, compact = chip discret. */
-  variant?: "full" | "compact";
+  /** Variante d affichage : full = CTA gold large, compact = chip discret,
+      tile = tuile design (zone quotidien Actions). */
+  variant?: "full" | "compact" | "tile";
 }
 
 export function MessageTemplatesButton({
@@ -44,6 +45,37 @@ export function MessageTemplatesButton({
   );
 
   const suggestionCount = applicable.length;
+
+  if (variant === "tile") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="at-quick-tile"
+          data-tour-id="messages-quick-templates-cta"
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <span aria-hidden="true" className="at-quick-tile-ico">💬</span>
+              <span style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ls-text)" }}>Message</span>
+            </div>
+            <span aria-hidden="true" className="at-quick-arrow">→</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", fontFamily: "'JetBrains Mono', ui-monospace, monospace", marginTop: 8 }}>
+            WhatsApp · SMS · Copier
+            {suggestionCount > 0 ? ` · ${suggestionCount} suggestion${suggestionCount > 1 ? "s" : ""}` : ""}
+          </div>
+        </button>
+        <MessageTemplatesModal
+          client={client}
+          open={open}
+          onClose={() => setOpen(false)}
+          preselectedTemplateId={preselectedTemplateId}
+        />
+      </>
+    );
+  }
 
   if (variant === "compact") {
     return (
