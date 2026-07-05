@@ -13,7 +13,7 @@
 // Tous les connecteurs métier sont réutilisés depuis AppContext — aucune
 // mutation n'est recréée ici, on branche sur ce qui existe.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
@@ -28,7 +28,6 @@ import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
 import { isClientProgramStarted } from "../../lib/calculations";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
-import { LIFECYCLE_LABELS } from "../../types/domain";
 
 // Ordre des pills (mockup) : Actif / Pause / Pas démarré / Arrêté / Perdu
 const LIFECYCLE_ORDER: LifecycleStatus[] = [
@@ -38,6 +37,15 @@ const LIFECYCLE_ORDER: LifecycleStatus[] = [
   "stopped",
   "lost",
 ];
+
+/** Libellés courts pour les pills du panneau Cycle de vie (design PanelBody). */
+const LC_SHORT: Record<LifecycleStatus, string> = {
+  active: "ACTIF",
+  paused: "PAUSE",
+  not_started: "PAS DÉM.",
+  stopped: "ARRÊTÉ",
+  lost: "PERDU",
+};
 
 function formatDateShort(iso?: string | null): string {
   if (!iso) return "—";
@@ -63,9 +71,46 @@ interface Props {
   onEditRdv: () => void;
   onOpenSharePublic?: () => void;
   onGoToVueComplete?: () => void;
+  onGoToClubVip?: () => void;
 }
 
-export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete }: Props) {
+/** Panneaux focalisés du lanceur « Gérer le dossier ». */
+type ManagePanel = "edit" | "lifecycle" | "access" | "uplink" | "admin";
+
+/** Teintes des tuiles/panneaux (design Claude design, tokens globals réels). */
+const TILE_TINTS: Record<string, { bg: string; col: string }> = {
+  purple: { bg: "var(--ls-purple-bg)", col: "var(--ls-purple)" },
+  teal: { bg: "var(--ls-teal-bg)", col: "var(--ls-teal)" },
+  lime: { bg: "color-mix(in srgb, var(--ls-lime) 16%, transparent)", col: "var(--ls-lime)" },
+  coral: { bg: "var(--ls-coral-bg)", col: "var(--ls-coral)" },
+};
+
+/** Tuiles du lanceur. `vip` n'ouvre pas de panneau : raccourci vers l'onglet Club VIP. */
+const MANAGE_TILES: {
+  id: "vip" | ManagePanel;
+  ico: string;
+  title: string;
+  sub: string;
+  tint: keyof typeof TILE_TINTS;
+  danger?: boolean;
+}[] = [
+  { id: "vip", ico: "👑", title: "Programme VIP", sub: "Remises · invitation · gestion", tint: "purple" },
+  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · date de départ", tint: "teal" },
+  { id: "lifecycle", ico: "🔄", title: "Cycle de vie & suivi", sub: "Statut · fragile · suivi/PV libre", tint: "teal" },
+  { id: "access", ico: "🔗", title: "Accès & partage", sub: "Partage public de la fiche", tint: "teal" },
+  { id: "uplink", ico: "🌿", title: "Herbalife uplink", sub: "Sponsor · lignée distributeur", tint: "lime" },
+  { id: "admin", ico: "⚙️", title: "Zone admin", sub: "Transférer · supprimer le dossier", tint: "coral", danger: true },
+];
+
+const PANEL_META: Record<ManagePanel, { title: string; ico: string; tint: keyof typeof TILE_TINTS }> = {
+  edit: { title: "Modifier le dossier", ico: "📝", tint: "teal" },
+  lifecycle: { title: "Cycle de vie & suivi", ico: "🔄", tint: "teal" },
+  access: { title: "Accès & partage", ico: "🔗", tint: "teal" },
+  uplink: { title: "Herbalife uplink", ico: "🌿", tint: "lime" },
+  admin: { title: "Zone admin", ico: "⚙️", tint: "coral" },
+};
+
+export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete, onGoToClubVip }: Props) {
   const navigate = useNavigate();
   const {
     currentUser,
@@ -88,9 +133,35 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [transferTo, setTransferTo] = useState<string>("");
-  // Lanceur (2026-07-03) : la gestion du dossier est repliée par défaut pour
-  // désencombrer l'onglet Actions (fini le scroll de 10 sections).
-  const [showManage, setShowManage] = useState(false);
+  // Lanceur (design Claude design 2026-07-03) : gestion en tuiles → panneau
+  // tiroir focalisé (fini le mur de 10 sections).
+  const [activePanel, setActivePanel] = useState<ManagePanel | null>(null);
+  const [vipNote, setVipNote] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const vipNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // VIP = raccourci vers l'onglet Club VIP (toast bref puis switch d'onglet).
+  function handleTileClick(id: "vip" | ManagePanel) {
+    if (id === "vip") {
+      setVipNote(true);
+      if (vipNoteTimer.current) clearTimeout(vipNoteTimer.current);
+      vipNoteTimer.current = setTimeout(() => {
+        setVipNote(false);
+        onGoToClubVip?.();
+      }, 900);
+      return;
+    }
+    setActivePanel((p) => (p === id ? null : id));
+  }
+  useEffect(() => () => { if (vipNoteTimer.current) clearTimeout(vipNoteTimer.current); }, []);
+
+  // Scroll doux du panneau dans la vue à l'ouverture (design).
+  useEffect(() => {
+    if (!activePanel || !panelRef.current) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const rect = panelRef.current.getBoundingClientRect();
+    window.scrollTo({ top: window.scrollY + rect.top - 90, behavior: reduce ? "auto" : "smooth" });
+  }, [activePanel]);
   const [transferring, setTransferring] = useState(false);
   const [togglingFragile, setTogglingFragile] = useState(false);
   const [togglingFreeFollow, setTogglingFreeFollow] = useState(false);
@@ -123,7 +194,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const currentStatus: LifecycleStatus =
     client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
 
-  const lifecycleUpdatedDays = daysSince(client.lifecycleUpdatedAt);
 
   const latestAssessment = [...(client.assessments ?? [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -388,11 +458,112 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         }
         .at-row-clickable:last-child { border-bottom: none; }
         .at-row-clickable:hover { background: var(--ls-actions-soft); }
+
+        /* ─── Lanceur : eyebrow + tuiles → tiroir (design Claude design 2026-07-03) ─── */
+        .at-eyebrow {
+          display: flex; align-items: center; gap: 8px;
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+          text-transform: uppercase; color: var(--ls-text-muted);
+          margin: 22px 2px 12px;
+        }
+        .at-eyebrow-dot {
+          width: 7px; height: 7px; border-radius: 999px; flex: 0 0 auto;
+          background: var(--ls-teal); box-shadow: 0 0 8px var(--ls-teal);
+        }
+        .at-eyebrow-dot--lime { background: var(--ls-lime); box-shadow: 0 0 8px var(--ls-lime); }
+        .at-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .at-tile {
+          display: flex; align-items: center; gap: 12px; width: 100%;
+          padding: 15px 16px; border-radius: 12px; cursor: pointer; min-height: 44px;
+          background: var(--ls-surface); border: 1px solid var(--ls-border);
+          text-align: left; font-family: var(--font-sans);
+          transition: transform .16s ease, border-color .16s ease, opacity .2s ease;
+          --arw-c: var(--ls-text-hint); --arw-x: 0px;
+        }
+        .at-tile.is-on { border-color: var(--ls-teal); }
+        .at-tile--danger { border-left: 2px solid color-mix(in srgb, var(--ls-coral) 55%, transparent); }
+        .at-tile:hover {
+          transform: translateY(-2px); opacity: 1 !important;
+          border-color: var(--ls-teal); --arw-c: var(--ls-lime); --arw-x: 3px;
+        }
+        .at-tile--danger:hover { border-color: var(--ls-coral); }
+        .at-tile:focus-visible { outline: 2px solid var(--ls-teal); outline-offset: 2px; }
+        .at-tile-ico {
+          width: 38px; height: 38px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 17px; flex: 0 0 auto;
+        }
+        .at-tile-body { flex: 1; min-width: 0; }
+        .at-tile-title { display: block; font-size: 14px; font-weight: 700; line-height: 1.25; color: var(--ls-text); }
+        .at-tile-sub { display: block; font-size: 11.5px; line-height: 1.35; margin-top: 2px; color: var(--ls-text-muted); }
+        .at-tile-arrow {
+          font-size: 17px; flex: 0 0 auto; color: var(--arw-c);
+          transform: translateX(var(--arw-x)); transition: transform .15s ease, color .15s ease;
+        }
+        .at-panel {
+          margin-top: 14px; background: var(--ls-surface);
+          border: 1px solid var(--ls-border); border-top: 2px solid var(--ls-teal);
+          border-radius: 12px; padding: 22px;
+          animation: atPanelIn .22s ease;
+        }
+        @keyframes atPanelIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: none; }
+        }
+        .at-panel-head {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 12px; margin-bottom: 6px;
+        }
+        .at-panel-title {
+          font-family: 'Anton', 'Syne', sans-serif;
+          font-size: 20px; letter-spacing: 0.02em; text-transform: uppercase;
+          color: var(--ls-text);
+          display: flex; align-items: center; gap: 12px; min-width: 0;
+        }
+        .at-panel-chip {
+          width: 36px; height: 36px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 17px; flex: 0 0 auto;
+        }
+        .at-panel-back {
+          min-height: 38px; padding: 9px 15px; border-radius: 9px;
+          border: 1px solid var(--ls-border); background: var(--ls-surface2);
+          color: var(--ls-text-muted);
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 11px; font-weight: 600; cursor: pointer; flex: 0 0 auto;
+          transition: border-color .15s ease, color .15s ease;
+        }
+        .at-panel-back:hover { border-color: var(--ls-teal); color: var(--ls-text); }
+        /* Intérieurs de panneaux (design PanelBody) */
+        .pb-row {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          width: 100%; text-align: left; background: transparent; border: none;
+          border-bottom: 1px solid var(--ls-border); padding: 14px 4px; cursor: pointer;
+          min-height: 44px; transition: background .15s ease;
+        }
+        .pb-row:last-child { border-bottom: none; }
+        .pb-row:hover { background: var(--ls-surface2); }
+        .pb-pill {
+          padding: 10px 4px; border-radius: 8px; text-align: center; cursor: pointer;
+          font-size: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+          letter-spacing: 0.03em; transition: border-color .15s ease;
+        }
+        .pb-pill:hover { border-color: var(--ls-teal); }
+        @media (prefers-reduced-motion: reduce) {
+          .at-tile, .at-tile-arrow, .at-panel { transition: none; animation: none; }
+        }
         @media (max-width: 767px) {
           .at-grid-2 { grid-template-columns: 1fr !important; }
+          .at-tiles { grid-template-columns: 1fr; }
         }
       `}</style>
 
+
+      <div className="at-eyebrow is-live" style={{ marginTop: 2 }}>
+        <span className="at-eyebrow-dot" aria-hidden="true" />
+        Actions rapides · le quotidien
+      </div>
 
       {/* ═══ BLOC 2 — CARTE "À FAIRE MAINTENANT" ═════════════════════════ */}
       <ActionsRdvBlock
@@ -453,705 +624,219 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       {/* VIP déplacé (2026-07-03) : toute la gestion Programme Client Privilégié
           vit désormais UNIQUEMENT dans l'onglet « Club VIP » (décision Thomas). */}
 
-      {/* 🗂 Lanceur (2026-07-03) : la gestion du dossier (modifier, cycle de vie,
-          accès, uplink, admin) est repliée par défaut. Fini le scroll de 10
-          sections — on ne déplie que quand on en a besoin. */}
-      <button
-        type="button"
-        onClick={() => setShowManage((v) => !v)}
-        className="at-card"
-        aria-expanded={showManage}
-        style={{
-          marginTop: 12,
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          cursor: "pointer",
-          background: "var(--ls-actions-card)",
-          border: "0.5px solid var(--ls-actions-border)",
-          textAlign: "left",
-          fontFamily: "var(--font-sans)",
-        }}
-      >
-        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span aria-hidden="true" style={{ fontSize: 20 }}>🗂</span>
-          <span>
-            <span style={{ display: "block", fontWeight: 700, fontSize: 14, color: "var(--ls-actions-text)" }}>
-              Gérer le dossier
-            </span>
-            <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-actions-text-muted)", marginTop: 1 }}>
-              Modifier · cycle de vie · accès · Herbalife uplink · admin
-            </span>
-          </span>
-        </span>
-        <span aria-hidden="true" style={{ fontSize: 13, color: "var(--ls-actions-text-muted)", transition: "transform .2s", transform: showManage ? "rotate(180deg)" : "none" }}>▾</span>
-      </button>
+      {/* 🗂 Lanceur (design Claude design 2026-07-03) : gestion en tuiles → tiroir focalisé. */}
+      <div className="at-eyebrow">
+        <span className="at-eyebrow-dot at-eyebrow-dot--lime" aria-hidden="true" />
+        Gérer le dossier · s&apos;ouvre au clic
+      </div>
+      <div className="at-tiles">
+        {MANAGE_TILES.map((t) => {
+          const on = activePanel === t.id;
+          const dim = activePanel != null && !on;
+          const tint = TILE_TINTS[t.tint];
+          return (
+            <button
+              key={t.id}
+              type="button"
+              className={`at-tile${t.danger ? " at-tile--danger" : ""}${on ? " is-on" : ""}`}
+              aria-expanded={t.id !== "vip" ? on : undefined}
+              onClick={() => handleTileClick(t.id)}
+              style={{ opacity: dim ? 0.45 : 1 }}
+            >
+              <span className="at-tile-ico" aria-hidden="true" style={{ background: tint.bg, color: tint.col }}>
+                {t.ico}
+              </span>
+              <span className="at-tile-body">
+                <span className="at-tile-title">{t.title}</span>
+                <span className="at-tile-sub">{t.sub}</span>
+              </span>
+              <span className="at-tile-arrow" aria-hidden="true">{t.id === "vip" ? "↗" : "→"}</span>
+            </button>
+          );
+        })}
+      </div>
 
-      {showManage ? (
-        <>
-      {/* Chantier uplink HL (2026-05-21) : override le distri uplink HL
-          réel pour les clients orphelins repris (ex: Stéphanie sous
-          Ophélie 42% mais suivie par Mélanie). */}
-      <HerbalifeUplinkPanel client={client} />
-
-      {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
-      <div
-        className="at-grid-2"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 12,
-          marginTop: 12,
-        }}
-      >
-        {/* ─── COLONNE GAUCHE ─── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Bloc 3A : Modifier le dossier */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 14 }}>
-              Modifier le dossier
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <RowClickable
-                label="Bilan de départ"
-                meta={formatDateShort(initialAssessment?.date)}
-                onClick={() => navigate(`/clients/${client.id}/start-assessment/edit`)}
-              />
-              <RowClickable
-                label="Dernier bilan"
-                meta={
-                  latestAssessmentDays != null
-                    ? `il y a ${latestAssessmentDays} j`
-                    : "Aucun bilan"
-                }
-                onClick={() =>
-                  latestAssessment?.id
-                    ? navigate(`/clients/${client.id}/assessments/${latestAssessment.id}/edit`)
-                    : navigate(`/clients/${client.id}/start-assessment/edit`)
-                }
-              />
-              <RowClickable
-                label="Coordonnées"
-                meta={formatPhone(client.phone)}
-                onClick={() => setEditCoordinatesOpen(true)}
-              />
-              <RowClickable
-                label="Fiche point volume"
-                meta={`${pvThisMonth.toFixed(1)} PV ce mois`}
-                onClick={() =>
-                  navigate(
-                    `/pv/clients?responsable=${encodeURIComponent(
-                      client.distributorId,
-                    )}&client=${encodeURIComponent(client.id)}`,
-                  )
-                }
-              />
-            </div>
-          </div>
-
-          {/* Bloc 3A-bis : Activator démarrage programme (chantier 2026-05-05).
-              Cas Mandy : bilan le 29/04 mais cliente reçoit produits le 05/05.
-              Sans cet activator, J+7 et usure produits partent du 29/04
-              → décalage en réalité. Click "Démarrer le programme" pose la
-              date de départ et ré-aligne pv_client_products + protocole. */}
-          {(() => {
-            const initialDate = initialAssessment?.date ?? null;
-            const startDateIso = client.startDate ?? null;
-            const lifecycleClosed =
-              currentStatus === "stopped" || currentStatus === "lost";
-            // On masque le bloc si client mort/perdu (pas pertinent).
-            if (lifecycleClosed) return null;
-            // On masque aussi si pas de bilan initial (pas de programme à démarrer).
-            if (!initialDate) return null;
-
-            const daysSinceStart = daysSince(startDateIso ?? initialDate);
-            const initialDateFormatted = formatDateShort(initialDate);
-            const startDateFormatted = startDateIso
-              ? formatDateShort(startDateIso)
-              : null;
-            const isMisaligned =
-              !!initialDate &&
-              !startDateIso &&
-              daysSince(initialDate) !== null &&
-              (daysSince(initialDate) ?? 0) >= 1;
-
-            return (
-              <div
-                className="at-card"
+      {activePanel ? (
+        <div
+          className="at-panel"
+          ref={panelRef}
+          style={{ borderTopColor: TILE_TINTS[PANEL_META[activePanel].tint].col }}
+        >
+          <div className="at-panel-head">
+            <span className="at-panel-title">
+              <span
+                className="at-panel-chip"
+                aria-hidden="true"
                 style={{
-                  borderLeft: isMisaligned
-                    ? "3px solid var(--ls-coral)"
-                    : undefined,
+                  background: TILE_TINTS[PANEL_META[activePanel].tint].bg,
+                  color: TILE_TINTS[PANEL_META[activePanel].tint].col,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 10,
-                    gap: 12,
-                  }}
-                >
-                  <div className="at-label">
-                    🚀 Démarrage du programme
-                  </div>
-                  {startDateFormatted ? (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--ls-text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Démarré le {startDateFormatted} · J+
-                      {daysSinceStart ?? 0}
-                    </div>
-                  ) : null}
-                </div>
-
-                {!startDateIso ? (
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ls-text-muted)",
-                      margin: "0 0 10px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {isMisaligned ? (
-                      <>
-                        ⚠️ Bilan fait le <strong>{initialDateFormatted}</strong>
-                        {" "}({daysSince(initialDate)} j) mais aucune date de
-                        démarrage produits enregistrée. Le compteur J+1/J+7/J+14
-                        et l'usure des produits partent donc du bilan.
-                        Activer ici pour réaligner sur le vrai départ.
-                      </>
-                    ) : (
-                      <>
-                        Marque le départ effectif des produits — le compteur
-                        J+1/J+7/J+14/J+21 et l'usure des produits partent
-                        de cette date.
-                      </>
-                    )}
-                  </p>
-                ) : (
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ls-text-muted)",
-                      margin: "0 0 10px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Si la cliente a redémarré ou si la date est mauvaise, tu
-                    peux la corriger ici. Bilan initial :
-                    {" "}
-                    <strong>{initialDateFormatted}</strong>.
-                  </p>
-                )}
-
-                {!activatorOpen ? (
-                  <button
-                    type="button"
-                    onClick={() => setActivatorOpen(true)}
-                    style={{
-                      background: !startDateIso
-                        ? "linear-gradient(180deg, #EF9F27, #BA7517)"
-                        : "var(--ls-surface2)",
-                      color: !startDateIso ? "white" : "var(--ls-text)",
-                      border: !startDateIso
-                        ? "none"
-                        : "1px solid var(--ls-border)",
-                      padding: "10px 16px",
-                      borderRadius: 10,
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "DM Sans, sans-serif",
-                    }}
-                  >
-                    {!startDateIso
-                      ? "Démarrer le programme"
-                      : "Modifier la date de départ"}
-                  </button>
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      background: "var(--ls-surface2)",
-                      padding: 12,
-                      borderRadius: 10,
-                      border: "1px solid var(--ls-border)",
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4,
-                        fontSize: 12,
-                        color: "var(--ls-text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Date de démarrage effectif
-                      <input
-                        type="date"
-                        value={activatorDate}
-                        max={new Date().toISOString().slice(0, 10)}
-                        onChange={(e) => setActivatorDate(e.target.value)}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 8,
-                          border: "1px solid var(--ls-border)",
-                          fontSize: 14,
-                          fontFamily: "DM Sans, sans-serif",
-                          background: "var(--ls-surface)",
-                          color: "var(--ls-text)",
-                        }}
-                      />
-                    </label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        type="button"
-                        onClick={() => void handleActivateProgram()}
-                        disabled={activatorSaving}
-                        style={{
-                          flex: 1,
-                          background:
-                            "linear-gradient(180deg, #EF9F27, #BA7517)",
-                          color: "white",
-                          border: "none",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          fontWeight: 700,
-                          fontSize: 13,
-                          cursor: activatorSaving ? "not-allowed" : "pointer",
-                          opacity: activatorSaving ? 0.6 : 1,
-                          fontFamily: "DM Sans, sans-serif",
-                        }}
-                      >
-                        {activatorSaving ? "Activation…" : "Confirmer"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActivatorOpen(false)}
-                        disabled={activatorSaving}
-                        style={{
-                          background: "transparent",
-                          color: "var(--ls-text-muted)",
-                          border: "1px solid var(--ls-border)",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          fontWeight: 600,
-                          fontSize: 13,
-                          cursor: "pointer",
-                          fontFamily: "DM Sans, sans-serif",
-                        }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Bloc 3B : Cycle de vie + toggles */}
-          <div className="at-card">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 14,
-              }}
-            >
-              <div className="at-label">Cycle de vie</div>
-              {lifecycleUpdatedDays != null ? (
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-teal-text)",
-                  }}
-                >
-                  Modifié il y a {lifecycleUpdatedDays} j
-                </div>
-              ) : null}
-            </div>
-
-            {/* 5 pills statut */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, 1fr)",
-                gap: 5,
-                marginBottom: 14,
-              }}
-            >
-              {LIFECYCLE_ORDER.map((st) => (
-                <LifecyclePill
-                  key={st}
-                  status={st}
-                  active={currentStatus === st}
-                  disabled={lifecycleSaving}
-                  onClick={() => void handleLifecycleChange(st)}
-                />
-              ))}
-            </div>
-
-            {/* 3 toggles */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <LifecycleToggle
-                icon="🛡️"
-                title="Marquer fragile"
-                metaOff="Client hésitant · attention particulière"
-                metaOn="Activé · attention particulière au suivi"
-                active={client.isFragile ?? false}
-                busy={togglingFragile}
-                onToggle={() => void handleToggleFragile()}
-              />
-              <LifecycleToggle
-                icon="✦"
-                title="Suivi libre"
-                metaOff="Désactivé · apparaît dans le plan de relance"
-                metaOn="Activé · exclu du plan de relance et des PV en retard (la rentabilité reste comptée)"
-                active={client.freeFollowUp ?? false}
-                busy={togglingFreeFollow}
-                onToggle={() => void handleToggleFreeFollow()}
-              />
-              <LifecycleToggle
-                icon="◇"
-                title="PV volume libre"
-                metaOff="Inclus dans les listes de réassort et alertes PV"
-                metaOn="Exclu des listes de réassort et alertes PV · bilans normaux"
-                active={client.freePvTracking ?? false}
-                busy={togglingFreePv}
-                onToggle={() => void handleToggleFreePv()}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ─── COLONNE DROITE ─── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Bloc 4A : Accès client */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 12 }}>
-              Accès client
-            </div>
-            {/* Accès app retiré d'ici (2026-07-03) : l'invitation PWA se gère
-                depuis le hero de la fiche + la page d'accueil client. On ne
-                garde ici que le partage public (lien vitrine anonymisé). */}
-
-            {/* Ligne partage public */}
-            <button
-              type="button"
-              onClick={onOpenSharePublic}
-              disabled={!onOpenSharePublic}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "8px 10px",
-                fontSize: 12,
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                cursor: onOpenSharePublic ? "pointer" : "default",
-                color: "var(--ls-actions-text)",
-              }}
-            >
-              <span>Partage public</span>
-              <SharePublicPill client={client} />
+                {PANEL_META[activePanel].ico}
+              </span>
+              {PANEL_META[activePanel].title}
+            </span>
+            <button type="button" className="at-panel-back" onClick={() => setActivePanel(null)}>
+              ← Fermer
             </button>
           </div>
 
-          {/* Bloc 4B : Propriété du dossier */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 12 }}>
-              Propriété du dossier
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 0",
-                fontSize: 12,
-                marginBottom: 8,
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  background:
-                    currentOwner?.role === "admin" ? "#0F6E56" : "#888780",
-                  color: "#fff",
-                  fontSize: 10,
-                  fontWeight: 500,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                {(currentOwner?.name?.[0] ?? "?").toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "var(--ls-actions-text)", fontWeight: 500 }}>
-                  {currentOwner?.name ?? client.distributorName ?? "Non assigné"}
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-text-muted)",
-                    marginTop: 1,
-                  }}
-                >
-                  Distributeur actuel
-                </div>
-              </div>
-            </div>
-            {canTransfer ? (
-              <>
-                <select
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
-                  disabled={transferring}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    fontSize: 12,
-                    borderRadius: 8,
-                    border: "0.5px solid var(--ls-actions-border)",
-                    background: "var(--ls-actions-soft)",
-                    color: "var(--ls-actions-text-tertiary)",
-                  }}
-                >
-                  <option value="">Transférer à…</option>
-                  {assignableOwners.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-                {transferTo ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleTransfer()}
-                    disabled={transferring}
-                    style={{
-                      width: "100%",
-                      marginTop: 8,
-                      padding: "8px 10px",
-                      fontSize: 12,
-                      borderRadius: 8,
-                      background: "#0F6E56",
-                      color: "#fff",
-                      border: "none",
-                      cursor: transferring ? "wait" : "pointer",
-                    }}
-                  >
-                    {transferring ? "Transfert…" : "Confirmer le transfert"}
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--ls-actions-text-muted)",
-                  fontStyle: "italic",
-                }}
-              >
-                Transfert réservé aux admins et référents.
-              </div>
-            )}
-          </div>
+          {activePanel === "uplink" ? (
+            /* Chantier uplink HL (2026-05-21) : override le distri uplink HL réel
+               pour les clients orphelins repris (ex: Stéphanie sous Ophélie 42%). */
+            <HerbalifeUplinkPanel client={client} />
+          ) : null}
 
-          {/* Bloc 4C : Zone sensible */}
-          {canDelete ? (
-            <div
-              style={{
-                background: "var(--ls-actions-red-bg)",
-                borderRadius: 14,
-                padding: "14px 18px",
-                border: "0.5px solid rgba(224,75,75,0.15)",
-              }}
-            >
-              <div
-                className="at-label"
-                style={{
-                  color: "var(--ls-actions-red-text-dark)",
-                  marginBottom: 8,
-                }}
-              >
-                Zone sensible
-              </div>
-              {deleteStep === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setDeleteStep(1)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: 8,
-                    border: "0.5px solid rgba(224,75,75,0.3)",
-                    background: "var(--ls-actions-card)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    color: "var(--ls-actions-red-text)",
-                    fontSize: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>Supprimer ce dossier</span>
-                  <span aria-hidden="true" style={{ fontSize: 11 }}>
-                    🗑
-                  </span>
-                </button>
-              ) : deleteStep === 1 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ls-actions-red-text-dark)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Êtes-vous sûr·e ? Cette action est <strong>irréversible</strong>. Tous
-                    les bilans, mensurations, messages et données liées seront perdus.
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStep(0)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "0.5px solid var(--ls-actions-border)",
-                        background: "var(--ls-actions-card)",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStep(2)}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "none",
-                        background: "#A32D2D",
-                        color: "#fff",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Je confirme
-                    </button>
-                  </div>
+          {activePanel === "edit" ? (
+            <>
+            {[
+              { label: "Bilan de départ", meta: formatDateShort(initialAssessment?.date), onClick: () => navigate(`/clients/${client.id}/start-assessment/edit`) },
+              { label: "Dernier bilan", meta: latestAssessmentDays != null ? `il y a ${latestAssessmentDays} j` : "Aucun bilan", onClick: () => (latestAssessment?.id ? navigate(`/clients/${client.id}/assessments/${latestAssessment.id}/edit`) : navigate(`/clients/${client.id}/start-assessment/edit`)) },
+              { label: "Coordonnées", meta: formatPhone(client.phone), onClick: () => setEditCoordinatesOpen(true) },
+              { label: "Fiche point volume", meta: `${pvThisMonth.toFixed(1)} PV ce mois`, onClick: () => navigate(`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`) },
+            ].map((r) => (
+              <button key={r.label} type="button" onClick={r.onClick} className="pb-row">
+                <span style={{ fontSize: 14, color: "var(--ls-text)", fontWeight: 500 }}>{r.label}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'JetBrains Mono',ui-monospace,monospace" }}>{r.meta}</span>
+                  <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 16 }}>&rsaquo;</span>
+                </span>
+              </button>
+            ))}
+
+            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-gold)", background: "var(--ls-gold-bg)" }}>
+              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-gold)", marginBottom: 6 }}>🚀 Démarrage du programme</div>
+              <p style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.5, color: "var(--ls-text-muted)" }}>
+                {client.startDate ? `Démarré le ${new Date(client.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}. ` : ""}
+                Le compteur J+1 / J+7 / J+14 et l&apos;usure des produits partent de la date de départ.
+              </p>
+              {activatorOpen ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <input type="date" value={activatorDate} onChange={(e) => setActivatorDate(e.target.value)} style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 13 }} />
+                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer le départ"}</button>
+                  <button type="button" onClick={() => setActivatorOpen(false)} style={{ background: "transparent", border: "1px solid var(--ls-border)", color: "var(--ls-text-muted)", padding: "11px 16px", borderRadius: 10, fontSize: 13, cursor: "pointer", minHeight: 44 }}>Annuler</button>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ls-actions-red-text-dark)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Tape <strong>SUPPRIMER</strong> pour confirmer définitivement.
-                  </div>
-                  <input
-                    type="text"
-                    value={deleteInput}
-                    onChange={(e) => setDeleteInput(e.target.value)}
-                    placeholder="SUPPRIMER"
-                    style={{
-                      width: "100%",
-                      padding: "7px 10px",
-                      borderRadius: 7,
-                      border: "0.5px solid rgba(224,75,75,0.3)",
-                      background: "var(--ls-actions-card)",
-                      fontSize: 12,
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteStep(0);
-                        setDeleteInput("");
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "0.5px solid var(--ls-actions-border)",
-                        background: "var(--ls-actions-card)",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete()}
-                      disabled={deleteInput.trim() !== "SUPPRIMER" || deleting}
-                      style={{
-                        flex: 1,
-                        padding: "7px 10px",
-                        borderRadius: 7,
-                        border: "none",
-                        background:
-                          deleteInput.trim() === "SUPPRIMER" ? "#A32D2D" : "rgba(211,209,199,0.4)",
-                        color: "#fff",
-                        fontSize: 11,
-                        cursor:
-                          deleteInput.trim() === "SUPPRIMER" && !deleting
-                            ? "pointer"
-                            : "not-allowed",
-                      }}
-                    >
-                      {deleting ? "Suppression…" : "Supprimer définitivement"}
-                    </button>
-                  </div>
-                </div>
+                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de départ" : "Démarrer le programme"}</button>
               )}
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "var(--ls-actions-red-text-dark)",
-                  opacity: 0.7,
-                  marginTop: 6,
-                }}
-              >
-                Action irréversible · toutes les données seront perdues
-              </div>
             </div>
+          </>
+          ) : null}
+
+          {activePanel === "lifecycle" ? (
+            <>
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Statut du client</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, marginBottom: 20 }}>
+              {LIFECYCLE_ORDER.map((st) => {
+                const on = currentStatus === st;
+                return (
+                  <button key={st} type="button" disabled={lifecycleSaving} onClick={() => void handleLifecycleChange(st)} className="pb-pill" style={{ background: on ? "var(--ls-teal-bg)" : "var(--ls-surface2)", border: `1px solid ${on ? "var(--ls-teal)" : "var(--ls-border)"}`, color: on ? "var(--ls-teal)" : "var(--ls-text-muted)", fontWeight: on ? 700 : 600 }}>{LC_SHORT[st]}</button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { icon: "🛡️", title: "Marquer fragile", meta: "Client hésitant · attention particulière", on: client.isFragile ?? false, busy: togglingFragile, onToggle: () => void handleToggleFragile() },
+                { icon: "✦", title: "Suivi libre", meta: "Exclu du plan de relance · rentabilité comptée", on: client.freeFollowUp ?? false, busy: togglingFreeFollow, onToggle: () => void handleToggleFreeFollow() },
+                { icon: "◇", title: "PV volume libre", meta: "Exclu des listes de réassort et alertes PV", on: client.freePvTracking ?? false, busy: togglingFreePv, onToggle: () => void handleToggleFreePv() },
+              ].map((t) => (
+                <button key={t.title} type="button" onClick={t.onToggle} disabled={t.busy} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "12px 14px", borderRadius: 12, width: "100%", textAlign: "left", cursor: t.busy ? "wait" : "pointer", background: t.on ? "var(--ls-teal-bg)" : "var(--ls-surface2)", border: `1px solid ${t.on ? "color-mix(in srgb,var(--ls-teal) 30%,transparent)" : "transparent"}` }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                    <span aria-hidden="true" style={{ fontSize: 15 }}>{t.icon}</span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: t.on ? "var(--ls-teal)" : "var(--ls-text)" }}>{t.title}</span>
+                      <span style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginTop: 1 }}>{t.meta}</span>
+                    </span>
+                  </span>
+                  <span aria-hidden="true" style={{ width: 38, height: 22, borderRadius: 999, background: t.on ? "var(--ls-teal)" : "var(--ls-border2)", flexShrink: 0, padding: 2, display: "flex", justifyContent: t.on ? "flex-end" : "flex-start", transition: "background .15s" }}>
+                    <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,.3)" }} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+          ) : null}
+
+          {activePanel === "access" ? (
+            <>
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Partage public de la fiche</div>
+            <button type="button" onClick={onOpenSharePublic} disabled={!onOpenSharePublic} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", width: "100%", textAlign: "left", cursor: onOpenSharePublic ? "pointer" : "default" }}>
+              <span>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>Lien vitrine anonymisé</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>Partage une version publique sans données sensibles.</span>
+              </span>
+              <SharePublicPill client={client} />
+            </button>
+            <p style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.5, color: "var(--ls-text-hint)" }}>L&apos;accès à l&apos;app client se gère depuis le hero de la fiche + la page d&apos;accueil client — pas ici.</p>
+          </>
+          ) : null}
+
+          {activePanel === "admin" ? (
+            <>
+            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Propriété du dossier</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", marginBottom: 10 }}>
+              <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--ls-teal)", color: "var(--ls-teal-contrast)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{(currentOwner?.name ?? "?").slice(0, 1).toUpperCase()}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, color: "var(--ls-text)", fontWeight: 600 }}>{currentOwner?.name ?? "—"}</span>
+                <span style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)" }}>Distributeur actuel</span>
+              </span>
+            </div>
+            {canTransfer ? (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)} style={{ flex: 1, minWidth: 180, minHeight: 44, padding: "10px 12px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)", fontSize: 13 }}>
+                  <option value="">Transférer à…</option>
+                  {assignableOwners.map((u) => (<option key={u.id} value={u.id}>{u.name}</option>))}
+                </select>
+                <button type="button" onClick={() => void handleTransfer()} disabled={!transferTo || transferring} style={{ minHeight: 44, padding: "10px 16px", borderRadius: 12, border: "1px solid var(--ls-teal)", background: "var(--ls-teal-bg)", color: "var(--ls-teal)", fontSize: 13, fontWeight: 700, cursor: !transferTo || transferring ? "not-allowed" : "pointer", opacity: !transferTo ? 0.5 : 1 }}>{transferring ? "…" : "Transférer"}</button>
+              </div>
+            ) : null}
+            {canDelete ? (
+              <div style={{ padding: 16, borderRadius: 12, background: "var(--ls-coral-bg)", border: "1px solid color-mix(in srgb,var(--ls-coral) 30%,transparent)" }}>
+                <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-coral)", marginBottom: 10 }}>⚠ Zone sensible</div>
+                {deleteStep === 0 ? (
+                  <button type="button" onClick={() => setDeleteStep(1)} style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: "1px solid color-mix(in srgb,var(--ls-coral) 40%,transparent)", background: "transparent", color: "var(--ls-coral)", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+                    <span>Supprimer ce dossier</span><span aria-hidden="true">🗑</span>
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 12, color: "var(--ls-coral)" }}>Tape <strong>SUPPRIMER</strong> pour confirmer.</div>
+                    <input type="text" value={deleteInput} onChange={(e) => setDeleteInput(e.target.value)} placeholder="SUPPRIMER" style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid color-mix(in srgb,var(--ls-coral) 40%,transparent)", background: "var(--ls-surface)", color: "var(--ls-text)", fontSize: 13 }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button type="button" onClick={() => { setDeleteStep(0); setDeleteInput(""); }} style={{ flex: 1, minHeight: 44, borderRadius: 10, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                      <button type="button" onClick={() => void handleDelete()} disabled={deleteInput.trim().toUpperCase() !== "SUPPRIMER" || deleting} style={{ flex: 1, minHeight: 44, borderRadius: 10, border: "none", background: "var(--ls-coral)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: deleteInput.trim().toUpperCase() !== "SUPPRIMER" || deleting ? "not-allowed" : "pointer", opacity: deleteInput.trim().toUpperCase() !== "SUPPRIMER" ? 0.5 : 1 }}>{deleting ? "Suppression…" : "Supprimer définitivement"}</button>
+                    </div>
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: "var(--ls-coral)", opacity: 0.7, marginTop: 8 }}>Action irréversible · réservé admin / référent</div>
+              </div>
+            ) : null}
+          </>
           ) : null}
         </div>
-      </div>
-        </>
+      ) : null}
+
+      {/* Toast VIP (design) : bref feedback avant le switch vers l'onglet Club VIP. */}
+      {vipNote ? (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 28,
+            transform: "translateX(-50%)",
+            zIndex: 60,
+            background: "var(--ls-surface2)",
+            border: "1px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+            color: "var(--ls-text)",
+            padding: "10px 16px",
+            borderRadius: 999,
+            fontSize: 12.5,
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+          }}
+        >
+          👑 Ouverture de l&apos;onglet Club VIP →
+        </div>
       ) : null}
 
       {/* ─── Modales ─── */}
@@ -1188,198 +873,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 // ═══════════════════════════════════════════════════════════════════════
 // Sous-composants
 // ═══════════════════════════════════════════════════════════════════════
-
-// StatusPill supprimé (utilisé uniquement par BLOC 1 Header identité
-// retiré dans la refonte RDV premium 2026-04-26). LIFECYCLE_PILL_STYLES
-// reste utilisé par LifecyclePill ci-dessous.
-
-const LIFECYCLE_PILL_STYLES: Record<
-  LifecycleStatus,
-  { background: string; color: string; border: string }
-> = {
-  active: {
-    background: "var(--ls-actions-teal-bg)",
-    color: "var(--ls-actions-teal-text)",
-    border: "#1D9E75",
-  },
-  paused: {
-    background: "var(--ls-actions-gold-bg)",
-    color: "var(--ls-actions-gold-text)",
-    border: "#EF9F27",
-  },
-  not_started: {
-    background: "var(--ls-actions-gold-bg)",
-    color: "var(--ls-actions-gold-text)",
-    border: "#EF9F27",
-  },
-  stopped: {
-    background: "var(--ls-actions-red-bg)",
-    color: "var(--ls-actions-red-text)",
-    border: "#E24B4A",
-  },
-  lost: {
-    background: "var(--ls-actions-soft)",
-    color: "var(--ls-actions-text-muted)",
-    border: "var(--ls-actions-border)",
-  },
-};
-
-function LifecyclePill({
-  status,
-  active,
-  disabled,
-  onClick,
-}: {
-  status: LifecycleStatus;
-  active: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  const styles = LIFECYCLE_PILL_STYLES[status];
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "9px 4px",
-        borderRadius: 8,
-        textAlign: "center",
-        cursor: disabled ? "wait" : "pointer",
-        fontSize: 10,
-        fontWeight: 500,
-        background: active ? styles.background : "var(--ls-actions-soft)",
-        border: active
-          ? `0.5px solid ${styles.border}`
-          : "0.5px solid var(--ls-actions-border)",
-        color: active ? styles.color : "var(--ls-actions-text-tertiary)",
-        transition: "background 150ms ease, border-color 150ms ease",
-      }}
-    >
-      {LIFECYCLE_LABELS[status]}
-    </button>
-  );
-}
-
-function LifecycleToggle({
-  icon,
-  title,
-  metaOff,
-  metaOn,
-  active,
-  busy,
-  onToggle,
-}: {
-  icon: string;
-  title: string;
-  metaOff: string;
-  metaOn: string;
-  active: boolean;
-  busy?: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      style={{
-        padding: "10px 12px",
-        background: active
-          ? "var(--ls-actions-teal-bg)"
-          : "var(--ls-actions-soft)",
-        borderRadius: 10,
-        border: active ? "0.5px solid rgba(29,158,117,0.2)" : "0.5px solid transparent",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-        <span aria-hidden="true" style={{ fontSize: 14 }}>
-          {icon}
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              color: active
-                ? "var(--ls-actions-teal-text)"
-                : "var(--ls-actions-text)",
-            }}
-          >
-            {title}
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              color: active ? "#0F6E56" : "var(--ls-actions-text-muted)",
-              marginTop: 1,
-            }}
-          >
-            {active ? metaOn : metaOff}
-          </div>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={busy}
-        aria-label={title}
-        aria-pressed={active}
-        style={{
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          border: "none",
-          background: active ? "#1D9E75" : "#D3D1C7",
-          position: "relative",
-          cursor: busy ? "wait" : "pointer",
-          transition: "background 200ms ease",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: 2,
-            left: active ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "#fff",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
-            transition: "left 200ms ease",
-          }}
-        />
-      </button>
-    </div>
-  );
-}
-
-function RowClickable({
-  label,
-  meta,
-  onClick,
-}: {
-  label: string;
-  meta: string;
-  onClick: () => void;
-}) {
-  return (
-    <button type="button" className="at-row-clickable" onClick={onClick}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, color: "var(--ls-actions-text)" }}>{label}</div>
-        <div style={{ fontSize: 10, color: "var(--ls-actions-text-muted)", marginTop: 1 }}>
-          {meta}
-        </div>
-      </div>
-      <span aria-hidden="true" style={{ fontSize: 12, color: "#B4B2A9" }}>
-        →
-      </span>
-    </button>
-  );
-}
 
 // PriorityCard supprimé (2026-04-26) : la priorité est maintenant rendue
 // par ActionsRdvBlock (fusion intelligente priorités + état RDV).
