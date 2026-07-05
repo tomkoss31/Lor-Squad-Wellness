@@ -75,7 +75,7 @@ interface Props {
 }
 
 /** Panneaux focalisés du lanceur « Gérer le dossier ». */
-type ManagePanel = "edit" | "lifecycle" | "access" | "uplink" | "admin";
+type ManagePanel = "edit" | "reception" | "lifecycle" | "access" | "uplink" | "admin";
 
 /** Teintes des tuiles/panneaux (design Claude design, tokens globals réels). */
 const TILE_TINTS: Record<string, { bg: string; col: string }> = {
@@ -83,6 +83,7 @@ const TILE_TINTS: Record<string, { bg: string; col: string }> = {
   teal: { bg: "var(--ls-teal-bg)", col: "var(--ls-teal)" },
   lime: { bg: "color-mix(in srgb, var(--ls-lime) 16%, transparent)", col: "var(--ls-lime)" },
   coral: { bg: "var(--ls-coral-bg)", col: "var(--ls-coral)" },
+  gold: { bg: "color-mix(in srgb, var(--ls-gold) 16%, transparent)", col: "var(--ls-gold)" },
 };
 
 /** Tuiles du lanceur. `vip` n'ouvre pas de panneau : raccourci vers l'onglet Club VIP. */
@@ -95,7 +96,8 @@ const MANAGE_TILES: {
   danger?: boolean;
 }[] = [
   { id: "vip", ico: "👑", title: "Programme VIP", sub: "Remises · invitation · gestion", tint: "purple" },
-  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · date de départ", tint: "teal" },
+  { id: "reception", ico: "📦", title: "Réception du colis", sub: "Date de démarrage réelle · cure & relances", tint: "gold" },
+  { id: "edit", ico: "📝", title: "Modifier le dossier", sub: "Bilans · coordonnées · fiche PV", tint: "teal" },
   { id: "lifecycle", ico: "🔄", title: "Cycle de vie & suivi", sub: "Statut · fragile · suivi/PV libre", tint: "teal" },
   { id: "access", ico: "🔗", title: "Accès & partage", sub: "Partage public de la fiche", tint: "teal" },
   { id: "uplink", ico: "🌿", title: "Herbalife uplink", sub: "Sponsor · lignée distributeur", tint: "lime" },
@@ -104,6 +106,7 @@ const MANAGE_TILES: {
 
 const PANEL_META: Record<ManagePanel, { title: string; ico: string; tint: keyof typeof TILE_TINTS }> = {
   edit: { title: "Modifier le dossier", ico: "📝", tint: "teal" },
+  reception: { title: "Réception du colis", ico: "📦", tint: "gold" },
   lifecycle: { title: "Cycle de vie & suivi", ico: "🔄", tint: "teal" },
   access: { title: "Accès & partage", ico: "🔗", tint: "teal" },
   uplink: { title: "Herbalife uplink", ico: "🌿", tint: "lime" },
@@ -704,20 +707,30 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               </button>
             ))}
 
-            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-gold)", background: "var(--ls-gold-bg)" }}>
-              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-gold)", marginBottom: 6 }}>🚀 Démarrage du programme</div>
+          </>
+          ) : null}
+
+          {activePanel === "reception" ? (
+            <>
+            {/* Réception du colis (unifié 2026-07-05) : action CANONIQUE qui pose
+                la vraie date de démarrage (clients.start_date). Cure J+1/J+7/J+14
+                et usure produits (relances réassort) partent de cette date, pas
+                du bilan. Aucune formule PV/rentabilité touchée — sorti de l'onglet
+                Modifier pour être une action unique et visible (ex-« Activator »). */}
+            <div style={{ padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-gold)", background: "var(--ls-gold-bg)" }}>
+              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-gold)", marginBottom: 6 }}>📦 Date de réception du colis</div>
               <p style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.5, color: "var(--ls-text-muted)" }}>
-                {client.startDate ? `Démarré le ${new Date(client.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}. ` : ""}
-                Le compteur J+1 / J+7 / J+14 et l&apos;usure des produits partent de la date de départ.
+                {client.startDate ? `Reçu le ${new Date(client.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}. ` : ""}
+                Marque le jour où le client a reçu son colis — le compteur J+1 / J+7 / J+14 et l&apos;usure des produits (relances réassort) partent de cette date.
               </p>
               {activatorOpen ? (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <input type="date" value={activatorDate} onChange={(e) => setActivatorDate(e.target.value)} style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 13 }} />
-                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer le départ"}</button>
+                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer la réception"}</button>
                   <button type="button" onClick={() => setActivatorOpen(false)} style={{ background: "transparent", border: "1px solid var(--ls-border)", color: "var(--ls-text-muted)", padding: "11px 16px", borderRadius: 10, fontSize: 13, cursor: "pointer", minHeight: 44 }}>Annuler</button>
                 </div>
               ) : (
-                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de départ" : "Démarrer le programme"}</button>
+                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de réception" : "Marquer la réception du colis"}</button>
               )}
             </div>
           </>
