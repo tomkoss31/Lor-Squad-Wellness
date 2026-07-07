@@ -46,9 +46,14 @@ const COPY: Record<DeviceKind, Instruction> = {
 export function InstallPwaInstructions({
   device,
   compact,
+  accent = "#BA7517",
+  accentBg = "rgba(186,117,23,0.12)",
 }: {
   device?: DeviceKind;
   compact?: boolean;
+  /** Accent des pastilles. Défaut or (flux client, card claire) ; passer lime pour le distri v2. */
+  accent?: string;
+  accentBg?: string;
 }) {
   // Audit 2026-04-30 : useMemo etait appele conditionnellement via ??
   // → rules-of-hooks. On l appelle TOUJOURS, et on prend `device` en
@@ -58,13 +63,15 @@ export function InstallPwaInstructions({
   const copy = COPY[resolvedDevice];
 
   return (
-    <div>
+    // color: inherit → s'adapte au parent (card claire = texte sombre ; card
+    // dark distri = texte clair). Seul l'accent des pastilles est piloté en prop.
+    <div style={{ color: "inherit" }}>
       <p
         style={{
-          fontFamily: "Syne, sans-serif",
+          fontFamily: "'Anton', 'Syne', sans-serif",
           fontSize: compact ? 16 : 20,
           fontWeight: 700,
-          color: "#111827",
+          color: "inherit",
           margin: 0,
           marginBottom: compact ? 8 : 14,
         }}
@@ -93,14 +100,14 @@ export function InstallPwaInstructions({
                 width: 26,
                 height: 26,
                 borderRadius: "50%",
-                background: "rgba(186,117,23,0.12)",
-                color: "#BA7517",
+                background: accentBg,
+                color: accent,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 11,
                 fontWeight: 700,
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 flexShrink: 0,
               }}
             >
@@ -109,7 +116,7 @@ export function InstallPwaInstructions({
             <div
               style={{
                 fontSize: 14,
-                color: "#111827",
+                color: "inherit",
                 lineHeight: 1.55,
                 paddingTop: 2,
               }}
@@ -124,7 +131,8 @@ export function InstallPwaInstructions({
         style={{
           marginTop: compact ? 12 : 18,
           fontSize: 12,
-          color: "#6B7280",
+          color: "inherit",
+          opacity: 0.62,
           lineHeight: 1.55,
         }}
       >
