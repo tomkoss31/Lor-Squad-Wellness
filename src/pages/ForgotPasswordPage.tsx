@@ -40,157 +40,82 @@ export function ForgotPasswordPage() {
     <div className="forgot-root">
       <style>{`
         .forgot-root {
-          min-height: 100vh;
-          min-height: 100dvh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 32px 20px;
-          position: relative;
-          overflow: hidden;
-          background: #0A0D0F;
-          color: #F0EDE8;
+          --dw-bg: #0a0c0a; --dw-card: #14171a; --dw-card-2: #1a1e22;
+          --dw-border: rgba(255,255,255,0.10); --dw-text: #F1EFE8;
+          --dw-muted: #9AA0A6; --dw-dim: #6b7280; --dw-lime: #c5f82a; --dw-teal: #2DD4BF;
+          min-height: 100vh; min-height: 100dvh;
+          display: flex; align-items: center; justify-content: center;
+          padding: 32px 20px; position: relative; overflow: hidden;
+          background: var(--dw-bg); color: var(--dw-text);
           font-family: 'DM Sans', sans-serif;
         }
-        html.theme-light .forgot-root { background: #F7F5F0; color: #0B0D11; }
-        .forgot-blob {
-          position: absolute; border-radius: 50%;
-          filter: blur(90px); pointer-events: none; will-change: transform;
-        }
+        .forgot-blob { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
         .forgot-blob-teal {
-          top: -15%; left: -10%;
-          width: 500px; height: 500px;
-          background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
-          opacity: 0.35;
-          animation: forgot-f1 32s ease-in-out infinite alternate;
+          top: -15%; left: -10%; width: 500px; height: 500px;
+          background: radial-gradient(circle, var(--dw-teal) 0%, transparent 70%);
+          opacity: 0.15; animation: forgot-f1 32s ease-in-out infinite alternate;
         }
         .forgot-blob-gold {
-          bottom: -16%; right: -8%;
-          width: 460px; height: 460px;
-          background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
-          opacity: 0.3;
-          animation: forgot-f2 36s ease-in-out infinite alternate;
+          bottom: -16%; right: -8%; width: 460px; height: 460px;
+          background: radial-gradient(circle, var(--dw-lime) 0%, transparent 70%);
+          opacity: 0.16; animation: forgot-f2 36s ease-in-out infinite alternate;
         }
-        :root:not(.theme-light) .forgot-blob-teal,
-        html:not(.theme-light) .forgot-blob-teal { opacity: 0.3; }
-        :root:not(.theme-light) .forgot-blob-gold,
-        html:not(.theme-light) .forgot-blob-gold { opacity: 0.26; }
-        @keyframes forgot-f1 {
-          0% { transform: translate(0,0) scale(1); }
-          100% { transform: translate(60px, 40px) scale(1.12); }
-        }
-        @keyframes forgot-f2 {
-          0% { transform: translate(0,0) scale(1); }
-          100% { transform: translate(-70px, -30px) scale(1.1); }
-        }
+        @keyframes forgot-f1 { to { transform: translate(60px, 40px) scale(1.12); } }
+        @keyframes forgot-f2 { to { transform: translate(-70px, -30px) scale(1.1); } }
         .forgot-inner {
-          position: relative; z-index: 1;
-          width: 100%; max-width: 440px;
+          position: relative; z-index: 1; width: 100%; max-width: 440px;
           animation: forgot-in 0.7s cubic-bezier(0.16,1,0.3,1) both;
         }
-        @keyframes forgot-in {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes forgot-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .forgot-back {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 6px 10px; border-radius: 8px;
-          color: rgba(11,13,17,0.58); text-decoration: none;
-          font-size: 13px; font-weight: 500;
-          margin-bottom: 20px;
-          transition: color 0.15s, transform 0.15s;
+          padding: 8px 13px; border-radius: 999px;
+          border: 1px solid var(--dw-border); color: var(--dw-muted); text-decoration: none;
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 11px; font-weight: 600; margin-bottom: 20px;
+          transition: color 0.15s, border-color 0.15s;
         }
-        :root:not(.theme-light) .forgot-back,
-        html:not(.theme-light) .forgot-back { color: rgba(240,237,232,0.5); }
-        .forgot-back:hover { color: #EF9F27; transform: translateX(-2px); }
+        .forgot-back:hover { color: var(--dw-text); border-color: var(--dw-lime); }
         .forgot-card {
-          background: rgba(255,255,255,0.78);
-          backdrop-filter: blur(14px) saturate(140%);
-          -webkit-backdrop-filter: blur(14px) saturate(140%);
-          border: 1px solid rgba(239,159,39,0.15);
-          border-radius: 20px;
-          padding: 28px 24px;
-          box-shadow: 0 1px 2px rgba(11,13,17,0.04), 0 8px 24px rgba(11,13,17,0.04);
-        }
-        :root:not(.theme-light) .forgot-card,
-        html:not(.theme-light) .forgot-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+          background: var(--dw-card); border: 1px solid var(--dw-border);
+          border-radius: 20px; padding: 30px 26px;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.5);
         }
         .forgot-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 22px;
-          font-weight: 700;
-          margin: 0 0 8px;
-          letter-spacing: -0.01em;
+          font-family: 'Anton', 'Syne', sans-serif; text-transform: uppercase;
+          letter-spacing: 0.01em; font-size: 26px; margin: 0 0 8px; color: var(--dw-text);
         }
-        .forgot-sub {
-          font-size: 13.5px;
-          color: rgba(11,13,17,0.6);
-          line-height: 1.55;
-          margin: 0 0 20px;
-        }
-        :root:not(.theme-light) .forgot-sub,
-        html:not(.theme-light) .forgot-sub { color: rgba(240,237,232,0.6); }
+        .forgot-sub { font-size: 13.5px; color: var(--dw-muted); line-height: 1.55; margin: 0 0 20px; }
         .forgot-label {
-          display: block; font-size: 11px; font-weight: 700;
-          letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(11,13,17,0.52); margin-bottom: 6px;
+          display: block; font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+          color: var(--dw-muted); margin-bottom: 6px;
         }
-        :root:not(.theme-light) .forgot-label,
-        html:not(.theme-light) .forgot-label { color: rgba(240,237,232,0.5); }
         .forgot-input {
           width: 100%; box-sizing: border-box;
-          background: rgba(255,255,255,0.6);
-          border: 1px solid rgba(11,13,17,0.08);
-          border-radius: 12px;
-          padding: 12px 14px;
-          font-size: 14px;
-          font-family: 'DM Sans', sans-serif;
-          color: inherit;
-          outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          background: var(--dw-card-2); border: 1px solid var(--dw-border);
+          border-radius: 12px; padding: 12px 14px; font-size: 14px;
+          font-family: 'DM Sans', sans-serif; color: var(--dw-text);
+          outline: none; transition: border-color 0.2s;
         }
-        :root:not(.theme-light) .forgot-input,
-        html:not(.theme-light) .forgot-input {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-        .forgot-input:focus {
-          border-color: rgba(239,159,39,0.6);
-          box-shadow: 0 0 0 4px rgba(239,159,39,0.12);
-        }
+        .forgot-input:focus { border-color: var(--dw-lime); }
         .forgot-submit {
-          width: 100%;
-          margin-top: 16px;
-          background: linear-gradient(135deg, #EF9F27, #BA7517);
-          color: #fff; border: none; border-radius: 12px;
-          padding: 13px 16px;
-          font-family: 'Syne', sans-serif;
-          font-size: 14px; font-weight: 700;
-          cursor: pointer;
-          box-shadow: 0 4px 14px rgba(186,117,23,0.28);
-          transition: transform 0.18s, box-shadow 0.18s, filter 0.18s;
+          width: 100%; margin-top: 16px;
+          background: var(--dw-lime); color: #0a0c0a; border: none; border-radius: 12px;
+          padding: 14px 16px; font-family: 'Anton', 'Syne', sans-serif;
+          text-transform: uppercase; letter-spacing: 0.02em; font-size: 14px; font-weight: 700;
+          cursor: pointer; box-shadow: 0 4px 16px rgba(197,248,42,0.28); transition: filter 0.18s;
         }
-        .forgot-submit:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(186,117,23,0.38);
-          filter: brightness(1.05);
-        }
-        .forgot-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+        .forgot-submit:hover:not(:disabled) { filter: brightness(1.05); }
+        .forgot-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
         .forgot-error {
-          background: #FCEBEB; border: 1px solid #E24B4A;
-          border-radius: 10px; padding: 10px 12px;
-          font-size: 12.5px; color: #501313;
-          margin-top: 12px;
+          background: rgba(251,113,133,0.12); border: 1px solid rgba(251,113,133,0.4);
+          border-radius: 10px; padding: 10px 12px; font-size: 12.5px; color: #FCA5A5; margin-top: 12px;
         }
         .forgot-success {
-          background: rgba(29,158,117,0.12);
-          border: 1px solid rgba(29,158,117,0.35);
-          border-radius: 12px; padding: 14px;
-          font-size: 13px; color: #0F6E56; line-height: 1.55;
-          margin-top: 4px;
+          background: color-mix(in srgb, var(--dw-teal) 12%, transparent);
+          border: 1px solid color-mix(in srgb, var(--dw-teal) 35%, transparent);
+          border-radius: 12px; padding: 14px; font-size: 13px; color: var(--dw-teal); line-height: 1.55; margin-top: 4px;
         }
         @media (prefers-reduced-motion: reduce) {
           .forgot-blob-teal, .forgot-blob-gold, .forgot-inner { animation: none !important; }
@@ -212,12 +137,12 @@ export function ForgotPasswordPage() {
 
           {phase === "sent" ? (
             <div className="forgot-success">
-              ✅ <strong>Email envoyé !</strong>
+              <strong>Email envoyé !</strong>
               <br />
               Vérifie ta boîte mail (et les spams). Le lien est valable 1h.
               <br />
               <br />
-              <Link to="/login" style={{ color: "#0F6E56", fontWeight: 600 }}>
+              <Link to="/login" style={{ color: "var(--dw-teal)", fontWeight: 600 }}>
                 Revenir à la connexion
               </Link>
             </div>

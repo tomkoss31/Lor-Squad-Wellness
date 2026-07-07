@@ -21,7 +21,6 @@ import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import {
   RANK_LABELS,
   RANK_MARGINS,
-  RANK_ORDER,
   type HerbalifeRank,
 } from "../types/domain";
 import {
@@ -29,10 +28,13 @@ import {
   FLEX_DEFAULT_BASKET,
 } from "../lib/flexCalculations";
 import type { DistributorActionPlanInsert } from "../types/flex";
+import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
+import { isStandalonePwa } from "../lib/utils/detectDevice";
 
-type Step = 0 | 1 | 2 | 3 | 4;
+// Étape 5 = installation PWA (ajoutée 2026-07) : le nouveau distri doit
+// installer l'app sur son tél (iOS/Android) avant d'entrer dans son espace.
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
-const RANK_LIST: HerbalifeRank[] = RANK_ORDER;
 
 function ymdInDays(days: number): string {
   const d = new Date();
@@ -330,7 +332,13 @@ export function BienvenueDistriPage() {
         .insert(planInsert);
       if (planErr) throw new Error(planErr.message);
 
-      navigate(`/co-pilote?welcome=distri`, { replace: true });
+      // Déjà en PWA installée → direct au Co-pilote. Sinon, étape « Installe
+      // l'app » avant d'entrer (le distri doit l'avoir sur son tél).
+      if (isStandalonePwa()) {
+        navigate(`/co-pilote?welcome=distri`, { replace: true });
+      } else {
+        setStep(5);
+      }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inattendue.");
     } finally {
@@ -351,10 +359,24 @@ export function BienvenueDistriPage() {
     <div className="distri-root">
       {/* Chantier Premium Onboarding distri (2026-04-24) */}
       <style>{`
+        /* Identité v2 « premium performance » (2026-07 refonte) : dark + lime
+           (--ls-lime #c5f82a) + Anton titres + JetBrains Mono labels, pour la
+           continuité avec la Salle des Opérations qui suit l'inscription.
+           Palette locale (page publique, hors thème app) : */
         .distri-root {
+          --dw-bg: #0a0c0a;
+          --dw-card: #14171a;
+          --dw-card-2: #1a1e22;
+          --dw-border: rgba(255,255,255,0.10);
+          --dw-text: #F1EFE8;
+          --dw-muted: #9AA0A6;
+          --dw-dim: #6b7280;
+          --dw-lime: #c5f82a;
+          --dw-lime-dk: #a9d425;
+          --dw-teal: #2DD4BF;
           min-height: 100vh;
           min-height: 100dvh;
-          background: #0A0D0F;
+          background: var(--dw-bg);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -362,6 +384,7 @@ export function BienvenueDistriPage() {
           position: relative;
           overflow: hidden;
           font-family: 'DM Sans', sans-serif;
+          color: var(--dw-text);
         }
         .distri-blob {
           position: absolute;
@@ -375,8 +398,8 @@ export function BienvenueDistriPage() {
           right: -8%;
           width: 540px;
           height: 540px;
-          background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
-          opacity: 0.34;
+          background: radial-gradient(circle, var(--dw-lime) 0%, transparent 70%);
+          opacity: 0.18;
           animation: distri-float-1 32s ease-in-out infinite alternate;
         }
         .distri-blob-teal {
@@ -384,8 +407,8 @@ export function BienvenueDistriPage() {
           left: -10%;
           width: 500px;
           height: 500px;
-          background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
-          opacity: 0.3;
+          background: radial-gradient(circle, var(--dw-teal) 0%, transparent 70%);
+          opacity: 0.16;
           animation: distri-float-2 38s ease-in-out infinite alternate;
         }
         @keyframes distri-float-1 {
@@ -400,7 +423,7 @@ export function BienvenueDistriPage() {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          opacity: 0.06;
+          opacity: 0.05;
           mix-blend-mode: overlay;
           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
         }
@@ -409,14 +432,28 @@ export function BienvenueDistriPage() {
           z-index: 1;
           width: 100%;
           max-width: 480px;
-          background: rgba(255, 255, 255, 0.96);
-          backdrop-filter: blur(14px) saturate(140%);
-          -webkit-backdrop-filter: blur(14px) saturate(140%);
+          background: var(--dw-card);
           border-radius: 22px;
           padding: 32px;
-          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(239, 159, 39, 0.1);
-          border: 1px solid rgba(239, 159, 39, 0.18);
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(197,248,42,0.06);
+          border: 1px solid var(--dw-border);
           animation: distri-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        /* Titres Anton CAPS + labels JetBrains Mono */
+        .distri-title {
+          font-family: 'Anton', 'Syne', sans-serif;
+          text-transform: uppercase;
+          letter-spacing: 0.01em;
+          color: var(--dw-text);
+          line-height: 1.02;
+          margin: 0;
+        }
+        .distri-eyebrow {
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
         }
         @keyframes distri-in {
           from { opacity: 0; transform: translateY(14px); }
@@ -438,7 +475,7 @@ export function BienvenueDistriPage() {
 
       <div className="distri-card">
         {validation.status === "loading" ? (
-          <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14 }}>
+          <p style={{ textAlign: "center", color: "var(--dw-muted)", fontSize: 14 }}>
             Vérification de ton invitation…
           </p>
         ) : validation.status === "invalid" ? (
@@ -535,9 +572,67 @@ export function BienvenueDistriPage() {
                 onSubmit={() => void handleFinishOnboarding()}
               />
             ) : null}
+
+            {step === 5 ? (
+              <InstallStep
+                onEnter={() => navigate(`/co-pilote?welcome=distri`, { replace: true })}
+              />
+            ) : null}
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Étape 5 : installe l'app (PWA) ────────────────────────────────────────
+function InstallStep({ onEnter }: { onEnter: () => void }) {
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: 22 }}>
+        <span
+          className="distri-eyebrow"
+          style={{
+            display: "inline-block",
+            padding: "5px 11px",
+            borderRadius: 999,
+            background: "color-mix(in srgb, var(--dw-lime) 14%, transparent)",
+            color: "var(--dw-lime)",
+          }}
+        >
+          Dernière étape
+        </span>
+        <p className="distri-title" style={{ fontSize: 30, marginTop: 14, marginBottom: 10 }}>
+          Installe l&apos;app 📲
+        </p>
+        <p style={{ fontSize: 14.5, color: "var(--dw-muted)", lineHeight: 1.6 }}>
+          Ajoute La Base 360 à ton écran d&apos;accueil : tu l&apos;ouvres en 1 tap (comme
+          WhatsApp) et tu reçois tes notifs — RDV, rappels, plan du jour.
+        </p>
+      </div>
+
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 14,
+          background: "var(--dw-card-2)",
+          border: "1px solid var(--dw-border)",
+          marginBottom: 18,
+          color: "var(--dw-text)",
+        }}
+      >
+        <InstallPwaInstructions
+          accent="var(--dw-lime)"
+          accentBg="color-mix(in srgb, var(--dw-lime) 14%, transparent)"
+        />
+      </div>
+
+      <PrimaryButton onClick={onEnter}>Entrer dans mon espace →</PrimaryButton>
+
+      <p style={{ textAlign: "center", fontSize: 11, color: "var(--dw-dim)", marginTop: 14 }}>
+        Tu pourras réinstaller l&apos;app plus tard depuis tes{" "}
+        <strong style={{ color: "var(--dw-muted)" }}>Paramètres</strong>.
+      </p>
     </div>
   );
 }
@@ -547,7 +642,7 @@ export function BienvenueDistriPage() {
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24 }}>
-      {[0, 1, 2, 3, 4].map((i) => {
+      {[0, 1, 2, 3, 4, 5].map((i) => {
         const isActive = step === i;
         const isDone = step > i;
         return (
@@ -557,7 +652,11 @@ function ProgressBar({ step }: { step: Step }) {
               width: isActive ? 28 : 10,
               height: 10,
               borderRadius: 5,
-              background: isActive ? "#BA7517" : isDone ? "#0F6E56" : "rgba(0,0,0,0.15)",
+              background: isActive
+                ? "var(--dw-lime)"
+                : isDone
+                  ? "color-mix(in srgb, var(--dw-lime) 45%, transparent)"
+                  : "rgba(255,255,255,0.14)",
               transition: "all 0.25s",
             }}
           />
@@ -571,18 +670,10 @@ function InvalidCard({ message }: { message: string }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 44, marginBottom: 12 }}>😕</div>
-      <p
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: 22,
-          fontWeight: 700,
-          color: "#111827",
-          marginBottom: 10,
-        }}
-      >
+      <p className="distri-title" style={{ fontSize: 26, marginBottom: 10 }}>
         Lien non valide
       </p>
-      <p style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>{message}</p>
+      <p style={{ fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.6 }}>{message}</p>
     </div>
   );
 }
@@ -597,54 +688,90 @@ function WelcomeStep({
   onContinue: () => void;
 }) {
   const displayName = firstName || "nouveau distributeur";
+  const roadmap = [
+    { ico: "🔑", t: "Ton accès", d: "Compte + profil, en 2 min." },
+    { ico: "🎯", t: "Ton objectif", d: "Ton revenu cible → ton plan d'action auto." },
+    { ico: "📲", t: "L'app sur ton tél", d: "Installe-la comme une vraie appli." },
+    { ico: "🚀", t: "Tes 3 premières actions", d: "Ta Salle des Opérations t'attend." },
+  ];
   return (
     <div style={{ textAlign: "center" }}>
       <span
+        className="distri-eyebrow"
         style={{
           display: "inline-block",
-          padding: "4px 10px",
-          borderRadius: 8,
-          background: "rgba(201,168,76,0.12)",
-          color: "#BA7517",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
+          padding: "5px 11px",
+          borderRadius: 999,
+          background: "color-mix(in srgb, var(--dw-lime) 14%, transparent)",
+          color: "var(--dw-lime)",
           marginBottom: 20,
         }}
       >
         Invitation La Base 360
       </span>
-      <p
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: 28,
-          fontWeight: 700,
-          color: "#111827",
-          margin: 0,
-          marginBottom: 12,
-          lineHeight: 1.15,
-        }}
-      >
-        🎉 Bienvenue {displayName} !
+      <p className="distri-title" style={{ fontSize: 34, marginBottom: 12 }}>
+        Bienvenue<br />{displayName} 👋
       </p>
-      <p
-        style={{
-          fontSize: 15,
-          color: "#4B5563",
-          lineHeight: 1.65,
-          marginBottom: 26,
-        }}
-      >
-        {sponsorFirstName} t'invite à rejoindre La Base 360. On va
-        créer ton accès distributeur en 2 minutes.
+      <p style={{ fontSize: 15, color: "var(--dw-muted)", lineHeight: 1.6, marginBottom: 22 }}>
+        <strong style={{ color: "var(--dw-text)" }}>{sponsorFirstName}</strong> t'invite dans
+        La Base 360 — l'app qui te guide pas à pas pour lancer ton activité. Voici ce qu'on
+        va faire ensemble :
       </p>
 
-      <PrimaryButton onClick={onContinue}>Créer mon accès</PrimaryButton>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24, textAlign: "left" }}>
+        {roadmap.map((r, i) => (
+          <div
+            key={r.t}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "11px 13px",
+              borderRadius: 12,
+              background: "var(--dw-card-2)",
+              border: "1px solid var(--dw-border)",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 9,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 17,
+                background: "color-mix(in srgb, var(--dw-lime) 12%, transparent)",
+              }}
+            >
+              {r.ico}
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: "var(--dw-text)" }}>
+                {r.t}
+              </span>
+              <span style={{ display: "block", fontSize: 12, color: "var(--dw-muted)", marginTop: 1 }}>
+                {r.d}
+              </span>
+            </span>
+            <span
+              className="distri-eyebrow"
+              aria-hidden="true"
+              style={{ color: "var(--dw-dim)", flexShrink: 0 }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+          </div>
+        ))}
+      </div>
 
-      <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 18 }}>
+      <PrimaryButton onClick={onContinue}>C'est parti 🚀</PrimaryButton>
+
+      <p style={{ fontSize: 11, color: "var(--dw-dim)", marginTop: 18 }}>
         Déjà inscrit ?{" "}
-        <a href="/login" style={{ color: "#BA7517", textDecoration: "none", fontWeight: 600 }}>
+        <a href="/login" style={{ color: "var(--dw-lime)", textDecoration: "none", fontWeight: 600 }}>
           Se connecter
         </a>
       </p>
@@ -679,17 +806,17 @@ function PasswordStep({
     <div>
       <p
         style={{
-          fontFamily: "Syne, sans-serif",
+          fontFamily: "'Anton', 'Syne', sans-serif",
           fontSize: 22,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--dw-text)",
           margin: 0,
           marginBottom: 6,
         }}
       >
         {showEmailField ? "Ton email et ton mot de passe" : "Choisis ton mot de passe"}
       </p>
-      <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 20, lineHeight: 1.55 }}>
+      <p style={{ fontSize: 13, color: "var(--dw-muted)", marginBottom: 20, lineHeight: 1.55 }}>
         {showEmailField
           ? "Ils te serviront à te connecter. Minimum 8 caractères pour le mot de passe."
           : "Il te servira à te connecter. Minimum 8 caractères — garde-le en sécurité."}
@@ -789,17 +916,17 @@ function ProfileStep({
     <div>
       <p
         style={{
-          fontFamily: "Syne, sans-serif",
+          fontFamily: "'Anton', 'Syne', sans-serif",
           fontSize: 22,
           fontWeight: 700,
-          color: "#111827",
+          color: "var(--dw-text)",
           margin: 0,
           marginBottom: 6,
         }}
       >
         Ton profil distributeur
       </p>
-      <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 20, lineHeight: 1.55 }}>
+      <p style={{ fontSize: 13, color: "var(--dw-muted)", marginBottom: 20, lineHeight: 1.55 }}>
         Ces infos permettent à ton parrain de te retrouver facilement. La photo
         est optionnelle.
       </p>
@@ -848,7 +975,7 @@ function ProfileStep({
           placeholder="Verdun, Paris…"
           style={inputStyle}
         />
-        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: "var(--dw-muted)", marginTop: 4 }}>
           Sert à la météo de ton Co-pilote et au badge sur ta page bilan online.
         </div>
       </LargeField>
@@ -860,7 +987,7 @@ function ProfileStep({
           onChange={(e) => onCoachingSinceChange(e.target.value)}
           style={{ ...inputStyle, colorScheme: "light" }}
         />
-        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: "var(--dw-muted)", marginTop: 4 }}>
           Ta vraie date de début Herbalife (pas la date d'aujourd'hui). Affichée comme badge ancienneté sur ta page bilan online. Modifiable plus tard dans Paramètres.
         </div>
       </LargeField>
@@ -903,8 +1030,8 @@ function AvatarUpload({
         width: 120,
         height: 120,
         borderRadius: "50%",
-        border: avatarUrl ? "3px solid #BA7517" : "2px dashed rgba(0,0,0,0.2)",
-        background: avatarUrl ? "transparent" : "#FAFAFA",
+        border: avatarUrl ? "3px solid var(--dw-lime)" : "2px dashed rgba(255,255,255,0.18)",
+        background: avatarUrl ? "transparent" : "var(--dw-card-2)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -946,7 +1073,7 @@ function AvatarUpload({
           </button>
         </>
       ) : (
-        <div style={{ textAlign: "center", color: "#9CA3AF" }}>
+        <div style={{ textAlign: "center", color: "var(--dw-dim)" }}>
           <div style={{ fontSize: 24, marginBottom: 4 }}>📷</div>
           <div style={{ fontSize: 11, fontWeight: 500 }}>
             {uploading ? "Envoi…" : "Ajouter une photo"}
@@ -977,13 +1104,8 @@ function LargeField({
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
       <span
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#4B5563",
-          letterSpacing: "0.03em",
-          textTransform: "uppercase",
-        }}
+        className="distri-eyebrow"
+        style={{ color: "var(--dw-muted)" }}
       >
         {label}
       </span>
@@ -999,8 +1121,8 @@ function ErrorBanner({ message }: { message: string }) {
         marginTop: 12,
         padding: "10px 12px",
         borderRadius: 10,
-        background: "rgba(220,38,38,0.08)",
-        color: "#B91C1C",
+        background: "rgba(251,113,133,0.12)",
+        color: "#FCA5A5",
         fontSize: 13,
         lineHeight: 1.5,
       }}
@@ -1031,15 +1153,15 @@ function PrimaryButton({
         width: stretch ? undefined : "100%",
         padding: "14px 20px",
         borderRadius: 12,
-        background: disabled ? "#D5B880" : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-        color: "#FFFFFF",
+        background: disabled ? "rgba(197,248,42,0.22)" : "var(--dw-lime)",
+        color: disabled ? "var(--dw-dim)" : "#0a0c0a",
         border: "none",
-        fontFamily: "Syne, sans-serif",
+        fontFamily: "'DM Sans', sans-serif",
         fontWeight: 700,
         fontSize: 15,
-        letterSpacing: 0.3,
+        letterSpacing: 0.2,
         cursor: disabled ? "default" : "pointer",
-        boxShadow: disabled ? "none" : "0 4px 12px rgba(186,117,23,0.3)",
+        boxShadow: disabled ? "none" : "0 4px 16px rgba(197,248,42,0.28)",
         transition: "transform 0.15s",
       }}
     >
@@ -1062,11 +1184,11 @@ function SecondaryButton({
       style={{
         padding: "14px 18px",
         borderRadius: 12,
-        background: "#FFFFFF",
-        color: "#6B7280",
-        border: "1px solid rgba(0,0,0,0.12)",
+        background: "var(--dw-card-2)",
+        color: "var(--dw-muted)",
+        border: "1px solid var(--dw-border)",
         fontFamily: "DM Sans, sans-serif",
-        fontWeight: 500,
+        fontWeight: 600,
         fontSize: 14,
         cursor: "pointer",
       }}
@@ -1080,11 +1202,11 @@ const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 12,
-  border: "1px solid rgba(0,0,0,0.12)",
-  background: "#FAFAFA",
+  border: "1px solid var(--dw-border)",
+  background: "var(--dw-card-2)",
   fontSize: 15,
   fontFamily: "DM Sans, sans-serif",
-  color: "#111827",
+  color: "var(--dw-text)",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -1102,71 +1224,116 @@ function RankStep({
   onChange: (r: HerbalifeRank) => void;
   onContinue: () => void;
 }) {
+  // Onboarding : on ne montre que les 4 paliers de MARGE (25/35/42/50 %) —
+  // les 8 rangs « équipe » à 50 % (World Team, GET, etc.) sont du jargon
+  // inutile pour un débutant et ont la même marge. Le distri affinera son
+  // rang exact plus tard dans Paramètres.
+  const TIERS: { rank: HerbalifeRank; ico: string; name: string; desc: string }[] = [
+    { rank: "distributor_25", ico: "🌱", name: "Je démarre", desc: "Tu viens de signer. C'est ici que tout le monde commence." },
+    { rank: "senior_consultant_35", ico: "⭐", name: "Senior Consultant", desc: "Tu as déjà commandé ~250 PV. Ta remise a grimpé." },
+    { rank: "success_builder_42", ico: "🚀", name: "Success Builder", desc: "Tu montes vite (1 000 PV en 3 mois)." },
+    { rank: "supervisor_50", ico: "👑", name: "Superviseur ou +", desc: "Le palier max : tu revends à pleine marge." },
+  ];
+  const currentPct = Math.round((RANK_MARGINS[rank] ?? 0.25) * 100);
   return (
     <div>
-      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "#BA7517", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-        Étape 4 sur 5 · Plan marketing Herbalife
+      <div className="distri-eyebrow" style={{ color: "var(--dw-lime)", marginBottom: 10 }}>
+        Ton statut Herbalife
       </div>
-      <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 26, color: "#111827", margin: 0, fontWeight: 700 }}>
-        Quel est ton statut, {firstName || "toi"} ?
+      <h2
+        className="distri-title"
+        style={{ fontSize: 26, marginBottom: 10 }}
+      >
+        Ta remise aujourd&apos;hui, {firstName || "toi"} ?
       </h2>
-      <p style={{ margin: "10px 0 22px 0", fontSize: 14, color: "#4B5563", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
-        Ton rang Herbalife détermine ta marge retail (25 → 50 %). On l'utilise
-        ensuite pour calibrer tes objectifs réalistes. Tu peux le changer
-        plus tard dans Paramètres.
+      <p style={{ margin: "0 0 8px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.6, fontFamily: "DM Sans, sans-serif" }}>
+        Ton <strong style={{ color: "var(--dw-text)" }}>rang Herbalife</strong>, c&apos;est la{" "}
+        <strong style={{ color: "var(--dw-text)" }}>remise que tu obtiens sur tes produits</strong>.
+        Plus elle est haute, plus ta marge quand tu revends est grande. On s&apos;en sert
+        juste pour calibrer des objectifs réalistes.
       </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "9px 12px",
+          borderRadius: 10,
+          background: "color-mix(in srgb, var(--dw-lime) 8%, transparent)",
+          border: "1px solid var(--dw-border)",
+          fontSize: 12.5,
+          color: "var(--dw-muted)",
+          lineHeight: 1.45,
+          marginBottom: 18,
+        }}
+      >
+        <span aria-hidden="true" style={{ fontSize: 15 }}>🤷</span>
+        <span>Pas sûr ? Choisis <strong style={{ color: "var(--dw-lime)" }}>« Je démarre »</strong> — tu l&apos;ajusteras dans Paramètres quand tu montes.</span>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {RANK_LIST.map((r) => {
-          const active = rank === r;
-          const margin = Math.round((RANK_MARGINS[r] ?? 0) * 100);
+        {TIERS.map((t) => {
+          const pct = Math.round((RANK_MARGINS[t.rank] ?? 0) * 100);
+          const active = currentPct === pct;
           return (
             <button
-              key={r}
+              key={t.rank}
               type="button"
-              onClick={() => onChange(r)}
+              onClick={() => onChange(t.rank)}
+              aria-pressed={active}
               style={{
                 textAlign: "left",
-                padding: "14px 16px",
+                padding: "13px 15px",
                 borderRadius: 12,
-                border: active ? "2px solid #BA7517" : "1px solid rgba(0,0,0,0.1)",
-                background: active ? "rgba(186,117,23,0.08)" : "#FAFAFA",
+                border: active ? "1.5px solid var(--dw-lime)" : "1px solid var(--dw-border)",
+                background: active ? "color-mix(in srgb, var(--dw-lime) 10%, transparent)" : "var(--dw-card-2)",
                 cursor: "pointer",
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
+                gap: 12,
                 fontFamily: "DM Sans, sans-serif",
-                color: "#111827",
-                fontSize: 14,
-                transition: "all 0.15s",
+                color: "var(--dw-text)",
+                transition: "border-color 0.15s, background 0.15s",
               }}
             >
-              <span style={{ fontWeight: active ? 600 : 400 }}>{RANK_LABELS[r]}</span>
-              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, color: active ? "#BA7517" : "#6B7280" }}>
-                {margin}%
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                  background: active ? "color-mix(in srgb, var(--dw-lime) 16%, transparent)" : "rgba(255,255,255,0.04)",
+                }}
+              >
+                {t.ico}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: "var(--dw-text)" }}>{t.name}</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--dw-muted)", marginTop: 1, lineHeight: 1.4 }}>{t.desc}</span>
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Anton', 'Syne', sans-serif",
+                  fontSize: 22,
+                  color: active ? "var(--dw-lime)" : "var(--dw-dim)",
+                  flexShrink: 0,
+                }}
+              >
+                {pct}%
               </span>
             </button>
           );
         })}
       </div>
-      <button
-        type="button"
-        onClick={onContinue}
-        style={{
-          marginTop: 22,
-          width: "100%",
-          padding: "14px 20px",
-          borderRadius: 12,
-          border: "none",
-          background: "linear-gradient(135deg, #BA7517, #D89849)",
-          color: "#fff",
-          fontFamily: "Syne, sans-serif",
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        Suivant — mes ambitions →
-      </button>
+
+      <div style={{ marginTop: 22 }}>
+        <PrimaryButton onClick={onContinue}>Suivant — mes ambitions →</PrimaryButton>
+      </div>
     </div>
   );
 }
@@ -1200,26 +1367,26 @@ function AmbitionStep({
 }) {
   return (
     <div>
-      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "#0F6E56", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-        Étape 5 sur 5 · Tes ambitions
+      <div className="distri-eyebrow" style={{ color: "var(--dw-teal)", marginBottom: 10 }}>
+        Ton plan d&apos;action
       </div>
-      <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 26, color: "#111827", margin: 0, fontWeight: 700 }}>
-        On pose ton plan d'action 🚀
+      <h2 className="distri-title" style={{ fontSize: 26, marginBottom: 10 }}>
+        On pose tes objectifs 🚀
       </h2>
-      <p style={{ margin: "10px 0 20px 0", fontSize: 14, color: "#4B5563", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
+      <p style={{ margin: "10px 0 20px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
         Avec ton rang <strong>{RANK_LABELS[rank]}</strong>, tu gagnes{" "}
-        <strong style={{ color: "#BA7517" }}>{breakdown.net_per_client.toFixed(2)} € net</strong> par client.
+        <strong style={{ color: "var(--dw-lime)" }}>{breakdown.net_per_client.toFixed(2)} € net</strong> par client.
         Calibrons ensemble tes cibles quotidiennes.
       </p>
 
       {/* Revenu mensuel */}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
+          <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
             Objectif revenu mensuel
           </span>
         </div>
-        <div style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 700, color: "#BA7517", textAlign: "center", marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 32, fontWeight: 700, color: "var(--dw-lime)", textAlign: "center", marginBottom: 8 }}>
           {revenue.toLocaleString("fr-FR")} €
         </div>
         <input
@@ -1229,18 +1396,18 @@ function AmbitionStep({
           step={50}
           value={revenue}
           onChange={(e) => onRevenueChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#BA7517" }}
+          style={{ width: "100%", accentColor: "var(--dw-lime)" }}
         />
       </div>
 
       {/* Panier moyen */}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
+          <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
             Panier moyen client (retail)
           </span>
         </div>
-        <div style={{ fontFamily: "Syne, sans-serif", fontSize: 24, fontWeight: 700, color: "#0F6E56", textAlign: "center", marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--dw-teal)", textAlign: "center", marginBottom: 8 }}>
           {basket} €
         </div>
         <input
@@ -1250,13 +1417,13 @@ function AmbitionStep({
           step={5}
           value={basket}
           onChange={(e) => onBasketChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#0F6E56" }}
+          style={{ width: "100%", accentColor: "var(--dw-teal)" }}
         />
       </div>
 
       {/* Deadline */}
       <div style={{ marginBottom: 18 }}>
-        <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif", display: "block", marginBottom: 8 }}>
+        <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif", display: "block", marginBottom: 8 }}>
           Date d'objectif
         </span>
         <input
@@ -1269,11 +1436,11 @@ function AmbitionStep({
             width: "100%",
             padding: "12px 14px",
             borderRadius: 10,
-            border: "1px solid rgba(0,0,0,0.1)",
-            background: "#FAFAFA",
+            border: "1px solid var(--dw-border)",
+            background: "var(--dw-card-2)",
             fontSize: 15,
             fontFamily: "DM Sans, sans-serif",
-            color: "#111827",
+            color: "var(--dw-text)",
             outline: "none",
             boxSizing: "border-box",
           }}
@@ -1283,14 +1450,14 @@ function AmbitionStep({
       {/* Summary cibles */}
       <div
         style={{
-          background: "linear-gradient(135deg, rgba(186,117,23,0.08), rgba(15,110,86,0.08))",
-          border: "1px solid #BA7517",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--dw-lime) 10%, transparent), color-mix(in srgb, var(--dw-teal) 8%, transparent))",
+          border: "1px solid color-mix(in srgb, var(--dw-lime) 40%, var(--dw-border))",
           borderRadius: 14,
           padding: 16,
           marginBottom: 18,
         }}
       >
-        <div style={{ fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase", color: "#BA7517", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
+        <div style={{ fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--dw-lime)", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
           Tes cibles quotidiennes calculées
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
@@ -1299,13 +1466,13 @@ function AmbitionStep({
           <Tile label="Bilans / sem" value={breakdown.weekly_bilans_target} />
           <Tile label="Clos / sem" value={breakdown.weekly_closings_target} />
         </div>
-        <p style={{ margin: "10px 0 0 0", fontSize: 11, color: "#6B7280", fontFamily: "DM Sans, sans-serif", textAlign: "center" }}>
+        <p style={{ margin: "10px 0 0 0", fontSize: 11, color: "var(--dw-muted)", fontFamily: "DM Sans, sans-serif", textAlign: "center" }}>
           ~{breakdown.needed_new_clients_per_month} nouveaux clients / mois
         </p>
       </div>
 
       {error && (
-        <div style={{ color: "#DC2626", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
+        <div style={{ color: "#FCA5A5", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
           {error}
         </div>
       )}
@@ -1318,9 +1485,9 @@ function AmbitionStep({
           style={{
             padding: "14px 18px",
             borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: "1px solid var(--dw-border)",
             background: "transparent",
-            color: "#4B5563",
+            color: "var(--dw-muted)",
             fontFamily: "DM Sans, sans-serif",
             fontSize: 13,
             cursor: submitting ? "wait" : "pointer",
@@ -1337,14 +1504,14 @@ function AmbitionStep({
             padding: "14px 20px",
             borderRadius: 12,
             border: "none",
-            background: submitting
-              ? "rgba(0,0,0,0.15)"
-              : "linear-gradient(135deg, #BA7517, #D89849)",
-            color: "#fff",
-            fontFamily: "Syne, sans-serif",
+            background: submitting ? "rgba(197,248,42,0.22)" : "var(--dw-lime)",
+            color: submitting ? "var(--dw-dim)" : "#0a0c0a",
+            fontFamily: "'Anton', 'Syne', sans-serif",
             fontSize: 15,
             fontWeight: 700,
+            letterSpacing: "0.01em",
             cursor: submitting ? "wait" : "pointer",
+            boxShadow: submitting ? "none" : "0 4px 16px rgba(197,248,42,0.28)",
           }}
         >
           {submitting ? "Création de ton plan…" : "🚀 Lancer mon aventure"}
@@ -1357,10 +1524,10 @@ function AmbitionStep({
 function Tile({ label, value }: { label: string; value: number }) {
   return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#111827" }}>
+      <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--dw-text)" }}>
         {value}
       </div>
-      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.4, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
+      <div style={{ fontSize: 9, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.4, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
         {label}
       </div>
     </div>

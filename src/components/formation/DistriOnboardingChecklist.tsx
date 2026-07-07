@@ -191,9 +191,9 @@ export function DistriOnboardingChecklist() {
         padding: "20px 22px",
         borderRadius: 18,
         background:
-          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
-        boxShadow: "0 6px 22px -12px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-lime) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-lime) 30%, var(--ls-border))",
+        boxShadow: "0 6px 22px -12px color-mix(in srgb, var(--ls-lime) 30%, transparent)",
       }}
     >
       {/* Header */}
@@ -214,7 +214,7 @@ export function DistriOnboardingChecklist() {
               fontWeight: 700,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-lime)",
               fontFamily: "DM Sans, sans-serif",
               marginBottom: 4,
             }}
@@ -241,8 +241,8 @@ export function DistriOnboardingChecklist() {
             gap: 4,
             padding: "6px 12px",
             borderRadius: 999,
-            background: "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            background: "color-mix(in srgb, var(--ls-lime) 14%, var(--ls-surface))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-lime) 30%, transparent)",
           }}
         >
           <span
@@ -250,7 +250,7 @@ export function DistriOnboardingChecklist() {
               fontFamily: "Syne, sans-serif",
               fontWeight: 800,
               fontSize: 18,
-              color: "var(--ls-gold)",
+              color: "var(--ls-lime)",
               lineHeight: 1,
             }}
           >
@@ -308,12 +308,12 @@ export function DistriOnboardingChecklist() {
                 background: isOn
                   ? "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))"
                   : isCurrent
-                    ? "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))"
+                    ? "color-mix(in srgb, var(--ls-lime) 6%, var(--ls-surface2))"
                     : "var(--ls-surface2)",
                 border: isOn
                   ? "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)"
                   : isCurrent
-                    ? "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)"
+                    ? "0.5px solid color-mix(in srgb, var(--ls-lime) 35%, transparent)"
                     : "0.5px solid var(--ls-border)",
                 opacity,
                 transition: "all 250ms ease",
@@ -395,7 +395,7 @@ export function DistriOnboardingChecklist() {
                         style={{
                           padding: "2px 8px",
                           borderRadius: 999,
-                          background: "var(--ls-gold)",
+                          background: "var(--ls-lime)",
                           color: "var(--ls-bg)",
                           fontSize: 9,
                           fontWeight: 800,
@@ -429,9 +429,9 @@ export function DistriOnboardingChecklist() {
                         marginTop: 10,
                         padding: "6px 12px",
                         borderRadius: 999,
-                        background: "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface))",
-                        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
-                        color: "var(--ls-gold)",
+                        background: "color-mix(in srgb, var(--ls-lime) 14%, var(--ls-surface))",
+                        border: "0.5px solid color-mix(in srgb, var(--ls-lime) 35%, transparent)",
+                        color: "var(--ls-lime)",
                         fontSize: 11.5,
                         fontWeight: 700,
                         textDecoration: "none",
