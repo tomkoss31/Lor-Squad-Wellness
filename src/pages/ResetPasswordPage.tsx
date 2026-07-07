@@ -131,7 +131,7 @@ export function ResetPasswordPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#0A0D0F",
+        background: "#0a0c0a",
         color: "#F0EDE8",
         display: "flex",
         alignItems: "center",
@@ -155,7 +155,7 @@ export function ResetPasswordPage() {
           top: "-14%", left: "-10%",
           width: 480, height: 480,
           borderRadius: "50%",
-          background: "radial-gradient(circle, #1D9E75 0%, transparent 70%)",
+          background: "radial-gradient(circle, #2DD4BF 0%, transparent 70%)",
           filter: "blur(90px)",
           opacity: 0.3,
           pointerEvents: "none",
@@ -169,7 +169,7 @@ export function ResetPasswordPage() {
           bottom: "-16%", right: "-8%",
           width: 460, height: 460,
           borderRadius: "50%",
-          background: "radial-gradient(circle, #EF9F27 0%, transparent 70%)",
+          background: "radial-gradient(circle, #c5f82a 0%, transparent 70%)",
           filter: "blur(90px)",
           opacity: 0.26,
           pointerEvents: "none",
@@ -193,7 +193,7 @@ export function ResetPasswordPage() {
       >
         <h1
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "'Anton', 'Syne', sans-serif",
             fontSize: 22,
             fontWeight: 700,
             margin: 0,
@@ -211,16 +211,16 @@ export function ResetPasswordPage() {
         {phase === "success" ? (
           <div
             style={{
-              background: "rgba(29,158,117,0.14)",
-              border: "1px solid rgba(29,158,117,0.4)",
+              background: "rgba(45,212,191,0.14)",
+              border: "1px solid rgba(45,212,191,0.4)",
               borderRadius: 12,
               padding: 16,
               fontSize: 13,
-              color: "#1D9E75",
+              color: "#2DD4BF",
               lineHeight: 1.55,
             }}
           >
-            ✅ <strong>Mot de passe mis à jour !</strong>
+            <strong>Mot de passe mis à jour !</strong>
             <div style={{ color: "rgba(240,237,232,0.75)", marginTop: 10 }}>
               <strong style={{ color: "#F0EDE8" }}>Client ?</strong> Rouvre simplement
               ton app <strong>La Base 360</strong> (l'icône sur ton écran d'accueil, ou
@@ -232,12 +232,12 @@ export function ResetPasswordPage() {
               style={{
                 marginTop: 14,
                 width: "100%",
-                background: "linear-gradient(135deg, #EF9F27, #BA7517)",
-                color: "#fff",
+                background: "linear-gradient(135deg, #c5f82a, #c5f82a)",
+                color: "#0a0c0a",
                 border: "none",
                 borderRadius: 12,
                 padding: "12px 16px",
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "'Anton', 'Syne', sans-serif",
                 fontSize: 13.5,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -311,12 +311,12 @@ export function ResetPasswordPage() {
               {errorMsg && !errorMsg.includes("expiré") ? (
                 <div
                   style={{
-                    background: "#FCEBEB",
-                    border: "1px solid #E24B4A",
+                    background: "rgba(251,113,133,0.12)",
+                    border: "1px solid rgba(251,113,133,0.4)",
                     borderRadius: 10,
                     padding: "10px 12px",
                     fontSize: 12.5,
-                    color: "#501313",
+                    color: "#FCA5A5",
                   }}
                 >
                   {errorMsg}
@@ -326,17 +326,17 @@ export function ResetPasswordPage() {
                 type="submit"
                 disabled={phase === "updating"}
                 style={{
-                  background: "linear-gradient(135deg, #EF9F27, #BA7517)",
-                  color: "#fff",
+                  background: "linear-gradient(135deg, #c5f82a, #c5f82a)",
+                  color: "#0a0c0a",
                   border: "none",
                   borderRadius: 12,
                   padding: "13px 16px",
-                  fontFamily: "Syne, sans-serif",
+                  fontFamily: "'Anton', 'Syne', sans-serif",
                   fontSize: 14,
                   fontWeight: 700,
                   cursor: phase === "updating" ? "wait" : "pointer",
                   marginTop: 4,
-                  boxShadow: "0 4px 14px rgba(186,117,23,0.28)",
+                  boxShadow: "0 4px 14px rgba(197,248,42,0.28)",
                 }}
               >
                 {phase === "updating" ? "Mise à jour…" : "Mettre à jour le mot de passe"}
@@ -348,19 +348,19 @@ export function ResetPasswordPage() {
         {phase === "error" && errorMsg.includes("expiré") ? (
           <div
             style={{
-              background: "#FCEBEB",
-              border: "1px solid #E24B4A",
+              background: "rgba(251,113,133,0.12)",
+              border: "1px solid rgba(251,113,133,0.4)",
               borderRadius: 12,
               padding: 14,
               fontSize: 13,
-              color: "#501313",
+              color: "#FCA5A5",
               lineHeight: 1.55,
             }}
           >
             {errorMsg}
             <br />
             <br />
-            <a href="/forgot-password" style={{ color: "#BA7517", fontWeight: 600, textDecoration: "none" }}>
+            <a href="/forgot-password" style={{ color: "#c5f82a", fontWeight: 600, textDecoration: "none" }}>
               → Demander un nouveau lien
             </a>
           </div>
