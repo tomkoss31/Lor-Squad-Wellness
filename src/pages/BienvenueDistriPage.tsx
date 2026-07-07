@@ -21,7 +21,6 @@ import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import {
   RANK_LABELS,
   RANK_MARGINS,
-  RANK_ORDER,
   type HerbalifeRank,
 } from "../types/domain";
 import {
@@ -36,7 +35,6 @@ import { isStandalonePwa } from "../lib/utils/detectDevice";
 // installer l'app sur son tél (iOS/Android) avant d'entrer dans son espace.
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
-const RANK_LIST: HerbalifeRank[] = RANK_ORDER;
 
 function ymdInDays(days: number): string {
   const d = new Date();
@@ -1032,7 +1030,7 @@ function AvatarUpload({
         width: 120,
         height: 120,
         borderRadius: "50%",
-        border: avatarUrl ? "3px solid var(--dw-lime)" : "2px dashed rgba(0,0,0,0.2)",
+        border: avatarUrl ? "3px solid var(--dw-lime)" : "2px dashed rgba(255,255,255,0.18)",
         background: avatarUrl ? "transparent" : "var(--dw-card-2)",
         display: "flex",
         alignItems: "center",
@@ -1226,71 +1224,116 @@ function RankStep({
   onChange: (r: HerbalifeRank) => void;
   onContinue: () => void;
 }) {
+  // Onboarding : on ne montre que les 4 paliers de MARGE (25/35/42/50 %) —
+  // les 8 rangs « équipe » à 50 % (World Team, GET, etc.) sont du jargon
+  // inutile pour un débutant et ont la même marge. Le distri affinera son
+  // rang exact plus tard dans Paramètres.
+  const TIERS: { rank: HerbalifeRank; ico: string; name: string; desc: string }[] = [
+    { rank: "distributor_25", ico: "🌱", name: "Je démarre", desc: "Tu viens de signer. C'est ici que tout le monde commence." },
+    { rank: "senior_consultant_35", ico: "⭐", name: "Senior Consultant", desc: "Tu as déjà commandé ~250 PV. Ta remise a grimpé." },
+    { rank: "success_builder_42", ico: "🚀", name: "Success Builder", desc: "Tu montes vite (1 000 PV en 3 mois)." },
+    { rank: "supervisor_50", ico: "👑", name: "Superviseur ou +", desc: "Le palier max : tu revends à pleine marge." },
+  ];
+  const currentPct = Math.round((RANK_MARGINS[rank] ?? 0.25) * 100);
   return (
     <div>
-      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--dw-lime)", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-        Étape 4 sur 5 · Plan marketing Herbalife
+      <div className="distri-eyebrow" style={{ color: "var(--dw-lime)", marginBottom: 10 }}>
+        Ton statut Herbalife
       </div>
-      <h2 style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 26, color: "var(--dw-text)", margin: 0, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.01em" }}>
-        Quel est ton statut, {firstName || "toi"} ?
+      <h2
+        className="distri-title"
+        style={{ fontSize: 26, marginBottom: 10 }}
+      >
+        Ta remise aujourd&apos;hui, {firstName || "toi"} ?
       </h2>
-      <p style={{ margin: "10px 0 22px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
-        Ton rang Herbalife détermine ta marge retail (25 → 50 %). On l'utilise
-        ensuite pour calibrer tes objectifs réalistes. Tu peux le changer
-        plus tard dans Paramètres.
+      <p style={{ margin: "0 0 8px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.6, fontFamily: "DM Sans, sans-serif" }}>
+        Ton <strong style={{ color: "var(--dw-text)" }}>rang Herbalife</strong>, c&apos;est la{" "}
+        <strong style={{ color: "var(--dw-text)" }}>remise que tu obtiens sur tes produits</strong>.
+        Plus elle est haute, plus ta marge quand tu revends est grande. On s&apos;en sert
+        juste pour calibrer des objectifs réalistes.
       </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "9px 12px",
+          borderRadius: 10,
+          background: "color-mix(in srgb, var(--dw-lime) 8%, transparent)",
+          border: "1px solid var(--dw-border)",
+          fontSize: 12.5,
+          color: "var(--dw-muted)",
+          lineHeight: 1.45,
+          marginBottom: 18,
+        }}
+      >
+        <span aria-hidden="true" style={{ fontSize: 15 }}>🤷</span>
+        <span>Pas sûr ? Choisis <strong style={{ color: "var(--dw-lime)" }}>« Je démarre »</strong> — tu l&apos;ajusteras dans Paramètres quand tu montes.</span>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {RANK_LIST.map((r) => {
-          const active = rank === r;
-          const margin = Math.round((RANK_MARGINS[r] ?? 0) * 100);
+        {TIERS.map((t) => {
+          const pct = Math.round((RANK_MARGINS[t.rank] ?? 0) * 100);
+          const active = currentPct === pct;
           return (
             <button
-              key={r}
+              key={t.rank}
               type="button"
-              onClick={() => onChange(r)}
+              onClick={() => onChange(t.rank)}
+              aria-pressed={active}
               style={{
                 textAlign: "left",
-                padding: "14px 16px",
+                padding: "13px 15px",
                 borderRadius: 12,
-                border: active ? "2px solid var(--dw-lime)" : "1px solid rgba(0,0,0,0.1)",
+                border: active ? "1.5px solid var(--dw-lime)" : "1px solid var(--dw-border)",
                 background: active ? "color-mix(in srgb, var(--dw-lime) 10%, transparent)" : "var(--dw-card-2)",
                 cursor: "pointer",
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
+                gap: 12,
                 fontFamily: "DM Sans, sans-serif",
                 color: "var(--dw-text)",
-                fontSize: 14,
-                transition: "all 0.15s",
+                transition: "border-color 0.15s, background 0.15s",
               }}
             >
-              <span style={{ fontWeight: active ? 600 : 400 }}>{RANK_LABELS[r]}</span>
-              <span style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontWeight: 700, color: active ? "var(--dw-lime)" : "var(--dw-muted)" }}>
-                {margin}%
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                  background: active ? "color-mix(in srgb, var(--dw-lime) 16%, transparent)" : "rgba(255,255,255,0.04)",
+                }}
+              >
+                {t.ico}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: "var(--dw-text)" }}>{t.name}</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--dw-muted)", marginTop: 1, lineHeight: 1.4 }}>{t.desc}</span>
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Anton', 'Syne', sans-serif",
+                  fontSize: 22,
+                  color: active ? "var(--dw-lime)" : "var(--dw-dim)",
+                  flexShrink: 0,
+                }}
+              >
+                {pct}%
               </span>
             </button>
           );
         })}
       </div>
-      <button
-        type="button"
-        onClick={onContinue}
-        style={{
-          marginTop: 22,
-          width: "100%",
-          padding: "14px 20px",
-          borderRadius: 12,
-          border: "none",
-          background: "linear-gradient(135deg, var(--dw-lime), var(--dw-lime-dk))",
-          color: "#fff",
-          fontFamily: "'Anton', 'Syne', sans-serif",
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        Suivant — mes ambitions →
-      </button>
+
+      <div style={{ marginTop: 22 }}>
+        <PrimaryButton onClick={onContinue}>Suivant — mes ambitions →</PrimaryButton>
+      </div>
     </div>
   );
 }
@@ -1324,11 +1367,11 @@ function AmbitionStep({
 }) {
   return (
     <div>
-      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--dw-teal)", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-        Étape 5 sur 5 · Tes ambitions
+      <div className="distri-eyebrow" style={{ color: "var(--dw-teal)", marginBottom: 10 }}>
+        Ton plan d&apos;action
       </div>
-      <h2 style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 26, color: "var(--dw-text)", margin: 0, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.01em" }}>
-        On pose ton plan d'action 🚀
+      <h2 className="distri-title" style={{ fontSize: 26, marginBottom: 10 }}>
+        On pose tes objectifs 🚀
       </h2>
       <p style={{ margin: "10px 0 20px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
         Avec ton rang <strong>{RANK_LABELS[rank]}</strong>, tu gagnes{" "}
@@ -1393,7 +1436,7 @@ function AmbitionStep({
             width: "100%",
             padding: "12px 14px",
             borderRadius: 10,
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: "1px solid var(--dw-border)",
             background: "var(--dw-card-2)",
             fontSize: 15,
             fontFamily: "DM Sans, sans-serif",
@@ -1407,8 +1450,8 @@ function AmbitionStep({
       {/* Summary cibles */}
       <div
         style={{
-          background: "linear-gradient(135deg, color-mix(in srgb, var(--dw-lime) 0.0800%, transparent), rgba(15,110,86,0.08))",
-          border: "1px solid var(--dw-lime)",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--dw-lime) 10%, transparent), color-mix(in srgb, var(--dw-teal) 8%, transparent))",
+          border: "1px solid color-mix(in srgb, var(--dw-lime) 40%, var(--dw-border))",
           borderRadius: 14,
           padding: 16,
           marginBottom: 18,
@@ -1429,7 +1472,7 @@ function AmbitionStep({
       </div>
 
       {error && (
-        <div style={{ color: "#DC2626", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
+        <div style={{ color: "#FCA5A5", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
           {error}
         </div>
       )}
@@ -1442,7 +1485,7 @@ function AmbitionStep({
           style={{
             padding: "14px 18px",
             borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: "1px solid var(--dw-border)",
             background: "transparent",
             color: "var(--dw-muted)",
             fontFamily: "DM Sans, sans-serif",
@@ -1461,14 +1504,14 @@ function AmbitionStep({
             padding: "14px 20px",
             borderRadius: 12,
             border: "none",
-            background: submitting
-              ? "rgba(255,255,255,0.14)"
-              : "linear-gradient(135deg, var(--dw-lime), var(--dw-lime-dk))",
-            color: "#fff",
+            background: submitting ? "rgba(197,248,42,0.22)" : "var(--dw-lime)",
+            color: submitting ? "var(--dw-dim)" : "#0a0c0a",
             fontFamily: "'Anton', 'Syne', sans-serif",
             fontSize: 15,
             fontWeight: 700,
+            letterSpacing: "0.01em",
             cursor: submitting ? "wait" : "pointer",
+            boxShadow: submitting ? "none" : "0 4px 16px rgba(197,248,42,0.28)",
           }}
         >
           {submitting ? "Création de ton plan…" : "🚀 Lancer mon aventure"}
