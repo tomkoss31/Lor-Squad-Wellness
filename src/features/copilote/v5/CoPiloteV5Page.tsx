@@ -80,9 +80,16 @@ export function CoPiloteV5Page() {
 
   // Switch §3 — Salle des Opérations : vue cockpit pour la recrue non activée.
   const ops = useSalleOps();
-  // Échappatoire « Plus tard » (par session) : ne verrouille jamais l'app.
+  // Échappatoire « Plus tard » = snooze POUR LA JOURNÉE (fix 2026-07-08).
+  // On stocke la date du jour (toDateString, local) en localStorage. Tant que
+  // le distri n'est pas activé, le cockpit guidé REVIENT tout seul à chaque
+  // nouvelle journée/connexion — un débutant ne peut pas « rater » son
+  // onboarding faute d'avoir cliqué pour y revenir. (Avant : sessionStorage,
+  // peu fiable en PWA + risquait de ne jamais revenir.)
   const [opsEscaped, setOpsEscaped] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem("ls-ops-escape") === "1",
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem("ls-ops-escape") === new Date().toDateString(),
   );
 
   // Refresh `now` toutes les minutes pour la date display
@@ -139,7 +146,8 @@ export function CoPiloteV5Page() {
         view={ops}
         fullscreen
         onEscape={() => {
-          sessionStorage.setItem("ls-ops-escape", "1");
+          // Snooze pour aujourd'hui seulement — revient demain tant que non activé.
+          window.localStorage.setItem("ls-ops-escape", new Date().toDateString());
           setOpsEscaped(true);
         }}
       />
@@ -268,7 +276,7 @@ export function CoPiloteV5Page() {
         <button
           type="button"
           onClick={() => {
-            sessionStorage.removeItem("ls-ops-escape");
+            window.localStorage.removeItem("ls-ops-escape");
             setOpsEscaped(false);
             window.scrollTo({ top: 0 });
           }}
