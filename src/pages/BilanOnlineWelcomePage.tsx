@@ -231,7 +231,7 @@ export function BilanOnlineWelcomePage() {
                     minWidth: 22,
                     borderRadius: "50%",
                     background: PUBLIC_TOKENS.gradCta,
-                    color: "white",
+                    color: PUBLIC_TOKENS.ink,
                     fontSize: 12,
                     fontWeight: 700,
                     display: "flex",

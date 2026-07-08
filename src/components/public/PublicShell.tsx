@@ -111,29 +111,30 @@ export function PublicCtaPrimary({
         padding: "16px 24px",
         background: disabled
           ? "rgba(251, 247, 240, 0.12)"
-          : PUBLIC_TOKENS.gradCta,
-        color: disabled ? PUBLIC_TOKENS.textOnDarkHint : PUBLIC_TOKENS.cream,
+          : PUBLIC_TOKENS.lime,
+        color: disabled ? PUBLIC_TOKENS.textOnDarkHint : PUBLIC_TOKENS.ink,
         border: "none",
         borderRadius: 14,
         fontFamily: PUBLIC_FONTS.display,
         fontSize: 16,
         fontWeight: 700,
+        letterSpacing: "0.01em",
         cursor: disabled ? "not-allowed" : "pointer",
-        boxShadow: disabled ? "none" : "0 8px 22px rgba(45, 212, 191, 0.25)",
-        transition: "transform 0.18s, box-shadow 0.18s, background 0.18s",
+        boxShadow: disabled ? "none" : "0 8px 22px rgba(197, 248, 42, 0.28)",
+        transition: "transform 0.18s, box-shadow 0.18s, filter 0.18s",
         ...style,
       }}
       onMouseEnter={(e) => {
         if (disabled) return;
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.background = PUBLIC_TOKENS.gradCtaHover;
-        e.currentTarget.style.boxShadow = "0 12px 32px rgba(167, 139, 250, 0.35)";
+        e.currentTarget.style.filter = "brightness(1.05)";
+        e.currentTarget.style.boxShadow = "0 12px 32px rgba(197, 248, 42, 0.38)";
       }}
       onMouseLeave={(e) => {
         if (disabled) return;
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.background = PUBLIC_TOKENS.gradCta;
-        e.currentTarget.style.boxShadow = "0 8px 22px rgba(45, 212, 191, 0.25)";
+        e.currentTarget.style.filter = "none";
+        e.currentTarget.style.boxShadow = "0 8px 22px rgba(197, 248, 42, 0.28)";
       }}
     >
       {children}
