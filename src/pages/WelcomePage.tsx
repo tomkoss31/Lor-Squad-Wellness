@@ -44,9 +44,9 @@ export function WelcomePage() {
           padding: 32px 20px;
           position: relative;
           overflow: hidden;
-          font-family: 'Inter', system-ui, sans-serif;
-          background: #FFFFFF;
-          color: #0F172A;
+          font-family: 'DM Sans', sans-serif;
+          background: #0a0c0a;
+          color: #F1EFE8;
         }
 
         /* ─── Mesh G3 (Emerald + Cyan + Violet, blobs flous) ────────── */
@@ -54,7 +54,7 @@ export function WelcomePage() {
           position: absolute;
           border-radius: 50%;
           filter: blur(110px);
-          opacity: 0.55;
+          opacity: 0.16;
           pointer-events: none;
           will-change: transform;
         }
@@ -63,7 +63,7 @@ export function WelcomePage() {
           left: -8%;
           width: 540px;
           height: 540px;
-          background: radial-gradient(circle, #10B981 0%, transparent 70%);
+          background: radial-gradient(circle, #c5f82a 0%, transparent 70%);
           animation: welcome-float-1 28s ease-in-out infinite alternate;
         }
         .welcome-blob-cyan {
@@ -71,18 +71,18 @@ export function WelcomePage() {
           right: -12%;
           width: 480px;
           height: 480px;
-          background: radial-gradient(circle, #06B6D4 0%, transparent 70%);
+          background: radial-gradient(circle, #2DD4BF 0%, transparent 70%);
           animation: welcome-float-2 32s ease-in-out infinite alternate;
-          opacity: 0.45;
+          opacity: 0.14;
         }
         .welcome-blob-violet {
           bottom: -15%;
           left: 30%;
           width: 460px;
           height: 460px;
-          background: radial-gradient(circle, #8B5CF6 0%, transparent 70%);
+          background: radial-gradient(circle, #A78BFA 0%, transparent 70%);
           animation: welcome-float-3 36s ease-in-out infinite alternate;
-          opacity: 0.40;
+          opacity: 0.13;
         }
 
         @keyframes welcome-float-1 {
@@ -137,7 +137,7 @@ export function WelcomePage() {
           position: absolute;
           inset: -8px;
           border-radius: 50%;
-          background: conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.4) 25%, rgba(6,182,212,0.5) 50%, rgba(139,92,246,0.4) 75%, transparent 100%);
+          background: conic-gradient(from 0deg, transparent 0%, rgba(197,248,42,0.4) 25%, rgba(45,212,191,0.5) 50%, rgba(167,139,250,0.4) 75%, transparent 100%);
           animation: welcome-ring-rotate 6s linear infinite;
           opacity: 0.7;
         }
@@ -146,7 +146,7 @@ export function WelcomePage() {
           position: absolute;
           inset: -4px;
           border-radius: 50%;
-          background: white;
+          background: #0a0c0a;
         }
         .welcome-logo {
           position: relative;
@@ -156,12 +156,12 @@ export function WelcomePage() {
           border-radius: 28px;
           object-fit: contain;
           animation: welcome-logo-breathe 3.5s ease-in-out infinite alternate;
-          filter: drop-shadow(0 0 28px rgba(16,185,129,0.35)) drop-shadow(0 12px 32px rgba(6,182,212,0.20));
+          filter: drop-shadow(0 0 28px rgba(197,248,42,0.35)) drop-shadow(0 12px 32px rgba(45,212,191,0.20));
           will-change: transform, filter;
         }
         @keyframes welcome-logo-breathe {
-          0%   { transform: scale(1); filter: drop-shadow(0 0 24px rgba(16,185,129,0.30)) drop-shadow(0 12px 32px rgba(6,182,212,0.18)); }
-          100% { transform: scale(1.04); filter: drop-shadow(0 0 36px rgba(16,185,129,0.50)) drop-shadow(0 16px 36px rgba(139,92,246,0.30)); }
+          0%   { transform: scale(1); filter: drop-shadow(0 0 24px rgba(197,248,42,0.30)) drop-shadow(0 12px 32px rgba(45,212,191,0.18)); }
+          100% { transform: scale(1.04); filter: drop-shadow(0 0 36px rgba(197,248,42,0.50)) drop-shadow(0 16px 36px rgba(167,139,250,0.30)); }
         }
         @keyframes welcome-ring-rotate {
           from { transform: rotate(0deg); }
@@ -172,45 +172,47 @@ export function WelcomePage() {
         .welcome-heritage {
           padding: 6px 18px;
           border-radius: 100px;
-          background: rgba(16,185,129,0.06);
-          border: 0.5px solid rgba(16,185,129,0.18);
-          font-family: 'Inter', system-ui, sans-serif;
+          background: rgba(197,248,42,0.06);
+          border: 0.5px solid rgba(197,248,42,0.18);
+          font-family: 'DM Sans', sans-serif;
           font-size: 10px;
           font-weight: 600;
           letter-spacing: 0.32em;
           text-transform: uppercase;
-          color: #475569;
+          color: #9AA0A6;
           backdrop-filter: blur(8px);
         }
 
         /* ─── Hero (titre + accroche) ─────────────────────────────── */
         .welcome-hero { text-align: center; }
         .welcome-title {
-          font-family: 'Sora', system-ui, sans-serif;
-          font-size: clamp(34px, 6vw, 48px);
-          font-weight: 700;
-          line-height: 1.05;
-          letter-spacing: -0.025em;
+          font-family: 'Anton', 'Syne', sans-serif;
+          text-transform: uppercase;
+          font-size: clamp(38px, 6.5vw, 54px);
+          font-weight: 400;
+          line-height: 1.0;
+          letter-spacing: 0.01em;
           margin: 0 0 14px;
-          color: #0F172A;
+          color: #F1EFE8;
           animation: welcome-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
         }
         .welcome-title-greeting {
-          font-weight: 500;
-          color: #475569;
-          font-size: 0.55em;
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          text-transform: uppercase;
+          font-weight: 600;
+          color: #9AA0A6;
+          font-size: 0.22em;
           display: block;
-          margin-bottom: 6px;
-          letter-spacing: 0.02em;
+          margin-bottom: 12px;
+          letter-spacing: 0.18em;
         }
         .welcome-title-brand {
-          font-weight: 700;
-          color: #0F172A;
+          font-weight: 400;
+          color: #F1EFE8;
         }
         .welcome-title-360 {
-          font-style: italic;
           font-weight: 400;
-          background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+          background: linear-gradient(135deg, #c5f82a 0%, #2DD4BF 50%, #A78BFA 100%);
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -219,18 +221,18 @@ export function WelcomePage() {
           padding-right: 6px;
         }
         .welcome-tagline {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 16px;
-          color: #475569;
+          color: #9AA0A6;
           margin: 0;
           line-height: 1.5;
           font-weight: 400;
           animation: welcome-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
         }
         .welcome-tagline-en {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 12px;
-          color: #94A3B8;
+          color: #6b7280;
           margin: 6px 0 0;
           line-height: 1.5;
           font-weight: 400;
@@ -244,11 +246,11 @@ export function WelcomePage() {
           animation: welcome-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
         }
         .welcome-label {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 10px;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #94A3B8;
+          color: #6b7280;
           font-weight: 700;
           display: block;
           margin-bottom: 10px;
@@ -256,7 +258,7 @@ export function WelcomePage() {
         .welcome-divider {
           width: 36px;
           height: 2px;
-          background: linear-gradient(90deg, transparent 0%, #10B981 30%, #06B6D4 50%, #8B5CF6 70%, transparent 100%);
+          background: linear-gradient(90deg, transparent 0%, #c5f82a 30%, #2DD4BF 50%, #A78BFA 70%, transparent 100%);
           border-radius: 999px;
           margin: 0 auto;
         }
@@ -271,15 +273,15 @@ export function WelcomePage() {
         /* ─── Footer ─────────────────────────────────────────────── */
         .welcome-footer {
           text-align: center;
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 11px;
-          color: #94A3B8;
+          color: #6b7280;
           margin-top: 8px;
           animation: welcome-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both;
         }
         .welcome-footer-brand {
           font-weight: 600;
-          background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+          background: linear-gradient(135deg, #c5f82a 0%, #2DD4BF 50%, #A78BFA 100%);
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;

@@ -13,21 +13,22 @@ interface Props {
   accent?: Accent;
 }
 
+// Identité v2 (2026-07) : tints lime/teal/coral sur card sombre.
 const ACCENT_COLORS: Record<Accent, { bg: string; bgDark: string; text: string }> = {
   teal: {
-    bg: "rgba(29, 158, 117, 0.14)",
-    bgDark: "rgba(29, 158, 117, 0.22)",
-    text: "#0F6E56",
+    bg: "rgba(45, 212, 191, 0.14)",
+    bgDark: "rgba(45, 212, 191, 0.22)",
+    text: "#2DD4BF",
   },
   gold: {
-    bg: "rgba(239, 159, 39, 0.16)",
-    bgDark: "rgba(239, 159, 39, 0.24)",
-    text: "#BA7517",
+    bg: "rgba(197, 248, 42, 0.14)",
+    bgDark: "rgba(197, 248, 42, 0.22)",
+    text: "#c5f82a",
   },
   magenta: {
-    bg: "rgba(212, 83, 126, 0.14)",
-    bgDark: "rgba(212, 83, 126, 0.22)",
-    text: "#A93B63",
+    bg: "rgba(251, 113, 133, 0.16)",
+    bgDark: "rgba(251, 113, 133, 0.22)",
+    text: "#FB7185",
   },
 };
 
@@ -48,16 +49,14 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
           align-items: center;
           gap: 14px;
           padding: 18px 20px;
-          background: rgba(255, 255, 255, 0.72);
-          backdrop-filter: blur(10px) saturate(140%);
-          -webkit-backdrop-filter: blur(10px) saturate(140%);
-          border: 1px solid rgba(239, 159, 39, 0.15);
+          background: #1a1e22;
+          border: 1px solid rgba(255, 255, 255, 0.10);
           border-radius: 16px;
           cursor: pointer;
           text-align: left;
           font-family: 'DM Sans', sans-serif;
           color: inherit;
-          box-shadow: 0 1px 2px rgba(11,13,17,0.04), 0 4px 12px rgba(11,13,17,0.03);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.25);
           transition:
             transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
@@ -66,26 +65,14 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
           opacity: 0;
           animation: welcome-card-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
-        :root[data-theme="dark"] .welcome-profile-card,
-        html.dark .welcome-profile-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
-        }
         .welcome-profile-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(239, 159, 39, 0.4);
-          box-shadow: 0 4px 20px rgba(239, 159, 39, 0.1), 0 2px 6px rgba(11,13,17,0.06);
-          background: rgba(255, 255, 255, 0.88);
-        }
-        :root[data-theme="dark"] .welcome-profile-card:hover,
-        html.dark .welcome-profile-card:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(239, 159, 39, 0.45);
-          box-shadow: 0 4px 24px rgba(239, 159, 39, 0.14), 0 2px 6px rgba(0,0,0,0.15);
+          border-color: rgba(197, 248, 42, 0.45);
+          box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+          background: #1f242a;
         }
         .welcome-profile-card:focus-visible {
-          outline: 2px solid #EF9F27;
+          outline: 2px solid #c5f82a;
           outline-offset: 2px;
         }
         .welcome-profile-card__icon {
@@ -109,37 +96,31 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
         .welcome-profile-card__title {
           font-size: 15.5px;
           font-weight: 700;
-          color: #0B0D11;
+          color: #F1EFE8;
           margin-bottom: 3px;
           line-height: 1.3;
           letter-spacing: -0.005em;
         }
-        :root[data-theme="dark"] .welcome-profile-card__title,
-        html.dark .welcome-profile-card__title { color: #F0EDE8; }
         .welcome-profile-card__sub {
           font-size: 13px;
           font-weight: 500;
-          color: rgba(11, 13, 17, 0.78);
+          color: rgba(240, 237, 232, 0.62);
           line-height: 1.4;
         }
-        :root[data-theme="dark"] .welcome-profile-card__sub,
-        html.dark .welcome-profile-card__sub { color: rgba(240, 237, 232, 0.72); }
         /* Au hover, le titre prend la couleur d accent — friendly + match page */
-        .welcome-profile-card--teal:hover .welcome-profile-card__title { color: #0F6E56; }
-        .welcome-profile-card--gold:hover .welcome-profile-card__title { color: #BA7517; }
-        .welcome-profile-card--magenta:hover .welcome-profile-card__title { color: #A93B63; }
+        .welcome-profile-card--teal:hover .welcome-profile-card__title { color: #2DD4BF; }
+        .welcome-profile-card--gold:hover .welcome-profile-card__title { color: #c5f82a; }
+        .welcome-profile-card--magenta:hover .welcome-profile-card__title { color: #FB7185; }
         .welcome-profile-card__arrow {
           font-size: 18px;
-          color: rgba(11, 13, 17, 0.38);
+          color: rgba(240, 237, 232, 0.32);
           flex-shrink: 0;
           transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
           line-height: 1;
         }
-        :root[data-theme="dark"] .welcome-profile-card__arrow,
-        html.dark .welcome-profile-card__arrow { color: rgba(240, 237, 232, 0.35); }
         .welcome-profile-card:hover .welcome-profile-card__arrow {
           transform: translateX(4px);
-          color: #EF9F27;
+          color: #c5f82a;
         }
 
         @keyframes welcome-card-in {
