@@ -151,6 +151,20 @@ serve(async (req) => {
 
     if (insertErr) throw insertErr;
 
+    // Chantier colis (2026-07-08) : email de remerciement personnalisé Noaly,
+    // fire-and-forget — best-effort, ne bloque jamais la réponse au funnel.
+    if (source === "colis" && email) {
+      fetch(`${SUPABASE_URL}/functions/v1/send-colis-welcome-email`, {
+        signal: AbortSignal.timeout(2500),
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prospect_lead_id: (inserted as { id: string }).id }),
+      }).catch(() => { /* non bloquant */ });
+    }
+
     // Notif push aux admins actifs + au coach referrer (best-effort, non
     // bloquant). Upgrade VIP-4 V1.1 (2026-06-10) : avant, seuls les admins
     // étaient notifiés — un distri non-admin ne savait pas qu'un lead était

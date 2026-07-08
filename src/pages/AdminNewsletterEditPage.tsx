@@ -24,7 +24,7 @@ import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 import { OgImageTemplate } from "../components/newsletter/OgImageTemplate";
 
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
-type NewsletterAudience = "clients" | "distri" | "all";
+type NewsletterAudience = "clients" | "distri" | "all" | "leads_colis";
 
 type PaywallMode = "none" | "teaser";
 
@@ -98,6 +98,8 @@ function audienceLabel(a: NewsletterAudience): string {
       return "tous les distri actifs (distributor, admin, referent)";
     case "all":
       return "tous les clients + tous les distri actifs";
+    case "leads_colis":
+      return "les leads du funnel colis ayant laissé un email (jamais inclus dans « tous »)";
   }
 }
 
@@ -894,6 +896,7 @@ export function AdminNewsletterEditPage() {
                   <option value="all">Tous (clients + distri)</option>
                   <option value="clients">Clients uniquement</option>
                   <option value="distri">Distri uniquement</option>
+                  <option value="leads_colis">🎁 Leads colis uniquement</option>
                 </select>
               </div>
               <div style={{ flex: 1, minWidth: 180 }}>
