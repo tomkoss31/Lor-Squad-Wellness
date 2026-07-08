@@ -72,6 +72,7 @@ export function ColisPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [melanieUserId, setMelanieUserId] = useState<string | null>(null);
+  const [leadId, setLeadId] = useState<string | null>(null);
 
   // Résolution du compte par défaut (même pattern que VipClubPage) — best
   // effort : si la RPC échoue, le lead part simplement sans referrer_user_id
@@ -116,18 +117,18 @@ export function ColisPage() {
   }, [firstName]);
   const rdvUrl = `/rdv/${DEFAULT_COACH_SLUG}`;
 
-  async function submitLead(nextAction: NextAction) {
+  async function submitLead(): Promise<string | null> {
     setError(null);
-    if (firstName.trim().length < 2) { setError("Indique ton prénom."); return false; }
-    if (phone.replace(/\D/g, "").length < 6) { setError("Indique un numéro de téléphone valide."); return false; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Indique un email valide."); return false; }
-    if (!consent) { setError("Coche la case pour qu'on puisse te recontacter."); return false; }
+    if (firstName.trim().length < 2) { setError("Indique ton prénom."); return null; }
+    if (phone.replace(/\D/g, "").length < 6) { setError("Indique un numéro de téléphone valide."); return null; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Indique un email valide."); return null; }
+    if (!consent) { setError("Coche la case pour qu'on puisse te recontacter."); return null; }
 
     setSending(true);
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-      const { error: fnErr } = await sb.functions.invoke("submit-prospect-lead", {
+      const { data, error: fnErr } = await sb.functions.invoke("submit-prospect-lead", {
         body: {
           first_name: firstName.trim(),
           phone: phone.trim(),
@@ -138,15 +139,19 @@ export function ColisPage() {
           metadata: {
             program: "colis_pass_decouverte",
             colis_answers: { energie, sommeil, objectif, dispo },
-            colis_next_action: nextAction,
+            // Défaut à la 1ère (et unique) insertion — affiné ensuite par
+            // update-colis-lead-action si la personne choisit RDV ou bilan
+            // sur l'écran suivant (jamais un 2e insert, cf. handleChooseRdv).
+            colis_next_action: "email_only" satisfies NextAction,
           },
         },
       });
       if (fnErr) throw new Error(fnErr.message);
-      return true;
+      const id = (data as { id?: string } | null)?.id ?? null;
+      return id;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Envoi impossible, réessaie.");
-      return false;
+      return null;
     } finally {
       setSending(false);
     }
@@ -154,26 +159,39 @@ export function ColisPage() {
 
   async function handleCapture(e: FormEvent) {
     e.preventDefault();
-    // Étape de capture : on enregistre déjà le lead en "email_only" — si la
-    // personne choisit ensuite RDV ou bilan sur l'écran suivant, on ne
-    // renvoie pas une 2e requête (le lead existe déjà, le choix reste dans
-    // colis_next_action pour la 1ère soumission — suffisant pour le tri CRM).
-    const ok = await submitLead("email_only");
-    if (ok) go(6);
+    const id = await submitLead();
+    if (id) {
+      setLeadId(id);
+      go(6);
+    }
   }
 
+  // Le lead existe déjà (1 seul insert, dans handleCapture) — ici on AFFINE
+  // le signal de priorité (colis_next_action) par un simple update ciblé,
+  // jamais un 2e insert (sinon doublon du même lead dans le CRM).
+  function updateNextAction(action: "rdv" | "bilan") {
+    if (!leadId) return;
+    void getSupabaseClient().then((sb) => {
+      sb?.functions
+        .invoke("update-colis-lead-action", {
+          body: { prospect_lead_id: leadId, next_action: action },
+        })
+        .catch(() => { /* non bloquant — la navigation se fait quand même */ });
+    });
+  }
   function handleChooseRdv() {
-    void submitLead("rdv");
+    updateNextAction("rdv");
     navigate(rdvUrl);
   }
   function handleChooseBilan() {
-    void submitLead("bilan");
+    updateNextAction("bilan");
     navigate(bilanOnlineUrl);
   }
 
   function reset() {
     setEnergie(null); setSommeil(null); setObjectif(null); setDispo(null);
     setFirstName(""); setPhone(""); setEmail(""); setConsent(false); setError(null);
+    setLeadId(null);
     go(0);
   }
 
