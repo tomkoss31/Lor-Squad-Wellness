@@ -36,7 +36,8 @@ export type CrmSource =
   | "opportunite"
   | "simulateur"
   | "business"
-  | "welcome";
+  | "welcome"
+  | "colis";
 
 export interface CrmLead {
   key: string;
@@ -89,6 +90,7 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   simulateur: { label: "Simulateur", emoji: "✨" },
   business: { label: "Business", emoji: "💼" },
   welcome: { label: "Site web", emoji: "🌐" },
+  colis: { label: "Colis", emoji: "🎁" },
 };
 
 // Re-catégorisation manuelle (A, 2026-06-16) : sources éditables pour un lead
@@ -123,6 +125,7 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   if (s.startsWith("opportunite") || s === "rejoindre") return "opportunite";
   if (s === "simulateur") return "simulateur";
   if (s.startsWith("business")) return "business";
+  if (s === "colis") return "colis";
   return "welcome";
 }
 
