@@ -245,20 +245,6 @@ export function CoPiloteV5Page() {
 
           {/* Cloche + theme toggle = doublons du MobileHeader (Onde 1) →
               masqués sur mobile via [data-v5-topbar-dups]. */}
-          {opsEscaped && !ops.activated ? (
-            <button
-              type="button"
-              onClick={() => {
-                sessionStorage.removeItem("ls-ops-escape");
-                setOpsEscaped(false);
-              }}
-              style={pillIconStyle}
-              aria-label="Revenir à La Base Académie"
-              title="Revenir à La Base Académie"
-            >
-              <span aria-hidden="true">▦</span>
-            </button>
-          ) : null}
           <span data-v5-topbar-dups style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <AnnouncementBell />
             <button
@@ -273,6 +259,45 @@ export function CoPiloteV5Page() {
           </span>
         </div>
       </div>
+
+      {/* Reprise onboarding (fix 2026-07-08) : après « Plus tard », le cockpit
+          se masque pour la session. On offre une carte CLAIRE et visible (corps,
+          donc mobile OK) pour y revenir — au lieu de l'ex-icône ▦ cryptique de la
+          topbar (introuvable, et masquée sur mobile). */}
+      {!ops.activated && opsEscaped ? (
+        <button
+          type="button"
+          onClick={() => {
+            sessionStorage.removeItem("ls-ops-escape");
+            setOpsEscaped(false);
+            window.scrollTo({ top: 0 });
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+            textAlign: "left",
+            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
+            borderRadius: 16,
+            padding: "14px 16px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
+              Reprendre mon démarrage
+            </span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Tu as mis en pause avec « Plus tard ». Reprends ton parcours guidé La Base Académie.
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
+        </button>
+      ) : null}
 
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
