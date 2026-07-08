@@ -91,6 +91,10 @@ export function CoPiloteV5Page() {
       typeof window !== "undefined" &&
       window.localStorage.getItem("ls-ops-escape") === new Date().toDateString(),
   );
+  // Ouverture manuelle du cockpit live (fix 2026-07-08) : permet à un membre
+  // DÉJÀ ACTIVÉ (ou un admin comme Thomas) de rouvrir / revoir la Salle des
+  // Opérations à la demande — avant, l'entrée n'existait que pour les non-activés.
+  const [opsForceOpen, setOpsForceOpen] = useState(false);
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -140,12 +144,17 @@ export function CoPiloteV5Page() {
   // Tant qu'un membre n'est pas « activé » (5 portes franchies), son Co-pilote EST
   // le cockpit plein écran : 1 action du jour, pas l'app lourde. Tous les rôles
   // (« on est tous nouveaux sur l'app ») — sauf échappatoire « Plus tard ».
-  if (!ops.loading && !ops.activated && !opsEscaped) {
+  if (!ops.loading && (opsForceOpen || (!ops.activated && !opsEscaped))) {
     return (
       <SalleOpsQuotidien
         view={ops}
         fullscreen
         onEscape={() => {
+          // Ouverture manuelle (activé/admin) → on referme simplement.
+          if (opsForceOpen) {
+            setOpsForceOpen(false);
+            return;
+          }
           // Snooze pour aujourd'hui seulement — revient demain tant que non activé.
           window.localStorage.setItem("ls-ops-escape", new Date().toDateString());
           setOpsEscaped(true);
@@ -268,16 +277,18 @@ export function CoPiloteV5Page() {
         </div>
       </div>
 
-      {/* Reprise onboarding (fix 2026-07-08) : après « Plus tard », le cockpit
-          se masque pour la session. On offre une carte CLAIRE et visible (corps,
-          donc mobile OK) pour y revenir — au lieu de l'ex-icône ▦ cryptique de la
-          topbar (introuvable, et masquée sur mobile). */}
-      {!ops.activated && opsEscaped ? (
+      {/* Accès cockpit « La Base Académie » (fix 2026-07-08) : entrée CLAIRE et
+          TOUJOURS dispo pour (r)ouvrir le démarrage guidé — que le membre soit en
+          pause du jour (« Plus tard »), déjà activé (revoir), ou admin (Thomas qui
+          veut vérifier ce que voient ses distris). Force l'ouverture du cockpit
+          LIVE (setOpsForceOpen) — pas la maquette statique /salle-ops. */}
+      {currentUser.role === "distributor" || currentUser.role === "admin" ? (
         <button
           type="button"
           onClick={() => {
             window.localStorage.removeItem("ls-ops-escape");
             setOpsEscaped(false);
+            setOpsForceOpen(true);
             window.scrollTo({ top: 0 });
           }}
           style={{
@@ -297,10 +308,12 @@ export function CoPiloteV5Page() {
           <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-              Reprendre mon démarrage
+              {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
             </span>
             <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Tu as mis en pause avec « Plus tard ». Reprends ton parcours guidé La Base Académie.
+              {ops.activated
+                ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
+                : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
             </span>
           </span>
           <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
@@ -309,40 +322,6 @@ export function CoPiloteV5Page() {
 
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
-
-      {/* L'ancien « Mon démarrage 30 jours » (StarterPlanCard) est retiré :
-          remplacé par la Salle des Opérations (switch §3 ci-dessus). Le distri
-          non activé voit le cockpit ; l'activé garde un accès « continuer ». */}
-      {currentUser.role === "distributor" && ops.activated ? (
-        <button
-          type="button"
-          onClick={() => navigate("/salle-ops")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            width: "100%",
-            textAlign: "left",
-            background: "var(--ls-surface)",
-            border: "0.5px solid var(--ls-border)",
-            borderRadius: 16,
-            padding: "14px 16px",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
-          <span style={{ flex: 1 }}>
-            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-              La Base Académie — continuer
-            </span>
-            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Étapes « faire faire » : démarrer ta recrue, dupliquer.
-            </span>
-          </span>
-          <span aria-hidden="true" style={{ color: "var(--ls-text-muted)" }}>→</span>
-        </button>
-      ) : null}
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv
