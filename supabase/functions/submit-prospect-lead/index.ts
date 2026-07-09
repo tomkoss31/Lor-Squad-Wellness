@@ -77,6 +77,8 @@ serve(async (req) => {
     utm_source?: string;
     utm_medium?: string;
     utm_campaign?: string;
+    // Chantier Colis (2026-07-08) : email obligatoire sur ce funnel, optionnel ailleurs.
+    email?: string;
   };
   try {
     body = await req.json();
@@ -98,12 +100,16 @@ serve(async (req) => {
   const utmSource = (body.utm_source ?? "").trim() || null;
   const utmMedium = (body.utm_medium ?? "").trim() || null;
   const utmCampaign = (body.utm_campaign ?? "").trim() || null;
+  const email = (body.email ?? "").trim() || null;
 
   if (firstName.length < 2) {
     return json({ success: false, error: "Prénom trop court." }, 400);
   }
   if (phone.replace(/\D/g, "").length < 6) {
     return json({ success: false, error: "Téléphone invalide." }, 400);
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json({ success: false, error: "Email invalide." }, 400);
   }
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -127,6 +133,7 @@ serve(async (req) => {
       .insert({
         first_name: firstName,
         phone,
+        email,
         city,
         source,
         status: "new",
@@ -143,6 +150,20 @@ serve(async (req) => {
       .single();
 
     if (insertErr) throw insertErr;
+
+    // Chantier colis (2026-07-08) : email de remerciement personnalisé Noaly,
+    // fire-and-forget — best-effort, ne bloque jamais la réponse au funnel.
+    if (source === "colis" && email) {
+      fetch(`${SUPABASE_URL}/functions/v1/send-colis-welcome-email`, {
+        signal: AbortSignal.timeout(2500),
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prospect_lead_id: (inserted as { id: string }).id }),
+      }).catch(() => { /* non bloquant */ });
+    }
 
     // Notif push aux admins actifs + au coach referrer (best-effort, non
     // bloquant). Upgrade VIP-4 V1.1 (2026-06-10) : avant, seuls les admins
