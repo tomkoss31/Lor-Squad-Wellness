@@ -188,13 +188,6 @@ export function ColisPage() {
     navigate(bilanOnlineUrl);
   }
 
-  function reset() {
-    setEnergie(null); setSommeil(null); setObjectif(null); setDispo(null);
-    setFirstName(""); setPhone(""); setEmail(""); setConsent(false); setError(null);
-    setLeadId(null);
-    go(0);
-  }
-
   return (
     <div style={pageStyle}>
       <div style={phoneStyle}>
@@ -298,7 +291,6 @@ export function ColisPage() {
             <div style={ctaWrapStyle}>
               <button type="button" style={btnStyle} onClick={handleChooseRdv}>Réserver mon bilan →</button>
               <button type="button" style={ghostBtnStyle} onClick={handleChooseBilan}>Je préfère faire mon bilan en ligne complet</button>
-              <button type="button" style={dimBtnStyle} onClick={reset}>↺ Revoir la démo</button>
             </div>
           </section>
         )}
@@ -422,10 +414,6 @@ const btnStyle: React.CSSProperties = {
   padding: 17, fontFamily: "'Archivo Black', sans-serif", textTransform: "uppercase", fontSize: 16, letterSpacing: "0.02em", cursor: "pointer",
 };
 const ghostBtnStyle: React.CSSProperties = { ...btnStyle, background: "transparent", color: "var(--colis-teal)", border: "1.5px solid var(--colis-teal)" };
-const dimBtnStyle: React.CSSProperties = {
-  background: "none", border: "none", color: "var(--colis-muted)", fontFamily: "'JetBrains Mono', monospace",
-  fontSize: 12, letterSpacing: "0.1em", cursor: "pointer", padding: "6px 0",
-};
 const backStyle: React.CSSProperties = {
   background: "none", border: "none", color: "var(--colis-muted)", fontFamily: "'JetBrains Mono', monospace",
   fontSize: 12, letterSpacing: "0.1em", cursor: "pointer", padding: "6px 0", marginBottom: 2, textAlign: "left",
