@@ -35,6 +35,9 @@ interface Props {
   language?: string;
   limit?: number;
   coachId?: string;
+  // Notifie le parent du nombre d'avis chargés (0 = aucun) pour qu'il puisse
+  // masquer un titre de section orphelin. Appelé une fois la requête résolue.
+  onLoaded?: (count: number) => void;
 }
 
 function formatAuthor(t: TestimonialPublic): string {
@@ -63,21 +66,30 @@ export function TestimonialsCarousel({
   language = "fr",
   limit = 6,
   coachId,
+  onLoaded,
 }: Props) {
   const [items, setItems] = useState<TestimonialPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
   const intervalRef = useRef<number | null>(null);
+  const onLoadedRef = useRef(onLoaded);
+  onLoadedRef.current = onLoaded;
 
   useEffect(() => {
     let cancelled = false;
+    // Applique le résultat + notifie le parent du compte (0 = aucun avis).
+    const finish = (arr: TestimonialPublic[]) => {
+      if (cancelled) return;
+      setItems(arr);
+      onLoadedRef.current?.(arr.length);
+    };
     (async () => {
       setLoading(true);
       try {
         const sb = await getSupabaseClient();
         if (!sb) {
           if (!cancelled) {
-            setItems([]);
+            finish([]);
             setLoading(false);
           }
           return;
@@ -107,17 +119,17 @@ export function TestimonialsCarousel({
               .eq("language", "fr")
               .order("created_at", { ascending: false })
               .limit(limit);
-            if (fallback && !cancelled) {
-              setItems(mapRows(fallback));
+            if (!cancelled) {
+              finish(fallback ? mapRows(fallback) : []);
             }
           } else {
-            setItems([]);
+            finish([]);
           }
         } else {
-          setItems(mapRows(data));
+          finish(mapRows(data));
         }
       } catch {
-        if (!cancelled) setItems([]);
+        finish([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
