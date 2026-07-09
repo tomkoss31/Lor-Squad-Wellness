@@ -35,6 +35,9 @@ interface Props {
   language?: string;
   limit?: number;
   coachId?: string;
+  // Notifie le parent du nombre d'avis chargés (0 = aucun) pour qu'il puisse
+  // masquer un titre de section orphelin. Appelé une fois la requête résolue.
+  onLoaded?: (count: number) => void;
 }
 
 function formatAuthor(t: TestimonialPublic): string {
@@ -47,7 +50,10 @@ function formatAuthor(t: TestimonialPublic): string {
 // V1.1 lien generique coach : les soumissions ont client_id=null et stockent
 // "[FROM:firstName|city] " en debut de content. On parse pour reconstituer
 // l'auteur et nettoyer la citation affichee.
-const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]+))?\]\s*/;
+// city rendue optionnelle (2026-07-09) → le tag peut être « [FROM:Judith|] »
+// (ville vide). `[^\]]*` (et non `+`) sinon la regex échoue et affiche le tag
+// brut + « Anonyme ». Cf. bug capture Thomas 2026-07-09.
+const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]*))?\]\s*/;
 function parseFromTag(content: string): { firstName: string | null; city: string | null; clean: string } {
   const m = content.match(FROM_TAG_RE);
   if (!m) return { firstName: null, city: null, clean: content };
@@ -63,21 +69,30 @@ export function TestimonialsCarousel({
   language = "fr",
   limit = 6,
   coachId,
+  onLoaded,
 }: Props) {
   const [items, setItems] = useState<TestimonialPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
   const intervalRef = useRef<number | null>(null);
+  const onLoadedRef = useRef(onLoaded);
+  onLoadedRef.current = onLoaded;
 
   useEffect(() => {
     let cancelled = false;
+    // Applique le résultat + notifie le parent du compte (0 = aucun avis).
+    const finish = (arr: TestimonialPublic[]) => {
+      if (cancelled) return;
+      setItems(arr);
+      onLoadedRef.current?.(arr.length);
+    };
     (async () => {
       setLoading(true);
       try {
         const sb = await getSupabaseClient();
         if (!sb) {
           if (!cancelled) {
-            setItems([]);
+            finish([]);
             setLoading(false);
           }
           return;
@@ -107,17 +122,17 @@ export function TestimonialsCarousel({
               .eq("language", "fr")
               .order("created_at", { ascending: false })
               .limit(limit);
-            if (fallback && !cancelled) {
-              setItems(mapRows(fallback));
+            if (!cancelled) {
+              finish(fallback ? mapRows(fallback) : []);
             }
           } else {
-            setItems([]);
+            finish([]);
           }
         } else {
-          setItems(mapRows(data));
+          finish(mapRows(data));
         }
       } catch {
-        if (!cancelled) setItems([]);
+        finish([]);
       } finally {
         if (!cancelled) setLoading(false);
       }

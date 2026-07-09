@@ -110,6 +110,18 @@ serve(async (req: Request) => {
         };
       });
 
+    // 3.b Preuve de paiement : au moins une commande `bilan_orders` de ce bilan
+    // marquée payée (webhook Square / confirm Stripe). Sert à afficher l'écran
+    // « payé » sur du réel, jamais sur le seul ?paid=1 (falsifiable).
+    const { data: paidOrder } = await sb
+      .from("bilan_orders")
+      .select("id")
+      .eq("online_bilan_id", bilan.id)
+      .eq("status", "paid")
+      .limit(1)
+      .maybeSingle();
+    const paid = !!paidOrder;
+
     // Produits à l'unité / combos (le coach cadre les combos côté commercial).
     const produits = (products ?? []).map((p) => ({
       id: p.id,
@@ -134,6 +146,7 @@ serve(async (req: Request) => {
       coach: { name: coachName, slug: coachSlug, userId: bilan.coach_user_id },
       programmes,
       produits,
+      paid,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";
