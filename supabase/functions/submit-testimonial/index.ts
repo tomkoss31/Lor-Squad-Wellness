@@ -179,9 +179,8 @@ serve(async (req) => {
   if (firstName.length < 2) {
     return json({ success: false, error: "Indique au moins ton prenom." }, 400);
   }
-  if (city.length < 2) {
-    return json({ success: false, error: "Indique au moins ta ville." }, 400);
-  }
+  // Ville rendue OPTIONNELLE (2026-07-09, Thomas) : le funnel ne demande plus
+  // que le prenom (affichage plus friendly). `city` peut etre vide.
   const rl = await checkRateLimit(sb, ip, "slug", RATE_MAX_SLUG);
   if (!rl.ok) {
     return json({ success: false, error: "rate_limited", retry_after_seconds: rl.retry_after }, 429);

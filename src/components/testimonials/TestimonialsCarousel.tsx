@@ -38,11 +38,10 @@ interface Props {
 }
 
 function formatAuthor(t: TestimonialPublic): string {
-  const first = (t.client_first_name ?? "").trim();
-  const lastInit = (t.client_last_name ?? "").trim().charAt(0).toUpperCase();
-  const city = (t.client_city ?? "").trim();
-  const author = lastInit ? `${first} ${lastInit}.` : first || "Anonyme";
-  return city ? `${author}, ${city}` : author;
+  // Friendly (2026-07-09, Thomas) : JUSTE le prénom — plus d'initiale de nom
+  // ni de ville (« ça fait amateur/débutant »). S'applique à tous les
+  // témoignages affichés, anciens comme nouveaux.
+  return (t.client_first_name ?? "").trim() || "Anonyme";
 }
 
 // V1.1 lien generique coach : les soumissions ont client_id=null et stockent

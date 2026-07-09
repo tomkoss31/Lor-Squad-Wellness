@@ -48,9 +48,9 @@ export function TestimonialFormPage() {
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [ctx, setCtx] = useState<TestimonialContext | null>(null);
 
-  // Form state
+  // Form state — friendly 2026-07-09 : on ne capture QUE le prénom (ni nom, ni
+  // ville — « ça fait amateur »). ctx.city reste toléré côté fetch mais inutilisé.
   const [firstName, setFirstName] = useState("");
-  const [city, setCity] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState("");
@@ -114,7 +114,6 @@ export function TestimonialFormPage() {
         };
         setCtx(next);
         if (next.firstName) setFirstName(next.firstName);
-        if (next.city) setCity(next.city);
         if (next.alreadySubmitted) {
           setLoadStatus("already");
         } else {
@@ -141,12 +140,11 @@ export function TestimonialFormPage() {
   const canSubmit = useMemo(
     () =>
       !!firstName.trim() &&
-      !!city.trim() &&
       rating >= 1 &&
       content.trim().length >= 10 &&
       content.length <= 1000 &&
       consentRgpd,
-    [firstName, city, rating, content, consentRgpd],
+    [firstName, rating, content, consentRgpd],
   );
 
   async function handleSubmit(e?: FormEvent) {
@@ -166,7 +164,6 @@ export function TestimonialFormPage() {
         photo_consent: false,
         language: "fr",
         first_name: firstName.trim(),
-        city: city.trim(),
       };
       const body = isCoachMode
         ? { ...baseBody, coach_slug: slugSafe }
@@ -227,18 +224,31 @@ export function TestimonialFormPage() {
       <form onSubmit={handleSubmit} style={{ padding: "48px 22px 64px", textAlign: "center" }}>
         <PublicBrand label="Témoignage" />
 
-        {/* Hero */}
+        {/* Hero — picto « bulle » teal→lime (identité v2 2026-07-09, remplace
+            l'ancien emoji 🌱 : plus premium, garde la chaleur). */}
         <div
           className="ps-bounce"
           style={{
-            fontSize: 56,
-            lineHeight: 1,
-            margin: "24px 0 16px",
-            display: "inline-block",
-            filter: "drop-shadow(0 4px 20px rgba(45,212,191,0.40))",
+            width: 80,
+            height: 80,
+            margin: "24px auto 16px",
+            borderRadius: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "linear-gradient(135deg, rgba(45,212,191,0.18), rgba(197,248,42,0.12))",
+            border: "1px solid var(--hair)",
           }}
         >
-          🌱
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="url(#temoGrad)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <defs>
+              <linearGradient id="temoGrad" x1="0" y1="0" x2="24" y2="24">
+                <stop stopColor={PUBLIC_TOKENS.teal} />
+                <stop offset="1" stopColor={PUBLIC_TOKENS.lime} />
+              </linearGradient>
+            </defs>
+            <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
+          </svg>
         </div>
         <h1
           style={{
@@ -313,26 +323,15 @@ export function TestimonialFormPage() {
             <div style={fieldLabelStyle}>
               Tu es ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Prénom"
-                style={inputStyle}
-                maxLength={40}
-                required
-              />
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Ville"
-                style={inputStyle}
-                maxLength={60}
-                required
-              />
-            </div>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Ton prénom"
+              style={inputStyle}
+              maxLength={40}
+              required
+            />
           </div>
 
           {/* Rating étoiles */}
@@ -429,8 +428,8 @@ export function TestimonialFormPage() {
               style={{ marginTop: 2, flexShrink: 0, width: 18, height: 18, accentColor: PUBLIC_TOKENS.teal }}
             />
             <span>
-              <strong>J'accepte</strong> que mon prénom + 1<sup>re</sup> lettre de mon nom + ma ville soient
-              affichés publiquement sur le site La Base 360, ainsi que mon témoignage.
+              <strong>J'accepte</strong> que mon prénom soit affiché publiquement sur le site
+              La Base 360, ainsi que mon témoignage.
             </span>
           </label>
 
