@@ -668,7 +668,7 @@ const PROGRAMME_SUBTITLE_BY_ID: Record<string, string> = {
 const WHY = [
   { icon: ICON.users, title: "Une vraie communauté", body: "Tu rejoins un groupe Telegram actif où chacun partage sa nutrition, ses conseils, son quotidien et ses victoires. C'est ultra motivant — on avance ensemble, tu n'es jamais seul·e." },
   { icon: ICON.hands, title: "« We Do » — on le fait ensemble", body: "Pas de PDF lâché dans la nature. On ajuste ton plan au fil des semaines, selon tes résultats et ta vie — je suis là à chaque étape." },
-  { icon: ICON.phone, title: "L'app coaching + le challenge 21 jours", body: "Tu reçois l'accès à notre application de coaching et à un challenge transformation de 21 jours : 3 semaines focus nutrition + activité pour transformer ton corps. Une cagnotte de 10 000 $ est reversée aux 10 meilleures transformations — jusqu'à 1 000 $ à gagner. De quoi te dépasser." },
+  { icon: ICON.phone, title: "We Do Transformations — le challenge 21 jours", body: "Tu reçois l'accès à We Do Transformations, notre application de coaching, et à son challenge de 21 jours : 3 semaines focus nutrition + activité pour transformer ton corps. Une cagnotte de 10 000 $ est reversée aux 10 meilleures transformations — jusqu'à 1 000 $ à gagner. De quoi te dépasser." },
   { icon: ICON.chart, title: "Un suivi qui se voit", body: "Pesées, mensurations, courbe d'évolution : on mesure pour célébrer chaque progrès, pas pour culpabiliser." },
 ] as const;
 
