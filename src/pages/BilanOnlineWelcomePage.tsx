@@ -68,18 +68,31 @@ export function BilanOnlineWelcomePage() {
       <div style={{ padding: "48px 22px 80px", textAlign: "center" }}>
         <PublicBrand label="Bilan" />
 
-        {/* Emoji hero bounce */}
+        {/* Hero — picto pouls teal→lime (option A validée Thomas 2026-07-08,
+            remplace l'ancien emoji 🥰 : plus premium, garde la touche santé). */}
         <div
           className="ps-bounce"
           style={{
-            fontSize: 56,
-            lineHeight: 1,
-            margin: "24px 0 16px",
-            display: "inline-block",
-            filter: "drop-shadow(0 4px 20px rgba(45,212,191,0.40))",
+            width: 80,
+            height: 80,
+            margin: "24px auto 16px",
+            borderRadius: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "linear-gradient(135deg, rgba(45,212,191,0.18), rgba(197,248,42,0.12))",
+            border: "1px solid var(--hair)",
           }}
         >
-          🥰
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="url(#bilanPulse)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <defs>
+              <linearGradient id="bilanPulse" x1="0" y1="0" x2="24" y2="24">
+                <stop stopColor={PUBLIC_TOKENS.teal} />
+                <stop offset="1" stopColor={PUBLIC_TOKENS.lime} />
+              </linearGradient>
+            </defs>
+            <path d="M3 12h4l2-6 4 12 2-6h6" />
+          </svg>
         </div>
 
         {/* H1 avec mot heureux en gradient italic */}

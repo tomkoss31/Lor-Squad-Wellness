@@ -566,8 +566,9 @@ interface StepProps {
   update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
 }
 
-function StepHero({ emoji, title, gradWord, subtitle }: {
-  emoji: string;
+function StepHero({ iconPath, title, gradWord, subtitle }: {
+  /** Picto ligne (path SVG 24×24). Remplace les emojis d'étape — v2 premium. */
+  iconPath: string;
   title: string;
   gradWord?: string;
   subtitle: string;
@@ -575,13 +576,25 @@ function StepHero({ emoji, title, gradWord, subtitle }: {
   return (
     <>
       <div style={{
-        fontSize: 42,
-        lineHeight: 1,
-        marginBottom: 14,
-        display: "inline-block",
-        filter: "drop-shadow(0 4px 16px rgba(45,212,191,0.30))",
+        width: 60,
+        height: 60,
+        margin: "0 auto 14px",
+        borderRadius: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, rgba(45,212,191,0.18), rgba(197,248,42,0.12))",
+        border: "1px solid var(--hair)",
       }}>
-        {emoji}
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="url(#bilanStepGrad)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="bilanStepGrad" x1="0" y1="0" x2="24" y2="24">
+              <stop stopColor="#2DD4BF" />
+              <stop offset="1" stopColor="#c5f82a" />
+            </linearGradient>
+          </defs>
+          <path d={iconPath} />
+        </svg>
       </div>
       <div style={{
         fontFamily: PUBLIC_FONTS.display,
@@ -836,7 +849,7 @@ const sectionLabel: CSSProperties = {
 function StepIdentity({ form, update }: StepProps) {
   return (
     <>
-      <StepHero emoji="👋" title="Faisons" gradWord="connaissance" subtitle="Quelques infos pour personnaliser ton bilan." />
+      <StepHero iconPath="M4 21v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1 M12 3a4 4 0 0 1 0 8 4 4 0 0 1 0-8z" title="Faisons" gradWord="connaissance" subtitle="Quelques infos pour personnaliser ton bilan." />
       <Field label="Ton prénom" required>
         <PsInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" autoComplete="given-name" />
       </Field>
@@ -883,7 +896,7 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
   ];
   return (
     <>
-      <StepHero emoji="🎯" title="Tes" gradWord="objectifs" subtitle="Tu peux en cocher plusieurs." />
+      <StepHero iconPath="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M12 11.2a.8 .8 0 1 0 0 1.6 .8 .8 0 0 0 0-1.6z" title="Tes" gradWord="objectifs" subtitle="Tu peux en cocher plusieurs." />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {OBJS.map((o) => (
           <ChoiceCard
@@ -974,7 +987,7 @@ function StepPresent({ form, update, toggle }: StepProps & { toggle: (o: Current
   return (
     <>
       <StepHero
-        emoji="🧭" title="Et" gradWord="aujourd'hui ?"
+        iconPath="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M15.5 8.5l-2 5-5 2 2-5 5-2z" title="Et" gradWord="aujourd'hui ?"
         subtitle="Qu'est-ce que tu fais déjà pour ta santé ?"
       />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1042,7 +1055,7 @@ function StepFoodWater({ form, update }: StepProps) {
   return (
     <>
       <StepHero
-        emoji="🍽️" title="Ton assiette &" gradWord="ton verre"
+        iconPath="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" title="Ton assiette &" gradWord="ton verre"
         subtitle="On capte l'essentiel — ressenti + hydratation."
       />
 
@@ -1126,7 +1139,7 @@ function StepSleepMind({ form, update }: StepProps) {
   return (
     <>
       <StepHero
-        emoji="😴" title="Sommeil &" gradWord="tête"
+        iconPath="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" title="Sommeil &" gradWord="tête"
         subtitle="Comment tu te sens niveau récup' et mental."
       />
 
@@ -1190,7 +1203,7 @@ function StepJobCircle({ form, update }: StepProps) {
   return (
     <>
       <StepHero
-        emoji="💼" title="Job &" gradWord="cercle"
+        iconPath="M3 8h18v12H3z M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M3 13h18" title="Job &" gradWord="cercle"
         subtitle="Le contexte autour de toi compte aussi."
       />
 
@@ -1240,7 +1253,7 @@ function StepFinalize({ form, update }: StepProps) {
   ];
   return (
     <>
-      <StepHero emoji="💪" title="On" gradWord="finalise" subtitle="Quelques infos pour boucler la boucle." />
+      <StepHero iconPath="M20 6 9 17l-5-5" title="On" gradWord="finalise" subtitle="Quelques infos pour boucler la boucle." />
 
       <label style={sectionLabel}>Actif au quotidien ? (marche, escaliers, jardin)</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
