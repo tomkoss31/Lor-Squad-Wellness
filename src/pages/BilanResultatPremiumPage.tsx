@@ -9,8 +9,14 @@
 // de programmes (prix RÉELS depuis la DB, jamais « /mois ») + pourquoi démarrer
 // + témoignages validés + FAQ + CTA.
 //
-// PHASE 1 : le CTA « Je démarre » prépare le choix mais NE déclenche pas encore
-// le paiement (Square/Stripe = Phase 2, multi-fournisseur par coach).
+// Caisse LIVE : « Je démarre » appelle create-payment-link (Square/Stripe, prix
+// recalculé serveur). Si le coach n'a pas d'encaissement configuré → fallback
+// « ton coach t'envoie le lien ». Retour caisse → ?paid=1.
+//
+// Refonte V1 (2026-07-09) : sous-titres/best-seller par ID (plus d'index),
+// fallback analyse Noaly, violet→teal/lime (v2), copy « nos formules ».
+// Reste (V2/V3) : stratégies dérivées de l'objectif, de-emoji complet, sécuriser
+// l'écran « payé » (preuve serveur au lieu de ?paid=1 nu).
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
@@ -145,8 +151,10 @@ export function BilanResultatPremiumPage() {
           return;
         }
         setData(payload);
-        // Présélectionne le best-seller (Premium) si présent.
-        const best = payload.programmes.find((p) => p.id === "premium") ?? payload.programmes[1];
+        // Présélectionne le best-seller (Premium) par ID stable. Fallback = 1er
+        // programme (jamais un index positionnel, qui casse si l'ordre change /
+        // si des programmes sport entrent dans le catalogue).
+        const best = payload.programmes.find((p) => p.id === "premium");
         setSelected(best?.id ?? payload.programmes[0]?.id ?? null);
         setStatus("ok");
       } catch {
@@ -237,29 +245,36 @@ export function BilanResultatPremiumPage() {
           <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
             {primaryObjective && <StatCard label="Objectif" value={primaryObjective} />}
             {bilan.currentWeightKg != null && <StatCard label="Poids actuel" value={`${bilan.currentWeightKg} kg`} />}
-            {bilan.weightLossTargetKg != null && <StatCard label="Objectif" value={`−${bilan.weightLossTargetKg} kg`} />}
+            {bilan.weightLossTargetKg != null && <StatCard label="Objectif poids" value={`−${bilan.weightLossTargetKg} kg`} />}
             {bilan.motivationScore != null && <StatCard label="Ta motivation" value={`${bilan.motivationScore}/10`} />}
             {bilan.age != null && <StatCard label="Âge" value={`${bilan.age} ans`} />}
           </div>
         </section>
 
-        {/* ── 3 · ANALYSE DE NOALY ── */}
-        {bilan.aiAnalysis && (
-          <section style={sectionTop}>
-            <div style={{ ...card, border: `1px solid ${withA(PUBLIC_TOKENS.gold, 0.3)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.gold, 0.08)}, ${withA(PUBLIC_TOKENS.cream, 0.02)})` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <span style={{ fontSize: 22 }} aria-hidden="true">✨</span>
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15, color: PUBLIC_TOKENS.gold }}>
-                  L'analyse de Noaly
-                </div>
-              </div>
-              <p style={{ ...bodyText, whiteSpace: "pre-wrap" }}>{bilan.aiAnalysis}</p>
-              <div style={{ ...bodyMuted, fontSize: 12, marginTop: 14 }}>
-                Lecture générée à partir de ton bilan · validée par ton coach
+        {/* ── 3 · ANALYSE DE NOALY (fallback si pas d'IA — plus de trou silencieux) ── */}
+        <section style={sectionTop}>
+          <div style={{ ...card, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.32)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.03)})` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: 22 }} aria-hidden="true">✨</span>
+              <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15, color: PUBLIC_TOKENS.teal }}>
+                L'analyse de Noaly
               </div>
             </div>
-          </section>
-        )}
+            {bilan.aiAnalysis ? (
+              <>
+                <p style={{ ...bodyText, whiteSpace: "pre-wrap" }}>{bilan.aiAnalysis}</p>
+                <div style={{ ...bodyMuted, fontSize: 12, marginTop: 14 }}>
+                  Lecture générée à partir de ton bilan · validée par ton coach
+                </div>
+              </>
+            ) : (
+              <p style={{ ...bodyText }}>
+                {coach.name} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras
+                lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.
+              </p>
+            )}
+          </div>
+        </section>
 
         {/* ── 4 · 5 STRATÉGIES ── */}
         <section style={sectionTop}>
@@ -295,7 +310,7 @@ export function BilanResultatPremiumPage() {
 
         {/* ── 5 · LES PROGRAMMES ── */}
         <section style={{ paddingTop: 40 }}>
-          <div style={eyebrow}>Ma proposition pour toi</div>
+          <div style={eyebrow}>Nos formules</div>
           <h2 style={secTitle}>
             Le programme qui <span style={publicGradText}>te correspond</span>
           </h2>
@@ -305,7 +320,7 @@ export function BilanResultatPremiumPage() {
           </p>
 
           <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
-            {programmes.map((p, i) => {
+            {programmes.map((p) => {
               const best = p.id === "premium";
               const isSel = selected === p.id;
               return (
@@ -321,11 +336,11 @@ export function BilanResultatPremiumPage() {
                     display: "flex",
                     flexDirection: "column",
                     border: isSel
-                      ? `1.5px solid ${PUBLIC_TOKENS.violet}`
+                      ? `1.5px solid ${PUBLIC_TOKENS.teal}`
                       : best
-                        ? `1px solid ${withA(PUBLIC_TOKENS.violet, 0.4)}`
+                        ? `1px solid ${withA(PUBLIC_TOKENS.lime, 0.45)}`
                         : "1px solid var(--hair)",
-                    background: best || isSel ? `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.violet, 0.1)}, ${withA(PUBLIC_TOKENS.cream, 0.02)})` : card.background,
+                    background: best || isSel ? `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.10)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` : card.background,
                   }}
                 >
                   {best && (
@@ -333,7 +348,7 @@ export function BilanResultatPremiumPage() {
                       ★ BEST-SELLER
                     </div>
                   )}
-                  <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE[i] ?? "Pour aller plus loin"}</div>
+                  <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
                   <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 19, marginTop: 4, color: "var(--cream)" }}>{prettyProgramName(p.name)}</div>
                   <div style={{ margin: "12px 0" }}>
                     <span style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: 30, color: "var(--cream)" }}>{p.price}&nbsp;€</span>
@@ -422,7 +437,7 @@ export function BilanResultatPremiumPage() {
 
         {/* ── 9 · CTA ── */}
         <section style={sectionTop}>
-          <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.07)}, ${withA(PUBLIC_TOKENS.violet, 0.05)})`, padding: "38px 24px" }}>
+          <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})`, padding: "38px 24px" }}>
             <h2 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(24px,4.6vw,32px)", lineHeight: 1.15, color: "var(--cream)" }}>
               Prêt·e à démarrer, <span style={publicGradText}>{firstName || "toi"}</span> ?
             </h2>
@@ -490,7 +505,14 @@ const STRATEGIES = [
   { n: 5, emoji: "🏃", title: "L'activité physique", foundation: false, problem: "Pas besoin de t'épuiser : vise 30 min de marche par jour (en une fois ou en sessions de 10-15 min). Pour aller plus loin, un défi 21 jours avec des séances vidéo de 20 min.", solutionLabel: "", solution: "" },
 ] as const;
 
-const PROGRAMME_SUBTITLE = ["Pour démarrer en douceur", "Le choix le plus complet", "Pour accélérer", "Pour pousser plus loin"];
+// Sous-titre par ID de programme (robuste : survit à l'ordre + aux nouveaux
+// programmes, ex. sport, contrairement à un index positionnel).
+const PROGRAMME_SUBTITLE_BY_ID: Record<string, string> = {
+  starter: "Pour démarrer en douceur",
+  premium: "Le choix le plus complet",
+  "booster-1": "Pour accélérer",
+  "booster-2": "Pour pousser plus loin",
+};
 
 const WHY = [
   { emoji: "👥", title: "Une vraie communauté", body: "Un groupe privé motivant où on avance ensemble, on partage, on se tire vers le haut. Tu n'es jamais seul·e." },
