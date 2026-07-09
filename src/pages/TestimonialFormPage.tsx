@@ -136,15 +136,16 @@ export function TestimonialFormPage() {
     };
   }, []);
 
-  const charCount = content.length;
+  // Minimum 50 mots (Thomas 2026-07-09) : garantit des témoignages étoffés.
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const canSubmit = useMemo(
     () =>
       !!firstName.trim() &&
       rating >= 1 &&
-      content.trim().length >= 10 &&
+      wordCount >= 50 &&
       content.length <= 1000 &&
       consentRgpd,
-    [firstName, rating, content, consentRgpd],
+    [firstName, rating, wordCount, content, consentRgpd],
   );
 
   async function handleSubmit(e?: FormEvent) {
@@ -362,7 +363,7 @@ export function TestimonialFormPage() {
                       cursor: "pointer",
                       fontSize: 36,
                       lineHeight: 1,
-                      color: filled ? PUBLIC_TOKENS.gold : "rgba(251,247,240,0.18)",
+                      color: filled ? PUBLIC_TOKENS.gold : "var(--cream-hint)",
                       transition: "all 0.18s",
                       textShadow: filled ? "0 0 14px rgba(201,168,76,0.45)" : "none",
                       padding: 4,
@@ -383,9 +384,8 @@ export function TestimonialFormPage() {
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value.slice(0, 1000))}
-              placeholder="Écris librement ce que tu souhaites partager — quelques mots suffisent."
+              placeholder="Raconte ton vécu, tes résultats, ce qui a changé pour toi… (50 mots minimum)"
               rows={6}
-              minLength={10}
               maxLength={1000}
               style={{ ...inputStyle, minHeight: 140, resize: "vertical" }}
               required
@@ -395,12 +395,12 @@ export function TestimonialFormPage() {
                 marginTop: 6,
                 fontFamily: PUBLIC_FONTS.mono,
                 fontSize: 11,
-                color: charCount < 10 ? PUBLIC_TOKENS.coral : "var(--cream-hint)",
+                color: wordCount < 50 ? PUBLIC_TOKENS.coral : "var(--cream-hint)",
                 letterSpacing: "0.06em",
                 textAlign: "right",
               }}
             >
-              {charCount} / 1000 · MIN 10
+              {wordCount} mot{wordCount > 1 ? "s" : ""} · min 50
             </div>
           </div>
 
@@ -497,7 +497,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 12,
   fontFamily: PUBLIC_FONTS.body,
   fontSize: 16,
-  color: PUBLIC_TOKENS.cream,
+  color: "var(--cream)",
   outline: "none",
   boxSizing: "border-box",
   transition: "all 0.22s",
@@ -520,10 +520,10 @@ function SuccessView({ firstName, coachFirstName }: { firstName: string; coachFi
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "white",
+          color: PUBLIC_TOKENS.ink,
           fontSize: 48,
           fontWeight: 700,
-          boxShadow: "0 16px 48px -8px rgba(45,212,191,0.55), 0 0 0 8px rgba(45,212,191,0.10)",
+          boxShadow: "0 16px 48px -8px rgba(197,248,42,0.40), 0 0 0 8px rgba(45,212,191,0.10)",
         }}
       >
         ✓
