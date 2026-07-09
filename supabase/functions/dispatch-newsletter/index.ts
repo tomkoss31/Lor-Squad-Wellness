@@ -130,17 +130,17 @@ async function sendBatchChunk(
 }
 
 async function sendBatch(
-  recipients: Array<{ id: string; email: string; recipient_type: "client" | "distri" }>,
+  recipients: Array<{ id: string; email: string; recipient_type: "client" | "distri" | "lead" }>,
   subject: string,
   html: string,
   newsletterId: string,
 ): Promise<
-  Array<{ id: string; email: string; recipient_type: "client" | "distri"; ok: boolean; message_id?: string; error?: string }>
+  Array<{ id: string; email: string; recipient_type: "client" | "distri" | "lead"; ok: boolean; message_id?: string; error?: string }>
 > {
   const results: Array<{
     id: string;
     email: string;
-    recipient_type: "client" | "distri";
+    recipient_type: "client" | "distri" | "lead";
     ok: boolean;
     message_id?: string;
     error?: string;
@@ -295,7 +295,7 @@ serve(async (req) => {
   }
 
   // 4. Récupère destinataires selon audience.
-  type Recipient = { id: string; email: string; recipient_type: "client" | "distri" };
+  type Recipient = { id: string; email: string; recipient_type: "client" | "distri" | "lead" };
   const recipients: Recipient[] = [];
 
   if (nl.audience === "clients" || nl.audience === "all") {
@@ -328,6 +328,23 @@ serve(async (req) => {
     for (const u of users ?? []) {
       if (u.email && /.+@.+\..+/.test(u.email)) {
         recipients.push({ id: String(u.id), email: u.email, recipient_type: "distri" });
+      }
+    }
+  }
+
+  // Chantier colis (2026-07-08) : audience opt-in dédiée, jamais incluse dans
+  // "all" — un envoi à ces leads est toujours un choix explicite de l'admin.
+  if (nl.audience === "leads_colis") {
+    const { data: leads, error: leadErr } = await sb
+      .from("prospect_leads")
+      .select("id, email")
+      .eq("source", "colis")
+      .not("email", "is", null)
+      .neq("email", "");
+    if (leadErr) return json({ success: false, error: `leads_fetch: ${leadErr.message}` }, 500);
+    for (const l of leads ?? []) {
+      if (l.email && /.+@.+\..+/.test(l.email)) {
+        recipients.push({ id: String(l.id), email: l.email, recipient_type: "lead" });
       }
     }
   }
