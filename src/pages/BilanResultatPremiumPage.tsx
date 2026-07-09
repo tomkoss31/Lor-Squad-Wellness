@@ -402,6 +402,13 @@ export function BilanResultatPremiumPage() {
                 Pas envie d'un pack complet ? On peut partir sur un seul produit ou une petite combinaison
                 (ex : Formula 1 + Thé). Dis-le à {coach.name}, on cale ça ensemble.
               </p>
+              <button
+                type="button"
+                onClick={() => document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                style={linkBtn}
+              >
+                J'en parle à {coach.name} →
+              </button>
             </div>
           </div>
 
@@ -472,7 +479,7 @@ export function BilanResultatPremiumPage() {
         </section>
 
         {/* ── 9 · CTA ── */}
-        <section style={sectionTop}>
+        <section id="demarrage" style={sectionTop}>
           <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})`, padding: "38px 24px" }}>
             <h2 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(24px,4.6vw,32px)", lineHeight: 1.15, color: "var(--cream)" }}>
               Prêt·e à démarrer, <span style={publicGradText}>{firstName || "toi"}</span> ?
@@ -659,9 +666,9 @@ const PROGRAMME_SUBTITLE_BY_ID: Record<string, string> = {
 };
 
 const WHY = [
-  { icon: ICON.users, title: "Une vraie communauté", body: "Un groupe privé motivant où on avance ensemble, on partage, on se tire vers le haut. Tu n'es jamais seul·e." },
-  { icon: ICON.hands, title: "« We Do » — on le fait ensemble", body: "Pas de PDF lâché dans la nature. On ajuste ton plan au fil des semaines, selon tes résultats et ta vie." },
-  { icon: ICON.phone, title: "L'app de coaching sport", body: "Tes séances vidéo de 20 min, le défi 21 jours, ton suivi d'évolution — tout dans ta poche, à ton rythme." },
+  { icon: ICON.users, title: "Une vraie communauté", body: "Tu rejoins un groupe Telegram actif où chacun partage sa nutrition, ses conseils, son quotidien et ses victoires. C'est ultra motivant — on avance ensemble, tu n'es jamais seul·e." },
+  { icon: ICON.hands, title: "« We Do » — on le fait ensemble", body: "Pas de PDF lâché dans la nature. On ajuste ton plan au fil des semaines, selon tes résultats et ta vie — je suis là à chaque étape." },
+  { icon: ICON.phone, title: "L'app coaching + le challenge 21 jours", body: "Tu reçois l'accès à notre application de coaching et à un challenge transformation de 21 jours : 3 semaines focus nutrition + activité pour transformer ton corps. Une cagnotte de 10 000 $ est reversée aux 10 meilleures transformations — jusqu'à 1 000 $ à gagner. De quoi te dépasser." },
   { icon: ICON.chart, title: "Un suivi qui se voit", body: "Pesées, mensurations, courbe d'évolution : on mesure pour célébrer chaque progrès, pas pour culpabiliser." },
 ] as const;
 
@@ -724,6 +731,20 @@ const bodyText: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body
 const bodyMuted: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body, color: "var(--cream-muted)", lineHeight: 1.5 };
 const sectionTop: React.CSSProperties = { paddingTop: 56 };
 const divider: React.CSSProperties = { height: 1, background: "var(--hair)", marginTop: 56 };
+const linkBtn: React.CSSProperties = {
+  marginTop: 10,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  fontFamily: PUBLIC_FONTS.display,
+  fontWeight: 600,
+  fontSize: 13.5,
+  color: PUBLIC_TOKENS.teal,
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  cursor: "pointer",
+};
 const ctaPrimary: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",

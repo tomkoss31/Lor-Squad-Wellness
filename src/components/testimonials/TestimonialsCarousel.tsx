@@ -50,7 +50,10 @@ function formatAuthor(t: TestimonialPublic): string {
 // V1.1 lien generique coach : les soumissions ont client_id=null et stockent
 // "[FROM:firstName|city] " en debut de content. On parse pour reconstituer
 // l'auteur et nettoyer la citation affichee.
-const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]+))?\]\s*/;
+// city rendue optionnelle (2026-07-09) → le tag peut être « [FROM:Judith|] »
+// (ville vide). `[^\]]*` (et non `+`) sinon la regex échoue et affiche le tag
+// brut + « Anonyme ». Cf. bug capture Thomas 2026-07-09.
+const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]*))?\]\s*/;
 function parseFromTag(content: string): { firstName: string | null; city: string | null; clean: string } {
   const m = content.match(FROM_TAG_RE);
   if (!m) return { firstName: null, city: null, clean: content };
