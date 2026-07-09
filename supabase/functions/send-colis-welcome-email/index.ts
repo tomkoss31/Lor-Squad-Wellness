@@ -65,7 +65,7 @@ function buildHtml(opts: {
   bilanUrl: string;
 }): string {
   const shakeBarBlock = SHAKE_BAR_APP_URL
-    ? `<a href="${SHAKE_BAR_APP_URL}" style="display:block;text-align:center;margin-top:12px;padding:14px;border-radius:10px;font-family:Helvetica,Arial,sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;text-decoration:none;color:#8a9794;border:1.5px dashed #3a4744;">🥤 Profiter de ma réduction au bar</a>`
+    ? `<a href="${SHAKE_BAR_APP_URL}" style="display:block;text-align:center;margin-top:12px;padding:14px;border-radius:10px;font-family:Helvetica,Arial,sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;text-decoration:none;color:#8a9794;border:1.5px dashed #3a4744;">🎡 Tente ta chance à la roue du bar</a>`
     : "";
   const name = escapeHtml(opts.firstName);
   const reflection = escapeHtml(opts.reflection);

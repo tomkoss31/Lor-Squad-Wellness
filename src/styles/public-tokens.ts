@@ -46,18 +46,25 @@ export const PUBLIC_TOKENS = {
   gold: "#C9A84C",
   goldSoft: "#E5C97D",
   emerald: "#34D399",
+  // Identité v2 « premium performance » (2026-07) : lime signature, teal = confiance.
+  lime: "#c5f82a",
+  limeDark: "#8fbf0f",
 
-  // Gradients identite brand
-  gradHeadline: "linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #FB7185 100%)",
-  gradCta: "linear-gradient(135deg, #2DD4BF 0%, #7C3AED 100%)",
-  gradCtaHover: "linear-gradient(135deg, #34D399 0%, #A78BFA 100%)",
-  gradProgress: "linear-gradient(90deg, #2DD4BF 0%, #A78BFA 100%)",
+  // Gradients identite brand — v2 : teal (confiance/santé) → lime (énergie/perf).
+  // Registre « premium accueillant » : frais et dynamique sans être agressif.
+  gradHeadline: "linear-gradient(120deg, #2DD4BF 0%, #c5f82a 100%)",
+  gradCta: "linear-gradient(120deg, #2DD4BF 0%, #c5f82a 100%)",
+  gradCtaHover: "linear-gradient(120deg, #34D399 0%, #c5f82a 100%)",
+  gradProgress: "linear-gradient(90deg, #2DD4BF 0%, #c5f82a 100%)",
 } as const;
 
 export const PUBLIC_FONTS = {
   display: '"Sora", -apple-system, BlinkMacSystemFont, sans-serif',
+  // impact = Anton (titres/chiffres à fort punch, identité v2). display reste
+  // Sora pour les phrases d'accueil (registre chaleureux, pas « war-room »).
+  impact: '"Anton", "Sora", sans-serif',
   body: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
-  mono: '"Sora", monospace',
+  mono: '"JetBrains Mono", ui-monospace, monospace',
 } as const;
 
 // Style helper pour les headlines avec gradient teal -> violet -> coral

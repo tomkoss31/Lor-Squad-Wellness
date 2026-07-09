@@ -153,8 +153,8 @@ export function BilanOnlineMerciPage() {
             borderRadius: "50%",
             background: PUBLIC_TOKENS.gradCta,
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "white", fontSize: 48, fontWeight: 700,
-            boxShadow: "0 16px 48px -8px rgba(45,212,191,0.55), 0 0 0 8px rgba(45,212,191,0.10)",
+            color: PUBLIC_TOKENS.ink, fontSize: 48, fontWeight: 700,
+            boxShadow: "0 16px 48px -8px rgba(197,248,42,0.40), 0 0 0 8px rgba(45,212,191,0.10)",
           }}
         >
           ✓
@@ -171,7 +171,7 @@ export function BilanOnlineMerciPage() {
         }}>
           Merci{firstName && (
             <> <strong style={publicGradText}>{firstName}</strong></>
-          )} 🙏
+          )}
         </h1>
 
         <p style={{
