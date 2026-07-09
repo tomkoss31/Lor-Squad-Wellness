@@ -17,6 +17,11 @@
 //     proposé », en RDV). Reçoit un résumé du bilan construit côté front et
 //     renvoie synthèse + pitch à dire au client + points d'attention +
 //     focus programme/assiette (JSON). Ne modifie jamais le bilan. Cap coach.
+//   - "colis_reflection" (chantier colis 2026-07-08) : paragraphe chaleureux
+//     de 3-4 phrases pour l'email de remerciement du funnel /colis, à partir
+//     des 4 réponses du mini-questionnaire (énergie/sommeil/objectif/dispo).
+//     Ni promesse santé, ni jargon. Fallback texte statique si IA indispo
+//     (l'email part quand même).
 //
 // Tous les appels loggés dans ai_usage_log (tokens + coût €).
 // Modèle : NOALY_MODEL (fallback LORSQUAD_AI_MODEL, défaut claude-opus-4-8).
@@ -457,6 +462,68 @@ async function handleBilanAnalysis(sb: SupabaseClient, body: Record<string, unkn
   return json({ analysis, model: MODEL, usage: data.usage });
 }
 
+// ─── Mode 5 : colis_reflection (email de remerciement funnel /colis) ────────
+
+interface ColisAnswers {
+  energie?: string | null;
+  sommeil?: string | null;
+  objectif?: string | null;
+  dispo?: string | null;
+}
+
+const COLIS_LABELS = {
+  energie: { top: "au top", ca_va: "ça va", a_plat: "souvent à plat", vide: "vidé·e en ce moment" },
+  sommeil: { tres_bien: "dort très bien", correct: "un sommeil correct", difficile: "un sommeil difficile", pas_terrible: "un sommeil vraiment pas terrible" },
+  objectif: { poids: "perdre du poids", muscle: "prendre du muscle", energie: "retrouver de l'énergie", mieux: "juste se sentir mieux" },
+  dispo: { semaine: "cette semaine", mois: "ce mois-ci", sans_pression: "sans pression particulière" },
+} as const;
+
+const COLIS_SYSTEM = `Tu es Noaly, l'assistante IA de La Base 360, un club de coaching bien-être/nutrition (méthode Herbalife).
+Une personne vient de flasher le QR de son colis et de répondre à un mini-questionnaire de 4 questions (énergie, sommeil, objectif, disponibilité). Tu écris un COURT paragraphe (3-4 phrases) pour l'email de remerciement, qui montre que tu as vraiment lu ses réponses.
+Ton : chaleureux, précis, jamais commercial. Tutoiement. 0 à 1 emoji maximum.
+Règles STRICTES : aucune promesse de santé, aucun diagnostic, aucun chiffre de perte de poids. Ne mentionne jamais de marque ni de produit. Termine en douceur en orientant vers le bilan (RDV ou en ligne), sans forcer.
+Tu réponds UNIQUEMENT avec le texte du paragraphe (pas de préambule, pas de titre, pas de guillemets).`;
+
+async function handleColisReflection(sb: SupabaseClient, body: Record<string, unknown>) {
+  const firstName = String(body.firstName ?? "").trim() || "toi";
+  const answers = (body.answers ?? {}) as ColisAnswers;
+
+  function label<K extends keyof typeof COLIS_LABELS>(key: K, value: string | null | undefined): string {
+    if (!value) return "non renseigné";
+    return (COLIS_LABELS[key] as Record<string, string>)[value] ?? value;
+  }
+
+  const userPrompt =
+    `Prénom : ${firstName}\n` +
+    `Énergie en ce moment : ${label("energie", answers.energie)}\n` +
+    `Sommeil : ${label("sommeil", answers.sommeil)}\n` +
+    `Objectif n°1 : ${label("objectif", answers.objectif)}\n` +
+    `Disponibilité pour passer au club : ${label("dispo", answers.dispo)}\n`;
+
+  try {
+    const data = await callAnthropic({
+      max_tokens: 400,
+      system: COLIS_SYSTEM,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+    const message = (data.content ?? [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("")
+      .trim();
+    logUsage(sb, "colis_reflection", data.usage, null, null);
+    return json({ message, model: MODEL, usage: data.usage });
+  } catch (e) {
+    // Fallback texte statique — l'email de remerciement doit toujours pouvoir
+    // partir, même si Noaly est indisponible ou le cap tokens atteint.
+    console.warn("[noaly] colis_reflection fallback:", e instanceof Error ? e.message : e);
+    const fallback =
+      `Merci d'avoir pris le temps de répondre ! On a bien noté que ton objectif du moment, c'est ${label("objectif", answers.objectif)} — ` +
+      `c'est exactement ce qu'on travaille ensemble lors du bilan bien-être. On te propose les deux options juste en dessous, à toi de choisir ce qui te va le mieux.`;
+    return json({ message: fallback, model: "fallback", usage: null });
+  }
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -471,6 +538,7 @@ serve(async (req: Request) => {
     if (body.mode === "coach_chat") return await handleCoachChat(sb, body);
     if (body.mode === "client_chat") return await handleClientChat(sb, body);
     if (body.mode === "bilan_analysis") return await handleBilanAnalysis(sb, body);
+    if (body.mode === "colis_reflection") return await handleColisReflection(sb, body);
     // Défaut / rétro-compat : génération message CRM (body.lead + mode first_contact/relance).
     return await handleCrmMessage(sb, body);
   } catch (e) {

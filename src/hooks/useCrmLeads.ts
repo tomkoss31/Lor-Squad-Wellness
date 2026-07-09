@@ -36,7 +36,8 @@ export type CrmSource =
   | "opportunite"
   | "simulateur"
   | "business"
-  | "welcome";
+  | "welcome"
+  | "colis";
 
 export interface CrmLead {
   key: string;
@@ -89,6 +90,7 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   simulateur: { label: "Simulateur", emoji: "✨" },
   business: { label: "Business", emoji: "💼" },
   welcome: { label: "Site web", emoji: "🌐" },
+  colis: { label: "Colis", emoji: "🎁" },
 };
 
 // Re-catégorisation manuelle (A, 2026-06-16) : sources éditables pour un lead
@@ -123,6 +125,7 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   if (s.startsWith("opportunite") || s === "rejoindre") return "opportunite";
   if (s === "simulateur") return "simulateur";
   if (s.startsWith("business")) return "business";
+  if (s === "colis") return "colis";
   return "welcome";
 }
 
@@ -239,9 +242,8 @@ export function useCrmLeads() {
           .order("created_at", { ascending: false })
           .limit(500),
         sb
-          // prospect_leads n'a pas de colonne email (uniquement phone).
           .from("prospect_leads")
-          .select("id, first_name, phone, city, source, status, metadata, created_at, notes, referrer_user_id")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, notes, referrer_user_id")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -330,12 +332,25 @@ export function useCrmLeads() {
         const viaName =
           typeof meta.from_client_name === "string" ? (meta.from_client_name as string) : null;
         const source = mapProspectSource(row.source as string | null);
+        // Signal de priorité colis (remplace "disponibilité", décision Thomas
+        // 2026-07-08) : ce que la personne a choisi en fin de tunnel — une
+        // action réelle est un bien meilleur indicateur qu'une réponse déclarée.
+        const colisNextAction =
+          source === "colis" ? (meta.colis_next_action as string | undefined) : undefined;
+        const colisExtra =
+          colisNextAction === "rdv"
+            ? "🔴 Voulait un RDV direct"
+            : colisNextAction === "bilan"
+              ? "🟠 Bilan en ligne complet"
+              : colisNextAction === "email_only"
+                ? "⚪ A laissé son email"
+                : null;
         all.push({
           key: `prospect_leads:${row.id}`,
           table: "prospect_leads",
           id: row.id as string,
           firstName: (row.first_name as string) || "—",
-          contact: (row.phone as string | null) || null,
+          contact: (row.phone as string | null) || (row.email as string | null) || null,
           contactIsPhone: looksLikePhone(row.phone as string | null),
           city: (row.city as string | null) ?? null,
           source,
@@ -344,7 +359,7 @@ export function useCrmLeads() {
           parrainPhone: null,
           parrainClientId:
             typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
-          extra: null,
+          extra: colisExtra,
           ownerUserId: (row.referrer_user_id as string | null) ?? null,
           relanceDue: false,
           resultToken: null,

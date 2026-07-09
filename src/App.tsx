@@ -213,6 +213,12 @@ const VipClubPage = lazy(() =>
     default: module.VipClubPage,
   })),
 );
+// Funnel colis "Pass Découverte" (chantier 2026-07-08) — pas de slug coach.
+const ColisPage = lazy(() =>
+  import("./pages/ColisPage").then((module) => ({
+    default: module.ColisPage,
+  })),
+);
 const RejoindreQuestionnairePage = lazy(() =>
   import("./pages/RejoindreQuestionnairePage").then((module) => ({
     default: module.RejoindreQuestionnairePage,
@@ -654,6 +660,7 @@ export default function App() {
           <Route path="/coach/:slug" element={<CoachPublicProfilePage />} />
           {/* Club VIP public partageable (VIP-3) — capture lead source='vip'. */}
           <Route path="/vip/:coachSlug" element={<VipClubPage />} />
+          <Route path="/colis" element={<ColisPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
