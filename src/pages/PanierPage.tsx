@@ -18,7 +18,7 @@ import { getLatestAssessment } from "../lib/calculations";
 import { getVipMeta } from "../features/client-vip/useClientVip";
 import { useToast } from "../context/ToastContext";
 import { useAppContext } from "../context/AppContext";
-import { recordQuickSale } from "../services/supabaseService";
+import { recordConsumptionOrder } from "../services/supabaseService";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { tierPctForRank } from "../lib/herbalifeFormulas";
 import type { Client, User } from "../types/domain";
@@ -130,7 +130,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, reloadClients, clients, addPvTransaction, pvTransactions, pvClientProducts, users, linkClientToUser } = useAppContext();
+  const { currentUser, clients, addPvTransaction, pvTransactions, pvClientProducts, users, linkClientToUser } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -492,21 +492,28 @@ export function PanierPage() {
         reset();
         navigate(`/clients/${selectedClient.id}`);
       } else {
-        await recordQuickSale({
-          clientName,
+        // Vente comptoir → répertoire consumption_orders (AUCUNE fiche client
+        // créée). Remonte en rentabilité via le hook, filtrable par mois.
+        await recordConsumptionOrder({
           distributorId: currentUser.id,
-          distributorName: currentUser.name,
-          lines: lines.map((p) => ({ id: p.id, name: p.name, price: p.price, pv: p.pv, quantity: cart[p.id] })),
+          customerLabel: clientName,
           saleDate,
+          saleType: "comptoir",
+          lines: lines.map((p) => ({
+            product_id: p.id,
+            name: p.name,
+            price_per_unit: p.price,
+            pv_per_unit: p.pv,
+            quantity: cart[p.id],
+          })),
         });
-        await reloadClients();
         push({
           tone: "success",
-          title: "Vente enregistrée 🎉",
-          message: `${clientName.trim()} ajouté·e à ta rentabilité.`,
+          title: "Vente comptoir enregistrée 🏪",
+          message: `${clientName.trim() || "Vente"} · ${lines.length} produit${lines.length > 1 ? "s" : ""} — sans créer de fiche.`,
         });
         reset();
-        navigate("/rentabilite");
+        navigate("/ventes-comptoir");
       }
     } catch (e) {
       push({ tone: "error", title: "Erreur", message: e instanceof Error ? e.message : "Réessaie." });
@@ -757,7 +764,7 @@ export function PanierPage() {
                           <div style={{ fontSize: 11, color: "var(--ls-text-hint)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {attribMode === "existing"
                               ? `${saleType === "commande" ? "💳 Sur son compte" : "🏪 Sur place"}${saleType === "commande" ? ` · ${delayDays === 0 ? "Aujourd'hui" : `+${delayDays} j`}` : ""}`
-                              : "Vente rapide hors-app"}
+                              : "🏪 Comptoir · répertorié, sans fiche"}
                           </div>
                         </div>
                       </>
@@ -774,7 +781,7 @@ export function PanierPage() {
                   {attribOpen ? (
                     <div className="panier-acc" style={{ padding: "2px 12px 12px" }}>
                       <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                        {([["existing", "👤 Client existant"], ["direct", "✍️ Client direct"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
+                        {([["existing", "👤 Client existant"], ["direct", "🏪 Vente comptoir"]] as Array<["existing" | "direct", string]>).map(([m, l]) => {
                           const on = attribMode === m;
                           return (
                             <button key={m} type="button" onClick={() => setAttribMode(m)} style={{ flex: 1, padding: "8px 10px", borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-teal)" : "var(--ls-surface)", color: on ? "#fff" : "var(--ls-text-muted)" }}>{l}</button>
