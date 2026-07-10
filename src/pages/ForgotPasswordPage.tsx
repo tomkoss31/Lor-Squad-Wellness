@@ -26,9 +26,20 @@ export function ForgotPasswordPage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-      const redirectTo = `${window.location.origin}/reset-password`;
-      const { error } = await sb.auth.resetPasswordForEmail(trimmed, { redirectTo });
-      if (error) throw error;
+      // Envoi via l'edge send-password-reset (Resend) : contourne le mailer
+      // intégré Supabase, bridé et peu fiable (« limite atteinte » / non reçu).
+      const { data, error } = await sb.functions.invoke("send-password-reset", {
+        body: { email: trimmed, redirect_to: window.location.origin },
+      });
+      const payload = data as { success?: boolean; error?: string } | null;
+      if (error || !payload?.success) {
+        const raw = payload?.error ?? "";
+        throw new Error(
+          raw === "rate_limited"
+            ? "Trop de demandes. Patiente quelques minutes avant de réessayer."
+            : "L'envoi a échoué. Réessaie dans un instant.",
+        );
+      }
       setPhase("sent");
     } catch (err) {
       setPhase("error");
