@@ -35,6 +35,8 @@ function readTheme(): ThemeMode {
   try {
     const v = localStorage.getItem("bk-shop-theme");
     if (v === "light" || v === "dark") return v;
+    // Pas de préférence stockée → on respecte le thème système au 1er rendu.
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
   } catch {
     /* ignore */
   }
@@ -254,31 +256,44 @@ export function BoutiquePage() {
     size();
     init();
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      paint(false);
-    } else {
-      const loop = () => {
-        paint(true);
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
-    }
-    const onResize = () => {
+    let visible = true;
+    const loop = () => {
+      paint(true);
+      raf = requestAnimationFrame(loop);
+    };
+    const start = () => {
       cancelAnimationFrame(raf);
+      loop();
+    };
+    const stop = () => cancelAnimationFrame(raf);
+
+    if (reduce) paint(false);
+    else start();
+
+    // Perf : on met l'animation en pause quand le hero sort du viewport.
+    const io = new IntersectionObserver(
+      (entries) => {
+        const nowVisible = entries[0]?.isIntersecting ?? true;
+        if (nowVisible === visible) return;
+        visible = nowVisible;
+        if (reduce) return;
+        if (visible) start();
+        else stop();
+      },
+      { threshold: 0 },
+    );
+    io.observe(cv);
+
+    const onResize = () => {
       size();
       init();
       if (reduce) paint(false);
-      else {
-        const loop = () => {
-          paint(true);
-          raf = requestAnimationFrame(loop);
-        };
-        loop();
-      }
+      else if (visible) start();
     };
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
+      io.disconnect();
       window.removeEventListener("resize", onResize);
     };
   }, [loading]);
@@ -423,17 +438,8 @@ export function BoutiquePage() {
                   )
                 ) : (
                   <>
-                    <canvas ref={canvasRef} />
+                    <canvas ref={canvasRef} aria-hidden="true" />
                     <div className="bk-glass" aria-hidden="true" />
-                    <span className="bk-cap">Vidéo hero — à venir</span>
-                    <button className="bk-play">
-                      <span className="bk-tri">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                          <path d="M2 1l6 4-6 4z" />
-                        </svg>
-                      </span>{" "}
-                      Le rituel · 0:38
-                    </button>
                   </>
                 )}
               </div>

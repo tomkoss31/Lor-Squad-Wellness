@@ -6,18 +6,18 @@
 
 .bk-shop {
   --ground:#F1EFE9; --raised:#FBFAF6; --sunk:#E7E4DB;
-  --ink:#232620; --ink-soft:#6E7268; --ink-faint:#A6A196;
+  --ink:#232620; --ink-soft:#585C51; --ink-faint:#847F72;
   --jade:#4F8B72; --jade-deep:#35664F; --jade-wash:#E4EDE7;
   --blush:#CF9488; --blush-wash:#F2E5E0;
   --hair:rgba(35,38,32,.11); --hair-strong:rgba(35,38,32,.2); --dew:rgba(255,255,255,.72);
   --star:#C79A3C;
   --shadow:0 1px 2px rgba(35,38,32,.05),0 12px 32px -18px rgba(35,38,32,.26);
   --lift:0 2px 6px rgba(35,38,32,.06),0 26px 58px -26px rgba(53,102,79,.4);
-  --bk-serif:'Iowan Old Style','Palatino Linotype','Palatino','Georgia',serif;
-  --bk-sans:'Helvetica Neue','Inter',-apple-system,'Segoe UI',system-ui,sans-serif;
+  --bk-serif:'Cormorant Garamond','Georgia',serif;
+  --bk-sans:'DM Sans','Helvetica Neue',system-ui,sans-serif;
 
   background:var(--ground); color:var(--ink);
-  font-family:var(--bk-sans); font-weight:350; line-height:1.6; font-size:16px;
+  font-family:var(--bk-sans); font-weight:400; line-height:1.6; font-size:16px;
   -webkit-font-smoothing:antialiased; min-height:100vh; overflow-x:hidden;
 }
 .bk-shop[data-bk-theme="dark"]{
@@ -31,9 +31,12 @@
 
 .bk-shop *{box-sizing:border-box}
 .bk-shop h1,.bk-shop h2,.bk-shop h3,.bk-shop h4{
-  font-family:var(--bk-serif); font-weight:400; line-height:1.06; letter-spacing:-.01em;
+  font-family:var(--bk-serif); font-weight:600; line-height:1.04; letter-spacing:-.005em;
   text-wrap:balance; margin:0;
 }
+/* Cormorant a besoin d'un peu plus de graisse pour les gros titres */
+.bk-shop h1{font-weight:600}
+.bk-price,.bk-pdp-price,.bk-welc-off,.bk-af-gain{font-weight:600}
 .bk-shop p{margin:0}
 .bk-shop a{color:inherit; text-decoration:none}
 .bk-shop button{font-family:inherit; cursor:pointer}
@@ -314,9 +317,11 @@
 .bk-co{width:100%; border:none; border-radius:13px; background:var(--jade); color:#fff; padding:15px; font-size:14.5px; font-weight:500;
   box-shadow:0 12px 28px -14px var(--jade); transition:.2s}
 .bk-co:hover{transform:translateY(-2px)} .bk-co:disabled{opacity:.5; transform:none}
-.bk-wallets{display:flex; gap:8px; margin-top:10px}
-.bk-wallet{flex:1; border:1px solid var(--hair); border-radius:11px; background:var(--raised); color:var(--ink); padding:10px; font-size:12.5px;
-  font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px}
+/* Moyens de paiement acceptés (informatif, PAS des boutons) */
+.bk-pays{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:12px}
+.bk-pays-label{font-size:11px; color:var(--ink-faint); margin-right:2px}
+.bk-pay{font-size:10.5px; font-weight:600; color:var(--ink-soft); background:color-mix(in srgb,var(--sunk) 60%,transparent);
+  border:1px solid var(--hair); border-radius:6px; padding:3px 7px; letter-spacing:.02em}
 .bk-cosec{text-align:center; font-size:11px; color:var(--ink-faint); margin-top:11px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
 
 /* ── checkout form ──────────────────────────────────────────────────────── */
