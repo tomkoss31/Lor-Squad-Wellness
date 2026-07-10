@@ -36,6 +36,7 @@ export function BoutiqueAffiliationPage() {
   // Simulateur illustratif
   const [friends, setFriends] = useState(5);
   const [avgCart, setAvgCart] = useState(60);
+  const [tierRate, setTierRate] = useState(42); // palier de remise (25 → 50 %)
 
   useEffect(() => {
     let cancelled = false;
@@ -58,8 +59,8 @@ export function BoutiqueAffiliationPage() {
   const firstName = boutique?.first_name ?? null;
   const registerUrl = HL_REGISTER_URL || `/boutique/${coachSlug}`;
 
-  // Illustratif : commission moyenne 25 % des achats des filleules.
-  const monthlyGain = useMemo(() => friends * avgCart * 0.25, [friends, avgCart]);
+  // Illustratif : commission = ton palier de remise appliqué aux achats filleules.
+  const monthlyGain = useMemo(() => friends * avgCart * (tierRate / 100), [friends, avgCart, tierRate]);
 
   const FAQ = [
     ["Dois-je forcément vendre pour gagner ?", "Non. Tu gagnes une commission sur les achats des personnes que tu parraines. Mais oui, pour toucher quoi que ce soit, l'inscription (enregistrement distributrice) est obligatoire."],
@@ -199,6 +200,32 @@ export function BoutiqueAffiliationPage() {
             maxWidth: 620,
           }}
         >
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 10 }}>Ta remise (palier)</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[25, 35, 42, 50].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setTierRate(r)}
+                  style={{
+                    flex: 1,
+                    minWidth: 64,
+                    padding: "10px 8px",
+                    borderRadius: 12,
+                    border: `1px solid ${tierRate === r ? "var(--jade)" : "var(--hair)"}`,
+                    background: tierRate === r ? "var(--jade)" : "transparent",
+                    color: tierRate === r ? "#fff" : "var(--ink)",
+                    fontWeight: 700,
+                    fontFamily: "var(--bk-serif)",
+                    fontSize: 16,
+                    cursor: "pointer",
+                  }}
+                >
+                  {r} %
+                </button>
+              ))}
+            </div>
+          </div>
           <div style={{ marginBottom: 22 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 8 }}>
               <span style={{ color: "var(--ink-soft)" }}>Personnes que tu parraines</span>
