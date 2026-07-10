@@ -55,6 +55,12 @@ const EncaissementPage = lazy(() =>
     default: module.EncaissementPage
   }))
 );
+// Cockpit config boutique HL SKIN (chantier 2026-07-10).
+const BoutiqueAdminPage = lazy(() =>
+  import("./pages/BoutiqueAdminPage").then((module) => ({
+    default: module.BoutiqueAdminPage
+  }))
+);
 const UsersPage = lazy(() =>
   import("./pages/UsersPage").then((module) => ({
     default: module.UsersPage
@@ -211,6 +217,18 @@ const CoachPublicProfilePage = lazy(() =>
 const VipClubPage = lazy(() =>
   import("./pages/VipClubPage").then((module) => ({
     default: module.VipClubPage,
+  })),
+);
+// Boutique HL SKIN « Beauté K Skin » (chantier 2026-07-10) — vitrine e-commerce
+// publique par distri, identité céladon dédiée.
+const BoutiquePage = lazy(() =>
+  import("./pages/BoutiquePage").then((module) => ({
+    default: module.BoutiquePage,
+  })),
+);
+const BoutiqueAffiliationPage = lazy(() =>
+  import("./pages/BoutiqueAffiliationPage").then((module) => ({
+    default: module.BoutiqueAffiliationPage,
   })),
 );
 // Funnel colis "Pass Découverte" (chantier 2026-07-08) — pas de slug coach.
@@ -660,6 +678,9 @@ export default function App() {
           <Route path="/coach/:slug" element={<CoachPublicProfilePage />} />
           {/* Club VIP public partageable (VIP-3) — capture lead source='vip'. */}
           <Route path="/vip/:coachSlug" element={<VipClubPage />} />
+          {/* Boutique HL SKIN publique par distri (chantier 2026-07-10). */}
+          <Route path="/boutique/:coachSlug" element={<BoutiquePage />} />
+          <Route path="/boutique/:coachSlug/affiliation" element={<BoutiqueAffiliationPage />} />
           <Route path="/colis" element={<ColisPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
@@ -791,6 +812,7 @@ export default function App() {
               <Route path="crm" element={<CrmPage />} />
               <Route path="outils" element={<OutilsPage />} />
               <Route path="encaissement" element={<EncaissementPage />} />
+              <Route path="ma-boutique" element={<BoutiqueAdminPage />} />
               <Route path="mes-liens" element={<MesLiensPage />} />
               <Route path="panier" element={<PanierPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
