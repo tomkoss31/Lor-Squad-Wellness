@@ -45,6 +45,11 @@ const PanierPage = lazy(() =>
     default: module.PanierPage
   }))
 );
+const VentesComptoirPage = lazy(() =>
+  import("./pages/VentesComptoirPage").then((module) => ({
+    default: module.VentesComptoirPage
+  }))
+);
 const OutilsPage = lazy(() =>
   import("./pages/OutilsPage").then((module) => ({
     default: module.OutilsPage
@@ -793,6 +798,7 @@ export default function App() {
               <Route path="encaissement" element={<EncaissementPage />} />
               <Route path="mes-liens" element={<MesLiensPage />} />
               <Route path="panier" element={<PanierPage />} />
+              <Route path="ventes-comptoir" element={<VentesComptoirPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}

@@ -1227,6 +1227,99 @@ export async function recordQuickSale(payload: {
   return { clientId };
 }
 
+// ─── Ventes comptoir / conso (chantier « panier conso » 2026-07-10) ───────────
+// Répertoire de commandes SANS fiche client (table consumption_orders). Remplace
+// le mode « Client direct » qui créait une fiche fantôme. Écriture via RPC
+// SECURITY DEFINER (totaux recalculés serveur). Cf. migration 20261205080000.
+export interface ConsumptionOrderLine {
+  product_id: string;
+  name: string;
+  quantity: number;
+  pv_per_unit: number;
+  price_per_unit: number;
+}
+export interface ConsumptionOrder {
+  id: string;
+  distributorId: string;
+  distributorName: string | null;
+  customerLabel: string | null;
+  saleDate: string; // YYYY-MM-DD
+  saleType: "comptoir" | "commande";
+  lines: ConsumptionOrderLine[];
+  totalPrice: number;
+  totalPv: number;
+  note: string | null;
+  createdAt: string;
+}
+
+function mapConsumptionOrder(r: Record<string, unknown>): ConsumptionOrder {
+  return {
+    id: r.id as string,
+    distributorId: r.distributor_id as string,
+    distributorName: (r.distributor_name as string | null) ?? null,
+    customerLabel: (r.customer_label as string | null) ?? null,
+    saleDate: r.sale_date as string,
+    saleType: (r.sale_type as "comptoir" | "commande") ?? "comptoir",
+    lines: Array.isArray(r.lines) ? (r.lines as ConsumptionOrderLine[]) : [],
+    totalPrice: Number(r.total_price) || 0,
+    totalPv: Number(r.total_pv) || 0,
+    note: (r.note as string | null) ?? null,
+    createdAt: r.created_at as string,
+  };
+}
+
+export async function recordConsumptionOrder(payload: {
+  distributorId?: string | null;
+  customerLabel?: string | null;
+  saleDate?: string; // YYYY-MM-DD
+  saleType?: "comptoir" | "commande";
+  lines: ConsumptionOrderLine[];
+  note?: string | null;
+}): Promise<string> {
+  const client = await requireSupabase();
+  const { data, error } = await client.rpc("record_consumption_order", {
+    p_distributor_id: payload.distributorId ?? null,
+    p_customer_label: payload.customerLabel ?? null,
+    p_sale_date: payload.saleDate ?? null,
+    p_sale_type: payload.saleType ?? "comptoir",
+    p_lines: payload.lines,
+    p_note: payload.note ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+/** Liste les ventes comptoir (RLS : les siennes, ou toutes si admin). Filtre
+ *  mois optionnel (YYYY-MM) sur sale_date. */
+export async function listConsumptionOrders(params: {
+  distributorId?: string | null;
+  monthIso?: string;
+} = {}): Promise<ConsumptionOrder[]> {
+  const client = await requireSupabase();
+  let q = client
+    .from("consumption_orders")
+    .select("*")
+    .order("sale_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (params.distributorId) q = q.eq("distributor_id", params.distributorId);
+  if (params.monthIso && /^\d{4}-\d{2}$/.test(params.monthIso)) {
+    const [y, m] = params.monthIso.split("-").map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    q = q
+      .gte("sale_date", `${params.monthIso}-01`)
+      .lte("sale_date", `${params.monthIso}-${String(lastDay).padStart(2, "0")}`);
+  }
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => mapConsumptionOrder(r as Record<string, unknown>));
+}
+
+export async function deleteConsumptionOrder(id: string): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("delete_consumption_order", { p_id: id });
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Édition d'une vente depuis Rentabilité → Analyse détaillée (crayon ✏️).
  * Réconcilie le client + ses produits avec l'état désiré :
