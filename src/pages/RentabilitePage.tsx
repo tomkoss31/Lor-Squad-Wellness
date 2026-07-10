@@ -445,7 +445,11 @@ export function RentabilitePage() {
             <CalcBlock
               label="CA brut"
               value={`${Math.round(ownData.revenue_brut).toLocaleString("fr-FR")} €`}
-              sub={`${ownData.products_count} programme${ownData.products_count > 1 ? "s" : ""} vendu${ownData.products_count > 1 ? "s" : ""}`}
+              sub={`${ownData.products_count} programme${ownData.products_count > 1 ? "s" : ""} vendu${ownData.products_count > 1 ? "s" : ""}${
+                ownData.conso_count && ownData.conso_count > 0
+                  ? ` · dont 🏪 ${Math.round(ownData.conso_revenue ?? 0).toLocaleString("fr-FR")} € comptoir`
+                  : ""
+              }`}
             />
             <CalcBlock
               label="Marge perso"

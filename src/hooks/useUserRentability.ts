@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useAppContext } from "../context/AppContext";
 import { resolveCoupleUserIds, isCoupleUser } from "../config/teamConfig";
+import { listConsumptionOrders } from "../services/supabaseService";
 
 export interface RentabilityTopClient {
   client_id: string;
@@ -57,6 +58,13 @@ export interface RentabilityData {
   month_end: string;
   days_elapsed: number;
   days_in_month: number;
+  // Ventes comptoir (consumption_orders) fusionnées côté hook (2026-07-10) :
+  // le CA + la marge sont AJOUTÉS à revenue_brut / margin_eur ci-dessus ; ces
+  // champs exposent le détail pour une ligne « dont comptoir » transparente.
+  conso_revenue?: number;
+  conso_margin?: number;
+  conso_pv?: number;
+  conso_count?: number;
 }
 
 interface UseUserRentabilityResult {
@@ -138,6 +146,36 @@ export function useUserRentability(
     if (!row) {
       console.warn("[useUserRentability] RPC returned empty rows", { userIds, monthIso });
     }
+
+    // ── Ventes comptoir (consumption_orders) : on AJOUTE CA + marge au total,
+    // et on expose le détail. Marge conso = CA × tier% du distri (même barème
+    // que la vente directe). Aucune formule PV/paliers touchée. Best-effort :
+    // si la table n'est pas dispo, la rentabilité s'affiche sans conso.
+    if (row) {
+      try {
+        const monthKey = /^\d{4}-\d{2}/.test(row.month_start ?? "")
+          ? row.month_start.slice(0, 7)
+          : /^\d{4}-\d{2}/.test(monthIso ?? "")
+            ? (monthIso as string).slice(0, 7)
+            : new Date().toISOString().slice(0, 7);
+        const perUser = await Promise.all(
+          userIds.map((uid) => listConsumptionOrders({ distributorId: uid, monthIso: monthKey })),
+        );
+        const all = perUser.flat();
+        const consoRevenue = all.reduce((a, o) => a + o.totalPrice, 0);
+        const consoPv = all.reduce((a, o) => a + o.totalPv, 0);
+        const consoMargin = consoRevenue * ((row.margin_pct ?? 0) / 100);
+        row.conso_revenue = consoRevenue;
+        row.conso_pv = consoPv;
+        row.conso_margin = consoMargin;
+        row.conso_count = all.length;
+        row.revenue_brut = (row.revenue_brut ?? 0) + consoRevenue;
+        row.margin_eur = (row.margin_eur ?? 0) + consoMargin;
+      } catch (consoErr) {
+        console.warn("[useUserRentability] conso merge skipped:", consoErr);
+      }
+    }
+
     setData(row);
     setLoading(false);
   }, [userId, userIds, monthIso]);

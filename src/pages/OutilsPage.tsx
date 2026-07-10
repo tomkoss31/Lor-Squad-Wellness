@@ -75,6 +75,14 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         path: "/panier",
       },
       {
+        id: "ventes-comptoir",
+        icon: "🏪",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Ventes comptoir",
+        desc: "Le répertoire de tes ventes au comptoir, classées par mois — sans créer de fiche client. Le total remonte dans ta rentabilité.",
+        path: "/ventes-comptoir",
+      },
+      {
         id: "encaissement",
         icon: "💳",
         iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
