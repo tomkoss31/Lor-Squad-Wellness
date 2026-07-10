@@ -771,6 +771,8 @@ avec `supabase functions deploy <name>`.
 | `create-manual-payment-link` | fetch front (coach authentifié) | Lien Stripe « montant libre » hors bilan (Payment Link sur le compte du distri). Auth = JWT distri (verify_jwt par défaut), clé secrète côté serveur |
 | `client-rdv-reminder` | cron */30 | Rappel RDV AU CLIENT : veille 18h Paris + 2h avant (sendPushToClient, anti-doublon client_rdv_reminders_sent) |
 | `book-rdv` | fetch front (page publique /rdv) | Réservation RDV funnel : résout coach par slug, re-check anti-doublon, insert `rdv_bookings`, notif push coach (no-verify-jwt) |
+| `send-password-reset` | fetch front (/forgot-password) | Mot de passe oublié via Resend : `admin.generateLink(recovery)` + envoi Resend (contourne le mailer Supabase bridé « limite atteinte »). Anti-énumération + throttle IP/email. Template `_shared/email.ts`. (no-verify-jwt) |
+| `auth-email-hook` | Supabase Send Email Hook | Route TOUS les mails auth (signup/invite/magiclink/recovery/email_change/reauthentication) vers Resend + template `_shared/email.ts`. Signature standardwebhooks (`SEND_EMAIL_HOOK_SECRET`). À activer côté dashboard (Auth → Hooks). (no-verify-jwt) |
 
 Toute nouvelle edge function = ajouter ici.
 
