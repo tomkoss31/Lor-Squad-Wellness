@@ -320,7 +320,30 @@ export function BoutiqueAdminPage() {
         <div style={{ marginBottom: 14 }}>
           <label style={label}>Lien de ma boutique</label>
           <input style={input} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="prenom" />
-          {boutiqueUrl && <div style={{ fontSize: 12, color: "var(--ls-teal)", marginTop: 5 }}>{boutiqueUrl}</div>}
+          {boutiqueUrl && (
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, color: "var(--ls-teal)", wordBreak: "break-all", flex: 1, minWidth: 160 }}>
+                {boutiqueUrl}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText(boutiqueUrl);
+                  pushToast({ tone: "success", title: "Lien copié", message: boutiqueUrl });
+                }}
+                style={{ ...btnPrimary, padding: "8px 14px", fontSize: 12.5 }}
+              >
+                Copier le lien
+              </button>
+              <a
+                href={boutiqueUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ ...btnPrimary, background: "transparent", color: "var(--ls-text)", border: "0.5px solid var(--ls-border)", padding: "8px 14px", fontSize: 12.5, textDecoration: "none" }}
+              >
+                Voir ma boutique →
+              </a>
+            </div>
+          )}
         </div>
         <div style={{ marginBottom: 14 }}>
           <label style={label}>Vidéo hero (URL YouTube ou MP4) — optionnel</label>
@@ -334,17 +357,6 @@ export function BoutiqueAdminPage() {
           <button style={btnPrimary} onClick={saveConfig} disabled={saving}>
             {saving ? "…" : "Enregistrer"}
           </button>
-          {boutiqueUrl && (
-            <button
-              style={{ ...btnPrimary, background: "transparent", color: "var(--ls-text)", border: "0.5px solid var(--ls-border)" }}
-              onClick={() => {
-                navigator.clipboard?.writeText(boutiqueUrl);
-                pushToast({ tone: "success", title: "Lien copié", message: boutiqueUrl });
-              }}
-            >
-              Copier le lien
-            </button>
-          )}
           <button
             style={{ ...btnPrimary, background: "transparent", color: "var(--ls-text)", border: "0.5px solid var(--ls-border)" }}
             onClick={() => navigate("/encaissement")}
