@@ -14,6 +14,7 @@ import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro } from "../lib/format";
 import type { BoutiqueInfo } from "../components/boutique/types";
+import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 
 // À REMPLACER par Thomas : lien d'inscription HL SKIN + prix pack démarrage.
 const HL_REGISTER_URL = "";
@@ -402,17 +403,7 @@ export function BoutiqueAffiliationPage() {
         </div>
       </section>
 
-      <footer className="bk-footer">
-        <div className="bk-wrap bk-foot-in">
-          <div>
-            <span className="bk-mark" style={{ fontSize: 17 }}>
-              {shopName}
-            </span>{" "}
-            · affiliation
-          </div>
-          <div>Propulsé par La Base 360</div>
-        </div>
-      </footer>
+      <BoutiqueFooter coachSlug={coachSlug} shopName={shopName} distriFirstName={firstName} />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
+import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -747,17 +748,12 @@ export function BoutiquePage() {
             </div>
           </section>
 
-          <footer className="bk-footer">
-            <div className="bk-wrap bk-foot-in">
-              <div>
-                <span className="bk-mark" style={{ fontSize: 17 }}>
-                  {shopName}
-                </span>{" "}
-                {distriFirstName ? `· boutique de ${distriFirstName}` : ""}
-              </div>
-              <div>Propulsé par La Base 360 · chaque distributrice a sa boutique</div>
-            </div>
-          </footer>
+          <BoutiqueFooter
+            coachSlug={coachSlug}
+            shopName={shopName}
+            distriFirstName={distriFirstName}
+            aiScanUrl={boutique?.ai_scan_url}
+          />
         </>
       )}
 

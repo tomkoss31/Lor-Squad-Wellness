@@ -272,8 +272,34 @@
 .bk-affil .bk-soon{border:1px dashed var(--hair-strong); border-radius:14px; padding:16px 20px; font-size:13px; color:var(--ink-soft);
   background:color-mix(in srgb,var(--raised) 60%,transparent); text-align:center}
 
-.bk-footer{border-top:1px solid var(--hair); padding:44px 0; color:var(--ink-soft); font-size:13px; margin-top:20px}
+.bk-footer{border-top:1px solid var(--hair); padding:48px 0 26px; color:var(--ink-soft); font-size:13px; margin-top:20px; background:var(--sunk)}
 .bk-foot-in{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center}
+/* footer e-commerce complet */
+.bk-foot-grid{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px}
+@media (max-width:820px){.bk-foot-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.bk-foot-grid{grid-template-columns:1fr}}
+.bk-foot-tag{font-size:13px; color:var(--ink-soft); max-width:34ch; margin:10px 0 14px; line-height:1.55}
+.bk-foot-pays{display:flex; flex-wrap:wrap; gap:6px}
+.bk-pay-badge{font-size:10px; font-weight:600; letter-spacing:.04em; color:var(--ink-faint); border:1px solid var(--hair);
+  border-radius:6px; padding:4px 8px; background:var(--raised)}
+.bk-foot-col{display:flex; flex-direction:column; gap:9px}
+.bk-foot-h{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-bottom:2px}
+.bk-foot-col a{font-size:13.5px; color:var(--ink-soft); transition:color .18s}
+.bk-foot-col a:hover{color:var(--jade-deep)}
+.bk-foot-bottom{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;
+  border-top:1px solid var(--hair); margin-top:34px; padding-top:20px; font-size:12px; color:var(--ink-faint)}
+/* page infos & conditions */
+.bk-infos{padding:36px 24px 20px; max-width:820px}
+.bk-infos h1{font-size:clamp(30px,5vw,44px); margin-bottom:8px}
+.bk-infos-lead{color:var(--ink-soft); font-size:15px; margin-bottom:14px}
+.bk-infos-sec{border-top:1px solid var(--hair); padding:24px 0}
+.bk-infos-sec h2{font-size:22px; margin-bottom:12px}
+.bk-infos-sec p{color:var(--ink-soft); font-size:14.5px; line-height:1.65; margin-bottom:8px}
+.bk-infos-sec ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px}
+.bk-infos-sec li{color:var(--ink-soft); font-size:14.5px; line-height:1.55}
+.bk-infos-sec b{color:var(--ink); font-weight:600}
+.bk-todo{display:inline-block; font-size:12px; color:var(--blush); background:color-mix(in srgb,var(--blush) 12%,transparent);
+  border:1px dashed color-mix(in srgb,var(--blush) 45%,transparent); border-radius:8px; padding:2px 8px; margin-top:4px}
 
 /* states */
 .bk-center{min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:40px 24px}
