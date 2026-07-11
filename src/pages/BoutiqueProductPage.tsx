@@ -15,6 +15,7 @@ import { formatEuro, formatEuroCompact } from "../lib/format";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { useCart } from "../components/boutique/useCart";
+import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import {
   CONCERN_LABELS,
   FREE_SHIPPING_THRESHOLD,
@@ -342,6 +343,13 @@ export function BoutiqueProductPage() {
           </div>
         )}
       </div>
+
+      <BoutiqueFooter
+        coachSlug={coachSlug}
+        shopName={shopName}
+        distriFirstName={boutique?.first_name}
+        aiScanUrl={boutique?.ai_scan_url}
+      />
 
       {cartOpen && (
         <CartDrawer
