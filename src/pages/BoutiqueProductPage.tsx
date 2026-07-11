@@ -36,8 +36,6 @@ function readTheme(): ThemeMode {
   return "light";
 }
 
-const IMAGE_SLOTS = ["Packshot", "Texture", "Lifestyle", "Avant / Après"];
-
 export function BoutiqueProductPage() {
   const { coachSlug, productSlug } = useParams<{ coachSlug?: string; productSlug?: string }>();
   const [theme, setTheme] = useState<ThemeMode>(readTheme);
@@ -54,6 +52,7 @@ export function BoutiqueProductPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setHeroIdx(0);
     (async () => {
       try {
         const sb = await getSupabaseClient();
@@ -225,30 +224,28 @@ export function BoutiqueProductPage() {
                 <div className="bk-bottle" aria-hidden="true" />
               )}
             </div>
-            <div className="bk-thumbs">
-              {IMAGE_SLOTS.map((slot, i) => (
-                <button
-                  className="bk-th"
-                  key={slot}
-                  onClick={() => setHeroIdx(i)}
-                  style={{
-                    borderColor: heroIdx === i ? "var(--jade)" : undefined,
-                    cursor: product.images[i]?.url ? "pointer" : "default",
-                  }}
-                >
-                  {product.images[i]?.url ? (
+            {product.images.length > 1 && (
+              <div className="bk-thumbs">
+                {product.images.map((img, i) => (
+                  <button
+                    className="bk-th"
+                    key={img.url}
+                    onClick={() => setHeroIdx(i)}
+                    style={{
+                      borderColor: heroIdx === i ? "var(--jade)" : undefined,
+                      cursor: "pointer",
+                    }}
+                  >
                     <img
-                      src={product.images[i].url}
+                      src={img.url}
                       alt=""
                       loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 9 }}
                     />
-                  ) : (
-                    slot
-                  )}
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bk-pdp-info" style={{ overflow: "visible" }}>

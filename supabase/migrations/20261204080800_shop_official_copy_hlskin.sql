@@ -20,10 +20,10 @@ update public.shop_products set
   tagline=$$Renforce la barrière cutanée et sublime l'éclat, pour un teint frais et lumineux.$$,
   description=$$Sérum à base d'eau inspiré de l'expertise coréenne. 10 % de niacinamide + vitamine B5 + glycérine pour uniformiser le teint, renforcer la barrière cutanée et retenir l'hydratation. Texture légère qui agit toute la journée. Testé dermatologiquement et ophtalmologiquement.$$,
   ingredient_hero=$$Niacinamide 10 % — uniformise le teint, renforce la barrière cutanée et assure l'hydratation. Complétée de vitamine B5 et de glycérine.$$,
-  how_to=$$Quelques gouttes sur peau propre et sèche (visage + cou), une fois par jour, jusqu'à absorption. Toujours un SPF le matin.$$,
+  how_to=$$Quelques gouttes sur peau propre et sèche (visage + cou), une fois par jour, jusqu'à absorption. Toujours une protection solaire (SPF) le matin.$$,
   benefits=$$["Illumine et unifie le teint","Réduit l'apparence des imperfections","Renforce la barrière cutanée · jusqu'à 8 h d'hydratation","Aide à lutter contre les signes de l'âge"]$$::jsonb,
   faq=$$[{"q":"Ça picote ?","a":"Non — 10 % est le juste équilibre efficacité / tolérance. Convient à divers types de peau et sous le maquillage."},{"q":"Résultats en combien de temps ?","a":"Dès 30 jours : 91 % ressentent une peau mieux hydratée et 88 % un teint plus lumineux (test consommateur sur 36 femmes)."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/card-serum.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/card-serum.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/life-serum.webp","kind":"lifestyle"}]$$::jsonb,
   updated_at=now()
 where slug='serum-niacinamide';
 
@@ -47,7 +47,7 @@ update public.shop_products set
   how_to=$$Quotidiennement selon les besoins, sur peau propre et sèche, jusqu'à absorption.$$,
   benefits=$$["Hydrate 24 h · +37 % d'hydratation après 24 h","Nourrit en profondeur dès la 1re application","Texture non grasse, absorption rapide","Peau lisse et veloutée"]$$::jsonb,
   faq=$$[{"q":"C'est gras ?","a":"Non — 96 % ne ressentent aucune sensation grasse et 93 % une absorption rapide."},{"q":"Sur le visage ?","a":"Formulée pour les mains et le corps ; pour le visage, préfère les soins visage dédiés."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/card-lotion.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/life-lotion.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/card-lotion.webp","kind":"packshot"}]$$::jsonb,
   updated_at=now()
 where slug='lotion-mains-corps';
 
@@ -57,10 +57,10 @@ update public.shop_products set
   tagline=$$Crème riche et veloutée qui cible les rides et renforce l'élasticité.$$,
   description=$$Crème hydratante riche et veloutée, développée grâce à la recherche coréenne avancée : adénosine + niacinamide + vitamine B5 pour cibler les rides, améliorer l'élasticité et offrir une hydratation durable. Teint plus ferme, plus lisse et plus éclatant. S'applique sous le maquillage.$$,
   ingredient_hero=$$Adénosine + niacinamide (ciblent les rides et soutiennent l'hydratation) et vitamine B5 (retient l'humidité et préserve la barrière cutanée).$$,
-  how_to=$$Chaque matin sur peau propre et sèche, masser le visage et le cou de bas en haut. Toujours un SPF en journée.$$,
+  how_to=$$Chaque matin sur peau propre et sèche, masser le visage et le cou de bas en haut. Toujours une protection solaire (SPF) en journée.$$,
   benefits=$$["Réduit l'apparence des rides","Renforce l'élasticité de la peau","Illumine le teint et ravive l'éclat","Texture riche et veloutée, sous le maquillage"]$$::jsonb,
   faq=$$[{"q":"Matin ou soir ?","a":"Le matin sur peau propre, en massage de bas en haut. Pense au SPF en journée."},{"q":"Sous le maquillage ?","a":"Oui, sa texture riche et veloutée le permet."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/card-tension.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/card-tension.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/life-tension.webp","kind":"packshot"}]$$::jsonb,
   updated_at=now()
 where slug='creme-tension';
 
@@ -72,6 +72,7 @@ update public.shop_products set
   how_to=$$Matin et soir, tapoter une petite quantité autour de l'œil et masser délicatement.$$,
   benefits=$$["Cible les rides et ridules du contour","Hydratation rafraîchissante longue tenue","Regard plus doux, lumineux et éclatant","Texture non grasse, sous le maquillage"]$$::jsonb,
   faq=$$[{"q":"Sous le maquillage ?","a":"Oui, sa texture non grasse à absorption rapide le permet."},{"q":"Quand l'appliquer ?","a":"Matin et soir, en tapotant délicatement autour de l'œil."}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/contour-yeux/card-contour.webp","kind":"packshot"}]$$::jsonb,
   updated_at=now()
 where slug='contour-yeux';
 
