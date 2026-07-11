@@ -28,6 +28,7 @@ const AFFIL_PEOPLE = `${BK_MEDIA}/affil-people.webp`;
 const AFFIL_POSTS = [
   { url: `${BK_MEDIA}/affil-post-5raisons.webp`, alt: "5 raisons de devenir entrepreneur beauté" },
   { url: `${BK_MEDIA}/affil-post-pack.webp`, alt: "Lance-toi — International Business Pack" },
+  { url: `${BK_MEDIA}/affil-post-ai.webp`, alt: "HL Beauty AI — ton assistant skincare digital" },
 ];
 const AFFIL_GUIDE = `${BK_MEDIA}/guide-hl-beauty.pdf`;
 
@@ -229,11 +230,6 @@ export function BoutiqueAffiliationPage() {
               <img src={p.url} alt={p.alt} loading="lazy" />
             </div>
           ))}
-          <div className="bk-af-kitcard bk-af-kitnote">
-            <div className="bk-ic" aria-hidden="true">🤖</div>
-            <h4>+ l'outil HL/Skin AI</h4>
-            <p>Ton lien d'analyse de peau par IA pour engager la conversation et recommander la bonne routine en 60 s.</p>
-          </div>
         </div>
       </section>
 
