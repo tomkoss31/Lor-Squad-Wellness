@@ -380,7 +380,7 @@ export function BoutiquePage() {
                   Affiliation
                 </a>
               </nav>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="bk-bar-actions">
                 <button
                   className="bk-iconbtn"
                   onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}

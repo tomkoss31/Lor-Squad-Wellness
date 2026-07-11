@@ -96,13 +96,15 @@ export function BoutiqueAffiliationPage() {
               </span>
             </span>
           </a>
-          <button
-            className="bk-iconbtn"
-            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-            aria-label="Thème"
-          >
-            {theme === "dark" ? "☀" : "☾"}
-          </button>
+          <div className="bk-bar-actions">
+            <button
+              className="bk-iconbtn"
+              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+              aria-label="Thème"
+            >
+              {theme === "dark" ? "☀" : "☾"}
+            </button>
+          </div>
         </div>
       </header>
 

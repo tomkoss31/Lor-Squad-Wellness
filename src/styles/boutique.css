@@ -13,7 +13,7 @@
   --star:#C79A3C;
   --shadow:0 1px 2px rgba(35,38,32,.05),0 12px 32px -18px rgba(35,38,32,.26);
   --lift:0 2px 6px rgba(35,38,32,.06),0 26px 58px -26px rgba(53,102,79,.4);
-  --bk-serif:'Cormorant Garamond','Georgia',serif;
+  --bk-serif:'Fraunces','Cormorant Garamond','Georgia',serif;
   --bk-sans:'DM Sans','Helvetica Neue',system-ui,sans-serif;
 
   background:var(--ground); color:var(--ink);
@@ -31,11 +31,10 @@
 
 .bk-shop *{box-sizing:border-box}
 .bk-shop h1,.bk-shop h2,.bk-shop h3,.bk-shop h4{
-  font-family:var(--bk-serif); font-weight:600; line-height:1.04; letter-spacing:-.005em;
-  text-wrap:balance; margin:0;
+  font-family:var(--bk-serif); font-weight:560; line-height:1.06; letter-spacing:-.012em;
+  font-optical-sizing:auto; text-wrap:balance; margin:0;
 }
-/* Cormorant a besoin d'un peu plus de graisse pour les gros titres */
-.bk-shop h1{font-weight:600}
+.bk-shop h1{font-weight:580}
 .bk-price,.bk-pdp-price,.bk-welc-off,.bk-af-gain{font-weight:600}
 .bk-shop p{margin:0}
 .bk-shop a{color:inherit; text-decoration:none}
@@ -63,13 +62,14 @@
 .bk-bar{position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 85%,transparent);
   backdrop-filter:blur(14px) saturate(1.1); border-bottom:1px solid var(--hair)}
 .bk-bar-in{display:flex; align-items:center; gap:20px; height:64px}
-.bk-brand{display:flex; align-items:center; gap:11px; margin-right:auto; line-height:1.05}
+.bk-brand{display:flex; align-items:center; gap:11px; line-height:1.05; flex-shrink:0}
+.bk-bar-actions{margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0}
 .bk-brand .bk-ava{width:38px; height:38px; border-radius:999px; object-fit:cover; border:1px solid var(--hair)}
 .bk-brand .bk-ava-fb{width:38px; height:38px; border-radius:999px; display:grid; place-items:center; color:#fff; font-weight:600;
   background:linear-gradient(150deg,var(--jade),var(--blush))}
 .bk-brand .bk-mark{font-family:var(--bk-serif); font-size:20px; letter-spacing:.01em}
 .bk-brand .bk-by{font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-top:2px}
-.bk-nav{display:flex; gap:24px; font-size:13.5px; color:var(--ink-soft)}
+.bk-nav{display:flex; gap:26px; font-size:13.5px; color:var(--ink-soft); flex:1; justify-content:center; margin:0 20px}
 .bk-nav a{position:relative; padding:4px 0}
 .bk-nav a::after{content:""; position:absolute; left:0; right:100%; bottom:-1px; height:1.5px; background:var(--jade); transition:right .3s}
 .bk-nav a:hover{color:var(--ink)} .bk-nav a:hover::after{right:0}
@@ -116,10 +116,10 @@
 .bk-trust-in{display:flex; flex-wrap:wrap; gap:8px 38px; padding:16px 0; justify-content:center; font-size:12.5px; color:var(--ink-soft)}
 .bk-trust-in span{display:inline-flex; align-items:center; gap:8px} .bk-trust-in b{color:var(--ink); font-weight:600}
 
-.bk-sec{padding:60px 0}
-.bk-sec-head{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:30px}
-.bk-sec-head h2{font-size:clamp(27px,3.5vw,38px)}
-.bk-sec-head p{color:var(--ink-soft); max-width:38ch; font-size:14.5px}
+.bk-sec{padding:46px 0}
+.bk-sec-head{display:flex; flex-direction:column; gap:9px; margin-bottom:24px; max-width:62ch}
+.bk-sec-head h2{font-size:clamp(26px,3.2vw,36px)}
+.bk-sec-head p{color:var(--ink-soft); max-width:54ch; font-size:14.5px}
 
 /* concern chips */
 .bk-chips{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:26px}
@@ -154,7 +154,7 @@
 .bk-cbody{padding:16px 16px 18px; display:flex; flex-direction:column; gap:6px; flex:1}
 .bk-cbody .bk-rate{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-faint)}
 .bk-cbody .bk-vol{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint)}
-.bk-cbody h3{font-size:17px}
+.bk-cbody h3{font-family:var(--bk-sans); font-weight:600; font-size:15.5px; letter-spacing:-.01em; line-height:1.28}
 .bk-cbody .bk-desc{font-size:12.5px; color:var(--ink-soft); flex:1; line-height:1.5}
 .bk-cfoot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px}
 .bk-price{font-family:var(--bk-serif); font-size:19px}
