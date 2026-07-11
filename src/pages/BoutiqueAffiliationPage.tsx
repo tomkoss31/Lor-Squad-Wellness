@@ -19,6 +19,17 @@ import type { BoutiqueInfo } from "../components/boutique/types";
 const HL_REGISTER_URL = "";
 const STARTER_PACK_PRICE = "";
 
+// Médias affiliation (assets officiels HL Beauty, communs à toutes les boutiques).
+const BK_MEDIA =
+  "https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/affil";
+const AFFIL_PROMO = `${BK_MEDIA}/promo/affil-promo.mp4`;
+const AFFIL_PROMO_POSTER = `${BK_MEDIA}/promo/affil-promo-poster.webp`;
+const AFFIL_PEOPLE = `${BK_MEDIA}/affil-people.webp`;
+const AFFIL_POSTS = [
+  { url: `${BK_MEDIA}/affil-post-5raisons.webp`, alt: "5 raisons de devenir entrepreneur beauté" },
+  { url: `${BK_MEDIA}/affil-post-pack.webp`, alt: "Lance-toi — International Business Pack" },
+];
+
 type ThemeMode = "light" | "dark";
 
 export function BoutiqueAffiliationPage() {
@@ -96,63 +107,80 @@ export function BoutiqueAffiliationPage() {
 
       {/* Hero */}
       <div className="bk-wrap bk-hero">
-        <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center", padding: "20px 0 10px" }}>
-          <div className="bk-eyebrow" style={eyebrow}>
-            Programme d'affiliation
-          </div>
-          <h1 style={{ fontSize: "clamp(38px,6vw,64px)", margin: "0 0 20px" }}>
-            Partage ta beauté,<br />
-            <em style={{ fontStyle: "italic", color: "var(--jade-deep)" }}>sois récompensée.</em>
-          </h1>
-          <p className="bk-hero-sub" style={{ margin: "0 auto 28px" }}>
-            Recommande {shopName} autour de toi. Tes proches commandent avec ton lien — et tu
-            touches une commission sur leurs achats. Sans stock, sans forcer, à ton rythme.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a className="bk-btn bk-btn-primary" href={registerUrl}>
-              Rejoindre l'équipe
-            </a>
-            <a
-              className="bk-btn bk-btn-ghost"
-              href="#bk-af-how"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById("bk-af-how")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Comment ça marche
-            </a>
-          </div>
-        </div>
-
-        {/* Gains highlight */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 40,
-            flexWrap: "wrap",
-            margin: "20px auto 0",
-            padding: "26px",
-            maxWidth: 560,
-            background: "linear-gradient(140deg,var(--jade-wash),var(--blush-wash))",
-            border: "1px solid var(--hair)",
-            borderRadius: 24,
-          }}
-        >
-          {[
-            { n: "25 %", l: "dès le départ" },
-            { n: "50 %", l: "si tu joues le jeu" },
-          ].map((g) => (
-            <div key={g.n} style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: "var(--bk-serif)", fontSize: 52, color: "var(--jade-deep)", lineHeight: 1 }}>
-                {g.n}
-              </div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>{g.l}</div>
+        <div className="bk-af-herogrid">
+          <div className="bk-af-herotext">
+            <div className="bk-eyebrow" style={eyebrow}>
+              Programme d'affiliation
             </div>
-          ))}
+            <h1 style={{ fontSize: "clamp(36px,5.5vw,60px)", margin: "0 0 20px" }}>
+              Partage ta beauté,<br />
+              <em style={{ fontStyle: "italic", color: "var(--jade-deep)" }}>sois récompensée.</em>
+            </h1>
+            <p className="bk-hero-sub" style={{ marginBottom: 26 }}>
+              Recommande {shopName} autour de toi. Tes proches commandent avec ton lien — et tu
+              touches une commission sur leurs achats. Sans stock, sans forcer, à ton rythme.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <a className="bk-btn bk-btn-primary" href={registerUrl}>
+                Rejoindre l'équipe
+              </a>
+              <a
+                className="bk-btn bk-btn-ghost"
+                href="#bk-af-how"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("bk-af-how")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Comment ça marche
+              </a>
+            </div>
+
+            {/* Gains highlight */}
+            <div className="bk-af-gains">
+              {[
+                { n: "25 %", l: "dès le départ" },
+                { n: "50 %", l: "si tu joues le jeu" },
+              ].map((g) => (
+                <div key={g.n} style={{ textAlign: "center" }}>
+                  <div style={{ fontFamily: "var(--bk-serif)", fontSize: 48, color: "var(--jade-deep)", lineHeight: 1 }}>
+                    {g.n}
+                  </div>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>{g.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bk-af-heroimg">
+            <img src={AFFIL_PEOPLE} alt="La routine beauté HL Skin" />
+          </div>
         </div>
       </div>
+
+      {/* Vidéo promo */}
+      <section className="bk-wrap bk-sec" style={{ paddingTop: 8 }}>
+        <div className="bk-sec-head">
+          <div>
+            <div className="bk-eyebrow" style={eyebrow}>
+              L'opportunité en 30 secondes
+            </div>
+            <h2>Regarde, puis lance-toi.</h2>
+          </div>
+        </div>
+        <div className="bk-af-video">
+          <video
+            src={AFFIL_PROMO}
+            poster={AFFIL_PROMO_POSTER}
+            controls
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </div>
+      </section>
 
       {/* Comment ça marche */}
       <section id="bk-af-how" className="bk-wrap bk-sec">
@@ -178,6 +206,31 @@ export function BoutiqueAffiliationPage() {
               <span>{s.d}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Contenus prêts à partager */}
+      <section className="bk-wrap bk-sec">
+        <div className="bk-sec-head">
+          <div>
+            <div className="bk-eyebrow" style={eyebrow}>
+              Marketing prêt-à-l'emploi
+            </div>
+            <h2>Des contenus prêts à partager.</h2>
+          </div>
+          <p>Tu reçois des visuels professionnels à poster tels quels. Tu partages — la marque fait le reste.</p>
+        </div>
+        <div className="bk-af-kit">
+          {AFFIL_POSTS.map((p) => (
+            <div className="bk-af-kitcard" key={p.url}>
+              <img src={p.url} alt={p.alt} loading="lazy" />
+            </div>
+          ))}
+          <div className="bk-af-kitcard bk-af-kitnote">
+            <div className="bk-ic" aria-hidden="true">🤖</div>
+            <h4>+ l'outil HL/Skin AI</h4>
+            <p>Ton lien d'analyse de peau par IA pour engager la conversation et recommander la bonne routine en 60 s.</p>
+          </div>
         </div>
       </section>
 
