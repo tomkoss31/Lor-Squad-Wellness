@@ -112,7 +112,7 @@ export const BOOSTERS: BoosterDef[] = [
   { id: "p-sport-boost-liftoff", productId: "liftoff-max", title: "Pré-workout Liftoff", price: 38.50, shortContent: "Énergie avant la séance" },
   { id: "p-sport-boost-cr7", productId: "cr7-drive", title: "CR7 Drive (pendant effort)", price: 27.50, shortContent: "Glucides + électrolytes" },
   { id: "p-sport-boost-hydration", productId: "hydrate", title: "Hydrate (électrolytes)", price: 47.50, shortContent: "Récupération hydrique" },
-  { id: "p-sport-boost-creatine", productId: "creatine-plus", title: "Créatine +", price: 47.50, shortContent: "Force et volume" },
+  { id: "p-sport-boost-creatine", productId: "creatine-plus", title: "Créatine +", price: 39.50, shortContent: "Force et volume" },
   { id: "p-sport-boost-collagen", productId: "collagene-skin-booster", title: "Collagène Skin Booster", price: 84.50, shortContent: "Articulations + peau" },
 ];
 
