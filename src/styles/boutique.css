@@ -207,6 +207,14 @@
 .bk-af-kitnote .bk-ic{font-size:32px}
 .bk-af-kitnote h4{font-size:18px}
 .bk-af-kitnote p{font-size:13px; color:var(--ink-soft)}
+.bk-af-guide{display:flex; align-items:center; gap:22px; padding:24px 28px; border-radius:20px; text-decoration:none;
+  background:linear-gradient(140deg,var(--jade-wash),var(--blush-wash)); border:1px solid var(--hair); transition:.22s}
+.bk-af-guide:hover{transform:translateY(-2px); box-shadow:var(--lift)}
+.bk-af-guide-ic{font-size:38px; line-height:1}
+.bk-af-guide-txt{flex:1; min-width:0}
+.bk-af-guide-txt h3{font-size:21px; margin-bottom:4px; color:var(--ink)}
+.bk-af-guide-txt p{font-size:13.5px; color:var(--ink-soft); max-width:52ch}
+@media (max-width:640px){.bk-af-guide{flex-direction:column; text-align:center; align-items:stretch}}
 
 /* bientôt disponible (teaser) */
 .bk-soon{border:1px dashed var(--hair-strong); border-radius:22px; padding:30px; background:var(--sunk);

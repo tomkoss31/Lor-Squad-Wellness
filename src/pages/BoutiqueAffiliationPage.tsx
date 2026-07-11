@@ -29,6 +29,7 @@ const AFFIL_POSTS = [
   { url: `${BK_MEDIA}/affil-post-5raisons.webp`, alt: "5 raisons de devenir entrepreneur beauté" },
   { url: `${BK_MEDIA}/affil-post-pack.webp`, alt: "Lance-toi — International Business Pack" },
 ];
+const AFFIL_GUIDE = `${BK_MEDIA}/guide-hl-beauty.pdf`;
 
 type ThemeMode = "light" | "dark";
 
@@ -362,6 +363,23 @@ export function BoutiqueAffiliationPage() {
             </details>
           ))}
         </div>
+      </section>
+
+      {/* Guide PDF à télécharger */}
+      <section className="bk-wrap bk-sec" style={{ paddingTop: 6 }}>
+        <a className="bk-af-guide" href={AFFIL_GUIDE} target="_blank" rel="noreferrer">
+          <div className="bk-af-guide-ic" aria-hidden="true">📘</div>
+          <div className="bk-af-guide-txt">
+            <div className="bk-eyebrow" style={{ marginBottom: 6 }}>
+              Guide à télécharger
+            </div>
+            <h3>Envie d'en savoir plus ?</h3>
+            <p>Le guide complet de l'opportunité HL Beauty — à lire tranquillement avant de te décider.</p>
+          </div>
+          <span className="bk-btn bk-btn-primary" style={{ whiteSpace: "nowrap" }}>
+            Télécharger le guide (PDF)
+          </span>
+        </a>
       </section>
 
       {/* CTA final */}

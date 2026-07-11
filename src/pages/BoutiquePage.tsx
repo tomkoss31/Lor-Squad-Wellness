@@ -634,7 +634,7 @@ export function BoutiquePage() {
             <div className="bk-soon">
               <div className="bk-soon-head">
                 <div className="bk-eyebrow">Prochainement</div>
-                <h3>Deux nouveautés arrivent.</h3>
+                <h3>La gamme s'agrandit.</h3>
                 <p>Sois la première prévenue — préviens ta coach pour être sur la liste.</p>
               </div>
               <div className="bk-soon-grid">

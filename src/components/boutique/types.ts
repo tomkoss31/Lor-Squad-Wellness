@@ -57,11 +57,6 @@ export const CONCERN_ORDER = ["eclat", "hydratation", "age"] as const;
 export type ComingSoonProduct = { name: string; tagline: string; concern: string };
 export const COMING_SOON: ComingSoonProduct[] = [
   {
-    name: "Crème de Nuit Revitalisante",
-    tagline: "Régénère et repulpe la peau pendant le sommeil.",
-    concern: "age",
-  },
-  {
     name: "Crème de Jour Éclat FPS 30",
     tagline: "Hydrate, illumine et protège des UV au quotidien.",
     concern: "eclat",
