@@ -20,6 +20,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SQUARE_VERSION = "2026-05-20";
 
 const FREE_SHIPPING_CENTS = 9000; // 90 €
 const SHIPPING_CENTS = 890; // 8,90 €
@@ -139,6 +140,19 @@ serve(async (req: Request) => {
     const shippingCents = afterDiscount >= FREE_SHIPPING_CENTS ? 0 : SHIPPING_CENTS;
     const totalCents = afterDiscount + shippingCents;
 
+    // 4-bis. Encaissement du distri — détermine le provider AVANT l'insert.
+    const { data: settings } = await sb
+      .from("coach_payment_settings")
+      .select("provider, active, stripe_secret_key, square_access_token, square_location_id, square_env")
+      .eq("coach_user_id", coachUserId)
+      .maybeSingle();
+    const stripeSecret = String(settings?.stripe_secret_key ?? "").trim();
+    const squareToken = String(settings?.square_access_token ?? "").trim();
+    const squareLoc = String(settings?.square_location_id ?? "").trim();
+    const squareOk = !!settings?.active && settings.provider === "square" && !!squareToken && !!squareLoc;
+    const stripeOk = !!settings?.active && settings.provider === "stripe" && stripeSecret.startsWith("sk_");
+    const provider: "square" | "stripe" | null = squareOk ? "square" : stripeOk ? "stripe" : null;
+
     // 5. Commande (pending) + lignes — LEAD CAPTURÉ avant paiement.
     const { data: order, error: ordErr } = await sb
       .from("shop_orders")
@@ -158,7 +172,7 @@ serve(async (req: Request) => {
         shipping_cents: shippingCents,
         total_cents: totalCents,
         status: "pending",
-        provider: "stripe",
+        provider: provider ?? "stripe",
       })
       .select("id")
       .single();
@@ -178,19 +192,81 @@ serve(async (req: Request) => {
       })),
     );
 
-    // 6. Stripe (compte du distri). Sinon fallback : la commande/lead est en base.
-    const { data: settings } = await sb
-      .from("coach_payment_settings")
-      .select("provider, active, stripe_secret_key")
-      .eq("coach_user_id", coachUserId)
-      .maybeSingle();
-    const secret = String(settings?.stripe_secret_key ?? "").trim();
-    if (!settings?.active || settings.provider !== "stripe" || !secret.startsWith("sk_")) {
+    // 6. Pas d'encaissement configuré → fallback (commande/lead déjà en base).
+    if (!provider) {
       return json({ order_id: order.id, fallback: true, reason: "not_configured" });
     }
 
     const base = body.redirect_base || SUPABASE_URL;
     const sep = base.includes("?") ? "&" : "?";
+
+    // 6-a. SQUARE — Payment Link multi-lignes (order.line_items) sur le compte du distri.
+    if (provider === "square") {
+      const host =
+        settings!.square_env === "sandbox"
+          ? "https://connect.squareupsandbox.com"
+          : "https://connect.squareup.com";
+      const successUrl = `${base}${sep}checkout=success&order=${order.id}&provider=square`;
+      const sqLineItems: Record<string, unknown>[] = lines.map((l) => ({
+        name: l.name.slice(0, 500),
+        quantity: String(l.quantity),
+        base_price_money: { amount: l.unit_cents, currency: "EUR" },
+      }));
+      if (shippingCents > 0) {
+        sqLineItems.push({
+          name: "Frais de port",
+          quantity: "1",
+          base_price_money: { amount: shippingCents, currency: "EUR" },
+        });
+      }
+      const sqOrder: Record<string, unknown> = {
+        location_id: squareLoc,
+        reference_id: order.id,
+        line_items: sqLineItems,
+      };
+      if (discountCents > 0) {
+        sqOrder.discounts = [
+          {
+            name: `Code ${promoCode ?? "promo"}`.slice(0, 255),
+            amount_money: { amount: discountCents, currency: "EUR" },
+            scope: "ORDER",
+          },
+        ];
+      }
+      const sqRes = await fetch(`${host}/v2/online-checkout/payment-links`, {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          Authorization: `Bearer ${squareToken}`,
+          "Square-Version": SQUARE_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idempotency_key: String(body.idempotency_key ?? order.id),
+          order: sqOrder,
+          checkout_options: { redirect_url: successUrl, ask_for_shipping_address: false },
+          pre_populated_data: { buyer_email: email },
+        }),
+      });
+      if (!sqRes.ok) {
+        console.warn("[create-shop-checkout] Square", sqRes.status, (await sqRes.text()).slice(0, 300));
+        return json({ order_id: order.id, fallback: true, reason: "provider_error" });
+      }
+      const sqData = (await sqRes.json()) as {
+        payment_link?: { id?: string; url?: string; order_id?: string };
+      };
+      const link = sqData.payment_link;
+      if (!link?.url) return json({ order_id: order.id, fallback: true, reason: "provider_error" });
+      // order_id Square stocké dans provider_session_id (ref générique) pour la confirmation.
+      await sb
+        .from("shop_orders")
+        .update({ provider_session_id: link.order_id ?? link.id ?? null, payment_url: link.url })
+        .eq("id", order.id);
+      return json({ order_id: order.id, url: link.url, provider: "square" });
+    }
+
+    // 6-b. STRIPE — Checkout Session sur le compte du distri.
+    const secret = stripeSecret;
     const successUrl = `${base}${sep}checkout=success&order=${order.id}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${base}${sep}checkout=cancel`;
 

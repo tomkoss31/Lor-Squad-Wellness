@@ -35,6 +35,9 @@ interface Props {
   language?: string;
   limit?: number;
   coachId?: string;
+  // Catégorie de témoignage à afficher (défaut coaching). 'skin' = boutique,
+  // 'business' = affiliation. Évite que les avis d'un contexte fuitent ailleurs.
+  category?: string;
   // Notifie le parent du nombre d'avis chargés (0 = aucun) pour qu'il puisse
   // masquer un titre de section orphelin. Appelé une fois la requête résolue.
   onLoaded?: (count: number) => void;
@@ -69,6 +72,7 @@ export function TestimonialsCarousel({
   language = "fr",
   limit = 6,
   coachId,
+  category = "coaching",
   onLoaded,
 }: Props) {
   const [items, setItems] = useState<TestimonialPublic[]>([]);
@@ -104,6 +108,7 @@ export function TestimonialsCarousel({
           .from("client_testimonials")
           .select(SELECT)
           .eq("status", "approved")
+          .eq("category", category)
           .eq("language", language)
           .order("created_at", { ascending: false })
           .limit(limit);
@@ -119,6 +124,7 @@ export function TestimonialsCarousel({
               .from("client_testimonials")
               .select(SELECT)
               .eq("status", "approved")
+              .eq("category", category)
               .eq("language", "fr")
               .order("created_at", { ascending: false })
               .limit(limit);
@@ -140,7 +146,7 @@ export function TestimonialsCarousel({
     return () => {
       cancelled = true;
     };
-  }, [language, limit, coachId]);
+  }, [language, limit, coachId, category]);
 
   // Auto-rotation 6s (welcome variant only — les autres sont statiques)
   useEffect(() => {

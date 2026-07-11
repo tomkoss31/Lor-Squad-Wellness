@@ -88,6 +88,7 @@ serve(async (req) => {
     photo_consent?: boolean;
     language?: string;
     photo_url?: string;
+    category?: string;
   };
   try {
     body = await req.json();
@@ -100,6 +101,9 @@ serve(async (req) => {
   const photoConsent = body.photo_consent === true;
   const language = ALLOWED_LANGUAGES.includes(body.language ?? "") ? body.language! : "fr";
   const photoUrl = (body.photo_url ?? "").trim() || null;
+  const category = ["coaching", "skin", "business"].includes(body.category ?? "")
+    ? body.category!
+    : "coaching";
 
   if (content.length < 10 || content.length > 1000) {
     return json({ success: false, error: "Le message doit faire entre 10 et 1000 caracteres." }, 400);
@@ -159,6 +163,7 @@ serve(async (req) => {
         photo_consent: photoConsent,
         photo_url: photoUrl,
         language,
+        category,
         status: "pending",
       });
     if (insertErr) return json({ success: false, error: insertErr.message }, 500);
@@ -228,12 +233,13 @@ serve(async (req) => {
       photo_consent: photoConsent,
       photo_url: photoUrl,
       language,
+      category,
       status: "pending",
     });
   if (insertErr) return json({ success: false, error: insertErr.message }, 500);
 
   await notifyAdmins(sb, {
-    title: "💬 Nouveau temoignage",
+    title: category === "skin" ? "🌿 Nouvel avis boutique" : "💬 Nouveau temoignage",
     body: `${firstName}${city ? " de " + city : ""} · ${rating}/5 · pour ${coachSlug}`,
   });
   return json({ success: true });

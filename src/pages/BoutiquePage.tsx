@@ -17,6 +17,7 @@ import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
+import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -123,17 +124,19 @@ export function BoutiquePage() {
     if (!status) return;
     const orderId = searchParams.get("order");
     const sessionId = searchParams.get("session_id");
+    const provider = searchParams.get("provider");
     const clean = () => {
       const sp = new URLSearchParams(searchParams);
-      ["checkout", "order", "session_id"].forEach((k) => sp.delete(k));
+      ["checkout", "order", "session_id", "provider"].forEach((k) => sp.delete(k));
       setSearchParams(sp, { replace: true });
     };
-    if (status === "success" && orderId && sessionId) {
+    // Stripe → session_id (cs_…) ; Square → provider=square (pas de session_id).
+    if (status === "success" && orderId && (sessionId || provider === "square")) {
       (async () => {
         try {
           const sb = await getSupabaseClient();
           const resp = await sb?.functions.invoke("confirm-shop-payment", {
-            body: { order_id: orderId, session_id: sessionId },
+            body: { order_id: orderId, session_id: sessionId ?? undefined },
           });
           const res = resp?.data as
             | { paid?: boolean; order?: { first_name?: string; total_cents?: number } }
@@ -699,58 +702,8 @@ export function BoutiquePage() {
             </div>
           </section>
 
-          {/* Avis (placeholder — se branchera sur le système témoignages) */}
-          <section className="bk-wrap bk-sec bk-reveal">
-            <div className="bk-sec-head">
-              <div>
-                <div className="bk-eyebrow" style={{ marginBottom: 12 }}>
-                  Elles ont testé
-                </div>
-                <h2>La preuve sur vraie peau.</h2>
-              </div>
-            </div>
-            <div className="bk-revs">
-              {[
-                {
-                  init: "CL",
-                  who: "Camille L.",
-                  ctx: "Sérum Niacinamide",
-                  badge: "Avant / Après",
-                  text: "En trois semaines mon grain de peau s'est lissé, je ne mets presque plus de fond de teint.",
-                },
-                {
-                  init: "SN",
-                  who: "Sarah N.",
-                  ctx: "Routine éclat",
-                  badge: "Éclat",
-                  text: "La cure collagène + la crème tension, c'est le combo. Peau repulpée le matin.",
-                },
-                {
-                  init: "MB",
-                  who: "Maya B.",
-                  ctx: "Contour des yeux",
-                  badge: "Hydratation",
-                  text: "Textures fondantes, zéro effet gras. Le contour des yeux décongestionne vraiment.",
-                },
-              ].map((r) => (
-                <div className="bk-rev" key={r.who}>
-                  <div className="bk-rt">
-                    <span className="bk-stars">★★★★★</span>
-                    <span className="bk-ba">{r.badge}</span>
-                  </div>
-                  <p>« {r.text} »</p>
-                  <div className="bk-who">
-                    <div className="bk-av">{r.init}</div>
-                    <div>
-                      <b>{r.who}</b>
-                      <br />
-                      <span>{r.ctx} · achat vérifié</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/* Avis clients réels (catégorie skin) + formulaire */}
+          <BoutiqueReviews coachSlug={coachSlug} coachUserId={boutique?.user_id} />
 
           {/* Affiliation (teaser) */}
           <section id="bk-affil" className="bk-wrap bk-sec bk-reveal">
