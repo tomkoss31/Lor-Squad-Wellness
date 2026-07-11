@@ -236,6 +236,11 @@ const BoutiqueAffiliationPage = lazy(() =>
     default: module.BoutiqueAffiliationPage,
   })),
 );
+const BoutiqueProductPage = lazy(() =>
+  import("./pages/BoutiqueProductPage").then((module) => ({
+    default: module.BoutiqueProductPage,
+  })),
+);
 // Funnel colis "Pass Découverte" (chantier 2026-07-08) — pas de slug coach.
 const ColisPage = lazy(() =>
   import("./pages/ColisPage").then((module) => ({
@@ -686,6 +691,7 @@ export default function App() {
           {/* Boutique HL SKIN publique par distri (chantier 2026-07-10). */}
           <Route path="/boutique/:coachSlug" element={<BoutiquePage />} />
           <Route path="/boutique/:coachSlug/affiliation" element={<BoutiqueAffiliationPage />} />
+          <Route path="/boutique/:coachSlug/produit/:productSlug" element={<BoutiqueProductPage />} />
           <Route path="/colis" element={<ColisPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />

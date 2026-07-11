@@ -3,6 +3,7 @@
 // complète (galerie, bénéfices, actif héros, mode d'emploi, FAQ, réassurance).
 
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { formatEuro } from "../../lib/format";
 import type { ShopProduct } from "./types";
 
@@ -10,11 +11,12 @@ type Props = {
   product: ShopProduct;
   onClose: () => void;
   onAdd: (id: string) => void;
+  coachSlug?: string;
 };
 
 const IMAGE_SLOTS = ["Packshot", "Texture", "Lifestyle", "Avant/Après"];
 
-export function ProductQuickView({ product, onClose, onAdd }: Props) {
+export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) {
   // Fermeture au clavier + verrou du scroll body.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -127,6 +129,21 @@ export function ProductQuickView({ product, onClose, onAdd }: Props) {
           <button className="bk-pdp-add" onClick={() => onAdd(product.id)}>
             Ajouter au panier · {formatEuro(product.price_ttc)}
           </button>
+          {coachSlug && (
+            <Link
+              to={`/boutique/${coachSlug}/produit/${product.slug}`}
+              onClick={onClose}
+              style={{
+                display: "block",
+                textAlign: "center",
+                marginTop: 10,
+                fontSize: 13,
+                color: "var(--jade-deep)",
+              }}
+            >
+              Voir la page complète →
+            </Link>
+          )}
         </div>
       </div>
     </div>

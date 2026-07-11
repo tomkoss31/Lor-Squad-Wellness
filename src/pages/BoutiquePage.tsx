@@ -12,7 +12,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
@@ -542,18 +542,10 @@ export function BoutiquePage() {
                 {visibleProducts.map((p) => {
                   const hasRating = typeof p.rating === "number" && p.reviews_count > 0;
                   return (
-                    <div
+                    <Link
                       key={p.id}
                       className="bk-card"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setQuickView(p)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setQuickView(p);
-                        }
-                      }}
+                      to={`/boutique/${coachSlug}/produit/${p.slug}`}
                     >
                       <div className="bk-thumb">
                         {p.badge && (
@@ -566,11 +558,20 @@ export function BoutiquePage() {
                           </span>
                         )}
                         {p.images[0]?.url ? (
-                          <img src={p.images[0].url} alt={p.name} />
+                          <img src={p.images[0].url} alt={p.name} loading="lazy" />
                         ) : (
                           <div className="bk-bottle" aria-hidden="true" />
                         )}
-                        <div className="bk-qvlabel">Vue rapide</div>
+                        <button
+                          className="bk-qvlabel"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setQuickView(p);
+                          }}
+                        >
+                          Vue rapide
+                        </button>
                       </div>
                       <div className="bk-cbody">
                         {hasRating && (
@@ -587,6 +588,7 @@ export function BoutiquePage() {
                           <button
                             className="bk-add"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               addToCart(p.id);
                             }}
@@ -595,7 +597,7 @@ export function BoutiquePage() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -748,6 +750,7 @@ export function BoutiquePage() {
       {quickView && (
         <ProductQuickView
           product={quickView}
+          coachSlug={coachSlug}
           onClose={() => setQuickView(null)}
           onAdd={(id) => {
             addToCart(id);
