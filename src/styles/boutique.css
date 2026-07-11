@@ -146,11 +146,20 @@
 .bk-tag{position:absolute; top:12px; left:12px; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
   background:var(--ink); color:var(--ground); padding:5px 9px; border-radius:999px; font-weight:600}
 .bk-tag.bk-new{background:var(--jade); color:#fff}
-.bk-qvlabel{position:absolute; inset:auto 0 0 0; background:color-mix(in srgb,var(--raised) 86%,transparent);
-  backdrop-filter:blur(6px); text-align:center; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--jade-deep); padding:9px; transform:translateY(100%); transition:transform .28s; font-weight:600;
-  border:none; border-top:1px solid var(--hair); width:100%; cursor:pointer}
-.bk-card:hover .bk-qvlabel{transform:none}
+/* image alternative révélée au survol (comme les grands shops K-beauty) */
+.bk-thumb-alt{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .45s ease}
+.bk-card:hover .bk-thumb-alt{opacity:1}
+/* barre « Ajouter au panier » qui remonte sur l'image au survol */
+.bk-addbar{position:absolute; inset:auto 0 0 0; z-index:2; background:var(--jade); color:#fff; border:none; width:100%;
+  padding:12px; font-size:13px; font-weight:600; letter-spacing:.02em; transform:translateY(101%); transition:transform .28s ease; cursor:pointer}
+.bk-addbar:hover{background:var(--jade-deep)}
+.bk-card:hover .bk-addbar{transform:none}
+/* pastille « Aperçu » (quick view) au survol */
+.bk-qv-eye{position:absolute; top:12px; right:12px; z-index:2; background:color-mix(in srgb,var(--raised) 88%,transparent);
+  backdrop-filter:blur(6px); border:1px solid var(--hair); border-radius:999px; padding:6px 13px; font-size:10.5px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--jade-deep); opacity:0; transform:translateY(-4px); transition:.24s; cursor:pointer}
+.bk-card:hover .bk-qv-eye{opacity:1; transform:none}
+@media (hover:none){.bk-qv-eye{display:none}}
 .bk-cbody{padding:16px 16px 18px; display:flex; flex-direction:column; gap:6px; flex:1}
 .bk-cbody .bk-rate{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-faint)}
 .bk-cbody .bk-vol{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint)}

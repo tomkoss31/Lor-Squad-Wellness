@@ -587,15 +587,35 @@ export function BoutiquePage() {
                         ) : (
                           <div className="bk-bottle" aria-hidden="true" />
                         )}
+                        {p.images[1]?.url && (
+                          <img
+                            className="bk-thumb-alt"
+                            src={p.images[1].url}
+                            alt=""
+                            loading="lazy"
+                            aria-hidden="true"
+                          />
+                        )}
                         <button
-                          className="bk-qvlabel"
+                          className="bk-qv-eye"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             setQuickView(p);
                           }}
+                          aria-label={`Aperçu rapide de ${p.name}`}
                         >
-                          Vue rapide
+                          Aperçu
+                        </button>
+                        <button
+                          className="bk-addbar"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart(p.id);
+                          }}
+                        >
+                          Ajouter au panier
                         </button>
                       </div>
                       <div className="bk-cbody">
