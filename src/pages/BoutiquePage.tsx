@@ -23,6 +23,7 @@ import { WelcomePopup } from "../components/boutique/WelcomePopup";
 import { useCart } from "../components/boutique/useCart";
 import {
   CONCERN_LABELS,
+  COMING_SOON,
   FREE_SHIPPING_THRESHOLD,
   type AppliedPromo,
   type BoutiqueInfo,
@@ -628,6 +629,32 @@ export function BoutiquePage() {
             )}
           </section>
 
+          {/* Bientôt disponible (teaser — pas en vente) */}
+          <section className="bk-wrap bk-sec bk-reveal" style={{ paddingTop: 6 }}>
+            <div className="bk-soon">
+              <div className="bk-soon-head">
+                <div className="bk-eyebrow">Prochainement</div>
+                <h3>Deux nouveautés arrivent.</h3>
+                <p>Sois la première prévenue — préviens ta coach pour être sur la liste.</p>
+              </div>
+              <div className="bk-soon-grid">
+                {COMING_SOON.map((s) => (
+                  <div className="bk-soon-card" key={s.name}>
+                    <span className="bk-soon-tag">Bientôt</span>
+                    <div
+                      className="bk-soon-ic"
+                      style={{ background: `${CONCERN_LABELS[s.concern]?.hue ?? "#6FB7B0"}22` }}
+                    >
+                      {CONCERN_LABELS[s.concern]?.icon ?? "✦"}
+                    </div>
+                    <h4>{s.name}</h4>
+                    <p>{s.tagline}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* Ingrédient */}
           <section id="bk-ingredient" className="bk-wrap bk-sec bk-reveal">
             <div className="bk-sec-head">
@@ -640,23 +667,23 @@ export function BoutiquePage() {
             </div>
             <div className="bk-ing">
               <div className="bk-ing-card bk-clin">
-                <span className="bk-badge">Prouvé cliniquement</span>
+                <span className="bk-badge">Testé dermatologiquement</span>
                 <span className="bk-pct">10 %</span>
                 <h3>Niacinamide</h3>
                 <p>
-                  La concentration qui resserre visiblement les pores et unifie le teint en 4
+                  La concentration qui unifie le teint et renforce la barrière cutanée en 4
                   semaines. Dosée pour agir, tolérée par les peaux sensibles.
                 </p>
               </div>
               <div className="bk-ing-card bk-rit">
                 <span className="bk-badge">La beauté de l'intérieur</span>
                 <span className="bk-pct">
-                  2500<span style={{ fontSize: 22 }}> mg</span>
+                  Verisol<span style={{ fontSize: 22 }}> ® P</span>
                 </span>
-                <h3>Collagène marin</h3>
+                <h3>Collagène bioactif</h3>
                 <p>
-                  Une cure à boire qui nourrit la peau là où les crèmes n'atteignent pas. Rebond,
-                  souplesse, éclat — le rituel du soir.
+                  Une cure à boire qui nourrit la peau là où les crèmes n'atteignent pas. Rides des
+                  yeux et élasticité dès 4 semaines — le rituel beauté de l'intérieur.
                 </p>
               </div>
             </div>
