@@ -23,7 +23,7 @@ update public.shop_products set
   how_to=$$Quelques gouttes sur peau propre et sèche (visage + cou), une fois par jour, jusqu'à absorption. Toujours une protection solaire (SPF) le matin.$$,
   benefits=$$["Illumine et unifie le teint","Réduit l'apparence des imperfections","Renforce la barrière cutanée · jusqu'à 8 h d'hydratation","Aide à lutter contre les signes de l'âge"]$$::jsonb,
   faq=$$[{"q":"Ça picote ?","a":"Non — 10 % est le juste équilibre efficacité / tolérance. Convient à divers types de peau et sous le maquillage."},{"q":"Résultats en combien de temps ?","a":"Dès 30 jours : 91 % ressentent une peau mieux hydratée et 88 % un teint plus lumineux (test consommateur sur 36 femmes)."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/card-serum.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/life-serum.webp","kind":"lifestyle"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/card-serum.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/desc-serum.webp","kind":"benefices"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/serum-niacinamide/life-serum.webp","kind":"lifestyle"}]$$::jsonb,
   updated_at=now()
 where slug='serum-niacinamide';
 
@@ -35,7 +35,7 @@ update public.shop_products set
   how_to=$$Sur mains humides, faire mousser, masser le visage et le cou en mouvements circulaires, rincer à l'eau tiède. Matin et soir.$$,
   benefits=$$["Élimine maquillage, impuretés et excès de sébum","Nettoie sans assécher, réduit la brillance","Sans parabènes ni sulfates ajoutés","Convient à divers types de peau"]$$::jsonb,
   faq=$$[{"q":"Ça mousse ?","a":"Une mousse fine et douce. 93 % trouvent la peau plus douce dès la première utilisation."},{"q":"Peaux sensibles ?","a":"Oui — testé dermatologiquement et ophtalmologiquement, convient à divers types de peau."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/gel-nettoyant/card-gel.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/gel-nettoyant/card-gel.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/gel-nettoyant/desc-gel.webp","kind":"benefices"}]$$::jsonb,
   updated_at=now()
 where slug='gel-nettoyant';
 
@@ -48,7 +48,7 @@ update public.shop_products set
   how_to=$$Quotidiennement selon les besoins, sur peau propre et sèche, jusqu'à absorption.$$,
   benefits=$$["Hydrate 24 h · +37 % d'hydratation après 24 h","Nourrit en profondeur dès la 1re application","Texture non grasse, absorption rapide","Peau lisse et veloutée"]$$::jsonb,
   faq=$$[{"q":"C'est gras ?","a":"Non — 96 % ne ressentent aucune sensation grasse et 93 % une absorption rapide."},{"q":"Sur le visage ?","a":"Formulée pour les mains et le corps ; pour le visage, préfère les soins visage dédiés."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/life-lotion.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/card-lotion.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/life-lotion.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/desc-lotion.webp","kind":"benefices"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/lotion-mains-corps/card-lotion.webp","kind":"lifestyle"}]$$::jsonb,
   updated_at=now()
 where slug='lotion-mains-corps';
 
@@ -61,7 +61,7 @@ update public.shop_products set
   how_to=$$Chaque matin sur peau propre et sèche, masser le visage et le cou de bas en haut. Toujours une protection solaire (SPF) en journée.$$,
   benefits=$$["Réduit l'apparence des rides","Renforce l'élasticité de la peau","Illumine le teint et ravive l'éclat","Texture riche et veloutée, sous le maquillage"]$$::jsonb,
   faq=$$[{"q":"Matin ou soir ?","a":"Le matin sur peau propre, en massage de bas en haut. Pense au SPF en journée."},{"q":"Sous le maquillage ?","a":"Oui, sa texture riche et veloutée le permet."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/card-tension.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/life-tension.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/card-tension.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/desc-tension.webp","kind":"benefices"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-tension/life-tension.webp","kind":"lifestyle"}]$$::jsonb,
   updated_at=now()
 where slug='creme-tension';
 
@@ -73,7 +73,7 @@ update public.shop_products set
   how_to=$$Matin et soir, tapoter une petite quantité autour de l'œil et masser délicatement.$$,
   benefits=$$["Cible les rides et ridules du contour","Hydratation rafraîchissante longue tenue","Regard plus doux, lumineux et éclatant","Texture non grasse, sous le maquillage"]$$::jsonb,
   faq=$$[{"q":"Sous le maquillage ?","a":"Oui, sa texture non grasse à absorption rapide le permet."},{"q":"Quand l'appliquer ?","a":"Matin et soir, en tapotant délicatement autour de l'œil."}]$$::jsonb,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/contour-yeux/card-contour.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/contour-yeux/card-contour.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/contour-yeux/desc-contour.webp","kind":"benefices"}]$$::jsonb,
   updated_at=now()
 where slug='contour-yeux';
 
