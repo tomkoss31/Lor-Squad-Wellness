@@ -607,16 +607,6 @@ export function BoutiquePage() {
                         >
                           Aperçu
                         </button>
-                        <button
-                          className="bk-addbar"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            addToCart(p.id);
-                          }}
-                        >
-                          Ajouter au panier
-                        </button>
                       </div>
                       <div className="bk-cbody">
                         {hasRating && (
