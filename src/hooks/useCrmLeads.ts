@@ -71,6 +71,12 @@ export interface CrmLead {
   resultToken: string | null;
   createdAt: string;
   notes: string | null;
+  /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
+   *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
+  funnelAnswers?: Record<string, string> | null;
+  funnelScore?: number | null;
+  funnelTemperature?: string | null;
+  funnelProfile?: string | null;
 }
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
@@ -122,7 +128,10 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   const s = (source ?? "").toLowerCase();
   if (s === "vip") return "vip";
   if (s === "reco-client") return "reco-client";
-  if (s.startsWith("opportunite") || s === "rejoindre") return "opportunite";
+  // « rejoindre-funnel », « rejoindre », « opportunite-gated »… → Opportunité.
+  // (bug : « rejoindre-funnel » ne matchait ni startsWith("opportunite") ni
+  // === "rejoindre" → tombait sur le défaut « Site web ». Corrigé 2026-07-11.)
+  if (s.startsWith("opportunite") || s.startsWith("rejoindre")) return "opportunite";
   if (s === "simulateur") return "simulateur";
   if (s.startsWith("business")) return "business";
   if (s === "colis") return "colis";
@@ -332,6 +341,12 @@ export function useCrmLeads() {
         const viaName =
           typeof meta.from_client_name === "string" ? (meta.from_client_name as string) : null;
         const source = mapProspectSource(row.source as string | null);
+        // Réponses du funnel Opportunité (metadata.answers) — pour les afficher
+        // dans la carte CRM (bug : elles n'étaient jamais exposées).
+        const funnelAnswers =
+          meta.answers && typeof meta.answers === "object" && !Array.isArray(meta.answers)
+            ? (meta.answers as Record<string, string>)
+            : null;
         // Signal de priorité colis (remplace "disponibilité", décision Thomas
         // 2026-07-08) : ce que la personne a choisi en fin de tunnel — une
         // action réelle est un bien meilleur indicateur qu'une réponse déclarée.
@@ -365,6 +380,10 @@ export function useCrmLeads() {
           resultToken: null,
           createdAt: row.created_at as string,
           notes: (row.notes as string | null) ?? null,
+          funnelAnswers,
+          funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
+          funnelTemperature: typeof meta.temperature === "string" ? (meta.temperature as string) : null,
+          funnelProfile: typeof meta.profile === "string" ? (meta.profile as string) : null,
         });
       }
 
