@@ -247,6 +247,18 @@
 .bk-rev .bk-av{width:36px; height:36px; border-radius:999px; background:linear-gradient(150deg,var(--jade),var(--blush));
   color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600}
 .bk-rev .bk-who b{font-size:13px} .bk-rev .bk-who span{font-size:11.5px; color:var(--ink-faint)}
+.bk-rev-empty{border:1px dashed var(--hair-strong); border-radius:18px; padding:28px; text-align:center;
+  color:var(--ink-soft); font-size:14px; background:var(--sunk)}
+/* formulaire avis (modale) */
+.bk-rev-form{position:relative; background:var(--ground); border-radius:22px; max-width:460px; width:100%;
+  padding:28px; box-shadow:var(--lift); color:var(--ink); max-height:90vh; overflow-y:auto}
+.bk-rev-form .bk-close{position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:999px;
+  border:1px solid var(--hair); background:var(--raised); color:var(--ink); font-size:18px; cursor:pointer}
+.bk-rev-lbl{display:block; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint);
+  font-weight:600; margin:0 0 6px}
+.bk-rev-in{width:100%; border:1px solid var(--hair-strong); border-radius:12px; background:var(--raised); color:var(--ink);
+  font-family:inherit; font-size:14px; padding:11px 13px; margin-bottom:14px; outline:none; resize:vertical}
+.bk-rev-in:focus{border-color:var(--jade)}
 
 /* affiliation */
 .bk-affil{background:linear-gradient(140deg,var(--jade-wash),var(--blush-wash)); border:1px solid var(--hair); border-radius:24px;
