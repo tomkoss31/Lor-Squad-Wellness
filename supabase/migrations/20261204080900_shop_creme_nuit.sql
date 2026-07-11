@@ -4,8 +4,7 @@
 --
 -- La Crème de Nuit (SKU Herbalife 539K, 50 ml, catégorie « Beauté à tout âge »)
 -- est bien commercialisée → on la passe de teaser « Bientôt » à vrai produit.
--- ⚠️ price_ttc = 55,09 € (« Prix total » du catalogue myHerbalife) + pv 35,20 —
---    À CONFIRMER par Thomas (prix client réel).
+-- price_ttc = 64,50 € (confirmé Thomas 2026-07-11) + pv 35,20.
 -- Aussi : le bucket product-images accepte désormais application/pdf (guide
 -- affiliation) et sa limite passe à 15 Mo. Idempotent.
 -- =============================================================================
@@ -25,7 +24,7 @@ values (
   $$Le soir, en dernier geste, sur peau propre et sèche : masser une noisette sur le visage et le cou.$$,
   $$["Régénère la peau pendant le sommeil","Nourrit et repulpe en profondeur","Teint reposé, lisse et éclatant au réveil","Texture riche et fondante · anti-âge"]$$::jsonb,
   $$[{"q":"Matin ou soir ?","a":"Le soir, en tout dernier geste, sur peau propre. Elle agit pendant que tu dors."},{"q":"Après le sérum ?","a":"Oui : nettoie, applique ton sérum, puis scelle avec la Crème de Nuit."}]$$::jsonb,
-  55.09, 'EUR', 35.20,
+  64.50, 'EUR', 35.20,
   $$50 ml$$,
   $$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-nuit/card-nuit.webp","kind":"packshot"}]$$::jsonb,
   'new', 7, true
