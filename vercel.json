@@ -28,6 +28,28 @@
       "destination": "/api/coach-meta?slug=:slug"
     },
     {
+      "source": "/boutique/:slug/produit/:productSlug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/boutique-meta?slug=:slug&product=:productSlug"
+    },
+    {
+      "source": "/boutique/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/boutique-meta?slug=:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -16,6 +16,7 @@ export interface BusinessShortcut {
 export const BUSINESS_SHORTCUTS: BusinessShortcut[] = [
   { label: "Prospecter", path: "/outils-prospection", emoji: "🎯" },
   { label: "Mes liens", path: "/mes-liens", emoji: "🔗" },
+  { label: "Ma boutique HL Skin", path: "/ma-boutique", emoji: "🌿" },
   { label: "Panier", path: "/panier", emoji: "🛒" },
   { label: "Ventes comptoir", path: "/ventes-comptoir", emoji: "🏪" },
   { label: "Rentabilité", path: "/rentabilite", emoji: "💎" },

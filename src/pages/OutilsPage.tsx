@@ -90,6 +90,14 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "Encaisse tes clients en CB à la fin du bilan, sur TON compte Stripe. Tu le configures une fois — l'argent va direct chez toi.",
         path: "/encaissement",
       },
+      {
+        id: "ma-boutique",
+        icon: "🌿",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Ma boutique HL Skin",
+        desc: "Ta boutique de cosmétiques coréens à ton nom : vitrine, panier, codes promo, commandes. Partage ton lien, encaisse sur ton Stripe.",
+        path: "/ma-boutique",
+      },
     ],
   },
   {
