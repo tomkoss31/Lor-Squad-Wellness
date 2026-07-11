@@ -18,15 +18,15 @@ values (
   'hlskin-creme-nuit',
   $$Crème de Nuit Revitalisante$$,
   $$Le soin de nuit qui régénère et repulpe la peau pendant ton sommeil.$$,
-  $$Crème de nuit riche inspirée de l'expertise coréenne : elle travaille pendant que tu dors pour régénérer, nourrir et repulper la peau. Au réveil, le teint est reposé, lisse et éclatant. Dernier geste de ta routine du soir. Testée dermatologiquement.$$,
+  $$Crème de nuit riche inspirée de l'expertise coréenne : enrichie en squalane et glycérine, elle travaille pendant que tu dors pour régénérer, nourrir et repulper la peau, cibler les signes de l'âge et améliorer sa texture. Au réveil, le teint est reposé, lisse et éclatant. Dernier geste de ta routine du soir. Testée dermatologiquement.$$,
   'age',
-  $$Une texture riche et fondante, gorgée d'actifs nourrissants, qui accompagne la régénération naturelle de la peau pendant la nuit.$$,
+  $$Squalane (hydratation longue durée, souplesse et élasticité) + glycérine (retient l'hydratation), pour cibler les signes de l'âge et améliorer la texture de la peau pendant la nuit.$$,
   $$Le soir, en dernier geste, sur peau propre et sèche : masser une noisette sur le visage et le cou.$$,
   $$["Régénère la peau pendant le sommeil","Nourrit et repulpe en profondeur","Teint reposé, lisse et éclatant au réveil","Texture riche et fondante · anti-âge"]$$::jsonb,
   $$[{"q":"Matin ou soir ?","a":"Le soir, en tout dernier geste, sur peau propre. Elle agit pendant que tu dors."},{"q":"Après le sérum ?","a":"Oui : nettoie, applique ton sérum, puis scelle avec la Crème de Nuit."}]$$::jsonb,
   60.00, 'EUR', 35.20,
   $$50 ml$$,
-  $$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-nuit/card-nuit.webp","kind":"packshot"}]$$::jsonb,
+  $$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-nuit/card-nuit.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/creme-nuit/life-nuit.webp","kind":"avantages"}]$$::jsonb,
   'new', 7, true
 )
 on conflict (slug) do update set

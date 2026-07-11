@@ -87,7 +87,7 @@ update public.shop_products set
   benefits=$$["Réduit les rides des yeux en 4 semaines","Améliore l'élasticité de la peau en 4 semaines","Riche en vitamines et minéraux (peau, cheveux, ongles)","Complément alimentaire · saveur fraise-citron · 171 g"]$$::jsonb,
   faq=$$[{"q":"C'est quel collagène ?","a":"Verisol® P, un collagène bioactif d'origine porcine, choisi pour la fiabilité de sa recherche et sa biodisponibilité."},{"q":"En combien de temps ?","a":"Premiers résultats (rides des yeux, élasticité) dès 4 semaines ; signes de cellulite réduits dès 3 mois (min. 2,5 g/jour)."}]$$::jsonb,
   volume_label=$$cure · 171 g$$,
-  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/collagen-booster/card-collagen.webp","kind":"packshot"}]$$::jsonb,
+  images=$$[{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/collagen-booster/card-collagen.webp","kind":"packshot"},{"url":"https://gqxnndwrdbghxflwmfxy.supabase.co/storage/v1/object/public/product-images/hlskin/collagen-booster/life-collagen.webp","kind":"avantages"}]$$::jsonb,
   updated_at=now()
 where slug='collagen-booster';
 
