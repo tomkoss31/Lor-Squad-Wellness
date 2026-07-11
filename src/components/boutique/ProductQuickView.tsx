@@ -2,7 +2,7 @@
 // L'ajout au panier arrive à l'Étape 3 (panier) : ici on affiche l'anatomie
 // complète (galerie, bénéfices, actif héros, mode d'emploi, FAQ, réassurance).
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatEuro } from "../../lib/format";
 import type { ShopProduct } from "./types";
@@ -14,9 +14,8 @@ type Props = {
   coachSlug?: string;
 };
 
-const IMAGE_SLOTS = ["Packshot", "Texture", "Lifestyle", "Avant/Après"];
-
 export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) {
+  const [bigIdx, setBigIdx] = useState(0);
   // Fermeture au clavier + verrou du scroll body.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -51,9 +50,9 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
         {/* Média : galerie (photos réelles si dispo, sinon flacon stylisé) */}
         <div className="bk-pdp-media">
           <div className="bk-big">
-            {product.images[0]?.url ? (
+            {product.images[bigIdx]?.url ? (
               <img
-                src={product.images[0].url}
+                src={product.images[bigIdx].url}
                 alt={product.name}
                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }}
               />
@@ -61,21 +60,24 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
               <div className="bk-bottle" aria-hidden="true" />
             )}
           </div>
-          <div className="bk-thumbs">
-            {IMAGE_SLOTS.map((slot, i) => (
-              <div className="bk-th" key={slot}>
-                {product.images[i]?.url ? (
+          {product.images.length > 1 && (
+            <div className="bk-thumbs">
+              {product.images.map((img, i) => (
+                <button
+                  className="bk-th"
+                  key={img.url}
+                  onClick={() => setBigIdx(i)}
+                  style={{ borderColor: bigIdx === i ? "var(--jade)" : undefined, cursor: "pointer" }}
+                >
                   <img
-                    src={product.images[i].url}
+                    src={img.url}
                     alt=""
                     style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 9 }}
                   />
-                ) : (
-                  slot
-                )}
-              </div>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Infos produit */}
@@ -97,6 +99,10 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
               ))}
             </ul>
           )}
+
+          <button className="bk-pdp-add" onClick={() => onAdd(product.id)}>
+            Ajouter au panier · {formatEuro(product.price_ttc)}
+          </button>
 
           {product.ingredient_hero && (
             <div className="bk-pdp-sec">
@@ -126,9 +132,6 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
             <p>🔒 Paiement Stripe sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
           </div>
 
-          <button className="bk-pdp-add" onClick={() => onAdd(product.id)}>
-            Ajouter au panier · {formatEuro(product.price_ttc)}
-          </button>
           {coachSlug && (
             <Link
               to={`/boutique/${coachSlug}/produit/${product.slug}`}

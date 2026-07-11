@@ -272,19 +272,21 @@
 .bk-qvm{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:20px;
   background:rgba(20,18,15,.5); backdrop-filter:blur(4px)}
 .bk-pdp{background:var(--ground); border-radius:22px; max-width:940px; width:100%; max-height:90vh; overflow:hidden;
-  display:grid; grid-template-columns:1fr 1fr; box-shadow:var(--lift); position:relative; color:var(--ink)}
-@media (max-width:760px){.bk-pdp{grid-template-columns:1fr; max-height:92vh}}
+  display:grid; grid-template-columns:1fr 1fr; grid-template-rows:minmax(0,1fr); box-shadow:var(--lift); position:relative; color:var(--ink)}
+@media (max-width:760px){.bk-pdp{grid-template-columns:1fr; grid-template-rows:auto; max-height:92vh; overflow-y:auto}
+  .bk-pdp-info{overflow-y:visible}
+  .bk-pdp-media .bk-big{min-height:56vw}}
 .bk-pdp .bk-close{position:absolute; top:14px; right:14px; z-index:3; width:34px; height:34px; border-radius:999px;
   border:1px solid var(--hair); background:var(--raised); color:var(--ink); font-size:18px}
 .bk-pdp-media{background:linear-gradient(160deg,var(--jade-wash),var(--blush-wash)); display:flex; flex-direction:column;
-  padding:26px; gap:14px; min-height:280px}
+  padding:26px; gap:14px; min-height:0; overflow:hidden}
 .bk-pdp-media .bk-big{flex:1; border-radius:16px; display:grid; place-items:center;
   background:radial-gradient(120% 120% at 30% 20%,var(--dew),transparent 55%)}
 .bk-pdp-media .bk-big .bk-bottle{width:38%}
 .bk-pdp-media .bk-thumbs{display:flex; gap:8px}
-.bk-pdp-media .bk-th{flex:1; aspect-ratio:1; border-radius:9px; background:color-mix(in srgb,var(--raised) 60%,transparent);
-  border:1px solid var(--hair); display:grid; place-items:center; font-size:11px; color:var(--ink-soft)}
-.bk-pdp-info{overflow-y:auto; padding:26px 26px 30px}
+.bk-pdp-media .bk-th{flex:1; max-width:88px; aspect-ratio:1; border-radius:9px; background:color-mix(in srgb,var(--raised) 60%,transparent);
+  border:1px solid var(--hair); display:grid; place-items:center; font-size:11px; color:var(--ink-soft); padding:0; overflow:hidden}
+.bk-pdp-info{overflow-y:auto; min-height:0; padding:26px 26px 30px}
 .bk-pdp-info .bk-rate{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-soft); margin-bottom:8px}
 .bk-pdp-info h2{font-size:26px; margin-bottom:6px}
 .bk-pdp-info .bk-vol{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px}
