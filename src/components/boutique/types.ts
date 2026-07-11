@@ -33,6 +33,7 @@ export type BoutiqueInfo = {
   avatar_url: string | null;
   hero_video_url?: string | null;
   contact_phone?: string | null;
+  ai_scan_url?: string | null;
 };
 
 // Code promo appliqué (validé serveur).

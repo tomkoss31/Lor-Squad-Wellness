@@ -468,6 +468,30 @@ export function BoutiquePage() {
             </div>
           </div>
 
+          {/* Diagnostic peau par IA (HL/Skin AI) — mis en avant si le lien est configuré */}
+          {boutique?.ai_scan_url && (
+            <section className="bk-wrap bk-sec bk-reveal" style={{ paddingBottom: 0 }}>
+              <a
+                className="bk-aiscan"
+                href={boutique.ai_scan_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="bk-aiscan-txt">
+                  <div className="bk-eyebrow" style={{ color: "var(--jade-deep)" }}>
+                    Nouveau · analyse par IA
+                  </div>
+                  <h2>Ta peau, analysée en 60 secondes.</h2>
+                  <p>
+                    Un selfie, et l'IA HL/Skin établit ton diagnostic (209 points, 6 types de peau)
+                    + ta routine sur-mesure. Gratuit, sans engagement.
+                  </p>
+                </div>
+                <span className="bk-btn bk-btn-primary bk-aiscan-cta">Faire mon diagnostic →</span>
+              </a>
+            </section>
+          )}
+
           {/* Shop by concern */}
           {availableConcerns.length > 0 && (
             <section id="bk-concern" className="bk-wrap bk-sec bk-reveal">
