@@ -258,12 +258,16 @@ export function CartDrawer({
             <button className="bk-co" onClick={() => onCheckout(promo)}>
               Passer au paiement · {formatEuro(total)}
             </button>
-            <div className="bk-wallets">
-              <div className="bk-wallet"> Pay</div>
-              <div className="bk-wallet">G&nbsp;Pay</div>
+            <div className="bk-pays" aria-label="Moyens de paiement acceptés">
+              <span className="bk-pays-label">Paiement sécurisé</span>
+              <span className="bk-pay">CB</span>
+              <span className="bk-pay">Visa</span>
+              <span className="bk-pay">Mastercard</span>
+              <span className="bk-pay"> Pay</span>
+              <span className="bk-pay">G&nbsp;Pay</span>
             </div>
             <div className="bk-cosec">
-              <span>🔒 Paiement Stripe</span>
+              <span>🔒 Stripe</span>
               <span>↩︎ Retours 14 j</span>
               <span>🚚 Expédié en 48 h</span>
             </div>

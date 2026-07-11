@@ -40,6 +40,8 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
   const [postal, setPostal] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("France");
+  const [consent, setConsent] = useState(false);
+  const [newsletter, setNewsletter] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -64,7 +66,13 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const canSubmit =
-    emailOk && firstName.trim() && line1.trim() && postal.trim() && city.trim() && lines.length > 0;
+    emailOk &&
+    firstName.trim() &&
+    line1.trim() &&
+    postal.trim() &&
+    city.trim() &&
+    lines.length > 0 &&
+    consent;
 
   async function submit() {
     if (!canSubmit || loading) return;
@@ -89,7 +97,9 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
               city: city.trim(),
               country: country.trim(),
             },
+            newsletter_opt_in: newsletter,
           },
+          consent: true,
           promo_code: promo?.code ?? null,
           redirect_base: `${window.location.origin}/boutique/${slug}`,
           idempotency_key: idempotencyKey,
@@ -141,6 +151,35 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
         </div>
 
         <div className="bk-co-body">
+          <div className="bk-co-recaplines">
+            {lines.map(({ p, qty }) => (
+              <div className="bk-co-line" key={p.id}>
+                <span>
+                  {p.name} <span style={{ color: "var(--ink-faint)" }}>× {qty}</span>
+                </span>
+                <span className="bk-tnum">{formatEuro(p.price_ttc * qty)}</span>
+              </div>
+            ))}
+            <div className="bk-co-line bk-co-line-sub">
+              <span>Sous-total</span>
+              <span className="bk-tnum">{formatEuro(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="bk-co-line" style={{ color: "var(--jade-deep)" }}>
+                <span>Réduction · {promo?.code}</span>
+                <span className="bk-tnum">−{formatEuro(discount)}</span>
+              </div>
+            )}
+            <div className="bk-co-line">
+              <span>Livraison</span>
+              <span className="bk-tnum">{freeShip ? "Offerte" : formatEuro(shipping)}</span>
+            </div>
+            <div className="bk-co-line bk-co-line-tot">
+              <span>Total</span>
+              <span className="bk-tnum">{formatEuro(total)}</span>
+            </div>
+          </div>
+
           <div className="bk-co-sec-t">Tes coordonnées</div>
           <input
             className="bk-field"
@@ -213,6 +252,21 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
             onChange={(e) => setCountry(e.target.value)}
             autoComplete="country-name"
           />
+
+          <label className="bk-co-check">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <span>
+              J'accepte que mes données soient utilisées pour traiter et expédier ma commande. *
+            </span>
+          </label>
+          <label className="bk-co-check">
+            <input
+              type="checkbox"
+              checked={newsletter}
+              onChange={(e) => setNewsletter(e.target.checked)}
+            />
+            <span>Je souhaite recevoir les conseils et offres de la boutique (facultatif).</span>
+          </label>
 
           {message && (
             <div className={`bk-co-msg ${message.ok ? "bk-ok" : "bk-err"}`}>{message.text}</div>
