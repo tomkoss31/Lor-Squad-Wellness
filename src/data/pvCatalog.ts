@@ -143,7 +143,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     id: "fibre-concentrate",
     name: "Fibre Concentrate — Orange & Baies de Goji 500ml",
     category: "fibres",
-    pricePublic: 58.68,
+    pricePublic: 67,
     pv: 30,
     quantiteLabel: "500 ml",
     dureeReferenceJours: 30,
@@ -297,7 +297,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
   },
 
   // ─── Catalogue elargi (mars 2026) ───────────────────────────────────────
-  // Source : Liste de prix distributeurs Herbalife France, vigueur 10/03/2026.
+  // Source : Liste de prix distributeurs Herbalife France, vigueur 25/06/2026.
 
   // ── ALOE VERA (3 variantes) ─────────────────────────────────────────────
   {
@@ -735,7 +735,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
   },
 
   // ── SOINS VISAGE (HL/Skin & gamme visage) ───────────────────────────────
-  // Source : Liste de prix distributeurs Herbalife France, vigueur 10/03/2026.
+  // Source : Liste de prix distributeurs Herbalife France, vigueur 25/06/2026.
   {
     id: "hlskin-niacinamide",
     name: "HL/Skin Sérum Niacinamide 10%",

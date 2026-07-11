@@ -1,6 +1,6 @@
 // src/data/herbalifeCatalog.ts
 // Catalogue Herbalife France — Prix publics conseillés à la vente
-// Source : Liste de prix distributeurs France — à compter du 10 mars 2026
+// Source : Liste de prix distributeurs France — à compter du 25 juin 2026
 // ⚠️ Ne pas modifier manuellement — mettre à jour depuis la liste officielle Herbalife
 
 export type ProductCategory =
@@ -101,7 +101,7 @@ export const HERBALIFE_PRODUCTS: HerbalifeProduct[] = [
   { ref: '376K', name: 'Gels ViewVita — 30 gommes Baies Rouges & Agrumes', shortName: 'Gels ViewVita Yeux', category: 'complements', pv: 27.20, publicPrice: 67.50, vegan: false, objectives: ['bien_etre'], shortBenefit: 'Santé oculaire · Lutéine & Zéaxanthine · Protection écrans', notes: '30 gommes' },
   { ref: '378K', name: 'Gels CoQ10Vita — 30 gommes Saveur Cerise', shortName: 'Gels CoQ10Vita', category: 'complements', pv: 23.20, publicPrice: 57.50, vegan: false, objectives: ['energie', 'bien_etre', 'sport_performance'], shortBenefit: 'Coenzyme Q10 · Énergie cellulaire · Anti-fatigue', notes: '30 gommes' },
   { ref: '2554', name: 'Boisson Multi-Fibres', shortName: 'Multi-Fibres', category: 'complements', pv: 22.95, publicPrice: 43.50, vegan: false, objectives: ['digestion', 'perte_de_poids', 'bien_etre'], shortBenefit: 'Fibres solubles & insolubles · Transit · Satiété · Intestin' },
-  { ref: '201K', name: 'Fibre Concentrate — Saveur Orange Douce & Baies de Goji 500ml', shortName: 'Fibre Concentrate Orange-Goji', category: 'complements', pv: 30.00, publicPrice: 58.68, vegan: true, objectives: ['digestion', 'perte_de_poids', 'bien_etre', 'immunite'], shortBenefit: 'Fibres concentrées + calcium + enzymes digestives · Transit & satiété · Vitamine C immunité', notes: '500 ml — saveur orange douce & baies de goji · SKU 201K · Nouveauté' },
+  { ref: '201K', name: 'Fibre Concentrate — Saveur Orange Douce & Baies de Goji 500ml', shortName: 'Fibre Concentrate Orange-Goji', category: 'complements', pv: 30.00, publicPrice: 67.00, vegan: true, objectives: ['digestion', 'perte_de_poids', 'bien_etre', 'immunite'], shortBenefit: 'Fibres concentrées + calcium + enzymes digestives · Transit & satiété · Vitamine C immunité', notes: '500 ml — saveur orange douce & baies de goji · SKU 201K · Nouveauté' },
 
   // ─── COMPLÉMENTS ENFANTS ───
   { ref: '369K', name: 'Gels NutrientVita Kids — 30 gommes Tutti Frutti', shortName: 'NutrientVita Kids', category: 'complements_enfants', pv: 9.30, publicPrice: 23.00, vegan: false, objectives: ['enfants', 'immunite', 'bien_etre'], shortBenefit: 'Vitamines & minéraux enfants · Croissance · Immunité', notes: '30 gommes saveur tutti frutti' },
