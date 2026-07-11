@@ -123,17 +123,19 @@ export function BoutiquePage() {
     if (!status) return;
     const orderId = searchParams.get("order");
     const sessionId = searchParams.get("session_id");
+    const provider = searchParams.get("provider");
     const clean = () => {
       const sp = new URLSearchParams(searchParams);
-      ["checkout", "order", "session_id"].forEach((k) => sp.delete(k));
+      ["checkout", "order", "session_id", "provider"].forEach((k) => sp.delete(k));
       setSearchParams(sp, { replace: true });
     };
-    if (status === "success" && orderId && sessionId) {
+    // Stripe → session_id (cs_…) ; Square → provider=square (pas de session_id).
+    if (status === "success" && orderId && (sessionId || provider === "square")) {
       (async () => {
         try {
           const sb = await getSupabaseClient();
           const resp = await sb?.functions.invoke("confirm-shop-payment", {
-            body: { order_id: orderId, session_id: sessionId },
+            body: { order_id: orderId, session_id: sessionId ?? undefined },
           });
           const res = resp?.data as
             | { paid?: boolean; order?: { first_name?: string; total_cents?: number } }
