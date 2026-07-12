@@ -83,6 +83,9 @@ export interface CrmLead {
   bilanWeightTarget?: number | null;
   bilanMotivation?: number | null;
   bilanAge?: number | null;
+  /** Provenance bilan online : slug du coach dont le lien a été utilisé
+   *  (null = lien public générique). Affiché « via <coach> » / « lien public ». */
+  bilanCoachSlug?: string | null;
 }
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
@@ -251,7 +254,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id, objectives, weight_loss_target_kg, motivation_score, age",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -335,6 +338,7 @@ export function useCrmLeads() {
           bilanWeightTarget: (row.weight_loss_target_kg as number | null) ?? null,
           bilanMotivation: (row.motivation_score as number | null) ?? null,
           bilanAge: (row.age as number | null) ?? null,
+          bilanCoachSlug: (row.coach_slug as string | null) ?? null,
           relanceDue: Boolean(
             row.relance_due_at &&
               !row.relance_done_at &&

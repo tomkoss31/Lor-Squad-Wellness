@@ -749,9 +749,17 @@ function LeadCard({
   onDelete?: () => void;
   archived?: boolean;
 }) {
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
   const src = CRM_SOURCE_META[lead.source];
+  // Provenance bilan online : nom du coach dont le lien a servi (via ownerUserId
+  // quand un slug est présent) — sinon « lien public ».
+  const bilanVia =
+    lead.table === "online_bilans"
+      ? lead.bilanCoachSlug
+        ? (users.find((u) => u.id === lead.ownerUserId)?.name ?? lead.bilanCoachSlug)
+        : null
+      : null;
   // Wagon 3 chantier 8 : message généré par Noaly (l'IA de La Base 360).
   const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -899,6 +907,10 @@ function LeadCard({
           Avant : seul le bouton était affiché, l'info restait cachée. */}
       {lead.table === "online_bilans" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Provenance : via le lien d'un distri, ou lien public générique */}
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: bilanVia ? "var(--ls-purple)" : "var(--ls-text-hint)" }}>
+            {bilanVia ? <>🔗 via {bilanVia}</> : <>🌐 Lien public (pas de distri)</>}
+          </div>
           {(lead.bilanObjectives && lead.bilanObjectives.length > 0) ||
           lead.bilanWeightTarget != null ||
           lead.bilanMotivation != null ? (
