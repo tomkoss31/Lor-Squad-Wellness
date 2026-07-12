@@ -24,6 +24,8 @@ export type ShopProduct = {
   rating: number | null;
   reviews_count: number;
   sort_order: number;
+  // Si non null : ce « produit » est un KIT (liste de slugs produits inclus).
+  bundle_items?: string[] | null;
 };
 
 export type BoutiqueInfo = {

@@ -166,6 +166,29 @@
   padding:8px 14px; font-size:12px; font-weight:600; transition:.2s; white-space:nowrap}
 .bk-view:hover,.bk-add:hover{background:var(--jade); color:#fff}
 
+/* kits / bundles */
+.bk-kits{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+@media (max-width:820px){.bk-kits{grid-template-columns:1fr}}
+.bk-kit{position:relative; border:1px solid var(--hair); border-radius:20px; background:var(--raised); padding:20px;
+  display:flex; flex-direction:column; gap:12px; transition:transform .25s, box-shadow .25s, border-color .25s}
+.bk-kit:hover{transform:translateY(-4px); box-shadow:var(--lift); border-color:transparent}
+.bk-kit-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.bk-kit-thumbs{display:flex}
+.bk-kit-th{width:52px; height:52px; border-radius:12px; overflow:hidden; border:1px solid var(--hair); margin-left:-12px;
+  background:linear-gradient(150deg,var(--jade-wash),var(--blush-wash))}
+.bk-kit-th:first-child{margin-left:0}
+.bk-kit-th img{width:100%; height:100%; object-fit:cover}
+.bk-kit-th-fb{display:grid; place-items:center; width:100%; height:100%; font-family:var(--bk-serif); color:var(--jade-deep)}
+.bk-kit-save{background:var(--jade); color:#fff; font-size:12px; font-weight:600; padding:5px 11px; border-radius:999px}
+.bk-kit h3{font-size:19px}
+.bk-kit-tag{font-size:13px; color:var(--ink-soft); line-height:1.5}
+.bk-kit-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px}
+.bk-kit-list li{font-size:13px; color:var(--ink-soft); display:flex; gap:8px; align-items:center}
+.bk-kit-list li span{color:var(--jade)}
+.bk-kit-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding-top:6px}
+.bk-kit-price{display:flex; align-items:baseline; gap:8px}
+.bk-kit-was{font-size:13px; color:var(--ink-faint); text-decoration:line-through}
+
 /* concerns cards */
 .bk-concerns{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
 @media (max-width:720px){.bk-concerns{grid-template-columns:1fr 1fr}}

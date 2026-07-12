@@ -13,6 +13,14 @@ import { Link, useParams } from "react-router-dom";
 import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import type { BoutiqueInfo } from "../components/boutique/types";
+import {
+  COMPANY_NAME,
+  COMPANY_ADDRESS,
+  COMPANY_DIRECTOR,
+  COMPANY_EMAIL,
+  HOSTING_PROVIDER,
+  HOSTING_REGION,
+} from "../lib/branding";
 
 type ThemeMode = "light" | "dark";
 
@@ -91,6 +99,9 @@ export function BoutiqueInfosPage() {
                 Téléphone / WhatsApp : <b>{phone}</b>
               </li>
             ) : null}
+            <li>
+              Email : <a href={`mailto:${COMPANY_EMAIL}`}><b>{COMPANY_EMAIL}</b></a>
+            </li>
             <li>Réponse sous 24–48 h ouvrées.</li>
           </ul>
         </section>
@@ -138,21 +149,31 @@ export function BoutiqueInfosPage() {
         <section id="cgv" className="bk-infos-sec">
           <h2>Conditions générales de vente</h2>
           <p>
-            Les présentes CGV régissent les ventes réalisées sur cette boutique. Toute commande
-            implique l'acceptation des présentes conditions. Les produits sont ceux de la gamme
-            HL Skin (Herbalife). Les prix sont indiqués en euros TTC ; les frais de port sont
-            précisés avant validation. La vente est conclue au paiement. Le droit de rétractation de
-            14 jours s'applique (voir Retours). {todo("raison sociale, n° SIRET, coordonnées du vendeur, médiateur de la consommation")}
+            Les présentes CGV régissent les ventes réalisées sur cette boutique, éditée par{" "}
+            <b>{COMPANY_NAME}</b> ({COMPANY_ADDRESS}). Toute commande implique l'acceptation des
+            présentes conditions. Les produits sont ceux de la gamme HL Skin (Herbalife). Les prix
+            sont indiqués en euros TTC ; les frais de port sont précisés avant validation. La vente
+            est conclue au paiement. Le droit de rétractation de 14 jours s'applique (voir Retours).
+            Réclamations : {COMPANY_EMAIL}. {todo("n° SIRET + médiateur de la consommation")}
           </p>
         </section>
 
         <section id="mentions" className="bk-infos-sec">
           <h2>Mentions légales</h2>
           <ul>
-            <li>Éditeur de la boutique : {distri}, distributeur·rice indépendant·e Herbalife.</li>
-            <li>{todo("raison sociale / nom, adresse, n° SIRET, email de contact, directeur de la publication")}</li>
-            <li>Hébergement & technologie : La Base 360 (Vercel, Supabase).</li>
+            <li>Boutique de {distri}, distributeur·rice indépendant·e Herbalife.</li>
+            <li>
+              Éditeur : <b>{COMPANY_NAME}</b> — {COMPANY_ADDRESS}.
+            </li>
+            <li>Directeur de la publication : {COMPANY_DIRECTOR}.</li>
+            <li>
+              Contact : <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.
+            </li>
+            <li>
+              Hébergement : {HOSTING_PROVIDER} — {HOSTING_REGION} ; front Vercel.
+            </li>
             <li>Marque & produits : HL Skin / Herbalife International.</li>
+            <li>{todo("n° SIRET / RCS")}</li>
           </ul>
         </section>
 
@@ -160,12 +181,18 @@ export function BoutiqueInfosPage() {
           <h2>Politique de confidentialité</h2>
           <ul>
             <li>
+              Responsable de traitement : <b>{COMPANY_NAME}</b>.
+            </li>
+            <li>
               Données collectées : prénom, nom, email, adresse et téléphone — uniquement pour traiter
               ta commande et te tenir informée.
             </li>
             <li>Elles ne sont ni revendues ni cédées à des tiers à des fins commerciales.</li>
-            <li>Tu peux demander l'accès, la rectification ou la suppression de tes données à tout moment (RGPD).</li>
-            <li>{todo("email de contact pour l'exercice des droits RGPD")}</li>
+            <li>Hébergement des données en Union européenne ({HOSTING_REGION}).</li>
+            <li>
+              Tu peux demander l'accès, la rectification ou la suppression de tes données à tout
+              moment (RGPD) en écrivant à <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.
+            </li>
           </ul>
         </section>
 
