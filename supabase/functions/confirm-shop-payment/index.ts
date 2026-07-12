@@ -21,6 +21,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const SQUARE_VERSION = "2026-05-20";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,48 +99,82 @@ serve(async (req: Request) => {
     const body = (await req.json().catch(() => ({}))) as { order_id?: string; session_id?: string };
     const orderId = String(body.order_id ?? "").trim();
     const sessionId = String(body.session_id ?? "").trim();
-    if (!orderId || !sessionId.startsWith("cs_")) return json({ paid: false });
+    if (!orderId) return json({ paid: false });
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: order } = await sb
       .from("shop_orders")
       .select(
-        "id, status, coach_user_id, boutique_slug, provider_session_id, promo_code_id, promo_code, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_first_name, customer_email, shipping_address",
+        "id, status, coach_user_id, boutique_slug, provider, provider_session_id, promo_code_id, promo_code, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_first_name, customer_email, shipping_address",
       )
       .eq("id", orderId)
       .maybeSingle();
     if (!order) return json({ paid: false });
-    // Sécurité : le session_id fourni doit être celui stocké à la création.
-    if (order.provider_session_id && order.provider_session_id !== sessionId) {
-      return json({ paid: false });
-    }
     if (order.status === "paid") {
       return json({ paid: true, order: { first_name: order.customer_first_name, total_cents: order.total_cents } });
     }
 
     const { data: settings } = await sb
       .from("coach_payment_settings")
-      .select("stripe_secret_key")
+      .select("stripe_secret_key, square_access_token, square_env")
       .eq("coach_user_id", order.coach_user_id)
       .maybeSingle();
-    const secret = String(settings?.stripe_secret_key ?? "").trim();
-    if (!secret.startsWith("sk_")) return json({ paid: false });
 
-    const stRes = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
-      signal: AbortSignal.timeout(8000),
-      headers: { Authorization: `Bearer ${secret}` },
-    });
-    if (!stRes.ok) {
-      console.warn("[confirm-shop-payment] Stripe", stRes.status);
-      return json({ paid: false });
+    // Vérification CÔTÉ SERVEUR via les credentials DU distri (jamais le navigateur).
+    let verified = false;
+    if (order.provider === "square") {
+      const token = String(settings?.square_access_token ?? "").trim();
+      const sqOrderId = String(order.provider_session_id ?? "").trim(); // order_id Square
+      if (!token || !sqOrderId) return json({ paid: false });
+      const host =
+        settings?.square_env === "sandbox"
+          ? "https://connect.squareupsandbox.com"
+          : "https://connect.squareup.com";
+      const sqRes = await fetch(`${host}/v2/orders/${sqOrderId}`, {
+        signal: AbortSignal.timeout(8000),
+        headers: { Authorization: `Bearer ${token}`, "Square-Version": SQUARE_VERSION },
+      });
+      if (!sqRes.ok) {
+        console.warn("[confirm-shop-payment] Square", sqRes.status);
+        return json({ paid: false });
+      }
+      const sqData = (await sqRes.json()) as {
+        order?: {
+          state?: string;
+          total_money?: { amount?: number };
+          net_amount_due_money?: { amount?: number };
+        };
+      };
+      const o = sqData.order;
+      const totalM = Number(o?.total_money?.amount ?? 0);
+      const dueM = Number(o?.net_amount_due_money?.amount ?? totalM);
+      verified = o?.state === "COMPLETED" || (totalM > 0 && dueM === 0);
+    } else {
+      // Stripe : le session_id fourni doit correspondre à celui stocké + être payé.
+      if (!sessionId.startsWith("cs_")) return json({ paid: false });
+      if (order.provider_session_id && order.provider_session_id !== sessionId) {
+        return json({ paid: false });
+      }
+      const secret = String(settings?.stripe_secret_key ?? "").trim();
+      if (!secret.startsWith("sk_")) return json({ paid: false });
+      const stRes = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+        signal: AbortSignal.timeout(8000),
+        headers: { Authorization: `Bearer ${secret}` },
+      });
+      if (!stRes.ok) {
+        console.warn("[confirm-shop-payment] Stripe", stRes.status);
+        return json({ paid: false });
+      }
+      const session = (await stRes.json()) as { payment_status?: string };
+      verified = session.payment_status === "paid";
     }
-    const session = (await stRes.json()) as { payment_status?: string };
-    if (session.payment_status !== "paid") return json({ paid: false });
+
+    if (!verified) return json({ paid: false });
 
     await sb
       .from("shop_orders")
-      .update({ status: "paid", paid_at: new Date().toISOString(), provider_session_id: sessionId })
+      .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", order.id);
 
     // Incrément atomique du code promo (une seule fois, au passage à paid).

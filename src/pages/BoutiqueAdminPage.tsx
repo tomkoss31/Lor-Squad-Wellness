@@ -100,6 +100,7 @@ export function BoutiqueAdminPage() {
   const [slug, setSlug] = useState("");
   const [phone, setPhone] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [aiScanUrl, setAiScanUrl] = useState("");
 
   // Données
   const [promos, setPromos] = useState<PromoCode[]>([]);
@@ -124,7 +125,7 @@ export function BoutiqueAdminPage() {
       const [u, pc, ord, leads, vis, prods] = await Promise.all([
         sb
           .from("users")
-          .select("shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url")
+          .select("shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url, boutique_ai_scan_url")
           .eq("id", uid)
           .maybeSingle(),
         sb.from("promo_codes").select("id, code, kind, value, active, used_count").eq("coach_user_id", uid).order("created_at"),
@@ -144,6 +145,7 @@ export function BoutiqueAdminPage() {
         setSlug(u.data.boutique_slug ?? normalizeSlug(currentUser?.name?.split(" ")[0] ?? ""));
         setPhone(u.data.shop_contact_phone ?? "");
         setVideoUrl(u.data.boutique_hero_video_url ?? "");
+        setAiScanUrl(u.data.boutique_ai_scan_url ?? "");
       }
       setPromos((pc.data as PromoCode[]) ?? []);
       setOrders((ord.data as Order[]) ?? []);
@@ -183,6 +185,7 @@ export function BoutiqueAdminPage() {
           boutique_active: active,
           shop_contact_phone: phone.trim() || null,
           boutique_hero_video_url: videoUrl.trim() || null,
+          boutique_ai_scan_url: aiScanUrl.trim() || null,
         })
         .eq("id", uid);
       if (error) {
@@ -348,6 +351,17 @@ export function BoutiqueAdminPage() {
         <div style={{ marginBottom: 14 }}>
           <label style={label}>Vidéo hero (URL YouTube ou MP4) — optionnel</label>
           <input style={input} value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtu.be/…" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Lien analyse de peau IA (HL/Skin AI) — optionnel</label>
+          <input style={input} value={aiScanUrl} onChange={(e) => setAiScanUrl(e.target.value)} placeholder="https://hlskin.ai/…" />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5, lineHeight: 1.45 }}>
+            🤖 Crée ton lien unique sur{" "}
+            <a href="https://hlskin.ai" target="_blank" rel="noreferrer" style={{ color: "var(--ls-teal)" }}>
+              hlskin.ai
+            </a>{" "}
+            (identifiants Herbalife), colle-le ici : un bouton « Diagnostic peau gratuit » apparaît sur ta boutique.
+          </div>
         </div>
         <div style={{ marginBottom: 18 }}>
           <label style={label}>Téléphone de contact — optionnel</label>

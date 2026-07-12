@@ -17,12 +17,15 @@ import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
+import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
+import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
 import { useCart } from "../components/boutique/useCart";
 import {
   CONCERN_LABELS,
+  COMING_SOON,
   FREE_SHIPPING_THRESHOLD,
   type AppliedPromo,
   type BoutiqueInfo,
@@ -122,17 +125,19 @@ export function BoutiquePage() {
     if (!status) return;
     const orderId = searchParams.get("order");
     const sessionId = searchParams.get("session_id");
+    const provider = searchParams.get("provider");
     const clean = () => {
       const sp = new URLSearchParams(searchParams);
-      ["checkout", "order", "session_id"].forEach((k) => sp.delete(k));
+      ["checkout", "order", "session_id", "provider"].forEach((k) => sp.delete(k));
       setSearchParams(sp, { replace: true });
     };
-    if (status === "success" && orderId && sessionId) {
+    // Stripe → session_id (cs_…) ; Square → provider=square (pas de session_id).
+    if (status === "success" && orderId && (sessionId || provider === "square")) {
       (async () => {
         try {
           const sb = await getSupabaseClient();
           const resp = await sb?.functions.invoke("confirm-shop-payment", {
-            body: { order_id: orderId, session_id: sessionId },
+            body: { order_id: orderId, session_id: sessionId ?? undefined },
           });
           const res = resp?.data as
             | { paid?: boolean; order?: { first_name?: string; total_cents?: number } }
@@ -379,7 +384,7 @@ export function BoutiquePage() {
                   Affiliation
                 </a>
               </nav>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="bk-bar-actions">
                 <button
                   className="bk-iconbtn"
                   onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
@@ -467,6 +472,30 @@ export function BoutiquePage() {
               </span>
             </div>
           </div>
+
+          {/* Diagnostic peau par IA (HL/Skin AI) — mis en avant si le lien est configuré */}
+          {boutique?.ai_scan_url && (
+            <section className="bk-wrap bk-sec bk-reveal" style={{ paddingBottom: 0 }}>
+              <a
+                className="bk-aiscan"
+                href={boutique.ai_scan_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="bk-aiscan-txt">
+                  <div className="bk-eyebrow" style={{ color: "var(--jade-deep)" }}>
+                    Nouveau · analyse par IA
+                  </div>
+                  <h2>Ta peau, analysée en 60 secondes.</h2>
+                  <p>
+                    Un selfie, et l'IA HL/Skin établit ton diagnostic (209 points, 6 types de peau)
+                    + ta routine sur-mesure. Gratuit, sans engagement.
+                  </p>
+                </div>
+                <span className="bk-btn bk-btn-primary bk-aiscan-cta">Faire mon diagnostic →</span>
+              </a>
+            </section>
+          )}
 
           {/* Shop by concern */}
           {availableConcerns.length > 0 && (
@@ -562,15 +591,25 @@ export function BoutiquePage() {
                         ) : (
                           <div className="bk-bottle" aria-hidden="true" />
                         )}
+                        {p.images[1]?.url && (
+                          <img
+                            className="bk-thumb-alt"
+                            src={p.images[1].url}
+                            alt=""
+                            loading="lazy"
+                            aria-hidden="true"
+                          />
+                        )}
                         <button
-                          className="bk-qvlabel"
+                          className="bk-qv-eye"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             setQuickView(p);
                           }}
+                          aria-label={`Aperçu rapide de ${p.name}`}
                         >
-                          Vue rapide
+                          Aperçu
                         </button>
                       </div>
                       <div className="bk-cbody">
@@ -604,6 +643,32 @@ export function BoutiquePage() {
             )}
           </section>
 
+          {/* Bientôt disponible (teaser — pas en vente) */}
+          <section className="bk-wrap bk-sec bk-reveal" style={{ paddingTop: 6 }}>
+            <div className="bk-soon">
+              <div className="bk-soon-head">
+                <div className="bk-eyebrow">Prochainement</div>
+                <h3>La gamme s'agrandit.</h3>
+                <p>Sois la première prévenue — préviens ta coach pour être sur la liste.</p>
+              </div>
+              <div className="bk-soon-grid">
+                {COMING_SOON.map((s) => (
+                  <div className="bk-soon-card" key={s.name}>
+                    <span className="bk-soon-tag">Bientôt</span>
+                    <div
+                      className="bk-soon-ic"
+                      style={{ background: `${CONCERN_LABELS[s.concern]?.hue ?? "#6FB7B0"}22` }}
+                    >
+                      {CONCERN_LABELS[s.concern]?.icon ?? "✦"}
+                    </div>
+                    <h4>{s.name}</h4>
+                    <p>{s.tagline}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* Ingrédient */}
           <section id="bk-ingredient" className="bk-wrap bk-sec bk-reveal">
             <div className="bk-sec-head">
@@ -616,80 +681,30 @@ export function BoutiquePage() {
             </div>
             <div className="bk-ing">
               <div className="bk-ing-card bk-clin">
-                <span className="bk-badge">Prouvé cliniquement</span>
+                <span className="bk-badge">Testé dermatologiquement</span>
                 <span className="bk-pct">10 %</span>
                 <h3>Niacinamide</h3>
                 <p>
-                  La concentration qui resserre visiblement les pores et unifie le teint en 4
+                  La concentration qui unifie le teint et renforce la barrière cutanée en 4
                   semaines. Dosée pour agir, tolérée par les peaux sensibles.
                 </p>
               </div>
               <div className="bk-ing-card bk-rit">
                 <span className="bk-badge">La beauté de l'intérieur</span>
                 <span className="bk-pct">
-                  2500<span style={{ fontSize: 22 }}> mg</span>
+                  Verisol<span style={{ fontSize: 22 }}> ® P</span>
                 </span>
-                <h3>Collagène marin</h3>
+                <h3>Collagène bioactif</h3>
                 <p>
-                  Une cure à boire qui nourrit la peau là où les crèmes n'atteignent pas. Rebond,
-                  souplesse, éclat — le rituel du soir.
+                  Une cure à boire qui nourrit la peau là où les crèmes n'atteignent pas. Rides des
+                  yeux et élasticité dès 4 semaines — le rituel beauté de l'intérieur.
                 </p>
               </div>
             </div>
           </section>
 
-          {/* Avis (placeholder — se branchera sur le système témoignages) */}
-          <section className="bk-wrap bk-sec bk-reveal">
-            <div className="bk-sec-head">
-              <div>
-                <div className="bk-eyebrow" style={{ marginBottom: 12 }}>
-                  Elles ont testé
-                </div>
-                <h2>La preuve sur vraie peau.</h2>
-              </div>
-            </div>
-            <div className="bk-revs">
-              {[
-                {
-                  init: "CL",
-                  who: "Camille L.",
-                  ctx: "Sérum Niacinamide",
-                  badge: "Avant / Après",
-                  text: "En trois semaines mon grain de peau s'est lissé, je ne mets presque plus de fond de teint.",
-                },
-                {
-                  init: "SN",
-                  who: "Sarah N.",
-                  ctx: "Routine éclat",
-                  badge: "Éclat",
-                  text: "La cure collagène + la crème tension, c'est le combo. Peau repulpée le matin.",
-                },
-                {
-                  init: "MB",
-                  who: "Maya B.",
-                  ctx: "Contour des yeux",
-                  badge: "Hydratation",
-                  text: "Textures fondantes, zéro effet gras. Le contour des yeux décongestionne vraiment.",
-                },
-              ].map((r) => (
-                <div className="bk-rev" key={r.who}>
-                  <div className="bk-rt">
-                    <span className="bk-stars">★★★★★</span>
-                    <span className="bk-ba">{r.badge}</span>
-                  </div>
-                  <p>« {r.text} »</p>
-                  <div className="bk-who">
-                    <div className="bk-av">{r.init}</div>
-                    <div>
-                      <b>{r.who}</b>
-                      <br />
-                      <span>{r.ctx} · achat vérifié</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/* Avis clients réels (catégorie skin) + formulaire */}
+          <BoutiqueReviews coachSlug={coachSlug} coachUserId={boutique?.user_id} />
 
           {/* Affiliation (teaser) */}
           <section id="bk-affil" className="bk-wrap bk-sec bk-reveal">
@@ -733,17 +748,12 @@ export function BoutiquePage() {
             </div>
           </section>
 
-          <footer className="bk-footer">
-            <div className="bk-wrap bk-foot-in">
-              <div>
-                <span className="bk-mark" style={{ fontSize: 17 }}>
-                  {shopName}
-                </span>{" "}
-                {distriFirstName ? `· boutique de ${distriFirstName}` : ""}
-              </div>
-              <div>Propulsé par La Base 360 · chaque distributrice a sa boutique</div>
-            </div>
-          </footer>
+          <BoutiqueFooter
+            coachSlug={coachSlug}
+            shopName={shopName}
+            distriFirstName={distriFirstName}
+            aiScanUrl={boutique?.ai_scan_url}
+          />
         </>
       )}
 

@@ -33,6 +33,7 @@ export type BoutiqueInfo = {
   avatar_url: string | null;
   hero_video_url?: string | null;
   contact_phone?: string | null;
+  ai_scan_url?: string | null;
 };
 
 // Code promo appliqué (validé serveur).
@@ -42,10 +43,22 @@ export type AppliedPromo = { code: string; kind: string; value: number };
 export const FREE_SHIPPING_THRESHOLD = 90;
 export const SHIPPING_COST = 8.9;
 
-// Libellés FR des préoccupations (shop-by-concern).
-export const CONCERN_LABELS: Record<string, { label: string; icon: string; sub: string }> = {
-  eclat: { label: "Éclat & teint", icon: "✨", sub: "Teint terne, taches" },
-  pores: { label: "Pores & grain", icon: "🫧", sub: "Grain irrégulier, sébum" },
-  age: { label: "Anti-âge & fermeté", icon: "⏳", sub: "Rides, relâchement" },
-  hydratation: { label: "Hydratation", icon: "💧", sub: "Tiraillements, sécheresse" },
+// Les 3 catégories officielles HL/Skin (code couleur packaging).
+export const CONCERN_LABELS: Record<string, { label: string; icon: string; sub: string; hue: string }> = {
+  eclat: { label: "Éclat & Luminosité", icon: "✨", sub: "Teint terne, imperfections", hue: "#E8C86A" },
+  hydratation: { label: "Hydratation", icon: "💧", sub: "Tiraillements, sécheresse", hue: "#6FB7B0" },
+  age: { label: "Beauté à tout âge", icon: "⏳", sub: "Rides, fermeté, éclat", hue: "#9E86C4" },
 };
+
+// Ordre d'affichage des catégories (Nettoyer → Cibler → Hydrater).
+export const CONCERN_ORDER = ["eclat", "hydratation", "age"] as const;
+
+// Produits à venir (teaser vitrine — PAS en vente).
+export type ComingSoonProduct = { name: string; tagline: string; concern: string };
+export const COMING_SOON: ComingSoonProduct[] = [
+  {
+    name: "Crème de Jour Éclat FPS 30",
+    tagline: "Hydrate, illumine et protège des UV au quotidien.",
+    concern: "eclat",
+  },
+];
