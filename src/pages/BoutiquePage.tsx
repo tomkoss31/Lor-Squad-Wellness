@@ -19,6 +19,7 @@ import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
+import { BoutiqueBundles } from "../components/boutique/BoutiqueBundles";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -304,14 +305,20 @@ export function BoutiquePage() {
   }, [loading]);
 
   // ── Dérivés ───────────────────────────────────────────────────────────────
+  const isBundle = (p: ShopProduct) => Array.isArray(p.bundle_items) && p.bundle_items.length > 0;
+  // Catalogue (produits à l'unité) vs kits — séparés à l'affichage ; `products`
+  // reste complet pour le panier/checkout (résolution des noms/prix).
+  const catalog = useMemo(() => products.filter((p) => !isBundle(p)), [products]);
+  const bundles = useMemo(() => products.filter(isBundle), [products]);
+
   const availableConcerns = useMemo(() => {
-    const set = new Set(products.map((p) => p.concern).filter(Boolean) as string[]);
+    const set = new Set(catalog.map((p) => p.concern).filter(Boolean) as string[]);
     return Object.keys(CONCERN_LABELS).filter((k) => set.has(k));
-  }, [products]);
+  }, [catalog]);
 
   const visibleProducts = useMemo(
-    () => (activeConcern ? products.filter((p) => p.concern === activeConcern) : products),
-    [products, activeConcern],
+    () => (activeConcern ? catalog.filter((p) => p.concern === activeConcern) : catalog),
+    [catalog, activeConcern],
   );
 
   const brandInitial = (distriFirstName ?? shopName ?? "B").charAt(0).toUpperCase();
@@ -642,6 +649,9 @@ export function BoutiquePage() {
               </div>
             )}
           </section>
+
+          {/* Kits routine (packs à prix groupé) */}
+          <BoutiqueBundles bundles={bundles} products={catalog} onAdd={addToCart} />
 
           {/* Bientôt disponible (teaser — pas en vente) */}
           <section className="bk-wrap bk-sec bk-reveal" style={{ paddingTop: 6 }}>
