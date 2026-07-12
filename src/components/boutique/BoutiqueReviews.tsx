@@ -23,9 +23,23 @@ function parse(content: string): { author: string; clean: string } {
 export function BoutiqueReviews({
   coachSlug,
   coachUserId,
+  category = "skin",
+  eyebrow = "Elles ont testé",
+  title = "La preuve sur vraie peau.",
+  subtitle = "De vrais avis de clientes. Tu as testé la routine ? Partage ton expérience.",
+  ctaLabel = "✍️ Laisser mon avis",
+  emptyText = "Sois la première à partager ton avis sur la routine ✨",
+  reviewedLabel = "Cliente · achat vérifié",
 }: {
   coachSlug?: string;
   coachUserId?: string | null;
+  category?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  emptyText?: string;
+  reviewedLabel?: string;
 }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [open, setOpen] = useState(false);
@@ -40,7 +54,7 @@ export function BoutiqueReviews({
         .from("client_testimonials")
         .select("id, content, rating")
         .eq("status", "approved")
-        .eq("category", "skin")
+        .eq("category", category)
         .eq("coach_user_id", coachUserId)
         .order("created_at", { ascending: false })
         .limit(6);
@@ -55,7 +69,7 @@ export function BoutiqueReviews({
     return () => {
       cancelled = true;
     };
-  }, [coachUserId]);
+  }, [coachUserId, category]);
 
   const stars = (n: number) => "★".repeat(Math.max(1, Math.min(5, n)));
 
@@ -64,11 +78,11 @@ export function BoutiqueReviews({
       <div className="bk-sec-head">
         <div>
           <div className="bk-eyebrow" style={{ marginBottom: 12 }}>
-            Elles ont testé
+            {eyebrow}
           </div>
-          <h2>La preuve sur vraie peau.</h2>
+          <h2>{title}</h2>
         </div>
-        <p>De vrais avis de clientes. Tu as testé la routine ? Partage ton expérience.</p>
+        <p>{subtitle}</p>
       </div>
 
       {reviews.length > 0 ? (
@@ -77,7 +91,7 @@ export function BoutiqueReviews({
             <div className="bk-rev" key={r.id}>
               <div className="bk-rt">
                 <span className="bk-stars">{stars(r.rating)}</span>
-                <span className="bk-ba">Achat vérifié</span>
+                <span className="bk-ba">Vérifié</span>
               </div>
               <p>« {r.content.slice(0, 240)}{r.content.length > 240 ? "…" : ""} »</p>
               <div className="bk-who">
@@ -85,7 +99,7 @@ export function BoutiqueReviews({
                 <div>
                   <b>{r.author}</b>
                   <br />
-                  <span>Cliente · achat vérifié</span>
+                  <span>{reviewedLabel}</span>
                 </div>
               </div>
             </div>
@@ -93,22 +107,32 @@ export function BoutiqueReviews({
         </div>
       ) : (
         <div className="bk-rev-empty">
-          <p>Sois la première à partager ton avis sur la routine ✨</p>
+          <p>{emptyText}</p>
         </div>
       )}
 
       <div style={{ marginTop: 22, textAlign: "center" }}>
         <button className="bk-btn bk-btn-ghost" onClick={() => setOpen(true)}>
-          ✍️ Laisser mon avis
+          {ctaLabel}
         </button>
       </div>
 
-      {open && <ReviewForm coachSlug={coachSlug} onClose={() => setOpen(false)} />}
+      {open && (
+        <ReviewForm coachSlug={coachSlug} category={category} onClose={() => setOpen(false)} />
+      )}
     </section>
   );
 }
 
-function ReviewForm({ coachSlug, onClose }: { coachSlug?: string; onClose: () => void }) {
+function ReviewForm({
+  coachSlug,
+  category,
+  onClose,
+}: {
+  coachSlug?: string;
+  category: string;
+  onClose: () => void;
+}) {
   const [firstName, setFirstName] = useState("");
   const [city, setCity] = useState("");
   const [rating, setRating] = useState(5);
@@ -127,7 +151,7 @@ function ReviewForm({ coachSlug, onClose }: { coachSlug?: string; onClose: () =>
       const { data, error } = await sb!.functions.invoke("submit-testimonial", {
         body: {
           coach_slug: coachSlug,
-          category: "skin",
+          category,
           first_name: firstName.trim(),
           city: city.trim(),
           content: content.trim(),

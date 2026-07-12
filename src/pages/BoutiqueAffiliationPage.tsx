@@ -15,6 +15,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro } from "../lib/format";
 import type { BoutiqueInfo } from "../components/boutique/types";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
+import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 
 // À REMPLACER par Thomas : lien d'inscription HL SKIN + prix pack démarrage.
 const HL_REGISTER_URL = "";
@@ -306,43 +307,18 @@ export function BoutiqueAffiliationPage() {
         </div>
       </section>
 
-      {/* Témoignages (placeholder) */}
-      <section className="bk-wrap bk-sec">
-        <div className="bk-sec-head">
-          <div>
-            <div className="bk-eyebrow" style={eyebrow}>
-              Elles se sont lancées
-            </div>
-            <h2>Des femmes comme toi.</h2>
-          </div>
-        </div>
-        <div className="bk-revs">
-          {[
-            { init: "AL", who: "Aline", ctx: "Affiliée depuis 6 mois", text: "J'ai juste partagé ma routine autour de moi. Aujourd'hui c'est un vrai complément de revenu." },
-            { init: "NB", who: "Noor", ctx: "Affiliée depuis 1 an", text: "Zéro pression : je parle de ce que j'aime, et je suis récompensée pour ça." },
-            { init: "SR", who: "Sarah", ctx: "Affiliée depuis 3 mois", text: "Le lien à envoyer, c'est tout bête, mais ça change tout. Mes copines adorent la gamme." },
-          ].map((r) => (
-            <div className="bk-rev" key={r.who}>
-              <div className="bk-rt">
-                <span className="bk-stars">★★★★★</span>
-                <span className="bk-ba">Gains</span>
-              </div>
-              <p>« {r.text} »</p>
-              <div className="bk-who">
-                <div className="bk-av">{r.init}</div>
-                <div>
-                  <b>{r.who}</b>
-                  <br />
-                  <span>{r.ctx}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 12 }}>
-          Témoignages d'illustration — à remplacer par de vrais retours.
-        </p>
-      </section>
+      {/* Témoignages business réels (catégorie business) + formulaire */}
+      <BoutiqueReviews
+        coachSlug={coachSlug}
+        coachUserId={boutique?.user_id}
+        category="business"
+        eyebrow="Elles se sont lancées"
+        title="Des femmes comme toi."
+        subtitle="De vrais retours d'affiliées. Tu t'es lancée ? Partage ton expérience."
+        ctaLabel="✍️ Partager mon parcours"
+        emptyText="Sois la première à partager ton parcours d'affiliée ✨"
+        reviewedLabel="Affiliée · vérifié"
+      />
 
       {/* FAQ */}
       <section className="bk-wrap bk-sec">
