@@ -134,7 +134,11 @@ export function ParametresPage() {
           border: "1px solid var(--ls-border)",
           borderRadius: 18,
           padding: "26px 26px 22px",
-          overflow: "hidden",
+          // overflow VISIBLE : sinon le menu déroulant « ⋯ Plus » (position
+          // absolute, ouvert vers le bas) est CLIPPÉ par la carte → apparaît
+          // vide (bug signalé 2026-07-12). Le mesh de fond est clippé par un
+          // calque dédié ci-dessous, pas par la carte.
+          overflow: "visible",
           boxShadow: `0 1px 0 0 ${g.glow}, 0 12px 36px -14px rgba(0,0,0,0.14)`,
         }}
       >
@@ -142,18 +146,20 @@ export function ParametresPage() {
           @keyframes ls-param-mesh { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(-10px,6px) scale(1.05)} 100%{transform:translate(8px,-4px) scale(1)} }
           @media (prefers-reduced-motion: reduce){ .ls-param-mesh{animation:none!important} }
         `}</style>
-        <div
-          className="ls-param-mesh"
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: "-20%",
-            opacity: 0.6,
-            pointerEvents: "none",
-            animation: "ls-param-mesh 22s ease-in-out infinite alternate",
-            background: `radial-gradient(circle at 0% 0%, ${g.glow} 0%, transparent 45%), radial-gradient(circle at 100% 120%, ${g.glow} 0%, transparent 50%), radial-gradient(circle at 100% 0%, color-mix(in srgb, ${g.tertiary} 22%, transparent) 0%, transparent 60%)`,
-          }}
-        />
+        {/* Calque de clip du mesh (garde les coins arrondis) — indépendant de
+            l'overflow de la carte pour ne pas couper le dropdown « Plus ». */}
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 18, pointerEvents: "none" }}>
+          <div
+            className="ls-param-mesh"
+            style={{
+              position: "absolute",
+              inset: "-20%",
+              opacity: 0.6,
+              animation: "ls-param-mesh 22s ease-in-out infinite alternate",
+              background: `radial-gradient(circle at 0% 0%, ${g.glow} 0%, transparent 45%), radial-gradient(circle at 100% 120%, ${g.glow} 0%, transparent 50%), radial-gradient(circle at 100% 0%, color-mix(in srgb, ${g.tertiary} 22%, transparent) 0%, transparent 60%)`,
+            }}
+          />
+        </div>
 
         <div style={{ position: "relative" }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: g.secondary, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
