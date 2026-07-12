@@ -894,6 +894,34 @@ function LeadCard({
         />
       ) : null}
 
+      {/* Bilan online : accès direct aux réponses (le détail vit dans une modale,
+          pas dans metadata.answers). Rendu visible sur la carte pour la même
+          lisibilité que les leads funnel. */}
+      {lead.table === "online_bilans" ? (
+        <button
+          type="button"
+          onClick={onOpenBilans}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            width: "100%",
+            padding: "8px 11px",
+            borderRadius: 9,
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
+            background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
+            color: "var(--ls-text)",
+            fontSize: 12.5,
+            fontWeight: 600,
+            fontFamily: "DM Sans, sans-serif",
+            cursor: "pointer",
+          }}
+        >
+          📋 Voir ses réponses (bilan complet)
+          <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-teal)" }}>→</span>
+        </button>
+      ) : null}
+
       {/* Actions — menu déroulant (aéré sur mobile, Noaly explicite) */}
       <div style={{ position: "relative" }}>
         <button
