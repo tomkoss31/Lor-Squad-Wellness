@@ -14,6 +14,34 @@ import { APP_NAME, APP_FALLBACK_DISTRI } from "../lib/branding";
 const LOGO_URL = "/brand/labase360/apple-touch-icon-180.png";
 type CertFormat = "a4" | "story";
 
+// ─── Design tokens (refonte premium 2026-07-08) ──────────────────────────
+// Cale sur la charte La Base 360 : gradient « vitalFusion » emerald→cyan→
+// violet, papier ivoire, polices Fraunces (serif editoriale) + Sora (labels)
+// + Cormorant (corps) + Dancing Script (signatures) — toutes chargees dans
+// index.html.
+const BRAND_GRAD = "linear-gradient(100deg,#0E9E77 0%,#06B6D4 46%,#8B5CF6 100%)";
+const INK = "#16292C";
+const MUTED = "#6E7A72";
+const HINT = "#9AA49C";
+const SAND = "#C7B892";
+const GOLD = "#B78B3A";
+const TEAL = "#0E9E77"; // fallback solide du nom en gradient (html2canvas)
+const FONT_TITLE = "'Fraunces', Georgia, serif";
+const FONT_LABEL = "'Sora', system-ui, sans-serif";
+const FONT_BODY = "'Cormorant Garamond', Georgia, serif";
+const FONT_SIGN = "'Dancing Script', cursive";
+
+// Texte rempli avec le gradient de marque. `color` sert de repli teal si le
+// moteur ne supporte pas background-clip:text (cas de html2canvas au
+// telechargement) → le texte reste lisible et on-brand au lieu de disparaitre.
+const gradientText = {
+  background: BRAND_GRAD,
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text" as const,
+  WebkitTextFillColor: "transparent",
+  color: TEAL,
+};
+
 /** Convertit un nom user en slug fichier safe. */
 function slugify(name: string): string {
   return (name || "certificat")
@@ -219,9 +247,9 @@ export function AcademyCertificatePage() {
             type="button"
             onClick={() => setFormat("a4")}
             style={{
-              background: format === "a4" ? "#B8922A" : "transparent",
-              color: format === "a4" ? "white" : "#B8922A",
-              border: "1px solid #B8922A",
+              background: format === "a4" ? TEAL : "transparent",
+              color: format === "a4" ? "white" : TEAL,
+              border: `1px solid ${TEAL}`,
               padding: "8px 16px",
               borderRadius: 8,
               cursor: "pointer",
@@ -236,9 +264,9 @@ export function AcademyCertificatePage() {
             type="button"
             onClick={() => setFormat("story")}
             style={{
-              background: format === "story" ? "#B8922A" : "transparent",
-              color: format === "story" ? "white" : "#B8922A",
-              border: "1px solid #B8922A",
+              background: format === "story" ? TEAL : "transparent",
+              color: format === "story" ? "white" : TEAL,
+              border: `1px solid ${TEAL}`,
               padding: "8px 16px",
               borderRadius: 8,
               cursor: "pointer",
@@ -278,7 +306,7 @@ export function AcademyCertificatePage() {
           onClick={() => handleDownload("pdf")}
           disabled={downloading !== null}
           style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: BRAND_GRAD,
             color: "white",
             border: "none",
             padding: "12px 22px",
@@ -287,7 +315,7 @@ export function AcademyCertificatePage() {
             fontWeight: 600,
             cursor: downloading ? "wait" : "pointer",
             fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            boxShadow: "0 6px 16px rgba(6,150,160,0.32)",
             opacity: downloading && downloading !== "pdf" ? 0.5 : 1,
           }}
         >
@@ -379,84 +407,41 @@ interface CertProps {
   completedDate: string;
 }
 
-function OfficialSeal({ size = 130 }: { size?: number }) {
+function OfficialSeal({ size = 118, gid = "seal" }: { size?: number; gid?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="46" fill="none" stroke="#B8922A" strokeWidth="0.6" />
-      <circle cx="50" cy="50" r="42" fill="none" stroke="#B8922A" strokeWidth="1.5" />
-      <circle cx="50" cy="50" r="38" fill="#FCF5E1" stroke="#B8922A" strokeWidth="0.4" />
-      {/* 4 petits losanges N/S/E/W */}
-      <g fill="#B8922A">
-        <path d="M50 12 L51 14 L50 16 L49 14 Z" />
-        <path d="M50 84 L51 86 L50 88 L49 86 Z" />
-        <path d="M12 50 L14 51 L16 50 L14 49 Z" />
-        <path d="M84 50 L86 51 L88 50 L86 49 Z" />
+    <svg width={size} height={size} viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#10B981" />
+          <stop offset="0.5" stopColor="#06B6D4" />
+          <stop offset="1" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="55" fill="none" stroke={`url(#${gid})`} strokeWidth="2" />
+      <circle cx="60" cy="60" r="50" fill="none" stroke={SAND} strokeWidth="0.7" />
+      <circle cx="60" cy="60" r="45" fill="#FCF8EC" stroke={`url(#${gid})`} strokeWidth="1" />
+      {/* 4 losanges N/S/E/W en gradient */}
+      <g fill={`url(#${gid})`}>
+        <path d="M60 6.5 l1.5 3.2 -1.5 3.2 -1.5 -3.2z" />
+        <path d="M60 107 l1.5 3.2 -1.5 3.2 -1.5 -3.2z" />
+        <path d="M6.5 60 l3.2 1.5 3.2 -1.5 -3.2 -1.5z" />
+        <path d="M107 60 l3.2 1.5 3.2 -1.5 -3.2 -1.5z" />
       </g>
-      {/* Couronnes laurier internes gauche */}
-      <g fill="#B8922A" opacity="0.85">
-        <path d="M28 38 Q32 28 38 26 Q35 32 32 35 Q38 33 42 31 Q37 37 32 38 Q38 39 42 41 Q35 41 32 38 Z" />
-        <path d="M28 56 Q32 50 38 48 Q35 54 32 57 Q38 55 42 53 Q37 59 32 60 Q38 61 42 63 Q35 63 32 60 Z" />
-      </g>
-      {/* Couronnes laurier internes droite (mirror) */}
-      <g fill="#B8922A" opacity="0.85" transform="translate(100,0) scale(-1,1)">
-        <path d="M28 38 Q32 28 38 26 Q35 32 32 35 Q38 33 42 31 Q37 37 32 38 Q38 39 42 41 Q35 41 32 38 Z" />
-        <path d="M28 56 Q32 50 38 48 Q35 54 32 57 Q38 55 42 53 Q37 59 32 60 Q38 61 42 63 Q35 63 32 60 Z" />
-      </g>
-      <text x="50" y="44" textAnchor="middle" fontFamily="Georgia, serif" fontSize="6.4" fontWeight="500" fill="#5C4A0F" letterSpacing="0.06em">LA BASE 360</text>
-      <text x="50" y="55" textAnchor="middle" fontFamily="Georgia, serif" fontSize="9" fontWeight="500" fill="#B8922A" fontStyle="italic">Academy</text>
-      <text x="50" y="66" textAnchor="middle" fontFamily="Georgia, serif" fontSize="5.5" fill="#888780" letterSpacing="0.15em">EST. 2026</text>
+      <text x="60" y="46" textAnchor="middle" fontFamily="Sora, sans-serif" fontSize="6.4" fontWeight="600" letterSpacing="1.6" fill={INK}>LA BASE 360</text>
+      <text x="60" y="63" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontSize="15" fontWeight="600" fill={`url(#${gid})`}>Academy</text>
+      <line x1="42" y1="70" x2="78" y2="70" stroke={SAND} strokeWidth="0.6" />
+      <text x="60" y="80" textAnchor="middle" fontFamily="Sora, sans-serif" fontSize="5.2" letterSpacing="2.2" fill={HINT}>EST. 2026</text>
     </svg>
   );
 }
 
-function LaurelTitle({ children }: { children: React.ReactNode }) {
+/** Fin flourish : hairline + point gradient + hairline (remplace les lauriers). */
+function Flourish({ width = 46 }: { width?: number }) {
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-      }}
-    >
-      <svg
-        width={340}
-        height={70}
-        viewBox="0 0 240 56"
-        style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", opacity: 0.55 }}
-      >
-        <g fill="#B8922A">
-          <path d="M40 28 Q44 18 50 16 Q47 22 44 25 Q49 24 53 22 Q49 27 44 28 Q49 29 53 31 Q47 31 44 28 Z" />
-          <path d="M55 32 Q60 22 66 20 Q63 26 60 29 Q66 28 70 26 Q65 31 60 32 Q66 33 70 35 Q63 35 60 32 Z" />
-          <path d="M70 36 Q76 26 82 24 Q79 30 76 33 Q82 32 86 30 Q81 35 76 36 Q82 37 86 39 Q79 39 76 36 Z" />
-          <path d="M88 38 Q95 30 102 30 Q98 34 95 36 Q102 36 107 35 Q101 39 95 40 Q102 41 107 43 Q98 42 95 40 Z" />
-        </g>
-        <g fill="#B8922A" transform="translate(240,0) scale(-1,1)">
-          <path d="M40 28 Q44 18 50 16 Q47 22 44 25 Q49 24 53 22 Q49 27 44 28 Q49 29 53 31 Q47 31 44 28 Z" />
-          <path d="M55 32 Q60 22 66 20 Q63 26 60 29 Q66 28 70 26 Q65 31 60 32 Q66 33 70 35 Q63 35 60 32 Z" />
-          <path d="M70 36 Q76 26 82 24 Q79 30 76 33 Q82 32 86 30 Q81 35 76 36 Q82 37 86 39 Q79 39 76 36 Z" />
-          <path d="M88 38 Q95 30 102 30 Q98 34 95 36 Q102 36 107 35 Q101 39 95 40 Q102 41 107 43 Q98 42 95 40 Z" />
-        </g>
-      </svg>
-      <h1
-        style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontSize: 38,
-          fontWeight: 400,
-          margin: 0,
-          color: "#2C2C2A",
-          letterSpacing: "0.01em",
-          textAlign: "center",
-          padding: "0 80px",
-          position: "relative",
-          zIndex: 2,
-          fontStyle: "italic",
-          lineHeight: 1.1,
-        }}
-      >
-        {children}
-      </h1>
+    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+      <div style={{ height: 1, width, background: `linear-gradient(90deg,transparent,${SAND})` }} />
+      <div style={{ width: 6, height: 6, borderRadius: "50%", background: BRAND_GRAD }} />
+      <div style={{ height: 1, width, background: `linear-gradient(90deg,${SAND},transparent)` }} />
     </div>
   );
 }
@@ -486,8 +471,8 @@ function CornerOrnament({
       style={{ position: "absolute", ...styles[position], transform: transforms[position] }}
     >
       <path
-        d="M0,0 L40,0 L40,3 L3,3 L3,40 L0,40 Z M3,5 L25,5 L25,7 L5,7 L5,25 L3,25 Z"
-        fill="#B8922A"
+        d="M0,0 L46,0 L46,3.5 L3.5,3.5 L3.5,46 L0,46 Z M8,8 L30,8 L30,10.5 L10.5,10.5 L10.5,30 L8,30 Z"
+        fill={GOLD}
       />
     </svg>
   );
@@ -523,33 +508,34 @@ function SignatureBlock({
     >
       <div
         style={{
-          fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
+          fontFamily: FONT_SIGN,
+          fontWeight: 600,
           fontSize: cursiveSize,
-          color: "#2C2C2A",
-          height: cursiveSize * 1.3,
+          color: INK,
+          height: cursiveSize * 1.15,
           lineHeight: 1,
         }}
       >
         {cursive}
       </div>
-      <div style={{ height: 0.5, width, background: "#2C2C2A", marginBottom: 6 }} />
+      <div style={{ height: 0.5, width, background: INK, opacity: 0.75, marginBottom: 6 }} />
       <div
         style={{
-          fontFamily: "Georgia, serif",
+          fontFamily: FONT_TITLE,
           fontSize: fullSize,
-          color: "#2C2C2A",
-          fontWeight: 500,
+          color: INK,
+          fontWeight: 600,
         }}
       >
         {fullName}
       </div>
       <div
         style={{
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: FONT_LABEL,
           fontSize: titleSize,
           letterSpacing: letterspacing,
-          color: "#888780",
-          marginTop: 3,
+          color: HINT,
+          marginTop: 4,
         }}
       >
         {title}
@@ -565,8 +551,12 @@ function CertificateA4({ userName, completedDate }: CertProps) {
     <div
       className="ls-cert-page"
       style={{
-        background: "#FAF6E8",
-        border: "2px solid #B8922A",
+        background:
+          "radial-gradient(620px 420px at 12% 8%, rgba(16,185,129,.055), transparent 60%)," +
+          "radial-gradient(680px 520px at 92% 96%, rgba(139,92,246,.06), transparent 62%)," +
+          "radial-gradient(760px 600px at 88% 10%, rgba(6,182,212,.045), transparent 60%)," +
+          "linear-gradient(160deg,#FCFAF2 0%, #FBF7EC 52%, #F5EFDF 100%)",
+        border: `1.5px solid ${SAND}`,
         maxWidth: 800,
         aspectRatio: "210 / 297",
         margin: "0 auto",
@@ -574,39 +564,44 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: 0,
-        fontFamily: "Georgia, serif",
-        color: "#2C2C2A",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+        padding: "62px 60px 0",
+        fontFamily: FONT_BODY,
+        color: INK,
+        overflow: "hidden",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
       }}
     >
-      {/* Bordure double trait intérieure */}
+      {/* Hairline intérieure teal */}
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
-          inset: 16,
-          border: "0.5px solid #B8922A",
+          inset: 12,
+          border: "0.5px solid rgba(14,158,119,0.30)",
           pointerEvents: "none",
         }}
       />
 
-      {/* Filigrane logo (premium, derrière le contenu) */}
-      <img
-        src={LOGO_URL}
-        alt=""
+      {/* Filigrane monogramme « B » (très discret) */}
+      <div
         aria-hidden="true"
         style={{
           position: "absolute",
-          top: "50%",
+          top: "52%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "62%",
-          opacity: 0.05,
+          fontFamily: FONT_TITLE,
+          fontStyle: "italic",
+          fontWeight: 600,
+          fontSize: 400,
+          lineHeight: 1,
+          color: "rgba(22,41,44,0.028)",
           pointerEvents: "none",
           userSelect: "none",
         }}
-      />
+      >
+        B
+      </div>
 
       {/* Ornements 4 coins */}
       <CornerOrnament position="tl" />
@@ -614,97 +609,100 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       <CornerOrnament position="bl" />
       <CornerOrnament position="br" />
 
-      {/* Logo réel + eyebrow */}
-      <div
-        style={{
-          marginTop: 56,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+      {/* Logo réel + wordmark */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
         <img
           src={LOGO_URL}
           alt="La Base 360"
           style={{
-            width: "auto",
-            height: 110,
-            maxWidth: 130,
+            width: 84,
+            height: 84,
+            borderRadius: 20,
             objectFit: "contain",
             display: "block",
-            background: "transparent",
+            boxShadow: "0 12px 26px rgba(6,120,120,0.28)",
           }}
         />
         <div
           style={{
-            marginTop: 12,
-            fontFamily: "Georgia, serif",
-            fontSize: 26,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            color: "#5C4A0F",
+            marginTop: 16,
+            fontFamily: FONT_TITLE,
+            fontSize: 30,
+            fontWeight: 600,
+            letterSpacing: "0.01em",
+            color: INK,
           }}
         >
           La Base 360
         </div>
         <div
           style={{
-            marginTop: 6,
-            fontFamily: "system-ui, sans-serif",
+            marginTop: 7,
+            fontFamily: FONT_LABEL,
             fontSize: 10,
-            letterSpacing: "0.32em",
-            color: "#B8922A",
-            fontWeight: 500,
+            letterSpacing: "0.34em",
+            color: "#2E9E8E",
+            fontWeight: 600,
           }}
         >
           THE WELLNESS CLUB
         </div>
       </div>
 
-      {/* Titre + couronnes laurier */}
-      <div style={{ marginTop: 28 }}>
-        <LaurelTitle>
+      {/* Titre + flourish */}
+      <div style={{ marginTop: 30, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <h1
+          style={{
+            fontFamily: FONT_TITLE,
+            fontStyle: "italic",
+            fontWeight: 500,
+            fontSize: 46,
+            lineHeight: 1.04,
+            margin: 0,
+            color: INK,
+            letterSpacing: "0.005em",
+            textAlign: "center",
+          }}
+        >
           Certificat
           <br />
-          de formation
-        </LaurelTitle>
+          de&nbsp;formation
+        </h1>
+        <div style={{ marginTop: 16 }}>
+          <Flourish />
+        </div>
       </div>
 
       {/* "Décerné avec honneur à" */}
-      <div
-        style={{
-          marginTop: 32,
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        <div style={{ height: 0.5, width: 56, background: "#B8922A" }} />
+      <div style={{ marginTop: 30, display: "flex", alignItems: "center", gap: 15 }}>
+        <div style={{ height: 0.5, width: 56, background: `linear-gradient(90deg,transparent,${GOLD})` }} />
         <div
           style={{
-            fontFamily: "system-ui, sans-serif",
-            fontSize: 11,
+            fontFamily: FONT_LABEL,
+            fontSize: 10.5,
             letterSpacing: "0.3em",
-            color: "#6B6B62",
-            fontStyle: "italic",
+            color: MUTED,
+            fontWeight: 500,
           }}
         >
           DÉCERNÉ AVEC HONNEUR À
         </div>
-        <div style={{ height: 0.5, width: 56, background: "#B8922A" }} />
+        <div style={{ height: 0.5, width: 56, background: `linear-gradient(90deg,${GOLD},transparent)` }} />
       </div>
 
-      {/* Nom du diplômé */}
+      {/* Nom du diplômé — gradient de marque (repli teal pour html2canvas) */}
       <h2
         style={{
-          fontFamily: "Georgia, serif",
-          fontSize: 52,
-          fontWeight: 400,
-          margin: "20px 0 0 0",
-          color: "#5C4A0F",
+          fontFamily: FONT_TITLE,
           fontStyle: "italic",
-          letterSpacing: "0.02em",
+          fontWeight: 600,
+          fontSize: 56,
+          margin: "18px 0 0 0",
+          lineHeight: 1,
+          letterSpacing: "0.01em",
           textAlign: "center",
+          padding: "0 6px 4px",
+          ...gradientText,
         }}
       >
         {userName}
@@ -713,83 +711,61 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       {/* Paragraphe corps */}
       <p
         style={{
-          fontFamily: "Georgia, serif",
-          fontSize: 14,
-          lineHeight: 1.7,
-          color: "#5F5E5A",
+          fontFamily: FONT_BODY,
+          fontSize: 18,
+          lineHeight: 1.6,
+          color: "#4C5A54",
           textAlign: "center",
-          maxWidth: 520,
-          margin: "32px 32px 0",
+          maxWidth: 528,
+          margin: "24px 0 0",
           fontStyle: "italic",
         }}
       >
         a complété avec succès l&apos;intégralité du parcours{" "}
-        <strong style={{ color: "#B8922A", fontStyle: "normal", fontWeight: 500 }}>
-          La Base 360 Academy
+        <strong style={{ fontStyle: "normal", fontWeight: 600, fontFamily: FONT_TITLE, ...gradientText }}>
+          La Base&nbsp;360 Academy
         </strong>{" "}
-        — les <strong style={{ color: "#B8922A", fontStyle: "normal", fontWeight: 600 }}>7 chapitres</strong> qui couvrent tout le métier : démarrage,
+        — les <strong style={{ fontStyle: "normal", fontWeight: 600, fontFamily: FONT_TITLE, ...gradientText }}>7 chapitres</strong> qui couvrent tout le métier : démarrage,
         maîtrise de l&apos;app, bilan &amp; premier client, prospection &amp; conversion,
         fidélisation, pilotage &amp; croissance, et outils personnels.
       </p>
 
-      {/* Bandeau « 100% maîtrisé » — accent wahou (2026-06-15) */}
+      {/* Bandeau « 100% maîtrisé » — gradient vitalFusion */}
       <div
         style={{
-          marginTop: 22,
+          marginTop: 24,
           display: "inline-flex",
           alignItems: "center",
-          gap: 10,
-          padding: "8px 22px",
+          gap: 11,
+          padding: "11px 30px",
           borderRadius: 999,
-          background: "linear-gradient(135deg, #B8922A, #E8C667 50%, #B8922A)",
-          color: "#2C2C2A",
-          fontFamily: "system-ui, sans-serif",
+          background: BRAND_GRAD,
+          color: "#fff",
+          fontFamily: FONT_LABEL,
           fontSize: 11,
           fontWeight: 700,
-          letterSpacing: "0.22em",
-          boxShadow: "0 4px 14px rgba(184,146,42,0.35)",
+          letterSpacing: "0.2em",
+          boxShadow: "0 10px 26px rgba(6,150,160,0.34), inset 0 1px 0 rgba(255,255,255,0.28)",
         }}
       >
-        ★ PARCOURS 100&nbsp;% MAÎTRISÉ ★
+        <span style={{ opacity: 0.9 }}>✦</span> PARCOURS 100&nbsp;% MAÎTRISÉ <span style={{ opacity: 0.9 }}>✦</span>
       </div>
 
       {/* Date */}
-      <div
-        style={{
-          marginTop: 28,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "system-ui, sans-serif",
-            fontSize: 10,
-            letterSpacing: "0.25em",
-            color: "#888780",
-          }}
-        >
+      <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <div style={{ fontFamily: FONT_LABEL, fontSize: 9.5, letterSpacing: "0.28em", color: HINT }}>
           DÉLIVRÉ LE
         </div>
-        <div
-          style={{
-            fontFamily: "Georgia, serif",
-            fontSize: 16,
-            color: "#2C2C2A",
-            fontWeight: 500,
-          }}
-        >
+        <div style={{ fontFamily: FONT_TITLE, fontSize: 18, color: INK, fontWeight: 500 }}>
           {completedDate}
         </div>
         <div
           style={{
-            marginTop: 8,
-            fontFamily: "system-ui, sans-serif",
+            marginTop: 7,
+            fontFamily: FONT_LABEL,
             fontSize: 10,
-            letterSpacing: "0.28em",
-            color: "#B8922A",
+            letterSpacing: "0.3em",
+            color: "#2E9E8E",
             fontWeight: 600,
           }}
         >
@@ -797,19 +773,20 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         </div>
       </div>
 
-      {/* Sceau central + halo doré (wahou) */}
-      <div style={{ marginTop: 26, position: "relative", display: "flex", justifyContent: "center" }}>
+      {/* Sceau central + halo cyan discret */}
+      <div style={{ marginTop: 22, position: "relative", display: "flex", justifyContent: "center" }}>
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
-            inset: "-34px",
-            background: "radial-gradient(circle, rgba(184,146,42,0.28) 0%, rgba(184,146,42,0) 70%)",
+            inset: "-20px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(6,182,212,0.10), transparent 70%)",
             pointerEvents: "none",
           }}
         />
         <div style={{ position: "relative" }}>
-          <OfficialSeal size={130} />
+          <OfficialSeal size={118} gid="seal-a4" />
         </div>
       </div>
 
@@ -819,29 +796,29 @@ function CertificateA4({ userName, completedDate }: CertProps) {
           marginTop: "auto",
           marginBottom: 50,
           display: "flex",
-          gap: 70,
+          gap: 60,
           alignItems: "flex-end",
         }}
       >
         <SignatureBlock
-          cursive="T. Houbert"
+          cursive="Thomas Houbert"
           fullName="Thomas Houbert"
           title="CO-FONDATEUR"
-          width={170}
+          width={180}
           cursiveSize={30}
           fullSize={13}
-          titleSize={10}
-          letterspacing="0.25em"
+          titleSize={9.5}
+          letterspacing="0.24em"
         />
         <SignatureBlock
-          cursive="M. Houbert"
+          cursive="Mélanie Houbert"
           fullName="Mélanie Houbert"
           title="CO-FONDATRICE"
-          width={170}
+          width={180}
           cursiveSize={30}
           fullSize={13}
-          titleSize={10}
-          letterspacing="0.25em"
+          titleSize={9.5}
+          letterspacing="0.24em"
         />
       </div>
     </div>
@@ -851,15 +828,15 @@ function CertificateA4({ userName, completedDate }: CertProps) {
 // ═══ Format Story Instagram (9:16) ══════════════════════════════════════
 
 function CertificateStory({ userName, completedDate }: CertProps) {
-  // completedDate non utilise dans le format story actuel — on peut
-  // l ajouter en sub plus tard si besoin.
-  void completedDate;
-
   return (
     <div
       className="ls-cert-page"
       style={{
-        background: "#FAF6E8",
+        background:
+          "radial-gradient(320px 320px at 12% 6%, rgba(16,185,129,.06), transparent 60%)," +
+          "radial-gradient(340px 340px at 90% 96%, rgba(139,92,246,.07), transparent 62%)," +
+          "radial-gradient(360px 360px at 88% 12%, rgba(6,182,212,.05), transparent 60%)," +
+          "linear-gradient(160deg,#FCFAF2 0%, #FBF7EC 52%, #F5EFDF 100%)",
         maxWidth: 380,
         aspectRatio: "9 / 16",
         margin: "0 auto",
@@ -867,24 +844,24 @@ function CertificateStory({ userName, completedDate }: CertProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "48px 32px",
-        fontFamily: "Georgia, serif",
-        color: "#2C2C2A",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+        padding: "44px 30px",
+        fontFamily: FONT_BODY,
+        color: INK,
+        overflow: "hidden",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
       }}
     >
-      {/* Bordures doubles */}
+      {/* Bordures doubles (sand + hairline teal) */}
       <div
         aria-hidden="true"
-        style={{ position: "absolute", inset: 20, border: "1.5px solid #B8922A", pointerEvents: "none" }}
+        style={{ position: "absolute", inset: 18, border: `1.2px solid ${SAND}`, pointerEvents: "none" }}
       />
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
-          inset: 28,
-          border: "0.5px solid #B8922A",
-          opacity: 0.5,
+          inset: 25,
+          border: "0.5px solid rgba(14,158,119,0.30)",
           pointerEvents: "none",
         }}
       />
@@ -902,34 +879,34 @@ function CertificateStory({ userName, completedDate }: CertProps) {
           src={LOGO_URL}
           alt="La Base 360"
           style={{
-            width: "auto",
-            height: 84,
-            maxWidth: 100,
+            width: 72,
+            height: 72,
+            borderRadius: 18,
             objectFit: "contain",
             display: "block",
-            background: "transparent",
+            boxShadow: "0 10px 22px rgba(6,120,120,0.28)",
           }}
         />
         <div
           style={{
-            marginTop: 10,
-            fontFamily: "Georgia, serif",
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            color: "#5C4A0F",
+            marginTop: 12,
+            fontFamily: FONT_TITLE,
+            fontSize: 23,
+            fontWeight: 600,
+            letterSpacing: "0.01em",
+            color: INK,
           }}
         >
           La Base 360
         </div>
         <div
           style={{
-            marginTop: 5,
-            fontFamily: "system-ui, sans-serif",
+            marginTop: 6,
+            fontFamily: FONT_LABEL,
             fontSize: 9,
             letterSpacing: "0.32em",
-            color: "#B8922A",
-            fontWeight: 500,
+            color: "#2E9E8E",
+            fontWeight: 600,
           }}
         >
           THE WELLNESS CLUB
@@ -937,34 +914,34 @@ function CertificateStory({ userName, completedDate }: CertProps) {
       </div>
 
       {/* Eyebrow "DIPLÔMÉ DE" */}
-      <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ height: 0.5, width: 28, background: "#B8922A" }} />
+      <div style={{ marginTop: 26, display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ height: 0.5, width: 28, background: `linear-gradient(90deg,transparent,${GOLD})` }} />
         <div
           style={{
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: FONT_LABEL,
             fontSize: 9,
             letterSpacing: "0.3em",
-            color: "#6B6B62",
-            fontStyle: "italic",
+            color: MUTED,
+            fontWeight: 500,
           }}
         >
           DIPLÔMÉ DE
         </div>
-        <div style={{ height: 0.5, width: 28, background: "#B8922A" }} />
+        <div style={{ height: 0.5, width: 28, background: `linear-gradient(90deg,${GOLD},transparent)` }} />
       </div>
 
-      {/* Titre {APP_NAME} Academy — templater pour rebrand futur */}
+      {/* Titre {APP_NAME} Academy */}
       <h1
         style={{
-          fontFamily: "Georgia, serif",
+          fontFamily: FONT_TITLE,
+          fontStyle: "italic",
+          fontWeight: 500,
           fontSize: 28,
-          fontWeight: 400,
           margin: "10px 0 0 0",
-          color: "#2C2C2A",
+          color: INK,
           textAlign: "center",
           lineHeight: 1.15,
-          fontStyle: "italic",
-          letterSpacing: "0.01em",
+          letterSpacing: "0.005em",
         }}
       >
         {APP_NAME}
@@ -973,61 +950,65 @@ function CertificateStory({ userName, completedDate }: CertProps) {
       </h1>
 
       {/* Sceau central agrandi */}
-      <div style={{ marginTop: 32 }}>
-        <OfficialSeal size={200} />
+      <div style={{ marginTop: 30 }}>
+        <OfficialSeal size={188} gid="seal-story" />
       </div>
 
       {/* Décerné à */}
       <div
         style={{
           marginTop: 24,
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: FONT_LABEL,
           fontSize: 9,
           letterSpacing: "0.3em",
-          color: "#6B6B62",
+          color: MUTED,
+          fontWeight: 500,
         }}
       >
         DÉCERNÉ À
       </div>
 
-      {/* Nom */}
+      {/* Nom — gradient de marque (repli teal pour html2canvas) */}
       <h2
         style={{
-          fontFamily: "Georgia, serif",
-          fontSize: 32,
-          fontWeight: 400,
-          margin: "10px 0 0 0",
-          color: "#5C4A0F",
+          fontFamily: FONT_TITLE,
           fontStyle: "italic",
+          fontWeight: 600,
+          fontSize: 34,
+          margin: "10px 0 0 0",
           textAlign: "center",
           lineHeight: 1.1,
+          padding: "0 4px 3px",
+          ...gradientText,
         }}
       >
         {userName}
       </h2>
 
-      {/* Séparateur losange */}
-      <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ height: 1, width: 24, background: "#B8922A" }} />
-        <div style={{ width: 5, height: 5, transform: "rotate(45deg)", background: "#B8922A" }} />
-        <div style={{ height: 1, width: 24, background: "#B8922A" }} />
+      {/* Séparateur : point gradient */}
+      <div style={{ marginTop: 16 }}>
+        <Flourish width={26} />
       </div>
 
       {/* Sub */}
       <p
         style={{
-          fontFamily: "Georgia, serif",
-          fontSize: 11,
-          lineHeight: 1.6,
-          color: "#5F5E5A",
+          fontFamily: FONT_BODY,
+          fontSize: 12.5,
+          lineHeight: 1.55,
+          color: "#4C5A54",
           textAlign: "center",
-          margin: "16px 8px 0",
+          margin: "14px 6px 0",
           fontStyle: "italic",
         }}
       >
-        Pour avoir complété les 7 chapitres du parcours de formation au métier
-        de distributeur Herbalife
+        Pour avoir complété avec succès les <b style={{ fontStyle: "normal", fontWeight: 600, fontFamily: FONT_TITLE, ...gradientText }}>7&nbsp;chapitres</b> du parcours La&nbsp;Base&nbsp;360 Academy — tout le métier, du démarrage à la croissance.
       </p>
+
+      {/* Date de délivrance */}
+      <div style={{ marginTop: 14, fontFamily: FONT_LABEL, fontSize: 8.5, letterSpacing: "0.24em", color: HINT, fontWeight: 500 }}>
+        DÉLIVRÉ LE {completedDate.toUpperCase()} · PROMOTION 2026
+      </div>
 
       {/* Footer */}
       <div
@@ -1039,39 +1020,39 @@ function CertificateStory({ userName, completedDate }: CertProps) {
           gap: 14,
         }}
       >
-        <div style={{ display: "flex", gap: 28, alignItems: "flex-end" }}>
+        <div style={{ display: "flex", gap: 24, alignItems: "flex-end" }}>
           <SignatureBlock
-            cursive="T. Houbert"
+            cursive="Thomas Houbert"
             fullName="Thomas Houbert"
             title="CO-FONDATEUR"
-            width={84}
-            cursiveSize={16}
+            width={92}
+            cursiveSize={19}
             fullSize={9}
             titleSize={7}
-            letterspacing="0.2em"
+            letterspacing="0.18em"
           />
           <SignatureBlock
-            cursive="M. Houbert"
+            cursive="Mélanie Houbert"
             fullName="Mélanie Houbert"
             title="CO-FONDATRICE"
-            width={84}
-            cursiveSize={16}
+            width={92}
+            cursiveSize={19}
             fullSize={9}
             titleSize={7}
-            letterspacing="0.2em"
+            letterspacing="0.18em"
           />
         </div>
         <div
           style={{
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: FONT_LABEL,
             fontSize: 9,
-            letterSpacing: "0.4em",
-            color: "#B8922A",
-            fontWeight: 500,
+            letterSpacing: "0.36em",
+            fontWeight: 600,
             marginTop: 8,
+            ...gradientText,
           }}
         >
-          #LORSQUADACADEMY
+          #LABASE360ACADEMY
         </div>
       </div>
     </div>
