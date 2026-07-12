@@ -894,32 +894,54 @@ function LeadCard({
         />
       ) : null}
 
-      {/* Bilan online : accès direct aux réponses (le détail vit dans une modale,
-          pas dans metadata.answers). Rendu visible sur la carte pour la même
-          lisibilité que les leads funnel. */}
+      {/* Bilan online : résumé clé INLINE (objectifs · cible · motivation) —
+          comme les réponses funnel — + bouton vers le détail complet (modale).
+          Avant : seul le bouton était affiché, l'info restait cachée. */}
       {lead.table === "online_bilans" ? (
-        <button
-          type="button"
-          onClick={onOpenBilans}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 7,
-            width: "100%",
-            padding: "8px 11px",
-            borderRadius: 9,
-            border: "1px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
-            background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
-            color: "var(--ls-text)",
-            fontSize: 12.5,
-            fontWeight: 600,
-            fontFamily: "DM Sans, sans-serif",
-            cursor: "pointer",
-          }}
-        >
-          📋 Voir ses réponses (bilan complet)
-          <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-teal)" }}>→</span>
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(lead.bilanObjectives && lead.bilanObjectives.length > 0) ||
+          lead.bilanWeightTarget != null ||
+          lead.bilanMotivation != null ? (
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+              {(lead.bilanObjectives ?? []).map((o) => (
+                <span key={o} style={{ fontSize: 11.5, fontWeight: 600, color: "var(--ls-teal)", background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)", borderRadius: 999, padding: "2px 9px" }}>
+                  {BILAN_OBJECTIVE_LABELS[o] ?? o}
+                </span>
+              ))}
+              {lead.bilanWeightTarget != null ? (
+                <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>🎯 −{lead.bilanWeightTarget} kg</span>
+              ) : null}
+              {lead.bilanMotivation != null ? (
+                <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>🔥 {lead.bilanMotivation}/10</span>
+              ) : null}
+              {lead.bilanAge != null ? (
+                <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>· {lead.bilanAge} ans</span>
+              ) : null}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={onOpenBilans}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              width: "100%",
+              padding: "8px 11px",
+              borderRadius: 9,
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
+              background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
+              color: "var(--ls-text)",
+              fontSize: 12.5,
+              fontWeight: 600,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            📋 Voir tout le bilan (habitudes, repas, sommeil…)
+            <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-teal)" }}>→</span>
+          </button>
+        </div>
       ) : null}
 
       {/* Actions — menu déroulant (aéré sur mobile, Noaly explicite) */}
@@ -1461,6 +1483,16 @@ const actionMenu: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 2,
+};
+
+// Libellés courts des objectifs bilan online (résumé inline carte CRM).
+const BILAN_OBJECTIVE_LABELS: Record<string, string> = {
+  weight_loss: "Perte de poids",
+  mass_gain: "Prise de masse",
+  energy: "Énergie",
+  sleep: "Sommeil",
+  wellbeing: "Bien-être",
+  perf_pro: "Perf pro",
 };
 
 // Réponses du questionnaire funnel Opportunité — bloc repliable dans la carte.

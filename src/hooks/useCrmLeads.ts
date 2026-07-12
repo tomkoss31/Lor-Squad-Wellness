@@ -77,6 +77,12 @@ export interface CrmLead {
   funnelScore?: number | null;
   funnelTemperature?: string | null;
   funnelProfile?: string | null;
+  /** Résumé du bilan online (affiché inline sur la carte CRM, comme les
+   *  réponses funnel). Le détail complet reste dans la modale « Détails ». */
+  bilanObjectives?: string[] | null;
+  bilanWeightTarget?: number | null;
+  bilanMotivation?: number | null;
+  bilanAge?: number | null;
 }
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
@@ -245,7 +251,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id, objectives, weight_loss_target_kg, motivation_score, age",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -325,6 +331,10 @@ export function useCrmLeads() {
           parrainClientId: null,
           extra: null,
           ownerUserId: (row.coach_user_id as string | null) ?? null,
+          bilanObjectives: Array.isArray(row.objectives) ? (row.objectives as string[]) : null,
+          bilanWeightTarget: (row.weight_loss_target_kg as number | null) ?? null,
+          bilanMotivation: (row.motivation_score as number | null) ?? null,
+          bilanAge: (row.age as number | null) ?? null,
           relanceDue: Boolean(
             row.relance_due_at &&
               !row.relance_done_at &&
