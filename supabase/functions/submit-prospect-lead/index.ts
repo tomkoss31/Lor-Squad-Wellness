@@ -10,6 +10,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPushToUser } from "../_shared/push.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -180,52 +181,34 @@ serve(async (req) => {
       if (effectiveReferrerUserId) targetIds.add(effectiveReferrerUserId);
 
       if (targetIds.size > 0) {
-        const subsPromises = [...targetIds].map((id) =>
-          sb
-            .from("push_subscriptions")
-            .select("endpoint, p256dh, auth")
-            .eq("user_id", id),
-        );
-        const subsResults = await Promise.all(subsPromises);
-        const allSubs = subsResults.flatMap((r) => r.data ?? []);
+        // Funnel Opportunité gated (chantier 2026-06) : notif enrichie profil + température.
+        const meta = (metadata && typeof metadata === "object") ? metadata as Record<string, unknown> : {};
+        const isFunnel = meta.funnel === "opportunite-gated";
+        const profileLabel =
+          ({ curious: "🔍 Curieux", side_income: "💸 Complément", career_change: "🚀 Reconversion" } as Record<string, string>)[
+            String(meta.profile)
+          ] ?? "";
+        const tempLabel =
+          ({ hot: "🔥 chaud", warm: "🟡 tiède", cold: "❄️ froid" } as Record<string, string>)[
+            String(meta.temperature)
+          ] ?? "";
+        const title = isFunnel ? `🚪 Lead opportunité ${tempLabel}`.trim() : "🔥 Nouveau prospect";
+        const pushBody = isFunnel
+          ? `${firstName}${profileLabel ? ` · ${profileLabel}` : ""} · ${phone}`
+          : `${firstName}${city ? " de " + city : ""} · ${phone}`;
 
-        // Notif via send-push function (déjà déployée dans le projet)
-        if (allSubs.length > 0) {
-          // Funnel Opportunité gated (chantier 2026-06) : notif enrichie profil + température.
-          const meta = (metadata && typeof metadata === "object") ? metadata as Record<string, unknown> : {};
-          const isFunnel = meta.funnel === "opportunite-gated";
-          const profileLabel =
-            ({ curious: "🔍 Curieux", side_income: "💸 Complément", career_change: "🚀 Reconversion" } as Record<string, string>)[
-              String(meta.profile)
-            ] ?? "";
-          const tempLabel =
-            ({ hot: "🔥 chaud", warm: "🟡 tiède", cold: "❄️ froid" } as Record<string, string>)[
-              String(meta.temperature)
-            ] ?? "";
-          const title = isFunnel ? `🚪 Lead opportunité ${tempLabel}`.trim() : "🔥 Nouveau prospect";
-          const pushBody = isFunnel
-            ? `${firstName}${profileLabel ? ` · ${profileLabel}` : ""} · ${phone}`
-            : `${firstName}${city ? " de " + city : ""} · ${phone}`;
-          await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-            signal: AbortSignal.timeout(2500),
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              subscriptions: allSubs,
-              payload: {
-                title,
-                body: pushBody,
-                // VIP-4 (2026-06-10) : le CRM commun est la destination.
-                url: "/crm",
-                icon: "/icon-192.png",
-                badge: "/badge-72.png",
-              },
+        // FIX 2026-07-12 : on utilise le helper sendPushToUser (lookup + envoi
+        // web-push par user) au lieu d'un fetch send-push au format
+        // { subscriptions, payload } qui était REJETÉ (send-push attend
+        // { user_id, title }) → la notif nouveau-lead ne partait jamais.
+        await Promise.all(
+          [...targetIds].map((uid) =>
+            sendPushToUser(sb, {
+              userId: uid,
+              payload: { title, body: pushBody, url: "/crm", type: "new_lead" },
             }),
-          }).catch(() => { /* non bloquant */ });
-        }
+          ),
+        );
       }
     } catch (notifErr) {
       console.error("[submit-prospect-lead] Notif non critique:", notifErr);

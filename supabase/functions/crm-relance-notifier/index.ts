@@ -36,8 +36,11 @@ serve(async (req: Request) => {
     const now = new Date();
     const nowIso = now.toISOString();
     const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    // Prospects « Contactés » qui dorment : contactés il y a > 3 jours mais ni
+    // convertis ni perdus → relance à faire (2026-07-12).
+    const cutoff3d = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [bilansNew, bilansRelance, prospects, referrals, adminsRes] = await Promise.all([
+    const [bilansNew, bilansRelance, prospects, prospectsContacted, referrals, adminsRes] = await Promise.all([
       sb
         .from("online_bilans")
         .select("coach_user_id, assigned_to_user_id")
@@ -53,6 +56,11 @@ serve(async (req: Request) => {
         .select("referrer_user_id, assigned_to_user_id")
         .eq("status", "new")
         .lt("created_at", cutoff24h),
+      sb
+        .from("prospect_leads")
+        .select("referrer_user_id, assigned_to_user_id")
+        .eq("status", "contacted")
+        .lt("contacted_at", cutoff3d),
       sb
         .from("client_referrals")
         .select("coach_id")
@@ -75,6 +83,7 @@ serve(async (req: Request) => {
     for (const r of bilansNew.data ?? []) bump((r.assigned_to_user_id ?? r.coach_user_id) as string | null);
     for (const r of bilansRelance.data ?? []) bump((r.assigned_to_user_id ?? r.coach_user_id) as string | null);
     for (const r of prospects.data ?? []) bump((r.assigned_to_user_id ?? r.referrer_user_id) as string | null);
+    for (const r of prospectsContacted.data ?? []) bump((r.assigned_to_user_id ?? r.referrer_user_id) as string | null);
     for (const r of referrals.data ?? []) bump(r.coach_id as string | null);
 
     const today = nowIso.slice(0, 10);
