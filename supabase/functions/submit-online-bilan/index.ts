@@ -24,6 +24,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPushToUser } from "../_shared/push.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -407,39 +408,21 @@ serve(async (req) => {
       }
 
       if (targetUserIds.size > 0) {
-        const subsPromises = Array.from(targetUserIds).map((uid) =>
-          sb
-            .from("push_subscriptions")
-            .select("endpoint, p256dh, auth")
-            .eq("user_id", uid),
-        );
-        const subsResults = await Promise.all(subsPromises);
-        const allSubs = subsResults.flatMap((r) => r.data ?? []);
-
-        if (allSubs.length > 0) {
-          const objLabel = objectives.length > 0
-            ? ` · ${objectives.length === 1 ? objectiveLabel(objectives[0]) : `${objectives.length} objectifs`}`
-            : "";
-          const pushBody = `${firstName}${city ? " · " + city : ""}${objLabel}`;
-          await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-            signal: AbortSignal.timeout(2500),
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              subscriptions: allSubs,
-              payload: {
-                title: "🌱 Nouveau Lead bilan online",
-                body: pushBody,
-                url: "/clients?tab=leads",
-                icon: "/icon-192.png",
-                badge: "/badge-72.png",
-              },
+        const objLabel = objectives.length > 0
+          ? ` · ${objectives.length === 1 ? objectiveLabel(objectives[0]) : `${objectives.length} objectifs`}`
+          : "";
+        const pushBody = `${firstName}${city ? " · " + city : ""}${objLabel}`;
+        // FIX 2026-07-12 : helper sendPushToUser (le fetch send-push au format
+        // { subscriptions, payload } était rejeté → notif jamais délivrée).
+        // Destination CRM (le kanban leads vit désormais sur /crm).
+        await Promise.all(
+          Array.from(targetUserIds).map((uid) =>
+            sendPushToUser(sb, {
+              userId: uid,
+              payload: { title: "🌱 Nouveau lead bilan online", body: pushBody, url: "/crm", type: "new_lead" },
             }),
-          }).catch(() => { /* non bloquant */ });
-        }
+          ),
+        );
       }
     } catch (notifErr) {
       console.error("[submit-online-bilan] Notif non critique:", notifErr);
