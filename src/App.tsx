@@ -35,6 +35,12 @@ const CrmPage = lazy(() =>
     default: module.CrmPage
   }))
 );
+// Fiche lead plein écran (Phase 2 refonte CRM, 2026-07-16).
+const CrmLeadDetailPage = lazy(() =>
+  import("./pages/CrmLeadDetailPage").then((module) => ({
+    default: module.CrmLeadDetailPage
+  }))
+);
 const MesLiensPage = lazy(() =>
   import("./pages/MesLiensPage").then((module) => ({
     default: module.MesLiensPage
@@ -827,6 +833,7 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               {/* CRM commun (VIP-4) — pipeline unifié de tous les leads. */}
               <Route path="crm" element={<CrmPage />} />
+              <Route path="crm/leads/:leadId" element={<CrmLeadDetailPage />} />
               <Route path="outils" element={<OutilsPage />} />
               <Route path="encaissement" element={<EncaissementPage />} />
               <Route path="ma-boutique" element={<BoutiqueAdminPage />} />

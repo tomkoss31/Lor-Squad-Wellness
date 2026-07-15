@@ -190,6 +190,31 @@ export function statusOptionsFor(table: CrmTable): CrmStatus[] {
   return ["new", "contacted", "converted", "lost"];
 }
 
+/** Table qui n'a pas de colonne `notes` en base (confirmé 2026-07-16) —
+    la fiche détail (Phase 2) doit masquer le champ notes pour ce cas. */
+export function tableHasNotes(table: CrmTable): boolean {
+  return table !== "client_referrals";
+}
+
+/** Décode le `CrmLead.key` (`${table}:${id}`) reçu en paramètre de route
+    `/crm/leads/:leadId`. Retourne null si le format ou la table est invalide
+    (protège la fiche détail contre une URL trafiquée ou un vieux lien mort). */
+export function parseCrmLeadKey(key: string | undefined): { table: CrmTable; id: string } | null {
+  if (!key) return null;
+  const idx = key.indexOf(":");
+  if (idx <= 0) return null;
+  const table = key.slice(0, idx);
+  const id = key.slice(idx + 1);
+  const validTables: CrmTable[] = [
+    "online_bilans",
+    "prospect_leads",
+    "client_referrals",
+    "client_referral_intentions",
+  ];
+  if (!id || !validTables.includes(table as CrmTable)) return null;
+  return { table: table as CrmTable, id };
+}
+
 interface IntentionRow {
   id: string;
   referrer_client_id: string | null;
@@ -585,6 +610,21 @@ export function useCrmLeads() {
     return null;
   }, []);
 
+  // Notes coach — générique 4 tables (Phase 2 fiche détail). client_referrals
+  // n'a pas de colonne notes en base (confirmé 2026-07-16) : erreur explicite
+  // plutôt qu'un échec silencieux, la fiche détail masque le champ pour ce cas.
+  const updateNotes = useCallback(async (lead: CrmLead, notes: string): Promise<string | null> => {
+    if (!tableHasNotes(lead.table)) {
+      return "Les recos clients n'ont pas de champ notes.";
+    }
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    const { error: e } = await sb.from(lead.table).update({ notes }).eq("id", lead.id);
+    if (e) return e.message;
+    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, notes } : l)));
+    return null;
+  }, []);
+
   // Suppression définitive (admin) depuis la table source + nettoyage archive.
   const deleteLead = useCallback(async (lead: CrmLead): Promise<string | null> => {
     const sb = await getSupabaseClient();
@@ -612,5 +652,16 @@ export function useCrmLeads() {
     return byStatus;
   }, [leads]);
 
-  return { leads, loading, error, counts, refetch: fetchAll, updateStatus, updateSource, setDormant, deleteLead };
+  return {
+    leads,
+    loading,
+    error,
+    counts,
+    refetch: fetchAll,
+    updateStatus,
+    updateSource,
+    updateNotes,
+    setDormant,
+    deleteLead,
+  };
 }
