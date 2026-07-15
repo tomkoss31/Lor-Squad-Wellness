@@ -21,10 +21,11 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { JargonTip } from "../components/ui/JargonTip";
-import { buildFunnelSummary } from "../lib/opportunityFunnelLabels";
+import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import {
   computeCrmStats,
   CRM_EDITABLE_SOURCES,
@@ -42,9 +43,7 @@ import {
 } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
-import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
-import { LeadDetailModal } from "../components/leads/LeadDetailModal";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
@@ -106,14 +105,6 @@ export function CrmPage() {
   // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
   const { curious, completionRate, loading: curiousLoading } = useCuriousLeads();
   const [showCurious, setShowCurious] = useState(false);
-
-  // Détail d'un lead bilan online (responses + conversion) — ouvert en place
-  // dans le CRM (l'ancien kanban /clients?tab=leads a été consolidé ici).
-  const onlineBilans = useOnlineBilans();
-  const [detailBilanId, setDetailBilanId] = useState<string | null>(null);
-  const detailBilan = detailBilanId
-    ? onlineBilans.bilans.find((b) => b.id === detailBilanId) ?? null
-    : null;
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -578,7 +569,6 @@ export function CrmPage() {
           onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
           onSourceChange={(lead, s) => void handleSourceChange(lead, s)}
           onCopy={(text) => void copyMessage(text)}
-          onOpenBilans={(lead) => setDetailBilanId(lead.id)}
           onAgenda={(lead) => setAgendaLead(lead)}
           dupeFlagFor={dupeFlagFor}
           onDormant={(lead) => void handleDormant(lead, true)}
@@ -614,7 +604,6 @@ export function CrmPage() {
               onStatusChange={(s) => void handleStatusChange(lead, s)}
               onSourceChange={(s) => void handleSourceChange(lead, s)}
               onCopy={(text) => void copyMessage(text)}
-              onOpenBilans={() => setDetailBilanId(lead.id)}
               onAgenda={() => setAgendaLead(lead)}
               dupeFlag={dupeFlagFor(lead)}
               archived
@@ -669,7 +658,6 @@ export function CrmPage() {
                       onStatusChange={(s) => void handleStatusChange(lead, s)}
               onSourceChange={(s) => void handleSourceChange(lead, s)}
                       onCopy={(text) => void copyMessage(text)}
-                      onOpenBilans={() => setDetailBilanId(lead.id)}
                       onAgenda={() => setAgendaLead(lead)}
                       dupeFlag={dupeFlagFor(lead)}
                       onDormant={() => void handleDormant(lead, true)}
@@ -717,45 +705,11 @@ export function CrmPage() {
         />
       ) : null}
 
-      {/* Détail lead bilan online (responses + conversion) — ouvert depuis 📂 Détails */}
-      {detailBilan ? (
-        <LeadDetailModal
-          bilan={detailBilan}
-          onClose={() => setDetailBilanId(null)}
-          onStatusChange={async (s) => {
-            await onlineBilans.updateStatus(detailBilan.id, s);
-            await refetch();
-          }}
-          onNotesChange={async (n) => {
-            await onlineBilans.updateNotes(detailBilan.id, n);
-          }}
-          onRefresh={async () => {
-            await onlineBilans.refetch();
-            await refetch();
-          }}
-          onDelete={
-            isAdmin
-              ? async () => {
-                  await onlineBilans.deleteBilan(detailBilan.id);
-                  setDetailBilanId(null);
-                  await refetch();
-                }
-              : undefined
-          }
-          onConverted={async (clientId) => {
-            await onlineBilans.convertLead(detailBilan.id, clientId);
-            setDetailBilanId(null);
-            await refetch();
-            pushToast({ tone: "success", title: "Lead converti", message: "Fiche client créée ✅" });
-          }}
-        />
-      ) : null}
-
       <footer style={footerHint}>
-        💡 Sur un lead <strong>Bilan online</strong>, le bouton <strong>📂 Détails</strong> ouvre
-        toutes ses réponses et permet de le convertir en fiche client. Les{" "}
-        <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients dans leur
-        simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au parrain.
+        💡 Clique sur un lead pour ouvrir sa fiche complète (réponses, conversion, RDV,
+        notes). Les <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients
+        dans leur simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au
+        parrain.
       </footer>
     </div>
   );
@@ -769,7 +723,6 @@ function LeadCard({
   onStatusChange,
   onSourceChange,
   onCopy,
-  onOpenBilans,
   onAgenda,
   dupeFlag,
   onDormant,
@@ -782,7 +735,6 @@ function LeadCard({
   onStatusChange: (s: CrmStatus) => void;
   onSourceChange?: (s: CrmSource) => void;
   onCopy: (text: string) => void;
-  onOpenBilans: () => void;
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
   onDormant?: () => void;
@@ -792,6 +744,7 @@ function LeadCard({
 }) {
   const { users } = useAppContext();
   const { push: pushToast } = useToast();
+  const navigate = useNavigate();
   const src = CRM_SOURCE_META[lead.source];
   // Provenance bilan online : nom du coach dont le lien a servi (via ownerUserId
   // quand un slug est présent) — sinon « lien public ».
@@ -905,9 +858,8 @@ function LeadCard({
               ) : null}
             </div>
           ) : null}
-          <button
-            type="button"
-            onClick={onOpenBilans}
+          <Link
+            to={`/crm/leads/${lead.key}`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -921,12 +873,13 @@ function LeadCard({
               fontSize: 12.5,
               fontWeight: 600,
               fontFamily: "DM Sans, sans-serif",
-              cursor: "pointer",
+              textDecoration: "none",
+              boxSizing: "border-box",
             }}
           >
             📋 Voir tout le bilan (habitudes, repas, sommeil…)
             <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-teal)" }}>→</span>
-          </button>
+          </Link>
         </div>
       ) : null}
 
@@ -996,16 +949,14 @@ function LeadCard({
                   📅 Caler un RDV
                 </MenuItem>
               ) : null}
-              {lead.table === "online_bilans" ? (
-                <MenuItem
-                  onClick={() => {
-                    onOpenBilans();
-                    setMenuOpen(false);
-                  }}
-                >
-                  📂 Détails du bilan
-                </MenuItem>
-              ) : null}
+              <MenuItem
+                onClick={() => {
+                  navigate(`/crm/leads/${lead.key}`);
+                  setMenuOpen(false);
+                }}
+              >
+                📂 Voir la fiche complète
+              </MenuItem>
               {lead.resultToken ? (
                 <MenuItem
                   onClick={() => {
@@ -1480,75 +1431,6 @@ const BILAN_OBJECTIVE_LABELS: Record<string, string> = {
   wellbeing: "Bien-être",
   perf_pro: "Perf pro",
 };
-
-// Réponses du questionnaire funnel Opportunité — bloc repliable dans la carte.
-const TEMP_META: Record<string, { emoji: string; label: string; color: string }> = {
-  hot: { emoji: "🔥", label: "Chaud", color: "var(--ls-coral)" },
-  warm: { emoji: "🌤️", label: "Tiède", color: "var(--ls-gold)" },
-  cold: { emoji: "❄️", label: "Froid", color: "var(--ls-text-muted)" },
-};
-function FunnelAnswers({
-  answers,
-  temperature,
-  score,
-}: {
-  answers: Record<string, string>;
-  temperature?: string | null;
-  score?: number | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const rows = buildFunnelSummary(answers);
-  if (rows.length === 0) return null;
-  const temp = temperature ? TEMP_META[temperature] : null;
-  return (
-    <div style={{ marginTop: 4 }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          width: "100%",
-          padding: "7px 10px",
-          borderRadius: 9,
-          border: "1px solid var(--ls-border)",
-          background: "var(--ls-surface2)",
-          color: "var(--ls-text)",
-          fontSize: 12.5,
-          fontWeight: 600,
-          fontFamily: "DM Sans, sans-serif",
-          cursor: "pointer",
-        }}
-      >
-        <span>💬 Ses réponses ({rows.length})</span>
-        {temp ? (
-          <span style={{ color: temp.color, fontWeight: 700 }}>
-            {temp.emoji} {temp.label}
-          </span>
-        ) : null}
-        {typeof score === "number" ? (
-          <span style={{ color: "var(--ls-text-hint)", fontWeight: 500 }}>· score {score}</span>
-        ) : null}
-        <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-text-hint)", fontSize: 11 }}>
-          {open ? "▴" : "▾"}
-        </span>
-      </button>
-      {open ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6, padding: "2px 2px" }}>
-          {rows.map((r) => (
-            <div key={r.id} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12, lineHeight: 1.4 }}>
-              <span aria-hidden="true" style={{ flex: "0 0 auto" }}>{r.emoji}</span>
-              <span style={{ flex: "0 0 auto", color: "var(--ls-text-hint)", minWidth: 118 }}>{r.question}</span>
-              <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>{r.answer}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 function MenuItem({
   onClick,
