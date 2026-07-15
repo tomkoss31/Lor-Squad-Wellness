@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   CRM_EDITABLE_SOURCES,
   CRM_SOURCE_META,
@@ -37,7 +38,6 @@ interface CrmLeadsListViewProps {
   onStatusChange: (lead: CrmLead, next: CrmStatus) => void;
   onSourceChange: (lead: CrmLead, next: CrmSource) => void;
   onCopy: (text: string) => void;
-  onOpenBilans: (lead: CrmLead) => void;
   onAgenda: (lead: CrmLead) => void;
   dupeFlagFor: (lead: CrmLead) => { kind: "client" | "dupe"; label: string } | null;
   onDormant: (lead: CrmLead) => void;
@@ -53,7 +53,6 @@ export function CrmLeadsListView({
   onStatusChange,
   onSourceChange,
   onCopy,
-  onOpenBilans,
   onAgenda,
   dupeFlagFor,
   onDormant,
@@ -154,7 +153,6 @@ export function CrmLeadsListView({
               onStatusChange={(s) => onStatusChange(lead, s)}
               onSourceChange={lead.table === "prospect_leads" ? (s: CrmSource) => onSourceChange(lead, s) : undefined}
               onCopy={onCopy}
-              onOpenBilans={() => onOpenBilans(lead)}
               onAgenda={() => onAgenda(lead)}
               dupeFlag={dupeFlagFor(lead)}
               onDormant={!archived ? () => onDormant(lead) : undefined}
@@ -180,7 +178,6 @@ function CrmLeadListRow({
   onStatusChange,
   onSourceChange,
   onCopy,
-  onOpenBilans,
   onAgenda,
   dupeFlag,
   onDormant,
@@ -196,7 +193,6 @@ function CrmLeadListRow({
   onStatusChange: (s: CrmStatus) => void;
   onSourceChange?: (s: CrmSource) => void;
   onCopy: (text: string) => void;
-  onOpenBilans: () => void;
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
   onDormant?: () => void;
@@ -211,62 +207,82 @@ function CrmLeadListRow({
 
   return (
     <div>
-      <button
-        type="button"
+      <div
         className="crm-list-row"
-        onClick={onToggle}
-        aria-expanded={expanded}
         style={{
           display: "flex",
           alignItems: "center",
           width: "100%",
           gap: 8,
           padding: "12px 14px",
-          border: "none",
           borderLeft: `3px solid ${statusMeta.color}`,
           borderBottom: isLast && !expanded ? "none" : "1px solid var(--ls-border)",
           background: "transparent",
-          cursor: "pointer",
-          textAlign: "left",
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        <div style={{ flex: 2, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
-            {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
-            {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
+        {/* Clic sur la ligne → fiche détail plein écran (Phase 2). Le
+            chevron reste un accordéon d'actions rapides sans quitter la
+            liste (WhatsApp/SMS/copier en 1 clic, cf. Phase 1). */}
+        <Link
+          to={`/crm/leads/${lead.key}`}
+          style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, gap: 8, textDecoration: "none", color: "inherit" }}
+        >
+          <div style={{ flex: 2, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
+              {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
+              {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {lead.viaName ? `via ${lead.viaName}` : lead.city ?? "—"}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {lead.viaName ? `via ${lead.viaName}` : lead.city ?? "—"}
+          <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {src.emoji} {src.label}
           </div>
-        </div>
-        <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {src.emoji} {src.label}
-        </div>
-        <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {lead.contact ?? (isIntentionSource ? "à demander au parrain" : "—")}
-        </div>
-        <div style={{ width: 130 }}>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "3px 10px",
-              borderRadius: 10,
-              fontSize: 10.5,
-              fontWeight: 600,
-              background: `color-mix(in srgb, ${statusMeta.color} 16%, transparent)`,
-              color: statusMeta.color,
-            }}
-          >
-            {statusMeta.emoji} {statusMeta.label}
-          </span>
-        </div>
-        <div style={{ width: 60, fontSize: 11, color: "var(--ls-text-hint)" }}>{formatLeadDate(lead.createdAt)}</div>
-        <div style={{ width: 20, fontSize: 11, color: "var(--ls-text-hint)", textAlign: "right" }}>{expanded ? "▲" : "▼"}</div>
-      </button>
+          <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {lead.contact ?? (isIntentionSource ? "à demander au parrain" : "—")}
+          </div>
+          <div style={{ width: 130 }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "3px 10px",
+                borderRadius: 10,
+                fontSize: 10.5,
+                fontWeight: 600,
+                background: `color-mix(in srgb, ${statusMeta.color} 16%, transparent)`,
+                color: statusMeta.color,
+              }}
+            >
+              {statusMeta.emoji} {statusMeta.label}
+            </span>
+          </div>
+          <div style={{ width: 60, fontSize: 11, color: "var(--ls-text-hint)" }}>{formatLeadDate(lead.createdAt)}</div>
+        </Link>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Fermer les actions rapides" : "Actions rapides"}
+          title="Actions rapides (WhatsApp/SMS/copier) sans quitter la liste"
+          style={{
+            width: 26,
+            height: 26,
+            flexShrink: 0,
+            border: "none",
+            background: "transparent",
+            color: "var(--ls-text-hint)",
+            fontSize: 11,
+            cursor: "pointer",
+          }}
+        >
+          {expanded ? "▲" : "▼"}
+        </button>
+      </div>
 
       {expanded ? (
         <div
@@ -361,11 +377,6 @@ function CrmLeadListRow({
             {lead.status !== "converted" && lead.status !== "lost" ? (
               <button type="button" onClick={onAgenda} style={actionBtn("var(--ls-purple)")}>
                 📅 Caler un RDV
-              </button>
-            ) : null}
-            {lead.table === "online_bilans" ? (
-              <button type="button" onClick={onOpenBilans} style={actionBtn("var(--ls-teal)")}>
-                📂 Détails du bilan
               </button>
             ) : null}
             <button
