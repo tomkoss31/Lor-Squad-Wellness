@@ -22,6 +22,11 @@
 //     des 4 réponses du mini-questionnaire (énergie/sommeil/objectif/dispo).
 //     Ni promesse santé, ni jargon. Fallback texte statique si IA indispo
 //     (l'email part quand même).
+//   - "crm_summary" (Phase 4 refonte CRM, 2026-07-16) : synthèse courte d'un
+//     lead CRM (source, signaux, score/température, réponses funnel, notes)
+//     + suggestion de prochaine action, pour le coach avant de le contacter.
+//     Déclenché par bouton « Analyser » côté front (CrmLeadDetailPage),
+//     JAMAIS au montage de la page — coût IA maîtrisé. Cap mensuel coach.
 //
 // Tous les appels loggés dans ai_usage_log (tokens + coût €).
 // Modèle : NOALY_MODEL (fallback LORSQUAD_AI_MODEL, défaut claude-opus-4-8).
@@ -524,6 +529,90 @@ async function handleColisReflection(sb: SupabaseClient, body: Record<string, un
   }
 }
 
+// ─── Mode 6 : crm_summary (résumé lead, Phase 4 refonte CRM 2026-07-16) ─────
+//
+// Synthétise en quelques lignes le profil d'un lead CRM (source, signaux,
+// score/température calculés côté front, historique, réponses funnel/bilan,
+// notes) et suggère une prochaine action concrète. Déclenché à la demande
+// (bouton « Analyser »), jamais au montage — coût IA maîtrisé, cap coach.
+
+const CRM_SUMMARY_SYSTEM = `Tu es Noaly, l'assistante IA de La Base 360 (club de coaching bien-être/nutrition, méthode Herbalife).
+Tu aides le COACH à lire rapidement un lead de son CRM avant de le contacter ou de le relancer.
+Donne une synthèse COURTE (4-6 lignes) : qui est ce lead, ce qu'on sait de lui (source, contexte, réponses), à quel point il semble motivé/chaud, et TERMINE par une suggestion concrète de prochaine action (ex : "Propose-lui un appel cette semaine" / "Relance-le une dernière fois avant de le mettre en pause").
+Ton : direct, factuel, pas de blabla. Tutoiement pour parler AU COACH (pas au lead). Pas de promesse santé. Si peu d'infos sont disponibles, dis-le simplement et suggère un premier contact standard.
+Tu réponds UNIQUEMENT avec le texte de la synthèse (pas de préambule, pas de titre, pas de guillemets).`;
+
+interface CrmSummaryLeadCtx {
+  firstName?: string;
+  sourceLabel?: string;
+  status?: string;
+  viaName?: string | null;
+  city?: string | null;
+  extra?: string | null;
+  notes?: string | null;
+  createdAt?: string;
+  score?: number;
+  temperature?: string;
+  stagnationDays?: number;
+  funnelAnswers?: Record<string, string> | null;
+  bilanObjectives?: string[] | null;
+  bilanMotivation?: number | null;
+}
+
+async function handleCrmSummary(sb: SupabaseClient, body: Record<string, unknown>) {
+  const coachUserId = (body.coachUserId as string) ?? null;
+  const lead = (body.lead ?? {}) as CrmSummaryLeadCtx;
+
+  if (coachUserId && (await coachCapReached(sb, coachUserId))) {
+    return json(
+      {
+        error: "cap_reached",
+        message:
+          "Tu as atteint ton quota Noaly du mois 🙏 Il se réinitialise le 1er. (L'admin peut l'augmenter.)",
+      },
+      429,
+    );
+  }
+
+  const lines: string[] = [
+    `Prénom : ${lead.firstName || "(inconnu)"}`,
+    `Source : ${lead.sourceLabel || "inconnue"}`,
+    `Statut actuel : ${lead.status || "nouveau"}`,
+  ];
+  if (lead.viaName) lines.push(`Recommandé par : ${lead.viaName}`);
+  if (lead.city) lines.push(`Ville : ${lead.city}`);
+  if (lead.extra) lines.push(`Contexte : ${lead.extra}`);
+  if (typeof lead.score === "number") {
+    lines.push(`Score interne (calculé par l'app) : ${lead.score}/10 (${lead.temperature ?? "?"})`);
+  }
+  if (typeof lead.stagnationDays === "number" && lead.stagnationDays > 0) {
+    lines.push(`Sans mouvement depuis : ${lead.stagnationDays} jour(s)`);
+  }
+  if (lead.bilanObjectives && lead.bilanObjectives.length > 0) {
+    lines.push(`Objectifs déclarés au bilan : ${lead.bilanObjectives.join(", ")}`);
+  }
+  if (typeof lead.bilanMotivation === "number") lines.push(`Motivation déclarée : ${lead.bilanMotivation}/10`);
+  if (lead.funnelAnswers && Object.keys(lead.funnelAnswers).length > 0) {
+    lines.push(`Réponses au questionnaire : ${JSON.stringify(lead.funnelAnswers)}`);
+  }
+  if (lead.notes) lines.push(`Notes du coach : ${lead.notes}`);
+
+  const data = await callAnthropic({
+    max_tokens: 500,
+    system: CRM_SUMMARY_SYSTEM,
+    messages: [{ role: "user", content: lines.join("\n") }],
+  });
+
+  const summary = (data.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("")
+    .trim();
+
+  logUsage(sb, "crm_summary", data.usage, coachUserId, null);
+  return json({ summary, model: MODEL, usage: data.usage });
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -539,6 +628,7 @@ serve(async (req: Request) => {
     if (body.mode === "client_chat") return await handleClientChat(sb, body);
     if (body.mode === "bilan_analysis") return await handleBilanAnalysis(sb, body);
     if (body.mode === "colis_reflection") return await handleColisReflection(sb, body);
+    if (body.mode === "crm_summary") return await handleCrmSummary(sb, body);
     // Défaut / rétro-compat : génération message CRM (body.lead + mode first_contact/relance).
     return await handleCrmMessage(sb, body);
   } catch (e) {
