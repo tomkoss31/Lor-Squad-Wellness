@@ -48,6 +48,8 @@ import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
+import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
+import { isStagnant, stagnationDays } from "../lib/leadActivity";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -768,6 +770,10 @@ function LeadCard({
     lastTouch,
     recordTouch,
   } = useLeadQuickActions(lead, msgCtx);
+  // Score/température unifiés + badge de stagnation (Phase 3).
+  const { temperature } = computeLeadScore(lead);
+  const temp = TEMP_META[temperature];
+  const stagnant = isStagnant(lead);
 
   return (
     <div
@@ -780,6 +786,7 @@ function LeadCard({
       title="Glisse-moi dans une autre colonne (ou utilise le sélecteur de statut)"
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span title={temp.label} aria-hidden="true">{temp.emoji}</span>
         <strong style={{ fontFamily: "Syne, sans-serif", fontSize: 14, color: "var(--ls-text)" }}>
           {lead.firstName}
         </strong>
@@ -804,6 +811,11 @@ function LeadCard({
         {lead.relanceDue ? <span style={relanceBadge}>🔔 Relance due</span> : null}
         {dupeFlag ? (
           <span style={dupeFlag.kind === "client" ? clientBadge : dupeBadge}>⚠️ {dupeFlag.label}</span>
+        ) : null}
+        {stagnant ? (
+          <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={stagnantBadge}>
+            ⏳ {stagnationDays(lead)}j
+          </span>
         ) : null}
         <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
           {formatDate(lead.createdAt)}
@@ -1300,6 +1312,19 @@ const clientBadge: React.CSSProperties = {
   background: "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
   border: "0.5px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
   color: "var(--ls-purple)",
+  whiteSpace: "nowrap",
+};
+
+// Badge de stagnation ⏳ Nj (Phase 3, 2026-07-16) — neutre volontairement
+// (pas rouge/urgent comme relanceBadge) : c'est une info, pas une alerte.
+const stagnantBadge: React.CSSProperties = {
+  fontSize: 10.5,
+  fontWeight: 700,
+  padding: "2px 8px",
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--ls-text-muted) 10%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-text-muted) 30%, transparent)",
+  color: "var(--ls-text-muted)",
   whiteSpace: "nowrap",
 };
 
