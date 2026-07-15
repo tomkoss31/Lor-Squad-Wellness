@@ -222,10 +222,17 @@ export function ResetPasswordPage() {
           >
             <strong>Mot de passe mis à jour !</strong>
             <div style={{ color: "rgba(240,237,232,0.75)", marginTop: 10 }}>
-              <strong style={{ color: "#F0EDE8" }}>Client ?</strong> Rouvre simplement
-              ton app <strong>La Base 360</strong> (l'icône sur ton écran d'accueil, ou
-              le lien que ton coach t'a envoyé).
+              <strong style={{ color: "#F0EDE8" }}>Client ?</strong> Si tu as encore
+              l'icône <strong>La Base 360</strong> sur ton écran d'accueil (ou le lien
+              que ton coach t'a envoyé), rouvre-la simplement. Sinon, connecte-toi
+              ci-dessous avec ton nouveau mot de passe.
             </div>
+            {/* Bug signalé sur la cliente Maeva (2026-07-16) : cet écran ne
+                proposait qu'un bouton "coach", laissant un client sans icône/lien
+                fonctionnel bloqué après un reset réussi. /login gère pourtant déjà
+                les identifiants client depuis le hotfix PWA login (2026-04-24,
+                loginWithSupabaseCredentials → kind "client" → redirige vers
+                /client/:token) — on l'expose maintenant explicitement ici. */}
             <button
               type="button"
               onClick={() => navigate("/login", { replace: true })}
@@ -243,7 +250,7 @@ export function ResetPasswordPage() {
                 cursor: "pointer",
               }}
             >
-              Je suis coach → me connecter
+              Me connecter avec mon nouveau mot de passe
             </button>
           </div>
         ) : null}
