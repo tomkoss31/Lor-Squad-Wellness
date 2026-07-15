@@ -458,10 +458,24 @@ export function CrmPage() {
       ) : null}
 
       {/* Section Curieux (ONLINE-B) : commencé le bilan, pas fini.
-          Masquée s'il n'y a personne (avant : s'affichait « 0 a commencé …
-          100% » quand curious.length===0 mais completionRate>0). */}
-      {!curiousLoading && curious.length > 0 ? (
+          Toujours visible dès qu'il y a de l'activité bilan (curieux OU bilans
+          complétés). État positif quand personne n'est en cours (avant : bug
+          « 0 a commencé … 100% » ; puis masquée à tort → « où est passée la
+          section ? » de Thomas 2026-07-15). */}
+      {!curiousLoading && (curious.length > 0 || completionRate > 0) ? (
         <div style={curiousPanel}>
+          {curious.length === 0 ? (
+            // Tout le monde a fini son bilan → état sain, pas de relance à faire.
+            <div style={{ ...curiousHeader, cursor: "default" }}>
+              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
+                💭 Aucun lead en cours de bilan — ceux qui démarrent vont au bout 🎉
+              </span>
+              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
+                complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
+              </span>
+            </div>
+          ) : (
+          <>
           <button
             type="button"
             onClick={() => setShowCurious((s) => !s)}
@@ -519,6 +533,8 @@ export function CrmPage() {
               )}
             </div>
           ) : null}
+          </>
+          )}
         </div>
       ) : null}
 
