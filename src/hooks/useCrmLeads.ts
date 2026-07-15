@@ -285,14 +285,14 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -364,7 +364,12 @@ export function useCrmLeads() {
           parrainPhone: null,
           parrainClientId: null,
           extra: null,
-          ownerUserId: (row.coach_user_id as string | null) ?? null,
+          // Assignation manuelle (Phase 5 routage) prioritaire sur la provenance
+          // (coach dont le lien a capté le lead) — RLS autorise déjà l'accès via
+          // les deux colonnes, seul le mapping app-level l'ignorait (bug corrigé
+          // 2026-07-16 : un lead assigné via assigned_to_user_id était invisible
+          // du filtre « mes leads » côté CRM alors que RLS le laissait passer).
+          ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.coach_user_id as string | null) ?? null,
           bilanObjectives: Array.isArray(row.objectives) ? (row.objectives as string[]) : null,
           bilanWeightTarget: (row.weight_loss_target_kg as number | null) ?? null,
           bilanMotivation: (row.motivation_score as number | null) ?? null,
@@ -421,7 +426,8 @@ export function useCrmLeads() {
           parrainClientId:
             typeof meta.from_client_id === "string" ? (meta.from_client_id as string) : null,
           extra: colisExtra,
-          ownerUserId: (row.referrer_user_id as string | null) ?? null,
+          // Cf. commentaire online_bilans — même correction (assigned_to_user_id prioritaire).
+          ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.referrer_user_id as string | null) ?? null,
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at as string,
@@ -636,6 +642,22 @@ export function useCrmLeads() {
     return null;
   }, []);
 
+  // Attribution manuelle (Phase 5 routage, suggestion validée par le coach —
+  // JAMAIS automatique). Seules online_bilans/prospect_leads ont une colonne
+  // assigned_to_user_id ; les recos/intentions dérivent leur propriétaire du
+  // parrain, non réassignable ici.
+  const assignOwner = useCallback(async (lead: CrmLead, userId: string | null): Promise<string | null> => {
+    if (lead.table !== "online_bilans" && lead.table !== "prospect_leads") {
+      return "L'attribution n'est possible que pour les leads bilan online / prospect.";
+    }
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    const { error: e } = await sb.from(lead.table).update({ assigned_to_user_id: userId }).eq("id", lead.id);
+    if (e) return e.message;
+    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, ownerUserId: userId } : l)));
+    return null;
+  }, []);
+
   // Suppression définitive (admin) depuis la table source + nettoyage archive.
   const deleteLead = useCallback(async (lead: CrmLead): Promise<string | null> => {
     const sb = await getSupabaseClient();
@@ -672,6 +694,7 @@ export function useCrmLeads() {
     updateStatus,
     updateSource,
     updateNotes,
+    assignOwner,
     setDormant,
     deleteLead,
   };

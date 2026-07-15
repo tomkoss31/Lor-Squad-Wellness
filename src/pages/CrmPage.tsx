@@ -50,6 +50,7 @@ import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
+import { tableSupportsAssignment } from "../lib/leadRouting";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -815,6 +816,11 @@ function LeadCard({
         {stagnant ? (
           <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={stagnantBadge}>
             ⏳ {stagnationDays(lead)}j
+          </span>
+        ) : null}
+        {!lead.ownerUserId && tableSupportsAssignment(lead.table) ? (
+          <span title="Non attribué — ouvre la fiche pour assigner" style={clientBadge}>
+            👤 Non attribué
           </span>
         ) : null}
         <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
