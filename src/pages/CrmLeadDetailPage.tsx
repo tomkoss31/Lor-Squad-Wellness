@@ -31,6 +31,8 @@ import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { buildCrmSmsLink, buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { relativeLeadDays } from "../lib/leadDateFormat";
+import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
+import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { LeadQualificationStepper } from "../components/leads/LeadQualificationStepper";
 import { LeadDetailBilanSections } from "../components/leads/LeadDetailBilanSections";
 import { FunnelAnswers } from "../components/crm/FunnelAnswers";
@@ -70,6 +72,7 @@ const PLACEHOLDER_LEAD: CrmLead = {
   relanceDue: false,
   resultToken: null,
   createdAt: new Date(0).toISOString(),
+  contactedAt: null,
   notes: null,
 };
 
@@ -218,6 +221,9 @@ export function CrmLeadDetailPage() {
   const statusMeta = CRM_STATUS_META[lead.status];
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
+  const { score, temperature } = computeLeadScore(lead);
+  const temp = TEMP_META[temperature];
+  const stagnant = isStagnant(lead);
 
   return (
     <div style={pageWrap}>
@@ -229,6 +235,14 @@ export function CrmLeadDetailPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h1 style={nameStyle}>{lead.firstName}</h1>
           <span style={sourceBadge(statusMeta.color)}>{src.emoji} {src.label}</span>
+          <span title={`${temp.label} · score ${score}/10`} style={sourceBadge(temp.color)}>
+            {temp.emoji} {temp.label} · {score}/10
+          </span>
+          {stagnant ? (
+            <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={sourceBadge("var(--ls-text-muted)")}>
+              ⏳ {stagnationDays(lead)}j sans mouvement
+            </span>
+          ) : null}
           {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
           {lead.dormant ? <span title="Endormi" aria-hidden="true">💤</span> : null}
         </div>

@@ -70,6 +70,11 @@ export interface CrmLead {
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
   createdAt: string;
+  /** Dernier contact confirmé (colonne contacted_at) — null si jamais contacté
+   *  OU si la table n'a pas cette colonne (client_referrals, confirmé en DB
+   *  2026-07-16). Sert de proxy « dernière activité » pour le badge de
+   *  stagnation (Phase 3) : contactedAt ?? createdAt. */
+  contactedAt: string | null;
   notes: string | null;
   /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
    *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
@@ -222,6 +227,7 @@ interface IntentionRow {
   relationship: string | null;
   status: string | null;
   created_at: string;
+  contacted_at: string | null;
   notes: string | null;
 }
 
@@ -279,14 +285,14 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, notes, coach_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, notes, referrer_user_id")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -296,7 +302,7 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("client_referral_intentions")
-          .select("id, referrer_client_id, prospect_first_name, relationship, status, created_at, notes")
+          .select("id, referrer_client_id, prospect_first_name, relationship, status, created_at, contacted_at, notes")
           .order("created_at", { ascending: false })
           .limit(500),
       ]);
@@ -371,6 +377,7 @@ export function useCrmLeads() {
           ),
           resultToken: (row.result_token as string | null) ?? null,
           createdAt: row.created_at as string,
+          contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
         });
       }
@@ -418,6 +425,7 @@ export function useCrmLeads() {
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at as string,
+          contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
           funnelAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
@@ -447,6 +455,8 @@ export function useCrmLeads() {
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at as string,
+          // client_referrals n'a pas de colonne contacted_at (confirmé DB 2026-07-16).
+          contactedAt: null,
           notes: null,
         });
       }
@@ -475,6 +485,7 @@ export function useCrmLeads() {
           relanceDue: false,
           resultToken: null,
           createdAt: row.created_at,
+          contactedAt: row.contacted_at ?? null,
           notes: row.notes ?? null,
         });
       }
