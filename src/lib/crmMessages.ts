@@ -115,3 +115,10 @@ export function buildCrmSmsLink(contact: string | null, message: string): string
   const text = encodeURIComponent(message);
   return phone ? `sms:${phone}?body=${text}` : `sms:?body=${text}`;
 }
+
+/** Telegram n'accepte pas de destinataire par numéro dans l'URL de partage
+    (contrairement à wa.me) — le coach choisit le contact dans l'app. */
+export function buildCrmTelegramLink(message: string): string {
+  const text = encodeURIComponent(message);
+  return `https://t.me/share/url?url=&text=${text}`;
+}

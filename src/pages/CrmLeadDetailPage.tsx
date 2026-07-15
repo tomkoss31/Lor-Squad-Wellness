@@ -29,11 +29,13 @@ import {
 } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { buildCrmSmsLink, buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { relativeLeadDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { LeadQualificationStepper } from "../components/leads/LeadQualificationStepper";
+import { CrmResponsePanel } from "../components/crm/CrmResponsePanel";
 import { LeadDetailBilanSections } from "../components/leads/LeadDetailBilanSections";
 import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import { LeadConvertModal } from "../components/leads/LeadConvertModal";
@@ -122,6 +124,12 @@ export function CrmLeadDetailPage() {
   const [showConvert, setShowConvert] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
+  // Résumé Noaly (Phase 4) — déclenché par bouton, jamais au montage (coût IA).
+  const [noalySummary, setNoalySummary] = useState<string | null>(null);
+  const [noalySummaryLoading, setNoalySummaryLoading] = useState(false);
+  useEffect(() => {
+    setNoalySummary(null);
+  }, [lead?.key]);
 
   const msgCtx = useMemo(() => {
     const slug = normalizeSlug((currentUser?.name ?? "").split(/\s+/)[0] ?? "");
@@ -180,6 +188,50 @@ export function CrmLeadDetailPage() {
   function copyMessage(text: string) {
     void navigator.clipboard?.writeText(text);
     pushToast({ tone: "success", title: "Copié ✓" });
+  }
+
+  async function generateNoalySummary() {
+    if (!lead) return;
+    setNoalySummaryLoading(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { score, temperature } = computeLeadScore(lead);
+      const src = CRM_SOURCE_META[lead.source];
+      const { data, error } = await sb.functions.invoke("noaly", {
+        body: {
+          mode: "crm_summary",
+          coachUserId: currentUser?.id,
+          coachFirstName: msgCtx.coachFirstName,
+          lead: {
+            firstName: lead.firstName,
+            sourceLabel: src.label,
+            status: CRM_STATUS_META[lead.status].label,
+            viaName: lead.viaName,
+            city: lead.city,
+            extra: lead.extra,
+            notes: lead.notes,
+            score,
+            temperature,
+            stagnationDays: stagnationDays(lead),
+            funnelAnswers: lead.funnelAnswers ?? null,
+            bilanObjectives: lead.bilanObjectives ?? null,
+            bilanMotivation: lead.bilanMotivation ?? null,
+          },
+        },
+      });
+      const payload = data as { summary?: string; message?: string } | null;
+      if (error || !payload?.summary) {
+        const reason = payload?.message || "IA indisponible — réessaie plus tard.";
+        pushToast({ tone: "warning", title: "Noaly", message: reason });
+        return;
+      }
+      setNoalySummary(payload.summary);
+    } catch (e) {
+      pushToast({ tone: "warning", title: "Noaly", message: e instanceof Error ? e.message : "Erreur IA." });
+    } finally {
+      setNoalySummaryLoading(false);
+    }
   }
 
   // ── Early returns APRÈS tous les hooks (rules-of-hooks) ──────────────────
@@ -319,7 +371,26 @@ export function CrmLeadDetailPage() {
               </p>
             </div>
           )}
-          {/* Réservé Phase 4 : résumé Noaly (mode crm_summary, sur bouton). */}
+          <div style={{ marginTop: 16 }}>
+            <button
+              type="button"
+              disabled={noalySummaryLoading}
+              onClick={() => {
+                if (noalySummary) { setNoalySummary(null); return; }
+                if (!window.confirm("✨ Noaly va analyser ce lead. Ça consomme des crédits — générer ?")) return;
+                void generateNoalySummary();
+              }}
+              style={secondaryBtn}
+            >
+              ✨ {noalySummaryLoading ? "Noaly analyse…" : noalySummary ? "Masquer l'analyse" : "Analyser avec Noaly"}
+            </button>
+            {noalySummary ? (
+              <div style={{ marginTop: 10, background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))", border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))", borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>✨ Analyse de Noaly</div>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--ls-text)", whiteSpace: "pre-wrap" }}>{noalySummary}</p>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* ── Colonne Actions ─────────────────────────────────────────── */}
@@ -440,6 +511,20 @@ export function CrmLeadDetailPage() {
                 </div>
               </div>
             ) : null}
+          </div>
+
+          <div style={actionBlock}>
+            <label style={label}>Templates de réponse</label>
+            <CrmResponsePanel
+              lead={lead}
+              msgCtx={msgCtx}
+              onAfterSend={(next) => {
+                // Ne bump le statut que si le lead est encore "new" — un
+                // envoi sur un lead déjà avancé (qualifié...) ne doit pas le
+                // faire régresser (même garde que l'ex-LeadDetailModal).
+                if (lead.status === "new") void handleStatusChange(next);
+              }}
+            />
           </div>
 
           <div style={actionBlock}>
