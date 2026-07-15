@@ -10,12 +10,9 @@
 
 import { useState } from "react";
 import { buildFunnelSummary } from "../../lib/opportunityFunnelLabels";
-
-export const TEMP_META: Record<string, { emoji: string; label: string; color: string }> = {
-  hot: { emoji: "🔥", label: "Chaud", color: "var(--ls-coral)" },
-  warm: { emoji: "🌤️", label: "Tiède", color: "var(--ls-gold)" },
-  cold: { emoji: "❄️", label: "Froid", color: "var(--ls-text-muted)" },
-};
+// Température unifiée (Phase 3, 2026-07) — un seul vocabulaire visuel
+// hot/warm/cold dans tout le CRM (Liste/Pipeline/Détail/carte Opportunité).
+import { TEMP_META, type LeadTemperature } from "../../lib/leadScoring";
 
 export function FunnelAnswers({
   answers,
@@ -29,7 +26,7 @@ export function FunnelAnswers({
   const [open, setOpen] = useState(false);
   const rows = buildFunnelSummary(answers);
   if (rows.length === 0) return null;
-  const temp = temperature ? TEMP_META[temperature] : null;
+  const temp = temperature && temperature in TEMP_META ? TEMP_META[temperature as LeadTemperature] : null;
   return (
     <div style={{ marginTop: 4 }}>
       <button

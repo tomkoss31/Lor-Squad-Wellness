@@ -26,6 +26,8 @@ import {
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmSmsLink, buildCrmWhatsAppLink, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
+import { computeLeadScore, TEMP_META } from "../../lib/leadScoring";
+import { isStagnant, stagnationDays } from "../../lib/leadActivity";
 import { EmptyState } from "../ui/EmptyState";
 
 type SortKey = "recent" | "oldest" | "name";
@@ -204,6 +206,10 @@ function CrmLeadListRow({
   const isIntentionSource = lead.source === "intention";
   const { message, messageLabel, aiMessage, setAiMessage, aiLoading, generateAi, lastTouch, recordTouch } =
     useLeadQuickActions(lead, msgCtx);
+  // Score/température unifiés + badge de stagnation (Phase 3).
+  const { temperature } = computeLeadScore(lead);
+  const temp = TEMP_META[temperature];
+  const stagnant = isStagnant(lead);
 
   return (
     <div>
@@ -233,12 +239,21 @@ function CrmLeadListRow({
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
               {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
               {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
+              {stagnant ? (
+                <span
+                  title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`}
+                  style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-text-hint)", whiteSpace: "nowrap" }}
+                >
+                  ⏳ {stagnationDays(lead)}j
+                </span>
+              ) : null}
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {lead.viaName ? `via ${lead.viaName}` : lead.city ?? "—"}
             </div>
           </div>
-          <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
+            <span title={temp.label} aria-hidden="true">{temp.emoji}</span>
             {src.emoji} {src.label}
           </div>
           <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
