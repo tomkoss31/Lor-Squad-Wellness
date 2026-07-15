@@ -34,6 +34,7 @@ import { buildCrmSmsLink, buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { relativeLeadDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
+import { suggestOwner, tableSupportsAssignment, type OwnerCandidate } from "../lib/leadRouting";
 import { LeadQualificationStepper } from "../components/leads/LeadQualificationStepper";
 import { CrmResponsePanel } from "../components/crm/CrmResponsePanel";
 import { LeadDetailBilanSections } from "../components/leads/LeadDetailBilanSections";
@@ -81,10 +82,10 @@ const PLACEHOLDER_LEAD: CrmLead = {
 export function CrmLeadDetailPage() {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
 
-  const { leads, loading, error, refetch, updateStatus, updateNotes, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, updateStatus, updateNotes, assignOwner, setDormant, deleteLead } = useCrmLeads();
   const onlineBilans = useOnlineBilans();
 
   const lead = useMemo(() => leads.find((l) => l.key === leadId) ?? null, [leads, leadId]);
@@ -93,6 +94,24 @@ export function CrmLeadDetailPage() {
       ? onlineBilans.bilans.find((b) => b.id === lead.id) ?? null
       : null;
   const isAdmin = currentUser?.role === "admin";
+
+  // Attribution (Phase 5) : candidats = équipe active, chargés par leads
+  // actifs déjà attribués — suggestion transparente, jamais automatique.
+  const ownerCandidates = useMemo<OwnerCandidate[]>(() => {
+    return (users ?? [])
+      .filter((u) => u.active)
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        activeLeadCount: leads.filter(
+          (l) => l.ownerUserId === u.id && !l.dormant && l.status !== "converted" && l.status !== "lost",
+        ).length,
+      }));
+  }, [users, leads]);
+  const ownerSuggestion = useMemo(
+    () => (lead && !lead.ownerUserId ? suggestOwner(ownerCandidates) : null),
+    [lead, ownerCandidates],
+  );
 
   // Garde-fou race condition (pattern ClientDetailPage.tsx) : si on arrive
   // sur la fiche juste après création du lead, un seul refetch de secours.
@@ -188,6 +207,12 @@ export function CrmLeadDetailPage() {
   function copyMessage(text: string) {
     void navigator.clipboard?.writeText(text);
     pushToast({ tone: "success", title: "Copié ✓" });
+  }
+
+  async function handleAssign(userId: string | null) {
+    if (!lead) return;
+    const err = await assignOwner(lead, userId);
+    if (err) pushToast({ tone: "error", title: "Attribution", message: err });
   }
 
   async function generateNoalySummary() {
@@ -396,6 +421,38 @@ export function CrmLeadDetailPage() {
         {/* ── Colonne Actions ─────────────────────────────────────────── */}
         <div style={colStyle}>
           <h2 style={colTitle}>Actions</h2>
+
+          {isAdmin && tableSupportsAssignment(lead.table) ? (
+            <div style={actionBlock}>
+              <label style={label} htmlFor="cld-owner">
+                Attribution {lead.ownerUserId ? "" : "— non attribué"}
+              </label>
+              {!lead.ownerUserId && ownerSuggestion ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8, fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+                  <span>
+                    💡 Suggestion : <strong style={{ color: "var(--ls-text)" }}>{ownerSuggestion.name}</strong>{" "}
+                    ({ownerSuggestion.activeLeadCount} lead{ownerSuggestion.activeLeadCount > 1 ? "s" : ""} actif{ownerSuggestion.activeLeadCount > 1 ? "s" : ""})
+                  </span>
+                  <button type="button" onClick={() => void handleAssign(ownerSuggestion.id)} style={actionBtn("var(--ls-gold)")}>
+                    Assigner
+                  </button>
+                </div>
+              ) : null}
+              <select
+                id="cld-owner"
+                value={lead.ownerUserId ?? ""}
+                onChange={(e) => void handleAssign(e.target.value || null)}
+                style={selectFull}
+              >
+                <option value="">— Non attribué —</option>
+                {ownerCandidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.activeLeadCount} actif{c.activeLeadCount > 1 ? "s" : ""})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <div style={actionBlock}>
             <label style={label} htmlFor="cld-status">Statut</label>

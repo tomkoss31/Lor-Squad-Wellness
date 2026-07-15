@@ -28,6 +28,7 @@ import { buildCrmSmsLink, buildCrmWhatsAppLink, type CrmMessageContext } from ".
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../../lib/leadActivity";
+import { tableSupportsAssignment } from "../../lib/leadRouting";
 import { EmptyState } from "../ui/EmptyState";
 
 type SortKey = "recent" | "oldest" | "name";
@@ -245,6 +246,11 @@ function CrmLeadListRow({
                   style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-text-hint)", whiteSpace: "nowrap" }}
                 >
                   ⏳ {stagnationDays(lead)}j
+                </span>
+              ) : null}
+              {!lead.ownerUserId && tableSupportsAssignment(lead.table) ? (
+                <span title="Non attribué — ouvre la fiche pour assigner" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
+                  👤 Non attribué
                 </span>
               ) : null}
             </div>
