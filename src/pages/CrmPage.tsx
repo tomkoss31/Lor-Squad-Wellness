@@ -37,18 +37,18 @@ import {
   type CrmStatus,
 } from "../hooks/useCrmLeads";
 import {
-  buildAskContactMessage,
-  buildCrmMessage,
-  buildCrmRelanceMessage,
   buildCrmSmsLink,
   buildCrmWhatsAppLink,
 } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
-import { getSupabaseClient } from "../services/supabaseClient";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
+import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { LeadDetailModal } from "../components/leads/LeadDetailModal";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
+import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
+import { Tabs } from "../components/ui/Tabs";
+import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -61,27 +61,15 @@ function normalizeSlug(input: string): string {
     .trim();
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
-}
-
-function relativeDays(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
-  if (days <= 0) return "aujourd'hui";
-  if (days === 1) return "hier";
-  return `il y a ${days}j`;
-}
-
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
   const { leads, loading, error, refetch, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
+  // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
+  // CRM 2026-07, demande Thomas « arrêter le kanban empilé comme vue principale ».
+  const [viewMode, setViewMode] = useState<"list" | "pipeline">("list");
   const isAdmin = currentUser?.role === "admin";
 
   // ── Filtre par ligne (2026-06-15) : par défaut chacun voit SES leads. Un
@@ -566,9 +554,46 @@ export function CrmPage() {
         ))}
       </div>
 
-      {/* Pipeline */}
+      {/* Switch Liste (défaut) / Pipeline — chantier refonte CRM 2026-07 */}
+      <div style={{ marginBottom: 14 }}>
+        <Tabs
+          tabs={[
+            { key: "list" as const, label: "Liste", icon: "📋" },
+            { key: "pipeline" as const, label: "Pipeline", icon: "🗂️" },
+          ]}
+          active={viewMode}
+          onChange={setViewMode}
+          variant="soft"
+          ariaLabel="Vue Liste ou Pipeline"
+        />
+      </div>
+
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
+      ) : viewMode === "list" ? (
+        <CrmLeadsListView
+          leads={filtered}
+          msgCtx={msgCtx}
+          archived={view === "archived"}
+          onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
+          onSourceChange={(lead, s) => void handleSourceChange(lead, s)}
+          onCopy={(text) => void copyMessage(text)}
+          onOpenBilans={(lead) => setDetailBilanId(lead.id)}
+          onAgenda={(lead) => setAgendaLead(lead)}
+          dupeFlagFor={dupeFlagFor}
+          onDormant={(lead) => void handleDormant(lead, true)}
+          onWake={(lead) => void handleDormant(lead, false)}
+          onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
+          emptyMessage={
+            view === "archived"
+              ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
+              : view === "historique"
+              ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
+              : leads.length === 0
+              ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
+              : "Aucun lead ne correspond aux filtres."
+          }
+        />
       ) : filtered.length === 0 ? (
         <div style={emptyState}>
           {view === "archived"
@@ -765,7 +790,7 @@ function LeadCard({
   onDelete?: () => void;
   archived?: boolean;
 }) {
-  const { currentUser, users } = useAppContext();
+  const { users } = useAppContext();
   const { push: pushToast } = useToast();
   const src = CRM_SOURCE_META[lead.source];
   // Provenance bilan online : nom du coach dont le lien a servi (via ownerUserId
@@ -776,87 +801,20 @@ function LeadCard({
         ? (users.find((u) => u.id === lead.ownerUserId)?.name ?? lead.bilanCoachSlug)
         : null
       : null;
-  // Wagon 3 chantier 8 : message généré par Noaly (l'IA de La Base 360).
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Wagon 3 chantier 7 : dernier contact (localStorage, par appareil). On
-  // l'enregistre quand le coach déclenche un message, on l'affiche ici.
-  const [lastTouch, setLastTouch] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(`crm-touch-${lead.key}`);
-    } catch {
-      return null;
-    }
-  });
-  function recordTouch() {
-    const iso = new Date().toISOString();
-    try {
-      localStorage.setItem(`crm-touch-${lead.key}`, iso);
-    } catch {
-      /* ignore */
-    }
-    setLastTouch(iso);
-  }
-
-  async function generateAi() {
-    setAiLoading(true);
-    try {
-      const sb = await getSupabaseClient();
-      if (!sb) throw new Error("Service indisponible.");
-      const { data, error } = await sb.functions.invoke("noaly", {
-        body: {
-          mode: lead.status === "contacted" ? "relance" : "first_contact",
-          coachFirstName: msgCtx.coachFirstName,
-          coachUserId: currentUser?.id,
-          bilanUrl: msgCtx.bilanUrl,
-          // Bilan déjà fait (lead bilan online) → Noaly ne reproposera pas un bilan.
-          bilanDone: lead.source === "bilan-online" || !!lead.resultToken,
-          lead: {
-            firstName: lead.firstName,
-            source: lead.source,
-            sourceLabel: src.label,
-            viaName: lead.viaName,
-            city: lead.city,
-            status: lead.status,
-            extra: lead.extra,
-            notes: lead.notes,
-          },
-        },
-      });
-      const payload = data as { message?: string; error?: string; message_text?: string } | null;
-      if (error || !payload?.message) {
-        const reason =
-          (payload as { message?: string } | null)?.message ||
-          "IA indisponible — réessaie ou utilise le message pré-rédigé.";
-        pushToast({ tone: "warning", title: "Noaly", message: reason });
-        return;
-      }
-      setAiMessage(payload.message);
-      recordTouch();
-    } catch (e) {
-      pushToast({
-        tone: "warning",
-        title: "Noaly",
-        message: e instanceof Error ? e.message : "Erreur IA.",
-      });
-    } finally {
-      setAiLoading(false);
-    }
-  }
-  // Intentions : pas de contact direct → on écrit AU PARRAIN pour obtenir
-  // le numéro. Sinon : 1er contact, puis relance douce une fois contacté.
-  const isIntention = lead.source === "intention";
-  const message = isIntention
-    ? buildAskContactMessage(lead, msgCtx)
-    : lead.status === "contacted"
-      ? buildCrmRelanceMessage(lead, msgCtx)
-      : buildCrmMessage(lead, msgCtx);
-  const messageLabel = isIntention
-    ? "Demander le contact"
-    : lead.status === "contacted"
-      ? "Relance douce"
-      : "1er contact";
+  // Logique message/canal/IA/touch — extraite dans useLeadQuickActions (chantier
+  // refonte CRM Liste/Pipeline 2026-07), partagée avec la vue Liste.
+  const {
+    isIntention,
+    message,
+    messageLabel,
+    aiMessage,
+    setAiMessage,
+    aiLoading,
+    generateAi,
+    lastTouch,
+    recordTouch,
+  } = useLeadQuickActions(lead, msgCtx);
 
   return (
     <div
