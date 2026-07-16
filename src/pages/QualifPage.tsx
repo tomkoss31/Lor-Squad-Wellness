@@ -3,17 +3,25 @@
 // (2026-07-16). Route publique /qualif/:token (même token que
 // /resultat-bilan/:token — online_bilans.result_token).
 //
-// Phase 1 : bootstrap (vérifie le paiement côté serveur, encaisse
-// nom/sexe/consentement, crée la fiche client de façon idempotente via
-// l'edge qualif-bootstrap) + écran de bienvenue. Les étapes saveur / scan
-// app / pesée-mensurations / Telegram arrivent en Phase 2-3 (state machine
-// déjà prête via `step`, il suffira de brancher les composants).
+// Parcours complet après paiement :
+//   register (identité + RGPD → crée la fiche, idempotent) → intro →
+//   saveur (si le programme a une Formula 1) → scan de l'appli →
+//   point de départ (pesée / mensurations, ClientBaselineStep) →
+//   Telegram → écran final « Ouvrir mon espace ».
+//
+// La state machine se RÉHYDRATE au chargement depuis l'état serveur (step) :
+// un client qui recharge en cours de route reprend là où il en était.
 // =============================================================================
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { PublicShell, PUBLIC_TOKENS, PUBLIC_FONTS, publicGradText } from "../components/public/PublicShell";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { getFlavorGroup, type FlavorOption } from "../data/flavorGroups";
+import { QualifFlavorStep } from "../components/qualif/QualifFlavorStep";
+import { QualifScanAppStep } from "../components/qualif/QualifScanAppStep";
+import { QualifTelegramStep } from "../components/qualif/QualifTelegramStep";
+import { ClientBaselineStep } from "../components/client-app/ClientBaselineStep";
 
 interface QualifStep {
   consentAt: string | null;
@@ -37,18 +45,38 @@ interface BootstrapDTO {
   step?: QualifStep;
 }
 
-type Status = "loading" | "not_found" | "not_paid" | "error" | "form" | "welcome";
+type Status = "loading" | "not_found" | "not_paid" | "error" | "form" | "flow";
+type Stage = "intro" | "flavor" | "scan" | "baseline" | "telegram" | "done";
+
+/** Étape de reprise à partir de l'état serveur (client qui recharge la page). */
+function initialStage(step: QualifStep | undefined): Stage {
+  if (!step) return "intro";
+  if (step.completedAt || step.telegramAt) return "done";
+  if (step.appOpenedAt) return "baseline";
+  if (step.flavorProductId || step.flavorSkipped) return "scan";
+  return "intro"; // rien de fait encore → on démarre par l'intro
+}
 
 export function QualifPage() {
   const { token } = useParams<{ token: string }>();
   const [status, setStatus] = useState<Status>("loading");
   const [info, setInfo] = useState<BootstrapDTO | null>(null);
+  const [stage, setStage] = useState<Stage>("intro");
+
+  const flavorGroup = useMemo(() => getFlavorGroup(info?.programId), [info?.programId]);
+  const firstRealStage: Stage = flavorGroup ? "flavor" : "scan";
 
   async function callBootstrap(payload: Record<string, unknown>): Promise<BootstrapDTO | null> {
     const sb = await getSupabaseClient();
     if (!sb) return null;
     const { data } = await sb.functions.invoke("qualif-bootstrap", { body: { token, ...payload } });
     return (data as BootstrapDTO | null) ?? null;
+  }
+
+  async function callUpdate(payload: Record<string, unknown>): Promise<void> {
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    await sb.functions.invoke("qualif-update", { body: { token, ...payload } });
   }
 
   useEffect(() => {
@@ -61,7 +89,12 @@ export function QualifPage() {
         return;
       }
       setInfo(res);
-      setStatus(res.registered ? "welcome" : "form");
+      if (res.registered) {
+        setStage(initialStage(res.step));
+        setStatus("flow");
+      } else {
+        setStatus("form");
+      }
     })();
     return () => {
       alive = false;
@@ -103,17 +136,6 @@ export function QualifPage() {
     );
   }
 
-  if (status === "welcome" && info) {
-    return (
-      <PublicShell defaultTheme="dark">
-        <Centered title={`Bienvenue, ${info.firstName || "toi"} !`}>
-          Ta fiche est créée. {info.coachName} va bientôt te contacter pour la suite —
-          on prépare la suite du parcours (saveur, appli, point de départ) juste ici.
-        </Centered>
-      </PublicShell>
-    );
-  }
-
   if (status === "form" && info) {
     return (
       <PublicShell defaultTheme="dark">
@@ -124,7 +146,8 @@ export function QualifPage() {
             const res = await callBootstrap({ mode: "register", lastName, sex, consent: true });
             if (res?.ok && res.registered) {
               setInfo(res);
-              setStatus("welcome");
+              setStage("intro");
+              setStatus("flow");
               return null;
             }
             return res?.error === "missing_fields"
@@ -136,7 +159,154 @@ export function QualifPage() {
     );
   }
 
+  if (status === "flow" && info) {
+    const firstName = info.firstName ?? "";
+    const clientToken = info.clientToken ?? "";
+    const clientId = info.clientId ?? "";
+
+    // Point de départ : réutilise l'écran de l'app client (thème clair, layout
+    // plein écran autonome) → rendu HORS PublicShell.
+    if (stage === "baseline") {
+      return (
+        <ClientBaselineStep
+          token={clientToken}
+          clientId={clientId}
+          firstName={firstName}
+          coachFirstName={info.coachName}
+          onDone={() => setStage("telegram")}
+        />
+      );
+    }
+
+    return (
+      <PublicShell defaultTheme="dark">
+        {stage === "intro" && (
+          <QualifIntro
+            firstName={firstName}
+            onStart={() => setStage(firstRealStage)}
+          />
+        )}
+
+        {stage === "flavor" && flavorGroup && (
+          <QualifFlavorStep
+            firstName={firstName}
+            group={flavorGroup}
+            onPick={async (option: FlavorOption) => {
+              await callUpdate({ mode: "flavor", productId: option.id, productLabel: option.label });
+              setStage("scan");
+            }}
+            onSkip={async () => {
+              await callUpdate({ mode: "skip_flavor" });
+              setStage("scan");
+            }}
+          />
+        )}
+
+        {stage === "scan" && (
+          <QualifScanAppStep
+            firstName={firstName}
+            clientToken={clientToken}
+            onNext={async () => {
+              await callUpdate({ mode: "app_opened" });
+              setStage("baseline");
+            }}
+          />
+        )}
+
+        {stage === "telegram" && (
+          <QualifTelegramStep
+            firstName={firstName}
+            onNext={async () => {
+              await callUpdate({ mode: "telegram" });
+              setStage("done");
+            }}
+          />
+        )}
+
+        {stage === "done" && (
+          <QualifDone
+            firstName={firstName}
+            onOpen={async () => {
+              await callUpdate({ mode: "complete" });
+              window.location.href = `/client/${clientToken}`;
+            }}
+          />
+        )}
+      </PublicShell>
+    );
+  }
+
   return null;
+}
+
+// ─── Intro ────────────────────────────────────────────────────────────────────
+function QualifIntro({ firstName, onStart }: { firstName: string; onStart: () => void }) {
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "70px 22px 90px", textAlign: "center" }}>
+      <div style={{ fontSize: 46 }} aria-hidden="true">
+        🎉
+      </div>
+      <h1
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontWeight: 800,
+          fontSize: "clamp(28px,6vw,38px)",
+          lineHeight: 1.12,
+          color: "var(--cream)",
+          margin: "14px 0 12px",
+        }}
+      >
+        Bienvenue, <span style={publicGradText}>{firstName || "toi"}</span> !
+      </h1>
+      <p style={{ fontFamily: PUBLIC_FONTS.body, fontSize: 15, color: "var(--cream-muted)", lineHeight: 1.6 }}>
+        Ta place est réservée, ton programme est validé. Encore 4 petites étapes (2 minutes) pour tout
+        mettre en place et bien démarrer.
+      </p>
+      <button type="button" onClick={onStart} style={{ ...ctaPrimary, marginTop: 28 }}>
+        C'est parti →
+      </button>
+    </div>
+  );
+}
+
+// ─── Écran final ──────────────────────────────────────────────────────────────
+function QualifDone({ firstName, onOpen }: { firstName: string; onOpen: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "70px 22px 90px", textAlign: "center" }}>
+      <div style={{ fontSize: 46 }} aria-hidden="true">
+        🌿
+      </div>
+      <h1
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontWeight: 800,
+          fontSize: "clamp(26px,5vw,34px)",
+          lineHeight: 1.15,
+          color: "var(--cream)",
+          margin: "14px 0 12px",
+        }}
+      >
+        Tout est prêt, <span style={publicGradText}>{firstName || "toi"}</span>
+      </h1>
+      <p style={{ fontFamily: PUBLIC_FONTS.body, fontSize: 15, color: "var(--cream-muted)", lineHeight: 1.6 }}>
+        Bienvenue dans La Base 360. Ton espace personnel t'attend — programme, conseils, progression et
+        ta messagerie avec ton coach.
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          if (busy) return;
+          setBusy(true);
+          void onOpen();
+        }}
+        disabled={busy}
+        style={{ ...ctaPrimary, marginTop: 28 }}
+      >
+        {busy ? "Ouverture…" : "Ouvrir mon espace →"}
+      </button>
+    </div>
+  );
 }
 
 function Centered({ title, children }: { title?: string; children: React.ReactNode }) {
@@ -184,10 +354,29 @@ function QualifIdentityConsentForm({
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 22px 90px" }}>
-      <div style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: PUBLIC_TOKENS.teal, marginBottom: 12 }}>
+      <div
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 2.5,
+          textTransform: "uppercase",
+          color: PUBLIC_TOKENS.teal,
+          marginBottom: 12,
+        }}
+      >
         Dernière étape avant de démarrer
       </div>
-      <h1 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(26px,5vw,34px)", lineHeight: 1.15, color: "var(--cream)", marginBottom: 10 }}>
+      <h1
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontWeight: 800,
+          fontSize: "clamp(26px,5vw,34px)",
+          lineHeight: 1.15,
+          color: "var(--cream)",
+          marginBottom: 10,
+        }}
+      >
         On finalise ta fiche, <span style={publicGradText}>{firstName || "toi"}</span>
       </h1>
       <p style={{ fontFamily: PUBLIC_FONTS.body, fontSize: 14, color: "var(--cream-muted)", lineHeight: 1.6, marginBottom: 26 }}>
@@ -256,29 +445,25 @@ function QualifIdentityConsentForm({
 
         {error ? <div style={{ fontSize: 12.5, color: "#FCA5A5" }}>{error}</div> : null}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          style={{
-            marginTop: 6,
-            padding: "14px 16px",
-            borderRadius: 12,
-            border: "none",
-            background: PUBLIC_TOKENS.gradCta,
-            color: "#06241f",
-            fontFamily: PUBLIC_FONTS.display,
-            fontWeight: 800,
-            fontSize: 15,
-            cursor: submitting ? "wait" : "pointer",
-            opacity: submitting ? 0.7 : 1,
-          }}
-        >
+        <button type="submit" disabled={submitting} style={{ ...ctaPrimary, opacity: submitting ? 0.7 : 1, cursor: submitting ? "wait" : "pointer" }}>
           {submitting ? "Création de ta fiche…" : "Continuer →"}
         </button>
       </form>
     </div>
   );
 }
+
+const ctaPrimary: React.CSSProperties = {
+  padding: "14px 16px",
+  borderRadius: 12,
+  border: "none",
+  background: PUBLIC_TOKENS.gradCta,
+  color: "#06241f",
+  fontFamily: PUBLIC_FONTS.display,
+  fontWeight: 800,
+  fontSize: 15,
+  cursor: "pointer",
+};
 
 const fieldLabel: React.CSSProperties = {
   display: "block",
