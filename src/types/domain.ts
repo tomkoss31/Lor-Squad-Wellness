@@ -295,9 +295,18 @@ export interface AssessmentQuestionnaire {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (un client grignote le matin ET le soir).
+   * ⚠️ Les bilans enregistrés avant cette date contiennent encore une string.
+   * Toujours lire via normalizeMultiValue() (src/lib/multiChoice.ts).
+   */
+  snackingMoment: string[] | string;
   cravingsPreference: string;
-  snackingTrigger: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (faim ET stress ET ennui).
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  snackingTrigger: string[] | string;
   waterIntake: number;
   drinksCoffee: string;
   coffeePerDay: number;
@@ -311,7 +320,11 @@ export interface AssessmentQuestionnaire {
   energyLevel: string;
   pastAttempts: string;
   hardestPart: string;
-  mainBlocker: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (plusieurs blocages cumulés).
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  mainBlocker: string[] | string;
   objectiveFocus: string;
   targetWeight?: number;
   motivation: number;

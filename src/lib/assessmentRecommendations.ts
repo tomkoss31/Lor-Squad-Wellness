@@ -1,3 +1,5 @@
+import { multiValueIncludes, type MultiChoiceValue } from "./multiChoice";
+
 export type AssessmentNeedId =
   | "hydration"
   | "energy"
@@ -20,9 +22,11 @@ export interface AssessmentRecommendationSource {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /** Multi depuis 2026-07-16 — lire via normalizeMultiValue (ancien format string possible). */
+  snackingMoment: MultiChoiceValue;
   cravingsPreference: string;
-  snackingTrigger: string;
+  /** Multi depuis 2026-07-16 — lire via normalizeMultiValue (ancien format string possible). */
+  snackingTrigger: MultiChoiceValue;
   waterIntake: number;
   energyLevel: string;
   transitStatus: string;
@@ -384,7 +388,10 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
   if (
     source.energyLevel === "Faible" ||
     source.energyLevel === "Moyen" ||
-    source.snackingTrigger === "Fatigue"
+    // Multi depuis 2026-07-16 : "Fatigue" peut désormais être coché avec
+    // d'autres causes (faim, stress...). includes() couvre aussi l'ancien
+    // format string via normalizeMultiValue.
+    multiValueIncludes(source.snackingTrigger, "Fatigue")
   ) {
     needs.push({
       id: "energy",
@@ -508,22 +515,24 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
     });
   }
 
+  // Fix 2026-07-16 : "Tres souvent" (sans accent) ne correspondait à AUCUNE
+  // option réelle — l'UI propose "Très souvent" (NewAssessmentPage). Ces deux
+  // branches étaient donc mortes : un client "Très souvent" sur les produits
+  // sucrés ne déclenchait pas le besoin (ni la priorité 8). Corrigé.
+  const heavySugar = source.sugaryProducts === "Très souvent";
+  const frequentSnacking = source.snackingFrequency === "Souvent";
   if (
-    source.snackingFrequency === "Souvent" ||
-    source.sugaryProducts === "Tres souvent" ||
+    frequentSnacking ||
+    heavySugar ||
     source.sugaryProducts === "Souvent" ||
     source.cravingsPreference === "Sucré"
   ) {
     needs.push({
       id: "snacking_control",
-      priority:
-        source.snackingFrequency === "Souvent" || source.sugaryProducts === "Tres souvent"
-          ? 8
-          : 6,
-      reasonLabel:
-        source.snackingFrequency === "Souvent"
-          ? "Le grignotage revient souvent dans la journee."
-          : "Les envies sucrées merite un encas plus cadre."
+      priority: frequentSnacking || heavySugar ? 8 : 6,
+      reasonLabel: frequentSnacking
+        ? "Le grignotage revient souvent dans la journee."
+        : "Les envies sucrées merite un encas plus cadre."
     });
   }
 
