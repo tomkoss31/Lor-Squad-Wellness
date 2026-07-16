@@ -325,7 +325,14 @@ export interface AssessmentQuestionnaire {
    * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
    */
   mainBlocker: string[] | string;
-  objectiveFocus: string;
+  /**
+   * Objectif(s) exprimé(s) par le client — choix MULTIPLE depuis 2026-07-16
+   * ("Prise de masse" ET "Énergie"). À ne pas confondre avec `objective`
+   * (AssessmentRecord.objective) qui reste MONO : c'est l'aiguillage interne
+   * sport / perte de poids, dérivé d'ici.
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  objectiveFocus: string[] | string;
   targetWeight?: number;
   motivation: number;
   desiredTimeline: string;

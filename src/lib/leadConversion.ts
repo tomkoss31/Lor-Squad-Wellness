@@ -121,7 +121,7 @@ export function buildEmptyQuestionnaire(
     pastAttempts: "",
     hardestPart: "",
     mainBlocker: [],
-    objectiveFocus: "",
+    objectiveFocus: [],
     motivation: 0,
     desiredTimeline: "",
     recommendations: [],
