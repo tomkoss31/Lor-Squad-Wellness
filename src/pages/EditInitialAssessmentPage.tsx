@@ -12,6 +12,7 @@ import { pvProductCatalog } from "../data/pvCatalog";
 import { QuantityStepper } from "../components/assessment/QuantityStepper";
 import { PROGRAM_CHOICES } from "../data/programs";
 import { refreshClientRecap } from "../services/supabaseService";
+import { formatMultiValue, parseMultiInput } from "../lib/multiChoice";
 // import { getSupabaseClient } from "../services/supabaseClient"; // remplacé par updateClientInfo (2026-05-22)
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
@@ -742,9 +743,12 @@ export function EditInitialAssessmentPage() {
               <TextField label="Proteines a chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
               <TextField label="Produits sucres" value={questionnaire.sugaryProducts} onChange={(value) => updateQuestionnaire("sugaryProducts", value)} />
               <TextField label="Frequence du grignotage" value={questionnaire.snackingFrequency} onChange={(value) => updateQuestionnaire("snackingFrequency", value)} />
-              <TextField label="Moment du grignotage" value={questionnaire.snackingMoment} onChange={(value) => updateQuestionnaire("snackingMoment", value)} />
+              {/* Multi depuis 2026-07-16 : édités ici en liste séparée par des
+                  virgules (cet écran est full texte libre). formatMultiValue
+                  affiche aussi correctement les anciens bilans en string. */}
+              <TextField label="Moment du grignotage (séparer par des virgules)" value={formatMultiValue(questionnaire.snackingMoment)} onChange={(value) => updateQuestionnaire("snackingMoment", parseMultiInput(value))} />
               <TextField label="Type d'envie" value={questionnaire.cravingsPreference} onChange={(value) => updateQuestionnaire("cravingsPreference", value)} />
-              <TextField label="Declencheur" value={questionnaire.snackingTrigger} onChange={(value) => updateQuestionnaire("snackingTrigger", value)} />
+              <TextField label="Causes du grignotage (séparer par des virgules)" value={formatMultiValue(questionnaire.snackingTrigger)} onChange={(value) => updateQuestionnaire("snackingTrigger", parseMultiInput(value))} />
               <MetricField label="Eau / jour (L)" value={questionnaire.waterIntake} onChange={(value) => updateQuestionnaire("waterIntake", Number(value))} />
               <TextField label="Cafe" value={questionnaire.drinksCoffee} onChange={(value) => updateQuestionnaire("drinksCoffee", value)} />
               <MetricField label="Cafes / jour" value={questionnaire.coffeePerDay} onChange={(value) => updateQuestionnaire("coffeePerDay", Number(value))} />
@@ -801,7 +805,7 @@ export function EditInitialAssessmentPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <AreaField label="Tentatives passees" value={questionnaire.pastAttempts} onChange={(value) => updateQuestionnaire("pastAttempts", value)} rows={3} />
               <AreaField label="Le plus difficile" value={questionnaire.hardestPart} onChange={(value) => updateQuestionnaire("hardestPart", value)} rows={3} />
-              <AreaField label="Blocage principal" value={questionnaire.mainBlocker} onChange={(value) => updateQuestionnaire("mainBlocker", value)} rows={3} />
+              <AreaField label="Blocages (séparer par des virgules)" value={formatMultiValue(questionnaire.mainBlocker)} onChange={(value) => updateQuestionnaire("mainBlocker", parseMultiInput(value))} rows={3} />
               <AreaField label="Produits optionnels déjà pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
             </div>
           </SectionCard>
