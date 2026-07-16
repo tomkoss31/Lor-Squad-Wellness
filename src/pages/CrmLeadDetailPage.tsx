@@ -574,8 +574,8 @@ export function CrmLeadDetailPage() {
             <div style={actionBlock}>
               <label style={label}>Lien Résultat Bilan</label>
               <div style={hint}>
-                Sa page premium personnalisée (bilan + programme + caisse). Envoie-la pour déclencher
-                le paiement.
+                Sa page premium personnalisée (bilan + programme + caisse). Vérifie-la avant de
+                l'envoyer — c'est elle qui déclenche le paiement.
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
                 {(() => {
@@ -584,6 +584,9 @@ export function CrmLeadDetailPage() {
                   const msg = `Coucou ${lead.firstName} 🌿 j'ai préparé ta page perso avec ton bilan complet et le programme qu'on a vu ensemble. Tout est ici (tu peux même démarrer directement) 👉 ${link}\n\nDis-moi si tu as la moindre question, je suis là 💛\n${msgCtx.coachFirstName}`;
                   return (
                     <>
+                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #8b5cf6)")}>
+                        👁️ Voir la page (vérif)
+                      </a>
                       <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-gold)")}>
                         📋 Copier le message + lien
                       </button>
