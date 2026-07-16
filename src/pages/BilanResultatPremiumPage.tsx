@@ -24,7 +24,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import {
   PublicShell,
   PUBLIC_TOKENS,
@@ -79,6 +79,7 @@ function capitalize(s: string) {
 
 export function BilanResultatPremiumPage() {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Retour de la caisse (redirect_url → ?paid=1). Stripe ajoute &session_id=cs_…
   const justPaid = searchParams.get("paid") === "1";
@@ -182,6 +183,45 @@ export function BilanResultatPremiumPage() {
       alive = false;
     };
   }, [token]);
+
+  // Fix bug (2026-07-16, chantier Qualif) : au retour Square (?paid=1, pas de
+  // session_id), rien ne rafraîchissait jamais data.paid — si le webhook
+  // n'était pas encore arrivé au chargement, l'utilisateur restait bloqué sur
+  // « on finalise ta confirmation » indéfiniment (fallait recharger la page à
+  // la main). On poll get-online-bilan-results tant que le paiement n'est pas
+  // confirmé côté serveur — couvre Square (aucun autre mécanisme) et sert de
+  // filet de sécurité pour Stripe si confirm-stripe-payment est lent.
+  useEffect(() => {
+    if (!token || !justPaid || !data || data.paid === true) return;
+    let alive = true;
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = window.setInterval(() => {
+      void (async () => {
+        attempts += 1;
+        if (!alive) return;
+        try {
+          const sb = await getSupabaseClient();
+          if (!sb || !alive) return;
+          const { data: res } = await sb.functions.invoke("get-online-bilan-results", { body: { token } });
+          const rp = res as { paid?: boolean } | null;
+          if (!alive) return;
+          if (rp?.paid === true) {
+            setData((d) => (d ? { ...d, paid: true } : d));
+            window.clearInterval(interval);
+            return;
+          }
+        } catch {
+          /* on retente au prochain tick */
+        }
+        if (attempts >= maxAttempts) window.clearInterval(interval);
+      })();
+    }, 2000);
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, [token, justPaid, data?.paid]);
 
   const firstName = useMemo(() => capitalize((data?.bilan.firstName ?? "").trim()), [data]);
   const primaryObjective = useMemo(() => {
@@ -497,9 +537,16 @@ export function BilanResultatPremiumPage() {
                   <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Paiement reçu, merci {firstName} !</div>
                 </div>
                 <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
-                  C'est officiel, tu démarres. {coach.name} te contacte très vite pour ton
-                  programme, ta saveur et ta première pesée. Bienvenue !
+                  C'est officiel, tu démarres. Encore 2 minutes pour finaliser ton inscription
+                  (règlement, ta saveur, ton point de départ) et tu es prêt·e. Bienvenue !
                 </p>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/qualif/${token}`)}
+                  style={{ ...ctaPrimary, width: "100%", marginTop: 16 }}
+                >
+                  Continuer mon inscription →
+                </button>
               </div>
             ) : justPaid ? (
               // Retour caisse mais webhook pas encore confirmé côté serveur : on

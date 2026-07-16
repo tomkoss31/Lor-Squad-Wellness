@@ -13,6 +13,7 @@ import { ClientXpBanner } from "../../features/client-xp/ClientXpBanner";
 import { recordClientXp } from "../../features/client-xp/useClientXp";
 import { ClientMoodCheckIn } from "./ClientMoodCheckIn";
 import { ClientVipHomeSection } from "../../features/client-vip/ClientVipHomeSection";
+import { TELEGRAM_GROUP_URL } from "../../lib/telegram";
 
 interface MetricEntry {
   date: string;
@@ -70,7 +71,6 @@ interface Props {
   onCalendarConfirmed?: () => void;
 }
 
-const TELEGRAM_GROUP_URL = "https://t.me/+ul1vgYs-uS0yNmFk";
 const GOOGLE_MAPS_LA_BASE =
   "https://www.google.com/maps/search/?api=1&query=La+Base+Shakes+and+drinks+Verdun";
 
