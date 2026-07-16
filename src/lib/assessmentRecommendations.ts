@@ -582,12 +582,17 @@ function getRecommendedProgramId(
     return "p-sport-discovery";
   }
 
+  // Fix 2026-07-16 (audit programmes) : "p-booster-1"/"p-booster-2" (avec tiret)
+  // ne correspondaient a AUCUN id reel — PROGRAM_INCLUDED_PRODUCT_IDS et
+  // PROGRAMS_LEGACY utilisent "p-booster1"/"p-booster2" (sans tiret). Latent
+  // aujourd'hui (valeur non consommee hors de ce fichier), mais piege garanti
+  // des que quelqu'un branchera la reco de programme.
   if (needIds.includes("visceral_fat") || needIds.includes("digestive_support")) {
-    return "p-booster-1";
+    return "p-booster1";
   }
 
   if (needIds.includes("energy") && needIds.includes("hydration")) {
-    return "p-booster-2";
+    return "p-booster2";
   }
 
   if (
@@ -602,11 +607,11 @@ function getRecommendedProgramId(
 }
 
 function getProgramReason(programId: string, needs: DetectedNeed[]) {
-  if (programId === "p-booster-1") {
+  if (programId === "p-booster1") {
     return "La priorite du moment melange base routine et soutien digestif / viscerale.";
   }
 
-  if (programId === "p-booster-2") {
+  if (programId === "p-booster2") {
     return "Le profil demande une routine plus dynamique autour de l'energie et de l'hydratation.";
   }
 
