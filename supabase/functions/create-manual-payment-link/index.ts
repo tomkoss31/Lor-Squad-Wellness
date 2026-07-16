@@ -1,19 +1,21 @@
 // =============================================================================
-// create-manual-payment-link — lien de paiement Stripe « montant libre »
-// (chantier Encaissement distri, 2026-06-15).
+// create-manual-payment-link — lien de paiement « montant libre »
+// (chantier Encaissement distri, 2026-06-15 ; Square ajouté 2026-07-16).
 //
 // Cas d'usage : le distri veut encaisser HORS bilan online (client au comptoir,
-// panier perso, montant sur-mesure) et envoyer un lien par WhatsApp/SMS.
+// panier perso, montant sur-mesure — utilisé par PanierPage « Mon panier » ET
+// ThankYouStep « fin de bilan physique ») et envoyer un lien par WhatsApp/SMS.
 //
 // Sécurité : appel AUTHENTIFIÉ (JWT du distri connecté). On lit auth.uid() →
-// le distri ne peut créer un lien que sur SON propre compte Stripe. La clé
-// secrète reste CÔTÉ SERVEUR (jamais dans le navigateur, contrairement à une
-// app HTML front). Le montant est validé serveur (bornes), pas de confiance
-// aveugle au front.
+// le distri ne peut créer un lien que sur SON propre compte (Square ou
+// Stripe). Les credentials restent CÔTÉ SERVEUR (jamais dans le navigateur).
+// Le montant est validé serveur (bornes), pas de confiance aveugle au front.
 //
-// On crée un Stripe Payment Link (URL permanente, idéale pour WhatsApp) :
-//   1. POST /v1/prices  (unit_amount + product name)
-//   2. POST /v1/payment_links  (line_item = price)
+// Multi-provider (même logique que create-payment-link) :
+//   - Square → POST /v2/online-checkout/payment-links (quick_pay), confirmé
+//     par le webhook square-payment-webhook (match sur provider_order_id,
+//     online_bilan_id peut être null).
+//   - Stripe → Payment Link permanent (POST /v1/prices puis /v1/payment_links).
 // Trace dans bilan_orders (online_bilan_id null, program_id 'manual').
 //
 // Déploiement : supabase functions deploy create-manual-payment-link
@@ -26,6 +28,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SQUARE_VERSION = "2026-05-20";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,15 +74,72 @@ serve(async (req: Request) => {
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Encaissement du distri (sa clé Stripe, lue en service_role).
+    // Encaissement du distri (ses credentials, lues en service_role).
     const { data: settings } = await sb
       .from("coach_payment_settings")
-      .select("provider, active, stripe_secret_key")
+      .select("provider, active, stripe_secret_key, square_access_token, square_location_id, square_env")
       .eq("coach_user_id", coachId)
       .maybeSingle();
-    if (!settings?.active || settings.provider !== "stripe") {
-      return json({ error: "not_configured" }, 200);
+    if (!settings?.active) return json({ error: "not_configured" }, 200);
+
+    // ── Square — Payment Link quick_pay (même pattern que create-payment-link) ──
+    if (settings.provider === "square") {
+      const squareToken = String(settings.square_access_token ?? "").trim();
+      const squareLoc = String(settings.square_location_id ?? "").trim();
+      if (!squareToken || !squareLoc) return json({ error: "not_configured" }, 200);
+
+      const host =
+        settings.square_env === "sandbox"
+          ? "https://connect.squareupsandbox.com"
+          : "https://connect.squareup.com";
+
+      const sqRes = await fetch(`${host}/v2/online-checkout/payment-links`, {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          Authorization: `Bearer ${squareToken}`,
+          "Square-Version": SQUARE_VERSION,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idempotency_key: crypto.randomUUID(),
+          quick_pay: {
+            name: description,
+            price_money: { amount: amountCents, currency: "EUR" },
+            location_id: squareLoc,
+          },
+          payment_note: clientName ? `${description} · ${clientName}`.slice(0, 500) : description.slice(0, 500),
+        }),
+      });
+      if (!sqRes.ok) {
+        console.warn("[manual-link] Square", sqRes.status, (await sqRes.text()).slice(0, 300));
+        return json({ error: "provider_error" }, 200);
+      }
+      const sqData = (await sqRes.json()) as {
+        payment_link?: { id?: string; url?: string; order_id?: string };
+      };
+      const link = sqData.payment_link;
+      if (!link?.url) return json({ error: "provider_error" }, 200);
+
+      const { error: insErr } = await sb.from("bilan_orders").insert({
+        online_bilan_id: null,
+        coach_user_id: coachId,
+        prospect_first_name: clientName,
+        program_id: "manual",
+        program_name: description,
+        amount_cents: amountCents,
+        currency: "EUR",
+        provider: "square",
+        provider_payment_link_id: link.id ?? null,
+        provider_order_id: link.order_id ?? link.id ?? null,
+        payment_url: link.url,
+      });
+      if (insErr) console.warn("[manual-link] order insert:", insErr.message);
+
+      return json({ url: link.url, provider: "square" });
     }
+
+    if (settings.provider !== "stripe") return json({ error: "not_configured" }, 200);
     const secret = String(settings.stripe_secret_key ?? "").trim();
     if (!secret.startsWith("sk_")) return json({ error: "not_configured" }, 200);
 
