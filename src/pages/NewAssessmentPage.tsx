@@ -129,8 +129,9 @@ type AssessmentForm = {
   hardestPart: string;
   /** Multi depuis 2026-07-16 (plusieurs blocages cumulés). */
   mainBlocker: string[];
-  objectiveFocus: string;
-  /** Chantier bilan updates (2026-04-20) : texte libre si objectiveFocus === "Autre". */
+  /** Multi depuis 2026-07-16 ("Prise de masse" ET "Énergie"). */
+  objectiveFocus: string[];
+  /** Chantier bilan updates (2026-04-20) : texte libre si "Autre" est coché. */
   customGoal: string;
   /** Chantier bilan updates (2026-04-20) : snacks/fast-food/resto par semaine. */
   snacksFastFoodPerWeek: number | null;
@@ -290,7 +291,7 @@ const initialForm: AssessmentForm = {
   pastAttempts: "",
   hardestPart: "",
   mainBlocker: [],
-  objectiveFocus: "",
+  objectiveFocus: [],
   customGoal: "",
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
@@ -712,8 +713,10 @@ export function NewAssessmentPage() {
         setStepWarning("Prénom et nom du client sont obligatoires pour continuer.");
         return;
       }
-      if (!form.objectiveFocus) {
-        setStepWarning("Choisis un objectif principal pour le client.");
+      // ⚠️ Multi depuis 2026-07-16 : `[]` est TRUTHY, un simple `!form.x`
+      // laisserait passer un bilan sans aucun objectif coché.
+      if (form.objectiveFocus.length === 0) {
+        setStepWarning("Choisis au moins un objectif pour le client.");
         return;
       }
     }
@@ -1008,9 +1011,22 @@ export function NewAssessmentPage() {
   })();
 
 
-  function updateObjectiveFocus(value: string) {
-    update("objectiveFocus", value);
-    const newObjective = value === "Prise de masse" ? "sport" : "weight-loss";
+  /**
+   * Objectif(s) du client — MULTI depuis 2026-07-16 ("Prise de masse" ET
+   * "Énergie", demande Thomas).
+   *
+   * ⚠️ `objective` (sport | weight-loss) reste MONO : ce n'est pas l'objectif
+   * client, c'est l'AIGUILLAGE du parcours (il fait apparaître 2 étapes sport,
+   * pilote les calculs protéines, les programmes, et il est contraint par un
+   * CHECK SQL sur clients + assessments). On le DÉRIVE donc des cases cochées :
+   * dès que "Prise de masse" est coché, le bilan bascule en parcours sport, peu
+   * importe ce qui est coché à côté. Même principe que le bilan online, qui
+   * collecte plusieurs objectifs puis les réduit (cf. mapOnlineObjective).
+   */
+  function updateObjectiveFocus(values: string[]) {
+    update("objectiveFocus", values);
+    const newObjective = values.includes("Prise de masse") ? "sport" : "weight-loss";
+    if (newObjective === form.objective) return; // rien d'autre à reset
     update("objective", newObjective);
     update("selectedProgramId", "");
     // Fix bug 2026-05-05 : le programme par defaut doit aussi se reset
@@ -1133,11 +1149,15 @@ export function NewAssessmentPage() {
       return;
     }
 
-    if (!form.objectiveFocus.trim()) {
-      setSaveError("Choisis d'abord l'objectif principal du client.");
+    if (form.objectiveFocus.length === 0) {
+      setSaveError("Choisis d'abord au moins un objectif pour le client.");
       goToStep(0);
       return;
     }
+    // Rendu texte des objectifs cochés : "Prise de masse + Énergie".
+    // Sert au résumé du bilan ET à client_recaps.objective (colonne TEXT — un
+    // tableau y serait stocké n'importe comment).
+    const objectiveFocusLabel = form.objectiveFocus.join(" + ");
 
     // Chantier refonte bilan (2026-04-24) : impossible de valider sans
     // avoir planifié de RDV suivi (sauf suivi libre explicite).
@@ -1189,9 +1209,10 @@ export function NewAssessmentPage() {
       objective: form.objective,
       programId,
       programTitle,
+      // Multi : "prise de masse + énergie" plutôt qu'un seul mot.
       summary: startsImmediately
-        ? `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
-        : `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
+        ? `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
+        : `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
       notes:
         form.comment.trim() ||
         (startsImmediately
@@ -1368,7 +1389,10 @@ export function NewAssessmentPage() {
               client_last_name: form.lastName?.trim() ?? '',
               assessment_date: new Date().toISOString(),
               program_title: programTitle || null,
-              objective: form.objectiveFocus || null,
+              // client_recaps.objective est une colonne TEXT : on aplatit les
+              // objectifs cochés ("Prise de masse + Énergie"). Sans ça, un
+              // tableau y atterrirait sérialisé n'importe comment (2026-07-16).
+              objective: objectiveFocusLabel || null,
               body_scan: {
                 weight: form.weight || null,
                 bodyFat: form.bodyFat || null,
@@ -2057,11 +2081,15 @@ export function NewAssessmentPage() {
                   accent="gold"
                 >
                   <div className="grid gap-4 md:grid-cols-2">
-                    <ChoiceGroup
-                      label="Objectif principal"
-                      value={form.objectiveFocus}
+                    {/* Multi depuis 2026-07-16 : un client vise souvent 2 choses
+                        à la fois ("prise de masse ET énergie"). Cocher "Prise de
+                        masse" bascule le bilan en parcours sport (cf.
+                        updateObjectiveFocus). */}
+                    <MultiChoiceGroup
+                      label="Objectifs"
+                      values={normalizeMultiValue(form.objectiveFocus)}
                       options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
-                      onChange={updateObjectiveFocus}
+                      onToggle={updateObjectiveFocus}
                     />
                     <TimelineChoiceField
                       label="Délai souhaité"
@@ -2070,7 +2098,7 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
-                  {form.objectiveFocus === "Autre" && (
+                  {form.objectiveFocus.includes("Autre") && (
                     <AreaField
                       label="Précise ton objectif"
                       value={form.customGoal ?? ""}
