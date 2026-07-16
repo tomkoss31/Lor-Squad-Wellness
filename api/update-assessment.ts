@@ -1,30 +1,56 @@
 import { createClient } from "@supabase/supabase-js";
 
+// ⚠️ Duplication assumee de src/data/pvCatalog.ts (cette API tourne cote Vercel
+// et ne peut pas importer le front). TOUTE modif ici doit etre repercutee la-bas
+// et inversement. Aligne le 2026-07-16 (audit programmes) : ajout de "unit"
+// (routine VIDE) + alias des ids legacy "p-*" qui existent reellement en base.
 const pvPrograms = [
   {
     id: "starter",
     title: "Programme Starter",
-    alias: ["Programme Decouverte", "Programme Starter", "Decouverte", "Starter"]
+    alias: [
+      "Programme Decouverte",
+      "Programme Starter",
+      "Decouverte",
+      "Découverte",
+      "Starter",
+      "p-discovery",
+      "discovery"
+    ]
   },
   {
     id: "premium",
     title: "Programme Premium",
-    alias: ["Programme Premium", "Premium"]
+    alias: ["Programme Premium", "Premium", "p-premium"]
   },
   {
     id: "booster-1",
     title: "Programme Booster 1",
-    alias: ["Programme Booster 1", "Booster 1"]
+    alias: ["Programme Booster 1", "Booster 1", "p-booster1", "booster1"]
   },
   {
     id: "booster-2",
     title: "Programme Booster 2",
-    alias: ["Programme Booster 2", "Booster 2"]
+    alias: ["Programme Booster 2", "Booster 2", "p-booster2", "booster2"]
   },
   {
     id: "custom",
     title: "Suivi personnalise",
     alias: ["Suivi personnalise", "Suivi personnalisé", "Personnalise", "Personnalisé"]
+  },
+  {
+    id: "unit",
+    title: "À l'unité",
+    alias: [
+      "À l'unité",
+      "A l'unite",
+      "Unite",
+      "Unité",
+      "A la carte",
+      "À la carte",
+      "p-unit",
+      "unit"
+    ]
   }
 ];
 
@@ -33,7 +59,9 @@ const pvProgramProducts: Record<string, string[]> = {
   premium: ["aloe-vera", "the-51g", "formula-1", "pdm"],
   "booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
   "booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
-  custom: ["formula-1"]
+  custom: ["formula-1"],
+  // Vente a l'unite : AUCUNE routine imposee (cf. pvCatalog.ts). Doit rester vide.
+  unit: []
 };
 
 const pvProductCatalog = [
@@ -181,10 +209,14 @@ function resolvePvProgramId(programTitleOrId: string | null | undefined) {
     return exact.id;
   }
 
+  // Repli 2026-07-16 : "starter" avant, ce qui injectait 3 produits fantomes
+  // (aloe-vera + the-51g + formula-1) des que le titre n'etait pas reconnu
+  // ("À l'unité", "Programme a confirmer", ""). On replie sur "unit" dont la
+  // routine est vide : un titre inconnu n'invente plus de produits.
   return (
     pvPrograms.find((program) =>
       normalized.includes(normalizeProgramLabel(program.title.replace("Programme ", "")))
-    )?.id ?? "starter"
+    )?.id ?? "unit"
   );
 }
 
@@ -212,9 +244,15 @@ function buildSeedPvProducts(payload: {
       array.indexOf(productId) === index &&
       pvProductCatalog.some((product) => product.id === productId)
   );
-  const productIds = selectedProductIds.length
-    ? selectedProductIds
-    : pvProgramProducts[payload.programId] ?? pvProgramProducts.starter;
+  // Fix 2026-07-16 : aligne sur src/services/supabaseService.ts (UNION routine
+  // du programme + produits retenus). Avant c'etait un OU exclusif — editer un
+  // bilan recomposait donc le client differemment de sa creation (perte de la
+  // routine du pack des qu'un seul produit etait retenu). Et le repli
+  // `?? pvProgramProducts.starter` injectait la routine Starter pour tout
+  // programme inconnu ("À l'unité") -> produits fantomes. Repli desormais [].
+  const productIds = Array.from(
+    new Set([...(pvProgramProducts[payload.programId] ?? []), ...selectedProductIds])
+  );
 
   return productIds.flatMap((productId) => {
     const product = pvProductCatalog.find((item) => item.id === productId);
@@ -366,7 +404,23 @@ export default async function handler(req: any, res: any) {
     }
 
     if (assessment.type === "initial") {
-      const hasStartedProgram = Boolean(assessment.programId && String(assessment.programTitle ?? "").trim());
+      // Fix 2026-07-16 (audit programmes) — BUG DE PERTE DE DONNEES.
+      // Avant : hasStartedProgram = Boolean(assessment.programId && programTitle).
+      // Or EditInitialAssessmentPage n'ecrit JAMAIS programId (il ne gere que le
+      // titre) -> hasStartedProgram etait toujours faux des que le bilan avait
+      // ete cree "À l'unité" ou "pas demarre" -> current_program vide de force,
+      // statut repasse "pending", et TOUS les pv_client_products supprimes plus
+      // bas sans jamais etre recrees (cas Aline / Elise). On se base desormais
+      // sur le TITRE du programme (+ produits retenus), pas sur un id que l'UI
+      // n'alimente pas.
+      const selectedProductIds = Array.isArray(assessment.questionnaire?.selectedProductIds)
+        ? assessment.questionnaire.selectedProductIds
+        : [];
+      const programTitleTrimmed = String(assessment.programTitle ?? "").trim();
+      const isPlaceholderTitle =
+        normalizeProgramLabel(programTitleTrimmed) === "programme a confirmer";
+      const hasStartedProgram =
+        (Boolean(programTitleTrimmed) && !isPlaceholderTitle) || selectedProductIds.length > 0;
       const pvProgramId = hasStartedProgram ? resolvePvProgramId(assessment.programTitle) : null;
       let { error: clientUpdateError } = await admin
         .from("clients")
@@ -399,22 +453,31 @@ export default async function handler(req: any, res: any) {
         return;
       }
 
-      const { error: clearPvProductsError } = await admin
-        .from("pv_client_products")
-        .delete()
-        .eq("client_id", clientId);
+      // ⚠️ Fix 2026-07-16 — on ne PURGE la composition PV que si on est capable
+      // de la reconstruire juste apres. Avant, le delete etait inconditionnel et
+      // le re-seed conditionne a `hasStartedProgram && pvProgramId` : un bilan
+      // edite sans programId (cas majoritaire, l'UI d'edition ne l'ecrit pas)
+      // perdait DEFINITIVEMENT tous ses produits, en silence.
+      const canReseedPvProducts = Boolean(hasStartedProgram && pvProgramId);
 
-      if (clearPvProductsError && !isMissingPvTableError(clearPvProductsError)) {
-        res.status(400).json({
-          ok: false,
-          error:
-            clearPvProductsError.message ||
-            "Le bilan a ete modifie, mais la composition PV n'a pas pu etre remise a jour."
-        });
-        return;
+      if (canReseedPvProducts) {
+        const { error: clearPvProductsError } = await admin
+          .from("pv_client_products")
+          .delete()
+          .eq("client_id", clientId);
+
+        if (clearPvProductsError && !isMissingPvTableError(clearPvProductsError)) {
+          res.status(400).json({
+            ok: false,
+            error:
+              clearPvProductsError.message ||
+              "Le bilan a ete modifie, mais la composition PV n'a pas pu etre remise a jour."
+          });
+          return;
+        }
       }
 
-      if (hasStartedProgram && pvProgramId) {
+      if (canReseedPvProducts && pvProgramId) {
         const seedProducts = buildSeedPvProducts({
           clientId,
           distributorId: clientRecord.distributor_id,

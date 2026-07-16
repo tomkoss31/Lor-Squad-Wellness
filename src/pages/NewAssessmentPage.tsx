@@ -546,7 +546,10 @@ const timelineOptions = [
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
-  const { programs, users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
+  // `programs` (PROGRAMS_LEGACY) volontairement plus consomme ici depuis le fix
+  // 2026-07-16 : cette liste exclut "À l'unité", c'etait la source du bug
+  // programme vide / produits fantomes. Le bilan lit PROGRAM_CHOICES.
+  const { users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
   const { push: pushToast } = useToast();
   const [searchParams] = useSearchParams();
   const prospectId = searchParams.get("prospectId");
@@ -761,23 +764,23 @@ export function NewAssessmentPage() {
     currentUser ??
     null;
 
-  const currentPrograms = programs.filter((program) => program.category === form.objective);
-  const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
-  // boosterPrograms retiré — l'étape 11 est refactorée, les "boosters" sont
-  // gérés via les programmes Booster 1 / Booster 2 dans programs.ts.
-  // Fix bug 2026-05-05 : avant on cherchait par form.selectedProgramId qui
-  // n'etait jamais set (ancien field obsolete) -> selectedProgram = null
-  // -> "Programme a confirmer" + 0 PV systematique. Maintenant on resout
-  // depuis form.programChoice (l'ID utilise par ProgramChoiceCard) en
-  // matchant sur l'ID legacy `p-${choice}` que PROGRAMS_LEGACY genere.
-  // Fallback secondaire : ancien selectedProgramId pour retrocompat
-  // d'un draft persiste avant ce fix.
-  const selectedProgram =
-    mainPrograms.find(
-      (program) =>
-        program.id === `p-${form.programChoice}` ||
-        program.id === form.selectedProgramId,
-    ) ?? null;
+  // Fix 2026-07-16 (audit programmes) — SOURCE DE VERITE = PROGRAM_CHOICES.
+  // AVANT : le programme retenu etait resolu dans PROGRAMS_LEGACY (via
+  // AppContext.programs), qui EXCLUT "unit" (programs.ts:198) alors que le
+  // selecteur du bilan le propose. Choisir "À l'unité" donnait donc
+  // selectedProgram = null -> current_program "" (ou la chaine littérale
+  // "Programme a confirmer") + zero produit cree, et le fallback du catalogue
+  // PV injectait la routine Starter (3 produits fantomes). On resout desormais
+  // le programme directement dans PROGRAM_CHOICES, qui contient TOUS les
+  // programmes, "unit" compris.
+  // Volontairement PAS getProgramById() : il replie sur Premium quand l'id est
+  // inconnu, ce qui ecrirait un faux programme.
+  const chosenProgramDef =
+    PROGRAM_CHOICES.find((choice) => choice.id === form.programChoice) ?? null;
+  /** Titre du programme retenu ("À l'unité" inclus), "" si aucun choix. */
+  const resolvedProgramTitle = chosenProgramDef?.title ?? "";
+  /** Id legacy (`p-*`) du programme retenu — espace d'id de assessments.program_id. */
+  const resolvedLegacyProgramId = chosenProgramDef ? `p-${chosenProgramDef.id}` : undefined;
   const startsImmediately = form.afterAssessmentAction === "started";
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
@@ -1158,11 +1161,18 @@ export function NewAssessmentPage() {
       form.nextFollowUp || getDefaultNextFollowUpDateTime(),
       10
     );
-    const programTitle = selectedProgram?.title ?? "Programme a confirmer";
-    const programId = startsImmediately ? selectedProgram?.id : undefined;
-    const clientStatus = startsImmediately ? "active" : "pending";
-    const followUpType = startsImmediately ? "Premier suivi" : "Relance après bilan";
-    const followUpStatus = startsImmediately ? "scheduled" : "pending";
+    // Regle metier (Thomas, 2026-07-16) : des que le coach a retenu des
+    // produits dans le ticket et finalise le bilan, le client DEMARRE — meme
+    // s'il n'a pas coche "a demarre" a l'etape 12. Sans ca, ses produits
+    // n'etaient jamais crees (garde `started && currentProgram` cote service)
+    // et le Co-pilote le signalait "sans programme" (cas Aline).
+    const hasSelectedProducts = effectiveSelectedProductIds.length > 0;
+    const startedEffective = startsImmediately || hasSelectedProducts;
+    const programTitle = resolvedProgramTitle || "Programme a confirmer";
+    const programId = startedEffective ? resolvedLegacyProgramId : undefined;
+    const clientStatus = startedEffective ? "active" : "pending";
+    const followUpType = startedEffective ? "Premier suivi" : "Relance après bilan";
+    const followUpStatus = startedEffective ? "scheduled" : "pending";
     const assessment = {
       id: `a-${Date.now()}`,
       date: assessmentDate,
@@ -1228,15 +1238,17 @@ export function NewAssessmentPage() {
         // indépendamment de startsImmediately — sinon le header fiche + app
         // client affiche "Programme à confirmer" alors que le coach a déjà
         // choisi. startsImmediately n'influe plus que sur pvProgramId (module PV).
-        currentProgram: selectedProgram?.title ?? (startsImmediately ? programTitle : ""),
-        pvProgramId: startsImmediately ? selectedProgram?.id : undefined,
-        started: startsImmediately,
+        // Fix 2026-07-16 : resolvedProgramTitle vient de PROGRAM_CHOICES, donc
+        // "À l'unité" s'écrit enfin (avant : "" -> zéro produit + fiche cassée).
+        currentProgram: resolvedProgramTitle,
+        pvProgramId: startedEffective ? resolvedLegacyProgramId : undefined,
+        started: startedEffective,
         nextFollowUp,
         followUpType,
         followUpStatus,
         notes:
           form.comment.trim() ||
-          (startsImmediately
+          (startedEffective
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
             : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
         afterAssessmentAction: form.afterAssessmentAction,

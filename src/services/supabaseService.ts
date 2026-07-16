@@ -970,7 +970,18 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     }
   }
 
-  const seedProducts = payload.started && payload.currentProgram
+  // Regle metier (Thomas, 2026-07-16) : on seede des que le client demarre OU
+  // qu'il repart avec des produits retenus. Avant, la garde etait
+  // `started && currentProgram` : un client "À l'unité" (currentProgram = ""
+  // a cause du bug de resolution) n'avait JAMAIS ses produits crees, meme
+  // avec F1 + PDM au ticket (cas Aline) -> Co-pilote "sans programme", PV et
+  // rentabilite a zero.
+  // Le garde-fou anti-fantomes n'est plus ici mais dans le catalogue PV :
+  // "À l'unité" a une routine VIDE, donc un client sans produit retenu ne peut
+  // pas se voir injecter la routine d'un programme qu'il n'a pas pris.
+  const hasSelectedProducts =
+    (payload.assessment.questionnaire.selectedProductIds ?? []).length > 0;
+  const seedProducts = (payload.started || hasSelectedProducts) && payload.currentProgram
     ? buildSeedPvProducts({
         clientId,
         distributorId: payload.client.distributorId,
