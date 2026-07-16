@@ -31,6 +31,7 @@ import { InlinePaymentButton } from "../components/payment/InlinePaymentButton";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { normalizeMultiValue } from "../lib/multiChoice";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -110,9 +111,11 @@ type AssessmentForm = {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /** Multi depuis 2026-07-16 (matin ET soir). */
+  snackingMoment: string[];
   cravingsPreference: string;
-  snackingTrigger: string;
+  /** Multi depuis 2026-07-16 (faim ET stress ET ennui). */
+  snackingTrigger: string[];
   waterIntake: number;
   drinksCoffee: string;
   coffeePerDay: number;
@@ -124,7 +127,8 @@ type AssessmentForm = {
   energyLevel: string;
   pastAttempts: string;
   hardestPart: string;
-  mainBlocker: string;
+  /** Multi depuis 2026-07-16 (plusieurs blocages cumulés). */
+  mainBlocker: string[];
   objectiveFocus: string;
   /** Chantier bilan updates (2026-04-20) : texte libre si objectiveFocus === "Autre". */
   customGoal: string;
@@ -182,7 +186,12 @@ interface AssessmentDraftPayload {
   savedAt: string;
 }
 
-const ASSESSMENT_DRAFT_KEY = "lor-squad-wellness-assessment-draft-v1";
+// v2 (2026-07-16) : snackingMoment / snackingTrigger / mainBlocker sont passés
+// de string à string[]. Un brouillon v1 en cours contiendrait des strings et
+// casserait le rendu multi → on repart d'un brouillon neuf plutôt que de faire
+// planter un bilan en cours de RDV. (Les bilans DÉJÀ ENREGISTRÉS, eux, sont
+// gérés en lecture par normalizeMultiValue — aucune perte.)
+const ASSESSMENT_DRAFT_KEY = "lor-squad-wellness-assessment-draft-v2";
 
 function padDatePart(value: number) {
   return String(value).padStart(2, "0");
@@ -266,9 +275,9 @@ const initialForm: AssessmentForm = {
   proteinEachMeal: "",
   sugaryProducts: "",
   snackingFrequency: "",
-  snackingMoment: "",
+  snackingMoment: [],
   cravingsPreference: "",
-  snackingTrigger: "",
+  snackingTrigger: [],
   waterIntake: 0,
   drinksCoffee: "",
   coffeePerDay: 0,
@@ -280,7 +289,7 @@ const initialForm: AssessmentForm = {
   energyLevel: "",
   pastAttempts: "",
   hardestPart: "",
-  mainBlocker: "",
+  mainBlocker: [],
   objectiveFocus: "",
   customGoal: "",
   snacksFastFoodPerWeek: null,
@@ -2293,10 +2302,15 @@ export function NewAssessmentPage() {
                 accent="teal"
               >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {/* Fréquence + attirance restent MONO : logiquement exclusifs
+                      ("Jamais" et "Souvent" ne peuvent pas coexister ; l'attirance
+                      a déjà "Les deux"). Moment + cause passent en MULTI
+                      (2026-07-16) : on grignote le matin ET le soir, par faim ET
+                      par stress. */}
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
-                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Après-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
+                  <MultiChoiceGroup label="Moment" values={normalizeMultiValue(form.snackingMoment)} options={["Matin", "Après-midi", "Soir", "Nuit"]} onToggle={(v) => update("snackingMoment", v)} />
                   <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
-                  <ChoiceGroup label="Cause fréquente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onChange={(v) => update("snackingTrigger", v)} />
+                  <MultiChoiceGroup label="Cause" values={normalizeMultiValue(form.snackingTrigger)} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onToggle={(v) => update("snackingTrigger", v)} />
                 </div>
               </AssessmentSectionV2>
 
@@ -2379,7 +2393,7 @@ export function NewAssessmentPage() {
                     <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
                     <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
                   </div>
-                  <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
+                  <MultiChoiceGroup label="Blocages" values={normalizeMultiValue(form.mainBlocker)} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onToggle={(v) => update("mainBlocker", v)} />
                 </AssessmentSectionV2>
               </div>
             )}
@@ -4183,6 +4197,72 @@ function AreaField({ label, value, onChange }: { label: string; value: string; o
     <div className="space-y-2">
       <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
+    </div>
+  );
+}
+
+/**
+ * MultiChoiceGroup — jumeau multi-sélection de ChoiceGroup (2026-07-16).
+ *
+ * Demande Thomas : pendant le bilan, certaines questions ne sont PAS exclusives.
+ * Un client grignote le matin ET le soir ; il grignote par faim ET par stress.
+ * Forcer un choix unique obligeait le coach à trancher arbitrairement et faisait
+ * perdre de l'info.
+ *
+ * Volontairement un composant distinct plutôt qu'une prop `multiple` sur
+ * ChoiceGroup : ce dernier est utilisé par ~25 questions mono et sa signature
+ * (`value: string`) resterait ambiguë. Ici le contrat est explicite.
+ * Même rendu visuel (ls-pill) → aucune rupture d'UI, seul le comportement change.
+ */
+function MultiChoiceGroup({
+  label,
+  values,
+  options,
+  onToggle,
+  hint,
+}: {
+  label: string;
+  values: string[];
+  options: string[];
+  onToggle: (next: string[]) => void;
+  hint?: string;
+}) {
+  const selected = normalizeMultiValue(values);
+  return (
+    <div className="space-y-2">
+      <label className="ls-field-label">
+        {label}
+        <span style={{ fontWeight: 400, color: "var(--ls-text-muted)", marginLeft: 6 }}>
+          {hint ?? "· plusieurs possibles"}
+        </span>
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isSelected = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() =>
+                onToggle(
+                  isSelected
+                    ? selected.filter((item) => item !== option)
+                    : [...selected, option],
+                )
+              }
+              className={`ls-pill${isSelected ? " ls-pill--selected" : ""}`}
+              aria-pressed={isSelected}
+            >
+              {isSelected && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {option}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
