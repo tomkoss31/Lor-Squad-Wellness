@@ -342,7 +342,7 @@ export function PanierPage() {
         throw new Error("Active d'abord ton encaissement (Mon business → Encaissement).");
       }
       if (payload.error || !payload.url) {
-        throw new Error("Lien impossible — vérifie ta clé Stripe.");
+        throw new Error("Lien impossible — vérifie ta config d'encaissement.");
       }
       setPayLink(payload.url);
     } catch (e) {

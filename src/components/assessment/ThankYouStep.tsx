@@ -29,7 +29,8 @@ interface Props {
   coachName: string;
   onBack: () => void;
   /** Total du panier programme (€) → encaissement direct si l'encaissement
-   *  Stripe du coach est configuré (chantier Encaissement distri 2026-06-15). */
+   *  du coach est configuré (Square ou Stripe — chantier Encaissement distri
+   *  2026-06-15, Square ajouté 2026-07-16). */
   amount?: number;
 }
 
@@ -61,9 +62,9 @@ export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack, amoun
       const payload = data as { url?: string; error?: string } | null;
       if (error || !payload) throw new Error("Erreur réseau");
       if (payload.error === "not_configured") {
-        throw new Error("Configure d'abord ton encaissement Stripe (Mon business → Encaissement).");
+        throw new Error("Configure d'abord ton encaissement (Mon business → Encaissement).");
       }
-      if (payload.error || !payload.url) throw new Error("Lien indisponible — vérifie ta clé Stripe.");
+      if (payload.error || !payload.url) throw new Error("Lien indisponible — vérifie ta config d'encaissement.");
       setPayLink(payload.url);
     } catch (e) {
       setPayError(e instanceof Error ? e.message : "Erreur");
@@ -188,7 +189,7 @@ export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack, amoun
                     </a>
                   </div>
                   <p className="thank-you-pay-hint">
-                    Le client peut payer ici tout de suite, ou via le lien. L&apos;argent arrive sur ton compte Stripe.
+                    Le client peut payer ici tout de suite, ou via le lien. L&apos;argent arrive directement sur ton compte.
                   </p>
                 </div>
               )}

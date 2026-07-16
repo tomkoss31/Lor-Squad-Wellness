@@ -1,11 +1,12 @@
 // =============================================================================
-// ManualPaymentLinkCard — génère un lien de paiement Stripe « montant libre »
-// (chantier Encaissement distri, 2026-06-15).
+// ManualPaymentLinkCard — génère un lien de paiement « montant libre »
+// (chantier Encaissement distri, 2026-06-15 ; Square ajouté 2026-07-16).
 //
 // Pour encaisser HORS bilan online (client au comptoir, panier perso) : le distri
 // saisit un montant + une description → l'edge create-manual-payment-link crée un
-// Stripe Payment Link SUR SON compte (clé secrète côté serveur, jamais ici) →
-// le distri copie / envoie par WhatsApp. Le client paie quand il veut.
+// lien de paiement (Square ou Stripe, selon la config du distri) SUR SON compte
+// (credentials côté serveur, jamais ici) → le distri copie / envoie par
+// WhatsApp. Le client paie quand il veut.
 // =============================================================================
 
 import { useState } from "react";
@@ -41,10 +42,10 @@ export function ManualPaymentLinkCard() {
       const payload = data as { url?: string; error?: string } | null;
       if (fnErr || !payload) throw new Error("Erreur réseau");
       if (payload.error === "not_configured") {
-        throw new Error("Active d'abord ton encaissement Stripe ci-dessus (clé + Actif).");
+        throw new Error("Active d'abord ton encaissement ci-dessus (credentials + Actif).");
       }
       if (payload.error || !payload.url) {
-        throw new Error("Impossible de générer le lien — vérifie ta clé Stripe.");
+        throw new Error("Impossible de générer le lien — vérifie ta config d'encaissement.");
       }
       setLink(payload.url);
     } catch (e) {
@@ -81,7 +82,7 @@ export function ManualPaymentLinkCard() {
       </div>
       <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 3, maxWidth: 520 }}>
         Pour encaisser hors bilan (comptoir, panier, montant sur-mesure). Le client paie quand il veut,
-        l&apos;argent arrive sur ton compte Stripe.
+        l&apos;argent arrive directement sur ton compte.
       </div>
 
       <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
@@ -176,7 +177,7 @@ export function ManualPaymentLinkCard() {
               </a>
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-              Stripe t&apos;envoie un email dès que le client a payé (et tu le retrouves dans ton dashboard Stripe).
+              Tu es notifié dès que le client a payé (et tu le retrouves dans ton dashboard Square ou Stripe).
             </div>
           </div>
         ) : null}
