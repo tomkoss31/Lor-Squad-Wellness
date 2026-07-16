@@ -570,6 +570,38 @@ export function CrmLeadDetailPage() {
             ) : null}
           </div>
 
+          {lead.resultToken ? (
+            <div style={actionBlock}>
+              <label style={label}>Lien Résultat Bilan</label>
+              <div style={hint}>
+                Sa page premium personnalisée (bilan + programme + caisse). Envoie-la pour déclencher
+                le paiement.
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                {(() => {
+                  const origin = typeof window !== "undefined" ? window.location.origin : "";
+                  const link = `${origin}/resultat-bilan/${lead.resultToken}`;
+                  const msg = `Coucou ${lead.firstName} 🌿 j'ai préparé ta page perso avec ton bilan complet et le programme qu'on a vu ensemble. Tout est ici (tu peux même démarrer directement) 👉 ${link}\n\nDis-moi si tu as la moindre question, je suis là 💛\n${msgCtx.coachFirstName}`;
+                  return (
+                    <>
+                      <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-gold)")}>
+                        📋 Copier le message + lien
+                      </button>
+                      {lead.contactIsPhone ? (
+                        <a href={buildCrmWhatsAppLink(lead.contact, msg)} target="_blank" rel="noopener noreferrer" onClick={() => recordTouch()} style={actionBtn("#25D366")}>
+                          📱 WhatsApp
+                        </a>
+                      ) : null}
+                      <button type="button" onClick={() => { recordTouch(); copyMessage(link); }} style={actionBtn("var(--ls-teal)")}>
+                        🔗 Copier le lien seul
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          ) : null}
+
           <div style={actionBlock}>
             <label style={label}>Templates de réponse</label>
             <CrmResponsePanel
