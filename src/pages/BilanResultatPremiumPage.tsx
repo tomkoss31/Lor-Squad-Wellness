@@ -420,8 +420,15 @@ export function BilanResultatPremiumPage() {
                     <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 38, letterSpacing: 0.5, color: "var(--cream)", lineHeight: 1 }}>{p.price}</span>
                     <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
                   </div>
+                  {/* ⚠️ NE PAS re-tronquer cette liste (fix 2026-07-16).
+                      Avant : .slice(0, 4). Or Premium = 4 produits, tandis que
+                      Booster 1 (+ Multifibres) et Booster 2 (+ Phyto brûle-
+                      graisse) en ont 5 : le 5e — le SEUL qui justifie les +43 €
+                      et +90 € — était masqué. Le prospect voyait 3 cartes
+                      identiques à 234/277/324 € et ne pouvait pas comprendre
+                      l'écart de prix. */}
                   <ul style={{ listStyle: "none", display: "grid", gap: 7, margin: 0, padding: 0, flex: 1 }}>
-                    {p.products.slice(0, 4).map((pr) => (
+                    {p.products.map((pr) => (
                       <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>• {pr.name}</li>
                     ))}
                   </ul>
