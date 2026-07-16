@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { PublicShell, PUBLIC_TOKENS, PUBLIC_FONTS, publicGradText } from "../components/public/PublicShell";
 import { getSupabaseClient } from "../services/supabaseClient";
-import { getFlavorGroup, type FlavorOption } from "../data/flavorGroups";
+import { getProgramFlavorGroups, flavorChoiceLabel } from "../data/flavorGroups";
 import { QualifFlavorStep } from "../components/qualif/QualifFlavorStep";
 import { QualifScanAppStep } from "../components/qualif/QualifScanAppStep";
 import { QualifTelegramStep } from "../components/qualif/QualifTelegramStep";
@@ -63,8 +63,8 @@ export function QualifPage() {
   const [info, setInfo] = useState<BootstrapDTO | null>(null);
   const [stage, setStage] = useState<Stage>("intro");
 
-  const flavorGroup = useMemo(() => getFlavorGroup(info?.programId), [info?.programId]);
-  const firstRealStage: Stage = flavorGroup ? "flavor" : "scan";
+  const flavorGroups = useMemo(() => getProgramFlavorGroups(info?.programId), [info?.programId]);
+  const firstRealStage: Stage = flavorGroups.length > 0 ? "flavor" : "scan";
 
   async function callBootstrap(payload: Record<string, unknown>): Promise<BootstrapDTO | null> {
     const sb = await getSupabaseClient();
@@ -187,12 +187,15 @@ export function QualifPage() {
           />
         )}
 
-        {stage === "flavor" && flavorGroup && (
+        {stage === "flavor" && flavorGroups.length > 0 && (
           <QualifFlavorStep
             firstName={firstName}
-            group={flavorGroup}
-            onPick={async (option: FlavorOption) => {
-              await callUpdate({ mode: "flavor", productId: option.id, productLabel: option.label });
+            groups={flavorGroups}
+            onSubmit={async (choices) => {
+              const labels = Object.entries(choices)
+                .map(([groupKey, optionId]) => flavorChoiceLabel(groupKey, optionId))
+                .filter((l): l is string => Boolean(l));
+              await callUpdate({ mode: "flavor", choices, productLabels: labels });
               setStage("scan");
             }}
             onSkip={async () => {
