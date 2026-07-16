@@ -3,13 +3,16 @@
 // l'enregistrement (2026-07-16). Compagnon de qualif-bootstrap (mode
 // "register" pour la création, celui-ci pour les étapes suivantes).
 //
-// { token, mode: "flavor" | "skip_flavor" | "app_opened" | "telegram" | "complete", productId?, productLabel? }
+// { token, mode: "flavor" | "skip_flavor" | "app_opened" | "telegram" | "complete",
+//   choices?, productLabels? }
 // → écrit dans client_qualif_onboarding (service_role — aucune policy RLS
 // d'écriture, cohérent avec le reste du chantier).
 //
-// Mode "flavor" : notifie AUSSI le coach par push (« 🥤 X a choisi sa saveur :
-// Vanille ») — le coach sait ainsi quelle saveur préparer, en complément du
-// push paiement (« 💶 X a payé son pack ») déjà envoyé par square-payment-webhook.
+// Mode "flavor" : choices = { f1: "...", the: "...", aloe: "..." } (une saveur
+// par produit du programme). Stocké dans flavor_choices (jsonb) + flavor_product_id
+// = choix Formula 1 (rétro-compat). Notifie AUSSI le coach par push (« 🥤 X a
+// choisi ses saveurs : Formula 1 Vanille · Thé Pêche · Aloé Mangue ») en
+// complément du push paiement déjà envoyé par square-payment-webhook.
 //
 // Déploiement : supabase functions deploy qualif-update --no-verify-jwt
 // =============================================================================
@@ -28,11 +31,11 @@ function json(body: unknown, status = 200): Response {
 const VALID_MODES = ["flavor", "skip_flavor", "app_opened", "telegram", "complete"] as const;
 type Mode = (typeof VALID_MODES)[number];
 
-/** Push best-effort au coach quand le client choisit sa saveur. Ne bloque jamais. */
+/** Push best-effort au coach quand le client choisit ses saveurs. Ne bloque jamais. */
 async function notifyCoachFlavor(
   sb: ReturnType<typeof createClient>,
   clientId: string,
-  flavorLabel: string,
+  flavorText: string,
 ): Promise<void> {
   try {
     const { data: onboarding } = await sb
@@ -59,8 +62,8 @@ async function notifyCoachFlavor(
       body: JSON.stringify({
         subscriptions: subs,
         payload: {
-          title: "🥤 Saveur choisie !",
-          body: `${firstName} a choisi sa saveur Formula 1 : ${flavorLabel}`,
+          title: "🥤 Saveurs choisies !",
+          body: `${firstName} a choisi ses saveurs : ${flavorText}`,
           url: "/clients",
         },
       }),
@@ -77,8 +80,8 @@ serve(async (req: Request) => {
     const body = (await req.json().catch(() => ({}))) as {
       token?: string;
       mode?: string;
-      productId?: string;
-      productLabel?: string;
+      choices?: Record<string, string>;
+      productLabels?: string[];
     };
     const token = String(body.token ?? "").trim();
     const mode = body.mode as Mode | undefined;
@@ -94,10 +97,18 @@ serve(async (req: Request) => {
 
     const now = new Date().toISOString();
     const patch: Record<string, unknown> = {};
+    let flavorText = "";
     if (mode === "flavor") {
-      const productId = String(body.productId ?? "").trim();
-      if (!productId) return json({ ok: false, error: "missing_product_id" }, 400);
-      patch.flavor_product_id = productId;
+      const choices = body.choices && typeof body.choices === "object" ? body.choices : {};
+      const entries = Object.entries(choices).filter(([, v]) => typeof v === "string" && v.trim());
+      if (entries.length === 0) return json({ ok: false, error: "missing_choices" }, 400);
+      patch.flavor_choices = Object.fromEntries(entries);
+      // Rétro-compat : flavor_product_id = choix Formula 1 s'il existe.
+      patch.flavor_product_id = (choices.f1 ?? entries[0][1]) as string;
+      const labels = Array.isArray(body.productLabels)
+        ? body.productLabels.filter((l): l is string => typeof l === "string" && l.trim().length > 0)
+        : [];
+      flavorText = labels.join(" · ").slice(0, 200) || "saveurs choisies";
     } else if (mode === "skip_flavor") {
       patch.flavor_skipped = true;
     } else if (mode === "app_opened") {
@@ -112,14 +123,13 @@ serve(async (req: Request) => {
       .from("client_qualif_onboarding")
       .update(patch)
       .eq("client_id", clientId)
-      .select("consent_at, flavor_product_id, flavor_skipped, app_opened_at, telegram_at, completed_at")
+      .select("consent_at, flavor_product_id, flavor_choices, flavor_skipped, app_opened_at, telegram_at, completed_at")
       .single();
     if (updErr) return json({ ok: false, error: "server_error", message: updErr.message }, 500);
 
-    // Notif coach (best-effort) quand la saveur est enregistrée.
+    // Notif coach (best-effort) quand les saveurs sont enregistrées.
     if (mode === "flavor") {
-      const label = String(body.productLabel ?? "").trim().slice(0, 60) || "saveur choisie";
-      await notifyCoachFlavor(sb, clientId, label);
+      await notifyCoachFlavor(sb, clientId, flavorText);
     }
 
     return json({
@@ -127,6 +137,7 @@ serve(async (req: Request) => {
       step: {
         consentAt: updated.consent_at as string | null,
         flavorProductId: updated.flavor_product_id as string | null,
+        flavorChoices: (updated.flavor_choices as Record<string, string> | null) ?? {},
         flavorSkipped: Boolean(updated.flavor_skipped),
         appOpenedAt: updated.app_opened_at as string | null,
         telegramAt: updated.telegram_at as string | null,
