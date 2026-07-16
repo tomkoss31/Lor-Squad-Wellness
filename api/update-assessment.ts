@@ -453,31 +453,23 @@ export default async function handler(req: any, res: any) {
         return;
       }
 
-      // ⚠️ Fix 2026-07-16 — on ne PURGE la composition PV que si on est capable
-      // de la reconstruire juste apres. Avant, le delete etait inconditionnel et
-      // le re-seed conditionne a `hasStartedProgram && pvProgramId` : un bilan
-      // edite sans programId (cas majoritaire, l'UI d'edition ne l'ecrit pas)
-      // perdait DEFINITIVEMENT tous ses produits, en silence.
-      const canReseedPvProducts = Boolean(hasStartedProgram && pvProgramId);
-
-      if (canReseedPvProducts) {
-        const { error: clearPvProductsError } = await admin
-          .from("pv_client_products")
-          .delete()
-          .eq("client_id", clientId);
-
-        if (clearPvProductsError && !isMissingPvTableError(clearPvProductsError)) {
-          res.status(400).json({
-            ok: false,
-            error:
-              clearPvProductsError.message ||
-              "Le bilan a ete modifie, mais la composition PV n'a pas pu etre remise a jour."
-          });
-          return;
-        }
-      }
-
-      if (canReseedPvProducts && pvProgramId) {
+      // ⚠️ Fix 2026-07-16 — NE JAMAIS PURGER pv_client_products ici.
+      //
+      // L'ancien code faisait `delete().eq("client_id", clientId)` de facon
+      // inconditionnelle, puis sautait le re-seed si programId etait null (ce
+      // que l'UI d'edition n'ecrit jamais) => perte de donnees silencieuse.
+      // Mais meme en reparant cette condition, la purge reste FAUSSE : la
+      // composition PV d'un client n'est PAS derivee du seul bilan. Elle est
+      // aussi alimentee par le comptoir / reassort / Mon panier (upsert dans
+      // supabaseService). Exemple reel : Lydie KEIL, cliente comptoir de longue
+      // date, bilan sans produit retenu mais 3 produits reels en base — une
+      // simple edition de son bilan les aurait tous effaces.
+      //
+      // On se contente donc d'AJOUTER les produits manquants de la routine du
+      // programme (upsert ignoreDuplicates) : jamais de suppression. Retirer un
+      // produit se fait depuis la fiche client / le module PV, qui eux savent
+      // ce qu'ils manipulent.
+      if (hasStartedProgram && pvProgramId) {
         const seedProducts = buildSeedPvProducts({
           clientId,
           distributorId: clientRecord.distributor_id,
@@ -490,16 +482,23 @@ export default async function handler(req: any, res: any) {
         });
 
         if (seedProducts.length) {
+          // ignoreDuplicates: on n'ajoute que ce qui manque et on ne touche PAS
+          // aux lignes existantes (quantites, dates, achats comptoir deja
+          // saisis). Sans ca, l'insert brut violerait la contrainte unique
+          // (client_id, product_id) maintenant qu'on ne purge plus avant.
           const { error: seedPvProductsError } = await admin
             .from("pv_client_products")
-            .insert(seedProducts);
+            .upsert(seedProducts, {
+              onConflict: "client_id,product_id",
+              ignoreDuplicates: true
+            });
 
           if (seedPvProductsError && !isMissingPvTableError(seedPvProductsError)) {
             res.status(400).json({
               ok: false,
               error:
                 seedPvProductsError.message ||
-                "Le bilan a ete modifie, mais la composition PV n'a pas pu etre recreee."
+                "Le bilan a ete modifie, mais la composition PV n'a pas pu etre mise a jour."
             });
             return;
           }
