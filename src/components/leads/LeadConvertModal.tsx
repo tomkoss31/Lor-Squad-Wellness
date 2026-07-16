@@ -108,7 +108,8 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
         notes: notes.trim() || summary,
         bodyScan: buildEmptyBodyScan(hasWeight ? weight : 0),
         questionnaire: buildEmptyQuestionnaire({
-          objectiveFocus: objLabel,
+          // Multi depuis 2026-07-16 (cf. src/lib/multiChoice.ts).
+          objectiveFocus: [objLabel],
           motivation: bilan.motivation_score ?? 0,
           ...(targetWeight !== undefined ? { targetWeight } : {}),
         }),
