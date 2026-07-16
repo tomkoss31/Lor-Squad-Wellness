@@ -283,6 +283,13 @@ const BilanResultatPremiumPage = lazy(() =>
     default: module.BilanResultatPremiumPage,
   })),
 );
+// Chantier Qualif (2026-07-16) : parcours post-paiement, même token que
+// /resultat-bilan/:token.
+const QualifPage = lazy(() =>
+  import("./pages/QualifPage").then((module) => ({
+    default: module.QualifPage,
+  })),
+);
 const BusinessPage = lazy(() =>
   import("./pages/BusinessPage").then((module) => ({
     default: module.BusinessPage,
@@ -683,6 +690,7 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
+          <Route path="/qualif/:token" element={<QualifPage />} />
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
           <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />

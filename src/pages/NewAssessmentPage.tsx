@@ -27,6 +27,7 @@ import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionT
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
+import { InlinePaymentButton } from "../components/payment/InlinePaymentButton";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
@@ -3751,6 +3752,14 @@ export function NewAssessmentPage() {
                         toggleSelectedProduct(productId);
                       }
                     }}
+                  />
+                  {/* Encaisser directement depuis le ticket (2026-07-16) —
+                      même moteur que la page Félicitations. Optionnel : le coach
+                      peut aussi attendre la fin du bilan. */}
+                  <InlinePaymentButton
+                    amount={programmeTotalEuros}
+                    description={`Programme ${chosenProgram?.title ?? "La Base 360"}${form.firstName ? ` — ${form.firstName}` : ""}`}
+                    clientName={form.firstName}
                   />
                 </div>
               </div>

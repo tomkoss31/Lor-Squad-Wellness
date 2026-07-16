@@ -320,41 +320,6 @@ export function CoPiloteV5Page() {
         </button>
       ) : null}
 
-      {/* HL/Skin AI — analyse de peau (chantier boutique, 2026-07-11) : entrée
-          discovery vers l'outil hlskin.ai. Config du lien = cockpit Ma boutique. */}
-      {["distributor", "admin", "referent"].includes(currentUser.role) ? (
-        <button
-          type="button"
-          onClick={() => navigate("/ma-boutique")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            width: "100%",
-            textAlign: "left",
-            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
-            borderRadius: 16,
-            padding: "14px 16px",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            marginTop: 10,
-          }}
-        >
-          <span aria-hidden="true" style={{ fontSize: 22 }}>🤖</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-              HL/Skin AI — analyse de peau gratuite
-            </span>
-            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Crée ton lien unique sur hlskin.ai (identifiants Herbalife), ajoute-le à ta boutique :
-              diagnostic peau de tes clients en 60 s + reco produits.
-            </span>
-          </span>
-          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-        </button>
-      ) : null}
-
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
 
