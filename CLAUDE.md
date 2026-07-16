@@ -34,6 +34,14 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - **Features non documentées présentes en prod** : VIP Program, gamification/leaderboards, système Rang + qualifications Herbalife auto, Client XP, Charte distri signable, Analytics admin, Team tree/arborescence, Manual PV entries, Share public, onboarding distri complet
 - **Leads (chantier 2026-06-03)** : modale détail réponses funnel + pré-évaluation personnalisée fin de funnel + stats prospection cliquables + suppression admin des leads (policy `prospect_leads_admin_delete`)
 
+#### ⚠️ Règle programmes / produits (audit 2026-07-16 — à lire avant toute modif PV)
+- **Source de vérité programme = `PROGRAM_CHOICES`** (`src/data/programs.ts`), la SEULE liste qui contient « À l'unité » (`unit`). `PROGRAMS_LEGACY` **exclut `unit`** (ligne 198) : ne JAMAIS l'utiliser pour résoudre le programme retenu d'un bilan. C'était la cause d'un bug majeur (programme vide → 0 produit → fiche + Co-pilote + PV cassés).
+- **`resolvePvProgram` ne doit JAMAIS replier sur un programme à routine non vide.** Le repli est `unit` (`includedProductIds: []`). Avant il repliait sur Starter → tout titre inconnu (« À l'unité », « Programme a confirmer », « », « Libre ») injectait 3 produits **fantômes** (aloe-vera + the-51g + formula-1) → PV et rentabilité faux sur des clients qui n'avaient rien pris.
+- **Le catalogue PV est DUPLIQUÉ** : `src/data/pvCatalog.ts` (front) et `api/update-assessment.ts` (Vercel, ne peut pas importer le front). Toute modif de l'un doit être répercutée sur l'autre.
+- `clients.pv_program_id` contient **2 espaces d'id mélangés** en base (PV `premium` ET legacy `p-premium`) → les alias `p-*` dans `pvProgramOptions` sont **obligatoires**, ne pas les retirer.
+- **Règle métier (Thomas)** : produits retenus au ticket ⇒ le client démarre (statut `active`, produits créés), même sans « démarré » coché à l'étape 12.
+- **Ne jamais purger `pv_client_products` sans pouvoir les reconstruire** (`api/update-assessment.ts`) — l'ancien code supprimait tout puis sautait le re-seed = perte de données silencieuse.
+
 #### ⚠️ Règle métier critique
 Voir **`docs/HERBALIFE_PALIERS_REGLES.md`** (paliers, fenêtres glissantes, qualifications) — à lire AVANT toute modif sur le calcul PV / rentabilité / FLEX margins. Récupéré en prod le 2026-06-03 (était piégé sur une branche morte).
 
