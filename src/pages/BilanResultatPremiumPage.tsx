@@ -33,6 +33,15 @@ import {
 } from "../components/public/PublicShell";
 import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { pickAddOn } from "../lib/bilanAddOns";
+import {
+  LUNCH_AVG_EUR,
+  PRODUCT_HUMAN,
+  dailyCost,
+  formatEur,
+} from "../data/routineCost";
+import { COMMUNITY_STATS, formatCount } from "../data/community";
+import { TELEGRAM_GROUP_URL } from "../lib/telegram";
 
 interface ProgrammeDTO {
   id: string;
@@ -51,6 +60,13 @@ interface ResultsDTO {
     motivationScore: number | null;
     aiAnalysis: string | null;
     createdAt: string;
+    // Réponses du questionnaire qui alimentent la reco d'add-on. Optionnel :
+    // les bilans d'avant 2026-07-17 n'ont pas forcément un payload complet.
+    answers?: {
+      sleepHours: string | null;
+      sleepQuality: string | null;
+      mealsBalanced: string | null;
+    };
   };
   coach: { name: string; slug: string | null; userId: string | null };
   programmes: ProgrammeDTO[];
@@ -169,11 +185,25 @@ export function BilanResultatPremiumPage() {
           return;
         }
         setData(payload);
-        // Présélectionne le best-seller (Premium) par ID stable. Fallback = 1er
-        // programme (jamais un index positionnel, qui casse si l'ordre change /
-        // si des programmes sport entrent dans le catalogue).
-        const best = payload.programmes.find((p) => p.id === "premium");
-        setSelected(best?.id ?? payload.programmes[0]?.id ?? null);
+        // Présélection (revue 2026-07-17). Avant : Premium en dur pour TOUT LE
+        // MONDE — une page qui promet « le programme qui te correspond » et qui
+        // met en avant la même formule pour chacun. Maintenant : si les réponses
+        // du bilan appellent un add-on (sommeil, métabolisme, fibres) et qu'une
+        // formule le CONTIENT déjà, c'est elle qu'on met en avant. Ça n'invente
+        // aucune règle commerciale : ça lit le catalogue.
+        // Fallback = Premium (best-seller réel), puis 1er programme — jamais un
+        // index positionnel, qui casserait si l'ordre du catalogue change.
+        const addOn = pickAddOn({
+          objectives: payload.bilan.objectives,
+          sleepHours: payload.bilan.answers?.sleepHours,
+          sleepQuality: payload.bilan.answers?.sleepQuality,
+          mealsBalanced: payload.bilan.answers?.mealsBalanced,
+        });
+        const matching = addOn
+          ? payload.programmes.find((p) => p.products.some((pr) => pr.id === addOn.productId))
+          : undefined;
+        const premium = payload.programmes.find((p) => p.id === "premium");
+        setSelected(matching?.id ?? premium?.id ?? payload.programmes[0]?.id ?? null);
         setStatus("ok");
       } catch {
         if (alive) setStatus("error");
@@ -231,6 +261,40 @@ export function BilanResultatPremiumPage() {
   // V2 : le plan « stratégies » colle au 1ᵉʳ objectif du bilan (plus de contenu
   // 100 % perte de poids servi à un prospect prise de masse / énergie).
   const strategies = useMemo(() => pickStrategies(data?.bilan.objectives), [data]);
+
+  // Prix unitaires par id — sert à calculer le €/jour réel de chaque formule et
+  // celui de l'add-on. Les prix viennent de la DB (edge), jamais d'un dur.
+  const priceById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of data?.produits ?? []) m.set(p.id, p.price);
+    return m;
+  }, [data]);
+
+  // €/jour de chaque formule, à la dose réelle (cf. src/data/routineCost.ts).
+  // null pour une formule dont un produit n'a pas de dose connue → on masque le
+  // €/jour plutôt que d'afficher un montant faux.
+  const dailyByProgram = useMemo(() => {
+    const m = new Map<string, number | null>();
+    for (const p of data?.programmes ?? []) {
+      m.set(p.id, dailyCost(p.products.map((pr) => pr.id), priceById));
+    }
+    return m;
+  }, [data, priceById]);
+
+  // L'add-on qui découle de SES réponses (sommeil / objectif / repas).
+  const addOn = useMemo(
+    () =>
+      data
+        ? pickAddOn({
+            objectives: data.bilan.objectives,
+            sleepHours: data.bilan.answers?.sleepHours,
+            sleepQuality: data.bilan.answers?.sleepQuality,
+            mealsBalanced: data.bilan.answers?.mealsBalanced,
+          })
+        : null,
+    [data],
+  );
+
   // Témoignages : null = pas encore chargé, false = aucun (on masque la section
   // → plus de titre orphelin), true = au moins un.
   const [hasTestimonials, setHasTestimonials] = useState<boolean | null>(null);
@@ -374,7 +438,114 @@ export function BilanResultatPremiumPage() {
 
         <div style={divider} />
 
-        {/* ── 5 · LES PROGRAMMES ── */}
+        {/* ── 5 · CE QUE TU VAS BOIRE (produits en langage humain) ── */}
+        {(() => {
+          // Union ordonnée des produits de toutes les formules : le prospect voit
+          // TOUT ce qui compose l'univers, expliqué, avant de voir un prix.
+          const seen = new Set<string>();
+          const humanProducts: { id: string; name: string }[] = [];
+          for (const p of programmes) {
+            for (const pr of p.products) {
+              if (!seen.has(pr.id) && PRODUCT_HUMAN[pr.id]) {
+                seen.add(pr.id);
+                humanProducts.push({ id: pr.id, name: pr.name });
+              }
+            }
+          }
+          if (humanProducts.length === 0) return null;
+          return (
+            <section style={{ paddingTop: 40 }}>
+              <div style={eyebrow}>Concrètement</div>
+              <h2 style={secTitle}>
+                Ce que tu vas <span style={publicGradText}>vraiment boire</span>
+              </h2>
+              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 600, marginBottom: 24 }}>
+                Pas des sigles. Des gestes simples qui remplacent ce que tu fais déjà de travers.
+                {coach.name} te montre comment les préparer.
+              </p>
+              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+                {humanProducts.map(({ id, name }) => {
+                  const h = PRODUCT_HUMAN[id];
+                  const price = priceById.get(id);
+                  const days = price !== undefined ? dailyCost([id], priceById) : null;
+                  return (
+                    <div key={id} style={{ ...card, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, color: "var(--cream)" }}>
+                        {h.title}
+                      </div>
+                      <div style={{ ...bodyMuted, fontSize: 12, color: PUBLIC_TOKENS.teal, fontFamily: PUBLIC_FONTS.mono }}>
+                        {name}
+                      </div>
+                      <p style={{ ...bodyMuted, fontSize: 14, margin: "2px 0 0" }}>{h.detail}</p>
+                      {days != null && (
+                        <div style={{ marginTop: "auto", paddingTop: 10, ...bodyText, fontSize: 13.5 }}>
+                          <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(days)}</strong>
+                          <span style={{ color: "var(--cream-muted)" }}> / jour</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* ── 6 · PARLONS VRAI (le repère prix AVANT les formules) ── */}
+        {(() => {
+          // Le €/jour de la formule présélectionnée sert d'ancrage. On ne montre
+          // ce bloc que si on sait le calculer (sinon pas de comparaison bancale).
+          const anchor = selected ? dailyByProgram.get(selected) : null;
+          const anchorProgram = programmes.find((p) => p.id === selected);
+          if (anchor == null || !anchorProgram) return null;
+          const cheaper = anchor < LUNCH_AVG_EUR;
+          return (
+            <section style={sectionTop}>
+              <div style={eyebrow}>Parlons vrai</div>
+              <h2 style={secTitle}>
+                Tu dépenses <span style={publicGradText}>déjà cet argent</span>
+              </h2>
+              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
+                En France, la pause déjeuner coûte <strong style={{ color: "var(--cream)" }}>{formatEur(LUNCH_AVG_EUR)}</strong> en
+                moyenne (enquête Edenred / Ifop). Un sandwich, un dessert, une boisson — et à 16 h,
+                tu rouvres le placard.
+              </p>
+              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr", alignItems: "stretch" }}>
+                <div style={{ ...card }}>
+                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>
+                    Ta pause déjeuner
+                  </div>
+                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, color: "var(--cream)", lineHeight: 1.1, marginTop: 6 }}>
+                    {formatEur(LUNCH_AVG_EUR)}
+                  </div>
+                  <p style={{ ...bodyMuted, fontSize: 13, marginTop: 4 }}>Un seul repas. Et tu as encore faim après.</p>
+                </div>
+                <div style={{ ...card, border: `1.5px solid ${withA(PUBLIC_TOKENS.lime, 0.5)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.1)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})` }}>
+                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600, color: PUBLIC_TOKENS.teal }}>
+                    Ton programme {prettyProgramName(anchorProgram.name)}
+                  </div>
+                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, lineHeight: 1.1, marginTop: 6, ...publicGradText }}>
+                    {formatEur(anchor)}
+                  </div>
+                  <p style={{ ...bodyMuted, fontSize: 13, marginTop: 4 }}>
+                    Ton petit-déjeuner complet + ton hydratation de toute la journée.
+                  </p>
+                </div>
+              </div>
+              <p style={{ ...bodyText, fontSize: 15, marginTop: 16, maxWidth: 620 }}>
+                {cheaper ? (
+                  <>Ta journée complète coûte <strong style={{ color: PUBLIC_TOKENS.lime }}>moins cher que ton seul déjeuner</strong>. Ce n'est pas une dépense en plus — c'est le même argent, dépensé autrement.</>
+                ) : (
+                  <>Pour l'équivalent d'une pause déjeuner, tu couvres <strong style={{ color: PUBLIC_TOKENS.lime }}>ta journée complète</strong>. Le même argent, mais qui travaille pour toi.</>
+                )}
+              </p>
+            </section>
+          );
+        })()}
+
+        <div style={divider} />
+
+        {/* ── 7 · LES PROGRAMMES ── */}
         <section style={{ paddingTop: 40 }}>
           <div style={eyebrow}>Nos formules</div>
           <h2 style={secTitle}>
@@ -416,10 +587,21 @@ export function BilanResultatPremiumPage() {
                   )}
                   <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
                   <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 19, marginTop: 4, color: "var(--cream)" }}>{prettyProgramName(p.name)}</div>
-                  <div style={{ margin: "12px 0", display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <div style={{ margin: "12px 0 4px", display: "flex", alignItems: "baseline", gap: 4 }}>
                     <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 38, letterSpacing: 0.5, color: "var(--cream)", lineHeight: 1 }}>{p.price}</span>
                     <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
                   </div>
+                  {/* €/jour réel À CÔTÉ du prix du pack, jamais à la place (le
+                      pack reste le prix qu'on encaisse). Rend concret le « moins
+                      cher que ton déjeuner » de la section Parlons vrai. */}
+                  {(() => {
+                    const d = dailyByProgram.get(p.id);
+                    return d != null ? (
+                      <div style={{ marginBottom: 12, ...bodyMuted, fontSize: 12.5 }}>
+                        soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong> / jour
+                      </div>
+                    ) : <div style={{ marginBottom: 12 }} />;
+                  })()}
                   {/* ⚠️ NE PAS re-tronquer cette liste (fix 2026-07-16).
                       Avant : .slice(0, 4). Or Premium = 4 produits, tandis que
                       Booster 1 (+ Multifibres) et Booster 2 (+ Phyto brûle-
@@ -472,7 +654,83 @@ export function BilanResultatPremiumPage() {
           </div>
         </section>
 
-        {/* ── 6 · POURQUOI DÉMARRER ── */}
+        {/* ── 8 · RECOMMANDÉ POUR TOI (add-on issu des réponses) ── */}
+        {addOn && (() => {
+          const price = priceById.get(addOn.productId);
+          const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
+          return (
+            <section style={sectionTop}>
+              <div style={{ ...card, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.lime, 0.06)}, transparent)` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <IconBadge d={ICON.spark} />
+                  <div style={{ ...eyebrow, margin: 0 }}>Suivant tes réponses</div>
+                </div>
+                <h2 style={{ ...secTitle, fontSize: 24 }}>
+                  On te conseille aussi <span style={publicGradText}>{addOn.title}</span>
+                </h2>
+                <p style={{ ...bodyText, fontSize: 15, marginTop: 10, fontStyle: "italic", color: PUBLIC_TOKENS.teal }}>
+                  « {addOn.reason} »
+                </p>
+                <p style={{ ...bodyMuted, fontSize: 14.5, marginTop: 8, maxWidth: 640 }}>{addOn.benefit}</p>
+                {perDay != null && (
+                  <div style={{ marginTop: 12, ...bodyText, fontSize: 13.5 }}>
+                    <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(perDay)}</strong>
+                    <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter à ton programme si tu le souhaites</span>
+                  </div>
+                )}
+                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 10 }}>
+                  Rien d'obligatoire — {coach.name} en parle avec toi à ton démarrage.
+                </p>
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* ── 9 · TU NE DÉMARRES PAS SEUL (preuve communauté) ── */}
+        <section style={sectionTop}>
+          <div style={eyebrow}>La communauté</div>
+          <h2 style={secTitle}>
+            Tu ne démarres <span style={publicGradText}>pas seul</span>
+          </h2>
+          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
+            Un programme, tout le monde peut t'en vendre un. Ce qui change tout, c'est ce qui se
+            passe les semaines suivantes.
+          </p>
+          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(3, 1fr)", marginBottom: 16 }}>
+            {[
+              { n: formatCount(COMMUNITY_STATS.members), l: "membres" },
+              { n: formatCount(COMMUNITY_STATS.messages), l: "messages échangés" },
+              { n: String(COMMUNITY_STATS.spaces), l: "salons d'entraide" },
+            ].map((s) => (
+              <div key={s.l} style={{ ...card, textAlign: "center" }}>
+                <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, lineHeight: 1.05, ...publicGradText }}>{s.n}</div>
+                <div style={{ ...bodyMuted, fontSize: 12.5, marginTop: 4 }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ ...card, display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <IconBadge d={ICON.spark} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>
+                L'application We Do Transformations, incluse dès ton démarrage
+              </div>
+              <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
+                Ton suivi, tes conseils du jour, ton évolution — dans ta poche. Pas une option, pas
+                un supplément : c'est compris.
+              </p>
+              <a
+                href={TELEGRAM_GROUP_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+                style={{ ...linkBtn, display: "inline-block", textDecoration: "none", marginTop: 8 }}
+              >
+                Voir le groupe →
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 10 · POURQUOI DÉMARRER ── */}
         <section style={sectionTop}>
           <div style={eyebrow}>L'accompagnement</div>
           <h2 style={secTitle}>

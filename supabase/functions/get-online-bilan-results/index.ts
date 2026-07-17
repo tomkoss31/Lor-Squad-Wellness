@@ -46,7 +46,7 @@ serve(async (req: Request) => {
     const { data: bilan, error: bErr } = await sb
       .from("online_bilans")
       .select(
-        "id, first_name, age, city, objectives, weight_loss_target_kg, current_weight_kg, motivation_score, ai_analysis, coach_user_id, coach_slug, created_at",
+        "id, first_name, age, city, objectives, weight_loss_target_kg, current_weight_kg, motivation_score, ai_analysis, coach_user_id, coach_slug, created_at, payload",
       )
       .eq("result_token", token)
       .maybeSingle();
@@ -131,6 +131,18 @@ serve(async (req: Request) => {
       quantiteLabel: p.quantite_label,
     }));
 
+    // Réponses du questionnaire utiles à la reco d'add-on côté page (chantier
+    // 2026-07-17). On expose UNIQUEMENT ces 3 champs, pas le `payload` brut :
+    // c'est une page publique, tout ce qu'on renvoie devient lisible par
+    // quiconque a le lien. Sommeil + équilibre des repas suffisent aux règles de
+    // `src/lib/bilanAddOns.ts` — inutile d'exposer le stress, le job, l'alcool.
+    const p = (bilan.payload ?? {}) as Record<string, Record<string, unknown>>;
+    const answers = {
+      sleepHours: (p.sleep_mind?.hours as string | undefined) ?? null,
+      sleepQuality: (p.sleep_mind?.quality as string | undefined) ?? null,
+      mealsBalanced: (p.meals?.balanced as string | undefined) ?? null,
+    };
+
     return json({
       bilan: {
         firstName: bilan.first_name,
@@ -142,6 +154,7 @@ serve(async (req: Request) => {
         motivationScore: bilan.motivation_score,
         aiAnalysis: bilan.ai_analysis,
         createdAt: bilan.created_at,
+        answers,
       },
       coach: { name: coachName, slug: coachSlug, userId: bilan.coach_user_id },
       programmes,
