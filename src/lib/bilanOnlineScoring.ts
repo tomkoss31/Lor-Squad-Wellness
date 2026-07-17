@@ -66,7 +66,12 @@ export interface ScoringInput {
   // Étape 7 — activite
   active_daily?: "yes" | "no" | "";
   sport_frequency?: "never" | "1x" | "2-3x" | "4+x" | "";
-  daily_food_budget?: "2" | "4" | "8" | "10" | "15+" | "";
+  /**
+   * Contexte coach uniquement — n'entre PLUS dans le score (cf. scoreFood).
+   * Type élargi à string : les bilans d'avant le 2026-07-17 portent les anciens
+   * paliers ("2"|"4"|"8"|"10"), les nouveaux "3"|"6"|"9"|"12"|"15+".
+   */
+  daily_food_budget?: string;
 }
 
 function clamp(v: number, min = 0, max = 100): number {
@@ -82,13 +87,18 @@ function scoreFood(input: ScoringInput): number {
     case "unsure": s = 45; break;
     case "no": s = 25; break;
   }
-  switch (input.daily_food_budget) {
-    case "15+": s += 15; break;
-    case "10": s += 12; break;
-    case "8": s += 8; break;
-    case "4": s += 3; break;
-    case "2": s -= 5; break;
-  }
+  // Fix 2026-07-17 — le budget NE DOIT PAS noter la qualité alimentaire.
+  //
+  // AVANT : 15+ => +15 pts, 10 => +12, 8 => +8, 4 => +3, 2 => −5. Autrement dit
+  // « dépenser plus = mieux manger ». C'est faux : une formule boulangerie à
+  // 9-12 € (sandwich + éclair + soda) est chère ET déséquilibrée — elle
+  // gagnait +12 points. À l'inverse, quelqu'un qui cuisine à 3 €/jour était
+  // pénalisé de 5 points.
+  //
+  // La qualité est déjà mesurée par meals_balanced et soda_per_day (juste en
+  // dessous). Le budget, lui, est un élément de CONTEXTE pour le coach — il
+  // reste dans le payload et s'affiche sur la fiche CRM, mais il ne pèse plus
+  // sur le score.
   switch (input.soda_per_day) {
     case "0": s += 12; break;
     case "1": s += 3; break;
