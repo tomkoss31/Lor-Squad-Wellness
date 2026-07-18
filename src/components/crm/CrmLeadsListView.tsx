@@ -238,6 +238,7 @@ function CrmLeadListRow({
           <div style={{ flex: 2, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
+              {lead.callbackRequestedAt ? <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span> : null}
               {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
               {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
               {stagnant ? (

@@ -74,6 +74,7 @@ const PLACEHOLDER_LEAD: CrmLead = {
   ownerUserId: null,
   relanceDue: false,
   resultToken: null,
+  callbackRequestedAt: null,
   createdAt: new Date(0).toISOString(),
   contactedAt: null,
   notes: null,
@@ -320,9 +321,33 @@ export function CrmLeadDetailPage() {
               ⏳ {stagnationDays(lead)}j sans mouvement
             </span>
           ) : null}
+          {lead.callbackRequestedAt ? <span title="A demandé à être rappelé" aria-hidden="true">📞</span> : null}
           {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
           {lead.dormant ? <span title="Endormi" aria-hidden="true">💤</span> : null}
         </div>
+        {lead.callbackRequestedAt ? (
+          // Signal fort : le lead a cliqué « rappelle-moi » sur sa page Résultat
+          // Bilan. On le met en avant tout en haut de la fiche — c'est l'action
+          // n°1 à faire sur ce lead.
+          <div
+            style={{
+              marginTop: 12,
+              padding: "10px 14px",
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+              color: "var(--ls-text)",
+              fontSize: 13.5,
+              fontWeight: 600,
+            }}
+          >
+            📞 {lead.firstName} a demandé à être rappelé —{" "}
+            {new Date(lead.callbackRequestedAt).toLocaleString("fr-FR", {
+              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+            })}
+            . À contacter en priorité.
+          </div>
+        ) : null}
         <p style={metaLine}>
           {lead.city ? `${lead.city} · ` : ""}
           Reçu le{" "}
