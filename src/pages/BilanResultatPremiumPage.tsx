@@ -132,6 +132,36 @@ export function BilanResultatPremiumPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
+  // Demande de rappel (« Fais-toi rappeler par Thomas »). idle → sending → done.
+  // Le lead a déjà laissé prénom + contact + canal préféré à l'étape bilan :
+  // un clic suffit, l'edge request-callback horodate la demande sur son lead et
+  // notifie le coach par push. done affiche la confirmation inline.
+  const [callbackState, setCallbackState] = useState<"idle" | "sending" | "done">("idle");
+
+  async function requestCallback() {
+    if (!token || callbackState !== "idle") return;
+    setCallbackState("sending");
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) {
+        setCallbackState("idle");
+        return;
+      }
+      const { data: res, error } = await sb.functions.invoke("request-callback", {
+        body: { token },
+      });
+      const payload = res as { success?: boolean } | null;
+      if (error || !payload?.success) {
+        setCallbackState("idle");
+        return;
+      }
+      setCallbackState("done");
+      // Amène l'œil sur la confirmation (section démarrage).
+      document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      setCallbackState("idle");
+    }
+  }
 
   // Phase 2 : « Je démarre » tente la caisse directe (create-payment-link →
   // Square hosted checkout). Si le coach n'a pas d'encaissement configuré
@@ -685,13 +715,20 @@ export function BilanResultatPremiumPage() {
                     <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter à ton programme si tu le souhaites</span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                  style={{ ...linkBtn, marginTop: 12 }}
-                >
-                  J'en parle à {coach.name} au démarrage →
-                </button>
+                {callbackState === "done" ? (
+                  <div style={{ ...bodyText, fontSize: 13.5, color: PUBLIC_TOKENS.teal, marginTop: 12, fontWeight: 600 }}>
+                    ✓ C'est noté — {coach.name} te recontacte.
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={callbackState === "sending"}
+                    onClick={() => void requestCallback()}
+                    style={{ ...linkBtn, marginTop: 12, opacity: callbackState === "sending" ? 0.6 : 1 }}
+                  >
+                    {callbackState === "sending" ? "Envoi…" : `J'aimerais que ${coach.name} m'en parle →`}
+                  </button>
+                )}
                 <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 8 }}>
                   Rien d'obligatoire — {coach.name} en parle avec toi à ton démarrage.
                 </p>
@@ -838,14 +875,45 @@ export function BilanResultatPremiumPage() {
                 </p>
               </div>
             ) : !started ? (
-              <button
-                type="button"
-                disabled={payLoading}
-                onClick={() => void startCheckout(selected)}
-                style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
-              >
-                {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
-              </button>
+              <>
+                <button
+                  type="button"
+                  disabled={payLoading}
+                  onClick={() => void startCheckout(selected)}
+                  style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
+                >
+                  {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
+                </button>
+                {/* Chemin « pas encore prêt » : un clic → l'edge request-callback
+                    horodate la demande sur le lead + push au coach. Le lead a
+                    déjà laissé prénom + contact + canal préféré au bilan. */}
+                <div style={{ marginTop: 18 }}>
+                  {callbackState === "done" ? (
+                    <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <IconBadge d={ICON.check} />
+                        <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>C'est noté, {firstName} !</div>
+                      </div>
+                      <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
+                        {coach.name} a reçu ta demande et te recontacte très vite. Pas besoin de
+                        faire autre chose de ton côté.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ ...bodyMuted, fontSize: 13, marginBottom: 8 }}>Pas encore décidé·e ?</div>
+                      <button
+                        type="button"
+                        disabled={callbackState === "sending"}
+                        onClick={() => void requestCallback()}
+                        style={{ ...linkBtn, opacity: callbackState === "sending" ? 0.6 : 1 }}
+                      >
+                        {callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coach.name} →`}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

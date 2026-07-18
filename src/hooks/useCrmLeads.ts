@@ -69,6 +69,10 @@ export interface CrmLead {
   dormant?: boolean;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
+  /** Le lead a cliqué « Fais-toi rappeler » sur sa page Résultat Bilan
+      (online_bilans.callback_requested_at). Signal fort : il attend un appel.
+      Null = pas de demande. Surfacé en badge dans la liste + le détail. */
+  callbackRequestedAt: string | null;
   createdAt: string;
   /** Dernier contact confirmé (colonne contacted_at) — null si jamais contacté
    *  OU si la table n'a pas cette colonne (client_referrals, confirmé en DB
@@ -285,7 +289,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -381,6 +385,7 @@ export function useCrmLeads() {
               new Date(row.relance_due_at as string).getTime() <= now,
           ),
           resultToken: (row.result_token as string | null) ?? null,
+          callbackRequestedAt: (row.callback_requested_at as string | null) ?? null,
           createdAt: row.created_at as string,
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
@@ -430,6 +435,7 @@ export function useCrmLeads() {
           ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.referrer_user_id as string | null) ?? null,
           relanceDue: false,
           resultToken: null,
+          callbackRequestedAt: null,
           createdAt: row.created_at as string,
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
@@ -460,6 +466,7 @@ export function useCrmLeads() {
             : null,
           relanceDue: false,
           resultToken: null,
+          callbackRequestedAt: null,
           createdAt: row.created_at as string,
           // client_referrals n'a pas de colonne contacted_at (confirmé DB 2026-07-16).
           contactedAt: null,
@@ -490,6 +497,7 @@ export function useCrmLeads() {
             : null,
           relanceDue: false,
           resultToken: null,
+          callbackRequestedAt: null,
           createdAt: row.created_at,
           contactedAt: row.contacted_at ?? null,
           notes: row.notes ?? null,
