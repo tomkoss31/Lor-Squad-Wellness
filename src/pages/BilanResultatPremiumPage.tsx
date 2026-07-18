@@ -754,11 +754,21 @@ export function BilanResultatPremiumPage() {
             padding: "26px 20px",
             marginBottom: 14,
           }}>
-            <img
-              src="/brand/wdt-logo.jpg"
-              alt="We Do Transformations"
-              style={{ height: 54, width: "auto", maxWidth: "70%", display: "block", margin: "0 auto 16px", borderRadius: 8 }}
-            />
+            {/* Lockup WDT recréé en blanc : le logo fourni est noir-sur-noir
+                (fond opaque #000 + lettres noires), invisible sur fond sombre.
+                Bandes tricolores + « WDT » + hashtag, 100 % visibles ici.
+                À remplacer par un vrai PNG blanc transparent si Thomas en fournit un. */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 11, margin: "0 auto" }}>
+              <div style={{ display: "flex", gap: 3, transform: "skewX(-12deg)" }} aria-hidden="true">
+                <span style={{ width: 8, height: 40, background: "#E10B17", borderRadius: 1 }} />
+                <span style={{ width: 8, height: 40, background: "#F5C518", borderRadius: 1 }} />
+                <span style={{ width: 8, height: 40, background: "#FBF7F0", borderRadius: 1 }} />
+              </div>
+              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 44, fontStyle: "italic", color: "#FBF7F0", letterSpacing: 1, lineHeight: 1 }}>WDT</span>
+            </div>
+            <div style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 10.5, letterSpacing: 2, color: "rgba(251,247,240,0.55)", margin: "8px 0 16px" }}>
+              #WEDOTRANSFORMATIONS
+            </div>
             <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 6px" }}>Le Challenge We Do · 21 jours</div>
             <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: "clamp(42px,10vw,68px)", lineHeight: 1, ...publicGradText }}>
               10 000 $
