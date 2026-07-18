@@ -36,6 +36,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { pickAddOn } from "../lib/bilanAddOns";
 import {
   LUNCH_AVG_EUR,
+  PRODUCT_DAYS,
   PRODUCT_HUMAN,
   PRODUCT_SHORT,
   dailyCost,
@@ -93,6 +94,33 @@ function prettyProgramName(name: string): string {
 function capitalize(s: string) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
+
+// Scroll vers une ancre en compensant le header collant (§7 du handoff : NE PAS
+// utiliser scrollIntoView, qui ne tient pas compte du header et se comporte mal
+// selon les navigateurs). HEADER_H = hauteur du header collant.
+const HEADER_H = 78;
+function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_H;
+  window.scrollTo({ top, behavior: "smooth" });
+}
+
+// Chapitres du menu collant (scrollspy). id = ancre de section.
+const CHAPTERS = [
+  { id: "bilan", label: "Mon bilan" },
+  { id: "plan", label: "Mon plan" },
+  { id: "formules", label: "Mes formules" },
+  { id: "demarrer", label: "Démarrer" },
+] as const;
+
+// Les 4 étapes réelles du parcours /qualif (bandeau « Et après »).
+const QUALIF_STEPS = [
+  { n: "1", t: "Ton identité", d: "Quelques infos + accord RGPD. Ta fiche se crée toute seule." },
+  { n: "2", t: "Tes saveurs", d: "Tu choisis tes saveurs Formula 1, Thé et Aloé." },
+  { n: "3", t: "Ton point de départ", d: "L'appli We Do + ta première pesée." },
+  { n: "4", t: "La communauté", d: "Tu rejoins le groupe et tu ouvres ton espace." },
+] as const;
 
 export function BilanResultatPremiumPage() {
   const { token } = useParams<{ token: string }>();
@@ -157,8 +185,8 @@ export function BilanResultatPremiumPage() {
         return;
       }
       setCallbackState("done");
-      // Amène l'œil sur la confirmation (section démarrage).
-      document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Amène l'œil sur la confirmation (section démarrer).
+      scrollToId("demarrer");
     } catch {
       setCallbackState("idle");
     }
@@ -330,6 +358,46 @@ export function BilanResultatPremiumPage() {
   // → plus de titre orphelin), true = au moins un.
   const [hasTestimonials, setHasTestimonials] = useState<boolean | null>(null);
 
+  // Entonnoir (refonte 2026-07-18) : chapitre actif (scrollspy), FAQ accordéon,
+  // dépliant « détail du calcul » du €/jour.
+  const [activeChapter, setActiveChapter] = useState<string>("bilan");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  // Scrollspy : surligne le chapitre dont le haut vient de passer sous le header
+  // collant. `recompute` lit les offsets réels et prend la dernière section dont
+  // le haut a franchi la ligne du header. On le déclenche par DEUX voies :
+  //   · un listener scroll (vrais navigateurs, scroll souris/tactile) ;
+  //   · un IntersectionObserver (réagit au changement d'intersection quelle que
+  //     soit la cause — y compris un scroll programmatique, que certains
+  //     environnements n'accompagnent PAS d'un événement scroll).
+  useEffect(() => {
+    if (status !== "ok") return;
+    const ids = ["bilan", "plan", "formules", "demarrer"];
+    const recompute = () => {
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top - 96 <= 0) current = id;
+      }
+      setActiveChapter((prev) => (prev === current ? prev : current));
+    };
+    recompute();
+    window.addEventListener("scroll", recompute, { passive: true });
+    const io = new IntersectionObserver(() => recompute(), {
+      rootMargin: "-96px 0px 0px 0px",
+      threshold: [0, 1],
+    });
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    }
+    return () => {
+      window.removeEventListener("scroll", recompute);
+      io.disconnect();
+    };
+  }, [status]);
+
   if (status === "loading") {
     return (
       <PublicShell defaultTheme="dark">
@@ -363,623 +431,594 @@ export function BilanResultatPremiumPage() {
   const { bilan, coach, programmes } = data;
   const selectedProg = programmes.find((p) => p.id === selected) ?? null;
   const paidConfirmed = data.paid === true; // preuve serveur (bilan_orders payé)
+  const selectedDaily = selected ? dailyByProgram.get(selected) ?? null : null;
+
+  // Formule recommandée (pastille ★) — même logique que la présélection au
+  // chargement : la formule qui contient l'add-on détecté, sinon Premium,
+  // sinon la 1ʳᵉ. Indépendant de la sélection courante de l'utilisateur.
+  const recoMatch = addOn
+    ? programmes.find((p) => p.products.some((pr) => pr.id === addOn.productId))
+    : undefined;
+  const recoId = recoMatch?.id ?? programmes.find((p) => p.id === "premium")?.id ?? programmes[0]?.id ?? null;
+
+  // Produits en langage humain (union ordonnée sur toutes les formules).
+  const seenHuman = new Set<string>();
+  const humanProducts: string[] = [];
+  for (const p of programmes) {
+    for (const pr of p.products) {
+      if (!seenHuman.has(pr.id) && PRODUCT_HUMAN[pr.id]) {
+        seenHuman.add(pr.id);
+        humanProducts.push(pr.id);
+      }
+    }
+  }
+
+  // Détail du calcul €/jour de la formule sélectionnée (produit par produit),
+  // pour le dépliant « Voir le détail du calcul ».
+  const breakdown = selectedProg
+    ? selectedProg.products.map((pr) => {
+        const days = PRODUCT_DAYS[pr.id];
+        const price = priceById.get(pr.id);
+        const perDay = days && price !== undefined ? price / days : null;
+        return { id: pr.id, name: PRODUCT_SHORT[pr.id] ?? pr.name, days: days ?? null, perDay };
+      })
+    : [];
+
+  // Actions du panneau de décision — partagées entre le rail desktop et (en
+  // partie) la barre mobile. Appellent les handlers existants (startCheckout /
+  // requestCallback), états caisse inchangés.
+  const railActions = paidConfirmed ? (
+    <>
+      <div style={{ ...bodyText, fontSize: 14, fontWeight: 600, color: PUBLIC_TOKENS.teal, marginBottom: 12 }}>
+        ✓ Paiement reçu, merci {firstName} !
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate(`/qualif/${token}`)}
+        style={{ ...ctaPrimary, width: "100%", justifyContent: "center" }}
+      >
+        Continuer mon inscription →
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        type="button"
+        disabled={payLoading}
+        onClick={() => void startCheckout(selected)}
+        style={{ ...ctaPrimary, width: "100%", justifyContent: "center", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
+      >
+        {payLoading ? "Ouverture…" : "Je démarre →"}
+      </button>
+      {callbackState === "done" ? (
+        <div style={{ ...bodyText, fontSize: 13.5, fontWeight: 600, color: PUBLIC_TOKENS.teal, marginTop: 10, textAlign: "center" }}>
+          ✓ {coach.name} te recontacte.
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={callbackState === "sending"}
+          onClick={() => void requestCallback()}
+          style={{
+            width: "100%",
+            marginTop: 10,
+            fontFamily: PUBLIC_FONTS.display,
+            fontWeight: 600,
+            fontSize: 14.5,
+            color: "var(--cream)",
+            background: "transparent",
+            border: "1px solid var(--hair-strong)",
+            borderRadius: 14,
+            padding: "13px 20px",
+            cursor: callbackState === "sending" ? "wait" : "pointer",
+            opacity: callbackState === "sending" ? 0.6 : 1,
+          }}
+        >
+          {callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}
+        </button>
+      )}
+    </>
+  );
+
+  const secTitleWrap: React.CSSProperties = { ...secTitle };
 
   return (
     <PublicShell defaultTheme="dark">
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 22px 90px" }}>
-        {/* ── Topbar ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 0" }}>
-          <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, letterSpacing: 0.5, fontSize: 17 }}>
-            LA&nbsp;BASE&nbsp;<span style={{ color: PUBLIC_TOKENS.teal }}>360</span>
-          </div>
-          <span style={pill}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: PUBLIC_TOKENS.teal, display: "inline-block" }} />
-            Ton analyse est prête
-          </span>
+      <style>{RB_CSS}</style>
+
+      {/* ── HEADER collant : logo · menu chapitre (scrollspy) · pastille sélection ── */}
+      <header className="rb-header">
+        <div className="rb-header-inner">
+          <div className="rb-logo">LA&nbsp;BASE&nbsp;<span style={{ color: PUBLIC_TOKENS.teal }}>360</span></div>
+          <nav className="rb-chapters" aria-label="Chapitres">
+            {CHAPTERS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={"rb-chapter" + (activeChapter === c.id ? " is-active" : "")}
+                onClick={() => scrollToId(c.id)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </nav>
+          {selectedProg && (
+            <span className="rb-selpill">
+              <span className="rb-dot" /> Ta sélection ·{" "}
+              <strong>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>
+            </span>
+          )}
         </div>
+      </header>
 
-        {/* ── 1 · HERO ── */}
-        <section style={{ paddingTop: 24 }}>
-          <div style={eyebrow}>Analyse personnalisée</div>
-          <h1 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(30px,6vw,48px)", lineHeight: 1.1, letterSpacing: "-1px", margin: "16px 0 4px", color: "var(--cream)" }}>
-            Salut {firstName || "à toi"},<br />voici ce que <span style={publicGradText}>ton bilan révèle.</span>
-          </h1>
-          <p style={{ ...bodyMuted, fontSize: 17, color: "var(--cream-soft, var(--cream))", maxWidth: 560, marginTop: 18 }}>
-            Tu as pris le temps de faire ton bilan — un vrai premier pas. Voici ta lecture
-            personnalisée, et ton plan pour la suite.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 24 }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: PUBLIC_TOKENS.gradCta, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, color: "#06241f" }}>
-              {coach.name.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>Préparé par {coach.name}</div>
-              <div style={{ ...bodyMuted, fontSize: 13 }}>Coach bien-être · La Base 360</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 2 · BILAN EN UN COUP D'ŒIL ── */}
-        <section style={sectionTop}>
-          <div style={kicker}>Ton bilan en un coup d'œil</div>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
-            {primaryObjective && <StatCard label="Objectif" value={primaryObjective} />}
-            {bilan.currentWeightKg != null && <StatCard label="Poids actuel" value={`${bilan.currentWeightKg} kg`} />}
-            {bilan.weightLossTargetKg != null && <StatCard label="Objectif poids" value={`−${bilan.weightLossTargetKg} kg`} />}
-            {bilan.motivationScore != null && <StatCard label="Ta motivation" value={`${bilan.motivationScore}/10`} />}
-            {bilan.age != null && <StatCard label="Âge" value={`${bilan.age} ans`} />}
-          </div>
-        </section>
-
-        {/* ── 3 · ANALYSE DE NOALY (fallback si pas d'IA — plus de trou silencieux) ── */}
-        <section style={sectionTop}>
-          <div style={{ ...card, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.32)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.03)})` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
-              <IconBadge d={ICON.spark} />
-              <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15, color: PUBLIC_TOKENS.teal }}>
-                L'analyse de Noaly
+      {/* ── SHELL : MAIN (contenu) + ASIDE (rail collant) ── */}
+      <div className="rb-shell">
+        <main className="rb-main">
+          {/* ═══ ACTE 1 · TON BILAN ═══ */}
+          <section id="bilan" style={{ scrollMarginTop: 92, paddingTop: 28 }}>
+            <div style={eyebrow}>— Acte 1 — Analyse personnalisée</div>
+            <h1 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(30px,5.4vw,46px)", lineHeight: 1.08, letterSpacing: "-1px", margin: "14px 0 4px", color: "var(--cream)" }}>
+              Salut {firstName || "à toi"}, voici ce que{" "}
+              <span style={publicGradText}>ton bilan révèle.</span>
+            </h1>
+            <p style={{ ...bodyMuted, fontSize: 16.5, maxWidth: 560, marginTop: 16 }}>
+              Tu as pris le temps de faire ton bilan — c'est déjà un vrai pas. Voici ta lecture
+              perso, et le plan que {coach.name} te propose. Tout est déjà calé sur ce que tu as
+              répondu.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: PUBLIC_TOKENS.gradCta, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, color: "#06241f" }}>
+                {coach.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>Préparé par {coach.name}</div>
+                <div style={{ ...bodyMuted, fontSize: 13 }}>Coach bien-être · La Base 360</div>
               </div>
             </div>
-            {bilan.aiAnalysis ? (
+
+            <div className="rb-stats">
+              {primaryObjective && (
+                <div style={{ ...card, padding: 16 }}>
+                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 600 }}>Objectif</div>
+                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 18, marginTop: 6, color: PUBLIC_TOKENS.teal }}>{primaryObjective}</div>
+                </div>
+              )}
+              {bilan.currentWeightKg != null && <StatCard label="Poids actuel" value={`${bilan.currentWeightKg} kg`} />}
+              {bilan.weightLossTargetKg != null && (
+                <div style={{ ...card, padding: 16 }}>
+                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 600 }}>Objectif poids</div>
+                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontWeight: 400, fontSize: 22, marginTop: 6, color: PUBLIC_TOKENS.lime }}>−{bilan.weightLossTargetKg} kg</div>
+                </div>
+              )}
+              {bilan.motivationScore != null && <StatCard label="Ta motivation" value={`${bilan.motivationScore} / 10`} />}
+            </div>
+
+            <div style={{ ...card, marginTop: 16, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.3)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.03)})` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 10 }}>
+                <IconBadge d={ICON.spark} />
+                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15, color: PUBLIC_TOKENS.teal }}>L'analyse de Noaly</div>
+              </div>
+              {bilan.aiAnalysis ? (
+                <>
+                  <p style={{ ...bodyText, whiteSpace: "pre-wrap" }}>{bilan.aiAnalysis}</p>
+                  <div style={{ ...bodyMuted, fontSize: 12, marginTop: 12 }}>Lecture générée à partir de ton bilan · validée par ton coach</div>
+                </>
+              ) : (
+                <p style={bodyText}>
+                  {coach.name} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras
+                  lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* ═══ ACTE 2 · TON PLAN ═══ */}
+          <section id="plan" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
+            <div style={eyebrow}>— Acte 2 — Ton plan</div>
+            <h2 style={secTitleWrap}>Tes 5 stratégies <span style={publicGradText}>essentielles</span></h2>
+            <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 580, marginBottom: 18 }}>{strategies.intro}</p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {strategies.items.map((s, i) => (
+                <div key={s.title} style={{ ...card, padding: 18, display: "flex", gap: 14 }}>
+                  <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 26, color: PUBLIC_TOKENS.teal, lineHeight: 1, flexShrink: 0, minWidth: 22 }}>{i + 1}</span>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15.5, color: "var(--cream)" }}>{s.title}</span>
+                      {s.foundation && (
+                        <span style={{ fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", fontWeight: 700, color: PUBLIC_TOKENS.teal, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.4)}`, borderRadius: 999, padding: "2px 8px" }}>Fondation</span>
+                      )}
+                    </div>
+                    <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 6 }}>
+                      {s.problem}
+                      {s.solution && (
+                        <> <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>{s.solutionLabel} </strong>{s.solution}</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {humanProducts.length > 0 && (
               <>
-                <p style={{ ...bodyText, whiteSpace: "pre-wrap" }}>{bilan.aiAnalysis}</p>
-                <div style={{ ...bodyMuted, fontSize: 12, marginTop: 14 }}>
-                  Lecture générée à partir de ton bilan · validée par ton coach
+                <h3 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 18, color: "var(--cream)", margin: "34px 0 4px" }}>Ce que tu vas prendre</h3>
+                <p style={{ ...bodyMuted, fontSize: 14.5, maxWidth: 560, marginBottom: 16 }}>Des gestes simples, à glisser dans ta journée. {coach.name} te montre comment.</p>
+                <div className="rb-grid2">
+                  {humanProducts.map((id) => {
+                    const h = PRODUCT_HUMAN[id];
+                    const price = priceById.get(id);
+                    const d = price !== undefined ? dailyCost([id], priceById) : null;
+                    return (
+                      <div key={id} style={{ ...card, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, color: "var(--cream)" }}>{h.title}</div>
+                        <p style={{ ...bodyMuted, fontSize: 14, margin: "2px 0 0" }}>{h.detail}</p>
+                        {d != null && (
+                          <div style={{ marginTop: "auto", paddingTop: 10, ...bodyText, fontSize: 13.5 }}>
+                            <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong>
+                            <span style={{ color: "var(--cream-muted)" }}> / jour</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </>
-            ) : (
-              <p style={{ ...bodyText }}>
-                {coach.name} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras
-                lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.
-              </p>
             )}
-          </div>
-        </section>
 
-        {/* ── 4 · 5 STRATÉGIES ── */}
-        <section style={sectionTop}>
-          <div style={eyebrow}>Ton plan</div>
-          <h2 style={secTitle}>
-            Tes 5 stratégies <span style={publicGradText}>essentielles</span>
-          </h2>
-          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 560, marginBottom: 24 }}>
-            {strategies.intro}
-          </p>
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-            {strategies.items.map((s, i) => (
-              <div key={s.title} style={{ ...card, ...(s.foundation ? { border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.35)}` } : {}) }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <IconBadge d={s.icon} />
-                  {s.foundation && <span style={{ ...pill, color: PUBLIC_TOKENS.teal, borderColor: withA(PUBLIC_TOKENS.teal, 0.4) }}>Fondation</span>}
+            {/* PARLONS VRAI — ancrage prix + dépliant calcul */}
+            {selectedDaily != null && selectedProg && (
+              <div style={{ ...card, marginTop: 20, padding: 22, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.32)}`, background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` }}>
+                <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: 0 }}>Parlons vrai</div>
+                <h3 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 20, color: "var(--cream)", margin: "8px 0 12px" }}>Tu dépenses déjà cet argent</h3>
+                <div className="rb-grid2" style={{ gap: 12 }}>
+                  <div style={{ ...card, padding: 16 }}>
+                    <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>Ta pause déjeuner</div>
+                    <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, color: "var(--cream)", lineHeight: 1.1, marginTop: 6 }}>{formatEur(LUNCH_AVG_EUR)}</div>
+                    <div style={{ ...bodyMuted, fontSize: 12, marginTop: 4 }}>Un seul repas.</div>
+                  </div>
+                  <div style={{ ...card, padding: 16, border: `1.5px solid ${withA(PUBLIC_TOKENS.lime, 0.5)}` }}>
+                    <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600, color: PUBLIC_TOKENS.teal }}>Ton programme {prettyProgramName(selectedProg.name)}</div>
+                    <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, lineHeight: 1.1, marginTop: 6, ...publicGradText }}>{formatEur(selectedDaily)}</div>
+                    <div style={{ ...bodyMuted, fontSize: 12, marginTop: 4 }}>Ton petit-déj complet + ton hydratation de la journée.</div>
+                  </div>
                 </div>
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16.5, color: "var(--cream)" }}>
-                  <span style={{ fontFamily: PUBLIC_FONTS.mono, color: PUBLIC_TOKENS.teal, fontSize: 13 }}>{i + 1}</span>{" · "}{s.title}
-                </div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 7 }}>{s.problem}</p>
-                {s.solution && (
-                  <p style={{ ...bodyText, fontSize: 14, marginTop: 10 }}>
-                    <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>{s.solutionLabel} </strong>
-                    {s.solution}
-                  </p>
+                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 12 }}>
+                  8,30 € = coût moyen d'un déjeuner en France — enquête Edenred / Ifop.
+                </p>
+                <button type="button" onClick={() => setShowBreakdown((v) => !v)} style={{ ...linkBtn, marginTop: 8 }}>
+                  {showBreakdown ? "Masquer le détail du calcul" : "Voir le détail du calcul →"}
+                </button>
+                {showBreakdown && (
+                  <div style={{ marginTop: 12, borderTop: "1px solid var(--hair)", paddingTop: 12 }}>
+                    <p style={{ ...bodyMuted, fontSize: 12.5, marginBottom: 10 }}>
+                      On ne divise pas le pack par une durée au hasard. On additionne le coût réel de
+                      chaque produit à la dose conseillée :
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {breakdown.map((b) => (
+                        <div key={b.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, ...bodyMuted, fontSize: 13 }}>
+                          <span style={{ color: "var(--cream)" }}>{b.name}{b.days != null ? <span style={{ color: "var(--cream-muted)" }}> · tient {Math.round(b.days)} j</span> : null}</span>
+                          <span style={{ fontFamily: PUBLIC_FONTS.mono, color: "var(--cream)", whiteSpace: "nowrap" }}>{b.perDay != null ? `${formatEur(b.perDay)}/j` : "—"}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 6, paddingTop: 8, borderTop: "1px solid var(--hair)", fontWeight: 700 }}>
+                        <span style={{ color: "var(--cream)" }}>Total</span>
+                        <span style={{ fontFamily: PUBLIC_FONTS.mono, color: PUBLIC_TOKENS.lime }}>{formatEur(selectedDaily)}/jour</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
-        </section>
+            )}
+          </section>
 
-        <div style={divider} />
+          {/* ═══ ACTE 3 · TES FORMULES ═══ */}
+          <section id="formules" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
+            <div style={eyebrow}>— Acte 3 — Tes formules</div>
+            <h2 style={secTitleWrap}>Le programme qui <span style={publicGradText}>te correspond</span></h2>
+            <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 580, marginBottom: 20 }}>
+              Plusieurs niveaux. On démarre où tu te sens prêt·e — clique pour comparer : ta sélection
+              et son €/jour se mettent à jour partout.
+            </p>
 
-        {/* ── 5 · CE QUE TU VAS BOIRE (produits en langage humain) ── */}
-        {(() => {
-          // Union ordonnée des produits de toutes les formules : le prospect voit
-          // TOUT ce qui compose l'univers, expliqué, avant de voir un prix.
-          const seen = new Set<string>();
-          const humanProducts: { id: string; name: string }[] = [];
-          for (const p of programmes) {
-            for (const pr of p.products) {
-              if (!seen.has(pr.id) && PRODUCT_HUMAN[pr.id]) {
-                seen.add(pr.id);
-                humanProducts.push({ id: pr.id, name: pr.name });
-              }
-            }
-          }
-          if (humanProducts.length === 0) return null;
-          return (
-            <section style={{ paddingTop: 40 }}>
-              <div style={eyebrow}>Ta routine</div>
-              <h2 style={secTitle}>
-                Ce que tu vas <span style={publicGradText}>prendre</span>
-              </h2>
-              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 600, marginBottom: 24 }}>
-                Des gestes simples, à glisser dans ta journée. {coach.name} te montre comment.
+            <div className="rb-grid2">
+              {programmes.map((p) => {
+                const isSel = selected === p.id;
+                const isReco = p.id === recoId;
+                const d = dailyByProgram.get(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelected(p.id)}
+                    style={{
+                      ...card,
+                      textAlign: "left",
+                      cursor: "pointer",
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      border: isSel
+                        ? `1.5px solid ${PUBLIC_TOKENS.teal}`
+                        : isReco
+                          ? `1px solid ${withA(PUBLIC_TOKENS.lime, 0.45)}`
+                          : "1px solid var(--hair)",
+                      background: isSel || isReco ? `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.10)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` : card.background,
+                    }}
+                  >
+                    {isReco && (
+                      <div style={{ position: "absolute", top: -11, left: 18, background: PUBLIC_TOKENS.gradCta, color: "#06241f", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: 0.5, padding: "4px 11px", borderRadius: 999 }}>★ RECOMMANDÉ</div>
+                    )}
+                    <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
+                    <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 19, marginTop: 4, color: "var(--cream)" }}>{prettyProgramName(p.name)}</div>
+                    <div style={{ margin: "12px 0 4px", display: "flex", alignItems: "baseline", gap: 4 }}>
+                      <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 38, letterSpacing: 0.5, color: "var(--cream)", lineHeight: 1 }}>{p.price}</span>
+                      <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
+                    </div>
+                    {d != null ? (
+                      <div style={{ marginBottom: 12, ...bodyMuted, fontSize: 12.5 }}>soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong> / jour</div>
+                    ) : <div style={{ marginBottom: 12 }} />}
+                    {/* ⚠️ NE PAS re-tronquer (garde-fou §9.2) : le 5ᵉ produit justifie l'écart de prix. */}
+                    <ul style={{ listStyle: "none", display: "grid", gap: 7, margin: 0, padding: 0, flex: 1 }}>
+                      {p.products.map((pr) => (
+                        <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>
+                          <span style={{ color: PUBLIC_TOKENS.teal }}>•</span> {PRODUCT_SHORT[pr.id] ?? pr.name}
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 600, color: isSel ? PUBLIC_TOKENS.teal : "var(--cream-muted)" }}>
+                      {isSel ? "✓ Sélectionné" : "Choisir cette formule"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Add-on issu des réponses */}
+            {addOn && (() => {
+              const price = priceById.get(addOn.productId);
+              const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
+              return (
+                <div style={{ ...card, marginTop: 16, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.lime, 0.06)}, transparent)` }}>
+                  <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 8px" }}>Suivant tes réponses</div>
+                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 20, color: "var(--cream)" }}>On te conseille aussi <span style={publicGradText}>{addOn.title}</span></div>
+                  <p style={{ ...bodyText, fontSize: 15, marginTop: 10, fontStyle: "italic", color: PUBLIC_TOKENS.teal }}>« {addOn.reason} »</p>
+                  <p style={{ ...bodyMuted, fontSize: 14.5, marginTop: 8, maxWidth: 640 }}>{addOn.benefit}</p>
+                  {perDay != null && (
+                    <div style={{ marginTop: 12, ...bodyText, fontSize: 13.5 }}>
+                      <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(perDay)}</strong>
+                      <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter si tu le souhaites</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* WE DO TRANSFORMATIONS */}
+            <div style={{ marginTop: 40 }}>
+              <div style={eyebrow}>Ta communauté</div>
+              <h2 style={secTitleWrap}>Tu ne démarres <span style={publicGradText}>pas seul</span></h2>
+              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
+                En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong> —
+                notre appli et notre communauté. C'est ça qui change tout, après le premier jour.
               </p>
-              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-                {humanProducts.map(({ id }) => {
-                  const h = PRODUCT_HUMAN[id];
-                  const price = priceById.get(id);
-                  const days = price !== undefined ? dailyCost([id], priceById) : null;
+              <div style={{ ...card, background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.14)}, ${withA(PUBLIC_TOKENS.lime, 0.06)})`, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, textAlign: "center", padding: "26px 20px", marginBottom: 14 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 11, margin: "0 auto" }}>
+                  <div style={{ display: "flex", gap: 3, transform: "skewX(-12deg)" }} aria-hidden="true">
+                    <span style={{ width: 8, height: 40, background: "#E10B17", borderRadius: 1 }} />
+                    <span style={{ width: 8, height: 40, background: "#F5C518", borderRadius: 1 }} />
+                    <span style={{ width: 8, height: 40, background: "var(--cream)", borderRadius: 1 }} />
+                  </div>
+                  <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 44, fontStyle: "italic", color: "var(--cream)", letterSpacing: 1, lineHeight: 1 }}>WDT</span>
+                </div>
+                <div style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 10.5, letterSpacing: 2, color: "var(--cream-muted)", margin: "8px 0 16px" }}>#WEDOTRANSFORMATIONS</div>
+                <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 6px" }}>Le Challenge We Do · 21 jours</div>
+                <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: "clamp(42px,10vw,68px)", lineHeight: 1, ...publicGradText }}>10 000 $</div>
+                <p style={{ ...bodyText, fontSize: 15, maxWidth: 440, margin: "12px auto 0" }}>en jeu pour les <strong>10 plus belles transformations</strong>. 3 semaines pour changer, tous ensemble.</p>
+                <p style={{ ...bodyMuted, fontSize: 13, marginTop: 8 }}>Inclus dès ton démarrage.</p>
+              </div>
+              <div className="rb-grid2">
+                <div style={{ ...card, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <video src="/brand/wdt-app.mp4" autoPlay muted loop playsInline style={{ width: "100%", borderRadius: 12, display: "block", background: "#000" }} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>L'appli We Do, dans ta poche</div>
+                    <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>Ton suivi, tes conseils du jour, ton évolution. Incluse — pas une option.</p>
+                  </div>
+                </div>
+                <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+                  <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.members)}</div>
+                      <div style={{ ...bodyMuted, fontSize: 12 }}>membres</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.messages)}</div>
+                      <div style={{ ...bodyMuted, fontSize: 12 }}>messages échangés</div>
+                    </div>
+                  </div>
+                  <p style={{ ...bodyMuted, fontSize: 13.5, textAlign: "center" }}>Recettes, transformations, lives, entraide au quotidien. Tu y entres dès ton premier jour.</p>
+                  <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noreferrer noopener" style={{ ...linkBtn, display: "inline-block", textDecoration: "none", textAlign: "center" }}>Voir la communauté →</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Pourquoi (2 cartes) */}
+            <div style={{ marginTop: 40 }}>
+              <div style={eyebrow}>L'accompagnement</div>
+              <h2 style={secTitleWrap}>Pourquoi démarrer <span style={publicGradText}>avec nous</span></h2>
+              <div className="rb-grid2" style={{ marginTop: 20 }}>
+                {WHY.map((w) => (
+                  <div key={w.title} style={card}>
+                    <IconBadge d={w.icon} />
+                    <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, marginTop: 12, color: "var(--cream)" }}>{w.title}</div>
+                    <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>{w.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Témoignages (masqués si aucun avis) */}
+            <div style={{ marginTop: hasTestimonials ? 40 : 0 }}>
+              {hasTestimonials && (
+                <>
+                  <div style={eyebrow}>Ils l'ont fait</div>
+                  <h2 style={secTitleWrap}>Des <span style={publicGradText}>vraies histoires</span></h2>
+                </>
+              )}
+              <TestimonialsCarousel variant="business" coachId={coach.userId ?? undefined} limit={3} onLoaded={(n) => setHasTestimonials(n > 0)} />
+            </div>
+
+            {/* FAQ accordéon */}
+            <div style={{ marginTop: 40 }}>
+              <div style={eyebrow}>Tout est clair ?</div>
+              <h2 style={{ ...secTitleWrap, marginBottom: 18 }}>Tes questions, <span style={publicGradText}>mes réponses</span></h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {FAQ.map((f, i) => {
+                  const open = openFaq === i;
                   return (
-                    <div key={id} style={{ ...card, display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, color: "var(--cream)" }}>
-                        {h.title}
-                      </div>
-                      <p style={{ ...bodyMuted, fontSize: 14, margin: "2px 0 0" }}>{h.detail}</p>
-                      {days != null && (
-                        <div style={{ marginTop: "auto", paddingTop: 10, ...bodyText, fontSize: 13.5 }}>
-                          <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(days)}</strong>
-                          <span style={{ color: "var(--cream-muted)" }}> / jour</span>
-                        </div>
+                    <div key={f.q} style={{ ...card, padding: 0, overflow: "hidden" }}>
+                      <button type="button" onClick={() => setOpenFaq(open ? null : i)} style={{ width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                        <span style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>{f.q}</span>
+                        <span style={{ color: PUBLIC_TOKENS.teal, fontSize: 20, lineHeight: 1, transform: open ? "rotate(45deg)" : "none", transition: "transform .18s" }}>+</span>
+                      </button>
+                      {open && (
+                        <p style={{ ...bodyMuted, fontSize: 14, padding: "0 18px 16px" }}>{f.a.replace("{coach}", coach.name)}</p>
                       )}
                     </div>
                   );
                 })}
               </div>
-            </section>
-          );
-        })()}
+            </div>
+          </section>
 
-        {/* ── 6 · PARLONS VRAI (le repère prix AVANT les formules) ── */}
-        {(() => {
-          // Le €/jour de la formule présélectionnée sert d'ancrage. On ne montre
-          // ce bloc que si on sait le calculer (sinon pas de comparaison bancale).
-          const anchor = selected ? dailyByProgram.get(selected) : null;
-          const anchorProgram = programmes.find((p) => p.id === selected);
-          if (anchor == null || !anchorProgram) return null;
-          const cheaper = anchor < LUNCH_AVG_EUR;
-          return (
-            <section style={sectionTop}>
-              <div style={eyebrow}>Parlons vrai</div>
-              <h2 style={secTitle}>
-                Tu dépenses <span style={publicGradText}>déjà cet argent</span>
+          {/* ═══ DÉMARRER (états caisse) ═══ */}
+          <section id="demarrer" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
+            <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})`, padding: "38px 24px" }}>
+              <h2 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(24px,4.6vw,32px)", lineHeight: 1.15, color: "var(--cream)" }}>
+                Prêt·e à démarrer, <span style={publicGradText}>{firstName || "toi"}</span> ?
               </h2>
-              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
-                En France, la pause déjeuner coûte <strong style={{ color: "var(--cream)" }}>{formatEur(LUNCH_AVG_EUR)}</strong> en
-                moyenne (enquête Edenred / Ifop). Un sandwich, un dessert, une boisson — et à 16 h,
-                tu rouvres le placard.
+              <p style={{ ...bodyText, fontSize: 16, maxWidth: 460, margin: "14px auto 24px" }}>
+                {selectedProg
+                  ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>. On démarre quand tu veux.</>
+                  : <>On démarre quand tu veux. La première étape, c'est juste un échange — sans pression.</>}
               </p>
-              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr", alignItems: "stretch" }}>
-                <div style={{ ...card }}>
-                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>
-                    Ta pause déjeuner
+              {paidConfirmed ? (
+                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <IconBadge d={ICON.check} />
+                    <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Paiement reçu, merci {firstName} !</div>
                   </div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, color: "var(--cream)", lineHeight: 1.1, marginTop: 6 }}>
-                    {formatEur(LUNCH_AVG_EUR)}
-                  </div>
-                  <p style={{ ...bodyMuted, fontSize: 13, marginTop: 4 }}>Un seul repas. Et tu as encore faim après.</p>
+                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>C'est officiel, tu démarres. Encore 2 minutes pour finaliser ton inscription et tu es prêt·e. Bienvenue !</p>
+                  <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...ctaPrimary, width: "100%", marginTop: 16, justifyContent: "center" }}>Continuer mon inscription →</button>
                 </div>
-                <div style={{ ...card, border: `1.5px solid ${withA(PUBLIC_TOKENS.lime, 0.5)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.1)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})` }}>
-                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600, color: PUBLIC_TOKENS.teal }}>
-                    Ton programme {prettyProgramName(anchorProgram.name)}
+              ) : justPaid ? (
+                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                  <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Merci {firstName} !</div>
+                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>On finalise la confirmation de ton paiement. {coach.name} revient vers toi tout de suite pour ton programme, ta saveur et ta première pesée.</p>
+                </div>
+              ) : !started ? (
+                <>
+                  <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>
+                    {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
+                  </button>
+                  <div style={{ marginTop: 18 }}>
+                    {callbackState === "done" ? (
+                      <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <IconBadge d={ICON.check} />
+                          <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>C'est noté, {firstName} !</div>
+                        </div>
+                        <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>{coach.name} a reçu ta demande et te recontacte très vite. Pas besoin de faire autre chose de ton côté.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ ...bodyMuted, fontSize: 13, marginBottom: 8 }}>Pas encore décidé·e ?</div>
+                        <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ ...linkBtn, opacity: callbackState === "sending" ? 0.6 : 1 }}>
+                          {callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coach.name} →`}
+                        </button>
+                      </>
+                    )}
                   </div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, lineHeight: 1.1, marginTop: 6, ...publicGradText }}>
-                    {formatEur(anchor)}
+                </>
+              ) : (
+                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <IconBadge d={ICON.lock} />
+                    <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Super, {firstName} !</div>
                   </div>
-                  <p style={{ ...bodyMuted, fontSize: 13, marginTop: 4 }}>
-                    Ton petit-déjeuner complet + ton hydratation de toute la journée.
+                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
+                    {coach.name} va t'envoyer ton lien de paiement sécurisé pour finaliser
+                    {selectedProg ? <> ton pack <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)}</strong></> : " ton démarrage"}.
+                    Réponds simplement à son message.
                   </p>
                 </div>
-              </div>
-              <p style={{ ...bodyText, fontSize: 15, marginTop: 16, maxWidth: 620 }}>
-                {cheaper ? (
-                  <>Ta journée complète coûte <strong style={{ color: PUBLIC_TOKENS.lime }}>moins cher que ton seul déjeuner</strong>. Ce n'est pas une dépense en plus — c'est le même argent, dépensé autrement.</>
-                ) : (
-                  <>Pour l'équivalent d'une pause déjeuner, tu couvres <strong style={{ color: PUBLIC_TOKENS.lime }}>ta journée complète</strong>. Le même argent, mais qui travaille pour toi.</>
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => document.getElementById("formules")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                style={{ ...linkBtn, marginTop: 6 }}
-              >
-                Voir mes formules →
-              </button>
-            </section>
-          );
-        })()}
-
-        <div style={divider} />
-
-        {/* ── 7 · LES PROGRAMMES ── */}
-        <section id="formules" style={{ paddingTop: 40, scrollMarginTop: 20 }}>
-          <div style={eyebrow}>Nos formules</div>
-          <h2 style={secTitle}>
-            Le programme qui <span style={publicGradText}>te correspond</span>
-          </h2>
-          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 580, marginBottom: 24 }}>
-            Plusieurs niveaux. On démarre où tu te sens prêt·e — et on fait évoluer ton pack selon
-            tes résultats. {coach.name} t'aide à choisir.
-          </p>
-
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
-            {programmes.map((p) => {
-              const best = p.id === "premium";
-              const isSel = selected === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setSelected(p.id)}
-                  style={{
-                    ...card,
-                    textAlign: "left",
-                    cursor: "pointer",
-                    position: "relative",
-                    display: "flex",
-                    flexDirection: "column",
-                    border: isSel
-                      ? `1.5px solid ${PUBLIC_TOKENS.teal}`
-                      : best
-                        ? `1px solid ${withA(PUBLIC_TOKENS.lime, 0.45)}`
-                        : "1px solid var(--hair)",
-                    background: best || isSel ? `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.10)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` : card.background,
-                  }}
-                >
-                  {best && (
-                    <div style={{ position: "absolute", top: -11, left: 18, background: PUBLIC_TOKENS.gradCta, color: "#06241f", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: 0.5, padding: "4px 11px", borderRadius: 999 }}>
-                      ★ BEST-SELLER
-                    </div>
-                  )}
-                  <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 19, marginTop: 4, color: "var(--cream)" }}>{prettyProgramName(p.name)}</div>
-                  <div style={{ margin: "12px 0 4px", display: "flex", alignItems: "baseline", gap: 4 }}>
-                    <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 38, letterSpacing: 0.5, color: "var(--cream)", lineHeight: 1 }}>{p.price}</span>
-                    <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
-                  </div>
-                  {/* €/jour réel À CÔTÉ du prix du pack, jamais à la place (le
-                      pack reste le prix qu'on encaisse). Rend concret le « moins
-                      cher que ton déjeuner » de la section Parlons vrai. */}
-                  {(() => {
-                    const d = dailyByProgram.get(p.id);
-                    return d != null ? (
-                      <div style={{ marginBottom: 12, ...bodyMuted, fontSize: 12.5 }}>
-                        soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong> / jour
-                      </div>
-                    ) : <div style={{ marginBottom: 12 }} />;
-                  })()}
-                  {/* ⚠️ NE PAS re-tronquer cette liste (fix 2026-07-16).
-                      Avant : .slice(0, 4). Or Premium = 4 produits, tandis que
-                      Booster 1 (+ Multifibres) et Booster 2 (+ Phyto brûle-
-                      graisse) en ont 5 : le 5e — le SEUL qui justifie les +43 €
-                      et +90 € — était masqué. Le prospect voyait 3 cartes
-                      identiques à 234/277/324 € et ne pouvait pas comprendre
-                      l'écart de prix. */}
-                  <ul style={{ listStyle: "none", display: "grid", gap: 7, margin: 0, padding: 0, flex: 1 }}>
-                    {p.products.map((pr) => (
-                      <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>• {PRODUCT_SHORT[pr.id] ?? pr.name}</li>
-                    ))}
-                  </ul>
-                  <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 600, color: isSel ? PUBLIC_TOKENS.teal : "var(--cream-muted)" }}>
-                    {isSel ? "✓ Sélectionné" : "Choisir"}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* À l'unité / combos */}
-          <div style={{ ...card, marginTop: 14, display: "flex", alignItems: "flex-start", gap: 12, background: withA(PUBLIC_TOKENS.teal, 0.05), borderColor: withA(PUBLIC_TOKENS.teal, 0.2) }}>
-            <IconBadge d={ICON.puzzle} />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>Plutôt à l'unité ou un petit combo ?</div>
-              <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
-                Pas envie d'un pack complet ? On peut partir sur un seul produit ou une petite combinaison
-                (ex : Formula 1 + Thé). Dis-le à {coach.name}, on cale ça ensemble.
-              </p>
-              <button
-                type="button"
-                onClick={() => document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                style={linkBtn}
-              >
-                J'en parle à {coach.name} →
-              </button>
+              )}
+              <div style={{ ...bodyMuted, fontSize: 12.5, marginTop: 22 }}>Une question ? Réponds simplement au message de {coach.name}, il·elle est là.</div>
             </div>
-          </div>
+          </section>
+        </main>
 
-          {/* Durée — règle honnête */}
-          <div style={{ ...card, marginTop: 14, display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <IconBadge d={ICON.clock} />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>Combien de temps dure un pack ?</div>
-              <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
-                Ça dépend de ton rythme — on le calcule ensemble à ton démarrage, pas de durée imposée.
-                L'idée : que ton pack te serve vraiment, sans gaspillage.
-              </p>
+        {/* ── ASIDE : rail de décision collant (desktop) ── */}
+        <div className="rb-rail-wrap">
+          <aside className="rb-rail" style={{ ...card, padding: 20 }}>
+            <div style={{ ...eyebrow, margin: 0 }}>Ta sélection</div>
+            <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 22, color: "var(--cream)", marginTop: 8 }}>{selectedProg ? prettyProgramName(selectedProg.name) : "—"}</div>
+            {selectedProg && <div style={{ ...bodyMuted, fontSize: 13 }}>{PROGRAMME_SUBTITLE_BY_ID[selectedProg.id] ?? "Pour aller plus loin"}</div>}
+            <div style={{ margin: "14px 0 2px", display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, color: "var(--cream)", lineHeight: 1 }}>{selectedProg?.price ?? "—"}</span>
+              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
             </div>
-          </div>
-        </section>
-
-        {/* ── 8 · RECOMMANDÉ POUR TOI (add-on issu des réponses) ── */}
-        {addOn && (() => {
-          const price = priceById.get(addOn.productId);
-          const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
-          return (
-            <section style={sectionTop}>
-              <div style={{ ...card, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.lime, 0.06)}, transparent)` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <IconBadge d={ICON.spark} />
-                  <div style={{ ...eyebrow, margin: 0 }}>Suivant tes réponses</div>
-                </div>
-                <h2 style={{ ...secTitle, fontSize: 24 }}>
-                  On te conseille aussi <span style={publicGradText}>{addOn.title}</span>
-                </h2>
-                <p style={{ ...bodyText, fontSize: 15, marginTop: 10, fontStyle: "italic", color: PUBLIC_TOKENS.teal }}>
-                  « {addOn.reason} »
-                </p>
-                <p style={{ ...bodyMuted, fontSize: 14.5, marginTop: 8, maxWidth: 640 }}>{addOn.benefit}</p>
-                {perDay != null && (
-                  <div style={{ marginTop: 12, ...bodyText, fontSize: 13.5 }}>
-                    <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(perDay)}</strong>
-                    <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter à ton programme si tu le souhaites</span>
-                  </div>
-                )}
-                {callbackState === "done" ? (
-                  <div style={{ ...bodyText, fontSize: 13.5, color: PUBLIC_TOKENS.teal, marginTop: 12, fontWeight: 600 }}>
-                    ✓ C'est noté — {coach.name} te recontacte.
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={callbackState === "sending"}
-                    onClick={() => void requestCallback()}
-                    style={{ ...linkBtn, marginTop: 12, opacity: callbackState === "sending" ? 0.6 : 1 }}
-                  >
-                    {callbackState === "sending" ? "Envoi…" : `J'aimerais que ${coach.name} m'en parle →`}
-                  </button>
-                )}
-                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 8 }}>
-                  Rien d'obligatoire — {coach.name} en parle avec toi à ton démarrage.
-                </p>
-              </div>
-            </section>
-          );
-        })()}
-
-        {/* ── 9 · WE DO TRANSFORMATIONS (le cœur : appli + challenge + communauté) ── */}
-        <section style={sectionTop}>
-          <div style={eyebrow}>Ta communauté</div>
-          <h2 style={secTitle}>
-            Tu ne démarres <span style={publicGradText}>pas seul</span>
-          </h2>
-          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 22 }}>
-            En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong> —
-            notre appli et notre communauté. C'est ça qui change tout, après le premier jour.
-          </p>
-
-          {/* Challenge — le 10 000 $ en grand */}
-          <div style={{
-            ...card,
-            background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.14)}, ${withA(PUBLIC_TOKENS.lime, 0.06)})`,
-            border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`,
-            textAlign: "center",
-            padding: "26px 20px",
-            marginBottom: 14,
-          }}>
-            {/* Lockup WDT recréé en blanc : le logo fourni est noir-sur-noir
-                (fond opaque #000 + lettres noires), invisible sur fond sombre.
-                Bandes tricolores + « WDT » + hashtag, 100 % visibles ici.
-                À remplacer par un vrai PNG blanc transparent si Thomas en fournit un. */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 11, margin: "0 auto" }}>
-              <div style={{ display: "flex", gap: 3, transform: "skewX(-12deg)" }} aria-hidden="true">
-                <span style={{ width: 8, height: 40, background: "#E10B17", borderRadius: 1 }} />
-                <span style={{ width: 8, height: 40, background: "#F5C518", borderRadius: 1 }} />
-                <span style={{ width: 8, height: 40, background: "#FBF7F0", borderRadius: 1 }} />
-              </div>
-              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 44, fontStyle: "italic", color: "#FBF7F0", letterSpacing: 1, lineHeight: 1 }}>WDT</span>
-            </div>
-            <div style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 10.5, letterSpacing: 2, color: "rgba(251,247,240,0.55)", margin: "8px 0 16px" }}>
-              #WEDOTRANSFORMATIONS
-            </div>
-            <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 6px" }}>Le Challenge We Do · 21 jours</div>
-            <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: "clamp(42px,10vw,68px)", lineHeight: 1, ...publicGradText }}>
-              10 000 $
-            </div>
-            <p style={{ ...bodyText, fontSize: 15, maxWidth: 440, margin: "12px auto 0" }}>
-              en jeu pour les <strong>10 plus belles transformations</strong>. 3 semaines pour changer,
-              tous ensemble.
-            </p>
-            <p style={{ ...bodyMuted, fontSize: 13, marginTop: 8 }}>Inclus dès ton démarrage.</p>
-          </div>
-
-          {/* Appli (vidéo) + preuve communauté */}
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-            <div style={{ ...card, display: "flex", flexDirection: "column", gap: 10 }}>
-              <video
-                src="/brand/wdt-app.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                style={{ width: "100%", borderRadius: 12, display: "block", background: "#000" }}
-              />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>L'appli We Do, dans ta poche</div>
-                <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
-                  Ton suivi, tes conseils du jour, ton évolution. Incluse — pas une option.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
-              <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.members)}</div>
-                  <div style={{ ...bodyMuted, fontSize: 12 }}>membres</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.messages)}</div>
-                  <div style={{ ...bodyMuted, fontSize: 12 }}>messages échangés</div>
-                </div>
-              </div>
-              <p style={{ ...bodyMuted, fontSize: 13.5, textAlign: "center" }}>
-                Recettes, transformations, lives, entraide au quotidien. Tu y entres dès ton premier jour.
-              </p>
-              <a
-                href={TELEGRAM_GROUP_URL}
-                target="_blank"
-                rel="noreferrer noopener"
-                style={{ ...linkBtn, display: "inline-block", textDecoration: "none", textAlign: "center" }}
-              >
-                Voir la communauté →
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 10 · POURQUOI DÉMARRER ── */}
-        <section style={sectionTop}>
-          <div style={eyebrow}>L'accompagnement</div>
-          <h2 style={secTitle}>
-            Pourquoi démarrer <span style={publicGradText}>avec nous</span>
-          </h2>
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", marginTop: 22 }}>
-            {WHY.map((w) => (
-              <div key={w.title} style={card}>
-                <IconBadge d={w.icon} />
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, marginTop: 12, color: "var(--cream)" }}>{w.title}</div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>{w.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {hasTestimonials && <div style={divider} />}
-
-        {/* ── 7 · TÉMOIGNAGES (section masquée tant qu'aucun avis validé) ── */}
-        <section style={{ paddingTop: hasTestimonials ? 40 : 0 }}>
-          {hasTestimonials && (
-            <>
-              <div style={eyebrow}>Ils ont commencé comme toi</div>
-              <h2 style={{ ...secTitle, marginBottom: 22 }}>
-                Ce qu'en disent <span style={publicGradText}>les autres</span>
-              </h2>
-            </>
-          )}
-          <TestimonialsCarousel
-            variant="business"
-            coachId={coach.userId ?? undefined}
-            limit={3}
-            onLoaded={(n) => setHasTestimonials(n > 0)}
-          />
-        </section>
-
-        {/* ── 8 · FAQ ── */}
-        <section style={sectionTop}>
-          <div style={eyebrow}>Tout est clair ?</div>
-          <h2 style={{ ...secTitle, marginBottom: 22 }}>
-            Tes questions, <span style={publicGradText}>mes réponses</span>
-          </h2>
-          <div style={{ display: "grid", gap: 12 }}>
-            {FAQ.map((f) => (
-              <div key={f.q} style={card}>
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 600, fontSize: 15.5, color: "var(--cream)" }}>{f.q}</div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 7 }}>{f.a.replace("{coach}", coach.name)}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── 9 · CTA ── */}
-        <section id="demarrage" style={sectionTop}>
-          <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})`, padding: "38px 24px" }}>
-            <h2 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(24px,4.6vw,32px)", lineHeight: 1.15, color: "var(--cream)" }}>
-              Prêt·e à démarrer, <span style={publicGradText}>{firstName || "toi"}</span> ?
-            </h2>
-            <p style={{ ...bodyText, fontSize: 16, maxWidth: 460, margin: "14px auto 24px" }}>
-              {selectedProg
-                ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>. On démarre quand tu veux.</>
-                : <>On démarre quand tu veux. La première étape, c'est juste un échange — sans pression.</>}
-            </p>
-            {paidConfirmed ? (
-              // Preuve SERVEUR (bilan_orders payé) — pas le seul ?paid=1.
-              <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <IconBadge d={ICON.check} />
-                  <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Paiement reçu, merci {firstName} !</div>
-                </div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
-                  C'est officiel, tu démarres. Encore 2 minutes pour finaliser ton inscription
-                  (règlement, ta saveur, ton point de départ) et tu es prêt·e. Bienvenue !
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/qualif/${token}`)}
-                  style={{ ...ctaPrimary, width: "100%", marginTop: 16 }}
-                >
-                  Continuer mon inscription →
-                </button>
-              </div>
-            ) : justPaid ? (
-              // Retour caisse mais webhook pas encore confirmé côté serveur : on
-              // reste honnête (« on confirme »), pas de fausse validation.
-              <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Merci {firstName} !</div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>
-                  On finalise la confirmation de ton paiement. {coach.name} revient vers toi tout de
-                  suite pour ton programme, ta saveur et ta première pesée.
-                </p>
-              </div>
-            ) : !started ? (
-              <>
-                <button
-                  type="button"
-                  disabled={payLoading}
-                  onClick={() => void startCheckout(selected)}
-                  style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
-                >
-                  {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
-                </button>
-                {/* Chemin « pas encore prêt » : un clic → l'edge request-callback
-                    horodate la demande sur le lead + push au coach. Le lead a
-                    déjà laissé prénom + contact + canal préféré au bilan. */}
-                <div style={{ marginTop: 18 }}>
-                  {callbackState === "done" ? (
-                    <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <IconBadge d={ICON.check} />
-                        <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>C'est noté, {firstName} !</div>
-                      </div>
-                      <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
-                        {coach.name} a reçu ta demande et te recontacte très vite. Pas besoin de
-                        faire autre chose de ton côté.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ ...bodyMuted, fontSize: 13, marginBottom: 8 }}>Pas encore décidé·e ?</div>
-                      <button
-                        type="button"
-                        disabled={callbackState === "sending"}
-                        onClick={() => void requestCallback()}
-                        style={{ ...linkBtn, opacity: callbackState === "sending" ? 0.6 : 1 }}
-                      >
-                        {callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coach.name} →`}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <IconBadge d={ICON.lock} />
-                  <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Super, {firstName} !</div>
-                </div>
-                <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
-                  {coach.name} va t'envoyer ton lien de paiement sécurisé pour finaliser
-                  {selectedProg ? <> ton pack <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)}</strong></> : " ton démarrage"}.
-                  Réponds simplement à son message.
-                </p>
-              </div>
+            {selectedDaily != null && (
+              <div style={{ ...bodyMuted, fontSize: 13 }}>soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(selectedDaily)}</strong> / jour · {selectedDaily < LUNCH_AVG_EUR ? "moins qu'un déjeuner" : "≈ un déjeuner"}</div>
             )}
-            <div style={{ ...bodyMuted, fontSize: 12.5, marginTop: 22 }}>
-              Une question ? Réponds simplement au message de {coach.name}, il·elle est là.
+            <div style={{ height: 1, background: "var(--hair)", margin: "16px 0" }} />
+            {railActions}
+            <div style={{ ...bodyMuted, fontSize: 12, marginTop: 14, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <LineIcon d={ICON.lock} size={13} color="var(--cream-muted)" /> Paiement sécurisé · Square
             </div>
+          </aside>
+          <div style={{ ...card, padding: 16 }}>
+            <p style={{ ...bodyMuted, fontSize: 13 }}>
+              <strong style={{ color: "var(--cream)" }}>L'appli We Do Transformations incluse</strong> + le challenge 21 jours (10 000 $ en jeu). Compris dès ton démarrage.
+            </p>
           </div>
-          <div style={{ ...bodyMuted, textAlign: "center", fontSize: 12, marginTop: 30 }}>
-            La Base 360 — Ce bilan est personnel et confidentiel.
-          </div>
-        </section>
+        </div>
       </div>
+
+      {/* ── Barre de paiement collante (mobile) ── */}
+      <div className="rb-paybar">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 14, color: "var(--cream)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {selectedProg ? `${prettyProgramName(selectedProg.name)} · ${selectedProg.price} €` : "Ta sélection"}
+          </div>
+          <div style={{ ...bodyMuted, fontSize: 11.5 }}>{selectedDaily != null ? `${formatEur(selectedDaily)} / jour · Square sécurisé` : "Paiement sécurisé · Square"}</div>
+        </div>
+        {paidConfirmed ? (
+          <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...ctaPrimary, padding: "13px 20px", fontSize: 15, whiteSpace: "nowrap" }}>Continuer →</button>
+        ) : (
+          <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...ctaPrimary, padding: "13px 20px", fontSize: 15, whiteSpace: "nowrap", opacity: payLoading ? 0.6 : 1 }}>{payLoading ? "…" : "Je démarre →"}</button>
+        )}
+      </div>
+
+      {/* ── BANDEAU « ET APRÈS » (pleine largeur) ── */}
+      <section className="rb-after">
+        <div className="rb-after-inner">
+          <div style={eyebrow}>Et après ?</div>
+          <h2 style={{ ...secTitleWrap, marginBottom: 4 }}>Une fois que tu <span style={publicGradText}>démarres</span></h2>
+          <p style={{ ...bodyMuted, fontSize: 15, maxWidth: 560 }}>4 étapes simples, guidées, juste après ton paiement.</p>
+          <div className="rb-steps">
+            {QUALIF_STEPS.map((s) => (
+              <div key={s.n} style={{ ...card, padding: 18 }}>
+                <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 26, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>{s.n}</span>
+                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15.5, color: "var(--cream)", marginTop: 8 }}>{s.t}</div>
+                <p style={{ ...bodyMuted, fontSize: 13, marginTop: 5 }}>{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ ...bodyMuted, textAlign: "center", fontSize: 12, marginTop: 34 }}>La Base 360 — Ce bilan est personnel et confidentiel.</div>
+        </div>
+      </section>
     </PublicShell>
   );
 }
@@ -1129,17 +1168,6 @@ const card: React.CSSProperties = {
   borderRadius: 18,
   padding: 22,
 };
-const pill: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 7,
-  fontSize: 12.5,
-  fontWeight: 600,
-  padding: "6px 13px",
-  borderRadius: 999,
-  border: "1px solid var(--hair-strong)",
-  color: "var(--cream)",
-};
 const eyebrow: React.CSSProperties = {
   fontFamily: PUBLIC_FONTS.display,
   fontSize: 12,
@@ -1148,28 +1176,20 @@ const eyebrow: React.CSSProperties = {
   textTransform: "uppercase",
   color: PUBLIC_TOKENS.teal,
 };
-const kicker: React.CSSProperties = {
-  fontFamily: PUBLIC_FONTS.display,
-  fontSize: 12,
-  fontWeight: 600,
-  letterSpacing: 2,
-  textTransform: "uppercase",
-  color: "var(--cream-muted)",
-  marginBottom: 14,
-};
 const secTitle: React.CSSProperties = {
   fontFamily: PUBLIC_FONTS.display,
   fontWeight: 700,
   fontSize: "clamp(24px,4vw,30px)",
   lineHeight: 1.18,
   letterSpacing: "-0.4px",
-  margin: "12px 0 8px",
+  marginTop: 12,
+  marginRight: 0,
+  marginBottom: 8,
+  marginLeft: 0,
   color: "var(--cream)",
 };
 const bodyText: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body, fontSize: 16, lineHeight: 1.55, color: "var(--cream)" };
 const bodyMuted: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body, color: "var(--cream-muted)", lineHeight: 1.5 };
-const sectionTop: React.CSSProperties = { paddingTop: 56 };
-const divider: React.CSSProperties = { height: 1, background: "var(--hair)", marginTop: 56 };
 const linkBtn: React.CSSProperties = {
   marginTop: 10,
   display: "inline-flex",
@@ -1198,3 +1218,40 @@ const ctaPrimary: React.CSSProperties = {
   padding: "16px 30px",
   cursor: "pointer",
 };
+
+// ─── CSS scopé de l'entonnoir (structure + responsive) ───────────────────────
+// Les couleurs viennent des vars du thème public (public-shell.css) → theme-aware
+// automatiquement (dark ET light). On ne met ici QUE ce que le style inline ne
+// peut pas faire : sticky, grille responsive, media queries, barre mobile.
+const RB_CSS = `
+.rb-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--ink) 85%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
+.rb-header-inner{max-width:1180px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:18px}
+.rb-logo{font-family:${PUBLIC_FONTS.display};font-weight:800;letter-spacing:.5px;font-size:17px;color:var(--cream);white-space:nowrap}
+.rb-chapters{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.rb-chapters::-webkit-scrollbar{display:none}
+.rb-chapter{font-family:${PUBLIC_FONTS.display};font-weight:600;font-size:13.5px;color:var(--cream-muted);background:transparent;border:1px solid transparent;border-radius:999px;padding:7px 14px;cursor:pointer;white-space:nowrap}
+.rb-chapter.is-active{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 40%,transparent);background:color-mix(in srgb,var(--teal) 10%,transparent)}
+.rb-selpill{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--cream-muted);border:1px solid var(--hair-strong);border-radius:999px;padding:7px 14px;white-space:nowrap}
+.rb-selpill strong{color:var(--cream)}
+.rb-dot{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.rb-shell{max-width:1180px;margin:0 auto;padding:8px 22px 120px;display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:34px;align-items:start}
+.rb-rail-wrap{position:sticky;top:84px;display:flex;flex-direction:column;gap:12px}
+.rb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.rb-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rb-paybar{display:none}
+.rb-after{border-top:1px solid var(--hair);margin-top:20px}
+.rb-after-inner{max-width:1180px;margin:0 auto;padding:40px 22px 80px}
+.rb-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+@media(max-width:899px){
+  .rb-shell{grid-template-columns:1fr;padding-bottom:100px}
+  .rb-rail-wrap{display:none}
+  .rb-selpill{display:none}
+  .rb-paybar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;align-items:center;gap:12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--ink) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--hair-strong)}
+  .rb-steps{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .rb-stats{grid-template-columns:1fr 1fr}
+  .rb-grid2{grid-template-columns:1fr}
+  .rb-steps{grid-template-columns:1fr}
+}
+`;
