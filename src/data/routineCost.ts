@@ -72,6 +72,23 @@ export function formatEur(value: number): string {
 }
 
 /**
+ * Nom court et PROPRE d'un produit (accentué, non technique) pour les listes —
+ * ex. les puces des cartes de formules. Les `name` bruts du catalogue PV
+ * ("Melange pour boisson proteinee", "Boisson instantanee a base de the 51 g")
+ * sont sans accents et jargonnants : on ne les montre JAMAIS au prospect.
+ * Fallback = le nom brut si l'id n'est pas mappé (packs = ces ids uniquement).
+ */
+export const PRODUCT_SHORT: Record<string, string> = {
+  "formula-1": "Formula 1",
+  "pdm": "Protéines sans lactose",
+  "aloe-vera": "Aloé Vera",
+  "the-51g": "Thé",
+  "multifibres": "Multifibres",
+  "phyto-brule-graisse": "Phyto Complete",
+  "night-mode": "Night Mode",
+};
+
+/**
  * Les produits en langage humain.
  *
  * Le problème d'origine (signalé par Thomas) : la page affichait « F1 · PDM · Thé
@@ -84,33 +101,30 @@ export const PRODUCT_HUMAN: Record<
 > = {
   "formula-1": {
     title: "Ton petit-déjeuner complet",
-    detail: "25 vitamines et minéraux et 24 g de protéines, dans un verre, en 2 minutes.",
+    detail: "Prêt en 2 minutes, dans un verre.",
   },
   "pdm": {
-    title: "Le même petit-déj, sans lactose",
-    detail:
-      "Préparé à l'eau plutôt qu'au lait : tu montes à 24 g de protéines et tu enlèves le lactose.",
+    title: "La version sans lactose",
+    detail: "Le même petit-déj, préparé à l'eau.",
   },
   "aloe-vera": {
     title: "Ton hydratation de la journée",
-    detail: "15 ml dans ta bouteille d'un litre. À base de plante.",
+    detail: "À glisser dans ta bouteille d'eau.",
   },
   "the-51g": {
-    title: "Ton coup de fouet sans le crash",
-    detail: "1,7 g dans un litre, à siroter dans la matinée.",
+    title: "Ton coup de boost du matin",
+    detail: "À siroter dans la matinée.",
   },
   "multifibres": {
-    title: "Les fibres qui manquent à presque tout le monde",
-    detail: "Une dose par jour, dans un grand verre d'eau.",
+    title: "Les fibres du quotidien",
+    detail: "Une dose dans un grand verre d'eau.",
   },
   "phyto-brule-graisse": {
     title: "Le coup de pouce métabolisme",
-    detail:
-      "Le chrome contribue au maintien d'une glycémie normale. Vitamine C et niacine aident à réduire la fatigue.",
+    detail: "Une gélule à chaque repas.",
   },
   "night-mode": {
     title: "Ta nuit",
-    detail:
-      "Safran extrait à froid, vitamine B6 et riboflavine, qui contribuent au fonctionnement normal du système nerveux. Une heure avant le coucher.",
+    detail: "Une tisane au safran, avant de dormir.",
   },
 };
