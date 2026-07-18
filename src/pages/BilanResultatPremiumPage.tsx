@@ -539,6 +539,13 @@ export function BilanResultatPremiumPage() {
                   <>Pour l'équivalent d'une pause déjeuner, tu couvres <strong style={{ color: PUBLIC_TOKENS.lime }}>ta journée complète</strong>. Le même argent, mais qui travaille pour toi.</>
                 )}
               </p>
+              <button
+                type="button"
+                onClick={() => document.getElementById("formules")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                style={{ ...linkBtn, marginTop: 6 }}
+              >
+                Voir mes formules →
+              </button>
             </section>
           );
         })()}
@@ -546,7 +553,7 @@ export function BilanResultatPremiumPage() {
         <div style={divider} />
 
         {/* ── 7 · LES PROGRAMMES ── */}
-        <section style={{ paddingTop: 40 }}>
+        <section id="formules" style={{ paddingTop: 40, scrollMarginTop: 20 }}>
           <div style={eyebrow}>Nos formules</div>
           <h2 style={secTitle}>
             Le programme qui <span style={publicGradText}>te correspond</span>
@@ -678,7 +685,14 @@ export function BilanResultatPremiumPage() {
                     <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter à ton programme si tu le souhaites</span>
                   </div>
                 )}
-                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("demarrage")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  style={{ ...linkBtn, marginTop: 12 }}
+                >
+                  J'en parle à {coach.name} au démarrage →
+                </button>
+                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 8 }}>
                   Rien d'obligatoire — {coach.name} en parle avec toi à ton démarrage.
                 </p>
               </div>
