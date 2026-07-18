@@ -523,7 +523,9 @@ export function BilanResultatPremiumPage() {
   const secTitleWrap: React.CSSProperties = { ...secTitle };
 
   return (
-    <PublicShell defaultTheme="dark">
+    // maxWidth:none → on casse la contrainte 560px de .ps-shell : cette page est
+    // en pleine largeur (header + grille 1fr/344px + bandeau), pas mono-colonne.
+    <PublicShell defaultTheme="dark" style={{ maxWidth: "none", width: "100%" }}>
       <style>{RB_CSS}</style>
 
       {/* ── HEADER collant : logo · menu chapitre (scrollspy) · pastille sélection ── */}
