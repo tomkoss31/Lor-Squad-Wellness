@@ -37,6 +37,7 @@ import { pickAddOn } from "../lib/bilanAddOns";
 import {
   LUNCH_AVG_EUR,
   PRODUCT_HUMAN,
+  PRODUCT_SHORT,
   dailyCost,
   formatEur,
 } from "../data/routineCost";
@@ -384,8 +385,8 @@ export function BilanResultatPremiumPage() {
             Salut {firstName || "à toi"},<br />voici ce que <span style={publicGradText}>ton bilan révèle.</span>
           </h1>
           <p style={{ ...bodyMuted, fontSize: 17, color: "var(--cream-soft, var(--cream))", maxWidth: 560, marginTop: 18 }}>
-            Tu as pris le temps de faire ton bilan — et ça, c'est déjà un vrai pas vers une meilleure
-            version de toi. Voici ta lecture personnalisée, et le plan que {coach.name} te propose.
+            Tu as pris le temps de faire ton bilan — un vrai premier pas. Voici ta lecture
+            personnalisée, et ton plan pour la suite.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 24 }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: PUBLIC_TOKENS.gradCta, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, color: "#06241f" }}>
@@ -485,16 +486,15 @@ export function BilanResultatPremiumPage() {
           if (humanProducts.length === 0) return null;
           return (
             <section style={{ paddingTop: 40 }}>
-              <div style={eyebrow}>Concrètement</div>
+              <div style={eyebrow}>Ta routine</div>
               <h2 style={secTitle}>
-                Ce que tu vas <span style={publicGradText}>vraiment boire</span>
+                Ce que tu vas <span style={publicGradText}>prendre</span>
               </h2>
               <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 600, marginBottom: 24 }}>
-                Pas des sigles. Des gestes simples qui remplacent ce que tu fais déjà de travers.
-                {coach.name} te montre comment les préparer.
+                Des gestes simples, à glisser dans ta journée. {coach.name} te montre comment.
               </p>
               <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-                {humanProducts.map(({ id, name }) => {
+                {humanProducts.map(({ id }) => {
                   const h = PRODUCT_HUMAN[id];
                   const price = priceById.get(id);
                   const days = price !== undefined ? dailyCost([id], priceById) : null;
@@ -502,9 +502,6 @@ export function BilanResultatPremiumPage() {
                     <div key={id} style={{ ...card, display: "flex", flexDirection: "column", gap: 6 }}>
                       <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, color: "var(--cream)" }}>
                         {h.title}
-                      </div>
-                      <div style={{ ...bodyMuted, fontSize: 12, color: PUBLIC_TOKENS.teal, fontFamily: PUBLIC_FONTS.mono }}>
-                        {name}
                       </div>
                       <p style={{ ...bodyMuted, fontSize: 14, margin: "2px 0 0" }}>{h.detail}</p>
                       {days != null && (
@@ -648,7 +645,7 @@ export function BilanResultatPremiumPage() {
                       l'écart de prix. */}
                   <ul style={{ listStyle: "none", display: "grid", gap: 7, margin: 0, padding: 0, flex: 1 }}>
                     {p.products.map((pr) => (
-                      <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>• {pr.name}</li>
+                      <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>• {PRODUCT_SHORT[pr.id] ?? pr.name}</li>
                     ))}
                   </ul>
                   <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 600, color: isSel ? PUBLIC_TOKENS.teal : "var(--cream-muted)" }}>
@@ -737,45 +734,82 @@ export function BilanResultatPremiumPage() {
           );
         })()}
 
-        {/* ── 9 · TU NE DÉMARRES PAS SEUL (preuve communauté) ── */}
+        {/* ── 9 · WE DO TRANSFORMATIONS (le cœur : appli + challenge + communauté) ── */}
         <section style={sectionTop}>
-          <div style={eyebrow}>La communauté</div>
+          <div style={eyebrow}>Ta communauté</div>
           <h2 style={secTitle}>
             Tu ne démarres <span style={publicGradText}>pas seul</span>
           </h2>
-          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
-            Un programme, tout le monde peut t'en vendre un. Ce qui change tout, c'est ce qui se
-            passe les semaines suivantes.
+          <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 22 }}>
+            En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong> —
+            notre appli et notre communauté. C'est ça qui change tout, après le premier jour.
           </p>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(3, 1fr)", marginBottom: 16 }}>
-            {[
-              { n: formatCount(COMMUNITY_STATS.members), l: "membres" },
-              { n: formatCount(COMMUNITY_STATS.messages), l: "messages échangés" },
-              { n: String(COMMUNITY_STATS.spaces), l: "salons d'entraide" },
-            ].map((s) => (
-              <div key={s.l} style={{ ...card, textAlign: "center" }}>
-                <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, lineHeight: 1.05, ...publicGradText }}>{s.n}</div>
-                <div style={{ ...bodyMuted, fontSize: 12.5, marginTop: 4 }}>{s.l}</div>
-              </div>
-            ))}
+
+          {/* Challenge — le 10 000 $ en grand */}
+          <div style={{
+            ...card,
+            background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.14)}, ${withA(PUBLIC_TOKENS.lime, 0.06)})`,
+            border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`,
+            textAlign: "center",
+            padding: "26px 20px",
+            marginBottom: 14,
+          }}>
+            <img
+              src="/brand/wdt-logo.jpg"
+              alt="We Do Transformations"
+              style={{ height: 54, width: "auto", maxWidth: "70%", display: "block", margin: "0 auto 16px", borderRadius: 8 }}
+            />
+            <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 6px" }}>Le Challenge We Do · 21 jours</div>
+            <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: "clamp(42px,10vw,68px)", lineHeight: 1, ...publicGradText }}>
+              10 000 $
+            </div>
+            <p style={{ ...bodyText, fontSize: 15, maxWidth: 440, margin: "12px auto 0" }}>
+              en jeu pour les <strong>10 plus belles transformations</strong>. 3 semaines pour changer,
+              tous ensemble.
+            </p>
+            <p style={{ ...bodyMuted, fontSize: 13, marginTop: 8 }}>Inclus dès ton démarrage.</p>
           </div>
-          <div style={{ ...card, display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <IconBadge d={ICON.spark} />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>
-                L'application We Do Transformations, incluse dès ton démarrage
+
+          {/* Appli (vidéo) + preuve communauté */}
+          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            <div style={{ ...card, display: "flex", flexDirection: "column", gap: 10 }}>
+              <video
+                src="/brand/wdt-app.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                style={{ width: "100%", borderRadius: 12, display: "block", background: "#000" }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>L'appli We Do, dans ta poche</div>
+                <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
+                  Ton suivi, tes conseils du jour, ton évolution. Incluse — pas une option.
+                </p>
               </div>
-              <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>
-                Ton suivi, tes conseils du jour, ton évolution — dans ta poche. Pas une option, pas
-                un supplément : c'est compris.
+            </div>
+
+            <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+              <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.members)}</div>
+                  <div style={{ ...bodyMuted, fontSize: 12 }}>membres</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.messages)}</div>
+                  <div style={{ ...bodyMuted, fontSize: 12 }}>messages échangés</div>
+                </div>
+              </div>
+              <p style={{ ...bodyMuted, fontSize: 13.5, textAlign: "center" }}>
+                Recettes, transformations, lives, entraide au quotidien. Tu y entres dès ton premier jour.
               </p>
               <a
                 href={TELEGRAM_GROUP_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                style={{ ...linkBtn, display: "inline-block", textDecoration: "none", marginTop: 8 }}
+                style={{ ...linkBtn, display: "inline-block", textDecoration: "none", textAlign: "center" }}
               >
-                Voir le groupe →
+                Voir la communauté →
               </a>
             </div>
           </div>
@@ -1059,10 +1093,11 @@ const PROGRAMME_SUBTITLE_BY_ID: Record<string, string> = {
   "booster-2": "Pour pousser plus loin",
 };
 
+// Note (2026-07-18) : les cartes « communauté » et « challenge 21 jours » ont
+// été retirées d'ici — elles font désormais l'objet de la section We Do
+// Transformations dédiée (logo + 10 000 $ + vidéo appli), pour ne pas répéter.
 const WHY = [
-  { icon: ICON.users, title: "Une vraie communauté", body: "Tu rejoins un groupe Telegram actif où chacun partage sa nutrition, ses conseils, son quotidien et ses victoires. C'est ultra motivant — on avance ensemble, tu n'es jamais seul·e." },
-  { icon: ICON.hands, title: "« We Do » — on le fait ensemble", body: "Pas de PDF lâché dans la nature. On ajuste ton plan au fil des semaines, selon tes résultats et ta vie — je suis là à chaque étape." },
-  { icon: ICON.phone, title: "We Do Transformations — le challenge 21 jours", body: "Tu reçois l'accès à We Do Transformations, notre application de coaching, et à son challenge de 21 jours : 3 semaines focus nutrition + activité pour transformer ton corps. Une cagnotte de 10 000 $ est reversée aux 10 meilleures transformations — jusqu'à 1 000 $ à gagner. De quoi te dépasser." },
+  { icon: ICON.hands, title: "On le fait ensemble", body: "Pas de PDF lâché dans la nature. On ajuste ton plan au fil des semaines, selon tes résultats et ta vie — je suis là à chaque étape." },
   { icon: ICON.chart, title: "Un suivi qui se voit", body: "Pesées, mensurations, courbe d'évolution : on mesure pour célébrer chaque progrès, pas pour culpabiliser." },
 ] as const;
 
