@@ -75,6 +75,7 @@ const PLACEHOLDER_LEAD: CrmLead = {
   relanceDue: false,
   resultToken: null,
   callbackRequestedAt: null,
+  engagement: null,
   createdAt: new Date(0).toISOString(),
   contactedAt: null,
   notes: null,
@@ -346,6 +347,17 @@ export function CrmLeadDetailPage() {
               day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
             })}
             . À contacter en priorité.
+            {lead.engagement ? (
+              // Lead scoring : ce que le lead a fait sur la page Résultat Bilan
+              // (intention, formule cliquée, détail calcul, add-on, temps) → aide
+              // à savoir avec quel angle relancer.
+              <div style={{ marginTop: 8, fontWeight: 400, fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+                <strong style={{ color: lead.engagement.tier === "chaud" ? "var(--ls-lime, #c5f82a)" : "var(--ls-teal)" }}>
+                  {lead.engagement.tier === "chaud" ? "🔥 Lead chaud" : lead.engagement.tier === "tiede" ? "Lead tiède" : "Lead froid"} · {lead.engagement.score}/100
+                </strong>
+                {lead.engagement.signals.length > 0 ? ` — ${lead.engagement.signals.join(" · ")}` : ""}
+              </div>
+            ) : null}
           </div>
         ) : null}
         <p style={metaLine}>
