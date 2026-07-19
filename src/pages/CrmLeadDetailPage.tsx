@@ -74,6 +74,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   ownerUserId: null,
   relanceDue: false,
   resultToken: null,
+  callbackRequestedAt: null,
+  engagement: null,
   createdAt: new Date(0).toISOString(),
   contactedAt: null,
   notes: null,
@@ -320,9 +322,44 @@ export function CrmLeadDetailPage() {
               ⏳ {stagnationDays(lead)}j sans mouvement
             </span>
           ) : null}
+          {lead.callbackRequestedAt ? <span title="A demandé à être rappelé" aria-hidden="true">📞</span> : null}
           {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
           {lead.dormant ? <span title="Endormi" aria-hidden="true">💤</span> : null}
         </div>
+        {lead.callbackRequestedAt ? (
+          // Signal fort : le lead a cliqué « rappelle-moi » sur sa page Résultat
+          // Bilan. On le met en avant tout en haut de la fiche — c'est l'action
+          // n°1 à faire sur ce lead.
+          <div
+            style={{
+              marginTop: 12,
+              padding: "10px 14px",
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+              color: "var(--ls-text)",
+              fontSize: 13.5,
+              fontWeight: 600,
+            }}
+          >
+            📞 {lead.firstName} a demandé à être rappelé —{" "}
+            {new Date(lead.callbackRequestedAt).toLocaleString("fr-FR", {
+              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+            })}
+            . À contacter en priorité.
+            {lead.engagement ? (
+              // Lead scoring : ce que le lead a fait sur la page Résultat Bilan
+              // (intention, formule cliquée, détail calcul, add-on, temps) → aide
+              // à savoir avec quel angle relancer.
+              <div style={{ marginTop: 8, fontWeight: 400, fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+                <strong style={{ color: lead.engagement.tier === "chaud" ? "var(--ls-lime, #c5f82a)" : "var(--ls-teal)" }}>
+                  {lead.engagement.tier === "chaud" ? "🔥 Lead chaud" : lead.engagement.tier === "tiede" ? "Lead tiède" : "Lead froid"} · {lead.engagement.score}/100
+                </strong>
+                {lead.engagement.signals.length > 0 ? ` — ${lead.engagement.signals.join(" · ")}` : ""}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <p style={metaLine}>
           {lead.city ? `${lead.city} · ` : ""}
           Reçu le{" "}
