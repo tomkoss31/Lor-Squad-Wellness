@@ -29,7 +29,6 @@ import {
   PublicShell,
   PUBLIC_TOKENS,
   PUBLIC_FONTS,
-  publicGradText,
 } from "../components/public/PublicShell";
 import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -43,7 +42,6 @@ import {
   formatEur,
 } from "../data/routineCost";
 import { COMMUNITY_STATS, formatCount } from "../data/community";
-import { TELEGRAM_GROUP_URL } from "../lib/telegram";
 
 interface ProgrammeDTO {
   id: string;
@@ -112,14 +110,6 @@ const CHAPTERS = [
   { id: "plan", label: "Mon plan" },
   { id: "formules", label: "Mes formules" },
   { id: "demarrer", label: "Démarrer" },
-] as const;
-
-// Les 4 étapes réelles du parcours /qualif (bandeau « Et après »).
-const QUALIF_STEPS = [
-  { n: "1", t: "Ton identité", d: "Quelques infos + accord RGPD. Ta fiche se crée toute seule." },
-  { n: "2", t: "Tes saveurs", d: "Tu choisis tes saveurs Formula 1, Thé et Aloé." },
-  { n: "3", t: "Ton point de départ", d: "L'appli We Do + ta première pesée." },
-  { n: "4", t: "La communauté", d: "Tu rejoins le groupe et tu ouvres ton espace." },
 ] as const;
 
 export function BilanResultatPremiumPage() {
@@ -428,610 +418,488 @@ export function BilanResultatPremiumPage() {
     );
   }
 
+  // ── Portage fidèle de la maquette claude design (ResultatBilan.dc.html) ──
+  // Structure/styles/copy = maquette. Données = réelles (edge, prix DB, Noaly,
+  // add-on, €/jour via dailyCost, paiement, callback, qualif). Garde-fous §9 OK.
   const { bilan, coach, programmes } = data;
-  const selectedProg = programmes.find((p) => p.id === selected) ?? null;
-  const paidConfirmed = data.paid === true; // preuve serveur (bilan_orders payé)
-  const selectedDaily = selected ? dailyByProgram.get(selected) ?? null : null;
+  const paidConfirmed = data.paid === true; // preuve serveur bilan_orders.paid
+  const coachName = coach.name;
+  const coachInitial = coachName.charAt(0).toUpperCase();
 
-  // Formule recommandée (pastille ★) — même logique que la présélection au
-  // chargement : la formule qui contient l'add-on détecté, sinon Premium,
-  // sinon la 1ʳᵉ. Indépendant de la sélection courante de l'utilisateur.
   const recoMatch = addOn
     ? programmes.find((p) => p.products.some((pr) => pr.id === addOn.productId))
     : undefined;
   const recoId = recoMatch?.id ?? programmes.find((p) => p.id === "premium")?.id ?? programmes[0]?.id ?? null;
 
-  // Produits en langage humain (union ordonnée sur toutes les formules).
-  const seenHuman = new Set<string>();
-  const humanProducts: string[] = [];
-  for (const p of programmes) {
-    for (const pr of p.products) {
-      if (!seenHuman.has(pr.id) && PRODUCT_HUMAN[pr.id]) {
-        seenHuman.add(pr.id);
-        humanProducts.push(pr.id);
-      }
-    }
-  }
+  const selectedProg = programmes.find((p) => p.id === selected) ?? null;
+  const selName = selectedProg ? prettyProgramName(selectedProg.name) : "—";
+  const selSubtitle = selectedProg ? (PROGRAMME_SUBTITLE_BY_ID[selectedProg.id] ?? "Pour aller plus loin") : "";
+  const selDailyNum = selected ? dailyByProgram.get(selected) ?? null : null;
+  const selPerDay = selDailyNum != null ? formatEur(selDailyNum) : null;
+  const cheaper = selDailyNum != null && selDailyNum < LUNCH_AVG_EUR;
+  const selVsLunch = cheaper ? "moins qu'un déjeuner" : "à peine + qu'un déj";
+  const anchorLine = cheaper
+    ? "Ta journée complète coûte moins cher que ton seul déjeuner. Ce n'est pas une dépense en plus — c'est le même argent, dépensé autrement."
+    : "Pour à peine plus qu'une pause déjeuner, tu couvres ta journée complète — petit-déj, hydratation et boost compris. Le même argent, mais qui travaille pour toi.";
 
-  // Détail du calcul €/jour de la formule sélectionnée (produit par produit),
-  // pour le dépliant « Voir le détail du calcul ».
   const breakdown = selectedProg
     ? selectedProg.products.map((pr) => {
         const days = PRODUCT_DAYS[pr.id];
         const price = priceById.get(pr.id);
-        const perDay = days && price !== undefined ? price / days : null;
-        return { id: pr.id, name: PRODUCT_SHORT[pr.id] ?? pr.name, days: days ?? null, perDay };
+        return {
+          id: pr.id,
+          name: PRODUCT_SHORT[pr.id] ?? pr.name,
+          days: days != null ? `${Math.round(days)} j` : "—",
+          perDay: days && price !== undefined ? formatEur(price / days) : "—",
+        };
       })
     : [];
 
-  // Actions du panneau de décision — partagées entre le rail desktop et (en
-  // partie) la barre mobile. Appellent les handlers existants (startCheckout /
-  // requestCallback), états caisse inchangés.
-  const railActions = paidConfirmed ? (
-    <>
-      <div style={{ ...bodyText, fontSize: 14, fontWeight: 600, color: PUBLIC_TOKENS.teal, marginBottom: 12 }}>
-        ✓ Paiement reçu, merci {firstName} !
-      </div>
-      <button
-        type="button"
-        onClick={() => navigate(`/qualif/${token}`)}
-        style={{ ...ctaPrimary, width: "100%", justifyContent: "center" }}
-      >
-        Continuer mon inscription →
-      </button>
-    </>
-  ) : (
-    <>
-      <button
-        type="button"
-        disabled={payLoading}
-        onClick={() => void startCheckout(selected)}
-        style={{ ...ctaPrimary, width: "100%", justifyContent: "center", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}
-      >
-        {payLoading ? "Ouverture…" : "Je démarre →"}
-      </button>
-      {callbackState === "done" ? (
-        <div style={{ ...bodyText, fontSize: 13.5, fontWeight: 600, color: PUBLIC_TOKENS.teal, marginTop: 10, textAlign: "center" }}>
-          ✓ {coach.name} te recontacte.
-        </div>
-      ) : (
-        <button
-          type="button"
-          disabled={callbackState === "sending"}
-          onClick={() => void requestCallback()}
-          style={{
-            width: "100%",
-            marginTop: 10,
-            fontFamily: PUBLIC_FONTS.display,
-            fontWeight: 600,
-            fontSize: 14.5,
-            color: "var(--cream)",
-            background: "transparent",
-            border: "1px solid var(--hair-strong)",
-            borderRadius: 14,
-            padding: "13px 20px",
-            cursor: callbackState === "sending" ? "wait" : "pointer",
-            opacity: callbackState === "sending" ? 0.6 : 1,
-          }}
-        >
-          {callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}
-        </button>
-      )}
-    </>
-  );
+  const seenH = new Set<string>();
+  const humanProducts: string[] = [];
+  for (const p of programmes) for (const pr of p.products) if (!seenH.has(pr.id) && PRODUCT_HUMAN[pr.id]) { seenH.add(pr.id); humanProducts.push(pr.id); }
 
-  const secTitleWrap: React.CSSProperties = { ...secTitle };
+  const noalyText = bilan.aiAnalysis
+    ?? `${coachName} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.`;
+
+  const stats = [
+    primaryObjective ? { label: "Objectif", value: primaryObjective, color: "var(--teal)" } : null,
+    bilan.currentWeightKg != null ? { label: "Poids actuel", value: `${bilan.currentWeightKg} kg`, color: "var(--cream)" } : null,
+    bilan.weightLossTargetKg != null ? { label: "Objectif poids", value: `−${bilan.weightLossTargetKg} kg`, color: "var(--lime)" } : null,
+    bilan.motivationScore != null ? { label: "Ta motivation", value: `${bilan.motivationScore} / 10`, color: "var(--cream)" } : null,
+  ].filter(Boolean) as { label: string; value: string; color: string }[];
+
+  const stratItems = strategies.items.map((s, i) => ({
+    n: i + 1,
+    title: s.title,
+    foundation: !!s.foundation,
+    text: s.problem + (s.solution ? ` ${s.solutionLabel ?? ""} ${s.solution}` : ""),
+  }));
+
+  const communityStats = [
+    { n: formatCount(COMMUNITY_STATS.members), label: "membres" },
+    { n: formatCount(COMMUNITY_STATS.messages), label: "messages" },
+    { n: String(COMMUNITY_STATS.spaces), label: "salons" },
+  ];
+
+  const faqData = [
+    { q: "C'est des produits « miracle » ?", a: `Non. Ce sont des compléments qui remplacent un petit-déj ou une collation mal équilibrés. Le vrai moteur, c'est tes habitudes — ${coachName} t'aide à les replacer.` },
+    { q: "En combien de temps des résultats ?", a: "Beaucoup ressentent plus d'énergie dès les premières semaines. Pour le poids, on vise du progressif et durable — pas l'effet yo-yo. On mesure ensemble." },
+    { q: "Je dois arrêter de manger normalement ?", a: "Pas du tout. Tu gardes de vrais repas. On structure juste le matin et les collations, là où ça pèche le plus." },
+    { q: "Et si je n'aime pas le goût ?", a: "Tu choisis ta saveur au démarrage (vanille, chocolat, cookies…). Et si une ne te plaît pas, on en change, simplement." },
+    { q: "Je suis suivi·e comment ?", a: `Par ${coachName}, directement : messages, ajustements, pesées, et le groupe pour la motivation. Jamais seul·e avec un PDF.` },
+  ];
+
+  const qualifSteps = [
+    { n: 1, title: "Ton identité + le règlement", text: "Tu confirmes tes infos et acceptes le RGPD. Ta fiche client se crée toute seule (self-serve)." },
+    { n: 2, title: "Ta saveur", text: `Tu choisis tes saveurs (F1, Thé, Aloé). ${coachName} est prévenu direct.` },
+    { n: 3, title: "L'appli + ta 1ʳᵉ pesée", text: "Tu scannes We Do Transformations et tu poses ton point de départ." },
+    { n: 4, title: "Rejoins la communauté", text: "Tu entres sur le Telegram, puis « Ouvrir mon espace ». Tu es lancé·e." },
+  ];
+
+  // ── Styles récurrents (valeurs de la maquette) ──
+  const GRAD = "linear-gradient(120deg, #2DD4BF, #c5f82a)";
+  const gradText: React.CSSProperties = { background: GRAD, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" };
+  const kickerHint: React.CSSProperties = { fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "var(--cream-hint)" };
+  const acteEyebrow: React.CSSProperties = { fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: "var(--teal)" };
+  const h2Sec: React.CSSProperties = { fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 28, letterSpacing: "-0.5px", margin: "0 0 10px" };
+  const inkCard: React.CSSProperties = { background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: 16 };
+  const gradBtn: React.CSSProperties = { background: GRAD, color: "#06241f", border: "none", borderRadius: 14, fontFamily: "'Sora', sans-serif", fontWeight: 700, cursor: "pointer" };
 
   return (
-    // maxWidth:none → on casse la contrainte 560px de .ps-shell : cette page est
-    // en pleine largeur (header + grille 1fr/344px + bandeau), pas mono-colonne.
-    <PublicShell defaultTheme="dark" style={{ maxWidth: "none", width: "100%" }}>
+    // maxWidth:none → on casse la contrainte 560px de .ps-shell (page pleine largeur).
+    <PublicShell defaultTheme="dark" showThemeToggle={false} style={{ maxWidth: "none", width: "100%" }}>
       <style>{RB_CSS}</style>
+      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "var(--cream)" }}>
 
-      {/* ── HEADER collant : logo · menu chapitre (scrollspy) · pastille sélection ── */}
-      <header className="rb-header">
-        <div className="rb-header-inner">
-          <div className="rb-logo">LA&nbsp;BASE&nbsp;<span style={{ color: PUBLIC_TOKENS.teal }}>360</span></div>
-          <nav className="rb-chapters" aria-label="Chapitres">
-            {CHAPTERS.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={"rb-chapter" + (activeChapter === c.id ? " is-active" : "")}
-                onClick={() => scrollToId(c.id)}
-              >
-                {c.label}
-              </button>
-            ))}
-          </nav>
-          {selectedProg && (
-            <span className="rb-selpill">
-              <span className="rb-dot" /> Ta sélection ·{" "}
-              <strong>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>
-            </span>
-          )}
-        </div>
-      </header>
-
-      {/* ── SHELL : MAIN (contenu) + ASIDE (rail collant) ── */}
-      <div className="rb-shell">
-        <main className="rb-main">
-          {/* ═══ ACTE 1 · TON BILAN ═══ */}
-          <section id="bilan" style={{ scrollMarginTop: 92, paddingTop: 28 }}>
-            <div style={eyebrow}>— Acte 1 — Analyse personnalisée</div>
-            <h1 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(30px,5.4vw,46px)", lineHeight: 1.08, letterSpacing: "-1px", margin: "14px 0 4px", color: "var(--cream)" }}>
-              Salut {firstName || "à toi"}, voici ce que{" "}
-              <span style={publicGradText}>ton bilan révèle.</span>
-            </h1>
-            <p style={{ ...bodyMuted, fontSize: 16.5, maxWidth: 560, marginTop: 16 }}>
-              Tu as pris le temps de faire ton bilan — c'est déjà un vrai pas. Voici ta lecture
-              perso, et le plan que {coach.name} te propose. Tout est déjà calé sur ce que tu as
-              répondu.
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: PUBLIC_TOKENS.gradCta, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, color: "#06241f" }}>
-                {coach.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>Préparé par {coach.name}</div>
-                <div style={{ ...bodyMuted, fontSize: 13 }}>Coach bien-être · La Base 360</div>
-              </div>
-            </div>
-
-            <div className="rb-stats">
-              {primaryObjective && (
-                <div style={{ ...card, padding: 16 }}>
-                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 600 }}>Objectif</div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 18, marginTop: 6, color: PUBLIC_TOKENS.teal }}>{primaryObjective}</div>
-                </div>
-              )}
-              {bilan.currentWeightKg != null && <StatCard label="Poids actuel" value={`${bilan.currentWeightKg} kg`} />}
-              {bilan.weightLossTargetKg != null && (
-                <div style={{ ...card, padding: 16 }}>
-                  <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 600 }}>Objectif poids</div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.impact, fontWeight: 400, fontSize: 22, marginTop: 6, color: PUBLIC_TOKENS.lime }}>−{bilan.weightLossTargetKg} kg</div>
-                </div>
-              )}
-              {bilan.motivationScore != null && <StatCard label="Ta motivation" value={`${bilan.motivationScore} / 10`} />}
-            </div>
-
-            <div style={{ ...card, marginTop: 16, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.3)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.03)})` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 10 }}>
-                <IconBadge d={ICON.spark} />
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15, color: PUBLIC_TOKENS.teal }}>L'analyse de Noaly</div>
-              </div>
-              {bilan.aiAnalysis ? (
-                <>
-                  <p style={{ ...bodyText, whiteSpace: "pre-wrap" }}>{bilan.aiAnalysis}</p>
-                  <div style={{ ...bodyMuted, fontSize: 12, marginTop: 12 }}>Lecture générée à partir de ton bilan · validée par ton coach</div>
-                </>
-              ) : (
-                <p style={bodyText}>
-                  {coach.name} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras
-                  lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* ═══ ACTE 2 · TON PLAN ═══ */}
-          <section id="plan" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
-            <div style={eyebrow}>— Acte 2 — Ton plan</div>
-            <h2 style={secTitleWrap}>Tes 5 stratégies <span style={publicGradText}>essentielles</span></h2>
-            <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 580, marginBottom: 18 }}>{strategies.intro}</p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {strategies.items.map((s, i) => (
-                <div key={s.title} style={{ ...card, padding: 18, display: "flex", gap: 14 }}>
-                  <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 26, color: PUBLIC_TOKENS.teal, lineHeight: 1, flexShrink: 0, minWidth: 22 }}>{i + 1}</span>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15.5, color: "var(--cream)" }}>{s.title}</span>
-                      {s.foundation && (
-                        <span style={{ fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", fontWeight: 700, color: PUBLIC_TOKENS.teal, border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.4)}`, borderRadius: 999, padding: "2px 8px" }}>Fondation</span>
-                      )}
-                    </div>
-                    <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 6 }}>
-                      {s.problem}
-                      {s.solution && (
-                        <> <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>{s.solutionLabel} </strong>{s.solution}</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {humanProducts.length > 0 && (
-              <>
-                <h3 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 18, color: "var(--cream)", margin: "34px 0 4px" }}>Ce que tu vas prendre</h3>
-                <p style={{ ...bodyMuted, fontSize: 14.5, maxWidth: 560, marginBottom: 16 }}>Des gestes simples, à glisser dans ta journée. {coach.name} te montre comment.</p>
-                <div className="rb-grid2">
-                  {humanProducts.map((id) => {
-                    const h = PRODUCT_HUMAN[id];
-                    const price = priceById.get(id);
-                    const d = price !== undefined ? dailyCost([id], priceById) : null;
-                    return (
-                      <div key={id} style={{ ...card, display: "flex", flexDirection: "column", gap: 6 }}>
-                        <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, color: "var(--cream)" }}>{h.title}</div>
-                        <p style={{ ...bodyMuted, fontSize: 14, margin: "2px 0 0" }}>{h.detail}</p>
-                        {d != null && (
-                          <div style={{ marginTop: "auto", paddingTop: 10, ...bodyText, fontSize: 13.5 }}>
-                            <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong>
-                            <span style={{ color: "var(--cream-muted)" }}> / jour</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* PARLONS VRAI — ancrage prix + dépliant calcul */}
-            {selectedDaily != null && selectedProg && (
-              <div style={{ ...card, marginTop: 20, padding: 22, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.32)}`, background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` }}>
-                <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: 0 }}>Parlons vrai</div>
-                <h3 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 20, color: "var(--cream)", margin: "8px 0 12px" }}>Tu dépenses déjà cet argent</h3>
-                <div className="rb-grid2" style={{ gap: 12 }}>
-                  <div style={{ ...card, padding: 16 }}>
-                    <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>Ta pause déjeuner</div>
-                    <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, color: "var(--cream)", lineHeight: 1.1, marginTop: 6 }}>{formatEur(LUNCH_AVG_EUR)}</div>
-                    <div style={{ ...bodyMuted, fontSize: 12, marginTop: 4 }}>Un seul repas.</div>
-                  </div>
-                  <div style={{ ...card, padding: 16, border: `1.5px solid ${withA(PUBLIC_TOKENS.lime, 0.5)}` }}>
-                    <div style={{ ...bodyMuted, fontSize: 11.5, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600, color: PUBLIC_TOKENS.teal }}>Ton programme {prettyProgramName(selectedProg.name)}</div>
-                    <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 34, lineHeight: 1.1, marginTop: 6, ...publicGradText }}>{formatEur(selectedDaily)}</div>
-                    <div style={{ ...bodyMuted, fontSize: 12, marginTop: 4 }}>Ton petit-déj complet + ton hydratation de la journée.</div>
-                  </div>
-                </div>
-                <p style={{ ...bodyMuted, fontSize: 12.5, marginTop: 12 }}>
-                  8,30 € = coût moyen d'un déjeuner en France — enquête Edenred / Ifop.
-                </p>
-                <button type="button" onClick={() => setShowBreakdown((v) => !v)} style={{ ...linkBtn, marginTop: 8 }}>
-                  {showBreakdown ? "Masquer le détail du calcul" : "Voir le détail du calcul →"}
-                </button>
-                {showBreakdown && (
-                  <div style={{ marginTop: 12, borderTop: "1px solid var(--hair)", paddingTop: 12 }}>
-                    <p style={{ ...bodyMuted, fontSize: 12.5, marginBottom: 10 }}>
-                      On ne divise pas le pack par une durée au hasard. On additionne le coût réel de
-                      chaque produit à la dose conseillée :
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {breakdown.map((b) => (
-                        <div key={b.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, ...bodyMuted, fontSize: 13 }}>
-                          <span style={{ color: "var(--cream)" }}>{b.name}{b.days != null ? <span style={{ color: "var(--cream-muted)" }}> · tient {Math.round(b.days)} j</span> : null}</span>
-                          <span style={{ fontFamily: PUBLIC_FONTS.mono, color: "var(--cream)", whiteSpace: "nowrap" }}>{b.perDay != null ? `${formatEur(b.perDay)}/j` : "—"}</span>
-                        </div>
-                      ))}
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 6, paddingTop: 8, borderTop: "1px solid var(--hair)", fontWeight: 700 }}>
-                        <span style={{ color: "var(--cream)" }}>Total</span>
-                        <span style={{ fontFamily: PUBLIC_FONTS.mono, color: PUBLIC_TOKENS.lime }}>{formatEur(selectedDaily)}/jour</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* ═══ ACTE 3 · TES FORMULES ═══ */}
-          <section id="formules" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
-            <div style={eyebrow}>— Acte 3 — Tes formules</div>
-            <h2 style={secTitleWrap}>Le programme qui <span style={publicGradText}>te correspond</span></h2>
-            <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 580, marginBottom: 20 }}>
-              Plusieurs niveaux. On démarre où tu te sens prêt·e — clique pour comparer : ta sélection
-              et son €/jour se mettent à jour partout.
-            </p>
-
-            <div className="rb-grid2">
-              {programmes.map((p) => {
-                const isSel = selected === p.id;
-                const isReco = p.id === recoId;
-                const d = dailyByProgram.get(p.id);
+        {/* ══ HEADER collant ══ */}
+        <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(11,13,17,0.82)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: "1px solid var(--hair)" }}>
+          <div style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 22 }}>
+            <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, letterSpacing: "0.5px", fontSize: 16, whiteSpace: "nowrap" }}>LA&nbsp;BASE&nbsp;<span style={{ color: "var(--teal)" }}>360</span></div>
+            <nav id="rb-nav" style={{ display: "flex", gap: 4, marginLeft: 8 }}>
+              {CHAPTERS.map((c) => {
+                const on = activeChapter === c.id;
                 return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setSelected(p.id)}
-                    style={{
-                      ...card,
-                      textAlign: "left",
-                      cursor: "pointer",
-                      position: "relative",
-                      display: "flex",
-                      flexDirection: "column",
-                      border: isSel
-                        ? `1.5px solid ${PUBLIC_TOKENS.teal}`
-                        : isReco
-                          ? `1px solid ${withA(PUBLIC_TOKENS.lime, 0.45)}`
-                          : "1px solid var(--hair)",
-                      background: isSel || isReco ? `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.10)}, ${withA(PUBLIC_TOKENS.lime, 0.04)})` : card.background,
-                    }}
-                  >
-                    {isReco && (
-                      <div style={{ position: "absolute", top: -11, left: 18, background: PUBLIC_TOKENS.gradCta, color: "#06241f", fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: 0.5, padding: "4px 11px", borderRadius: 999 }}>★ RECOMMANDÉ</div>
-                    )}
-                    <div style={{ ...bodyMuted, fontSize: 12.5, fontWeight: 600 }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
-                    <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 19, marginTop: 4, color: "var(--cream)" }}>{prettyProgramName(p.name)}</div>
-                    <div style={{ margin: "12px 0 4px", display: "flex", alignItems: "baseline", gap: 4 }}>
-                      <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 38, letterSpacing: 0.5, color: "var(--cream)", lineHeight: 1 }}>{p.price}</span>
-                      <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
-                    </div>
-                    {d != null ? (
-                      <div style={{ marginBottom: 12, ...bodyMuted, fontSize: 12.5 }}>soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(d)}</strong> / jour</div>
-                    ) : <div style={{ marginBottom: 12 }} />}
-                    {/* ⚠️ NE PAS re-tronquer (garde-fou §9.2) : le 5ᵉ produit justifie l'écart de prix. */}
-                    <ul style={{ listStyle: "none", display: "grid", gap: 7, margin: 0, padding: 0, flex: 1 }}>
-                      {p.products.map((pr) => (
-                        <li key={pr.id} style={{ ...bodyText, fontSize: 13.5 }}>
-                          <span style={{ color: PUBLIC_TOKENS.teal }}>•</span> {PRODUCT_SHORT[pr.id] ?? pr.name}
-                        </li>
-                      ))}
-                    </ul>
-                    <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 600, color: isSel ? PUBLIC_TOKENS.teal : "var(--cream-muted)" }}>
-                      {isSel ? "✓ Sélectionné" : "Choisir cette formule"}
-                    </div>
-                  </button>
+                  <button key={c.id} type="button" onClick={() => scrollToId(c.id)} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: on ? 700 : 500, color: on ? "var(--cream)" : "var(--cream-muted)", background: on ? "rgba(45,212,191,0.14)" : "transparent", border: `1px solid ${on ? "rgba(45,212,191,0.4)" : "transparent"}`, borderRadius: 999, padding: "6px 13px", cursor: "pointer", whiteSpace: "nowrap" }}>{c.label}</button>
                 );
               })}
-            </div>
-
-            {/* Add-on issu des réponses */}
-            {addOn && (() => {
-              const price = priceById.get(addOn.productId);
-              const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
-              return (
-                <div style={{ ...card, marginTop: 16, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.lime, 0.06)}, transparent)` }}>
-                  <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 8px" }}>Suivant tes réponses</div>
-                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 20, color: "var(--cream)" }}>On te conseille aussi <span style={publicGradText}>{addOn.title}</span></div>
-                  <p style={{ ...bodyText, fontSize: 15, marginTop: 10, fontStyle: "italic", color: PUBLIC_TOKENS.teal }}>« {addOn.reason} »</p>
-                  <p style={{ ...bodyMuted, fontSize: 14.5, marginTop: 8, maxWidth: 640 }}>{addOn.benefit}</p>
-                  {perDay != null && (
-                    <div style={{ marginTop: 12, ...bodyText, fontSize: 13.5 }}>
-                      <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(perDay)}</strong>
-                      <span style={{ color: "var(--cream-muted)" }}> / jour · à ajouter si tu le souhaites</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* WE DO TRANSFORMATIONS */}
-            <div style={{ marginTop: 40 }}>
-              <div style={eyebrow}>Ta communauté</div>
-              <h2 style={secTitleWrap}>Tu ne démarres <span style={publicGradText}>pas seul</span></h2>
-              <p style={{ ...bodyMuted, fontSize: 15.5, maxWidth: 620, marginBottom: 20 }}>
-                En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong> —
-                notre appli et notre communauté. C'est ça qui change tout, après le premier jour.
-              </p>
-              <div style={{ ...card, background: `linear-gradient(135deg, ${withA(PUBLIC_TOKENS.teal, 0.14)}, ${withA(PUBLIC_TOKENS.lime, 0.06)})`, border: `1px solid ${withA(PUBLIC_TOKENS.lime, 0.4)}`, textAlign: "center", padding: "26px 20px", marginBottom: 14 }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 11, margin: "0 auto" }}>
-                  <div style={{ display: "flex", gap: 3, transform: "skewX(-12deg)" }} aria-hidden="true">
-                    <span style={{ width: 8, height: 40, background: "#E10B17", borderRadius: 1 }} />
-                    <span style={{ width: 8, height: 40, background: "#F5C518", borderRadius: 1 }} />
-                    <span style={{ width: 8, height: 40, background: "var(--cream)", borderRadius: 1 }} />
-                  </div>
-                  <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 44, fontStyle: "italic", color: "var(--cream)", letterSpacing: 1, lineHeight: 1 }}>WDT</span>
-                </div>
-                <div style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 10.5, letterSpacing: 2, color: "var(--cream-muted)", margin: "8px 0 16px" }}>#WEDOTRANSFORMATIONS</div>
-                <div style={{ ...eyebrow, color: PUBLIC_TOKENS.lime, margin: "0 0 6px" }}>Le Challenge We Do · 21 jours</div>
-                <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: "clamp(42px,10vw,68px)", lineHeight: 1, ...publicGradText }}>10 000 $</div>
-                <p style={{ ...bodyText, fontSize: 15, maxWidth: 440, margin: "12px auto 0" }}>en jeu pour les <strong>10 plus belles transformations</strong>. 3 semaines pour changer, tous ensemble.</p>
-                <p style={{ ...bodyMuted, fontSize: 13, marginTop: 8 }}>Inclus dès ton démarrage.</p>
+            </nav>
+            {selectedProg && (
+              <div id="rb-selpill" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 9, padding: "6px 12px", border: "1px solid var(--hair-strong)", borderRadius: 999, background: "var(--ink2)", whiteSpace: "nowrap" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--teal)", display: "inline-block", boxShadow: "0 0 8px var(--teal)" }} />
+                <span style={{ fontSize: 12.5, color: "var(--cream-muted)" }}>Ta sélection&nbsp;·&nbsp;</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700 }}>{selName} · {selectedProg.price} €</span>
               </div>
-              <div className="rb-grid2">
-                <div style={{ ...card, display: "flex", flexDirection: "column", gap: 10 }}>
-                  <video src="/brand/wdt-app.mp4" autoPlay muted loop playsInline style={{ width: "100%", borderRadius: 12, display: "block", background: "#000" }} />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--cream)" }}>L'appli We Do, dans ta poche</div>
-                    <p style={{ ...bodyMuted, fontSize: 13.5, marginTop: 4 }}>Ton suivi, tes conseils du jour, ton évolution. Incluse — pas une option.</p>
-                  </div>
-                </div>
-                <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
-                  <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.members)}</div>
-                      <div style={{ ...bodyMuted, fontSize: 12 }}>membres</div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 30, lineHeight: 1, ...publicGradText }}>{formatCount(COMMUNITY_STATS.messages)}</div>
-                      <div style={{ ...bodyMuted, fontSize: 12 }}>messages échangés</div>
-                    </div>
-                  </div>
-                  <p style={{ ...bodyMuted, fontSize: 13.5, textAlign: "center" }}>Recettes, transformations, lives, entraide au quotidien. Tu y entres dès ton premier jour.</p>
-                  <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noreferrer noopener" style={{ ...linkBtn, display: "inline-block", textDecoration: "none", textAlign: "center" }}>Voir la communauté →</a>
+            )}
+          </div>
+        </header>
+
+        {/* ══ GRID : MAIN + RAIL ══ */}
+        <div id="rb-grid" style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 24px 40px", display: "grid", gridTemplateColumns: "minmax(0, 1fr) 344px", gap: 44, alignItems: "start" }}>
+          <main style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 64 }}>
+
+            {/* ══ ACTE 1 · TON BILAN ══ */}
+            <section id="bilan" style={{ scrollMarginTop: 80, animation: "rb-fade .5s ease both" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, ...acteEyebrow, marginBottom: 14 }}>
+                <span style={{ width: 18, height: 1, background: "var(--teal)", display: "inline-block" }} />Acte 1 — Analyse personnalisée
+              </div>
+              <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 4vw, 44px)", lineHeight: 1.1, letterSpacing: "-1px", margin: "0 0 16px" }}>
+                Salut {firstName || "à toi"}, voici ce que <span style={{ ...gradText, fontStyle: "italic" }}>ton bilan révèle.</span>
+              </h1>
+              <p style={{ fontSize: 16.5, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 560, margin: "0 0 22px" }}>Tu as pris le temps de faire ton bilan — c'est déjà un vrai pas. Voici ta lecture perso, et le plan que {coachName} te propose. Tout est déjà calé sur ce que tu as répondu.</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 26 }}>
+                <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, var(--teal), var(--lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora', sans-serif", fontWeight: 800, color: "#06241f" }}>{coachInitial}</div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>Préparé par {coachName}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--cream-hint)" }}>Coach bien-être · La Base 360</div>
                 </div>
               </div>
-            </div>
 
-            {/* Pourquoi (2 cartes) */}
-            <div style={{ marginTop: 40 }}>
-              <div style={eyebrow}>L'accompagnement</div>
-              <h2 style={secTitleWrap}>Pourquoi démarrer <span style={publicGradText}>avec nous</span></h2>
-              <div className="rb-grid2" style={{ marginTop: 20 }}>
-                {WHY.map((w) => (
-                  <div key={w.title} style={card}>
-                    <IconBadge d={w.icon} />
-                    <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 16, marginTop: 12, color: "var(--cream)" }}>{w.title}</div>
-                    <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>{w.body}</p>
+              <div id="rb-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+                {stats.map((st) => (
+                  <div key={st.label} style={inkCard}>
+                    <div style={{ fontSize: 11.5, letterSpacing: "0.3px", textTransform: "uppercase", fontWeight: 600, color: "var(--cream-hint)" }}>{st.label}</div>
+                    <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 20, marginTop: 8, color: st.color }}>{st.value}</div>
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Témoignages (masqués si aucun avis) */}
-            <div style={{ marginTop: hasTestimonials ? 40 : 0 }}>
-              {hasTestimonials && (
-                <>
-                  <div style={eyebrow}>Ils l'ont fait</div>
-                  <h2 style={secTitleWrap}>Des <span style={publicGradText}>vraies histoires</span></h2>
-                </>
-              )}
-              <TestimonialsCarousel variant="business" coachId={coach.userId ?? undefined} limit={3} onLoaded={(n) => setHasTestimonials(n > 0)} />
-            </div>
+              <div style={{ background: "linear-gradient(180deg, rgba(45,212,191,0.09), rgba(19,24,32,0.6))", border: "1px solid rgba(45,212,191,0.32)", borderRadius: 16, padding: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "rgba(45,212,191,0.14)", border: "1px solid rgba(45,212,191,0.30)" }}>
+                    <LineIcon d={ICON.spark} size={17} />
+                  </span>
+                  <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--teal)" }}>L'analyse de Noaly</div>
+                </div>
+                <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.6, color: "var(--cream)", whiteSpace: "pre-wrap" }}>{noalyText}</p>
+                <div style={{ fontSize: 12, color: "var(--cream-hint)", marginTop: 14 }}>Lecture générée à partir de ton bilan · validée par ton coach</div>
+              </div>
+            </section>
 
-            {/* FAQ accordéon */}
-            <div style={{ marginTop: 40 }}>
-              <div style={eyebrow}>Tout est clair ?</div>
-              <h2 style={{ ...secTitleWrap, marginBottom: 18 }}>Tes questions, <span style={publicGradText}>mes réponses</span></h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {FAQ.map((f, i) => {
-                  const open = openFaq === i;
-                  return (
-                    <div key={f.q} style={{ ...card, padding: 0, overflow: "hidden" }}>
-                      <button type="button" onClick={() => setOpenFaq(open ? null : i)} style={{ width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                        <span style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>{f.q}</span>
-                        <span style={{ color: PUBLIC_TOKENS.teal, fontSize: 20, lineHeight: 1, transform: open ? "rotate(45deg)" : "none", transition: "transform .18s" }}>+</span>
-                      </button>
-                      {open && (
-                        <p style={{ ...bodyMuted, fontSize: 14, padding: "0 18px 16px" }}>{f.a.replace("{coach}", coach.name)}</p>
-                      )}
+            {/* ══ ACTE 2 · TON PLAN ══ */}
+            <section id="plan" style={{ scrollMarginTop: 80 }}>
+              <div style={{ ...acteEyebrow, marginBottom: 12 }}>Acte 2 — Ton plan</div>
+              <h2 style={h2Sec}>Tes 5 stratégies essentielles</h2>
+              <p style={{ fontSize: 15, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 560, margin: 0 }}>{strategies.intro}</p>
+
+              <div style={{ display: "grid", gap: 10, marginTop: 22 }}>
+                {stratItems.map((s) => (
+                  <div key={s.n} style={{ display: "flex", gap: 16, alignItems: "flex-start", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: "16px 18px" }}>
+                    <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)", lineHeight: 1, minWidth: 22 }}>{s.n}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15.5 }}>{s.title}</span>
+                        {s.foundation && <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: "var(--teal)", border: "1px solid rgba(45,212,191,0.4)", borderRadius: 999, padding: "2px 8px" }}>Fondation</span>}
+                      </div>
+                      <p style={{ margin: "5px 0 0", fontSize: 14, lineHeight: 1.5, color: "var(--cream-muted)" }}>{s.text}</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+
+              {humanProducts.length > 0 && (
+                <div style={{ marginTop: 30 }}>
+                  <div style={{ ...kickerHint, marginBottom: 14 }}>Concrètement · ce que tu vas boire</div>
+                  <div id="rb-products" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                    {humanProducts.map((id) => {
+                      const h = PRODUCT_HUMAN[id];
+                      return (
+                        <div key={id} style={{ background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: "15px 16px" }}>
+                          <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5 }}>{h.title}</div>
+                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--teal)", fontWeight: 600, marginTop: 3 }}>{PRODUCT_SHORT[id] ?? id}</div>
+                          <div style={{ fontSize: 13, color: "var(--cream-muted)", marginTop: 6 }}>{h.detail}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Parlons vrai */}
+              {selDailyNum != null && selectedProg && (
+                <div style={{ marginTop: 30, background: "linear-gradient(180deg, rgba(197,248,42,0.06), rgba(19,24,32,0.5))", border: "1px solid rgba(197,248,42,0.24)", borderRadius: 16, padding: 24 }}>
+                  <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 8 }}>Parlons vrai · les chiffres exacts</div>
+                  <h3 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 23, margin: "0 0 16px" }}>Tu dépenses <span style={{ color: "var(--lime)" }}>déjà cet argent</span></h3>
+                  <div id="rb-anchortiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div style={{ background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 12, padding: 16 }}>
+                      <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--cream-hint)" }}>Ta pause déjeuner</div>
+                      <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 38, marginTop: 8, lineHeight: 1 }}>{formatEur(LUNCH_AVG_EUR)}</div>
+                      <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 6 }}>Coût moyen d'un déjeuner en France — enquête <strong style={{ color: "var(--cream)" }}>Edenred / Ifop</strong>. Un seul repas, et faim à 16 h.</div>
+                    </div>
+                    <div style={{ background: "var(--ink)", border: "1.5px solid rgba(45,212,191,0.5)", borderRadius: 12, padding: 16 }}>
+                      <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--teal)" }}>Ta routine {selName} · / jour</div>
+                      <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 38, marginTop: 8, lineHeight: 1, ...gradText }}>{selPerDay}</div>
+                      <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 6 }}>Ton petit-déj complet + ton hydratation + ton boost. Toute la journée.</div>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setShowBreakdown((v) => !v)} style={{ marginTop: 14, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--teal)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    {showBreakdown ? "Masquer le détail du calcul ▲" : "Voir le détail du calcul (produit par produit) ▾"}
+                  </button>
+                  {showBreakdown && (
+                    <div style={{ marginTop: 12, background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 12, padding: 16 }}>
+                      <div style={{ fontSize: 12.5, color: "var(--cream-muted)", marginBottom: 12, lineHeight: 1.5 }}>On ne divise pas le pack par une durée au hasard. Le <strong style={{ color: "var(--cream)" }}>€/jour = le prix de chaque produit ÷ le nombre de jours qu'il tient à la dose conseillée</strong>, additionné. Chaque produit tient une durée différente.</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {breakdown.map((b) => (
+                          <div key={b.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, paddingBottom: 8, borderBottom: "1px solid var(--hair)" }}>
+                            <span style={{ fontSize: 13.5, fontWeight: 600 }}>{b.name}</span>
+                            <span style={{ fontSize: 12, color: "var(--cream-hint)", fontFamily: "'JetBrains Mono', monospace", marginLeft: "auto" }}>tient {b.days}</span>
+                            <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--lime)", minWidth: 78, textAlign: "right" }}>{b.perDay} / j</span>
+                          </div>
+                        ))}
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, paddingTop: 4 }}>
+                          <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 14, fontWeight: 700 }}>Total {selName}</span>
+                          <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 15, fontWeight: 800, color: "var(--teal)" }}>{selPerDay} / jour</span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--cream-hint)", marginTop: 12 }}>Durées réelles à la dose prescrite. Prix produits issus du catalogue.</div>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 14.5, lineHeight: 1.55, color: "var(--cream)", margin: "16px 0 0" }}>{anchorLine}</p>
+                </div>
+              )}
+            </section>
+
+            {/* ══ ACTE 3 · TES FORMULES ══ */}
+            <section id="formules" style={{ scrollMarginTop: 80 }}>
+              <div style={{ ...acteEyebrow, marginBottom: 12 }}>Acte 3 — Tes formules</div>
+              <h2 style={h2Sec}>Le programme qui te correspond</h2>
+              <p style={{ fontSize: 15, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 580, margin: 0 }}>Plusieurs niveaux. On démarre où tu te sens prêt·e, et on fait évoluer ton pack selon tes résultats. Clique pour comparer — ta sélection et son €/jour se mettent à jour partout.</p>
+
+              <div id="rb-programs" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginTop: 22 }}>
+                {programmes.map((p) => {
+                  const on = selected === p.id;
+                  const reco = p.id === recoId;
+                  const d = dailyByProgram.get(p.id);
+                  return (
+                    <button key={p.id} type="button" onClick={() => setSelected(p.id)} style={{
+                      background: on ? "linear-gradient(180deg, rgba(45,212,191,0.12), rgba(19,24,32,0.9))" : "var(--ink2)",
+                      border: on ? "1.5px solid var(--teal)" : reco ? "1px solid rgba(197,248,42,0.4)" : "1px solid var(--hair)",
+                      borderRadius: 16, padding: reco ? "26px 18px 18px" : 18, cursor: "pointer", textAlign: "left", width: "100%",
+                      display: "flex", flexDirection: "column", position: "relative", color: "var(--cream)",
+                    }}>
+                      {reco && <div style={{ position: "absolute", top: -10, left: 16, background: GRAD, color: "#06241f", fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 10.5, letterSpacing: "0.5px", padding: "4px 11px", borderRadius: 999, whiteSpace: "nowrap" }}>★ RECOMMANDÉ</div>}
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cream-muted)" }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
+                      <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 19, marginTop: 3 }}>{prettyProgramName(p.name)}</div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "10px 0 2px" }}>
+                        <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 34, lineHeight: 1 }}>{p.price}</span>
+                        <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 20, color: "var(--teal)" }}>€</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--cream-muted)", marginBottom: 12, minHeight: 15 }}>{d != null ? <>soit <strong style={{ color: "var(--lime)" }}>{formatEur(d)}</strong> / jour</> : null}</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                        {p.products.map((pr) => (
+                          <div key={pr.id} style={{ fontSize: 13, color: "var(--cream)", display: "flex", gap: 7 }}><span style={{ color: "var(--teal)" }}>•</span>{PRODUCT_SHORT[pr.id] ?? pr.name}</div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: on ? "var(--teal)" : "var(--cream-hint)" }}>{on ? "✓ Sélectionné" : "Choisir cette formule"}</div>
+                    </button>
                   );
                 })}
               </div>
-            </div>
-          </section>
 
-          {/* ═══ DÉMARRER (états caisse) ═══ */}
-          <section id="demarrer" style={{ scrollMarginTop: 92, paddingTop: 52 }}>
-            <div style={{ ...card, textAlign: "center", border: "1px solid var(--hair-strong)", background: `linear-gradient(180deg, ${withA(PUBLIC_TOKENS.teal, 0.08)}, ${withA(PUBLIC_TOKENS.lime, 0.05)})`, padding: "38px 24px" }}>
-              <h2 style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 800, fontSize: "clamp(24px,4.6vw,32px)", lineHeight: 1.15, color: "var(--cream)" }}>
-                Prêt·e à démarrer, <span style={publicGradText}>{firstName || "toi"}</span> ?
-              </h2>
-              <p style={{ ...bodyText, fontSize: 16, maxWidth: 460, margin: "14px auto 24px" }}>
-                {selectedProg
-                  ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)} · {selectedProg.price} €</strong>. On démarre quand tu veux.</>
-                  : <>On démarre quand tu veux. La première étape, c'est juste un échange — sans pression.</>}
-              </p>
-              {paidConfirmed ? (
-                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <IconBadge d={ICON.check} />
-                    <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Paiement reçu, merci {firstName} !</div>
+              {/* Add-on */}
+              {addOn && (() => {
+                const price = priceById.get(addOn.productId);
+                const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
+                return (
+                  <div style={{ marginTop: 14, background: "linear-gradient(180deg, rgba(197,248,42,0.07), transparent)", border: "1px solid rgba(197,248,42,0.3)", borderRadius: 16, padding: 20, display: "flex", gap: 16, alignItems: "flex-start" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 11, flexShrink: 0, background: "rgba(197,248,42,0.12)", border: "1px solid rgba(197,248,42,0.3)" }}>
+                      <LineIcon d={ICON.moon} size={19} color="var(--lime)" />
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime)" }}>Suivant tes réponses</div>
+                      <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 18, margin: "4px 0 6px" }}>On te conseille aussi <span style={{ color: "var(--lime)" }}>{addOn.title}</span></div>
+                      <p style={{ margin: "0 0 6px", fontSize: 14, fontStyle: "italic", color: "var(--teal)" }}>« {addOn.reason} »</p>
+                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>{addOn.benefit}{perDay != null && <> <strong style={{ color: "var(--lime)" }}>{formatEur(perDay)} / jour</strong>, à ajouter si tu le souhaites.</>}</p>
+                    </div>
                   </div>
-                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>C'est officiel, tu démarres. Encore 2 minutes pour finaliser ton inscription et tu es prêt·e. Bienvenue !</p>
-                  <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...ctaPrimary, width: "100%", marginTop: 16, justifyContent: "center" }}>Continuer mon inscription →</button>
-                </div>
-              ) : justPaid ? (
-                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Merci {firstName} !</div>
-                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 6 }}>On finalise la confirmation de ton paiement. {coach.name} revient vers toi tout de suite pour ton programme, ta saveur et ta première pesée.</p>
-                </div>
-              ) : !started ? (
-                <>
-                  <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...ctaPrimary, opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>
-                    {payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}
-                  </button>
-                  <div style={{ marginTop: 18 }}>
-                    {callbackState === "done" ? (
-                      <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.1), borderColor: withA(PUBLIC_TOKENS.teal, 0.35), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <IconBadge d={ICON.check} />
-                          <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>C'est noté, {firstName} !</div>
+                );
+              })()}
+
+              {/* WE DO TRANSFORMATIONS */}
+              <div style={{ marginTop: 40 }}>
+                <div style={{ ...kickerHint, marginBottom: 6 }}>Tu ne démarres pas seul</div>
+                <p style={{ fontSize: 15, color: "var(--cream-muted)", maxWidth: 560, margin: "0 0 16px" }}>Un programme, tout le monde peut t'en vendre un. Ce qui change tout, c'est ce qui se passe les semaines suivantes. En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong>.</p>
+                <div style={{ background: "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(197,248,42,0.08))", border: "1px solid rgba(197,248,42,0.32)", borderRadius: 18, padding: 26, display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 240 }}>
+                    <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 6 }}>Le Challenge We Do · 21 jours</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 52, lineHeight: 0.9, ...gradText }}>10 000 $</span>
+                      <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, color: "var(--cream)" }}>en jeu</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: "var(--cream)" }}>…pour les <strong style={{ color: "var(--lime)" }}>10 plus belles transformations</strong>. 3 semaines pour changer, tous niveaux — nutrition + activité, guidé jour après jour.</p>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 240, background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 14, padding: 18 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                      <LineIcon d={ICON.phone} size={18} />
+                      <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5 }}>L'appli We Do, dans ta poche</div>
+                    </div>
+                    <p style={{ margin: "0 0 10px", fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>Ton suivi, tes conseils du jour, ton évolution. <strong style={{ color: "var(--cream)" }}>Incluse — pas une option.</strong></p>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                      {communityStats.map((s) => (
+                        <div key={s.label} style={{ textAlign: "center" }}>
+                          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)", lineHeight: 1 }}>{s.n}</div>
+                          <div style={{ fontSize: 10.5, color: "var(--cream-hint)", marginTop: 3, lineHeight: 1.2 }}>{s.label}</div>
                         </div>
-                        <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>{coach.name} a reçu ta demande et te recontacte très vite. Pas besoin de faire autre chose de ton côté.</p>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div id="rb-why" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+                  {WHY.map((w) => (
+                    <div key={w.title} style={{ background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: 18 }}>
+                      <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15 }}>{w.title}</div>
+                      <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>{w.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Témoignages (gardés — masqués si aucun avis validé, garde-fou §9.5) */}
+              <div style={{ marginTop: hasTestimonials ? 40 : 0 }}>
+                {hasTestimonials && <div style={{ ...kickerHint, marginBottom: 14 }}>Ils l'ont fait avant toi</div>}
+                <TestimonialsCarousel variant="business" coachId={coach.userId ?? undefined} limit={3} onLoaded={(n) => setHasTestimonials(n > 0)} />
+              </div>
+
+              {/* FAQ */}
+              <div style={{ marginTop: 40 }}>
+                <div style={{ ...kickerHint, marginBottom: 14 }}>Tout est clair ?</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {faqData.map((f, i) => {
+                    const open = openFaq === i;
+                    return (
+                      <button key={f.q} type="button" onClick={() => setOpenFaq(open ? -1 : i)} style={{ textAlign: "left", width: "100%", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 12, padding: "15px 18px", cursor: "pointer", color: "var(--cream)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14.5 }}>{f.q}</span>
+                          <span style={{ color: "var(--teal)", fontSize: 18, lineHeight: 1 }}>{open ? "−" : "+"}</span>
+                        </div>
+                        {open && <p style={{ margin: "10px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "var(--cream-muted)" }}>{f.a}</p>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* ══ DÉMARRER ══ */}
+            <section id="demarrer" style={{ scrollMarginTop: 80 }}>
+              <div style={{ textAlign: "center", background: "linear-gradient(180deg, rgba(45,212,191,0.1), rgba(19,24,32,0.6))", border: "1px solid var(--hair-strong)", borderRadius: 20, padding: "40px 28px" }}>
+                <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: "clamp(24px, 3vw, 32px)", lineHeight: 1.12, margin: "0 0 12px" }}>Prêt·e à démarrer, <span style={{ color: "var(--teal)" }}>{firstName || "toi"}</span> ?</h2>
+                <p style={{ fontSize: 15.5, color: "var(--cream-muted)", maxWidth: 440, margin: "0 auto 22px" }}>{selectedProg ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{selName} · {selectedProg.price} €</strong> {selPerDay && <span style={{ color: "var(--cream-hint)" }}>({selPerDay}/jour)</span>}. On démarre quand tu veux.</> : <>On démarre quand tu veux. La première étape, c'est juste un échange.</>}</p>
+
+                {paidConfirmed ? (
+                  <div style={{ maxWidth: 420, margin: "0 auto", textAlign: "left", background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: 14, padding: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 15 }}>
+                      <LineIcon d={ICON.check} size={20} /> Paiement reçu, merci {firstName} !
+                    </div>
+                    <p style={{ margin: "10px 0 16px", fontSize: 14, lineHeight: 1.5, color: "var(--cream-muted)" }}>C'est officiel, tu démarres. Encore 2 minutes pour finaliser ton inscription et tu es prêt·e. Bienvenue !</p>
+                    <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...gradBtn, width: "100%", padding: 15, fontSize: 15 }}>Continuer mon inscription →</button>
+                  </div>
+                ) : justPaid ? (
+                  <div style={{ maxWidth: 420, margin: "0 auto", textAlign: "left", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: 20, fontSize: 14, color: "var(--cream-muted)" }}>
+                    <div style={{ fontWeight: 700, color: "var(--cream)", fontSize: 15, marginBottom: 6 }}>On finalise ton paiement…</div>
+                    On confirme ton règlement <strong style={{ color: "var(--cream)" }}>Square</strong>. {coachName} revient vers toi tout de suite pour ton programme, ta saveur et ta première pesée.
+                  </div>
+                ) : started ? (
+                  <div style={{ maxWidth: 420, margin: "0 auto", textAlign: "left", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: 20, fontSize: 14, color: "var(--cream-muted)" }}>
+                    <div style={{ fontWeight: 700, color: "var(--cream)", fontSize: 15, marginBottom: 6 }}>Super, {firstName} !</div>
+                    {coachName} va t'envoyer ton lien de paiement sécurisé pour finaliser {selectedProg ? <>ton pack <strong style={{ color: "var(--cream)" }}>{selName}</strong></> : "ton démarrage"}. Réponds simplement à son message.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+                    <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...gradBtn, width: "100%", maxWidth: 340, padding: "16px 24px", fontSize: 16, boxShadow: "0 8px 22px rgba(197,248,42,0.28)", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>{payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}</button>
+                    {callbackState === "done" ? (
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--teal)" }}>✓ C'est noté — {coachName} te recontacte.</div>
                     ) : (
                       <>
-                        <div style={{ ...bodyMuted, fontSize: 13, marginBottom: 8 }}>Pas encore décidé·e ?</div>
-                        <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ ...linkBtn, opacity: callbackState === "sending" ? 0.6 : 1 }}>
-                          {callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coach.name} →`}
-                        </button>
+                        <div style={{ fontSize: 12.5, color: "var(--cream-hint)" }}>Pas encore décidé·e ?</div>
+                        <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ maxWidth: 280, padding: "11px 20px", background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coachName}`}</button>
                       </>
                     )}
                   </div>
+                )}
+                <div style={{ fontSize: 12, color: "var(--cream-hint)", marginTop: 22 }}>Une question ? Réponds simplement au message de {coachName}, il·elle est là.</div>
+              </div>
+            </section>
+          </main>
+
+          {/* ══ RAIL DE DÉCISION ══ */}
+          <aside id="rb-rail" style={{ position: "sticky", top: 84 }}>
+            <div style={{ background: "var(--ink2)", border: "1px solid var(--hair-strong)", borderRadius: 18, padding: 22, boxShadow: "0 18px 50px -20px rgba(0,0,0,0.75)" }}>
+              <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--teal)" }}>Ta sélection</div>
+              <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 20, margin: "6px 0 2px" }}>{selName}</div>
+              <div style={{ fontSize: 12.5, color: "var(--cream-muted)" }}>{selSubtitle}</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 5, margin: "16px 0 2px" }}>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 44, lineHeight: 1 }}>{selectedProg?.price ?? "—"}</span>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)" }}>€</span>
+              </div>
+              {selPerDay && <div style={{ fontSize: 13, color: "var(--cream-muted)" }}>soit <strong style={{ color: "var(--lime)" }}>{selPerDay}</strong> / jour · {selVsLunch}</div>}
+              <div style={{ height: 1, background: "var(--hair)", margin: "18px 0" }} />
+              {paidConfirmed ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 700, fontSize: 14, color: "var(--teal)", marginBottom: 14 }}>
+                    <LineIcon d={ICON.check} size={18} />Paiement reçu
+                  </div>
+                  <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...gradBtn, width: "100%", padding: 14, borderRadius: 12, fontSize: 14.5 }}>Continuer mon inscription →</button>
                 </>
               ) : (
-                <div style={{ ...card, background: withA(PUBLIC_TOKENS.teal, 0.08), borderColor: withA(PUBLIC_TOKENS.teal, 0.3), maxWidth: 460, margin: "0 auto", textAlign: "left" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <IconBadge d={ICON.lock} />
-                    <div style={{ fontWeight: 600, fontSize: 15, color: "var(--cream)" }}>Super, {firstName} !</div>
-                  </div>
-                  <p style={{ ...bodyMuted, fontSize: 14, marginTop: 10 }}>
-                    {coach.name} va t'envoyer ton lien de paiement sécurisé pour finaliser
-                    {selectedProg ? <> ton pack <strong style={{ color: "var(--cream)" }}>{prettyProgramName(selectedProg.name)}</strong></> : " ton démarrage"}.
-                    Réponds simplement à son message.
-                  </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...gradBtn, width: "100%", padding: 15, borderRadius: 12, fontSize: 15, boxShadow: "0 8px 22px rgba(197,248,42,0.25)", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>{payLoading ? "Ouverture…" : "Je démarre →"}</button>
+                  {callbackState === "done" ? (
+                    <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 600, color: "var(--teal)" }}>✓ {coachName} te recontacte</div>
+                  ) : (
+                    <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}</button>
+                  )}
                 </div>
               )}
-              <div style={{ ...bodyMuted, fontSize: 12.5, marginTop: 22 }}>Une question ? Réponds simplement au message de {coach.name}, il·elle est là.</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", marginTop: 16, fontSize: 11.5, color: "var(--cream-hint)" }}>
+                <LineIcon d={ICON.lock} size={13} color="currentColor" />Paiement sécurisé · Square
+              </div>
             </div>
-          </section>
-        </main>
-
-        {/* ── ASIDE : rail de décision collant (desktop) ── */}
-        <div className="rb-rail-wrap">
-          <aside className="rb-rail" style={{ ...card, padding: 20 }}>
-            <div style={{ ...eyebrow, margin: 0 }}>Ta sélection</div>
-            <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 22, color: "var(--cream)", marginTop: 8 }}>{selectedProg ? prettyProgramName(selectedProg.name) : "—"}</div>
-            {selectedProg && <div style={{ ...bodyMuted, fontSize: 13 }}>{PROGRAMME_SUBTITLE_BY_ID[selectedProg.id] ?? "Pour aller plus loin"}</div>}
-            <div style={{ margin: "14px 0 2px", display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 40, color: "var(--cream)", lineHeight: 1 }}>{selectedProg?.price ?? "—"}</span>
-              <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 20, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>€</span>
-            </div>
-            {selectedDaily != null && (
-              <div style={{ ...bodyMuted, fontSize: 13 }}>soit <strong style={{ color: PUBLIC_TOKENS.lime }}>{formatEur(selectedDaily)}</strong> / jour · {selectedDaily < LUNCH_AVG_EUR ? "moins qu'un déjeuner" : "≈ un déjeuner"}</div>
-            )}
-            <div style={{ height: 1, background: "var(--hair)", margin: "16px 0" }} />
-            {railActions}
-            <div style={{ ...bodyMuted, fontSize: 12, marginTop: 14, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-              <LineIcon d={ICON.lock} size={13} color="var(--cream-muted)" /> Paiement sécurisé · Square
+            <div style={{ marginTop: 12, background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: "14px 16px", fontSize: 12.5, color: "var(--cream-muted)", lineHeight: 1.5 }}>
+              <strong style={{ color: "var(--cream)" }}>L'appli We Do Transformations incluse</strong> + le challenge 21 jours (10 000 $ en jeu). Compris dès ton démarrage.
             </div>
           </aside>
-          <div style={{ ...card, padding: 16 }}>
-            <p style={{ ...bodyMuted, fontSize: 13 }}>
-              <strong style={{ color: "var(--cream)" }}>L'appli We Do Transformations incluse</strong> + le challenge 21 jours (10 000 $ en jeu). Compris dès ton démarrage.
-            </p>
-          </div>
         </div>
-      </div>
 
-      {/* ── Barre de paiement collante (mobile) ── */}
-      <div className="rb-paybar">
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 14, color: "var(--cream)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {selectedProg ? `${prettyProgramName(selectedProg.name)} · ${selectedProg.price} €` : "Ta sélection"}
-          </div>
-          <div style={{ ...bodyMuted, fontSize: 11.5 }}>{selectedDaily != null ? `${formatEur(selectedDaily)} / jour · Square sécurisé` : "Paiement sécurisé · Square"}</div>
-        </div>
-        {paidConfirmed ? (
-          <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...ctaPrimary, padding: "13px 20px", fontSize: 15, whiteSpace: "nowrap" }}>Continuer →</button>
-        ) : (
-          <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...ctaPrimary, padding: "13px 20px", fontSize: 15, whiteSpace: "nowrap", opacity: payLoading ? 0.6 : 1 }}>{payLoading ? "…" : "Je démarre →"}</button>
-        )}
-      </div>
-
-      {/* ── BANDEAU « ET APRÈS » (pleine largeur) ── */}
-      <section className="rb-after">
-        <div className="rb-after-inner">
-          <div style={eyebrow}>Et après ?</div>
-          <h2 style={{ ...secTitleWrap, marginBottom: 4 }}>Une fois que tu <span style={publicGradText}>démarres</span></h2>
-          <p style={{ ...bodyMuted, fontSize: 15, maxWidth: 560 }}>4 étapes simples, guidées, juste après ton paiement.</p>
-          <div className="rb-steps">
-            {QUALIF_STEPS.map((s) => (
-              <div key={s.n} style={{ ...card, padding: 18 }}>
-                <span style={{ fontFamily: PUBLIC_FONTS.impact, fontSize: 26, color: PUBLIC_TOKENS.teal, lineHeight: 1 }}>{s.n}</span>
-                <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 15.5, color: "var(--cream)", marginTop: 8 }}>{s.t}</div>
-                <p style={{ ...bodyMuted, fontSize: 13, marginTop: 5 }}>{s.d}</p>
+        {/* ══ ET APRÈS ══ */}
+        <section style={{ borderTop: "1px solid var(--hair)", background: "rgba(19,24,32,0.4)" }}>
+          <div style={{ maxWidth: 1180, margin: "0 auto", padding: "44px 24px 56px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
+              <div>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 8 }}>Et juste après ton paiement</div>
+                <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 26, margin: 0 }}>2 minutes pour finaliser, et tu es lancé·e</h2>
               </div>
-            ))}
+              <div style={{ fontSize: 13, color: "var(--cream-hint)", maxWidth: 320 }}>Tout est guidé sur <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "var(--teal)" }}>/qualif</span> — self-serve, ta fiche se crée toute seule. {coachName} est notifié à chaque étape.</div>
+            </div>
+            <div id="rb-qualif" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+              {qualifSteps.map((q) => (
+                <div key={q.n} style={{ background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 16, padding: "20px 18px" }}>
+                  <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 15, color: "#06241f", background: "linear-gradient(135deg, var(--teal), var(--lime))", width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>{q.n}</div>
+                  <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, margin: "14px 0 6px" }}>{q.title}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--cream-muted)" }}>{q.text}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ textAlign: "center", fontSize: 12, color: "var(--cream-hint)", marginTop: 32 }}>La Base 360 — Ce bilan est personnel et confidentiel.</div>
           </div>
-          <div style={{ ...bodyMuted, textAlign: "center", fontSize: 12, marginTop: 34 }}>La Base 360 — Ce bilan est personnel et confidentiel.</div>
-        </div>
-      </section>
-    </PublicShell>
-  );
-}
+        </section>
 
-// ─── Sous-composant carte stat ───────────────────────────────────────────────
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ ...card, padding: 16 }}>
-      <div style={{ ...bodyMuted, fontSize: 12.5 }}>{label}</div>
-      <div style={{ fontFamily: PUBLIC_FONTS.display, fontWeight: 700, fontSize: 18, marginTop: 6, color: "var(--cream)" }}>{value}</div>
-    </div>
+        {/* ══ BARRE PAIEMENT MOBILE ══ */}
+        <div id="rb-mobilebar" style={{ display: "none", position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, background: "rgba(11,13,17,0.96)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: "1px solid var(--hair-strong)", padding: "11px 16px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 640, margin: "0 auto" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selName} · <strong style={{ color: "var(--cream)" }}>{selectedProg?.price ?? "—"} €</strong></div>
+              <div style={{ fontSize: 11, color: "var(--cream-hint)" }}>{selPerDay ? `${selPerDay} / jour · ` : ""}Square sécurisé</div>
+            </div>
+            {paidConfirmed ? (
+              <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...gradBtn, padding: "13px 20px", borderRadius: 12, fontSize: 14, whiteSpace: "nowrap" }}>Continuer →</button>
+            ) : (
+              <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...gradBtn, padding: "13px 22px", borderRadius: 12, fontSize: 14, whiteSpace: "nowrap", boxShadow: "0 6px 18px rgba(197,248,42,0.28)", opacity: payLoading ? 0.6 : 1 }}>{payLoading ? "…" : "Je démarre →"}</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </PublicShell>
   );
 }
 
@@ -1045,20 +913,6 @@ function LineIcon({ d, size = 22, color = PUBLIC_TOKENS.teal }: { d: string; siz
     </svg>
   );
 }
-// Badge carré arrondi teinté teal autour du picto (identité v2).
-function IconBadge({ d }: { d: string }) {
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", justifyContent: "center",
-      width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-      background: withA(PUBLIC_TOKENS.teal, 0.12),
-      border: `1px solid ${withA(PUBLIC_TOKENS.teal, 0.28)}`,
-    }}>
-      <LineIcon d={d} size={20} />
-    </span>
-  );
-}
-
 // ─── Pictos ligne (24×24) réutilisés (identité v2, remplace les emojis) ──────
 const ICON = {
   cup: "M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z M17 9h1.5a2.5 2.5 0 0 1 0 5H17 M6 2v3 M10 2v3 M14 2v3",
@@ -1152,108 +1006,24 @@ const WHY = [
   { icon: ICON.chart, title: "Un suivi qui se voit", body: "Pesées, mensurations, courbe d'évolution : on mesure pour célébrer chaque progrès, pas pour culpabiliser." },
 ] as const;
 
-const FAQ = [
-  { q: "C'est des produits « miracle » ?", a: "Non. Ce sont des compléments nutritionnels qui remplacent un petit-déj ou une collation mal équilibrés. Le vrai moteur, c'est tes habitudes — {coach} t'aide à les replacer." },
-  { q: "En combien de temps des résultats ?", a: "Beaucoup ressentent plus d'énergie dès les premières semaines. Pour le poids, on vise du progressif et durable — pas l'effet yo-yo. On mesure ensemble." },
-  { q: "Je dois arrêter de manger normalement ?", a: "Pas du tout. Tu gardes de vrais repas (l'assiette équilibrée du plan). On structure juste le matin et les collations, là où ça pèche le plus." },
-  { q: "Et si je n'aime pas le goût ?", a: "Tu choisis ta saveur au démarrage (vanille, chocolat, cookies…). Et si une ne te plaît pas, on en change, simplement." },
-  { q: "Je suis suivi·e comment ?", a: "Par {coach}, directement : messages, ajustements, pesées, et le groupe pour la motivation. Tu n'es jamais seul·e avec un PDF." },
-] as const;
-
-// ─── Styles partagés (thème public V2, theme-aware via CSS vars) ─────────────
-function withA(hex: string, a: number): string {
-  return `color-mix(in srgb, ${hex} ${Math.round(a * 100)}%, transparent)`;
-}
-const card: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--cream) 3.5%, transparent)",
-  border: "1px solid var(--hair)",
-  borderRadius: 18,
-  padding: 22,
-};
-const eyebrow: React.CSSProperties = {
-  fontFamily: PUBLIC_FONTS.display,
-  fontSize: 12,
-  fontWeight: 600,
-  letterSpacing: 2.5,
-  textTransform: "uppercase",
-  color: PUBLIC_TOKENS.teal,
-};
-const secTitle: React.CSSProperties = {
-  fontFamily: PUBLIC_FONTS.display,
-  fontWeight: 700,
-  fontSize: "clamp(24px,4vw,30px)",
-  lineHeight: 1.18,
-  letterSpacing: "-0.4px",
-  marginTop: 12,
-  marginRight: 0,
-  marginBottom: 8,
-  marginLeft: 0,
-  color: "var(--cream)",
-};
-const bodyText: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body, fontSize: 16, lineHeight: 1.55, color: "var(--cream)" };
-const bodyMuted: React.CSSProperties = { margin: 0, fontFamily: PUBLIC_FONTS.body, color: "var(--cream-muted)", lineHeight: 1.5 };
-const linkBtn: React.CSSProperties = {
-  marginTop: 10,
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  fontFamily: PUBLIC_FONTS.display,
-  fontWeight: 600,
-  fontSize: 13.5,
-  color: PUBLIC_TOKENS.teal,
-  background: "transparent",
-  border: "none",
-  padding: 0,
-  cursor: "pointer",
-};
-const ctaPrimary: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 9,
-  fontFamily: PUBLIC_FONTS.display,
-  fontWeight: 700,
-  fontSize: 16,
-  color: "#06241f",
-  background: PUBLIC_TOKENS.gradCta,
-  border: "none",
-  borderRadius: 14,
-  padding: "16px 30px",
-  cursor: "pointer",
-};
-
 // ─── CSS scopé de l'entonnoir (structure + responsive) ───────────────────────
-// Les couleurs viennent des vars du thème public (public-shell.css) → theme-aware
-// automatiquement (dark ET light). On ne met ici QUE ce que le style inline ne
-// peut pas faire : sticky, grille responsive, media queries, barre mobile.
+// CSS scopé = la balise <style> de la maquette (ids identiques) + les 2 vars
+// manquantes (--ink2, --lime) que public-shell.css ne définit pas. Responsive
+// géré via ces media queries (le style inline ne peut pas les porter).
 const RB_CSS = `
-.rb-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--ink) 85%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
-.rb-header-inner{max-width:1180px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:18px}
-.rb-logo{font-family:${PUBLIC_FONTS.display};font-weight:800;letter-spacing:.5px;font-size:17px;color:var(--cream);white-space:nowrap}
-.rb-chapters{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
-.rb-chapters::-webkit-scrollbar{display:none}
-.rb-chapter{font-family:${PUBLIC_FONTS.display};font-weight:600;font-size:13.5px;color:var(--cream-muted);background:transparent;border:1px solid transparent;border-radius:999px;padding:7px 14px;cursor:pointer;white-space:nowrap}
-.rb-chapter.is-active{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 40%,transparent);background:color-mix(in srgb,var(--teal) 10%,transparent)}
-.rb-selpill{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--cream-muted);border:1px solid var(--hair-strong);border-radius:999px;padding:7px 14px;white-space:nowrap}
-.rb-selpill strong{color:var(--cream)}
-.rb-dot{width:7px;height:7px;border-radius:50%;background:var(--teal)}
-.rb-shell{max-width:1180px;margin:0 auto;padding:8px 22px 120px;display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:34px;align-items:start}
-.rb-rail-wrap{position:sticky;top:84px;display:flex;flex-direction:column;gap:12px}
-.rb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
-.rb-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.rb-paybar{display:none}
-.rb-after{border-top:1px solid var(--hair);margin-top:20px}
-.rb-after-inner{max-width:1180px;margin:0 auto;padding:40px 22px 80px}
-.rb-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
-@media(max-width:899px){
-  .rb-shell{grid-template-columns:1fr;padding-bottom:100px}
-  .rb-rail-wrap{display:none}
-  .rb-selpill{display:none}
-  .rb-paybar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;align-items:center;gap:12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--ink) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--hair-strong)}
-  .rb-steps{grid-template-columns:1fr 1fr}
+.public-shell{--ink2:#131820;--lime:#c5f82a}
+#rb-nav::-webkit-scrollbar{display:none}
+@keyframes rb-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-width: 900px){
+  #rb-grid{grid-template-columns:1fr !important;gap:30px !important;padding-bottom:132px !important}
+  #rb-rail{display:none !important}
+  #rb-selpill{display:none !important}
+  #rb-nav{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #rb-stats,#rb-qualif{grid-template-columns:repeat(2, 1fr) !important}
+  #rb-products,#rb-programs,#rb-why{grid-template-columns:1fr !important}
+  #rb-mobilebar{display:block !important}
 }
-@media(max-width:560px){
-  .rb-stats{grid-template-columns:1fr 1fr}
-  .rb-grid2{grid-template-columns:1fr}
-  .rb-steps{grid-template-columns:1fr}
+@media (max-width: 560px){
+  #rb-stats,#rb-qualif,#rb-anchortiles{grid-template-columns:1fr !important}
 }
 `;
