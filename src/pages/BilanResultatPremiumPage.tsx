@@ -112,6 +112,21 @@ const CHAPTERS = [
   { id: "demarrer", label: "Démarrer" },
 ] as const;
 
+// Les 5 piliers de la maquette claude design — FIXES pour tous les leads
+// (décision Thomas 2026-07-19 : « c'est exactement les textes que je veux »,
+// « il faut que ce soit générique »). Ce ne sont PAS générés par l'IA : la
+// seule partie IA de la page est le paragraphe « L'analyse de Noaly ».
+const STRATEGIES = {
+  intro: "Souvent, ce sont les petits ajustements qui font les plus grands changements. On commence par les fondations — sans t'affamer.",
+  items: [
+    { n: 1, title: "Le petit-déjeuner", foundation: true, text: "Un petit-déj pauvre en protéines ralentit ton métabolisme dès le matin. La solution : un petit-déj sous forme de boisson nutritionnelle calibrée." },
+    { n: 2, title: "Les collations", foundation: true, text: "Les coups de mou de l'après-midi viennent d'un en-cas absent ou trop sucré. L'idéal : 10 g de protéines + un fruit, entre les repas." },
+    { n: 3, title: "L'assiette équilibrée", foundation: false, text: "Midi : ¼ protéines · ¼ glucides complexes · ½ légumes + un filet d'huile d'olive. Le soir, on allège les glucides." },
+    { n: 4, title: "L'hydratation", foundation: false, text: "≥ 2 L par jour (eau, infusions, thés non sucrés). Ça soutient la digestion et calme les fringales." },
+    { n: 5, title: "L'activité physique", foundation: false, text: "Pas besoin de t'épuiser : 30 min de marche par jour, en une fois ou en sessions de 10-15 min." },
+  ],
+} as const;
+
 export function BilanResultatPremiumPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -157,6 +172,43 @@ export function BilanResultatPremiumPage() {
   // notifie le coach par push. done affiche la confirmation inline.
   const [callbackState, setCallbackState] = useState<"idle" | "sending" | "done">("idle");
 
+  // ── Lead scoring silencieux (#2, maquette 2026-07-19) ──
+  // Signaux d'engagement du lead → score envoyé au coach avec « Fais-toi
+  // rappeler » pour qu'il sache QUI relancer en 1er et AVEC QUEL angle.
+  // `intent` = micro-engagement (#1). `dwell` = secondes sur la page.
+  // `sawAddon` = a survolé/vu l'add-on. Non visible du lead (interne).
+  const [intent, setIntent] = useState<"now" | "understand" | null>(null);
+  const [sawAddon, setSawAddon] = useState(false);
+  const [dwell, setDwell] = useState(0);
+
+  useEffect(() => {
+    if (status !== "ok") return;
+    const t0 = Date.now();
+    const iv = window.setInterval(() => setDwell(Math.round((Date.now() - t0) / 1000)), 1000);
+    return () => window.clearInterval(iv);
+  }, [status]);
+
+  // Barème IDENTIQUE à la maquette (leadScore) : intention +40/+12, formule
+  // choisie +20, détail calcul ouvert +15, add-on vu +10, temps +15/+8.
+  function computeEngagement() {
+    let pts = 0;
+    if (intent === "now") pts += 40; else if (intent === "understand") pts += 12;
+    if (selected) pts += 20;
+    if (showBreakdown) pts += 15;
+    if (sawAddon) pts += 10;
+    if (dwell >= 45) pts += 15; else if (dwell >= 20) pts += 8;
+    const score = Math.min(100, pts);
+    const tier = score >= 70 ? "chaud" : score >= 40 ? "tiede" : "froid";
+    const signals = [
+      intent === "now" ? "Veut démarrer ce mois-ci" : intent === "understand" ? "Veut d'abord comprendre" : null,
+      selected ? `A choisi une formule (${prettyProgramName(data?.programmes.find((p) => p.id === selected)?.name ?? "")})` : null,
+      showBreakdown ? "A ouvert le détail du calcul" : null,
+      sawAddon ? "A regardé l'add-on" : null,
+      `Temps sur la page : ${dwell} s`,
+    ].filter(Boolean) as string[];
+    return { score, tier, signals };
+  }
+
   async function requestCallback() {
     if (!token || callbackState !== "idle") return;
     setCallbackState("sending");
@@ -167,7 +219,7 @@ export function BilanResultatPremiumPage() {
         return;
       }
       const { data: res, error } = await sb.functions.invoke("request-callback", {
-        body: { token },
+        body: { token, engagement: computeEngagement() },
       });
       const payload = res as { success?: boolean } | null;
       if (error || !payload?.success) {
@@ -307,9 +359,6 @@ export function BilanResultatPremiumPage() {
     const first = data?.bilan.objectives?.[0];
     return first ? OBJECTIVE_LABELS[first] ?? capitalize(first.replace(/_/g, " ")) : null;
   }, [data]);
-  // V2 : le plan « stratégies » colle au 1ᵉʳ objectif du bilan (plus de contenu
-  // 100 % perte de poids servi à un prospect prise de masse / énergie).
-  const strategies = useMemo(() => pickStrategies(data?.bilan.objectives), [data]);
 
   // Prix unitaires par id — sert à calculer le €/jour réel de chaque formule et
   // celui de l'add-on. Les prix viennent de la DB (edge), jamais d'un dur.
@@ -469,12 +518,10 @@ export function BilanResultatPremiumPage() {
     bilan.motivationScore != null ? { label: "Ta motivation", value: `${bilan.motivationScore} / 10`, color: "var(--cream)" } : null,
   ].filter(Boolean) as { label: string; value: string; color: string }[];
 
-  const stratItems = strategies.items.map((s, i) => ({
-    n: i + 1,
-    title: s.title,
-    foundation: !!s.foundation,
-    text: s.problem + (s.solution ? ` ${s.solutionLabel ?? ""} ${s.solution}` : ""),
-  }));
+  // Stratégies = les 5 piliers de la maquette, FIXES pour tous (décision Thomas
+  // 2026-07-19 : « c'est exactement les textes que je veux »). Plus de version
+  // dynamique par objectif ici.
+  const stratItems = STRATEGIES.items;
 
   const communityStats = [
     { n: formatCount(COMMUNITY_STATS.members), label: "membres" },
@@ -580,7 +627,7 @@ export function BilanResultatPremiumPage() {
             <section id="plan" style={{ scrollMarginTop: 80 }}>
               <div style={{ ...acteEyebrow, marginBottom: 12 }}>Acte 2 — Ton plan</div>
               <h2 style={h2Sec}>Tes 5 stratégies essentielles</h2>
-              <p style={{ fontSize: 15, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 560, margin: 0 }}>{strategies.intro}</p>
+              <p style={{ fontSize: 15, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 560, margin: 0 }}>{STRATEGIES.intro}</p>
 
               <div style={{ display: "grid", gap: 10, marginTop: 22 }}>
                 {stratItems.map((s) => (
@@ -665,6 +712,26 @@ export function BilanResultatPremiumPage() {
               <h2 style={h2Sec}>Le programme qui te correspond</h2>
               <p style={{ fontSize: 15, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 580, margin: 0 }}>Plusieurs niveaux. On démarre où tu te sens prêt·e, et on fait évoluer ton pack selon tes résultats. Clique pour comparer — ta sélection et son €/jour se mettent à jour partout.</p>
 
+              {/* #1 · Micro-engagement : intention (alimente le score envoyé au coach) */}
+              <div style={{ marginTop: 22, background: "var(--ink2)", border: "1px solid var(--hair-strong)", borderRadius: 16, padding: 20 }}>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15.5, marginBottom: 4 }}>Une dernière chose, {firstName || "toi"} — où en es-tu&nbsp;?</div>
+                <div style={{ fontSize: 13.5, color: "var(--cream-muted)", marginBottom: 14 }}>Ça nous aide à t'accompagner comme il faut. Aucun engagement.</div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {([
+                    { id: "now" as const, title: "Je veux démarrer ce mois-ci", sub: "Tout est prêt, on y va" },
+                    { id: "understand" as const, title: "Je veux d'abord comprendre", sub: `Une question ? ${coachName} t'explique` },
+                  ]).map((it) => {
+                    const on = intent === it.id;
+                    return (
+                      <button key={it.id} type="button" onClick={() => setIntent(it.id)} style={{ flex: "1 1 220px", textAlign: "left", cursor: "pointer", borderRadius: 13, padding: "13px 15px", background: on ? "linear-gradient(180deg, rgba(45,212,191,0.12), var(--ink))" : "var(--ink)", color: "var(--cream)", border: on ? "1.5px solid var(--teal)" : "1px solid var(--hair)" }}>
+                        <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5 }}>{it.title}</div>
+                        <div style={{ fontSize: 12.5, color: "var(--cream-muted)", marginTop: 2 }}>{it.sub}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div id="rb-programs" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginTop: 22 }}>
                 {programmes.map((p) => {
                   const on = selected === p.id;
@@ -701,7 +768,7 @@ export function BilanResultatPremiumPage() {
                 const price = priceById.get(addOn.productId);
                 const perDay = price !== undefined ? dailyCost([addOn.productId], priceById) : null;
                 return (
-                  <div style={{ marginTop: 14, background: "linear-gradient(180deg, rgba(197,248,42,0.07), transparent)", border: "1px solid rgba(197,248,42,0.3)", borderRadius: 16, padding: 20, display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  <div onMouseEnter={() => setSawAddon(true)} style={{ marginTop: 14, background: "linear-gradient(180deg, rgba(197,248,42,0.07), transparent)", border: "1px solid rgba(197,248,42,0.3)", borderRadius: 16, padding: 20, display: "flex", gap: 16, alignItems: "flex-start" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 11, flexShrink: 0, background: "rgba(197,248,42,0.12)", border: "1px solid rgba(197,248,42,0.3)" }}>
                       <LineIcon d={ICON.moon} size={19} color="var(--lime)" />
                     </span>
@@ -935,59 +1002,6 @@ const ICON = {
   check: "M20 6 9 17l-5-5",
 } as const;
 
-// ─── Stratégies ADAPTÉES à l'objectif du bilan (V2 2026-07-09) ────────────────
-// Fini le contenu 100 % perte de poids : on sert le set qui colle au 1ᵉʳ
-// objectif du prospect. Fallback = weight_loss.
-type Strat = { title: string; icon: string; foundation?: boolean; problem: string; solutionLabel?: string; solution?: string };
-const STRATEGY_SETS: Record<string, { intro: string; items: Strat[] }> = {
-  weight_loss: {
-    intro: "Souvent, ce sont les petits ajustements qui font les plus grands changements. On commence par les fondations — sans t'affamer.",
-    items: [
-      { title: "Le petit-déjeuner", icon: ICON.cup, foundation: true, problem: "Un petit-déj pauvre en protéines ralentit ton métabolisme dès le matin.", solutionLabel: "La solution :", solution: "un petit-déj sous forme de boisson nutritionnelle calibrée — protéines, vitamines, calories maîtrisées." },
-      { title: "Les collations", icon: ICON.clock, foundation: true, problem: "Les coups de mou de l'après-midi viennent souvent d'un en-cas absent ou trop sucré.", solutionLabel: "L'idéal :", solution: "10 g de protéines + ~150 kcal + un fruit, entre les repas." },
-      { title: "L'assiette équilibrée", icon: ICON.plate, problem: "Midi : ¼ protéines · ¼ glucides complexes · ½ légumes + un filet d'huile d'olive. Soir : protéines + légumes, on allège les glucides." },
-      { title: "L'hydratation", icon: ICON.droplet, problem: "≥ 2 L par jour (eau, infusions, thés non sucrés). Ça soutient la digestion et calme les fringales." },
-      { title: "L'activité physique", icon: ICON.pulse, problem: "Pas besoin de t'épuiser : 30 min de marche par jour, en une fois ou en sessions de 10-15 min." },
-    ],
-  },
-  mass_gain: {
-    intro: "Prendre de la masse propre, ce n'est pas manger n'importe quoi : c'est un surplus maîtrisé, des protéines bien réparties et de la récup.",
-    items: [
-      { title: "Des protéines à chaque repas", icon: ICON.dumbbell, foundation: true, problem: "Sans apport protéique régulier, le muscle ne se construit pas.", solutionLabel: "La cible :", solution: "1,6 à 2 g de protéines par kg de poids, réparties sur la journée (dont un shake si besoin)." },
-      { title: "Un surplus calorique maîtrisé", icon: ICON.bolt, foundation: true, problem: "Trop peu = pas de prise ; trop = du gras inutile.", solutionLabel: "L'idéal :", solution: "+250 à +400 kcal/jour de qualité, ajustés selon la balance." },
-      { title: "Le shake post-entraînement", icon: ICON.cup, problem: "La fenêtre après la séance est clé : protéines + glucides pour relancer la construction musculaire." },
-      { title: "La récupération & le sommeil", icon: ICON.moon, problem: "Le muscle se construit au repos, pas à la salle : vise 7-8 h de sommeil régulier." },
-      { title: "La surcharge progressive", icon: ICON.pulse, problem: "Augmente progressivement charges ou répétitions : c'est ce qui force le corps à grossir." },
-    ],
-  },
-  energy: {
-    intro: "Retrouver de l'énergie, c'est surtout mieux dormir, mieux s'hydrater et éviter les pics de sucre. On pose les fondations.",
-    items: [
-      { title: "Un sommeil régulier", icon: ICON.moon, foundation: true, problem: "Des horaires de coucher irréguliers cassent ta récup.", solutionLabel: "La base :", solution: "des horaires stables et 7-8 h de sommeil — le socle de l'énergie." },
-      { title: "L'hydratation", icon: ICON.droplet, foundation: true, problem: "La déshydratation, même légère, se ressent direct en fatigue et brouillard mental.", solutionLabel: "La cible :", solution: "≥ 2 L par jour, dès le réveil." },
-      { title: "Un petit-déj sans pic de sucre", icon: ICON.cup, problem: "Un petit-déj trop sucré = coup de barre 2 h après. On mise sur les protéines pour une énergie stable." },
-      { title: "La micronutrition", icon: ICON.plus, problem: "Vitamines et minéraux comblent les carences qui plombent l'énergie au quotidien." },
-      { title: "Bouger & la lumière du jour", icon: ICON.pulse, problem: "Un peu de marche + de la lumière naturelle relancent ton horloge et ton tonus." },
-    ],
-  },
-  perf_pro: {
-    intro: "Performer sans coup de barre, c'est une énergie stable toute la journée : petit-déj solide, pas de crash, hydratation, sommeil.",
-    items: [
-      { title: "Un petit-déjeuner qui tient", icon: ICON.cup, foundation: true, problem: "Un petit-déj léger ou sucré = énergie en dents de scie dès la matinée.", solutionLabel: "La solution :", solution: "un petit-déj protéiné (boisson calibrée) pour une énergie stable jusqu'au midi." },
-      { title: "Éviter le crash de 15 h", icon: ICON.clock, foundation: true, problem: "Le coup de barre de l'après-midi te coûte ta concentration.", solutionLabel: "L'astuce :", solution: "une collation structurée (protéines + fruit) avant le creux." },
-      { title: "L'hydratation = ton focus", icon: ICON.droplet, problem: "Ta concentration chute vite en état de déshydratation. Garde une bouteille à portée, tout le temps." },
-      { title: "Le sommeil, c'est de la décision", icon: ICON.moon, problem: "La récup cognitive se joue la nuit : 7-8 h, c'est ce qui te garde net et lucide." },
-      { title: "Des micro-pauses actives", icon: ICON.pulse, problem: "Bouger 5 min toutes les 1-2 h relance la circulation et l'attention." },
-    ],
-  },
-};
-function pickStrategies(objectives: string[] | undefined) {
-  const o = objectives?.[0];
-  if (o === "mass_gain") return STRATEGY_SETS.mass_gain;
-  if (o === "perf_pro") return STRATEGY_SETS.perf_pro;
-  if (o === "energy" || o === "sleep" || o === "wellbeing") return STRATEGY_SETS.energy;
-  return STRATEGY_SETS.weight_loss;
-}
 
 // Sous-titre par ID de programme (robuste : survit à l'ordre + aux nouveaux
 // programmes, ex. sport, contrairement à un index positionnel).
