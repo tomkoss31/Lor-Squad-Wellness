@@ -188,9 +188,39 @@ export function BilanResultatPremiumPage() {
     return () => window.clearInterval(iv);
   }, [status]);
 
+  // #4 · Capture d'objection à la sortie. Modale « qu'est-ce qui te retient ? »
+  // déclenchée sur intention de sortie (souris qui quitte par le haut) OU après
+  // inactivité, UNE seule fois par session (clé sessionStorage), et jamais si le
+  // paiement est déjà validé. Non intrusif : le lead ferme d'un clic.
+  const [showExit, setShowExit] = useState(false);
+  useEffect(() => {
+    if (status !== "ok") return;
+    const KEY = `ls-rb-exit-${token}`;
+    let done = false;
+    try { done = sessionStorage.getItem(KEY) === "1"; } catch { /* ignore */ }
+    if (done) return;
+    const trigger = () => {
+      if (done || data?.paid === true) return;
+      done = true;
+      try { sessionStorage.setItem(KEY, "1"); } catch { /* ignore */ }
+      setShowExit(true);
+      cleanup();
+    };
+    const onMouseOut = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !e.relatedTarget) trigger();
+    };
+    const inactivity = window.setTimeout(trigger, 55000); // filet : 55 s sans sortie
+    document.addEventListener("mouseout", onMouseOut);
+    function cleanup() {
+      document.removeEventListener("mouseout", onMouseOut);
+      window.clearTimeout(inactivity);
+    }
+    return cleanup;
+  }, [status, token, data?.paid]);
+
   // Barème IDENTIQUE à la maquette (leadScore) : intention +40/+12, formule
   // choisie +20, détail calcul ouvert +15, add-on vu +10, temps +15/+8.
-  function computeEngagement() {
+  function computeEngagement(objection?: string) {
     let pts = 0;
     if (intent === "now") pts += 40; else if (intent === "understand") pts += 12;
     if (selected) pts += 20;
@@ -200,6 +230,7 @@ export function BilanResultatPremiumPage() {
     const score = Math.min(100, pts);
     const tier = score >= 70 ? "chaud" : score >= 40 ? "tiede" : "froid";
     const signals = [
+      objection ? `🎯 Objection : ${objection}` : null,
       intent === "now" ? "Veut démarrer ce mois-ci" : intent === "understand" ? "Veut d'abord comprendre" : null,
       selected ? `A choisi une formule (${prettyProgramName(data?.programmes.find((p) => p.id === selected)?.name ?? "")})` : null,
       showBreakdown ? "A ouvert le détail du calcul" : null,
@@ -209,7 +240,7 @@ export function BilanResultatPremiumPage() {
     return { score, tier, signals };
   }
 
-  async function requestCallback() {
+  async function requestCallback(objection?: string) {
     if (!token || callbackState !== "idle") return;
     setCallbackState("sending");
     try {
@@ -219,7 +250,7 @@ export function BilanResultatPremiumPage() {
         return;
       }
       const { data: res, error } = await sb.functions.invoke("request-callback", {
-        body: { token, engagement: computeEngagement() },
+        body: { token, engagement: computeEngagement(objection) },
       });
       const payload = res as { success?: boolean } | null;
       if (error || !payload?.success) {
@@ -227,8 +258,9 @@ export function BilanResultatPremiumPage() {
         return;
       }
       setCallbackState("done");
-      // Amène l'œil sur la confirmation (section démarrer).
-      scrollToId("demarrer");
+      // Amène l'œil sur la confirmation (section démarrer) — sauf si la demande
+      // vient de la modale d'objection (#4), qui a sa propre confirmation.
+      if (!objection) scrollToId("demarrer");
     } catch {
       setCallbackState("idle");
     }
@@ -801,6 +833,16 @@ export function BilanResultatPremiumPage() {
                       <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5 }}>L'appli We Do, dans ta poche</div>
                     </div>
                     <p style={{ margin: "0 0 10px", fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>Ton suivi, tes conseils du jour, ton évolution. <strong style={{ color: "var(--cream)" }}>Incluse — pas une option.</strong></p>
+                    {/* Vidéo de l'appli We Do (Thomas : « super inspirante »). Portrait,
+                        autoplay/muette/boucle — cadrée pour rester compacte. */}
+                    <video
+                      src="/brand/wdt-app.mp4"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: 12, display: "block", background: "#000", marginBottom: 12 }}
+                    />
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                       {communityStats.map((s) => (
                         <div key={s.label} style={{ textAlign: "center" }}>
@@ -874,12 +916,22 @@ export function BilanResultatPremiumPage() {
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
                     <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...gradBtn, width: "100%", maxWidth: 340, padding: "16px 24px", fontSize: 16, boxShadow: "0 8px 22px rgba(197,248,42,0.28)", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>{payLoading ? "Ouverture de la caisse…" : "Je démarre mon programme →"}</button>
+                    {/* #5 · Réassurance transactionnelle collée au CTA */}
+                    <div style={{ fontSize: 12, color: "var(--cream-muted)" }}>Sans engagement · saveur échangeable · suivi {coachName} inclus</div>
                     {callbackState === "done" ? (
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--teal)" }}>✓ C'est noté — {coachName} te recontacte.</div>
                     ) : (
                       <>
-                        <div style={{ fontSize: 12.5, color: "var(--cream-hint)" }}>Pas encore décidé·e ?</div>
-                        <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ maxWidth: 280, padding: "11px 20px", background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler par ${coachName}`}</button>
+                        <div style={{ fontSize: 12.5, color: "var(--cream-hint)", marginTop: 4 }}>
+                          {intent === "understand" ? "Tu préfères d'abord échanger ? Deux options :" : "Pas encore décidé·e ?"}
+                        </div>
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                          {/* #3 · Réservation RDV — créneaux réels du coach (par slug) */}
+                          {coach.slug && (
+                            <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ padding: "11px 20px", background: "transparent", color: "var(--teal)", border: "1px solid rgba(45,212,191,0.5)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Je réserve 15 min avec {coachName} →</button>
+                          )}
+                          <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ padding: "11px 20px", background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler`}</button>
+                        </div>
                       </>
                     )}
                   </div>
@@ -911,10 +963,18 @@ export function BilanResultatPremiumPage() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <button type="button" disabled={payLoading} onClick={() => void startCheckout(selected)} style={{ ...gradBtn, width: "100%", padding: 15, borderRadius: 12, fontSize: 15, boxShadow: "0 8px 22px rgba(197,248,42,0.25)", opacity: payLoading ? 0.6 : 1, cursor: payLoading ? "wait" : "pointer" }}>{payLoading ? "Ouverture…" : "Je démarre →"}</button>
+                  {/* #5 · Réassurance collée au CTA */}
+                  <div style={{ textAlign: "center", fontSize: 11, color: "var(--cream-muted)", lineHeight: 1.4 }}>Sans engagement · saveur échangeable · suivi inclus</div>
                   {callbackState === "done" ? (
                     <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 600, color: "var(--teal)" }}>✓ {coachName} te recontacte</div>
                   ) : (
-                    <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}</button>
+                    <>
+                      {/* #3 · Réservation d'un créneau réel du coach */}
+                      {coach.slug && (
+                        <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--teal)", border: "1px solid rgba(45,212,191,0.5)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>Je réserve 15 min →</button>
+                      )}
+                      <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}</button>
+                    </>
                   )}
                 </div>
               )}
@@ -965,6 +1025,52 @@ export function BilanResultatPremiumPage() {
             )}
           </div>
         </div>
+
+        {/* ══ #4 · CAPTURE D'OBJECTION À LA SORTIE ══ */}
+        {showExit && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setShowExit(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          >
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--ink2)", border: "1px solid var(--hair-strong)", borderRadius: 20, padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }}>
+              <button type="button" onClick={() => setShowExit(false)} aria-label="Fermer" style={{ float: "right", background: "transparent", border: "none", color: "var(--cream-hint)", fontSize: 20, lineHeight: 1, cursor: "pointer" }}>×</button>
+              {callbackState === "done" ? (
+                <>
+                  <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 19 }}>C'est noté, {firstName || "toi"} !</div>
+                  <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--cream-muted)", margin: "8px 0 16px" }}>{coachName} a bien reçu ton message et revient vers toi avec la bonne réponse. Aucun engagement.</p>
+                  <button type="button" onClick={() => setShowExit(false)} style={{ ...gradBtn, width: "100%", padding: 13, borderRadius: 12, fontSize: 14.5 }}>Fermer</button>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 19 }}>Attends, {firstName || "toi"} — qu'est-ce qui te retient&nbsp;?</div>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.55, color: "var(--cream-muted)", margin: "8px 0 16px" }}>Dis-le-moi en un clic. {coachName} te répond direct — pas de blabla, pas d'engagement.</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {[
+                      { k: "Le prix", d: "Le budget te freine" },
+                      { k: "Le goût", d: "Peur de ne pas aimer" },
+                      { k: "Le temps", d: "Pas sûr·e d'avoir le temps" },
+                      { k: "Je veux en parler", d: "Une question avant" },
+                    ].map((o) => (
+                      <button
+                        key={o.k}
+                        type="button"
+                        disabled={callbackState === "sending"}
+                        onClick={() => void requestCallback(o.k)}
+                        style={{ textAlign: "left", cursor: "pointer", background: "var(--ink)", color: "var(--cream)", border: "1px solid var(--hair)", borderRadius: 12, padding: "12px 14px", opacity: callbackState === "sending" ? 0.6 : 1 }}
+                      >
+                        <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14 }}>{o.k}</div>
+                        <div style={{ fontSize: 11.5, color: "var(--cream-muted)", marginTop: 2 }}>{o.d}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => setShowExit(false)} style={{ width: "100%", marginTop: 14, background: "transparent", border: "none", color: "var(--cream-hint)", fontSize: 12.5, cursor: "pointer" }}>Non merci, je continue de lire</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </PublicShell>
   );
