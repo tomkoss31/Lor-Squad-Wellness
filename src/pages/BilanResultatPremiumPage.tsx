@@ -1012,6 +1012,10 @@ const WHY = [
 // géré via ces media queries (le style inline ne peut pas les porter).
 const RB_CSS = `
 .public-shell{--ink2:#131820;--lime:#c5f82a}
+/* .ps-shell a overflow-x:hidden (→ overflow-y:auto calculé) : ça en fait un
+   conteneur de scroll qui CASSE le position:sticky du rail. On le neutralise
+   pour cette page → le rail colle au scroll de la fenêtre et suit tout le long. */
+.public-shell .ps-shell{overflow:visible !important}
 #rb-nav::-webkit-scrollbar{display:none}
 @keyframes rb-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (max-width: 900px){
