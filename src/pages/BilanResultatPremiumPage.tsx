@@ -620,7 +620,7 @@ export function BilanResultatPremiumPage() {
                 <div style={{ marginTop: 30, background: "linear-gradient(180deg, rgba(197,248,42,0.06), rgba(19,24,32,0.5))", border: "1px solid rgba(197,248,42,0.24)", borderRadius: 16, padding: 24 }}>
                   <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 8 }}>Parlons vrai · les chiffres exacts</div>
                   <h3 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 23, margin: "0 0 16px" }}>Tu dépenses <span style={{ color: "var(--lime)" }}>déjà cet argent</span></h3>
-                  <div id="rb-anchortiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div id="rb-anchortiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
                     <div style={{ background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 12, padding: 16 }}>
                       <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--cream-hint)" }}>Ta pause déjeuner</div>
                       <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 38, marginTop: 8, lineHeight: 1 }}>{formatEur(LUNCH_AVG_EUR)}</div>
