@@ -658,14 +658,15 @@ export function ClientAppPage() {
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
   // ── Refonte identité PWA v2 (chantier 2026-07) ─────────────────────────
-  // Flag `?v2=1` : monte la nouvelle identité (lime/noir/Anton). Migration
-  // PROGRESSIVE — deviendra le défaut quand tous les onglets seront portés
-  // (l'UI historique ci-dessous disparaîtra alors, avec le flag). Zéro impact
-  // sur le flux token live tant que le flag n'est pas posé.
-  const v2Enabled =
+  // La nouvelle identité (lime/noir/Anton) est désormais le DÉFAUT. L'ancienne
+  // UI reste accessible via `?v1=1` comme filet de sécurité tant que quelques
+  // flux périphériques ne sont pas portés en v2 (opt-in push, bannière
+  // install PWA, submit parrainage réel, modales message). À supprimer avec
+  // ce garde-fou une fois le portage terminé + recette Thomas OK.
+  const useLegacyUi =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('v2') === '1'
-  if (v2Enabled) {
+    new URLSearchParams(window.location.search).get('v1') === '1'
+  if (!useLegacyUi) {
     const firstW = typeof first?.weight === 'number' ? first.weight : null
     const lastW = typeof latest?.weight === 'number' ? latest.weight : null
     const weightDeltaKg =
@@ -712,7 +713,6 @@ export function ClientAppPage() {
         lastAdviceDate={fmtDate(latest?.date)}
         objective={liveData?.client?.objective ?? undefined}
         startDate={fmtDate(first?.date)}
-        onLogout={() => window.location.reload()}
       />
     )
   }
