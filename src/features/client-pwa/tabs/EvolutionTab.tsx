@@ -12,10 +12,19 @@
 // ultérieure — cf. ClientMeasurementsSection existant).
 // ============================================================================
 import { useState, type CSSProperties } from 'react'
+import { getSupabaseClient } from '../../../services/supabaseClient'
+import { recordClientXp } from '../../../features/client-xp/useClientXp'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
 const MONO = "'JetBrains Mono', monospace"
+
+// Mapping zone v2 → colonne réelle client_measurements (les 10 colonnes existent).
+const ZONE_TO_COL: Record<string, string> = {
+  cou: 'neck', poitrine: 'chest', brasG: 'arm_left', brasD: 'arm_right',
+  taille: 'waist', hanches: 'hips', cuisseG: 'thigh_left', cuisseD: 'thigh_right',
+  molletG: 'calf_left', molletD: 'calf_right',
+}
 
 export interface EvolutionMetricPoint {
   date: string
@@ -32,6 +41,7 @@ export interface EvolutionMeasurement {
   arm_cm?: number
 }
 export interface EvolutionTabProps {
+  token: string
   ageYears: number | null
   metrics: EvolutionMetricPoint[]
   measurements: EvolutionMeasurement[]
@@ -56,12 +66,41 @@ function fmt(n: number | undefined, digits = 1): string {
   return n == null || !isFinite(n) ? '—' : n.toFixed(digits)
 }
 
-export function EvolutionTab({ ageYears, metrics, measurements }: EvolutionTabProps) {
+export function EvolutionTab({ token, ageYears, metrics, measurements }: EvolutionTabProps) {
   const [measView, setMeasView] = useState<'face' | 'back'>('face')
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const [sheetVal, setSheetVal] = useState(0)
   const [localMeasures, setLocalMeasures] = useState<Record<string, number>>({})
   const [draftKeys, setDraftKeys] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
+  const [savedOk, setSavedOk] = useState(false)
+
+  async function saveSession() {
+    if (draftKeys.length === 0 || saving) return
+    setSaving(true)
+    const measures: Record<string, number> = {}
+    for (const zk of draftKeys) {
+      const col = ZONE_TO_COL[zk]
+      const val = localMeasures[zk]
+      if (col && typeof val === 'number') measures[col] = val
+    }
+    try {
+      const sb = await getSupabaseClient()
+      if (sb) {
+        const { error } = await sb.functions.invoke('client-app-save-measurement', { body: { token, measures } })
+        if (!error) {
+          void recordClientXp(token, 'measurement_added')
+          setSavedOk(true)
+          setDraftKeys([])
+          window.setTimeout(() => setSavedOk(false), 2500)
+        }
+      }
+    } catch {
+      /* silencieux */
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const withWeight = metrics.filter((m) => typeof m.weight === 'number' && isFinite(m.weight as number))
   const firstM = withWeight[0]
@@ -281,7 +320,13 @@ export function EvolutionTab({ ageYears, metrics, measurements }: EvolutionTabPr
         </div>
 
         {draftKeys.length > 0 && (
-          <button onClick={() => { setDraftKeys([]) }} style={{ marginTop: 12, width: '100%', minHeight: 46, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: SORA, fontWeight: 700, fontSize: 14 }}>Enregistrer la session ({draftKeys.length})</button>
+          <button onClick={() => void saveSession()} disabled={saving} style={{ marginTop: 12, width: '100%', minHeight: 46, borderRadius: 12, border: 'none', cursor: saving ? 'default' : 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: SORA, fontWeight: 700, fontSize: 14, opacity: saving ? 0.7 : 1 }}>{saving ? 'Enregistrement…' : `Enregistrer la session (${draftKeys.length})`}</button>
+        )}
+        {savedOk && (
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12.5, color: 'var(--teal)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+            Session enregistrée · +10 XP
+          </div>
         )}
 
         {lastMeasDate && (

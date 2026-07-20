@@ -203,6 +203,15 @@ export function PwaClientApp({
         level: xp.level,
       })
       setLevelUpOpen(true)
+      // Notif coach (rappel privé + push best-effort) — jamais bloquant.
+      void (async () => {
+        try {
+          const sb = await getSupabaseClient()
+          if (sb) await sb.functions.invoke('client-app-level-up-notify', { body: { token, level: xp.level } })
+        } catch {
+          /* silencieux */
+        }
+      })()
     }
     prevLevelRef.current = xp.level
   }, [xp.loaded, xp.level, xp.levelTitle])
@@ -513,7 +522,7 @@ export function PwaClientApp({
             </a>
           </div>
         ) : tab === 'evolution' ? (
-          <EvolutionTab ageYears={ageYears} metrics={metrics} measurements={measurements} />
+          <EvolutionTab token={token} ageYears={ageYears} metrics={metrics} measurements={measurements} />
         ) : tab === 'produits' ? (
           <ProduitsTab products={products} onTalkToCoach={() => setTab('messages')} />
         ) : tab === 'conseils' ? (
