@@ -8,6 +8,7 @@
 // rouvre simplement l'espace (le token de l'URL reste valide).
 // ============================================================================
 import { useState } from 'react'
+import { getSupabaseClient } from '../../services/supabaseClient'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -65,8 +66,55 @@ export function LandingScreen({ onChooseClient }: { onChooseClient: () => void }
 }
 
 // ─── Login ───────────────────────────────────────────────────────────────
-export function LoginScreen({ defaultEmail, onBack, onSubmit }: { defaultEmail?: string | null; onBack: () => void; onSubmit: () => void }) {
+export function LoginScreen({ defaultEmail, onBack }: { defaultEmail?: string | null; onBack: () => void }) {
   const [showPw, setShowPw] = useState(false)
+  const [email, setEmail] = useState(defaultEmail ?? '')
+  const [pw, setPw] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [resetSent, setResetSent] = useState(false)
+
+  async function doLogin() {
+    const mail = email.trim()
+    if (!mail || !pw || busy) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const sb = await getSupabaseClient()
+      if (!sb) throw new Error('indispo')
+      const { error } = await sb.auth.signInWithPassword({ email: mail, password: pw })
+      if (error) {
+        setErr('Email ou mot de passe incorrect.')
+        return
+      }
+      const { data: token } = await sb.rpc('get_my_client_app_token')
+      if (token) {
+        window.location.href = `/client/${token}`
+      } else {
+        setErr("Connecté, mais aucun espace client associé. Contacte ton coach.")
+      }
+    } catch {
+      setErr('Connexion impossible. Réessaie.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function sendResetLink() {
+    const mail = email.trim()
+    if (!mail) {
+      setErr("Entre d'abord ton adresse email.")
+      return
+    }
+    setErr(null)
+    try {
+      const sb = await getSupabaseClient()
+      if (sb) await sb.functions.invoke('send-password-reset', { body: { email: mail } })
+    } catch {
+      /* anti-énumération : on affiche le message quoi qu'il arrive */
+    }
+    setResetSent(true)
+  }
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll pwa2-overlay">
       <div style={{ position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -83,17 +131,19 @@ export function LoginScreen({ defaultEmail, onBack, onSubmit }: { defaultEmail?:
           <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--muted)' }}>Identifie-toi pour ouvrir ton espace.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ position: 'relative' }}>
-              <input type="email" defaultValue={defaultEmail ?? ''} placeholder="ton.email@exemple.com" style={{ width: '100%', padding: '19px 14px 8px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ton.email@exemple.com" style={{ width: '100%', padding: '19px 14px 8px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
               <label style={{ position: 'absolute', left: 14, top: 7, fontFamily: MONO, fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--lime)', pointerEvents: 'none' }}>Adresse email</label>
             </div>
             <div style={{ position: 'relative' }}>
-              <input type={showPw ? 'text' : 'password'} defaultValue="" style={{ width: '100%', padding: '19px 76px 8px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
+              <input type={showPw ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void doLogin() }} style={{ width: '100%', padding: '19px 76px 8px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
               <label style={{ position: 'absolute', left: 14, top: 7, fontFamily: MONO, fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--lime)', pointerEvents: 'none' }}>Mot de passe</label>
               <button onClick={() => setShowPw((v) => !v)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dim)', fontFamily: MONO, fontSize: 9.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', padding: '6px 8px' }}>{showPw ? 'Masquer' : 'Afficher'}</button>
             </div>
           </div>
-          <button onClick={onSubmit} style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, width: '100%', minHeight: 52, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'var(--lime)', color: '#0a0c0a', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 16, boxShadow: '0 4px 18px rgba(197,248,42,0.28)' }}>Ouvrir mon espace<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg></button>
-          <button onClick={onSubmit} style={{ display: 'block', width: '100%', marginTop: 15, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontFamily: MONO, fontSize: 11, letterSpacing: '.04em', textAlign: 'center' }}>Mot de passe oublié ? <strong style={{ color: 'var(--text)', fontWeight: 600 }}>Recevoir un lien</strong></button>
+          {err && <div style={{ marginTop: 14, padding: '10px 13px', borderRadius: 11, background: 'color-mix(in srgb,var(--coral) 12%,transparent)', border: '1px solid color-mix(in srgb,var(--coral) 30%,transparent)', color: 'var(--coral)', fontSize: 12.5, lineHeight: 1.4 }}>{err}</div>}
+          {resetSent && <div style={{ marginTop: 14, padding: '10px 13px', borderRadius: 11, background: 'color-mix(in srgb,var(--teal) 12%,transparent)', border: '1px solid color-mix(in srgb,var(--teal) 30%,transparent)', color: 'var(--teal)', fontSize: 12.5, lineHeight: 1.4 }}>Si un compte existe pour cet email, tu vas recevoir un lien de connexion. Pense à vérifier tes spams.</div>}
+          <button onClick={() => void doLogin()} disabled={busy} style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, width: '100%', minHeight: 52, borderRadius: 12, border: 'none', cursor: busy ? 'default' : 'pointer', background: 'var(--lime)', color: '#0a0c0a', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 16, boxShadow: '0 4px 18px rgba(197,248,42,0.28)', opacity: busy ? 0.7 : 1 }}>{busy ? 'Connexion…' : 'Ouvrir mon espace'}<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg></button>
+          <button onClick={() => void sendResetLink()} style={{ display: 'block', width: '100%', marginTop: 15, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontFamily: MONO, fontSize: 11, letterSpacing: '.04em', textAlign: 'center' }}>Mot de passe oublié ? <strong style={{ color: 'var(--text)', fontWeight: 600 }}>Recevoir un lien</strong></button>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 22, fontFamily: MONO, fontSize: 11, color: 'var(--dim)', letterSpacing: '.03em' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>Connexion sécurisée · données chiffrées</div>
         </div>
       </div>
