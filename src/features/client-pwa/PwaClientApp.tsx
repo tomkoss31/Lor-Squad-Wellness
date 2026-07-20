@@ -27,7 +27,6 @@ import { MessagesTab } from './tabs/MessagesTab'
 import { RecommanderTab } from './tabs/RecommanderTab'
 import { ProfilScreen } from './ProfilScreen'
 import { LandingScreen, LoginScreen, OnboardingScreen } from './EntryScreens'
-import { DistribScreen } from './DistribScreen'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -80,7 +79,7 @@ export interface PwaClientAppProps {
   startDate?: string | null
 }
 
-type ScreenKey = 'app' | 'landing' | 'login' | 'onboarding' | 'distrib'
+type ScreenKey = 'app' | 'landing' | 'login' | 'onboarding'
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -121,7 +120,6 @@ export function PwaClientApp({
   const [tab, setTab] = useState<TabKey>('accueil')
   const [profilOpen, setProfilOpen] = useState(false)
   const [screen, setScreen] = useState<ScreenKey>('app')
-  const [loginRole, setLoginRole] = useState<'client' | 'distributeur'>('client')
 
   // Gamification (démo — à brancher sur client-xp + persistance humeur)
   const [xpLevel, setXpLevel] = useState(2)
@@ -612,24 +610,17 @@ export function PwaClientApp({
 
       {/* Écrans d'entrée (atteints via Déconnexion) — couvrent l'app */}
       {screen === 'landing' && (
-        <LandingScreen
-          onChooseClient={() => { setLoginRole('client'); setScreen('login') }}
-          onChooseDistrib={() => { setLoginRole('distributeur'); setScreen('login') }}
-        />
+        <LandingScreen onChooseClient={() => setScreen('login')} />
       )}
       {screen === 'login' && (
         <LoginScreen
-          role={loginRole}
           defaultEmail={email}
           onBack={() => setScreen('landing')}
-          onSubmit={() => setScreen(loginRole === 'distributeur' ? 'distrib' : 'onboarding')}
+          onSubmit={() => setScreen('onboarding')}
         />
       )}
       {screen === 'onboarding' && (
         <OnboardingScreen onDone={() => { setScreen('app'); setTab('accueil') }} />
-      )}
-      {screen === 'distrib' && (
-        <DistribScreen name={clientName} onQuit={() => setScreen('landing')} />
       )}
     </div>
   )
