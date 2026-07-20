@@ -1,0 +1,191 @@
+/* ============================================================================
+ * PWA v2 — Identité « premium performance » (chantier refonte PWA client 2026-07)
+ * ----------------------------------------------------------------------------
+ * Socle de tokens de la refonte identité de la PWA client (design hi-fi validé
+ * Thomas, handoff `PWA Client La Base 360`). Fond encre + accent lime, Anton en
+ * display, Sora/Inter/JetBrains Mono. Deux thèmes : sombre (défaut) et clair
+ * (`.pwa2-light`).
+ *
+ * ⚠️ IMPORTANT — tout est SCOPÉ sous `.pwa2`. On NE touche PAS aux tokens de
+ * l'app coach (`--ls-*`, src/styles/globals.css) ni aux public-tokens des pages
+ * marketing. Les noms génériques (--bg, --lime…) n'existent QUE dans le sous-arbre
+ * `.pwa2` — aucune fuite globale. Les keyframes sont préfixées `lb` (pas de
+ * collision).
+ * ========================================================================== */
+
+.pwa2 {
+  /* Thème sombre — défaut */
+  --bg: #0a0c0a;
+  --surface: #14171a;
+  --surface2: #1a1e22;
+  --border: rgba(255, 255, 255, 0.1);
+  --border2: rgba(255, 255, 255, 0.17);
+  --text: #f1efe8;
+  --muted: #9aa0a6;
+  --dim: #6b7280;
+  --lime: #c5f82a;
+  --lime-d: #8fbf0f;
+  --teal: #2dd4bf;
+  --teal-d: #0f766e;
+  --violet: #a78bfa;
+  --coral: #fb7185;
+  --gold: #e5c97d;
+  --emerald: #34d399;
+  --bronze: #d9a15a;
+
+  color: var(--text);
+  background: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thème clair — bascule via `.pwa2-light` (posée par le toggle Profil / header) */
+.pwa2-light {
+  --bg: #f1eee6;
+  --surface: #ffffff;
+  --surface2: #f5f2ea;
+  --border: rgba(11, 13, 17, 0.1);
+  --border2: rgba(11, 13, 17, 0.18);
+  --text: #12140f;
+  --muted: #5c6470;
+  --dim: #8a929e;
+  --lime: #5f8c06;
+  --lime-d: #4d7304;
+  --teal: #0f766e;
+  --violet: #6d28d9;
+  --coral: #e11d48;
+  --gold: #a8842a;
+  --emerald: #059669;
+  --bronze: #b07a34;
+}
+
+/* Masquage de la scrollbar (zones scrollables internes) */
+.pwa2 .lb-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.pwa2 .lb-scroll {
+  scrollbar-width: none;
+}
+
+/* Réinitialisations locales pour ne pas hériter de styles globaux parasites */
+.pwa2 *,
+.pwa2 *::before,
+.pwa2 *::after {
+  box-sizing: border-box;
+}
+.pwa2 button {
+  font-family: inherit;
+}
+.pwa2 a {
+  color: var(--teal);
+  text-decoration: none;
+}
+
+/* ── Keyframes (préfixées lb, sûres globalement) ────────────────────────── */
+@keyframes lbFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-40px, 34px) scale(1.12);
+  }
+}
+@keyframes lbFloat2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(46px, -28px) scale(1.1);
+  }
+}
+@keyframes lbSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lbBreathe {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+@keyframes lbPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes lbRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes lbSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes lbDraw {
+  from {
+    stroke-dashoffset: 640;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes lbFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes lbPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes lbPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  80%,
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+/* Respect de prefers-reduced-motion : on coupe les animations d'ambiance */
+@media (prefers-reduced-motion: reduce) {
+  .pwa2 [style*='animation'],
+  .pwa2 .lb-anim {
+    animation: none !important;
+  }
+}
