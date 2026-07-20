@@ -705,7 +705,6 @@ export function ClientAppPage() {
         weightDeltaKg={weightDeltaKg}
         nextFollowUp={data.next_follow_up}
         programTitle={data.program_title}
-        onOpenTour={() => setOnboardingDone(false)}
         ageYears={ageYears}
         metrics={metricsV2}
         measurements={liveData?.measurements ?? []}

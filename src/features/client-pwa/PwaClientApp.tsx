@@ -99,7 +99,6 @@ export interface PwaClientAppProps {
   weightDeltaKg: number | null
   nextFollowUp?: string | null
   programTitle?: string
-  onOpenTour: () => void
   // Données onglets
   ageYears: number | null
   metrics: EvolutionMetricPoint[]
@@ -141,7 +140,6 @@ export function PwaClientApp({
   weightDeltaKg,
   nextFollowUp,
   programTitle,
-  onOpenTour,
   ageYears,
   metrics,
   measurements,
@@ -359,7 +357,7 @@ export function PwaClientApp({
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 6px var(--teal)' }} />
             <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }}>Coach {coachName}</span>
           </div>
-          <button onClick={onOpenTour} style={{ width: 30, height: 30, flex: 'none', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', fontFamily: SORA, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</button>
+          <button onClick={() => setScreen('onboarding')} style={{ width: 30, height: 30, flex: 'none', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', fontFamily: SORA, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</button>
         </div>
       </div>
 
@@ -583,7 +581,7 @@ export function PwaClientApp({
             <div style={{ padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => { setNoalyOpen(false); setTab('messages') }} style={{ flex: 1, minHeight: 44, borderRadius: 12, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Écrire à {coachName}</button>
-                <button onClick={() => { setNoalyOpen(false); onOpenTour() }} style={{ flex: 1, minHeight: 44, borderRadius: 12, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Tour de l'app</button>
+                <button onClick={() => { setNoalyOpen(false); setScreen('onboarding') }} style={{ flex: 1, minHeight: 44, borderRadius: 12, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Tour de l'app</button>
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--dim)', textAlign: 'center', marginTop: 9, lineHeight: 1.5 }}>Noaly aide au quotidien. Pour ton suivi perso, {coachName} reste là.</div>
             </div>
@@ -667,7 +665,7 @@ export function PwaClientApp({
           theme={theme}
           onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
           onBack={() => setProfilOpen(false)}
-          onOpenTour={() => { setProfilOpen(false); onOpenTour() }}
+          onOpenTour={() => { setProfilOpen(false); setScreen('onboarding') }}
           onLogout={() => { setProfilOpen(false); setScreen('landing') }}
         />
       )}
@@ -677,11 +675,7 @@ export function PwaClientApp({
         <LandingScreen onChooseClient={() => setScreen('login')} />
       )}
       {screen === 'login' && (
-        <LoginScreen
-          defaultEmail={email}
-          onBack={() => setScreen('landing')}
-          onSubmit={() => setScreen('onboarding')}
-        />
+        <LoginScreen defaultEmail={email} onBack={() => setScreen('landing')} />
       )}
       {screen === 'onboarding' && (
         <OnboardingScreen onDone={() => { setScreen('app'); setTab('accueil') }} />
