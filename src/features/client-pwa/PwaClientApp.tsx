@@ -253,6 +253,7 @@ export function PwaClientApp({
       <button
         key={item.key}
         onClick={() => setTab(item.key)}
+        className={`pwa2-navbtn${activeTab ? ' active-nav' : ''}`}
         style={{
           flex: 1,
           display: 'flex',
@@ -279,16 +280,13 @@ export function PwaClientApp({
   }
 
   return (
-    <div
-      className={`pwa2${theme === 'light' ? ' pwa2-light' : ''}`}
-      style={{ position: 'relative', width: '100%', maxWidth: 440, margin: '0 auto', minHeight: '100dvh', overflow: 'hidden' }}
-    >
+    <div className={`pwa2 pwa2-frame${theme === 'light' ? ' pwa2-light' : ''}`}>
       {/* Blobs d'ambiance */}
       <div style={{ position: 'absolute', top: '-6%', right: '-18%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 70%)', opacity: 0.08, filter: 'blur(70px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '20%', left: '-16%', width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle,var(--teal),transparent 70%)', opacity: 0.07, filter: 'blur(70px)', pointerEvents: 'none' }} />
 
       {/* Header condensé */}
-      <div style={{ position: 'relative', padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 6px' }}>
+      <div className="pwa2-header" style={{ position: 'relative', padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => setProfilOpen(true)} aria-label="Mon profil" style={{ width: 46, height: 46, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'linear-gradient(140deg,var(--teal),var(--teal-d))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ANTON, fontSize: 16, color: '#04201b', flex: 'none' }}>{initials}</button>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -304,7 +302,7 @@ export function PwaClientApp({
       </div>
 
       {/* Contenu */}
-      <div style={{ position: 'relative', padding: '14px 18px 100px' }}>
+      <div className="pwa2-content" style={{ position: 'relative', padding: '14px 18px 100px' }}>
         {tab === 'accueil' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'lbRise .4s ease both' }}>
             {/* 1. Ta régularité (XP) */}
@@ -474,11 +472,11 @@ export function PwaClientApp({
         )}
       </div>
 
-      {/* Bottom nav + Noaly central */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'color-mix(in srgb,var(--bg) 82%,transparent)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderTop: '1px solid var(--border)', display: 'flex', padding: '8px 2px calc(8px + env(safe-area-inset-bottom, 0px))', zIndex: 20 }}>
+      {/* Bottom nav (mobile) / sidebar (desktop) + Noaly */}
+      <div className="pwa2-nav" style={{ position: 'fixed', bottom: 0, left: '50%', right: 'auto', transform: 'translateX(-50%)', width: '100%', maxWidth: 440, background: 'color-mix(in srgb,var(--bg) 82%,transparent)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderTop: '1px solid var(--border)', display: 'flex', padding: '8px 2px calc(8px + env(safe-area-inset-bottom, 0px))', zIndex: 20 }}>
         {leftNav.map(renderNavBtn)}
-        <button onClick={toggleNoaly} style={{ flex: 'none', width: 62, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0 4px' }}>
-          <span style={{ position: 'relative', width: 50, height: 50, marginTop: -20, borderRadius: 17, background: 'linear-gradient(140deg,var(--teal),var(--lime))', border: '3px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px var(--teal)' }}>
+        <button onClick={toggleNoaly} className="pwa2-noalybtn" style={{ flex: 'none', width: 62, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0 4px' }}>
+          <span className="pwa2-noalyorb" style={{ position: 'relative', width: 50, height: 50, marginTop: -20, borderRadius: 17, background: 'linear-gradient(140deg,var(--teal),var(--lime))', border: '3px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px var(--teal)' }}>
             <span style={{ position: 'absolute', inset: 0, borderRadius: 17, background: 'var(--teal)', opacity: 0.5, animation: 'lbPing 2.6s ease-out infinite', pointerEvents: 'none' }} />
             <svg width="26" height="26" viewBox="0 0 24 24" fill="#04201b" style={{ position: 'relative' }}><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" /></svg>
           </span>
@@ -489,14 +487,14 @@ export function PwaClientApp({
 
       {/* Bulle d'accroche Noaly (1er passage Accueil) */}
       {!noalyLabelSeen && tab === 'accueil' && (
-        <div style={{ position: 'absolute', bottom: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 19, maxWidth: 220, padding: '10px 13px', borderRadius: '14px 14px 14px 14px', background: 'var(--surface)', border: '1px solid var(--border2)', boxShadow: '0 10px 24px -12px rgba(0,0,0,.7)', animation: 'lbFade .5s ease .4s both', textAlign: 'center' }}>
+        <div style={{ position: 'fixed', bottom: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 19, maxWidth: 220, padding: '10px 13px', borderRadius: '14px 14px 14px 14px', background: 'var(--surface)', border: '1px solid var(--border2)', boxShadow: '0 10px 24px -12px rgba(0,0,0,.7)', animation: 'lbFade .5s ease .4s both', textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.45 }}>Une question ? <strong style={{ color: 'var(--teal)' }}>Demande à Noaly</strong></div>
         </div>
       )}
 
       {/* Panneau Noaly (bottom sheet) */}
       {noalyOpen && (
-        <div onClick={() => setNoalyOpen(false)} style={{ position: 'absolute', inset: 0, zIndex: 75, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end' }}>
+        <div onClick={() => setNoalyOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 75, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxHeight: '84%', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderTop: '1px solid var(--border2)', borderRadius: '26px 26px 0 0', animation: 'lbSheet .32s cubic-bezier(.16,1,.3,1)', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '16px 18px 13px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 40, height: 40, flex: 'none', borderRadius: 13, background: 'linear-gradient(140deg,var(--teal),var(--lime))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="#04201b"><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" /></svg></div>
@@ -533,7 +531,7 @@ export function PwaClientApp({
 
       {/* Modale : passage de niveau */}
       {levelUpOpen && levelUpFromTo && (
-        <div onClick={() => setLevelUpOpen(false)} style={{ position: 'absolute', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.68)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+        <div onClick={() => setLevelUpOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.68)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 26, padding: '30px 22px 22px', textAlign: 'center', animation: 'lbRise .34s cubic-bezier(.16,1,.3,1)', boxShadow: '0 30px 70px -20px rgba(0,0,0,0.85)' }}>
             <div style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 68%)', opacity: 0.16, filter: 'blur(30px)', pointerEvents: 'none' }} />
             <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 16px' }}>
@@ -565,7 +563,7 @@ export function PwaClientApp({
 
       {/* Modale : c'est quoi les XP ? */}
       {xpInfoOpen && (
-        <div onClick={() => setXpInfoOpen(false)} style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => setXpInfoOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} className="lb-scroll" style={{ width: '100%', maxHeight: '86%', overflowY: 'auto', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 24, padding: 22, animation: 'lbRise .32s cubic-bezier(.16,1,.3,1)', boxShadow: '0 30px 70px -20px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
               <span style={{ fontFamily: MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>Deux compteurs, deux rôles</span>

@@ -21,7 +21,7 @@ export function LandingScreen({ onChooseClient, onChooseDistrib }: { onChooseCli
     { title: "Je veux rejoindre l'aventure", sub: 'Découvrir le business La Base 360', accent: 'var(--violet)', onClick: onChooseClient, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" /></svg> },
   ]
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll pwa2-overlay">
       <div style={{ position: 'relative', minHeight: '100%', padding: 'calc(env(safe-area-inset-top,0px) + 60px) 24px 30px', display: 'flex', flexDirection: 'column', gap: 26, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-8%', left: '-16%', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 70%)', opacity: 0.14, filter: 'blur(70px)', animation: 'lbFloat 22s ease-in-out infinite alternate', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '24%', right: '-20%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle,var(--teal),transparent 70%)', opacity: 0.13, filter: 'blur(70px)', animation: 'lbFloat2 26s ease-in-out infinite alternate', pointerEvents: 'none' }} />
@@ -69,7 +69,7 @@ export function LandingScreen({ onChooseClient, onChooseDistrib }: { onChooseCli
 export function LoginScreen({ role, defaultEmail, onBack, onSubmit }: { role: 'client' | 'distributeur'; defaultEmail?: string | null; onBack: () => void; onSubmit: () => void }) {
   const [showPw, setShowPw] = useState(false)
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll pwa2-overlay">
       <div style={{ position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'relative', overflow: 'hidden', padding: 'calc(env(safe-area-inset-top,0px) + 54px) 24px 30px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>
           <div style={{ position: 'absolute', top: '-30%', left: '-14%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 70%)', opacity: 0.16, filter: 'blur(70px)', pointerEvents: 'none' }} />
@@ -120,7 +120,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const o = ONB[step]
   const last = step === ONB.length - 1
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 95, background: 'var(--bg)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)' }} className="pwa2-overlay">
       <div style={{ position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', padding: 'calc(env(safe-area-inset-top,0px) + 52px) 26px 30px', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-6%', left: '-18%', width: 320, height: 320, borderRadius: '50%', background: `radial-gradient(circle,${o.accent},transparent 70%)`, opacity: 0.14, filter: 'blur(70px)', pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
