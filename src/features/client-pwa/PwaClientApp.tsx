@@ -20,6 +20,8 @@
 // ============================================================================
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { TELEGRAM_GROUP_URL } from '../../lib/telegram'
+import { getSupabaseClient } from '../../services/supabaseClient'
+import { useClientXp, recordClientXp } from '../../features/client-xp/useClientXp'
 import { EvolutionTab, type EvolutionMetricPoint, type EvolutionMeasurement } from './tabs/EvolutionTab'
 import { ProduitsTab, type PwaProduct } from './tabs/ProduitsTab'
 import { ConseilsTab, type PwaSportAlert } from './tabs/ConseilsTab'
@@ -27,13 +29,45 @@ import { MessagesTab } from './tabs/MessagesTab'
 import { RecommanderTab } from './tabs/RecommanderTab'
 import { ProfilScreen } from './ProfilScreen'
 import { LandingScreen, LoginScreen, OnboardingScreen } from './EntryScreens'
+import { CLIENT_XP_LEVELS } from '../../features/client-xp/actions'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
 const MONO = "'JetBrains Mono', monospace"
 
-const RANKS = ['Débutante', 'Régulière', 'Motivée', 'Championne', 'Légende']
-const XP_PER_LEVEL = 200
+function levelTitleOf(level: number): string {
+  return CLIENT_XP_LEVELS.find((l) => l.level === level)?.title ?? ''
+}
+
+// Mapping clés humeur v2 ⇄ clés serveur (record_client_mood / get_client_mood_today)
+const MOOD_TO_SERVER: Record<string, string> = { top: 'great', bien: 'good', comme: 'okay', fatigue: 'tired', dur: 'tough' }
+const SERVER_TO_MOOD: Record<string, string> = { great: 'top', good: 'bien', okay: 'comme', tired: 'fatigue', tough: 'dur' }
+
+// Streak humeur local (par device) : le serveur ne stocke pas de streak.
+function readMoodStreak(token: string): number {
+  try {
+    const raw = window.localStorage.getItem(`lb-mood-streak-${token}`)
+    if (!raw) return 0
+    const { streak } = JSON.parse(raw) as { date: string; streak: number }
+    return streak ?? 0
+  } catch {
+    return 0
+  }
+}
+function bumpMoodStreak(token: string): number {
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const raw = window.localStorage.getItem(`lb-mood-streak-${token}`)
+    const prev = raw ? (JSON.parse(raw) as { date: string; streak: number }) : null
+    if (prev?.date === today) return prev.streak
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+    const streak = prev?.date === yesterday ? prev.streak + 1 : 1
+    window.localStorage.setItem(`lb-mood-streak-${token}`, JSON.stringify({ date: today, streak }))
+    return streak
+  } catch {
+    return 1
+  }
+}
 
 const NOALY_SUGGESTIONS: Array<{ key: string; chip: string; answer: string }> = [
   { key: 'recette', chip: 'Une idée de recette', answer: "Essaie un bowl protéiné : skyr, fruits rouges, une dose de Formula 1 vanille et quelques amandes. ~250 kcal, 20 g de protéines. J'en ai d'autres si tu veux !" },
@@ -121,80 +155,97 @@ export function PwaClientApp({
   const [profilOpen, setProfilOpen] = useState(false)
   const [screen, setScreen] = useState<ScreenKey>('app')
 
-  // Gamification (démo — à brancher sur client-xp + persistance humeur)
-  const [xpLevel, setXpLevel] = useState(2)
-  const [xpInLevel, setXpInLevel] = useState(196)
+  // Gamification — branchée sur le vrai système client-xp + humeur (RPC).
+  const xp = useClientXp(token)
+  const xpLevel = xp.level
+  const xpInLevel = xp.xpInLevel
+  const levelSpan = Math.max(1, xp.nextThreshold - xp.prevThreshold)
   const [xpExpanded, setXpExpanded] = useState(false)
   const [mood, setMood] = useState<string | null>(null)
-  const [moodStreak, setMoodStreak] = useState(6)
+  const [moodStreak, setMoodStreak] = useState(0)
   const [moodLoggedToday, setMoodLoggedToday] = useState(false)
   const [levelUpOpen, setLevelUpOpen] = useState(false)
   const [xpInfoOpen, setXpInfoOpen] = useState(false)
   const [levelUpFromTo, setLevelUpFromTo] = useState<{ from: string; to: string; level: number } | null>(null)
+  const prevLevelRef = useRef<number | null>(null)
 
   // Noaly
   const [noalyOpen, setNoalyOpen] = useState(false)
   const [noalyLabelSeen, setNoalyLabelSeen] = useState(false)
   const [noalyThread, setNoalyThread] = useState<Array<{ role: 'user' | 'noaly'; text: string }>>([])
 
-  // Anim d'intro XP (barre + compteur) au montage / retour Accueil
-  const [xpAnim, setXpAnim] = useState(0)
+  // Anim d'intro de la barre XP (remplissage 0→valeur) au montage / retour Accueil.
   const [barsRevealed, setBarsRevealed] = useState(false)
-  const rafRef = useRef<number | null>(null)
-
-  const totalXp = (xpLevel - 1) * XP_PER_LEVEL + xpInLevel
+  const totalXp = xp.totalXp
 
   useEffect(() => {
-    if (tab !== 'accueil') return
+    if (tab !== 'accueil') {
+      setBarsRevealed(false)
+      return
+    }
     setBarsRevealed(false)
-    setXpAnim(0)
     const id = requestAnimationFrame(() => setBarsRevealed(true))
-    const target = totalXp
-    const dur = 950
-    const t0 = performance.now()
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - t0) / dur)
-      const eased = 1 - Math.pow(1 - p, 3)
-      setXpAnim(Math.round(eased * target))
-      if (p < 1) rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => {
-      cancelAnimationFrame(id)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab])
+    return () => cancelAnimationFrame(id)
+  }, [tab, totalXp])
 
-  function addXp(gain: number) {
-    let inLvl = xpInLevel + gain
-    let lvl = xpLevel
-    let leveled = false
-    while (inLvl >= XP_PER_LEVEL && lvl < RANKS.length) {
-      inLvl -= XP_PER_LEVEL
-      lvl++
-      leveled = true
-    }
-    if (leveled) {
+  // Passage de niveau : détecté sur la vraie montée de niveau (client-xp).
+  useEffect(() => {
+    if (!xp.loaded) return
+    const prev = prevLevelRef.current
+    if (prev != null && xp.level > prev) {
       setLevelUpFromTo({
-        from: `Niveau ${lvl - 1} · ${RANKS[lvl - 2] ?? ''}`,
-        to: `Niveau ${lvl} · ${RANKS[lvl - 1] ?? ''}`,
-        level: lvl,
+        from: `Niveau ${prev} · ${levelTitleOf(prev)}`,
+        to: `Niveau ${xp.level} · ${xp.levelTitle}`,
+        level: xp.level,
       })
       setLevelUpOpen(true)
     }
-    setXpInLevel(inLvl)
-    setXpLevel(lvl)
-  }
+    prevLevelRef.current = xp.level
+  }, [xp.loaded, xp.level, xp.levelTitle])
 
-  function pickMood(key: string) {
+  // Humeur du jour : lecture au montage (RPC) + streak local (par device).
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const sb = await getSupabaseClient()
+        if (!sb) return
+        const { data } = await sb.rpc('get_client_mood_today', { p_token: token })
+        if (cancelled) return
+        const payload = (data ?? {}) as { mood_key?: string | null }
+        if (payload.mood_key) {
+          setMood(SERVER_TO_MOOD[payload.mood_key] ?? payload.mood_key)
+          setMoodLoggedToday(true)
+        }
+      } catch {
+        /* silencieux */
+      }
+      setMoodStreak(readMoodStreak(token))
+    })()
+    return () => { cancelled = true }
+  }, [token])
+
+  // XP de découverte d'onglet (cap lifetime côté serveur → 1× par onglet).
+  useEffect(() => {
+    if (tab === 'evolution') void recordClientXp(token, 'tab_evolution')
+    else if (tab === 'conseils') void recordClientXp(token, 'tab_conseils')
+    else if (tab === 'produits') void recordClientXp(token, 'tab_pv')
+  }, [tab, token])
+
+  async function pickMood(key: string) {
     const first = !moodLoggedToday
     setMood(key)
-    if (first) {
-      setMoodStreak((s) => s + 1)
-      setMoodLoggedToday(true)
-      addXp(5)
+    if (!first) return
+    setMoodLoggedToday(true)
+    setMoodStreak(bumpMoodStreak(token))
+    try {
+      const sb = await getSupabaseClient()
+      if (sb) await sb.rpc('record_client_mood', { p_token: token, p_mood_key: MOOD_TO_SERVER[key] ?? 'okay', p_comment: null })
+    } catch {
+      /* silencieux */
     }
+    void recordClientXp(token, 'mood_checkin')
   }
 
   function toggleNoaly() {
@@ -209,9 +260,9 @@ export function PwaClientApp({
 
   const greeting = greetingFor(new Date())
   const initials = initialsOf(clientName)
-  const rankName = `Niveau ${xpLevel} · ${RANKS[xpLevel - 1] ?? ''}`
-  const xpBarPct = Math.min(100, Math.round((xpInLevel / XP_PER_LEVEL) * 100))
-  const xpToNext = XP_PER_LEVEL - xpInLevel
+  const rankName = `Niveau ${xpLevel} · ${xp.levelTitle}`
+  const xpBarPct = Math.min(100, Math.round((xpInLevel / levelSpan) * 100))
+  const xpToNext = xp.xpToNext
 
   const deltaTxt =
     weightDeltaKg == null
@@ -315,7 +366,7 @@ export function PwaClientApp({
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ fontFamily: ANTON, fontSize: 15, color: '#04201b', background: 'linear-gradient(120deg,var(--teal),var(--lime))', padding: '7px 12px', borderRadius: 11 }}>{xpAnim} XP</div>
+                    <div style={{ fontFamily: ANTON, fontSize: 15, color: '#04201b', background: 'linear-gradient(120deg,var(--teal),var(--lime))', padding: '7px 12px', borderRadius: 11 }}>{totalXp} XP</div>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: xpExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .25s', flex: 'none' }}><path d="M6 9l6 6 6-6" /></svg>
                   </div>
                 </div>
@@ -323,7 +374,7 @@ export function PwaClientApp({
                   <div style={{ width: barsRevealed ? `${xpBarPct}%` : '0%', height: '100%', borderRadius: 999, background: 'linear-gradient(90deg,var(--teal),var(--lime) 60%,var(--violet))', transition: 'width .95s cubic-bezier(.16,1,.3,1)' }} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 10, color: 'var(--muted)' }}>
-                  <span>{xpInLevel} / {XP_PER_LEVEL} XP</span>
+                  <span>{xpInLevel} / {levelSpan} XP</span>
                   <span>{xpToNext} XP pour le niveau {xpLevel + 1}</span>
                 </div>
               </div>
@@ -359,7 +410,7 @@ export function PwaClientApp({
                 {MOODS.map((m) => {
                   const sel = mood === m.key
                   return (
-                    <button key={m.key} onClick={() => pickMood(m.key)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, padding: '12px 4px', borderRadius: 13, background: sel ? `color-mix(in srgb,${m.color} 14%,var(--surface))` : 'var(--surface)', border: `1px solid ${sel ? m.color : 'var(--border)'}`, cursor: 'pointer' }}>
+                    <button key={m.key} onClick={() => void pickMood(m.key)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, padding: '12px 4px', borderRadius: 13, background: sel ? `color-mix(in srgb,${m.color} 14%,var(--surface))` : 'var(--surface)', border: `1px solid ${sel ? m.color : 'var(--border)'}`, cursor: 'pointer' }}>
                       <span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color }} />
                       <span style={{ fontSize: 9.5, fontWeight: 600, color: sel ? 'var(--text)' : 'var(--muted)', textAlign: 'center', lineHeight: 1.1 }}>{m.label}</span>
                     </button>
@@ -424,7 +475,7 @@ export function PwaClientApp({
                 <div style={{ fontFamily: SORA, fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>Rejoins les Challengers</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Communauté Telegram · motivation quotidienne</div>
               </div>
-              <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noopener noreferrer" style={{ flex: 'none', background: 'linear-gradient(120deg,var(--teal),var(--lime))', borderRadius: 999, padding: '9px 16px', color: '#04201b', fontFamily: SORA, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Rejoindre</a>
+              <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noopener noreferrer" onClick={() => void recordClientXp(token, 'telegram_joined')} style={{ flex: 'none', background: 'linear-gradient(120deg,var(--teal),var(--lime))', borderRadius: 999, padding: '9px 16px', color: '#04201b', fontFamily: SORA, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Rejoindre</a>
             </div>
 
             {/* 7. Tuiles */}
@@ -446,7 +497,7 @@ export function PwaClientApp({
             </div>
 
             {/* 8. Avis Google */}
-            <a href="https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', textDecoration: 'none' }}>
+            <a href="https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks" target="_blank" rel="noopener noreferrer" onClick={() => void recordClientXp(token, 'google_review')} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', textDecoration: 'none' }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in srgb,var(--gold) 16%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z" /></svg>
               </div>
