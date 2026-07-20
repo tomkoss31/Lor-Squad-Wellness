@@ -30,9 +30,21 @@ export interface EvolutionMetricPoint {
   date: string
   weight?: number
   bodyFat?: number
-  muscle?: number
+  muscleMass?: number
   hydration?: number
+  visceralFat?: number
+  metabolicAge?: number
 }
+type MetricKey = 'weight' | 'bodyFat' | 'muscleMass' | 'hydration' | 'visceralFat' | 'metabolicAge'
+// Les 6 métriques du body-scan. goodDown = baisser est favorable.
+const METRICS: Array<{ key: MetricKey; label: string; short: string; unit: string; color: string; goodDown: boolean }> = [
+  { key: 'weight', label: 'Poids', short: 'Poids', unit: 'kg', color: 'var(--teal)', goodDown: true },
+  { key: 'bodyFat', label: 'Masse grasse', short: 'Masse grasse', unit: '%', color: 'var(--coral)', goodDown: true },
+  { key: 'muscleMass', label: 'Masse musculaire', short: 'Muscle', unit: 'kg', color: 'var(--lime)', goodDown: false },
+  { key: 'hydration', label: 'Hydratation', short: 'Eau', unit: '%', color: 'var(--violet)', goodDown: false },
+  { key: 'visceralFat', label: 'Graisse viscérale', short: 'Graisse visc.', unit: '', color: 'var(--gold)', goodDown: true },
+  { key: 'metabolicAge', label: 'Âge métabolique', short: 'Âge méta.', unit: 'ans', color: 'var(--emerald)', goodDown: true },
+]
 export interface EvolutionMeasurement {
   measured_at: string
   waist_cm?: number
@@ -68,6 +80,7 @@ function fmt(n: number | undefined, digits = 1): string {
 
 export function EvolutionTab({ token, ageYears, metrics, measurements }: EvolutionTabProps) {
   const [measView, setMeasView] = useState<'face' | 'back'>('face')
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>('weight')
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const [sheetVal, setSheetVal] = useState(0)
   const [localMeasures, setLocalMeasures] = useState<Record<string, number>>({})
@@ -105,8 +118,6 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
   const withWeight = metrics.filter((m) => typeof m.weight === 'number' && isFinite(m.weight as number))
   const firstM = withWeight[0]
   const lastM = withWeight[withWeight.length - 1]
-  const latest = metrics[metrics.length - 1]
-  const first = metrics[0]
 
   const weightStart = firstM?.weight
   const weightNow = lastM?.weight
@@ -152,29 +163,41 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
     return d > 0 ? s + d : s
   }, 0)
 
-  // Indicateurs
-  const indicatorDefs: Array<{ label: string; unit: string; key: 'weight' | 'bodyFat' | 'muscle' | 'hydration'; color: string; goodDown: boolean }> = [
-    { label: 'POIDS', unit: 'kg', key: 'weight', color: 'var(--teal)', goodDown: true },
-    { label: 'MASSE GRASSE', unit: '%', key: 'bodyFat', color: 'var(--coral)', goodDown: true },
-    { label: 'MUSCLE', unit: 'kg', key: 'muscle', color: 'var(--lime)', goodDown: false },
-    { label: 'EAU', unit: '%', key: 'hydration', color: 'var(--violet)', goodDown: false },
-  ]
+  // Quelles métriques ont au moins une valeur (pour n'afficher que le pertinent).
+  const availableMetrics = METRICS.filter((mt) => metrics.some((m) => typeof m[mt.key] === 'number'))
+  const activeMetricKey = availableMetrics.some((m) => m.key === selectedMetric) ? selectedMetric : (availableMetrics[0]?.key ?? 'weight')
+  const sel = METRICS.find((m) => m.key === activeMetricKey) ?? METRICS[0]
 
-  // Courbe de poids
-  const weights = withWeight.map((m) => m.weight as number)
+  // Valeur courante/départ/delta d'une métrique.
+  function metricStat(key: MetricKey) {
+    const pts = metrics.map((m) => m[key]).filter((v): v is number => typeof v === 'number')
+    if (pts.length === 0) return { cur: undefined as number | undefined, start: undefined as number | undefined, delta: null as number | null }
+    const cur = pts[pts.length - 1]
+    const start = pts[0]
+    return { cur, start, delta: Math.round((cur - start) * 10) / 10 }
+  }
+
+  // Courbe de la métrique sélectionnée.
   const W = 300, H = 132, P = 14, top = 8, bottom = 104
-  const n = weights.length
-  const wmin = n ? Math.min(...weights) - 1 : 0
-  const wmax = n ? Math.max(...weights) + 1 : 1
-  const span = wmax - wmin || 1
-  const pts = weights.map((w, i) => {
+  const selSeries = metrics.map((m) => ({ date: m.date, v: m[activeMetricKey] })).filter((p): p is { date: string; v: number } => typeof p.v === 'number')
+  const n = selSeries.length
+  const selVals = selSeries.map((p) => p.v)
+  const rawMin = n ? Math.min(...selVals) : 0
+  const rawMax = n ? Math.max(...selVals) : 1
+  const padY = (rawMax - rawMin) * 0.12 || Math.max(1, rawMax * 0.05)
+  const lo = rawMin - padY, hi = rawMax + padY, span = hi - lo || 1
+  const pts = selVals.map((w, i) => {
     const x = P + (n > 1 ? (i * (W - 2 * P)) / (n - 1) : 0)
-    const y = top + ((wmax - w) / span) * (bottom - top)
+    const y = top + ((hi - w) / span) * (bottom - top)
     return [Math.round(x * 10) / 10, Math.round(y * 10) / 10] as [number, number]
   })
   const chartLine = pts.map((p) => p.join(',')).join(' ')
   const chartArea = `${P},${bottom} ${chartLine} ${W - P},${bottom}`
   const lastPt = pts[pts.length - 1]
+  const selStat = metricStat(activeMetricKey)
+  // Étiquettes de date : ~5 réparties.
+  const dateLabelIdx = n <= 5 ? selSeries.map((_, i) => i) : [0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1]
+  const dateLabels = [...new Set(dateLabelIdx)].map((i) => new Date(selSeries[i].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }))
 
   const card: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 18, padding: 18 }
   const activeZoneDef = ZONE_DEFS.find((z) => z.key === activeZone) || null
@@ -233,48 +256,66 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
         </div>
       </div>
 
-      {/* 4 indicateurs */}
+      {/* Indicateurs clés (cliquables → change la courbe) */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--dim)', fontWeight: 600, margin: '2px 2px 9px' }}>Tes 4 indicateurs clés</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--dim)', fontWeight: 600, margin: '2px 2px 9px' }}>Tes indicateurs · touche pour la courbe</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-          {indicatorDefs.map((ind, i) => {
-            const cur = latest?.[ind.key]
-            const start = first?.[ind.key]
-            const delta = typeof cur === 'number' && typeof start === 'number' ? Math.round((cur - start) * 10) / 10 : null
-            const improved = delta == null ? null : ind.goodDown ? delta < 0 : delta > 0
+          {METRICS.filter((mt) => ['weight', 'bodyFat', 'muscleMass', 'hydration'].includes(mt.key)).map((mt, i) => {
+            const st = metricStat(mt.key)
+            const improved = st.delta == null ? null : mt.goodDown ? st.delta < 0 : st.delta > 0
             const deltaColor = improved == null ? 'var(--dim)' : improved ? 'var(--teal)' : 'var(--coral)'
+            const isSel = activeMetricKey === mt.key
             return (
-              <div key={ind.key} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderTop: `3px solid ${ind.color}`, borderRadius: 13, padding: 13, animation: 'lbRise .5s ease both', animationDelay: `${0.05 + i * 0.07}s` }}>
-                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.08em', color: 'var(--muted)' }}>{ind.label}</div>
-                <div style={{ fontFamily: ANTON, fontSize: 25, color: 'var(--text)', margin: '5px 0 3px' }}>{fmt(typeof cur === 'number' ? cur : undefined)}<span style={{ fontSize: 12, color: 'var(--muted)', fontFamily: "'Inter'" }}> {ind.unit}</span></div>
+              <button key={mt.key} onClick={() => setSelectedMetric(mt.key)} style={{ textAlign: 'left', background: isSel ? `color-mix(in srgb,${mt.color} 8%,var(--surface))` : 'var(--surface)', border: `1px solid ${isSel ? mt.color : 'var(--border)'}`, borderTop: `3px solid ${mt.color}`, borderRadius: 13, padding: 13, cursor: 'pointer', animation: 'lbRise .5s ease both', animationDelay: `${0.05 + i * 0.07}s` }}>
+                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>{mt.label}</div>
+                <div style={{ fontFamily: ANTON, fontSize: 25, color: 'var(--text)', margin: '5px 0 3px' }}>{fmt(st.cur)}<span style={{ fontSize: 12, color: 'var(--muted)', fontFamily: "'Inter'" }}> {mt.unit}</span></div>
                 <div style={{ fontSize: 12, color: deltaColor, fontWeight: 600 }}>
-                  {delta == null ? '—' : `${delta > 0 ? '↑' : delta < 0 ? '↓' : ''} ${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} ${ind.unit}`}
+                  {st.delta == null ? '—' : `${st.delta > 0 ? '↑ +' : st.delta < 0 ? '↓ −' : ''}${Math.abs(st.delta)} ${mt.unit}`}
                   <span style={{ color: 'var(--dim)', fontWeight: 400 }}> depuis le départ</span>
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
       </div>
 
-      {/* Courbe de poids */}
-      {n >= 2 && (
+      {/* Chips : toutes les métriques disponibles */}
+      {availableMetrics.length > 1 && (
+        <div className="lb-scroll" style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '0 0 2px' }}>
+          {availableMetrics.map((mt) => {
+            const isSel = activeMetricKey === mt.key
+            return (
+              <button key={mt.key} onClick={() => setSelectedMetric(mt.key)} style={{ flex: 'none', padding: '8px 13px', borderRadius: 999, background: isSel ? `color-mix(in srgb,${mt.color} 16%,var(--surface))` : 'var(--surface)', border: `1px solid ${isSel ? mt.color : 'var(--border)'}`, color: isSel ? mt.color : 'var(--muted)', fontFamily: "'Inter'", fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{mt.short}</button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Courbe de la métrique sélectionnée */}
+      {n >= 2 ? (
         <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--teal)', fontWeight: 600 }}>Courbe du poids · {n} bilans</div>
-            {weightDelta != null && <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, color: '#04201b', background: 'var(--teal)', padding: '4px 9px', borderRadius: 8 }}>{weightDelta <= 0 ? '−' : '+'} {Math.abs(weightDelta)} kg</div>}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: sel.color, fontWeight: 600 }}>Courbe · {sel.label} · {n} bilans</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+              <span style={{ fontFamily: ANTON, fontSize: 17, color: 'var(--text)' }}>{fmt(selStat.cur)}<span style={{ fontFamily: "'Inter'", fontSize: 10, color: 'var(--muted)' }}> {sel.unit}</span></span>
+              {selStat.delta != null && <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, color: '#04201b', background: sel.color, padding: '3px 8px', borderRadius: 8 }}>{selStat.delta > 0 ? '+' : selStat.delta < 0 ? '−' : ''}{Math.abs(selStat.delta)}</span>}
+            </div>
           </div>
           <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}>
-            <defs><linearGradient id="pwaWArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--teal)" stopOpacity="0.28" /><stop offset="1" stopColor="var(--teal)" stopOpacity="0" /></linearGradient></defs>
+            <defs><linearGradient id="pwaMetricArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={sel.color} stopOpacity="0.28" /><stop offset="1" stopColor={sel.color} stopOpacity="0" /></linearGradient></defs>
             <line x1="14" y1={bottom} x2={W - 14} y2={bottom} stroke="var(--border)" strokeWidth="1" />
-            <polygon points={chartArea} fill="url(#pwaWArea)" style={{ animation: 'lbFade .9s ease .5s both' }} />
-            <polyline points={chartLine} fill="none" stroke="var(--teal)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: 640, animation: 'lbDraw 1.15s cubic-bezier(.16,1,.3,1) forwards' }} />
-            {lastPt && <circle cx={lastPt[0]} cy={lastPt[1]} r="5" fill="var(--lime)" stroke="var(--bg)" strokeWidth="2.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'lbPop .5s cubic-bezier(.16,1,.3,1) 1s both' }} />}
+            <polygon points={chartArea} fill="url(#pwaMetricArea)" style={{ animation: 'lbFade .9s ease .3s both' }} />
+            <polyline points={chartLine} fill="none" stroke={sel.color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: 640, animation: 'lbDraw 1s cubic-bezier(.16,1,.3,1) forwards' }} />
+            {lastPt && <circle cx={lastPt[0]} cy={lastPt[1]} r="5" fill={sel.color} stroke="var(--bg)" strokeWidth="2.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'lbPop .5s cubic-bezier(.16,1,.3,1) .8s both' }} />}
+            {lastPt && <text x={Math.min(lastPt[0], W - 30)} y={Math.max(lastPt[1] - 9, 12)} fill="var(--text)" fontFamily="'JetBrains Mono', monospace" fontSize="11" fontWeight="700" textAnchor="end">{fmt(selStat.cur)}</text>}
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9.5, color: 'var(--dim)', marginTop: 6 }}>
-            <span>{firstM ? new Date(firstM.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : ''}</span>
-            <span>{lastM ? new Date(lastM.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : ''}</span>
+            {dateLabels.map((d, i) => <span key={i}>{d}</span>)}
           </div>
+        </div>
+      ) : (
+        <div style={{ ...card, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+          Il faut au moins 2 bilans pour tracer la courbe de {sel.label.toLowerCase()}.
         </div>
       )}
 

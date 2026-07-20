@@ -673,13 +673,19 @@ export function ClientAppPage() {
       firstW != null && lastW != null ? Math.round((lastW - firstW) * 10) / 10 : null
     const birthDate = liveData?.client?.birth_date ?? null
     const ageYears = birthDate ? calculateAge(birthDate) : null
-    const metricsV2 = metrics.map((m) => ({
-      date: m.date,
-      weight: typeof m.weight === 'number' ? m.weight : undefined,
-      bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : undefined,
-      muscle: typeof m.muscle === 'number' ? m.muscle : undefined,
-      hydration: typeof m.hydration === 'number' ? m.hydration : undefined,
-    }))
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v !== 0 ? v : undefined)
+    const metricsV2 = metrics.map((m) => {
+      const mm = m as Record<string, number> & { date: string }
+      return {
+        date: mm.date,
+        weight: num(mm.weight),
+        bodyFat: num(mm.bodyFat),
+        muscleMass: num(mm.muscleMass),
+        hydration: num(mm.hydration),
+        visceralFat: num(mm.visceralFat),
+        metabolicAge: num(mm.metabolicAge),
+      }
+    })
     const productsV2 = (liveData?.current_products ?? []).map((p) => ({
       id: p.id,
       product_name: p.product_name,
