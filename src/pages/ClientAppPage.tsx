@@ -697,6 +697,8 @@ export function ClientAppPage() {
     return (
       <PwaClientApp
         token={token as string}
+        clientId={data.client_id}
+        coachId={data.coach_id}
         clientName={data.client_first_name || 'toi'}
         coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
         assessmentsCount={data.assessments_count ?? metrics.length}

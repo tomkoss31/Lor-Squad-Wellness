@@ -90,6 +90,8 @@ type TabKey = 'accueil' | 'evolution' | 'produits' | 'conseils' | 'messages' | '
 
 export interface PwaClientAppProps {
   token: string
+  clientId: string
+  coachId?: string
   clientName: string
   coachName: string
   assessmentsCount: number
@@ -131,6 +133,8 @@ function greetingFor(d: Date): string {
 
 export function PwaClientApp({
   token,
+  clientId,
+  coachId,
   clientName,
   coachName,
   assessmentsCount,
@@ -517,7 +521,7 @@ export function PwaClientApp({
         ) : tab === 'messages' ? (
           <MessagesTab token={token} coachName={coachName} />
         ) : (
-          <RecommanderTab coachName={coachName} onShareContact={() => setTab('messages')} />
+          <RecommanderTab coachName={coachName} token={token} clientId={clientId} coachId={coachId} clientName={clientName} />
         )}
       </div>
 

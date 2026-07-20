@@ -6,6 +6,8 @@
 // modale « Club VIP en 30 s ». CTA « partager un proche » → messagerie.
 // ============================================================================
 import { useState, type CSSProperties } from 'react'
+import { getSupabaseClient } from '../../../services/supabaseClient'
+import { recordClientXp } from '../../../features/client-xp/useClientXp'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -13,7 +15,10 @@ const MONO = "'JetBrains Mono', monospace"
 
 export interface RecommanderTabProps {
   coachName: string
-  onShareContact: () => void
+  token: string
+  clientId: string
+  coachId?: string
+  clientName: string
 }
 
 const REF = 200
@@ -29,9 +34,59 @@ const TIERS = [
 function tierForPts(p: number) { let c = TIERS[0]; for (const t of TIERS) if (p >= t.min) c = t; return c }
 function nextTier(p: number) { return TIERS.find((t) => t.min > p) || null }
 
-export function RecommanderTab({ coachName, onShareContact }: RecommanderTabProps) {
+export function RecommanderTab({ coachName, token, clientId, coachId, clientName }: RecommanderTabProps) {
   const [friends, setFriends] = useState(3)
   const [showHow, setShowHow] = useState(false)
+  const [referOpen, setReferOpen] = useState(false)
+  const [referName, setReferName] = useState('')
+  const [referContact, setReferContact] = useState('')
+  const [referSending, setReferSending] = useState(false)
+  const [referSent, setReferSent] = useState(false)
+
+  async function submitReferral() {
+    const name = referName.trim()
+    const contact = referContact.trim()
+    if (!name || !contact || referSending) return
+    setReferSending(true)
+    try {
+      const sb = await getSupabaseClient()
+      if (!sb) throw new Error('indispo')
+      const isPhone = contact.replace(/\D/g, '').length >= 6 && !contact.includes('@')
+      let routed = false
+      if (isPhone) {
+        try {
+          const { error } = await sb.functions.invoke('submit-prospect-lead', {
+            body: {
+              first_name: name,
+              phone: contact,
+              source: 'reco-client',
+              referrer_user_id: coachId ?? undefined,
+              metadata: { from_client_id: clientId, from_client_name: clientName, source_page: 'pwa-recommander-v2' },
+            },
+          })
+          routed = !error
+        } catch { /* fallback ci-dessous */ }
+      }
+      if (!routed) {
+        await sb.from('client_referrals').insert({
+          from_client_id: clientId,
+          from_client_name: clientName,
+          coach_id: coachId ?? '',
+          referred_name: name,
+          referred_contact: contact,
+        })
+      }
+      void recordClientXp(token, 'vip_intentions_filled')
+      setReferSent(true)
+      setReferName('')
+      setReferContact('')
+    } catch {
+      /* silencieux */
+    } finally {
+      setReferSending(false)
+    }
+  }
+  const openRefer = () => { setShowHow(false); setReferSent(false); setReferOpen(true) }
 
   const cumPts = (m: number) => Math.round(BASE * m + friends * FRIEND * Math.max(0, m - 1))
   const timeline = Array.from({ length: MONTHS }, (_, i) => {
@@ -148,7 +203,7 @@ export function RecommanderTab({ coachName, onShareContact }: RecommanderTabProp
         <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.7 }}>Sarah démarre à <strong style={{ color: 'var(--text)' }}>Bronze −15 %</strong>. Elle parle d'Herbalife à 3 personnes (sa maman, une collègue, sa pote de running). En 1 mois → <strong style={{ color: 'var(--lime)' }}>Gold −35 %</strong>. 3 mois plus tard, son groupe est passionné → <strong style={{ color: 'var(--violet)' }}>Ambassadrice −42 % à vie</strong>.</p>
       </div>
 
-      <button onClick={onShareContact} style={{ width: '100%', minHeight: 52, borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 15, boxShadow: '0 10px 26px -12px var(--teal)' }}>Partager un proche à {coachName} →</button>
+      <button onClick={openRefer} style={{ width: '100%', minHeight: 52, borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 15, boxShadow: '0 10px 26px -12px var(--teal)' }}>Partager un proche à {coachName} →</button>
       <div style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>Donne juste un prénom + un contact. {coachName} s'occupe du reste.</div>
 
       {/* Modale Club VIP en 30s */}
@@ -166,7 +221,38 @@ export function RecommanderTab({ coachName, onShareContact }: RecommanderTabProp
                 <div key={x.n} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', borderRadius: 11, background: 'var(--surface2)', border: '1px solid var(--border)' }}><div style={{ fontFamily: ANTON, fontSize: 16, color: x.c }}>{x.p}</div><div style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--muted)', marginTop: 2 }}>{x.n}</div></div>
               ))}
             </div>
-            <button onClick={() => { setShowHow(false); onShareContact() }} style={{ width: '100%', minHeight: 50, borderRadius: 13, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 15 }}>Partager un proche →</button>
+            <button onClick={openRefer} style={{ width: '100%', minHeight: 50, borderRadius: 13, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--teal),var(--lime))', color: '#04201b', fontFamily: ANTON, textTransform: 'uppercase', letterSpacing: '.02em', fontSize: 15 }}>Partager un proche →</button>
+          </div>
+        </div>
+      )}
+
+      {/* Feuille de parrainage — soumission réelle (submit-prospect-lead) */}
+      {referOpen && (
+        <div onClick={() => setReferOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 75, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 auto', background: 'var(--surface)', borderTop: '1px solid var(--border2)', borderRadius: '26px 26px 0 0', padding: '22px 22px calc(26px + env(safe-area-inset-bottom, 0px))', animation: 'lbSheet .3s cubic-bezier(.16,1,.3,1)' }}>
+            <div style={{ width: 40, height: 4, borderRadius: 999, background: 'var(--border2)', margin: '0 auto 18px' }} />
+            {referSent ? (
+              <div style={{ textAlign: 'center', padding: '10px 0 6px' }}>
+                <div style={{ width: 54, height: 54, margin: '0 auto 12px', borderRadius: 16, background: 'color-mix(in srgb,var(--teal) 16%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg></div>
+                <div style={{ fontFamily: SORA, fontWeight: 700, fontSize: 17, color: 'var(--text)' }}>C'est envoyé !</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 5, lineHeight: 1.5 }}>{coachName} a reçu le contact et s'en occupe. Merci pour la confiance 🙌</div>
+                <button onClick={() => setReferOpen(false)} style={{ marginTop: 18, width: '100%', minHeight: 50, borderRadius: 13, border: 'none', cursor: 'pointer', background: 'var(--surface2)', color: 'var(--text)', fontFamily: SORA, fontWeight: 700, fontSize: 14 }}>Fermer</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--teal)', fontWeight: 600 }}>Partager un proche</div>
+                <div style={{ fontFamily: SORA, fontWeight: 700, fontSize: 19, color: 'var(--text)', margin: '4px 0 4px' }}>À qui penses-tu ?</div>
+                <div style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 18 }}>Un prénom + un contact (téléphone de préférence). {coachName} prend le relais, en douceur.</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
+                  <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom" style={{ width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
+                  <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Téléphone ou email" style={{ width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 15, fontFamily: "'Inter'", outline: 'none' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setReferOpen(false)} style={{ flex: 'none', padding: '0 20px', minHeight: 50, borderRadius: 13, background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--muted)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Annuler</button>
+                  <button onClick={() => void submitReferral()} disabled={referSending || !referName.trim() || !referContact.trim()} style={{ flex: 1, minHeight: 50, borderRadius: 13, border: 'none', cursor: referSending || !referName.trim() || !referContact.trim() ? 'default' : 'pointer', background: referSending || !referName.trim() || !referContact.trim() ? 'var(--surface2)' : 'linear-gradient(120deg,var(--teal),var(--lime))', color: referSending || !referName.trim() || !referContact.trim() ? 'var(--muted)' : '#04201b', fontFamily: SORA, fontWeight: 700, fontSize: 15 }}>{referSending ? 'Envoi…' : `Envoyer à ${coachName}`}</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
