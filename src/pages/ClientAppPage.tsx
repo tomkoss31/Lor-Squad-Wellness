@@ -28,6 +28,9 @@ import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
 import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
+// Refonte identité PWA v2 (chantier 2026-07) — montée derrière le flag `?v2=1`.
+import { PwaClientApp } from '../features/client-pwa/PwaClientApp'
+import '../styles/pwa2.css'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
 // alourdir le bundle initial de ClientAppPage.
@@ -653,6 +656,32 @@ export function ClientAppPage() {
 
   // Refonte v2 (2026-04-25) : metricCards inline retiré au profit de
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
+
+  // ── Refonte identité PWA v2 (chantier 2026-07) ─────────────────────────
+  // Flag `?v2=1` : monte la nouvelle identité (lime/noir/Anton). Migration
+  // PROGRESSIVE — deviendra le défaut quand tous les onglets seront portés
+  // (l'UI historique ci-dessous disparaîtra alors, avec le flag). Zéro impact
+  // sur le flux token live tant que le flag n'est pas posé.
+  const v2Enabled =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('v2') === '1'
+  if (v2Enabled) {
+    const firstW = typeof first?.weight === 'number' ? first.weight : null
+    const lastW = typeof latest?.weight === 'number' ? latest.weight : null
+    const weightDeltaKg =
+      firstW != null && lastW != null ? Math.round((lastW - firstW) * 10) / 10 : null
+    return (
+      <PwaClientApp
+        clientName={data.client_first_name || 'toi'}
+        coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+        assessmentsCount={data.assessments_count ?? metrics.length}
+        weightDeltaKg={weightDeltaKg}
+        nextFollowUp={data.next_follow_up}
+        programTitle={data.program_title}
+        onOpenTour={() => setOnboardingDone(false)}
+      />
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
