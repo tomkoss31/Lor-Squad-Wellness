@@ -29,6 +29,7 @@ import { MessagesTab } from './tabs/MessagesTab'
 import { RecommanderTab } from './tabs/RecommanderTab'
 import { ProfilScreen } from './ProfilScreen'
 import { LandingScreen, LoginScreen, OnboardingScreen } from './EntryScreens'
+import { PwaEngage } from './PwaEngage'
 import { CLIENT_XP_LEVELS } from '../../features/client-xp/actions'
 
 const ANTON = "'Anton', sans-serif"
@@ -365,6 +366,7 @@ export function PwaClientApp({
       <div className="pwa2-content" style={{ position: 'relative', padding: '14px 18px 100px' }}>
         {tab === 'accueil' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'lbRise .4s ease both' }}>
+            <PwaEngage token={token} />
             {/* 1. Ta régularité (XP) */}
             <div style={card}>
               <div onClick={() => setXpExpanded((v) => !v)} style={{ cursor: 'pointer' }}>
