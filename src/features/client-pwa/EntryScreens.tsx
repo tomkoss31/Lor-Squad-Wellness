@@ -14,10 +14,9 @@ const SORA = "'Sora', sans-serif"
 const MONO = "'JetBrains Mono', monospace"
 
 // ─── Landing ───────────────────────────────────────────────────────────────
-export function LandingScreen({ onChooseClient, onChooseDistrib }: { onChooseClient: () => void; onChooseDistrib: () => void }) {
+export function LandingScreen({ onChooseClient }: { onChooseClient: () => void }) {
   const roles = [
     { title: 'Client suivi par un coach', sub: 'Accès à mon programme perso', accent: 'var(--teal)', onClick: onChooseClient, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg> },
-    { title: "Distributeur de l'équipe", sub: 'Accès à ma tour de contrôle', accent: 'var(--lime)', onClick: onChooseDistrib, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg> },
     { title: "Je veux rejoindre l'aventure", sub: 'Découvrir le business La Base 360', accent: 'var(--violet)', onClick: onChooseClient, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" /></svg> },
   ]
   return (
@@ -66,7 +65,7 @@ export function LandingScreen({ onChooseClient, onChooseDistrib }: { onChooseCli
 }
 
 // ─── Login ───────────────────────────────────────────────────────────────
-export function LoginScreen({ role, defaultEmail, onBack, onSubmit }: { role: 'client' | 'distributeur'; defaultEmail?: string | null; onBack: () => void; onSubmit: () => void }) {
+export function LoginScreen({ defaultEmail, onBack, onSubmit }: { defaultEmail?: string | null; onBack: () => void; onSubmit: () => void }) {
   const [showPw, setShowPw] = useState(false)
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll pwa2-overlay">
@@ -79,7 +78,7 @@ export function LoginScreen({ role, defaultEmail, onBack, onSubmit }: { role: 'c
           <h1 style={{ position: 'relative', fontFamily: ANTON, textTransform: 'uppercase', fontSize: 44, lineHeight: 0.92, margin: 0, color: 'var(--text)' }}>La Base<br /><span style={{ color: 'var(--lime)' }}>360</span></h1>
         </div>
         <div style={{ flex: 1, padding: '30px 24px 26px' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>Connexion · {role === 'distributeur' ? 'DISTRIBUTEUR' : 'CLIENT'}</div>
+          <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>Connexion</div>
           <h2 style={{ fontFamily: ANTON, textTransform: 'uppercase', fontSize: 27, lineHeight: 1.02, margin: '0 0 8px', color: 'var(--text)' }}>Ton espace t'attend</h2>
           <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--muted)' }}>Identifie-toi pour ouvrir ton espace.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
