@@ -302,7 +302,7 @@ export function EvolutionTab({ ageYears, metrics, measurements }: EvolutionTabPr
 
       {/* Feuille de saisie mensuration */}
       {activeZone && activeZoneDef && (
-        <div onClick={() => setActiveZone(null)} style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end' }}>
+        <div onClick={() => setActiveZone(null)} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', background: 'var(--surface)', borderTop: '1px solid var(--border2)', borderRadius: '26px 26px 0 0', padding: '22px 22px calc(26px + env(safe-area-inset-bottom, 0px))', animation: 'lbSheet .3s cubic-bezier(.16,1,.3,1)' }}>
             <div style={{ width: 40, height: 4, borderRadius: 999, background: 'var(--border2)', margin: '0 auto 18px' }} />
             <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--teal)', fontWeight: 600 }}>Mensuration</div>

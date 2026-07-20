@@ -29,7 +29,7 @@ const CLIENTS = [
 export function DistribScreen({ name, onQuit }: { name: string; onQuit: () => void }) {
   const initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'SB'
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'var(--bg)', overflowY: 'auto' }} className="lb-scroll pwa2-overlay">
       <div style={{ position: 'relative', minHeight: '100%', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 18px 34px', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'hidden', animation: 'lbRise .4s ease both' }}>
         <div style={{ position: 'absolute', top: '-8%', right: '-18%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 70%)', opacity: 0.1, filter: 'blur(70px)', pointerEvents: 'none' }} />
 

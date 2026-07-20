@@ -153,7 +153,7 @@ export function RecommanderTab({ coachName, onShareContact }: RecommanderTabProp
 
       {/* Modale Club VIP en 30s */}
       {showHow && (
-        <div onClick={() => setShowHow(false)} style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => setShowHow(false)} style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} className="lb-scroll" style={{ width: '100%', maxHeight: '86%', overflowY: 'auto', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 24, padding: 22, animation: 'lbRise .32s cubic-bezier(.16,1,.3,1)', boxShadow: '0 30px 70px -20px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 999, background: 'color-mix(in srgb,var(--gold) 16%,transparent)', border: '1px solid color-mix(in srgb,var(--gold) 40%,transparent)', color: 'var(--gold)', fontFamily: MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" /></svg>Club VIP</span>
