@@ -670,8 +670,32 @@ export function ClientAppPage() {
     const lastW = typeof latest?.weight === 'number' ? latest.weight : null
     const weightDeltaKg =
       firstW != null && lastW != null ? Math.round((lastW - firstW) * 10) / 10 : null
+    const birthDate = liveData?.client?.birth_date ?? null
+    const ageYears = birthDate ? calculateAge(birthDate) : null
+    const metricsV2 = metrics.map((m) => ({
+      date: m.date,
+      weight: typeof m.weight === 'number' ? m.weight : undefined,
+      bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : undefined,
+      muscle: typeof m.muscle === 'number' ? m.muscle : undefined,
+      hydration: typeof m.hydration === 'number' ? m.hydration : undefined,
+    }))
+    const productsV2 = (liveData?.current_products ?? []).map((p) => ({
+      id: p.id,
+      product_name: p.product_name,
+      note_metier: p.note_metier,
+      quantite_label: p.quantite_label,
+    }))
+    const sportAlertsV2 = (liveData?.sport_alerts ?? []).map((a) => ({
+      id: a.id,
+      title: a.title,
+      detail: a.detail,
+      advice: a.advice,
+    }))
+    const fmtDate = (iso?: string | null) =>
+      iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined
     return (
       <PwaClientApp
+        token={token as string}
         clientName={data.client_first_name || 'toi'}
         coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
         assessmentsCount={data.assessments_count ?? metrics.length}
@@ -679,6 +703,16 @@ export function ClientAppPage() {
         nextFollowUp={data.next_follow_up}
         programTitle={data.program_title}
         onOpenTour={() => setOnboardingDone(false)}
+        ageYears={ageYears}
+        metrics={metricsV2}
+        measurements={liveData?.measurements ?? []}
+        products={productsV2}
+        coachAdvice={liveData?.coach_advice}
+        sportAlerts={sportAlertsV2}
+        lastAdviceDate={fmtDate(latest?.date)}
+        objective={liveData?.client?.objective ?? undefined}
+        startDate={fmtDate(first?.date)}
+        onLogout={() => window.location.reload()}
       />
     )
   }
