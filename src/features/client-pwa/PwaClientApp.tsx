@@ -20,6 +20,12 @@
 // ============================================================================
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { TELEGRAM_GROUP_URL } from '../../lib/telegram'
+import { EvolutionTab, type EvolutionMetricPoint, type EvolutionMeasurement } from './tabs/EvolutionTab'
+import { ProduitsTab, type PwaProduct } from './tabs/ProduitsTab'
+import { ConseilsTab, type PwaSportAlert } from './tabs/ConseilsTab'
+import { MessagesTab } from './tabs/MessagesTab'
+import { RecommanderTab } from './tabs/RecommanderTab'
+import { ProfilScreen } from './ProfilScreen'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -48,6 +54,7 @@ const MOODS: Array<{ key: string; label: string; color: string }> = [
 type TabKey = 'accueil' | 'evolution' | 'produits' | 'conseils' | 'messages' | 'recommander'
 
 export interface PwaClientAppProps {
+  token: string
   clientName: string
   coachName: string
   assessmentsCount: number
@@ -56,6 +63,21 @@ export interface PwaClientAppProps {
   nextFollowUp?: string | null
   programTitle?: string
   onOpenTour: () => void
+  // Données onglets
+  ageYears: number | null
+  metrics: EvolutionMetricPoint[]
+  measurements: EvolutionMeasurement[]
+  products: PwaProduct[]
+  coachAdvice?: string | null
+  sportAlerts: PwaSportAlert[]
+  lastAdviceDate?: string | null
+  // Profil
+  email?: string | null
+  heightCm?: number | null
+  objective?: string | null
+  startDate?: string | null
+  // Actions
+  onLogout: () => void
 }
 
 function initialsOf(name: string): string {
@@ -73,6 +95,7 @@ function greetingFor(d: Date): string {
 }
 
 export function PwaClientApp({
+  token,
   clientName,
   coachName,
   assessmentsCount,
@@ -80,9 +103,22 @@ export function PwaClientApp({
   nextFollowUp,
   programTitle,
   onOpenTour,
+  ageYears,
+  metrics,
+  measurements,
+  products,
+  coachAdvice,
+  sportAlerts,
+  lastAdviceDate,
+  email,
+  heightCm,
+  objective,
+  startDate,
+  onLogout,
 }: PwaClientAppProps) {
-  const [theme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [tab, setTab] = useState<TabKey>('accueil')
+  const [profilOpen, setProfilOpen] = useState(false)
 
   // Gamification (démo — à brancher sur client-xp + persistance humeur)
   const [xpLevel, setXpLevel] = useState(2)
@@ -94,7 +130,6 @@ export function PwaClientApp({
   const [levelUpOpen, setLevelUpOpen] = useState(false)
   const [xpInfoOpen, setXpInfoOpen] = useState(false)
   const [levelUpFromTo, setLevelUpFromTo] = useState<{ from: string; to: string; level: number } | null>(null)
-  const [coachNotified, setCoachNotified] = useState(false)
 
   // Noaly
   const [noalyOpen, setNoalyOpen] = useState(false)
@@ -146,7 +181,6 @@ export function PwaClientApp({
         level: lvl,
       })
       setLevelUpOpen(true)
-      setCoachNotified(true)
     }
     setXpInLevel(inLvl)
     setXpLevel(lvl)
@@ -241,14 +275,6 @@ export function PwaClientApp({
     )
   }
 
-  const placeholderLabels: Record<Exclude<TabKey, 'accueil'>, string> = {
-    evolution: 'Évolution',
-    produits: 'Produits',
-    conseils: 'Conseils',
-    messages: 'Messages',
-    recommander: 'Club VIP',
-  }
-
   return (
     <div
       className={`pwa2${theme === 'light' ? ' pwa2-light' : ''}`}
@@ -261,7 +287,7 @@ export function PwaClientApp({
       {/* Header condensé */}
       <div style={{ position: 'relative', padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(140deg,var(--teal),var(--teal-d))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ANTON, fontSize: 16, color: '#04201b', flex: 'none' }}>{initials}</div>
+          <button onClick={() => setProfilOpen(true)} aria-label="Mon profil" style={{ width: 46, height: 46, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'linear-gradient(140deg,var(--teal),var(--teal-d))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ANTON, fontSize: 16, color: '#04201b', flex: 'none' }}>{initials}</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: SORA, fontWeight: 600, fontSize: 18, color: 'var(--text)', lineHeight: 1.2 }}>{greeting} {clientName} !</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--muted)', marginTop: 2, letterSpacing: '.02em' }}>{programTitle ? `${programTitle} · ` : ''}{assessmentsCount} bilan{assessmentsCount > 1 ? 's' : ''}</div>
@@ -432,8 +458,16 @@ export function PwaClientApp({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M9 7h8v8" /></svg>
             </a>
           </div>
+        ) : tab === 'evolution' ? (
+          <EvolutionTab ageYears={ageYears} metrics={metrics} measurements={measurements} />
+        ) : tab === 'produits' ? (
+          <ProduitsTab products={products} onTalkToCoach={() => setTab('messages')} />
+        ) : tab === 'conseils' ? (
+          <ConseilsTab coachName={coachName} coachAdvice={coachAdvice} sportAlerts={sportAlerts} lastAdviceDate={lastAdviceDate} />
+        ) : tab === 'messages' ? (
+          <MessagesTab token={token} coachName={coachName} />
         ) : (
-          <PlaceholderTab label={placeholderLabels[tab]} />
+          <RecommanderTab coachName={coachName} onShareContact={() => setTab('messages')} />
         )}
       </div>
 
@@ -557,21 +591,24 @@ export function PwaClientApp({
         </div>
       )}
 
-      {/* coachNotified : indicateur discret (le message réel arrivera à l'étape Messages) */}
-      {coachNotified && tab !== 'accueil' && tab !== 'messages' && null}
+      {/* Profil / Réglages (overlay depuis l'avatar) */}
+      {profilOpen && (
+        <ProfilScreen
+          initials={initials}
+          clientName={clientName}
+          email={email}
+          ageYears={ageYears}
+          heightCm={heightCm}
+          objective={objective}
+          startDate={startDate}
+          theme={theme}
+          onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          onBack={() => setProfilOpen(false)}
+          onOpenTour={() => { setProfilOpen(false); onOpenTour() }}
+          onLogout={onLogout}
+        />
+      )}
     </div>
   )
 }
 
-function PlaceholderTab({ label }: { label: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 14, padding: '60px 20px', minHeight: 360, animation: 'lbRise .4s ease both' }}>
-      <div style={{ width: 64, height: 64, borderRadius: 20, background: 'color-mix(in srgb,var(--lime) 12%,var(--surface))', border: '1px solid color-mix(in srgb,var(--lime) 26%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" /></svg>
-      </div>
-      <div style={{ fontFamily: ANTON, textTransform: 'uppercase', fontSize: 26, color: 'var(--text)' }}>{label}</div>
-      <div style={{ fontSize: 13, color: 'var(--muted)', maxWidth: 260, lineHeight: 1.5 }}>Cet onglet arrive dans la nouvelle identité — chantier en cours, on le déroule juste après.</div>
-      <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--lime)', padding: '6px 14px', borderRadius: 999, background: 'color-mix(in srgb,var(--lime) 10%,transparent)', border: '1px solid color-mix(in srgb,var(--lime) 24%,transparent)' }}>Bientôt</span>
-    </div>
-  )
-}
