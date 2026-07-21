@@ -193,11 +193,28 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
   })
   const chartLine = pts.map((p) => p.join(',')).join(' ')
   const chartArea = `${P},${bottom} ${chartLine} ${W - P},${bottom}`
-  const lastPt = pts[pts.length - 1]
   const selStat = metricStat(activeMetricKey)
   // Étiquettes de date : ~5 réparties.
   const dateLabelIdx = n <= 5 ? selSeries.map((_, i) => i) : [0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1]
   const dateLabels = [...new Set(dateLabelIdx)].map((i) => new Date(selSeries[i].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }))
+
+  // ── Valeurs secondaires (en PLUS, pas en remplacement) ──────────────────
+  // Masse grasse : les kg de graisse perdus (poids × %MG). Muscle : le % du poids.
+  const r1 = (x: number) => Math.round(x * 10) / 10
+  const mFirstFat = metrics.find((m) => typeof m.weight === 'number' && typeof m.bodyFat === 'number')
+  const mLastFat = [...metrics].reverse().find((m) => typeof m.weight === 'number' && typeof m.bodyFat === 'number')
+  const fatKgDelta = mFirstFat && mLastFat ? r1((mLastFat.weight! * mLastFat.bodyFat!) / 100 - (mFirstFat.weight! * mFirstFat.bodyFat!) / 100) : null
+  const mFirstMus = metrics.find((m) => typeof m.weight === 'number' && typeof m.muscleMass === 'number')
+  const mLastMus = [...metrics].reverse().find((m) => typeof m.weight === 'number' && typeof m.muscleMass === 'number')
+  const musclePctNow = mLastMus ? r1((mLastMus.muscleMass! / mLastMus.weight!) * 100) : null
+  const musclePctDelta = mFirstMus && mLastMus ? r1((mLastMus.muscleMass! / mLastMus.weight!) * 100 - (mFirstMus.muscleMass! / mFirstMus.weight!) * 100) : null
+  function secondaryFor(key: MetricKey): string | null {
+    if (key === 'bodyFat' && fatKgDelta != null) return `${fatKgDelta <= 0 ? '≈ −' : '≈ +'}${Math.abs(fatKgDelta)} kg de graisse`
+    if (key === 'muscleMass' && musclePctNow != null) return `${musclePctNow}% du poids${musclePctDelta != null && musclePctDelta !== 0 ? ` (${musclePctDelta > 0 ? '+' : '−'}${Math.abs(musclePctDelta)})` : ''}`
+    return null
+  }
+  // Étiquetage courbe : tous les points si peu nombreux, sinon on éclaircit.
+  const labelStep = Math.max(1, Math.ceil(n / 12))
 
   const card: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 18, padding: 18 }
   const activeZoneDef = ZONE_DEFS.find((z) => z.key === activeZone) || null
@@ -273,6 +290,9 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
                   {st.delta == null ? '—' : `${st.delta > 0 ? '↑ +' : st.delta < 0 ? '↓ −' : ''}${Math.abs(st.delta)} ${mt.unit}`}
                   <span style={{ color: 'var(--dim)', fontWeight: 400 }}> depuis le départ</span>
                 </div>
+                {secondaryFor(mt.key) && (
+                  <div style={{ fontSize: 11, color: mt.color, fontWeight: 600, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 7, background: `color-mix(in srgb,${mt.color} 12%,transparent)` }}>{secondaryFor(mt.key)}</div>
+                )}
               </button>
             )
           })}
@@ -306,8 +326,16 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
             <line x1="14" y1={bottom} x2={W - 14} y2={bottom} stroke="var(--border)" strokeWidth="1" />
             <polygon points={chartArea} fill="url(#pwaMetricArea)" style={{ animation: 'lbFade .9s ease .3s both' }} />
             <polyline points={chartLine} fill="none" stroke={sel.color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: 640, animation: 'lbDraw 1s cubic-bezier(.16,1,.3,1) forwards' }} />
-            {lastPt && <circle cx={lastPt[0]} cy={lastPt[1]} r="5" fill={sel.color} stroke="var(--bg)" strokeWidth="2.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'lbPop .5s cubic-bezier(.16,1,.3,1) .8s both' }} />}
-            {lastPt && <text x={Math.min(lastPt[0], W - 30)} y={Math.max(lastPt[1] - 9, 12)} fill="var(--text)" fontFamily="'JetBrains Mono', monospace" fontSize="11" fontWeight="700" textAnchor="end">{fmt(selStat.cur)}</text>}
+            {pts.map((p, i) => {
+              const isLast = i === pts.length - 1
+              const showLabel = i % labelStep === 0 || isLast
+              return (
+                <g key={i}>
+                  <circle cx={p[0]} cy={p[1]} r={isLast ? 4.5 : 2.4} fill={sel.color} stroke="var(--bg)" strokeWidth={isLast ? 2 : 1.2} style={isLast ? { transformBox: 'fill-box', transformOrigin: 'center', animation: 'lbPop .5s cubic-bezier(.16,1,.3,1) .8s both' } : undefined} />
+                  {showLabel && <text x={Math.max(11, Math.min(p[0], W - 11))} y={p[1] - 7} fill="var(--text)" fontFamily="'JetBrains Mono', monospace" fontSize="6.5" fontWeight="700" textAnchor="middle">{fmt(selVals[i])}</text>}
+                </g>
+              )
+            })}
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9.5, color: 'var(--dim)', marginTop: 6 }}>
             {dateLabels.map((d, i) => <span key={i}>{d}</span>)}
