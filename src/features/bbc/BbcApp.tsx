@@ -15,6 +15,13 @@ import "../../styles/bbc-tokens.css";
 import { useState, type ReactNode } from "react";
 import type { Club } from "../../types/domain";
 import { BbcModeSwitch } from "./BbcModeSwitch";
+import { BbcScripts } from "./views/BbcScripts";
+import { BbcCoeurs } from "./views/BbcCoeurs";
+import { BbcClub } from "./views/BbcClub";
+import { BbcClubs } from "./views/BbcClubs";
+import { BbcFormation } from "./views/BbcFormation";
+import { BbcCrm } from "./views/BbcCrm";
+import { BbcMessages } from "./views/BbcMessages";
 
 type BbcView =
   | "cockpit"
@@ -33,15 +40,15 @@ interface BbcAppProps {
   club?: Club | null;
 }
 
-const NAV: Array<{ k: BbcView; label: string; icon: string; badge?: string; lot?: string }> = [
+const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
   { k: "cockpit", label: "Cockpit", icon: "▦" },
-  { k: "crm", label: "Cobayes & membres", icon: "👥", lot: "Lot 2" },
-  { k: "club", label: "Le club", icon: "☕", lot: "Lot 3" },
-  { k: "coeurs", label: "Cœurs", icon: "❤️", lot: "Lot 2" },
-  { k: "messages", label: "Messages", icon: "✉️", lot: "Lot 4" },
-  { k: "scripts", label: "Scripts", icon: "📝", lot: "Lot 2" },
-  { k: "formation", label: "Formation", icon: "🎓", lot: "Lot 5" },
-  { k: "clubs", label: "Mes clubs", icon: "🗺️", lot: "Lot 5" },
+  { k: "crm", label: "Cobayes & membres", icon: "👥" },
+  { k: "club", label: "Le club", icon: "☕" },
+  { k: "coeurs", label: "Cœurs", icon: "❤️" },
+  { k: "messages", label: "Messages", icon: "✉️" },
+  { k: "scripts", label: "Scripts", icon: "📝" },
+  { k: "formation", label: "Formation", icon: "🎓" },
+  { k: "clubs", label: "Mes clubs", icon: "🗺️" },
 ];
 
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
@@ -116,19 +123,6 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
                   {n.icon}
                 </span>
                 <span style={{ flex: 1 }}>{n.label}</span>
-                {n.lot ? (
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      color: "var(--ls-bbc-hint)",
-                      letterSpacing: "0.04em",
-                      fontFamily: "var(--ls-bbc-font-mono)",
-                    }}
-                  >
-                    {n.lot}
-                  </span>
-                ) : null}
               </button>
             );
           })}
@@ -194,7 +188,14 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
           ) : null}
         </div>
 
-        {view === "cockpit" ? <Cockpit /> : <ComingSoon view={view} />}
+        {view === "cockpit" && <Cockpit />}
+        {view === "scripts" && <BbcScripts />}
+        {view === "coeurs" && <BbcCoeurs />}
+        {view === "club" && <BbcClub />}
+        {view === "clubs" && <BbcClubs />}
+        {view === "formation" && <BbcFormation />}
+        {view === "crm" && <BbcCrm />}
+        {view === "messages" && <BbcMessages />}
       </main>
 
       {/* ── Bottom nav (mobile) ───────────────────────────────────────── */}
@@ -337,21 +338,6 @@ function Cockpit() {
         Cockpit BBC — charpente du Lot 1, données d'exemple.
         <br />
         Le compteur cobayes, le pointage et les cœurs se branchent aux lots suivants.
-      </div>
-    </div>
-  );
-}
-
-function ComingSoon({ view }: { view: BbcView }) {
-  const lot = NAV.find((n) => n.k === view)?.lot ?? "à venir";
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: "70px 0", textAlign: "center" }}>
-      <div style={{ width: 60, height: 60, borderRadius: 16, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
-        <span aria-hidden="true">{NAV.find((n) => n.k === view)?.icon}</span>
-      </div>
-      <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22 }}>{TITLES[view].title}</div>
-      <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", maxWidth: 380, lineHeight: 1.5 }}>
-        Cet écran est déjà dessiné dans ton design — je le branche au <b style={{ color: "var(--ls-bbc-lime-text)" }}>{lot}</b>, même ADN lime/noir.
       </div>
     </div>
   );
