@@ -23,6 +23,9 @@ import { useCrmBadge } from "../../hooks/useCrmBadge";
 import { NoalyFab } from "../noaly/NoalyFab";
 import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
+import { useBbcMode } from "../../features/bbc/useBbcMode";
+import { BbcApp } from "../../features/bbc/BbcApp";
+import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
 // des emojis (decoratifs aria-hidden) directement dans le tableau
@@ -75,6 +78,9 @@ export function AppLayout() {
   const { activeTour, closeTour } = useActiveTour();
   // Direction 2 (2026-04-28) : QuizModal idem au niveau AppLayout.
   const { activeQuiz, closeQuiz } = useActiveQuiz();
+  // Chantier BBC (2026-07-24) : état du mode BBC (hook parallèle, ne touche
+  // pas AppContext). Appelé avant le guard pour respecter les règles des hooks.
+  const bbc = useBbcMode(currentUser?.id, currentUser?.role === "admin");
 
   if (!currentUser) {
     return null;
@@ -202,6 +208,20 @@ export function AppLayout() {
     !location.pathname.startsWith("/welcome") &&
     !location.pathname.startsWith("/bienvenue-distri") &&
     !location.pathname.startsWith("/auto-login");
+
+  // Chantier BBC : prise de contrôle COMPLÈTE de l'écran quand le coach est
+  // en BBC (club_model='bbc' ou aperçu admin). Remplace tout le chrome classic
+  // par l'environnement BBC dédié (sa propre sidebar + ses écrans).
+  if (bbc.isBbc) {
+    return (
+      <BbcApp
+        coachName={currentUser.name}
+        isAdmin={currentUser.role === "admin"}
+        onSetPreview={bbc.setPreview}
+        club={bbc.activeClub}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-hero-mesh">
@@ -553,6 +573,13 @@ export function AppLayout() {
           >
             {/* Bouton install PWA — visible si le navigateur expose le prompt */}
             <CoachInstallPwaButton />
+            {/* Chantier BBC : bascule Classic/BBC (admins) — entrée dans
+                l'environnement dédié. Aperçu localStorage, zéro impact DB. */}
+            {currentUser.role === "admin" ? (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <BbcModeSwitch value="classic" onChange={(v) => bbc.setPreview(v)} compact />
+              </div>
+            ) : null}
             {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
             <SidebarStreakBadge />
             {/* Ligne profil + bouton Sortir inline. V7 sidebar refresh

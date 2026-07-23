@@ -1,12 +1,11 @@
 /* =============================================================================
- * BBC mode — design tokens (chantier BBC Lot 1, 2026-07-24)
+ * BBC mode — design tokens + layout (chantier BBC Lot 1, 2026-07-24)
  *
  * Namespace ISOLÉ --ls-bbc-* (même patron que --ls-ops-* de la Salle des
  * Opérations) : n'affecte AUCUNE autre partie de l'app. Source de vérité =
  * design validé par Thomas (BBC Mode.dc.html / BBC Desktop.dc.html).
  *
- * Dark par défaut (l'environnement BBC est sombre premium). La variante
- * claire s'active en ajoutant la classe `.bbc-light` sur le wrapper.
+ * Dark par défaut. Variante claire via `.bbc-light` sur le wrapper.
  * ========================================================================== */
 
 .bbc-mode {
@@ -43,4 +42,54 @@
   --ls-bbc-teal: #0F766E;
   --ls-bbc-coral: #E11D48;
   --ls-bbc-lime-text: #4D7A06;
+}
+
+/* ── Layout de l'environnement BBC (prise de contrôle plein écran) ──────── */
+.bbc-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--ls-bbc-bg);
+  color: var(--ls-bbc-text);
+  font-family: var(--ls-bbc-font-body);
+}
+.bbc-sidebar {
+  width: 244px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--ls-bbc-s1);
+  border-right: 1px solid var(--ls-bbc-line);
+  padding: 18px 12px calc(14px + env(safe-area-inset-bottom));
+}
+.bbc-main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  padding: 24px 28px 40px;
+}
+.bbc-bottomnav {
+  display: none;
+}
+.bbc-navitem:hover {
+  background: var(--ls-bbc-s2) !important;
+}
+
+@media (max-width: 900px) {
+  .bbc-sidebar {
+    display: none;
+  }
+  .bbc-main {
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom));
+  }
+  .bbc-bottomnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    background: var(--ls-bbc-s1);
+    border-top: 1px solid var(--ls-bbc-line);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
 }
