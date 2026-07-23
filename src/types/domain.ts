@@ -172,6 +172,31 @@ export interface User {
   monthlyPvOverrideMonth?: string | null;
   monthlyPvOverrideSetAt?: string | null;
   monthlyPvOverrideSetBy?: string | null;
+  /** Modèle de club (chantier BBC 2026-07-24). 'classic' = app actuelle,
+   *  'bbc' = environnement dédié Breakfast Budget Club. Default 'classic'.
+   *  Lu via useBbcMode (hook parallèle) — non hydraté par AppContext. */
+  clubModel?: "classic" | "bbc";
+}
+
+/** Objet club (chantier BBC 2026-07-24). Un coach BBC possède 1..N clubs.
+ *  Toutes les valeurs métier configurables (horaires des appels, barème des
+ *  cœurs, créneau d'ouverture) vivent dans `settings` — jamais en dur. */
+export interface Club {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  city?: string | null;
+  slug?: string | null;
+  active: boolean;
+  settings?: ClubSettings | null;
+  createdAt?: string;
+}
+
+export interface ClubSettings {
+  open_hours?: string;
+  calls?: Record<string, { days: string[]; time: string }>;
+  hearts_bareme?: Record<string, string>;
+  [key: string]: unknown;
 }
 
 /** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.
@@ -495,6 +520,11 @@ export interface Client {
   /** V3 funnel business (2026-11-07) : timestamp quand le coach a envoye
    *  le plan /opportunite via le bouton SendBusinessPlanButton. */
   businessPlanSentAt?: string | null;
+  /** Chantier BBC 2026-07-24 : ce client suit une EBE BBC → son espace PWA
+   *  bascule sur l'app membre BBC. Default false (EBE standard = PWA actuelle). */
+  ebeBbc?: boolean;
+  /** Club BBC de rattachement (NULL = pas rattaché). */
+  clubId?: string | null;
 }
 
 export interface FollowUp {
