@@ -30,6 +30,7 @@ import { useClientLiveData } from '../hooks/useClientLiveData'
 import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
 // Refonte identité PWA v2 (chantier 2026-07) — montée derrière le flag `?v2=1`.
 import { PwaClientApp } from '../features/client-pwa/PwaClientApp'
+import { BbcClientApp } from '../features/bbc/BbcClientApp'
 import '../styles/pwa2.css'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
@@ -663,6 +664,24 @@ export function ClientAppPage() {
   // flux périphériques ne sont pas portés en v2 (opt-in push, bannière
   // install PWA, submit parrainage réel, modales message). À supprimer avec
   // ce garde-fou une fois le portage terminé + recette Thomas OK.
+  // ── Mode BBC (chantier 2026-07-24) ─────────────────────────────────────
+  // Aiguillage PAR CLIENT : une EBE BBC bascule la PWA sur l'app membre BBC.
+  // Aperçu via ?bbc=1. Le vrai flag `ebe_bbc` arrivera dans le payload de
+  // l'edge client-app-data (commit suivant) — ici on le lit s'il est présent.
+  const isBbcClient =
+    (typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('bbc') === '1') ||
+    Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
+  if (isBbcClient) {
+    return (
+      <BbcClientApp
+        clientName={data.client_first_name || 'toi'}
+        coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+        programTitle={data.program_title}
+      />
+    )
+  }
+
   const useLegacyUi =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('v1') === '1'

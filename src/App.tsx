@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
+import { CoPiloteDispatcher } from "./features/bbc/CoPiloteDispatcher";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
 import { StaleHostBanner } from "./components/layout/StaleHostBanner";
@@ -743,7 +744,9 @@ export default function App() {
                   (2026-06-14) : co-pilote-legacy + co-pilote-v5 retirés (V5
                   stable en prod) → CoPilotePage/RentabilityWidget/Gauge supprimés.
                   Rollback éventuel = historique git. */}
-              <Route path="co-pilote" element={<CoPiloteV5Page />} />
+              {/* Chantier BBC (2026-07-24) : aiguillage additif — un coach BBC
+                  voit la coquille BBC, un classic garde le Co-pilote V5 intact. */}
+              <Route path="co-pilote" element={<CoPiloteDispatcher classic={<CoPiloteV5Page />} />} />
               {/* Preview provisoire Salle des Opérations (slice 1, recette look). */}
               <Route path="salle-ops" element={<SalleDesOperationsPage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />

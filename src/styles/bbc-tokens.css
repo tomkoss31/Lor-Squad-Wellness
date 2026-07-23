@@ -1,0 +1,46 @@
+/* =============================================================================
+ * BBC mode — design tokens (chantier BBC Lot 1, 2026-07-24)
+ *
+ * Namespace ISOLÉ --ls-bbc-* (même patron que --ls-ops-* de la Salle des
+ * Opérations) : n'affecte AUCUNE autre partie de l'app. Source de vérité =
+ * design validé par Thomas (BBC Mode.dc.html / BBC Desktop.dc.html).
+ *
+ * Dark par défaut (l'environnement BBC est sombre premium). La variante
+ * claire s'active en ajoutant la classe `.bbc-light` sur le wrapper.
+ * ========================================================================== */
+
+.bbc-mode {
+  --ls-bbc-bg: #0B0D11;
+  --ls-bbc-s1: #131820;
+  --ls-bbc-s2: #1A2029;
+  --ls-bbc-s3: #20262F;
+  --ls-bbc-line: rgba(251, 247, 240, 0.10);
+  --ls-bbc-line2: rgba(251, 247, 240, 0.18);
+  --ls-bbc-text: #FBF7F0;
+  --ls-bbc-muted: rgba(251, 247, 240, 0.60);
+  --ls-bbc-hint: rgba(251, 247, 240, 0.34);
+  --ls-bbc-lime: #C5F82A;
+  --ls-bbc-teal: #2DD4BF;
+  --ls-bbc-coral: #FB7185;
+  --ls-bbc-lime-ink: #06241F;
+  --ls-bbc-lime-text: #C5F82A;
+  --ls-bbc-font-display: "Anton", system-ui, sans-serif;
+  --ls-bbc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ls-bbc-font-body: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.bbc-mode.bbc-light {
+  --ls-bbc-bg: #F3F4EF;
+  --ls-bbc-s1: #FFFFFF;
+  --ls-bbc-s2: #F4F5EF;
+  --ls-bbc-s3: #EAEBE3;
+  --ls-bbc-line: rgba(11, 13, 17, 0.10);
+  --ls-bbc-line2: rgba(11, 13, 17, 0.18);
+  --ls-bbc-text: #0B0D11;
+  --ls-bbc-muted: rgba(11, 13, 17, 0.62);
+  --ls-bbc-hint: rgba(11, 13, 17, 0.38);
+  --ls-bbc-lime: #8FBF0F;
+  --ls-bbc-teal: #0F766E;
+  --ls-bbc-coral: #E11D48;
+  --ls-bbc-lime-text: #4D7A06;
+}
