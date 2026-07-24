@@ -23,6 +23,7 @@ import { BbcFormation } from "./views/BbcFormation";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
+import { useBbcCobayes } from "./useBbcCobayes";
 
 type BbcView =
   | "cockpit"
@@ -36,9 +37,12 @@ type BbcView =
 
 interface BbcAppProps {
   coachName?: string;
+  userId?: string;
   isAdmin?: boolean;
   onSetPreview?: (v: "classic" | "bbc" | null) => void;
   club?: Club | null;
+  clubs?: Club[];
+  onCreateClub?: (name: string, city: string) => Promise<boolean>;
 }
 
 const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
@@ -63,10 +67,10 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
 };
 
-export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) {
+export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub }: BbcAppProps) {
   const [view, setView] = useState<BbcView>("cockpit");
-  const [cobayes, setCobayes] = useState(14);
   const [sheet, setSheet] = useState(false);
+  const cob = useBbcCobayes(userId);
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
   const clubCity = club?.city ?? "Verdun";
@@ -191,11 +195,11 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
           ) : null}
         </div>
 
-        {view === "cockpit" && <Cockpit cobayes={cobayes} target={20} onSend={() => setSheet(true)} />}
+        {view === "cockpit" && <Cockpit cobayes={cob.count} target={cob.target} onSend={() => setSheet(true)} />}
         {view === "scripts" && <BbcScripts />}
         {view === "coeurs" && <BbcCoeurs />}
         {view === "club" && <BbcClub />}
-        {view === "clubs" && <BbcClubs />}
+        {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm />}
         {view === "messages" && <BbcMessages />}
@@ -238,7 +242,7 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
       {sheet ? (
         <BbcCobayeSheet
           onClose={() => setSheet(false)}
-          onSent={() => setCobayes((c) => Math.min(c + 1, 20))}
+          onSent={(templateKey, contactLabel) => void cob.logCobaye(templateKey, contactLabel)}
         />
       ) : null}
     </div>

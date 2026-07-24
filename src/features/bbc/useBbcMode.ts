@@ -27,6 +27,8 @@ export interface UseBbcModeResult {
   preview: "classic" | "bbc" | null;
   /** Admin only : pose/retire l'aperçu (localStorage), sans toucher la DB. */
   setPreview: (v: "classic" | "bbc" | null) => void;
+  /** Admin/self : crée un club + passe le coach en BBC (RPC set_club_model). */
+  createMyClub: (name: string, city: string) => Promise<boolean>;
 }
 
 function readPreview(): "classic" | "bbc" | null {
@@ -102,11 +104,48 @@ export function useBbcMode(
     };
   }, [userId]);
 
+  const createMyClub = useCallback(
+    async (name: string, city: string): Promise<boolean> => {
+      if (!userId || !name.trim()) return false;
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return false;
+        const { data, error } = await sb
+          .from("clubs")
+          .insert({ owner_user_id: userId, name: name.trim(), city: city.trim() || null })
+          .select("id")
+          .maybeSingle();
+        if (error) return false;
+        await sb.rpc("set_club_model", { p_user_id: userId, p_model: "bbc" });
+        setClubModel("bbc");
+        if (data) {
+          setClubs((prev) => [
+            ...prev,
+            {
+              id: String((data as { id: string }).id),
+              ownerUserId: userId,
+              name: name.trim(),
+              city: city.trim() || null,
+              slug: null,
+              active: true,
+              settings: null,
+              createdAt: undefined,
+            },
+          ]);
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [userId],
+  );
+
   const effectivePreview = isAdmin ? preview : null;
   const isBbc =
     effectivePreview === "bbc" ||
     (effectivePreview !== "classic" && clubModel === "bbc");
   const activeClub = clubs[0] ?? null;
 
-  return { isBbc, clubModel, clubs, activeClub, loading, preview: effectivePreview, setPreview };
+  return { isBbc, clubModel, clubs, activeClub, loading, preview: effectivePreview, setPreview, createMyClub };
 }

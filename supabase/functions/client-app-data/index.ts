@@ -206,7 +206,7 @@ serve(async (req) => {
     const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes] = await Promise.all([
       supabase
         .from("clients")
-        .select("current_program, notes, objective, birth_date")
+        .select("current_program, notes, objective, birth_date, ebe_bbc")
         .eq("id", clientId)
         .maybeSingle(),
 
@@ -611,6 +611,8 @@ serve(async (req) => {
             objective: (clientRes.data as { objective?: string | null }).objective ?? null,
             // Date de naissance → âge auto-calculé côté front (toujours à jour).
             birth_date: (clientRes.data as { birth_date?: string | null }).birth_date ?? null,
+            // Chantier BBC : aiguillage PWA membre (EBE BBC → app membre BBC).
+            ebe_bbc: (clientRes.data as { ebe_bbc?: boolean | null }).ebe_bbc ?? false,
           }
         : null,
       next_follow_up: followUpRes.data

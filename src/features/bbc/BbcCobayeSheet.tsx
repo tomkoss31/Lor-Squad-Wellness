@@ -12,7 +12,7 @@ const OUTREACH = BBC_SCRIPTS.filter((s) => s.outreach);
 
 interface BbcCobayeSheetProps {
   onClose: () => void;
-  onSent: () => void;
+  onSent: (templateKey: string, contactLabel: string) => void;
 }
 
 export function BbcCobayeSheet({ onClose, onSent }: BbcCobayeSheetProps) {
@@ -32,7 +32,7 @@ export function BbcCobayeSheet({ onClose, onSent }: BbcCobayeSheetProps) {
     } catch {
       /* ignore */
     }
-    onSent();
+    onSent(OUTREACH[sel].title, name.trim());
     onClose();
   }
 

@@ -216,9 +216,12 @@ export function AppLayout() {
     return (
       <BbcApp
         coachName={currentUser.name}
+        userId={currentUser.id}
         isAdmin={currentUser.role === "admin"}
         onSetPreview={bbc.setPreview}
         club={bbc.activeClub}
+        clubs={bbc.clubs}
+        onCreateClub={bbc.createMyClub}
       />
     );
   }
