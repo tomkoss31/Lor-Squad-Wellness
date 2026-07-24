@@ -673,13 +673,20 @@ export function ClientAppPage() {
       new URLSearchParams(window.location.search).get('bbc') === '1') ||
     Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
   if (isBbcClient) {
+    const bbcFirstW = typeof first?.weight === 'number' && first.weight > 0 ? first.weight : null
+    const bbcLastW = typeof latest?.weight === 'number' && latest.weight > 0 ? latest.weight : null
+    const bbcDelta = bbcFirstW != null && bbcLastW != null ? Math.round((bbcLastW - bbcFirstW) * 10) / 10 : null
     return (
       <BbcClientApp
         clientName={data.client_first_name || 'toi'}
-        coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+        coachName={data.coach_name || 'ton coach'}
         programTitle={data.program_title}
         token={token as string}
         visitsCount={(liveData as { visits_count?: number } | null)?.visits_count ?? 0}
+        weightDeltaKg={bbcDelta}
+        currentWeight={bbcLastW}
+        nextRdvDate={data.next_follow_up ?? null}
+        nextRdvType={(liveData?.next_follow_up as { type?: string | null } | null)?.type ?? null}
       />
     )
   }
