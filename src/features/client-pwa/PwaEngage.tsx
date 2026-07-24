@@ -7,51 +7,12 @@
 // InstallPwaInstructions), habillage lime/noir. Monté en haut de l'Accueil.
 // ============================================================================
 import { useEffect, useState } from 'react'
-import { getSupabaseClient } from '../../services/supabaseClient'
 import { detectDevice, isStandalonePwa } from '../../lib/utils/detectDevice'
 import { InstallPwaInstructions } from '../../components/pwa/InstallPwaInstructions'
+import { enablePush, pushSupported, subscribeAndStore } from './pushSubscribe'
 
 const SORA = "'Sora', sans-serif"
-const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? ''
 const DISMISS_KEY = 'pwa_banner_dismissed'
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = atob(base64)
-  const arr = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) arr[i] = rawData.charCodeAt(i)
-  return arr
-}
-
-async function subscribeAndStore(token: string): Promise<'ok' | 'skipped' | 'error'> {
-  try {
-    if (!VAPID_KEY) return 'error'
-    if (typeof window === 'undefined') return 'skipped'
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'skipped'
-    const reg = await navigator.serviceWorker.ready
-    let subscription = await reg.pushManager.getSubscription()
-    if (!subscription) {
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_KEY) as unknown as ArrayBuffer,
-      })
-    }
-    const j = subscription.toJSON()
-    const sb = await getSupabaseClient()
-    if (!sb) return 'error'
-    const { error } = await sb.rpc('upsert_client_push_subscription_by_token', {
-      p_token: token,
-      p_endpoint: j.endpoint ?? '',
-      p_p256dh: j.keys?.p256dh ?? '',
-      p_auth: j.keys?.auth ?? '',
-      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-    })
-    return error ? 'error' : 'ok'
-  } catch {
-    return 'error'
-  }
-}
 
 export function PwaEngage({ token }: { token: string }) {
   const [pushState, setPushState] = useState<'hidden' | 'prompt' | 'subscribing' | 'failed'>('hidden')
@@ -60,9 +21,7 @@ export function PwaEngage({ token }: { token: string }) {
 
   // Push : montrer le prompt si supporté + permission 'default'.
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
-    if (!supported) return
+    if (!pushSupported()) return
     const perm = Notification.permission
     if (perm === 'granted') {
       void subscribeAndStore(token)
@@ -82,14 +41,8 @@ export function PwaEngage({ token }: { token: string }) {
 
   async function activatePush() {
     setPushState('subscribing')
-    try {
-      const perm = await Notification.requestPermission()
-      if (perm !== 'granted') { setPushState('failed'); return }
-      const r = await subscribeAndStore(token)
-      setPushState(r === 'ok' ? 'hidden' : 'failed')
-    } catch {
-      setPushState('failed')
-    }
+    const ok = await enablePush(token)
+    setPushState(ok ? 'hidden' : 'failed')
   }
   function dismissInstall() {
     setInstallVisible(false)

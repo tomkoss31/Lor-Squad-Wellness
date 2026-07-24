@@ -14,6 +14,7 @@
 import { useState, type CSSProperties } from 'react'
 import { getSupabaseClient } from '../../../services/supabaseClient'
 import { recordClientXp } from '../../../features/client-xp/useClientXp'
+import { getGuide, type MeasurementKey } from '../../../data/measurementGuides'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -420,7 +421,29 @@ export function EvolutionTab({ token, ageYears, metrics, measurements }: Evoluti
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', background: 'var(--surface)', borderTop: '1px solid var(--border2)', borderRadius: '26px 26px 0 0', padding: '22px 22px calc(26px + env(safe-area-inset-bottom, 0px))', animation: 'lbSheet .3s cubic-bezier(.16,1,.3,1)' }}>
             <div style={{ width: 40, height: 4, borderRadius: 999, background: 'var(--border2)', margin: '0 auto 18px' }} />
             <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--teal)', fontWeight: 600 }}>Mensuration</div>
-            <div style={{ fontFamily: SORA, fontWeight: 700, fontSize: 19, color: 'var(--text)', margin: '4px 0 22px' }}>{activeZoneDef.label}</div>
+            <div style={{ fontFamily: SORA, fontWeight: 700, fontSize: 19, color: 'var(--text)', margin: '4px 0 16px' }}>{activeZoneDef.label}</div>
+            {(() => {
+              const g = getGuide(ZONE_TO_COL[activeZoneDef.key] as MeasurementKey)
+              if (!g) return null
+              return (
+                <div style={{ background: 'color-mix(in srgb,var(--teal) 8%,var(--surface2))', border: '1px solid color-mix(in srgb,var(--teal) 22%,var(--border))', borderRadius: 12, padding: '12px 14px', marginBottom: 20 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--teal)', fontWeight: 700, marginBottom: 8 }}>Comment mesurer</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {g.howToMeasure.map((step, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: 'var(--text)', lineHeight: 1.4 }}>
+                        <span style={{ flex: 'none', width: 16, height: 16, borderRadius: '50%', background: 'color-mix(in srgb,var(--teal) 18%,transparent)', color: 'var(--teal)', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>{i + 1}</span>
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {g.commonMistakes.length > 0 && (
+                    <div style={{ marginTop: 9, paddingTop: 9, borderTop: '1px dashed var(--border)', fontSize: 11.5, color: 'var(--coral)', lineHeight: 1.4 }}>
+                      ⚠️ À éviter : {g.commonMistakes.join(' · ')}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 22 }}>
               <button onClick={() => setSheetVal((v) => Math.max(0, Math.round((v - 0.5) * 2) / 2))} style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--text)', fontSize: 26, fontWeight: 700, cursor: 'pointer', lineHeight: 1 }}>−</button>
               <div style={{ textAlign: 'center', minWidth: 110 }}>
