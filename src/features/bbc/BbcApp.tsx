@@ -198,7 +198,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "cockpit" && <Cockpit cobayes={cob.count} target={cob.target} onSend={() => setSheet(true)} />}
         {view === "scripts" && <BbcScripts />}
         {view === "coeurs" && <BbcCoeurs userId={userId} />}
-        {view === "club" && <BbcClub />}
+        {view === "club" && <BbcClub userId={userId} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm />}
