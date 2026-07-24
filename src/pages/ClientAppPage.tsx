@@ -678,6 +678,8 @@ export function ClientAppPage() {
         clientName={data.client_first_name || 'toi'}
         coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
         programTitle={data.program_title}
+        token={token as string}
+        visitsCount={(liveData as { visits_count?: number } | null)?.visits_count ?? 0}
       />
     )
   }

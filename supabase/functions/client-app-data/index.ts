@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc")
@@ -255,6 +255,12 @@ serve(async (req) => {
         .select("measured_at, waist, hips, thigh_left, thigh_right, arm_left, arm_right")
         .eq("client_id", clientId)
         .order("measured_at", { ascending: true }),
+
+      // Chantier BBC : compteur de visites du membre (carte de membre PWA).
+      supabase
+        .from("club_visits")
+        .select("*", { count: "exact", head: true })
+        .eq("client_id", clientId),
     ]);
 
     if (clientRes.error) {
@@ -635,6 +641,7 @@ serve(async (req) => {
       sport_profile,
       current_intake,
       coach_advice,
+      visits_count: (visitsRes as { count?: number | null }).count ?? 0,
       fetched_at: new Date().toISOString(),
     };
 
