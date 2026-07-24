@@ -30,6 +30,7 @@ import { RecommanderTab } from './tabs/RecommanderTab'
 import { ProfilScreen } from './ProfilScreen'
 import { LandingScreen, LoginScreen, OnboardingScreen } from './EntryScreens'
 import { PwaEngage } from './PwaEngage'
+import { PushGate } from './PushGate'
 import { CLIENT_XP_LEVELS } from '../../features/client-xp/actions'
 
 const ANTON = "'Anton', sans-serif"
@@ -157,6 +158,9 @@ export function PwaClientApp({
   const [tab, setTab] = useState<TabKey>('accueil')
   const [profilOpen, setProfilOpen] = useState(false)
   const [screen, setScreen] = useState<ScreenKey>('app')
+  // Barrière notifs : hard-force à la connexion (Thomas 2026-07-24). Échappatoire
+  // de session seulement → se represente à chaque nouvelle connexion.
+  const [pushLater, setPushLater] = useState(false)
 
   // Gamification — branchée sur le vrai système client-xp + humeur (RPC).
   const xp = useClientXp(token)
@@ -342,6 +346,9 @@ export function PwaClientApp({
 
   return (
     <div className={`pwa2 pwa2-frame${theme === 'light' ? ' pwa2-light' : ''}`}>
+      {/* Barrière notifs — hard-force à la connexion tant que non activées */}
+      {screen === 'app' && !pushLater && <PushGate token={token} onLater={() => setPushLater(true)} />}
+
       {/* Blobs d'ambiance */}
       <div style={{ position: 'absolute', top: '-6%', right: '-18%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle,var(--lime),transparent 70%)', opacity: 0.08, filter: 'blur(70px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '20%', left: '-16%', width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle,var(--teal),transparent 70%)', opacity: 0.07, filter: 'blur(70px)', pointerEvents: 'none' }} />
