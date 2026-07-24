@@ -21,6 +21,7 @@
 - **Le club** — pointage réel (**+1 visite** → `club_visits`), alerte **7-9 orange / 10+ rouge (bilan)**, + **scanner caméra QR** (le membre montre son QR → +1 visite via `bbc_scan_visit`).
 - **Cœurs** — mur des cœurs réel + **recos à valider** (le coach confirme « a démarré » = 1 cœur), paliers 2/3/5.
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
+- **Formation** — échelle des rôles + **9 modules 00→08 cliquables avec contenu** (résumé + points clés, depuis le Notion) + glossaire.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
 - **Switch Classic/BBC** (admins) dans la sidebar.
 
@@ -39,7 +40,6 @@
 - **Cockpit** — blocs « ☕ le club ce matin », « ❤️ à un cœur du palier », « 📞 prochain appel » = **données d'exemple** (le compteur cobayes, lui, est réel).
 - **Messages (coach)** dans l'environnement desktop = exemple (le membre a un chat réel).
 - **Scripts** — contenu réel (verbatim Notion) mais statique ; le bouton « copier » fonctionne.
-- **Formation** — **structure seulement** : échelle des rôles + liste des 9 modules (00→08) + glossaire. **Pas de contenu dans les modules.**
 - **Noaly** (membre + coach) — coquille, pas branché à l'IA.
 
 ---
@@ -47,7 +47,7 @@
 ## 🔴 PAS FAIT DU TOUT
 
 - **Écran d'entrée membre** (`BBC Entrée.dc.html`, designé, pas porté).
-- **Contenu des modules Formation** (leçons 00→08). ⭐ *je sais quoi y mettre* (Notion Playbook + Formation 00→08).
+- **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
 - **Appels & rappels** — les rituels hebdo (Appel Ambassadeur lun/jeu, Atelier Cœurs mar/sam, Coach Academy mer) + inscriptions + séquence de rappels (J-jour midi / −30 / −15 / +30). Le membre a un bloc « appel du club » statique.
 - **Bilan des 10** — la checklist 9 étapes déclenchée à 10 visites (l'alerte existe, la checklist non).
 - **Cartes de membre 10/30** — type/prix/solde (aujourd'hui carte 10 en dur).
