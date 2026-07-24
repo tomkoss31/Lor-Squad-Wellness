@@ -172,7 +172,10 @@ export function CrmPage() {
         if (effScope === "me") {
           // Admin : voit aussi les leads NON attribués (coach null) — sinon un
           // lien /bilan-online sans slug donne un lead invisible.
-          const isMine = owner === currentUser?.id || (isAdmin && !owner);
+          // + Campagne club « colis » (funnel /colis, référent Mélanie par
+          //   défaut) : visible sous « Moi » pour TOUS les admins — décision
+          //   Thomas 2026-07-24, les 2 admins pilotent la même campagne.
+          const isMine = owner === currentUser?.id || (isAdmin && !owner) || (isAdmin && l.source === "colis");
           if (!isMine) return false;
         } else if (effScope === "l1") {
           if (!owner || !line1Ids.has(owner)) return false;
@@ -205,7 +208,7 @@ export function CrmPage() {
     for (const l of leads) {
       if (l.dormant) continue;
       const owner = l.ownerUserId;
-      if (effScope === "me") { if (!(owner === currentUser?.id || (isAdmin && !owner))) continue; }
+      if (effScope === "me") { if (!(owner === currentUser?.id || (isAdmin && !owner) || (isAdmin && l.source === "colis"))) continue; }
       else if (effScope === "l1") { if (!owner || !line1Ids.has(owner)) continue; }
       else if (effScope === "l2") { if (!owner || !line2Ids.has(owner)) continue; }
       else if (effScope !== "all") { if (owner !== effScope) continue; }
