@@ -664,6 +664,7 @@ export function PwaClientApp({
           heightCm={heightCm}
           objective={objective}
           startDate={startDate}
+          token={token}
           theme={theme}
           onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
           onBack={() => setProfilOpen(false)}

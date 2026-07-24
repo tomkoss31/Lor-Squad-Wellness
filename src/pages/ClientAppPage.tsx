@@ -622,9 +622,17 @@ export function ClientAppPage() {
   // départ". FAIL-OPEN : on n'affiche que si baseline_at vaut strictement
   // null ET que la donnée live est résolue (dataSource != unknown) — toute
   // incertitude (undefined / 'error' / live pas prêt) → on n'affiche pas.
+  // Élargi (2026-07-24) : un client qui a DÉJÀ un vrai bilan (poids dans
+  // metrics_history OU dans body_scan d'un assessment) ou une mensuration ne
+  // doit JAMAIS revoir « ton point de départ ». Évite de re-demander la pesée à
+  // quelqu'un qui a déjà des données.
   const hasBaseline =
     (data.metrics_history ?? []).some((m) => Number((m as Record<string, number>).weight) > 0) ||
-    ((liveData?.measurements?.length ?? 0) > 0)
+    ((liveData?.measurements?.length ?? 0) > 0) ||
+    (liveData?.assessment_history ?? []).some((a) => {
+      const row = a as { weight?: unknown; body_scan?: { weight?: unknown } | null }
+      return Number(row.weight) > 0 || Number(row.body_scan?.weight) > 0
+    })
   const showBaselineStep =
     Boolean(token) &&
     onboardingDone === true &&
