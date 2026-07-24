@@ -403,7 +403,19 @@ export function CrmLeadDetailPage() {
           ) : lead.table === "prospect_leads" ? (
             <>
               {lead.extra ? <p style={infoLine}>{lead.extra}</p> : null}
-              {lead.funnelAnswers ? (
+              {lead.colisAnswers ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                    💬 Ses réponses ({Object.keys(lead.colisAnswers).length})
+                  </div>
+                  {Object.entries(lead.colisAnswers).map(([q, a]) => (
+                    <div key={q} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12, lineHeight: 1.4 }}>
+                      <span style={{ flex: "0 0 auto", color: "var(--ls-text-hint)", minWidth: 118 }}>{q}</span>
+                      <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>{a}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : lead.funnelAnswers ? (
                 <FunnelAnswers
                   answers={lead.funnelAnswers}
                   temperature={lead.funnelTemperature}

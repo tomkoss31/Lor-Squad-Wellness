@@ -87,6 +87,8 @@ export interface CrmLead {
   /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
    *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
   funnelAnswers?: Record<string, string> | null;
+  /** Réponses du funnel colis (question → réponse, déjà en libellés). */
+  colisAnswers?: Record<string, string> | null;
   funnelScore?: number | null;
   funnelTemperature?: string | null;
   funnelProfile?: string | null;
@@ -432,13 +434,15 @@ export function useCrmLeads() {
         const source = mapProspectSource(row.source as string | null);
         // Réponses du funnel Opportunité (metadata.answers) — pour les afficher
         // dans la carte CRM (bug : elles n'étaient jamais exposées).
-        // Les leads colis stockent leurs réponses dans metadata.colis_answers
-        // (format différent) → on les mappe en libellés lisibles.
         const funnelAnswers =
-          (source === "colis" ? buildColisFunnelAnswers(meta.colis_answers) : null) ??
-          (meta.answers && typeof meta.answers === "object" && !Array.isArray(meta.answers)
+          meta.answers && typeof meta.answers === "object" && !Array.isArray(meta.answers)
             ? (meta.answers as Record<string, string>)
-            : null);
+            : null;
+        // Réponses du funnel colis (metadata.colis_answers) — format + rendu
+        // différents du funnel Opportunité (FunnelAnswers passe par
+        // buildFunnelSummary qui ne connaît que les clés Opportunité). On expose
+        // donc un champ dédié, rendu par un bloc propre dans la fiche.
+        const colisAnswers = source === "colis" ? buildColisFunnelAnswers(meta.colis_answers) : null;
         // Signal de priorité colis (remplace "disponibilité", décision Thomas
         // 2026-07-08) : ce que la personne a choisi en fin de tunnel — une
         // action réelle est un bien meilleur indicateur qu'une réponse déclarée.
@@ -477,6 +481,7 @@ export function useCrmLeads() {
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
           funnelAnswers,
+          colisAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
           funnelTemperature: typeof meta.temperature === "string" ? (meta.temperature as string) : null,
           funnelProfile: typeof meta.profile === "string" ? (meta.profile as string) : null,
