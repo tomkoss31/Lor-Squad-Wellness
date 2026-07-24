@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { getFormationModule } from "../data/bbcFormation";
 
 const ROLES: Array<{ role: string; sub: string; st: "done" | "current" | "next" | "locked"; exp: string }> = [
   { role: "Membre", sub: "EBE faite + un programme", st: "done",
@@ -48,6 +49,8 @@ const CHECK = "M20 6 9 17l-5-5";
 
 export function BbcFormation() {
   const [sel, setSel] = useState(1);
+  const [openModule, setOpenModule] = useState<string | null>(null);
+  const openMod = openModule ? getFormationModule(openModule) : null;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 340px) minmax(0, 1fr)", gap: 20, alignItems: "start" }} className="bbc-formation-grid">
@@ -123,18 +126,19 @@ export function BbcFormation() {
           const badge = m.st === "done" ? "var(--ls-bbc-teal)" : m.st === "locked" ? "var(--ls-bbc-hint)" : "var(--ls-bbc-lime)";
           const bBg = m.st === "done" ? "rgba(45,212,191,.12)" : m.st === "current" ? "rgba(197,248,42,.12)" : "transparent";
           return (
-            <div key={m.n} style={{ display: "flex", alignItems: "center", gap: 15, padding: "13px 8px", borderTop: "1px solid var(--ls-bbc-line)", opacity: m.st === "locked" ? 0.55 : 1 }}>
+            <button key={m.n} type="button" onClick={() => setOpenModule(m.n)} style={{ display: "flex", alignItems: "center", gap: 15, padding: "13px 8px", width: "100%", background: "transparent", border: "none", borderTop: "1px solid var(--ls-bbc-line)", cursor: "pointer", textAlign: "left", color: "var(--ls-bbc-text)", opacity: m.st === "locked" ? 0.7 : 1 }}>
               <div style={{ width: 46, height: 46, borderRadius: 13, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 16, background: bBg, border: `1px solid ${badge}`, color: badge }}>{m.n}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 700, color: m.st === "locked" ? "var(--ls-bbc-muted)" : "var(--ls-bbc-text)" }}>{m.t}</div>
                 <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2 }}>{m.d}</div>
               </div>
-              {m.st === "locked" ? (
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ls-bbc-hint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={LOCK} /></svg>
-              ) : m.st === "current" ? (
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-bbc-lime-ink)", background: "var(--ls-bbc-lime)", padding: "7px 13px", borderRadius: 10, cursor: "pointer" }}>reprendre</span>
+              {m.st === "current" ? (
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-bbc-lime-ink)", background: "var(--ls-bbc-lime)", padding: "7px 13px", borderRadius: 10 }}>reprendre</span>
+              ) : m.st === "locked" ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ls-bbc-hint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={LOCK} /></svg>
               ) : null}
-            </div>
+              <span aria-hidden="true" style={{ fontSize: 16, color: "var(--ls-bbc-hint)" }}>›</span>
+            </button>
           );
         })}
 
@@ -153,6 +157,31 @@ export function BbcFormation() {
           </div>
         </div>
       </div>
+
+      {openMod ? (
+        <div onClick={() => setOpenModule(null)} style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} className="bbc-mode" style={{ width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "24px 24px 0 0", padding: "20px 22px calc(24px + env(safe-area-inset-bottom))", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 13, flex: "none", background: "var(--ls-bbc-lime)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 16, color: "var(--ls-bbc-lime-ink)" }}>{openMod.n}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, lineHeight: 1.1 }}>{openMod.title}</div>
+                <div style={{ fontSize: 12, color: "var(--ls-bbc-lime-text)", marginTop: 2 }}>{openMod.subtitle}</div>
+              </div>
+              <button type="button" onClick={() => setOpenModule(null)} style={{ width: 32, height: 32, borderRadius: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-muted)", cursor: "pointer", fontSize: 15, flex: "none" }}>✕</button>
+            </div>
+            <div style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: 14 }}>{openMod.summary}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {openMod.points.map((p, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, padding: "11px 13px", borderRadius: 12, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
+                  <span style={{ color: "var(--ls-bbc-lime)", flex: "none", fontWeight: 800 }}>•</span>
+                  <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>{p}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", textAlign: "center", marginTop: 14 }}>source · Notion Formation BBC {openMod.n}</div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
