@@ -1,68 +1,153 @@
 // =============================================================================
-// BbcCrm — pipeline cobayes & membres (port du design, BBC Lot 2).
-// Stats + table (statut / cœurs / visites / dernier contact / prochaine action).
+// BbcCrm — « Cobayes & membres » : la liste RÉELLE des membres BBC du coach,
+// cliquable, avec un RÉCAP complet par membre (contact, objectif, programme,
+// statut, visites, cœurs, RDV). Données réelles via useBbcMembers.
 // =============================================================================
 
-const STATS: Array<{ label: string; value: string; delta: string; tone: string }> = [
-  { label: "nouveaux", value: "6", delta: "+2 aujourd'hui", tone: "var(--ls-bbc-lime)" },
-  { label: "cobayes en cours", value: "14", delta: "8 à pointer", tone: "var(--ls-bbc-teal)" },
-  { label: "à convertir", value: "5", delta: "bilan des 10", tone: "var(--ls-bbc-coral)" },
-  { label: "membres actifs", value: "37", delta: "+4 vs M-1", tone: "var(--ls-bbc-text)" },
-];
+import { useState } from "react";
+import { useBbcMembers, type BbcMember } from "../useBbcMembers";
+import { visitLevel } from "../useBbcVisits";
 
-type Tone = "teal" | "lime" | "coral";
-const ROWS: Array<{ name: string; ini: string; status: string; stone: Tone; hearts: string; visits: string; last: string; next: string; ntone: Tone }> = [
-  { name: "Sarah M.", ini: "SM", status: "membre", stone: "teal", hearts: "2", visits: "7 / 10", last: "aujourd'hui", next: "relancer palier", ntone: "lime" },
-  { name: "Inès L.", ini: "IL", status: "cobaye", stone: "lime", hearts: "2", visits: "3 / 10", last: "aujourd'hui", next: "expliquer junior", ntone: "lime" },
-  { name: "Karim D.", ini: "KD", status: "membre", stone: "teal", hearts: "1", visits: "9 / 10", last: "aujourd'hui", next: "carte presque pleine", ntone: "teal" },
-  { name: "Léa R.", ini: "LR", status: "à convertir", stone: "coral", hearts: "0", visits: "10 / 10", last: "il y a 2 j", next: "bilan des 10", ntone: "coral" },
-  { name: "Paul V.", ini: "PV", status: "nouveau", stone: "lime", hearts: "0", visits: "0 / 10", last: "hier", next: "1er rdv 10h15", ntone: "teal" },
-  { name: "Nadia B.", ini: "NB", status: "nouveau", stone: "lime", hearts: "0", visits: "0 / 10", last: "hier", next: "appeler 9h30", ntone: "teal" },
-  { name: "Thomas P.", ini: "TP", status: "cobaye", stone: "lime", hearts: "2", visits: "5 / 10", last: "il y a 1 j", next: "relancer palier", ntone: "lime" },
-];
-
-function tc(t: Tone) {
-  return t === "teal" ? "var(--ls-bbc-teal)" : t === "lime" ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-coral)";
+function objLabel(o?: string) {
+  const map: Record<string, string> = {
+    "weight-loss": "perte de poids",
+    sport: "sport / performance",
+    "mass-gain": "prise de masse",
+    strength: "force",
+    cutting: "sèche",
+    endurance: "endurance",
+    fitness: "forme",
+    competition: "compétition",
+  };
+  return o ? map[o] ?? o : "—";
 }
-function tbg(t: Tone) {
-  return t === "teal" ? "rgba(45,212,191,.12)" : t === "lime" ? "rgba(197,248,42,.12)" : "rgba(251,113,133,.12)";
+function lifeLabel(s?: string) {
+  const map: Record<string, string> = {
+    active: "en suivi actif",
+    not_started: "à démarrer",
+    paused: "en pause",
+    stopped: "arrêté",
+    lost: "perdu",
+  };
+  return s ? map[s] ?? s : "—";
+}
+function fmtDate(iso?: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+function levelColor(v: number) {
+  const l = visitLevel(v);
+  return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
 }
 
-const COLS = "minmax(0,1.6fr) minmax(0,1fr) 52px minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.4fr)";
+interface BbcCrmProps {
+  userId?: string;
+}
 
-export function BbcCrm() {
+export function BbcCrm({ userId }: BbcCrmProps) {
+  const { members, loading } = useBbcMembers(userId);
+  const [open, setOpen] = useState<string | null>(null);
+
+  const totalVisits = members.reduce((s, m) => s + m.visits, 0);
+  const totalHearts = members.reduce((s, m) => s + m.hearts, 0);
+  const pending = members.reduce((s, m) => s + m.pendingHearts, 0);
+
+  const stats: Array<{ label: string; value: string; tone: string }> = [
+    { label: "membres BBC", value: String(members.length), tone: "var(--ls-bbc-lime-text)" },
+    { label: "visites cumulées", value: String(totalVisits), tone: "var(--ls-bbc-teal)" },
+    { label: "cœurs", value: String(totalHearts), tone: "var(--ls-bbc-lime-text)" },
+    { label: "recos à valider", value: String(pending), tone: pending ? "var(--ls-bbc-coral)" : "var(--ls-bbc-text)" },
+  ];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
-        {STATS.map((s) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16 }}>
+        {stats.map((s) => (
           <div key={s.label} style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "18px 20px", borderTop: `2px solid ${s.tone}` }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>{s.label}</div>
             <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 34, color: s.tone, lineHeight: 1, marginTop: 8 }}>{s.value}</div>
-            <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", marginTop: 6 }}>{s.delta}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "8px 8px 12px", overflowX: "auto" }}>
-        <div style={{ minWidth: 680 }}>
-          <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 12, padding: "14px 18px", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: "var(--ls-bbc-hint)", textTransform: "uppercase" }}>
-            <span>nom</span><span>statut</span><span>cœurs</span><span>visites</span><span>dernier contact</span><span>prochaine action</span>
-          </div>
-          {ROWS.map((r) => (
-            <div key={r.name} style={{ display: "grid", gridTemplateColumns: COLS, gap: 12, alignItems: "center", padding: "13px 18px", borderTop: "1px solid var(--ls-bbc-line)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
-                <span style={{ width: 34, height: 34, borderRadius: 999, flex: "none", background: tbg(r.stone), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 700, color: tc(r.stone) }}>{r.ini}</span>
-                <span style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-              </div>
-              <span><span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: tc(r.stone), background: tbg(r.stone), padding: "4px 11px", borderRadius: 999 }}>{r.status}</span></span>
-              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700 }}>{r.hearts}</span>
-              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>{r.visits}</span>
-              <span style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>{r.last}</span>
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: tc(r.ntone) }}>{r.next}</span>
-            </div>
-          ))}
+      <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "18px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />mes membres BBC
         </div>
+        <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 12 }}>Tape un membre pour voir son récap complet.</div>
+        {loading ? (
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0" }}>chargement…</div>
+        ) : members.length === 0 ? (
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0", lineHeight: 1.5 }}>
+            Aucun membre BBC pour l'instant. Passe un client en membre BBC depuis sa fiche (Actions → « Passer en membre BBC »).
+          </div>
+        ) : (
+          members.map((m) => (
+            <MemberRow key={m.id} m={m} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} />
+          ))
+        )}
       </div>
+    </div>
+  );
+}
+
+function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggle: () => void }) {
+  const lvlColor = levelColor(m.visits);
+  return (
+    <div style={{ borderTop: "1px solid var(--ls-bbc-line)" }}>
+      <button type="button" onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 13, width: "100%", background: "transparent", border: 0, cursor: "pointer", textAlign: "left", padding: "13px 4px", color: "var(--ls-bbc-text)" }}>
+        <span style={{ width: 40, height: 40, borderRadius: 999, flex: "none", background: "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700, color: lvlColor }}>{m.name[0]?.toUpperCase() ?? "?"}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>{m.name}</div>
+          <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>{m.started ? "membre" : "à démarrer"} · {objLabel(m.objective)}</div>
+        </div>
+        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: lvlColor }}>{m.visits}/10</span>
+        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: "var(--ls-bbc-lime-text)" }}>{m.hearts}♥</span>
+        <span aria-hidden="true" style={{ fontSize: 11, color: "var(--ls-bbc-hint)", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}>▾</span>
+      </button>
+
+      {open ? (
+        <div style={{ padding: "4px 4px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* chiffres clés */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            <Stat label="visites" value={`${m.visits}/10`} color={lvlColor} sub={visitLevel(m.visits) === "bilan" ? "bilan à faire" : visitLevel(m.visits) === "warn" ? "bientôt bilan" : "actif"} />
+            <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
+            <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
+          </div>
+          {/* détails */}
+          <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <Line k="Objectif" v={objLabel(m.objective)} />
+            <Line k="Programme" v={m.program || "—"} />
+            <Line k="Démarré le" v={fmtDate(m.startDate)} />
+            <Line k="Prochain RDV" v={fmtDate(m.nextFollowUp)} />
+            <Line k="Téléphone" v={m.phone || "—"} />
+            <Line k="Email" v={m.email || "—"} />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Stat({ label, value, color, sub, small }: { label: string; value: string; color: string; sub: string; small?: boolean }) {
+  return (
+    <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "12px 10px", textAlign: "center" }}>
+      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>{label}</div>
+      <div style={{ fontFamily: small ? "var(--ls-bbc-font-body)" : "var(--ls-bbc-font-mono)", fontWeight: small ? 600 : 800, fontSize: small ? 12.5 : 20, color, lineHeight: 1.1, marginTop: 5 }}>{value}</div>
+      {sub ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 3 }}>{sub}</div> : null}
+    </div>
+  );
+}
+
+function Line({ k, v }: { k: string; v: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5 }}>
+      <span style={{ flex: "none", width: 100, color: "var(--ls-bbc-muted)" }}>{k}</span>
+      <span style={{ flex: 1, fontWeight: 600, color: "var(--ls-bbc-text)", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</span>
     </div>
   );
 }
