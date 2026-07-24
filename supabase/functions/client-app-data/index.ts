@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc")
@@ -261,6 +261,13 @@ serve(async (req) => {
         .from("club_visits")
         .select("*", { count: "exact", head: true })
         .eq("client_id", clientId),
+
+      // Chantier BBC : cœurs du membre = recos démarrées (status 'started').
+      supabase
+        .from("client_referrals")
+        .select("*", { count: "exact", head: true })
+        .eq("from_client_id", clientId)
+        .eq("status", "started"),
     ]);
 
     if (clientRes.error) {
@@ -642,6 +649,7 @@ serve(async (req) => {
       current_intake,
       coach_advice,
       visits_count: (visitsRes as { count?: number | null }).count ?? 0,
+      hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
       fetched_at: new Date().toISOString(),
     };
 

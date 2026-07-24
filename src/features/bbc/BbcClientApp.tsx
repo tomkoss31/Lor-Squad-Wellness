@@ -9,6 +9,8 @@
 import "../../styles/bbc-tokens.css";
 import { useState } from "react";
 import { QRCode } from "../../components/ui/QRCode";
+import { MemberEvolution } from "./member/MemberEvolution";
+import { MemberCoeurs } from "./member/MemberCoeurs";
 
 type MemberTab = "accueil" | "evolution" | "coeurs" | "conseils" | "messages";
 
@@ -22,6 +24,11 @@ interface BbcClientAppProps {
   currentWeight?: number | null;
   nextRdvDate?: string | null;
   nextRdvType?: string | null;
+  metrics?: Array<{ date?: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>;
+  measurements?: Array<{ measured_at?: string; waist_cm?: number; hips_cm?: number; thigh_cm?: number; arm_cm?: number }>;
+  heartsCount?: number;
+  clientId?: string;
+  coachId?: string;
 }
 
 const CARD_MAX = 10;
@@ -41,7 +48,7 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType } = props;
+  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId } = props;
   const [tab, setTab] = useState<MemberTab>("accueil");
   const [qrFull, setQrFull] = useState(false);
   const [noaly, setNoaly] = useState(false);
@@ -180,6 +187,10 @@ export function BbcClientApp(props: BbcClientAppProps) {
               </button>
             </div>
           </>
+        ) : tab === "evolution" ? (
+          <MemberEvolution metrics={metrics} measurements={measurements} />
+        ) : tab === "coeurs" ? (
+          <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "70px 0", textAlign: "center", minHeight: 300 }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22 }}>{NAV.find((n) => n.k === tab)?.label}</div>

@@ -687,6 +687,11 @@ export function ClientAppPage() {
         currentWeight={bbcLastW}
         nextRdvDate={data.next_follow_up ?? null}
         nextRdvType={(liveData?.next_follow_up as { type?: string | null } | null)?.type ?? null}
+        metrics={metrics as Array<{ date?: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
+        measurements={(liveData?.measurements ?? []) as Array<{ measured_at?: string; waist_cm?: number; hips_cm?: number; thigh_cm?: number; arm_cm?: number }>}
+        heartsCount={(liveData as { hearts_count?: number } | null)?.hearts_count ?? 0}
+        clientId={data.client_id}
+        coachId={data.coach_id ?? undefined}
       />
     )
   }
