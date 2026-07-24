@@ -45,7 +45,9 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
         return;
       }
       const [clientsRes, countsRes] = await Promise.all([
-        sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).order("first_name"),
+        // Seuls les MEMBRES BBC (ceux qui ont pris une carte = ebe_bbc) entrent
+        // dans l'environnement BBC. Un client classique n'apparaît jamais ici.
+        sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).eq("ebe_bbc", true).order("first_name"),
         sb.rpc("bbc_visit_counts"),
       ]);
       if (Array.isArray(clientsRes.data)) {
