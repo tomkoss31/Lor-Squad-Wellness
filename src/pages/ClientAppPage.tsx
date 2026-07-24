@@ -692,6 +692,7 @@ export function ClientAppPage() {
         heartsCount={(liveData as { hearts_count?: number } | null)?.hearts_count ?? 0}
         clientId={data.client_id}
         coachId={data.coach_id ?? undefined}
+        coachAdvice={liveData?.coach_advice ?? null}
       />
     )
   }

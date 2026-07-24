@@ -11,6 +11,8 @@ import { useState } from "react";
 import { QRCode } from "../../components/ui/QRCode";
 import { MemberEvolution } from "./member/MemberEvolution";
 import { MemberCoeurs } from "./member/MemberCoeurs";
+import { MemberConseils } from "./member/MemberConseils";
+import { MemberMessages } from "./member/MemberMessages";
 
 type MemberTab = "accueil" | "evolution" | "coeurs" | "conseils" | "messages";
 
@@ -29,6 +31,7 @@ interface BbcClientAppProps {
   heartsCount?: number;
   clientId?: string;
   coachId?: string;
+  coachAdvice?: string | null;
 }
 
 const CARD_MAX = 10;
@@ -48,7 +51,7 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId } = props;
+  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice } = props;
   const [tab, setTab] = useState<MemberTab>("accueil");
   const [qrFull, setQrFull] = useState(false);
   const [noaly, setNoaly] = useState(false);
@@ -191,13 +194,10 @@ export function BbcClientApp(props: BbcClientAppProps) {
           <MemberEvolution metrics={metrics} measurements={measurements} />
         ) : tab === "coeurs" ? (
           <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} />
+        ) : tab === "conseils" ? (
+          <MemberConseils coachAdvice={coachAdvice} coachName={coachName} />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "70px 0", textAlign: "center", minHeight: 300 }}>
-            <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22 }}>{NAV.find((n) => n.k === tab)?.label}</div>
-            <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", maxWidth: 300, lineHeight: 1.5 }}>
-              Cet onglet est déjà dans ton design — je le porte au prochain commit, même ADN.
-            </div>
-          </div>
+          <MemberMessages token={token ?? ""} coachName={coachName} />
         )}
       </div>
 
