@@ -5,7 +5,9 @@
 // Le scan QR caméra (port Shake Bar) viendra compléter le tap.
 // =============================================================================
 
+import { useState } from "react";
 import { useBbcVisits, visitLevel, type VisitLevel } from "../useBbcVisits";
+import { BbcScanner } from "../BbcScanner";
 
 function levelColor(l: VisitLevel) {
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
@@ -22,7 +24,8 @@ interface BbcClubProps {
 }
 
 export function BbcClub({ userId }: BbcClubProps) {
-  const { members, loading, addVisit } = useBbcVisits(userId);
+  const { members, loading, addVisit, refetch } = useBbcVisits(userId);
+  const [scan, setScan] = useState(false);
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
   const bilans = members.filter((m) => m.visits >= 10);
 
@@ -42,6 +45,11 @@ export function BbcClub({ userId }: BbcClubProps) {
           </div>
         ))}
       </div>
+
+      <button type="button" onClick={() => setScan(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", minHeight: 52, border: 0, borderRadius: 14, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ls-bbc-lime-ink)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18" /></svg>
+        Scanner un membre (QR)
+      </button>
 
       {/* bilans à faire (alerte) */}
       {bilans.length > 0 ? (
@@ -79,6 +87,8 @@ export function BbcClub({ userId }: BbcClubProps) {
           </div>
         )}
       </div>
+
+      {scan ? <BbcScanner onClose={() => setScan(false)} onScanned={() => void refetch()} /> : null}
     </div>
   );
 }
