@@ -22,6 +22,7 @@ import { BbcClubs } from "./views/BbcClubs";
 import { BbcFormation } from "./views/BbcFormation";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
+import { BbcCobayeSheet } from "./BbcCobayeSheet";
 
 type BbcView =
   | "cockpit"
@@ -64,6 +65,8 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
 
 export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) {
   const [view, setView] = useState<BbcView>("cockpit");
+  const [cobayes, setCobayes] = useState(14);
+  const [sheet, setSheet] = useState(false);
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
   const clubCity = club?.city ?? "Verdun";
@@ -188,7 +191,7 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
           ) : null}
         </div>
 
-        {view === "cockpit" && <Cockpit />}
+        {view === "cockpit" && <Cockpit cobayes={cobayes} target={20} onSend={() => setSheet(true)} />}
         {view === "scripts" && <BbcScripts />}
         {view === "coeurs" && <BbcCoeurs />}
         {view === "club" && <BbcClub />}
@@ -231,12 +234,21 @@ export function BbcApp({ coachName, isAdmin, onSetPreview, club }: BbcAppProps) 
           );
         })}
       </nav>
+
+      {sheet ? (
+        <BbcCobayeSheet
+          onClose={() => setSheet(false)}
+          onSent={() => setCobayes((c) => Math.min(c + 1, 20))}
+        />
+      ) : null}
     </div>
   );
 }
 
 // ── Cockpit (fidèle au design, données d'exemple front-only) ──────────────
-function Cockpit() {
+function Cockpit({ cobayes, target, onSend }: { cobayes: number; target: number; onSend: () => void }) {
+  const ringOffset = Math.max(0, Math.round(578 * (1 - Math.min(cobayes / target, 1))));
+  const left = Math.max(0, target - cobayes);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
       {/* Formation banner */}
@@ -283,19 +295,19 @@ function Cockpit() {
           <div style={{ position: "relative", width: 200, height: 200, margin: "0 auto" }}>
             <svg width="200" height="200" viewBox="0 0 220 220" aria-hidden="true">
               <circle cx="110" cy="110" r="92" fill="none" stroke="var(--ls-bbc-s2)" strokeWidth="15" />
-              <circle cx="110" cy="110" r="92" fill="none" stroke="var(--ls-bbc-lime)" strokeWidth="15" strokeLinecap="round" strokeDasharray="578" strokeDashoffset="173" transform="rotate(-90 110 110)" />
+              <circle cx="110" cy="110" r="92" fill="none" stroke="var(--ls-bbc-lime)" strokeWidth="15" strokeLinecap="round" strokeDasharray="578" strokeDashoffset={ringOffset} transform="rotate(-90 110 110)" style={{ transition: "stroke-dashoffset .5s ease" }} />
             </svg>
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 64, color: "var(--ls-bbc-lime-text)", lineHeight: 0.85 }}>14</div>
-              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 18, color: "var(--ls-bbc-muted)", marginTop: 4 }}>/ 20</div>
+              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 64, color: "var(--ls-bbc-lime-text)", lineHeight: 0.85 }}>{cobayes}</div>
+              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 18, color: "var(--ls-bbc-muted)", marginTop: 4 }}>/ {target}</div>
             </div>
           </div>
           <div style={{ marginTop: 12, fontSize: 12, color: "var(--ls-bbc-muted)" }}>
-            cobayes envoyés aujourd'hui · <span style={{ color: "var(--ls-bbc-lime-text)" }}>compteur + envoi = Lot 2</span>
+            cobayes envoyés aujourd'hui · <span style={{ color: "var(--ls-bbc-lime-text)" }}>{left > 0 ? `encore ${left} ce matin` : "objectif atteint 🔥"}</span>
           </div>
           <button
             type="button"
-            disabled
+            onClick={onSend}
             style={{
               marginTop: 16,
               width: "100%",
@@ -308,11 +320,10 @@ function Cockpit() {
               fontFamily: "var(--ls-bbc-font-body)",
               fontSize: 16,
               fontWeight: 700,
-              opacity: 0.55,
-              cursor: "not-allowed",
+              cursor: "pointer",
             }}
           >
-            envoyer un cobaye
+            ＋ envoyer un cobaye
           </button>
         </div>
       </div>
