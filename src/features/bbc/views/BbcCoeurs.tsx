@@ -6,19 +6,9 @@
 // =============================================================================
 
 import { useBbcHearts, nextPalier } from "../useBbcHearts";
-
-const TIERS: Array<{ n: string; label: string; reward: string; tone: "hint" | "teal" | "lime" }> = [
-  { n: "1", label: "1 filleul", reward: "1 cœur = 1 personne qui rejoint le club", tone: "hint" },
-  { n: "2", label: "compte ambassadeur", reward: "25% de remise + 2-3 recommandations", tone: "teal" },
-  { n: "3", label: "10 visites offertes", reward: "débloque le statut coach stagiaire", tone: "lime" },
-  { n: "5", label: "30 visites offertes", reward: "membre ambassadeur du club", tone: "lime" },
-];
-
-const AGENDA: Array<{ day: string; time: string; label: string; who: string; tone: "lime" | "teal" }> = [
-  { day: "mardi", time: "20h00", label: "atelier des cœurs", who: "aider à trouver ses 2 cœurs", tone: "lime" },
-  { day: "samedi", time: "20h00", label: "atelier des cœurs", who: "aider à trouver ses 2 cœurs", tone: "lime" },
-  { day: "lundi", time: "20h00", label: "appel ambassadeur", who: "tri A · B · C · D", tone: "teal" },
-];
+import { getNextCalls } from "../data/bbcCalls";
+import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
+import type { Club } from "../../../types/domain";
 
 const HEART_PATH = "M12 20.3S4.6 15.7 2.6 11.3C1.4 8.7 2.9 5.6 6 5.6c1.9 0 3.2 1.2 4 2.2.8-1 2.1-2.2 4-2.2 3.1 0 4.6 3.1 3.4 5.7C19.4 15.7 12 20.3 12 20.3z";
 
@@ -38,10 +28,29 @@ function Eye({ children, right }: { children: string; right?: string }) {
 
 interface BbcCoeursProps {
   userId?: string;
+  club?: Club | null;
 }
 
-export function BbcCoeurs({ userId }: BbcCoeursProps) {
+export function BbcCoeurs({ userId, club }: BbcCoeursProps) {
   const { members, pending, loading, validate } = useBbcHearts(userId);
+
+  // Barème et rituels : lus dans les réglages du club, jamais en dur.
+  const bareme = { ...(DEFAULT_CLUB_SETTINGS.hearts_bareme ?? {}), ...(club?.settings?.hearts_bareme ?? {}) };
+  const TIERS: Array<{ n: string; label: string; reward: string; tone: "hint" | "teal" | "lime" }> = [
+    { n: "1", label: "1ᵉʳ filleul", reward: "1 cœur = 1 personne qui rejoint le club", tone: "hint" },
+    { n: "2", label: bareme["2"] ?? "", reward: "le palier ambassadeur", tone: "teal" },
+    { n: "3", label: bareme["3"] ?? "", reward: "débloque le statut coach stagiaire", tone: "lime" },
+    { n: "5", label: bareme["5"] ?? "", reward: "membre ambassadeur du club", tone: "lime" },
+  ];
+  const AGENDA = getNextCalls(club?.settings)
+    .slice(0, 4)
+    .map((c) => ({
+      day: c.isToday ? "aujourd'hui" : c.at.toLocaleDateString("fr-FR", { weekday: "long" }),
+      time: c.when.split(" · ")[1] ?? "",
+      label: c.label.toLowerCase(),
+      who: c.key === "atelier_coeurs" ? "aider à trouver ses 2 cœurs" : c.key === "appel_ambassadeur" ? "tri A · B · C · D" : "formation coachs",
+      tone: (c.key === "atelier_coeurs" ? "lime" : "teal") as "lime" | "teal",
+    }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

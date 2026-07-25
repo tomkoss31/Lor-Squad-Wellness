@@ -196,6 +196,8 @@ export interface ClubSettings {
   open_hours?: string;
   calls?: Record<string, { days: string[]; time: string }>;
   hearts_bareme?: Record<string, string>;
+  /** Cartes de membre : prix + durée de validité par type (10 / 30 visites). */
+  cards?: Record<string, { price: number | null; days: number }>;
   [key: string]: unknown;
 }
 

@@ -9,13 +9,18 @@ import { useState } from "react";
 interface BbcCardSheetProps {
   memberName: string;
   currentCard: { type: number; used: number; remaining: number } | null;
+  /** Prix + durée par type, depuis les réglages du club (jamais en dur). */
+  cardsConfig?: Record<string, { price: number | null; days: number }> | null;
   onClose: () => void;
   onAssign: (type: 10 | 30, priceEur: number | null) => Promise<boolean>;
 }
 
-export function BbcCardSheet({ memberName, currentCard, onClose, onAssign }: BbcCardSheetProps) {
+export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, onAssign }: BbcCardSheetProps) {
   const [type, setType] = useState<10 | 30>(10);
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(() => {
+    const p = cardsConfig?.["10"]?.price;
+    return p != null ? String(p) : "";
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -30,10 +35,20 @@ export function BbcCardSheet({ memberName, currentCard, onClose, onAssign }: Bbc
     else setErr("Impossible d'enregistrer la carte — réessaie.");
   }
 
+  // Durées issues des réglages du club, avec repli sur les défauts métier.
+  const days10 = cardsConfig?.["10"]?.days ?? 30;
+  const days30 = cardsConfig?.["30"]?.days ?? 90;
   const options: Array<{ t: 10 | 30; label: string; days: string }> = [
-    { t: 10, label: "10 visites", days: "valable 30 jours" },
-    { t: 30, label: "30 visites", days: "valable 90 jours" },
+    { t: 10, label: "10 visites", days: `valable ${days10} jours` },
+    { t: 30, label: "30 visites", days: `valable ${days30} jours` },
   ];
+
+  /** Changer de type recharge le prix configuré pour ce type. */
+  function pickType(t: 10 | 30) {
+    setType(t);
+    const p = cardsConfig?.[String(t)]?.price;
+    setPrice(p != null ? String(p) : "");
+  }
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(0,0,0,.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -59,7 +74,7 @@ export function BbcCardSheet({ memberName, currentCard, onClose, onAssign }: Bbc
           {options.map((o) => {
             const on = type === o.t;
             return (
-              <button key={o.t} type="button" onClick={() => setType(o.t)} style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "left", background: on ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}>
+              <button key={o.t} type="button" onClick={() => pickType(o.t)} style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "left", background: on ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}>
                 <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 20, color: on ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)" }}>{o.t}</div>
                 <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>{o.label}</div>
                 <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 1 }}>{o.days}</div>

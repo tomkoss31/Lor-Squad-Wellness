@@ -22,6 +22,7 @@ import { BbcClubs } from "./views/BbcClubs";
 import { BbcFormation } from "./views/BbcFormation";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
+import { BbcReglages } from "./views/BbcReglages";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -36,7 +37,8 @@ type BbcView =
   | "messages"
   | "scripts"
   | "formation"
-  | "clubs";
+  | "clubs"
+  | "reglages";
 
 interface BbcAppProps {
   coachName?: string;
@@ -57,6 +59,7 @@ const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
   { k: "scripts", label: "Scripts", icon: "📝" },
   { k: "formation", label: "Formation", icon: "🎓" },
   { k: "clubs", label: "Mes clubs", icon: "🗺️" },
+  { k: "reglages", label: "Réglages", icon: "⚙️" },
 ];
 
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
@@ -68,6 +71,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   scripts: { eye: "bibliothèque · verbatim", title: "Les scripts" },
   formation: { eye: "accès gradué", title: "Formation BBC" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
+  reglages: { eye: "config du club", title: "Réglages" },
 };
 
 export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub }: BbcAppProps) {
@@ -209,12 +213,13 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
           />
         )}
         {view === "scripts" && <BbcScripts />}
-        {view === "coeurs" && <BbcCoeurs userId={userId} />}
-        {view === "club" && <BbcClub userId={userId} />}
+        {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
+        {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm userId={userId} />}
         {view === "messages" && <BbcMessages />}
+        {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
 
       {/* ── Bottom nav (mobile) ───────────────────────────────────────── */}

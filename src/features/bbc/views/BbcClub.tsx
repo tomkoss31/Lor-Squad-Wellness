@@ -10,6 +10,7 @@ import { useBbcVisits, visitLevel, type VisitLevel } from "../useBbcVisits";
 import { BbcScanner } from "../BbcScanner";
 import { BbcBilan10 } from "../BbcBilan10";
 import { BbcCardSheet } from "../BbcCardSheet";
+import type { Club } from "../../../types/domain";
 
 function levelColor(l: VisitLevel) {
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
@@ -19,9 +20,10 @@ function levelBg(l: VisitLevel) {
 }
 interface BbcClubProps {
   userId?: string;
+  club?: Club | null;
 }
 
-export function BbcClub({ userId }: BbcClubProps) {
+export function BbcClub({ userId, club }: BbcClubProps) {
   const { members, loading, addVisit, assignCard, refetch } = useBbcVisits(userId);
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
@@ -104,6 +106,7 @@ export function BbcClub({ userId }: BbcClubProps) {
         <BbcCardSheet
           memberName={members.find((m) => m.id === cardFor)?.name ?? ""}
           currentCard={members.find((m) => m.id === cardFor)?.card ?? null}
+          cardsConfig={club?.settings?.cards ?? null}
           onClose={() => setCardFor(null)}
           onAssign={(type, priceEur) => assignCard(cardFor, type, priceEur)}
         />
