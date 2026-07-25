@@ -80,12 +80,12 @@ le client d'un autre) · toggle BBC visible chez les coachs classiques ·
 messages/recos perdus silencieusement · bilan des 10 dupliqué en concurrence ·
 scan affichant « ? visite » · caméra relancée à chaque render.
 
-**Restent à traiter** (non bloquants) :
-- **Carte expirée** : le membre voit un solde figé, le coach ne la voit plus, et les visites suivantes tombent hors carte. → prévoir un état « carte expirée » explicite + relance.
-- **Cœurs vs CRM** : `client_referrals.status` porte deux vocabulaires (BBC écrit `started`/`lost`, le CRM écrit `converted`). Une reco convertie côté CRM ne donne donc aucun cœur. → unifier le vocabulaire.
-- **Cockpit vs onglet Cœurs** : les cœurs sont comptés sur deux périmètres (tous les referrals du coach vs membres BBC). → aligner.
-- `bbc-call-reminder` sans secret d'appel (pattern commun à toutes les crons du projet, pas propre à BBC).
-- Module BBC importé statiquement dans le bundle du coach classique (perf).
+**Les 5 derniers** (commit `2d93463`) — **16/16 traités** :
+- **Cœurs vs CRM** : `client_referrals.status` portait deux vocabulaires (BBC `started`, CRM `converted`) → une reco convertie ne donnait aucun cœur. On lit les deux (`isHeart`) et on écrit `converted`.
+- **Cockpit vs onglet Cœurs** : même source désormais (`useBbcHearts`), fin des compteurs divergents.
+- **Carte expirée** : elle reste visible avec un drapeau `expired` ; coach et membre affichent « carte expirée · à renouveler ».
+- **Edge cron** : `bbc-call-reminder` vérifie le rôle du jeton (clé anon → 401, cron → 200). ⚠️ Une 1re version comparait à `SUPABASE_SERVICE_ROLE_KEY` et cassait le cron — la clé du Vault diffère.
+- **Bundle** : `BbcApp` en `lazy()` → chunk de 118 kB non téléchargé par un coach classique.
 
 ---
 
