@@ -49,7 +49,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 | Panier | Contenu | Pourquoi |
 |---|---|---|
-| **🔥 Bloquant pour ouvrir un club** | Bilan des 10 (checklist) · cartes 10/30 · config club (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
+| **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · cartes 10/30 · config club (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
 | **🙂 Confort (après l'ouverture)** | Écran d'entrée membre · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
@@ -62,7 +62,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 - **Écran d'entrée membre** (`BBC Entrée.dc.html`, designé, pas porté).
 - **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
 - **Appels & rappels** — les rituels hebdo (Appel Ambassadeur lun/jeu, Atelier Cœurs mar/sam, Coach Academy mer) + inscriptions + séquence de rappels (J-jour midi / −30 / −15 / +30). Le membre a un bloc « appel du club » statique.
-- **Bilan des 10** — la checklist 9 étapes déclenchée à 10 visites (l'alerte existe, la checklist non).
 - **Cartes de membre 10/30** — type/prix/solde (aujourd'hui carte 10 en dur).
 - **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
 - **Dashboard admin « Club 100 »** — 100 membres / 3 sup / 9 stagiaires / 20 000 PV + classement cobayes équipe + alertes.
