@@ -70,6 +70,25 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 ---
 
+## 🔍 Revue adversariale (2026-07-25) — 16 défauts confirmés, 10 corrigés
+
+**Corrigés** (commit `57a6901`) : compteur de visites basé sur la carte et non
+le cumul à vie (l'alerte « bilan » ne s'éteignait jamais, « /10 » ignorait les
+cartes de 30, 3 écrans affichaient 3 chiffres différents) · app membre « 23/10 »
+quand la carte se ferme · **RLS durcie** (un coach pouvait forger une ligne sur
+le client d'un autre) · toggle BBC visible chez les coachs classiques ·
+messages/recos perdus silencieusement · bilan des 10 dupliqué en concurrence ·
+scan affichant « ? visite » · caméra relancée à chaque render.
+
+**Restent à traiter** (non bloquants) :
+- **Carte expirée** : le membre voit un solde figé, le coach ne la voit plus, et les visites suivantes tombent hors carte. → prévoir un état « carte expirée » explicite + relance.
+- **Cœurs vs CRM** : `client_referrals.status` porte deux vocabulaires (BBC écrit `started`/`lost`, le CRM écrit `converted`). Une reco convertie côté CRM ne donne donc aucun cœur. → unifier le vocabulaire.
+- **Cockpit vs onglet Cœurs** : les cœurs sont comptés sur deux périmètres (tous les referrals du coach vs membres BBC). → aligner.
+- `bbc-call-reminder` sans secret d'appel (pattern commun à toutes les crons du projet, pas propre à BBC).
+- Module BBC importé statiquement dans le bundle du coach classique (perf).
+
+---
+
 ## 💡 IDÉES D'OPTIMISATION
 
 - **Formation** : remplir chaque module (résumé + points clés + scripts liés) depuis le Notion ; réutiliser le composant `TutorialLink` + registre `src/data/tutorials.ts` pour coller les vidéos YouTube.
