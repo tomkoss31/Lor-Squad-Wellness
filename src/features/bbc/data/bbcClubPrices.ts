@@ -82,9 +82,10 @@ export const CARTE_CLUB: LigneCarte[] = [
   { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: null, releveNet: false },
   { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake de 400 ml", doses: 19, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: null, releveNet: false },
   { ref: "013K", rayon: "shake", libelle: "Shake Tri Blend Select", unite: "un shake", doses: null, prixReleve: null, releveNet: false },
-  // PDM : pot de 580 g, demi-dose de 15 g au club → 580 ÷ 15 = 38 doses.
+  // PDM : pot de 588 g, demi-dose de 15 g au club → 588 ÷ 15 = 39 doses.
+  // (Une dose de 14 g donnerait pile 42 doses — à trancher par le coach.)
   // (Au Shake Bar la dose est de 30 g, soit 19 doses — autre commerce.)
-  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: 38, dosesSource: "dose-club", prixReleve: null, releveNet: false },
+  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: 39, dosesSource: "dose-club", prixReleve: null, releveNet: false },
   { ref: "0242", rayon: "shake", libelle: "Boost protéines (Formula 3)", unite: "une dose", doses: null, prixReleve: null, releveNet: false },
 
   // ─── Boissons ─────────────────────────────────────────────────────────────
