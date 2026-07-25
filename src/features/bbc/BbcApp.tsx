@@ -25,6 +25,7 @@ import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
 import { BbcLiens } from "./views/BbcLiens";
+import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -42,6 +43,7 @@ type BbcView =
   | "formation"
   | "clubs"
   | "appels"
+  | "prelancement"
   | "reglages";
 
 interface BbcAppProps {
@@ -63,6 +65,7 @@ const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
   { k: "messages", label: "Messages", icon: "✉️" },
   { k: "scripts", label: "Scripts & liens", icon: "📝" },
   { k: "formation", label: "Formation", icon: "🎓" },
+  { k: "prelancement", label: "Pré-lancement", icon: "🚀" },
   { k: "clubs", label: "Mes clubs", icon: "🗺️" },
   { k: "reglages", label: "Réglages", icon: "⚙️" },
 ];
@@ -77,6 +80,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   formation: { eye: "accès gradué", title: "Formation BBC" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
   appels: { eye: "rituels du club", title: "Les appels" },
+  prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
@@ -231,6 +235,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "crm" && <BbcCrm userId={userId} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
+        {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
 
