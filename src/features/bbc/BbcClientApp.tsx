@@ -13,6 +13,7 @@ import { MemberEvolution } from "./member/MemberEvolution";
 import { MemberCoeurs } from "./member/MemberCoeurs";
 import { MemberConseils } from "./member/MemberConseils";
 import { MemberMessages } from "./member/MemberMessages";
+import { BbcMemberEntry } from "./BbcMemberEntry";
 
 type MemberTab = "accueil" | "evolution" | "coeurs" | "conseils" | "messages";
 
@@ -34,6 +35,8 @@ interface BbcClientAppProps {
   coachAdvice?: string | null;
   /** Carte de membre active (null = pas de carte en cours). */
   card?: { type: number; used: number; remaining: number; expires_at: string | null } | null;
+  /** L'écran d'entrée a-t-il déjà été vu ? (sinon on l'affiche une fois) */
+  entrySeen?: boolean;
 }
 
 
@@ -52,8 +55,12 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card } = props;
+  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen } = props;
   const [tab, setTab] = useState<MemberTab>("accueil");
+  // L'intro ne s'affiche que si le serveur dit explicitement « pas encore vue »
+  // (undefined = données pas encore chargées → on n'affiche rien, pas de flash).
+  const [entryDismissed, setEntryDismissed] = useState(false);
+  const showEntry = !entryDismissed && entrySeen === false;
   const [qrFull, setQrFull] = useState(false);
   const [noaly, setNoaly] = useState(false);
 
@@ -75,6 +82,17 @@ export function BbcClientApp(props: BbcClientAppProps) {
     { k: "conseils", label: "Conseils", d: "M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.2 1 2V17h6v-1.5c0-.8.3-1.4 1-2A6 6 0 0 0 12 3zM9 21h6" },
     { k: "messages", label: "Messages", d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", badge: true },
   ];
+
+  // Écran d'entrée : une seule fois, avant l'app.
+  if (showEntry) {
+    return (
+      <BbcMemberEntry
+        firstName={first}
+        token={token}
+        onDone={() => setEntryDismissed(true)}
+      />
+    );
+  }
 
   return (
     <div className="bbc-mode" style={{ position: "relative", minHeight: "100vh", background: "var(--ls-bbc-bg)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", maxWidth: 460, margin: "0 auto", overflow: "hidden" }}>

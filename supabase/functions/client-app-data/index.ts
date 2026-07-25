@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes, cardRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes, entryRes, cardRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc")
@@ -268,6 +268,13 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true })
         .eq("from_client_id", clientId)
         .eq("status", "started"),
+
+      // Chantier BBC : l'écran d'entrée a-t-il déjà été vu ?
+      supabase
+        .from("client_app_accounts")
+        .select("bbc_entry_seen_at")
+        .eq("token", token)
+        .maybeSingle(),
 
       // Chantier BBC : carte de membre active (10 ou 30 visites).
       supabase
@@ -678,6 +685,9 @@ serve(async (req) => {
       visits_count: (visitsRes as { count?: number | null }).count ?? 0,
       hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
       member_card: memberCard,
+      bbc_entry_seen: Boolean(
+        (entryRes as { data?: { bbc_entry_seen_at?: string | null } | null }).data?.bbc_entry_seen_at,
+      ),
       fetched_at: new Date().toISOString(),
     };
 
