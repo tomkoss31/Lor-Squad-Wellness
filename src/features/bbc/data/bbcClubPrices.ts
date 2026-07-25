@@ -72,20 +72,19 @@ export interface LigneCarte {
 export const CARTE_CLUB: LigneCarte[] = [
   // ─── Shakes ───────────────────────────────────────────────────────────────
   // Recette du CLUB BBC (Thomas, 25/07/2026) : un shake de 400 ml = 26 g de F1
-  // + 15 g de PDM. Les doses par pot en découlent : 550 ÷ 26 = 21, 780 ÷ 26 = 30.
+  // + 14 g de PDM. Les doses par pot en découlent : 550 ÷ 26 = 21, 780 ÷ 26 = 30.
   // ⚠️ NE PAS confondre avec la recette du Shake Bar (30 g de PDM, vendu 8,90 €) :
   // c'est un autre commerce, une autre carte. Le BBC sert la demi-dose.
   // `prixReleve` reste vide : le 2,80 € au crayon sur le tarif concerne le F1
   // SEUL, pas le shake complet servi au club — l'appliquer ici donnerait un prix
   // sous le coût de revient.
-  { ref: "4466", rayon: "shake", libelle: "Shake Formula 1", unite: "un shake de 400 ml", doses: 21, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: null, releveNet: false },
-  { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: null, releveNet: false },
-  { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake de 400 ml", doses: 19, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: null, releveNet: false },
+  { ref: "4466", rayon: "shake", libelle: "Shake Formula 1", unite: "un shake de 400 ml", doses: 21, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "14 g" }], prixReleve: null, releveNet: false },
+  { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "14 g" }], prixReleve: null, releveNet: false },
+  { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake de 400 ml", doses: 19, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "14 g" }], prixReleve: null, releveNet: false },
   { ref: "013K", rayon: "shake", libelle: "Shake Tri Blend Select", unite: "un shake", doses: null, prixReleve: null, releveNet: false },
-  // PDM : pot de 588 g, demi-dose de 15 g au club → 588 ÷ 15 = 39 doses.
-  // (Une dose de 14 g donnerait pile 42 doses — à trancher par le coach.)
+  // PDM : pot de 588 g, dose de 14 g au club → 588 ÷ 14 = 42 doses pile.
   // (Au Shake Bar la dose est de 30 g, soit 19 doses — autre commerce.)
-  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: 39, dosesSource: "dose-club", prixReleve: null, releveNet: false },
+  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 14 g", doses: 42, dosesSource: "dose-club", prixReleve: null, releveNet: false },
   { ref: "0242", rayon: "shake", libelle: "Boost protéines (Formula 3)", unite: "une dose", doses: null, prixReleve: null, releveNet: false },
 
   // ─── Boissons ─────────────────────────────────────────────────────────────
@@ -135,6 +134,25 @@ export function produitDeLaLigne(ligne: LigneCarte): HerbalifeProduct | undefine
 export function coutParDose(prixPublicContenant: number, doses: number | null, tauxRemise: number): number | null {
   if (!doses || doses <= 0) return null;
   return (prixPublicContenant * (1 - tauxRemise / 100)) / doses;
+}
+
+/**
+ * Prix de vente conseillé pour une dose : le **prix public rapporté à la dose**,
+ * arrondi aux 10 centimes supérieurs.
+ *
+ * Pourquoi cette règle et pas une autre : le coach achète avec une remise sur le
+ * prix public, donc vendre au prix public lui garantit mécaniquement sa remise
+ * en marge (50 % s'il est à 50 %), sans calcul et sans avoir à justifier quoi
+ * que ce soit devant un membre — c'est le tarif officiel. L'arrondi au-dessus
+ * évite les centimes à la caisse et ne fait que renforcer la marge.
+ *
+ * C'est une valeur DÉRIVÉE, jamais stockée : elle reste juste si les prix du
+ * catalogue changent, et elle s'adapte au palier de chaque distributeur quand le
+ * modèle est dupliqué. `null` tant que les doses ne sont pas connues.
+ */
+export function prixConseille(prixPublicContenant: number, doses: number | null): number | null {
+  if (!doses || doses <= 0) return null;
+  return Math.ceil((prixPublicContenant / doses) * 10) / 10;
 }
 
 /** Marge dégagée sur une dose vendue au bar. `null` tant qu'il manque une donnée. */

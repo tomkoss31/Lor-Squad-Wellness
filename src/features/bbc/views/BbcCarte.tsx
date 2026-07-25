@@ -16,6 +16,7 @@ import {
   coutParDose,
   coutServi,
   margeParDose,
+  prixConseille,
   produitDeLaLigne,
   PETIT_DEJ,
   PALIERS_REMISE,
@@ -274,6 +275,8 @@ function LigneRow({
 }) {
   const produit = produitDeLaLigne(ligne);
   const coutBase = produit ? coutParDose(produit.publicPrice, etat?.doses ?? null, palier) : null;
+  // Prix public rapporté à la dose, arrondi au-dessus : garantit la remise en marge.
+  const conseille = produit ? prixConseille(produit.publicPrice, etat?.doses ?? null) : null;
 
   // Ce qu'on ajoute dans le verre compte dans le coût : un shake, c'est du F1
   // ET du PDM. Si un composant n'a pas encore ses doses, on le signale plutôt
@@ -332,7 +335,7 @@ function LigneRow({
           suffix="€"
           step="0.05"
           value={etat?.prix ?? ""}
-          placeholder={ligne.prixReleve != null ? ligne.prixReleve.toFixed(2) : "?"}
+          placeholder={conseille != null ? conseille.toFixed(2) : ligne.prixReleve != null ? ligne.prixReleve.toFixed(2) : "?"}
           onChange={(v) => onPatch({ prix: v === "" ? null : Math.max(0, Number(v)), valide: false })}
         />
 
@@ -378,11 +381,37 @@ function LigneRow({
         </button>
       </div>
 
-      {!etat?.valide && ligne.prixReleve != null ? (
-        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 8 }}>
-          proposé {ligne.prixReleve.toFixed(2)} € — {ligne.releveNet ? "relevé net" : "lecture à confirmer"} sur le tarif
-          annoté du 25/06/2026
-          {ligne.dosesSource === "note-tarif" ? " · doses notées à la main sur le tarif" : ""}
+      {!etat?.valide && (conseille != null || ligne.prixReleve != null) ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginTop: 8 }}>
+          {conseille != null ? (
+            <>
+              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)" }}>
+                conseillé {conseille.toFixed(2)} € — prix public ÷ {etat?.doses} doses, arrondi
+              </span>
+              <button
+                type="button"
+                onClick={() => onPatch({ prix: conseille })}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "var(--ls-bbc-font-body)",
+                  border: "1px solid var(--ls-bbc-line2)",
+                  background: "var(--ls-bbc-s1)",
+                  color: "var(--ls-bbc-lime-text)",
+                }}
+              >
+                appliquer
+              </button>
+            </>
+          ) : null}
+          {ligne.prixReleve != null ? (
+            <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)" }}>
+              · {ligne.prixReleve.toFixed(2)} € {ligne.releveNet ? "relevé" : "lu (à confirmer)"} sur le tarif annoté
+            </span>
+          ) : null}
         </div>
       ) : null}
     </div>
