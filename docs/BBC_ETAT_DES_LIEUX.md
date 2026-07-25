@@ -18,7 +18,7 @@
 
 ### Environnement COACH (plein écran, sidebar dédiée, 8 vues)
 - **Cockpit** — compteur **cobayes du jour réel** + flow « envoyer un cobaye » (script verrouillé + prénom injecté + WhatsApp → persisté dans `outreach_messages`) + **les 3 blocs réels** : « le club ce matin » (membres + pointés du jour + alerte bilan des 10), « à un cœur du palier » (membres réellement à 1 cœur + recos à valider), « prochain appel » (rituel calculé depuis `clubs.settings`). Lignes cliquables.
-- **Le club** — pointage réel (**+1 visite** → `club_visits`), alerte **7-9 orange / 10+ rouge (bilan)**, + **scanner caméra QR** (le membre montre son QR → +1 visite via `bbc_scan_visit`).
+- **Le club** — pointage réel (**+1 visite**), alerte **7-9 orange / 10+ rouge**, **scanner caméra QR**, **cartes 10/30** (attribuer/renouveler, solde, expiration) et **bilan des 10** (checklist 9 étapes). Toute visite passe par la RPC `bbc_add_visit` (chemin unique) qui la rattache à la carte active.
 - **Cœurs** — mur des cœurs réel + **recos à valider** (le coach confirme « a démarré » = 1 cœur), paliers 2/3/5.
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
 - **Formation** — échelle des rôles + **9 modules 00→08 cliquables avec contenu** (résumé + points clés, depuis le Notion) + glossaire.
@@ -49,7 +49,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 | Panier | Contenu | Pourquoi |
 |---|---|---|
-| **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · cartes 10/30 · config club (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
+| **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · **config club** (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
 | **🙂 Confort (après l'ouverture)** | Écran d'entrée membre · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
@@ -62,7 +62,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 - **Écran d'entrée membre** (`BBC Entrée.dc.html`, designé, pas porté).
 - **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
 - **Appels & rappels** — les rituels hebdo (Appel Ambassadeur lun/jeu, Atelier Cœurs mar/sam, Coach Academy mer) + inscriptions + séquence de rappels (J-jour midi / −30 / −15 / +30). Le membre a un bloc « appel du club » statique.
-- **Cartes de membre 10/30** — type/prix/solde (aujourd'hui carte 10 en dur).
 - **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
 - **Dashboard admin « Club 100 »** — 100 membres / 3 sup / 9 stagiaires / 20 000 PV + classement cobayes équipe + alertes.
 - **Liens rapides** — 7 liens 1-tap (bilan online, RDV, Zoom, visuel A/B/C/D, avis Google…).
