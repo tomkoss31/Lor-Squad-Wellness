@@ -21,6 +21,8 @@ export interface BbcMember {
   visits: number;
   hearts: number;
   pendingHearts: number;
+  /** A pointé (ou été scanné) aujourd'hui. */
+  visitedToday: boolean;
 }
 
 export interface UseBbcMembersResult {
@@ -33,6 +35,7 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [hearts, setHearts] = useState<Record<string, { done: number; pending: number }>>({});
+  const [today, setToday] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -46,7 +49,9 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
         setLoading(false);
         return;
       }
-      const [clientsRes, countsRes, refsRes] = await Promise.all([
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const [clientsRes, countsRes, refsRes, todayRes] = await Promise.all([
         sb
           .from("clients")
           .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up")
@@ -55,7 +60,11 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           .order("first_name"),
         sb.rpc("bbc_visit_counts"),
         sb.from("client_referrals").select("from_client_id, status"),
+        sb.from("club_visits").select("client_id").eq("coach_user_id", userId).gte("visited_at", startOfDay.toISOString()),
       ]);
+      if (Array.isArray(todayRes.data)) {
+        setToday(new Set((todayRes.data as Array<Record<string, unknown>>).map((r) => String(r.client_id))));
+      }
       if (Array.isArray(clientsRes.data)) setRows(clientsRes.data as Record<string, unknown>[]);
       if (Array.isArray(countsRes.data)) {
         const m: Record<string, number> = {};
@@ -103,9 +112,10 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           visits: counts[id] ?? 0,
           hearts: h.done,
           pendingHearts: h.pending,
+          visitedToday: today.has(id),
         } as BbcMember;
       }),
-    [rows, counts, hearts],
+    [rows, counts, hearts, today],
   );
 
   return { members, loading, refetch };

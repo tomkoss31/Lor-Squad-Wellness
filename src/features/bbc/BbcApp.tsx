@@ -24,6 +24,9 @@ import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
+import { useBbcMembers } from "./useBbcMembers";
+import { getNextCalls } from "./data/bbcCalls";
+import { visitLevel } from "./useBbcVisits";
 
 type BbcView =
   | "cockpit"
@@ -195,7 +198,16 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
           ) : null}
         </div>
 
-        {view === "cockpit" && <Cockpit cobayes={cob.count} target={cob.target} onSend={() => setSheet(true)} />}
+        {view === "cockpit" && (
+          <Cockpit
+            cobayes={cob.count}
+            target={cob.target}
+            onSend={() => setSheet(true)}
+            userId={userId}
+            club={club ?? null}
+            onGo={setView}
+          />
+        )}
         {view === "scripts" && <BbcScripts />}
         {view === "coeurs" && <BbcCoeurs userId={userId} />}
         {view === "club" && <BbcClub userId={userId} />}
@@ -250,9 +262,23 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
 }
 
 // ── Cockpit (fidèle au design, données d'exemple front-only) ──────────────
-function Cockpit({ cobayes, target, onSend }: { cobayes: number; target: number; onSend: () => void }) {
+function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: number; target: number; onSend: () => void; userId?: string; club: Club | null; onGo: (v: BbcView) => void }) {
   const ringOffset = Math.max(0, Math.round(578 * (1 - Math.min(cobayes / target, 1))));
   const left = Math.max(0, target - cobayes);
+  const { members, loading } = useBbcMembers(userId);
+
+  // Le club ce matin : qui a pointé aujourd'hui + qui est à faire.
+  const pointes = members.filter((m) => m.visitedToday);
+  const bilans = members.filter((m) => m.visits >= 10);
+  // À un cœur du palier : le prochain palier est à 1 cœur.
+  const PALIERS = [2, 3, 5];
+  const aUnCoeur = members.filter((m) => {
+    const next = PALIERS.find((p) => p > m.hearts);
+    return next !== undefined && next - m.hearts === 1;
+  });
+  const aValider = members.reduce((s, m) => s + m.pendingHearts, 0);
+  const nextCall = getNextCalls(club?.settings)[0];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
       {/* Formation banner */}
@@ -332,28 +358,70 @@ function Cockpit({ cobayes, target, onSend }: { cobayes: number; target: number;
         </div>
       </div>
 
-      <SectionCard eye="☕ le club ce matin" right="2 / 4 pointés">
-        <MemberRow name="Sarah M." note="arrivée · 7h04" tone="teal" action="pointé" />
-        <MemberRow name="Karim D." note="arrivé · 7h10" tone="teal" action="pointé" />
-        <MemberRow name="Yanis B." note="attendu" tone="muted" action="pointer" />
-        <MemberRow name="Léa R." note="bilan des 10 à faire" tone="coral" action="bilan" />
+      {/* ☕ le club ce matin — réel */}
+      <SectionCard eye="☕ le club ce matin" right={members.length ? `${pointes.length} / ${members.length} pointés` : ""}>
+        {loading ? (
+          <Empty>chargement…</Empty>
+        ) : members.length === 0 ? (
+          <Empty>Aucun membre BBC. Passe un client en membre depuis sa fiche (Actions).</Empty>
+        ) : (
+          <>
+            {members.slice(0, 4).map((m) => {
+              const lvl = visitLevel(m.visits);
+              return (
+                <MemberRow
+                  key={m.id}
+                  name={m.name}
+                  note={m.visitedToday ? `pointé aujourd'hui · ${m.visits}/10` : lvl === "bilan" ? "bilan des 10 à faire" : `${m.visits}/10 visites`}
+                  tone={m.visitedToday ? "teal" : lvl === "bilan" ? "coral" : "muted"}
+                  action={m.visitedToday ? "pointé" : lvl === "bilan" ? "bilan" : "pointer"}
+                  onClick={() => onGo("club")}
+                />
+              );
+            })}
+            {bilans.length ? <Empty>🎯 {bilans.map((b) => b.name).join(", ")} → bilan des 10 à faire.</Empty> : null}
+          </>
+        )}
       </SectionCard>
 
-      <SectionCard eye="❤️ à un cœur du palier" right="qui relancer">
-        <MemberRow name="Inès L." note="à 1 cœur du palier junior" tone="lime" action="relancer" filled />
-        <MemberRow name="Thomas P." note="à 1 cœur du palier junior" tone="lime" action="relancer" filled />
+      {/* ❤️ à un cœur du palier — réel */}
+      <SectionCard eye="❤️ à un cœur du palier" right={aValider ? `${aValider} à valider` : "qui relancer"}>
+        {loading ? (
+          <Empty>chargement…</Empty>
+        ) : aUnCoeur.length === 0 ? (
+          <Empty>{aValider ? "Des recos attendent ta validation dans l'onglet Cœurs." : "Personne à un cœur d'un palier pour l'instant."}</Empty>
+        ) : (
+          aUnCoeur.slice(0, 4).map((m) => {
+            const next = PALIERS.find((p) => p > m.hearts);
+            return (
+              <MemberRow
+                key={m.id}
+                name={m.name}
+                note={`${m.hearts}♥ · à 1 cœur du palier ${next}`}
+                tone="lime"
+                action="relancer"
+                filled
+                onClick={() => onGo("coeurs")}
+              />
+            );
+          })
+        )}
       </SectionCard>
 
-      <SectionCard eye="📞 prochain appel" right="">
-        <MemberRow name="Nadia — inscrite hier" note="9h30" tone="teal" action="rappeler" />
-        <MemberRow name="Paul — relance J+2" note="10h15" tone="teal" action="rappeler" />
+      {/* 📞 prochain appel — depuis la config du club */}
+      <SectionCard eye="📞 prochain appel" right={club?.name ?? ""}>
+        {nextCall ? (
+          <MemberRow
+            name={nextCall.label}
+            note={nextCall.when}
+            tone={nextCall.isToday ? "lime" : "teal"}
+            action={nextCall.isToday ? "aujourd'hui" : "à venir"}
+            filled={nextCall.isToday}
+          />
+        ) : (
+          <Empty>Aucun rituel configuré pour ce club.</Empty>
+        )}
       </SectionCard>
-
-      <div style={{ textAlign: "center", fontSize: 11, color: "var(--ls-bbc-hint)", lineHeight: 1.5, marginTop: 2 }}>
-        Cockpit BBC — charpente du Lot 1, données d'exemple.
-        <br />
-        Le compteur cobayes, le pointage et les cœurs se branchent aux lots suivants.
-      </div>
     </div>
   );
 }
@@ -393,23 +461,33 @@ function SectionCard({ eye, right, children }: { eye: string; right: string; chi
   );
 }
 
+function Empty({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", padding: "12px 0", borderTop: "1px solid var(--ls-bbc-line)", lineHeight: 1.5 }}>
+      {children}
+    </div>
+  );
+}
+
 function MemberRow({
   name,
   note,
   tone,
   action,
   filled,
+  onClick,
 }: {
   name: string;
   note: string;
   tone: "teal" | "coral" | "lime" | "muted";
   action: string;
   filled?: boolean;
+  onClick?: () => void;
 }) {
   const color =
     tone === "teal" ? "var(--ls-bbc-teal)" : tone === "coral" ? "var(--ls-bbc-coral)" : tone === "lime" ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid var(--ls-bbc-line)" }}>
+    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid var(--ls-bbc-line)", cursor: onClick ? "pointer" : "default" }}>
       <span style={{ width: 8, height: 8, borderRadius: 999, flex: "none", background: color }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 600 }}>{name}</div>
