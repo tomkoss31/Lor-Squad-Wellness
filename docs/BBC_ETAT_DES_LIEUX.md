@@ -23,6 +23,7 @@
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
 - **Formation** — échelle des rôles + **9 modules 00→08 cliquables avec contenu** (résumé + points clés, depuis le Notion) + glossaire.
 - **Appels** — inscriptions aux rituels (occurrences depuis la config), présence pointée après l'appel, **suivi « patate chaude »** (10 min), bloc « à traiter ». Le membre voit son prochain appel.
+- **Rappels automatiques** — edge `bbc-call-reminder` + cron `*/10` : midi le jour J, −30 min, −15 min (push **membre**) et +30 min après (push **coach**, patate chaude, seulement si le suivi n'est pas fait). Anti-doublon en base.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
 - **Réglages** — créneau d'ouverture · rituels (jours + heure) · barème des cœurs · cartes (prix + durée). Écrit `clubs.settings` ; le Cockpit, les Cœurs et les cartes lisent cette config. **Aucune valeur métier en dur.**
 - **Switch Classic/BBC** (admins) dans la sidebar.
@@ -53,7 +54,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 | Panier | Contenu | Pourquoi |
 |---|---|---|
 | **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
-| **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée membre~~ ✅ · ~~inscriptions aux appels~~ ✅ · rappels **auto** · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
+| **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée~~ ✅ · ~~appels + rappels auto~~ ✅ · **liens rapides** · **Messages coach** | Le manuel/WhatsApp fait le job en attendant |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
 > **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
@@ -63,7 +64,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 ## 🔴 PAS FAIT DU TOUT
 
 - **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
-- **Rappels AUTOMATIQUES des appels** (J-jour midi / −30 / −15 / +30 min) — les inscriptions et le suivi manuel existent ; l'envoi auto demande un cron + edge.
 - **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
 - **Dashboard admin « Club 100 »** — 100 membres / 3 sup / 9 stagiaires / 20 000 PV + classement cobayes équipe + alertes.
 - **Liens rapides** — 7 liens 1-tap (bilan online, RDV, Zoom, visuel A/B/C/D, avis Google…).
@@ -89,7 +89,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 2. ~~Blocs réels du Cockpit~~ ✅ fait.
 3. ~~Bilan des 10~~ ✅ · ~~Cartes 10/30~~ ✅ · ~~Config club~~ ✅
 4. ~~Écran d'entrée membre~~ ✅
-5. ~~Appels : inscriptions + présence + suivi~~ ✅ — reste les **rappels automatiques** (cron).
+5. ~~Appels : inscriptions + présence + suivi + rappels automatiques~~ ✅
 6. **Liens rapides** (7 liens 1-tap) · **Messages coach** réel.
 7. Recette Thomas → merge dev/prod (autorisation scoped).
 
