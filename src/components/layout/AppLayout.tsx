@@ -18,14 +18,15 @@ import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
 import { BUSINESS_SHORTCUTS } from "./businessShortcuts";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
 import { NoalyFab } from "../noaly/NoalyFab";
 import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
-import { BbcApp } from "../../features/bbc/BbcApp";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
+// Chargé à la demande : un coach classique ne télécharge pas tout le module BBC.
+const BbcApp = lazy(() => import("../../features/bbc/BbcApp").then((m) => ({ default: m.BbcApp })));
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
 // des emojis (decoratifs aria-hidden) directement dans le tableau
@@ -214,15 +215,17 @@ export function AppLayout() {
   // par l'environnement BBC dédié (sa propre sidebar + ses écrans).
   if (bbc.isBbc) {
     return (
-      <BbcApp
-        coachName={currentUser.name}
-        userId={currentUser.id}
-        isAdmin={currentUser.role === "admin"}
-        onSetPreview={bbc.setPreview}
-        club={bbc.activeClub}
-        clubs={bbc.clubs}
-        onCreateClub={bbc.createMyClub}
-      />
+      <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0B0D11" }} />}>
+        <BbcApp
+          coachName={currentUser.name}
+          userId={currentUser.id}
+          isAdmin={currentUser.role === "admin"}
+          onSetPreview={bbc.setPreview}
+          club={bbc.activeClub}
+          clubs={bbc.clubs}
+          onCreateClub={bbc.createMyClub}
+        />
+      </Suspense>
     );
   }
 

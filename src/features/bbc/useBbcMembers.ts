@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { isHeart } from "./useBbcHearts";
 
 export interface BbcMember {
   id: string;
@@ -25,7 +26,7 @@ export interface BbcMember {
   /** A pointé (ou été scanné) aujourd'hui. */
   visitedToday: boolean;
   /** Carte active : c'est ELLE qui pilote le solde et l'alerte bilan. */
-  card: { type: number; used: number; remaining: number } | null;
+  card: { type: number; used: number; remaining: number; expired: boolean } | null;
 }
 
 export interface UseBbcMembersResult {
@@ -39,7 +40,7 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [hearts, setHearts] = useState<Record<string, { done: number; pending: number }>>({});
   const [today, setToday] = useState<Set<string>>(new Set());
-  const [cards, setCards] = useState<Record<string, { type: number; used: number; remaining: number }>>({});
+  const [cards, setCards] = useState<Record<string, { type: number; used: number; remaining: number; expired: boolean }>>({});
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -68,11 +69,11 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
         sb.rpc("bbc_active_cards"),
       ]);
       if (Array.isArray(cardsRes.data)) {
-        const cm: Record<string, { type: number; used: number; remaining: number }> = {};
+        const cm: Record<string, { type: number; used: number; remaining: number; expired: boolean }> = {};
         for (const row of cardsRes.data as Array<Record<string, unknown>>) {
           const type = Number(row.card_type) || 0;
           const used = Number(row.used) || 0;
-          cm[String(row.client_id)] = { type, used, remaining: Math.max(type - used, 0) };
+          cm[String(row.client_id)] = { type, used, remaining: Math.max(type - used, 0), expired: Boolean(row.expired) };
         }
         setCards(cm);
       }
@@ -91,7 +92,8 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           const k = String(r.from_client_id);
           const s = String(r.status);
           h[k] = h[k] ?? { done: 0, pending: 0 };
-          if (s === "started") h[k].done += 1;
+          // Même vocabulaire que useBbcHearts (BBC 'started' + CRM 'converted').
+          if (isHeart(s)) h[k].done += 1;
           else if (s !== "lost") h[k].pending += 1;
         }
         setHearts(h);

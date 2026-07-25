@@ -34,7 +34,7 @@ interface BbcClientAppProps {
   coachId?: string;
   coachAdvice?: string | null;
   /** Carte de membre active (null = pas de carte en cours). */
-  card?: { type: number; used: number; remaining: number; expires_at: string | null } | null;
+  card?: { type: number; used: number; remaining: number; expires_at: string | null; expired?: boolean } | null;
   /** L'écran d'entrée a-t-il déjà été vu ? (sinon on l'affiche une fois) */
   entrySeen?: boolean;
 }
@@ -123,7 +123,9 @@ export function BbcClientApp(props: BbcClientAppProps) {
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
                     <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />carte de membre
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--ls-bbc-lime-text)", border: "1px solid rgba(197,248,42,.4)", padding: "4px 10px", borderRadius: 999 }}>{card ? `carte · ${cardMax} visites` : "pas de carte active"}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: card?.expired ? "var(--ls-bbc-coral)" : "var(--ls-bbc-lime-text)", border: `1px solid ${card?.expired ? "rgba(251,113,133,.5)" : "rgba(197,248,42,.4)"}`, padding: "4px 10px", borderRadius: 999 }}>
+                    {!card ? "pas de carte active" : card.expired ? "carte expirée" : `carte · ${cardMax} visites`}
+                  </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
                   <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 56, lineHeight: 0.8, color: "var(--ls-bbc-lime)" }}>{onCard}</span>
@@ -146,9 +148,11 @@ export function BbcClientApp(props: BbcClientAppProps) {
                     ? "ta 1ʳᵉ visite est offerte 🎁"
                     : !card
                       ? "demande ta carte à ton coach pour continuer 🎟️"
-                      : left > 0
-                        ? `plus que ${left} → ton bilan t'attend 🎁`
-                        : "carte finie · ton bilan avec ton coach 🎁"}
+                      : card.expired
+                        ? "ta carte a expiré · vois ton coach pour la renouveler"
+                        : left > 0
+                          ? `plus que ${left} → ton bilan t'attend 🎁`
+                          : "carte finie · ton bilan avec ton coach 🎁"}
                 </div>
                 {token ? (
                   <button type="button" onClick={() => setQrFull(true)} style={{ width: "100%", textAlign: "left", border: 0, cursor: "pointer", display: "flex", gap: 14, alignItems: "center", marginTop: 14, background: "#FBF7F0", borderRadius: 16, padding: 14 }}>

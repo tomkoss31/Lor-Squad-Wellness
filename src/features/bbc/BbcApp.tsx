@@ -28,6 +28,7 @@ import { BbcLiens } from "./views/BbcLiens";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
+import { useBbcHearts, nextPalier } from "./useBbcHearts";
 import { useBbcCalls } from "./useBbcCalls";
 import { visitLevel } from "./useBbcVisits";
 
@@ -287,13 +288,14 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
   const pointes = members.filter((m) => m.visitedToday);
   // Bilan = carte consommée, pas le cumul de visites à vie.
   const bilans = members.filter((m) => m.card && m.card.used >= m.card.type);
-  // À un cœur du palier : le prochain palier est à 1 cœur.
-  const PALIERS = [2, 3, 5];
-  const aUnCoeur = members.filter((m) => {
-    const next = PALIERS.find((p) => p > m.hearts);
-    return next !== undefined && next - m.hearts === 1;
+  // Cœurs : MÊME source que l'onglet Cœurs (sinon les deux écrans affichent
+  // des compteurs différents — l'un limité aux membres BBC, l'autre non).
+  const heartsData = useBbcHearts(userId);
+  const aUnCoeur = heartsData.members.filter((m) => {
+    const next = nextPalier(m.hearts);
+    return next !== null && next - m.hearts === 1;
   });
-  const aValider = members.reduce((s, m) => s + m.pendingHearts, 0);
+  const aValider = heartsData.pending.length;
   // Rituels : prochaine occurrence + inscrits réels + suivis en attente.
   const calls = useBbcCalls(userId, club?.settings);
   const nextCall = calls.nextCalls[0];
@@ -413,10 +415,10 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
           <Empty>{aValider ? "Des recos attendent ta validation dans l'onglet Cœurs." : "Personne à un cœur d'un palier pour l'instant."}</Empty>
         ) : (
           aUnCoeur.slice(0, 4).map((m) => {
-            const next = PALIERS.find((p) => p > m.hearts);
+            const next = nextPalier(m.hearts);
             return (
               <MemberRow
-                key={m.id}
+                key={m.key}
                 name={m.name}
                 note={`${m.hearts}♥ · à 1 cœur du palier ${next}`}
                 tone="lime"

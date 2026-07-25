@@ -31,6 +31,8 @@ export interface MemberCard {
   used: number;
   remaining: number;
   expiresAt: string | null;
+  /** Carte périmée : elle reste visible pour être renouvelée. */
+  expired: boolean;
 }
 
 export interface VisitMember {
@@ -97,6 +99,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
             used,
             remaining: Math.max(type - used, 0),
             expiresAt: (row.expires_at as string | null) ?? null,
+            expired: Boolean(row.expired),
           };
         }
         setCards(map);

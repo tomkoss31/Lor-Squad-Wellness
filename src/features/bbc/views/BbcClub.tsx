@@ -76,7 +76,8 @@ export function BbcClub({ userId, club }: BbcClubProps) {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
             {members.map((m) => {
-              const lvl = visitLevel(m.card?.used ?? 0, m.card?.type);
+              // Carte expirée = alerte au même titre qu'une carte finie.
+              const lvl = m.card?.expired ? "bilan" : visitLevel(m.card?.used ?? 0, m.card?.type);
               return (
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
                   <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.card ? m.card.used : m.visits}</span>
@@ -84,7 +85,9 @@ export function BbcClub({ userId, club }: BbcClubProps) {
                     <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
                     <div style={{ fontSize: 11, color: levelColor(lvl) }}>
                       {m.card
-                        ? `carte ${m.card.type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`
+                        ? m.card.expired
+                          ? `carte ${m.card.type} EXPIRÉE · à renouveler`
+                          : `carte ${m.card.type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`
                         : `${m.visits} visite${m.visits > 1 ? "s" : ""} au total · pas de carte`}
                     </div>
                   </div>

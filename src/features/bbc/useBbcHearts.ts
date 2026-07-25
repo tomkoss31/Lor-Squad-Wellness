@@ -10,9 +10,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 
-const STARTED = "started";
+// ⚠️ Vocabulaire PARTAGÉ avec le CRM : `client_referrals.status` est écrit par
+// deux chemins. Le CRM pose 'converted' quand une reco devient cliente
+// (useCrmLeads → notify-referral-converted). BBC posait 'started' de son côté,
+// si bien qu'une reco convertie via le CRM ne donnait AUCUN cœur.
+// → On LIT les deux comme un cœur, et on ÉCRIT 'converted' (le vocabulaire
+//   déjà dominant dans le projet) pour que les deux mondes restent alignés.
+const STARTED_STATUSES = ["started", "converted"];
+const STARTED_WRITE = "converted";
 const LOST = "lost";
 export const HEART_PALIERS = [2, 3, 5];
+
+export function isHeart(status: string): boolean {
+  return STARTED_STATUSES.includes(status);
+}
 
 export interface HeartReferral {
   id: string;
@@ -84,7 +95,7 @@ export function useBbcHearts(userId?: string | null): UseBbcHeartsResult {
 
   const validate = useCallback(
     async (id: string, started: boolean) => {
-      const nextStatus = started ? STARTED : LOST;
+      const nextStatus = started ? STARTED_WRITE : LOST;
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextStatus } : r)));
       try {
         const sb = await getSupabaseClient();
@@ -103,13 +114,13 @@ export function useBbcHearts(userId?: string | null): UseBbcHeartsResult {
     for (const r of rows) {
       const key = r.fromClientId || r.fromClientName;
       const m = byMember.get(key) ?? { key, name: r.fromClientName, hearts: 0, pending: 0 };
-      if (r.status === STARTED) m.hearts += 1;
+      if (isHeart(r.status)) m.hearts += 1;
       else if (r.status !== LOST) m.pending += 1;
       byMember.set(key, m);
     }
     return {
       members: Array.from(byMember.values()).sort((a, b) => b.hearts - a.hearts),
-      pending: rows.filter((r) => r.status !== STARTED && r.status !== LOST),
+      pending: rows.filter((r) => !isHeart(r.status) && r.status !== LOST),
     };
   }, [rows]);
 

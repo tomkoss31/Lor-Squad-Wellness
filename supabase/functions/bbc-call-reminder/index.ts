@@ -51,8 +51,39 @@ function hourLabel(iso: string): string {
   });
 }
 
+/**
+ * L'appelant porte-t-il bien une clé service_role ?
+ * On ne compare PAS à `SUPABASE_SERVICE_ROLE_KEY` en dur : plusieurs clés
+ * service_role peuvent coexister (rotation, clé du Vault utilisée par le cron)
+ * et une égalité stricte bloquerait le cron légitime. On lit le rôle inscrit
+ * dans le jeton — la clé anon, elle, porte role='anon' et sera rejetée.
+ */
+function isServiceRole(authHeader: string): boolean {
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  const envKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (envKey && token === envKey) return true;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload?.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // Cette fonction tourne en service_role et envoie de vraies notifications :
+  // seul le cron (qui porte la service_role key depuis Vault) doit pouvoir la
+  // déclencher. Sans ce contrôle, la clé anon — publique, embarquée dans le
+  // bundle front — suffisait à lancer la campagne et à brûler les marqueurs
+  // anti-doublon.
+  if (!isServiceRole(req.headers.get("Authorization") ?? "")) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
 
   try {
     const sb = getServiceClient();

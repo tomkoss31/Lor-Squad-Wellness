@@ -288,7 +288,7 @@ serve(async (req) => {
     ]);
 
     // Visites consommées sur la carte active (pour le solde côté membre).
-    let memberCard: { type: number; used: number; remaining: number; expires_at: string | null } | null = null;
+    let memberCard: { type: number; used: number; remaining: number; expires_at: string | null; expired: boolean } | null = null;
     const cardRow = (cardRes as { data?: { id: string; card_type: number; expires_at: string | null } | null }).data;
     if (cardRow?.id) {
       const { count: usedCount } = await supabase
@@ -301,6 +301,9 @@ serve(async (req) => {
         used,
         remaining: Math.max(cardRow.card_type - used, 0),
         expires_at: cardRow.expires_at,
+        // Une carte périmée doit être annoncée au membre, pas affichée comme
+        // un solde encore valable (ses visites ne la consomment plus).
+        expired: Boolean(cardRow.expires_at && new Date(cardRow.expires_at).getTime() <= Date.now()),
       };
     }
 
