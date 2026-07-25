@@ -322,12 +322,101 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
   const [{ data: cli }, { data: coachUser }] = await Promise.all([
     sb
       .from("clients")
-      .select("first_name, next_follow_up, current_program, objective")
+      .select("first_name, next_follow_up, current_program, objective, ebe_bbc, club_id")
       .eq("id", account.client_id)
       .maybeSingle(),
     sb.from("users").select("name").eq("id", account.coach_id).maybeSingle(),
   ]);
+
   const coachFirst = ((coachUser?.name as string) ?? "ton coach").split(/\s+/)[0];
+
+  // ── Contexte BBC (membre de club) : carte, visites, cœurs, prochain rituel.
+  // Chargé UNIQUEMENT pour un membre BBC — un client classique n'en a pas.
+  let bbcContext = "";
+  if (cli?.ebe_bbc) {
+    const [cardRes, visitsRes, heartsRes, callRes] = await Promise.all([
+      sb
+        .from("member_cards")
+        .select("card_type, expires_at, id")
+        .eq("client_id", account.client_id)
+        .is("closed_at", null)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      sb.from("club_visits").select("*", { count: "exact", head: true }).eq("client_id", account.client_id),
+      sb
+        .from("client_referrals")
+        .select("*", { count: "exact", head: true })
+        .eq("from_client_id", account.client_id)
+        .in("status", ["started", "converted"]),
+      sb
+        .from("club_call_registrations")
+        .select("call_key, scheduled_at")
+        .eq("client_id", account.client_id)
+        .gt("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const card = cardRes.data as { card_type?: number; expires_at?: string | null; id?: string } | null;
+    let cardLine = "- Carte de membre : aucune carte en cours\n";
+    if (card?.id) {
+      const { count: used } = await sb
+        .from("club_visits")
+        .select("*", { count: "exact", head: true })
+        .eq("card_id", card.id);
+      const expired = card.expires_at ? new Date(card.expires_at).getTime() <= Date.now() : false;
+      cardLine = expired
+        ? `- Carte de membre : carte de ${card.card_type} visites EXPIRÉE (à renouveler auprès de ${coachFirst})\n`
+        : `- Carte de membre : ${used ?? 0} / ${card.card_type} visites utilisées (${Math.max((card.card_type ?? 0) - (used ?? 0), 0)} restantes)\n`;
+    }
+
+    // La carte du bar : UNIQUEMENT les lignes que le coach a validées. Une ligne
+    // non validée porte encore un prix « proposé » — Noaly ne doit jamais
+    // annoncer un prix que le club n'a pas confirmé.
+    let carteLigne = "";
+    if (cli?.club_id) {
+      const { data: clubRow } = await sb
+        .from("clubs")
+        .select("settings")
+        .eq("id", cli.club_id)
+        .maybeSingle();
+      const carte = (clubRow as { settings?: { carte?: Record<string, { prix: number | null; valide: boolean }> } } | null)
+        ?.settings?.carte;
+      if (carte) {
+        const lignes = Object.values(carte)
+          .filter((l) => l?.valide && typeof l.prix === "number")
+          .map((l) => l.prix as number);
+        if (lignes.length) {
+          const min = Math.min(...lignes);
+          const max = Math.max(...lignes);
+          carteLigne =
+            `- Au bar du club, les consommations vont de ${min.toFixed(2)} € à ${max.toFixed(2)} €. ` +
+            `Si on te demande le prix précis d'un produit, dis d'aller voir l'ardoise au club ou de demander à ${coachFirst} — ne devine JAMAIS un prix.\n`;
+        }
+      }
+    }
+
+    const callLabels: Record<string, string> = {
+      appel_ambassadeur: "Appel Ambassadeur",
+      atelier_coeurs: "Atelier Cœurs",
+      coach_academy: "Coach Academy",
+    };
+    const call = callRes.data as { call_key?: string; scheduled_at?: string } | null;
+
+    bbcContext =
+      `Ce client est MEMBRE D'UN CLUB BBC (club de petit-déjeuner, ouvert le matin) :\n` +
+      cardLine +
+      `- Visites au club (total) : ${visitsRes.count ?? 0}\n` +
+      `- Cœurs (proches qu'il a recommandés et qui ont démarré) : ${heartsRes.count ?? 0}\n` +
+      carteLigne +
+      (call?.scheduled_at
+        ? `- Prochain rendez-vous du club : ${callLabels[call.call_key ?? ""] ?? "appel du club"} le ${new Date(call.scheduled_at).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}\n`
+        : "") +
+      `Dans son app il a : sa carte de membre + son QR à montrer au coach, son évolution, ses cœurs (paliers 2/3/5), ses conseils, la messagerie.\n` +
+      `Le principe du club : il vient le matin, il montre son QR, sa visite est pointée. Ses cœurs lui débloquent des récompenses.\n`;
+  }
   const rdv = cli?.next_follow_up
     ? new Date(cli.next_follow_up as string).toLocaleString("fr-FR", {
         weekday: "long",
@@ -346,9 +435,12 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
     (rdv ? `- Prochain RDV : ${rdv}\n` : `- Prochain RDV : pas encore planifié\n`) +
     (cli?.current_program ? `- Programme en cours : ${cli.current_program}\n` : "") +
     (cli?.objective ? `- Objectif : ${cli.objective}\n` : "") +
-    `L'app du client contient les onglets : Accueil (RDV), Évolution (poids/bilans), Produits, Conseils (assiette idéale, routine), Messages (écrire au coach), Recommander (Club VIP, remises 15→35%).\n` +
+    bbcContext +
+    (bbcContext
+      ? ""
+      : `L'app du client contient les onglets : Accueil (RDV), Évolution (poids/bilans), Produits, Conseils (assiette idéale, routine), Messages (écrire au coach), Recommander (Club VIP, remises 15→35%).\n`) +
     `RÈGLES STRICTES :\n` +
-    `1. JAMAIS de conseil médical, de diagnostic, de dosage, d'avis sur un médicament ou un symptôme inquiétant → réponds qu'il faut en parler à ${coachFirst} ou à un professionnel de santé.\n` +
+    `1. JAMAIS de conseil médical, de diagnostic, de posologie, d'avis sur un médicament ou un symptôme inquiétant → réponds qu'il faut en parler à ${coachFirst} ou à un professionnel de santé. (Rappeler le mode d'emploi imprimé sur un produit — une mesurette dans 250 ml d'eau — n'est pas un conseil médical ; mais si tu n'es pas certaine du mode d'emploi exact, renvoie vers ${coachFirst} plutôt que d'inventer une quantité.)\n` +
     `2. Tu ne connais QUE ce client. Jamais d'info sur d'autres clients ou sur le business du coach.\n` +
     `3. Questions nutrition générales (fringale, hydratation, motivation, comment lire son évolution) : réponds simplement, 3-5 lignes max, chaleureux, tutoiement, 1-2 emojis.\n` +
     `4. Si tu n'es pas sûre ou si c'est personnel (changer le programme, douleur, résultat anormal) → oriente vers l'onglet Messages pour écrire à ${coachFirst}.\n` +

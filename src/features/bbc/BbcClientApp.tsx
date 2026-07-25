@@ -14,6 +14,7 @@ import { MemberCoeurs } from "./member/MemberCoeurs";
 import { MemberConseils } from "./member/MemberConseils";
 import { MemberMessages } from "./member/MemberMessages";
 import { BbcMemberEntry } from "./BbcMemberEntry";
+import { MemberNoaly } from "./member/MemberNoaly";
 
 type MemberTab = "accueil" | "evolution" | "coeurs" | "conseils" | "messages";
 
@@ -266,19 +267,8 @@ export function BbcClientApp(props: BbcClientAppProps) {
         </div>
       ) : null}
 
-      {/* Noaly sheet */}
-      {noaly ? (
-        <div onClick={() => setNoaly(false)} style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, margin: "0 auto", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "26px 26px 0 0", padding: "16px 18px calc(22px + env(safe-area-inset-bottom))" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 13 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 13, background: "linear-gradient(140deg, var(--ls-bbc-teal), var(--ls-bbc-lime))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }} aria-hidden="true">✦</div>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Noaly</div><div style={{ fontSize: 11, color: "var(--ls-bbc-muted)" }}>ton assistante du club</div></div>
-              <button type="button" onClick={() => setNoaly(false)} style={{ width: 32, height: 32, borderRadius: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-muted)", cursor: "pointer", fontSize: 15 }}>✕</button>
-            </div>
-            <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: "16px 16px 16px 5px", padding: "12px 14px", fontSize: 13.5, lineHeight: 1.5 }}>Salut {first} ! Une question sur ton matin, une recette, ta carte ? (branchement à venir)</div>
-          </div>
-        </div>
-      ) : null}
+      {/* Noaly — chat réel (edge `noaly`, contexte BBC chargé côté serveur) */}
+      {noaly ? <MemberNoaly token={token} firstName={first} onClose={() => setNoaly(false)} /> : null}
     </div>
   );
 }

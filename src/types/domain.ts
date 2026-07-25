@@ -200,6 +200,16 @@ export interface ClubSettings {
   cards?: Record<string, { price: number | null; days: number }>;
   /** Liens du club à partager (Zoom des rituels, avis Google…). */
   links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
+  /**
+   * La carte du bar : par référence produit, ce qu'on sert et à quel prix.
+   * `doses` = nombre de portions dans un contenant (le tarif ne le donne pas),
+   * `prix` = prix de vente de LA dose au comptoir. `valide` passe à true quand
+   * le coach a confirmé la ligne — tant qu'il ne l'a pas fait, l'app affiche la
+   * valeur relevée sur le tarif comme une proposition, jamais comme un prix.
+   */
+  carte?: Record<string, { doses: number | null; prix: number | null; valide: boolean }>;
+  /** Palier de remise du distributeur (25 / 35 / 42 / 50 %) — sert au calcul de marge. */
+  palier_remise?: number;
   [key: string]: unknown;
 }
 

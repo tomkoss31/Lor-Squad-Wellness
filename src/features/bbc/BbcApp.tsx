@@ -27,6 +27,7 @@ import { BbcAppels } from "./views/BbcAppels";
 import { BbcLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
+import { BbcCarte } from "./views/BbcCarte";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -46,6 +47,7 @@ type BbcView =
   | "appels"
   | "prelancement"
   | "club100"
+  | "carte"
   | "reglages";
 
 interface BbcAppProps {
@@ -74,6 +76,7 @@ const NAV: NavItem[] = [
   { k: "formation", label: "Formation", icon: "🎓", group: "Ressources" },
   { k: "prelancement", label: "Pré-lancement", icon: "🚀", group: "Ressources" },
 
+  { k: "carte", label: "La carte", icon: "🥤", group: "Mon club" },
   { k: "club100", label: "Club 100 & rentabilité", icon: "📊", group: "Mon club" },
   { k: "clubs", label: "Mes clubs", icon: "🗺️", group: "Mon club" },
   { k: "reglages", label: "Réglages", icon: "⚙️", group: "Mon club" },
@@ -95,6 +98,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   appels: { eye: "rituels du club", title: "Les appels" },
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
   club100: { eye: "le modèle · tes chiffres", title: "Club 100 & rentabilité" },
+  carte: { eye: "l'ardoise du bar", title: "La carte" },
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
@@ -259,6 +263,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "club100" && <BbcClub100 userId={userId} />}
+        {view === "carte" && <BbcCarte clubId={club?.id ?? null} onGoClubs={() => setView("clubs")} />}
         {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
 
