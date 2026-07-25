@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes, cardRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc")
@@ -268,7 +268,34 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true })
         .eq("from_client_id", clientId)
         .eq("status", "started"),
+
+      // Chantier BBC : carte de membre active (10 ou 30 visites).
+      supabase
+        .from("member_cards")
+        .select("id, card_type, expires_at")
+        .eq("client_id", clientId)
+        .is("closed_at", null)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+    // Visites consommées sur la carte active (pour le solde côté membre).
+    let memberCard: { type: number; used: number; remaining: number; expires_at: string | null } | null = null;
+    const cardRow = (cardRes as { data?: { id: string; card_type: number; expires_at: string | null } | null }).data;
+    if (cardRow?.id) {
+      const { count: usedCount } = await supabase
+        .from("club_visits")
+        .select("*", { count: "exact", head: true })
+        .eq("card_id", cardRow.id);
+      const used = usedCount ?? 0;
+      memberCard = {
+        type: cardRow.card_type,
+        used,
+        remaining: Math.max(cardRow.card_type - used, 0),
+        expires_at: cardRow.expires_at,
+      };
+    }
 
     if (clientRes.error) {
       log("error", "client_select_error", {
@@ -650,6 +677,7 @@ serve(async (req) => {
       coach_advice,
       visits_count: (visitsRes as { count?: number | null }).count ?? 0,
       hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
+      member_card: memberCard,
       fetched_at: new Date().toISOString(),
     };
 

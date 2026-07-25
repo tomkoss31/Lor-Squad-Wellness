@@ -1,7 +1,8 @@
 // =============================================================================
-// useBbcVisits — pointage des visites, données réelles (chantier BBC).
-// Membres = clients du coach ; compteur via RPC bbc_visit_counts (RLS-safe).
-// addVisit insère une ligne club_visits (RLS : coach_user_id = auth.uid()).
+// useBbcVisits — pointage + cartes de membre (chantier BBC).
+// Membres = clients ebe_bbc du coach. Toute écriture d'une visite passe par la
+// RPC `bbc_add_visit` (chemin UNIQUE, partagé avec le scan QR) : elle rattache
+// la visite à la carte active et ferme la carte quand son quota est atteint.
 // Alerte : 7-9 = orange (bientôt bilan), 10+ = rouge (bilan des 10 à faire).
 // =============================================================================
 
@@ -16,21 +17,33 @@ export function visitLevel(v: number): VisitLevel {
   return "ok";
 }
 
+export interface MemberCard {
+  cardId: string;
+  type: number;
+  used: number;
+  remaining: number;
+  expiresAt: string | null;
+}
+
 export interface VisitMember {
   id: string;
   name: string;
   visits: number;
+  card: MemberCard | null;
 }
+
 export interface UseBbcVisitsResult {
   members: VisitMember[];
   loading: boolean;
   addVisit: (clientId: string) => Promise<void>;
+  assignCard: (clientId: string, type: 10 | 30, priceEur?: number | null) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
 export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [cards, setCards] = useState<Record<string, MemberCard>>({});
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -44,11 +57,11 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
         setLoading(false);
         return;
       }
-      const [clientsRes, countsRes] = await Promise.all([
-        // Seuls les MEMBRES BBC (ceux qui ont pris une carte = ebe_bbc) entrent
-        // dans l'environnement BBC. Un client classique n'apparaît jamais ici.
+      const [clientsRes, countsRes, cardsRes] = await Promise.all([
+        // Seuls les MEMBRES BBC entrent dans l'environnement BBC.
         sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).eq("ebe_bbc", true).order("first_name"),
         sb.rpc("bbc_visit_counts"),
+        sb.rpc("bbc_active_cards"),
       ]);
       if (Array.isArray(clientsRes.data)) {
         setClients(
@@ -65,6 +78,21 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
         }
         setCounts(map);
       }
+      if (Array.isArray(cardsRes.data)) {
+        const map: Record<string, MemberCard> = {};
+        for (const row of cardsRes.data as Array<Record<string, unknown>>) {
+          const type = Number(row.card_type) || 0;
+          const used = Number(row.used) || 0;
+          map[String(row.client_id)] = {
+            cardId: String(row.card_id),
+            type,
+            used,
+            remaining: Math.max(type - used, 0),
+            expiresAt: (row.expires_at as string | null) ?? null,
+          };
+        }
+        setCards(map);
+      }
     } catch {
       // silent-fail
     } finally {
@@ -78,24 +106,49 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
 
   const addVisit = useCallback(
     async (clientId: string) => {
+      // optimiste
       setCounts((prev) => ({ ...prev, [clientId]: (prev[clientId] ?? 0) + 1 }));
-      if (!userId) return;
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        const { error } = await sb.from("club_visits").insert({ coach_user_id: userId, client_id: clientId });
+        const { error } = await sb.rpc("bbc_add_visit", { p_client_id: clientId });
         if (error) setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
+        // relit compteurs + carte (la carte a pu se fermer)
+        void refetch();
       } catch {
         setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
       }
     },
-    [userId],
+    [refetch],
+  );
+
+  const assignCard = useCallback(
+    async (clientId: string, type: 10 | 30, priceEur?: number | null): Promise<boolean> => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return false;
+        const { error } = await sb.rpc("bbc_assign_card", {
+          p_client_id: clientId,
+          p_type: type,
+          p_price: priceEur ?? null,
+        });
+        if (error) return false;
+        await refetch();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [refetch],
   );
 
   const members = useMemo(
-    () => clients.map((c) => ({ ...c, visits: counts[c.id] ?? 0 })).sort((a, b) => b.visits - a.visits),
-    [clients, counts],
+    () =>
+      clients
+        .map((c) => ({ ...c, visits: counts[c.id] ?? 0, card: cards[c.id] ?? null }))
+        .sort((a, b) => b.visits - a.visits),
+    [clients, counts, cards],
   );
 
-  return { members, loading, addVisit, refetch };
+  return { members, loading, addVisit, assignCard, refetch };
 }

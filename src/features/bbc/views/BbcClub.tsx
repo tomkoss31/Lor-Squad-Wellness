@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useBbcVisits, visitLevel, type VisitLevel } from "../useBbcVisits";
 import { BbcScanner } from "../BbcScanner";
 import { BbcBilan10 } from "../BbcBilan10";
+import { BbcCardSheet } from "../BbcCardSheet";
 
 function levelColor(l: VisitLevel) {
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
@@ -16,16 +17,13 @@ function levelColor(l: VisitLevel) {
 function levelBg(l: VisitLevel) {
   return l === "bilan" ? "rgba(251,113,133,.12)" : l === "warn" ? "rgba(233,162,59,.14)" : "rgba(45,212,191,.12)";
 }
-function levelLabel(l: VisitLevel) {
-  return l === "bilan" ? "bilan des 10 !" : l === "warn" ? "bientôt bilan" : "actif";
-}
-
 interface BbcClubProps {
   userId?: string;
 }
 
 export function BbcClub({ userId }: BbcClubProps) {
-  const { members, loading, addVisit, refetch } = useBbcVisits(userId);
+  const { members, loading, addVisit, assignCard, refetch } = useBbcVisits(userId);
+  const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
@@ -81,8 +79,15 @@ export function BbcClub({ userId }: BbcClubProps) {
                   <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.visits}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: levelColor(lvl) }}>{m.visits} / 10 · {levelLabel(lvl)}</div>
+                    <div style={{ fontSize: 11, color: levelColor(lvl) }}>
+                      {m.card
+                        ? `carte ${m.card.type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`
+                        : `${m.visits} visites · pas de carte`}
+                    </div>
                   </div>
+                  <button type="button" onClick={() => setCardFor(m.id)} title={m.card ? "Renouveler la carte" : "Attribuer une carte"} style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: m.card ? "var(--ls-bbc-muted)" : "var(--ls-bbc-lime-text)", flex: "none" }}>
+                    {m.card ? "carte" : "+ carte"}
+                  </button>
                   {lvl === "bilan" ? (
                     <button type="button" onClick={() => setBilan({ id: m.id, name: m.name })} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff", flex: "none" }}>bilan</button>
                   ) : null}
@@ -95,6 +100,14 @@ export function BbcClub({ userId }: BbcClubProps) {
       </div>
 
       {scan ? <BbcScanner onClose={() => setScan(false)} onScanned={() => void refetch()} /> : null}
+      {cardFor ? (
+        <BbcCardSheet
+          memberName={members.find((m) => m.id === cardFor)?.name ?? ""}
+          currentCard={members.find((m) => m.id === cardFor)?.card ?? null}
+          onClose={() => setCardFor(null)}
+          onAssign={(type, priceEur) => assignCard(cardFor, type, priceEur)}
+        />
+      ) : null}
       {bilan && userId ? (
         <BbcBilan10
           clientId={bilan.id}

@@ -1,0 +1,88 @@
+// =============================================================================
+// BbcCardSheet — attribuer / renouveler une carte de membre (chantier BBC).
+// 10 visites (30 jours) ou 30 visites (90 jours). Le prix est SAISI, jamais en
+// dur (il varie par club et n'est pas figé). Attribuer ferme la carte en cours.
+// =============================================================================
+
+import { useState } from "react";
+
+interface BbcCardSheetProps {
+  memberName: string;
+  currentCard: { type: number; used: number; remaining: number } | null;
+  onClose: () => void;
+  onAssign: (type: 10 | 30, priceEur: number | null) => Promise<boolean>;
+}
+
+export function BbcCardSheet({ memberName, currentCard, onClose, onAssign }: BbcCardSheetProps) {
+  const [type, setType] = useState<10 | 30>(10);
+  const [price, setPrice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function confirm() {
+    if (busy) return;
+    setBusy(true);
+    setErr("");
+    const parsed = price.trim() ? Number(price.replace(",", ".")) : null;
+    const ok = await onAssign(type, Number.isFinite(parsed as number) ? (parsed as number) : null);
+    setBusy(false);
+    if (ok) onClose();
+    else setErr("Impossible d'enregistrer la carte — réessaie.");
+  }
+
+  const options: Array<{ t: 10 | 30; label: string; days: string }> = [
+    { t: 10, label: "10 visites", days: "valable 30 jours" },
+    { t: 30, label: "30 visites", days: "valable 90 jours" },
+  ];
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(0,0,0,.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div onClick={(e) => e.stopPropagation()} className="bbc-mode" style={{ width: "100%", maxWidth: 460, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "24px 24px 0 0", padding: "20px 22px calc(24px + env(safe-area-inset-bottom))", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20 }}>{currentCard ? "Renouveler la carte" : "Attribuer une carte"}</div>
+            <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2 }}>{memberName}</div>
+          </div>
+          <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-muted)", cursor: "pointer", fontSize: 15, flex: "none" }}>✕</button>
+        </div>
+
+        {currentCard ? (
+          <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 12, padding: "10px 13px", margin: "10px 0 14px", lineHeight: 1.5 }}>
+            Carte en cours : <b style={{ color: "var(--ls-bbc-text)" }}>{currentCard.type} visites</b> · {currentCard.used} utilisées, {currentCard.remaining} restantes.
+            <br />En attribuer une nouvelle clôturera celle-ci.
+          </div>
+        ) : (
+          <div style={{ height: 12 }} />
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+          {options.map((o) => {
+            const on = type === o.t;
+            return (
+              <button key={o.t} type="button" onClick={() => setType(o.t)} style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "left", background: on ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}>
+                <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 20, color: on ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)" }}>{o.t}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>{o.label}</div>
+                <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 1 }}>{o.days}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <label style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)", marginBottom: 6 }}>Prix payé (optionnel, en €)</label>
+        <input
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          inputMode="decimal"
+          placeholder="ex. 80"
+          style={{ width: "100%", height: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16, padding: "0 14px", outline: "none", marginBottom: 12 }}
+        />
+
+        {err ? <div style={{ fontSize: 11.5, color: "var(--ls-bbc-coral)", marginBottom: 10 }}>{err}</div> : null}
+
+        <button type="button" onClick={() => void confirm()} disabled={busy} style={{ width: "100%", height: 50, border: 0, borderRadius: 13, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+          {busy ? "enregistrement…" : currentCard ? "Renouveler" : "Attribuer la carte"}
+        </button>
+      </div>
+    </div>
+  );
+}

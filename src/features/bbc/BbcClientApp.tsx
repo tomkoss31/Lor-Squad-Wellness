@@ -32,9 +32,10 @@ interface BbcClientAppProps {
   clientId?: string;
   coachId?: string;
   coachAdvice?: string | null;
+  /** Carte de membre active (null = pas de carte en cours). */
+  card?: { type: number; used: number; remaining: number; expires_at: string | null } | null;
 }
 
-const CARD_MAX = 10;
 
 function initials(name?: string) {
   const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
@@ -51,7 +52,7 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice } = props;
+  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card } = props;
   const [tab, setTab] = useState<MemberTab>("accueil");
   const [qrFull, setQrFull] = useState(false);
   const [noaly, setNoaly] = useState(false);
@@ -59,9 +60,12 @@ export function BbcClientApp(props: BbcClientAppProps) {
   const first = (clientName ?? "").split(/\s+/)[0] || "toi";
   const coach = (coachName ?? "").split(/\s+/)[0] || "ton coach";
   const visits = Math.max(0, visitsCount);
-  const shown = Math.min(visits, CARD_MAX);
-  const left = Math.max(0, CARD_MAX - visits);
-  const isNew = visits === 0 && (weightDeltaKg == null);
+  // La carte active pilote l'affichage ; sans carte on montre le total de visites.
+  const cardMax = card?.type ?? 10;
+  const onCard = card ? card.used : visits;
+  const shown = Math.min(onCard, cardMax);
+  const left = card ? card.remaining : Math.max(0, cardMax - visits);
+  const isNew = visits === 0 && weightDeltaKg == null;
   const rdv = fmtRdv(nextRdvDate);
 
   const NAV: Array<{ k: MemberTab; label: string; d: string; badge?: boolean }> = [
@@ -79,7 +83,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
         <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(140deg, var(--ls-bbc-teal), var(--ls-bbc-lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-display)", fontSize: 16, color: "#04201b", flex: "none" }}>{initials(clientName)}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.15 }}>Salut {first} !</div>
-          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-muted)", marginTop: 2 }}>ton club du matin · carte {visits}/{CARD_MAX}</div>
+          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-muted)", marginTop: 2 }}>ton club du matin · {card ? `carte ${onCard}/${cardMax}` : `${visits} visite${visits > 1 ? "s" : ""}`}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 999, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", flex: "none" }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ls-bbc-teal)", boxShadow: "0 0 6px var(--ls-bbc-teal)" }} />
@@ -99,15 +103,15 @@ export function BbcClientApp(props: BbcClientAppProps) {
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
                     <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />carte de membre
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--ls-bbc-lime-text)", border: "1px solid rgba(197,248,42,.4)", padding: "4px 10px", borderRadius: 999 }}>carte · {CARD_MAX} visites</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--ls-bbc-lime-text)", border: "1px solid rgba(197,248,42,.4)", padding: "4px 10px", borderRadius: 999 }}>{card ? `carte · ${cardMax} visites` : "pas de carte active"}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 56, lineHeight: 0.8, color: "var(--ls-bbc-lime)" }}>{visits}</span>
-                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 22, color: "var(--ls-bbc-muted)", paddingBottom: 6 }}>/ {CARD_MAX}</span>
+                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 56, lineHeight: 0.8, color: "var(--ls-bbc-lime)" }}>{onCard}</span>
+                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 22, color: "var(--ls-bbc-muted)", paddingBottom: 6 }}>/ {cardMax}</span>
                   <span style={{ flex: 1, textAlign: "right", fontSize: 11, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>{isNew ? "ta carte démarre" : left > 0 ? `plus que ${left} visite${left > 1 ? "s" : ""}` : "carte complète 🎉"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 5, marginTop: 12 }}>
-                  {Array.from({ length: CARD_MAX }).map((_, i) => (
+                  {Array.from({ length: cardMax }).map((_, i) => (
                     <div key={i} style={{ flex: 1, height: 8, borderRadius: 3, background: i < shown ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s1)" }} />
                   ))}
                 </div>
