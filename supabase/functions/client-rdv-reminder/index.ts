@@ -1,14 +1,17 @@
 // =============================================================================
-// client-rdv-reminder — rappels de RDV envoyés AU CLIENT (PWA).
+// client-rdv-reminder — rappels de RDV envoyés AU CLIENT / PROSPECT.
 //
-// Déclenché par pg_cron toutes les 30 min. Par RDV :
-//   • « 2h avant »   : PUSH (due_date dans [+105min, +150min])
-//   • « veille 18h » : PUSH + EMAIL (RDV du lendemain, ~18h Paris)
+// Déclenché par pg_cron toutes les 30 min. TROIS sources de RDV :
+//   1. follow_ups (client PWA existant) : « 2h avant » PUSH + « veille 18h »
+//      PUSH + EMAIL. Anti-doublon client_rdv_reminders_sent (imminent2h/eve/
+//      eve_email).
+//   2. rdv_bookings (prospect via réservation publique) : EMAIL « veille 18h »
+//      uniquement (pas de push). Anti-doublon rdv_bookings.reminder_email_sent_at.
+//   3. prospects (RDV ajouté À LA MAIN par le coach dans l'Agenda) : EMAIL
+//      « veille 18h » uniquement, si un email a été renseigné. Anti-doublon
+//      prospects.reminder_email_sent_at.
 //
-// Source : follow_ups (status='scheduled', client_id). Push via sendPushToClient.
-// Email via Resend (beau rappel : nom du coach + lieu de RDV). Anti-doublon via
-// client_rdv_reminders_sent (1 ligne par follow_up + kind : imminent2h / eve /
-// eve_email).
+// Push via sendPushToClient. Email via Resend (nom du coach + lieu de RDV).
 //
 // Deploy : supabase functions deploy client-rdv-reminder
 // =============================================================================
@@ -87,8 +90,17 @@ serve(async (req) => {
     if (fuErr) return jsonResponse({ error: fuErr.message }, 500);
 
     const rows = (followUps ?? []).filter((f) => f.client_id && f.due_date);
-    if (rows.length === 0) return jsonResponse({ ok: true, found: 0, sent: 0 });
 
+    // Compteurs partagés — les blocs PROSPECTS (rdv_bookings + prospects) tournent
+    // MÊME sans follow_up client. Avant : un return anticipé ici quand rows vide
+    // court-circuitait les rappels prospects (jamais envoyés les jours sans suivi
+    // client programmé).
+    let sent = 0;
+    let emails = 0;
+    let skipped = 0;
+
+    // ── Bloc 1 : rappels aux CLIENTS PWA (source follow_ups) ─────────────────
+    if (rows.length > 0) {
     // Clients → email + nom + coach.
     const clientIds = [...new Set(rows.map((f) => f.client_id as string))];
     const { data: clients } = await sb
@@ -129,10 +141,6 @@ serve(async (req) => {
       .select("follow_up_id, kind")
       .in("follow_up_id", rows.map((f) => f.id as string));
     const sentSet = new Set((markers ?? []).map((m) => `${m.follow_up_id}:${m.kind}`));
-
-    let sent = 0;
-    let emails = 0;
-    let skipped = 0;
 
     const mark = async (fid: string, kind: string) =>
       sb.from("client_rdv_reminders_sent").upsert(
@@ -196,6 +204,7 @@ serve(async (req) => {
         }
       }
     }
+    } // ── fin Bloc 1 (follow_ups)
 
     // ─── Mail J-1 aux PROSPECTS (rdv_bookings, funnel public) ───────────────
     // Pas de push (le prospect n'est pas sur la PWA) — uniquement l'email, et
@@ -248,7 +257,56 @@ serve(async (req) => {
       }
     }
 
-    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, prospectEmails, skipped });
+    // ─── Mail J-1 aux PROSPECTS ajoutés MANUELLEMENT dans l'Agenda ──────────
+    // (table `prospects`, RDV saisi à la main par le coach). Même logique que
+    // rdv_bookings : pas de push (le prospect n'est pas sur la PWA), email
+    // uniquement si un email a été renseigné. Anti-doublon = reminder_email_sent_at.
+    let manualProspectEmails = 0;
+    if (hourParis === 18) {
+      const dayStart = new Date(`${tomorrowParis}T00:00:00+02:00`).toISOString();
+      const dayEnd = new Date(`${tomorrowParis}T23:59:59+02:00`).toISOString();
+      const { data: prospects } = await sb
+        .from("prospects")
+        .select("id, distributor_id, first_name, email, rdv_date, status")
+        .eq("status", "scheduled")
+        .is("reminder_email_sent_at", null)
+        .gte("rdv_date", dayStart)
+        .lte("rdv_date", dayEnd);
+
+      const validProspects = (prospects ?? []).filter(
+        (p) => p.email && EMAIL_RE.test(String(p.email)),
+      );
+      if (validProspects.length > 0) {
+        const coachIds = [...new Set(validProspects.map((p) => p.distributor_id).filter(Boolean))] as string[];
+        const pFull = new Map<string, string>();
+        const pLoc = new Map<string, string>();
+        if (coachIds.length > 0) {
+          const { data: us } = await sb.from("users").select("id, name, rdv_location, city").in("id", coachIds);
+          for (const u of us ?? []) {
+            pFull.set(u.id as string, String((u.name as string) ?? "").trim() || "ton coach");
+            pLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
+          }
+        }
+        for (const p of validProspects) {
+          const cid = p.distributor_id as string | null;
+          const html = rdvEmailHtml({
+            kind: "reminder",
+            firstName: String((p.first_name as string) ?? "").split(/\s+/)[0] || "",
+            coachName: (cid && pFull.get(cid)) || "ton coach",
+            dateLabel: parisDateLabel(p.rdv_date as string),
+            hour: parisHourLabel(p.rdv_date as string),
+            location: (cid && pLoc.get(cid)) || "ton club La Base",
+          });
+          const ok = await sendViaResend(String(p.email), "📅 Ton rendez-vous, c'est demain", html);
+          if (ok) {
+            await sb.from("prospects").update({ reminder_email_sent_at: new Date().toISOString() }).eq("id", p.id);
+            manualProspectEmails += 1;
+          } else skipped += 1;
+        }
+      }
+    }
+
+    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, prospectEmails, manualProspectEmails, skipped });
   } catch (err) {
     return jsonResponse({ error: err instanceof Error ? err.message : "unknown" }, 500);
   }
