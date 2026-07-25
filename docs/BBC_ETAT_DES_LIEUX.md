@@ -23,6 +23,7 @@
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
 - **Formation** — échelle des rôles + **9 modules 00→08 cliquables avec contenu** (résumé + points clés, depuis le Notion) + glossaire.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
+- **Réglages** — créneau d'ouverture · rituels (jours + heure) · barème des cœurs · cartes (prix + durée). Écrit `clubs.settings` ; le Cockpit, les Cœurs et les cartes lisent cette config. **Aucune valeur métier en dur.**
 - **Switch Classic/BBC** (admins) dans la sidebar.
 
 ### App MEMBRE (PWA, 5 onglets, données réelles)
@@ -49,7 +50,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 | Panier | Contenu | Pourquoi |
 |---|---|---|
-| **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · **config club** (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
+| **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
 | **🙂 Confort (après l'ouverture)** | Écran d'entrée membre · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
@@ -65,7 +66,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 - **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
 - **Dashboard admin « Club 100 »** — 100 membres / 3 sup / 9 stagiaires / 20 000 PV + classement cobayes équipe + alertes.
 - **Liens rapides** — 7 liens 1-tap (bilan online, RDV, Zoom, visuel A/B/C/D, avis Google…).
-- **Config par club** — éditer horaires appels + barème (le `clubs.settings` jsonb existe, pas d'UI).
 - **Cobayes — vues avancées** — taux de réponse, série de jours, total semaine, liste de contacts depuis le CRM.
 
 ---
@@ -86,8 +86,11 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 1. ~~Contenu Formation~~ ✅ fait (9 modules cliquables).
 2. ~~Blocs réels du Cockpit~~ ✅ fait.
-3. **Écran d'entrée membre** (porter le design `BBC Entrée.dc.html`).
-4. **Bilan des 10** (checklist 9 étapes) + **cartes 10/30**.
+3. ~~Bilan des 10~~ ✅ · ~~Cartes 10/30~~ ✅ · ~~Config club~~ ✅
+4. **Écran d'entrée membre** (porter le design `BBC Entrée.dc.html`).
 5. **Appels & rappels** (inscriptions + séquence de rappels).
-6. **Config club** (UI pour éditer `clubs.settings` : horaires + barème).
+6. **Liens rapides** (7 liens 1-tap) · **Messages coach** réel.
 7. Recette Thomas → merge dev/prod (autorisation scoped).
+
+> ⚙️ **Décision métier en attente** (toi + Mélanie) : l'heure des rituels
+> (20h ou 20h30). L'app ne tranche pas — ça se règle dans **Réglages**.
