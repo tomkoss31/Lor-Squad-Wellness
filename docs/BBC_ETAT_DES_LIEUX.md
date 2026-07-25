@@ -22,6 +22,7 @@
 - **Cœurs** — mur des cœurs réel + **recos à valider** (le coach confirme « a démarré » = 1 cœur), paliers 2/3/5.
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
 - **Formation** — échelle des rôles + **9 modules 00→08 cliquables avec contenu** (résumé + points clés, depuis le Notion) + glossaire.
+- **Messages (coach)** — fils = membres BBC (dernier message + badge non lus), conversation et envoi réels via `client_messages` (même table que la messagerie classique → conversation continue entre les deux modes).
 - **Appels** — inscriptions aux rituels (occurrences depuis la config), présence pointée après l'appel, **suivi « patate chaude »** (10 min), bloc « à traiter ». Le membre voit son prochain appel.
 - **Rappels automatiques** — edge `bbc-call-reminder` + cron `*/10` : midi le jour J, −30 min, −15 min (push **membre**) et +30 min après (push **coach**, patate chaude, seulement si le suivi n'est pas fait). Anti-doublon en base.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
@@ -42,7 +43,6 @@
 
 ## 🟡 FAÇADE / DONNÉES D'EXEMPLE (structure là, à brancher)
 
-- **Messages (coach)** dans l'environnement desktop = exemple (le membre a un chat réel).
 - **Noaly** (membre + coach) — coquille, pas branché à l'IA.
 
 ---
@@ -54,7 +54,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 | Panier | Contenu | Pourquoi |
 |---|---|---|
 | **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
-| **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée~~ ✅ · ~~appels + rappels auto~~ ✅ · ~~liens rapides~~ ✅ · **Messages coach** | Presque vide : il ne reste que la messagerie côté coach |
+| **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée~~ ✅ · ~~appels + rappels~~ ✅ · ~~liens rapides~~ ✅ · ~~Messages coach~~ ✅ | **Vide.** |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
 > **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
@@ -89,8 +89,8 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 3. ~~Bilan des 10~~ ✅ · ~~Cartes 10/30~~ ✅ · ~~Config club~~ ✅
 4. ~~Écran d'entrée membre~~ ✅
 5. ~~Appels : inscriptions + présence + suivi + rappels automatiques~~ ✅
-6. ~~Liens rapides~~ ✅ — reste **Messages coach** réel (dernier item « confort »).
-7. Recette Thomas → merge dev/prod (autorisation scoped).
+6. ~~Liens rapides~~ ✅ · ~~Messages coach~~ ✅ — **plus rien en « bloquant » ni en « confort »**.
+7. **Recette Thomas de bout en bout** → puis merge dev/prod (autorisation scoped).
 
 > ⚙️ **Décision métier en attente** (toi + Mélanie) : l'heure des rituels
 > (20h ou 20h30). L'app ne tranche pas — ça se règle dans **Réglages**.
