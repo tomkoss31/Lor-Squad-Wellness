@@ -228,7 +228,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm userId={userId} />}
-        {view === "messages" && <BbcMessages />}
+        {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
