@@ -43,6 +43,20 @@
 
 ---
 
+## 🧭 Lire cette liste sans paniquer
+
+Tout ce qui reste **n'a pas le même poids**. Trois paniers :
+
+| Panier | Contenu | Pourquoi |
+|---|---|---|
+| **🔥 Bloquant pour ouvrir un club** | Bilan des 10 (checklist) · cartes 10/30 · config club (horaires/barème) | Sans ça, le rituel du club ne tourne pas |
+| **🙂 Confort (après l'ouverture)** | Écran d'entrée membre · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
+| **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
+
+> **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
+
+---
+
 ## 🔴 PAS FAIT DU TOUT
 
 - **Écran d'entrée membre** (`BBC Entrée.dc.html`, designé, pas porté).

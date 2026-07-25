@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { useBbcVisits, visitLevel, type VisitLevel } from "../useBbcVisits";
 import { BbcScanner } from "../BbcScanner";
+import { BbcBilan10 } from "../BbcBilan10";
 
 function levelColor(l: VisitLevel) {
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
@@ -26,6 +27,7 @@ interface BbcClubProps {
 export function BbcClub({ userId }: BbcClubProps) {
   const { members, loading, addVisit, refetch } = useBbcVisits(userId);
   const [scan, setScan] = useState(false);
+  const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
   const bilans = members.filter((m) => m.visits >= 10);
 
@@ -55,7 +57,8 @@ export function BbcClub({ userId }: BbcClubProps) {
       {bilans.length > 0 ? (
         <div style={{ background: "rgba(251,113,133,.10)", border: "1px solid rgba(251,113,133,.28)", borderRadius: 16, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ls-bbc-coral)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /></svg>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>{bilans.map((m) => m.name).join(", ")} {bilans.length > 1 ? "ont" : "a"} atteint 10 visites — bilan des 10 à faire.</span>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{bilans.map((m) => m.name).join(", ")} {bilans.length > 1 ? "ont" : "a"} atteint 10 visites — bilan des 10 à faire.</span>
+          <button type="button" onClick={() => setBilan({ id: bilans[0].id, name: bilans[0].name })} style={{ flex: "none", border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 13px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff" }}>faire le bilan →</button>
         </div>
       ) : null}
 
@@ -80,6 +83,9 @@ export function BbcClub({ userId }: BbcClubProps) {
                     <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
                     <div style={{ fontSize: 11, color: levelColor(lvl) }}>{m.visits} / 10 · {levelLabel(lvl)}</div>
                   </div>
+                  {lvl === "bilan" ? (
+                    <button type="button" onClick={() => setBilan({ id: m.id, name: m.name })} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff", flex: "none" }}>bilan</button>
+                  ) : null}
                   <button type="button" onClick={() => void addVisit(m.id)} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 13px", borderRadius: 10, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", flex: "none" }}>+1</button>
                 </div>
               );
@@ -89,6 +95,15 @@ export function BbcClub({ userId }: BbcClubProps) {
       </div>
 
       {scan ? <BbcScanner onClose={() => setScan(false)} onScanned={() => void refetch()} /> : null}
+      {bilan && userId ? (
+        <BbcBilan10
+          clientId={bilan.id}
+          clientName={bilan.name}
+          coachUserId={userId}
+          onClose={() => setBilan(null)}
+          onDone={() => void refetch()}
+        />
+      ) : null}
     </div>
   );
 }
