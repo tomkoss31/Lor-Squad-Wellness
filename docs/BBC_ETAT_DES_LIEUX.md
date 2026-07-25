@@ -33,6 +33,7 @@
 - **Conseils** — mot du coach réel + assiette idéale + routine.
 - **Messages** — chat réel coach↔membre (polling 15s).
 - QR plein écran + FAB Noaly.
+- **Écran d'entrée** — landing + 4 slides d'intro + écran final, vu **une seule fois** (`bbc_entry_seen_at`), skippable.
 
 ---
 
@@ -51,7 +52,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 | Panier | Contenu | Pourquoi |
 |---|---|---|
 | **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
-| **🙂 Confort (après l'ouverture)** | Écran d'entrée membre · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
+| **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée membre~~ ✅ · appels & rappels auto · liens rapides · Messages coach | Le manuel/WhatsApp fait le job en attendant |
 | **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
 > **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
@@ -60,7 +61,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 
 ## 🔴 PAS FAIT DU TOUT
 
-- **Écran d'entrée membre** (`BBC Entrée.dc.html`, designé, pas porté).
 - **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
 - **Appels & rappels** — les rituels hebdo (Appel Ambassadeur lun/jeu, Atelier Cœurs mar/sam, Coach Academy mer) + inscriptions + séquence de rappels (J-jour midi / −30 / −15 / +30). Le membre a un bloc « appel du club » statique.
 - **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
@@ -87,7 +87,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 1. ~~Contenu Formation~~ ✅ fait (9 modules cliquables).
 2. ~~Blocs réels du Cockpit~~ ✅ fait.
 3. ~~Bilan des 10~~ ✅ · ~~Cartes 10/30~~ ✅ · ~~Config club~~ ✅
-4. **Écran d'entrée membre** (porter le design `BBC Entrée.dc.html`).
+4. ~~Écran d'entrée membre~~ ✅
 5. **Appels & rappels** (inscriptions + séquence de rappels).
 6. **Liens rapides** (7 liens 1-tap) · **Messages coach** réel.
 7. Recette Thomas → merge dev/prod (autorisation scoped).
