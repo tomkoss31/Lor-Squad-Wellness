@@ -27,6 +27,8 @@ export interface BbcMember {
   visitedToday: boolean;
   /** Carte active : c'est ELLE qui pilote le solde et l'alerte bilan. */
   card: { type: number; used: number; remaining: number; expired: boolean } | null;
+  /** Token d'accès à son app membre — permet au coach d'ouvrir la PWA telle qu'il la voit. */
+  appToken?: string;
 }
 
 export interface UseBbcMembersResult {
@@ -41,6 +43,7 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
   const [hearts, setHearts] = useState<Record<string, { done: number; pending: number }>>({});
   const [today, setToday] = useState<Set<string>>(new Set());
   const [cards, setCards] = useState<Record<string, { type: number; used: number; remaining: number; expired: boolean }>>({});
+  const [tokens, setTokens] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -56,7 +59,7 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
       }
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
-      const [clientsRes, countsRes, refsRes, todayRes, cardsRes] = await Promise.all([
+      const [clientsRes, countsRes, refsRes, todayRes, cardsRes, tokensRes] = await Promise.all([
         sb
           .from("clients")
           .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up")
@@ -67,7 +70,13 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
         sb.from("client_referrals").select("from_client_id, status"),
         sb.from("club_visits").select("client_id").eq("coach_user_id", userId).gte("visited_at", startOfDay.toISOString()),
         sb.rpc("bbc_active_cards"),
+        sb.from("client_app_accounts").select("client_id, token").eq("coach_id", userId),
       ]);
+      if (Array.isArray(tokensRes.data)) {
+        const tk: Record<string, string> = {};
+        for (const r of tokensRes.data as Array<Record<string, unknown>>) tk[String(r.client_id)] = String(r.token);
+        setTokens(tk);
+      }
       if (Array.isArray(cardsRes.data)) {
         const cm: Record<string, { type: number; used: number; remaining: number; expired: boolean }> = {};
         for (const row of cardsRes.data as Array<Record<string, unknown>>) {
@@ -130,9 +139,10 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           pendingHearts: h.pending,
           visitedToday: today.has(id),
           card: cards[id] ?? null,
+          appToken: tokens[id],
         } as BbcMember;
       }),
-    [rows, counts, hearts, today, cards],
+    [rows, counts, hearts, today, cards, tokens],
   );
 
   return { members, loading, refetch };

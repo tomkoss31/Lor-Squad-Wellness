@@ -178,6 +178,7 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
                 key={ligne.ref}
                 ligne={ligne}
                 etat={carte[ligne.ref]}
+                carte={carte}
                 palier={palier}
                 onPatch={(n) => patch(ligne.ref, n)}
               />
@@ -220,16 +221,37 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
 function LigneRow({
   ligne,
   etat,
+  carte,
   palier,
   onPatch,
 }: {
   ligne: LigneCarte;
   etat: LigneEtat;
+  carte: CarteMap;
   palier: number;
   onPatch: (n: Partial<LigneEtat>) => void;
 }) {
   const produit = produitDeLaLigne(ligne);
-  const cout = produit ? coutParDose(produit.publicPrice, etat?.doses ?? null, palier) : null;
+  const coutBase = produit ? coutParDose(produit.publicPrice, etat?.doses ?? null, palier) : null;
+
+  // Ce qu'on ajoute dans le verre compte dans le coût : un shake, c'est du F1
+  // ET du PDM. Si un composant n'a pas encore ses doses, on le signale plutôt
+  // que d'afficher une marge trop belle.
+  const composants = (ligne.composeAvec ?? []).map((c) => {
+    const l = CARTE_CLUB.find((x) => x.ref === c.ref);
+    const p = l ? produitDeLaLigne(l) : undefined;
+    return {
+      ...c,
+      libelle: l?.libelle ?? c.ref,
+      cout: p ? coutParDose(p.publicPrice, carte[c.ref]?.doses ?? null, palier) : null,
+    };
+  });
+  const composantIncomplet = composants.some((c) => c.cout == null);
+  const cout =
+    coutBase == null || composantIncomplet
+      ? null
+      : coutBase + composants.reduce((s, c) => s + (c.cout ?? 0), 0);
+
   const marge = margeParDose(etat?.prix ?? null, cout);
   const margePct = marge != null && etat?.prix ? Math.round((marge / etat.prix) * 100) : null;
 
@@ -250,6 +272,12 @@ function LigneRow({
           réf {ligne.ref} · contenant {produit ? eur2(produit.publicPrice) : "?"}
         </span>
       </div>
+
+      {composants.length > 0 ? (
+        <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", marginTop: 4 }}>
+          recette : {composants.map((c) => `+ ${c.quantite} de ${c.libelle.toLowerCase()}`).join(" · ")}
+        </div>
+      ) : null}
 
       <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginTop: 11, flexWrap: "wrap" }}>
         <Champ
@@ -280,7 +308,11 @@ function LigneRow({
             </div>
           ) : (
             <div style={{ fontSize: 11.5, color: "var(--ls-bbc-hint)", lineHeight: 1.5 }}>
-              {etat?.doses == null ? "combien de doses dans un contenant ?" : "indique le prix de la dose"}
+              {etat?.doses == null
+                ? "combien de doses dans un contenant ?"
+                : composantIncomplet
+                  ? `il manque les doses de : ${composants.filter((c) => c.cout == null).map((c) => c.libelle).join(", ")}`
+                  : "indique le prix de la dose"}
             </div>
           )}
         </div>

@@ -51,7 +51,14 @@ export interface LigneCarte {
    * `source` dit d'où vient le chiffre pour qu'il soit contestable.
    */
   doses: number | null;
-  dosesSource?: "contenant" | "note-tarif";
+  dosesSource?: "contenant" | "note-tarif" | "dose-club";
+  /**
+   * Ce qu'on ajoute DANS le verre : un shake du club, ce n'est pas que du F1
+   * (26 g de F1 + 15 g de PDM), une boisson, ce n'est pas que du thé (1,7 g de
+   * thé + 10 ml d'aloé). Sans ça, la marge affichée serait fausse — elle
+   * oublierait la moitié du coût.
+   */
+  composeAvec?: { ref: string; quantite: string }[];
   /** Prix relevé sur la feuille annotée du 25/06/2026. `null` = rien d'écrit. */
   prixReleve: number | null;
   /** true quand l'annotation manuscrite était nette ; false = lecture à confirmer. */
@@ -64,18 +71,22 @@ export interface LigneCarte {
  */
 export const CARTE_CLUB: LigneCarte[] = [
   // ─── Shakes ───────────────────────────────────────────────────────────────
-  { ref: "4466", rayon: "shake", libelle: "Shake Formula 1", unite: "un shake", doses: null, prixReleve: 2.8, releveNet: true },
-  { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake", doses: null, prixReleve: 3.8, releveNet: false },
-  { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake", doses: null, prixReleve: 2.8, releveNet: false },
+  // Recette du club (Thomas, 25/07/2026) : un shake de 400 ml = 26 g de F1 + 15 g
+  // de PDM. Les doses par pot en découlent : 550 ÷ 26 = 21, 780 ÷ 26 = 30.
+  { ref: "4466", rayon: "shake", libelle: "Shake Formula 1", unite: "un shake de 400 ml", doses: 21, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: 2.8, releveNet: true },
+  { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: 3.8, releveNet: false },
+  { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake de 400 ml", doses: 19, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: 2.8, releveNet: false },
   { ref: "013K", rayon: "shake", libelle: "Shake Tri Blend Select", unite: "un shake", doses: null, prixReleve: null, releveNet: false },
-  { ref: "2600", rayon: "shake", libelle: "Boost protéines (PDM)", unite: "une dose", doses: null, prixReleve: null, releveNet: false },
+  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: null, prixReleve: null, releveNet: false },
   { ref: "0242", rayon: "shake", libelle: "Boost protéines (Formula 3)", unite: "une dose", doses: null, prixReleve: null, releveNet: false },
 
   // ─── Boissons ─────────────────────────────────────────────────────────────
-  { ref: "178K", rayon: "boisson", libelle: "Thé instantané", unite: "une tasse", doses: null, prixReleve: null, releveNet: false },
-  { ref: "179K", rayon: "boisson", libelle: "Thé instantané · grand format", unite: "une tasse", doses: 33, dosesSource: "note-tarif", prixReleve: null, releveNet: false },
-  { ref: "0006", rayon: "boisson", libelle: "Aloé Vera", unite: "un verre", doses: null, prixReleve: null, releveNet: false },
-  { ref: "1188", rayon: "boisson", libelle: "Aloé Vera · grand format", unite: "un verre", doses: null, prixReleve: null, releveNet: false },
+  // Recette du club : une boisson de 400 ml = 1,7 g de thé + 10 ml d'aloé.
+  // 51 ÷ 1,7 = 30 doses · 102 ÷ 1,7 = 60 · 473 ÷ 10 = 47 · 1 892 ÷ 10 = 189.
+  { ref: "178K", rayon: "boisson", libelle: "Boisson thé", unite: "un verre de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "0006", quantite: "10 ml" }], prixReleve: null, releveNet: false },
+  { ref: "179K", rayon: "boisson", libelle: "Boisson thé · grand format", unite: "un verre de 400 ml", doses: 60, dosesSource: "dose-club", composeAvec: [{ ref: "0006", quantite: "10 ml" }], prixReleve: null, releveNet: false },
+  { ref: "0006", rayon: "boisson", libelle: "Aloé Vera (dans la boisson)", unite: "10 ml", doses: 47, dosesSource: "dose-club", prixReleve: null, releveNet: false },
+  { ref: "1188", rayon: "boisson", libelle: "Aloé Vera · grand format", unite: "10 ml", doses: 189, dosesSource: "dose-club", prixReleve: null, releveNet: false },
   { ref: "012K", rayon: "boisson", libelle: "Café protéiné glacé", unite: "un verre", doses: null, prixReleve: 5.25, releveNet: true },
   { ref: "2554", rayon: "boisson", libelle: "Boisson multi-fibres", unite: "un verre", doses: null, prixReleve: 1.5, releveNet: true },
   { ref: "201K", rayon: "boisson", libelle: "Fibre Concentrate", unite: "une dose", doses: null, prixReleve: 2.1, releveNet: false },

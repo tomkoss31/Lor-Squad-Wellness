@@ -144,6 +144,52 @@ function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggl
             <Line k="Téléphone" v={m.phone || "—"} />
             <Line k="Email" v={m.email || "—"} />
           </div>
+
+          {/* Voir l'app telle que le membre la voit — indispensable pour la
+              recette : le coach ouvre la PWA du membre sans chercher son lien. */}
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+            {m.appToken ? (
+              <>
+                <a
+                  href={`/client/${m.appToken}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    padding: "10px 16px",
+                    borderRadius: 12,
+                    background: "var(--ls-bbc-lime)",
+                    color: "var(--ls-bbc-lime-ink)",
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    textDecoration: "none",
+                  }}
+                >
+                  📱 Ouvrir son app
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard?.writeText(`${window.location.origin}/client/${m.appToken}`)}
+                  style={{
+                    padding: "10px 16px",
+                    borderRadius: 12,
+                    background: "var(--ls-bbc-s2)",
+                    border: "1px solid var(--ls-bbc-line)",
+                    color: "var(--ls-bbc-muted)",
+                    fontWeight: 600,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    fontFamily: "var(--ls-bbc-font-body)",
+                  }}
+                >
+                  Copier le lien
+                </button>
+              </>
+            ) : (
+              <div style={{ fontSize: 11.5, color: "var(--ls-bbc-hint)" }}>
+                Pas encore d'accès à l'app pour ce membre — génère-le depuis sa fiche client.
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
     </div>
