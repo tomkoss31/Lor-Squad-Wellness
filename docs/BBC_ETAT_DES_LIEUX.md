@@ -27,6 +27,8 @@
 - **Rappels automatiques** — edge `bbc-call-reminder` + cron `*/10` : midi le jour J, −30 min, −15 min (push **membre**) et +30 min après (push **coach**, patate chaude, seulement si le suivi n'est pas fait). Anti-doublon en base.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
 - **Scripts & liens** — les 12 scripts verbatim (prénom injecté + copier) **et** les 6 **liens rapides** 1-tap avec message pré-rédigé (bilan online, réserver un créneau, page coach, Zoom Appel/Atelier, avis Google) → copier / lien seul / WhatsApp.
+- **Club 100 & rentabilité** — repères **sourcés** (Notion 00 : 100 membres · 3 sup actifs · 9 stagiaires · ~13 sup · 20 000 PV · 40 % de fréquentation ; échelle 1/2/3 clubs = 20k/35k/50k PV) + jauge membres réelle + **calculateur** (prix des cartes 80 €/185 € validés ; coût portion et charges **saisis** ; CA, marge, résultat et point mort **calculés**, formule affichée).
+- **Navigation** — sidebar groupée en 4 sections ; mobile = 4 onglets + tiroir « Plus » donnant accès à **toutes** les vues.
 - **Pré-lancement** — le parcours guidé des **6 semaines avant l'ouverture** (18 tâches du Playbook, chacune avec son « pourquoi »), **4 non-négociables** (liste de 200 · 200 cobayes · 20 évaluations d'entraînement · 30 membres) et un bandeau « prêt à ouvrir ? ». Table dédiée, le « Démarrage 30 jours » classique n'est pas touché.
 - **Réglages** — créneau d'ouverture · rituels (jours + heure) · barème des cœurs · cartes (prix + durée) · **liens du club** (Zoom, avis Google). Écrit `clubs.settings` ; le Cockpit, les Cœurs, les cartes et les liens lisent cette config. **Aucune valeur métier en dur.**
 - **Switch Classic/BBC** (admins) dans la sidebar.
@@ -56,7 +58,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 |---|---|---|
 | **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
 | **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée~~ ✅ · ~~appels + rappels~~ ✅ · ~~liens rapides~~ ✅ · ~~Messages coach~~ ✅ | **Vide.** |
-| **🌱 Plus tard (quand ça grandit)** | ~~Parcours 6 semaines~~ ✅ · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
+| **🌱 Plus tard (quand ça grandit)** | ~~Parcours 6 semaines~~ ✅ · ~~Club 100~~ ✅ · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
 > **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
 
