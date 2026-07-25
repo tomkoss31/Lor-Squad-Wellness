@@ -28,6 +28,7 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
     "10": { price: null, days: 30 },
     "30": { price: null, days: 90 },
   },
+  links: {},
 };
 
 export interface UseClubSettingsResult {

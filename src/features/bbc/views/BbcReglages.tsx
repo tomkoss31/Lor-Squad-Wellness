@@ -164,6 +164,25 @@ export function BbcReglages({ club }: BbcReglagesProps) {
         })}
       </Section>
 
+      {/* Liens du club */}
+      <Section eye="les liens du club" hint="collés dans les messages depuis l'onglet Scripts & liens">
+        {([
+          { k: "zoom_appel", label: "Zoom · Appel Ambassadeur", ph: "https://zoom.us/j/…" },
+          { k: "zoom_atelier", label: "Zoom · Atelier Cœurs", ph: "https://zoom.us/j/…" },
+          { k: "google_review", label: "Avis Google du club", ph: "https://g.page/…" },
+        ] as const).map((l) => (
+          <div key={l.k} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderTop: "1px solid var(--ls-bbc-line)", flexWrap: "wrap" }}>
+            <span style={{ width: 190, flex: "none", fontSize: 12.5, fontWeight: 600 }}>{l.label}</span>
+            <input
+              value={draft.links?.[l.k] ?? ""}
+              onChange={(e) => setDraft({ ...draft, links: { ...(draft.links ?? {}), [l.k]: e.target.value } })}
+              placeholder={l.ph}
+              style={{ ...inputStyle, margin: 0 }}
+            />
+          </div>
+        ))}
+      </Section>
+
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <button
           type="button"

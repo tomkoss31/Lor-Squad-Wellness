@@ -24,6 +24,7 @@ import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
+import { BbcLiens } from "./views/BbcLiens";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -59,7 +60,7 @@ const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
   { k: "coeurs", label: "Cœurs", icon: "❤️" },
   { k: "appels", label: "Appels", icon: "📞" },
   { k: "messages", label: "Messages", icon: "✉️" },
-  { k: "scripts", label: "Scripts", icon: "📝" },
+  { k: "scripts", label: "Scripts & liens", icon: "📝" },
   { k: "formation", label: "Formation", icon: "🎓" },
   { k: "clubs", label: "Mes clubs", icon: "🗺️" },
   { k: "reglages", label: "Réglages", icon: "⚙️" },
@@ -71,7 +72,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   club: { eye: "pointage en direct", title: "Le club ce matin" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
   messages: { eye: "messagerie", title: "Messages" },
-  scripts: { eye: "bibliothèque · verbatim", title: "Les scripts" },
+  scripts: { eye: "tout ce que tu envoies", title: "Scripts & liens" },
   formation: { eye: "accès gradué", title: "Formation BBC" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
   appels: { eye: "rituels du club", title: "Les appels" },
@@ -216,7 +217,12 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
             onGo={setView}
           />
         )}
-        {view === "scripts" && <BbcScripts />}
+        {view === "scripts" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+            <BbcLiens coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} />
+            <BbcScripts />
+          </div>
+        )}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}

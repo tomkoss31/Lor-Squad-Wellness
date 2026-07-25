@@ -198,6 +198,8 @@ export interface ClubSettings {
   hearts_bareme?: Record<string, string>;
   /** Cartes de membre : prix + durée de validité par type (10 / 30 visites). */
   cards?: Record<string, { price: number | null; days: number }>;
+  /** Liens du club à partager (Zoom des rituels, avis Google…). */
+  links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
   [key: string]: unknown;
 }
 
