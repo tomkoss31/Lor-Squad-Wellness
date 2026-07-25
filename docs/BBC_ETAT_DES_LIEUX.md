@@ -31,7 +31,22 @@
 - **Navigation** — sidebar groupée en 4 sections ; mobile = 4 onglets + tiroir « Plus » donnant accès à **toutes** les vues.
 - **Pré-lancement** — le parcours guidé des **6 semaines avant l'ouverture** (18 tâches du Playbook, chacune avec son « pourquoi »), **4 non-négociables** (liste de 200 · 200 cobayes · 20 évaluations d'entraînement · 30 membres) et un bandeau « prêt à ouvrir ? ». Table dédiée, le « Démarrage 30 jours » classique n'est pas touché.
 - **Réglages** — créneau d'ouverture · rituels (jours + heure) · barème des cœurs · cartes (prix + durée) · **liens du club** (Zoom, avis Google). Écrit `clubs.settings` ; le Cockpit, les Cœurs, les cartes et les liens lisent cette config. **Aucune valeur métier en dur.**
+- **La carte du club** (`La carte`, groupe « Mon club ») — le tarif Herbalife
+  donne le prix d'un **contenant**, le club vend des **doses**. L'écran fait le
+  pont : par produit, le coach saisit le nombre de doses tirées d'un contenant
+  et le prix de la dose au comptoir ; **coût et marge sont calculés** (prix
+  public du catalogue × palier de remise ÷ doses, formule affichée). Persisté
+  dans `clubs.settings.carte`. Les valeurs relevées sur le **tarif annoté du
+  25/06/2026** sont affichées comme **propositions** tant que la ligne n'est pas
+  validée — et Noaly ne cite que les lignes validées.
+- **Rattachement membre → club** : « Passer en membre BBC » écrit désormais
+  `clients.club_id` (il restait NULL → carte et réglages illisibles côté membre).
 - **Switch Classic/BBC** (admins) dans la sidebar.
+
+> ⚠️ **La table `clubs` est vide** (aucun club créé à ce jour). Sans club, la
+> carte, les réglages et les rituels tombent sur les valeurs par défaut et **rien
+> ne s'enregistre**. L'écran « La carte » le dit maintenant franchement avec un
+> raccourci « Créer mon club ». Premier geste de recette : créer le club.
 
 ### App MEMBRE (PWA, 5 onglets, données réelles)
 - **Accueil** — carte de membre (visites + QR), transformation Δ poids, prochain RDV.
@@ -46,7 +61,16 @@
 
 ## 🟡 FAÇADE / DONNÉES D'EXEMPLE (structure là, à brancher)
 
-- **Noaly** (membre + coach) — coquille, pas branché à l'IA.
+- ~~**Noaly membre**~~ ✅ **branchée** — le FAB de l'app membre ouvre un vrai chat
+  (edge `noaly`, mode `client_chat`, auth par token). Le contexte BBC est
+  construit **côté serveur** : carte de membre (visites utilisées / restantes /
+  expirée), cœurs, prochain rituel, fourchette de prix du bar. Le front n'envoie
+  que la question. ⚠️ **L'edge n'est pas encore redéployée** (`noaly` est une
+  fonction partagée avec la PROD → déploiement à valider par Thomas). Tant
+  qu'elle ne l'est pas, le chat répond mais sans le contexte BBC.
+- **Noaly coach en mode BBC** — le FAB coach existe déjà (`NoalyFab`, mode
+  `coach_chat`) mais son prompt décrit l'app CLASSIQUE (Co-pilote, FLEX, CRM…).
+  En BBC il faudrait lui décrire le club (cobayes, cartes, cœurs, rituels).
 
 ---
 
@@ -115,3 +139,33 @@ scan affichant « ? visite » · caméra relancée à chaque render.
 
 > ⚙️ **Décision métier en attente** (toi + Mélanie) : l'heure des rituels
 > (20h ou 20h30). L'app ne tranche pas — ça se règle dans **Réglages**.
+
+---
+
+## 🥤 La carte — ce qui manque pour qu'elle soit juste (2026-07-25)
+
+Le tarif Herbalife photographié (25/06/2026) donne le prix des **contenants** ;
+il est déjà en base (`src/data/herbalifeCatalog.ts`, mêmes réfs, mêmes prix —
+vérifié). Les **annotations manuscrites** sont les prix de vente **à l'unité**
+au bar. Deux données manquent encore, et **aucune ne peut être devinée** :
+
+**1. Le nombre de doses par contenant.** Le tarif ne le donne que pour les
+formats comptés (10 sachets, 6 barres, 14 barres, 21 sachets). Pour les poudres
+et les liquides, ça dépend de la dose servie au club :
+
+| Produit | Contenant | Doses ? |
+|---|---|---|
+| Formula 1 | 550 g / 780 g | ❓ combien de grammes par shake |
+| Thé instantané | 51 g | ❓ (le 102 g est noté **33 doses** sur ta feuille) |
+| Aloé Vera | 473 ml / 1,892 L | ❓ combien de ml par verre |
+| Rebuild Strength, CR7 Drive, Fibre Concentrate | pot | ❓ |
+| Créatine+ 228 g | — | ✅ **60** (noté sur ta feuille) |
+| H24 Hydrate · Microbiotic Max | — | ✅ **20 sticks** (noté) |
+
+**2. La relecture de tes annotations.** Certaines sont nettes, d'autres pas —
+l'écran « La carte » affiche chaque prix comme **proposition** avec la mention
+« lecture à confirmer » tant que tu n'as pas validé la ligne. Rien n'est
+appliqué sans ton clic.
+
+Une fois les deux renseignés, l'app calcule seule : coût de la dose, marge €,
+marge %, et la marge moyenne par visite alimente le calculateur Club 100.
