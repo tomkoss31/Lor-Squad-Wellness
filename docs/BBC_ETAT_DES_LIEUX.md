@@ -27,6 +27,7 @@
 - **Rappels automatiques** — edge `bbc-call-reminder` + cron `*/10` : midi le jour J, −30 min, −15 min (push **membre**) et +30 min après (push **coach**, patate chaude, seulement si le suivi n'est pas fait). Anti-doublon en base.
 - **Mes clubs** — création de club réelle (`createMyClub` + `set_club_model`).
 - **Scripts & liens** — les 12 scripts verbatim (prénom injecté + copier) **et** les 6 **liens rapides** 1-tap avec message pré-rédigé (bilan online, réserver un créneau, page coach, Zoom Appel/Atelier, avis Google) → copier / lien seul / WhatsApp.
+- **Pré-lancement** — le parcours guidé des **6 semaines avant l'ouverture** (18 tâches du Playbook, chacune avec son « pourquoi »), **4 non-négociables** (liste de 200 · 200 cobayes · 20 évaluations d'entraînement · 30 membres) et un bandeau « prêt à ouvrir ? ». Table dédiée, le « Démarrage 30 jours » classique n'est pas touché.
 - **Réglages** — créneau d'ouverture · rituels (jours + heure) · barème des cœurs · cartes (prix + durée) · **liens du club** (Zoom, avis Google). Écrit `clubs.settings` ; le Cockpit, les Cœurs, les cartes et les liens lisent cette config. **Aucune valeur métier en dur.**
 - **Switch Classic/BBC** (admins) dans la sidebar.
 
@@ -55,7 +56,7 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 |---|---|---|
 | **🔥 Bloquant pour ouvrir un club** | ~~Bilan des 10~~ ✅ · ~~cartes 10/30~~ ✅ · ~~config club~~ ✅ | **Plus rien ne bloque l'ouverture d'un club.** |
 | **🙂 Confort (après l'ouverture)** | ~~Écran d'entrée~~ ✅ · ~~appels + rappels~~ ✅ · ~~liens rapides~~ ✅ · ~~Messages coach~~ ✅ | **Vide.** |
-| **🌱 Plus tard (quand ça grandit)** | Onboarding guidé 6 semaines · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
+| **🌱 Plus tard (quand ça grandit)** | ~~Parcours 6 semaines~~ ✅ · dashboard Club 100 · Noaly IA · vues cobayes avancées | N'a de sens qu'avec plusieurs clubs / une équipe |
 
 > **En clair : 3 chantiers séparent l'app d'un club qui tourne.** Le reste, c'est de l'amélioration continue.
 
@@ -64,7 +65,6 @@ Tout ce qui reste **n'a pas le même poids**. Trois paniers :
 ## 🔴 PAS FAIT DU TOUT
 
 - **Vidéos des modules Formation** (optionnel) — le texte des 9 modules est fait ; reste à coller des vidéos via `TutorialLink` + `src/data/tutorials.ts` si tu veux.
-- **Onboarding BBC guidé** — `starterPlanBBC` (6 semaines de pré-lancement à portes serveur).
 - **Dashboard admin « Club 100 »** — 100 membres / 3 sup / 9 stagiaires / 20 000 PV + classement cobayes équipe + alertes.
 - **Cobayes — vues avancées** — taux de réponse, série de jours, total semaine, liste de contacts depuis le CRM.
 
