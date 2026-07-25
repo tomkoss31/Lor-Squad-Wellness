@@ -26,6 +26,7 @@ import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
 import { BbcLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
+import { BbcClub100 } from "./views/BbcClub100";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -44,6 +45,7 @@ type BbcView =
   | "clubs"
   | "appels"
   | "prelancement"
+  | "club100"
   | "reglages";
 
 interface BbcAppProps {
@@ -56,19 +58,30 @@ interface BbcAppProps {
   onCreateClub?: (name: string, city: string) => Promise<boolean>;
 }
 
-const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
-  { k: "cockpit", label: "Cockpit", icon: "▦" },
-  { k: "crm", label: "Cobayes & membres", icon: "👥" },
-  { k: "club", label: "Le club", icon: "☕" },
-  { k: "coeurs", label: "Cœurs", icon: "❤️" },
-  { k: "appels", label: "Appels", icon: "📞" },
-  { k: "messages", label: "Messages", icon: "✉️" },
-  { k: "scripts", label: "Scripts & liens", icon: "📝" },
-  { k: "formation", label: "Formation", icon: "🎓" },
-  { k: "prelancement", label: "Pré-lancement", icon: "🚀" },
-  { k: "clubs", label: "Mes clubs", icon: "🗺️" },
-  { k: "reglages", label: "Réglages", icon: "⚙️" },
+// Le menu est groupé par intention (piloter / développer / apprendre / mon club)
+// pour rester lisible malgré le nombre de vues.
+type NavItem = { k: BbcView; label: string; icon: string; group: string };
+const NAV: NavItem[] = [
+  { k: "cockpit", label: "Cockpit", icon: "▦", group: "Ce matin" },
+  { k: "club", label: "Le club", icon: "☕", group: "Ce matin" },
+  { k: "appels", label: "Appels", icon: "📞", group: "Ce matin" },
+
+  { k: "crm", label: "Cobayes & membres", icon: "👥", group: "Développer" },
+  { k: "coeurs", label: "Cœurs", icon: "❤️", group: "Développer" },
+  { k: "messages", label: "Messages", icon: "✉️", group: "Développer" },
+
+  { k: "scripts", label: "Scripts & liens", icon: "📝", group: "Ressources" },
+  { k: "formation", label: "Formation", icon: "🎓", group: "Ressources" },
+  { k: "prelancement", label: "Pré-lancement", icon: "🚀", group: "Ressources" },
+
+  { k: "club100", label: "Club 100 & rentabilité", icon: "📊", group: "Mon club" },
+  { k: "clubs", label: "Mes clubs", icon: "🗺️", group: "Mon club" },
+  { k: "reglages", label: "Réglages", icon: "⚙️", group: "Mon club" },
 ];
+
+// Mobile : 4 onglets du matin + « Plus » (pattern iOS). Sans ce tiroir, 6 vues
+// seraient inaccessibles au téléphone — or le club se pilote au téléphone.
+const MOBILE_MAIN: BbcView[] = ["cockpit", "club", "crm", "coeurs"];
 
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
   cockpit: { eye: "co-pilote du matin", title: "Bon matin" },
@@ -81,12 +94,14 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
   appels: { eye: "rituels du club", title: "Les appels" },
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
+  club100: { eye: "le modèle · tes chiffres", title: "Club 100 & rentabilité" },
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
 export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub }: BbcAppProps) {
   const [view, setView] = useState<BbcView>("cockpit");
   const [sheet, setSheet] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const cob = useBbcCobayes(userId);
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
@@ -117,11 +132,17 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
-          {NAV.map((n) => {
+          {NAV.map((n, i) => {
             const active = n.k === view;
+            const newGroup = i === 0 || NAV[i - 1].group !== n.group;
             return (
+              <div key={n.k} style={{ display: "contents" }}>
+              {newGroup ? (
+                <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-bbc-hint)", padding: "0 12px", marginTop: i === 0 ? 4 : 14, marginBottom: 5 }}>
+                  {n.group}
+                </div>
+              ) : null}
               <button
-                key={n.k}
                 type="button"
                 className="bbc-navitem"
                 onClick={() => setView(n.k)}
@@ -148,6 +169,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
                 </span>
                 <span style={{ flex: 1 }}>{n.label}</span>
               </button>
+              </div>
             );
           })}
         </nav>
@@ -236,12 +258,13 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
+        {view === "club100" && <BbcClub100 userId={userId} />}
         {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
 
       {/* ── Bottom nav (mobile) ───────────────────────────────────────── */}
       <nav className="bbc-bottomnav bbc-mode">
-        {NAV.slice(0, 5).map((n) => {
+        {NAV.filter((n) => MOBILE_MAIN.includes(n.k)).map((n) => {
           const active = n.k === view;
           return (
             <button
@@ -271,7 +294,67 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
             </button>
           );
         })}
+        {/* « Plus » : sans lui, 7 vues seraient hors d'atteinte au téléphone. */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          style={{
+            flex: 1, background: "transparent", border: 0, cursor: "pointer",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 2px",
+            color: MOBILE_MAIN.includes(view) ? "var(--ls-bbc-hint)" : "var(--ls-bbc-lime)",
+            fontFamily: "var(--ls-bbc-font-body)", fontSize: 10, fontWeight: 600,
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 18 }}>⋯</span>
+          Plus
+        </button>
       </nav>
+
+      {/* Tiroir « Plus » (mobile) */}
+      {moreOpen ? (
+        <div
+          onClick={() => setMoreOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bbc-mode"
+            style={{ width: "100%", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "24px 24px 0 0", padding: "18px 18px calc(24px + env(safe-area-inset-bottom))", maxHeight: "80vh", overflowY: "auto" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ flex: 1, fontFamily: "var(--ls-bbc-font-display)", fontSize: 18 }}>Tout le club</span>
+              <button type="button" onClick={() => setMoreOpen(false)} aria-label="Fermer" style={{ width: 32, height: 32, borderRadius: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-muted)", cursor: "pointer", fontSize: 15 }}>✕</button>
+            </div>
+            {NAV.filter((n) => !MOBILE_MAIN.includes(n.k)).map((n, i, arr) => {
+              const newGroup = i === 0 || arr[i - 1].group !== n.group;
+              return (
+                <div key={n.k}>
+                  {newGroup ? (
+                    <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-bbc-hint)", margin: i === 0 ? "2px 0 6px" : "14px 0 6px" }}>
+                      {n.group}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => { setView(n.k); setMoreOpen(false); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 13, width: "100%", minHeight: 48,
+                      border: 0, cursor: "pointer", textAlign: "left", padding: "12px 14px", borderRadius: 13, marginBottom: 4,
+                      background: n.k === view ? "var(--ls-bbc-s2)" : "transparent",
+                      color: n.k === view ? "var(--ls-bbc-lime)" : "var(--ls-bbc-text)",
+                      fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 600,
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ fontSize: 18, width: 22, textAlign: "center" }}>{n.icon}</span>
+                    <span style={{ flex: 1 }}>{n.label}</span>
+                    <span aria-hidden="true" style={{ color: "var(--ls-bbc-hint)" }}>›</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {sheet ? (
         <BbcCobayeSheet
