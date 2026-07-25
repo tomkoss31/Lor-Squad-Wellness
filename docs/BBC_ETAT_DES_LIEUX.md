@@ -155,12 +155,33 @@ et les liquides, ça dépend de la dose servie au club :
 
 | Produit | Contenant | Doses ? |
 |---|---|---|
-| Formula 1 | 550 g / 780 g | ❓ combien de grammes par shake |
-| Thé instantané | 51 g | ❓ (le 102 g est noté **33 doses** sur ta feuille) |
-| Aloé Vera | 473 ml / 1,892 L | ❓ combien de ml par verre |
+| Formula 1 | 550 g / 780 g | ✅ **21 / 30** (26 g par shake) |
+| PDM | 580 g | ✅ **38** (15 g par shake) |
+| Thé instantané | 51 g / 102 g | ✅ **30 / 60** (1,7 g par verre) |
+| Aloé Vera | 473 ml / 1,892 L | ✅ **47 / 189** (10 ml par verre) |
 | Rebuild Strength, CR7 Drive, Fibre Concentrate | pot | ❓ |
 | Créatine+ 228 g | — | ✅ **60** (noté sur ta feuille) |
 | H24 Hydrate · Microbiotic Max | — | ✅ **20 sticks** (noté) |
+
+**Recettes du club** (Thomas, 25/07/2026) : shake de 400 ml = 26 g F1 + 15 g PDM ·
+boisson de 400 ml = 1,7 g thé + 10 ml aloé. L'app calcule donc le coût d'un
+**shake complet** (F1 + PDM), pas celui du F1 seul.
+
+### Le chiffre du modèle (palier 50 %, calculé, formules affichées)
+| | |
+|---|---|
+| un shake | **2,50 €** |
+| une boisson | **1,26 €** |
+| **une visite te coûte** | **3,76 €** (3,46 € en grands formats) |
+| carte 10 → 8,00 €/visite | marge **4,24 €** · 53 % |
+| carte 30 → 6,17 €/visite | marge **2,40 €** · 39 % |
+
+Sur un Club 100 (1 040 visites/mois) en cartes 30 ⇒ ~**2 500 €/mois de marge
+produit**, avant loyer et charges fixes.
+
+⚠️ **À trancher** : le **2,80 €** relevé sur le F1. Si c'est le prix du shake
+COMPLET, la marge tombe à **0,30 €** — quasiment à perte. Si c'est le F1 seul
+(PDM facturé à part), la marge est de 1,29 €.
 
 **2. La relecture de tes annotations.** Certaines sont nettes, d'autres pas —
 l'écran « La carte » affiche chaque prix comme **proposition** avec la mention

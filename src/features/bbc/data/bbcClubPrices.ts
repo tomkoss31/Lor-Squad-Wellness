@@ -77,7 +77,8 @@ export const CARTE_CLUB: LigneCarte[] = [
   { ref: "048K", rayon: "shake", libelle: "Shake Formula 1 · grand format", unite: "un shake de 400 ml", doses: 30, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: 3.8, releveNet: false },
   { ref: "4469", rayon: "shake", libelle: "Shake sans lactose / sans gluten", unite: "un shake de 400 ml", doses: 19, dosesSource: "dose-club", composeAvec: [{ ref: "2600", quantite: "15 g" }], prixReleve: 2.8, releveNet: false },
   { ref: "013K", rayon: "shake", libelle: "Shake Tri Blend Select", unite: "un shake", doses: null, prixReleve: null, releveNet: false },
-  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: null, prixReleve: null, releveNet: false },
+  // PDM : pot de 580 g (Thomas, 25/07/2026) → 580 ÷ 15 = 38 doses.
+  { ref: "2600", rayon: "shake", libelle: "Protéines PDM (dans le shake)", unite: "une dose de 15 g", doses: 38, dosesSource: "dose-club", prixReleve: null, releveNet: false },
   { ref: "0242", rayon: "shake", libelle: "Boost protéines (Formula 3)", unite: "une dose", doses: null, prixReleve: null, releveNet: false },
 
   // ─── Boissons ─────────────────────────────────────────────────────────────
@@ -133,6 +134,36 @@ export function coutParDose(prixPublicContenant: number, doses: number | null, t
 export function margeParDose(prixVente: number | null, cout: number | null): number | null {
   if (prixVente == null || cout == null) return null;
   return prixVente - cout;
+}
+
+/**
+ * Ce qu'on sert réellement à un membre qui vient le matin : un shake + une
+ * boisson. C'est CE coût-là qu'il faut comparer au prix d'une visite (carte
+ * 10 ou 30) — pas le prix d'un produit isolé.
+ */
+export const PETIT_DEJ = {
+  shake: { libelle: "un shake", refs: ["4466", "2600"] },
+  boisson: { libelle: "une boisson", refs: ["178K", "0006"] },
+} as const;
+
+/**
+ * Coût de revient d'un ensemble de doses (ex. le shake = F1 + PDM).
+ * `null` dès qu'une dose manque — on préfère ne rien afficher qu'un chiffre
+ * qui oublierait un ingrédient et flatterait la marge.
+ */
+export function coutServi(
+  refs: readonly string[],
+  doses: Record<string, number | null | undefined>,
+  tauxRemise: number,
+): number | null {
+  let total = 0;
+  for (const ref of refs) {
+    const produit = getProductByRef(ref);
+    const c = produit ? coutParDose(produit.publicPrice, doses[ref] ?? null, tauxRemise) : null;
+    if (c == null) return null;
+    total += c;
+  }
+  return total;
 }
 
 /** Les paliers de remise Herbalife, pour le sélecteur de Réglages. */

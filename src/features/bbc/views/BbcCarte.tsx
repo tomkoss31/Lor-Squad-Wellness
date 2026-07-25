@@ -14,8 +14,10 @@ import {
   CARTE_CLUB,
   RAYON_LABELS,
   coutParDose,
+  coutServi,
   margeParDose,
   produitDeLaLigne,
+  PETIT_DEJ,
   PALIERS_REMISE,
   type LigneCarte,
   type RayonCarte,
@@ -55,6 +57,17 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
   const palier = settings.palier_remise ?? 50;
   const aValider = CARTE_CLUB.filter((l) => !carte[l.ref]?.valide).length;
   const sansDoses = CARTE_CLUB.filter((l) => carte[l.ref]?.doses == null).length;
+
+  // Ce que coûte réellement un membre qui vient le matin (shake + boisson),
+  // comparé à ce qu'il paie sa visite via sa carte. C'est LE chiffre du modèle.
+  const dosesMap = Object.fromEntries(Object.entries(carte).map(([k, v]) => [k, v?.doses ?? null]));
+  const coutShake = coutServi(PETIT_DEJ.shake.refs, dosesMap, palier);
+  const coutBoisson = coutServi(PETIT_DEJ.boisson.refs, dosesMap, palier);
+  const coutVisite = coutShake != null && coutBoisson != null ? coutShake + coutBoisson : null;
+  // Prix des cartes : ceux du club s'ils sont réglés, sinon les tiens (80/185,
+  // validés le 25/07/2026). 10 visites → 8,00 € · 30 visites → 6,17 €.
+  const prix10 = settings.cards?.["10"]?.price ?? 80;
+  const prix30 = settings.cards?.["30"]?.price ?? 185;
 
   function patch(ref: string, next: Partial<LigneEtat>) {
     setSaved(false);
@@ -139,6 +152,34 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
           coût d'une dose = prix public du contenant × (1 − {palier} %) ÷ doses · confronte-le à ta facture réelle
         </div>
       </div>
+
+      {/* ── Le chiffre du modèle : ce que coûte une visite ───────────────── */}
+      {coutVisite != null && (
+        <div style={{ ...card, border: "1px solid rgba(197,248,42,.30)" }}>
+          <Eye>ce que coûte un membre qui vient</Eye>
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.6, marginBottom: 14 }}>
+            Un membre qui passe le matin repart avec <b style={{ color: "var(--ls-bbc-text)" }}>un shake et une boisson</b>.
+            Voilà ce que ça te coûte, et ce qu'il te reste selon sa carte.
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 11 }}>
+            <Bloc label="le shake" value={eur2(coutShake as number)} sub="26 g F1 + 15 g PDM" />
+            <Bloc label="la boisson" value={eur2(coutBoisson as number)} sub="1,7 g thé + 10 ml aloé" />
+            <Bloc label="une visite te coûte" value={eur2(coutVisite)} sub="shake + boisson" fort />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 11, marginTop: 12 }}>
+            <MargeCarte titre={`carte 10 · ${eur2(prix10)}`} prixVisite={prix10 / 10} cout={coutVisite} />
+            <MargeCarte titre={`carte 30 · ${eur2(prix30)}`} prixVisite={prix30 / 30} cout={coutVisite} />
+          </div>
+
+          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 12, lineHeight: 1.6 }}>
+            prix de la visite = prix de la carte ÷ nombre de visites · marge = prix de la visite − coût
+            <br />
+            coût d'une dose = prix public × (1 − {palier} %) ÷ doses par contenant
+          </div>
+        </div>
+      )}
 
       {/* ── Ce qu'il reste à trancher ───────────────────────────────────── */}
       {(aValider > 0 || sansDoses > 0) && (
@@ -393,6 +434,50 @@ function Champ({
         {suffix ? <span style={{ fontSize: 13, color: "var(--ls-bbc-muted)" }}>{suffix}</span> : null}
       </span>
     </label>
+  );
+}
+
+function Bloc({ label, value, sub, fort }: { label: string; value: string; sub: string; fort?: boolean }) {
+  return (
+    <div
+      style={{
+        background: fort ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)",
+        border: fort ? "1px solid rgba(197,248,42,.30)" : "1px solid var(--ls-bbc-line)",
+        borderRadius: 14,
+        padding: "13px 15px",
+      }}
+    >
+      <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--ls-bbc-muted)" }}>{label}</div>
+      <div
+        style={{
+          fontFamily: "var(--ls-bbc-font-mono)",
+          fontSize: 24,
+          fontWeight: 800,
+          marginTop: 4,
+          color: fort ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)",
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{sub}</div>
+    </div>
+  );
+}
+
+function MargeCarte({ titre, prixVisite, cout }: { titre: string; prixVisite: number; cout: number }) {
+  const marge = prixVisite - cout;
+  const pct = prixVisite > 0 ? Math.round((marge / prixVisite) * 100) : 0;
+  return (
+    <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "13px 15px" }}>
+      <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>{titre}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginTop: 5 }}>
+        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 20, fontWeight: 800, color: marge > 0 ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-coral)" }}>
+          {eur2(marge)}
+        </span>
+        <span style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>de marge · {pct} %</span>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 3 }}>la visite te rapporte {eur2(prixVisite)}</div>
+    </div>
   );
 }
 
