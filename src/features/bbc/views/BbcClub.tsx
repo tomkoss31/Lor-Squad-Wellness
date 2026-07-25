@@ -29,7 +29,8 @@ export function BbcClub({ userId, club }: BbcClubProps) {
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
-  const bilans = members.filter((m) => m.visits >= 10);
+  // Bilan à faire = carte consommée (pas le cumul à vie).
+  const bilans = members.filter((m) => m.card && m.card.used >= m.card.type);
 
   const stats: Array<{ label: string; value: string; tone: string }> = [
     { label: "membres", value: String(members.length), tone: "var(--ls-bbc-lime-text)" },
@@ -75,16 +76,16 @@ export function BbcClub({ userId, club }: BbcClubProps) {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
             {members.map((m) => {
-              const lvl = visitLevel(m.visits);
+              const lvl = visitLevel(m.card?.used ?? 0, m.card?.type);
               return (
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
-                  <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.visits}</span>
+                  <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.card ? m.card.used : m.visits}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
                     <div style={{ fontSize: 11, color: levelColor(lvl) }}>
                       {m.card
                         ? `carte ${m.card.type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`
-                        : `${m.visits} visites · pas de carte`}
+                        : `${m.visits} visite${m.visits > 1 ? "s" : ""} au total · pas de carte`}
                     </div>
                   </div>
                   <button type="button" onClick={() => setCardFor(m.id)} title={m.card ? "Renouveler la carte" : "Attribuer une carte"} style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: m.card ? "var(--ls-bbc-muted)" : "var(--ls-bbc-lime-text)", flex: "none" }}>

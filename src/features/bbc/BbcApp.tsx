@@ -285,7 +285,8 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
 
   // Le club ce matin : qui a pointé aujourd'hui + qui est à faire.
   const pointes = members.filter((m) => m.visitedToday);
-  const bilans = members.filter((m) => m.visits >= 10);
+  // Bilan = carte consommée, pas le cumul de visites à vie.
+  const bilans = members.filter((m) => m.card && m.card.used >= m.card.type);
   // À un cœur du palier : le prochain palier est à 1 cœur.
   const PALIERS = [2, 3, 5];
   const aUnCoeur = members.filter((m) => {
@@ -386,19 +387,20 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
         ) : (
           <>
             {members.slice(0, 4).map((m) => {
-              const lvl = visitLevel(m.visits);
+              const lvl = visitLevel(m.card?.used ?? 0, m.card?.type);
+              const solde = m.card ? `${m.card.used}/${m.card.type}` : `${m.visits} au total`;
               return (
                 <MemberRow
                   key={m.id}
                   name={m.name}
-                  note={m.visitedToday ? `pointé aujourd'hui · ${m.visits}/10` : lvl === "bilan" ? "bilan des 10 à faire" : `${m.visits}/10 visites`}
+                  note={m.visitedToday ? `pointé aujourd'hui · ${solde}` : lvl === "bilan" ? "carte finie · bilan à faire" : `${solde}${m.card ? "" : " · pas de carte"}`}
                   tone={m.visitedToday ? "teal" : lvl === "bilan" ? "coral" : "muted"}
                   action={m.visitedToday ? "pointé" : lvl === "bilan" ? "bilan" : "pointer"}
                   onClick={() => onGo("club")}
                 />
               );
             })}
-            {bilans.length ? <Empty>🎯 {bilans.map((b) => b.name).join(", ")} → bilan des 10 à faire.</Empty> : null}
+            {bilans.length ? <Empty>🎯 {bilans.map((b) => b.name).join(", ")} → carte finie, bilan à faire.</Empty> : null}
           </>
         )}
       </SectionCard>

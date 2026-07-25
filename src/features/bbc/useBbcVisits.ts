@@ -11,9 +11,17 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 
 export type VisitLevel = "ok" | "warn" | "bilan";
 
-export function visitLevel(v: number): VisitLevel {
-  if (v >= 10) return "bilan";
-  if (v >= 7) return "warn";
+/**
+ * Niveau d'alerte basé sur la CARTE EN COURS, pas sur le cumul à vie.
+ * Sans carte active, aucune alerte : un membre à 23 visites cumulées et une
+ * carte de 30 en cours n'est pas « en retard de bilan ».
+ *  - carte consommée (used >= type) → bilan à faire
+ *  - dernières 3 visites de la carte  → bientôt le bilan
+ */
+export function visitLevel(used: number, cardType?: number | null): VisitLevel {
+  if (!cardType) return "ok";
+  if (used >= cardType) return "bilan";
+  if (used >= cardType - 3) return "warn";
   return "ok";
 }
 

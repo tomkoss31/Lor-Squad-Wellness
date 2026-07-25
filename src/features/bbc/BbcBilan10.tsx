@@ -5,7 +5,7 @@
 // est coché, completed_at est posé.
 // =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 
 export const BILAN10_STEPS: Array<{ key: string; label: string; hint: string }> = [
@@ -30,7 +30,11 @@ interface BbcBilan10Props {
 
 export function BbcBilan10({ clientId, clientName, coachUserId, onClose, onDone }: BbcBilan10Props) {
   const [steps, setSteps] = useState<Record<string, boolean>>({});
-  const [rowId, setRowId] = useState<string | null>(null);
+  // Verrou : deux cases cochées coup sur coup ne doivent pas créer DEUX
+  // lignes de bilan (la 2e écraserait la 1re et perdrait des étapes).
+  // La ref est la source de vérité (lisible tout de suite, sans re-render).
+  const rowIdRef = useRef<string | null>(null);
+  const creatingRef = useRef<Promise<string | null> | null>(null);
   const [loading, setLoading] = useState(true);
   const [completedAt, setCompletedAt] = useState<string | null>(null);
 
@@ -52,7 +56,7 @@ export function BbcBilan10({ clientId, clientName, coachUserId, onClose, onDone 
         if (cancelled) return;
         const row = data as { id: string; steps: Record<string, boolean>; completed_at: string | null } | null;
         if (row) {
-          setRowId(row.id);
+          rowIdRef.current = row.id;
           setSteps(row.steps ?? {});
           setCompletedAt(row.completed_at);
         }
@@ -75,22 +79,34 @@ export function BbcBilan10({ clientId, clientName, coachUserId, onClose, onDone 
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        if (rowId) {
-          await sb.from("club_bilans").update({ steps: next, completed_at: completed }).eq("id", rowId);
+
+        // 1) Une création déjà en vol ? On l'attend au lieu d'en lancer une 2e.
+        if (!rowIdRef.current && creatingRef.current) {
+          await creatingRef.current;
+        }
+
+        if (rowIdRef.current) {
+          await sb.from("club_bilans").update({ steps: next, completed_at: completed }).eq("id", rowIdRef.current);
         } else {
-          const { data } = await sb
-            .from("club_bilans")
-            .insert({ client_id: clientId, coach_user_id: coachUserId, steps: next, completed_at: completed })
-            .select("id")
-            .maybeSingle();
-          if (data) setRowId(String((data as { id: string }).id));
+          creatingRef.current = (async () => {
+            const { data } = await sb
+              .from("club_bilans")
+              .insert({ client_id: clientId, coach_user_id: coachUserId, steps: next, completed_at: completed })
+              .select("id")
+              .maybeSingle();
+            const id = data ? String((data as { id: string }).id) : null;
+            if (id) rowIdRef.current = id;
+            return id;
+          })();
+          await creatingRef.current;
+          creatingRef.current = null;
         }
         if (allDone) onDone?.();
       } catch {
-        // silent-fail
+        creatingRef.current = null;
       }
     },
-    [rowId, clientId, coachUserId, onDone],
+    [clientId, coachUserId, onDone],
   );
 
   function toggle(key: string) {

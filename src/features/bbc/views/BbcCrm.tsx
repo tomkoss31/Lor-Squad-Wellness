@@ -39,9 +39,13 @@ function fmtDate(iso?: string | null) {
     return "—";
   }
 }
-function levelColor(v: number) {
-  const l = visitLevel(v);
+function levelColor(m: BbcMember) {
+  const l = visitLevel(m.card?.used ?? 0, m.card?.type);
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
+}
+/** Ce que le coach doit lire : le solde de la carte, sinon le cumul. */
+function visitLabel(m: BbcMember) {
+  return m.card ? `${m.card.used}/${m.card.type}` : `${m.visits} au total`;
 }
 
 interface BbcCrmProps {
@@ -96,7 +100,7 @@ export function BbcCrm({ userId }: BbcCrmProps) {
 }
 
 function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggle: () => void }) {
-  const lvlColor = levelColor(m.visits);
+  const lvlColor = levelColor(m);
   return (
     <div style={{ borderTop: "1px solid var(--ls-bbc-line)" }}>
       <button type="button" onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 13, width: "100%", background: "transparent", border: 0, cursor: "pointer", textAlign: "left", padding: "13px 4px", color: "var(--ls-bbc-text)" }}>
@@ -105,7 +109,7 @@ function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggl
           <div style={{ fontSize: 14, fontWeight: 600 }}>{m.name}</div>
           <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>{m.started ? "membre" : "à démarrer"} · {objLabel(m.objective)}</div>
         </div>
-        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: lvlColor }}>{m.visits}/10</span>
+        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: lvlColor }}>{visitLabel(m)}</span>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: "var(--ls-bbc-lime-text)" }}>{m.hearts}♥</span>
         <span aria-hidden="true" style={{ fontSize: 11, color: "var(--ls-bbc-hint)", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}>▾</span>
       </button>
@@ -114,7 +118,20 @@ function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggl
         <div style={{ padding: "4px 4px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
           {/* chiffres clés */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-            <Stat label="visites" value={`${m.visits}/10`} color={lvlColor} sub={visitLevel(m.visits) === "bilan" ? "bilan à faire" : visitLevel(m.visits) === "warn" ? "bientôt bilan" : "actif"} />
+            <Stat
+              label={m.card ? `carte ${m.card.type}` : "visites"}
+              value={visitLabel(m)}
+              color={lvlColor}
+              sub={
+                !m.card
+                  ? "pas de carte active"
+                  : visitLevel(m.card.used, m.card.type) === "bilan"
+                    ? "carte finie · bilan à faire"
+                    : visitLevel(m.card.used, m.card.type) === "warn"
+                      ? "bientôt le bilan"
+                      : `${m.card.remaining} restantes`
+              }
+            />
             <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
             <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
           </div>

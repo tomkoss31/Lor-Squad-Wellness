@@ -64,28 +64,32 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId }: Mem
   const [toast, setToast] = useState<string | null>(null);
   const [modal, setModal] = useState<"42" | "50" | null>(null);
 
+  const canSend = Boolean(prenom.trim() && clientId && coachId);
+
   async function send() {
-    if (sending || !prenom.trim() || !clientId || !coachId) return;
+    if (sending || !canSend) return;
     setSending(true);
     try {
       const sb = await getSupabaseClient();
-      if (sb) {
-        await sb.from("client_referrals").insert({
-          from_client_id: clientId,
-          from_client_name: clientName ?? "",
-          coach_id: coachId,
-          referred_name: prenom.trim(),
-          referred_contact: contact.trim(),
-          status: "new",
-        });
-      }
+      if (!sb) throw new Error("indisponible");
+      const { error } = await sb.from("client_referrals").insert({
+        from_client_id: clientId,
+        from_client_name: clientName ?? "",
+        coach_id: coachId,
+        referred_name: prenom.trim(),
+        referred_contact: contact.trim(),
+        status: "new",
+      });
+      // Pas de « envoyée 🎉 » si l'écriture a échoué : le membre croirait
+      // avoir recommandé quelqu'un et attendrait un cœur qui n'arrivera pas.
+      if (error) throw new Error(error.message);
       setPrenom("");
       setContact("");
       setToast("invitation envoyée 🎉");
       window.setTimeout(() => setToast(null), 2400);
     } catch {
       setToast("oups, réessaie");
-      window.setTimeout(() => setToast(null), 2400);
+      window.setTimeout(() => setToast(null), 3000);
     } finally {
       setSending(false);
     }
@@ -184,7 +188,7 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId }: Mem
         <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
           <input value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="prénom" style={{ height: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16, padding: "0 14px", outline: "none" }} />
           <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="téléphone ou email" style={{ height: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16, padding: "0 14px", outline: "none" }} />
-          <button type="button" onClick={() => void send()} disabled={sending || !prenom.trim()} style={{ height: 50, border: 0, borderRadius: 12, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 700, cursor: sending || !prenom.trim() ? "not-allowed" : "pointer", opacity: sending || !prenom.trim() ? 0.55 : 1 }}>{sending ? "envoi…" : "envoyer l'invitation"}</button>
+          <button type="button" onClick={() => void send()} disabled={sending || !canSend} style={{ height: 50, border: 0, borderRadius: 12, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 700, cursor: sending || !canSend ? "not-allowed" : "pointer", opacity: sending || !canSend ? 0.55 : 1 }}>{sending ? "envoi…" : "envoyer l'invitation"}</button>
         </div>
       </div>
 

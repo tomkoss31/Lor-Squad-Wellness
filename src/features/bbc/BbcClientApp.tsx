@@ -67,11 +67,13 @@ export function BbcClientApp(props: BbcClientAppProps) {
   const first = (clientName ?? "").split(/\s+/)[0] || "toi";
   const coach = (coachName ?? "").split(/\s+/)[0] || "ton coach";
   const visits = Math.max(0, visitsCount);
-  // La carte active pilote l'affichage ; sans carte on montre le total de visites.
-  const cardMax = card?.type ?? 10;
+  // La carte active pilote l'affichage. SANS carte, on n'invente pas de
+  // dénominateur : on montre le cumul de visites, sans « / 10 » trompeur
+  // (sinon un membre à 23 visites verrait « 23 / 10 »).
+  const cardMax = card?.type ?? 0;
   const onCard = card ? card.used : visits;
-  const shown = Math.min(onCard, cardMax);
-  const left = card ? card.remaining : Math.max(0, cardMax - visits);
+  const shown = card ? Math.min(card.used, cardMax) : 0;
+  const left = card ? card.remaining : 0;
   const isNew = visits === 0 && weightDeltaKg == null;
   const rdv = fmtRdv(nextRdvDate);
 
@@ -125,8 +127,14 @@ export function BbcClientApp(props: BbcClientAppProps) {
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
                   <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 56, lineHeight: 0.8, color: "var(--ls-bbc-lime)" }}>{onCard}</span>
-                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 22, color: "var(--ls-bbc-muted)", paddingBottom: 6 }}>/ {cardMax}</span>
-                  <span style={{ flex: 1, textAlign: "right", fontSize: 11, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>{isNew ? "ta carte démarre" : left > 0 ? `plus que ${left} visite${left > 1 ? "s" : ""}` : "carte complète 🎉"}</span>
+                  {card ? (
+                    <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 22, color: "var(--ls-bbc-muted)", paddingBottom: 6 }}>/ {cardMax}</span>
+                  ) : (
+                    <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 15, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>visite{visits > 1 ? "s" : ""}</span>
+                  )}
+                  <span style={{ flex: 1, textAlign: "right", fontSize: 11, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>
+                    {isNew ? "ta carte démarre" : !card ? "vois ton coach pour ta carte" : left > 0 ? `plus que ${left} visite${left > 1 ? "s" : ""}` : "carte complète 🎉"}
+                  </span>
                 </div>
                 <div style={{ display: "flex", gap: 5, marginTop: 12 }}>
                   {Array.from({ length: cardMax }).map((_, i) => (
@@ -134,7 +142,13 @@ export function BbcClientApp(props: BbcClientAppProps) {
                   ))}
                 </div>
                 <div style={{ fontSize: 11, fontWeight: 500, color: "var(--ls-bbc-lime-text)", marginTop: 9 }}>
-                  {isNew ? "ta 1ʳᵉ visite est offerte 🎁" : left > 0 ? `plus que ${left} → ton bilan des 10 t'attend 🎁` : "bilan des 10 à faire avec ton coach 🎁"}
+                  {isNew
+                    ? "ta 1ʳᵉ visite est offerte 🎁"
+                    : !card
+                      ? "demande ta carte à ton coach pour continuer 🎟️"
+                      : left > 0
+                        ? `plus que ${left} → ton bilan t'attend 🎁`
+                        : "carte finie · ton bilan avec ton coach 🎁"}
                 </div>
                 {token ? (
                   <button type="button" onClick={() => setQrFull(true)} style={{ width: "100%", textAlign: "left", border: 0, cursor: "pointer", display: "flex", gap: 14, alignItems: "center", marginTop: 14, background: "#FBF7F0", borderRadius: 16, padding: 14 }}>

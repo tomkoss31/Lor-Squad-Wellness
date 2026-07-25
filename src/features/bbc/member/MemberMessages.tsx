@@ -27,6 +27,7 @@ export function MemberMessages({ token, coachName }: MemberMessagesProps) {
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const refresh = useCallback(async () => {
@@ -37,8 +38,10 @@ export function MemberMessages({ token, coachName }: MemberMessagesProps) {
     try {
       const sb = await getSupabaseClient();
       if (!sb) return;
-      const { data } = await sb.rpc("get_client_messages_by_token", { p_token: token });
-      setMessages((data ?? []) as ChatMessage[]);
+      const { data, error } = await sb.rpc("get_client_messages_by_token", { p_token: token });
+      // Un échec réseau ne doit PAS effacer la conversation déjà affichée.
+      if (error || !Array.isArray(data)) return;
+      setMessages(data as ChatMessage[]);
     } catch {
       // silent
     } finally {
@@ -60,15 +63,22 @@ export function MemberMessages({ token, coachName }: MemberMessagesProps) {
     const text = input.trim();
     if (!text || sending || !token) return;
     setSending(true);
+    setSendError(false);
     try {
       const sb = await getSupabaseClient();
-      if (sb) {
-        await sb.rpc("insert_client_message_by_token", { p_token: token, p_message: text, p_message_type: "general" });
-      }
+      if (!sb) throw new Error("indisponible");
+      const { error } = await sb.rpc("insert_client_message_by_token", {
+        p_token: token,
+        p_message: text,
+        p_message_type: "general",
+      });
+      // On ne vide le champ QUE si le message est bien parti — sinon le
+      // membre croit avoir écrit à son coach alors que rien n'a été envoyé.
+      if (error) throw new Error(error.message);
       setInput("");
       await refresh();
     } catch {
-      // silent
+      setSendError(true);
     } finally {
       setSending(false);
     }
@@ -100,6 +110,12 @@ export function MemberMessages({ token, coachName }: MemberMessagesProps) {
         })
       )}
       <div ref={bottomRef} />
+
+      {sendError ? (
+        <div role="alert" style={{ fontSize: 12, color: "var(--ls-bbc-coral)", background: "rgba(251,113,133,.10)", border: "1px solid rgba(251,113,133,.28)", borderRadius: 10, padding: "9px 12px" }}>
+          Message pas envoyé — vérifie ta connexion et réessaie.
+        </div>
+      ) : null}
 
       <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "7px 8px 7px 15px", marginTop: 6 }}>
         <input

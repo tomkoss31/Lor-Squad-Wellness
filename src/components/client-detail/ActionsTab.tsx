@@ -15,6 +15,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { getClientEbeBbc, setClientEbeBbc } from "../../features/bbc/clientEbeBbc";
+import { useBbcMode } from "../../features/bbc/useBbcMode";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
@@ -398,6 +399,10 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   // par AppContext). Seed au montage, écriture directe sur clients.ebe_bbc.
   const [ebeBbcOn, setEbeBbcOn] = useState(false);
   const [ebeBbcBusy, setEbeBbcBusy] = useState(false);
+  // Le toggle BBC n'a de sens que pour un coach qui travaille en BBC (ou un
+  // admin en aperçu). Un coach classique ne doit rien voir de BBC.
+  const bbcMode = useBbcMode(currentUser?.id, currentUser?.role === "admin");
+  const showBbcToggle = bbcMode.isBbc || bbcMode.clubModel === "bbc" || ebeBbcOn;
   useEffect(() => {
     let cancelled = false;
     void getClientEbeBbc(client.id).then((v) => {
@@ -1004,7 +1009,9 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
                 { icon: "🛡️", title: "Marquer fragile", meta: "Client hésitant · attention particulière", on: client.isFragile ?? false, busy: togglingFragile, onToggle: () => void handleToggleFragile() },
                 { icon: "✦", title: "Suivi libre", meta: "Exclu du plan de relance · rentabilité comptée", on: client.freeFollowUp ?? false, busy: togglingFreeFollow, onToggle: () => void handleToggleFreeFollow() },
                 { icon: "◇", title: "PV volume libre", meta: "Exclu des listes de réassort et alertes PV", on: client.freePvTracking ?? false, busy: togglingFreePv, onToggle: () => void handleToggleFreePv() },
-                { icon: "☕", title: "Passer en membre BBC", meta: "A pris une carte de membre → rejoint l'environnement BBC (app membre + pointage)", on: ebeBbcOn, busy: ebeBbcBusy, onToggle: () => void handleToggleEbeBbc() },
+                ...(showBbcToggle
+                  ? [{ icon: "☕", title: "Passer en membre BBC", meta: "A pris une carte de membre → rejoint l'environnement BBC (app membre + pointage)", on: ebeBbcOn, busy: ebeBbcBusy, onToggle: () => void handleToggleEbeBbc() }]
+                  : []),
               ].map((t) => (
                 <button key={t.title} type="button" onClick={t.onToggle} disabled={t.busy} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "12px 14px", borderRadius: 12, width: "100%", textAlign: "left", cursor: t.busy ? "wait" : "pointer", background: t.on ? "var(--ls-teal-bg)" : "var(--ls-surface2)", border: `1px solid ${t.on ? "color-mix(in srgb,var(--ls-teal) 30%,transparent)" : "transparent"}` }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>

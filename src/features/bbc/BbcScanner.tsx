@@ -27,6 +27,12 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
+  // La prop onScanned change à chaque render du parent : on la garde dans une
+  // ref pour que l'effet caméra ne se relance pas (flash + perte de mise au point).
+  const onScannedRef = useRef(onScanned);
+  useEffect(() => {
+    onScannedRef.current = onScanned;
+  }, [onScanned]);
 
   const handleValue = useCallback(
     async (raw: string) => {
@@ -43,9 +49,20 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
         if (rpcErr) {
           setResult("❌ QR non reconnu");
         } else {
-          const r = data as { client_name?: string; visits?: number } | null;
-          setResult(`✅ ${r?.client_name ?? "membre"} · ${r?.visits ?? "?"} visite${(r?.visits ?? 0) > 1 ? "s" : ""}`);
-          onScanned?.();
+          // La RPC renvoie total_visits + l'état de la carte (card_used/card_type).
+          const r = data as {
+            client_name?: string;
+            total_visits?: number;
+            card_type?: number | null;
+            card_used?: number | null;
+            card_remaining?: number | null;
+          } | null;
+          const solde =
+            r?.card_type != null
+              ? `carte ${r.card_used ?? 0}/${r.card_type}${(r.card_remaining ?? 0) === 0 ? " · bilan à faire" : ""}`
+              : `${r?.total_visits ?? 0} visite${(r?.total_visits ?? 0) > 1 ? "s" : ""}`;
+          setResult(`✅ ${r?.client_name ?? "membre"} · ${solde}`);
+          onScannedRef.current?.();
         }
       } catch {
         setResult("❌ erreur, réessaie");
@@ -56,7 +73,7 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
         }, 1800);
       }
     },
-    [onScanned],
+    [],
   );
 
   useEffect(() => {
