@@ -17,7 +17,7 @@
 - Design tokens isolés `--ls-bbc-*` (dark + light), fidèles au design validé.
 
 ### Environnement COACH (plein écran, sidebar dédiée, 8 vues)
-- **Cockpit** — compteur **cobayes du jour réel** + flow « envoyer un cobaye » (script verrouillé + prénom injecté + WhatsApp → persisté dans `outreach_messages`).
+- **Cockpit** — compteur **cobayes du jour réel** + flow « envoyer un cobaye » (script verrouillé + prénom injecté + WhatsApp → persisté dans `outreach_messages`) + **les 3 blocs réels** : « le club ce matin » (membres + pointés du jour + alerte bilan des 10), « à un cœur du palier » (membres réellement à 1 cœur + recos à valider), « prochain appel » (rituel calculé depuis `clubs.settings`). Lignes cliquables.
 - **Le club** — pointage réel (**+1 visite** → `club_visits`), alerte **7-9 orange / 10+ rouge (bilan)**, + **scanner caméra QR** (le membre montre son QR → +1 visite via `bbc_scan_visit`).
 - **Cœurs** — mur des cœurs réel + **recos à valider** (le coach confirme « a démarré » = 1 cœur), paliers 2/3/5.
 - **Cobayes & membres** — liste réelle des membres BBC + **récap complet cliquable** (contact, objectif, programme, statut, RDV, visites, cœurs).
@@ -37,7 +37,6 @@
 
 ## 🟡 FAÇADE / DONNÉES D'EXEMPLE (structure là, à brancher)
 
-- **Cockpit** — blocs « ☕ le club ce matin », « ❤️ à un cœur du palier », « 📞 prochain appel » = **données d'exemple** (le compteur cobayes, lui, est réel).
 - **Messages (coach)** dans l'environnement desktop = exemple (le membre a un chat réel).
 - **Scripts** — contenu réel (verbatim Notion) mais statique ; le bouton « copier » fonctionne.
 - **Noaly** (membre + coach) — coquille, pas branché à l'IA.
@@ -73,9 +72,10 @@
 
 ## 🎯 Prochaines étapes proposées (ordre)
 
-1. **Contenu Formation** (je sais quoi y mettre — Notion) — remplit le plus gros « vide ».
-2. **Blocs réels du Cockpit** (le club ce matin / à un cœur / prochain appel) branchés aux vraies données.
-3. **Écran d'entrée membre** (porter le design).
-4. **Bilan des 10** (checklist) + **cartes 10/30**.
-5. **Appels & rappels** (rituels + séquence).
-6. Recette Thomas → merge dev/prod (autorisation scoped).
+1. ~~Contenu Formation~~ ✅ fait (9 modules cliquables).
+2. ~~Blocs réels du Cockpit~~ ✅ fait.
+3. **Écran d'entrée membre** (porter le design `BBC Entrée.dc.html`).
+4. **Bilan des 10** (checklist 9 étapes) + **cartes 10/30**.
+5. **Appels & rappels** (inscriptions + séquence de rappels).
+6. **Config club** (UI pour éditer `clubs.settings` : horaires + barème).
+7. Recette Thomas → merge dev/prod (autorisation scoped).
