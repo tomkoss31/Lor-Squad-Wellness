@@ -23,10 +23,11 @@ import { BbcFormation } from "./views/BbcFormation";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
+import { BbcAppels } from "./views/BbcAppels";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
-import { getNextCalls } from "./data/bbcCalls";
+import { useBbcCalls } from "./useBbcCalls";
 import { visitLevel } from "./useBbcVisits";
 
 type BbcView =
@@ -38,6 +39,7 @@ type BbcView =
   | "scripts"
   | "formation"
   | "clubs"
+  | "appels"
   | "reglages";
 
 interface BbcAppProps {
@@ -55,6 +57,7 @@ const NAV: Array<{ k: BbcView; label: string; icon: string }> = [
   { k: "crm", label: "Cobayes & membres", icon: "👥" },
   { k: "club", label: "Le club", icon: "☕" },
   { k: "coeurs", label: "Cœurs", icon: "❤️" },
+  { k: "appels", label: "Appels", icon: "📞" },
   { k: "messages", label: "Messages", icon: "✉️" },
   { k: "scripts", label: "Scripts", icon: "📝" },
   { k: "formation", label: "Formation", icon: "🎓" },
@@ -71,6 +74,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   scripts: { eye: "bibliothèque · verbatim", title: "Les scripts" },
   formation: { eye: "accès gradué", title: "Formation BBC" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
+  appels: { eye: "rituels du club", title: "Les appels" },
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
@@ -219,6 +223,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm userId={userId} />}
         {view === "messages" && <BbcMessages />}
+        {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "reglages" && <BbcReglages club={club ?? null} />}
       </main>
 
@@ -282,7 +287,10 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
     return next !== undefined && next - m.hearts === 1;
   });
   const aValider = members.reduce((s, m) => s + m.pendingHearts, 0);
-  const nextCall = getNextCalls(club?.settings)[0];
+  // Rituels : prochaine occurrence + inscrits réels + suivis en attente.
+  const calls = useBbcCalls(userId, club?.settings);
+  const nextCall = calls.nextCalls[0];
+  const inscrits = nextCall ? calls.forOccurrence(nextCall.key, nextCall.at).length : 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
@@ -414,15 +422,21 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
       </SectionCard>
 
       {/* 📞 prochain appel — depuis la config du club */}
-      <SectionCard eye="📞 prochain appel" right={club?.name ?? ""}>
+      <SectionCard eye="📞 prochain appel" right={inscrits ? `${inscrits} inscrit${inscrits > 1 ? "s" : ""}` : ""}>
         {nextCall ? (
-          <MemberRow
-            name={nextCall.label}
-            note={nextCall.when}
-            tone={nextCall.isToday ? "lime" : "teal"}
-            action={nextCall.isToday ? "aujourd'hui" : "à venir"}
-            filled={nextCall.isToday}
-          />
+          <>
+            <MemberRow
+              name={nextCall.label}
+              note={`${nextCall.when} · ${inscrits} inscrit${inscrits > 1 ? "s" : ""}`}
+              tone={nextCall.isToday ? "lime" : "teal"}
+              action={nextCall.isToday ? "aujourd'hui" : "inscrire"}
+              filled={nextCall.isToday}
+              onClick={() => onGo("appels")}
+            />
+            {calls.toProcess.length ? (
+              <Empty>📞 {calls.toProcess.length} suivi{calls.toProcess.length > 1 ? "s" : ""} à faire après le dernier appel.</Empty>
+            ) : null}
+          </>
         ) : (
           <Empty>Aucun rituel configuré pour ce club.</Empty>
         )}
