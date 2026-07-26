@@ -115,6 +115,53 @@ scan affichant « ? visite » · caméra relancée à chaque render.
 
 ---
 
+## 🔬 Audit « impasses » (2026-07-26) — 20 confirmées après réfutation
+
+Audit adversarial en 4 angles (créer sans pouvoir modifier · RLS · réglages
+jamais relus · parcours membre), chaque trouvaille soumise à un réfutateur.
+**7 bloquantes, 13 gênantes.**
+
+### ✅ Corrigé dans la foulée
+- **Double comptage d'une visite** → `bbc_add_visit` idempotente sur 10 min
+  (pointage manuel + rescan, double scan, relance auto du scanner à 4 s).
+- **Aucun retour arrière sur un pointage** → RPC `bbc_remove_visit` + bouton
+  « −1 », qui **rouvre la carte** si c'est ce pointage qui l'avait fermée.
+- **Désinscription d'un rituel impossible** → `unregister` (les 3 push
+  s'éteignent, le suivi fantôme disparaît).
+- **Durée de validité de carte jamais appliquée** (trouvée avant l'audit).
+- **Renommer un club** (impossible auparavant).
+
+### 🔴 Bloquant, en attente du go de Thomas — edge `client-app-data` (PARTAGÉE AVEC LA PROD)
+Ces quatre-là se corrigent dans la même edge, donc en un seul déploiement :
+1. **Les cœurs du membre restent à zéro** : le coach écrit `converted`, l'edge
+   ne compte que `started`. Coach : 2 cœurs. Membre : « invite ton premier
+   proche ». Noaly : 2 cœurs. Trois écrans, trois vérités. *(one-liner — c'est
+   exactement le piège déjà corrigé côté coach en juin)*
+2. **À la 10ᵉ visite**, l'app annonce au membre « pas de carte active » au lieu
+   de fêter sa carte pleine — le filtre `closed_at is null` masque la carte au
+   moment précis de la récompense.
+3. **Les réglages du club n'atteignent jamais le membre** : barème des cœurs et
+   horaires sont recopiés en dur dans l'app membre. Le coach change « 10 visites
+   offertes » → le membre lit toujours l'ancienne promesse.
+4. **`open_hours` n'a aucun lecteur** : « 7h–11h » est en dur dans la sidebar et
+   dans l'écran d'entrée du membre.
+
+### 🟠 Gênant — à traiter avant l'ouverture
+- Notifs de rituel → renvoient à la racine du site, pas à la PWA membre ; et le
+  **lien Zoom réglé par le coach n'est jamais transmis**.
+- Présence pointée « absent » par erreur → irrattrapable.
+- Changer l'horaire d'un rituel → orpheline les inscriptions déjà prises.
+- 2ᵉ bilan des 10 → écrase le premier.
+- Réglages : aucun message quand l'enregistrement échoue (l'écran affiche quand
+  même les nouvelles valeurs).
+- Réglages non rafraîchis sans rechargement complet de la page.
+- Club 100 ignore les prix de carte réglés **et** le coût de visite calculé dans
+  « La carte » — le coach ressaisit ce que l'app connaît déjà.
+- Notif « ton coach t'a répondu » → ouvre l'Accueil, pas Messages ; badge promis
+  mais jamais affiché.
+
+---
+
 ## 💡 IDÉES D'OPTIMISATION
 
 - **Formation** : remplir chaque module (résumé + points clés + scripts liés) depuis le Notion ; réutiliser le composant `TutorialLink` + registre `src/data/tutorials.ts` pour coller les vidéos YouTube.
