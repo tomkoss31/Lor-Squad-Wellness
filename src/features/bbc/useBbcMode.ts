@@ -29,6 +29,9 @@ export interface UseBbcModeResult {
   setPreview: (v: "classic" | "bbc" | null) => void;
   /** Admin/self : crée un club + passe le coach en BBC (RPC set_club_model). */
   createMyClub: (name: string, city: string) => Promise<boolean>;
+  /** Renommer un club / corriger sa ville. La RLS `clubs_owner_manage` est en ALL,
+   *  le propriétaire (ou un admin) peut donc éditer sans migration. */
+  renameClub: (clubId: string, name: string, city: string) => Promise<boolean>;
 }
 
 function readPreview(): "classic" | "bbc" | null {
@@ -141,11 +144,43 @@ export function useBbcMode(
     [userId],
   );
 
+  const renameClub = useCallback(
+    async (clubId: string, name: string, city: string): Promise<boolean> => {
+      if (!clubId || !name.trim()) return false;
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return false;
+        const { error } = await sb
+          .from("clubs")
+          .update({ name: name.trim(), city: city.trim() || null })
+          .eq("id", clubId);
+        if (error) return false;
+        setClubs((prev) =>
+          prev.map((c) => (c.id === clubId ? { ...c, name: name.trim(), city: city.trim() || null } : c)),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   const effectivePreview = isAdmin ? preview : null;
   const isBbc =
     effectivePreview === "bbc" ||
     (effectivePreview !== "classic" && clubModel === "bbc");
   const activeClub = clubs[0] ?? null;
 
-  return { isBbc, clubModel, clubs, activeClub, loading, preview: effectivePreview, setPreview, createMyClub };
+  return {
+    isBbc,
+    clubModel,
+    clubs,
+    activeClub,
+    loading,
+    preview: effectivePreview,
+    setPreview,
+    createMyClub,
+    renameClub,
+  };
 }

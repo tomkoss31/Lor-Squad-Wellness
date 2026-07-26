@@ -224,6 +224,7 @@ export function AppLayout() {
           club={bbc.activeClub}
           clubs={bbc.clubs}
           onCreateClub={bbc.createMyClub}
+          onRenameClub={bbc.renameClub}
         />
       </Suspense>
     );

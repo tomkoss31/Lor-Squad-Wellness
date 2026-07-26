@@ -46,7 +46,10 @@ export interface UseBbcVisitsResult {
   members: VisitMember[];
   loading: boolean;
   addVisit: (clientId: string) => Promise<void>;
-  assignCard: (clientId: string, type: 10 | 30, priceEur?: number | null) => Promise<boolean>;
+  /** `days` vient de `clubs.settings.cards.<type>.days` : sans lui, la RPC
+   *  retombe sur ses défauts et la date d'expiration contredit ce que l'écran
+   *  annonce au coach. */
+  assignCard: (clientId: string, type: 10 | 30, priceEur?: number | null, days?: number | null) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
@@ -134,7 +137,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   );
 
   const assignCard = useCallback(
-    async (clientId: string, type: 10 | 30, priceEur?: number | null): Promise<boolean> => {
+    async (clientId: string, type: 10 | 30, priceEur?: number | null, days?: number | null): Promise<boolean> => {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return false;
@@ -142,6 +145,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
           p_client_id: clientId,
           p_type: type,
           p_price: priceEur ?? null,
+          p_days: days ?? null,
         });
         if (error) return false;
         await refetch();

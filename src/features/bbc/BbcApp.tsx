@@ -58,6 +58,7 @@ interface BbcAppProps {
   club?: Club | null;
   clubs?: Club[];
   onCreateClub?: (name: string, city: string) => Promise<boolean>;
+  onRenameClub?: (clubId: string, name: string, city: string) => Promise<boolean>;
 }
 
 // Le menu est groupé par intention (piloter / développer / apprendre / mon club)
@@ -102,7 +103,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
-export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub }: BbcAppProps) {
+export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
   const [view, setView] = useState<BbcView>("cockpit");
   const [sheet, setSheet] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -256,7 +257,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         )}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
-        {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} />}
+        {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm userId={userId} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}

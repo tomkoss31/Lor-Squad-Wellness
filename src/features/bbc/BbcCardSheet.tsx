@@ -12,7 +12,7 @@ interface BbcCardSheetProps {
   /** Prix + durée par type, depuis les réglages du club (jamais en dur). */
   cardsConfig?: Record<string, { price: number | null; days: number }> | null;
   onClose: () => void;
-  onAssign: (type: 10 | 30, priceEur: number | null) => Promise<boolean>;
+  onAssign: (type: 10 | 30, priceEur: number | null, days: number | null) => Promise<boolean>;
 }
 
 export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, onAssign }: BbcCardSheetProps) {
@@ -29,7 +29,10 @@ export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, on
     setBusy(true);
     setErr("");
     const parsed = price.trim() ? Number(price.replace(",", ".")) : null;
-    const ok = await onAssign(type, Number.isFinite(parsed as number) ? (parsed as number) : null);
+    // La durée vient des réglages du club : c'est elle qui est annoncée à
+    // l'écran (« valable X jours »), elle doit donc être celle qui est écrite.
+    const jours = cardsConfig?.[String(type)]?.days ?? null;
+    const ok = await onAssign(type, Number.isFinite(parsed as number) ? (parsed as number) : null, jours);
     setBusy(false);
     if (ok) onClose();
     else setErr("Impossible d'enregistrer la carte — réessaie.");
