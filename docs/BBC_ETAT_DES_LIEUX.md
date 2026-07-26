@@ -131,7 +131,23 @@ jamais relus · parcours membre), chaque trouvaille soumise à un réfutateur.
 - **Durée de validité de carte jamais appliquée** (trouvée avant l'audit).
 - **Renommer un club** (impossible auparavant).
 
-### 🔴 Bloquant, en attente du go de Thomas — edge `client-app-data` (PARTAGÉE AVEC LA PROD)
+### ✅ Corrigé aussi — les 13 gênants (2026-07-26)
+- **Rappels de rituel** → mènent à la PWA du membre, et le rappel « connecte-toi »
+  (−15 min) ouvre **le lien Zoom réglé par le coach**, qui n'était transmis nulle part.
+- **Notif « ton coach t'a répondu »** → ouvre l'onglet Messages (`?tab=` était ignoré).
+  Badge non-lus retiré : jamais rendu, et un vrai compteur suppose un `read_at`
+  côté membre — mieux vaut rien qu'une promesse morte.
+- **Enregistrement perdu en silence** (Réglages + La carte) → message d'échec.
+- **Réglages non pris en compte sans F5** → `BbcApp` garde les valeurs fraîches.
+- **Présence « absent » par erreur** → bouton « corriger », fenêtre de 24 h.
+- **Horaire de rituel déplacé** → les inscrits ne disparaissent plus (tolérance au jour).
+- **2ᵉ bilan des 10** → ne recharge plus le bilan clôturé.
+- **Club 100** → prix de carte et coût de visite seedés depuis les réglages et
+  « La carte », toujours éditables.
+
+*(Deux trouvailles de l'audit faisaient doublon avec les correctifs du même jour.)*
+
+### ✅ Ex-bloquants — edge `client-app-data` déployée (v21, `verify_jwt:false` préservé)
 Ces quatre-là se corrigent dans la même edge, donc en un seul déploiement :
 1. **Les cœurs du membre restent à zéro** : le coach écrit `converted`, l'edge
    ne compte que `started`. Coach : 2 cœurs. Membre : « invite ton premier
