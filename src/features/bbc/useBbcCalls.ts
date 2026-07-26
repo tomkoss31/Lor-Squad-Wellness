@@ -29,6 +29,7 @@ export interface UseBbcCallsResult {
   toProcess: CallRegistration[];
   loading: boolean;
   register: (clientId: string, callKey: string, at: Date) => Promise<boolean>;
+  unregister: (id: string) => Promise<void>;
   setAttendance: (id: string, attended: boolean) => Promise<void>;
   markFollowUp: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
@@ -114,6 +115,27 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
     [refetch],
   );
 
+  /**
+   * Retire une inscription. Sans ce geste, un membre qui annule recevait quand
+   * même ses trois rappels push, puis remontait au coach comme un suivi en
+   * retard. La policy `club_call_reg_own` autorise déjà le DELETE au coach, et
+   * `club_call_reminders_sent` part en cascade — donc les push s'éteignent.
+   */
+  const unregister = useCallback(
+    async (id: string) => {
+      setRows((prev) => prev.filter((r) => r.id !== id));
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { error } = await sb.from("club_call_registrations").delete().eq("id", id);
+        if (error) void refetch();
+      } catch {
+        void refetch();
+      }
+    },
+    [refetch],
+  );
+
   const setAttendance = useCallback(
     async (id: string, attended: boolean) => {
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, attended } : r)));
@@ -163,5 +185,5 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
     });
   }, [rows]);
 
-  return { nextCalls, registrations: rows, forOccurrence, toProcess, loading, register, setAttendance, markFollowUp, refetch };
+  return { nextCalls, registrations: rows, forOccurrence, toProcess, loading, register, unregister, setAttendance, markFollowUp, refetch };
 }

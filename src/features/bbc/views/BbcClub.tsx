@@ -24,7 +24,7 @@ interface BbcClubProps {
 }
 
 export function BbcClub({ userId, club }: BbcClubProps) {
-  const { members, loading, addVisit, assignCard, refetch } = useBbcVisits(userId);
+  const { members, loading, addVisit, removeVisit, assignCard, refetch } = useBbcVisits(userId);
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
@@ -96,6 +96,20 @@ export function BbcClub({ userId, club }: BbcClubProps) {
                   </button>
                   {lvl === "bilan" ? (
                     <button type="button" onClick={() => setBilan({ id: m.id, name: m.name })} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff", flex: "none" }}>bilan</button>
+                  ) : null}
+                  {/* Le « −1 » n'apparaît que sur un membre déjà pointé aujourd'hui :
+                      c'est le seul cas où l'on corrige, et ça évite de retirer par
+                      mégarde une visite d'un autre jour. */}
+                  {m.visitedToday ? (
+                    <button
+                      type="button"
+                      onClick={() => void removeVisit(m.id)}
+                      title="Annuler le dernier pointage"
+                      aria-label={`Annuler le pointage de ${m.name}`}
+                      style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: "var(--ls-bbc-muted)", flex: "none" }}
+                    >
+                      −1
+                    </button>
                   ) : null}
                   <button type="button" onClick={() => void addVisit(m.id)} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 13px", borderRadius: 10, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", flex: "none" }}>+1</button>
                 </div>

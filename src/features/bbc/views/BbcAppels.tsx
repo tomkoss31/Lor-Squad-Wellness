@@ -23,7 +23,7 @@ function fmtTime(d: Date) {
 }
 
 export function BbcAppels({ userId, club }: BbcAppelsProps) {
-  const { nextCalls, forOccurrence, toProcess, loading, register, setAttendance, markFollowUp } = useBbcCalls(userId, club?.settings);
+  const { nextCalls, forOccurrence, toProcess, loading, register, unregister, setAttendance, markFollowUp } = useBbcCalls(userId, club?.settings);
   const { members } = useBbcVisits(userId);
   const [pickFor, setPickFor] = useState<NextCall | null>(null);
 
@@ -97,6 +97,15 @@ export function BbcAppels({ userId, club }: BbcAppelsProps) {
                     <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--ls-bbc-teal)", flex: "none" }} />
                     <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600 }}>{r.clientName}</span>
                     <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, color: "var(--ls-bbc-teal)", textTransform: "uppercase" }}>inscrit ✓</span>
+                    <button
+                      type="button"
+                      onClick={() => void unregister(r.id)}
+                      title="Retirer de cet appel"
+                      aria-label={`Retirer ${r.clientName} de cet appel`}
+                      style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, color: "var(--ls-bbc-muted)", flex: "none" }}
+                    >
+                      retirer
+                    </button>
                   </div>
                 ))
               )}

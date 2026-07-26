@@ -40,12 +40,15 @@ export interface VisitMember {
   name: string;
   visits: number;
   card: MemberCard | null;
+  /** A été pointé aujourd'hui — seul cas où l'on propose d'annuler. */
+  visitedToday: boolean;
 }
 
 export interface UseBbcVisitsResult {
   members: VisitMember[];
   loading: boolean;
   addVisit: (clientId: string) => Promise<void>;
+  removeVisit: (clientId: string) => Promise<void>;
   /** `days` vient de `clubs.settings.cards.<type>.days` : sans lui, la RPC
    *  retombe sur ses défauts et la date d'expiration contredit ce que l'écran
    *  annonce au coach. */
@@ -57,6 +60,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [cards, setCards] = useState<Record<string, MemberCard>>({});
+  const [today, setToday] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -70,12 +74,18 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
         setLoading(false);
         return;
       }
-      const [clientsRes, countsRes, cardsRes] = await Promise.all([
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const [clientsRes, countsRes, cardsRes, todayRes] = await Promise.all([
         // Seuls les MEMBRES BBC entrent dans l'environnement BBC.
         sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).eq("ebe_bbc", true).order("first_name"),
         sb.rpc("bbc_visit_counts"),
         sb.rpc("bbc_active_cards"),
+        sb.from("club_visits").select("client_id").eq("coach_user_id", userId).gte("visited_at", startOfDay.toISOString()),
       ]);
+      if (Array.isArray(todayRes.data)) {
+        setToday(new Set((todayRes.data as Array<Record<string, unknown>>).map((r) => String(r.client_id))));
+      }
       if (Array.isArray(clientsRes.data)) {
         setClients(
           clientsRes.data.map((c: Record<string, unknown>) => ({
@@ -117,6 +127,25 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   useEffect(() => {
     void refetch();
   }, [refetch]);
+
+  /** Annule le dernier pointage. Au comptoir, à 7h30, on se trompe de membre —
+   *  et sans retour arrière la visite d'une carte payée était perdue à vie. */
+  const removeVisit = useCallback(
+    async (clientId: string) => {
+      setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { error } = await sb.rpc("bbc_remove_visit", { p_client_id: clientId });
+        if (error) setCounts((prev) => ({ ...prev, [clientId]: (prev[clientId] ?? 0) + 1 }));
+        // La carte a pu se rouvrir : on relit tout.
+        void refetch();
+      } catch {
+        setCounts((prev) => ({ ...prev, [clientId]: (prev[clientId] ?? 0) + 1 }));
+      }
+    },
+    [refetch],
+  );
 
   const addVisit = useCallback(
     async (clientId: string) => {
@@ -160,10 +189,10 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   const members = useMemo(
     () =>
       clients
-        .map((c) => ({ ...c, visits: counts[c.id] ?? 0, card: cards[c.id] ?? null }))
+        .map((c) => ({ ...c, visits: counts[c.id] ?? 0, card: cards[c.id] ?? null, visitedToday: today.has(c.id) }))
         .sort((a, b) => b.visits - a.visits),
-    [clients, counts, cards],
+    [clients, counts, cards, today],
   );
 
-  return { members, loading, addVisit, assignCard, refetch };
+  return { members, loading, addVisit, removeVisit, assignCard, refetch };
 }
