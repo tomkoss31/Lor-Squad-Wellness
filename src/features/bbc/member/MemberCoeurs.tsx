@@ -13,16 +13,20 @@ interface MemberCoeursProps {
   clientName?: string;
   clientId?: string;
   coachId?: string;
+  /** Barème réglé par le coach (`clubs.settings.hearts_bareme`). Sans lui, le
+   *  membre lirait une promesse figée que son club a peut-être déjà changée. */
+  bareme?: Record<string, string> | null;
 }
 
 const PALIERS = [2, 3, 5];
 const HEART_PATH = "M12 20.3S4.6 15.7 2.6 11.3C1.4 8.7 2.9 5.6 6 5.6c1.9 0 3.2 1.2 4 2.2.8-1 2.1-2.2 4-2.2 3.1 0 4.6 3.1 3.4 5.7C19.4 15.7 12 20.3 12 20.3z";
 
-const REWARDS: Array<{ n: number; reward: string }> = [
-  { n: 2, reward: "−25 % à vie sur toute ta nutrition" },
-  { n: 3, reward: "10 visites offertes" },
-  { n: 5, reward: "30 visites offertes" },
-];
+/** Repli quand le club n'a rien réglé — jamais une valeur concurrente. */
+const REWARDS_DEFAUT: Record<number, string> = {
+  2: "−25 % à vie sur toute ta nutrition",
+  3: "10 visites offertes",
+  5: "30 visites offertes",
+};
 
 const REMISES: Array<{ pct: string; cond: string; note: string; edu?: "42" | "50" }> = [
   { pct: "25 %", cond: "pack ambassadeur · dès 2 cœurs", note: "les cœurs te le donnent" },
@@ -56,8 +60,9 @@ const EDU: Record<"42" | "50", { title: string; big: string; sub: string; rows: 
   },
 };
 
-export function MemberCoeurs({ heartsCount, clientName, clientId, coachId }: MemberCoeursProps) {
+export function MemberCoeurs({ heartsCount, clientName, clientId, coachId, bareme }: MemberCoeursProps) {
   const cur = Math.max(0, heartsCount);
+  const recompenses = PALIERS.map((n) => ({ n, reward: bareme?.[String(n)]?.trim() || REWARDS_DEFAUT[n] }));
   const [prenom, setPrenom] = useState("");
   const [contact, setContact] = useState("");
   const [sending, setSending] = useState(false);
@@ -146,7 +151,7 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId }: Mem
           })}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {REWARDS.map((r) => {
+          {recompenses.map((r) => {
             const done = cur >= r.n;
             const next = !done && PALIERS.find((p) => p > cur) === r.n;
             return (

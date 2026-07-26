@@ -34,6 +34,7 @@ import { useBbcMembers } from "./useBbcMembers";
 import { useBbcHearts, nextPalier } from "./useBbcHearts";
 import { useBbcCalls } from "./useBbcCalls";
 import { visitLevel } from "./useBbcVisits";
+import { DEFAULT_CLUB_SETTINGS } from "./useClubSettings";
 
 type BbcView =
   | "cockpit"
@@ -175,7 +176,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 14, lineHeight: 1 }}>{clubName}</div>
             <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-hint)", letterSpacing: "0.06em", marginTop: 3 }}>
-              {clubCity} · 7h–11h
+              {clubCity} · {club?.settings?.open_hours || DEFAULT_CLUB_SETTINGS.open_hours}
             </div>
           </div>
         </div>

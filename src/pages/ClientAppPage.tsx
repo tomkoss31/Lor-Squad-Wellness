@@ -642,6 +642,7 @@ export function ClientAppPage() {
         coachAdvice={liveData?.coach_advice ?? null}
         card={(liveData as { member_card?: { type: number; used: number; remaining: number; expires_at: string | null } | null } | null)?.member_card ?? null}
         entrySeen={(liveData as { bbc_entry_seen?: boolean } | null)?.bbc_entry_seen}
+        clubSettings={(liveData as { club_settings?: { hearts_bareme?: Record<string, string>; open_hours?: string; club_name?: string | null } | null } | null)?.club_settings ?? null}
       />
     )
   }

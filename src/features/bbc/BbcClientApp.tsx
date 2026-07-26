@@ -38,6 +38,13 @@ interface BbcClientAppProps {
   card?: { type: number; used: number; remaining: number; expires_at: string | null; expired?: boolean } | null;
   /** L'écran d'entrée a-t-il déjà été vu ? (sinon on l'affiche une fois) */
   entrySeen?: boolean;
+  /** Réglages du club servis par `client-app-data` (barème des cœurs, horaires,
+   *  nom du club). Le membre n'a pas de session : c'est le seul canal. */
+  clubSettings?: {
+    hearts_bareme?: Record<string, string>;
+    open_hours?: string;
+    club_name?: string | null;
+  } | null;
 }
 
 
@@ -56,7 +63,7 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen } = props;
+  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen, clubSettings } = props;
   const [tab, setTab] = useState<MemberTab>("accueil");
   // L'intro ne s'affiche que si le serveur dit explicitement « pas encore vue »
   // (undefined = données pas encore chargées → on n'affiche rien, pas de flash).
@@ -91,6 +98,8 @@ export function BbcClientApp(props: BbcClientAppProps) {
     return (
       <BbcMemberEntry
         firstName={first}
+        clubName={clubSettings?.club_name ?? undefined}
+        openHours={clubSettings?.open_hours}
         token={token}
         onDone={() => setEntryDismissed(true)}
       />
@@ -213,7 +222,12 @@ export function BbcClientApp(props: BbcClientAppProps) {
             <div style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-bbc-lime) 12%, var(--ls-bbc-s1)), var(--ls-bbc-s1))", border: "1px solid rgba(197,248,42,.3)", borderRadius: 18, padding: 18 }}>
               <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-lime-text)", fontWeight: 700, marginBottom: 4 }}>tes cœurs</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>fais découvrir ton club</div>
-              <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, margin: "8px 0 14px" }}>2 cœurs = <strong style={{ color: "var(--ls-bbc-lime-text)" }}>−25 % à vie</strong> sur ta nutrition · 3 = 10 visites offertes · 5 = 30.</div>
+              {/* La promesse vient du club, pas du code : le coach peut la changer. */}
+              <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, margin: "8px 0 14px" }}>
+                2 cœurs = <strong style={{ color: "var(--ls-bbc-lime-text)" }}>{clubSettings?.hearts_bareme?.["2"]?.trim() || "−25 % à vie sur ta nutrition"}</strong>
+                {" · "}3 = {clubSettings?.hearts_bareme?.["3"]?.trim() || "10 visites offertes"}
+                {" · "}5 = {clubSettings?.hearts_bareme?.["5"]?.trim() || "30 visites offertes"}.
+              </div>
               <button type="button" onClick={() => setTab("coeurs")} style={{ width: "100%", minHeight: 46, borderRadius: 12, border: 0, cursor: "pointer", background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 700 }}>recommander un proche</button>
             </div>
 
@@ -234,7 +248,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
         ) : tab === "evolution" ? (
           <MemberEvolution metrics={metrics} measurements={measurements} />
         ) : tab === "coeurs" ? (
-          <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} />
+          <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
         ) : tab === "conseils" ? (
           <MemberConseils coachAdvice={coachAdvice} coachName={coachName} />
         ) : (
