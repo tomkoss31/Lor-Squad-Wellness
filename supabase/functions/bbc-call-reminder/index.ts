@@ -117,6 +117,49 @@ serve(async (req) => {
         { onConflict: "registration_id,kind", ignoreDuplicates: true },
       );
 
+    // Où envoyer le membre quand il tape la notification. Sans ça, les trois
+    // rappels le déposaient sur la racine du site (page coach / login) : on le
+    // convoquait trois fois sans jamais lui ouvrir son club.
+    const clientIds = [...new Set(regs.map((r) => r.client_id as string))];
+    const { data: comptes } = await sb
+      .from("client_app_accounts")
+      .select("client_id, token")
+      .in("client_id", clientIds);
+    const tokenParClient: Record<string, string> = {};
+    for (const c of comptes ?? []) tokenParClient[String(c.client_id)] = String(c.token);
+
+    // Le lien Zoom du rituel, réglé par le coach dans Réglages. Le membre ne
+    // pouvait pas rejoindre un appel dont personne ne lui donnait l'adresse.
+    const { data: clientsRows } = await sb.from("clients").select("id, club_id").in("id", clientIds);
+    const clubParClient: Record<string, string> = {};
+    for (const c of clientsRows ?? []) {
+      if (c.club_id) clubParClient[String(c.id)] = String(c.club_id);
+    }
+    const clubIds = [...new Set(Object.values(clubParClient))];
+    const liensParClub: Record<string, Record<string, string>> = {};
+    if (clubIds.length) {
+      const { data: clubsRows } = await sb.from("clubs").select("id, settings").in("id", clubIds);
+      for (const c of clubsRows ?? []) {
+        const links = (c.settings as { links?: Record<string, string> } | null)?.links ?? {};
+        liensParClub[String(c.id)] = links;
+      }
+    }
+    const LIEN_PAR_RITUEL: Record<string, string> = {
+      appel_ambassadeur: "zoom_appel",
+      atelier_coeurs: "zoom_atelier",
+    };
+
+    /** L'app du membre — repli sur la racine si son accès n'est pas encore créé. */
+    const urlMembre = (clientId: string) =>
+      tokenParClient[clientId] ? `/client/${tokenParClient[clientId]}` : "/";
+
+    /** Le lien de connexion s'il est réglé, sinon l'app du membre. */
+    const urlConnexion = (clientId: string, callKey: string) => {
+      const cle = LIEN_PAR_RITUEL[callKey];
+      const lien = cle ? liensParClub[clubParClient[clientId] ?? ""]?.[cle] : undefined;
+      return lien && lien.trim() ? lien.trim() : urlMembre(clientId);
+    };
+
     let sent = 0;
     const todayParis = parisDateStr(now);
     const hourParis = parisHour(now);
@@ -141,7 +184,7 @@ serve(async (req) => {
         const res = await sendPushToClient(sb, clientId, {
           title: `${label} ce soir à ${time}`,
           body: "On compte sur toi 🙌 Tu peux juste écouter.",
-          url: "/",
+          url: urlMembre(clientId),
         });
         await mark(rid, "midi");
         if (res.sent) sent++;
@@ -152,7 +195,7 @@ serve(async (req) => {
         const res = await sendPushToClient(sb, clientId, {
           title: `${label} dans 30 min`,
           body: `Ça commence à ${time}. Prépare-toi ☕`,
-          url: "/",
+          url: urlMembre(clientId),
         });
         await mark(rid, "m30");
         if (res.sent) sent++;
@@ -163,7 +206,9 @@ serve(async (req) => {
         const res = await sendPushToClient(sb, clientId, {
           title: `${label} dans 15 min`,
           body: "C'est le moment de te connecter 👉",
-          url: "/",
+          // Celui-ci ouvre directement le Zoom quand le coach l'a réglé : c'est
+          // le rappel « connecte-toi », il doit mener à la salle.
+          url: urlConnexion(clientId, r.call_key as string),
         });
         await mark(rid, "m15");
         if (res.sent) sent++;

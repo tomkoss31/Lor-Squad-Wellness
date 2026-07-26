@@ -55,10 +55,21 @@ export function BbcAppels({ userId, club }: BbcAppelsProps) {
                   <button type="button" onClick={() => void setAttendance(r.id, false)} style={btnGhost}>absent</button>
                 </div>
               ) : r.attended && !r.followedUpAt ? (
-                <button type="button" onClick={() => void markFollowUp(r.id)} style={{ ...btnFilled, background: "var(--ls-bbc-teal)", color: "#052620" }}>
-                  suivi 10 min fait
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <button type="button" onClick={() => void markFollowUp(r.id)} style={{ ...btnFilled, background: "var(--ls-bbc-teal)", color: "#052620" }}>
+                    suivi 10 min fait
+                  </button>
+                  <button type="button" onClick={() => void setAttendance(r.id, null)} style={btnGhost} title="Repointer cette présence">
+                    corriger
+                  </button>
+                </div>
+              ) : (
+                /* Pointé « absent » ou suivi déjà fait : reste corrigeable la
+                   journée, sinon une erreur de pointage était définitive. */
+                <button type="button" onClick={() => void setAttendance(r.id, null)} style={btnGhost} title="Repointer cette présence">
+                  corriger
                 </button>
-              ) : null}
+              )}
             </div>
           ))}
         </div>

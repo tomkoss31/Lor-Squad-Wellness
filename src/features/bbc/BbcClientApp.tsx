@@ -64,7 +64,14 @@ function fmtRdv(iso?: string | null) {
 
 export function BbcClientApp(props: BbcClientAppProps) {
   const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen, clubSettings } = props;
-  const [tab, setTab] = useState<MemberTab>("accueil");
+  // La notif « ton coach t'a répondu » ouvre l'app avec ?tab=messages. Sans
+  // lire ce paramètre, le membre atterrissait sur l'Accueil et refermait,
+  // persuadé que la notification était vide.
+  const [tab, setTab] = useState<MemberTab>(() => {
+    if (typeof window === "undefined") return "accueil";
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return t === "messages" || t === "evolution" || t === "coeurs" || t === "conseils" ? (t as MemberTab) : "accueil";
+  });
   // L'intro ne s'affiche que si le serveur dit explicitement « pas encore vue »
   // (undefined = données pas encore chargées → on n'affiche rien, pas de flash).
   const [entryDismissed, setEntryDismissed] = useState(false);
@@ -90,7 +97,10 @@ export function BbcClientApp(props: BbcClientAppProps) {
     { k: "evolution", label: "Évolution", d: "M3 12h4l2-7 4 14 2-7h6" },
     { k: "coeurs", label: "Cœurs", d: "M12 20.3S4.6 15.7 2.6 11.3C1.4 8.7 2.9 5.6 6 5.6c1.9 0 3.2 1.2 4 2.2.8-1 2.1-2.2 4-2.2 3.1 0 4.6 3.1 3.4 5.7C19.4 15.7 12 20.3 12 20.3z" },
     { k: "conseils", label: "Conseils", d: "M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.2 1 2V17h6v-1.5c0-.8.3-1.4 1-2A6 6 0 0 0 12 3zM9 21h6" },
-    { k: "messages", label: "Messages", d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", badge: true },
+    // Pas de `badge` : il n'était jamais rendu, et un vrai compteur de non-lus
+    // suppose un `read_at` côté membre qui n'existe pas encore. Mieux vaut rien
+    // qu'une promesse morte.
+    { k: "messages", label: "Messages", d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
   ];
 
   // Écran d'entrée : une seule fois, avant l'app.

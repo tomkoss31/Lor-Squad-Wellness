@@ -18,12 +18,16 @@ const CALL_LABELS: Record<string, string> = {
 
 interface BbcReglagesProps {
   club: Club | null;
+  /** Remonte les réglages fraîchement enregistrés pour que les autres écrans
+   *  les prennent en compte sans rechargement de page. */
+  onSaved?: (s: ClubSettings) => void;
 }
 
-export function BbcReglages({ club }: BbcReglagesProps) {
+export function BbcReglages({ club, onSaved }: BbcReglagesProps) {
   const { settings, loading, saving, save } = useClubSettings(club?.id, club?.settings ?? null);
   const [draft, setDraft] = useState<ClubSettings>(settings);
   const [saved, setSaved] = useState(false);
+  const [echec, setEchec] = useState(false);
 
   useEffect(() => setDraft(settings), [settings]);
 
@@ -46,8 +50,14 @@ export function BbcReglages({ club }: BbcReglagesProps) {
 
   async function onSave() {
     const ok = await save(draft);
+    setEchec(!ok);
     if (ok) {
       setSaved(true);
+      // Le parent garde les réglages en mémoire : sans ça, les autres écrans
+      // (appels, cœurs, cartes) continuaient d'afficher les anciennes valeurs
+      // jusqu'à un rechargement complet — et les inscriptions prises entre-temps
+      // partaient à la mauvaise heure.
+      onSaved?.(draft);
       window.setTimeout(() => setSaved(false), 2200);
     }
   }
@@ -193,6 +203,13 @@ export function BbcReglages({ club }: BbcReglagesProps) {
           {saving ? "enregistrement…" : "Enregistrer les réglages"}
         </button>
         {saved ? <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ls-bbc-teal)" }}>✓ enregistré</span> : null}
+        {/* Sans ce message, un échec passait inaperçu : l'écran continuait
+            d'afficher les nouvelles valeurs, perdues au rechargement suivant. */}
+        {echec ? (
+          <span role="alert" style={{ fontSize: 13, fontWeight: 700, color: "var(--ls-bbc-coral)" }}>
+            ✕ rien n'a été enregistré — réessaie
+          </span>
+        ) : null}
       </div>
     </div>
   );

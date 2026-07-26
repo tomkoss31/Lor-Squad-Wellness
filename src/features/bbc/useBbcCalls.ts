@@ -30,7 +30,8 @@ export interface UseBbcCallsResult {
   loading: boolean;
   register: (clientId: string, callKey: string, at: Date) => Promise<boolean>;
   unregister: (id: string) => Promise<void>;
-  setAttendance: (id: string, attended: boolean) => Promise<void>;
+  /** `null` remet la ligne « à pointer » — c'est le geste de correction. */
+  setAttendance: (id: string, attended: boolean | null) => Promise<void>;
   markFollowUp: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -137,12 +138,17 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
   );
 
   const setAttendance = useCallback(
-    async (id: string, attended: boolean) => {
-      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, attended } : r)));
+    async (id: string, attended: boolean | null) => {
+      // Repointer remet aussi le suivi à zéro : sinon une ligne corrigée
+      // resterait marquée « suivi fait » alors qu'il ne l'a jamais été.
+      const patch = attended === null ? { attended: null, followed_up_at: null } : { attended };
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, attended, followedUpAt: attended === null ? null : r.followedUpAt } : r)),
+      );
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        const { error } = await sb.from("club_call_registrations").update({ attended }).eq("id", id);
+        const { error } = await sb.from("club_call_registrations").update(patch).eq("id", id);
         if (error) void refetch();
       } catch {
         void refetch();
@@ -169,8 +175,13 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
 
   const forOccurrence = useCallback(
     (callKey: string, at: Date) => {
-      const t = at.getTime();
-      return rows.filter((r) => r.callKey === callKey && Math.abs(new Date(r.scheduledAt).getTime() - t) < 60_000);
+      // Tolérance au JOUR, pas à la minute. Quand le club déplace un rituel de
+      // 20h00 à 20h30, les inscrits pris à l'ancienne heure ne matchaient plus :
+      // ils disparaissaient de l'écran alors que leurs lignes existaient
+      // toujours — donc leurs push partaient, et le garde-fou « déjà inscrit »
+      // ne les voyait plus, ce qui autorisait des doublons.
+      const jour = at.toDateString();
+      return rows.filter((r) => r.callKey === callKey && new Date(r.scheduledAt).toDateString() === jour);
     },
     [rows],
   );
@@ -179,9 +190,14 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
   const toProcess = useMemo(() => {
     const now = Date.now();
     return rows.filter((r) => {
-      const past = new Date(r.scheduledAt).getTime() < now;
-      if (!past) return false;
-      return r.attended === null || (r.attended === true && !r.followedUpAt);
+      const at = new Date(r.scheduledAt).getTime();
+      if (at >= now) return false;
+      // Une ligne pointée « absent » sortait immédiatement de l'écran : le coach
+      // qui se trompait en pointant vite après l'appel n'avait plus AUCUN endroit
+      // pour rattraper, et le membre ne recevait jamais son suivi. On garde donc
+      // toutes les lignes de la journée, corrigeables tant que le jour dure.
+      const recent = now - at < 24 * 60 * 60 * 1000;
+      return r.attended === null || (r.attended === true && !r.followedUpAt) || recent;
     });
   }, [rows]);
 

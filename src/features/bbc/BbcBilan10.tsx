@@ -45,11 +45,17 @@ export function BbcBilan10({ clientId, clientName, coachUserId, onClose, onDone 
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
+        // Uniquement le bilan EN COURS. Sans ce filtre, rouvrir le bilan d'un
+        // membre qui en a déjà fait un rechargeait l'ancien, coché et daté :
+        // pour refaire le rituel il fallait décocher les 9 cases une à une, ce
+        // qui effaçait la date du premier. Un bilan clôturé appartient à
+        // l'historique, on repart d'une checklist vierge.
         const { data } = await sb
           .from("club_bilans")
           .select("id, steps, completed_at")
           .eq("client_id", clientId)
           .eq("coach_user_id", coachUserId)
+          .is("completed_at", null)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();

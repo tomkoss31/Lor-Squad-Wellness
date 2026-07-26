@@ -191,6 +191,26 @@ export function coutServi(
   return total;
 }
 
+/**
+ * Ce que coûte au coach un membre qui passe le matin, d'après SA carte.
+ * Sert au calculateur de rentabilité, qui sinon redemanderait un chiffre que
+ * l'app vient de calculer. `null` tant qu'une dose de la recette manque.
+ */
+export function coutVisiteDepuisCarte(
+  doses: Record<string, number | null | undefined>,
+  tauxRemise: number,
+): number | null {
+  const shake = coutServi(PETIT_DEJ.shake.refs, doses, tauxRemise);
+  const boisson = coutServi(PETIT_DEJ.boisson.refs, doses, tauxRemise);
+  if (shake == null || boisson == null) return null;
+  return shake + boisson;
+}
+
+/** Les doses par défaut de la carte, pour un club qui n'a rien personnalisé. */
+export function dosesParDefaut(): Record<string, number | null> {
+  return Object.fromEntries(CARTE_CLUB.map((l) => [l.ref, l.doses]));
+}
+
 /** Les paliers de remise Herbalife, pour le sélecteur de Réglages. */
 export const PALIERS_REMISE = [25, 35, 42, 50] as const;
 export type PalierRemise = (typeof PALIERS_REMISE)[number];

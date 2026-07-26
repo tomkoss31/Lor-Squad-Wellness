@@ -13,7 +13,7 @@
 
 import "../../styles/bbc-tokens.css";
 import { useState, type ReactNode } from "react";
-import type { Club } from "../../types/domain";
+import type { Club, ClubSettings } from "../../types/domain";
 import { BbcModeSwitch } from "./BbcModeSwitch";
 import { BbcScripts } from "./views/BbcScripts";
 import { BbcCoeurs } from "./views/BbcCoeurs";
@@ -134,7 +134,13 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
-export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
+export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
+  // Les réglages fraîchement enregistrés priment sur ceux chargés au montage :
+  // `useBbcMode` ne les relit qu'au démarrage, et sans ça les appels, les cœurs
+  // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
+  // longtemps pour inscrire des membres à la mauvaise heure.
+  const [reglagesFrais, setReglagesFrais] = useState<ClubSettings | null>(null);
+  const club = clubProp && reglagesFrais ? { ...clubProp, settings: reglagesFrais } : clubProp;
   const [section, setSection] = useState<SectionKey>("club");
   const [view, setViewState] = useState<BbcView>("cockpit");
   const [sheet, setSheet] = useState(false);
@@ -338,9 +344,9 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club, clubs, 
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
-        {view === "club100" && <BbcClub100 userId={userId} />}
+        {view === "club100" && <BbcClub100 userId={userId} clubId={club?.id ?? null} />}
         {view === "carte" && <BbcCarte clubId={club?.id ?? null} onGoClubs={() => setView("clubs")} />}
-        {view === "reglages" && <BbcReglages club={club ?? null} />}
+        {view === "reglages" && <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />}
       </main>
 
       {/* ── Bottom nav (mobile) : les 5 sections, rien de caché ───────── */}

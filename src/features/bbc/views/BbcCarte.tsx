@@ -42,6 +42,7 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
   const { settings, saving, save } = useClubSettings(clubId);
   const [draft, setDraft] = useState<CarteMap | null>(null);
   const [saved, setSaved] = useState(false);
+  const [echec, setEchec] = useState(false);
 
   // État courant = brouillon local s'il existe, sinon la config du club, sinon
   // la proposition relevée sur le tarif (non validée).
@@ -77,6 +78,7 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
 
   async function enregistrer(nextPalier = palier) {
     const ok = await save({ ...settings, carte, palier_remise: nextPalier });
+    setEchec(!ok);
     if (ok) {
       setDraft(null);
       setSaved(true);
@@ -250,6 +252,11 @@ export function BbcCarte({ clubId, onGoClubs }: BbcCarteProps) {
           {saving ? "Enregistrement…" : "Enregistrer la carte"}
         </button>
         {saved ? <span style={{ fontSize: 12.5, color: "var(--ls-bbc-lime-text)" }}>✓ carte enregistrée</span> : null}
+        {echec ? (
+          <span role="alert" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-bbc-coral)" }}>
+            ✕ rien n'a été enregistré — réessaie
+          </span>
+        ) : null}
         {!clubId ? (
           <span style={{ fontSize: 12, color: "var(--ls-bbc-muted)" }}>Crée ton club pour enregistrer la carte.</span>
         ) : null}

@@ -4,8 +4,10 @@
 // (tes chiffres → résultats calculés, formules affichées). Rien d'inventé.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBbcMembers } from "../useBbcMembers";
+import { useClubSettings } from "../useClubSettings";
+import { coutVisiteDepuisCarte, dosesParDefaut } from "../data/bbcClubPrices";
 import { CLUB100, ECHELLE_ORG, DEFAULT_RENTA, calculerRenta, type RentaInput } from "../data/bbcClub100";
 
 const eur = (n: number) =>
@@ -16,14 +18,37 @@ const num = (n: number) => new Intl.NumberFormat("fr-FR", { maximumFractionDigit
 
 interface BbcClub100Props {
   userId?: string;
+  clubId?: string | null;
 }
 
-export function BbcClub100({ userId }: BbcClub100Props) {
+export function BbcClub100({ userId, clubId }: BbcClub100Props) {
   const { members } = useBbcMembers(userId);
+  const { settings } = useClubSettings(clubId);
   const [input, setInput] = useState<RentaInput>(DEFAULT_RENTA);
+  // Le coach a modifié un champ à la main : on cesse de le réécrire.
+  const [touche, setTouche] = useState(false);
   const r = useMemo(() => calculerRenta(input), [input]);
 
-  const set = (patch: Partial<RentaInput>) => setInput((p) => ({ ...p, ...patch }));
+  // Les prix des cartes et le coût d'une visite viennent de SES réglages et de
+  // SA carte. Sans ça, l'écran affichait 80 €/185 € et un coût de portion à
+  // zéro — un calcul de rentabilité faux pour tout club qui ne pratique pas
+  // exactement ces prix, et une ressaisie de ce que l'app savait déjà.
+  useEffect(() => {
+    if (touche) return;
+    const doses = { ...dosesParDefaut(), ...Object.fromEntries(Object.entries(settings.carte ?? {}).map(([k, v]) => [k, v?.doses ?? null])) };
+    const cout = coutVisiteDepuisCarte(doses, settings.palier_remise ?? 50);
+    setInput((p) => ({
+      ...p,
+      prixCarte10: settings.cards?.["10"]?.price ?? p.prixCarte10,
+      prixCarte30: settings.cards?.["30"]?.price ?? p.prixCarte30,
+      coutPortion: cout != null ? Math.round(cout * 100) / 100 : p.coutPortion,
+    }));
+  }, [settings, touche]);
+
+  const set = (patch: Partial<RentaInput>) => {
+    setTouche(true);
+    setInput((p) => ({ ...p, ...patch }));
+  };
   const membresReels = members.length;
   const pctMembres = Math.min(Math.round((membresReels / CLUB100.membres) * 100), 100);
   const chargesRenseignees = input.coutPortion > 0 || input.chargesFixes > 0;
@@ -64,7 +89,8 @@ export function BbcClub100({ userId }: BbcClub100Props) {
       <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid rgba(197,248,42,.28)", borderRadius: 20, padding: "22px 24px" }}>
         <Eye>ton calcul de rentabilité</Eye>
         <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 16, lineHeight: 1.5 }}>
-          Les prix des cartes sont les tiens (80 € / 185 €). Le <b style={{ color: "var(--ls-bbc-text)" }}>coût d'une portion</b> et tes{" "}
+          Les prix des cartes ({eur(input.prixCarte10)} / {eur(input.prixCarte30)}) et le coût d'une visite viennent de tes
+          réglages et de ta carte — modifiables ici sans rien casser. Tes{" "}
           <b style={{ color: "var(--ls-bbc-text)" }}>charges fixes</b> ne sont connus que de toi : renseigne-les pour obtenir un résultat réel.
         </div>
 
@@ -81,8 +107,8 @@ export function BbcClub100({ userId }: BbcClub100Props) {
 
         {/* résultats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-          <Out v={eur2(r.prixVisite10)} l="prix / visite (carte 10)" f="80 € ÷ 10" />
-          <Out v={eur2(r.prixVisite30)} l="prix / visite (carte 30)" f="185 € ÷ 30" />
+          <Out v={eur2(r.prixVisite10)} l="prix / visite (carte 10)" f={`${eur(input.prixCarte10)} ÷ 10`} />
+          <Out v={eur2(r.prixVisite30)} l="prix / visite (carte 30)" f={`${eur(input.prixCarte30)} ÷ 30`} />
           <Out v={num(r.visitesParJour)} l="visites / jour" f="membres × fréquentation" />
           <Out v={num(r.visitesParMois)} l="visites / mois" f="× jours × 52/12" />
         </div>
