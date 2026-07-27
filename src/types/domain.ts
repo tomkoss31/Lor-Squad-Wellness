@@ -564,6 +564,9 @@ export interface FollowUp {
   /** Durée du suivi en minutes. undefined = durée par défaut du coach.
    *  Chantier Agenda V2 2026-07-27. */
   durationMin?: number;
+  /** false = RDV modifié « en silence » : le client ne recevra aucun rappel
+   *  automatique. L'agenda le signale (2026-07-27). */
+  notifyClient?: boolean;
   type: string;
   status: "scheduled" | "pending" | "completed" | "dismissed" | "inactive";
   programTitle: string;

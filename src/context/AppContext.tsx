@@ -161,7 +161,13 @@ interface AppContextValue {
     clientId: string,
     checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean }
   ) => Promise<void>;
-  updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
+  // updateFollowUpStatus RETIRÉ (2026-07-27) : aucun consommateur, et
+  // dangereux. `follow_ups` est upserté onConflict client_id — c'est UN
+  // pointeur vers le prochain RDV, pas un journal. Écrire 'completed'
+  // ferait disparaître le client de l'agenda sans lui donner de suite.
+  // La clôture d'un RDV, dans cette app, c'est le suivi lui-même
+  // (/clients/:id/follow-up/new) ou une replanification via
+  // updateClientSchedule.
   loginWithCredentials: (
     payload: { email: string; password: string }
   ) => Promise<
@@ -1007,18 +1013,6 @@ export function AppProvider({ children }: PropsWithChildren) {
         if (data.sex !== undefined) updateData.sex = data.sex;
         if (data.birthDate !== undefined) updateData.birth_date = data.birthDate;
         const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
-        if (error) {
-          throw error;
-        }
-        await refreshRemoteData(currentUser);
-      },
-      updateFollowUpStatus: async (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => {
-        // Site 5 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
-        const sb = await getSupabaseClient();
-        if (!sb) {
-          throw new Error("Client Supabase indisponible.");
-        }
-        const { error } = await sb.from('follow_ups').update({ status }).eq('id', followUpId);
         if (error) {
           throw error;
         }
