@@ -134,7 +134,12 @@ serve(async (req: Request) => {
         provider_order_id: link.order_id ?? link.id ?? null,
         payment_url: link.url,
       });
-      if (insErr) console.warn("[manual-link] order insert:", insErr.message);
+      // Fatal : sans trace bilan_orders, le webhook Square ne peut pas réconcilier
+      // le paiement (encaissement orphelin, coach jamais notifié).
+      if (insErr) {
+        console.warn("[manual-link] order insert (fatal):", insErr.message);
+        return json({ error: "order_trace_failed" }, 200);
+      }
 
       return json({ url: link.url, provider: "square" });
     }
@@ -197,7 +202,11 @@ serve(async (req: Request) => {
       provider_order_id: link.id ?? null,
       payment_url: link.url,
     });
-    if (insErr) console.warn("[manual-link] order insert:", insErr.message);
+    // Fatal : sans trace bilan_orders, l'encaissement Stripe est orphelin.
+    if (insErr) {
+      console.warn("[manual-link] order insert (fatal):", insErr.message);
+      return json({ error: "order_trace_failed" }, 200);
+    }
 
     return json({ url: link.url });
   } catch (e) {
