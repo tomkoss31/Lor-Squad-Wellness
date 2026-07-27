@@ -11,6 +11,8 @@
 import { useNavigate } from "react-router-dom";
 import { JargonTip } from "../components/ui/JargonTip";
 import type { JargonKey } from "../data/jargon";
+import { useAppLevel } from "../hooks/useAppLevel";
+import type { FeatureKey } from "../config/appVisibility";
 
 interface ToolCard {
   id: string;
@@ -22,12 +24,68 @@ interface ToolCard {
   soon?: boolean;
   /** Si défini, ajoute une bulle ⓘ à côté du nom pour expliquer le mot. */
   infoTerm?: JargonKey;
+  /** Clé de visibilité — cf. src/config/appVisibility.ts */
+  feature: FeatureKey;
 }
+
+// Chantier Simplification (2026-07-27) — LOT 3.
+// L'encaissement est sorti de la liste : c'est l'outil qui fait rentrer
+// l'argent, il est désormais mis en avant en carte pleine largeur au-dessus des
+// sections (et en 1re position du menu). Il était perdu en 3e section.
+// L'ordre des sections suit le geste du coach : vendre → partager → mesurer.
+const ENCAISSEMENT_CARD = {
+  name: "Encaissement",
+  desc: "Encaisse tes clients en carte bancaire dès la fin du bilan. Tu configures ton compte une fois — l'argent va direct chez toi, on ne prend rien au passage.",
+  path: "/encaissement",
+};
 
 const TOOLS: { section: string; items: ToolCard[] }[] = [
   {
-    section: "🔗 Partage & prospection",
+    // B7 (2026-06-13) : carte « Devis » retirée (décision Thomas). Réversible —
+    // le placeholder « Bientôt » a été supprimé pour aérer.
+    section: "🛒 Vendre",
     items: [
+      {
+        id: "panier",
+        icon: "🛒",
+        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        name: "Panier",
+        desc: "Calcule un panier produits : total €, total PV, remise client (5 → 35 %), récap copiable.",
+        path: "/panier",
+        feature: "business.panier",
+      },
+      {
+        id: "ventes-comptoir",
+        icon: "🏪",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Ventes comptoir",
+        desc: "Le répertoire de tes ventes au comptoir, classées par mois — sans créer de fiche client. Le total remonte dans ta rentabilité.",
+        path: "/ventes-comptoir",
+        feature: "business.ventes-comptoir",
+      },
+      {
+        id: "ma-boutique",
+        icon: "🌿",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Ma boutique HL Skin",
+        desc: "Ta boutique de cosmétiques coréens à ton nom : vitrine, panier, codes promo, commandes. Partage ton lien, encaisse sur ton Stripe.",
+        path: "/ma-boutique",
+        feature: "business.boutique",
+      },
+    ],
+  },
+  {
+    section: "🔗 Partager & prospecter",
+    items: [
+      {
+        id: "mes-liens",
+        icon: "🔗",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "Mes liens",
+        desc: "Tous tes liens publics (bilan, business, coach, VIP…) prêts à copier, QR, WhatsApp.",
+        path: "/mes-liens",
+        feature: "business.mes-liens",
+      },
       {
         // B4 (2026-06-13) : porte UNIQUE « Prospecter » depuis Mon business
         // (faire/piloter). Pointe vers la page mère /outils-prospection qui
@@ -40,14 +98,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "Ta machine à prospects : la méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
         path: "/outils-prospection",
         infoTerm: "prospect",
-      },
-      {
-        id: "mes-liens",
-        icon: "🔗",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "Mes liens",
-        desc: "Tous tes liens publics (bilan, business, coach, VIP…) prêts à copier, QR, WhatsApp.",
-        path: "/mes-liens",
+        feature: "business.prospecter",
       },
       {
         // Raccroché ici (2026-06-13) : la carte Liste 100 du Co-pilote a été
@@ -58,50 +109,12 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Ma Liste 100",
         desc: "Ta liste de connaissances (méthode FRANK) : ajoute, qualifie et transforme tes contacts en prospects.",
         path: "/cahier-de-bord?tab=liste",
+        feature: "business.liste-100",
       },
     ],
   },
   {
-    // B7 (2026-06-13) : carte « Devis » retirée (décision Thomas). Réversible —
-    // le placeholder « Bientôt » a été supprimé pour aérer.
-    section: "🛒 Vente",
-    items: [
-      {
-        id: "panier",
-        icon: "🛒",
-        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
-        name: "Panier",
-        desc: "Calcule un panier produits : total €, total PV, remise client (5 → 35 %), récap copiable.",
-        path: "/panier",
-      },
-      {
-        id: "ventes-comptoir",
-        icon: "🏪",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "Ventes comptoir",
-        desc: "Le répertoire de tes ventes au comptoir, classées par mois — sans créer de fiche client. Le total remonte dans ta rentabilité.",
-        path: "/ventes-comptoir",
-      },
-      {
-        id: "encaissement",
-        icon: "💳",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "Encaissement",
-        desc: "Encaisse tes clients en CB à la fin du bilan, sur TON compte Stripe. Tu le configures une fois — l'argent va direct chez toi.",
-        path: "/encaissement",
-      },
-      {
-        id: "ma-boutique",
-        icon: "🌿",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "Ma boutique HL Skin",
-        desc: "Ta boutique de cosmétiques coréens à ton nom : vitrine, panier, codes promo, commandes. Partage ton lien, encaisse sur ton Stripe.",
-        path: "/ma-boutique",
-      },
-    ],
-  },
-  {
-    section: "📊 Suivi & business",
+    section: "📊 Mes chiffres",
     items: [
       {
         id: "rentabilite",
@@ -111,15 +124,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "Ta marge du mois, ta projection et le détail complet (vente directe + overrides équipe). Vue avant réservée au Co-pilote.",
         path: "/rentabilite",
         infoTerm: "rentabilite",
-      },
-      {
-        id: "flex",
-        icon: "⚡",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "FLEX",
-        desc: "Ta marge, tes paliers Herbalife et la projection du mois en un coup d'œil.",
-        path: "/flex",
-        infoTerm: "flex",
+        feature: "business.rentabilite",
       },
       {
         id: "pv",
@@ -129,6 +134,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         desc: "L'historique de tes points de volume, échéances et relances à faire.",
         path: "/pv",
         infoTerm: "pv",
+        feature: "business.pv",
       },
       {
         id: "plan-marketing",
@@ -137,6 +143,17 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         name: "Plan Marketing",
         desc: "L'échelle des rangs Herbalife (Distributor → President's) : où tu en es, comment passer chaque palier, ce que ça rapporte.",
         path: "/plan-marketing",
+        feature: "business.plan-marketing",
+      },
+      {
+        id: "flex",
+        icon: "⚡",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+        name: "FLEX",
+        desc: "Ta marge, tes paliers Herbalife et la projection du mois en un coup d'œil.",
+        path: "/flex",
+        infoTerm: "flex",
+        feature: "business.flex",
       },
     ],
   },
@@ -144,6 +161,13 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
 
 export function OutilsPage() {
   const navigate = useNavigate();
+  // Niveau de visibilité (LOT 3) : une carte masquée ne l'est que dans le
+  // menu — /flex et /cahier-de-bord restent joignables par lien direct.
+  const { can } = useAppLevel();
+  const sections = TOOLS.map((grp) => ({
+    ...grp,
+    items: grp.items.filter((tool) => can(tool.feature)),
+  })).filter((grp) => grp.items.length > 0);
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 60px" }}>
@@ -158,10 +182,86 @@ export function OutilsPage() {
         </span>
       </h1>
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif" }}>
-        Prospecter, tes liens, ton panier et tes chiffres (rentabilité, FLEX, PV) regroupés ici pour piloter ton activité.
+        Encaisser, vendre, partager tes liens et suivre tes chiffres : tout ce qui fait tourner ton activité est ici.
       </p>
 
-      {TOOLS.map((grp) => (
+      {/* ═══ Encaissement — carte mise en lumière (LOT 3, 2026-07-27) ═══
+          Demande Thomas : « encaissement super important à mettre en lumière ».
+          C'était une carte parmi 11, en 3e section. C'est le seul outil de la
+          page qui fait rentrer de l'argent — il passe en pleine largeur, en
+          tête, avant toute autre chose. */}
+      {can("business.encaissement") ? (
+        <button
+          type="button"
+          onClick={() => navigate(ENCAISSEMENT_CARD.path)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            padding: "20px 20px",
+            marginBottom: 6,
+            borderRadius: 18,
+            cursor: "pointer",
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)) 100%)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border))",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow =
+              "0 6px 20px color-mix(in srgb, var(--ls-teal) 22%, transparent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          <div
+            style={{
+              flex: "0 0 auto",
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 28,
+              background: "color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+            }}
+          >
+            💳
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 1.8,
+                textTransform: "uppercase",
+                color: "var(--ls-teal)",
+                marginBottom: 3,
+              }}
+            >
+              Le plus important
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 17, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+              {ENCAISSEMENT_CARD.name}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--ls-text-muted)", marginTop: 4, lineHeight: 1.45 }}>
+              {ENCAISSEMENT_CARD.desc}
+            </div>
+          </div>
+          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, fontSize: 18, flexShrink: 0 }}>
+            →
+          </span>
+        </button>
+      ) : null}
+
+      {sections.map((grp) => (
         <div key={grp.section}>
           <div style={{ fontFamily: "Syne, sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--ls-text-muted)", margin: "22px 4px 10px" }}>
             {grp.section}
