@@ -25,6 +25,7 @@ import {
   minutesSinceMidnight,
   weekDays,
   type CalendarEvent,
+  type DayBand,
   type OwnerColorResolver,
   type PlacedEvent,
 } from "./calendarEvents";
@@ -50,6 +51,10 @@ export interface AgendaWeekGridProps {
   onCreateAt?: (at: Date) => void;
   /** Id du coach connecté : les RDV des autres sont en lecture seule. */
   currentUserId?: string;
+  /** Bandes de fond (LOT 6.6) — aujourd'hui les permanences du club. */
+  bands?: DayBand[];
+  /** Clic sur une bande retirable. */
+  onSelectBand?: (band: DayBand) => void;
 }
 
 function hourRange(): number[] {
@@ -75,6 +80,14 @@ function heightPx(start: Date, durationMin: number): number {
   return Math.max(26, Math.min(natural, gridHeight - top - 2));
 }
 
+/** Hauteur d'une bande de fond, bornée au bas de la grille. */
+function bandHeightPx(start: Date, end: Date): number {
+  const top = topPx(start);
+  const bottom = topPx(end);
+  const gridHeight = (END_HOUR - START_HOUR) * SLOT_PX;
+  return Math.min(bottom - top, gridHeight - top);
+}
+
 function hhmm(d: Date): string {
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
@@ -87,6 +100,8 @@ export function AgendaWeekGrid({
   onSelectEvent,
   onCreateAt,
   currentUserId,
+  bands,
+  onSelectBand,
 }: AgendaWeekGridProps) {
   const days = useMemo(() => weekDays(anchorDate), [anchorDate]);
   const hours = useMemo(() => hourRange(), []);
@@ -127,6 +142,17 @@ export function AgendaWeekGrid({
     }
     return map;
   }, [events]);
+
+  const bandsByDay = useMemo(() => {
+    const map = new Map<string, DayBand[]>();
+    for (const b of bands ?? []) {
+      const key = b.start.toDateString();
+      const list = map.get(key);
+      if (list) list.push(b);
+      else map.set(key, [b]);
+    }
+    return map;
+  }, [bands]);
 
   const EMPTY_DAY = { timed: [] as CalendarEvent[], allDay: [] as CalendarEvent[] };
   const hasAnyAllDay = useMemo(
@@ -559,6 +585,52 @@ export function AgendaWeekGrid({
                         : "transparent",
                   }}
                 >
+                  {/* Calque de fond (LOT 6.6) : permanences du club. Posé
+                      AVANT les créneaux et les RDV → il reste dessous, et ne
+                      bloque pas le clic « créer un RDV » (pointerEvents). */}
+                  {(bandsByDay.get(d.toDateString()) ?? []).map((band) => (
+                    <div
+                      key={band.id}
+                      onClick={
+                        band.removable && onSelectBand
+                          ? (e) => {
+                              e.stopPropagation();
+                              onSelectBand(band);
+                            }
+                          : undefined
+                      }
+                      title={`${band.label}${band.removable ? " — cliquer pour retirer" : ""}`}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        top: topPx(band.start),
+                        height: Math.max(14, bandHeightPx(band.start, band.end)),
+                        background: `repeating-linear-gradient(45deg, color-mix(in srgb, ${band.color} 16%, transparent) 0 6px, transparent 6px 12px)`,
+                        borderTop: `1px solid color-mix(in srgb, ${band.color} 45%, transparent)`,
+                        borderBottom: `1px solid color-mix(in srgb, ${band.color} 45%, transparent)`,
+                        pointerEvents: band.removable && onSelectBand ? "auto" : "none",
+                        cursor: band.removable && onSelectBand ? "pointer" : "default",
+                        zIndex: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: 2,
+                          left: 5,
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 9,
+                          letterSpacing: "0.06em",
+                          color: `color-mix(in srgb, ${band.color} 75%, var(--ls-text))`,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {band.label}
+                      </span>
+                    </div>
+                  ))}
                   {hours.map((h) => (
                     <div
                       key={h}

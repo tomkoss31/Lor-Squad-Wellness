@@ -110,6 +110,24 @@ export function fallbackOwnerColor(ownerId: string): string {
 export type OwnerColorResolver = (ownerId: string) => string;
 
 /**
+ * Bande de fond dessinée SOUS les RDV (LOT 6.6). Générique par construction :
+ * le moteur d'agenda ne sait pas ce qu'elle représente. Aujourd'hui ce sont
+ * les permanences du club BBC (« qui tient le bar »), demain ce pourrait être
+ * des heures d'ouverture ou des indisponibilités — sans toucher à la grille.
+ */
+export interface DayBand {
+  id: string;
+  start: Date;
+  end: Date;
+  /** Texte court affiché en haut de la bande (ex. « THOMAS · CLUB »). */
+  label: string;
+  /** Couleur d'accent (hex). */
+  color: string;
+  /** Vrai si l'utilisateur courant peut la retirer. */
+  removable?: boolean;
+}
+
+/**
  * Construit le résolveur : couleur choisie si elle existe et qu'elle est un
  * hex valide, repli dérivé sinon. La validation évite qu'une valeur douteuse
  * parte dans un style CSS (la base a déjà un CHECK, ceinture et bretelles).

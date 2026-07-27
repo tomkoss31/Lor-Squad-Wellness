@@ -20,11 +20,13 @@ import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
 import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
+import { useClubShifts } from "../features/agenda/useClubShifts";
 import {
   toCalendarEvents,
   startOfWeekMonday,
   makeOwnerColorResolver,
   type AgendaEntry as AgendaEntryBase,
+  type DayBand,
 } from "../features/agenda/calendarEvents";
 
 type DateFilter = "today" | "week" | "all";
@@ -438,6 +440,33 @@ export function AgendaPage() {
       return next;
     });
   }, []);
+  // ─── Permanences du club (LOT 6.6) ─────────────────────────────────────
+  // Mode « pose une permanence » : tant qu'il est actif, un clic sur un creux
+  // pose un créneau de présence au club au lieu d'ouvrir un RDV. C'est le seul
+  // geste de création — sans lui, la table resterait vide comme `exposures`.
+  const [shiftMode, setShiftMode] = useState(false);
+  const weekEndAnchor = useMemo(() => {
+    const end = new Date(weekAnchor);
+    end.setDate(end.getDate() + 7);
+    return end;
+  }, [weekAnchor]);
+  const clubShifts = useClubShifts(weekAnchor, weekEndAnchor);
+  /** Durée d'une permanence posée en un clic. */
+  const SHIFT_HOURS = 3;
+  const bands: DayBand[] = useMemo(
+    () =>
+      clubShifts.shifts.map((s) => ({
+        id: s.id,
+        start: s.startsAt,
+        end: s.endsAt,
+        label: `${(ownerNameMap.get(s.userId) ?? "Coach").toUpperCase()} · CLUB`,
+        color: "#c5f82a",
+        // On ne retire que ce qu'on a posé (les RLS refuseraient le reste).
+        removable: s.userId === currentUser?.id || currentUser?.role === "admin",
+      })),
+    [clubShifts.shifts, ownerNameMap, currentUser?.id, currentUser?.role],
+  );
+
   const shiftMonth = useCallback((direction: 1 | -1) => {
     setWeekAnchor((prev) => {
       // On se cale sur le 1er avant de décaler : sinon un 31 janvier + 1 mois
@@ -1211,6 +1240,33 @@ export function AgendaPage() {
             <button type="button" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente" style={weekNavBtnStyle}>‹</button>
             <button type="button" onClick={() => shiftWeek(1)} aria-label="Semaine suivante" style={weekNavBtnStyle}>›</button>
           </div>
+
+          {/* Permanences du club (LOT 6.6) — visible seulement s'il y a un
+              club. Tant que le mode est actif, un clic sur un creux pose une
+              présence au club de {SHIFT_HOURS} h au lieu d'ouvrir un RDV. */}
+          {clubShifts.clubId ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+              <button
+                type="button"
+                onClick={() => setShiftMode((v) => !v)}
+                aria-pressed={shiftMode}
+                style={{
+                  ...weekNavBtnStyle,
+                  background: shiftMode ? "var(--ls-lime)" : "var(--ls-surface)",
+                  color: shiftMode ? "#0a1400" : "var(--ls-text)",
+                  borderColor: shiftMode ? "var(--ls-lime)" : "var(--ls-border)",
+                  fontWeight: 700,
+                }}
+              >
+                🥤 {shiftMode ? "Mode permanence actif" : "Poser une permanence"}
+              </button>
+              <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
+                {shiftMode
+                  ? `Clique un créneau : tu tiens le club ${SHIFT_HOURS} h à partir de cette heure. Clique une bande pour la retirer.`
+                  : "Les bandes hachurées montrent qui tient le club."}
+              </span>
+            </div>
+          ) : null}
           <AgendaWeekGrid
             events={calendarEvents}
             anchorDate={weekAnchor}
@@ -1220,7 +1276,25 @@ export function AgendaPage() {
             onSelectEvent={(ev) => {
               if (ev.href) navigate(ev.href);
             }}
+            bands={bands}
+            onSelectBand={(band) => {
+              if (!window.confirm("Retirer cette permanence du club ?")) return;
+              void clubShifts.remove(band.id).catch((err) => {
+                pushToast(buildSupabaseErrorToast(err, "Suppression de la permanence"));
+              });
+            }}
             onCreateAt={(at) => {
+              // En mode permanence, le clic sur un creux pose un créneau de
+              // présence au club au lieu d'ouvrir le formulaire de RDV.
+              if (shiftMode) {
+                if (!clubShifts.clubId || !currentUser) return;
+                const end = new Date(at);
+                end.setHours(end.getHours() + SHIFT_HOURS);
+                void clubShifts
+                  .create(currentUser.id, at, end)
+                  .catch((err) => pushToast(buildSupabaseErrorToast(err, "Ajout de la permanence")));
+                return;
+              }
               setEditing(undefined);
               setPrefillRdvDate(at);
               setShowForm(true);
