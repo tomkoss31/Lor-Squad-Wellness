@@ -203,7 +203,10 @@ export function ClientAppPage() {
   useEffect(() => {
     if (!liveData || !data) return
     const nextProgramTitle = liveData.client?.current_program ?? data.program_title
-    const nextFollowUpIso = liveData.next_follow_up?.due_date ?? data.next_follow_up
+    // Le fetch live a réussi (liveData présent) → il fait AUTORITÉ, même à null :
+    // un RDV annulé/passé renvoie null côté edge et doit disparaître. Avant, le
+    // `?? snapshot` ré-affichait un RDV fantôme figé (client_app_accounts).
+    const nextFollowUpIso = liveData.next_follow_up?.due_date ?? null
 
     // assessment_history (live) prioritaire sur metrics_history (snapshot).
     // Shape déjà flat compatible (date + weight/bodyFat/muscleMass/hydration/...).

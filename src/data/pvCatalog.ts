@@ -1098,9 +1098,20 @@ export function resolvePvProgram(programTitleOrId: string | null | undefined) {
       const aliases = [program.title, ...(program.alias ?? [])];
       return aliases.some((alias) => normalize(alias) === normalized);
     }) ??
-    pvProgramOptions.find((program) =>
-      normalized.includes(normalize(program.title.replace("Programme ", "")))
-    ) ??
+    pvProgramOptions.find((program) => {
+      // Repli substring, MAIS uniquement si l'input EST essentiellement le titre
+      // du programme (pas titre + qualificatif). Sinon "premium sport" /
+      // "p-sport-premium" matchaient "premium" → produits minceur fantômes chez
+      // un client sport (les programmes sport ne sont PAS au catalogue PV).
+      const t = normalize(program.title.replace("Programme ", ""));
+      if (!t || !normalized.includes(t)) return false;
+      const rest = normalized
+        .replace(t, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\b(programme|p)\b/g, " ")
+        .trim();
+      return rest.length === 0;
+    }) ??
     PV_PROGRAM_FALLBACK
   );
 }

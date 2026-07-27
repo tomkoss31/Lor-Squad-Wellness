@@ -213,11 +213,22 @@ function resolvePvProgramId(programTitleOrId: string | null | undefined) {
   // (aloe-vera + the-51g + formula-1) des que le titre n'etait pas reconnu
   // ("À l'unité", "Programme a confirmer", ""). On replie sur "unit" dont la
   // routine est vide : un titre inconnu n'invente plus de produits.
-  return (
-    pvPrograms.find((program) =>
-      normalized.includes(normalizeProgramLabel(program.title.replace("Programme ", "")))
-    )?.id ?? "unit"
-  );
+  // Repli substring, MAIS seulement si l'input EST essentiellement le titre du
+  // programme (pas titre + qualificatif). Sinon "premium sport"/"p-sport-premium"
+  // resolvaient vers "premium" et injectaient des produits minceur fantômes chez
+  // un client sport (miroir du fix pvCatalog.ts). Programmes sport absents du
+  // catalogue → repli "unit" (routine vide).
+  const loose = pvPrograms.find((program) => {
+    const t = normalizeProgramLabel(program.title.replace("Programme ", ""));
+    if (!t || !normalized.includes(t)) return false;
+    const rest = normalized
+      .replace(t, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\b(programme|p)\b/g, " ")
+      .trim();
+    return rest.length === 0;
+  });
+  return loose?.id ?? "unit";
 }
 
 function isMissingPvTableError(error: { message?: string } | null | undefined) {

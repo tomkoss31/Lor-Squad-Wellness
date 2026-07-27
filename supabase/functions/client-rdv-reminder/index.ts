@@ -211,18 +211,22 @@ serve(async (req) => {
     // seulement si un email a été laissé. Anti-doublon = reminder_email_sent_at.
     let prospectEmails = 0;
     if (hourParis === 18) {
-      const dayStart = new Date(`${tomorrowParis}T00:00:00+02:00`).toISOString();
-      const dayEnd = new Date(`${tomorrowParis}T23:59:59+02:00`).toISOString();
+      // Fenêtre large en UTC, puis filtre par DATE Paris en JS. NE PAS coder
+      // l'offset en dur (+02:00) : faux en hiver (CET = +01:00) → fenêtre décalée
+      // d'1h, rappels ratés/erronés. parisDateStr gère le fuseau correctement.
       const { data: bookings } = await sb
         .from("rdv_bookings")
         .select("id, coach_user_id, first_name, contact, mode, slot_start")
         .neq("status", "canceled")
         .is("reminder_email_sent_at", null)
-        .gte("slot_start", dayStart)
-        .lte("slot_start", dayEnd);
+        .gte("slot_start", now.toISOString())
+        .lte("slot_start", coarseEnd);
 
       const validBookings = (bookings ?? []).filter(
-        (b) => b.contact && EMAIL_RE.test(String(b.contact)),
+        (b) =>
+          b.contact &&
+          EMAIL_RE.test(String(b.contact)) &&
+          parisDateStr(new Date(b.slot_start as string)) === tomorrowParis,
       );
       if (validBookings.length > 0) {
         const coachIds = [...new Set(validBookings.map((b) => b.coach_user_id).filter(Boolean))] as string[];
@@ -263,18 +267,20 @@ serve(async (req) => {
     // uniquement si un email a été renseigné. Anti-doublon = reminder_email_sent_at.
     let manualProspectEmails = 0;
     if (hourParis === 18) {
-      const dayStart = new Date(`${tomorrowParis}T00:00:00+02:00`).toISOString();
-      const dayEnd = new Date(`${tomorrowParis}T23:59:59+02:00`).toISOString();
+      // Idem : filtre par DATE Paris en JS, pas d'offset codé en dur.
       const { data: prospects } = await sb
         .from("prospects")
         .select("id, distributor_id, first_name, email, rdv_date, status")
         .eq("status", "scheduled")
         .is("reminder_email_sent_at", null)
-        .gte("rdv_date", dayStart)
-        .lte("rdv_date", dayEnd);
+        .gte("rdv_date", now.toISOString())
+        .lte("rdv_date", coarseEnd);
 
       const validProspects = (prospects ?? []).filter(
-        (p) => p.email && EMAIL_RE.test(String(p.email)),
+        (p) =>
+          p.email &&
+          EMAIL_RE.test(String(p.email)) &&
+          parisDateStr(new Date(p.rdv_date as string)) === tomorrowParis,
       );
       if (validProspects.length > 0) {
         const coachIds = [...new Set(validProspects.map((p) => p.distributor_id).filter(Boolean))] as string[];
