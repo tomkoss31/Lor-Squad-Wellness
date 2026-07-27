@@ -58,7 +58,11 @@ export function RdvBookingPage() {
   const [searchParams] = useSearchParams();
   const slug = (coachSlug ?? "").trim();
   const coachName = useMemo(() => (slug ? capitalize(slug) : ""), [slug]);
-  const firstName = (searchParams.get("firstName") ?? "").trim();
+  // Prénom : pré-rempli si passé en query (?firstName=, ex. page Merci du bilan),
+  // sinon SAISI sur place. Avant, c'était une const figée sur le query param → un
+  // accès direct (/rdv/:slug via QR ou funnel colis sans firstName) partait avec un
+  // prénom vide → book-rdv rejetait (prenom_requis) → « réservation échouée ».
+  const [firstName, setFirstName] = useState((searchParams.get("firstName") ?? "").trim());
 
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<DayGroup[]>([]);
@@ -106,7 +110,7 @@ export function RdvBookingPage() {
 
   const selectedGroup = groups.find((g) => g.key === selectedKey) ?? null;
   const emailValid = EMAIL_RE.test(email.trim());
-  const canConfirm = selectedSlot !== null && emailValid && !submitting;
+  const canConfirm = selectedSlot !== null && emailValid && firstName.trim().length >= 2 && !submitting;
 
   const slotEnd = useMemo(
     () => (selectedSlot ? new Date(selectedSlot.getTime() + SLOT_MINUTES * 60_000) : null),
@@ -315,6 +319,27 @@ export function RdvBookingPage() {
 
         {groups.length > 0 && selectedSlot && (
           <div style={{ marginBottom: 18 }}>
+            <label
+              htmlFor="rdv-firstname"
+              style={{ display: "block", fontFamily: PUBLIC_FONTS.display, fontSize: 13, fontWeight: 600, color: "var(--cream-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}
+            >
+              Ton prénom
+            </label>
+            <input
+              id="rdv-firstname"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => { setFirstName(e.target.value); setBookingError(null); }}
+              placeholder="Ton prénom"
+              style={{
+                width: "100%", boxSizing: "border-box", padding: "14px 16px", borderRadius: 14,
+                background: "var(--glass)",
+                border: `1px solid ${firstName.length > 0 && firstName.trim().length < 2 ? PUBLIC_TOKENS.coral : "var(--hair)"}`,
+                color: "var(--cream)", fontFamily: PUBLIC_FONTS.body, fontSize: 15, outline: "none",
+                marginBottom: 18,
+              }}
+            />
             <label
               htmlFor="rdv-email"
               style={{ display: "block", fontFamily: PUBLIC_FONTS.display, fontSize: 13, fontWeight: 600, color: "var(--cream-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}

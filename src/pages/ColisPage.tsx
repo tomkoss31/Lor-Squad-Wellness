@@ -115,7 +115,12 @@ export function ColisPage() {
     const qs = params.toString();
     return `/bilan-online/${DEFAULT_COACH_SLUG}/formulaire${qs ? `?${qs}` : ""}`;
   }, [firstName]);
-  const rdvUrl = `/rdv/${DEFAULT_COACH_SLUG}`;
+  // firstName passé en query → le champ prénom de /rdv est pré-rempli (le
+  // prospect l'a déjà donné dans le funnel). Sans ça, il devait le re-saisir.
+  const rdvUrl = useMemo(() => {
+    const qs = firstName.trim() ? `?firstName=${encodeURIComponent(firstName.trim())}` : "";
+    return `/rdv/${DEFAULT_COACH_SLUG}${qs}`;
+  }, [firstName]);
 
   async function submitLead(): Promise<string | null> {
     setError(null);
