@@ -190,6 +190,24 @@ export function AgendaDayList({
                         .filter(Boolean)
                         .join(" · ")}
                 </span>
+                {/* RDV muet : le client ne recevra pas le rappel attendu, il
+                    faudra l'appeler soi-même (2026-07-27). */}
+                {ev.silentReason ? (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginTop: 6,
+                      padding: "3px 8px",
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: "color-mix(in srgb, var(--ls-gold) 16%, transparent)",
+                      color: "color-mix(in srgb, var(--ls-gold) 75%, var(--ls-text))",
+                    }}
+                  >
+                    🔕 {ev.silentReason}
+                  </span>
+                ) : null}
               </span>
               <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 20, flexShrink: 0 }}>
                 ›

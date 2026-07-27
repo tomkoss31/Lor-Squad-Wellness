@@ -109,8 +109,22 @@ function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
   }
 }
 
-function groupLabel(dateIso: string, today: Date): string {
-  const d = new Date(dateIso);
+/** Une entrée passée attend-elle encore une action du coach ? */
+function stillActionable(entry: AgendaEntry): boolean {
+  if (entry.kind === "prospect") return entry.prospect.status === "scheduled";
+  if (entry.kind === "client") {
+    return entry.followUp.status === "scheduled" || entry.followUp.status === "pending";
+  }
+  // Suivi de protocole : le scheduler donne déjà le retard.
+  return (
+    entry.due.status === "due_today" ||
+    entry.due.status === "overdue_1d" ||
+    entry.due.status === "overdue_more"
+  );
+}
+
+function groupLabel(entry: AgendaEntry, today: Date): string {
+  const d = new Date(entry.date);
   const todayStart = startOfDay(today);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
@@ -120,12 +134,19 @@ function groupLabel(dateIso: string, today: Date): string {
 
   if (dayStart.getTime() === todayStart.getTime()) return "Aujourd'hui";
   if (dayStart.getTime() === tomorrowStart.getTime()) return "Demain";
-  if (d < todayStart) return "Passés";
+  // Passé : « En retard » si ça attend encore quelque chose, « Passés » si
+  // c'est soldé (RDV honoré, prospect converti, RDV annulé).
+  if (d < todayStart) return stillActionable(entry) ? "En retard" : "Passés";
   if (d <= weekEnd) return "Cette semaine";
   return "Plus tard";
 }
 
-const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
+// « En retard » en TÊTE (2026-07-27). Avant, groupLabel ne regardait que la
+// date : un suivi dû il y a 9 jours et un RDV converti d'avril tombaient dans
+// le même sac « Passés », tout en bas de la liste. Or l'un attend une action
+// et l'autre est réglé. Mesuré en prod : 82 suivis en retard, dont 66 sur des
+// clients actifs, et 11 RDV prospects passés jamais qualifiés.
+const GROUP_ORDER = ["En retard", "Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
 
 const AGENDA_FILTER_KEY = "labase360.agenda.filter";
 const AGENDA_ENTITY_KEY = "labase360.agenda.entity-filter";
@@ -351,7 +372,7 @@ export function AgendaPage() {
     const now = new Date();
     const map = new Map<string, AgendaEntry[]>();
     agendaEntries.forEach((entry) => {
-      const g = groupLabel(entry.date, now);
+      const g = groupLabel(entry, now);
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(entry);
     });

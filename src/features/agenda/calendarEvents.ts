@@ -71,14 +71,22 @@ export interface CalendarEvent {
    * venir et faussent le CRM. L'agenda est le seul endroit où les rattraper.
    */
   needsQualification?: boolean;
+  /**
+   * Renseigné quand le client ne recevra PAS le rappel automatique attendu.
+   * Mesuré en prod le 2026-07-27 chez Mélanie : sur 29 RDV clients à venir,
+   * 5 ont les rappels coupés et 5 concernent un client sans email — soit une
+   * dizaine de RDV muets, invisibles à l'écran, pour quelqu'un qui travaille
+   * au téléphone. Le coach doit savoir qui il devra appeler lui-même.
+   */
+  silentReason?: string;
   /** Ligne 1 : « Bilan · Karim B. » */
   title: string;
   /** Ligne 2, optionnelle : contexte court. */
   subtitle?: string;
   /** Le coach à qui appartient ce RDV — porte la couleur. */
   ownerId: string;
-  /** Destination au clic, si l'événement mène quelque part. */
-  href?: string;
+  // `href` RETIRÉ (2026-07-27) : plus aucun lecteur depuis que le clic ouvre
+  // les modales sur place au lieu de naviguer (handleCalendarEventClick).
   /** L'entrée d'origine, pour les actions qui ont besoin du détail complet. */
   entry: AgendaEntry;
 }
@@ -249,18 +257,26 @@ export function toCalendarEvent(
         entry.prospect.status === "scheduled" && start.getTime() < Date.now(),
       title: prospectTitle(entry.prospect),
       subtitle: entry.prospect.source || undefined,
-      href: entry.prospect.convertedClientId
-        ? `/clients/${entry.prospect.convertedClientId}`
-        : undefined,
     };
   }
 
   if (entry.kind === "client") {
+    // On ne signale que ce qui est CERTAIN depuis le front : le rappel coupé
+    // (drapeau explicite) et l'absence d'email (l'edge client-rdv-reminder
+    // envoie le rappel de la veille par email). Le push de 2 h avant dépend
+    // d'un abonnement que le front ne charge pas — on ne prétend donc pas
+    // qu'« aucun rappel » ne partira.
+    const silent =
+      entry.followUp.notifyClient === false
+        ? "Rappels coupés pour ce RDV"
+        : !entry.client.email
+          ? "Pas d'email : pas de rappel la veille"
+          : undefined;
     return {
       ...base,
+      silentReason: silent,
       title: clientTitle(entry.client),
       subtitle: entry.followUp.type || undefined,
-      href: `/clients/${entry.client.id}`,
     };
   }
 
@@ -276,7 +292,6 @@ export function toCalendarEvent(
     allDay: true,
     title: `${entry.due.stepIconEmoji} ${name || "Client"}`,
     subtitle: entry.due.stepShortTitle,
-    href: `/clients/${entry.due.client.id}`,
   };
 }
 
