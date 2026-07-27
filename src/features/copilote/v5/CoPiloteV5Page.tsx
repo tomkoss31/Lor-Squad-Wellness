@@ -25,10 +25,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { useGlobalView } from "../../../hooks/useGlobalView";
 import { useCopiloteData } from "../../../hooks/useCopiloteData";
-// Chantier Co-pilote V7 — Phase 2 (2026-05-08) : pills connecteurs
-// supplementaires sur la topbar.
 import { useTheme } from "../../../hooks/useTheme";
-import { useFormationStreak } from "../../../hooks/useFormationStreak";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
@@ -36,18 +33,12 @@ import { PlanDuJour } from "./components/PlanDuJour";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
 
-import { DistriOnboardingChecklist } from "../../../components/formation/DistriOnboardingChecklist";
 import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
-import { useDailyActionChecklist } from "../../../hooks/useDailyActionChecklist";
 import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
-import { WeatherPopup } from "./components/WeatherPopup";
-import { useWeatherForecast } from "./hooks/useWeatherForecast";
 // Liste privée « à relancer » (in-app, sans email/push) — 2026-06-30.
 import { CoachRemindersWidget } from "../../../components/reminders/CoachRemindersWidget";
-// Moteur d'équipe PR3 (2026-06-27) : métrique-reine expositions + nudge démarrage.
-import { ExposuresWeekCard } from "../../../components/team/ExposuresWeekCard";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
 import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
 import { useSalleOps } from "../salle-ops/useSalleOps";
@@ -60,20 +51,12 @@ export function CoPiloteV5Page() {
   const [now, setNow] = useState(new Date());
   const data = useCopiloteData(now, globalView);
 
-  // Météo : fetch léger pour la pill (current temp + emoji). Le popup
-  // utilise le même hook (memoized par city) → 0 double-fetch.
-  const userCity = currentUser?.city ?? null;
-  const { forecast: weatherLite } = useWeatherForecast(userCity, true);
-  const [weatherOpen, setWeatherOpen] = useState(false);
-
-  // Co-pilote V7 — Phase 2 (2026-05-08) : pills connecteurs supplementaires.
+  // Chantier Simplification (2026-07-27) — LOT 1, ménage de la topbar.
+  // Sont sortis d'ici : la pill météo + son popup 5 jours, la pill horloge,
+  // la pill streak 🔥 et la pill routine ☀️ X/5. Quatre gadgets qui
+  // encombraient la barre sans porter une seule action business. La routine
+  // reste joignable par sa notification de 20h et par /routine-du-jour.
   const { isDark, toggleTheme } = useTheme();
-  const { count: streakDays, badge: streakBadge } = useFormationStreak();
-  // Routine du jour (chantier #2, 2026-05-20) : score live pour la pill topbar.
-  // Le popup auto a été retiré — la routine est sur /routine-du-jour, accès
-  // via cette chip ou via /developpement > Ma routine du jour.
-  const { score: routineScore, total: routineTotal } = useDailyActionChecklist(now);
-  const navigate = useNavigate();
   // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
   // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
   const timeContext = useTimeContext();
@@ -117,14 +100,6 @@ export function CoPiloteV5Page() {
     return date.charAt(0).toUpperCase() + date.slice(1);
   }, [now]);
 
-  const clockDisplay = useMemo(() => {
-    return new Intl.DateTimeFormat("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(now);
-  }, [now]);
-
   if (!currentUser) {
     return (
       <div className="copilote-v5" style={{ padding: 30 }}>
@@ -165,17 +140,12 @@ export function CoPiloteV5Page() {
 
   return (
     <div className="copilote-v5" style={pageWrapStyle}>
-      {/* ═══ TOP BAR V7 ═══════════════════════════════════════════════
-          Chantier Co-pilote V7 / Phase 2 (2026-05-08) :
-          - Sticky avec backdrop blur (effet "glass" premium)
-          - Pastille "★ SINCE 2022 ★" eyebrow
-          - Greeting accent : gradient G3 (au lieu de gold/orange V5)
-          - Pills connecteurs uniformises G3 :
-            * Meteo (existante, re-skin)
-            * Horloge live
-            * Streak (NOUVEAU — useFormationStreak)
-            * Cloche annonces (existante)
-            * Theme toggle (NOUVEAU — useTheme) */}
+      {/* ═══ TOP BAR ══════════════════════════════════════════════════
+          Sticky, backdrop blur, pastille "★ SINCE 2022 ★", greeting gradient G3.
+          Ménage 2026-07-27 (LOT 1) : ne restent à droite que la cloche
+          d'annonces et le toggle de thème. Météo / horloge / streak / routine
+          ont été retirées — quatre pills qui prenaient la moitié de la barre
+          sans jamais déclencher une action. */}
       <div style={topBarStyle}>
         <div style={topBarLeftStyle}>
           <div style={topBarMetaStyle}>
@@ -193,73 +163,6 @@ export function CoPiloteV5Page() {
         </div>
 
         <div style={topBarRightStyle} data-v5-topbar-right>
-          {/* Weather pill réelle (Open-Meteo, click → popup 5 jours).
-              Si city manquante : pill discrète "Météo" qui ouvre le CTA
-              "Renseigner ma ville". Chantier D 2026-05-05. */}
-          <button
-            type="button"
-            onClick={() => setWeatherOpen(true)}
-            style={pillStyle}
-            aria-label={
-              weatherLite
-                ? `Météo ${weatherLite.city} : ${weatherLite.current.temp}°, ${weatherLite.current.label}. Cliquer pour voir 5 jours.`
-                : "Voir la météo"
-            }
-          >
-            <span aria-hidden="true">{weatherLite?.current.emoji ?? "🌤"}</span>
-            {weatherLite ? (
-              <>
-                <span style={pillMonoStyle}>{weatherLite.current.temp}°</span>
-                <span style={pillDimStyle}>{weatherLite.current.label}</span>
-              </>
-            ) : (
-              <span style={pillDimStyle}>Météo</span>
-            )}
-          </button>
-
-          {/* Horloge live (remplace search box — validation Thomas 2026-05-05) */}
-          <div style={pillStyle} aria-label="Heure courante">
-            <span aria-hidden="true">🕒</span>
-            <span style={pillMonoStyle}>{clockDisplay}</span>
-          </div>
-
-          {/* Chip routine du jour (chantier #2, 2026-05-20) — score live X/5
-              avec accent gold. Click → /routine-du-jour. Pas de popup auto. */}
-          <button
-            type="button"
-            onClick={() => navigate("/routine-du-jour")}
-            style={pillRoutineStyle(routineScore, routineTotal)}
-            aria-label={`Ma routine du jour : ${routineScore} sur ${routineTotal} actions faites`}
-            title="Ouvrir ma routine du jour"
-          >
-            <span aria-hidden="true">☀️</span>
-            <strong style={{ fontFamily: "var(--lb360-display, 'Sora', sans-serif)", fontSize: 14, fontWeight: 800 }}>
-              {routineScore}
-              <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.7 }}>/{routineTotal}</span>
-            </strong>
-            <span style={pillDimStyle}>routine</span>
-          </button>
-
-          {/* Streak coaching (V7 Phase 2 — nouveau).
-              Affiche jours d affilee + badge palier (grain/flamme/legende).
-              Click → /developpement/cahier-de-bord pour voir l historique. */}
-          {streakDays > 0 ? (
-            <div
-              style={pillStreakStyle}
-              aria-label={`Streak coaching : ${streakDays} jour${streakDays > 1 ? "s" : ""} d'affilée${streakBadge.level !== "none" ? ", " + streakBadge.label : ""}`}
-              title={streakBadge.hint}
-            >
-              <span aria-hidden="true">{streakBadge.emoji || "🔥"}</span>
-              <strong style={{ fontFamily: "var(--lb360-display, 'Sora', sans-serif)", fontSize: 14, fontWeight: 800 }}>
-                {streakDays}
-                <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 1 }}>j</span>
-              </strong>
-              {streakBadge.level !== "none" ? (
-                <span style={pillDimStyle}>· {streakBadge.label}</span>
-              ) : null}
-            </div>
-          ) : null}
-
           {/* Cloche + theme toggle = doublons du MobileHeader (Onde 1) →
               masqués sur mobile via [data-v5-topbar-dups]. */}
           <span data-v5-topbar-dups style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -320,8 +223,11 @@ export function CoPiloteV5Page() {
         </button>
       ) : null}
 
-      {/* Onboarding checklist conditionnel */}
-      {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
+      {/* Simplification 2026-07-27 (LOT 1) : la check-list d'accueil J0→J7
+          (DistriOnboardingChecklist, localStorage) est retirée. C'était un
+          SECOND système d'onboarding sur la même page que le cockpit La Base
+          Académie ci-dessus — lequel fait la même chose en mieux (en base,
+          7 étapes, repris chaque jour). Une seule porte de démarrage. */}
 
       {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
           du Co-pilote qui s affiche si au moins un client a un anniv
@@ -341,19 +247,14 @@ export function CoPiloteV5Page() {
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
       <PlanDuJour data={data} />
 
-      {/* Métrique-reine équipe : expositions de la semaine, reléguée tout en bas
-          (sous le Plan du jour). Liste équipe repliée + filtre à l'intérieur. */}
-      <ExposuresWeekCard />
+      {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
+          retiré — 2 lignes enregistrées en base depuis la mise en service.
+          La table `exposures` et sa RPC restent en place : si le moteur
+          d'équipe reprend un jour, la carte est récupérable dans l'historique
+          git (composant ExposuresWeekCard). */}
 
       {/* Footer légal */}
       <LegalFooter />
-
-      {/* Popup météo 5 jours */}
-      <WeatherPopup
-        open={weatherOpen}
-        onClose={() => setWeatherOpen(false)}
-        city={userCity}
-      />
     </div>
   );
 }
@@ -485,27 +386,9 @@ const pillStyle: React.CSSProperties = {
   transition: "border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
 };
 
-// Routine pill (chantier #2 2026-05-20) — accent gold, couleur vire teal
-// quand 5/5. Pattern aligné sur streak/pill V7.
-const pillRoutineStyle = (score: number, total: number): React.CSSProperties => {
-  const complete = total > 0 && score >= total;
-  const color = complete ? "var(--ls-teal)" : "var(--ls-gold)";
-  return {
-    ...pillStyle,
-    background: `color-mix(in srgb, ${color} 10%, var(--ls-surface))`,
-    borderColor: `color-mix(in srgb, ${color} 32%, var(--ls-border))`,
-    color: `color-mix(in srgb, ${color} 60%, var(--ls-text))`,
-  };
-};
-
-// Streak pill : accent gold/coral pour gamification. Click → cahier de bord.
-const pillStreakStyle: React.CSSProperties = {
-  ...pillStyle,
-  cursor: "default",
-  background: "color-mix(in srgb, var(--lb360-coral, #D4537E) 8%, var(--ls-surface))",
-  borderColor: "color-mix(in srgb, var(--lb360-coral, #D4537E) 28%, var(--ls-border))",
-  color: "color-mix(in srgb, var(--lb360-coral, #D4537E) 60%, var(--ls-text))",
-};
+// Simplification 2026-07-27 (LOT 1) : pillRoutineStyle / pillStreakStyle /
+// pillMonoStyle / pillDimStyle supprimés avec les pills qu'ils habillaient
+// (routine, streak, météo, horloge).
 
 // Pill icon (sans texte) — ex. theme toggle
 const pillIconStyle: React.CSSProperties = {
@@ -517,17 +400,6 @@ const pillIconStyle: React.CSSProperties = {
   fontSize: 16,
 };
 
-const pillMonoStyle: React.CSSProperties = {
-  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
-  fontWeight: 700,
-  letterSpacing: "-0.01em",
-};
-
-const pillDimStyle: React.CSSProperties = {
-  color: "var(--ls-text-muted)",
-  fontSize: 11.5,
-  fontWeight: 500,
-};
 // Note 2026-05-05 : notifBtnStyle supprimé (remplacé par AnnouncementBell).
 // Note 2026-06-13 : rowBottomStyle supprimé (rangée TodayTimeline+SideStack
 // retirée par le Plan du jour).
