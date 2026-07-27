@@ -373,7 +373,7 @@ export function AgendaWeekGrid({
                   borderRadius: 11,
                   border: "none",
                   background: on ? "var(--ls-teal)" : "transparent",
-                  color: on ? "#fff" : isToday ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                  color: on ? "var(--ls-teal-contrast)" : isToday ? "var(--ls-teal)" : "var(--ls-text-muted)",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 11,
                   fontWeight: 600,
@@ -387,7 +387,7 @@ export function AgendaWeekGrid({
                     fontFamily: "'JetBrains Mono', monospace",
                     fontSize: 14,
                     marginTop: 2,
-                    color: on ? "#fff" : isToday ? "var(--ls-teal)" : "var(--ls-text)",
+                    color: on ? "var(--ls-teal-contrast)" : isToday ? "var(--ls-teal)" : "var(--ls-text)",
                   }}
                 >
                   {String(d.getDate()).padStart(2, "0")}

@@ -280,8 +280,24 @@ export function AgendaPage() {
         const client = clientsById.get(fu.clientId);
         if (!client) continue;
         if (!isInScope(client.distributorId)) continue;
-        // Exclure les clients morts (lifecycle stopped / lost)
-        if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
+        // ─── Règle « hors agenda » (alignement 2026-07-27) ─────────────────
+        // L'agenda n'excluait que les clients morts. Or trois autres endroits
+        // de l'app appliquent une règle PLUS large et depuis plus longtemps :
+        // getClientActiveFollowUp (portfolio.ts:139-147) écarte aussi les
+        // clients EN PAUSE et ceux en SUIVI LIBRE — « client en suivi libre →
+        // hors agenda auto, pas de RDV », commentaire d'origine —, l'insert du
+        // premier suivi fait pareil, et la migration
+        // 20260613120000_dormant_exclude_paused_free les sort des relances.
+        // L'agenda affichait donc des RDV que le reste de l'app considère
+        // comme inexistants. On aligne.
+        if (
+          client.lifecycleStatus === "stopped" ||
+          client.lifecycleStatus === "lost" ||
+          client.lifecycleStatus === "paused" ||
+          client.freeFollowUp === true
+        ) {
+          continue;
+        }
         const d = new Date(fu.dueDate);
         if (Number.isNaN(d.getTime())) continue;
         if (effectiveDateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
@@ -370,7 +386,17 @@ export function AgendaPage() {
       if (!allowedFuStatusesStats.includes(fu.status as typeof allowedFuStatusesStats[number])) continue;
       const c = clientsById.get(fu.clientId);
       if (!c || !isInScope(c.distributorId)) continue;
-      if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
+      // Même règle « hors agenda » que la construction des entrées ci-dessus,
+      // sinon les compteurs des onglets annonceraient des RDV qui ne sont pas
+      // dans la liste (alignement 2026-07-27).
+      if (
+        c.lifecycleStatus === "stopped" ||
+        c.lifecycleStatus === "lost" ||
+        c.lifecycleStatus === "paused" ||
+        c.freeFollowUp === true
+      ) {
+        continue;
+      }
       if (!inDateRange(fu.dueDate)) continue;
       clientCount += 1;
     }

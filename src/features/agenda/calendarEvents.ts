@@ -91,11 +91,14 @@ export interface CalendarEvent {
 // devient gris en attendant que l'équipe passe régler son profil.
 
 /** Les couleurs proposées au choix — teintes de l'identité de l'app. */
+// « Framboise » (#D4537E) est volontairement ABSENTE : c'est la teinte de la
+// ligne « il est telle heure » dans la grille. Un coach qui l'aurait choisie
+// aurait rendu ses RDV de la couleur du repère temporel. Retirée avant que
+// quiconque la choisisse — les 14 comptes ont calendar_color à NULL.
 export const CALENDAR_PALETTE: Array<{ hex: string; label: string }> = [
   { hex: "#2DD4BF", label: "Turquoise" },
   { hex: "#A78BFA", label: "Violet" },
   { hex: "#C9A84C", label: "Doré" },
-  { hex: "#D4537E", label: "Framboise" },
   { hex: "#06B6D4", label: "Cyan" },
   { hex: "#8FBF3F", label: "Olive" },
   { hex: "#F97316", label: "Orange" },

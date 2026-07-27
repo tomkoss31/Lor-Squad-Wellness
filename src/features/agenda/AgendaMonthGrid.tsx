@@ -163,7 +163,7 @@ export function AgendaMonthGrid({
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: 15,
                   fontWeight: isSel || isToday ? 800 : 600,
-                  color: isSel ? "#fff" : isToday ? "var(--ls-teal)" : "var(--ls-text)",
+                  color: isSel ? "var(--ls-teal-contrast)" : isToday ? "var(--ls-teal)" : "var(--ls-text)",
                 }}
               >
                 {String(d.getDate()).padStart(2, "0")}
