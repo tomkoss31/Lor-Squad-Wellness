@@ -6,7 +6,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
-import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
+import { getFirstAssessment, normalizeDateTimeLocalInputValue, serializeDateTimeForStorage } from "../lib/calculations";
 import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { QuantityStepper } from "../components/assessment/QuantityStepper";
@@ -397,7 +397,10 @@ export function EditInitialAssessmentPage() {
 
     const updatedAssessment: AssessmentRecord = {
       ...targetAssessment,
-      date: assessmentDate || normalizeDateTimeLocalInputValue(new Date().toISOString()),
+      // Offset OBLIGATOIRE avant stockage (colonnes timestamptz) : la valeur
+      // datetime-local est naïve → serializeDateTimeForStorage y ajoute l'offset
+      // Paris. Sans ça, dérive de +1/+2h à chaque édition (règle CLAUDE.md).
+      date: serializeDateTimeForStorage(assessmentDate || new Date().toISOString()),
       programTitle: programTitle.trim() || targetAssessment.programTitle,
       summary: summary.trim() || buildFallbackSummary(isInitialAssessment),
       notes,

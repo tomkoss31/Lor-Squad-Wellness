@@ -7,6 +7,7 @@
 // (persistance sur les préférences client dans une passe ultérieure).
 // ============================================================================
 import { useState } from 'react'
+import { enablePush, pushPermission } from './pushSubscribe'
 
 const ANTON = "'Anton', sans-serif"
 const SORA = "'Sora', sans-serif"
@@ -20,6 +21,7 @@ export interface ProfilScreenProps {
   heightCm?: number | null
   objective?: string | null
   startDate?: string | null
+  token?: string | null
   theme: 'dark' | 'light'
   onToggleTheme: () => void
   onBack: () => void
@@ -35,9 +37,24 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   )
 }
 
-export function ProfilScreen({ initials, clientName, email, ageYears, heightCm, objective, startDate, theme, onToggleTheme, onBack, onOpenTour, onLogout }: ProfilScreenProps) {
-  const [notifPush, setNotifPush] = useState(true)
+export function ProfilScreen({ initials, clientName, email, ageYears, heightCm, objective, startDate, token, theme, onToggleTheme, onBack, onOpenTour, onLogout }: ProfilScreenProps) {
+  const initialPerm = pushPermission()
+  const [notifPush, setNotifPush] = useState(initialPerm === 'granted')
+  const [notifBusy, setNotifBusy] = useState(false)
   const [notifEmail, setNotifEmail] = useState(false)
+  const pushBlocked = initialPerm === 'denied' || initialPerm === 'unsupported'
+
+  async function togglePush() {
+    if (notifBusy) return
+    // Le navigateur ne permet pas de révoquer par programme : une fois accordé,
+    // le toggle reste ON (retrait = réglages navigateur). On ne gère donc que
+    // l'activation. Si déjà refusé au niveau navigateur, on n'essaie pas.
+    if (notifPush || pushBlocked || !token) return
+    setNotifBusy(true)
+    const ok = await enablePush(token)
+    setNotifPush(ok)
+    setNotifBusy(false)
+  }
 
   const sectionLabel = { fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase' as const, color: 'var(--muted)', fontWeight: 600, margin: '0 2px 9px' }
   const listCard = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' as const }
@@ -69,7 +86,7 @@ export function ProfilScreen({ initials, clientName, email, ageYears, heightCm, 
         <div>
           <div style={sectionLabel}>Réglages</div>
           <div style={listCard}>
-            <div style={row}><div><div style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600 }}>Notifications push</div><div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 1 }}>Rappels, RDV, niveaux</div></div><Toggle on={notifPush} onClick={() => setNotifPush((v) => !v)} /></div>
+            <div style={row}><div><div style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600 }}>Notifications push</div><div style={{ fontSize: 11.5, color: pushBlocked ? 'var(--coral)' : 'var(--muted)', marginTop: 1 }}>{initialPerm === 'unsupported' ? 'Non supporté sur cet appareil' : initialPerm === 'denied' ? 'Bloqué — à réactiver dans les réglages du navigateur' : notifPush ? 'Rappels, RDV, niveaux' : 'Active pour recevoir rappels & RDV'}</div></div><Toggle on={notifPush} onClick={togglePush} /></div>
             <div style={row}><div><div style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600 }}>Emails & résumés</div><div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 1 }}>Bilan mensuel par email</div></div><Toggle on={notifEmail} onClick={() => setNotifEmail((v) => !v)} /></div>
             <button onClick={onToggleTheme} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', background: 'none', border: 'none', cursor: 'pointer' }}><span style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600 }}>Apparence</span><span style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600 }}>{theme === 'dark' ? '☾ Sombre' : '☀ Clair'}</span></button>
           </div>

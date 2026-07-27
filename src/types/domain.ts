@@ -1,3 +1,7 @@
+// Niveau de visibilité de la nav (chantier Simplification 2026-07-27).
+// La définition vit avec la carte des features — cf. src/config/appVisibility.ts.
+import type { AppLevel } from "../config/appVisibility";
+
 export type UserRole = "admin" | "referent" | "distributor";
 
 // ─── Lifecycle status (Matrice B — Chantier 1) ──────────────────────────
@@ -149,6 +153,11 @@ export interface User {
   /** Accès beta formation (opt-in admin). Default false. Quand true,
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;
+  /** Niveau de visibilité de la navigation (chantier Simplification 2026-07-27).
+   *  'essentiel' (défaut, socle du quotidien) | 'complet' (toute l'app).
+   *  Réglable par un admin uniquement. Ne masque QUE les menus — les routes et
+   *  les données restent accessibles. Cf. src/config/appVisibility.ts. */
+  appLevel?: AppLevel;
   /** Ville du distri (saisie /bienvenue-distri ou /parametres).
    *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05.
    *  Aussi affichée sur les badges crédibilité Welcome bilan (chantier #10 V2). */

@@ -2,6 +2,7 @@ import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/aut
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { computeWaterTarget, computeProteinTarget } from "../lib/calculations";
+import { toAppLevel } from "../config/appVisibility";
 
 // Chantier Recommandations nutri (2026-04-25) : helpers safe qui
 // retournent null si le poids est absent — compatibles avec les
@@ -49,6 +50,8 @@ type UserRow = {
   current_rank?: string | null;
   rank_set_at?: string | null;
   formation_beta_access?: boolean | null;
+  /** Chantier Simplification (2026-07-27) : 'essentiel' | 'complet'. */
+  app_level?: string | null;
   city?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
@@ -338,6 +341,9 @@ function mapUser(row: UserRow): User {
     isExternal: (row as { is_external?: boolean }).is_external ?? false,
     isPassiveSupervisor: (row as { is_passive_supervisor?: boolean }).is_passive_supervisor ?? false,
     formationBetaAccess: row.formation_beta_access ?? false,
+    // Chantier Simplification (2026-07-27) : défaut 'essentiel' si la colonne
+    // n'est pas encore là (migration pas encore passée sur cet environnement).
+    appLevel: toAppLevel(row.app_level),
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,

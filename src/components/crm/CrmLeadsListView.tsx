@@ -401,6 +401,13 @@ function CrmLeadListRow({
                 📅 Caler un RDV
               </button>
             ) : null}
+            {/* Convertir en fiche client — ouvre la fiche avec le modal déjà
+                ouvert (?convert=1). Bilans online non encore convertis. */}
+            {lead.table === "online_bilans" && lead.status !== "converted" ? (
+              <Link to={`/crm/leads/${lead.key}?convert=1`} style={actionBtn("var(--ls-teal)")}>
+                ✅ Convertir en client
+              </Link>
+            ) : null}
             <button
               type="button"
               disabled={aiLoading}

@@ -76,6 +76,9 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
   const assignable = filterAssignableUsers(currentUser, users);
   void canSponsorDistributors; // linter
 
+  // Email valide → le rappel auto J-1 pourra partir (cf. edge client-rdv-reminder).
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -209,10 +212,45 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
             <LabelInput label="Nom *" value={lastName} onChange={setLastName} />
           </div>
 
-          {/* Phone + Email */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <LabelInput label="Téléphone" value={phone} onChange={setPhone} inputMode="tel" />
-            <LabelInput label="Email" value={email} onChange={setEmail} type="email" />
+          {/* Téléphone */}
+          <LabelInput label="Téléphone" value={phone} onChange={setPhone} inputMode="tel" />
+
+          {/* Email — mis en avant : c'est lui qui déclenche le rappel auto la veille */}
+          <div
+            style={{
+              borderRadius: 12,
+              border: `1px solid ${email.trim() ? "var(--ls-border)" : "color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border))"}`,
+              background: email.trim() ? "transparent" : "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+              padding: 12,
+              transition: "background .2s, border-color .2s",
+            }}
+          >
+            <label className={labelClass} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <span>📧 Email</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ls-teal)" }}>· active le rappel automatique</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="prenom@email.com"
+              inputMode="email"
+              className={inputClass}
+            />
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 12,
+                lineHeight: 1.45,
+                color: emailValid ? "var(--ls-teal)" : "var(--ls-text-muted)",
+              }}
+            >
+              {emailValid
+                ? "✓ Il recevra un rappel automatique la veille du RDV, à 18h."
+                : email.trim()
+                ? "Vérifie l'adresse : le rappel de la veille part à cet email."
+                : "Renseigne son email pour qu'il reçoive un rappel automatique la veille du RDV."}
+            </div>
           </div>
 
           {/* RDV */}

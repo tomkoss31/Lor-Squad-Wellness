@@ -148,7 +148,13 @@ serve(async (req: Request) => {
         provider_order_id: link.order_id ?? null,
         payment_url: link.url,
       });
-      if (insErr) console.warn("[create-payment-link] order insert:", insErr.message);
+      // Fatal : la ligne bilan_orders est l'UNIQUE clé de réconciliation du
+      // webhook. Sans elle, un paiement serait encaissé sans trace ni notif
+      // coach. On préfère faire échouer le lien plutôt que créer un orphelin.
+      if (insErr) {
+        console.warn("[create-payment-link] order insert (fatal):", insErr.message);
+        return json({ fallback: true, reason: "order_trace_failed" });
+      }
 
       return json({ url: link.url, provider: "square" });
     }
@@ -217,7 +223,11 @@ serve(async (req: Request) => {
         provider_order_id: stData.id ?? null,
         payment_url: stData.url,
       });
-      if (insErr) console.warn("[create-payment-link] order insert:", insErr.message);
+      // Fatal (cf. branche Square) : pas de trace = paiement orphelin.
+      if (insErr) {
+        console.warn("[create-payment-link] order insert (fatal):", insErr.message);
+        return json({ fallback: true, reason: "order_trace_failed" });
+      }
 
       return json({ url: stData.url, provider: "stripe" });
     }
