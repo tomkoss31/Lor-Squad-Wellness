@@ -386,6 +386,56 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     recommendedProgram: "Programme Sport",
     active: true
   },
+  // Boosters sport add-on (cf. BOOSTERS programs.ts) — pour que leur PV compte
+  // quand ils sont retenus au ticket. Valeurs = table pv_products (autorité).
+  {
+    id: "liftoff-max",
+    name: "Liftoff Max H24",
+    category: "sport / energie",
+    pricePublic: 38.50,
+    pv: 15.95,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Pré-workout, énergie avant la séance.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "hydrate",
+    name: "Hydrate",
+    category: "sport / hydratation",
+    pricePublic: 47.50,
+    pv: 17.20,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Électrolytes, récupération hydrique.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "creatine-plus",
+    name: "Créatine+",
+    category: "sport / muscle",
+    pricePublic: 39.50,
+    pv: 15.95,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Force et volume.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "collagene-skin-booster",
+    name: "Collagène Skin Booster",
+    category: "sport / articulations",
+    pricePublic: 84.50,
+    pv: 37.10,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Articulations + peau.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
 
   // ─── Catalogue elargi (mars 2026) ───────────────────────────────────────
   // Source : Liste de prix distributeurs Herbalife France, vigueur 25/06/2026.
