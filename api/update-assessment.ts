@@ -225,6 +225,44 @@ const pvProductCatalog = [
     quantiteLabel: "1kg — 30 jours",
     dureeReferenceJours: 30,
     noteMetier: "Proteines & creatine pour prise de masse et recuperation."
+  },
+  // Boosters sport add-on (ids EXACTS de BOOSTERS programs.ts) — PV compte quand
+  // retenus au ticket. Valeurs = table pv_products.
+  {
+    id: "liftoff-max",
+    name: "Liftoff Max H24",
+    pv: 15.95,
+    pricePublic: 38.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Pre-workout, energie avant la seance."
+  },
+  {
+    id: "hydrate",
+    name: "Hydrate",
+    pv: 17.20,
+    pricePublic: 47.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Electrolytes, recuperation hydrique."
+  },
+  {
+    id: "creatine-plus",
+    name: "Creatine+",
+    pv: 15.95,
+    pricePublic: 39.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Force et volume."
+  },
+  {
+    id: "collagene-skin-booster",
+    name: "Collagene Skin Booster",
+    pv: 37.10,
+    pricePublic: 84.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Articulations + peau."
   }
 ];
 
