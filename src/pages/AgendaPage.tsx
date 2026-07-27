@@ -635,6 +635,14 @@ export function AgendaPage() {
 
   return (
     <div className="space-y-5">
+      {/* ═══ EN-TÊTE — masqué en vue calendrier (refonte 2026-07-27) ═══════
+          Sur téléphone, il fallait traverser le hero, la carte « prochain
+          RDV », les onglets d'entité puis 9 pastilles de filtres avant
+          d'atteindre le calendrier : une vingtaine de contrôles, deux écrans
+          de défilement. En vue Semaine ou Mois, le calendrier commence donc
+          en haut ; tout ceci reste intact en vue Liste. */}
+      {!isCalendarView ? (
+      <>
       {/* Hero PREMIUM AGENDA V1 (2026-04-29) — gradient time-of-day + stats inline + CTA glow */}
       <style>{`
         @keyframes ls-agenda-hero-mesh {
@@ -1118,6 +1126,9 @@ export function AgendaPage() {
         />
       </div>
 
+      </>
+      ) : null}
+
       {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
           premier choix et le défaut : personne ne perd son repère. */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -1163,13 +1174,19 @@ export function AgendaPage() {
             );
           })}
         </div>
-        {isCalendarView ? (
-          <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
-            Les filtres Période et Statut ne s&apos;appliquent qu&apos;à la liste.
-          </span>
-        ) : null}
+        {/* La phrase « les filtres ne s'appliquent qu'à la liste » est retirée
+            (2026-07-27) : les filtres eux-mêmes ne sont plus affichés en vue
+            calendrier. On n'explique plus pourquoi des boutons sont inertes,
+            on ne montre plus de boutons inertes. */}
       </div>
 
+      {/* Filtres Période et Statut — UNIQUEMENT en vue Liste (2026-07-27).
+          En vue calendrier, effectiveDateFilter et effectiveStatusFilter sont
+          déjà forcés à « all » : on affichait donc 9 pastilles inertes, plus
+          une phrase en gris pour prévenir qu'elles ne servaient à rien. On
+          retire les deux. */}
+      {!isCalendarView ? (
+      <>
       {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
           conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1240,6 +1257,9 @@ export function AgendaPage() {
           </div>
         </div>
       </div>
+
+      </>
+      ) : null}
 
       {/* ═══ Vue mois (Agenda V2, LOT 6.5) ═════════════════════════════════
           Répond à « ma semaine du 12 est-elle chargée ? », pas à « je pose un
@@ -1550,6 +1570,42 @@ export function AgendaPage() {
           />
         );
       })()}
+      {/* Bouton « + » flottant — vue calendrier uniquement (2026-07-27).
+          Le hero et son CTA « + Nouveau RDV » sont masqués ici, or ce CTA
+          porte `data-tour-id="agenda-new-rdv"`, une ancre vivante du parcours
+          Academy (sections.ts:541). Le bouton flottant la reprend : jamais les
+          deux à la fois, donc jamais d'ancre en double. */}
+      {isCalendarView ? (
+        <button
+          type="button"
+          data-tour-id="agenda-new-rdv"
+          aria-label="Nouveau RDV"
+          onClick={() => {
+            setEditing(undefined);
+            setPrefillRdvDate(null);
+            setShowForm(true);
+          }}
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: "calc(78px + env(safe-area-inset-bottom, 0px))",
+            zIndex: 30,
+            width: 58,
+            height: 58,
+            borderRadius: "50%",
+            border: "none",
+            color: "#fff",
+            fontSize: 29,
+            lineHeight: 1,
+            cursor: "pointer",
+            background: "linear-gradient(135deg, var(--ls-teal), var(--ls-purple))",
+            boxShadow: "0 8px 22px rgba(0,0,0,0.3)",
+          }}
+        >
+          +
+        </button>
+      ) : null}
+
       <LegalFooter />
     </div>
   );
