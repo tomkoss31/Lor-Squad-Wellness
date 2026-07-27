@@ -23,3 +23,22 @@
     display: block;
   }
 }
+
+/* =============================================================================
+   La hauteur d'un bloc DIT sa durée — correctif 2026-07-27.
+
+   globals.css impose `button, a, [role="button"] { min-height: 44px }` pour la
+   confort tactile. Or chaque RDV de la grille est un <button> : 30 min (26 px)
+   et 45 min (34,5 px) étaient tous deux remontés à 44 px, et 60 min à 46 px.
+   Trois des quatre durées proposées rendaient donc la même hauteur — toute la
+   chaîne de durée (réglage profil, sélecteur, resolveDuration) était payée et
+   invisible.
+
+   On lève la contrainte UNIQUEMENT sur les blocs positionnés de la grille
+   desktop. Aucun impact sur le confort tactile : `.agenda-week-desktop` est en
+   `display:none` sous 900 px, ces blocs n'existent pas sur téléphone. La règle
+   globale reste intacte pour tout le reste de l'app.
+   ============================================================================= */
+.agenda-week-desktop .agenda-ev {
+  min-height: 0;
+}

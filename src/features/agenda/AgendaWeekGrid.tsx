@@ -51,6 +51,9 @@ export interface AgendaWeekGridProps {
   onCreateAt?: (at: Date) => void;
   /** Id du coach connecté : les RDV des autres sont en lecture seule. */
   currentUserId?: string;
+  /** Jour à mettre en avant côté mobile (« Aujourd'hui », clic dans le mois).
+   *  Absent → aujourd'hui s'il est dans la semaine affichée, sinon le lundi. */
+  focusDay?: Date | null;
   /** Bandes de fond (LOT 6.6) — aujourd'hui les permanences du club. */
   bands?: DayBand[];
   /** Clic sur une bande retirable. */
@@ -100,6 +103,7 @@ export function AgendaWeekGrid({
   onSelectEvent,
   onCreateAt,
   currentUserId,
+  focusDay,
   bands,
   onSelectBand,
 }: AgendaWeekGridProps) {
@@ -107,12 +111,38 @@ export function AgendaWeekGrid({
   const hours = useMemo(() => hourRange(), []);
   const today = new Date();
 
-  // Un seul jour affiché sur téléphone. On suit `anchorDate` quand la semaine
-  // change, sinon on garde le jour choisi par l'utilisateur.
-  const [mobileDay, setMobileDay] = useState<Date>(() => anchorDate);
+  // ─── Le jour affiché sur téléphone ────────────────────────────────────
+  // CORRECTIF 2026-07-27 : `mobileDay` suivait `anchorDate`, qui vaut TOUJOURS
+  // le lundi de la semaine. Trois conséquences, invisibles en recette desktop
+  // (le bloc mobile est masqué au-dessus de 900 px) mais permanentes pour la
+  // coach qui travaille au téléphone :
+  //   • ouvrir la vue Semaine un jeudi affichait lundi, trois jours en arrière
+  //   • « Aujourd'hui » renvoyait un nouvel objet Date → l'effet se rejouait →
+  //     retour sur lundi. Le bouton « Aujourd'hui » emmenait ailleurs
+  //     qu'aujourd'hui.
+  //   • taper le 23 dans la vue Mois ouvrait le 21 — soit exactement ce que
+  //     cette vue est censée permettre.
+  // Désormais : par défaut aujourd'hui s'il est dans la semaine affichée,
+  // sinon le lundi ; et `focusDay` permet au parent d'imposer un jour précis.
+  const defaultDayFor = (anchor: Date): Date => {
+    const list = weekDays(anchor);
+    const now = new Date();
+    return list.find((d) => isSameDay(d, now)) ?? list[0];
+  };
+  const [mobileDay, setMobileDay] = useState<Date>(() => defaultDayFor(anchorDate));
+  // Clé stable : sans elle, un simple `new Date()` du parent relançait l'effet.
+  const weekKey = weekDays(anchorDate)[0].getTime();
   useEffect(() => {
-    setMobileDay(anchorDate);
-  }, [anchorDate]);
+    setMobileDay(defaultDayFor(new Date(weekKey)));
+    // defaultDayFor est pure et ne dépend que de son argument.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekKey]);
+  // Déclaré APRÈS : quand le parent change de semaine ET impose un jour (clic
+  // dans la vue Mois), c'est le jour imposé qui doit gagner.
+  const focusKey = focusDay ? focusDay.getTime() : null;
+  useEffect(() => {
+    if (focusKey !== null) setMobileDay(new Date(focusKey));
+  }, [focusKey]);
 
   // Ligne « il est telle heure » — recalculée chaque minute.
   const [now, setNow] = useState(() => new Date());
@@ -226,6 +256,7 @@ export function AgendaWeekGrid({
       <button
         key={ev.id}
         type="button"
+        className={compact ? undefined : "agenda-ev"}
         onClick={() => onSelectEvent?.(ev)}
         title={`${kindLabel(ev.kind)} — ${ev.title} · ${hhmm(ev.start)} · ${ownerName(ev.ownerId)}${mine ? "" : " (lecture seule)"}`}
         style={{

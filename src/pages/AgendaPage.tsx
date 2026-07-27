@@ -163,6 +163,9 @@ export function AgendaPage() {
   }, [view]);
   /** Lundi de la semaine affichée par la grille (navigation ‹ ›). */
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeekMonday(new Date()));
+  /** Jour imposé à la vue mobile (« Aujourd'hui », clic dans le mois).
+   *  null = la grille choisit elle-même (aujourd'hui, sinon le lundi). */
+  const [focusDay, setFocusDay] = useState<Date | null>(null);
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
   const isCalendarView = view === "week" || view === "month";
@@ -434,6 +437,7 @@ export function AgendaPage() {
     [users],
   );
   const shiftWeek = useCallback((direction: 1 | -1) => {
+    setFocusDay(null);
     setWeekAnchor((prev) => {
       const next = new Date(prev);
       next.setDate(next.getDate() + direction * 7);
@@ -1247,6 +1251,9 @@ export function AgendaPage() {
             onSelectEvent={handleCalendarEventClick}
             onSelectDay={(day) => {
               setWeekAnchor(startOfWeekMonday(day));
+              // Le jour touché, pas le lundi de sa semaine : c'est toute la
+              // raison d'être de la vue Mois (correctif 2026-07-27).
+              setFocusDay(day);
               setView("week");
             }}
           />
@@ -1259,7 +1266,17 @@ export function AgendaPage() {
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
               {weekRangeLabel}
             </div>
-            <button type="button" onClick={() => setWeekAnchor(startOfWeekMonday(new Date()))} style={weekNavBtnStyle}>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                setWeekAnchor(startOfWeekMonday(now));
+                // Sur téléphone, sans ce jour imposé, « Aujourd'hui » ramenait
+                // au lundi de la semaine (correctif 2026-07-27).
+                setFocusDay(now);
+              }}
+              style={weekNavBtnStyle}
+            >
               Aujourd'hui
             </button>
             <button type="button" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente" style={weekNavBtnStyle}>‹</button>
@@ -1296,6 +1313,7 @@ export function AgendaPage() {
             events={calendarEvents}
             anchorDate={weekAnchor}
             currentUserId={currentUser?.id}
+            focusDay={focusDay}
             ownerName={ownerName}
             ownerColor={ownerColor}
             onSelectEvent={handleCalendarEventClick}
