@@ -69,6 +69,30 @@ export const pvProgramOptions: PvProgramOption[] = [
     mainReferenceDurationDays: 42,
     active: true
   },
+  // Programmes SPORT — routine réelle (cf. PROGRAM_CHOICES). Ajoutés 2026-07-27
+  // (audit #1) : absents ici, "Premium Sport"/"p-sport-premium" tombaient sur le
+  // repli et injectaient des produits minceur fantômes. Aliases = titre + id
+  // choice + id legacy p-sport-*. includedProductIds mirroir de routineProductIds.
+  {
+    id: "sport-discovery",
+    title: "Découverte Sport",
+    alias: ["Découverte Sport", "Decouverte Sport", "sport-discovery", "p-sport-discovery"],
+    summary: "Programme sport léger : base repas + collation protéinée.",
+    pricePublic: 190,
+    includedProductIds: ["formula-1", "barres-proteinees-achieve"],
+    mainReferenceDurationDays: 30,
+    active: true
+  },
+  {
+    id: "sport-premium",
+    title: "Premium Sport",
+    alias: ["Premium Sport", "Premium sport", "sport-premium", "p-sport-premium"],
+    summary: "Programme sport complet : base repas + collation + récupération + effort.",
+    pricePublic: 285,
+    includedProductIds: ["formula-1", "barres-proteinees-achieve", "rebuild-strength", "cr7-drive"],
+    mainReferenceDurationDays: 30,
+    active: true
+  },
   {
     id: "custom",
     title: "Suivi personnalise",
@@ -334,6 +358,31 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     quantiteLabel: "1kg — 30 jours",
     dureeReferenceJours: 30,
     noteMetier: "Protéines & créatine pour prise de masse et récupération.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  // Produits routine sport (valeurs PV/prix = table pv_products, source d'autorité).
+  {
+    id: "barres-proteinees-achieve",
+    name: "Barres Protéinées Achieve H24",
+    category: "sport / collation",
+    pricePublic: 27.50,
+    pv: 11.30,
+    quantiteLabel: "14 barres — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Collation sport 21 g de protéines.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "cr7-drive",
+    name: "CR7 Drive",
+    category: "sport / effort",
+    pricePublic: 27.50,
+    pv: 12.50,
+    quantiteLabel: "boîte — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Glucides + électrolytes pendant l'effort.",
     recommendedProgram: "Programme Sport",
     active: true
   },

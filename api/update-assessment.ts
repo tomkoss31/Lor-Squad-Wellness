@@ -34,6 +34,16 @@ const pvPrograms = [
     alias: ["Programme Booster 2", "Booster 2", "p-booster2", "booster2"]
   },
   {
+    id: "sport-discovery",
+    title: "Découverte Sport",
+    alias: ["Découverte Sport", "Decouverte Sport", "sport-discovery", "p-sport-discovery"]
+  },
+  {
+    id: "sport-premium",
+    title: "Premium Sport",
+    alias: ["Premium Sport", "Premium sport", "sport-premium", "p-sport-premium"]
+  },
+  {
     id: "custom",
     title: "Suivi personnalise",
     alias: ["Suivi personnalise", "Suivi personnalisé", "Personnalise", "Personnalisé"]
@@ -60,6 +70,9 @@ const pvProgramProducts: Record<string, string[]> = {
   "booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
   "booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
   custom: ["formula-1"],
+  // Programmes sport (miroir pvCatalog.ts / PROGRAM_CHOICES).
+  "sport-discovery": ["formula-1", "barres-proteinees-achieve"],
+  "sport-premium": ["formula-1", "barres-proteinees-achieve", "rebuild-strength", "cr7-drive"],
   // Vente a l'unite : AUCUNE routine imposee (cf. pvCatalog.ts). Doit rester vide.
   unit: []
 };
@@ -183,6 +196,35 @@ const pvProductCatalog = [
     quantiteLabel: "20 jours",
     dureeReferenceJours: 20,
     noteMetier: "Repere hydratation plus marque en soutien."
+  },
+  // Produits routine sport (valeurs = table pv_products). Ids EXACTS attendus par
+  // les routines sport (barres-proteinees-achieve / cr7-drive / rebuild-strength).
+  {
+    id: "barres-proteinees-achieve",
+    name: "Barres Proteinees Achieve H24",
+    pv: 11.30,
+    pricePublic: 27.50,
+    quantiteLabel: "14 barres — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Collation sport 21 g de proteines."
+  },
+  {
+    id: "cr7-drive",
+    name: "CR7 Drive",
+    pv: 12.50,
+    pricePublic: 27.50,
+    quantiteLabel: "boite — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Glucides + electrolytes pendant l'effort."
+  },
+  {
+    id: "rebuild-strength",
+    name: "Herbalife 24 — Rebuild Strength",
+    pv: 33.55,
+    pricePublic: 83.50,
+    quantiteLabel: "1kg — 30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Proteines & creatine pour prise de masse et recuperation."
   }
 ];
 
