@@ -260,6 +260,63 @@ Composants : `AnnouncementBell`, `AnnouncementSpotlight`, `NouveautesPage`.
 
 ---
 
+## 🎚 Niveau d'app — `users.app_level` (chantier Simplification, 2026-07-27)
+
+> **À lire avant d'ajouter ou de masquer quoi que ce soit dans un menu.**
+
+Constat prod : un distri avait ~45 destinations atteignables depuis les menus,
+alors que Mélanie (65 clients, 405 bilans, la 2e plus active) n'utilise que
+bilan / clients / agenda / CRM. Décision Thomas : **on ne supprime rien, on
+rend visible selon la personne.**
+
+- `users.app_level` = `essentiel` (défaut de tout le monde) | `complet`
+- **Thomas seul en `complet`** au départ ; il ouvre au cas par cas depuis
+  `/users` → panneau membre déplié → « Niveau d'app ».
+- Un coach peut demander l'accès depuis le cockpit La Base Académie →
+  table `app_level_requests` → bannière en haut de `/users`. **Pas de push.**
+
+### Les 3 règles à ne jamais casser
+
+1. **Ça masque un MENU, jamais une route ni une donnée.** Une URL tapée à la
+   main, un lien de push, une annonce, un deep-link Co-pilote : tout continue
+   de marcher pour tout le monde. Donc aucun lien existant ne casse.
+2. **Ce n'est pas de la sécurité.** Le contrôle d'accès réel = RLS + rôle.
+   Ne jamais protéger quelque chose de sensible avec ce système.
+3. **Le niveau est indépendant du rôle.** Mélanie est admin ET en essentiel :
+   elle garde « Mon équipe » (admin) mais pas les outils avancés. Les deux
+   filtres se composent.
+
+### Où ça se règle
+
+**`src/config/appVisibility.ts`** — carte UNIQUE feature → niveau. C'est le
+seul fichier à toucher pour faire (ré)apparaître une entrée de menu.
+Côté React, tout passe par `useAppLevel().can("clé")` — ne jamais lire
+`currentUser.appLevel` en direct.
+
+Un garde-fou SQL (`users_guard_app_level`) empêche l'auto-promotion : la policy
+`users_update_self` laisse chacun modifier sa propre ligne, donc sans trigger
+n'importe qui pouvait se passer en `complet`.
+
+### Ce qui est passé en `complet` (= Thomas only)
+
+`Mon développement`, `FLEX` (0 check-in en base), `Ma Liste 100` (13 contacts,
+100 % Thomas), `Cahier de bord`, `Simulateur EBE`, `Routine du jour`
+(9 cochages en tout — reste joignable par sa notif de 20h).
+
+⚠ **Piège vécu** : le CTA « + Nouveau bilan » de la sidebar était ancré sur la
+présence de l'item `/developpement`. Masquer celui-ci faisait disparaître le
+bouton principal de l'app. **Ne jamais ancrer un élément d'UI sur la présence
+d'un item de menu filtrable** — cf. `newBilanAnchorPath` dans `AppLayout`.
+
+### Diète notifications (même chantier)
+
+26 crons → 15. Coupés (`active = false`, réversibles via `cron.alter_job`) :
+les 6 jobs FLEX, `coach-tips-dispatcher`, `pv-month-end-reminder` ×2,
+`rank-threshold-notifier` ×2. Mesure avant coupe : ~3 push/jour/coach, dont 2
+venaient de FLEX. **Toute feature qu'on masque doit aussi arrêter de notifier.**
+
+---
+
 ## Hub développement (sidebar Option B, 2026-05-04)
 
 > ### 🧭 Règle anti-dérive navigation (B9, 2026-06-13)
