@@ -34,6 +34,16 @@ const pvPrograms = [
     alias: ["Programme Booster 2", "Booster 2", "p-booster2", "booster2"]
   },
   {
+    id: "sport-discovery",
+    title: "Découverte Sport",
+    alias: ["Découverte Sport", "Decouverte Sport", "sport-discovery", "p-sport-discovery"]
+  },
+  {
+    id: "sport-premium",
+    title: "Premium Sport",
+    alias: ["Premium Sport", "Premium sport", "sport-premium", "p-sport-premium"]
+  },
+  {
     id: "custom",
     title: "Suivi personnalise",
     alias: ["Suivi personnalise", "Suivi personnalisé", "Personnalise", "Personnalisé"]
@@ -60,6 +70,9 @@ const pvProgramProducts: Record<string, string[]> = {
   "booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
   "booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
   custom: ["formula-1"],
+  // Programmes sport (miroir pvCatalog.ts / PROGRAM_CHOICES).
+  "sport-discovery": ["formula-1", "barres-proteinees-achieve"],
+  "sport-premium": ["formula-1", "barres-proteinees-achieve", "rebuild-strength", "cr7-drive"],
   // Vente a l'unite : AUCUNE routine imposee (cf. pvCatalog.ts). Doit rester vide.
   unit: []
 };
@@ -183,6 +196,73 @@ const pvProductCatalog = [
     quantiteLabel: "20 jours",
     dureeReferenceJours: 20,
     noteMetier: "Repere hydratation plus marque en soutien."
+  },
+  // Produits routine sport (valeurs = table pv_products). Ids EXACTS attendus par
+  // les routines sport (barres-proteinees-achieve / cr7-drive / rebuild-strength).
+  {
+    id: "barres-proteinees-achieve",
+    name: "Barres Proteinees Achieve H24",
+    pv: 11.30,
+    pricePublic: 27.50,
+    quantiteLabel: "14 barres — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Collation sport 21 g de proteines."
+  },
+  {
+    id: "cr7-drive",
+    name: "CR7 Drive",
+    pv: 12.50,
+    pricePublic: 27.50,
+    quantiteLabel: "boite — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Glucides + electrolytes pendant l'effort."
+  },
+  {
+    id: "rebuild-strength",
+    name: "Herbalife 24 — Rebuild Strength",
+    pv: 33.55,
+    pricePublic: 83.50,
+    quantiteLabel: "1kg — 30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Proteines & creatine pour prise de masse et recuperation."
+  },
+  // Boosters sport add-on (ids EXACTS de BOOSTERS programs.ts) — PV compte quand
+  // retenus au ticket. Valeurs = table pv_products.
+  {
+    id: "liftoff-max",
+    name: "Liftoff Max H24",
+    pv: 15.95,
+    pricePublic: 38.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Pre-workout, energie avant la seance."
+  },
+  {
+    id: "hydrate",
+    name: "Hydrate",
+    pv: 17.20,
+    pricePublic: 47.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Electrolytes, recuperation hydrique."
+  },
+  {
+    id: "creatine-plus",
+    name: "Creatine+",
+    pv: 15.95,
+    pricePublic: 39.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Force et volume."
+  },
+  {
+    id: "collagene-skin-booster",
+    name: "Collagene Skin Booster",
+    pv: 37.10,
+    pricePublic: 84.50,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Articulations + peau."
   }
 ];
 
@@ -213,11 +293,22 @@ function resolvePvProgramId(programTitleOrId: string | null | undefined) {
   // (aloe-vera + the-51g + formula-1) des que le titre n'etait pas reconnu
   // ("À l'unité", "Programme a confirmer", ""). On replie sur "unit" dont la
   // routine est vide : un titre inconnu n'invente plus de produits.
-  return (
-    pvPrograms.find((program) =>
-      normalized.includes(normalizeProgramLabel(program.title.replace("Programme ", "")))
-    )?.id ?? "unit"
-  );
+  // Repli substring, MAIS seulement si l'input EST essentiellement le titre du
+  // programme (pas titre + qualificatif). Sinon "premium sport"/"p-sport-premium"
+  // resolvaient vers "premium" et injectaient des produits minceur fantômes chez
+  // un client sport (miroir du fix pvCatalog.ts). Programmes sport absents du
+  // catalogue → repli "unit" (routine vide).
+  const loose = pvPrograms.find((program) => {
+    const t = normalizeProgramLabel(program.title.replace("Programme ", ""));
+    if (!t || !normalized.includes(t)) return false;
+    const rest = normalized
+      .replace(t, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\b(programme|p)\b/g, " ")
+      .trim();
+    return rest.length === 0;
+  });
+  return loose?.id ?? "unit";
 }
 
 function isMissingPvTableError(error: { message?: string } | null | undefined) {

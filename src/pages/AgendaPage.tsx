@@ -18,6 +18,12 @@ import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../data/followUpProtocol"
 import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
 import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 import { LegalFooter } from "../components/ui/LegalFooter";
+import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
+import {
+  toCalendarEvents,
+  startOfWeekMonday,
+  type AgendaEntry as AgendaEntryBase,
+} from "../features/agenda/calendarEvents";
 
 type DateFilter = "today" | "week" | "all";
 type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
@@ -25,11 +31,15 @@ type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" 
 // + onglet Suivis ajouté dans le chantier Protocole Agenda+Dashboard.
 type EntityFilter = "all" | "clients" | "prospects" | "followups";
 
-// Entrée unifiée pour la liste : follow-up client, prospect, OU suivi protocole.
-type AgendaEntry =
-  | { kind: "client"; id: string; date: string; distributorId: string; followUp: FollowUp; client: Client }
-  | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect }
-  | { kind: "protocol"; id: string; date: string; distributorId: string; due: FollowUpDueItem };
+// Entrée unifiée : follow-up client, prospect, OU suivi protocole.
+// Le type vit désormais dans features/agenda/calendarEvents.ts (chantier
+// Agenda V2, 2026-07-27) — la liste ET la grille semaine consomment les mêmes
+// entrées, elles ne peuvent donc pas diverger.
+type AgendaEntry = AgendaEntryBase;
+
+/** Vue courante : la liste historique, ou la grille semaine. */
+type AgendaView = "list" | "week";
+const AGENDA_VIEW_KEY = "ls-agenda-view";
 
 function startOfDay(d: Date): Date {
   const copy = new Date(d);
@@ -131,6 +141,26 @@ export function AgendaPage() {
   const initialEntityFromQuery = searchParams.get("tab") === "followups" ? "followups" : null;
   const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
+  // ─── Agenda V2 (2026-07-27) : vue Liste (historique) ou Semaine (grille) ───
+  // La liste reste le choix par défaut : c'est elle que l'équipe utilise
+  // aujourd'hui, on ne change le repère de personne sans qu'il le demande.
+  const [view, setView] = useState<AgendaView>(() => {
+    try {
+      return localStorage.getItem(AGENDA_VIEW_KEY) === "week" ? "week" : "list";
+    } catch {
+      return "list";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(AGENDA_VIEW_KEY, view);
+    } catch { /* ignore */ }
+  }, [view]);
+  /** Lundi de la semaine affichée par la grille (navigation ‹ ›). */
+  const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeekMonday(new Date()));
+  // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
+  // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
+  const effectiveDateFilter: DateFilter = view === "week" ? "all" : dateFilter;
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
   const [agendaFilter, setAgendaFilter] = useState<string>(() => {
@@ -155,6 +185,8 @@ export function AgendaPage() {
   const [protocolBusy, setProtocolBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
+  /** Heure cliquée dans la grille semaine → pré-remplit le formulaire. */
+  const [prefillRdvDate, setPrefillRdvDate] = useState<Date | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
 
   useEffect(() => {
@@ -217,8 +249,8 @@ export function AgendaPage() {
         if (!matchesStatusFilter(p, statusFilter)) continue;
         const d = new Date(p.rdvDate);
         if (Number.isNaN(d.getTime())) continue;
-        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
-        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        if (effectiveDateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (effectiveDateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
         entries.push({ kind: "prospect", id: p.id, date: p.rdvDate, distributorId: p.distributorId, prospect: p });
       }
     }
@@ -237,8 +269,8 @@ export function AgendaPage() {
         if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
         const d = new Date(fu.dueDate);
         if (Number.isNaN(d.getTime())) continue;
-        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
-        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        if (effectiveDateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (effectiveDateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
         entries.push({ kind: "client", id: fu.id, date: fu.dueDate, distributorId: client.distributorId, followUp: fu, client });
       }
     }
@@ -256,10 +288,10 @@ export function AgendaPage() {
         // Filtre date uniforme avec le reste (today/week) — un suivi en retard
         // d'hier reste visible aujourd'hui.
         const d = item.dueDate;
-        if (dateFilter === "today") {
+        if (effectiveDateFilter === "today") {
           const isTodayOrLate = item.status === "due_today" || item.status === "overdue_1d" || item.status === "overdue_more";
           if (!isTodayOrLate) continue;
-        } else if (dateFilter === "week") {
+        } else if (effectiveDateFilter === "week") {
           // Visible si dû aujourd'hui, en retard, ou dû dans la semaine courante.
           const inRange = d >= todayStart && d <= weekEnd;
           const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
@@ -276,7 +308,7 @@ export function AgendaPage() {
     }
 
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -367,6 +399,33 @@ export function AgendaPage() {
     () => new Map(users.map((u) => [u.id, u.name])),
     [users]
   );
+
+  // ─── Agenda V2 (2026-07-27) : la grille semaine ────────────────────────────
+  // Mêmes entrées que la liste, simplement traduites en événements dessinables.
+  const calendarEvents = useMemo(() => toCalendarEvents(agendaEntries), [agendaEntries]);
+  const ownerName = useCallback(
+    (ownerId: string) => ownerNameMap.get(ownerId) ?? "Coach",
+    [ownerNameMap],
+  );
+  const shiftWeek = useCallback((direction: 1 | -1) => {
+    setWeekAnchor((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() + direction * 7);
+      return next;
+    });
+  }, []);
+  const weekRangeLabel = useMemo(() => {
+    const monday = startOfWeekMonday(weekAnchor);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d: Date, withYear: boolean) =>
+      d.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        ...(withYear ? { year: "numeric" } : {}),
+      });
+    return `Semaine du ${fmt(monday, false)} — ${fmt(sunday, true)}`;
+  }, [weekAnchor]);
 
   // Perf (2026-04-20) : handler stable pour ProspectCard.onClick. Sans ça,
   // la flèche inline était recréée à chaque render, défaisant React.memo côté carte.
@@ -950,6 +1009,57 @@ export function AgendaPage() {
         />
       </div>
 
+      {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
+          premier choix et le défaut : personne ne perd son repère. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div
+          role="group"
+          aria-label="Affichage de l'agenda"
+          style={{
+            display: "inline-flex",
+            padding: 3,
+            gap: 3,
+            borderRadius: 999,
+            background: "var(--ls-surface)",
+            border: "1px solid var(--ls-border)",
+          }}
+        >
+          {([
+            { key: "list" as AgendaView, label: "Liste" },
+            { key: "week" as AgendaView, label: "Semaine" },
+          ]).map((v) => {
+            const active = view === v.key;
+            return (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => setView(v.key)}
+                aria-pressed={active}
+                style={{
+                  padding: "6px 16px",
+                  border: "none",
+                  borderRadius: 999,
+                  background: active ? "var(--ls-teal)" : "transparent",
+                  color: active ? "#fff" : "var(--ls-text-muted)",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 12.5,
+                  fontWeight: active ? 700 : 500,
+                  cursor: "pointer",
+                  transition: "background 0.18s, color 0.18s",
+                }}
+              >
+                {v.label}
+              </button>
+            );
+          })}
+        </div>
+        {view === "week" ? (
+          <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
+            Le filtre Période ne s&apos;applique qu&apos;à la liste.
+          </span>
+        ) : null}
+      </div>
+
       {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
           conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1021,6 +1131,37 @@ export function AgendaPage() {
         </div>
       </div>
 
+      {/* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════════
+          Même moteur d'entrées que la liste — seul le dessin change. */}
+      {view === "week" ? (
+        <div data-tour-id="agenda-week">
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
+              {weekRangeLabel}
+            </div>
+            <button type="button" onClick={() => setWeekAnchor(startOfWeekMonday(new Date()))} style={weekNavBtnStyle}>
+              Aujourd'hui
+            </button>
+            <button type="button" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente" style={weekNavBtnStyle}>‹</button>
+            <button type="button" onClick={() => shiftWeek(1)} aria-label="Semaine suivante" style={weekNavBtnStyle}>›</button>
+          </div>
+          <AgendaWeekGrid
+            events={calendarEvents}
+            anchorDate={weekAnchor}
+            currentUserId={currentUser?.id}
+            ownerName={ownerName}
+            onSelectEvent={(ev) => {
+              if (ev.href) navigate(ev.href);
+            }}
+            onCreateAt={(at) => {
+              setEditing(undefined);
+              setPrefillRdvDate(at);
+              setShowForm(true);
+            }}
+          />
+        </div>
+      ) : (
+      <>
       {/* Liste groupée — rendu unifié clients + prospects */}
       <div data-tour-id="agenda-upcoming">
       {grouped.length === 0 ? (
@@ -1106,6 +1247,8 @@ export function AgendaPage() {
         ))
       )}
       </div>
+      </>
+      )}
 
       {/* Audit 2026-04-30 : ConfirmDialog remplace window.confirm pour le delete prospect */}
       <ConfirmDialog
@@ -1128,7 +1271,8 @@ export function AgendaPage() {
       {showForm && (
         <ProspectFormModal
           initial={editing}
-          onClose={() => { setShowForm(false); setEditing(undefined); }}
+          prefill={prefillRdvDate ? { rdvDate: prefillRdvDate.toISOString() } : undefined}
+          onClose={() => { setShowForm(false); setEditing(undefined); setPrefillRdvDate(null); }}
           onSaved={() => {
             pushToast({
               tone: "success",
@@ -1749,6 +1893,20 @@ function ClientFollowUpCard({
     </Link>
   );
 }
+
+// Boutons de navigation de la grille semaine (‹ › et « Aujourd'hui »).
+const weekNavBtnStyle: React.CSSProperties = {
+  padding: "6px 12px",
+  minWidth: 34,
+  borderRadius: 9,
+  border: "1px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
+};
 
 function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   // Premium V2 FilterPill (2026-04-29) — gold subtle hover gradient

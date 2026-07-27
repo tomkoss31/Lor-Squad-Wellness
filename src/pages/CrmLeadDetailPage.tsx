@@ -14,7 +14,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
@@ -143,6 +143,21 @@ export function CrmLeadDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
+  // Ouverture directe du modal de conversion depuis la LISTE (bouton « Convertir »
+  // → /crm/leads/:id?convert=1). On ouvre une seule fois, dès que le bilan est
+  // chargé et pas déjà converti, puis on nettoie le param.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const convertAutoRef = useRef(false);
+  useEffect(() => {
+    if (convertAutoRef.current) return;
+    if (searchParams.get("convert") !== "1") return;
+    if (!bilanRow || bilanRow.converted_to_client_id) return;
+    convertAutoRef.current = true;
+    setShowConvert(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("convert");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, bilanRow, setSearchParams]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
   // Résumé Noaly (Phase 4) — déclenché par bouton, jamais au montage (coût IA).
@@ -403,7 +418,19 @@ export function CrmLeadDetailPage() {
           ) : lead.table === "prospect_leads" ? (
             <>
               {lead.extra ? <p style={infoLine}>{lead.extra}</p> : null}
-              {lead.funnelAnswers ? (
+              {lead.colisAnswers ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                    💬 Ses réponses ({Object.keys(lead.colisAnswers).length})
+                  </div>
+                  {Object.entries(lead.colisAnswers).map(([q, a]) => (
+                    <div key={q} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12, lineHeight: 1.4 }}>
+                      <span style={{ flex: "0 0 auto", color: "var(--ls-text-hint)", minWidth: 118 }}>{q}</span>
+                      <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>{a}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : lead.funnelAnswers ? (
                 <FunnelAnswers
                   answers={lead.funnelAnswers}
                   temperature={lead.funnelTemperature}

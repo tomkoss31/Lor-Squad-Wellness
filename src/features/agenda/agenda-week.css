@@ -1,0 +1,25 @@
+/* =============================================================================
+   Vue semaine de l'Agenda (chantier Agenda V2, LOT 6.2).
+
+   Une grille à 7 colonnes est illisible sur un téléphone : sous 900 px on
+   bascule sur « un jour à la fois ». Les deux rendus vivent dans le même
+   composant et consomment les mêmes événements — c'est le CSS qui choisit.
+   ============================================================================= */
+
+.agenda-week-mobile {
+  display: block;
+}
+
+.agenda-week-desktop {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .agenda-week-mobile {
+    display: none;
+  }
+
+  .agenda-week-desktop {
+    display: block;
+  }
+}

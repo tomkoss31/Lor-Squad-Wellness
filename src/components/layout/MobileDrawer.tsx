@@ -25,6 +25,7 @@ import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
+import { useAppLevel } from "../../hooks/useAppLevel";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -166,16 +167,21 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
             </DrawerSection>
           ) : null}
 
-          <DrawerSection label="Développement">
-            {navDev.map((item) => (
-              <DrawerItem
-                key={item.path}
-                item={item}
-                active={isItemActive(item.path)}
-                onSelect={onClose}
-              />
-            ))}
-          </DrawerSection>
+          {/* Garde `length > 0` (2026-07-27) : en niveau essentiel, « Mon
+              développement » est masqué → sans ce test, le tiroir affichait un
+              titre de section « Développement » suivi de rien. */}
+          {navDev.length > 0 ? (
+            <DrawerSection label="Développement">
+              {navDev.map((item) => (
+                <DrawerItem
+                  key={item.path}
+                  item={item}
+                  active={isItemActive(item.path)}
+                  onSelect={onClose}
+                />
+              ))}
+            </DrawerSection>
+          ) : null}
 
           <DrawerSection label="Compte">
             {navAccount.map((item) => (
@@ -257,6 +263,11 @@ function DrawerBusinessGroup({
   const haptic = useHaptic();
   const [expanded, setExpanded] = useState(() => isBusinessRoute(currentPath));
   const subActive = (p: string) => currentPath === p || currentPath.startsWith(p + "/");
+  // Simplification (2026-07-27) : même filtre que la sidebar PC — une seule
+  // source (BUSINESS_SHORTCUTS) + un seul niveau (useAppLevel), donc PC et
+  // mobile ne peuvent plus diverger.
+  const { can } = useAppLevel();
+  const shortcuts = BUSINESS_SHORTCUTS.filter((s) => can(s.feature));
 
   return (
     <div>
@@ -280,7 +291,7 @@ function DrawerBusinessGroup({
       </button>
       {expanded ? (
         <div style={{ paddingLeft: 14, display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
-          {BUSINESS_SHORTCUTS.map((sub) => (
+          {shortcuts.map((sub) => (
             <NavLink
               key={sub.path}
               to={sub.path}

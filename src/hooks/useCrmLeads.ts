@@ -87,6 +87,8 @@ export interface CrmLead {
   /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
    *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
   funnelAnswers?: Record<string, string> | null;
+  /** Réponses du funnel colis (question → réponse, déjà en libellés). */
+  colisAnswers?: Record<string, string> | null;
   funnelScore?: number | null;
   funnelTemperature?: string | null;
   funnelProfile?: string | null;
@@ -192,6 +194,34 @@ function mapSimpleStatus(status: string | null): CrmStatus {
     default:
       return "new";
   }
+}
+
+// Libellés des réponses du funnel colis (/colis) — source de vérité : ColisPage.
+// Les réponses vivent dans metadata.colis_answers (codes) ; on les rend lisibles
+// pour la fiche CRM (bug : le lead colis affichait « Pas de réponses »).
+const COLIS_LABELS: Record<string, Record<string, string>> = {
+  energie: { top: "Au top", ca_va: "Ça va", a_plat: "Souvent à plat", vide: "Vidé·e en ce moment" },
+  sommeil: { tres_bien: "Je dors très bien", correct: "Correct", difficile: "Difficile", pas_terrible: "Vraiment pas terrible" },
+  objectif: { poids: "Perdre du poids", muscle: "Prendre du muscle", energie: "Retrouver de l'énergie", mieux: "Juste me sentir mieux" },
+  dispo: { semaine: "Cette semaine", mois: "Ce mois-ci", sans_pression: "Je verrai, sans pression" },
+};
+const COLIS_QUESTION_LABEL: Record<string, string> = {
+  energie: "Énergie au quotidien",
+  sommeil: "Sommeil",
+  objectif: "Objectif principal",
+  dispo: "Prêt·e à agir",
+};
+function buildColisFunnelAnswers(raw: unknown): Record<string, string> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const a = raw as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const key of ["energie", "sommeil", "objectif", "dispo"]) {
+    const v = a[key];
+    if (typeof v === "string" && v) {
+      out[COLIS_QUESTION_LABEL[key]] = COLIS_LABELS[key]?.[v] ?? v;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
 }
 
 /** Statuts proposables par table (le write-back doit rester natif-compatible). */
@@ -408,6 +438,11 @@ export function useCrmLeads() {
           meta.answers && typeof meta.answers === "object" && !Array.isArray(meta.answers)
             ? (meta.answers as Record<string, string>)
             : null;
+        // Réponses du funnel colis (metadata.colis_answers) — format + rendu
+        // différents du funnel Opportunité (FunnelAnswers passe par
+        // buildFunnelSummary qui ne connaît que les clés Opportunité). On expose
+        // donc un champ dédié, rendu par un bloc propre dans la fiche.
+        const colisAnswers = source === "colis" ? buildColisFunnelAnswers(meta.colis_answers) : null;
         // Signal de priorité colis (remplace "disponibilité", décision Thomas
         // 2026-07-08) : ce que la personne a choisi en fin de tunnel — une
         // action réelle est un bien meilleur indicateur qu'une réponse déclarée.
@@ -446,6 +481,7 @@ export function useCrmLeads() {
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
           funnelAnswers,
+          colisAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
           funnelTemperature: typeof meta.temperature === "string" ? (meta.temperature as string) : null,
           funnelProfile: typeof meta.profile === "string" ? (meta.profile as string) : null,
