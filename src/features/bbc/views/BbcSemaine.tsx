@@ -1,0 +1,648 @@
+// =============================================================================
+// BbcSemaine — « La semaine du club » (chantier BBC, 2026-07-28).
+//
+// L'agenda du club : même moteur de données que l'agenda classique, coquille
+// visuelle séparée. Il agrège quatre natures d'événements qui n'avaient jamais
+// été regardées ensemble :
+//
+//   ☕ PERMANENCE  le service du matin. Pas un rendez-vous : un POSTE à tenir.
+//                  Un matin sans personne s'affiche en ambre pointillé — c'est
+//                  le seul endroit de l'app qui dise « demain, personne
+//                  n'ouvre », et c'est ce qui manquait pour confier un club.
+//   📞 RITUEL      les appels du soir. Déjà en config (`clubs.settings.calls`)
+//                  et déjà inscrits (`useBbcCalls`) : on AFFICHE, on ne
+//                  réimplémente pas.
+//   🎁 BILAN       les cartes pleines. L'app savait déjà qui a fini sa carte,
+//                  mais ça ne devenait jamais une date — alors que c'est le
+//                  moment précis où le membre rachète.
+//   👥 RDV         les vrais rendez-vous de la semaine, membres OU non.
+//
+// ─── LA RÈGLE DE FILTRAGE ────────────────────────────────────────────────────
+// On ne cache JAMAIS un rendez-vous avec une personne. Un coach BBC garde des
+// clients classiques : si le bilan de Julien disparaissait parce qu'il n'a pas
+// pris de carte de membre, le coach le raterait — et l'écran deviendrait un
+// piège au lieu d'un agenda. Ce qu'on restreint au club, c'est le DÉCOR
+// (permanences, rituels), qui n'a aucun sens ailleurs. Les chips, elles, sont
+// une intention explicite de l'utilisateur : là, il a le droit de tout réduire.
+// =============================================================================
+
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useAppContext } from "../../../context/AppContext";
+import { useBbcCalls } from "../useBbcCalls";
+import { useBbcMembers } from "../useBbcMembers";
+import { getCallsForWeek } from "../data/bbcCalls";
+import { useClubShifts, equipeAffectable, cleJour, type Affectable } from "../useClubShifts";
+import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
+import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
+import type { Club } from "../../../types/domain";
+
+interface BbcSemaineProps {
+  userId?: string;
+  club?: Club | null;
+}
+
+/** Les 5 familles de la semaine — l'ordre est celui des chips. */
+type Famille = "perm" | "rituel" | "membre" | "classique" | "bilan";
+type Filtre = "all" | "perm" | "rituel" | "rdv" | "bilan";
+
+interface Evenement {
+  id: string;
+  famille: Famille;
+  /** « 7h », « 20h00 », ou « — » pour ce qui n'a pas d'heure. */
+  heure: string;
+  titre: string;
+  sous: string;
+  tag: string;
+  /** Permanence non couverte : la ligne doit crier. */
+  vide?: boolean;
+  /** Le jour à affecter — présent uniquement sur les permanences. */
+  jour?: Date;
+}
+
+const CHIPS: Array<{ k: Filtre; label: string }> = [
+  { k: "all", label: "Tout" },
+  { k: "perm", label: "☕ Permanences" },
+  { k: "rituel", label: "📞 Rituels" },
+  { k: "rdv", label: "👥 RDV" },
+  { k: "bilan", label: "🎁 Bilans" },
+];
+
+/** Couleur de la pastille + du tag, par famille. */
+const TEINTE: Record<Famille, string> = {
+  perm: "var(--ls-bbc-lime)",
+  rituel: "var(--ls-bbc-violet)",
+  membre: "var(--ls-bbc-teal)",
+  classique: "var(--ls-bbc-muted)",
+  bilan: "var(--ls-bbc-coral)",
+};
+
+function fmtHeure(d: Date): string {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+
+function fmtJour(d: Date): string {
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric" });
+}
+
+export function BbcSemaine({ userId, club }: BbcSemaineProps) {
+  const { clients, prospects, followUps, users, currentUser } = useAppContext();
+  const [filtre, setFiltre] = useState<Filtre>("all");
+  /** Le matin dont on est en train de décider — null = feuille fermée. */
+  const [feuille, setFeuille] = useState<Date | null>(null);
+
+  // Semaine courante uniquement (lundi → dimanche), conformément à la maquette
+  // validée. `startOfWeekMonday` / `weekDays` viennent du moteur de l'agenda
+  // classique : la semaine française y est déjà définie une seule fois.
+  const lundi = useMemo(() => startOfWeekMonday(new Date()), []);
+  const jours = useMemo(() => weekDays(lundi), [lundi]);
+
+  const settings = club?.settings ?? null;
+  // `open_hours` est optionnel jusqu'au bout de la chaîne de types : on ne
+  // laisse pas un « undefined » atteindre l'écran, où il s'afficherait tel quel
+  // à côté de la date. Le littéral n'est qu'un dernier filet — la vraie valeur
+  // vient des Réglages du club.
+  const openHours = settings?.open_hours || DEFAULT_CLUB_SETTINGS.open_hours || "7h-11h";
+  const shifts = useClubShifts(club?.id ?? null, openHours, lundi);
+  const calls = useBbcCalls(userId, settings);
+  const { members } = useBbcMembers(userId);
+
+  const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
+  const equipe = useMemo(() => equipeAffectable(users, currentUser?.id), [users, currentUser?.id]);
+
+  // Un membre BBC est un client comme un autre côté RDV : c'est cet ensemble
+  // qui permet de dire « membre » plutôt que « hors club » — sans jamais
+  // servir à EXCLURE qui que ce soit (cf. la règle de filtrage en tête).
+  const idsMembres = useMemo(() => new Set(members.map((m) => m.id)), [members]);
+
+  // ── Bilans à caler : cartes pleines, sans date ──────────────────────────
+  const aCaler = useMemo(
+    () => members.filter((m) => m.card && m.card.used >= m.card.type),
+    [members],
+  );
+
+  // ── Les rituels de CETTE semaine (pas « les prochains ») ────────────────
+  const rituels = useMemo(() => getCallsForWeek(settings, lundi), [settings, lundi]);
+
+  // ── Les vrais rendez-vous de la semaine ─────────────────────────────────
+  // Sources identiques à l'agenda classique : prospects (bilans) + follow-ups
+  // clients. Portée strictement personnelle — un coach BBC pilote son club.
+  const rdv = useMemo(() => {
+    const finSemaine = new Date(lundi);
+    finSemaine.setDate(finSemaine.getDate() + 7);
+    const dansLaSemaine = (iso: string): Date | null => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return null;
+      return d >= lundi && d < finSemaine ? d : null;
+    };
+    const out: Array<Evenement & { at: Date }> = [];
+
+    for (const p of prospects) {
+      if (p.distributorId !== currentUser?.id) continue;
+      // Un RDV annulé, perdu ou refroidi encombrerait la semaine sans rien
+      // apprendre — et ferait croire à une matinée pleine. On garde en
+      // revanche `done` et `converted` : ces RDV-là ont bien eu lieu.
+      if (p.status === "lost" || p.status === "no_show" || p.status === "cancelled" || p.status === "cold") continue;
+      const at = dansLaSemaine(p.rdvDate);
+      if (!at) continue;
+      const nom = [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Prospect";
+      out.push({
+        id: `prospect-${p.id}`,
+        famille: "classique",
+        at,
+        heure: fmtHeure(at),
+        titre: nom,
+        sous: "bilan · prospect",
+        tag: "hors club",
+      });
+    }
+
+    const clientsParId = new Map(clients.map((c) => [c.id, c]));
+    for (const fu of followUps) {
+      if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+      const c = clientsParId.get(fu.clientId);
+      if (!c || c.distributorId !== currentUser?.id) continue;
+      if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
+      const at = dansLaSemaine(fu.dueDate);
+      if (!at) continue;
+      const membre = idsMembres.has(c.id);
+      const nom = [c.firstName, c.lastName].filter(Boolean).join(" ").trim() || "Client";
+      out.push({
+        id: `followup-${fu.id}`,
+        famille: membre ? "membre" : "classique",
+        at,
+        heure: fmtHeure(at),
+        titre: nom,
+        sous: membre ? `suivi · ${fu.type || "membre du club"}` : `suivi · client classique`,
+        tag: membre ? "membre" : "hors club",
+      });
+    }
+
+    return out;
+  }, [prospects, followUps, clients, currentUser?.id, idsMembres, lundi]);
+
+  // ── Assemblage jour par jour ────────────────────────────────────────────
+  const semaine = useMemo(() => {
+    return jours.map((jour) => {
+      const evs: Evenement[] = [];
+
+      // Permanence : dimanche exclu — le club ouvre 6 jours sur 7. Le jour de
+      // fermeture n'est pas (encore) réglable ; il n'existe nulle part en base.
+      if (jour.getDay() !== 0) {
+        const shift = shifts.parJour.get(cleJour(jour));
+        const qui = shift ? nomsUsers.get(shift.userId) : null;
+        const debutTexte = shift ? fmtHeure(shift.startsAt) : `${shifts.creneau.startH}h`;
+        evs.push({
+          id: `perm-${cleJour(jour)}`,
+          famille: "perm",
+          heure: debutTexte,
+          titre: shift ? "Permanence du matin" : "Personne n'ouvre",
+          sous: shift ? (qui ?? "affecté") : "touche pour affecter quelqu'un",
+          tag: shift ? "club" : "à couvrir",
+          vide: !shift,
+          jour,
+        });
+      }
+
+      for (const c of rituels) {
+        if (!isSameDay(c.at, jour)) continue;
+        const inscrits = calls.forOccurrence(c.key, c.at).length;
+        evs.push({
+          id: `rituel-${c.key}-${cleJour(c.at)}`,
+          famille: "rituel",
+          heure: fmtHeure(c.at),
+          titre: c.label,
+          sous: inscrits ? `${inscrits} inscrit${inscrits > 1 ? "s" : ""}` : "personne d'inscrit",
+          tag: "rituel",
+        });
+      }
+
+      for (const r of rdv) {
+        if (!isSameDay(r.at, jour)) continue;
+        evs.push(r);
+      }
+
+      // Tri par heure ; la permanence garde sa place de première ligne du jour
+      // même si un RDV est posé avant l'ouverture (cas rare mais vécu). Un rang
+      // explicite plutôt que des retours -1/1 en cascade : un comparateur
+      // incohérent avec lui-même donne un ordre indéfini le jour où deux
+      // permanences coexistent.
+      const rang = (e: Evenement) => (e.famille === "perm" ? 0 : 1);
+      evs.sort(
+        (a, b) => rang(a) - rang(b) || a.heure.localeCompare(b.heure, "fr", { numeric: true }),
+      );
+
+      return { jour, evs };
+    });
+  }, [jours, shifts.parJour, shifts.creneau, nomsUsers, rituels, calls, rdv]);
+
+  const garde = (f: Famille): boolean => {
+    if (filtre === "all") return true;
+    // « RDV » couvre membres ET clients classiques : la chip parle de gens, pas
+    // d'appartenance au club.
+    if (filtre === "rdv") return f === "membre" || f === "classique";
+    return filtre === f;
+  };
+
+  const bilansVisibles = garde("bilan") ? aCaler : [];
+  const joursVisibles = semaine
+    .map((d) => ({ ...d, evs: d.evs.filter((e) => garde(e.famille)) }))
+    .filter((d) => d.evs.length > 0);
+  const rienAAfficher = joursVisibles.length === 0 && bilansVisibles.length === 0;
+
+  const shiftDuJourChoisi = feuille ? shifts.parJour.get(cleJour(feuille)) : undefined;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", maxWidth: 720 }}>
+      {/* Sous-titre : la plage couverte + le créneau d'ouverture réel du club. */}
+      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-hint)", marginTop: -14, marginBottom: 16 }}>
+        {fmtJour(jours[0])} → {fmtJour(jours[5])} · {openHours}
+      </div>
+
+      {/* ── Chips de filtre ─────────────────────────────────────────────── */}
+      <div role="group" aria-label="Filtrer la semaine" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 12, marginBottom: 4, borderBottom: "1px solid var(--ls-bbc-line)" }}>
+        {CHIPS.map((c) => {
+          const on = c.k === filtre;
+          return (
+            <button
+              key={c.k}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setFiltre(c.k)}
+              style={{
+                flex: "none",
+                padding: "7px 12px",
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                fontFamily: "var(--ls-bbc-font-body)",
+                border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`,
+                background: on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s1)",
+                color: on ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",
+              }}
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Bandeau bilans à caler ──────────────────────────────────────── */}
+      {aCaler.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setFiltre("bilan")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            width: "100%",
+            textAlign: "left",
+            marginTop: 12,
+            padding: "11px 13px",
+            borderRadius: 13,
+            fontSize: 12.5,
+            cursor: "pointer",
+            fontFamily: "var(--ls-bbc-font-body)",
+            color: "var(--ls-bbc-text)",
+            background: "color-mix(in srgb, var(--ls-bbc-coral) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ls-bbc-coral) 30%, transparent)",
+          }}
+        >
+          <span aria-hidden="true">🎁</span>
+          <span>
+            <b style={{ color: "var(--ls-bbc-coral)" }}>
+              {aCaler.length} bilan{aCaler.length > 1 ? "s" : ""} à caler
+            </b>{" "}
+            — {aCaler.slice(0, 3).map((m) => m.name.split(" ")[0]).join(", ")}
+            {aCaler.length > 3 ? "…" : ""} {aCaler.length > 1 ? "ont" : "a"} fini {aCaler.length > 1 ? "leur" : "sa"} carte.
+          </span>
+        </button>
+      ) : null}
+
+      {/* ── La semaine ──────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 16 }}>
+        {/* Les bilans n'ont PAS de date : les planter un jour au hasard serait
+            inventer une information. Ils vivent donc dans leur propre bloc, en
+            tête — c'est ce qui reste à décider avant de lire la semaine. */}
+        {bilansVisibles.length > 0 ? (
+          <div>
+            <EnTeteJour libelle="à caler · sans date" />
+            {bilansVisibles.map((m) => (
+              <LigneEvenement
+                key={`bilan-${m.id}`}
+                ev={{
+                  id: `bilan-${m.id}`,
+                  famille: "bilan",
+                  heure: "—",
+                  titre: `${m.name} · bilan à caler`,
+                  sous: m.card ? `carte finie · ${m.card.used}/${m.card.type} visites` : "carte finie",
+                  tag: "à caler",
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {joursVisibles.map(({ jour, evs }) => (
+          <div key={cleJour(jour)}>
+            <EnTeteJour libelle={fmtJour(jour)} aujourdhui={isSameDay(jour, new Date())} />
+            {evs.map((ev) => (
+              <LigneEvenement key={ev.id} ev={ev} onClick={ev.jour ? () => setFeuille(ev.jour!) : undefined} />
+            ))}
+          </div>
+        ))}
+
+        {rienAAfficher ? (
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "24px 0", textAlign: "center" }}>
+            Rien de ce type cette semaine.
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── Feuille « Qui tient le bar ? » ──────────────────────────────── */}
+      {feuille ? (
+        <FeuilleAffectation
+          jour={feuille}
+          creneauTexte={openHours}
+          equipe={equipe}
+          actuelId={shiftDuJourChoisi?.userId ?? null}
+          onFermer={() => setFeuille(null)}
+          onAffecter={async (id) => {
+            const ok = await shifts.assign(feuille, id);
+            if (ok) setFeuille(null);
+          }}
+          onLiberer={async () => {
+            const ok = await shifts.clear(feuille);
+            if (ok) setFeuille(null);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Briques d'affichage ─────────────────────────────────────────────────────
+
+function EnTeteJour({ libelle, aujourdhui }: { libelle: string; aujourdhui?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 7 }}>
+      <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
+        {libelle}
+      </span>
+      {aujourdhui ? (
+        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 999, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)" }}>
+          aujourd'hui
+        </span>
+      ) : null}
+      <span style={{ flex: 1, height: 1, background: "var(--ls-bbc-line)" }} />
+    </div>
+  );
+}
+
+function LigneEvenement({ ev, onClick }: { ev: Evenement; onClick?: () => void }) {
+  const teinte = ev.vide ? "var(--ls-bbc-amber)" : TEINTE[ev.famille];
+  const contenu = (
+    <>
+      <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-muted)", flex: "none", width: 42 }}>
+        {ev.heure}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 13.5, fontWeight: 600 }}>{ev.titre}</span>
+        <span style={{ display: "block", fontSize: 11.5, marginTop: 1, color: ev.vide ? "var(--ls-bbc-amber)" : "var(--ls-bbc-hint)" }}>
+          {ev.sous}
+        </span>
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--ls-bbc-font-mono)",
+          fontSize: 9.5,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          padding: "3px 7px",
+          borderRadius: 7,
+          flex: "none",
+          color: ev.famille === "classique" && !ev.vide ? "var(--ls-bbc-muted)" : teinte,
+          background:
+            ev.famille === "classique" && !ev.vide
+              ? "var(--ls-bbc-s3)"
+              : `color-mix(in srgb, ${teinte} 15%, transparent)`,
+        }}
+      >
+        {ev.tag}
+      </span>
+    </>
+  );
+
+  const style: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    textAlign: "left",
+    padding: "11px 12px",
+    borderRadius: 12,
+    marginBottom: 6,
+    color: "var(--ls-bbc-text)",
+    fontFamily: "var(--ls-bbc-font-body)",
+    // Le créneau non couvert sort du lot : ambre, pointillé, fond teinté. C'est
+    // volontairement la seule ligne « bruyante » de l'écran.
+    background: ev.vide ? "color-mix(in srgb, var(--ls-bbc-amber) 7%, transparent)" : "var(--ls-bbc-s1)",
+    border: `1px ${ev.vide ? "dashed" : "solid"} ${ev.vide ? "color-mix(in srgb, var(--ls-bbc-amber) 40%, transparent)" : "var(--ls-bbc-line)"}`,
+    borderLeft: `3px solid ${teinte}`,
+    cursor: onClick ? "pointer" : "default",
+  };
+
+  // Une ligne actionnable est un <button> : au clavier comme au lecteur d'écran,
+  // un <div onClick> n'existe pas.
+  return onClick ? (
+    <button type="button" onClick={onClick} style={style}>
+      {contenu}
+    </button>
+  ) : (
+    <div style={style}>{contenu}</div>
+  );
+}
+
+function FeuilleAffectation({
+  jour,
+  creneauTexte,
+  equipe,
+  actuelId,
+  onFermer,
+  onAffecter,
+  onLiberer,
+}: {
+  jour: Date;
+  creneauTexte: string;
+  equipe: Affectable[];
+  actuelId: string | null;
+  onFermer: () => void;
+  onAffecter: (userId: string) => void;
+  onLiberer: () => void;
+}) {
+  const [choisi, setChoisi] = useState<string | null>(actuelId);
+
+  return (
+    <div
+      onClick={onFermer}
+      style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bbc-mode"
+        role="dialog"
+        aria-modal="true"
+        aria-label={actuelId ? "Changer la permanence" : "Qui tient le bar ?"}
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          maxHeight: "84vh",
+          overflowY: "auto",
+          background: "var(--ls-bbc-s1)",
+          border: "1px solid var(--ls-bbc-line2)",
+          borderRadius: "22px 22px 0 0",
+          padding: "18px 18px calc(26px + env(safe-area-inset-bottom))",
+          color: "var(--ls-bbc-text)",
+          fontFamily: "var(--ls-bbc-font-body)",
+        }}
+      >
+        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20 }}>
+          {actuelId ? "Changer la permanence" : "Qui tient le bar ?"}
+        </div>
+        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginBottom: 15 }}>
+          {fmtJour(jour)} · {creneauTexte}
+        </div>
+
+        {equipe.length === 0 ? (
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "10px 0" }}>
+            Personne à afficher — ton équipe est vide pour l'instant.
+          </div>
+        ) : (
+          equipe.map((p) => {
+            const on = choisi === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setChoisi(p.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 11,
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "12px 13px",
+                  borderRadius: 12,
+                  marginBottom: 7,
+                  cursor: "pointer",
+                  fontFamily: "var(--ls-bbc-font-body)",
+                  fontSize: 14,
+                  color: "var(--ls-bbc-text)",
+                  background: on ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)",
+                  border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`,
+                }}
+              >
+                <Avatar nom={p.name} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontWeight: 600 }}>{p.name}</span>
+                  <span style={{ display: "block", fontSize: 11, color: "var(--ls-bbc-hint)" }}>{p.role}</span>
+                </span>
+              </button>
+            );
+          })
+        )}
+
+        <button
+          type="button"
+          disabled={!choisi}
+          onClick={() => choisi && onAffecter(choisi)}
+          style={{
+            width: "100%",
+            minHeight: 50,
+            border: 0,
+            borderRadius: 13,
+            marginTop: 10,
+            cursor: choisi ? "pointer" : "default",
+            opacity: choisi ? 1 : 0.5,
+            background: "var(--ls-bbc-lime)",
+            color: "var(--ls-bbc-lime-ink)",
+            fontFamily: "var(--ls-bbc-font-body)",
+            fontSize: 15,
+            fontWeight: 800,
+          }}
+        >
+          Affecter
+        </button>
+        <button
+          type="button"
+          onClick={onFermer}
+          style={{
+            width: "100%",
+            minHeight: 44,
+            marginTop: 8,
+            borderRadius: 12,
+            border: "1px solid var(--ls-bbc-line2)",
+            background: "transparent",
+            color: "var(--ls-bbc-muted)",
+            fontFamily: "var(--ls-bbc-font-body)",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Annuler
+        </button>
+        {/* Ajout assumé à la maquette : sans ce geste, une permanence posée par
+            erreur ne pouvait plus JAMAIS être retirée — il n'existe aucun autre
+            chemin vers `clear()`. Discret, et réservé au cas occupé. */}
+        {actuelId ? (
+          <button
+            type="button"
+            onClick={onLiberer}
+            style={{
+              width: "100%",
+              minHeight: 40,
+              marginTop: 6,
+              border: 0,
+              background: "transparent",
+              color: "var(--ls-bbc-coral)",
+              fontFamily: "var(--ls-bbc-font-body)",
+              fontSize: 12.5,
+              cursor: "pointer",
+            }}
+          >
+            libérer ce matin
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Avatar({ nom }: { nom: string }): ReactNode {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 999,
+        flex: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--ls-bbc-s3)",
+        color: "var(--ls-bbc-teal)",
+        fontFamily: "var(--ls-bbc-font-mono)",
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      {(nom.trim()[0] ?? "?").toUpperCase()}
+    </span>
+  );
+}

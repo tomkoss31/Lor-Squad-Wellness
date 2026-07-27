@@ -22,6 +22,10 @@
   --ls-bbc-teal: #2DD4BF;
   --ls-bbc-coral: #FB7185;
   --ls-bbc-amber: #E9A23B;
+  /* Les rituels du club (« La semaine du club », 2026-07-28). Il fallait une
+     5e teinte : le lime dit « club », le teal « membre », le coral « urgent »,
+     l'ambre « personne n'ouvre » — un rituel n'est rien de tout ça. */
+  --ls-bbc-violet: #A78BFA;
   --ls-bbc-lime-ink: #06241F;
   --ls-bbc-lime-text: #C5F82A;
   --ls-bbc-font-display: "Anton", system-ui, sans-serif;
@@ -43,6 +47,7 @@
   --ls-bbc-teal: #0F766E;
   --ls-bbc-coral: #E11D48;
   --ls-bbc-amber: #B7791F;
+  --ls-bbc-violet: #6D28D9;
   --ls-bbc-lime-text: #4D7A06;
 }
 

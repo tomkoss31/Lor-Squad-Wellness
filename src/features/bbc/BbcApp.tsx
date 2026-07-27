@@ -24,6 +24,7 @@ import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
+import { BbcSemaine } from "./views/BbcSemaine";
 import { BbcLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
@@ -40,6 +41,7 @@ type BbcView =
   | "cockpit"
   | "crm"
   | "club"
+  | "semaine"
   | "coeurs"
   | "messages"
   | "scripts"
@@ -76,6 +78,7 @@ const SECTIONS: Section[] = [
     icon: "☕",
     tabs: [
       { k: "cockpit", label: "Ce matin" },
+      { k: "semaine", label: "La semaine" },
       { k: "club", label: "Les visites" },
       { k: "appels", label: "Les appels" },
     ],
@@ -122,6 +125,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   cockpit: { eye: "co-pilote du matin", title: "Bon matin" },
   crm: { eye: "cobayes & membres", title: "Ton pipeline" },
   club: { eye: "pointage en direct", title: "Le club ce matin" },
+  semaine: { eye: "la semaine du club", title: "Cette semaine" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
   messages: { eye: "messagerie", title: "Messages" },
   scripts: { eye: "tout ce que tu envoies", title: "Scripts & liens" },
@@ -338,6 +342,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         )}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
+        {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "crm" && <BbcCrm userId={userId} />}
