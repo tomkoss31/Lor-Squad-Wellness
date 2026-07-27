@@ -103,18 +103,26 @@ serve(async (req: Request) => {
   }
 
   // 2. Anti-doublon serveur : le créneau est-il encore libre ?
-  const { data: clash, error: clashErr } = await sb
-    .from("rdv_bookings")
-    .select("id")
-    .eq("coach_user_id", coachUserId)
-    .neq("status", "canceled")
-    .lt("slot_start", slotEnd.toISOString())
-    .gt("slot_end", slotStart.toISOString())
-    .limit(1);
+  //
+  // CORRECTIF 2026-07-27 : cette vérification ne regardait que
+  // `rdv_bookings` — les réservations venues du funnel. Elle ignorait
+  // l'agenda réel du coach (RDV prospects et RDV clients), exactement comme
+  // le faisait l'affichage des disponibilités. Mesuré avant correctif :
+  // 26 créneaux déjà occupés étaient proposés, dont 18 chez Mélanie.
+  //
+  // On délègue désormais à `is_coach_slot_free`, la SEULE définition de
+  // « ce créneau est libre » : l'affichage et l'écriture partagent la même
+  // règle et ne peuvent plus diverger. Un prospect resté sur une page ouverte
+  // ne peut donc plus réserver par-dessus un rendez-vous existant.
+  const { data: slotFree, error: clashErr } = await sb.rpc("is_coach_slot_free", {
+    p_coach_user_id: coachUserId,
+    p_start: slotStart.toISOString(),
+    p_end: slotEnd.toISOString(),
+  });
   if (clashErr) {
     return jsonResponse({ success: false, error: "check_failed" }, 500);
   }
-  if (clash && clash.length > 0) {
+  if (slotFree !== true) {
     return jsonResponse({ success: false, error: "creneau_pris" }, 409);
   }
 
