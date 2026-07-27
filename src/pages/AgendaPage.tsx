@@ -22,6 +22,7 @@ import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
 import {
   toCalendarEvents,
   startOfWeekMonday,
+  makeOwnerColorResolver,
   type AgendaEntry as AgendaEntryBase,
 } from "../features/agenda/calendarEvents";
 
@@ -161,6 +162,11 @@ export function AgendaPage() {
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
   const effectiveDateFilter: DateFilter = view === "week" ? "all" : dateFilter;
+  // Idem pour le statut. Le défaut de la liste est « À venir » — appliqué à un
+  // CALENDRIER, il vidait toute semaine passée : un RDV honoré (statut « fait »
+  // ou « converti ») disparaissait de la case où il avait eu lieu. Un agenda
+  // doit montrer ce qui s'est passé, pas seulement ce qui reste à faire.
+  const effectiveStatusFilter: StatusFilter = view === "week" ? "all" : statusFilter;
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
   const [agendaFilter, setAgendaFilter] = useState<string>(() => {
@@ -246,7 +252,7 @@ export function AgendaPage() {
     if (entityFilter === "all" || entityFilter === "prospects") {
       for (const p of prospects) {
         if (!isInScope(p.distributorId)) continue;
-        if (!matchesStatusFilter(p, statusFilter)) continue;
+        if (!matchesStatusFilter(p, effectiveStatusFilter)) continue;
         const d = new Date(p.rdvDate);
         if (Number.isNaN(d.getTime())) continue;
         if (effectiveDateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
@@ -257,7 +263,7 @@ export function AgendaPage() {
 
     // 2. Follow-ups clients
     if (entityFilter === "all" || entityFilter === "clients") {
-      const allowedFuStatuses = followUpStatusesForFilter(statusFilter);
+      const allowedFuStatuses = followUpStatusesForFilter(effectiveStatusFilter);
       for (const fu of followUps) {
         // Statut filter aligné sur le toggle UI (fix Mélanie 2026-05-22)
         if (allowedFuStatuses === null) continue; // filtre prospects-only
@@ -308,7 +314,7 @@ export function AgendaPage() {
     }
 
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -406,6 +412,12 @@ export function AgendaPage() {
   const ownerName = useCallback(
     (ownerId: string) => ownerNameMap.get(ownerId) ?? "Coach",
     [ownerNameMap],
+  );
+  // Couleur du coach : celle qu'il a choisie dans son profil, sinon un repli
+  // dérivé de son identifiant (LOT 6.3). Personne n'apparaît en gris.
+  const ownerColor = useMemo(
+    () => makeOwnerColorResolver(new Map(users.map((u) => [u.id, u.calendarColor]))),
+    [users],
   );
   const shiftWeek = useCallback((direction: 1 | -1) => {
     setWeekAnchor((prev) => {
@@ -1150,6 +1162,7 @@ export function AgendaPage() {
             anchorDate={weekAnchor}
             currentUserId={currentUser?.id}
             ownerName={ownerName}
+            ownerColor={ownerColor}
             onSelectEvent={(ev) => {
               if (ev.href) navigate(ev.href);
             }}

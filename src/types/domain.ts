@@ -158,6 +158,9 @@ export interface User {
    *  Réglable par un admin uniquement. Ne masque QUE les menus — les routes et
    *  les données restent accessibles. Cf. src/config/appVisibility.ts. */
   appLevel?: AppLevel;
+  /** Couleur du coach dans l'agenda (hex #RRGGBB). NULL = non choisie → le
+   *  front dérive une couleur de l'identifiant. Chantier Agenda V2 2026-07-27. */
+  calendarColor?: string | null;
   /** Ville du distri (saisie /bienvenue-distri ou /parametres).
    *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05.
    *  Aussi affichée sur les badges crédibilité Welcome bilan (chantier #10 V2). */

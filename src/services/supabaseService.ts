@@ -52,6 +52,8 @@ type UserRow = {
   formation_beta_access?: boolean | null;
   /** Chantier Simplification (2026-07-27) : 'essentiel' | 'complet'. */
   app_level?: string | null;
+  /** Agenda V2 (2026-07-27) : couleur du coach dans l'agenda (#RRGGBB). */
+  calendar_color?: string | null;
   city?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
@@ -344,6 +346,7 @@ function mapUser(row: UserRow): User {
     // Chantier Simplification (2026-07-27) : défaut 'essentiel' si la colonne
     // n'est pas encore là (migration pas encore passée sur cet environnement).
     appLevel: toAppLevel(row.app_level),
+    calendarColor: row.calendar_color ?? null,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,

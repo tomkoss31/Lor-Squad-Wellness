@@ -48,25 +48,64 @@ export interface CalendarEvent {
 }
 
 // ─── Couleurs par personne ───────────────────────────────────────────────────
-// Palette stable dérivée de l'identifiant : la même personne garde TOUJOURS la
-// même couleur, d'une session à l'autre et d'un appareil à l'autre, sans avoir
-// à stocker quoi que ce soit. Les teintes sont piochées dans l'identité de
-// l'app (teal / violet / gold / coral / cyan / lime).
-const OWNER_PALETTE = [
-  "#2DD4BF", // teal
-  "#A78BFA", // violet
-  "#C9A84C", // gold
-  "#D4537E", // coral
-  "#06B6D4", // cyan
-  "#8FBF3F", // olive
-] as const;
+// LOT 6.3 (2026-07-27) : la couleur est désormais CHOISIE par chaque coach
+// (users.calendar_color), comme dans TimeTree — « le violet, c'est Mélanie »
+// devient vrai et durable. Tant que personne n'a choisi, on retombe sur une
+// teinte dérivée de l'identifiant : stable, mais arbitraire. Aucun agenda ne
+// devient gris en attendant que l'équipe passe régler son profil.
 
-export function ownerColor(ownerId: string): string {
+/** Les couleurs proposées au choix — teintes de l'identité de l'app. */
+export const CALENDAR_PALETTE: Array<{ hex: string; label: string }> = [
+  { hex: "#2DD4BF", label: "Turquoise" },
+  { hex: "#A78BFA", label: "Violet" },
+  { hex: "#C9A84C", label: "Doré" },
+  { hex: "#D4537E", label: "Framboise" },
+  { hex: "#06B6D4", label: "Cyan" },
+  { hex: "#8FBF3F", label: "Olive" },
+  { hex: "#F97316", label: "Orange" },
+  { hex: "#3B82F6", label: "Bleu" },
+];
+
+const FALLBACK_PALETTE = CALENDAR_PALETTE.slice(0, 6).map((c) => c.hex);
+
+/** Couleur de repli, dérivée de l'identifiant (stable, jamais aléatoire). */
+export function fallbackOwnerColor(ownerId: string): string {
   let hash = 0;
   for (let i = 0; i < ownerId.length; i += 1) {
     hash = (hash * 31 + ownerId.charCodeAt(i)) >>> 0;
   }
-  return OWNER_PALETTE[hash % OWNER_PALETTE.length];
+  return FALLBACK_PALETTE[hash % FALLBACK_PALETTE.length];
+}
+
+/** Signature du résolveur de couleur passé aux composants d'agenda. */
+export type OwnerColorResolver = (ownerId: string) => string;
+
+/**
+ * Construit le résolveur : couleur choisie si elle existe et qu'elle est un
+ * hex valide, repli dérivé sinon. La validation évite qu'une valeur douteuse
+ * parte dans un style CSS (la base a déjà un CHECK, ceinture et bretelles).
+ */
+export function makeOwnerColorResolver(
+  chosen: Map<string, string | null | undefined>,
+): OwnerColorResolver {
+  return (ownerId: string) => {
+    const picked = chosen.get(ownerId);
+    if (picked && /^#[0-9A-Fa-f]{6}$/.test(picked)) return picked;
+    return fallbackOwnerColor(ownerId);
+  };
+}
+
+/** Pictogramme du TYPE de RDV — la couleur dit QUI, l'icône dit QUOI. */
+export function kindIcon(kind: AgendaEntry["kind"]): string {
+  if (kind === "prospect") return "🎯";
+  if (kind === "client") return "🌿";
+  return "📋";
+}
+
+export function kindLabel(kind: AgendaEntry["kind"]): string {
+  if (kind === "prospect") return "Bilan";
+  if (kind === "client") return "Suivi";
+  return "Protocole";
 }
 
 // ─── Traduction entrée → événement ───────────────────────────────────────────
@@ -174,4 +213,66 @@ export function isSameDay(a: Date, b: Date): boolean {
 /** Minutes écoulées depuis minuit — sert à positionner un bloc dans la grille. */
 export function minutesSinceMidnight(d: Date): number {
   return d.getHours() * 60 + d.getMinutes();
+}
+
+// ─── Chevauchements ──────────────────────────────────────────────────────────
+// LOT 6.3 : deux RDV à la même heure se superposaient, l'un cachant l'autre —
+// exactement le cas où le coach a le PLUS besoin de voir clair. On fait comme
+// TimeTree ou Google : les RDV qui se chevauchent se partagent la largeur.
+//
+// L'algorithme travaille par « grappes » : une suite de RDV qui se recouvrent
+// de proche en proche. Toute la grappe est découpée en autant de colonnes que
+// nécessaire, ce qui garantit que deux blocs ne se recouvrent jamais.
+
+export interface PlacedEvent {
+  event: CalendarEvent;
+  /** Colonne occupée dans la grappe (0-indexée). */
+  column: number;
+  /** Nombre total de colonnes de la grappe → largeur = 1 / columnCount. */
+  columnCount: number;
+}
+
+function endMinutes(ev: CalendarEvent): number {
+  return minutesSinceMidnight(ev.start) + Math.max(1, ev.durationMin);
+}
+
+/** Répartit les RDV d'UNE journée en colonnes sans recouvrement. */
+export function layoutDay(events: CalendarEvent[]): PlacedEvent[] {
+  const sorted = [...events].sort(
+    (a, b) => a.start.getTime() - b.start.getTime() || endMinutes(a) - endMinutes(b),
+  );
+
+  const placed: PlacedEvent[] = [];
+  let cluster: PlacedEvent[] = [];
+  /** Fin de la dernière occupation de chaque colonne de la grappe courante. */
+  let columnEnds: number[] = [];
+
+  const flush = () => {
+    const count = Math.max(1, columnEnds.length);
+    for (const item of cluster) {
+      item.columnCount = count;
+      placed.push(item);
+    }
+    cluster = [];
+    columnEnds = [];
+  };
+
+  for (const ev of sorted) {
+    const start = minutesSinceMidnight(ev.start);
+    // Plus aucun chevauchement possible avec la grappe en cours → on la ferme.
+    if (columnEnds.length > 0 && columnEnds.every((end) => end <= start)) {
+      flush();
+    }
+    // Première colonne libérée, sinon on en ouvre une nouvelle.
+    let column = columnEnds.findIndex((end) => end <= start);
+    if (column === -1) {
+      column = columnEnds.length;
+      columnEnds.push(0);
+    }
+    columnEnds[column] = endMinutes(ev);
+    cluster.push({ event: ev, column, columnCount: 1 });
+  }
+  flush();
+
+  return placed;
 }

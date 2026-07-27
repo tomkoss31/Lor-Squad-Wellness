@@ -14,6 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { ProgressGauges } from "../../features/gamification/components/ProgressGauges";
 import { AvatarUploader } from "./AvatarUploader";
+import { CALENDAR_PALETTE } from "../../features/agenda/calendarEvents";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
@@ -89,6 +90,11 @@ export function ProfilTab() {
   );
   // Lieu de RDV (club/cabinet/adresse) — affiché dans les emails de rappel RDV.
   const [rdvLocation, setRdvLocation] = useState<string>(currentUser?.rdvLocation ?? "");
+  // Agenda V2 (2026-07-27) : couleur du coach dans l'agenda partagé.
+  // null = pas encore choisie → l'agenda dérive une teinte de l'identifiant.
+  const [calendarColor, setCalendarColor] = useState<string | null>(
+    currentUser?.calendarColor ?? null,
+  );
   // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
   // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
   const [currentRank, setCurrentRank] = useState<HerbalifeRank>(
@@ -210,6 +216,9 @@ export function ProfilTab() {
           // (peut être déjà rempli, on le maintient en sync à chaque save).
           current_rank: currentRank,
           rank_set_at: new Date().toISOString(),
+          // Agenda V2 (2026-07-27) : la couleur qui te représente dans
+          // l'agenda partagé de l'équipe.
+          calendar_color: calendarColor,
         })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
@@ -561,6 +570,66 @@ export function ProfilTab() {
             }}
           >
             Adresse où tu reçois tes clients. Affichée dans les emails de rappel de RDV. Vide = ta ville.
+          </div>
+        </div>
+
+        {/* Couleur dans l'agenda (Agenda V2, 2026-07-27) — dans l'agenda
+            partagé de l'équipe, chacun a SA couleur, choisie et durable.
+            Non choisie = teinte dérivée de l'identifiant, jamais du gris. */}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              fontWeight: 500,
+              color: "var(--ls-text-hint)",
+              textTransform: "uppercase",
+              letterSpacing: "0.13em",
+              marginBottom: 6,
+            }}
+          >
+            Ma couleur dans l&apos;agenda
+          </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {CALENDAR_PALETTE.map((c) => {
+              const active = calendarColor === c.hex;
+              return (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => setCalendarColor(active ? null : c.hex)}
+                  aria-label={c.label}
+                  aria-pressed={active}
+                  title={active ? `${c.label} — cliquer pour retirer` : c.label}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: c.hex,
+                    border: active
+                      ? "3px solid var(--ls-text)"
+                      : "1px solid var(--ls-border)",
+                    cursor: "pointer",
+                    padding: 0,
+                    transition: "transform 0.15s ease",
+                    transform: active ? "scale(1.06)" : "none",
+                  }}
+                />
+              );
+            })}
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "var(--ls-text-hint)",
+              marginTop: 6,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            {calendarColor
+              ? "Tes RDV apparaîtront dans cette couleur pour toute l'équipe."
+              : "Aucune couleur choisie : l'agenda t'en attribue une automatiquement."}
           </div>
         </div>
 

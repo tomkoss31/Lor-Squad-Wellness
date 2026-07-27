@@ -19,10 +19,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./agenda-week.css";
 import {
   isSameDay,
+  kindIcon,
+  kindLabel,
+  layoutDay,
   minutesSinceMidnight,
-  ownerColor,
   weekDays,
   type CalendarEvent,
+  type OwnerColorResolver,
+  type PlacedEvent,
 } from "./calendarEvents";
 
 /** Plage horaire affichée. En dehors, les RDV sont épinglés aux bords. */
@@ -38,6 +42,8 @@ export interface AgendaWeekGridProps {
   anchorDate: Date;
   /** Nom affiché pour un coach (légende + info-bulle). */
   ownerName: (ownerId: string) => string;
+  /** Couleur du coach : celle qu'il a choisie, sinon un repli dérivé. */
+  ownerColor: OwnerColorResolver;
   /** Clic sur un événement. */
   onSelectEvent?: (event: CalendarEvent) => void;
   /** Clic sur un créneau vide → création pré-remplie à cette date/heure. */
@@ -69,6 +75,7 @@ export function AgendaWeekGrid({
   events,
   anchorDate,
   ownerName,
+  ownerColor,
   onSelectEvent,
   onCreateAt,
   currentUserId,
@@ -120,25 +127,34 @@ export function AgendaWeekGrid({
     bodyRef.current.scrollTop = Math.max(0, target - SLOT_PX);
   }, [events]);
 
-  function renderEvent(ev: CalendarEvent, compact: boolean) {
+  /**
+   * `placement` absent = rendu compact (mobile, en pile).
+   * `placement` fourni = rendu positionné dans la grille, en partageant la
+   * largeur avec les RDV qui le chevauchent (LOT 6.3).
+   */
+  function renderEvent(ev: CalendarEvent, placement?: PlacedEvent) {
+    const compact = !placement;
     const color = ownerColor(ev.ownerId);
     const mine = !currentUserId || ev.ownerId === currentUserId;
+    const cols = placement?.columnCount ?? 1;
+    const col = placement?.column ?? 0;
+    // 3px de marge à gauche/droite de la colonne, 2px entre deux blocs voisins.
+    const widthPct = 100 / cols;
     return (
       <button
         key={ev.id}
         type="button"
         onClick={() => onSelectEvent?.(ev)}
-        title={`${ev.title} — ${hhmm(ev.start)} · ${ownerName(ev.ownerId)}${mine ? "" : " (lecture seule)"}`}
+        title={`${kindLabel(ev.kind)} — ${ev.title} · ${hhmm(ev.start)} · ${ownerName(ev.ownerId)}${mine ? "" : " (lecture seule)"}`}
         style={{
           position: compact ? "relative" : "absolute",
-          left: compact ? undefined : 3,
-          right: compact ? undefined : 3,
+          left: compact ? undefined : `calc(${col * widthPct}% + 3px)`,
+          width: compact ? "100%" : `calc(${widthPct}% - ${cols > 1 ? 5 : 6}px)`,
           top: compact ? undefined : topPx(ev.start),
           height: compact ? undefined : heightPx(ev.durationMin),
-          width: compact ? "100%" : undefined,
           textAlign: "left",
           overflow: "hidden",
-          padding: compact ? "9px 11px" : "5px 7px",
+          padding: compact ? "9px 11px" : "4px 6px",
           borderRadius: compact ? 11 : 8,
           border: "none",
           borderLeft: `3px solid ${color}`,
@@ -147,6 +163,7 @@ export function AgendaWeekGrid({
           cursor: "pointer",
           fontFamily: "DM Sans, sans-serif",
           opacity: mine ? 1 : 0.82,
+          zIndex: 1,
         }}
       >
         <div
@@ -159,6 +176,7 @@ export function AgendaWeekGrid({
             textOverflow: "ellipsis",
           }}
         >
+          <span aria-hidden="true" style={{ marginRight: 4 }}>{kindIcon(ev.kind)}</span>
           {ev.title}
         </div>
         <div
@@ -296,7 +314,7 @@ export function AgendaWeekGrid({
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {mobileEvents.map((ev) => renderEvent(ev, true))}
+            {mobileEvents.map((ev) => renderEvent(ev))}
           </div>
         )}
       </div>
@@ -436,7 +454,10 @@ export function AgendaWeekGrid({
                       }}
                     />
                   ))}
-                  {dayEvents.map((ev) => renderEvent(ev, false))}
+                  {/* layoutDay répartit les RDV qui se chevauchent en
+                      colonnes : deux RDV à la même heure se partagent la
+                      largeur au lieu de se cacher l'un l'autre (LOT 6.3). */}
+                  {layoutDay(dayEvents).map((p) => renderEvent(p.event, p))}
                 </div>
               );
             })}
