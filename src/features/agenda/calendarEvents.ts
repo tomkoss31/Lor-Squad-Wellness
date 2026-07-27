@@ -64,6 +64,13 @@ export interface CalendarEvent {
    * l'heure du bilan initial, ce qui donnerait une précision inventée.
    */
   allDay?: boolean;
+  /**
+   * RDV prospect passé, toujours au statut « planifié » : le coach n'a jamais
+   * dit si la personne était venue. Mesuré en prod le 2026-07-27 : 11 des 13
+   * prospects « à venir » sont dans ce cas — ils polluent la liste des RDV à
+   * venir et faussent le CRM. L'agenda est le seul endroit où les rattraper.
+   */
+  needsQualification?: boolean;
   /** Ligne 1 : « Bilan · Karim B. » */
   title: string;
   /** Ligne 2, optionnelle : contexte court. */
@@ -142,6 +149,41 @@ export function makeOwnerColorResolver(
   };
 }
 
+/**
+ * Couleur par TYPE de rendez-vous (refonte 2026-07-27).
+ *
+ * La couleur disait « qui ». Or un coach seul dans sa vue voyait tout de la
+ * même teinte : une information qui ne varie jamais n'informe pas. Quand un
+ * seul coach est affiché, la couleur dit donc le TYPE ; dès que l'équipe
+ * apparaît, elle redit « qui ». Cf. makeEventColor.
+ *
+ * Tokens CSS et non hex bruts : les deux thèmes sont couverts d'office.
+ */
+export const KIND_COLORS: Record<AgendaEntry["kind"], string> = {
+  prospect: "var(--ls-teal)",
+  client: "var(--ls-purple)",
+  protocol: "var(--ls-gold)",
+};
+
+/** Un RDV passé que le coach n'a jamais qualifié : il saute aux yeux. */
+export const NEEDS_QUALIF_COLOR = "var(--ls-coral)";
+
+/**
+ * Résout la couleur d'un événement selon le contexte affiché.
+ * Priorité : à qualifier > (un seul coach ? le type : la personne).
+ */
+export function makeEventColor(
+  events: CalendarEvent[],
+  ownerColor: OwnerColorResolver,
+): (ev: CalendarEvent) => string {
+  const owners = new Set(events.map((e) => e.ownerId));
+  const soloCoach = owners.size <= 1;
+  return (ev) => {
+    if (ev.needsQualification) return NEEDS_QUALIF_COLOR;
+    return soloCoach ? KIND_COLORS[ev.kind] : ownerColor(ev.ownerId);
+  };
+}
+
 /** Pictogramme du TYPE de RDV — la couleur dit QUI, l'icône dit QUOI. */
 export function kindIcon(kind: AgendaEntry["kind"]): string {
   if (kind === "prospect") return "🎯";
@@ -199,6 +241,9 @@ export function toCalendarEvent(
   if (entry.kind === "prospect") {
     return {
       ...base,
+      // « scheduled » sur un RDV déjà passé = jamais qualifié.
+      needsQualification:
+        entry.prospect.status === "scheduled" && start.getTime() < Date.now(),
       title: prospectTitle(entry.prospect),
       subtitle: entry.prospect.source || undefined,
       href: entry.prospect.convertedClientId

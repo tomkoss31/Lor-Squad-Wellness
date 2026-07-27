@@ -14,7 +14,9 @@
 // des CalendarEvent déjà normalisés (cf. calendarEvents.ts).
 // =============================================================================
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import "./agenda-week.css";
+import { AgendaDayList } from "./AgendaDayList";
 import {
   isSameDay,
   kindIcon,
@@ -33,6 +35,12 @@ export interface AgendaMonthGridProps {
   anchorDate: Date;
   ownerName: (ownerId: string) => string;
   ownerColor: OwnerColorResolver;
+  /** Couleur d'UN événement (type / personne / à qualifier). */
+  colorOf: (ev: CalendarEvent) => string;
+  /** Vrai si plusieurs coachs sont affichés. */
+  showOwner?: boolean;
+  /** Création depuis une journée vide (vue mobile). */
+  onCreateAt?: (at: Date) => void;
   /** Clic sur un RDV. */
   onSelectEvent?: (event: CalendarEvent) => void;
   /** Clic sur un jour (ou sur « +N ») → ouvrir la semaine correspondante. */
@@ -48,8 +56,11 @@ export function AgendaMonthGrid({
   anchorDate,
   ownerName,
   ownerColor,
+  colorOf,
+  showOwner,
   onSelectEvent,
   onSelectDay,
+  onCreateAt,
 }: AgendaMonthGridProps) {
   const days = useMemo(() => monthGridDays(anchorDate), [anchorDate]);
   const today = new Date();
@@ -74,8 +85,123 @@ export function AgendaMonthGrid({
     return map;
   }, [events]);
 
+  // ─── Jour sélectionné, côté téléphone ────────────────────────────────────
+  // La grille mobile montre la densité (des pastilles) ; le détail s'ouvre en
+  // dessous. Par défaut : aujourd'hui s'il est dans le mois affiché, sinon le
+  // 1er — jamais un jour du mois voisin.
+  const defaultSel = useMemo(() => {
+    const now = new Date();
+    if (now.getMonth() === displayedMonth && now.getFullYear() === anchorDate.getFullYear()) return now;
+    return new Date(anchorDate.getFullYear(), displayedMonth, 1);
+  }, [displayedMonth, anchorDate]);
+  const [selected, setSelected] = useState<Date>(defaultSel);
+  const monthKey = `${anchorDate.getFullYear()}-${displayedMonth}`;
+  useEffect(() => {
+    setSelected(defaultSel);
+    // On resynchronise au changement de MOIS, pas à chaque nouvel objet Date.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthKey]);
+  const selBucket = eventsByDay.get(selected.toDateString()) ?? [];
+
   return (
+    <>
+    {/* ═══ TÉLÉPHONE — pastilles + journée détaillée ═══════════════════════
+        Une grille à 7 colonnes sur 375 px laisse ~50 px par jour : les
+        libellés y étaient coupés en plein milieu (« 14:3( ») et le samedi et
+        le dimanche sortaient de l'écran. On garde la grille pour la densité,
+        on sort le détail en dessous — comme TimeTree, Google et Apple.
+        Refonte validée par Thomas le 2026-07-27. */}
+    <div className="agenda-week-mobile">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+        {DAY_LABELS.map((l) => (
+          <div
+            key={l}
+            style={{
+              textAlign: "center",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--ls-text-hint)",
+              padding: "4px 0",
+            }}
+          >
+            {l.charAt(0)}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 6 }}>
+        {days.map((d) => {
+          const list = eventsByDay.get(d.toDateString()) ?? [];
+          const inMonth = d.getMonth() === displayedMonth;
+          const isToday = isSameDay(d, today);
+          const isSel = isSameDay(d, selected);
+          return (
+            <button
+              key={d.toISOString()}
+              type="button"
+              onClick={() => setSelected(d)}
+              aria-pressed={isSel}
+              style={{
+                aspectRatio: "1 / 1",
+                minHeight: 44,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                border: "none",
+                borderRadius: 12,
+                background: isSel ? "var(--ls-teal)" : "transparent",
+                color: "var(--ls-text)",
+                cursor: "pointer",
+                opacity: inMonth ? 1 : 0.4,
+                fontFamily: "inherit",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 15,
+                  fontWeight: isSel || isToday ? 800 : 600,
+                  color: isSel ? "#fff" : isToday ? "var(--ls-teal)" : "var(--ls-text)",
+                }}
+              >
+                {String(d.getDate()).padStart(2, "0")}
+              </span>
+              <span style={{ display: "flex", gap: 3, height: 6, alignItems: "center" }}>
+                {list.slice(0, 3).map((ev) => (
+                  <i
+                    key={ev.id}
+                    aria-hidden="true"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: isSel ? "rgba(255,255,255,0.9)" : colorOf(ev),
+                      display: "block",
+                    }}
+                  />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <AgendaDayList
+        day={selected}
+        timed={selBucket.filter((e) => !e.allDay)}
+        allDay={selBucket.filter((e) => e.allDay)}
+        colorOf={colorOf}
+        ownerName={ownerName}
+        showOwner={showOwner}
+        onSelectEvent={onSelectEvent}
+        onCreateAt={onCreateAt}
+      />
+    </div>
+
+    {/* ═══ DESKTOP — grille pleine ═══ */}
     <div
+      className="agenda-week-desktop"
       style={{
         border: "1px solid var(--ls-border)",
         borderRadius: 14,
@@ -225,5 +351,6 @@ export function AgendaMonthGrid({
         })}
       </div>
     </div>
+    </>
   );
 }

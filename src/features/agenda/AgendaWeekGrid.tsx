@@ -17,6 +17,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./agenda-week.css";
+import { AgendaDayList } from "./AgendaDayList";
 import {
   isSameDay,
   kindIcon,
@@ -43,8 +44,13 @@ export interface AgendaWeekGridProps {
   anchorDate: Date;
   /** Nom affiché pour un coach (légende + info-bulle). */
   ownerName: (ownerId: string) => string;
-  /** Couleur du coach : celle qu'il a choisie, sinon un repli dérivé. */
+  /** Couleur du coach — sert la légende quand l'équipe est affichée. */
   ownerColor: OwnerColorResolver;
+  /** Couleur d'UN événement : type si un seul coach, personne sinon,
+   *  rouge s'il est à qualifier. Cf. makeEventColor. */
+  colorOf: (ev: CalendarEvent) => string;
+  /** Vrai si plusieurs coachs sont affichés (légende + mention du propriétaire). */
+  showOwner?: boolean;
   /** Clic sur un événement. */
   onSelectEvent?: (event: CalendarEvent) => void;
   /** Clic sur un créneau vide → création pré-remplie à cette date/heure. */
@@ -100,6 +106,8 @@ export function AgendaWeekGrid({
   anchorDate,
   ownerName,
   ownerColor,
+  colorOf,
+  showOwner,
   onSelectEvent,
   onCreateAt,
   currentUserId,
@@ -208,7 +216,7 @@ export function AgendaWeekGrid({
 
   /** Pastille « à faire ce jour-là », sans heure (suivis de protocole). */
   function renderAllDayChip(ev: CalendarEvent) {
-    const color = ownerColor(ev.ownerId);
+    const color = colorOf(ev);
     return (
       <button
         key={ev.id}
@@ -246,7 +254,7 @@ export function AgendaWeekGrid({
    */
   function renderEvent(ev: CalendarEvent, placement?: PlacedEvent) {
     const compact = !placement;
-    const color = ownerColor(ev.ownerId);
+    const color = colorOf(ev);
     const mine = !currentUserId || ev.ownerId === currentUserId;
     const cols = placement?.columnCount ?? 1;
     const col = placement?.column ?? 0;
@@ -317,7 +325,7 @@ export function AgendaWeekGrid({
   return (
     <div>
       {/* ── Légende : qui est de quelle couleur ── */}
-      {owners.length > 0 ? (
+      {showOwner && owners.length > 1 ? (
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
           {owners.map((id) => (
             <span
@@ -389,67 +397,19 @@ export function AgendaWeekGrid({
           })}
         </div>
 
-        {/* Actions du jour (sans heure) — au-dessus des RDV, comme sur desktop. */}
-        {mobileAllDay.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 10 }}>
-            <div
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 9,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "var(--ls-text-hint)",
-              }}
-            >
-              À faire dans la journée
-            </div>
-            {mobileAllDay.map((ev) => renderAllDayChip(ev))}
-          </div>
-        ) : null}
-
-        {mobileEvents.length === 0 ? (
-          <div
-            style={{
-              padding: "26px 16px",
-              textAlign: "center",
-              color: "var(--ls-text-hint)",
-              fontSize: 13,
-              border: "1px dashed var(--ls-border)",
-              borderRadius: 14,
-            }}
-          >
-            {mobileAllDay.length > 0 ? "Aucun rendez-vous posé ce jour-là." : "Rien de prévu ce jour-là."}
-            {onCreateAt ? (
-              <div style={{ marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const at = new Date(mobileDay);
-                    at.setHours(9, 0, 0, 0);
-                    onCreateAt(at);
-                  }}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 999,
-                    border: "1px solid var(--ls-border)",
-                    background: "var(--ls-surface)",
-                    color: "var(--ls-text)",
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontFamily: "DM Sans, sans-serif",
-                  }}
-                >
-                  + Ajouter un RDV
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {mobileEvents.map((ev) => renderEvent(ev))}
-          </div>
-        )}
+        {/* Le détail de la journée est rendu par AgendaDayList — le MÊME
+            composant que la vue Mois sur téléphone. Une seule implémentation,
+            donc un geste identique où qu'on se trouve (refonte 2026-07-27). */}
+        <AgendaDayList
+          day={mobileDay}
+          timed={mobileEvents}
+          allDay={mobileAllDay}
+          colorOf={colorOf}
+          ownerName={ownerName}
+          showOwner={showOwner}
+          onSelectEvent={onSelectEvent}
+          onCreateAt={onCreateAt}
+        />
       </div>
 
       {/* ═══ DESKTOP — grille 7 jours ═══ */}

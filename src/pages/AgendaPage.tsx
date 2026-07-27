@@ -25,6 +25,7 @@ import {
   toCalendarEvents,
   startOfWeekMonday,
   makeOwnerColorResolver,
+  makeEventColor,
   type AgendaEntry as AgendaEntryBase,
   type DayBand,
 } from "../features/agenda/calendarEvents";
@@ -496,6 +497,18 @@ export function AgendaPage() {
       navigate(`/clients/${entry.client.id}`);
     },
     [navigate],
+  );
+
+  // Couleur d'un événement : le TYPE quand un seul coach est affiché (sinon
+  // tout serait de la même teinte et la couleur n'informerait pas), la
+  // PERSONNE dès que l'équipe apparaît, le ROUGE si le RDV est à qualifier.
+  const colorOf = useMemo(
+    () => makeEventColor(calendarEvents, ownerColor),
+    [calendarEvents, ownerColor],
+  );
+  const showOwner = useMemo(
+    () => new Set(calendarEvents.map((e) => e.ownerId)).size > 1,
+    [calendarEvents],
   );
 
   const shiftMonth = useCallback((direction: 1 | -1) => {
@@ -1248,6 +1261,13 @@ export function AgendaPage() {
             anchorDate={weekAnchor}
             ownerName={ownerName}
             ownerColor={ownerColor}
+            colorOf={colorOf}
+            showOwner={showOwner}
+            onCreateAt={(at) => {
+              setEditing(undefined);
+              setPrefillRdvDate(at);
+              setShowForm(true);
+            }}
             onSelectEvent={handleCalendarEventClick}
             onSelectDay={(day) => {
               setWeekAnchor(startOfWeekMonday(day));
@@ -1316,6 +1336,8 @@ export function AgendaPage() {
             focusDay={focusDay}
             ownerName={ownerName}
             ownerColor={ownerColor}
+            colorOf={colorOf}
+            showOwner={showOwner}
             onSelectEvent={handleCalendarEventClick}
             bands={bands}
             onSelectBand={(band) => {
