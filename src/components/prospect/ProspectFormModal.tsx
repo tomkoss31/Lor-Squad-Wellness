@@ -18,6 +18,9 @@ interface ProspectFormModalProps {
     source?: ProspectSource;
     sourceDetail?: string;
     note?: string;
+    /** Date/heure du RDV pré-remplie (ISO). Agenda V2 2026-07-27 : clic sur un
+        créneau vide de la grille semaine → le formulaire s'ouvre à cette heure. */
+    rdvDate?: string;
   };
   onClose: () => void;
   onSaved?: (prospect: Prospect) => void;
@@ -64,7 +67,11 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
   const [phone, setPhone] = useState(initial?.phone ?? prefill?.phone ?? "");
   const [email, setEmail] = useState(initial?.email ?? prefill?.email ?? "");
   const [rdvDate, setRdvDate] = useState(
-    initial?.rdvDate ? toDateTimeLocal(initial.rdvDate) : defaultRdvDate()
+    initial?.rdvDate
+      ? toDateTimeLocal(initial.rdvDate)
+      : prefill?.rdvDate
+        ? toDateTimeLocal(prefill.rdvDate)
+        : defaultRdvDate()
   );
   const [source, setSource] = useState<ProspectSource>(initial?.source ?? prefill?.source ?? "Instagram");
   const [sourceDetail, setSourceDetail] = useState(initial?.sourceDetail ?? prefill?.sourceDetail ?? "");
