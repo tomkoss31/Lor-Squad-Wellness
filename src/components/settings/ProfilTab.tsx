@@ -14,7 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { ProgressGauges } from "../../features/gamification/components/ProgressGauges";
 import { AvatarUploader } from "./AvatarUploader";
-import { CALENDAR_PALETTE } from "../../features/agenda/calendarEvents";
+import { CALENDAR_PALETTE, RDV_DURATION_CHOICES } from "../../features/agenda/calendarEvents";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
@@ -94,6 +94,11 @@ export function ProfilTab() {
   // null = pas encore choisie → l'agenda dérive une teinte de l'identifiant.
   const [calendarColor, setCalendarColor] = useState<string | null>(
     currentUser?.calendarColor ?? null,
+  );
+  // Durée par défaut d'un RDV (Agenda V2, LOT 6.4). Appliquée à tout RDV qui
+  // ne porte pas de durée propre — donc à tous ceux déjà en base.
+  const [defaultRdvMinutes, setDefaultRdvMinutes] = useState<number>(
+    currentUser?.defaultRdvMinutes ?? 45,
   );
   // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
   // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
@@ -217,8 +222,9 @@ export function ProfilTab() {
           current_rank: currentRank,
           rank_set_at: new Date().toISOString(),
           // Agenda V2 (2026-07-27) : la couleur qui te représente dans
-          // l'agenda partagé de l'équipe.
+          // l'agenda partagé de l'équipe, et la durée type de tes RDV.
           calendar_color: calendarColor,
+          default_rdv_minutes: defaultRdvMinutes,
         })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
@@ -630,6 +636,63 @@ export function ProfilTab() {
             {calendarColor
               ? "Tes RDV apparaîtront dans cette couleur pour toute l'équipe."
               : "Aucune couleur choisie : l'agenda t'en attribue une automatiquement."}
+          </div>
+        </div>
+
+        {/* Durée type d'un RDV (Agenda V2, LOT 6.4) — sert à dessiner la
+            hauteur des blocs dans la vue semaine. Chaque RDV peut la
+            surcharger au moment de le poser. */}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              fontWeight: 500,
+              color: "var(--ls-text-hint)",
+              textTransform: "uppercase",
+              letterSpacing: "0.13em",
+              marginBottom: 6,
+            }}
+          >
+            Mes RDV durent en général
+          </label>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {RDV_DURATION_CHOICES.map((m) => {
+              const active = defaultRdvMinutes === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setDefaultRdvMinutes(m)}
+                  aria-pressed={active}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: active ? 700 : 500,
+                    fontFamily: "DM Sans, sans-serif",
+                    cursor: "pointer",
+                    background: active ? "var(--ls-teal)" : "var(--ls-surface2)",
+                    color: active ? "#fff" : "var(--ls-text-muted)",
+                    border: active ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)",
+                  }}
+                >
+                  {m} min
+                </button>
+              );
+            })}
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "var(--ls-text-hint)",
+              marginTop: 6,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Hauteur de tes blocs dans la vue semaine. Tu peux changer la durée d&apos;un RDV
+            précis au moment de le poser.
           </div>
         </div>
 

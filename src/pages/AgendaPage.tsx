@@ -408,7 +408,16 @@ export function AgendaPage() {
 
   // ─── Agenda V2 (2026-07-27) : la grille semaine ────────────────────────────
   // Mêmes entrées que la liste, simplement traduites en événements dessinables.
-  const calendarEvents = useMemo(() => toCalendarEvents(agendaEntries), [agendaEntries]);
+  // La durée d'un bloc vient du RDV s'il en porte une, sinon du réglage
+  // « mes RDV durent X » de son coach (LOT 6.4).
+  const coachDefaultDurations = useMemo(
+    () => new Map(users.map((u) => [u.id, u.defaultRdvMinutes])),
+    [users],
+  );
+  const calendarEvents = useMemo(
+    () => toCalendarEvents(agendaEntries, coachDefaultDurations),
+    [agendaEntries, coachDefaultDurations],
+  );
   const ownerName = useCallback(
     (ownerId: string) => ownerNameMap.get(ownerId) ?? "Coach",
     [ownerNameMap],

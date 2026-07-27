@@ -27,14 +27,43 @@ export type AgendaEntry =
   | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect }
   | { kind: "protocol"; id: string; date: string; distributorId: string; due: FollowUpDueItem };
 
-/** Durée d'un RDV faute de mieux (le modèle ne stocke pas encore de durée). */
+/** Dernier recours si ni le RDV ni le coach ne portent de durée. */
 export const DEFAULT_RDV_MINUTES = 45;
+
+/** Choix rapides proposés au moment de poser un RDV. */
+export const RDV_DURATION_CHOICES = [30, 45, 60, 90] as const;
+
+/**
+ * Durée retenue pour un RDV, par ordre de priorité (LOT 6.4) :
+ *   1. la durée portée par le RDV lui-même
+ *   2. le réglage « mes RDV durent X » du coach à qui il appartient
+ *   3. 45 minutes
+ * Les valeurs aberrantes (0, négatives, > 8 h) sont ignorées plutôt que
+ * dessinées : un bloc de 3 000 minutes écraserait toute la grille.
+ */
+export function resolveDuration(
+  ownDuration: number | null | undefined,
+  coachDefault: number | null | undefined,
+): number {
+  const valid = (v: number | null | undefined): v is number =>
+    typeof v === "number" && Number.isFinite(v) && v >= 5 && v <= 480;
+  if (valid(ownDuration)) return ownDuration;
+  if (valid(coachDefault)) return coachDefault;
+  return DEFAULT_RDV_MINUTES;
+}
 
 export interface CalendarEvent {
   id: string;
   kind: AgendaEntry["kind"];
   start: Date;
   durationMin: number;
+  /**
+   * Vrai pour une action à faire dans la journée, sans heure de rendez-vous
+   * (les suivis de protocole). Affichée en bandeau en haut du jour, jamais
+   * plantée à une heure arbitraire dans la grille : leur `dueDate` hérite de
+   * l'heure du bilan initial, ce qui donnerait une précision inventée.
+   */
+  allDay?: boolean;
   /** Ligne 1 : « Bilan · Karim B. » */
   title: string;
   /** Ligne 2, optionnelle : contexte court. */
@@ -125,15 +154,26 @@ function clientTitle(c: Client): string {
  * Renvoie `null` si la date est inexploitable — un événement sans date valide
  * n'a rien à faire dans une grille horaire (la liste, elle, la tolérait).
  */
-export function toCalendarEvent(entry: AgendaEntry): CalendarEvent | null {
+export function toCalendarEvent(
+  entry: AgendaEntry,
+  /** Durée par défaut du coach propriétaire — cf. resolveDuration. */
+  coachDefaultMinutes?: number | null,
+): CalendarEvent | null {
   const start = new Date(entry.date);
   if (Number.isNaN(start.getTime())) return null;
+
+  const ownDuration =
+    entry.kind === "prospect"
+      ? entry.prospect.durationMin
+      : entry.kind === "client"
+        ? entry.followUp.durationMin
+        : undefined;
 
   const base = {
     id: `${entry.kind}-${entry.id}`,
     kind: entry.kind,
     start,
-    durationMin: DEFAULT_RDV_MINUTES,
+    durationMin: resolveDuration(ownDuration, coachDefaultMinutes),
     ownerId: entry.distributorId,
     entry,
   };
@@ -165,16 +205,23 @@ export function toCalendarEvent(entry: AgendaEntry): CalendarEvent | null {
     .trim();
   return {
     ...base,
+    // Un suivi de protocole n'a pas d'heure de rendez-vous : sa date hérite de
+    // l'heure du bilan initial. On le sort de la grille horaire.
+    allDay: true,
     title: `${entry.due.stepIconEmoji} ${name || "Client"}`,
     subtitle: entry.due.stepShortTitle,
     href: `/clients/${entry.due.client.id}`,
   };
 }
 
-export function toCalendarEvents(entries: AgendaEntry[]): CalendarEvent[] {
+export function toCalendarEvents(
+  entries: AgendaEntry[],
+  /** Durée par défaut de chaque coach (users.default_rdv_minutes). */
+  coachDefaults?: Map<string, number | null | undefined>,
+): CalendarEvent[] {
   const events: CalendarEvent[] = [];
   for (const entry of entries) {
-    const ev = toCalendarEvent(entry);
+    const ev = toCalendarEvent(entry, coachDefaults?.get(entry.distributorId));
     if (ev) events.push(ev);
   }
   return events.sort((a, b) => a.start.getTime() - b.start.getTime());
