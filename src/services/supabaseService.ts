@@ -52,6 +52,10 @@ type UserRow = {
   formation_beta_access?: boolean | null;
   /** Chantier Simplification (2026-07-27) : 'essentiel' | 'complet'. */
   app_level?: string | null;
+  /** Agenda V2 (2026-07-27) : couleur du coach dans l'agenda (#RRGGBB). */
+  calendar_color?: string | null;
+  /** Agenda V2 (2026-07-27) : duree par defaut d'un RDV, en minutes. */
+  default_rdv_minutes?: number | null;
   city?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
@@ -140,6 +144,8 @@ type FollowUpRow = {
   client_id: string;
   client_name: string;
   due_date: string;
+  /** Agenda V2 (2026-07-27) : NULL = duree par defaut du coach. */
+  duration_min?: number | null;
   type: string;
   status: FollowUp["status"];
   program_title: string;
@@ -344,6 +350,9 @@ function mapUser(row: UserRow): User {
     // Chantier Simplification (2026-07-27) : défaut 'essentiel' si la colonne
     // n'est pas encore là (migration pas encore passée sur cet environnement).
     appLevel: toAppLevel(row.app_level),
+    calendarColor: row.calendar_color ?? null,
+    defaultRdvMinutes:
+      typeof row.default_rdv_minutes === "number" ? row.default_rdv_minutes : undefined,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,
@@ -484,6 +493,7 @@ function mapFollowUp(row: FollowUpRow): FollowUp {
     clientId: row.client_id,
     clientName: row.client_name,
     dueDate: row.due_date,
+    durationMin: row.duration_min ?? undefined,
     type: row.type,
     status: row.status,
     programTitle: row.program_title,

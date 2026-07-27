@@ -18,6 +18,8 @@ type ProspectRow = {
   phone?: string | null;
   email?: string | null;
   rdv_date: string;
+  /** Agenda V2 (2026-07-27) : NULL = duree par defaut du coach. */
+  duration_min?: number | null;
   source: string;
   source_detail?: string | null;
   note?: string | null;
@@ -38,6 +40,7 @@ function mapProspectFromDb(row: ProspectRow): Prospect {
     phone: row.phone ?? undefined,
     email: row.email ?? undefined,
     rdvDate: row.rdv_date,
+    durationMin: row.duration_min ?? undefined,
     source: row.source as ProspectSource,
     sourceDetail: row.source_detail ?? undefined,
     note: row.note ?? undefined,
@@ -58,6 +61,7 @@ function mapProspectToDbUpdates(updates: Partial<Prospect>): Record<string, unkn
   if (updates.phone !== undefined) out.phone = updates.phone ?? null;
   if (updates.email !== undefined) out.email = updates.email ?? null;
   if (updates.rdvDate !== undefined) out.rdv_date = updates.rdvDate;
+  if (updates.durationMin !== undefined) out.duration_min = updates.durationMin ?? null;
   if (updates.source !== undefined) out.source = updates.source;
   if (updates.sourceDetail !== undefined) out.source_detail = updates.sourceDetail ?? null;
   if (updates.note !== undefined) out.note = updates.note ?? null;
@@ -99,6 +103,7 @@ export async function createSupabaseProspect(input: ProspectFormInput): Promise<
       phone: input.phone ?? null,
       email: input.email ?? null,
       rdv_date: input.rdvDate,
+      duration_min: input.durationMin ?? null,
       source: input.source,
       source_detail: input.sourceDetail ?? null,
       note: input.note ?? null,

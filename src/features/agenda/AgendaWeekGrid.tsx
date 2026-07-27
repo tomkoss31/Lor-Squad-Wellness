@@ -19,10 +19,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./agenda-week.css";
 import {
   isSameDay,
+  kindIcon,
+  kindLabel,
+  layoutDay,
   minutesSinceMidnight,
-  ownerColor,
   weekDays,
   type CalendarEvent,
+  type OwnerColorResolver,
+  type PlacedEvent,
 } from "./calendarEvents";
 
 /** Plage horaire affichée. En dehors, les RDV sont épinglés aux bords. */
@@ -38,6 +42,8 @@ export interface AgendaWeekGridProps {
   anchorDate: Date;
   /** Nom affiché pour un coach (légende + info-bulle). */
   ownerName: (ownerId: string) => string;
+  /** Couleur du coach : celle qu'il a choisie, sinon un repli dérivé. */
+  ownerColor: OwnerColorResolver;
   /** Clic sur un événement. */
   onSelectEvent?: (event: CalendarEvent) => void;
   /** Clic sur un créneau vide → création pré-remplie à cette date/heure. */
@@ -57,8 +63,16 @@ function topPx(date: Date): number {
   return ((clamped - START_HOUR * 60) / 60) * SLOT_PX;
 }
 
-function heightPx(durationMin: number): number {
-  return Math.max(26, (durationMin / 60) * SLOT_PX);
+/**
+ * Hauteur d'un bloc, bornée au bas de la grille : depuis que les durées sont
+ * réelles (LOT 6.4), un RDV de 90 min posé à 19 h débordait sous la dernière
+ * heure affichée. Plancher à 26 px pour qu'un RDV court reste lisible.
+ */
+function heightPx(start: Date, durationMin: number): number {
+  const top = topPx(start);
+  const gridHeight = (END_HOUR - START_HOUR) * SLOT_PX;
+  const natural = (durationMin / 60) * SLOT_PX;
+  return Math.max(26, Math.min(natural, gridHeight - top - 2));
 }
 
 function hhmm(d: Date): string {
@@ -69,6 +83,7 @@ export function AgendaWeekGrid({
   events,
   anchorDate,
   ownerName,
+  ownerColor,
   onSelectEvent,
   onCreateAt,
   currentUserId,
@@ -95,16 +110,29 @@ export function AgendaWeekGrid({
     now.getHours() >= START_HOUR &&
     now.getHours() < END_HOUR;
 
+  // Deux familles distinctes (LOT 6.4) : les RDV posés à une heure, et les
+  // actions à faire dans la journée (suivis de protocole). Les secondes n'ont
+  // pas d'heure de rendez-vous — les planter dans la grille horaire
+  // inventerait une précision qui n'existe pas.
   const eventsByDay = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
+    const map = new Map<string, { timed: CalendarEvent[]; allDay: CalendarEvent[] }>();
     for (const ev of events) {
       const key = ev.start.toDateString();
-      const list = map.get(key);
-      if (list) list.push(ev);
-      else map.set(key, [ev]);
+      let bucket = map.get(key);
+      if (!bucket) {
+        bucket = { timed: [], allDay: [] };
+        map.set(key, bucket);
+      }
+      (ev.allDay ? bucket.allDay : bucket.timed).push(ev);
     }
     return map;
   }, [events]);
+
+  const EMPTY_DAY = { timed: [] as CalendarEvent[], allDay: [] as CalendarEvent[] };
+  const hasAnyAllDay = useMemo(
+    () => days.some((d) => (eventsByDay.get(d.toDateString())?.allDay.length ?? 0) > 0),
+    [days, eventsByDay],
+  );
 
   const owners = useMemo(() => {
     const set = new Set(events.map((e) => e.ownerId));
@@ -115,30 +143,74 @@ export function AgendaWeekGrid({
   const bodyRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!bodyRef.current || events.length === 0) return;
-    const earliest = Math.min(...events.map((e) => minutesSinceMidnight(e.start)));
+    const timed = events.filter((e) => !e.allDay);
+    if (timed.length === 0) return;
+    const earliest = Math.min(...timed.map((e) => minutesSinceMidnight(e.start)));
     const target = ((Math.max(earliest, START_HOUR * 60) - START_HOUR * 60) / 60) * SLOT_PX;
     bodyRef.current.scrollTop = Math.max(0, target - SLOT_PX);
   }, [events]);
 
-  function renderEvent(ev: CalendarEvent, compact: boolean) {
+  /** Pastille « à faire ce jour-là », sans heure (suivis de protocole). */
+  function renderAllDayChip(ev: CalendarEvent) {
     const color = ownerColor(ev.ownerId);
-    const mine = !currentUserId || ev.ownerId === currentUserId;
     return (
       <button
         key={ev.id}
         type="button"
         onClick={() => onSelectEvent?.(ev)}
-        title={`${ev.title} — ${hhmm(ev.start)} · ${ownerName(ev.ownerId)}${mine ? "" : " (lecture seule)"}`}
+        title={`${ev.title}${ev.subtitle ? ` · ${ev.subtitle}` : ""} · ${ownerName(ev.ownerId)} — à faire dans la journée`}
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "left",
+          padding: "3px 6px",
+          borderRadius: 6,
+          border: "none",
+          borderLeft: `3px solid ${color}`,
+          background: `color-mix(in srgb, ${color} 12%, var(--ls-surface))`,
+          color: "var(--ls-text)",
+          cursor: "pointer",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 10.5,
+          fontWeight: 600,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {ev.title}
+      </button>
+    );
+  }
+
+  /**
+   * `placement` absent = rendu compact (mobile, en pile).
+   * `placement` fourni = rendu positionné dans la grille, en partageant la
+   * largeur avec les RDV qui le chevauchent (LOT 6.3).
+   */
+  function renderEvent(ev: CalendarEvent, placement?: PlacedEvent) {
+    const compact = !placement;
+    const color = ownerColor(ev.ownerId);
+    const mine = !currentUserId || ev.ownerId === currentUserId;
+    const cols = placement?.columnCount ?? 1;
+    const col = placement?.column ?? 0;
+    // 3px de marge à gauche/droite de la colonne, 2px entre deux blocs voisins.
+    const widthPct = 100 / cols;
+    return (
+      <button
+        key={ev.id}
+        type="button"
+        onClick={() => onSelectEvent?.(ev)}
+        title={`${kindLabel(ev.kind)} — ${ev.title} · ${hhmm(ev.start)} · ${ownerName(ev.ownerId)}${mine ? "" : " (lecture seule)"}`}
         style={{
           position: compact ? "relative" : "absolute",
-          left: compact ? undefined : 3,
-          right: compact ? undefined : 3,
+          left: compact ? undefined : `calc(${col * widthPct}% + 3px)`,
+          width: compact ? "100%" : `calc(${widthPct}% - ${cols > 1 ? 5 : 6}px)`,
           top: compact ? undefined : topPx(ev.start),
-          height: compact ? undefined : heightPx(ev.durationMin),
-          width: compact ? "100%" : undefined,
+          height: compact ? undefined : heightPx(ev.start, ev.durationMin),
           textAlign: "left",
           overflow: "hidden",
-          padding: compact ? "9px 11px" : "5px 7px",
+          padding: compact ? "9px 11px" : "4px 6px",
           borderRadius: compact ? 11 : 8,
           border: "none",
           borderLeft: `3px solid ${color}`,
@@ -147,6 +219,7 @@ export function AgendaWeekGrid({
           cursor: "pointer",
           fontFamily: "DM Sans, sans-serif",
           opacity: mine ? 1 : 0.82,
+          zIndex: 1,
         }}
       >
         <div
@@ -159,6 +232,7 @@ export function AgendaWeekGrid({
             textOverflow: "ellipsis",
           }}
         >
+          <span aria-hidden="true" style={{ marginRight: 4 }}>{kindIcon(ev.kind)}</span>
           {ev.title}
         </div>
         <div
@@ -179,7 +253,9 @@ export function AgendaWeekGrid({
     );
   }
 
-  const mobileEvents = (eventsByDay.get(mobileDay.toDateString()) ?? []).slice();
+  const mobileBucket = eventsByDay.get(mobileDay.toDateString()) ?? EMPTY_DAY;
+  const mobileEvents = mobileBucket.timed;
+  const mobileAllDay = mobileBucket.allDay;
 
   return (
     <div>
@@ -256,6 +332,24 @@ export function AgendaWeekGrid({
           })}
         </div>
 
+        {/* Actions du jour (sans heure) — au-dessus des RDV, comme sur desktop. */}
+        {mobileAllDay.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 10 }}>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 9,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--ls-text-hint)",
+              }}
+            >
+              À faire dans la journée
+            </div>
+            {mobileAllDay.map((ev) => renderAllDayChip(ev))}
+          </div>
+        ) : null}
+
         {mobileEvents.length === 0 ? (
           <div
             style={{
@@ -267,7 +361,7 @@ export function AgendaWeekGrid({
               borderRadius: 14,
             }}
           >
-            Rien de prévu ce jour-là.
+            {mobileAllDay.length > 0 ? "Aucun rendez-vous posé ce jour-là." : "Rien de prévu ce jour-là."}
             {onCreateAt ? (
               <div style={{ marginTop: 10 }}>
                 <button
@@ -296,7 +390,7 @@ export function AgendaWeekGrid({
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {mobileEvents.map((ev) => renderEvent(ev, true))}
+            {mobileEvents.map((ev) => renderEvent(ev))}
           </div>
         )}
       </div>
@@ -353,6 +447,55 @@ export function AgendaWeekGrid({
           })}
         </div>
 
+        {/* ── Bandeau « à faire dans la journée » (LOT 6.4) ──
+            Les suivis de protocole ne sont pas des rendez-vous : leur date
+            hérite de l'heure du bilan initial. Les poser dans la grille
+            horaire inventerait un créneau. Ils vivent donc ici, au-dessus des
+            heures, comme les événements « journée entière » d'un vrai
+            calendrier. La ligne disparaît quand la semaine n'en a aucun. */}
+        {hasAnyAllDay ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `52px repeat(7, 1fr)`,
+              borderBottom: "1px solid var(--ls-border)",
+              background: "color-mix(in srgb, var(--ls-text-hint) 4%, transparent)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 9,
+                color: "var(--ls-text-hint)",
+                textAlign: "right",
+                paddingRight: 7,
+                paddingTop: 8,
+                letterSpacing: "0.06em",
+              }}
+            >
+              JOUR
+            </div>
+            {days.map((d) => {
+              const items = (eventsByDay.get(d.toDateString()) ?? EMPTY_DAY).allDay;
+              return (
+                <div
+                  key={d.toISOString()}
+                  style={{
+                    borderLeft: "1px solid var(--ls-border)",
+                    padding: 4,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    minHeight: 30,
+                  }}
+                >
+                  {items.map((ev) => renderAllDayChip(ev))}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
         {/* Corps scrollable */}
         <div ref={bodyRef} style={{ maxHeight: 560, overflowY: "auto" }}>
           <div
@@ -400,7 +543,7 @@ export function AgendaWeekGrid({
 
             {/* Une colonne par jour */}
             {days.map((d, dayIdx) => {
-              const dayEvents = eventsByDay.get(d.toDateString()) ?? [];
+              const dayEvents = (eventsByDay.get(d.toDateString()) ?? EMPTY_DAY).timed;
               const isToday = isSameDay(d, today);
               const isWeekend = dayIdx >= 5;
               return (
@@ -436,7 +579,10 @@ export function AgendaWeekGrid({
                       }}
                     />
                   ))}
-                  {dayEvents.map((ev) => renderEvent(ev, false))}
+                  {/* layoutDay répartit les RDV qui se chevauchent en
+                      colonnes : deux RDV à la même heure se partagent la
+                      largeur au lieu de se cacher l'un l'autre (LOT 6.3). */}
+                  {layoutDay(dayEvents).map((p) => renderEvent(p.event, p))}
                 </div>
               );
             })}
