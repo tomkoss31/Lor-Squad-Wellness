@@ -64,14 +64,29 @@ export interface CalendarEvent {
    * l'heure du bilan initial, ce qui donnerait une précision inventée.
    */
   allDay?: boolean;
+  /**
+   * RDV prospect passé, toujours au statut « planifié » : le coach n'a jamais
+   * dit si la personne était venue. Mesuré en prod le 2026-07-27 : 11 des 13
+   * prospects « à venir » sont dans ce cas — ils polluent la liste des RDV à
+   * venir et faussent le CRM. L'agenda est le seul endroit où les rattraper.
+   */
+  needsQualification?: boolean;
+  /**
+   * Renseigné quand le client ne recevra PAS le rappel automatique attendu.
+   * Mesuré en prod le 2026-07-27 chez Mélanie : sur 29 RDV clients à venir,
+   * 5 ont les rappels coupés et 5 concernent un client sans email — soit une
+   * dizaine de RDV muets, invisibles à l'écran, pour quelqu'un qui travaille
+   * au téléphone. Le coach doit savoir qui il devra appeler lui-même.
+   */
+  silentReason?: string;
   /** Ligne 1 : « Bilan · Karim B. » */
   title: string;
   /** Ligne 2, optionnelle : contexte court. */
   subtitle?: string;
   /** Le coach à qui appartient ce RDV — porte la couleur. */
   ownerId: string;
-  /** Destination au clic, si l'événement mène quelque part. */
-  href?: string;
+  // `href` RETIRÉ (2026-07-27) : plus aucun lecteur depuis que le clic ouvre
+  // les modales sur place au lieu de naviguer (handleCalendarEventClick).
   /** L'entrée d'origine, pour les actions qui ont besoin du détail complet. */
   entry: AgendaEntry;
 }
@@ -84,11 +99,14 @@ export interface CalendarEvent {
 // devient gris en attendant que l'équipe passe régler son profil.
 
 /** Les couleurs proposées au choix — teintes de l'identité de l'app. */
+// « Framboise » (#D4537E) est volontairement ABSENTE : c'est la teinte de la
+// ligne « il est telle heure » dans la grille. Un coach qui l'aurait choisie
+// aurait rendu ses RDV de la couleur du repère temporel. Retirée avant que
+// quiconque la choisisse — les 14 comptes ont calendar_color à NULL.
 export const CALENDAR_PALETTE: Array<{ hex: string; label: string }> = [
   { hex: "#2DD4BF", label: "Turquoise" },
   { hex: "#A78BFA", label: "Violet" },
   { hex: "#C9A84C", label: "Doré" },
-  { hex: "#D4537E", label: "Framboise" },
   { hex: "#06B6D4", label: "Cyan" },
   { hex: "#8FBF3F", label: "Olive" },
   { hex: "#F97316", label: "Orange" },
@@ -139,6 +157,41 @@ export function makeOwnerColorResolver(
     const picked = chosen.get(ownerId);
     if (picked && /^#[0-9A-Fa-f]{6}$/.test(picked)) return picked;
     return fallbackOwnerColor(ownerId);
+  };
+}
+
+/**
+ * Couleur par TYPE de rendez-vous (refonte 2026-07-27).
+ *
+ * La couleur disait « qui ». Or un coach seul dans sa vue voyait tout de la
+ * même teinte : une information qui ne varie jamais n'informe pas. Quand un
+ * seul coach est affiché, la couleur dit donc le TYPE ; dès que l'équipe
+ * apparaît, elle redit « qui ». Cf. makeEventColor.
+ *
+ * Tokens CSS et non hex bruts : les deux thèmes sont couverts d'office.
+ */
+export const KIND_COLORS: Record<AgendaEntry["kind"], string> = {
+  prospect: "var(--ls-teal)",
+  client: "var(--ls-purple)",
+  protocol: "var(--ls-gold)",
+};
+
+/** Un RDV passé que le coach n'a jamais qualifié : il saute aux yeux. */
+export const NEEDS_QUALIF_COLOR = "var(--ls-coral)";
+
+/**
+ * Résout la couleur d'un événement selon le contexte affiché.
+ * Priorité : à qualifier > (un seul coach ? le type : la personne).
+ */
+export function makeEventColor(
+  events: CalendarEvent[],
+  ownerColor: OwnerColorResolver,
+): (ev: CalendarEvent) => string {
+  const owners = new Set(events.map((e) => e.ownerId));
+  const soloCoach = owners.size <= 1;
+  return (ev) => {
+    if (ev.needsQualification) return NEEDS_QUALIF_COLOR;
+    return soloCoach ? KIND_COLORS[ev.kind] : ownerColor(ev.ownerId);
   };
 }
 
@@ -199,20 +252,31 @@ export function toCalendarEvent(
   if (entry.kind === "prospect") {
     return {
       ...base,
+      // « scheduled » sur un RDV déjà passé = jamais qualifié.
+      needsQualification:
+        entry.prospect.status === "scheduled" && start.getTime() < Date.now(),
       title: prospectTitle(entry.prospect),
       subtitle: entry.prospect.source || undefined,
-      href: entry.prospect.convertedClientId
-        ? `/clients/${entry.prospect.convertedClientId}`
-        : undefined,
     };
   }
 
   if (entry.kind === "client") {
+    // On ne signale que ce qui est CERTAIN depuis le front : le rappel coupé
+    // (drapeau explicite) et l'absence d'email (l'edge client-rdv-reminder
+    // envoie le rappel de la veille par email). Le push de 2 h avant dépend
+    // d'un abonnement que le front ne charge pas — on ne prétend donc pas
+    // qu'« aucun rappel » ne partira.
+    const silent =
+      entry.followUp.notifyClient === false
+        ? "Rappels coupés pour ce RDV"
+        : !entry.client.email
+          ? "Pas d'email : pas de rappel la veille"
+          : undefined;
     return {
       ...base,
+      silentReason: silent,
       title: clientTitle(entry.client),
       subtitle: entry.followUp.type || undefined,
-      href: `/clients/${entry.client.id}`,
     };
   }
 
@@ -228,7 +292,6 @@ export function toCalendarEvent(
     allDay: true,
     title: `${entry.due.stepIconEmoji} ${name || "Client"}`,
     subtitle: entry.due.stepShortTitle,
-    href: `/clients/${entry.due.client.id}`,
   };
 }
 

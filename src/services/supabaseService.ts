@@ -146,6 +146,8 @@ type FollowUpRow = {
   due_date: string;
   /** Agenda V2 (2026-07-27) : NULL = duree par defaut du coach. */
   duration_min?: number | null;
+  /** false = RDV modifie en silence, aucun rappel au client. */
+  notify_client?: boolean | null;
   type: string;
   status: FollowUp["status"];
   program_title: string;
@@ -494,6 +496,7 @@ function mapFollowUp(row: FollowUpRow): FollowUp {
     clientName: row.client_name,
     dueDate: row.due_date,
     durationMin: row.duration_min ?? undefined,
+    notifyClient: row.notify_client ?? undefined,
     type: row.type,
     status: row.status,
     programTitle: row.program_title,
