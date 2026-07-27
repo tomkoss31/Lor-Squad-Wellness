@@ -112,7 +112,7 @@ export function AgendaMonthGrid({
         on sort le détail en dessous — comme TimeTree, Google et Apple.
         Refonte validée par Thomas le 2026-07-27. */}
     <div className="agenda-week-mobile">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
         {DAY_LABELS.map((l) => (
           <div
             key={l}
@@ -129,7 +129,7 @@ export function AgendaMonthGrid({
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 2, marginBottom: 6 }}>
         {days.map((d) => {
           const list = eventsByDay.get(d.toDateString()) ?? [];
           const inMonth = d.getMonth() === displayedMonth;
@@ -213,7 +213,7 @@ export function AgendaMonthGrid({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
           borderBottom: "1px solid var(--ls-border)",
         }}
       >
@@ -236,7 +236,7 @@ export function AgendaMonthGrid({
       </div>
 
       {/* 6 semaines × 7 jours */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
         {days.map((d, idx) => {
           const dayEvents = eventsByDay.get(d.toDateString()) ?? [];
           const shown = dayEvents.slice(0, MAX_CHIPS_PER_DAY);
@@ -266,6 +266,8 @@ export function AgendaMonthGrid({
               title={onSelectDay ? "Ouvrir cette semaine" : undefined}
               style={{
                 minHeight: 96,
+                minWidth: 0,
+                overflow: "hidden",
                 padding: 5,
                 borderLeft: idx % 7 === 0 ? "none" : "1px solid var(--ls-border)",
                 borderTop: idx >= 7 ? "1px solid var(--ls-border)" : "none",

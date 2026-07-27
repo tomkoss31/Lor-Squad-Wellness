@@ -21,6 +21,8 @@ import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
 import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
 import { useClubShifts } from "../features/agenda/useClubShifts";
+import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
+import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import {
   toCalendarEvents,
   startOfWeekMonday,
@@ -202,6 +204,10 @@ export function AgendaPage() {
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
   /** Heure cliquée dans la grille semaine → pré-remplit le formulaire. */
   const [prefillRdvDate, setPrefillRdvDate] = useState<Date | null>(null);
+  /** RDV client ouvert depuis le calendrier (feuille d'action, 2026-07-27). */
+  const [clientRdv, setClientRdv] = useState<{ client: Client; followUp: FollowUp | null } | null>(null);
+  /** Replanification du RDV client ouvert. */
+  const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
 
   useEffect(() => {
@@ -519,10 +525,12 @@ export function AgendaPage() {
         setOpenProtocol(entry.due);
         return;
       }
-      // Suivi client : pas de modale dédiée, la fiche client EST la destination.
-      navigate(`/clients/${entry.client.id}`);
+      // Suivi client : feuille d'action sur place (2026-07-27). C'était la
+      // dernière branche qui éjectait vers la fiche — et la majoritaire :
+      // 44 des 46 RDV à venir en base.
+      setClientRdv({ client: entry.client, followUp: entry.followUp });
     },
-    [navigate],
+    [],
   );
 
   // Couleur d'un événement : le TYPE quand un seul coach est affiché (sinon
@@ -1531,6 +1539,36 @@ export function AgendaPage() {
           }}
         />
       )}
+
+      {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
+      {clientRdv ? (
+        <ClientRdvSheet
+          client={clientRdv.client}
+          followUp={clientRdv.followUp}
+          canEdit={
+            currentUser?.role === "admin" ||
+            clientRdv.client.distributorId === currentUser?.id
+          }
+          onClose={() => setClientRdv(null)}
+          onReschedule={() => {
+            setRescheduleClient(clientRdv.client);
+            setClientRdv(null);
+          }}
+        />
+      ) : null}
+
+      {/* Replanification — passe par updateClientSchedule (reprogramme au lieu
+          de faire disparaître le client de l'agenda). */}
+      {rescheduleClient ? (
+        <EditScheduleModal
+          client={rescheduleClient}
+          onClose={() => setRescheduleClient(null)}
+          onSaved={() => {
+            setRescheduleClient(null);
+            pushToast({ tone: "success", title: "Rendez-vous mis à jour" });
+          }}
+        />
+      ) : null}
 
       {/* Détail prospect */}
       {detailProspect && (

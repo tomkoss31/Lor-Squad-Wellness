@@ -426,7 +426,7 @@ export function AgendaWeekGrid({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `52px repeat(7, 1fr)`,
+            gridTemplateColumns: `52px repeat(7, minmax(0, 1fr))`,
             borderBottom: "1px solid var(--ls-border)",
           }}
         >
@@ -474,7 +474,7 @@ export function AgendaWeekGrid({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: `52px repeat(7, 1fr)`,
+              gridTemplateColumns: `52px repeat(7, minmax(0, 1fr))`,
               borderBottom: "1px solid var(--ls-border)",
               background: "color-mix(in srgb, var(--ls-text-hint) 4%, transparent)",
             }}
@@ -519,7 +519,7 @@ export function AgendaWeekGrid({
             style={{
               position: "relative",
               display: "grid",
-              gridTemplateColumns: `52px repeat(7, 1fr)`,
+              gridTemplateColumns: `52px repeat(7, minmax(0, 1fr))`,
             }}
           >
             {/* Ligne de l'heure courante */}
