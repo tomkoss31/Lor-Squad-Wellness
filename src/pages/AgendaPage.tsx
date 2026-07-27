@@ -19,6 +19,7 @@ import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
 import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
+import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
 import {
   toCalendarEvents,
   startOfWeekMonday,
@@ -38,8 +39,8 @@ type EntityFilter = "all" | "clients" | "prospects" | "followups";
 // entrées, elles ne peuvent donc pas diverger.
 type AgendaEntry = AgendaEntryBase;
 
-/** Vue courante : la liste historique, ou la grille semaine. */
-type AgendaView = "list" | "week";
+/** Vue courante : la liste historique, la grille semaine, ou le mois. */
+type AgendaView = "list" | "week" | "month";
 const AGENDA_VIEW_KEY = "ls-agenda-view";
 
 function startOfDay(d: Date): Date {
@@ -147,7 +148,8 @@ export function AgendaPage() {
   // aujourd'hui, on ne change le repère de personne sans qu'il le demande.
   const [view, setView] = useState<AgendaView>(() => {
     try {
-      return localStorage.getItem(AGENDA_VIEW_KEY) === "week" ? "week" : "list";
+      const stored = localStorage.getItem(AGENDA_VIEW_KEY);
+      return stored === "week" || stored === "month" ? stored : "list";
     } catch {
       return "list";
     }
@@ -161,12 +163,13 @@ export function AgendaPage() {
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeekMonday(new Date()));
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
-  const effectiveDateFilter: DateFilter = view === "week" ? "all" : dateFilter;
+  const isCalendarView = view === "week" || view === "month";
+  const effectiveDateFilter: DateFilter = isCalendarView ? "all" : dateFilter;
   // Idem pour le statut. Le défaut de la liste est « À venir » — appliqué à un
   // CALENDRIER, il vidait toute semaine passée : un RDV honoré (statut « fait »
   // ou « converti ») disparaissait de la case où il avait eu lieu. Un agenda
   // doit montrer ce qui s'est passé, pas seulement ce qui reste à faire.
-  const effectiveStatusFilter: StatusFilter = view === "week" ? "all" : statusFilter;
+  const effectiveStatusFilter: StatusFilter = isCalendarView ? "all" : statusFilter;
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
   const [agendaFilter, setAgendaFilter] = useState<string>(() => {
@@ -435,6 +438,18 @@ export function AgendaPage() {
       return next;
     });
   }, []);
+  const shiftMonth = useCallback((direction: 1 | -1) => {
+    setWeekAnchor((prev) => {
+      // On se cale sur le 1er avant de décaler : sinon un 31 janvier + 1 mois
+      // atterrit en mars, et la navigation saute un mois.
+      const next = new Date(prev.getFullYear(), prev.getMonth() + direction, 1);
+      return next;
+    });
+  }, []);
+  const monthLabel = useMemo(() => {
+    const label = weekAnchor.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [weekAnchor]);
   const weekRangeLabel = useMemo(() => {
     const monday = startOfWeekMonday(weekAnchor);
     const sunday = new Date(monday);
@@ -1048,6 +1063,7 @@ export function AgendaPage() {
           {([
             { key: "list" as AgendaView, label: "Liste" },
             { key: "week" as AgendaView, label: "Semaine" },
+            { key: "month" as AgendaView, label: "Mois" },
           ]).map((v) => {
             const active = view === v.key;
             return (
@@ -1074,9 +1090,9 @@ export function AgendaPage() {
             );
           })}
         </div>
-        {view === "week" ? (
+        {isCalendarView ? (
           <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
-            Le filtre Période ne s&apos;applique qu&apos;à la liste.
+            Les filtres Période et Statut ne s&apos;appliquent qu&apos;à la liste.
           </span>
         ) : null}
       </div>
@@ -1152,9 +1168,38 @@ export function AgendaPage() {
         </div>
       </div>
 
-      {/* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════════
-          Même moteur d'entrées que la liste — seul le dessin change. */}
-      {view === "week" ? (
+      {/* ═══ Vue mois (Agenda V2, LOT 6.5) ═════════════════════════════════
+          Répond à « ma semaine du 12 est-elle chargée ? », pas à « je pose un
+          RDV à 14h30 » : on clique un jour pour basculer en semaine. */}
+      {view === "month" ? (
+        <div data-tour-id="agenda-month">
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
+              {monthLabel}
+            </div>
+            <button type="button" onClick={() => setWeekAnchor(new Date())} style={weekNavBtnStyle}>
+              Aujourd&apos;hui
+            </button>
+            <button type="button" onClick={() => shiftMonth(-1)} aria-label="Mois précédent" style={weekNavBtnStyle}>‹</button>
+            <button type="button" onClick={() => shiftMonth(1)} aria-label="Mois suivant" style={weekNavBtnStyle}>›</button>
+          </div>
+          <AgendaMonthGrid
+            events={calendarEvents}
+            anchorDate={weekAnchor}
+            ownerName={ownerName}
+            ownerColor={ownerColor}
+            onSelectEvent={(ev) => {
+              if (ev.href) navigate(ev.href);
+            }}
+            onSelectDay={(day) => {
+              setWeekAnchor(startOfWeekMonday(day));
+              setView("week");
+            }}
+          />
+        </div>
+      ) : /* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════
+          Même moteur d'entrées que la liste — seul le dessin change. */
+      view === "week" ? (
         <div data-tour-id="agenda-week">
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>

@@ -249,6 +249,22 @@ export function weekDays(d: Date): Date[] {
   });
 }
 
+/**
+ * Les 42 jours d'une grille mensuelle (6 semaines × 7 jours), lundi en tête.
+ * Six semaines couvrent tous les cas — y compris un mois de 31 jours qui
+ * commence un dimanche — donc la grille ne change jamais de hauteur d'un mois
+ * à l'autre : rien ne saute à l'écran quand on navigue.
+ */
+export function monthGridDays(anchor: Date): Date[] {
+  const firstOfMonth = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const start = startOfWeekMonday(firstOfMonth);
+  return Array.from({ length: 42 }, (_, i) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    return day;
+  });
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
