@@ -30,6 +30,7 @@ import { useClientLiveData } from '../hooks/useClientLiveData'
 import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
 // Refonte identité PWA v2 (chantier 2026-07) — montée derrière le flag `?v2=1`.
 import { PwaClientApp } from '../features/client-pwa/PwaClientApp'
+import { BbcClientApp } from '../features/bbc/BbcClientApp'
 import '../styles/pwa2.css'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
@@ -605,10 +606,57 @@ export function ClientAppPage() {
   if (!data)
     return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
 
+  // ─── Calculs métriques ─────────────────────────────────────────────────
+  const metrics = data.metrics_history ?? []
+  const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
+  const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
+
+  // ── Mode BBC (chantier 2026-07-24) ─────────────────────────────────────
+  // Aiguillage PAR CLIENT : une EBE BBC bascule la PWA sur l'app membre BBC.
+  // Aperçu via ?bbc=1.
+  // ⚠️ Cet aiguillage doit passer AVANT le tour d'onboarding et l'étape « point
+  // de départ » classiques : un membre BBC a SON propre écran d'entrée
+  // (BbcMemberEntry) et sa pesée se fait au club. Sinon il recevait « Cette app
+  // est ton espace personnel… », hors sujet pour lui.
+  const isBbcClient =
+    (typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('bbc') === '1') ||
+    Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
+  if (isBbcClient) {
+    const bbcFirstW = typeof first?.weight === 'number' && first.weight > 0 ? first.weight : null
+    const bbcLastW = typeof latest?.weight === 'number' && latest.weight > 0 ? latest.weight : null
+    const bbcDelta = bbcFirstW != null && bbcLastW != null ? Math.round((bbcLastW - bbcFirstW) * 10) / 10 : null
+    return (
+      <BbcClientApp
+        clientName={data.client_first_name || 'toi'}
+        coachName={data.coach_name || 'ton coach'}
+        programTitle={data.program_title}
+        token={token as string}
+        visitsCount={(liveData as { visits_count?: number } | null)?.visits_count ?? 0}
+        weightDeltaKg={bbcDelta}
+        currentWeight={bbcLastW}
+        nextRdvDate={data.next_follow_up ?? null}
+        nextRdvType={(liveData?.next_follow_up as { type?: string | null } | null)?.type ?? null}
+        metrics={metrics as Array<{ date?: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
+        measurements={(liveData?.measurements ?? []) as Array<{ measured_at?: string; waist_cm?: number; hips_cm?: number; thigh_cm?: number; arm_cm?: number }>}
+        heartsCount={(liveData as { hearts_count?: number } | null)?.hearts_count ?? 0}
+        clientId={data.client_id}
+        coachId={data.coach_id ?? undefined}
+        coachAdvice={liveData?.coach_advice ?? null}
+        card={(liveData as { member_card?: { type: number; used: number; remaining: number; expires_at: string | null } | null } | null)?.member_card ?? null}
+        entrySeen={(liveData as { bbc_entry_seen?: boolean } | null)?.bbc_entry_seen}
+        clubSettings={(liveData as { club_settings?: { hearts_bareme?: Record<string, string>; open_hours?: string; club_name?: string | null } | null } | null)?.club_settings ?? null}
+      />
+    )
+  }
+
   // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
   // 1er login. onboardingDone === false strictement (null = pas encore
   // determine, ne pas afficher tant qu on sait pas).
-  const showOnboardingTour = onboardingDone === false && token
+  // `dataSource !== 'unknown'` : on attend que la donnée live soit résolue,
+  // sinon un membre BBC verrait le tour classique le temps que `ebe_bbc`
+  // arrive (flash d'un écran qui ne le concerne pas).
+  const showOnboardingTour = onboardingDone === false && token && dataSource !== 'unknown'
   if (showOnboardingTour) {
     return (
       <ClientOnboardingTour
@@ -654,11 +702,6 @@ export function ClientAppPage() {
     )
   }
 
-  // ─── Calculs métriques ─────────────────────────────────────────────────
-  const metrics = data.metrics_history ?? []
-  const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
-  const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
-
   // ─── Produits recommandés ──────────────────────────────────────────────
   const recoList = data.recommendations ?? []
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
@@ -674,6 +717,8 @@ export function ClientAppPage() {
   // flux périphériques ne sont pas portés en v2 (opt-in push, bannière
   // install PWA, submit parrainage réel, modales message). À supprimer avec
   // ce garde-fou une fois le portage terminé + recette Thomas OK.
+  // (L'aiguillage BBC est plus haut : il doit précéder onboarding et pesée.)
+
   const useLegacyUi =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('v1') === '1'

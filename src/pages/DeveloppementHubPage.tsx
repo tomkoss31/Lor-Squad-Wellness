@@ -95,7 +95,11 @@ const CARDS: HubCard[] = [
     path: "/formation/boite-a-outils",
     accent: "var(--ls-teal)",
     section: "apprendre",
-    requireAcademyPercent: 50,
+    // Verrou « Academy à 50 % » retiré le 2026-07-27 (chantier Simplification,
+    // LOT 4) : on cachait des scripts de vente derrière un tuto d'application.
+    // La boîte à outils est maintenant liée directement depuis le cockpit
+    // La Base Académie (bloc « Aller plus loin »), donc le gate n'aurait de
+    // toute façon plus rien gardé.
   },
   {
     // Glossaire rendu visible (2026-06-22) : raccourci vers la page existante

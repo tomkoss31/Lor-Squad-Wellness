@@ -203,10 +203,10 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes, entryRes, cardRes] = await Promise.all([
       supabase
         .from("clients")
-        .select("current_program, notes, objective, birth_date")
+        .select("current_program, notes, objective, birth_date, ebe_bbc, club_id")
         .eq("id", clientId)
         .maybeSingle(),
 
@@ -255,7 +255,80 @@ serve(async (req) => {
         .select("measured_at, waist, hips, thigh_left, thigh_right, arm_left, arm_right")
         .eq("client_id", clientId)
         .order("measured_at", { ascending: true }),
+
+      // Chantier BBC : compteur de visites du membre (carte de membre PWA).
+      supabase
+        .from("club_visits")
+        .select("*", { count: "exact", head: true })
+        .eq("client_id", clientId),
+
+      // Chantier BBC : cœurs du membre = recos qui ont démarré.
+      // ⚠️ DEUX vocabulaires cohabitent dans `client_referrals.status` : le CRM
+      // écrit 'converted', le flow BBC 'started'. Ne compter que 'started'
+      // laissait le membre à zéro cœur alors que son coach en voyait deux —
+      // même correction que `useBbcHearts.isHeart()` et `noaly` (mode client).
+      supabase
+        .from("client_referrals")
+        .select("*", { count: "exact", head: true })
+        .eq("from_client_id", clientId)
+        .in("status", ["started", "converted"]),
+
+      // Chantier BBC : l'écran d'entrée a-t-il déjà été vu ?
+      supabase
+        .from("client_app_accounts")
+        .select("bbc_entry_seen_at")
+        .eq("token", token)
+        .maybeSingle(),
+
+      // Chantier BBC : la carte de membre la plus récente (10 ou 30 visites).
+      // On ne filtre PAS sur `closed_at is null` : la carte se ferme à la
+      // dernière visite, or c'est précisément le moment de la récompense.
+      // Filtrer masquait la carte pleine et l'app annonçait « pas de carte
+      // active » au lieu de « 10/10 · ton bilan t'attend 🎁 ». Le renouvellement
+      // insère une carte plus récente, l'ordre suffit donc à la remplacer.
+      supabase
+        .from("member_cards")
+        .select("id, card_type, expires_at")
+        .eq("client_id", clientId)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+    // Réglages du club (barème des cœurs, horaires, liens). Le membre n'a pas
+    // de session Supabase : la config ne peut lui parvenir que par ici, sinon
+    // l'app lui répète des promesses en dur que le coach a déjà changées.
+    let clubSettings: Record<string, unknown> | null = null;
+    const clubId = (clientRes as { data?: { club_id?: string | null } | null }).data?.club_id;
+    if (clubId) {
+      const { data: clubRow } = await supabase
+        .from("clubs")
+        .select("name, settings")
+        .eq("id", clubId)
+        .maybeSingle();
+      const row = clubRow as { name?: string | null; settings?: Record<string, unknown> | null } | null;
+      if (row) clubSettings = { ...(row.settings ?? {}), club_name: row.name ?? null };
+    }
+
+    // Visites consommées sur la carte active (pour le solde côté membre).
+    let memberCard: { type: number; used: number; remaining: number; expires_at: string | null; expired: boolean } | null = null;
+    const cardRow = (cardRes as { data?: { id: string; card_type: number; expires_at: string | null } | null }).data;
+    if (cardRow?.id) {
+      const { count: usedCount } = await supabase
+        .from("club_visits")
+        .select("*", { count: "exact", head: true })
+        .eq("card_id", cardRow.id);
+      const used = usedCount ?? 0;
+      memberCard = {
+        type: cardRow.card_type,
+        used,
+        remaining: Math.max(cardRow.card_type - used, 0),
+        expires_at: cardRow.expires_at,
+        // Une carte périmée doit être annoncée au membre, pas affichée comme
+        // un solde encore valable (ses visites ne la consomment plus).
+        expired: Boolean(cardRow.expires_at && new Date(cardRow.expires_at).getTime() <= Date.now()),
+      };
+    }
 
     if (clientRes.error) {
       log("error", "client_select_error", {
@@ -611,6 +684,8 @@ serve(async (req) => {
             objective: (clientRes.data as { objective?: string | null }).objective ?? null,
             // Date de naissance → âge auto-calculé côté front (toujours à jour).
             birth_date: (clientRes.data as { birth_date?: string | null }).birth_date ?? null,
+            // Chantier BBC : aiguillage PWA membre (EBE BBC → app membre BBC).
+            ebe_bbc: (clientRes.data as { ebe_bbc?: boolean | null }).ebe_bbc ?? false,
           }
         : null,
       next_follow_up: followUpRes.data
@@ -633,6 +708,13 @@ serve(async (req) => {
       sport_profile,
       current_intake,
       coach_advice,
+      visits_count: (visitsRes as { count?: number | null }).count ?? 0,
+      hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
+      member_card: memberCard,
+      club_settings: clubSettings,
+      bbc_entry_seen: Boolean(
+        (entryRes as { data?: { bbc_entry_seen_at?: string | null } | null }).data?.bbc_entry_seen_at,
+      ),
       fetched_at: new Date().toISOString(),
     };
 
