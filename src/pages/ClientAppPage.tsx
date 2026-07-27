@@ -28,6 +28,10 @@ import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
 import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
+// Refonte identité PWA v2 (chantier 2026-07) — montée derrière le flag `?v2=1`.
+import { PwaClientApp } from '../features/client-pwa/PwaClientApp'
+import { BbcClientApp } from '../features/bbc/BbcClientApp'
+import '../styles/pwa2.css'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
 // alourdir le bundle initial de ClientAppPage.
@@ -200,7 +204,10 @@ export function ClientAppPage() {
   useEffect(() => {
     if (!liveData || !data) return
     const nextProgramTitle = liveData.client?.current_program ?? data.program_title
-    const nextFollowUpIso = liveData.next_follow_up?.due_date ?? data.next_follow_up
+    // Le fetch live a réussi (liveData présent) → il fait AUTORITÉ, même à null :
+    // un RDV annulé/passé renvoie null côté edge et doit disparaître. Avant, le
+    // `?? snapshot` ré-affichait un RDV fantôme figé (client_app_accounts).
+    const nextFollowUpIso = liveData.next_follow_up?.due_date ?? null
 
     // assessment_history (live) prioritaire sur metrics_history (snapshot).
     // Shape déjà flat compatible (date + weight/bodyFat/muscleMass/hydration/...).
@@ -599,10 +606,57 @@ export function ClientAppPage() {
   if (!data)
     return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
 
+  // ─── Calculs métriques ─────────────────────────────────────────────────
+  const metrics = data.metrics_history ?? []
+  const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
+  const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
+
+  // ── Mode BBC (chantier 2026-07-24) ─────────────────────────────────────
+  // Aiguillage PAR CLIENT : une EBE BBC bascule la PWA sur l'app membre BBC.
+  // Aperçu via ?bbc=1.
+  // ⚠️ Cet aiguillage doit passer AVANT le tour d'onboarding et l'étape « point
+  // de départ » classiques : un membre BBC a SON propre écran d'entrée
+  // (BbcMemberEntry) et sa pesée se fait au club. Sinon il recevait « Cette app
+  // est ton espace personnel… », hors sujet pour lui.
+  const isBbcClient =
+    (typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('bbc') === '1') ||
+    Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
+  if (isBbcClient) {
+    const bbcFirstW = typeof first?.weight === 'number' && first.weight > 0 ? first.weight : null
+    const bbcLastW = typeof latest?.weight === 'number' && latest.weight > 0 ? latest.weight : null
+    const bbcDelta = bbcFirstW != null && bbcLastW != null ? Math.round((bbcLastW - bbcFirstW) * 10) / 10 : null
+    return (
+      <BbcClientApp
+        clientName={data.client_first_name || 'toi'}
+        coachName={data.coach_name || 'ton coach'}
+        programTitle={data.program_title}
+        token={token as string}
+        visitsCount={(liveData as { visits_count?: number } | null)?.visits_count ?? 0}
+        weightDeltaKg={bbcDelta}
+        currentWeight={bbcLastW}
+        nextRdvDate={data.next_follow_up ?? null}
+        nextRdvType={(liveData?.next_follow_up as { type?: string | null } | null)?.type ?? null}
+        metrics={metrics as Array<{ date?: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
+        measurements={(liveData?.measurements ?? []) as Array<{ measured_at?: string; waist_cm?: number; hips_cm?: number; thigh_cm?: number; arm_cm?: number }>}
+        heartsCount={(liveData as { hearts_count?: number } | null)?.hearts_count ?? 0}
+        clientId={data.client_id}
+        coachId={data.coach_id ?? undefined}
+        coachAdvice={liveData?.coach_advice ?? null}
+        card={(liveData as { member_card?: { type: number; used: number; remaining: number; expires_at: string | null } | null } | null)?.member_card ?? null}
+        entrySeen={(liveData as { bbc_entry_seen?: boolean } | null)?.bbc_entry_seen}
+        clubSettings={(liveData as { club_settings?: { hearts_bareme?: Record<string, string>; open_hours?: string; club_name?: string | null } | null } | null)?.club_settings ?? null}
+      />
+    )
+  }
+
   // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
   // 1er login. onboardingDone === false strictement (null = pas encore
   // determine, ne pas afficher tant qu on sait pas).
-  const showOnboardingTour = onboardingDone === false && token
+  // `dataSource !== 'unknown'` : on attend que la donnée live soit résolue,
+  // sinon un membre BBC verrait le tour classique le temps que `ebe_bbc`
+  // arrive (flash d'un écran qui ne le concerne pas).
+  const showOnboardingTour = onboardingDone === false && token && dataSource !== 'unknown'
   if (showOnboardingTour) {
     return (
       <ClientOnboardingTour
@@ -619,9 +673,17 @@ export function ClientAppPage() {
   // départ". FAIL-OPEN : on n'affiche que si baseline_at vaut strictement
   // null ET que la donnée live est résolue (dataSource != unknown) — toute
   // incertitude (undefined / 'error' / live pas prêt) → on n'affiche pas.
+  // Élargi (2026-07-24) : un client qui a DÉJÀ un vrai bilan (poids dans
+  // metrics_history OU dans body_scan d'un assessment) ou une mensuration ne
+  // doit JAMAIS revoir « ton point de départ ». Évite de re-demander la pesée à
+  // quelqu'un qui a déjà des données.
   const hasBaseline =
     (data.metrics_history ?? []).some((m) => Number((m as Record<string, number>).weight) > 0) ||
-    ((liveData?.measurements?.length ?? 0) > 0)
+    ((liveData?.measurements?.length ?? 0) > 0) ||
+    (liveData?.assessment_history ?? []).some((a) => {
+      const row = a as { weight?: unknown; body_scan?: { weight?: unknown } | null }
+      return Number(row.weight) > 0 || Number(row.body_scan?.weight) > 0
+    })
   const showBaselineStep =
     Boolean(token) &&
     onboardingDone === true &&
@@ -640,11 +702,6 @@ export function ClientAppPage() {
     )
   }
 
-  // ─── Calculs métriques ─────────────────────────────────────────────────
-  const metrics = data.metrics_history ?? []
-  const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
-  const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
-
   // ─── Produits recommandés ──────────────────────────────────────────────
   const recoList = data.recommendations ?? []
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
@@ -653,6 +710,75 @@ export function ClientAppPage() {
 
   // Refonte v2 (2026-04-25) : metricCards inline retiré au profit de
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
+
+  // ── Refonte identité PWA v2 (chantier 2026-07) ─────────────────────────
+  // La nouvelle identité (lime/noir/Anton) est désormais le DÉFAUT. L'ancienne
+  // UI reste accessible via `?v1=1` comme filet de sécurité tant que quelques
+  // flux périphériques ne sont pas portés en v2 (opt-in push, bannière
+  // install PWA, submit parrainage réel, modales message). À supprimer avec
+  // ce garde-fou une fois le portage terminé + recette Thomas OK.
+  // (L'aiguillage BBC est plus haut : il doit précéder onboarding et pesée.)
+
+  const useLegacyUi =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('v1') === '1'
+  if (!useLegacyUi) {
+    const firstW = typeof first?.weight === 'number' ? first.weight : null
+    const lastW = typeof latest?.weight === 'number' ? latest.weight : null
+    const weightDeltaKg =
+      firstW != null && lastW != null ? Math.round((lastW - firstW) * 10) / 10 : null
+    const birthDate = liveData?.client?.birth_date ?? null
+    const ageYears = birthDate ? calculateAge(birthDate) : null
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v !== 0 ? v : undefined)
+    const metricsV2 = metrics.map((m) => {
+      const mm = m as Record<string, number> & { date: string }
+      return {
+        date: mm.date,
+        weight: num(mm.weight),
+        bodyFat: num(mm.bodyFat),
+        muscleMass: num(mm.muscleMass),
+        hydration: num(mm.hydration),
+        visceralFat: num(mm.visceralFat),
+        metabolicAge: num(mm.metabolicAge),
+      }
+    })
+    const productsV2 = (liveData?.current_products ?? []).map((p) => ({
+      id: p.id,
+      product_name: p.product_name,
+      note_metier: p.note_metier,
+      quantite_label: p.quantite_label,
+    }))
+    const sportAlertsV2 = (liveData?.sport_alerts ?? []).map((a) => ({
+      id: a.id,
+      title: a.title,
+      detail: a.detail,
+      advice: a.advice,
+    }))
+    const fmtDate = (iso?: string | null) =>
+      iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined
+    return (
+      <PwaClientApp
+        token={token as string}
+        clientId={data.client_id}
+        coachId={data.coach_id}
+        clientName={data.client_first_name || 'toi'}
+        coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+        assessmentsCount={data.assessments_count ?? metrics.length}
+        weightDeltaKg={weightDeltaKg}
+        nextFollowUp={data.next_follow_up}
+        programTitle={data.program_title}
+        ageYears={ageYears}
+        metrics={metricsV2}
+        measurements={liveData?.measurements ?? []}
+        products={productsV2}
+        coachAdvice={liveData?.coach_advice}
+        sportAlerts={sportAlertsV2}
+        lastAdviceDate={fmtDate(latest?.date)}
+        objective={liveData?.client?.objective ?? undefined}
+        startDate={fmtDate(first?.date)}
+      />
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>

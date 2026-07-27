@@ -6,12 +6,13 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
-import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
+import { getFirstAssessment, normalizeDateTimeLocalInputValue, serializeDateTimeForStorage } from "../lib/calculations";
 import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { QuantityStepper } from "../components/assessment/QuantityStepper";
 import { PROGRAM_CHOICES } from "../data/programs";
 import { refreshClientRecap } from "../services/supabaseService";
+import { formatMultiValue, parseMultiInput, normalizeMultiValue } from "../lib/multiChoice";
 // import { getSupabaseClient } from "../services/supabaseClient"; // remplacé par updateClientInfo (2026-05-22)
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
@@ -130,9 +131,9 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     proteinEachMeal: questionnaire.proteinEachMeal ?? "",
     sugaryProducts: questionnaire.sugaryProducts ?? "",
     snackingFrequency: questionnaire.snackingFrequency ?? "",
-    snackingMoment: questionnaire.snackingMoment ?? "",
+    snackingMoment: normalizeMultiValue(questionnaire.snackingMoment),
     cravingsPreference: questionnaire.cravingsPreference ?? "",
-    snackingTrigger: questionnaire.snackingTrigger ?? "",
+    snackingTrigger: normalizeMultiValue(questionnaire.snackingTrigger),
     waterIntake: questionnaire.waterIntake ?? 0,
     drinksCoffee: questionnaire.drinksCoffee ?? "",
     coffeePerDay: questionnaire.coffeePerDay ?? 0,
@@ -146,8 +147,10 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     energyLevel: questionnaire.energyLevel ?? "",
     pastAttempts: questionnaire.pastAttempts ?? "",
     hardestPart: questionnaire.hardestPart ?? "",
-    mainBlocker: questionnaire.mainBlocker ?? "",
-    objectiveFocus: questionnaire.objectiveFocus ?? "",
+    // Champs multi (2026-07-16) : normalisés pour absorber les anciens bilans
+    // enregistrés en string.
+    mainBlocker: normalizeMultiValue(questionnaire.mainBlocker),
+    objectiveFocus: normalizeMultiValue(questionnaire.objectiveFocus),
     targetWeight: questionnaire.targetWeight,
     motivation: questionnaire.motivation ?? 0,
     desiredTimeline: questionnaire.desiredTimeline ?? "",
@@ -394,7 +397,10 @@ export function EditInitialAssessmentPage() {
 
     const updatedAssessment: AssessmentRecord = {
       ...targetAssessment,
-      date: assessmentDate || normalizeDateTimeLocalInputValue(new Date().toISOString()),
+      // Offset OBLIGATOIRE avant stockage (colonnes timestamptz) : la valeur
+      // datetime-local est naïve → serializeDateTimeForStorage y ajoute l'offset
+      // Paris. Sans ça, dérive de +1/+2h à chaque édition (règle CLAUDE.md).
+      date: serializeDateTimeForStorage(assessmentDate || new Date().toISOString()),
       programTitle: programTitle.trim() || targetAssessment.programTitle,
       summary: summary.trim() || buildFallbackSummary(isInitialAssessment),
       notes,
@@ -742,9 +748,12 @@ export function EditInitialAssessmentPage() {
               <TextField label="Proteines a chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
               <TextField label="Produits sucres" value={questionnaire.sugaryProducts} onChange={(value) => updateQuestionnaire("sugaryProducts", value)} />
               <TextField label="Frequence du grignotage" value={questionnaire.snackingFrequency} onChange={(value) => updateQuestionnaire("snackingFrequency", value)} />
-              <TextField label="Moment du grignotage" value={questionnaire.snackingMoment} onChange={(value) => updateQuestionnaire("snackingMoment", value)} />
+              {/* Multi depuis 2026-07-16 : édités ici en liste séparée par des
+                  virgules (cet écran est full texte libre). formatMultiValue
+                  affiche aussi correctement les anciens bilans en string. */}
+              <TextField label="Moment du grignotage (séparer par des virgules)" value={formatMultiValue(questionnaire.snackingMoment)} onChange={(value) => updateQuestionnaire("snackingMoment", parseMultiInput(value))} />
               <TextField label="Type d'envie" value={questionnaire.cravingsPreference} onChange={(value) => updateQuestionnaire("cravingsPreference", value)} />
-              <TextField label="Declencheur" value={questionnaire.snackingTrigger} onChange={(value) => updateQuestionnaire("snackingTrigger", value)} />
+              <TextField label="Causes du grignotage (séparer par des virgules)" value={formatMultiValue(questionnaire.snackingTrigger)} onChange={(value) => updateQuestionnaire("snackingTrigger", parseMultiInput(value))} />
               <MetricField label="Eau / jour (L)" value={questionnaire.waterIntake} onChange={(value) => updateQuestionnaire("waterIntake", Number(value))} />
               <TextField label="Cafe" value={questionnaire.drinksCoffee} onChange={(value) => updateQuestionnaire("drinksCoffee", value)} />
               <MetricField label="Cafes / jour" value={questionnaire.coffeePerDay} onChange={(value) => updateQuestionnaire("coffeePerDay", Number(value))} />
@@ -761,7 +770,7 @@ export function EditInitialAssessmentPage() {
               <TextField label="Activite physique" value={questionnaire.physicalActivity} onChange={(value) => updateQuestionnaire("physicalActivity", value)} />
               <TextField label="Type d'activité" value={questionnaire.activityType} onChange={(value) => updateQuestionnaire("activityType", value)} />
               <MetricField label="Seances / semaine" value={questionnaire.sessionsPerWeek} onChange={(value) => updateQuestionnaire("sessionsPerWeek", Number(value))} />
-              <TextField label="Objectif reformule" value={questionnaire.objectiveFocus} onChange={(value) => updateQuestionnaire("objectiveFocus", value)} />
+              <TextField label="Objectifs (séparer par des virgules)" value={formatMultiValue(questionnaire.objectiveFocus)} onChange={(value) => updateQuestionnaire("objectiveFocus", parseMultiInput(value))} />
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
               <div className="space-y-2 md:col-span-2">
@@ -801,7 +810,7 @@ export function EditInitialAssessmentPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <AreaField label="Tentatives passees" value={questionnaire.pastAttempts} onChange={(value) => updateQuestionnaire("pastAttempts", value)} rows={3} />
               <AreaField label="Le plus difficile" value={questionnaire.hardestPart} onChange={(value) => updateQuestionnaire("hardestPart", value)} rows={3} />
-              <AreaField label="Blocage principal" value={questionnaire.mainBlocker} onChange={(value) => updateQuestionnaire("mainBlocker", value)} rows={3} />
+              <AreaField label="Blocages (séparer par des virgules)" value={formatMultiValue(questionnaire.mainBlocker)} onChange={(value) => updateQuestionnaire("mainBlocker", parseMultiInput(value))} rows={3} />
               <AreaField label="Produits optionnels déjà pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
             </div>
           </SectionCard>

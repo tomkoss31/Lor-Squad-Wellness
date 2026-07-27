@@ -47,7 +47,13 @@ type MentalLoad = "light" | "ok" | "heavy" | "crushed";
 type JobFeeling = "great" | "valued" | "routine" | "demotivated" | "lost";
 type SocialCircle = "family" | "couple" | "friends" | "alone";
 type SportFrequency = "never" | "1x" | "2-3x" | "4+x";
-type BudgetTier = "2" | "4" | "8" | "10" | "15+";
+/**
+ * Paliers refondus le 2026-07-17 (cf. BUDGETS). Anciens : "2"|"4"|"8"|"10"|"15+".
+ * Les bilans déjà enregistrés conservent leurs anciennes valeurs dans le jsonb
+ * `payload` — c'est sans conséquence : plus aucun code ne fait de switch dessus
+ * (le scoring ne s'en sert plus, cf. bilanOnlineScoring.ts).
+ */
+type BudgetTier = "3" | "6" | "9" | "12" | "15+";
 type ContactPref = "phone" | "email" | "whatsapp";
 
 interface FormState {
@@ -685,8 +691,20 @@ const inputStyle: CSSProperties = {
 };
 
 function ChoiceCard({
-  emoji, label, selected, onClick, full,
-}: { emoji: string; label: string; selected: boolean; onClick: () => void; full?: boolean }) {
+  emoji, label, selected, onClick, full, hint,
+}: {
+  emoji: string;
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+  full?: boolean;
+  /**
+   * Sous-libellé d'ancrage (2026-07-17). Sert à rendre une question ÉDUCATIVE :
+   * un montant seul ("3 €") ne veut rien dire, "le prix d'un jambon-beurre" si.
+   * Utilisé par la question budget — cf. BUDGETS.
+   */
+  hint?: string;
+}) {
   return (
     <div
       onClick={onClick}
@@ -715,6 +733,18 @@ function ChoiceCard({
       }}>
         {label}
       </span>
+      {hint ? (
+        <span style={{
+          display: "block",
+          marginTop: 4,
+          fontFamily: PUBLIC_FONTS.body,
+          fontSize: 11,
+          lineHeight: 1.3,
+          color: "var(--cream-muted)",
+        }}>
+          {hint}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1239,11 +1269,25 @@ function StepFinalize({ form, update }: StepProps) {
     { key: "2-3x", emoji: "💪", label: "2 à 3× par semaine" },
     { key: "4+x", emoji: "🔥", label: "4× et +" },
   ];
-  const BUDGETS: { key: BudgetTier; emoji: string; label: string; full?: boolean }[] = [
-    { key: "2", emoji: "💰", label: "2 €" },
-    { key: "4", emoji: "💰", label: "4 €" },
-    { key: "8", emoji: "💰", label: "8 €" },
-    { key: "10", emoji: "💰", label: "10 €" },
+  // Refonte 2026-07-17 — question ÉDUCATIVE.
+  //
+  // AVANT : paliers 2/4/8/10/15+ sans repère. Deux problèmes :
+  //  1. « 2 € » n'existe pas dans la vraie vie (la moyenne française est de
+  //     5,80-7 €/jour) — c'était une réponse défensive, pas un budget. On l'a
+  //     donc supprimé.
+  //  2. Un montant nu ne veut rien dire. Ancré ("le prix d'un jambon-beurre"),
+  //     la personne se situe toute seule et répond honnêtement.
+  //
+  // Repères vérifiés : jambon-beurre 3,04 € (indice Gira Conseil, l'indice
+  // officiel du pouvoir d'achat FR) · moyenne alimentaire 5,80-7 €/j (dérivé
+  // INSEE, 394 €/mois/ménage) · formule boulangerie 8-12 €.
+  // Le croissant est volontairement absent : sources contradictoires (0,90 à
+  // 1,50 €), on n'affiche pas un chiffre qu'on ne peut pas tenir.
+  const BUDGETS: { key: BudgetTier; emoji: string; label: string; hint?: string; full?: boolean }[] = [
+    { key: "3", emoji: "🥖", label: "3 €", hint: "le prix d'un jambon-beurre" },
+    { key: "6", emoji: "🇫🇷", label: "6 €", hint: "la moyenne en France" },
+    { key: "9", emoji: "🥪", label: "9 €", hint: "une formule boulangerie" },
+    { key: "12", emoji: "🍽️", label: "12 €", hint: "un plat du jour" },
     { key: "15+", emoji: "💎", label: "15 € et +", full: true },
   ];
   const CONTACT: { key: ContactPref; emoji: string; label: string }[] = [
@@ -1296,11 +1340,14 @@ function StepFinalize({ form, update }: StepProps) {
         ))}
       </div>
 
-      <label style={sectionLabel}>💰 Budget alimentaire / jour</label>
+      {/* On demande un FAIT ("tu dépenses combien"), pas un engagement ("ton
+          budget") : la 2e formulation sonne comme « combien tu es prêt à me
+          donner » et déclenche une réponse défensive. */}
+      <label style={sectionLabel}>💰 Aujourd'hui, tu dépenses combien pour manger sur une journée ?</label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {BUDGETS.map((b) => (
           <ChoiceCard
-            key={b.key} emoji={b.emoji} label={b.label} full={b.full}
+            key={b.key} emoji={b.emoji} label={b.label} hint={b.hint} full={b.full}
             selected={form.daily_food_budget === b.key}
             onClick={() => update("daily_food_budget", b.key)}
           />

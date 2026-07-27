@@ -17,12 +17,18 @@ import { RankSelectorModal } from "../rank/RankSelectorModal";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
-import { BUSINESS_SHORTCUTS } from "./businessShortcuts";
-import { useState } from "react";
+import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
+import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
+import { useAppLevel } from "../../hooks/useAppLevel";
+import type { FeatureKey } from "../../config/appVisibility";
 import { NoalyFab } from "../noaly/NoalyFab";
 import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
+import { useBbcMode } from "../../features/bbc/useBbcMode";
+import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
+// Chargé à la demande : un coach classique ne télécharge pas tout le module BBC.
+const BbcApp = lazy(() => import("../../features/bbc/BbcApp").then((m) => ({ default: m.BbcApp })));
 
 // V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
 // des emojis (decoratifs aria-hidden) directement dans le tableau
@@ -40,6 +46,9 @@ export function AppLayout() {
   useSessionTracker();
   // Badge 🎯 CRM : leads à traiter (wagon 2 chantier 1, 2026-06-10).
   const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true, currentUser?.role === "admin");
+  // Niveau de visibilité (chantier Simplification 2026-07-27) — filtre les
+  // menus, jamais les routes. Cf. src/config/appVisibility.ts.
+  const { can } = useAppLevel();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
@@ -75,6 +84,9 @@ export function AppLayout() {
   const { activeTour, closeTour } = useActiveTour();
   // Direction 2 (2026-04-28) : QuizModal idem au niveau AppLayout.
   const { activeQuiz, closeQuiz } = useActiveQuiz();
+  // Chantier BBC (2026-07-24) : état du mode BBC (hook parallèle, ne touche
+  // pas AppContext). Appelé avant le guard pour respecter les règles des hooks.
+  const bbc = useBbcMode(currentUser?.id, currentUser?.role === "admin");
 
   if (!currentUser) {
     return null;
@@ -94,7 +106,8 @@ export function AppLayout() {
   // pas de fiches clients, pas de PV, pas de team. Juste rentab perso +
   // équipe (visible passive) + Académie + messagerie + paramètres.
   const isPassive = currentUser.isPassiveSupervisor === true;
-  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string; section?: string }> = isPassive
+  type NavItem = { label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string; section?: string; feature?: FeatureKey };
+  const allNavigation: NavItem[] = isPassive
     ? [
         { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
         { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
@@ -105,18 +118,34 @@ export function AppLayout() {
         // Refonte nav (2026-06-13) : la sidebar = le quotidien de la relation
         // client. FLEX + Suivi PV (consultation rare, décision Thomas) sortent
         // de la sidebar et vivent dans le hub /outils (page + déroulé).
-        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
-        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients", section: "Clients & relation" },
-        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & relation" },
-        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Clients & relation" },
-        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Clients & relation" },
-        { label: "Mon business", path: "/outils", emoji: "💼", badge: 0, tourId: "nav-outils", section: "Mon espace" },
+        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote", feature: "nav.copilote" },
+        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients", section: "Clients & relation", feature: "nav.clients" },
+        { label: "CRM", path: "/crm", emoji: "🎯", badge: crmBadgeCount, section: "Clients & relation", feature: "nav.crm" },
+        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda", section: "Clients & relation", feature: "nav.agenda" },
+        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie", section: "Clients & relation", feature: "nav.messages" },
+        { label: "Mon business", path: "/outils", emoji: "💼", badge: 0, tourId: "nav-outils", section: "Mon espace", feature: "nav.business" },
         ...(currentUser.role === "admin"
-          ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace" }]
+          ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true, section: "Mon espace", feature: "nav.equipe" as FeatureKey }]
           : []),
-        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement", section: "Mon espace" },
-        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0, section: "Mon espace" },
+        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement", section: "Mon espace", feature: "nav.developpement" },
+        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0, section: "Mon espace", feature: "nav.parametres" },
       ];
+
+  // Chantier Simplification (2026-07-27) — LOT 2. Deux filtres se composent :
+  //   • le RÔLE (déjà appliqué ci-dessus : « Mon équipe » = admin)
+  //   • le NIVEAU d'app (essentiel / complet), indépendant du rôle — Mélanie
+  //     est admin ET en essentiel : elle garde « Mon équipe », pas le reste.
+  // Un item sans `feature` est toujours visible (vue superviseur passif).
+  // Rappel : ça masque le MENU, la route reste ouverte pour tout le monde.
+  const navigation = allNavigation.filter((item) => !item.feature || can(item.feature));
+
+  // Ancrage du CTA « + Nouveau bilan » : le 1er item de la section « Mon
+  // espace » s'il existe, sinon le dernier item visible. Jamais un chemin en
+  // dur — un item masqué ne doit pas emporter le bouton avec lui.
+  const newBilanAnchorPath =
+    navigation.find((i) => i.section === "Mon espace")?.path ??
+    navigation[navigation.length - 1]?.path ??
+    null;
   // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
   void urgentRelanceCount;
@@ -184,15 +213,11 @@ export function AppLayout() {
   // tactile/PWA). Auto-ouvert si on est déjà sur une route outil.
   // Raccourcis du hub « Mon business » — source UNIQUE partagée avec le tiroir
   // mobile (businessShortcuts.ts), pour que PC et mobile restent synchro.
-  const OUTILS_SUBITEMS = BUSINESS_SHORTCUTS;
-  const onOutilsRoute =
-    location.pathname === "/outils" ||
-    location.pathname.startsWith("/outils-prospection") ||
-    location.pathname === "/mes-liens" ||
-    location.pathname === "/panier" ||
-    location.pathname === "/rentabilite" ||
-    location.pathname.startsWith("/flex") ||
-    location.pathname.startsWith("/pv");
+  // Filtré par le niveau d'app (LOT 2) : FLEX sort pour un « essentiel ».
+  const OUTILS_SUBITEMS = BUSINESS_SHORTCUTS.filter((s) => can(s.feature));
+  // isBusinessRoute couvre tous les raccourcis (y compris ceux masqués) : si on
+  // arrive sur /flex par un lien direct, le menu doit quand même s'ouvrir.
+  const onOutilsRoute = isBusinessRoute(location.pathname);
   const [outilsOpen, setOutilsOpen] = useState(onOutilsRoute);
   const outilsExpanded = outilsOpen || onOutilsRoute;
 
@@ -202,6 +227,26 @@ export function AppLayout() {
     !location.pathname.startsWith("/welcome") &&
     !location.pathname.startsWith("/bienvenue-distri") &&
     !location.pathname.startsWith("/auto-login");
+
+  // Chantier BBC : prise de contrôle COMPLÈTE de l'écran quand le coach est
+  // en BBC (club_model='bbc' ou aperçu admin). Remplace tout le chrome classic
+  // par l'environnement BBC dédié (sa propre sidebar + ses écrans).
+  if (bbc.isBbc) {
+    return (
+      <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0B0D11" }} />}>
+        <BbcApp
+          coachName={currentUser.name}
+          userId={currentUser.id}
+          isAdmin={currentUser.role === "admin"}
+          onSetPreview={bbc.setPreview}
+          club={bbc.activeClub}
+          clubs={bbc.clubs}
+          onCreateClub={bbc.createMyClub}
+          onRenameClub={bbc.renameClub}
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-hero-mesh">
@@ -288,11 +333,13 @@ export function AppLayout() {
                   location.pathname.startsWith("/routine-du-jour")
                 ));
 
-              // Bouton "+ Nouveau bilan" inséré dans la sidebar juste avant
-              // "Mon développement" (refonte 2026-05-20 : ancien lien
-              // "/formation" obsolète, l'item s'appelle désormais "Mon
-              // développement" et pointe sur /developpement).
-              const insertNewBilanBefore = item.path === "/developpement";
+              // Bouton "+ Nouveau bilan" : ancré au PREMIER item de la section
+              // « Mon espace », pas sur un chemin en dur.
+              // ⚠ Avant le 2026-07-27 il était ancré sur "/developpement" — or
+              // cet item disparaît en niveau essentiel, ce qui aurait fait
+              // disparaître avec lui le CTA principal de l'app. Ancrage calculé
+              // = robuste à tout filtrage futur.
+              const insertNewBilanBefore = item.path === newBilanAnchorPath;
               const showSection = !!item.section && item.section !== navigation[idx - 1]?.section;
               const isOutils = item.path === "/outils";
 
@@ -553,6 +600,13 @@ export function AppLayout() {
           >
             {/* Bouton install PWA — visible si le navigateur expose le prompt */}
             <CoachInstallPwaButton />
+            {/* Chantier BBC : bascule Classic/BBC (admins) — entrée dans
+                l'environnement dédié. Aperçu localStorage, zéro impact DB. */}
+            {currentUser.role === "admin" ? (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <BbcModeSwitch value="classic" onChange={(v) => bbc.setPreview(v)} compact />
+              </div>
+            ) : null}
             {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
             <SidebarStreakBadge />
             {/* Ligne profil + bouton Sortir inline. V7 sidebar refresh

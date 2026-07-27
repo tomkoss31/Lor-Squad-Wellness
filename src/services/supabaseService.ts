@@ -2,6 +2,7 @@ import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/aut
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { computeWaterTarget, computeProteinTarget } from "../lib/calculations";
+import { toAppLevel } from "../config/appVisibility";
 
 // Chantier Recommandations nutri (2026-04-25) : helpers safe qui
 // retournent null si le poids est absent — compatibles avec les
@@ -49,6 +50,12 @@ type UserRow = {
   current_rank?: string | null;
   rank_set_at?: string | null;
   formation_beta_access?: boolean | null;
+  /** Chantier Simplification (2026-07-27) : 'essentiel' | 'complet'. */
+  app_level?: string | null;
+  /** Agenda V2 (2026-07-27) : couleur du coach dans l'agenda (#RRGGBB). */
+  calendar_color?: string | null;
+  /** Agenda V2 (2026-07-27) : duree par defaut d'un RDV, en minutes. */
+  default_rdv_minutes?: number | null;
   city?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
@@ -137,6 +144,8 @@ type FollowUpRow = {
   client_id: string;
   client_name: string;
   due_date: string;
+  /** Agenda V2 (2026-07-27) : NULL = duree par defaut du coach. */
+  duration_min?: number | null;
   type: string;
   status: FollowUp["status"];
   program_title: string;
@@ -338,6 +347,12 @@ function mapUser(row: UserRow): User {
     isExternal: (row as { is_external?: boolean }).is_external ?? false,
     isPassiveSupervisor: (row as { is_passive_supervisor?: boolean }).is_passive_supervisor ?? false,
     formationBetaAccess: row.formation_beta_access ?? false,
+    // Chantier Simplification (2026-07-27) : défaut 'essentiel' si la colonne
+    // n'est pas encore là (migration pas encore passée sur cet environnement).
+    appLevel: toAppLevel(row.app_level),
+    calendarColor: row.calendar_color ?? null,
+    defaultRdvMinutes:
+      typeof row.default_rdv_minutes === "number" ? row.default_rdv_minutes : undefined,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,
@@ -478,6 +493,7 @@ function mapFollowUp(row: FollowUpRow): FollowUp {
     clientId: row.client_id,
     clientName: row.client_name,
     dueDate: row.due_date,
+    durationMin: row.duration_min ?? undefined,
     type: row.type,
     status: row.status,
     programTitle: row.program_title,
@@ -970,7 +986,18 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     }
   }
 
-  const seedProducts = payload.started && payload.currentProgram
+  // Regle metier (Thomas, 2026-07-16) : on seede des que le client demarre OU
+  // qu'il repart avec des produits retenus. Avant, la garde etait
+  // `started && currentProgram` : un client "À l'unité" (currentProgram = ""
+  // a cause du bug de resolution) n'avait JAMAIS ses produits crees, meme
+  // avec F1 + PDM au ticket (cas Aline) -> Co-pilote "sans programme", PV et
+  // rentabilite a zero.
+  // Le garde-fou anti-fantomes n'est plus ici mais dans le catalogue PV :
+  // "À l'unité" a une routine VIDE, donc un client sans produit retenu ne peut
+  // pas se voir injecter la routine d'un programme qu'il n'a pas pris.
+  const hasSelectedProducts =
+    (payload.assessment.questionnaire.selectedProductIds ?? []).length > 0;
+  const seedProducts = (payload.started || hasSelectedProducts) && payload.currentProgram
     ? buildSeedPvProducts({
         clientId,
         distributorId: payload.client.distributorId,

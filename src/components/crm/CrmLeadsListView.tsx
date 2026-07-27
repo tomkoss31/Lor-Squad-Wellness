@@ -238,6 +238,7 @@ function CrmLeadListRow({
           <div style={{ flex: 2, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
+              {lead.callbackRequestedAt ? <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span> : null}
               {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
               {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
               {stagnant ? (
@@ -399,6 +400,13 @@ function CrmLeadListRow({
               <button type="button" onClick={onAgenda} style={actionBtn("var(--ls-purple)")}>
                 📅 Caler un RDV
               </button>
+            ) : null}
+            {/* Convertir en fiche client — ouvre la fiche avec le modal déjà
+                ouvert (?convert=1). Bilans online non encore convertis. */}
+            {lead.table === "online_bilans" && lead.status !== "converted" ? (
+              <Link to={`/crm/leads/${lead.key}?convert=1`} style={actionBtn("var(--ls-teal)")}>
+                ✅ Convertir en client
+              </Link>
             ) : null}
             <button
               type="button"

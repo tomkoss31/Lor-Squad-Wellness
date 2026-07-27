@@ -18,6 +18,7 @@ import "../../styles/public-shell.css";
 export interface TestimonialPublic {
   id: string;
   content: string;
+  public_excerpt: string | null;
   rating: number;
   language: string;
   created_at: string;
@@ -56,6 +57,19 @@ function formatAuthor(t: TestimonialPublic): string {
 // city rendue optionnelle (2026-07-09) → le tag peut être « [FROM:Judith|] »
 // (ville vide). `[^\]]*` (et non `+`) sinon la regex échoue et affiche le tag
 // brut + « Anonyme ». Cf. bug capture Thomas 2026-07-09.
+// Coupe sur la derniere frontiere de mot avant `max` — un temoignage tronque
+// en plein milieu d'un mot (« puis 1… ») fait amateur sur une page qui vend.
+// Si aucun espace n'est trouve dans le dernier tiers, on coupe net (mot unique
+// tres long) plutot que de renvoyer un texte quasi vide.
+function truncateAtWord(text: string, max: number): string {
+  const clean = text.trim();
+  if (clean.length <= max) return clean;
+  const head = clean.slice(0, max);
+  const lastSpace = head.lastIndexOf(" ");
+  const cut = lastSpace > max * 0.6 ? head.slice(0, lastSpace) : head;
+  return `${cut.replace(/[\s,;:.!?…]+$/, "")}…`;
+}
+
 const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]*))?\]\s*/;
 function parseFromTag(content: string): { firstName: string | null; city: string | null; clean: string } {
   const m = content.match(FROM_TAG_RE);
@@ -103,7 +117,7 @@ export function TestimonialsCarousel({
         }
         // Left join sur clients : V1.1 lien generique coach a client_id=null
         // (auteur recupere depuis tag [FROM:...] dans le content).
-        const SELECT = "id, content, rating, language, created_at, photo_url, photo_consent, clients(first_name, last_name, city)";
+        const SELECT = "id, content, public_excerpt, rating, language, created_at, photo_url, photo_consent, clients(first_name, last_name, city)";
         let query = sb
           .from("client_testimonials")
           .select(SELECT)
@@ -169,22 +183,56 @@ export function TestimonialsCarousel({
     return <CompactList items={items.slice(0, 3)} />;
   }
   if (variant === "business") {
-    return <BusinessGrid items={items.slice(0, 3)} />;
+    return (
+      <>
+        <BusinessGrid items={items.slice(0, 3)} />
+        <ResultsDisclaimer />
+      </>
+    );
   }
   // welcome (default) : 1 card avec dots + auto-rotation
   return (
-    <WelcomeCarousel items={items} active={active} onSelect={setActive} />
+    <>
+      <WelcomeCarousel items={items} active={active} onSelect={setActive} />
+      <ResultsDisclaimer />
+    </>
+  );
+}
+
+// Obligatoire des qu'un temoignage est publie sur une page qui vend : sans ca,
+// un resultat individuel se lit comme une promesse faite a tous les lecteurs.
+// Porte par le composant (pas par la page) pour qu'aucune nouvelle page ne
+// puisse afficher les temoignages en oubliant la mention.
+function ResultsDisclaimer() {
+  return (
+    <p style={{
+      margin: "10px 0 0",
+      fontFamily: PUBLIC_FONTS.body,
+      fontSize: 11,
+      lineHeight: 1.5,
+      color: "var(--cream-soft)",
+      opacity: 0.55,
+      textAlign: "center",
+    }}>
+      Résultats individuels — ils varient d'une personne à l'autre, selon
+      l'alimentation, l'activité physique et le mode de vie de chacun.
+    </p>
   );
 }
 
 function mapRows(data: unknown): TestimonialPublic[] {
   return (data as Array<TestimonialPublic & { clients: { first_name: string | null; last_name: string | null; city: string | null } | null }>).map((r) => {
+    // `public_excerpt` = version publiable quand le temoignage d'origine contient
+    // des allegations de sante (maladie, symptome) qu'on n'a pas le droit
+    // d'afficher sur une page qui vend. Cf. colonne en base : on ne reecrit
+    // jamais `content`, on publie l'extrait quand il existe.
+    const source = r.public_excerpt ?? r.content;
     // Si pas de client lie (V1.1 lien coach generique), parser le tag [FROM:...]
     // pour recuperer prenom + ville et nettoyer le content.
-    const tag = r.clients ? null : parseFromTag(r.content);
+    const tag = r.clients ? null : parseFromTag(source);
     return {
       ...r,
-      content: tag ? tag.clean : r.content,
+      content: tag ? tag.clean : source,
       client_first_name: r.clients?.first_name ?? tag?.firstName ?? null,
       client_last_name: r.clients?.last_name ?? null,
       client_city: r.clients?.city ?? tag?.city ?? null,
@@ -234,7 +282,7 @@ function WelcomeCarousel({
         color: "var(--cream-soft)",
         fontStyle: "italic",
       }}>
-        « {t.content.slice(0, 220)}{t.content.length > 220 ? "…" : ""} »
+        « {truncateAtWord(t.content, 220)} »
       </blockquote>
       <div style={{
         marginTop: 14,
@@ -294,7 +342,7 @@ function BusinessGrid({ items }: { items: TestimonialPublic[] }) {
             margin: 0, fontFamily: PUBLIC_FONTS.body, fontSize: 14,
             lineHeight: 1.5, color: "var(--cream-soft)", fontStyle: "italic",
           }}>
-            « {t.content.slice(0, 160)}{t.content.length > 160 ? "…" : ""} »
+            « {truncateAtWord(t.content, 180)} »
           </blockquote>
           <div style={{
             marginTop: 12, fontFamily: PUBLIC_FONTS.display,
@@ -327,7 +375,7 @@ function NewsletterStrip({ items }: { items: TestimonialPublic[] }) {
             lineHeight: 1.5, color: "var(--cream-soft)",
             fontStyle: "italic", marginBottom: 8,
           }}>
-            « {t.content.slice(0, 100)}{t.content.length > 100 ? "…" : ""} »
+            « {truncateAtWord(t.content, 100)} »
           </div>
           <div style={{
             fontFamily: PUBLIC_FONTS.display, fontSize: 11,
@@ -351,7 +399,7 @@ function CompactList({ items }: { items: TestimonialPublic[] }) {
           color: "var(--cream-soft)", lineHeight: 1.45,
         }}>
           <span style={{ color: PUBLIC_TOKENS.gold }}>{"★".repeat(t.rating)}</span>{" "}
-          <em>« {t.content.slice(0, 80)}{t.content.length > 80 ? "…" : ""} »</em>{" "}
+          <em>« {truncateAtWord(t.content, 80)} »</em>{" "}
           <span style={{ ...publicGradText, fontStyle: "normal", fontWeight: 600 }}>
             — {formatAuthor(t)}
           </span>

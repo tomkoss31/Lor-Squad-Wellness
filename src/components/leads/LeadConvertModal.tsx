@@ -45,9 +45,14 @@ const OBJECTIVE_OPTIONS: Objective[] = [
   "competition",
 ];
 
+function digitsTail(v: string | null | undefined): string {
+  const d = String(v ?? "").replace(/\D/g, "");
+  return d.length >= 9 ? d.slice(-9) : d;
+}
+
 export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
   const navigate = useNavigate();
-  const { createClientWithInitialAssessment, currentUser, users } = useAppContext();
+  const { createClientWithInitialAssessment, currentUser, users, clients } = useAppContext();
   const { push: pushToast } = useToast();
 
   const [lastName, setLastName] = useState("");
@@ -67,6 +72,9 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
   const [showAccess, setShowAccess] = useState(false);
+  // Réconciliation lead ↔ fiche déjà existante (link path).
+  const [linkedLastName, setLinkedLastName] = useState<string | null>(null);
+  const [dismissedExisting, setDismissedExisting] = useState(false);
 
   // Distributeur : le coach assigné au lead, sinon celui qui convertit.
   const distributorId =
@@ -76,7 +84,37 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
     return u?.name ?? currentUser?.name ?? "La Base 360";
   }, [users, distributorId, currentUser]);
 
+  // Une fiche client existe-t-elle déjà pour ce contact (email ou téléphone) ?
+  // Si oui, on propose de LIER le lead à cette fiche plutôt que d'en recréer une
+  // (cas Jeremy : devenu client via un bilan présentiel, hors de cette modale).
+  const existing = useMemo(() => {
+    const email = bilan.email?.trim().toLowerCase() || "";
+    const phone = digitsTail(bilan.phone);
+    for (const c of clients) {
+      const ce = (c.email ?? "").trim().toLowerCase();
+      const cp = digitsTail(c.phone);
+      if (email && ce && ce === email) return { client: c, reason: "même email" };
+      if (phone && cp && cp === phone) return { client: c, reason: "même téléphone" };
+    }
+    return null;
+  }, [clients, bilan.email, bilan.phone]);
+
   const canSubmit = lastName.trim().length > 0 && sex !== "" && !submitting;
+
+  async function handleLinkExisting(clientId: string, displayLastName: string) {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onConverted(clientId); // écrit converted_to_client_id → lead "Converti"
+      setLinkedLastName(displayLastName);
+      setCreatedClientId(clientId);
+      pushToast({ tone: "success", title: `${bilan.first_name} relié à sa fiche ✓` });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de relier le lead à la fiche."));
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleSubmit() {
     // Garde directe sur l'union (pas via canSubmit : TS narrow les conditions
@@ -108,7 +146,8 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
         notes: notes.trim() || summary,
         bodyScan: buildEmptyBodyScan(hasWeight ? weight : 0),
         questionnaire: buildEmptyQuestionnaire({
-          objectiveFocus: objLabel,
+          // Multi depuis 2026-07-16 (cf. src/lib/multiChoice.ts).
+          objectiveFocus: [objLabel],
           motivation: bilan.motivation_score ?? 0,
           ...(targetWeight !== undefined ? { targetWeight } : {}),
         }),
@@ -171,11 +210,21 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
           // ─── État succès ───────────────────────────────────────────────
           <div className="lcm-success">
             <div className="lcm-success-emoji" aria-hidden="true">🎉</div>
-            <h2 className="lcm-success-title">Fiche créée</h2>
+            <h2 className="lcm-success-title">{linkedLastName ? "Lead relié" : "Fiche créée"}</h2>
             <p className="lcm-success-text">
-              La fiche de <strong>{bilan.first_name} {lastName.trim()}</strong> est
-              dans ta base. Complète le bilan (body scan, produits) et partage
-              l'accès à l'app client depuis la fiche.
+              {linkedLastName ? (
+                <>
+                  Le lead de <strong>{bilan.first_name} {linkedLastName}</strong> est
+                  relié à sa fiche : il passe en « Convertis » et quitte tes leads
+                  actifs.
+                </>
+              ) : (
+                <>
+                  La fiche de <strong>{bilan.first_name} {lastName.trim()}</strong> est
+                  dans ta base. Complète le bilan (body scan, produits) et partage
+                  l'accès à l'app client depuis la fiche.
+                </>
+              )}
             </p>
             <div className="lcm-actions">
               <button
@@ -202,7 +251,7 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
               onClose={() => setShowAccess(false)}
               clientId={createdClientId}
               clientFirstName={bilan.first_name}
-              clientLastName={lastName.trim()}
+              clientLastName={linkedLastName ?? lastName.trim()}
               clientPhone={bilan.phone}
               clientEmail={bilan.email}
             />
@@ -218,6 +267,36 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
                 sexe (obligatoires), le reste est optionnel.
               </p>
             </div>
+
+            {/* Réconciliation : fiche déjà existante → lier plutôt que dupliquer */}
+            {existing && !dismissedExisting && (
+              <div className="lcm-existing">
+                <div className="lcm-existing-title">🔗 Il est peut-être déjà client</div>
+                <p className="lcm-existing-text">
+                  Une fiche existe déjà pour ce contact ({existing.reason}) :{" "}
+                  <strong>{existing.client.firstName} {existing.client.lastName}</strong>.
+                  S'il est déjà ton client, relie ce lead à sa fiche — inutile d'en
+                  recréer une.
+                </p>
+                <div className="lcm-existing-actions">
+                  <button
+                    type="button"
+                    className="lcm-primary"
+                    disabled={submitting}
+                    onClick={() => void handleLinkExisting(existing.client.id, existing.client.lastName)}
+                  >
+                    {submitting ? "…" : `Lier à la fiche de ${existing.client.firstName}`}
+                  </button>
+                  <button
+                    type="button"
+                    className="lcm-ghost"
+                    onClick={() => setDismissedExisting(true)}
+                  >
+                    Non, créer une nouvelle fiche
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Récap pré-rempli (lecture seule) */}
             <div className="lcm-recap">
@@ -373,6 +452,22 @@ const STYLES = `
   }
   .lcm-title { font-family: 'Syne', 'Inter', sans-serif; font-size: 22px; font-weight: 700; margin: 0; }
   .lcm-meta { font-size: 13px; color: var(--ls-text-muted, #6B7280); margin: 6px 0 0; line-height: 1.45; }
+
+  .lcm-existing {
+    margin: 14px 0 4px; padding: 14px 16px; border-radius: 12px;
+    background: rgba(45,212,191,0.08); border: 1px solid rgba(45,212,191,0.38);
+  }
+  .lcm-existing-title {
+    font-size: 13px; font-weight: 700; color: var(--ls-teal, #0D9488); margin-bottom: 5px;
+  }
+  .lcm-existing-text {
+    font-size: 13px; line-height: 1.5; color: var(--ls-text, #0F172A); margin: 0 0 12px;
+  }
+  .lcm-existing-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .lcm-existing-actions .lcm-primary {
+    flex: 1; min-width: 160px;
+    background: linear-gradient(120deg, var(--ls-teal, #2DD4BF), #0D9488); color: #04231A;
+  }
 
   .lcm-recap { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
   .lcm-chip {

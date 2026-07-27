@@ -1,3 +1,5 @@
+import { multiValueIncludes, type MultiChoiceValue } from "./multiChoice";
+
 export type AssessmentNeedId =
   | "hydration"
   | "energy"
@@ -20,9 +22,11 @@ export interface AssessmentRecommendationSource {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /** Multi depuis 2026-07-16 — lire via normalizeMultiValue (ancien format string possible). */
+  snackingMoment: MultiChoiceValue;
   cravingsPreference: string;
-  snackingTrigger: string;
+  /** Multi depuis 2026-07-16 — lire via normalizeMultiValue (ancien format string possible). */
+  snackingTrigger: MultiChoiceValue;
   waterIntake: number;
   energyLevel: string;
   transitStatus: string;
@@ -384,7 +388,10 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
   if (
     source.energyLevel === "Faible" ||
     source.energyLevel === "Moyen" ||
-    source.snackingTrigger === "Fatigue"
+    // Multi depuis 2026-07-16 : "Fatigue" peut désormais être coché avec
+    // d'autres causes (faim, stress...). includes() couvre aussi l'ancien
+    // format string via normalizeMultiValue.
+    multiValueIncludes(source.snackingTrigger, "Fatigue")
   ) {
     needs.push({
       id: "energy",
@@ -508,22 +515,24 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
     });
   }
 
+  // Fix 2026-07-16 : "Tres souvent" (sans accent) ne correspondait à AUCUNE
+  // option réelle — l'UI propose "Très souvent" (NewAssessmentPage). Ces deux
+  // branches étaient donc mortes : un client "Très souvent" sur les produits
+  // sucrés ne déclenchait pas le besoin (ni la priorité 8). Corrigé.
+  const heavySugar = source.sugaryProducts === "Très souvent";
+  const frequentSnacking = source.snackingFrequency === "Souvent";
   if (
-    source.snackingFrequency === "Souvent" ||
-    source.sugaryProducts === "Tres souvent" ||
+    frequentSnacking ||
+    heavySugar ||
     source.sugaryProducts === "Souvent" ||
     source.cravingsPreference === "Sucré"
   ) {
     needs.push({
       id: "snacking_control",
-      priority:
-        source.snackingFrequency === "Souvent" || source.sugaryProducts === "Tres souvent"
-          ? 8
-          : 6,
-      reasonLabel:
-        source.snackingFrequency === "Souvent"
-          ? "Le grignotage revient souvent dans la journee."
-          : "Les envies sucrées merite un encas plus cadre."
+      priority: frequentSnacking || heavySugar ? 8 : 6,
+      reasonLabel: frequentSnacking
+        ? "Le grignotage revient souvent dans la journee."
+        : "Les envies sucrées merite un encas plus cadre."
     });
   }
 
@@ -582,12 +591,17 @@ function getRecommendedProgramId(
     return "p-sport-discovery";
   }
 
+  // Fix 2026-07-16 (audit programmes) : "p-booster-1"/"p-booster-2" (avec tiret)
+  // ne correspondaient a AUCUN id reel — PROGRAM_INCLUDED_PRODUCT_IDS et
+  // PROGRAMS_LEGACY utilisent "p-booster1"/"p-booster2" (sans tiret). Latent
+  // aujourd'hui (valeur non consommee hors de ce fichier), mais piege garanti
+  // des que quelqu'un branchera la reco de programme.
   if (needIds.includes("visceral_fat") || needIds.includes("digestive_support")) {
-    return "p-booster-1";
+    return "p-booster1";
   }
 
   if (needIds.includes("energy") && needIds.includes("hydration")) {
-    return "p-booster-2";
+    return "p-booster2";
   }
 
   if (
@@ -602,11 +616,11 @@ function getRecommendedProgramId(
 }
 
 function getProgramReason(programId: string, needs: DetectedNeed[]) {
-  if (programId === "p-booster-1") {
+  if (programId === "p-booster1") {
     return "La priorite du moment melange base routine et soutien digestif / viscerale.";
   }
 
-  if (programId === "p-booster-2") {
+  if (programId === "p-booster2") {
     return "Le profil demande une routine plus dynamique autour de l'energie et de l'hydratation.";
   }
 

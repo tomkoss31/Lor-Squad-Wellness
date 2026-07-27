@@ -14,7 +14,7 @@
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import {
@@ -74,6 +74,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   ownerUserId: null,
   relanceDue: false,
   resultToken: null,
+  callbackRequestedAt: null,
+  engagement: null,
   createdAt: new Date(0).toISOString(),
   contactedAt: null,
   notes: null,
@@ -141,6 +143,21 @@ export function CrmLeadDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
+  // Ouverture directe du modal de conversion depuis la LISTE (bouton « Convertir »
+  // → /crm/leads/:id?convert=1). On ouvre une seule fois, dès que le bilan est
+  // chargé et pas déjà converti, puis on nettoie le param.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const convertAutoRef = useRef(false);
+  useEffect(() => {
+    if (convertAutoRef.current) return;
+    if (searchParams.get("convert") !== "1") return;
+    if (!bilanRow || bilanRow.converted_to_client_id) return;
+    convertAutoRef.current = true;
+    setShowConvert(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("convert");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, bilanRow, setSearchParams]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
   // Résumé Noaly (Phase 4) — déclenché par bouton, jamais au montage (coût IA).
@@ -320,9 +337,44 @@ export function CrmLeadDetailPage() {
               ⏳ {stagnationDays(lead)}j sans mouvement
             </span>
           ) : null}
+          {lead.callbackRequestedAt ? <span title="A demandé à être rappelé" aria-hidden="true">📞</span> : null}
           {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
           {lead.dormant ? <span title="Endormi" aria-hidden="true">💤</span> : null}
         </div>
+        {lead.callbackRequestedAt ? (
+          // Signal fort : le lead a cliqué « rappelle-moi » sur sa page Résultat
+          // Bilan. On le met en avant tout en haut de la fiche — c'est l'action
+          // n°1 à faire sur ce lead.
+          <div
+            style={{
+              marginTop: 12,
+              padding: "10px 14px",
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+              color: "var(--ls-text)",
+              fontSize: 13.5,
+              fontWeight: 600,
+            }}
+          >
+            📞 {lead.firstName} a demandé à être rappelé —{" "}
+            {new Date(lead.callbackRequestedAt).toLocaleString("fr-FR", {
+              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+            })}
+            . À contacter en priorité.
+            {lead.engagement ? (
+              // Lead scoring : ce que le lead a fait sur la page Résultat Bilan
+              // (intention, formule cliquée, détail calcul, add-on, temps) → aide
+              // à savoir avec quel angle relancer.
+              <div style={{ marginTop: 8, fontWeight: 400, fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+                <strong style={{ color: lead.engagement.tier === "chaud" ? "var(--ls-lime, #c5f82a)" : "var(--ls-teal)" }}>
+                  {lead.engagement.tier === "chaud" ? "🔥 Lead chaud" : lead.engagement.tier === "tiede" ? "Lead tiède" : "Lead froid"} · {lead.engagement.score}/100
+                </strong>
+                {lead.engagement.signals.length > 0 ? ` — ${lead.engagement.signals.join(" · ")}` : ""}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <p style={metaLine}>
           {lead.city ? `${lead.city} · ` : ""}
           Reçu le{" "}
@@ -366,7 +418,19 @@ export function CrmLeadDetailPage() {
           ) : lead.table === "prospect_leads" ? (
             <>
               {lead.extra ? <p style={infoLine}>{lead.extra}</p> : null}
-              {lead.funnelAnswers ? (
+              {lead.colisAnswers ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                    💬 Ses réponses ({Object.keys(lead.colisAnswers).length})
+                  </div>
+                  {Object.entries(lead.colisAnswers).map(([q, a]) => (
+                    <div key={q} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12, lineHeight: 1.4 }}>
+                      <span style={{ flex: "0 0 auto", color: "var(--ls-text-hint)", minWidth: 118 }}>{q}</span>
+                      <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>{a}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : lead.funnelAnswers ? (
                 <FunnelAnswers
                   answers={lead.funnelAnswers}
                   temperature={lead.funnelTemperature}
@@ -574,8 +638,8 @@ export function CrmLeadDetailPage() {
             <div style={actionBlock}>
               <label style={label}>Lien Résultat Bilan</label>
               <div style={hint}>
-                Sa page premium personnalisée (bilan + programme + caisse). Envoie-la pour déclencher
-                le paiement.
+                Sa page premium personnalisée (bilan + programme + caisse). Vérifie-la avant de
+                l'envoyer — c'est elle qui déclenche le paiement.
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
                 {(() => {
@@ -584,6 +648,9 @@ export function CrmLeadDetailPage() {
                   const msg = `Coucou ${lead.firstName} 🌿 j'ai préparé ta page perso avec ton bilan complet et le programme qu'on a vu ensemble. Tout est ici (tu peux même démarrer directement) 👉 ${link}\n\nDis-moi si tu as la moindre question, je suis là 💛\n${msgCtx.coachFirstName}`;
                   return (
                     <>
+                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #8b5cf6)")}>
+                        👁️ Voir la page (vérif)
+                      </a>
                       <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-gold)")}>
                         📋 Copier le message + lien
                       </button>

@@ -1,3 +1,7 @@
+// Niveau de visibilité de la nav (chantier Simplification 2026-07-27).
+// La définition vit avec la carte des features — cf. src/config/appVisibility.ts.
+import type { AppLevel } from "../config/appVisibility";
+
 export type UserRole = "admin" | "referent" | "distributor";
 
 // ─── Lifecycle status (Matrice B — Chantier 1) ──────────────────────────
@@ -149,6 +153,17 @@ export interface User {
   /** Accès beta formation (opt-in admin). Default false. Quand true,
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;
+  /** Niveau de visibilité de la navigation (chantier Simplification 2026-07-27).
+   *  'essentiel' (défaut, socle du quotidien) | 'complet' (toute l'app).
+   *  Réglable par un admin uniquement. Ne masque QUE les menus — les routes et
+   *  les données restent accessibles. Cf. src/config/appVisibility.ts. */
+  appLevel?: AppLevel;
+  /** Couleur du coach dans l'agenda (hex #RRGGBB). NULL = non choisie → le
+   *  front dérive une couleur de l'identifiant. Chantier Agenda V2 2026-07-27. */
+  calendarColor?: string | null;
+  /** Durée par défaut d'un RDV de ce coach, en minutes (défaut 45). Appliquée
+   *  quand le RDV ne porte pas de durée propre. Chantier Agenda V2 2026-07-27. */
+  defaultRdvMinutes?: number;
   /** Ville du distri (saisie /bienvenue-distri ou /parametres).
    *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05.
    *  Aussi affichée sur les badges crédibilité Welcome bilan (chantier #10 V2). */
@@ -172,6 +187,45 @@ export interface User {
   monthlyPvOverrideMonth?: string | null;
   monthlyPvOverrideSetAt?: string | null;
   monthlyPvOverrideSetBy?: string | null;
+  /** Modèle de club (chantier BBC 2026-07-24). 'classic' = app actuelle,
+   *  'bbc' = environnement dédié Breakfast Budget Club. Default 'classic'.
+   *  Lu via useBbcMode (hook parallèle) — non hydraté par AppContext. */
+  clubModel?: "classic" | "bbc";
+}
+
+/** Objet club (chantier BBC 2026-07-24). Un coach BBC possède 1..N clubs.
+ *  Toutes les valeurs métier configurables (horaires des appels, barème des
+ *  cœurs, créneau d'ouverture) vivent dans `settings` — jamais en dur. */
+export interface Club {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  city?: string | null;
+  slug?: string | null;
+  active: boolean;
+  settings?: ClubSettings | null;
+  createdAt?: string;
+}
+
+export interface ClubSettings {
+  open_hours?: string;
+  calls?: Record<string, { days: string[]; time: string }>;
+  hearts_bareme?: Record<string, string>;
+  /** Cartes de membre : prix + durée de validité par type (10 / 30 visites). */
+  cards?: Record<string, { price: number | null; days: number }>;
+  /** Liens du club à partager (Zoom des rituels, avis Google…). */
+  links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
+  /**
+   * La carte du bar : par référence produit, ce qu'on sert et à quel prix.
+   * `doses` = nombre de portions dans un contenant (le tarif ne le donne pas),
+   * `prix` = prix de vente de LA dose au comptoir. `valide` passe à true quand
+   * le coach a confirmé la ligne — tant qu'il ne l'a pas fait, l'app affiche la
+   * valeur relevée sur le tarif comme une proposition, jamais comme un prix.
+   */
+  carte?: Record<string, { doses: number | null; prix: number | null; valide: boolean }>;
+  /** Palier de remise du distributeur (25 / 35 / 42 / 50 %) — sert au calcul de marge. */
+  palier_remise?: number;
+  [key: string]: unknown;
 }
 
 /** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.
@@ -295,9 +349,18 @@ export interface AssessmentQuestionnaire {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (un client grignote le matin ET le soir).
+   * ⚠️ Les bilans enregistrés avant cette date contiennent encore une string.
+   * Toujours lire via normalizeMultiValue() (src/lib/multiChoice.ts).
+   */
+  snackingMoment: string[] | string;
   cravingsPreference: string;
-  snackingTrigger: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (faim ET stress ET ennui).
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  snackingTrigger: string[] | string;
   waterIntake: number;
   drinksCoffee: string;
   coffeePerDay: number;
@@ -311,8 +374,19 @@ export interface AssessmentQuestionnaire {
   energyLevel: string;
   pastAttempts: string;
   hardestPart: string;
-  mainBlocker: string;
-  objectiveFocus: string;
+  /**
+   * Choix MULTIPLE depuis 2026-07-16 (plusieurs blocages cumulés).
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  mainBlocker: string[] | string;
+  /**
+   * Objectif(s) exprimé(s) par le client — choix MULTIPLE depuis 2026-07-16
+   * ("Prise de masse" ET "Énergie"). À ne pas confondre avec `objective`
+   * (AssessmentRecord.objective) qui reste MONO : c'est l'aiguillage interne
+   * sport / perte de poids, dérivé d'ici.
+   * ⚠️ Ancien format string possible — lire via normalizeMultiValue().
+   */
+  objectiveFocus: string[] | string;
   targetWeight?: number;
   motivation: number;
   desiredTimeline: string;
@@ -475,6 +549,11 @@ export interface Client {
   /** V3 funnel business (2026-11-07) : timestamp quand le coach a envoye
    *  le plan /opportunite via le bouton SendBusinessPlanButton. */
   businessPlanSentAt?: string | null;
+  /** Chantier BBC 2026-07-24 : ce client suit une EBE BBC → son espace PWA
+   *  bascule sur l'app membre BBC. Default false (EBE standard = PWA actuelle). */
+  ebeBbc?: boolean;
+  /** Club BBC de rattachement (NULL = pas rattaché). */
+  clubId?: string | null;
 }
 
 export interface FollowUp {
@@ -482,6 +561,9 @@ export interface FollowUp {
   clientId: string;
   clientName: string;
   dueDate: string;
+  /** Durée du suivi en minutes. undefined = durée par défaut du coach.
+   *  Chantier Agenda V2 2026-07-27. */
+  durationMin?: number;
   type: string;
   status: "scheduled" | "pending" | "completed" | "dismissed" | "inactive";
   programTitle: string;
@@ -626,6 +708,9 @@ export interface Prospect {
   phone?: string;
   email?: string;
   rdvDate: string;          // ISO timestamptz
+  /** Durée du RDV en minutes. undefined = durée par défaut du coach.
+   *  Chantier Agenda V2 2026-07-27. */
+  durationMin?: number;
   source: ProspectSource;
   sourceDetail?: string;
   note?: string;
@@ -644,6 +729,8 @@ export interface ProspectFormInput {
   phone?: string;
   email?: string;
   rdvDate: string;
+  /** Durée en minutes. undefined = durée par défaut du coach (Agenda V2). */
+  durationMin?: number;
   source: ProspectSource;
   sourceDetail?: string;
   note?: string;

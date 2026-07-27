@@ -14,11 +14,25 @@ import type {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Les alias couvrent TOUS les espaces d'id qui atterrissent reellement en base
+// (audit 2026-07-16) : clients.pv_program_id contient aussi bien des ids PV
+// ("premium", "starter") que des ids LEGACY ("p-premium" x18, "p-discovery" x2,
+// "p-booster2" x1) ecrits par le bilan initial. Sans alias explicite, ces
+// valeurs ne matchaient que par hasard via la branche "substring" (ou pas du
+// tout) et tombaient sur le fallback. Ne pas retirer les alias "p-*".
 export const pvProgramOptions: PvProgramOption[] = [
   {
     id: "starter",
     title: "Programme Starter",
-    alias: ["Programme Decouverte", "Programme Starter", "Decouverte", "Starter"],
+    alias: [
+      "Programme Decouverte",
+      "Programme Starter",
+      "Decouverte",
+      "Découverte",
+      "Starter",
+      "p-discovery",
+      "discovery",
+    ],
     summary: "Base simple pour suivre le demarrage et le renouvellement des produits principaux.",
     pricePublic: 159,
     includedProductIds: ["aloe-vera", "the-51g", "formula-1"],
@@ -28,6 +42,7 @@ export const pvProgramOptions: PvProgramOption[] = [
   {
     id: "premium",
     title: "Programme Premium",
+    alias: ["Programme Premium", "Premium", "p-premium"],
     summary: "Routine plus complete avec proteines en plus pour tenir dans le temps.",
     pricePublic: 234,
     includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm"],
@@ -37,6 +52,7 @@ export const pvProgramOptions: PvProgramOption[] = [
   {
     id: "booster-1",
     title: "Programme Booster 1",
+    alias: ["Programme Booster 1", "Booster 1", "p-booster1", "booster1"],
     summary: "Version plus structuree avec fibres et lecture volume plus precise.",
     pricePublic: 277,
     includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
@@ -46,10 +62,35 @@ export const pvProgramOptions: PvProgramOption[] = [
   {
     id: "booster-2",
     title: "Programme Booster 2",
+    alias: ["Programme Booster 2", "Booster 2", "p-booster2", "booster2"],
     summary: "Cadre plus complet avec produit metabolique en plus.",
     pricePublic: 324,
     includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
     mainReferenceDurationDays: 42,
+    active: true
+  },
+  // Programmes SPORT — routine réelle (cf. PROGRAM_CHOICES). Ajoutés 2026-07-27
+  // (audit #1) : absents ici, "Premium Sport"/"p-sport-premium" tombaient sur le
+  // repli et injectaient des produits minceur fantômes. Aliases = titre + id
+  // choice + id legacy p-sport-*. includedProductIds mirroir de routineProductIds.
+  {
+    id: "sport-discovery",
+    title: "Découverte Sport",
+    alias: ["Découverte Sport", "Decouverte Sport", "sport-discovery", "p-sport-discovery"],
+    summary: "Programme sport léger : base repas + collation protéinée.",
+    pricePublic: 190,
+    includedProductIds: ["formula-1", "barres-proteinees-achieve"],
+    mainReferenceDurationDays: 30,
+    active: true
+  },
+  {
+    id: "sport-premium",
+    title: "Premium Sport",
+    alias: ["Premium Sport", "Premium sport", "sport-premium", "p-sport-premium"],
+    summary: "Programme sport complet : base repas + collation + récupération + effort.",
+    pricePublic: 285,
+    includedProductIds: ["formula-1", "barres-proteinees-achieve", "rebuild-strength", "cr7-drive"],
+    mainReferenceDurationDays: 30,
     active: true
   },
   {
@@ -59,6 +100,31 @@ export const pvProgramOptions: PvProgramOption[] = [
     summary: "Programme libre pour les cas terrain qui ne rentrent pas pile dans une formule.",
     pricePublic: 0,
     includedProductIds: ["formula-1"],
+    mainReferenceDurationDays: 21,
+    active: true
+  },
+  // Vente a l'unite — AUCUNE routine imposee : seuls les produits reellement
+  // retenus par le coach comptent. Ajoute le 2026-07-16 (audit programmes) :
+  // "À l'unité" n'existait pas ici, donc resolvePvProgram tombait sur le
+  // fallback Starter et injectait 3 produits fantomes (aloe-vera + the-51g +
+  // formula-1) a des clients qui n'avaient rien pris. includedProductIds DOIT
+  // rester vide.
+  {
+    id: "unit",
+    title: "À l'unité",
+    alias: [
+      "À l'unité",
+      "A l'unite",
+      "Unite",
+      "Unité",
+      "A la carte",
+      "À la carte",
+      "p-unit",
+      "unit",
+    ],
+    summary: "Vente a l'unite : le client repart uniquement avec les produits retenus.",
+    pricePublic: 0,
+    includedProductIds: [],
     mainReferenceDurationDays: 21,
     active: true
   }
@@ -292,6 +358,81 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     quantiteLabel: "1kg — 30 jours",
     dureeReferenceJours: 30,
     noteMetier: "Protéines & créatine pour prise de masse et récupération.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  // Produits routine sport (valeurs PV/prix = table pv_products, source d'autorité).
+  {
+    id: "barres-proteinees-achieve",
+    name: "Barres Protéinées Achieve H24",
+    category: "sport / collation",
+    pricePublic: 27.50,
+    pv: 11.30,
+    quantiteLabel: "14 barres — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Collation sport 21 g de protéines.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "cr7-drive",
+    name: "CR7 Drive",
+    category: "sport / effort",
+    pricePublic: 27.50,
+    pv: 12.50,
+    quantiteLabel: "boîte — ~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Glucides + électrolytes pendant l'effort.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  // Boosters sport add-on (cf. BOOSTERS programs.ts) — pour que leur PV compte
+  // quand ils sont retenus au ticket. Valeurs = table pv_products (autorité).
+  {
+    id: "liftoff-max",
+    name: "Liftoff Max H24",
+    category: "sport / energie",
+    pricePublic: 38.50,
+    pv: 15.95,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Pré-workout, énergie avant la séance.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "hydrate",
+    name: "Hydrate",
+    category: "sport / hydratation",
+    pricePublic: 47.50,
+    pv: 17.20,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Électrolytes, récupération hydrique.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "creatine-plus",
+    name: "Créatine+",
+    category: "sport / muscle",
+    pricePublic: 39.50,
+    pv: 15.95,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Force et volume.",
+    recommendedProgram: "Programme Sport",
+    active: true
+  },
+  {
+    id: "collagene-skin-booster",
+    name: "Collagène Skin Booster",
+    category: "sport / articulations",
+    pricePublic: 84.50,
+    pv: 37.10,
+    quantiteLabel: "~30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Articulations + peau.",
     recommendedProgram: "Programme Sport",
     active: true
   },
@@ -1030,6 +1171,20 @@ export function getPvProgramById(programId: string | null | undefined) {
   return pvProgramOptions.find((program) => program.id === programId) ?? null;
 }
 
+/**
+ * Programme neutre de repli : routine VIDE.
+ *
+ * Fix 2026-07-16 (audit programmes) : le repli etait `pvProgramOptions[0]` =
+ * Starter. Consequence, tout titre non reconnu ("À l'unité", "Programme a
+ * confirmer", "") injectait silencieusement les 3 produits de la routine
+ * Starter (aloe-vera + the-51g + formula-1) dans pv_client_products → PV et
+ * rentabilite faux sur des clients qui n'avaient rien pris. On replie
+ * desormais sur "unit" (includedProductIds: []) : un titre inconnu ne peut
+ * plus fabriquer de produits, il n'ajoute rien.
+ */
+const PV_PROGRAM_FALLBACK =
+  pvProgramOptions.find((program) => program.id === "unit") ?? pvProgramOptions[0];
+
 export function resolvePvProgram(programTitleOrId: string | null | undefined) {
   const byId = getPvProgramById(programTitleOrId);
   if (byId) {
@@ -1042,10 +1197,21 @@ export function resolvePvProgram(programTitleOrId: string | null | undefined) {
       const aliases = [program.title, ...(program.alias ?? [])];
       return aliases.some((alias) => normalize(alias) === normalized);
     }) ??
-    pvProgramOptions.find((program) =>
-      normalized.includes(normalize(program.title.replace("Programme ", "")))
-    ) ??
-    pvProgramOptions[0]
+    pvProgramOptions.find((program) => {
+      // Repli substring, MAIS uniquement si l'input EST essentiellement le titre
+      // du programme (pas titre + qualificatif). Sinon "premium sport" /
+      // "p-sport-premium" matchaient "premium" → produits minceur fantômes chez
+      // un client sport (les programmes sport ne sont PAS au catalogue PV).
+      const t = normalize(program.title.replace("Programme ", ""));
+      if (!t || !normalized.includes(t)) return false;
+      const rest = normalized
+        .replace(t, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\b(programme|p)\b/g, " ")
+        .trim();
+      return rest.length === 0;
+    }) ??
+    PV_PROGRAM_FALLBACK
   );
 }
 

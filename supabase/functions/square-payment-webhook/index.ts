@@ -107,12 +107,20 @@ serve(async (req: Request) => {
       .eq("provider_order_id", payment.order_id)
       .maybeSingle();
     if (!order) return new Response("no matching order", { status: 200 });
-    if (order.status === "paid") return new Response("already paid", { status: 200 }); // idempotent
+    if (order.status === "paid") return new Response("already paid", { status: 200 }); // idempotent (rapide)
 
-    await sb
+    // Transition CONDITIONNELLE : `neq status paid` + on ne pousse le notif que si
+    // une ligne a réellement changé. Square peut renvoyer 2× l'événement COMPLETED
+    // quasi simultanément → sans ça, 2 push « Paiement reçu » pour un seul paiement.
+    const { data: transitioned } = await sb
       .from("bilan_orders")
       .update({ status: "paid", paid_at: new Date().toISOString() })
-      .eq("id", order.id);
+      .eq("id", order.id)
+      .neq("status", "paid")
+      .select("id");
+    if (!transitioned || transitioned.length === 0) {
+      return new Response("already paid (race)", { status: 200 });
+    }
 
     // Push au coach — best-effort, ne bloque jamais le 200 vers Square.
     try {

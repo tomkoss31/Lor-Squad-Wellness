@@ -3,6 +3,7 @@ import { useAppContext } from "../../context/AppContext";
 import { PROSPECT_SOURCES, type Prospect, type ProspectSource, type User } from "../../types/domain";
 import { canSponsorDistributors } from "../../lib/auth";
 import { confirmNoAgendaConflict } from "../../lib/agendaGuard";
+import { RDV_DURATION_CHOICES } from "../../features/agenda/calendarEvents";
 import { Button } from "../ui/Button";
 
 interface ProspectFormModalProps {
@@ -18,6 +19,9 @@ interface ProspectFormModalProps {
     source?: ProspectSource;
     sourceDetail?: string;
     note?: string;
+    /** Date/heure du RDV pré-remplie (ISO). Agenda V2 2026-07-27 : clic sur un
+        créneau vide de la grille semaine → le formulaire s'ouvre à cette heure. */
+    rdvDate?: string;
   };
   onClose: () => void;
   onSaved?: (prospect: Prospect) => void;
@@ -43,6 +47,21 @@ function defaultRdvDate(): string {
   return toDateTimeLocal(d.toISOString());
 }
 
+// Puce de choix de durée (Agenda V2, LOT 6.4).
+function durationChipStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: "7px 12px",
+    borderRadius: 999,
+    fontSize: 12.5,
+    fontWeight: active ? 700 : 500,
+    fontFamily: "DM Sans, sans-serif",
+    cursor: "pointer",
+    background: active ? "var(--ls-teal)" : "var(--ls-surface2)",
+    color: active ? "#fff" : "var(--ls-text-muted)",
+    border: active ? "1px solid var(--ls-teal)" : "1px solid var(--ls-border)",
+  };
+}
+
 function filterAssignableUsers(currentUser: User | null, users: User[]): User[] {
   if (!currentUser) return [];
   if (currentUser.role === "admin") {
@@ -64,9 +83,16 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
   const [phone, setPhone] = useState(initial?.phone ?? prefill?.phone ?? "");
   const [email, setEmail] = useState(initial?.email ?? prefill?.email ?? "");
   const [rdvDate, setRdvDate] = useState(
-    initial?.rdvDate ? toDateTimeLocal(initial.rdvDate) : defaultRdvDate()
+    initial?.rdvDate
+      ? toDateTimeLocal(initial.rdvDate)
+      : prefill?.rdvDate
+        ? toDateTimeLocal(prefill.rdvDate)
+        : defaultRdvDate()
   );
   const [source, setSource] = useState<ProspectSource>(initial?.source ?? prefill?.source ?? "Instagram");
+  // Durée du RDV (Agenda V2, LOT 6.4). null = « comme d'habitude » → la durée
+  // par défaut du coach s'applique. On ne force personne à choisir.
+  const [durationMin, setDurationMin] = useState<number | null>(initial?.durationMin ?? null);
   const [sourceDetail, setSourceDetail] = useState(initial?.sourceDetail ?? prefill?.sourceDetail ?? "");
   const [note, setNote] = useState(initial?.note ?? prefill?.note ?? "");
   const [distributorId, setDistributorId] = useState(initial?.distributorId ?? currentUser?.id ?? "");
@@ -75,6 +101,9 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
 
   const assignable = filterAssignableUsers(currentUser, users);
   void canSponsorDistributors; // linter
+
+  // Email valide → le rappel auto J-1 pourra partir (cf. edge client-rdv-reminder).
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -109,6 +138,7 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
           phone: phone.trim() || undefined,
           email: email.trim().toLowerCase() || undefined,
           rdvDate: isoRdv,
+          durationMin: durationMin ?? undefined,
           source,
           sourceDetail: sourceDetail.trim() || undefined,
           note: note.trim() || undefined,
@@ -122,6 +152,7 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
           phone: phone.trim() || undefined,
           email: email.trim().toLowerCase() || undefined,
           rdvDate: isoRdv,
+          durationMin: durationMin ?? undefined,
           source,
           sourceDetail: sourceDetail.trim() || undefined,
           note: note.trim() || undefined,
@@ -209,10 +240,45 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
             <LabelInput label="Nom *" value={lastName} onChange={setLastName} />
           </div>
 
-          {/* Phone + Email */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <LabelInput label="Téléphone" value={phone} onChange={setPhone} inputMode="tel" />
-            <LabelInput label="Email" value={email} onChange={setEmail} type="email" />
+          {/* Téléphone */}
+          <LabelInput label="Téléphone" value={phone} onChange={setPhone} inputMode="tel" />
+
+          {/* Email — mis en avant : c'est lui qui déclenche le rappel auto la veille */}
+          <div
+            style={{
+              borderRadius: 12,
+              border: `1px solid ${email.trim() ? "var(--ls-border)" : "color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border))"}`,
+              background: email.trim() ? "transparent" : "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+              padding: 12,
+              transition: "background .2s, border-color .2s",
+            }}
+          >
+            <label className={labelClass} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <span>📧 Email</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ls-teal)" }}>· active le rappel automatique</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="prenom@email.com"
+              inputMode="email"
+              className={inputClass}
+            />
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 12,
+                lineHeight: 1.45,
+                color: emailValid ? "var(--ls-teal)" : "var(--ls-text-muted)",
+              }}
+            >
+              {emailValid
+                ? "✓ Il recevra un rappel automatique la veille du RDV, à 18h."
+                : email.trim()
+                ? "Vérifie l'adresse : le rappel de la veille part à cet email."
+                : "Renseigne son email pour qu'il reçoive un rappel automatique la veille du RDV."}
+            </div>
           </div>
 
           {/* RDV */}
@@ -222,6 +288,33 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
             onChange={setRdvDate}
             type="datetime-local"
           />
+
+          {/* Durée (Agenda V2, LOT 6.4) — choix rapide, jamais obligatoire.
+              « Comme d'habitude » applique le réglage du coach. */}
+          <div>
+            <label className={labelClass}>Durée</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setDurationMin(null)}
+                aria-pressed={durationMin === null}
+                style={durationChipStyle(durationMin === null)}
+              >
+                Comme d'habitude
+              </button>
+              {RDV_DURATION_CHOICES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setDurationMin(m)}
+                  aria-pressed={durationMin === m}
+                  style={durationChipStyle(durationMin === m)}
+                >
+                  {m} min
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Source */}
           <div>

@@ -6,14 +6,17 @@
 //   - { token, mode:"measurements" }     → stamp seulement (les mensurations
 //                                           sont insérées côté client via
 //                                           MeasurementsPanel, RLS client OK)
-//   - { token, mode:"skip" }             → stamp + notifie le coach (message)
+//   - { token, mode:"skip" }             → stamp + crée un RAPPEL PRIVÉ coach
+//                                           (coach_reminders). Ne fabrique PAS
+//                                           de faux message du client (refonte
+//                                           2026-07-16, cf. bloc mode skip).
 //
 // Dans tous les cas : UPDATE client_app_accounts.baseline_at = NOW() pour ne
 // plus re-demander. Auth = token client (uuid) sur client_app_accounts.
 //
 // Déployer : supabase functions deploy client-app-set-baseline --no-verify-jwt
 //
-// Robustesse : la notif coach (mode skip) et l'absence de bilan initial sont
+// Robustesse : le rappel coach (mode skip) et l'absence de bilan initial sont
 // best-effort — on ne fait jamais échouer le flux client là-dessus.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -86,7 +89,17 @@ serve(async (req) => {
       // ci-dessous — le poids sera ressaisi via un vrai bilan côté coach.
     }
 
-    // ─── Mode skip : notifier le coach (best-effort, ne bloque jamais) ──────
+    // ─── Mode skip : créer un RAPPEL COACH privé (best-effort) ──────────────
+    //
+    // Refonte 2026-07-16 (retour Thomas : "pas efficace et pas très
+    // professionnel"). AVANT : on fabriquait un FAUX message du client dans la
+    // messagerie ("👋 Je préfère faire mon point de départ avec toi...") — le
+    // client n'a jamais écrit ça, il a juste tapoté un lien. Ça polluait la
+    // messagerie et faisait dire au client des mots qui ne sont pas les siens.
+    //
+    // MAINTENANT : on écrit dans coach_reminders — la liste privée du coach
+    // (in-app, aucune notif/mail au client). C'est une TÂCHE du coach, pas une
+    // parole du client.
     if (mode === "skip") {
       try {
         const { data: client } = await sb
@@ -95,24 +108,31 @@ serve(async (req) => {
           .eq("id", clientId)
           .maybeSingle();
         if (client?.distributor_id) {
-          // Réutilise le canal messagerie → le trigger Postgres
-          // notify_new_client_message pousse une notif au coach.
-          await sb.from("client_messages").insert({
-            client_id: clientId,
-            client_name: `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim(),
-            distributor_id: client.distributor_id,
-            // 'general' (et non 'message') : seuls product_request /
-            // recommendation / rdv_request / general sont rendus dans un
-            // onglet de MessagesPage. Un type invalide rend le message
-            // invisible côté coach (badge "+1" mais introuvable). Bug 2026-06-08.
-            message_type: "general",
-            message:
-              "👋 Je préfère faire mon point de départ (poids ou mensurations) avec toi, lors de notre échange.",
-            sender: "client",
-          });
+          const fullName = `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim();
+          // Anti-doublon : un client qui rouvre l'app et re-skippe ne doit pas
+          // empiler les rappels.
+          const { data: existing } = await sb
+            .from("coach_reminders")
+            .select("id")
+            .eq("coach_id", client.distributor_id)
+            .eq("client_id", clientId)
+            .eq("status", "pending")
+            .ilike("label", "Point de départ%")
+            .maybeSingle();
+
+          if (!existing) {
+            await sb.from("coach_reminders").insert({
+              coach_id: client.distributor_id,
+              client_id: clientId,
+              label: `Point de départ à faire avec ${client.first_name ?? fullName}`,
+              note: "Le client a préféré faire sa pesée / ses mensurations avec toi plutôt que seul depuis l'appli. À caler au prochain échange.",
+              remind_on: new Date().toISOString().slice(0, 10),
+              status: "pending",
+            });
+          }
         }
       } catch (e) {
-        console.warn("[set-baseline] coach notify skipped:", e);
+        console.warn("[set-baseline] coach reminder skipped:", e);
       }
     }
 

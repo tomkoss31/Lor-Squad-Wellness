@@ -31,6 +31,7 @@ import { InlinePaymentButton } from "../components/payment/InlinePaymentButton";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { normalizeMultiValue } from "../lib/multiChoice";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -110,9 +111,11 @@ type AssessmentForm = {
   proteinEachMeal: string;
   sugaryProducts: string;
   snackingFrequency: string;
-  snackingMoment: string;
+  /** Multi depuis 2026-07-16 (matin ET soir). */
+  snackingMoment: string[];
   cravingsPreference: string;
-  snackingTrigger: string;
+  /** Multi depuis 2026-07-16 (faim ET stress ET ennui). */
+  snackingTrigger: string[];
   waterIntake: number;
   drinksCoffee: string;
   coffeePerDay: number;
@@ -124,9 +127,11 @@ type AssessmentForm = {
   energyLevel: string;
   pastAttempts: string;
   hardestPart: string;
-  mainBlocker: string;
-  objectiveFocus: string;
-  /** Chantier bilan updates (2026-04-20) : texte libre si objectiveFocus === "Autre". */
+  /** Multi depuis 2026-07-16 (plusieurs blocages cumulés). */
+  mainBlocker: string[];
+  /** Multi depuis 2026-07-16 ("Prise de masse" ET "Énergie"). */
+  objectiveFocus: string[];
+  /** Chantier bilan updates (2026-04-20) : texte libre si "Autre" est coché. */
   customGoal: string;
   /** Chantier bilan updates (2026-04-20) : snacks/fast-food/resto par semaine. */
   snacksFastFoodPerWeek: number | null;
@@ -182,7 +187,12 @@ interface AssessmentDraftPayload {
   savedAt: string;
 }
 
-const ASSESSMENT_DRAFT_KEY = "lor-squad-wellness-assessment-draft-v1";
+// v2 (2026-07-16) : snackingMoment / snackingTrigger / mainBlocker sont passés
+// de string à string[]. Un brouillon v1 en cours contiendrait des strings et
+// casserait le rendu multi → on repart d'un brouillon neuf plutôt que de faire
+// planter un bilan en cours de RDV. (Les bilans DÉJÀ ENREGISTRÉS, eux, sont
+// gérés en lecture par normalizeMultiValue — aucune perte.)
+const ASSESSMENT_DRAFT_KEY = "lor-squad-wellness-assessment-draft-v2";
 
 function padDatePart(value: number) {
   return String(value).padStart(2, "0");
@@ -266,9 +276,9 @@ const initialForm: AssessmentForm = {
   proteinEachMeal: "",
   sugaryProducts: "",
   snackingFrequency: "",
-  snackingMoment: "",
+  snackingMoment: [],
   cravingsPreference: "",
-  snackingTrigger: "",
+  snackingTrigger: [],
   waterIntake: 0,
   drinksCoffee: "",
   coffeePerDay: 0,
@@ -280,8 +290,8 @@ const initialForm: AssessmentForm = {
   energyLevel: "",
   pastAttempts: "",
   hardestPart: "",
-  mainBlocker: "",
-  objectiveFocus: "",
+  mainBlocker: [],
+  objectiveFocus: [],
   customGoal: "",
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
@@ -546,7 +556,10 @@ const timelineOptions = [
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
-  const { programs, users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
+  // `programs` (PROGRAMS_LEGACY) volontairement plus consomme ici depuis le fix
+  // 2026-07-16 : cette liste exclut "À l'unité", c'etait la source du bug
+  // programme vide / produits fantomes. Le bilan lit PROGRAM_CHOICES.
+  const { users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
   const { push: pushToast } = useToast();
   const [searchParams] = useSearchParams();
   const prospectId = searchParams.get("prospectId");
@@ -700,8 +713,10 @@ export function NewAssessmentPage() {
         setStepWarning("Prénom et nom du client sont obligatoires pour continuer.");
         return;
       }
-      if (!form.objectiveFocus) {
-        setStepWarning("Choisis un objectif principal pour le client.");
+      // ⚠️ Multi depuis 2026-07-16 : `[]` est TRUTHY, un simple `!form.x`
+      // laisserait passer un bilan sans aucun objectif coché.
+      if (form.objectiveFocus.length === 0) {
+        setStepWarning("Choisis au moins un objectif pour le client.");
         return;
       }
     }
@@ -761,23 +776,23 @@ export function NewAssessmentPage() {
     currentUser ??
     null;
 
-  const currentPrograms = programs.filter((program) => program.category === form.objective);
-  const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
-  // boosterPrograms retiré — l'étape 11 est refactorée, les "boosters" sont
-  // gérés via les programmes Booster 1 / Booster 2 dans programs.ts.
-  // Fix bug 2026-05-05 : avant on cherchait par form.selectedProgramId qui
-  // n'etait jamais set (ancien field obsolete) -> selectedProgram = null
-  // -> "Programme a confirmer" + 0 PV systematique. Maintenant on resout
-  // depuis form.programChoice (l'ID utilise par ProgramChoiceCard) en
-  // matchant sur l'ID legacy `p-${choice}` que PROGRAMS_LEGACY genere.
-  // Fallback secondaire : ancien selectedProgramId pour retrocompat
-  // d'un draft persiste avant ce fix.
-  const selectedProgram =
-    mainPrograms.find(
-      (program) =>
-        program.id === `p-${form.programChoice}` ||
-        program.id === form.selectedProgramId,
-    ) ?? null;
+  // Fix 2026-07-16 (audit programmes) — SOURCE DE VERITE = PROGRAM_CHOICES.
+  // AVANT : le programme retenu etait resolu dans PROGRAMS_LEGACY (via
+  // AppContext.programs), qui EXCLUT "unit" (programs.ts:198) alors que le
+  // selecteur du bilan le propose. Choisir "À l'unité" donnait donc
+  // selectedProgram = null -> current_program "" (ou la chaine littérale
+  // "Programme a confirmer") + zero produit cree, et le fallback du catalogue
+  // PV injectait la routine Starter (3 produits fantomes). On resout desormais
+  // le programme directement dans PROGRAM_CHOICES, qui contient TOUS les
+  // programmes, "unit" compris.
+  // Volontairement PAS getProgramById() : il replie sur Premium quand l'id est
+  // inconnu, ce qui ecrirait un faux programme.
+  const chosenProgramDef =
+    PROGRAM_CHOICES.find((choice) => choice.id === form.programChoice) ?? null;
+  /** Titre du programme retenu ("À l'unité" inclus), "" si aucun choix. */
+  const resolvedProgramTitle = chosenProgramDef?.title ?? "";
+  /** Id legacy (`p-*`) du programme retenu — espace d'id de assessments.program_id. */
+  const resolvedLegacyProgramId = chosenProgramDef ? `p-${chosenProgramDef.id}` : undefined;
   const startsImmediately = form.afterAssessmentAction === "started";
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
@@ -996,9 +1011,22 @@ export function NewAssessmentPage() {
   })();
 
 
-  function updateObjectiveFocus(value: string) {
-    update("objectiveFocus", value);
-    const newObjective = value === "Prise de masse" ? "sport" : "weight-loss";
+  /**
+   * Objectif(s) du client — MULTI depuis 2026-07-16 ("Prise de masse" ET
+   * "Énergie", demande Thomas).
+   *
+   * ⚠️ `objective` (sport | weight-loss) reste MONO : ce n'est pas l'objectif
+   * client, c'est l'AIGUILLAGE du parcours (il fait apparaître 2 étapes sport,
+   * pilote les calculs protéines, les programmes, et il est contraint par un
+   * CHECK SQL sur clients + assessments). On le DÉRIVE donc des cases cochées :
+   * dès que "Prise de masse" est coché, le bilan bascule en parcours sport, peu
+   * importe ce qui est coché à côté. Même principe que le bilan online, qui
+   * collecte plusieurs objectifs puis les réduit (cf. mapOnlineObjective).
+   */
+  function updateObjectiveFocus(values: string[]) {
+    update("objectiveFocus", values);
+    const newObjective = values.includes("Prise de masse") ? "sport" : "weight-loss";
+    if (newObjective === form.objective) return; // rien d'autre à reset
     update("objective", newObjective);
     update("selectedProgramId", "");
     // Fix bug 2026-05-05 : le programme par defaut doit aussi se reset
@@ -1121,11 +1149,15 @@ export function NewAssessmentPage() {
       return;
     }
 
-    if (!form.objectiveFocus.trim()) {
-      setSaveError("Choisis d'abord l'objectif principal du client.");
+    if (form.objectiveFocus.length === 0) {
+      setSaveError("Choisis d'abord au moins un objectif pour le client.");
       goToStep(0);
       return;
     }
+    // Rendu texte des objectifs cochés : "Prise de masse + Énergie".
+    // Sert au résumé du bilan ET à client_recaps.objective (colonne TEXT — un
+    // tableau y serait stocké n'importe comment).
+    const objectiveFocusLabel = form.objectiveFocus.join(" + ");
 
     // Chantier refonte bilan (2026-04-24) : impossible de valider sans
     // avoir planifié de RDV suivi (sauf suivi libre explicite).
@@ -1158,11 +1190,18 @@ export function NewAssessmentPage() {
       form.nextFollowUp || getDefaultNextFollowUpDateTime(),
       10
     );
-    const programTitle = selectedProgram?.title ?? "Programme a confirmer";
-    const programId = startsImmediately ? selectedProgram?.id : undefined;
-    const clientStatus = startsImmediately ? "active" : "pending";
-    const followUpType = startsImmediately ? "Premier suivi" : "Relance après bilan";
-    const followUpStatus = startsImmediately ? "scheduled" : "pending";
+    // Regle metier (Thomas, 2026-07-16) : des que le coach a retenu des
+    // produits dans le ticket et finalise le bilan, le client DEMARRE — meme
+    // s'il n'a pas coche "a demarre" a l'etape 12. Sans ca, ses produits
+    // n'etaient jamais crees (garde `started && currentProgram` cote service)
+    // et le Co-pilote le signalait "sans programme" (cas Aline).
+    const hasSelectedProducts = effectiveSelectedProductIds.length > 0;
+    const startedEffective = startsImmediately || hasSelectedProducts;
+    const programTitle = resolvedProgramTitle || "Programme a confirmer";
+    const programId = startedEffective ? resolvedLegacyProgramId : undefined;
+    const clientStatus = startedEffective ? "active" : "pending";
+    const followUpType = startedEffective ? "Premier suivi" : "Relance après bilan";
+    const followUpStatus = startedEffective ? "scheduled" : "pending";
     const assessment = {
       id: `a-${Date.now()}`,
       date: assessmentDate,
@@ -1170,9 +1209,10 @@ export function NewAssessmentPage() {
       objective: form.objective,
       programId,
       programTitle,
+      // Multi : "prise de masse + énergie" plutôt qu'un seul mot.
       summary: startsImmediately
-        ? `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
-        : `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
+        ? `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
+        : `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
       notes:
         form.comment.trim() ||
         (startsImmediately
@@ -1228,15 +1268,17 @@ export function NewAssessmentPage() {
         // indépendamment de startsImmediately — sinon le header fiche + app
         // client affiche "Programme à confirmer" alors que le coach a déjà
         // choisi. startsImmediately n'influe plus que sur pvProgramId (module PV).
-        currentProgram: selectedProgram?.title ?? (startsImmediately ? programTitle : ""),
-        pvProgramId: startsImmediately ? selectedProgram?.id : undefined,
-        started: startsImmediately,
+        // Fix 2026-07-16 : resolvedProgramTitle vient de PROGRAM_CHOICES, donc
+        // "À l'unité" s'écrit enfin (avant : "" -> zéro produit + fiche cassée).
+        currentProgram: resolvedProgramTitle,
+        pvProgramId: startedEffective ? resolvedLegacyProgramId : undefined,
+        started: startedEffective,
         nextFollowUp,
         followUpType,
         followUpStatus,
         notes:
           form.comment.trim() ||
-          (startsImmediately
+          (startedEffective
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
             : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
         afterAssessmentAction: form.afterAssessmentAction,
@@ -1347,7 +1389,10 @@ export function NewAssessmentPage() {
               client_last_name: form.lastName?.trim() ?? '',
               assessment_date: new Date().toISOString(),
               program_title: programTitle || null,
-              objective: form.objectiveFocus || null,
+              // client_recaps.objective est une colonne TEXT : on aplatit les
+              // objectifs cochés ("Prise de masse + Énergie"). Sans ça, un
+              // tableau y atterrirait sérialisé n'importe comment (2026-07-16).
+              objective: objectiveFocusLabel || null,
               body_scan: {
                 weight: form.weight || null,
                 bodyFat: form.bodyFat || null,
@@ -2036,11 +2081,15 @@ export function NewAssessmentPage() {
                   accent="gold"
                 >
                   <div className="grid gap-4 md:grid-cols-2">
-                    <ChoiceGroup
-                      label="Objectif principal"
-                      value={form.objectiveFocus}
+                    {/* Multi depuis 2026-07-16 : un client vise souvent 2 choses
+                        à la fois ("prise de masse ET énergie"). Cocher "Prise de
+                        masse" bascule le bilan en parcours sport (cf.
+                        updateObjectiveFocus). */}
+                    <MultiChoiceGroup
+                      label="Objectifs"
+                      values={normalizeMultiValue(form.objectiveFocus)}
                       options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
-                      onChange={updateObjectiveFocus}
+                      onToggle={updateObjectiveFocus}
                     />
                     <TimelineChoiceField
                       label="Délai souhaité"
@@ -2049,7 +2098,7 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
-                  {form.objectiveFocus === "Autre" && (
+                  {form.objectiveFocus.includes("Autre") && (
                     <AreaField
                       label="Précise ton objectif"
                       value={form.customGoal ?? ""}
@@ -2281,10 +2330,15 @@ export function NewAssessmentPage() {
                 accent="teal"
               >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {/* Fréquence + attirance restent MONO : logiquement exclusifs
+                      ("Jamais" et "Souvent" ne peuvent pas coexister ; l'attirance
+                      a déjà "Les deux"). Moment + cause passent en MULTI
+                      (2026-07-16) : on grignote le matin ET le soir, par faim ET
+                      par stress. */}
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
-                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Après-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
+                  <MultiChoiceGroup label="Moment" values={normalizeMultiValue(form.snackingMoment)} options={["Matin", "Après-midi", "Soir", "Nuit"]} onToggle={(v) => update("snackingMoment", v)} />
                   <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
-                  <ChoiceGroup label="Cause fréquente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onChange={(v) => update("snackingTrigger", v)} />
+                  <MultiChoiceGroup label="Cause" values={normalizeMultiValue(form.snackingTrigger)} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onToggle={(v) => update("snackingTrigger", v)} />
                 </div>
               </AssessmentSectionV2>
 
@@ -2367,7 +2421,7 @@ export function NewAssessmentPage() {
                     <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
                     <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
                   </div>
-                  <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
+                  <MultiChoiceGroup label="Blocages" values={normalizeMultiValue(form.mainBlocker)} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onToggle={(v) => update("mainBlocker", v)} />
                 </AssessmentSectionV2>
               </div>
             )}
@@ -4171,6 +4225,72 @@ function AreaField({ label, value, onChange }: { label: string; value: string; o
     <div className="space-y-2">
       <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
+    </div>
+  );
+}
+
+/**
+ * MultiChoiceGroup — jumeau multi-sélection de ChoiceGroup (2026-07-16).
+ *
+ * Demande Thomas : pendant le bilan, certaines questions ne sont PAS exclusives.
+ * Un client grignote le matin ET le soir ; il grignote par faim ET par stress.
+ * Forcer un choix unique obligeait le coach à trancher arbitrairement et faisait
+ * perdre de l'info.
+ *
+ * Volontairement un composant distinct plutôt qu'une prop `multiple` sur
+ * ChoiceGroup : ce dernier est utilisé par ~25 questions mono et sa signature
+ * (`value: string`) resterait ambiguë. Ici le contrat est explicite.
+ * Même rendu visuel (ls-pill) → aucune rupture d'UI, seul le comportement change.
+ */
+function MultiChoiceGroup({
+  label,
+  values,
+  options,
+  onToggle,
+  hint,
+}: {
+  label: string;
+  values: string[];
+  options: string[];
+  onToggle: (next: string[]) => void;
+  hint?: string;
+}) {
+  const selected = normalizeMultiValue(values);
+  return (
+    <div className="space-y-2">
+      <label className="ls-field-label">
+        {label}
+        <span style={{ fontWeight: 400, color: "var(--ls-text-muted)", marginLeft: 6 }}>
+          {hint ?? "· plusieurs possibles"}
+        </span>
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isSelected = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() =>
+                onToggle(
+                  isSelected
+                    ? selected.filter((item) => item !== option)
+                    : [...selected, option],
+                )
+              }
+              className={`ls-pill${isSelected ? " ls-pill--selected" : ""}`}
+              aria-pressed={isSelected}
+            >
+              {isSelected && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {option}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
