@@ -362,6 +362,11 @@ export function UsersPage() {
               </div>
             </div>
 
+            {/* Demandes d'accès au niveau complet (LOT 4, 2026-07-27).
+                Volontairement sans push : elles s'affichent ici, à l'endroit
+                exact où l'on bascule le niveau d'app. */}
+            <AppLevelRequestsBanner users={users} />
+
             {/* Liste membres accordéon */}
             {filteredUsers.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13 }}>
@@ -1165,6 +1170,104 @@ function UserInlineRankForm({ user }: { user: User }) {
 }
 
 const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = RANK_ORDER;
+
+// ─── Demandes d'accès au niveau complet (Simplification, 2026-07-27) ──────
+// Un coach qui bute sur un outil masqué clique « Demander l'accès complet »
+// depuis le cockpit La Base Académie. La demande atterrit ici, au-dessus de la
+// liste des membres — pas en notification (le chantier coupe le bruit).
+function AppLevelRequestsBanner({ users }: { users: User[] }) {
+  const [pending, setPending] = useState<Array<{ id: string; user_id: string; created_at: string }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data } = await sb
+        .from("app_level_requests")
+        .select("id, user_id, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (!cancelled && data) setPending(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function resolve(requestId: string, userId: string, approve: boolean) {
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    if (approve) {
+      const { error: levelErr } = await sb
+        .from("users")
+        .update({ app_level: "complet" })
+        .eq("id", userId);
+      if (levelErr) return;
+    }
+    await sb
+      .from("app_level_requests")
+      .update({ status: approve ? "approved" : "refused", handled_at: new Date().toISOString() })
+      .eq("id", requestId);
+    setPending((list) => list.filter((r) => r.id !== requestId));
+  }
+
+  if (pending.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        padding: "14px 16px",
+        borderRadius: 14,
+        background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+        🔓 {pending.length} demande{pending.length > 1 ? "s" : ""} d&apos;accès à l&apos;app complète
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+        {pending.map((r) => {
+          const who = users.find((u) => u.id === r.user_id);
+          return (
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ flex: 1, minWidth: 140, fontSize: 13, color: "var(--ls-text)" }}>
+                {who?.name ?? "Membre"}
+                <span style={{ color: "var(--ls-text-muted)", fontSize: 11.5 }}>
+                  {" · "}
+                  {new Date(r.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => void resolve(r.id, r.user_id, true)}
+                style={{
+                  padding: "6px 12px", border: "none", borderRadius: 8, cursor: "pointer",
+                  background: "var(--ls-teal)", color: "#fff", fontSize: 12, fontWeight: 600,
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                Ouvrir l&apos;accès
+              </button>
+              <button
+                type="button"
+                onClick={() => void resolve(r.id, r.user_id, false)}
+                style={{
+                  padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                  background: "transparent", border: "1px solid var(--ls-border)",
+                  color: "var(--ls-text-muted)", fontSize: 12, fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                Plus tard
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── Niveau d'app (chantier Simplification, 2026-07-27) ───────────────────
 // « essentiel » = le socle du quotidien (défaut de tout le monde).

@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
 import { InviteDistributorModal } from "../../../components/users/InviteDistributorModal";
+import { AllerPlusLoin } from "./AllerPlusLoin";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
@@ -226,6 +227,9 @@ export function SalleOpsQuotidien({
           <div className="ls-ops-hide-desktop">
             <SectionLabel>Ton parcours · {view.totalSteps} étapes</SectionLabel>
             <Progression view={view} activeLabel={activeLabel} shownN={shownN} onPick={pickStep} />
+            {/* Formation + boîte à outils + glossaire (LOT 4) — version mobile,
+                le rail desktop porte le même bloc. */}
+            <AllerPlusLoin />
           </div>
         </div>
 
@@ -247,6 +251,11 @@ export function SalleOpsQuotidien({
           <button type="button" onClick={() => askNoaly(lesson?.noalyPrompt)} style={railNoalyBtn}>
             Demander à Noaly →
           </button>
+          {/* La porte « apprendre » des coachs (LOT 4, 2026-07-27) : formation
+              Herbalife, scripts et glossaire, rapatriés ici depuis le hub
+              « Mon développement » qui devient l'espace de Thomas. */}
+          <div style={{ height: 1, background: "var(--ls-ops-border-soft)", margin: "26px 0" }} />
+          <AllerPlusLoin />
         </aside>
       </div>
 

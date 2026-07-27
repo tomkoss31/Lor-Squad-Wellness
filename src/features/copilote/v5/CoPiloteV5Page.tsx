@@ -57,6 +57,7 @@ export function CoPiloteV5Page() {
   // encombraient la barre sans porter une seule action business. La routine
   // reste joignable par sa notification de 20h et par /routine-du-jour.
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
   // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
   const timeContext = useTimeContext();
@@ -186,41 +187,82 @@ export function CoPiloteV5Page() {
           veut vérifier ce que voient ses distris). Force l'ouverture du cockpit
           LIVE (setOpsForceOpen) — pas la maquette statique /salle-ops. */}
       {currentUser.role === "distributor" || currentUser.role === "admin" ? (
-        <button
-          type="button"
-          onClick={() => {
-            window.localStorage.removeItem("ls-ops-escape");
-            setOpsEscaped(false);
-            setOpsForceOpen(true);
-            window.scrollTo({ top: 0 });
-          }}
+        <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            width: "100%",
-            textAlign: "left",
             background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
             border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
             borderRadius: 16,
             padding: "14px 16px",
-            cursor: "pointer",
-            fontFamily: "inherit",
           }}
         >
-          <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-              {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
+          <button
+            type="button"
+            onClick={() => {
+              window.localStorage.removeItem("ls-ops-escape");
+              setOpsEscaped(false);
+              setOpsForceOpen(true);
+              window.scrollTo({ top: 0 });
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
+                {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
+              </span>
+              <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                {ops.activated
+                  ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
+                  : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
+              </span>
             </span>
-            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              {ops.activated
-                ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
-                : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
+            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
+          </button>
+
+          {/* Accès direct à la formation (LOT 4, 2026-07-27) : sans ça, un coach
+              déjà activé devait passer par le cockpit pour la trouver — soit
+              plus loin qu'avant, alors que l'objectif est de la rendre PLUS
+              accessible (8 personnes l'avaient ouverte). */}
+          <button
+            type="button"
+            onClick={() => navigate("/formation")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 12,
+              paddingTop: 11,
+              width: "100%",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              borderTop: "1px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              color: "var(--ls-text)",
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: 17 }}>📚</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600 }}>
+              Ma formation Herbalife
             </span>
-          </span>
-          <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-        </button>
+            <span style={{ fontSize: 12, color: "var(--ls-text-muted)", flexShrink: 0 }}>
+              Démarrer · Construire · Dupliquer
+            </span>
+            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
+          </button>
+        </div>
       ) : null}
 
       {/* Simplification 2026-07-27 (LOT 1) : la check-list d'accueil J0→J7
