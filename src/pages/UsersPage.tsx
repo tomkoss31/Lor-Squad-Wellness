@@ -11,6 +11,7 @@ import type { User, HerbalifeRank } from "../types/domain";
 import { RANK_LABELS, RANK_ORDER } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
+import { hiddenFeatures, toAppLevel, type AppLevel } from "../config/appVisibility";
 
 type TabKey = "members" | "new" | "repair";
 type RoleFilter = "all" | "admin" | "referent" | "distributor";
@@ -513,6 +514,18 @@ export function UsersPage() {
                               Rang Herbalife
                             </div>
                             <UserInlineRankForm user={user} />
+                          </div>
+
+                          {/* Niveau d'app (Simplification 2026-07-27) — règle
+                              ce que la personne VOIT dans les menus. Tout le
+                              monde démarre en « Essentiel » ; on ouvre au cas
+                              par cas. Aucune donnée n'est cachée, aucun lien
+                              ne casse — juste des menus plus courts. */}
+                          <div>
+                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                              Niveau d'app
+                            </div>
+                            <UserInlineAppLevelControl user={user} />
                           </div>
 
                           {/* Beta access formation (2026-11-05) — toggle
@@ -1152,6 +1165,110 @@ function UserInlineRankForm({ user }: { user: User }) {
 }
 
 const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = RANK_ORDER;
+
+// ─── Niveau d'app (chantier Simplification, 2026-07-27) ───────────────────
+// « essentiel » = le socle du quotidien (défaut de tout le monde).
+// « complet »   = toute l'app. Réservé à Thomas au départ, il ouvre au cas
+// par cas. Ne masque QUE les menus : les routes et les données restent
+// accessibles, donc aucun lien existant ne casse.
+// Le trigger SQL users_guard_app_level refuse le changement à un non-admin.
+function UserInlineAppLevelControl({ user }: { user: User }) {
+  const [level, setLevel] = useState<AppLevel>(toAppLevel(user.appLevel));
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  const hiddenCount = hiddenFeatures(level).length;
+
+  async function apply(next: AppLevel) {
+    if (next === level || saving) return;
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { error: e } = await sb
+        .from("users")
+        .update({ app_level: next })
+        .eq("id", user.id);
+      if (e) throw new Error(e.message);
+      setLevel(next);
+      setFeedback({
+        type: "ok",
+        msg: next === "complet" ? "Toute l'app ouverte" : "Retour au socle",
+      });
+      setTimeout(() => setFeedback(null), 2500);
+    } catch (err) {
+      setFeedback({ type: "err", msg: err instanceof Error ? err.message : "Erreur" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const OPTIONS: Array<{ value: AppLevel; label: string }> = [
+    { value: "essentiel", label: "Essentiel" },
+    { value: "complet", label: "Complet" },
+  ];
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div
+        role="group"
+        aria-label="Niveau d'app"
+        style={{
+          display: "inline-flex",
+          padding: 3,
+          gap: 3,
+          borderRadius: 999,
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+        }}
+      >
+        {OPTIONS.map((opt) => {
+          const active = level === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => void apply(opt.value)}
+              disabled={saving}
+              aria-pressed={active}
+              style={{
+                padding: "6px 14px",
+                border: "none",
+                borderRadius: 999,
+                background: active ? "var(--ls-teal)" : "transparent",
+                color: active ? "#fff" : "var(--ls-text-muted)",
+                fontSize: 12,
+                fontWeight: active ? 700 : 500,
+                cursor: saving ? "wait" : "pointer",
+                fontFamily: "DM Sans, sans-serif",
+                transition: "background 0.18s, color 0.18s",
+              }}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+      <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>
+        {level === "complet"
+          ? "Voit toute l'app"
+          : `Voit le socle du quotidien · ${hiddenCount} outils masqués`}
+      </span>
+      {feedback && (
+        <span
+          style={{
+            fontSize: 11,
+            color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          {feedback.msg}
+        </span>
+      )}
+    </div>
+  );
+}
 
 // ─── Beta access formation toggle (2026-11-05) ────────────────────────────
 function UserInlineFormationBetaToggle({ user }: { user: User }) {
