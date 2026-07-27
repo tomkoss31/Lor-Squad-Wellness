@@ -357,7 +357,7 @@ export function AgendaWeekGrid({
 
       {/* ═══ MOBILE — un jour à la fois ═══ */}
       <div className="agenda-week-mobile">
-        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+        <div className="agenda-fixed" style={{ display: "flex", gap: 4, marginBottom: 12 }}>
           {days.map((d, i) => {
             const on = isSameDay(d, mobileDay);
             const isToday = isSameDay(d, today);
@@ -373,6 +373,9 @@ export function AgendaWeekGrid({
                   borderRadius: 11,
                   border: "none",
                   background: on ? "var(--ls-teal)" : "transparent",
+                  // Anneau permanent sur aujourd'hui, même si un autre jour
+                  // est consulté (2026-07-27).
+                  boxShadow: isToday ? "inset 0 0 0 2px var(--ls-teal)" : undefined,
                   color: on ? "var(--ls-teal-contrast)" : isToday ? "var(--ls-teal)" : "var(--ls-text-muted)",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 11,
@@ -400,6 +403,7 @@ export function AgendaWeekGrid({
         {/* Le détail de la journée est rendu par AgendaDayList — le MÊME
             composant que la vue Mois sur téléphone. Une seule implémentation,
             donc un geste identique où qu'on se trouve (refonte 2026-07-27). */}
+        <div className="agenda-scroll">
         <AgendaDayList
           day={mobileDay}
           timed={mobileEvents}
@@ -410,6 +414,7 @@ export function AgendaWeekGrid({
           onSelectEvent={onSelectEvent}
           onCreateAt={onCreateAt}
         />
+        </div>
       </div>
 
       {/* ═══ DESKTOP — grille 7 jours ═══ */}

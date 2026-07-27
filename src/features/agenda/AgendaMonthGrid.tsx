@@ -77,11 +77,14 @@ export function AgendaMonthGrid({
       if (list) list.push(ev);
       else map.set(key, [ev]);
     }
-    // Les RDV sans heure (suivis de protocole) passent en tête de journée :
-    // ce sont des actions à caler, pas des créneaux déjà pris.
+    // Les RDV HORODATÉS d'abord (correctif 2026-07-27). Avant, les actions de
+    // protocole passaient en tête : comme la case n'affiche que 3 pastilles,
+    // elles pouvaient occuper les trois et faire disparaître un bilan de 14 h
+    // de la grille. Or la vue mois sert à répondre « ce jour est-il chargé ? »,
+    // et un RDV posé pèse plus qu'une action à caler.
     for (const list of map.values()) {
       list.sort((a, b) => {
-        if (!!a.allDay !== !!b.allDay) return a.allDay ? -1 : 1;
+        if (!!a.allDay !== !!b.allDay) return a.allDay ? 1 : -1;
         return a.start.getTime() - b.start.getTime();
       });
     }
@@ -119,8 +122,8 @@ export function AgendaMonthGrid({
         le dimanche sortaient de l'écran. On garde la grille pour la densité,
         on sort le détail en dessous — comme TimeTree, Google et Apple.
         Refonte validée par Thomas le 2026-07-27. */}
-    <div className="agenda-week-mobile">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
+    <div className="agenda-week-mobile agenda-fullpage-inner">
+      <div className="agenda-fixed" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
         {DAY_LABELS.map((l) => (
           <div
             key={l}
@@ -137,12 +140,13 @@ export function AgendaMonthGrid({
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 2, marginBottom: 6 }}>
+      <div className="agenda-fixed" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 2, marginBottom: 6 }}>
         {days.map((d) => {
           const list = eventsByDay.get(d.toDateString()) ?? [];
           const inMonth = d.getMonth() === displayedMonth;
           const isToday = isSameDay(d, today);
           const isSel = isSameDay(d, selected);
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
           return (
             <button
               key={d.toISOString()}
@@ -159,7 +163,16 @@ export function AgendaMonthGrid({
                 gap: 4,
                 border: "none",
                 borderRadius: 12,
-                background: isSel ? "var(--ls-teal)" : "transparent",
+                background: isSel
+                  ? "var(--ls-teal)"
+                  : isWeekend
+                    ? "color-mix(in srgb, var(--ls-text-hint) 9%, transparent)"
+                    : "transparent",
+                // AUJOURD'HUI garde un anneau EN PERMANENCE, même quand un
+                // autre jour est sélectionné (demande explicite de Thomas).
+                // Deux marqueurs distincts : anneau = aujourd'hui, pastille
+                // pleine = jour consulté.
+                boxShadow: isToday ? "inset 0 0 0 2px var(--ls-teal)" : undefined,
                 color: "var(--ls-text)",
                 cursor: "pointer",
                 opacity: inMonth ? 1 : 0.4,
@@ -177,7 +190,7 @@ export function AgendaMonthGrid({
                 {String(d.getDate()).padStart(2, "0")}
               </span>
               <span style={{ display: "flex", gap: 3, height: 6, alignItems: "center" }}>
-                {list.slice(0, 3).map((ev) => (
+                {list.slice(0, MAX_CHIPS_PER_DAY).map((ev) => (
                   <i
                     key={ev.id}
                     aria-hidden="true"
@@ -185,16 +198,33 @@ export function AgendaMonthGrid({
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: isSel ? "rgba(255,255,255,0.9)" : colorOf(ev),
+                      background: isSel ? "var(--ls-teal-contrast)" : colorOf(ev),
                       display: "block",
                     }}
                   />
                 ))}
+                {/* « +N » : sans lui, une journée à 5 RDV était indiscernable
+                    d'une journée à 3 — or c'est LA question que la vue mois
+                    doit trancher (2026-07-27). */}
+                {list.length > MAX_CHIPS_PER_DAY ? (
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      color: isSel ? "var(--ls-teal-contrast)" : "var(--ls-text-muted)",
+                    }}
+                  >
+                    +{list.length - MAX_CHIPS_PER_DAY}
+                  </span>
+                ) : null}
               </span>
             </button>
           );
         })}
       </div>
+      <div className="agenda-scroll">
       <AgendaDayList
         day={selected}
         timed={selBucket.filter((e) => !e.allDay)}
@@ -205,6 +235,7 @@ export function AgendaMonthGrid({
         onSelectEvent={onSelectEvent}
         onCreateAt={onCreateAt}
       />
+      </div>
     </div>
 
     {/* ═══ DESKTOP — grille pleine ═══ */}

@@ -691,7 +691,9 @@ export function AgendaPage() {
   const heroTodayCount = entityCounts.all > 0 ? entityCounts.all : 0;
 
   return (
-    <div className="space-y-5">
+    // En vue calendrier, la page occupe l'écran et seule la journée défile
+    // (maquette validée 2026-07-27). En vue Liste, comportement inchangé.
+    <div className={isCalendarView ? "agenda-fullpage" : "space-y-5"}>
       {/* ═══ EN-TÊTE — masqué en vue calendrier (refonte 2026-07-27) ═══════
           Sur téléphone, il fallait traverser le hero, la carte « prochain
           RDV », les onglets d'entité puis 9 pastilles de filtres avant
@@ -1154,6 +1156,78 @@ export function AgendaPage() {
       </>
       ) : null}
 
+      {/* ═══ BARRE UNIQUE — vue calendrier (maquette validée 2026-07-27) ═══
+          Avant, la période était un label gris de 11,5 px répété DANS chaque
+          vue, avec sa propre paire de flèches. Elle devient le contrôle
+          principal : le mois en gros, et un bouton « Auj. » qui porte le vrai
+          quantième — c'est le repère du jour que Thomas demandait. */}
+      {isCalendarView ? (
+        <div className="agenda-fixed" style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 0 8px" }}>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontFamily: "Anton, sans-serif",
+              fontWeight: 400,
+              fontSize: "clamp(19px, 5.5vw, 23px)",
+              letterSpacing: "0.4px",
+              textTransform: "uppercase",
+              color: "var(--ls-text)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {view === "month" ? monthLabel : weekRangeLabel}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              setWeekAnchor(now);
+              setFocusDay(now);
+            }}
+            style={{
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              height: 40,
+              padding: "0 12px",
+              borderRadius: 12,
+              border: "1px solid var(--ls-teal)",
+              background: "transparent",
+              color: "var(--ls-teal)",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Auj.
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}>
+              {new Date().getDate()}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => (view === "month" ? shiftMonth(-1) : shiftWeek(-1))}
+            aria-label={view === "month" ? "Mois précédent" : "Semaine précédente"}
+            style={weekNavBtnStyle}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => (view === "month" ? shiftMonth(1) : shiftWeek(1))}
+            aria-label={view === "month" ? "Mois suivant" : "Semaine suivante"}
+            style={weekNavBtnStyle}
+          >
+            ›
+          </button>
+        </div>
+      ) : null}
+
       {/* ═══ ONGLETS D'ENTITÉ — toujours visibles (correctif 2026-07-27) ═══
           Ils étaient enfermés dans le bloc masqué en vue calendrier. Or
           `entityFilter` est persisté en localStorage ET appliqué à la
@@ -1172,7 +1246,7 @@ export function AgendaPage() {
           turquoise, protocoles turquoise au lieu de doré). Invisible tant que
           les onglets vivaient deux écrans au-dessus de la grille ; posés
           juste au-dessus, la contradiction serait la première chose lue. */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
+      <div className="agenda-fixed" style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
         <EntityTab
           label="Tous"
           count={isCalendarView ? null : entityCounts.all}
@@ -1208,7 +1282,7 @@ export function AgendaPage() {
 
       {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
           premier choix et le défaut : personne ne perd son repère. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div className="agenda-fixed" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 0" }}>
         <div
           role="group"
           aria-label="Affichage de l'agenda"
@@ -1343,24 +1417,6 @@ export function AgendaPage() {
           RDV à 14h30 » : on clique un jour pour basculer en semaine. */}
       {view === "month" ? (
         <div data-tour-id="agenda-month">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
-              {monthLabel}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const now = new Date();
-                setWeekAnchor(now);
-                setFocusDay(now);
-              }}
-              style={weekNavBtnStyle}
-            >
-              Aujourd&apos;hui
-            </button>
-            <button type="button" onClick={() => shiftMonth(-1)} aria-label="Mois précédent" style={weekNavBtnStyle}>‹</button>
-            <button type="button" onClick={() => shiftMonth(1)} aria-label="Mois suivant" style={weekNavBtnStyle}>›</button>
-          </div>
           <AgendaMonthGrid
             events={calendarEvents}
             anchorDate={weekAnchor}
@@ -1387,26 +1443,6 @@ export function AgendaPage() {
           Même moteur d'entrées que la liste — seul le dessin change. */
       view === "week" ? (
         <div data-tour-id="agenda-week">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
-              {weekRangeLabel}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const now = new Date();
-                setWeekAnchor(startOfWeekMonday(now));
-                // Sur téléphone, sans ce jour imposé, « Aujourd'hui » ramenait
-                // au lundi de la semaine (correctif 2026-07-27).
-                setFocusDay(now);
-              }}
-              style={weekNavBtnStyle}
-            >
-              Aujourd'hui
-            </button>
-            <button type="button" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente" style={weekNavBtnStyle}>‹</button>
-            <button type="button" onClick={() => shiftWeek(1)} aria-label="Semaine suivante" style={weekNavBtnStyle}>›</button>
-          </div>
 
           {/* Permanences du club (LOT 6.6) — visible seulement s'il y a un
               club. Tant que le mode est actif, un clic sur un creux pose une
