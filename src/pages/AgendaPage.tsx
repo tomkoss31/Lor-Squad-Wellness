@@ -28,6 +28,7 @@ import {
   startOfWeekMonday,
   makeOwnerColorResolver,
   makeEventColor,
+  KIND_COLORS,
   type AgendaEntry as AgendaEntryBase,
   type DayBand,
 } from "../features/agenda/calendarEvents";
@@ -567,6 +568,7 @@ export function AgendaPage() {
   );
 
   const shiftMonth = useCallback((direction: 1 | -1) => {
+    setFocusDay(null);
     setWeekAnchor((prev) => {
       // On se cale sur le 1er avant de décaler : sinon un 31 janvier + 1 mois
       // atterrit en mars, et la navigation saute un mois.
@@ -1148,41 +1150,61 @@ export function AgendaPage() {
         <TeamStatsWidget prospects={distributorFilteredProspects} />
       )}
 
-      {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
 
+      </>
+      ) : null}
+
+      {/* ═══ ONGLETS D'ENTITÉ — toujours visibles (correctif 2026-07-27) ═══
+          Ils étaient enfermés dans le bloc masqué en vue calendrier. Or
+          `entityFilter` est persisté en localStorage ET appliqué à la
+          construction des entrées (agendaEntries), donc au calendrier aussi :
+          une coach ayant laissé « Clients » actif dans la liste ouvrait la vue
+          Mois sur un mois amputé de tous ses prospects, sans un pixel pour le
+          lui dire. Avec ~30 RDV à venir, un mois qui paraît vide.
+
+          Les compteurs ne s'affichent qu'en vue Liste : en vue calendrier ils
+          porteraient sur la période des filtres (aujourd'hui / cette semaine)
+          pendant qu'on regarde septembre. Mieux vaut pas de chiffre qu'un
+          chiffre faux.
+
+          Les pastilles reprennent KIND_COLORS : elles étaient toutes les trois
+          décalées (clients doré au lieu de violet, prospects violet au lieu de
+          turquoise, protocoles turquoise au lieu de doré). Invisible tant que
+          les onglets vivaient deux écrans au-dessus de la grille ; posés
+          juste au-dessus, la contradiction serait la première chose lue. */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
         <EntityTab
           label="Tous"
-          count={entityCounts.all}
+          count={isCalendarView ? null : entityCounts.all}
           active={entityFilter === "all"}
           onClick={() => setEntityFilter("all")}
           dot={null}
         />
         <EntityTab
           label="Clients"
-          count={entityCounts.clients}
+          count={isCalendarView ? null : entityCounts.clients}
           active={entityFilter === "clients"}
           onClick={() => setEntityFilter("clients")}
-          dot="var(--ls-gold)"
+          dot={KIND_COLORS.client}
         />
         <EntityTab
           label="Prospects"
-          count={entityCounts.prospects}
+          count={isCalendarView ? null : entityCounts.prospects}
           active={entityFilter === "prospects"}
           onClick={() => setEntityFilter("prospects")}
-          dot="var(--ls-purple)"
+          dot={KIND_COLORS.prospect}
         />
         <EntityTab
-          label="Suivis"
-          count={entityCounts.followups}
+          /* Renommé « Suivis » → « Protocole » : kindLabel(client) renvoie déjà
+             « Suivi », donc un RDV étiqueté « Suivi » dans la journée n'était
+             PAS dans l'onglet « Suivis ». Collision de vocabulaire. */
+          label="Protocole"
+          count={isCalendarView ? null : entityCounts.followups}
           active={entityFilter === "followups"}
           onClick={() => setEntityFilter("followups")}
-          dot="var(--ls-teal)"
+          dot={KIND_COLORS.protocol}
         />
       </div>
-
-      </>
-      ) : null}
 
       {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
           premier choix et le défaut : personne ne perd son repère. */}
@@ -1325,7 +1347,15 @@ export function AgendaPage() {
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
               {monthLabel}
             </div>
-            <button type="button" onClick={() => setWeekAnchor(new Date())} style={weekNavBtnStyle}>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                setWeekAnchor(now);
+                setFocusDay(now);
+              }}
+              style={weekNavBtnStyle}
+            >
               Aujourd&apos;hui
             </button>
             <button type="button" onClick={() => shiftMonth(-1)} aria-label="Mois précédent" style={weekNavBtnStyle}>‹</button>
@@ -1335,9 +1365,9 @@ export function AgendaPage() {
             events={calendarEvents}
             anchorDate={weekAnchor}
             ownerName={ownerName}
-            ownerColor={ownerColor}
             colorOf={colorOf}
             showOwner={showOwner}
+            focusDay={focusDay}
             onCreateAt={(at) => {
               setEditing(undefined);
               setPrefillRdvDate(at);
@@ -1922,7 +1952,9 @@ function EntityTab({
   label, count, active, onClick, dot,
 }: {
   label: string;
-  count: number;
+  /** null = pas de compteur (vue calendrier : il porterait sur une autre
+   *  période que celle affichée — mieux vaut rien qu'un chiffre faux). */
+  count: number | null;
   active: boolean;
   onClick: () => void;
   dot: string | null;
@@ -1984,6 +2016,7 @@ function EntityTab({
         />
       )}
       <span>{label}</span>
+      {count === null ? null : (
       <span
         style={{
           fontSize: 11,
@@ -2003,6 +2036,7 @@ function EntityTab({
       >
         {count}
       </span>
+      )}
     </button>
   );
 }

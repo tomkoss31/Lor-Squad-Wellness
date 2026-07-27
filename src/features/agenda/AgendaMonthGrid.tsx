@@ -22,7 +22,6 @@ import {
   kindIcon,
   monthGridDays,
   type CalendarEvent,
-  type OwnerColorResolver,
 } from "./calendarEvents";
 
 const DAY_LABELS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
@@ -34,13 +33,17 @@ export interface AgendaMonthGridProps {
   /** N'importe quelle date du mois à afficher. */
   anchorDate: Date;
   ownerName: (ownerId: string) => string;
-  ownerColor: OwnerColorResolver;
   /** Couleur d'UN événement (type / personne / à qualifier). */
   colorOf: (ev: CalendarEvent) => string;
   /** Vrai si plusieurs coachs sont affichés. */
   showOwner?: boolean;
   /** Création depuis une journée vide (vue mobile). */
   onCreateAt?: (at: Date) => void;
+  /** Jour imposé par le parent (bouton « Aujourd'hui »). Sans lui, appuyer
+   *  sur « Aujourd'hui » depuis le mois courant ne faisait RIEN : le mois ne
+   *  changeant pas, l'effet sur monthKey ne se rejouait pas et le panneau du
+   *  bas restait sur le jour précédemment touché (correctif 2026-07-27). */
+  focusDay?: Date | null;
   /** Clic sur un RDV. */
   onSelectEvent?: (event: CalendarEvent) => void;
   /** Clic sur un jour (ou sur « +N ») → ouvrir la semaine correspondante. */
@@ -55,12 +58,12 @@ export function AgendaMonthGrid({
   events,
   anchorDate,
   ownerName,
-  ownerColor,
   colorOf,
   showOwner,
   onSelectEvent,
   onSelectDay,
   onCreateAt,
+  focusDay,
 }: AgendaMonthGridProps) {
   const days = useMemo(() => monthGridDays(anchorDate), [anchorDate]);
   const today = new Date();
@@ -101,6 +104,11 @@ export function AgendaMonthGrid({
     // On resynchronise au changement de MOIS, pas à chaque nouvel objet Date.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthKey]);
+  // Déclaré APRÈS l'effet de mois : un jour imposé gagne toujours.
+  const focusKey = focusDay ? focusDay.getTime() : null;
+  useEffect(() => {
+    if (focusKey !== null) setSelected(new Date(focusKey));
+  }, [focusKey]);
   const selBucket = eventsByDay.get(selected.toDateString()) ?? [];
 
   return (
@@ -297,7 +305,11 @@ export function AgendaMonthGrid({
               </div>
 
               {shown.map((ev) => {
-                const color = ownerColor(ev.ownerId);
+                // colorOf, pas ownerColor (correctif 2026-07-27) : sinon un
+                // RDV à qualifier est rouge sur téléphone et turquoise sur
+                // desktop, et la couleur par TYPE — le cas d'un coach seul,
+                // donc celui de Thomas et de Mélanie — n'existait pas ici.
+                const color = colorOf(ev);
                 return (
                   <button
                     key={ev.id}
