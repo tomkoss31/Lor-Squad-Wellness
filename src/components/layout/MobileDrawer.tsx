@@ -26,6 +26,8 @@ import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { useAppLevel } from "../../hooks/useAppLevel";
+import { useBbcMode } from "../../features/bbc/useBbcMode";
+import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -45,6 +47,9 @@ interface MobileDrawerProps {
 export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }: MobileDrawerProps) {
   const { currentUser } = useAppContext();
   const { count: streakDays, badge: streakBadge } = useFormationStreak();
+  // Bascule Classic/BBC sur mobile (correctif 2026-07-27) — sans elle, un
+  // admin passé en Classic depuis son téléphone n'avait plus aucun retour.
+  const bbcMode = useBbcMode(currentUser?.id, currentUser?.role === "admin");
 
   // ESC pour fermer
   useEffect(() => {
@@ -196,6 +201,25 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
             <div style={{ padding: "4px 12px 2px" }}>
               <ThemeToggle />
             </div>
+            {/* Bascule Classic / BBC — CORRECTIF 2026-07-27.
+                Elle n'existait QUE dans la sidebar desktop, laquelle est
+                masquée sous 1280px : un admin qui passait en Classic depuis
+                son téléphone se retrouvait enfermé, sans aucun chemin de
+                retour vers son environnement BBC. Signalé par Thomas depuis
+                son iPhone. Le drawer est le seul menu qui existe sur mobile,
+                la bascule doit donc y vivre aussi. */}
+            {isAdmin ? (
+              <div style={{ padding: "6px 12px 2px", display: "flex", justifyContent: "center" }}>
+                <BbcModeSwitch
+                  value={bbcMode.isBbc ? "bbc" : "classic"}
+                  onChange={(v) => {
+                    bbcMode.setPreview(v);
+                    onClose();
+                  }}
+                  compact
+                />
+              </div>
+            ) : null}
             <button
               type="button"
               className="lb-drawer-item danger"

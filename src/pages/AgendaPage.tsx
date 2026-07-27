@@ -467,6 +467,33 @@ export function AgendaPage() {
     [clubShifts.shifts, ownerNameMap, currentUser?.id, currentUser?.role],
   );
 
+  /**
+   * Clic sur un RDV dans une vue calendaire.
+   *
+   * Correctif 2026-07-27 : la grille faisait `navigate(href)` — on QUITTAIT
+   * l'agenda pour la fiche client, alors que la vue liste, elle, ouvre une
+   * modale avec toutes les actions rapides (statut, refroidir, réactiver,
+   * démarrer un bilan, éditer). La grille était donc une régression sur le
+   * geste le plus fréquent. On réutilise les modales existantes — aucune UI
+   * nouvelle, aucun doublon.
+   */
+  const handleCalendarEventClick = useCallback(
+    (ev: { entry: AgendaEntry }) => {
+      const entry = ev.entry;
+      if (entry.kind === "prospect") {
+        setDetailProspect(entry.prospect);
+        return;
+      }
+      if (entry.kind === "protocol") {
+        setOpenProtocol(entry.due);
+        return;
+      }
+      // Suivi client : pas de modale dédiée, la fiche client EST la destination.
+      navigate(`/clients/${entry.client.id}`);
+    },
+    [navigate],
+  );
+
   const shiftMonth = useCallback((direction: 1 | -1) => {
     setWeekAnchor((prev) => {
       // On se cale sur le 1er avant de décaler : sinon un 31 janvier + 1 mois
@@ -1217,9 +1244,7 @@ export function AgendaPage() {
             anchorDate={weekAnchor}
             ownerName={ownerName}
             ownerColor={ownerColor}
-            onSelectEvent={(ev) => {
-              if (ev.href) navigate(ev.href);
-            }}
+            onSelectEvent={handleCalendarEventClick}
             onSelectDay={(day) => {
               setWeekAnchor(startOfWeekMonday(day));
               setView("week");
@@ -1273,9 +1298,7 @@ export function AgendaPage() {
             currentUserId={currentUser?.id}
             ownerName={ownerName}
             ownerColor={ownerColor}
-            onSelectEvent={(ev) => {
-              if (ev.href) navigate(ev.href);
-            }}
+            onSelectEvent={handleCalendarEventClick}
             bands={bands}
             onSelectBand={(band) => {
               if (!window.confirm("Retirer cette permanence du club ?")) return;
