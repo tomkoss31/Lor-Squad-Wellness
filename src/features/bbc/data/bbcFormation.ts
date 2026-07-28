@@ -136,7 +136,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
     apport:
       "Il apprend à PILOTER un club, pas seulement à y coacher : le loyer, le point mort, les stocks, les statistiques, le planning. Et il encadre les stagiaires.",
     acces:
-      "Un entretien de 20 min avec le propriétaire, puis un rythme tenu : 4 services complets 7h-11h par semaine, 5 nouveaux membres par semaine, et 10 clients en première ligne sous 90 jours — sinon il redevient coach stagiaire.",
+      "Un entretien d'1h30 avec le propriétaire (le pourquoi, les objectifs chiffrés à 90 jours) et un engagement de 3 à 9 mois. Puis un rythme tenu : 4 services complets 7h-11h par semaine, 5 nouveaux membres par semaine, et 10 clients en première ligne sous 90 jours — sinon il redevient coach stagiaire.",
     description:
       "La marche où l'on apprend les chiffres. Le programme de mentorat tient en 8 compétences : finances (« combien de cartes pour couvrir mon loyer ? »), tracker du club, administratif, stocks, plan de prospection 90 jours, suivi des bénéfices, tracker du parcours, et prendre la parole en formation. Il fournit son propre stock, pour lui et ses stagiaires.",
     vuDenHaut: "Côté propriétaire : c'est toi qui mènes cet entretien et qui poses la marche.",
@@ -147,8 +147,6 @@ export const BBC_ROLES: BbcRoleRung[] = [
       "suivre ses stagiaires",
       "le Huddle Junior, 2 fois par mois minimum",
     ],
-    todo:
-      "Deux sources divergent sur l'entrée : le Drive (« Checklist activation du Junior Partenaire ») dit entretien de 20 min et 10 clients en première ligne sous 90 jours ; le Playbook Notion disait entretien d'1h30 et engagement de 3 à 9 mois. C'est la version du Drive qui est affichée ici — à trancher avec Thomas.",
   },
   {
     role: "proprietaire",
@@ -661,7 +659,7 @@ export function buildGlossary(settings: ClubSettings | null): GlossaryEntry[] {
     },
     {
       t: "junior partner",
-      d: "la marche où l'on apprend les CHIFFRES d'un club : loyer, point mort, stocks, statistiques, planning. Rythme demandé : 4 services complets et 5 nouveaux membres par semaine, 10 clients en première ligne sous 90 jours.",
+      d: "la marche où l'on apprend les CHIFFRES d'un club : loyer, point mort, stocks, statistiques, planning. On y entre par un entretien d'1h30 et un engagement de 3 à 9 mois. Rythme demandé : 4 services complets et 5 nouveaux membres par semaine, 10 clients en première ligne sous 90 jours.",
     },
     {
       t: "propriétaire de club",
