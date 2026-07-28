@@ -22,6 +22,10 @@
   --ls-bbc-teal: #2DD4BF;
   --ls-bbc-coral: #FB7185;
   --ls-bbc-amber: #E9A23B;
+  /* Les rituels du club (« La semaine du club », 2026-07-28). Il fallait une
+     5e teinte : le lime dit « club », le teal « membre », le coral « urgent »,
+     l'ambre « personne n'ouvre » — un rituel n'est rien de tout ça. */
+  --ls-bbc-violet: #A78BFA;
   --ls-bbc-lime-ink: #06241F;
   --ls-bbc-lime-text: #C5F82A;
   --ls-bbc-font-display: "Anton", system-ui, sans-serif;
@@ -43,6 +47,7 @@
   --ls-bbc-teal: #0F766E;
   --ls-bbc-coral: #E11D48;
   --ls-bbc-amber: #B7791F;
+  --ls-bbc-violet: #6D28D9;
   --ls-bbc-lime-text: #4D7A06;
 }
 
@@ -76,7 +81,23 @@
   background: var(--ls-bbc-s2) !important;
 }
 
+/* Formation : rail de gauche + parcours à droite.
+   La classe existait déjà dans le TSX mais n'était définie NULLE PART, et la
+   grille était posée en style inline — donc plus prioritaire que n'importe
+   quel media query. À 390 px le rail gardait ses 340 px et toute la colonne de
+   droite (le parcours 00→08, le compteur, le glossaire) était écrasée sur une
+   bande illisible. Le repli mobile n'avait simplement jamais existé. */
+.bbc-formation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
 @media (max-width: 900px) {
+  .bbc-formation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .bbc-sidebar {
     display: none;
   }

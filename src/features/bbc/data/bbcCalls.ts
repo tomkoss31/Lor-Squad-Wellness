@@ -68,3 +68,52 @@ export function getNextCalls(settings?: ClubSettings | null, now = new Date()): 
 
   return out.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
+
+/**
+ * Toutes les occurrences des rituels DANS une semaine donnée (« La semaine du
+ * club », 2026-07-28).
+ *
+ * `getNextCalls` ne sert pas ici : il regarde vers l'AVANT et repousse à la
+ * semaine suivante une occurrence déjà passée dans la journée. Parfait pour un
+ * « prochain appel », faux pour un agenda — l'atelier de mardi soir aurait
+ * disparu de la semaine dès mercredi matin, alors que le coach a justement
+ * besoin de le revoir pour faire ses suivis.
+ *
+ * La fonction vit ici, et pas dans la vue, pour que les libellés, le repli et
+ * la lecture de la config restent partagés avec le reste du mode BBC.
+ *
+ * @param weekStart lundi 00:00 de la semaine voulue.
+ */
+export function getCallsForWeek(settings: ClubSettings | null | undefined, weekStart: Date): NextCall[] {
+  const calls = settings?.calls ?? FALLBACK;
+  const today = new Date();
+  const out: NextCall[] = [];
+
+  for (const [key, cfg] of Object.entries(calls)) {
+    if (!cfg?.days?.length || !cfg.time) continue;
+    const [h, m] = cfg.time.split(":").map((v) => parseInt(v, 10));
+    if (Number.isNaN(h)) continue;
+
+    for (const day of cfg.days) {
+      const target = DAY_INDEX[day.toLowerCase()];
+      if (target === undefined) continue;
+      // `weekStart` est un lundi : dimanche (index 0) est le 7e jour, pas le 1er.
+      const offset = (target + 6) % 7;
+      const at = new Date(weekStart);
+      at.setDate(at.getDate() + offset);
+      at.setHours(h, m || 0, 0, 0);
+
+      const isToday = at.toDateString() === today.toDateString();
+      const time = `${String(h).padStart(2, "0")}h${String(m || 0).padStart(2, "0")}`;
+      out.push({
+        key,
+        label: LABELS[key] ?? key,
+        at,
+        isToday,
+        when: `${isToday ? "aujourd'hui" : at.toLocaleDateString("fr-FR", { weekday: "long" })} · ${time}`,
+      });
+    }
+  }
+
+  return out.sort((a, b) => a.at.getTime() - b.at.getTime());
+}
