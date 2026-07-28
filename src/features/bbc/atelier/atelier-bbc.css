@@ -1,0 +1,103 @@
+/* =============================================================================
+ * Atelier visuel BBC — habillage de l'outil, DÉVELOPPEMENT UNIQUEMENT.
+ *
+ * L'atelier lui-même porte `.bbc-mode` : ses couleurs sortent donc des mêmes
+ * tokens `--ls-bbc-*` que les écrans qu'il montre (règle du dépôt : aucun hex
+ * en dur dans le mode BBC). Rien ici ne cible un sélecteur des composants BBC —
+ * l'atelier n'a pas le droit de repeindre ce qu'il est censé auditer.
+ * ========================================================================== */
+
+.atelier-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ls-bbc-bg);
+  color: var(--ls-bbc-text);
+  font-family: var(--ls-bbc-font-body);
+}
+
+.atelier-bar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ls-bbc-line);
+  background: var(--ls-bbc-s1);
+}
+
+.atelier-groupe {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.atelier-legende {
+  font-family: var(--ls-bbc-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ls-bbc-hint);
+}
+
+.atelier-chip {
+  border: 1px solid var(--ls-bbc-line2);
+  background: var(--ls-bbc-s2);
+  color: var(--ls-bbc-muted);
+  font-family: var(--ls-bbc-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.atelier-chip:hover {
+  color: var(--ls-bbc-text);
+}
+.atelier-chip[aria-pressed="true"] {
+  background: var(--ls-bbc-lime);
+  border-color: var(--ls-bbc-lime);
+  color: var(--ls-bbc-lime-ink);
+}
+
+/* La scène : fond neutre pour que les bords du viewport simulé se voient. */
+.atelier-scene {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 16px 24px;
+  background: var(--ls-bbc-s2);
+  overflow: auto;
+}
+
+.atelier-viewport {
+  flex: 1;
+  min-height: 640px;
+  width: 100%;
+  border: 1px solid var(--ls-bbc-line2);
+  border-radius: 14px;
+  background: var(--ls-bbc-bg);
+  /* L'iframe est le cœur du dispositif : les media queries de `bbc-tokens.css`
+     interrogent la largeur du VIEWPORT, pas celle du conteneur. Un simple div
+     de 390 px dans une fenêtre de 1280 px n'aurait donc JAMAIS déclenché le
+     repli mobile — on aurait « testé » du responsive sans en voir un pixel. */
+  display: block;
+}
+
+.atelier-note {
+  flex: none;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ls-bbc-hint);
+  max-width: 860px;
+  padding: 10px 2px 0;
+}
+.atelier-note strong {
+  color: var(--ls-bbc-amber);
+  font-weight: 700;
+}

@@ -634,6 +634,27 @@ const AnalyticsPage = lazy(() =>
   }))
 );
 
+// Atelier visuel BBC — DÉVELOPPEMENT UNIQUEMENT (/atelier-bbc).
+//
+// POURQUOI. Les écrans coach BBC sont derrière l'auth Supabase : personne ne
+// peut les REGARDER sans compte, et deux régressions purement visuelles (le
+// bascule Classic/BBC invisible sous 1280 px, la grille de Formation sans repli
+// mobile) sont parties en prod avec un build vert. L'atelier monte les VRAIS
+// composants BBC avec des props factices, à une largeur de viewport choisie.
+//
+// SÉCURITÉ. `import.meta.env.DEV` est remplacé par un littéral au build : en
+// production la branche est morte, l'import dynamique est éliminé (le chunk
+// n'est pas émis) et la <Route> n'est jamais déclarée — l'URL retombe donc sur
+// le catch-all `*`. Aucune garde de route, aucun AppContext, aucune session
+// n'est modifiée : l'atelier ne contourne rien, il rend des composants.
+const AtelierBbcPage = import.meta.env.DEV
+  ? lazy(() =>
+      import("./features/bbc/atelier/AtelierBbcPage").then((module) => ({
+        default: module.AtelierBbcPage,
+      })),
+    )
+  : null;
+
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
 import { useAppContext } from './context/AppContext'
@@ -728,6 +749,9 @@ export default function App() {
               bouton 'Demander reactivation' qui INSERT unfreeze_requests. */}
           <Route path="/frozen" element={<FrozenPage />} />
           <Route path="/partage/:token" element={<SharePage />} />
+          {/* Atelier visuel BBC — jamais déclaré hors développement (cf. le
+              commentaire au-dessus de la déclaration `AtelierBbcPage`). */}
+          {AtelierBbcPage ? <Route path="/atelier-bbc" element={<AtelierBbcPage />} /> : null}
           {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
           <Route path="/legal/mentions" element={<LegalNoticePage />} />
           <Route path="/legal/confidentialite" element={<PrivacyPolicyPage />} />
