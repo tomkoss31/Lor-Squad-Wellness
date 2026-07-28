@@ -91,6 +91,21 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const [filtre, setFiltre] = useState<Filtre>("all");
   /** Le matin dont on est en train de décider — null = feuille fermée. */
   const [feuille, setFeuille] = useState<Date | null>(null);
+  /** Dernier échec d'écriture, affiché DANS la feuille. Les deux seuls gestes
+   *  d'écriture de l'écran passent par un RPC qui peut refuser (club qui n'est
+   *  pas le sien, session expirée, réseau coupé) : sans ce message, le refus
+   *  laissait la feuille strictement dans le même état, donc indiscernable d'un
+   *  appui qui n'a pas pris. */
+  const [erreurFeuille, setErreurFeuille] = useState<string | null>(null);
+
+  const ouvrirFeuille = (jour: Date) => {
+    setErreurFeuille(null);
+    setFeuille(jour);
+  };
+  const fermerFeuille = () => {
+    setFeuille(null);
+    setErreurFeuille(null);
+  };
 
   // Semaine courante uniquement (lundi → dimanche), conformément à la maquette
   // validée. `startOfWeekMonday` / `weekDays` viennent du moteur de l'agenda
@@ -104,7 +119,8 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   // à côté de la date. Le littéral n'est qu'un dernier filet — la vraie valeur
   // vient des Réglages du club.
   const openHours = settings?.open_hours || DEFAULT_CLUB_SETTINGS.open_hours || "7h-11h";
-  const shifts = useClubShifts(club?.id ?? null, openHours, lundi);
+  const clubId = club?.id ?? null;
+  const shifts = useClubShifts(clubId, openHours, lundi);
   const calls = useBbcCalls(userId, settings);
   const { members } = useBbcMembers(userId);
 
@@ -147,14 +163,21 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
       const at = dansLaSemaine(p.rdvDate);
       if (!at) continue;
       const nom = [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Prospect";
+      // Le parcours BBC nominal, c'est « bilan puis carte dans la foulée » : le
+      // prospect passe `converted` et une fiche membre est créée le jour même.
+      // Coder « hors club » en dur sur toute la branche prospects étiquetait
+      // donc le membre le PLUS récent du club comme un étranger — à l'envers du
+      // seul repère de l'écran. On résout l'appartenance par la fiche créée,
+      // exactement comme la branche suivis juste en dessous.
+      const membre = !!p.convertedClientId && idsMembres.has(p.convertedClientId);
       out.push({
         id: `prospect-${p.id}`,
-        famille: "classique",
+        famille: membre ? "membre" : "classique",
         at,
         heure: fmtHeure(at),
         titre: nom,
-        sous: "bilan · prospect",
-        tag: "hors club",
+        sous: membre ? "bilan · membre du club" : "bilan · prospect",
+        tag: membre ? "membre" : "hors club",
       });
     }
 
@@ -189,19 +212,38 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
       // Permanence : dimanche exclu — le club ouvre 6 jours sur 7. Le jour de
       // fermeture n'est pas (encore) réglable ; il n'existe nulle part en base.
-      if (jour.getDay() !== 0) {
+      // Sans club connu (le temps que `useBbcMode` le charge, ou faute de club
+      // créé), il n'y a AUCUNE permanence à afficher : on ne sait pas qui tient
+      // le bar, et la feuille s'ouvrirait sur un geste voué à échouer — `assign`
+      // rend false d'entrée sans `club_id`. Le reste de la semaine (RDV, rituels,
+      // bilans) reste lisible.
+      if (jour.getDay() !== 0 && clubId) {
         const shift = shifts.parJour.get(cleJour(jour));
         const qui = shift ? nomsUsers.get(shift.userId) : null;
         const debutTexte = shift ? fmtHeure(shift.startsAt) : `${shifts.creneau.startH}h`;
+        // Tant que la semaine n'est pas revenue de la base, `parJour` est vide —
+        // strictement indiscernable d'un matin réellement sans personne. Sans ce
+        // test, un coach dont les 6 matins sont pourtant affectés voyait les 6
+        // lignes crier « personne n'ouvre » à chaque ouverture de l'onglet (le
+        // temps d'un aller-retour en 4G au comptoir), puis basculer sur les noms.
+        // Une alarme qui se déclenche à faux à chaque visite s'apprend à
+        // s'ignorer : l'ambre est donc réservé à un matin vide CONFIRMÉ par le
+        // serveur. Le repli après ÉCHEC de fetch reste, lui, volontairement
+        // « personne n'ouvre » (cf. useClubShifts) — alerter à tort est le sens
+        // sûr, rassurer à tort ne l'est pas.
+        const enAttente = shifts.loading && !shift;
         evs.push({
           id: `perm-${cleJour(jour)}`,
           famille: "perm",
           heure: debutTexte,
-          titre: shift ? "Permanence du matin" : "Personne n'ouvre",
-          sous: shift ? (qui ?? "affecté") : "touche pour affecter quelqu'un",
-          tag: shift ? "club" : "à couvrir",
-          vide: !shift,
-          jour,
+          titre: shift || enAttente ? "Permanence du matin" : "Personne n'ouvre",
+          sous: enAttente ? "chargement…" : shift ? (qui ?? "affecté") : "touche pour affecter quelqu'un",
+          tag: enAttente ? "…" : shift ? "club" : "à couvrir",
+          vide: !shift && !enAttente,
+          // Pas d'affectation à l'aveugle : tant qu'on ignore si le matin est
+          // déjà tenu, ouvrir la feuille reviendrait à écraser quelqu'un sans
+          // jamais avoir vu son nom (la RPC remplace ce qui chevauche).
+          jour: enAttente ? undefined : jour,
         });
       }
 
@@ -235,7 +277,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
       return { jour, evs };
     });
-  }, [jours, shifts.parJour, shifts.creneau, nomsUsers, rituels, calls, rdv]);
+  }, [jours, clubId, shifts.parJour, shifts.creneau, shifts.loading, nomsUsers, rituels, calls, rdv]);
 
   const garde = (f: Famille): boolean => {
     if (filtre === "all") return true;
@@ -255,9 +297,14 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", maxWidth: 720 }}>
-      {/* Sous-titre : la plage couverte + le créneau d'ouverture réel du club. */}
-      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-hint)", marginTop: -14, marginBottom: 16 }}>
-        {fmtJour(jours[0])} → {fmtJour(jours[5])} · {openHours}
+      {/* Sous-titre : la plage RÉELLEMENT couverte + le créneau d'ouverture du
+          club. La liste rend les 7 jours (un suivi peut être calé un dimanche,
+          et `DAY_INDEX` accepte un rituel dominical) ; s'arrêter à samedi ici
+          faisait mentir l'en-tête sur ce que l'écran couvre, au risque qu'on
+          rate ce qui s'y trouve. Seule la PERMANENCE saute le dimanche — d'où
+          la précision « du lundi au samedi » accolée aux horaires. */}
+      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, lineHeight: 1.5, color: "var(--ls-bbc-hint)", marginTop: -14, marginBottom: 16 }}>
+        {fmtJour(jours[0])} → {fmtJour(jours[6])} · ouverture {openHours} du lundi au samedi
       </div>
 
       {/* ── Chips de filtre ─────────────────────────────────────────────── */}
@@ -351,7 +398,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           <div key={cleJour(jour)}>
             <EnTeteJour libelle={fmtJour(jour)} aujourdhui={isSameDay(jour, new Date())} />
             {evs.map((ev) => (
-              <LigneEvenement key={ev.id} ev={ev} onClick={ev.jour ? () => setFeuille(ev.jour!) : undefined} />
+              <LigneEvenement key={ev.id} ev={ev} onClick={ev.jour ? () => ouvrirFeuille(ev.jour!) : undefined} />
             ))}
           </div>
         ))}
@@ -370,14 +417,22 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           creneauTexte={openHours}
           equipe={equipe}
           actuelId={shiftDuJourChoisi?.userId ?? null}
-          onFermer={() => setFeuille(null)}
+          erreur={erreurFeuille}
+          onFermer={fermerFeuille}
           onAffecter={async (id) => {
+            setErreurFeuille(null);
             const ok = await shifts.assign(feuille, id);
+            // On ne ferme la feuille QUE si la base a dit oui : refermer sur un
+            // échec ferait passer un refus pour une réussite, d'autant que la
+            // peinture optimiste a affiché le nom une seconde avant de le retirer.
             if (ok) setFeuille(null);
+            else setErreurFeuille("Impossible d'affecter — vérifie ta connexion, puis réessaie.");
           }}
           onLiberer={async () => {
+            setErreurFeuille(null);
             const ok = await shifts.clear(feuille);
             if (ok) setFeuille(null);
+            else setErreurFeuille("Impossible de libérer ce matin — réessaie.");
           }}
         />
       ) : null}
@@ -472,6 +527,7 @@ function FeuilleAffectation({
   creneauTexte,
   equipe,
   actuelId,
+  erreur,
   onFermer,
   onAffecter,
   onLiberer,
@@ -480,11 +536,26 @@ function FeuilleAffectation({
   creneauTexte: string;
   equipe: Affectable[];
   actuelId: string | null;
+  /** Message d'échec du dernier geste — null quand tout va bien. */
+  erreur: string | null;
   onFermer: () => void;
-  onAffecter: (userId: string) => void;
-  onLiberer: () => void;
+  onAffecter: (userId: string) => Promise<void>;
+  onLiberer: () => Promise<void>;
 }) {
   const [choisi, setChoisi] = useState<string | null>(actuelId);
+  // L'écriture passe par un aller-retour réseau : sans cet état, un appui pendant
+  // le vol relançait un second RPC (qui efface puis réinsère) pour rien.
+  const [envoi, setEnvoi] = useState(false);
+
+  const lancer = async (geste: () => Promise<void>) => {
+    if (envoi) return;
+    setEnvoi(true);
+    try {
+      await geste();
+    } finally {
+      setEnvoi(false);
+    }
+  };
 
   return (
     <div
@@ -557,18 +628,38 @@ function FeuilleAffectation({
           })
         )}
 
+        {/* L'échec s'affiche juste au-dessus du bouton qui vient de refuser —
+            c'est là que le regard revient, et c'est là que le geste se retente. */}
+        {erreur ? (
+          <div
+            role="alert"
+            style={{
+              marginTop: 12,
+              padding: "10px 12px",
+              borderRadius: 11,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+              color: "var(--ls-bbc-coral)",
+              background: "color-mix(in srgb, var(--ls-bbc-coral) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-bbc-coral) 35%, transparent)",
+            }}
+          >
+            {erreur}
+          </div>
+        ) : null}
+
         <button
           type="button"
-          disabled={!choisi}
-          onClick={() => choisi && onAffecter(choisi)}
+          disabled={!choisi || envoi}
+          onClick={() => choisi && void lancer(() => onAffecter(choisi))}
           style={{
             width: "100%",
             minHeight: 50,
             border: 0,
             borderRadius: 13,
             marginTop: 10,
-            cursor: choisi ? "pointer" : "default",
-            opacity: choisi ? 1 : 0.5,
+            cursor: choisi && !envoi ? "pointer" : "default",
+            opacity: choisi && !envoi ? 1 : 0.5,
             background: "var(--ls-bbc-lime)",
             color: "var(--ls-bbc-lime-ink)",
             fontFamily: "var(--ls-bbc-font-body)",
@@ -576,7 +667,7 @@ function FeuilleAffectation({
             fontWeight: 800,
           }}
         >
-          Affecter
+          {envoi ? "…" : "Affecter"}
         </button>
         <button
           type="button"
@@ -602,7 +693,8 @@ function FeuilleAffectation({
         {actuelId ? (
           <button
             type="button"
-            onClick={onLiberer}
+            disabled={envoi}
+            onClick={() => void lancer(onLiberer)}
             style={{
               width: "100%",
               minHeight: 40,
@@ -612,7 +704,8 @@ function FeuilleAffectation({
               color: "var(--ls-bbc-coral)",
               fontFamily: "var(--ls-bbc-font-body)",
               fontSize: 12.5,
-              cursor: "pointer",
+              opacity: envoi ? 0.5 : 1,
+              cursor: envoi ? "default" : "pointer",
             }}
           >
             libérer ce matin

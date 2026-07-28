@@ -111,6 +111,9 @@ export interface UseClubShiftsResult {
   /** Permanences de la semaine, indexées par jour (clé locale YYYY-MM-DD). */
   parJour: Map<string, ClubShift>;
   creneau: Creneau;
+  /** Vrai tant que la semaine demandée n'est pas revenue de la base. À LIRE
+   *  avant de conclure qu'un matin est vide : une map vide veut aussi bien dire
+   *  « personne ne tient le bar » que « on n'a pas encore demandé ». */
   loading: boolean;
   /** Confie ce matin-là à quelqu'un. Remplace l'affectation existante. */
   assign: (jour: Date, userId: string) => Promise<boolean>;
@@ -172,6 +175,19 @@ export function useClubShifts(
     } finally {
       setLoading(false);
     }
+  }, [clubId, weekMs]);
+
+  // ⚠ Ce reset n'est PAS cosmétique : `rows` vide est strictement indiscernable
+  // de « pas encore demandé », et c'est sur cette confusion que l'écran criait
+  // « personne n'ouvre » sur les 6 matins pendant tout le chargement. Le club
+  // arrive de surcroît en différé (`useBbcMode` le charge après le premier
+  // render) : sans repasser `loading` à vrai quand la fenêtre change, le vrai
+  // fetch se serait déroulé avec `loading` déjà retombé à faux.
+  // On le fait dans un effet séparé de `refetch` pour que le refetch qui SUIT
+  // une affectation ne fasse pas clignoter les autres matins en « chargement… ».
+  useEffect(() => {
+    setRows([]);
+    setLoading(Boolean(clubId));
   }, [clubId, weekMs]);
 
   useEffect(() => {

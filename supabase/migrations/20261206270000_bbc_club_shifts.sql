@@ -31,6 +31,16 @@
 -- `supabase db push` depuis la seule branche feat/bbc parte d'une base saine :
 -- les deux fichiers sont `if not exists`, ils se croisent sans se marcher
 -- dessus au moment du merge.
+--
+-- ⚠ CE FICHIER NE SUFFIT PAS À LUI SEUL : il active la RLS sans définir de
+-- policy. Sur une base neuve (branche Supabase, `db reset`), la table naîtrait
+-- donc muette — le SELECT direct du front renverrait [] pour toujours, en
+-- silence, pendant que les RPC (security definer) écriraient correctement :
+-- le coach affecte quelqu'un, la RPC réussit, et le matin repasse « personne
+-- n'ouvre » au refetch, sans la moindre erreur. Les 4 policies sont dans
+-- 20261206280000_bbc_club_shifts_rls_owner.sql (idempotentes), qui est LA
+-- référence depuis la revue de sécurité — ne pas les recopier ici, deux
+-- définitions concurrentes de la même policy finissent toujours par diverger.
 create table if not exists public.club_shifts (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs (id) on delete cascade,
