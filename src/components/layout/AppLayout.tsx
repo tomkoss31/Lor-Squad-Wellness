@@ -739,15 +739,6 @@ export function AppLayout() {
               nav, profil, theme, install PWA, sortir. Toutes ces options
               ne polluent plus la page d'accueil. */}
           <MobileHeader
-            /* La bascule Classic/BBC vit AUSSI ici. Elle n'existait que dans la
-               sidebar, qui est en `hidden … xl:grid` : sous 1280 px un admin
-               n'avait donc aucun chemin pour entrer dans son club — bug remonté
-               par Thomas en recette mobile. */
-            footer={
-              currentUser.role === "admin" ? (
-                <BbcModeSwitch value="classic" onChange={(v) => bbc.setPreview(v)} compact />
-              ) : undefined
-            }
             crumb={pageTitle}
             navItems={navigation}
             currentPath={location.pathname}
