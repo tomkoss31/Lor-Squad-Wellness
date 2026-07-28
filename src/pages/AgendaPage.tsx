@@ -19,11 +19,18 @@ import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
 import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
+import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
+import { useClubShifts } from "../features/agenda/useClubShifts";
+import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
+import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import {
   toCalendarEvents,
   startOfWeekMonday,
   makeOwnerColorResolver,
+  makeEventColor,
+  KIND_COLORS,
   type AgendaEntry as AgendaEntryBase,
+  type DayBand,
 } from "../features/agenda/calendarEvents";
 
 type DateFilter = "today" | "week" | "all";
@@ -38,8 +45,8 @@ type EntityFilter = "all" | "clients" | "prospects" | "followups";
 // entrées, elles ne peuvent donc pas diverger.
 type AgendaEntry = AgendaEntryBase;
 
-/** Vue courante : la liste historique, ou la grille semaine. */
-type AgendaView = "list" | "week";
+/** Vue courante : la liste historique, la grille semaine, ou le mois. */
+type AgendaView = "list" | "week" | "month";
 const AGENDA_VIEW_KEY = "ls-agenda-view";
 
 function startOfDay(d: Date): Date {
@@ -103,8 +110,22 @@ function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
   }
 }
 
-function groupLabel(dateIso: string, today: Date): string {
-  const d = new Date(dateIso);
+/** Une entrée passée attend-elle encore une action du coach ? */
+function stillActionable(entry: AgendaEntry): boolean {
+  if (entry.kind === "prospect") return entry.prospect.status === "scheduled";
+  if (entry.kind === "client") {
+    return entry.followUp.status === "scheduled" || entry.followUp.status === "pending";
+  }
+  // Suivi de protocole : le scheduler donne déjà le retard.
+  return (
+    entry.due.status === "due_today" ||
+    entry.due.status === "overdue_1d" ||
+    entry.due.status === "overdue_more"
+  );
+}
+
+function groupLabel(entry: AgendaEntry, today: Date): string {
+  const d = new Date(entry.date);
   const todayStart = startOfDay(today);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
@@ -114,12 +135,19 @@ function groupLabel(dateIso: string, today: Date): string {
 
   if (dayStart.getTime() === todayStart.getTime()) return "Aujourd'hui";
   if (dayStart.getTime() === tomorrowStart.getTime()) return "Demain";
-  if (d < todayStart) return "Passés";
+  // Passé : « En retard » si ça attend encore quelque chose, « Passés » si
+  // c'est soldé (RDV honoré, prospect converti, RDV annulé).
+  if (d < todayStart) return stillActionable(entry) ? "En retard" : "Passés";
   if (d <= weekEnd) return "Cette semaine";
   return "Plus tard";
 }
 
-const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
+// « En retard » en TÊTE (2026-07-27). Avant, groupLabel ne regardait que la
+// date : un suivi dû il y a 9 jours et un RDV converti d'avril tombaient dans
+// le même sac « Passés », tout en bas de la liste. Or l'un attend une action
+// et l'autre est réglé. Mesuré en prod : 82 suivis en retard, dont 66 sur des
+// clients actifs, et 11 RDV prospects passés jamais qualifiés.
+const GROUP_ORDER = ["En retard", "Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
 
 const AGENDA_FILTER_KEY = "labase360.agenda.filter";
 const AGENDA_ENTITY_KEY = "labase360.agenda.entity-filter";
@@ -147,7 +175,8 @@ export function AgendaPage() {
   // aujourd'hui, on ne change le repère de personne sans qu'il le demande.
   const [view, setView] = useState<AgendaView>(() => {
     try {
-      return localStorage.getItem(AGENDA_VIEW_KEY) === "week" ? "week" : "list";
+      const stored = localStorage.getItem(AGENDA_VIEW_KEY);
+      return stored === "week" || stored === "month" ? stored : "list";
     } catch {
       return "list";
     }
@@ -159,14 +188,18 @@ export function AgendaPage() {
   }, [view]);
   /** Lundi de la semaine affichée par la grille (navigation ‹ ›). */
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeekMonday(new Date()));
+  /** Jour imposé à la vue mobile (« Aujourd'hui », clic dans le mois).
+   *  null = la grille choisit elle-même (aujourd'hui, sinon le lundi). */
+  const [focusDay, setFocusDay] = useState<Date | null>(null);
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
-  const effectiveDateFilter: DateFilter = view === "week" ? "all" : dateFilter;
+  const isCalendarView = view === "week" || view === "month";
+  const effectiveDateFilter: DateFilter = isCalendarView ? "all" : dateFilter;
   // Idem pour le statut. Le défaut de la liste est « À venir » — appliqué à un
   // CALENDRIER, il vidait toute semaine passée : un RDV honoré (statut « fait »
   // ou « converti ») disparaissait de la case où il avait eu lieu. Un agenda
   // doit montrer ce qui s'est passé, pas seulement ce qui reste à faire.
-  const effectiveStatusFilter: StatusFilter = view === "week" ? "all" : statusFilter;
+  const effectiveStatusFilter: StatusFilter = isCalendarView ? "all" : statusFilter;
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
   const [agendaFilter, setAgendaFilter] = useState<string>(() => {
@@ -193,6 +226,10 @@ export function AgendaPage() {
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
   /** Heure cliquée dans la grille semaine → pré-remplit le formulaire. */
   const [prefillRdvDate, setPrefillRdvDate] = useState<Date | null>(null);
+  /** RDV client ouvert depuis le calendrier (feuille d'action, 2026-07-27). */
+  const [clientRdv, setClientRdv] = useState<{ client: Client; followUp: FollowUp | null } | null>(null);
+  /** Replanification du RDV client ouvert. */
+  const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
 
   useEffect(() => {
@@ -271,8 +308,24 @@ export function AgendaPage() {
         const client = clientsById.get(fu.clientId);
         if (!client) continue;
         if (!isInScope(client.distributorId)) continue;
-        // Exclure les clients morts (lifecycle stopped / lost)
-        if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
+        // ─── Règle « hors agenda » (alignement 2026-07-27) ─────────────────
+        // L'agenda n'excluait que les clients morts. Or trois autres endroits
+        // de l'app appliquent une règle PLUS large et depuis plus longtemps :
+        // getClientActiveFollowUp (portfolio.ts:139-147) écarte aussi les
+        // clients EN PAUSE et ceux en SUIVI LIBRE — « client en suivi libre →
+        // hors agenda auto, pas de RDV », commentaire d'origine —, l'insert du
+        // premier suivi fait pareil, et la migration
+        // 20260613120000_dormant_exclude_paused_free les sort des relances.
+        // L'agenda affichait donc des RDV que le reste de l'app considère
+        // comme inexistants. On aligne.
+        if (
+          client.lifecycleStatus === "stopped" ||
+          client.lifecycleStatus === "lost" ||
+          client.lifecycleStatus === "paused" ||
+          client.freeFollowUp === true
+        ) {
+          continue;
+        }
         const d = new Date(fu.dueDate);
         if (Number.isNaN(d.getTime())) continue;
         if (effectiveDateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
@@ -320,7 +373,7 @@ export function AgendaPage() {
     const now = new Date();
     const map = new Map<string, AgendaEntry[]>();
     agendaEntries.forEach((entry) => {
-      const g = groupLabel(entry.date, now);
+      const g = groupLabel(entry, now);
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(entry);
     });
@@ -361,7 +414,17 @@ export function AgendaPage() {
       if (!allowedFuStatusesStats.includes(fu.status as typeof allowedFuStatusesStats[number])) continue;
       const c = clientsById.get(fu.clientId);
       if (!c || !isInScope(c.distributorId)) continue;
-      if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
+      // Même règle « hors agenda » que la construction des entrées ci-dessus,
+      // sinon les compteurs des onglets annonceraient des RDV qui ne sont pas
+      // dans la liste (alignement 2026-07-27).
+      if (
+        c.lifecycleStatus === "stopped" ||
+        c.lifecycleStatus === "lost" ||
+        c.lifecycleStatus === "paused" ||
+        c.freeFollowUp === true
+      ) {
+        continue;
+      }
       if (!inDateRange(fu.dueDate)) continue;
       clientCount += 1;
     }
@@ -429,12 +492,94 @@ export function AgendaPage() {
     [users],
   );
   const shiftWeek = useCallback((direction: 1 | -1) => {
+    setFocusDay(null);
     setWeekAnchor((prev) => {
       const next = new Date(prev);
       next.setDate(next.getDate() + direction * 7);
       return next;
     });
   }, []);
+  // ─── Permanences du club (LOT 6.6) ─────────────────────────────────────
+  // Mode « pose une permanence » : tant qu'il est actif, un clic sur un creux
+  // pose un créneau de présence au club au lieu d'ouvrir un RDV. C'est le seul
+  // geste de création — sans lui, la table resterait vide comme `exposures`.
+  const [shiftMode, setShiftMode] = useState(false);
+  const weekEndAnchor = useMemo(() => {
+    const end = new Date(weekAnchor);
+    end.setDate(end.getDate() + 7);
+    return end;
+  }, [weekAnchor]);
+  const clubShifts = useClubShifts(weekAnchor, weekEndAnchor);
+  /** Durée d'une permanence posée en un clic. */
+  const SHIFT_HOURS = 3;
+  const bands: DayBand[] = useMemo(
+    () =>
+      clubShifts.shifts.map((s) => ({
+        id: s.id,
+        start: s.startsAt,
+        end: s.endsAt,
+        label: `${(ownerNameMap.get(s.userId) ?? "Coach").toUpperCase()} · CLUB`,
+        color: "#c5f82a",
+        // On ne retire que ce qu'on a posé (les RLS refuseraient le reste).
+        removable: s.userId === currentUser?.id || currentUser?.role === "admin",
+      })),
+    [clubShifts.shifts, ownerNameMap, currentUser?.id, currentUser?.role],
+  );
+
+  /**
+   * Clic sur un RDV dans une vue calendaire.
+   *
+   * Correctif 2026-07-27 : la grille faisait `navigate(href)` — on QUITTAIT
+   * l'agenda pour la fiche client, alors que la vue liste, elle, ouvre une
+   * modale avec toutes les actions rapides (statut, refroidir, réactiver,
+   * démarrer un bilan, éditer). La grille était donc une régression sur le
+   * geste le plus fréquent. On réutilise les modales existantes — aucune UI
+   * nouvelle, aucun doublon.
+   */
+  const handleCalendarEventClick = useCallback(
+    (ev: { entry: AgendaEntry }) => {
+      const entry = ev.entry;
+      if (entry.kind === "prospect") {
+        setDetailProspect(entry.prospect);
+        return;
+      }
+      if (entry.kind === "protocol") {
+        setOpenProtocol(entry.due);
+        return;
+      }
+      // Suivi client : feuille d'action sur place (2026-07-27). C'était la
+      // dernière branche qui éjectait vers la fiche — et la majoritaire :
+      // 44 des 46 RDV à venir en base.
+      setClientRdv({ client: entry.client, followUp: entry.followUp });
+    },
+    [],
+  );
+
+  // Couleur d'un événement : le TYPE quand un seul coach est affiché (sinon
+  // tout serait de la même teinte et la couleur n'informerait pas), la
+  // PERSONNE dès que l'équipe apparaît, le ROUGE si le RDV est à qualifier.
+  const colorOf = useMemo(
+    () => makeEventColor(calendarEvents, ownerColor),
+    [calendarEvents, ownerColor],
+  );
+  const showOwner = useMemo(
+    () => new Set(calendarEvents.map((e) => e.ownerId)).size > 1,
+    [calendarEvents],
+  );
+
+  const shiftMonth = useCallback((direction: 1 | -1) => {
+    setFocusDay(null);
+    setWeekAnchor((prev) => {
+      // On se cale sur le 1er avant de décaler : sinon un 31 janvier + 1 mois
+      // atterrit en mars, et la navigation saute un mois.
+      const next = new Date(prev.getFullYear(), prev.getMonth() + direction, 1);
+      return next;
+    });
+  }, []);
+  const monthLabel = useMemo(() => {
+    const label = weekAnchor.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [weekAnchor]);
   const weekRangeLabel = useMemo(() => {
     const monday = startOfWeekMonday(weekAnchor);
     const sunday = new Date(monday);
@@ -546,7 +691,17 @@ export function AgendaPage() {
   const heroTodayCount = entityCounts.all > 0 ? entityCounts.all : 0;
 
   return (
-    <div className="space-y-5">
+    // En vue calendrier, la page occupe l'écran et seule la journée défile
+    // (maquette validée 2026-07-27). En vue Liste, comportement inchangé.
+    <div className={isCalendarView ? "agenda-fullpage" : "space-y-5"}>
+      {/* ═══ EN-TÊTE — masqué en vue calendrier (refonte 2026-07-27) ═══════
+          Sur téléphone, il fallait traverser le hero, la carte « prochain
+          RDV », les onglets d'entité puis 9 pastilles de filtres avant
+          d'atteindre le calendrier : une vingtaine de contrôles, deux écrans
+          de défilement. En vue Semaine ou Mois, le calendrier commence donc
+          en haut ; tout ceci reste intact en vue Liste. */}
+      {!isCalendarView ? (
+      <>
       {/* Hero PREMIUM AGENDA V1 (2026-04-29) — gradient time-of-day + stats inline + CTA glow */}
       <style>{`
         @keyframes ls-agenda-hero-mesh {
@@ -997,42 +1152,137 @@ export function AgendaPage() {
         <TeamStatsWidget prospects={distributorFilteredProspects} />
       )}
 
-      {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
 
+      </>
+      ) : null}
+
+      {/* ═══ BARRE UNIQUE — vue calendrier (maquette validée 2026-07-27) ═══
+          Avant, la période était un label gris de 11,5 px répété DANS chaque
+          vue, avec sa propre paire de flèches. Elle devient le contrôle
+          principal : le mois en gros, et un bouton « Auj. » qui porte le vrai
+          quantième — c'est le repère du jour que Thomas demandait. */}
+      {isCalendarView ? (
+        <div className="agenda-fixed" style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 0 8px" }}>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontFamily: "Anton, sans-serif",
+              fontWeight: 400,
+              fontSize: "clamp(19px, 5.5vw, 23px)",
+              letterSpacing: "0.4px",
+              textTransform: "uppercase",
+              color: "var(--ls-text)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {view === "month" ? monthLabel : weekRangeLabel}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              setWeekAnchor(now);
+              setFocusDay(now);
+            }}
+            style={{
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              height: 40,
+              padding: "0 12px",
+              borderRadius: 12,
+              border: "1px solid var(--ls-teal)",
+              background: "transparent",
+              color: "var(--ls-teal)",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Auj.
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}>
+              {new Date().getDate()}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => (view === "month" ? shiftMonth(-1) : shiftWeek(-1))}
+            aria-label={view === "month" ? "Mois précédent" : "Semaine précédente"}
+            style={weekNavBtnStyle}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => (view === "month" ? shiftMonth(1) : shiftWeek(1))}
+            aria-label={view === "month" ? "Mois suivant" : "Semaine suivante"}
+            style={weekNavBtnStyle}
+          >
+            ›
+          </button>
+        </div>
+      ) : null}
+
+      {/* ═══ ONGLETS D'ENTITÉ — toujours visibles (correctif 2026-07-27) ═══
+          Ils étaient enfermés dans le bloc masqué en vue calendrier. Or
+          `entityFilter` est persisté en localStorage ET appliqué à la
+          construction des entrées (agendaEntries), donc au calendrier aussi :
+          une coach ayant laissé « Clients » actif dans la liste ouvrait la vue
+          Mois sur un mois amputé de tous ses prospects, sans un pixel pour le
+          lui dire. Avec ~30 RDV à venir, un mois qui paraît vide.
+
+          Les compteurs ne s'affichent qu'en vue Liste : en vue calendrier ils
+          porteraient sur la période des filtres (aujourd'hui / cette semaine)
+          pendant qu'on regarde septembre. Mieux vaut pas de chiffre qu'un
+          chiffre faux.
+
+          Les pastilles reprennent KIND_COLORS : elles étaient toutes les trois
+          décalées (clients doré au lieu de violet, prospects violet au lieu de
+          turquoise, protocoles turquoise au lieu de doré). Invisible tant que
+          les onglets vivaient deux écrans au-dessus de la grille ; posés
+          juste au-dessus, la contradiction serait la première chose lue. */}
+      <div className="agenda-fixed" style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
         <EntityTab
           label="Tous"
-          count={entityCounts.all}
+          count={isCalendarView ? null : entityCounts.all}
           active={entityFilter === "all"}
           onClick={() => setEntityFilter("all")}
           dot={null}
         />
         <EntityTab
           label="Clients"
-          count={entityCounts.clients}
+          count={isCalendarView ? null : entityCounts.clients}
           active={entityFilter === "clients"}
           onClick={() => setEntityFilter("clients")}
-          dot="var(--ls-gold)"
+          dot={KIND_COLORS.client}
         />
         <EntityTab
           label="Prospects"
-          count={entityCounts.prospects}
+          count={isCalendarView ? null : entityCounts.prospects}
           active={entityFilter === "prospects"}
           onClick={() => setEntityFilter("prospects")}
-          dot="var(--ls-purple)"
+          dot={KIND_COLORS.prospect}
         />
         <EntityTab
-          label="Suivis"
-          count={entityCounts.followups}
+          /* Renommé « Suivis » → « Protocole » : kindLabel(client) renvoie déjà
+             « Suivi », donc un RDV étiqueté « Suivi » dans la journée n'était
+             PAS dans l'onglet « Suivis ». Collision de vocabulaire. */
+          label="Protocole"
+          count={isCalendarView ? null : entityCounts.followups}
           active={entityFilter === "followups"}
           onClick={() => setEntityFilter("followups")}
-          dot="var(--ls-teal)"
+          dot={KIND_COLORS.protocol}
         />
       </div>
 
       {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
           premier choix et le défaut : personne ne perd son repère. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div className="agenda-fixed" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 0" }}>
         <div
           role="group"
           aria-label="Affichage de l'agenda"
@@ -1048,6 +1298,7 @@ export function AgendaPage() {
           {([
             { key: "list" as AgendaView, label: "Liste" },
             { key: "week" as AgendaView, label: "Semaine" },
+            { key: "month" as AgendaView, label: "Mois" },
           ]).map((v) => {
             const active = view === v.key;
             return (
@@ -1074,13 +1325,19 @@ export function AgendaPage() {
             );
           })}
         </div>
-        {view === "week" ? (
-          <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
-            Le filtre Période ne s&apos;applique qu&apos;à la liste.
-          </span>
-        ) : null}
+        {/* La phrase « les filtres ne s'appliquent qu'à la liste » est retirée
+            (2026-07-27) : les filtres eux-mêmes ne sont plus affichés en vue
+            calendrier. On n'explique plus pourquoi des boutons sont inertes,
+            on ne montre plus de boutons inertes. */}
       </div>
 
+      {/* Filtres Période et Statut — UNIQUEMENT en vue Liste (2026-07-27).
+          En vue calendrier, effectiveDateFilter et effectiveStatusFilter sont
+          déjà forcés à « all » : on affichait donc 9 pastilles inertes, plus
+          une phrase en gris pour prévenir qu'elles ne servaient à rien. On
+          retire les deux. */}
+      {!isCalendarView ? (
+      <>
       {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
           conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1152,30 +1409,96 @@ export function AgendaPage() {
         </div>
       </div>
 
-      {/* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════════
-          Même moteur d'entrées que la liste — seul le dessin change. */}
-      {view === "week" ? (
+      </>
+      ) : null}
+
+      {/* ═══ Vue mois (Agenda V2, LOT 6.5) ═════════════════════════════════
+          Répond à « ma semaine du 12 est-elle chargée ? », pas à « je pose un
+          RDV à 14h30 » : on clique un jour pour basculer en semaine. */}
+      {view === "month" ? (
+        <div data-tour-id="agenda-month">
+          <AgendaMonthGrid
+            events={calendarEvents}
+            anchorDate={weekAnchor}
+            ownerName={ownerName}
+            colorOf={colorOf}
+            showOwner={showOwner}
+            focusDay={focusDay}
+            onCreateAt={(at) => {
+              setEditing(undefined);
+              setPrefillRdvDate(at);
+              setShowForm(true);
+            }}
+            onSelectEvent={handleCalendarEventClick}
+            onSelectDay={(day) => {
+              setWeekAnchor(startOfWeekMonday(day));
+              // Le jour touché, pas le lundi de sa semaine : c'est toute la
+              // raison d'être de la vue Mois (correctif 2026-07-27).
+              setFocusDay(day);
+              setView("week");
+            }}
+          />
+        </div>
+      ) : /* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════
+          Même moteur d'entrées que la liste — seul le dessin change. */
+      view === "week" ? (
         <div data-tour-id="agenda-week">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-text-muted)", flex: 1, minWidth: 180 }}>
-              {weekRangeLabel}
+
+          {/* Permanences du club (LOT 6.6) — visible seulement s'il y a un
+              club. Tant que le mode est actif, un clic sur un creux pose une
+              présence au club de {SHIFT_HOURS} h au lieu d'ouvrir un RDV. */}
+          {clubShifts.clubId ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+              <button
+                type="button"
+                onClick={() => setShiftMode((v) => !v)}
+                aria-pressed={shiftMode}
+                style={{
+                  ...weekNavBtnStyle,
+                  background: shiftMode ? "var(--ls-lime)" : "var(--ls-surface)",
+                  color: shiftMode ? "#0a1400" : "var(--ls-text)",
+                  borderColor: shiftMode ? "var(--ls-lime)" : "var(--ls-border)",
+                  fontWeight: 700,
+                }}
+              >
+                🥤 {shiftMode ? "Mode permanence actif" : "Poser une permanence"}
+              </button>
+              <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
+                {shiftMode
+                  ? `Clique un créneau : tu tiens le club ${SHIFT_HOURS} h à partir de cette heure. Clique une bande pour la retirer.`
+                  : "Les bandes hachurées montrent qui tient le club."}
+              </span>
             </div>
-            <button type="button" onClick={() => setWeekAnchor(startOfWeekMonday(new Date()))} style={weekNavBtnStyle}>
-              Aujourd'hui
-            </button>
-            <button type="button" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente" style={weekNavBtnStyle}>‹</button>
-            <button type="button" onClick={() => shiftWeek(1)} aria-label="Semaine suivante" style={weekNavBtnStyle}>›</button>
-          </div>
+          ) : null}
           <AgendaWeekGrid
             events={calendarEvents}
             anchorDate={weekAnchor}
             currentUserId={currentUser?.id}
+            focusDay={focusDay}
             ownerName={ownerName}
             ownerColor={ownerColor}
-            onSelectEvent={(ev) => {
-              if (ev.href) navigate(ev.href);
+            colorOf={colorOf}
+            showOwner={showOwner}
+            onSelectEvent={handleCalendarEventClick}
+            bands={bands}
+            onSelectBand={(band) => {
+              if (!window.confirm("Retirer cette permanence du club ?")) return;
+              void clubShifts.remove(band.id).catch((err) => {
+                pushToast(buildSupabaseErrorToast(err, "Suppression de la permanence"));
+              });
             }}
             onCreateAt={(at) => {
+              // En mode permanence, le clic sur un creux pose un créneau de
+              // présence au club au lieu d'ouvrir le formulaire de RDV.
+              if (shiftMode) {
+                if (!clubShifts.clubId || !currentUser) return;
+                const end = new Date(at);
+                end.setHours(end.getHours() + SHIFT_HOURS);
+                void clubShifts
+                  .create(currentUser.id, at, end)
+                  .catch((err) => pushToast(buildSupabaseErrorToast(err, "Ajout de la permanence")));
+                return;
+              }
               setEditing(undefined);
               setPrefillRdvDate(at);
               setShowForm(true);
@@ -1304,6 +1627,36 @@ export function AgendaPage() {
         />
       )}
 
+      {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
+      {clientRdv ? (
+        <ClientRdvSheet
+          client={clientRdv.client}
+          followUp={clientRdv.followUp}
+          canEdit={
+            currentUser?.role === "admin" ||
+            clientRdv.client.distributorId === currentUser?.id
+          }
+          onClose={() => setClientRdv(null)}
+          onReschedule={() => {
+            setRescheduleClient(clientRdv.client);
+            setClientRdv(null);
+          }}
+        />
+      ) : null}
+
+      {/* Replanification — passe par updateClientSchedule (reprogramme au lieu
+          de faire disparaître le client de l'agenda). */}
+      {rescheduleClient ? (
+        <EditScheduleModal
+          client={rescheduleClient}
+          onClose={() => setRescheduleClient(null)}
+          onSaved={() => {
+            setRescheduleClient(null);
+            pushToast({ tone: "success", title: "Rendez-vous mis à jour" });
+          }}
+        />
+      ) : null}
+
       {/* Détail prospect */}
       {detailProspect && (
         <ProspectDetailModal
@@ -1368,6 +1721,42 @@ export function AgendaPage() {
           />
         );
       })()}
+      {/* Bouton « + » flottant — vue calendrier uniquement (2026-07-27).
+          Le hero et son CTA « + Nouveau RDV » sont masqués ici, or ce CTA
+          porte `data-tour-id="agenda-new-rdv"`, une ancre vivante du parcours
+          Academy (sections.ts:541). Le bouton flottant la reprend : jamais les
+          deux à la fois, donc jamais d'ancre en double. */}
+      {isCalendarView ? (
+        <button
+          type="button"
+          data-tour-id="agenda-new-rdv"
+          aria-label="Nouveau RDV"
+          onClick={() => {
+            setEditing(undefined);
+            setPrefillRdvDate(null);
+            setShowForm(true);
+          }}
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: "calc(78px + env(safe-area-inset-bottom, 0px))",
+            zIndex: 30,
+            width: 58,
+            height: 58,
+            borderRadius: "50%",
+            border: "none",
+            color: "#fff",
+            fontSize: 29,
+            lineHeight: 1,
+            cursor: "pointer",
+            background: "linear-gradient(135deg, var(--ls-teal), var(--ls-purple))",
+            boxShadow: "0 8px 22px rgba(0,0,0,0.3)",
+          }}
+        >
+          +
+        </button>
+      ) : null}
+
       <LegalFooter />
     </div>
   );
@@ -1599,7 +1988,9 @@ function EntityTab({
   label, count, active, onClick, dot,
 }: {
   label: string;
-  count: number;
+  /** null = pas de compteur (vue calendrier : il porterait sur une autre
+   *  période que celle affichée — mieux vaut rien qu'un chiffre faux). */
+  count: number | null;
   active: boolean;
   onClick: () => void;
   dot: string | null;
@@ -1661,6 +2052,7 @@ function EntityTab({
         />
       )}
       <span>{label}</span>
+      {count === null ? null : (
       <span
         style={{
           fontSize: 11,
@@ -1680,6 +2072,7 @@ function EntityTab({
       >
         {count}
       </span>
+      )}
     </button>
   );
 }

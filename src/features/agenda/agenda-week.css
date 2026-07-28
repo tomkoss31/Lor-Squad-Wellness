@@ -23,3 +23,96 @@
     display: block;
   }
 }
+
+/* =============================================================================
+   La hauteur d'un bloc DIT sa durée — correctif 2026-07-27.
+
+   globals.css impose `button, a, [role="button"] { min-height: 44px }` pour la
+   confort tactile. Or chaque RDV de la grille est un <button> : 30 min (26 px)
+   et 45 min (34,5 px) étaient tous deux remontés à 44 px, et 60 min à 46 px.
+   Trois des quatre durées proposées rendaient donc la même hauteur — toute la
+   chaîne de durée (réglage profil, sélecteur, resolveDuration) était payée et
+   invisible.
+
+   On lève la contrainte UNIQUEMENT sur les blocs positionnés de la grille
+   desktop. Aucun impact sur le confort tactile : `.agenda-week-desktop` est en
+   `display:none` sous 900 px, ces blocs n'existent pas sur téléphone. La règle
+   globale reste intacte pour tout le reste de l'app.
+   ============================================================================= */
+.agenda-week-desktop .agenda-ev {
+  min-height: 0;
+}
+
+/* =============================================================================
+   AGENDA PLEINE PAGE — maquette validée par Thomas le 2026-07-27.
+
+   La page occupe l'écran, la grille est figée et SEULE la journée défile.
+   Avant, on empilait deux zones scrollables (la page + la grille), et le
+   dernier RDV pouvait se retrouver sous la barre du bas.
+
+   `100svh` et pas `100vh` (qui compte la barre d'adresse Safari : les deux
+   dernières semaines du mois passaient sous l'écran dès qu'elle réapparaît)
+   ni `100dvh` (qui force un relayout des 42 cases à chaque scroll).
+
+   Chrome soustrait, valeurs lues dans le code :
+     .lb-header       64px + safe-area-top   (globals.css)
+     conteneur py-3   12px en haut           (AppLayout)
+     BottomNav        52px + max(12px, safe-area-bottom)
+   ============================================================================= */
+@media (max-width: 899px) {
+  .agenda-fullpage {
+    height: calc(
+      100svh
+      - 64px - env(safe-area-inset-top, 0px)
+      - 12px
+      - 52px - max(12px, env(safe-area-inset-bottom, 0px))
+    );
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Le spacer de 128px qui suit l'Outlet dégage la BottomNav sur les pages qui
+     défilent. Ici la page ne défile pas : il ne ferait que pousser la grille
+     hors de l'écran. */
+  .agenda-fullpage + .h-32 {
+    display: none;
+  }
+
+  /* Tout ce qui est au-dessus de la journée garde sa taille. */
+  .agenda-fixed {
+    flex: 0 0 auto;
+  }
+
+  /* La journée : l'unique zone scrollable de l'écran. Le padding du bas laisse
+     passer le bouton flottant, sinon le dernier RDV est inatteignable. */
+  .agenda-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* La chaîne flex doit être continue de la racine jusqu'à la zone scrollable,
+   sinon `flex: 1` ne trouve pas de hauteur à remplir et la journée s'écrase.
+   Les conteneurs intermédiaires (branche de vue + bloc mobile) sont déclarés
+   ici plutôt qu'en style inline : ils ne doivent PAS être flex sur desktop,
+   où la page défile normalement. */
+@media (max-width: 899px) {
+  .agenda-fullpage > [data-tour-id="agenda-month"],
+  .agenda-fullpage > [data-tour-id="agenda-week"] {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .agenda-fullpage .agenda-week-mobile {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+}
