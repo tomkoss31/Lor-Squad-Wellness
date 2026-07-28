@@ -5,9 +5,12 @@
 // =============================================================================
 
 import { useState } from "react";
+import type { ClubSettings } from "../../../types/domain";
 import { BBC_SCRIPTS, BBC_SCRIPT_CATS, scriptAccentBg, scriptAccentColor } from "../data/bbcScripts";
 
-export function BbcScripts() {
+/** `settings` sert aux scripts qui citent un jour de rituel : ils le lisent
+ *  dans les reglages du club au lieu de l ecrire en dur. */
+export function BbcScripts({ settings }: { settings?: ClubSettings | null }) {
   const [name, setName] = useState("");
   const [copied, setCopied] = useState<number>(-1);
   const who = name.trim() || "[prénom]";
@@ -75,7 +78,7 @@ export function BbcScripts() {
             {BBC_SCRIPTS.filter((s) => s.cat === cat).map((s) => {
               idx += 1;
               const myIdx = idx;
-              const body = s.body(who);
+              const body = s.body(who, settings ?? undefined);
               return (
                 <div
                   key={s.title}
