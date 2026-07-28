@@ -28,7 +28,6 @@ import { BbcSemaine } from "./views/BbcSemaine";
 import { BbcLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
-import { BbcCarte } from "./views/BbcCarte";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
@@ -52,7 +51,6 @@ type BbcView =
   | "appels"
   | "prelancement"
   | "club100"
-  | "carte"
   | "reglages";
 
 type SectionKey = "club" | "membres" | "coeurs" | "ressources" | "monclub";
@@ -110,7 +108,10 @@ const SECTIONS: Section[] = [
     label: "Mon club",
     icon: "⚙️",
     tabs: [
-      { k: "carte", label: "La carte" },
+      // Plus d'onglet « La carte » (retiré le 2026-07-28) : l'app n'encaisse
+      // nulle part au comptoir, donc les prix de vente à l'unité ne pilotaient
+      // rien. La carte est physique, au club, sous les yeux des membres. Seul
+      // le COÛT d'une visite restait utile — il vit dans « Rentabilité ».
       { k: "club100", label: "Rentabilité" },
       { k: "clubs", label: "Mes clubs" },
       { k: "reglages", label: "Réglages" },
@@ -136,7 +137,6 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   appels: { eye: "rituels du club", title: "Les appels" },
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
   club100: { eye: "le modèle · tes chiffres", title: "Club 100 & rentabilité" },
-  carte: { eye: "l'ardoise du bar", title: "La carte" },
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
@@ -352,7 +352,6 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "club100" && <BbcClub100 userId={userId} clubId={club?.id ?? null} />}
-        {view === "carte" && <BbcCarte clubId={club?.id ?? null} onGoClubs={() => setView("clubs")} />}
         {view === "reglages" && <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />}
       </main>
 

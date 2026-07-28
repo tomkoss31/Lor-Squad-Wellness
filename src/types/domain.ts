@@ -216,11 +216,15 @@ export interface ClubSettings {
   /** Liens du club à partager (Zoom des rituels, avis Google…). */
   links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
   /**
-   * La carte du bar : par référence produit, ce qu'on sert et à quel prix.
-   * `doses` = nombre de portions dans un contenant (le tarif ne le donne pas),
-   * `prix` = prix de vente de LA dose au comptoir. `valide` passe à true quand
-   * le coach a confirmé la ligne — tant qu'il ne l'a pas fait, l'app affiche la
-   * valeur relevée sur le tarif comme une proposition, jamais comme un prix.
+   * La recette du club : par référence produit, `doses` = nombre de portions
+   * tirées d'un contenant (le tarif Herbalife ne le donne pas). C'est la SEULE
+   * clé encore lue — elle donne le coût de revient d'une visite, saisie dans
+   * l'onglet Rentabilité.
+   *
+   * ⚠️ `prix` et `valide` sont MORTS depuis le retrait de l'écran « La carte »
+   * (2026-07-28) : l'app n'encaisse nulle part au comptoir, donc un prix de
+   * vente à l'unité ne pilotait rien. Ils restent dans le type et en base pour
+   * ne pas migrer ni écraser ce qui a déjà été saisi — ne pas s'en resservir.
    */
   carte?: Record<string, { doses: number | null; prix: number | null; valide: boolean }>;
   /** Palier de remise du distributeur (25 / 35 / 42 / 50 %) — sert au calcul de marge. */
