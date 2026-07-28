@@ -127,7 +127,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
           <Repere v={num(CLUB100.pvOrganisation)} l="PV d'organisation" s="club à maturité" />
         </div>
         <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
-          source · Formation 00 « La machine à royalties » (Clare &amp; Dan)
+          source · Formation 09 « Le modèle économique » (Clare &amp; Dan)
         </div>
       </div>
 
@@ -273,7 +273,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
           ))}
         </div>
         <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
-          source · Formation 00 — échelle organisation
+          source · Formation 09 — échelle organisation
         </div>
       </div>
     </div>

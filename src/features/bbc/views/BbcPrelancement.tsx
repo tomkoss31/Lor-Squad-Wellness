@@ -143,7 +143,7 @@ export function BbcPrelancement({ userId, coachName }: BbcPrelancementProps) {
       )}
 
       <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", textAlign: "center" }}>
-        parcours officiel · module Formation 07
+        parcours officiel · module Formation 08
       </div>
     </div>
   );
