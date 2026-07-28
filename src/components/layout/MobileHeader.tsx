@@ -16,7 +16,7 @@
 // Styles : globals.css classes lb-header, lb-logo-*, lb-pill, lb-avatar
 // =============================================================================
 
-import { useState } from "react";
+import { useState , type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useTheme } from "../../hooks/useTheme";
@@ -25,6 +25,8 @@ import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { MobileDrawer } from "./MobileDrawer";
 
 interface MobileHeaderProps {
+  /** Relayé vers le pied du tiroir (bascule Classic/BBC). */
+  footer?: ReactNode;
   crumb: string;
   navItems: Array<{
     label: string;
@@ -38,7 +40,7 @@ interface MobileHeaderProps {
   onLogout: () => Promise<void> | void;
 }
 
-export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileHeaderProps) {
+export function MobileHeader({ footer, crumb, navItems, currentPath, onLogout }: MobileHeaderProps) {
   const { currentUser } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   const haptic = useHaptic();
@@ -127,6 +129,7 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
         navItems={navItems}
         currentPath={currentPath}
         onLogout={onLogout}
+        footer={footer}
       />
     </>
   );

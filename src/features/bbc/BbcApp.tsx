@@ -346,7 +346,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "scripts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
             <BbcLiens coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} />
-            <BbcScripts />
+            <BbcScripts settings={club?.settings ?? null} />
           </div>
         )}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}

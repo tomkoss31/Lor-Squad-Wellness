@@ -3,17 +3,42 @@
 // Partagée par la vue Scripts et le flow « envoyer un cobaye » du Cockpit.
 // Verrouillés par défaut (règle : on ne modifie pas le cœur du message).
 // Source : Notion Formation BBC (verbatim officiel).
+//
+// ⚠️ « On ne modifie pas le message » ne veut pas dire « on fige les jours ».
+// Un script qui annonce un jour de rituel doit le LIRE dans les réglages du
+// club : sinon le coach invite pour lundi pendant que les rappels automatiques
+// partent le mardi. Le verbatim reste intact, seule la cadence est variable.
 // =============================================================================
+
+import type { ClubSettings } from "../../../types/domain";
 
 export interface BbcScript {
   cat: string;
   accent: "lime" | "teal" | "coral";
   title: string;
   src: string;
-  /** Corps du message ; `who` = prénom injecté (défaut « [prénom] »). */
-  body: (who: string) => string;
+  /**
+   * Corps du message ; `who` = prénom injecté (défaut « [prénom] »).
+   * `cfg` = les réglages du club, pour les scripts qui citent un jour de rituel.
+   * Sans elle, le script annonçait « lundi ou jeudi » en dur pendant que les
+   * rappels automatiques partaient sur le jour RÉGLÉ : le coach invitait un
+   * soir, l'app convoquait un autre.
+   */
+  body: (who: string, cfg?: ClubSettings) => string;
   /** true = proposé dans le flow « envoyer un cobaye » du Cockpit. */
   outreach?: boolean;
+}
+
+/**
+ * Les jours d'un rituel, tels que RÉGLÉS dans Réglages → rituels.
+ * Repli volontairement vague plutôt que faux : mieux vaut « en soirée » qu'un
+ * jour inventé que le membre ne retrouvera pas au bout du lien.
+ */
+function joursRituel(cfg: ClubSettings | undefined, key: string): string {
+  const d = cfg?.calls?.[key]?.days;
+  if (!d?.length) return "en soirée";
+  if (d.length === 1) return d[0];
+  return `${d.slice(0, -1).join(", ")} ou ${d[d.length - 1]}`;
 }
 
 export const BBC_SCRIPTS: BbcScript[] = [
@@ -34,7 +59,7 @@ export const BBC_SCRIPTS: BbcScript[] = [
   { cat: "Cœurs & recommandations", accent: "teal", title: "DM à qui commente un post", src: "05 — Le bilan des 10 visites", outreach: true,
     body: (w) => `Salut ${w}, merci pour ton commentaire sur le post de mon membre, ça lui fait super plaisir ! Je suis sa coach bien-être au club et j'offre en ce moment des bilans bien-être gratuits pour les objectifs santé, perte de poids, énergie ou performance. Qui connais-tu qui pourrait en bénéficier ?` },
   { cat: "Appel ambassadeur", accent: "lime", title: "Invitation à l'appel", src: "06 — L'appel ambassadeur", outreach: true,
-    body: () => `Vu tes résultats et ton enthousiasme, il y a une prochaine étape pour toi. On a une petite Réunion Ambassadeur en ligne où on explique comment avoir plus de remise, comment te faire rembourser grâce à tes recommandations, et si ça t'intéresse, comment faire un petit complément de revenu. C'est en visio, 30-40 min, tu peux juste écouter. Lundi ou jeudi soir — qu'est-ce qui t'arrange le mieux ?` },
+    body: (_w, cfg) => `Vu tes résultats et ton enthousiasme, il y a une prochaine étape pour toi. On a une petite Réunion Ambassadeur en ligne où on explique comment avoir plus de remise, comment te faire rembourser grâce à tes recommandations, et si ça t'intéresse, comment faire un petit complément de revenu. C'est en visio, 30-40 min, tu peux juste écouter. ${joursRituel(cfg, "appel_ambassadeur")} soir — qu'est-ce qui t'arrange le mieux ?` },
   // Les 4 options sont RECOPIÉES de la slide que la personne vient de voir
   // (« Présentation appel ambassadeur », Drive). L'ancienne version décalait C
   // et D d'un cran — elle proposait « un vrai projet » là où l'écran affichait
