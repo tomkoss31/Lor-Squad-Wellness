@@ -1,12 +1,22 @@
 // =============================================================================
-// BbcFormation — l'échelle des 5 marches, le parcours 00→08, le glossaire.
+// BbcFormation — l'échelle des 5 marches et le parcours 01→10.
 //
-// CE QUE CET ÉCRAN NE DOIT PLUS JAMAIS FAIRE (recette client 2026-07-28) :
+// CE QUE CET ÉCRAN NE DOIT PLUS JAMAIS FAIRE (recettes client 2026-07-28) :
 //
 //  · Affirmer une marche. « TU ES Coach stagiaire » était une constante servie
 //    à tout le monde, propriétaire de club compris. Ici la marche vient de
 //    `useBbcRole` (faits réels) et le bloc « tu es » ne s'affiche QUE si on la
 //    connaît. Sinon : formulation neutre, on ne devine pas.
+//
+//  · COCHER L'ÉCHELLE. C'est le retour le plus dur de la 2e recette : « j'ai
+//    croisé les levels ??? chacun dit quoi finalement l'intérêt (c'est joli
+//    bien fait mais comment c'est éducatif) ». Les marches sous celle du
+//    lecteur portaient un ✓ vert « fait » — or Thomas, propriétaire, n'a jamais
+//    été « membre » de son propre club. Barrer une marche, c'est prétendre
+//    connaître un passé qu'on n'a pas, et ça n'apprend RIEN.
+//    L'échelle est maintenant une CARTE : on met en avant la marche occupée, on
+//    n'en barre aucune, et chaque marche répond à deux questions — ce qu'elle
+//    apporte, comment on y entre.
 //
 //  · Verrouiller à tort. `isAdmin || club actif` ⇒ rien n'est verrouillé, et
 //    marche inconnue ⇒ rien n'est verrouillé non plus (`fullAccess`). Un module
@@ -21,23 +31,25 @@
 //    pas du tout tant qu'on ne peut pas le lire (migration non poussée) — mieux
 //    vaut aucun compteur qu'un compteur figé.
 //
+//  · Empiler le lexique en pied de page. Les 25 définitions sont parties dans
+//    Ressources → Lexique (recherche + fiche par mot) ; les modules y renvoient
+//    par des puces, pour que le mot s'explique là où il est employé.
+//
 // L'état du lecteur (« tu es ici », « c'est ta marche ») est posé ICI, jamais
 // dans les données : les définitions de marches se lisent à la 3e personne.
 // =============================================================================
 
 import { useEffect, useRef, useState } from "react";
-import {
-  BBC_FORMATION_MODULES,
-  BBC_ROLES,
-  buildGlossary,
-  getFormationModule,
-  getModulePoints,
-} from "../data/bbcFormation";
+import { BBC_FORMATION_MODULES, BBC_ROLES, getFormationModule, getModulePoints } from "../data/bbcFormation";
 import { bbcRoleRank, useBbcRole } from "../useBbcRole";
 import { useBbcFormationProgress } from "../useBbcFormationProgress";
+import { BbcLexiqueChips } from "./BbcLexique";
 
 const STAR = "M12 2l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9 6.4 19.1l1.4-6.3L3 8.5l6.4-.6z";
 const LOCK = "M6.5 10V7.5a5.5 5.5 0 0 1 11 0V10M5 10h14v10.5H5z";
+// Le ✓ ne sert plus QU'aux modules réellement cochés par le coach. Il a été
+// retiré de l'échelle des marches : là-bas il affirmait un passé (« tu as été
+// membre ») que personne n'a validé. Ne pas le réintroduire côté échelle.
 const CHECK = "M20 6 9 17l-5-5";
 
 /** Teinte d'un token BBC. Aucune COULEUR DE MARQUE en rgba() littéral : lime,
@@ -47,6 +59,34 @@ const CHECK = "M20 6 9 17l-5-5";
  *  deux thèmes et ne dépend d'aucun token — même choix partout dans BBC.) */
 function tint(token: string, pct: number): string {
   return `color-mix(in srgb, var(${token}) ${pct}%, transparent)`;
+}
+
+/**
+ * Un petit bloc « intitulé + texte » du panneau de marche.
+ *
+ * Les deux blocs (« ce que ça apporte », « comment on y entre ») sont ce qui
+ * transforme l'échelle en support pédagogique plutôt qu'en liste de trophées :
+ * ils répondent au « chacun dit quoi finalement l'intérêt » de la recette.
+ */
+function Bloc({ titre, texte, couleur }: { titre: string; texte: string; couleur: string }) {
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div
+        style={{
+          fontFamily: "var(--ls-bbc-font-mono)",
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: couleur,
+          marginBottom: 4,
+        }}
+      >
+        {titre}
+      </div>
+      <div style={{ fontSize: 12, color: "var(--ls-bbc-text)", lineHeight: 1.55 }}>{texte}</div>
+    </div>
+  );
 }
 
 export function BbcFormation() {
@@ -75,13 +115,16 @@ export function BbcFormation() {
     setSel(i);
   }
 
-  const glossaire = buildGlossary(clubSettings);
   const rungSel = BBC_ROLES[sel] ?? BBC_ROLES[0];
 
   // Statut de chaque module, CALCULÉ : plus aucun `st` écrit à la main.
+  // ⚠️ La progression se lit sur `m.key` (slug stable), JAMAIS sur `m.n` (le
+  // numéro affiché). Le module « modèle économique » est passé de 00 à 09 dans
+  // la réorganisation du 2026-07-28 : indexée sur le numéro, la case cochée
+  // d'un coach aurait suivi le module qui a pris sa place.
   const modules = BBC_FORMATION_MODULES.map((m) => ({
     m,
-    done: Boolean(progress.done[m.n]),
+    done: Boolean(progress.done[m.key]),
     // fullAccess couvre déjà l'admin, le propriétaire de club ET la marche
     // inconnue : dans ces trois cas on ne calcule même pas de verrou.
     locked: !fullAccess && bbcRoleRank(m.minRole) > rang,
@@ -89,8 +132,8 @@ export function BbcFormation() {
   const faits = modules.filter((x) => x.done).length;
   // « à faire » = le premier module ni coché ni verrouillé. Un simple statut,
   // pas un bouton : l'ancien badge « reprendre » promettait de reprendre là où
-  // on s'était arrêté et ouvrait en fait la même fiche que les 8 autres.
-  const aFaire = progress.available ? modules.find((x) => !x.done && !x.locked)?.m.n ?? null : null;
+  // on s'était arrêté et ouvrait en fait la même fiche que les autres.
+  const aFaire = progress.available ? modules.find((x) => !x.done && !x.locked)?.m.key ?? null : null;
 
   const rungCourante = rang >= 0 ? BBC_ROLES[rang] : null;
   const rungSuivante = rang >= 0 ? BBC_ROLES[rang + 1] ?? null : null;
@@ -179,19 +222,21 @@ export function BbcFormation() {
           </div>
         </div>
 
-        {/* L'échelle : définitions neutres, position posée par la vue. */}
+        {/* L'échelle = une CARTE, pas une liste de cases à cocher.
+            Aucune marche n'est barrée « faite » (cf. entête). La seule marque
+            portée est « tu es ici », sur la marche réellement détectée. */}
         <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
             <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />
             l'échelle des rôles
+          </div>
+          <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginBottom: 14 }}>
+            Où mène le modèle. Touche une marche : ce qu'elle apporte, et comment on y entre.
           </div>
           <div style={{ position: "relative" }}>
             <div style={{ position: "absolute", left: 21, top: 22, bottom: 22, width: 2, background: "var(--ls-bbc-line)" }} />
             {BBC_ROLES.map((r, i) => {
-              const passee = rang >= 0 && i < rang;
               const courante = rang >= 0 && i === rang;
-              const nodeBg = passee ? "var(--ls-bbc-teal)" : courante ? "var(--ls-bbc-lime)" : "var(--ls-bbc-bg)";
-              const numColor = passee || courante ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-hint)";
               return (
                 <button
                   key={r.role}
@@ -225,9 +270,9 @@ export function BbcFormation() {
                       fontFamily: "var(--ls-bbc-font-mono)",
                       fontWeight: 700,
                       fontSize: 14,
-                      background: nodeBg,
-                      border: `2px solid ${passee ? "var(--ls-bbc-teal)" : courante ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`,
-                      color: numColor,
+                      background: courante ? "var(--ls-bbc-lime)" : "var(--ls-bbc-bg)",
+                      border: `2px solid ${courante ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`,
+                      color: courante ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-hint)",
                       zIndex: 1,
                     }}
                   >
@@ -236,11 +281,6 @@ export function BbcFormation() {
                   <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ls-bbc-text)" }}>{r.label}</span>
-                      {passee ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ls-bbc-teal)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d={CHECK} />
-                        </svg>
-                      ) : null}
                       {courante ? (
                         <span
                           style={{
@@ -258,9 +298,29 @@ export function BbcFormation() {
                           tu es ici
                         </span>
                       ) : null}
+                      {/* Dire tout de suite que « Membre » ne se franchit pas
+                          ici évite la question que Thomas s'est posée en
+                          voyant la marche cochée sur son propre écran. */}
+                      {r.horsAppCoach ? (
+                        <span
+                          style={{
+                            fontFamily: "var(--ls-bbc-font-mono)",
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "var(--ls-bbc-hint)",
+                            border: "1px solid var(--ls-bbc-line2)",
+                            padding: "2px 7px",
+                            borderRadius: 999,
+                          }}
+                        >
+                          hors app coach
+                        </span>
+                      ) : null}
                     </div>
-                    <div style={{ fontSize: 11.5, color: courante ? "var(--ls-bbc-lime-text)" : passee ? "var(--ls-bbc-teal)" : "var(--ls-bbc-muted)", marginTop: 2 }}>
-                      {r.criteria}
+                    <div style={{ fontSize: 11.5, color: courante ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.45 }}>
+                      {r.apport}
                     </div>
                   </div>
                 </button>
@@ -270,12 +330,36 @@ export function BbcFormation() {
           <div style={{ marginTop: 14, padding: 16, borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ls-bbc-lime-text)", marginBottom: 6 }}>{rungSel.label}</div>
             <div style={{ fontSize: 12.5, color: "var(--ls-bbc-text)", lineHeight: 1.55 }}>{rungSel.description}</div>
+
+            {/* Les deux questions qui rendent l'échelle éducative. */}
+            <Bloc titre="ce que ça apporte" texte={rungSel.apport} couleur="var(--ls-bbc-lime-text)" />
+            <Bloc titre="comment on y entre" texte={rungSel.acces} couleur="var(--ls-bbc-teal)" />
+
             {/* La 2e personne n'apparaît QUE sur la marche réellement occupée. */}
             {rang >= 0 && sel === rang ? (
-              <div style={{ fontSize: 12, color: "var(--ls-bbc-lime-text)", marginTop: 8, fontWeight: 600 }}>C'est ta marche.</div>
+              <div style={{ fontSize: 12, color: "var(--ls-bbc-lime-text)", marginTop: 10, fontWeight: 600 }}>C'est ta marche.</div>
             ) : null}
             {rang >= 0 && sel < rang && rungSel.vuDenHaut ? (
               <div style={{ fontSize: 12, color: "var(--ls-bbc-teal)", marginTop: 8, lineHeight: 1.45 }}>{rungSel.vuDenHaut}</div>
+            ) : null}
+            {/* Une marche dont les prérequis ne sont pas sourcés le dit, comme
+                un module le dit dans son `todo`. Même règle partout. */}
+            {rungSel.todo ? (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 12px",
+                  borderRadius: 11,
+                  background: tint("--ls-bbc-amber", 10),
+                  border: `1px solid ${tint("--ls-bbc-amber", 30)}`,
+                  fontSize: 11.5,
+                  lineHeight: 1.5,
+                  color: "var(--ls-bbc-muted)",
+                }}
+              >
+                <span style={{ color: "var(--ls-bbc-amber)", fontWeight: 700 }}>À trancher · </span>
+                {rungSel.todo}
+              </div>
             ) : null}
           </div>
         </div>
@@ -323,7 +407,7 @@ export function BbcFormation() {
         </div>
 
         {modules.map(({ m, done, locked }) => {
-          const enCours = m.n === aFaire;
+          const enCours = m.key === aFaire;
           const badge = done ? "var(--ls-bbc-teal)" : locked ? "var(--ls-bbc-hint)" : "var(--ls-bbc-lime)";
           const bBg = done ? tint("--ls-bbc-teal", 12) : enCours ? tint("--ls-bbc-lime", 12) : "transparent";
           const marcheRequise = BBC_ROLES.find((r) => r.role === m.minRole)?.label ?? m.minRole;
@@ -411,22 +495,13 @@ export function BbcFormation() {
           );
         })}
 
-        <div style={{ marginTop: 22, paddingTop: 20, borderTop: "1px solid var(--ls-bbc-line)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />
-            le vocabulaire du club
-          </div>
-          <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 14 }}>
-            Les mots qu'on emploie tous les matins, expliqués comme à un pote — du point de vue du coach.
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-            {glossaire.map((g) => (
-              <div key={g.t} style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "14px 16px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ls-bbc-lime-text)" }}>{g.t}</div>
-                <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", marginTop: 4, lineHeight: 1.5 }}>{g.d}</div>
-              </div>
-            ))}
-          </div>
+        {/* Le lexique n'est plus empilé ici — il a son onglet. On garde juste
+            le panneau qui dit où il est parti, sinon un habitué de l'ancienne
+            page croit qu'on l'a supprimé. */}
+        <div style={{ marginTop: 22, paddingTop: 20, borderTop: "1px solid var(--ls-bbc-line)", fontSize: 12, color: "var(--ls-bbc-muted)", lineHeight: 1.55 }}>
+          Un mot que tu ne connais pas ? Le vocabulaire du club vit dans l'onglet{" "}
+          <span style={{ color: "var(--ls-bbc-lime-text)", fontWeight: 600 }}>Lexique</span>, juste à côté — et
+          chaque module rappelle ses propres mots en bas de sa fiche.
         </div>
       </div>
 
@@ -479,6 +554,11 @@ export function BbcFormation() {
               ))}
             </div>
 
+            {/* Les mots du module, cliquables. C'est ce qui permet au lexique
+                de vivre dans son onglet sans devenir inaccessible depuis le
+                contenu qui l'emploie. */}
+            {openMod.lexique?.length ? <BbcLexiqueChips termes={openMod.lexique} settings={clubSettings} /> : null}
+
             {/* Ce qui manque, dit franchement : un module qui promet un déroulé
                 qu'il n'a pas fait plus de dégâts qu'un module qui l'annonce. */}
             {openMod.todo ? (
@@ -504,7 +584,7 @@ export function BbcFormation() {
             {progress.available ? (
               <button
                 type="button"
-                onClick={() => void progress.toggle(openMod.n)}
+                onClick={() => void progress.toggle(openMod.key)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -515,8 +595,8 @@ export function BbcFormation() {
                   borderRadius: 13,
                   cursor: "pointer",
                   textAlign: "left",
-                  background: progress.done[openMod.n] ? tint("--ls-bbc-lime", 7) : "var(--ls-bbc-s2)",
-                  border: `1px solid ${progress.done[openMod.n] ? tint("--ls-bbc-lime", 28) : "var(--ls-bbc-line)"}`,
+                  background: progress.done[openMod.key] ? tint("--ls-bbc-lime", 7) : "var(--ls-bbc-s2)",
+                  border: `1px solid ${progress.done[openMod.key] ? tint("--ls-bbc-lime", 28) : "var(--ls-bbc-line)"}`,
                   color: "var(--ls-bbc-text)",
                 }}
               >
@@ -529,11 +609,11 @@ export function BbcFormation() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: progress.done[openMod.n] ? "var(--ls-bbc-lime)" : "transparent",
-                    border: `1px solid ${progress.done[openMod.n] ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`,
+                    background: progress.done[openMod.key] ? "var(--ls-bbc-lime)" : "transparent",
+                    border: `1px solid ${progress.done[openMod.key] ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`,
                     fontSize: 12,
                     fontWeight: 800,
-                    color: progress.done[openMod.n] ? "var(--ls-bbc-lime-ink)" : "transparent",
+                    color: progress.done[openMod.key] ? "var(--ls-bbc-lime-ink)" : "transparent",
                   }}
                 >
                   ✓
@@ -542,8 +622,12 @@ export function BbcFormation() {
               </button>
             ) : null}
 
+            {/* La source ne dit plus « Notion Formation BBC 04 » : depuis la
+                relecture du 2026-07-28, l'essentiel des déroulés vient des
+                documents officiels du Drive, et le numéro n'identifie plus
+                rien de stable (il change à chaque réorganisation). */}
             <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", textAlign: "center", marginTop: 14 }}>
-              source · Notion Formation BBC {openMod.n}
+              source · documents officiels du club + Playbook BBC
             </div>
           </div>
         </div>

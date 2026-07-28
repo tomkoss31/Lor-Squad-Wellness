@@ -1,7 +1,7 @@
 // =============================================================================
 // BbcAppels — les rituels du club : inscriptions, présence, « patate chaude ».
 // Occurrences calculées depuis la config du club. Après l'appel : on pointe qui
-// était là, puis on fait le suivi 10 min (règle de la patate chaude, module 05).
+// était là, puis on fait le suivi 10 min (règle de la patate chaude, module 06).
 // =============================================================================
 
 import { useState, type CSSProperties } from "react";

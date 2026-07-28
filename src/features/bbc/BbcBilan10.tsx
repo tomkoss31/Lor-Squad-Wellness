@@ -1,8 +1,13 @@
 // =============================================================================
 // BbcBilan10 — le bilan des 10 visites (chantier BBC).
 // Le rendez-vous charnière : à la 10ᵉ visite, 9 étapes dans l'ordre
-// (module Formation 04). Coché = persisté dans club_bilans.steps ; quand tout
-// est coché, completed_at est posé.
+// (module Formation 05 — était 04 avant la réorganisation du parcours du
+// 2026-07-28). Coché = persisté dans club_bilans.steps ; quand tout est coché,
+// completed_at est posé.
+//
+// ⚠️ BILAN10_STEPS est la source UNIQUE : le module Formation la ré-affiche
+// telle quelle. Les `key` sont enregistrés en base — on peut retoucher un
+// `label` ou un `hint`, jamais une clé.
 // =============================================================================
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -177,7 +182,7 @@ export function BbcBilan10({ clientId, clientName, coachUserId, onClose, onDone 
         )}
 
         <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", textAlign: "center", marginTop: 14 }}>
-          les 9 étapes · module Formation 04 · sauvegarde auto
+          les 9 étapes · module Formation 05 · sauvegarde auto
         </div>
       </div>
     </div>

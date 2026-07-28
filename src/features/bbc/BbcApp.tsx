@@ -20,6 +20,7 @@ import { BbcCoeurs } from "./views/BbcCoeurs";
 import { BbcClub } from "./views/BbcClub";
 import { BbcClubs } from "./views/BbcClubs";
 import { BbcFormation } from "./views/BbcFormation";
+import { BbcLexique } from "./views/BbcLexique";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
@@ -47,6 +48,7 @@ type BbcView =
   | "messages"
   | "scripts"
   | "formation"
+  | "lexique"
   | "clubs"
   | "appels"
   | "prelancement"
@@ -100,6 +102,10 @@ const SECTIONS: Section[] = [
     tabs: [
       { k: "scripts", label: "Scripts & liens" },
       { k: "formation", label: "Formation" },
+      // Le lexique était empilé en pied de la page Formation : 25 définitions
+      // sous 10 modules, que personne ne scrollait. Il devient un onglet ICI
+      // (et pas une 6e entrée de menu — la nav BBC tient à 5 sections).
+      { k: "lexique", label: "Lexique" },
       { k: "prelancement", label: "Pré-lancement" },
     ],
   },
@@ -133,6 +139,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   messages: { eye: "messagerie", title: "Messages" },
   scripts: { eye: "tout ce que tu envoies", title: "Scripts & liens" },
   formation: { eye: "accès gradué", title: "Formation BBC" },
+  lexique: { eye: "les mots du club", title: "Lexique" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
   appels: { eye: "rituels du club", title: "Les appels" },
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
@@ -347,6 +354,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
+        {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
         {view === "crm" && <BbcCrm userId={userId} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
@@ -416,7 +424,9 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
   // Progression de formation réelle — sert le bandeau ci-dessous, qui ne
   // s'affiche pas du tout si la base ne sait rien dire (`available` false).
   const formation = useBbcFormationProgress(userId);
-  const modulesFaits = BBC_FORMATION_MODULES.filter((m) => formation.done[m.n]).length;
+  // Sur `m.key` (slug stable), pas sur `m.n` : le numéro affiché change à
+  // chaque réorganisation du parcours, la clé de progression non.
+  const modulesFaits = BBC_FORMATION_MODULES.filter((m) => formation.done[m.key]).length;
   const aUnCoeur = heartsData.members.filter((m) => {
     const next = nextPalier(m.hearts);
     return next !== null && next - m.hearts === 1;

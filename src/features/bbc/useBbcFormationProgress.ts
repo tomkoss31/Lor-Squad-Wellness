@@ -20,9 +20,17 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 
 export interface UseBbcFormationProgressResult {
-  /** Coché par module ('00'…'08'). Le COMPTE se fait côté vue, à partir du
-   *  registre des modules : compter les clés de la base compterait aussi une
-   *  clé devenue orpheline si un module disparaît du registre. */
+  /**
+   * Coché par module, indexé sur `BbcFormationModule.key` — le SLUG stable
+   * (« ebe », « bilan10»…), jamais sur le numéro affiché.
+   *
+   * ⚠️ Le stockage a changé le 2026-07-28, quand le parcours a été réordonné
+   * (le modèle économique est passé de 00 à 09). Indexée sur le numéro, la
+   * case cochée d'un coach aurait silencieusement suivi le module qui a pris
+   * sa place. Les anciennes lignes '00'…'08' restent en base et deviennent des
+   * clés orphelines : sans conséquence, justement parce que le COMPTE se fait
+   * côté vue à partir du registre des modules, et pas en comptant les lignes.
+   */
   done: Record<string, boolean>;
   loading: boolean;
   /** false = table absente / RLS / pas de session → l'UI n'affiche rien. */
