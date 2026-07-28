@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBbcMembers } from "../useBbcMembers";
 import { useClubSettings } from "../useClubSettings";
-import { RECETTE_CLUB, coutVisiteDepuisCarte, dosesParDefaut } from "../data/bbcClubPrices";
+import { RECETTE_CLUB, PALIERS_REMISE, coutVisiteDepuisCarte, dosesParDefaut } from "../data/bbcClubPrices";
 import { CLUB100, ECHELLE_ORG, DEFAULT_RENTA, calculerRenta, type RentaInput } from "../data/bbcClub100";
 
 const eur = (n: number) =>
@@ -150,6 +150,35 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
               hint={`doses par ${ing.contenant}`}
               highlight={doses[ing.ref] == null}
             />
+          ))}
+        </div>
+
+        {/* Le palier conditionne DIRECTEMENT le coût d'une dose. Il vivait dans
+            l'écran « La carte » retiré : sans lui ici, un coach à 42 % verrait un
+            coût calculé à 50 % sans aucun moyen de le corriger — et le modèle est
+            fait pour être dupliqué chez des distris qui n'y sont pas encore. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
+          <span style={{ fontSize: 12, color: "var(--ls-bbc-muted)" }}>Ton palier de remise :</span>
+          {PALIERS_REMISE.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => void save({ ...settings, palier_remise: p })}
+              aria-pressed={p === palier}
+              style={{
+                padding: "6px 13px",
+                borderRadius: 10,
+                cursor: "pointer",
+                fontFamily: "var(--ls-bbc-font-mono)",
+                fontSize: 12.5,
+                fontWeight: 700,
+                border: p === palier ? "1px solid var(--ls-bbc-lime)" : "1px solid var(--ls-bbc-line)",
+                background: p === palier ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)",
+                color: p === palier ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",
+              }}
+            >
+              {p} %
+            </button>
           ))}
         </div>
 
