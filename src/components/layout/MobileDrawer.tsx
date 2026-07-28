@@ -16,7 +16,7 @@
 // Styles : classes lb-drawer, lb-scrim, lb-drawer-* dans globals.css
 // =============================================================================
 
-import { useEffect, useState , type ReactNode } from "react";
+import { useEffect, useState  } from "react";
 import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
@@ -30,10 +30,6 @@ import { useBbcMode } from "../../features/bbc/useBbcMode";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
 
 interface MobileDrawerProps {
-  /** Encart libre en pied de tiroir. Sert au bascule Classic/BBC : la sidebar
-   *  qui le portait est en `hidden … xl:grid`, donc invisible sous 1280 px —
-   *  un admin sur téléphone n'avait AUCUN chemin pour entrer dans son club. */
-  footer?: ReactNode;
   open: boolean;
   onClose: () => void;
   onLogout: () => Promise<void> | void;
@@ -48,7 +44,7 @@ interface MobileDrawerProps {
   currentPath: string;
 }
 
-export function MobileDrawer({ footer, open, onClose, onLogout, navItems, currentPath }: MobileDrawerProps) {
+export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }: MobileDrawerProps) {
   const { currentUser } = useAppContext();
   const { count: streakDays, badge: streakBadge } = useFormationStreak();
   // Bascule Classic/BBC sur mobile (correctif 2026-07-27) — sans elle, un
@@ -223,9 +219,6 @@ export function MobileDrawer({ footer, open, onClose, onLogout, navItems, curren
                   compact
                 />
               </div>
-            ) : null}
-            {footer ? (
-              <div style={{ display: "flex", justifyContent: "center", padding: "10px 4px 6px" }}>{footer}</div>
             ) : null}
             <button
               type="button"
