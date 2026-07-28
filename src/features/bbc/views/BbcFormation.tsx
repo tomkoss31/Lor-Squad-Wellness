@@ -40,9 +40,11 @@ const STAR = "M12 2l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9 6.4 19.1l1.4-6.3L3 8.5
 const LOCK = "M6.5 10V7.5a5.5 5.5 0 0 1 11 0V10M5 10h14v10.5H5z";
 const CHECK = "M20 6 9 17l-5-5";
 
-/** Teinte d'un token BBC — jamais de rgba() littéral : les valeurs lime / teal /
- *  coral changent en thème clair (bbc-tokens.css), un rgba figé garderait la
- *  version néon prévue pour le fond noir. */
+/** Teinte d'un token BBC. Aucune COULEUR DE MARQUE en rgba() littéral : lime,
+ *  teal et coral changent en thème clair (bbc-tokens.css), un rgba figé
+ *  garderait la version néon prévue pour le fond noir.
+ *  (Le voile noir des modales, lui, reste un rgba : il est identique dans les
+ *  deux thèmes et ne dépend d'aucun token — même choix partout dans BBC.) */
 function tint(token: string, pct: number): string {
   return `color-mix(in srgb, var(${token}) ${pct}%, transparent)`;
 }

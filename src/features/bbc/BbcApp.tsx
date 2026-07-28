@@ -36,6 +36,8 @@ import { useBbcHearts, nextPalier } from "./useBbcHearts";
 import { useBbcCalls } from "./useBbcCalls";
 import { visitLevel } from "./useBbcVisits";
 import { DEFAULT_CLUB_SETTINGS } from "./useClubSettings";
+import { useBbcFormationProgress } from "./useBbcFormationProgress";
+import { BBC_FORMATION_MODULES } from "./data/bbcFormation";
 
 type BbcView =
   | "cockpit"
@@ -412,6 +414,10 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
   // Cœurs : MÊME source que l'onglet Cœurs (sinon les deux écrans affichent
   // des compteurs différents — l'un limité aux membres BBC, l'autre non).
   const heartsData = useBbcHearts(userId);
+  // Progression de formation réelle — sert le bandeau ci-dessous, qui ne
+  // s'affiche pas du tout si la base ne sait rien dire (`available` false).
+  const formation = useBbcFormationProgress(userId);
+  const modulesFaits = BBC_FORMATION_MODULES.filter((m) => formation.done[m.n]).length;
   const aUnCoeur = heartsData.members.filter((m) => {
     const next = nextPalier(m.hearts);
     return next !== null && next - m.hearts === 1;
@@ -424,29 +430,53 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
-      {/* Formation banner */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          background: "var(--ls-bbc-s1)",
-          border: "1px solid var(--ls-bbc-line)",
-          borderRadius: 16,
-          padding: "14px 18px",
-        }}
-      >
-        <span aria-hidden="true" style={{ fontSize: 20 }}>
-          📚
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>Formation BBC — reprendre le chapitre 3</div>
-          <div style={{ height: 5, borderRadius: 3, background: "var(--ls-bbc-s2)", marginTop: 8, maxWidth: 340, overflow: "hidden" }}>
-            <div style={{ width: "60%", height: "100%", background: "var(--ls-bbc-lime)", borderRadius: 3 }} />
+      {/* Formation : progression RÉELLE, ou rien.
+          Avant, ce bandeau affichait « reprendre le chapitre 3 » et une barre
+          figée à 60 % — pour tout le monde, à vie, quoi qu'on ait lu. Un
+          indicateur qui ne bouge jamais apprend à ignorer l'écran. On ne le
+          montre donc que si la progression est réellement lisible en base, et
+          on ne le montre plus du tout une fois les 9 modules déroulés. */}
+      {formation.available && modulesFaits < BBC_FORMATION_MODULES.length ? (
+        <button
+          type="button"
+          onClick={() => onGo("formation")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            width: "100%",
+            textAlign: "left",
+            cursor: "pointer",
+            background: "var(--ls-bbc-s1)",
+            border: "1px solid var(--ls-bbc-line)",
+            borderRadius: 16,
+            padding: "14px 18px",
+            color: "var(--ls-bbc-text)",
+            fontFamily: "var(--ls-bbc-font-body)",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 20 }}>📚</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>
+              {modulesFaits === 0 ? "Formation BBC — commencer" : "Formation BBC — continuer"}
+            </div>
+            <div style={{ height: 5, borderRadius: 3, background: "var(--ls-bbc-s2)", marginTop: 8, maxWidth: 340, overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${Math.round((modulesFaits / BBC_FORMATION_MODULES.length) * 100)}%`,
+                  height: "100%",
+                  background: "var(--ls-bbc-lime)",
+                  borderRadius: 3,
+                  transition: "width .3s",
+                }}
+              />
+            </div>
           </div>
-        </div>
-        <Chip>Lot 5</Chip>
-      </div>
+          <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-muted)", flex: "none" }}>
+            {modulesFaits} / {BBC_FORMATION_MODULES.length}
+          </span>
+        </button>
+      ) : null}
 
       {/* Hero cobayes */}
       <div
@@ -573,25 +603,6 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
         )}
       </SectionCard>
     </div>
-  );
-}
-
-function Chip({ children }: { children: ReactNode }) {
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        fontWeight: 800,
-        color: "var(--ls-bbc-lime-ink)",
-        background: "var(--ls-bbc-lime)",
-        padding: "3px 8px",
-        borderRadius: 999,
-        whiteSpace: "nowrap",
-        fontFamily: "var(--ls-bbc-font-mono)",
-      }}
-    >
-      {children}
-    </span>
   );
 }
 

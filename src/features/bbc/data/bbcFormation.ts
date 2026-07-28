@@ -109,9 +109,6 @@ export const BBC_ROLES: BbcRoleRung[] = [
   },
 ];
 
-export function getRoleRung(role: BbcRole | null): BbcRoleRung | undefined {
-  return role ? BBC_ROLES.find((r) => r.role === role) : undefined;
-}
 
 // ── Les modules ────────────────────────────────────────────────────────────
 
