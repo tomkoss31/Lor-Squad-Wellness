@@ -132,6 +132,21 @@ function greetingFor(d: Date): string {
   return 'Bonsoir'
 }
 
+// Lien « Ajouter à mon agenda » (Google Calendar, universel — ouvre Google Cal
+// web/app sur iOS comme Android). RDV de 30 min par défaut.
+function buildRdvCalUrl(iso: string, coachName: string): string {
+  const start = new Date(iso)
+  const end = new Date(start.getTime() + 30 * 60000)
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `RDV bilan avec ${coachName || 'ton coach'} · La Base 360`,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details: 'Rendez-vous de suivi La Base 360.',
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
 export function PwaClientApp({
   token,
   clientId,
@@ -461,7 +476,19 @@ export function PwaClientApp({
               <div style={{ flex: 1 }}>
                 <div style={{ ...eyebrow(), fontSize: 9, letterSpacing: '.14em' }}>Prochain RDV</div>
                 <div style={{ fontFamily: SORA, fontWeight: 600, fontSize: 15, color: 'var(--text)', marginTop: 2 }}>{nextFollowUp ? new Date(nextFollowUp).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Pas encore de RDV'}</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{nextFollowUp ? 'Ajoute-le à ton agenda depuis la messagerie.' : `Demande à ${coachName} un nouveau rendez-vous.`}</div>
+                {nextFollowUp ? (
+                  <a
+                    href={buildRdvCalUrl(nextFollowUp, coachName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                    Ajouter à mon agenda
+                  </a>
+                ) : (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{`Demande à ${coachName} un nouveau rendez-vous.`}</div>
+                )}
               </div>
             </div>
 
