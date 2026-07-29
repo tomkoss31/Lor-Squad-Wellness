@@ -1,0 +1,33 @@
+-- =============================================================================
+-- Ménage final du chantier sécurité (2026-07-29).
+--
+-- Sept tables du schéma public sont vides depuis 166 jours (0 ligne, 0
+-- insertion). DEUX seulement sont supprimables — les autres sont vides parce
+-- que la fonctionnalité n'a pas encore servi, pas parce qu'elle est morte.
+--
+-- SUPPRIMÉES
+--   · `_audit_policies_avant` — la photo des 280 policies prise avant la
+--     transformation `auth_rls_initplan`. Filet temporaire, plus nécessaire :
+--     la transformation est vérifiée et déployée.
+--   · `cobaye_photos` — orpheline de `20261105100000_cahier_de_bord.sql`
+--     (novembre). 0 ligne, aucune référence dans `src/`,
+--     `supabase/functions/` ni `api/`, aucune clé étrangère, aucune vue,
+--     aucune fonction.
+--
+-- GARDÉES, et pourquoi — c'est le plus important de ce fichier :
+--   · `outreach_templates` — créée il y a trois semaines par
+--     `20261206100000_bbc_outreach_and_assign.sql`. Le chantier BBC est en
+--     cours et le club ouvre sous peu : la supprimer casserait le lot suivant.
+--   · `client_mood_log` — vide, mais `record_client_mood` et
+--     `get_client_mood_today` sont bel et bien appelées par l'app client. La
+--     table est vide parce qu'aucun client n'a encore saisi son humeur.
+--   · `app_level_requests`, `client_referral_intentions`,
+--     `daily_action_checkin`, `unfreeze_requests` — référencées par du code
+--     vivant. Vides ≠ inutiles.
+--
+-- LA RÈGLE : « 0 ligne » ne suffit jamais à décider. Il faut 0 ligne ET 0
+-- référence dans le code ET 0 dépendance en base — les trois.
+-- =============================================================================
+
+drop table if exists public._audit_policies_avant restrict;
+drop table if exists public.cobaye_photos          restrict;
