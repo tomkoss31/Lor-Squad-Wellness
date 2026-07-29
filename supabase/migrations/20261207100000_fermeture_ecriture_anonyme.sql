@@ -3,14 +3,21 @@
 --
 -- Trouvée pendant l'audit de fond demandé après le gel de la base.
 --
--- CE QUI ÉTAIT POSSIBLE, sans compte ni mot de passe :
---   DELETE https://<projet>.supabase.co/rest/v1/clients      -> HTTP 204
---   DELETE https://<projet>.supabase.co/rest/v1/assessments  -> HTTP 204
---   DELETE https://<projet>.supabase.co/rest/v1/follow_ups   -> HTTP 204
--- Vérifié en réel sur un identifiant inexistant (aucune donnée supprimée).
--- La clé publique nécessaire est dans le JavaScript du site : lisible par
--- quiconque ouvre le code source. 150 clients, 774 bilans et 149 suivis
--- étaient effaçables par un inconnu, en une requête.
+-- CE QUI ÉTAIT RÉELLEMENT EXPOSÉ : la table `assessments`, soit 774 bilans,
+-- effaçables par un inconnu avec la seule clé publique du site (lisible dans
+-- le JavaScript par quiconque ouvre le code source).
+--
+-- ⚠ CORRECTIF DE PORTÉE, même jour : l'alerte initiale annonçait aussi
+-- `clients` et `follow_ups`, sur la foi d'un `HTTP 204` renvoyé par un DELETE
+-- de test. C'ÉTAIT UNE ERREUR DE LECTURE. Un `204` sur une suppression qui ne
+-- vise aucune ligne existante signifie « requête acceptée, zéro ligne
+-- touchée » — pas « autorisée ». Vérification faite en lisant les policies :
+-- `clients` et `follow_ups` n'ont AUCUNE policy DELETE, donc RLS refusait par
+-- défaut. Seule `assessments` portait `assessment_delete USING (true)` pour le
+-- rôle `public` — un trou réel, confirmé par lecture de la règle elle-même.
+--
+-- LEÇON : ne jamais conclure à une faille sur un code HTTP. Lire la policy.
+-- Le test qui fait foi : `select qual from pg_policies where ...`.
 --
 -- DEUX CAUSES CUMULÉES — il fallait les deux, corriger une seule ne suffit pas :
 --   1. le rôle `anon` avait les droits DELETE/UPDATE sur les tables métier
