@@ -36,6 +36,25 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      # Le script sort en code 1 dès qu'une table échoue. Sans cette étape, un
+      # échec ne produisait AUCUN signal : le récap du dimanche ne tournait pas,
+      # et personne ne remarquait le silence. C'est ce qui a permis à
+      # `activity_logs` (table supprimée) d'échouer pendant des mois sous un
+      # « ✅ Sauvegarde OK ».
+      - name: ⚠️ Sauvegarde en échec → alerte immédiate
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "❌ SAUVEGARDE ÉCHOUÉE — $(date -u +%Y-%m-%d)" \
+            --body "La sauvegarde quotidienne a échoué. **Tes données du jour ne sont pas archivées.**
+
+          👉 [Voir le détail de l'erreur](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          Le script liste la table fautive dans son journal et dans \`manifest.json\`.
+          Tant que ce n'est pas corrigé, la dernière sauvegarde valable est celle d'hier."
+
       - name: Récap hebdo (dimanche) → crée une issue GitHub
         if: github.event_name == 'schedule'
         env:
@@ -47,12 +66,15 @@ jobs:
             MANIFEST="backups/$DATE/manifest.json"
             if [ -f "$MANIFEST" ]; then
               TOTAL=$(jq -r '.total' "$MANIFEST")
-              DETAILS=$(jq -r '.tables | to_entries | map("- **\(.key)** : \(.value) enregistrements") | join("\n")' "$MANIFEST")
+              NB=$(jq -r '.tables | length' "$MANIFEST")
+              # Seules les tables non vides sont détaillées : sur 117 ensembles,
+              # la liste complète était devenue illisible.
+              DETAILS=$(jq -r '.tables | to_entries | map(select(.value > 0)) | sort_by(-.value) | map("- **\(.key)** : \(.value)") | join("\n")' "$MANIFEST")
               gh issue create \
-                --title "📊 Récap backup Lor'Squad — $DATE" \
+                --title "📊 Récap backup La Base 360 — $DATE" \
                 --body "## ✅ Sauvegarde hebdomadaire OK
 
-          **Total sauvegardé aujourd'hui : $TOTAL enregistrements**
+          **$TOTAL enregistrements sur $NB ensembles** (tables + comptes de connexion + inventaire du stockage).
 
           $DETAILS
 

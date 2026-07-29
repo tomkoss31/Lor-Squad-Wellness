@@ -338,11 +338,25 @@ export function useCrmLeads() {
           .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
           .limit(500),
-        sb
-          .from("client_referral_intentions")
-          .select("id, referrer_client_id, prospect_first_name, relationship, status, created_at, contacted_at, notes")
-          .order("created_at", { ascending: false })
-          .limit(500),
+        // Intentions de parrainage — requête débranchée le 2026-07-29.
+        //
+        // Ce hook alimente `useCrmBadge`, donc cette requête partait à CHAQUE
+        // chargement de l'app, pour tout le monde. Mesure sur 166 jours de
+        // statistiques Postgres : 2 735 interrogations, 0 ligne insérée, 0 ligne
+        // en table. La fonctionnalité (saisie de prénoms dans le sandbox VIP)
+        // n'a jamais été branchée en prod.
+        //
+        // On renvoie un résultat vide plutôt que de retirer la fonctionnalité :
+        // tout l'aval (résolution des parrains, mapping en leads CRM, action
+        // « demander le contact ») reste en place et compile. Le jour où les
+        // intentions arrivent vraiment, il suffit de restaurer l'appel
+        // ci-dessous — rien d'autre à retoucher.
+        //
+        //   sb.from("client_referral_intentions")
+        //     .select("id, referrer_client_id, prospect_first_name, relationship, status, created_at, contacted_at, notes")
+        //     .order("created_at", { ascending: false })
+        //     .limit(500),
+        Promise.resolve({ data: [] as IntentionRow[], error: null }),
       ]);
 
       // Garde-fou : on remonte la 1ère erreur au lieu d'un échec silencieux

@@ -1,5 +1,44 @@
 # Sauvegardes Supabase
 
+## ⚠️ Ce qui a changé le 2026-07-29 (après le gel de la base)
+
+Un audit déclenché par l'incident a montré que la sauvegarde était **partielle
+et silencieusement cassée** :
+
+| | Avant | Après |
+|---|---|---|
+| Ensembles sauvegardés | 14 (liste écrite à la main) | **117** (découverte automatique) |
+| Enregistrements | 2 718 | **7 909** |
+| Comptes de connexion (`auth.users`) | ❌ absents | ✅ 70 |
+| Inventaire du stockage | ❌ absent | ✅ 34 fichiers référencés |
+| Pagination | ❌ aucune (troncature muette au-delà de la limite API) | ✅ par pages de 500 |
+| Table en erreur | annoncée « ✅ OK » | **échec en code 1 + issue d'alerte** |
+
+Manquaient notamment : `prospects` (RDV de l'agenda), `client_consents` (RGPD),
+`bilan_orders` (paiements), `online_bilans` (leads), `coach_payment_settings`.
+La liste citait `activity_logs`, **table supprimée depuis**, qui échouait à
+chaque exécution derrière un récap « OK ».
+
+**Règle à retenir : ne jamais réintroduire de liste de tables écrite à la main.**
+Le script appelle `public.backup_table_list()`
+(migration `20261206290000_backup_table_list.sql`) — toute table créée demain
+est sauvegardée sans rien changer.
+
+### Limites connues, assumées
+
+- **Les fichiers du stockage ne sont pas téléchargés**, seulement inventoriés
+  (chemin, taille, date). En cas de perte, on saurait ce qui manque, pas le
+  restaurer. À traiter le jour où des fichiers deviennent critiques.
+- **Le schéma n'est pas sauvegardé** — il vit dans `supabase/migrations/`.
+  Une restauration complète = rejouer les migrations, puis `npm run restore`.
+- **L'ordre de restauration n'est pas géré** : `restore` parcourt le manifeste
+  sans tenir compte des clés étrangères, et fait un `upsert` sur `id`. Les
+  tables à clé composite (ex. `shop_visit_daily`) échoueront. À reprendre le
+  jour où une vraie restauration devient nécessaire.
+- Les tables de journal sont volontairement exclues (`push_notifications_sent`,
+  `client_rdv_reminders_sent`, `club_call_reminders_sent`) : volumineuses et
+  sans valeur en restauration.
+
 ## Où sont les backups ?
 
 Depuis le **2026-06-08**, les sauvegardes ne sont **plus committées dans git**
