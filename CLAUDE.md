@@ -214,6 +214,29 @@ doit toujours builder.
 
 ---
 
+## ⚠️ Configs racine : la source est le `.ts` (2026-07-27)
+
+`tailwind.config.ts` et `vite.config.ts` sont les **seules** sources.
+Les `.js` / `.d.ts` correspondants ne sont **ni générés ni committés** :
+`tsconfig.node.json` est en `"noEmit": true` (le `tsc -b` de `npm run build`
+type-check ces configs sans rien émettre), et les 4 noms de fichiers sont
+dans `.gitignore` par sécurité.
+
+**Ne jamais éditer `tailwind.config.js`.** Tailwind résout `tailwind.config.js`
+**avant** `tailwind.config.ts` : un `.js` qui traîne masque silencieusement
+la source `.ts`.
+
+**Pourquoi** : de mai 2026 au 2026-07-27, `tailwind.config.js` était committé
+et avait **divergé** de son `.ts` (commit `ebd66b9` avait ajouté une palette
+`lb360` + fonts Sora/Inter uniquement au `.js`). Résultat : chaque
+`npm run build` régénérait le `.js` depuis le `.ts`, effaçait ces tokens et
+laissait le worktree sale. La palette `lb360` Tailwind (`bg-lb360-*`, etc.)
+n'était utilisée **nulle part** — le code ne consomme que les variables CSS
+`var(--lb360-*)` de `globals.css`, qui sont intactes. Vérifié : le CSS émis
+par Tailwind est **identique** avant / après suppression.
+
+---
+
 ## ⚠️ Règle du livrable complet (2026-05-04)
 
 **Une feature N'EST PAS livrée tant que :**
