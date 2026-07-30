@@ -894,7 +894,7 @@ UUID-valide, le cast plante et le SELECT entier remonte l'erreur.
 
 ---
 
-## 🔒 Sécurité — les 5 règles issues de l'audit du 2026-07-29
+## 🔒 Sécurité — les 7 règles issues de l’audit du 2026-07-29
 
 > **À relire avant toute création de table ou de policy.** Cet audit a trouvé
 > **deux failles critiques** en une journée, l'app tournant depuis 6 mois. Les
@@ -956,6 +956,50 @@ select policyname, cmd, roles, qual from pg_policies
 Une fonction privilégiée sans chemin figé prend celui de l'appelant, qui peut y
 glisser un faux objet homonyme. **Toute nouvelle fonction `security definer`
 doit porter `set search_path = public, extensions`.**
+
+### 6. Une policy peut être une faille ET un support fonctionnel
+
+**La leçon la plus coûteuse de l'audit.** Les policies `*_public_read` sur
+`client_app_accounts` / `client_recaps` / `client_evolution_reports` exposaient
+52 jetons — il fallait les retirer. Mais elles étaient AUSSI la seule chose qui
+laissait quatre chemins publics lire leur propre ligne :
+
+```
+ClientAppPage.tsx:453/456/460   cascade de snapshot -> écran « Lien introuvable »
+ClientAppPage.tsx:472/490       onboarded_at, baseline_at
+RecapPage.tsx:35/54             /recap/:token, lecture ET écriture des recos
+EvolutionReportPage.tsx:58      rapport d'évolution
+supabaseService.ts:653          login client par email/mot de passe
+```
+
+Résultat : **l'espace client est resté mort 24 h pour les 52 clients**, et deux
+pages publiques avec lui.
+
+**Le protocole, avant de retirer une policy `to public` :**
+1. `grep` les **DEUX** styles de guillemets — `from("t")` ET `from('t')`. Mon
+   grep n'en cherchait qu'un et a raté quatre appels.
+2. **Ouvrir chaque appel.** J'avais bien vu `supabaseService.ts` dans les
+   résultats, mais j'ai conclu « c'est côté coach » d'après le NOM du fichier.
+   Ce fichier contient aussi le login client.
+3. **Charger la page dans un navigateur.** Un `HTTP 200` sur une SPA ne prouve
+   rien — la coquille répond toujours 200. Seul le rendu fait foi.
+
+**Le remplacement correct** : une policy RLS ne peut pas savoir si l'appelant a
+filtré par jeton (elle ne voit que des lignes), donc « public + `expires_at` »
+est **forcément** énumérable. Il faut une fonction `security definer` qui EXIGE
+le jeton en paramètre et ne renvoie que la ligne correspondante — motif déjà en
+place pour `get_client_messages_by_token` et une dizaine d'autres. Ajoutées le
+2026-07-30 : `get_client_app_account_by_token`, `get_client_recap_by_token`,
+`get_client_evolution_report_by_token`, `set_client_recap_referrals_by_token`,
+`get_my_client_app_token`.
+
+### 7. Jamais de sous-requête sur une table dans sa propre policy
+
+La transformation des 187 policies en `(select auth.uid())` a introduit une
+**récursion infinie sur `users`** : une policy UPDATE contenant
+`EXISTS (SELECT 1 FROM users …)` se re-déclenche à chaque ligne relue. Toute
+écriture sur `users` plantait (`infinite recursion detected in policy`).
+Passer par une fonction `security definer` — `is_admin()` — qui contourne le RLS.
 
 ### Le réflexe, après toute migration touchant une table ou une policy
 
