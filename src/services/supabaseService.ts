@@ -649,18 +649,21 @@ export async function loginWithSupabaseCredentials(payload: {
   // profil coach trouvé. On check si c'est un compte client lié via
   // client_app_accounts.auth_user_id — dans ce cas on renvoie le token
   // magic-link pour rediriger vers /client/:token.
-  const { data: clientAccount } = await client
-    .from("client_app_accounts")
-    .select("token, client_id")
-    .eq("auth_user_id", data.user.id)
-    .maybeSingle();
+  //
+  // ⚠️ Fix 2026-07-28 : la lecture DOIT passer par la RPC SECURITY DEFINER
+  // get_my_client_app_token (lit `where auth_user_id = auth.uid()` en bypass
+  // RLS). La requête directe échouait pour TOUT client : la seule policy SELECT
+  // de client_app_accounts est réservée aux COACHES (is_active_user()), donc un
+  // client ne peut pas lire sa propre ligne → data vide → « compte pas lié à un
+  // espace », alors que le lien existait bien (cas Virgile Famibelle).
+  const { data: clientToken } = await client.rpc("get_my_client_app_token");
 
-  if (clientAccount?.token) {
+  if (clientToken) {
     return {
       ok: true as const,
       kind: "client" as const,
-      clientToken: String(clientAccount.token),
-      clientId: String(clientAccount.client_id ?? ""),
+      clientToken: String(clientToken),
+      clientId: "",
     };
   }
 
