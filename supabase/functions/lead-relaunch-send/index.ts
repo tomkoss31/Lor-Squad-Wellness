@@ -137,7 +137,7 @@ serve(async (req) => {
   }
 
   const from = body.from ?? "Mélanie & Thomas – La Base <bonjour@labase360.fr>";
-  const replyTo = body.replyTo;
+  const replyTo = body.replyTo ?? "labaseverdun@gmail.com";
   // reply-to obligatoire seulement pour un vrai envoi — le dry-run sert à
   // valider le contenu/la liste avant même d'avoir tranché cette adresse.
   if (!replyTo && mode === "send") {

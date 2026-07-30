@@ -19,7 +19,7 @@ import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
-const REPLY_TO_DEFAULT = "contact@labase360.fr";
+const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parisDateLabel(iso: string): string {
