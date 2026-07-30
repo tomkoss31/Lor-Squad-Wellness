@@ -214,6 +214,11 @@ const RejoindreOpportunitePage = lazy(() =>
     default: module.RejoindreOpportunitePage,
   })),
 );
+const DecouvrirPage = lazy(() =>
+  import("./pages/DecouvrirPage").then((module) => ({
+    default: module.DecouvrirPage,
+  })),
+);
 const CoachPublicProfilePage = lazy(() =>
   import("./pages/CoachPublicProfilePage").then((module) => ({
     default: module.CoachPublicProfilePage,
@@ -729,6 +734,8 @@ export default function App() {
           <Route path="/boutique/:coachSlug/produit/:productSlug" element={<BoutiqueProductPage />} />
           <Route path="/boutique/:coachSlug/infos" element={<BoutiqueInfosPage />} />
           <Route path="/colis" element={<ColisPage />} />
+          {/* Page découverte publique (ouverte depuis la 3e carte de /welcome) */}
+          <Route path="/decouvrir" element={<DecouvrirPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />

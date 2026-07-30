@@ -382,15 +382,18 @@ export function WelcomePage() {
             accent="gold"
           />
           <ProfileCard
-            icon="✨"
-            title="Je veux rejoindre l'aventure"
-            subtitle="Découvrir le business La Base 360"
-            // Page d'accueil publique → tunnel recrutement /rejoindre avec
-            // attribution au coach par défaut (Thomas, owner). Le ?ref est
-            // préservé jusqu'au questionnaire (cf. RejoindreOpportunitePage).
-            onClick={() => navigate("/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423")}
+            icon="✦"
+            title="Découvrir le club"
+            subtitle="Qui on est, ce qu'on fait, comment nous rejoindre"
+            // Refonte 2026-07-31 : au lieu d'envoyer direct sur /rejoindre (qui
+            // verrouille le contenu derrière un questionnaire → 0 conversion),
+            // on ouvre la page découverte /decouvrir qui EXPLIQUE d'abord, puis
+            // propose deux chemins (bilan offert / opportunité). Maquette validée.
+            onClick={() => navigate("/decouvrir")}
             delayMs={1000}
             accent="magenta"
+            featured
+            badge="Nouveau"
           />
         </div>
 

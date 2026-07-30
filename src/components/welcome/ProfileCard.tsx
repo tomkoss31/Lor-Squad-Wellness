@@ -11,6 +11,10 @@ interface Props {
   onClick: () => void;
   delayMs?: number;
   accent?: Accent;
+  /** Carte mise en avant : bordure + icône dégradé signature, titre Anton, pastille. */
+  featured?: boolean;
+  /** Pastille en haut à droite (ex. « Nouveau »), visible seulement si featured. */
+  badge?: string;
 }
 
 // Identité v2 (2026-07) : tints lime/teal/coral sur card sombre.
@@ -32,13 +36,23 @@ const ACCENT_COLORS: Record<Accent, { bg: string; bgDark: string; text: string }
   },
 };
 
-export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accent = "gold" }: Props) {
+export function ProfileCard({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  delayMs = 0,
+  accent = "gold",
+  featured = false,
+  badge,
+}: Props) {
   const accentColors = ACCENT_COLORS[accent];
+  const SIGNATURE_GRADIENT = "linear-gradient(135deg,#c5f82a 0%,#2DD4BF 50%,#A78BFA 100%)";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`welcome-profile-card welcome-profile-card--${accent}`}
+      className={`welcome-profile-card welcome-profile-card--${accent}${featured ? " welcome-profile-card--featured" : ""}`}
       aria-label={`Continuer en tant que ${title}`}
       style={{ animationDelay: `${delayMs}ms` }}
     >
@@ -123,6 +137,43 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
           color: #c5f82a;
         }
 
+        /* ─── Variante « featured » (3e carte : Découvrir le club) ─── */
+        .welcome-profile-card--featured {
+          position: relative;
+          background:
+            linear-gradient(#14171a, #14171a) padding-box,
+            linear-gradient(135deg,#c5f82a 0%,#2DD4BF 50%,#A78BFA 100%) border-box;
+          border: 1px solid transparent;
+        }
+        .welcome-profile-card--featured:hover {
+          border-color: transparent;
+          background:
+            linear-gradient(#181c1f, #181c1f) padding-box,
+            linear-gradient(135deg,#c5f82a 0%,#2DD4BF 50%,#A78BFA 100%) border-box;
+        }
+        .welcome-profile-card--featured .welcome-profile-card__title {
+          font-family: 'Anton', 'Syne', sans-serif;
+          font-weight: 400;
+          font-size: 18px;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        .welcome-profile-card--featured:hover .welcome-profile-card__title { color: #F1EFE8; }
+        .welcome-profile-card__badge {
+          position: absolute;
+          top: -9px;
+          right: 16px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.10em;
+          text-transform: uppercase;
+          padding: 3px 9px;
+          border-radius: 999px;
+          background: linear-gradient(135deg,#c5f82a 0%,#2DD4BF 50%,#A78BFA 100%);
+          color: #08110a;
+        }
+
         @keyframes welcome-card-in {
           from { opacity: 0; transform: translateY(18px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -135,11 +186,14 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
         }
       `}</style>
 
+      {featured && badge ? (
+        <span className="welcome-profile-card__badge" aria-hidden="true">{badge}</span>
+      ) : null}
       <div
         className="welcome-profile-card__icon"
         aria-hidden="true"
         style={{
-          background: accentColors.bg,
+          background: featured ? SIGNATURE_GRADIENT : accentColors.bg,
         }}
       >
         {icon}
