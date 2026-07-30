@@ -50,7 +50,7 @@ async function sendEmail(shopName: string, to: string, subject: string, html: st
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: `${shopName} <boutique@labase360.fr>`,
-      reply_to: "contact@labase360.fr",
+      reply_to: "labaseverdun@gmail.com",
       to: [to],
       subject,
       html,

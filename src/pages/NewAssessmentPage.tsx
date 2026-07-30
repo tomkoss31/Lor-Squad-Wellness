@@ -34,7 +34,6 @@ import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from 
 import { normalizeMultiValue } from "../lib/multiChoice";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
-import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
 import {
   readCoachNotesDraft,
   writeCoachNotesDraft,
@@ -618,7 +617,6 @@ export function NewAssessmentPage() {
     purgeLegacyCoachNotesKey();
     return readCoachNotesDraft(prospectId);
   });
-  const [showValidationBanner, setShowValidationBanner] = useState(false);
   // Chantier Prise de masse (2026-04-24) : alertes sport style Apple Health.
   const [sportAlerts, setSportAlerts] = useState<SportAlert[]>([]);
   const [sportAlertsOpen, setSportAlertsOpen] = useState(false);
@@ -634,12 +632,6 @@ export function NewAssessmentPage() {
   const persistCoachNotesLocal = (value: string) => {
     writeCoachNotesDraft(prospectId, value);
   };
-
-  // L'étape 11 "Suite du suivi" est validée si le coach a choisi
-  // "suivi_libre" OU s'il a un RDV planifié (typeDeSuite + date).
-  const hasFollowUpPlanned =
-    form.typeDeSuite === "suivi_libre" ||
-    (!!form.typeDeSuite && form.nextFollowUp.trim().length > 0);
 
   // (notesVisible est calculé plus bas, après currentStepId)
 
@@ -684,11 +676,6 @@ export function NewAssessmentPage() {
 
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
-  };
-
-  const goToStepId = (id: StepId) => {
-    const idx = stepIds.indexOf(id);
-    if (idx >= 0) goToStep(idx);
   };
 
   // Panneau notes visible sur étapes "amont" (avant body-scan) + final.
@@ -1159,13 +1146,6 @@ export function NewAssessmentPage() {
     // tableau y serait stocké n'importe comment).
     const objectiveFocusLabel = form.objectiveFocus.join(" + ");
 
-    // Chantier refonte bilan (2026-04-24) : impossible de valider sans
-    // avoir planifié de RDV suivi (sauf suivi libre explicite).
-    if (!hasFollowUpPlanned) {
-      setShowValidationBanner(true);
-      return;
-    }
-
     // Programme optionnel — pas de validation bloquante
 
     // Garde-fou agenda (chantier 2026-06-04) : UNIQUEMENT pour un RDV ferme
@@ -1341,36 +1321,6 @@ export function NewAssessmentPage() {
         }
       }
 
-      // Chantier Auto-notif RDV (2026-04-24) : message auto au client
-      // si un RDV de suivi est planifié (sauf suivi libre). Best-effort,
-      // non bloquant si échec.
-      if (hasFollowUpPlanned && form.typeDeSuite !== "suivi_libre" && form.nextFollowUp) {
-        try {
-          const sbMsg = await getSupabaseClient();
-          if (sbMsg && currentUser?.id) {
-            const d = new Date(form.nextFollowUp);
-            const dateLabel = d.toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "2-digit",
-              month: "long",
-            });
-            const hourLabel = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-            const msg = `Salut ${form.firstName.trim()} ! 🎉\n\nMerci pour ce super bilan. Notre prochain RDV est confirmé :\n📅 ${dateLabel}\n⏰ ${hourLabel}\n\nÀ très vite pour ton suivi ! 💪\n${currentUser.name ?? "Coach"}`;
-            await sbMsg.from("client_messages").insert({
-              client_id: clientId,
-              client_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
-              distributor_id: currentUser.id,
-              message_type: "coach_reply",
-              message: msg,
-              sender: "coach",
-              sender_id: currentUser.id,
-            });
-          }
-        } catch (msgErr) {
-          console.warn("[auto-notif RDV] échec non bloquant:", msgErr);
-        }
-      }
-
       // Créer récap Supabase pour QR code.
       // Site 2 du durcissement audit L1 (le plus critique) :
       //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
@@ -1415,57 +1365,6 @@ export function NewAssessmentPage() {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
 
-            // Chantier unification acces client (2026-05-05) : decision
-            // intelligente du token a generer :
-            //   - Si client a deja un client_app_accounts.auth_user_id NOT NULL
-            //     (= compte deja cree dans un bilan precedent), on REUTILISE
-            //     son caa.token. URL /client/<caa_token> = auto-login PWA
-            //     SANS password (le compte existe deja, pas de signup needed).
-            //   - Sinon (premier bilan = pas de compte) : on genere un
-            //     client_invitation_tokens. URL /bienvenue?token=... = signup
-            //     PWA avec creation password.
-            //
-            // Avant : on creait toujours un nouveau invitation token, meme
-            // pour les clients qui avaient deja un compte. Romane se faisait
-            // demander un password, le consume tentait createUser sur email
-            // existant -> 409 "Edge Function non-2xx" (Safari iOS extractor
-            // bug masquait le vrai message).
-            let magicToken: string | null = null;
-            let accessKindToUse: "magic" | "caa" = "magic";
-            try {
-              // 1. Check si compte deja cree
-              const { data: existingCaa } = await sb
-                .from("client_app_accounts")
-                .select("token, auth_user_id")
-                .eq("client_id", clientId)
-                .maybeSingle();
-
-              if (existingCaa?.auth_user_id && existingCaa?.token) {
-                magicToken = existingCaa.token;
-                accessKindToUse = "caa";
-              } else {
-                // 2. Generer un client_invitation_tokens (premier bilan)
-                const bytes = new Uint8Array(24);
-                crypto.getRandomValues(bytes);
-                const generatedToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-                const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-                const { error: tokenErr } = await sb.from("client_invitation_tokens").insert({
-                  client_id: clientId,
-                  token: generatedToken,
-                  created_by: currentUser?.id,
-                  expires_at: expiresAt,
-                });
-                if (!tokenErr) {
-                  magicToken = generatedToken;
-                  accessKindToUse = "magic";
-                } else {
-                  console.warn("[NewAssessment] client_invitation_tokens insert failed:", tokenErr);
-                }
-              }
-            } catch (magicErr) {
-              console.warn("[NewAssessment] magic link gen skip:", magicErr);
-            }
-
             // Chantier Auto-journal EBE post-bilan (2026-05-04) : à chaque
             // bilan validé, on pré-crée silencieusement une entrée dans
             // ebe_journal_entries avec assessment_id lié et prospect_name
@@ -1489,22 +1388,16 @@ export function NewAssessmentPage() {
               console.warn("Auto-journal EBE skip:", ebeJournalErr);
             }
 
-            // Chantier Page remerciement post-bilan (2026-04-27) :
-            // remplace l'ouverture de ClientAccessModal par une navigation
-            // vers la page plein écran /bilan-termine (dark premium, QR,
-            // partage, parrainage, avis). La modale reste accessible
-            // depuis la fiche coach pour les usages hors-bilan.
-            // On passe en priorite le magic/caa token (auto-login PWA),
-            // sinon fallback sur le recap token. La BilanTermineePage
-            // saura distinguer via le param ?accessKind=.
-            const useToken = magicToken ?? recapData.token;
-            const accessKind = magicToken ? accessKindToUse : "recap";
-            const tokenParam = encodeURIComponent(useToken);
-            const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
-            const amountParam = programmeTotalEuros > 0 ? `&amount=${programmeTotalEuros}` : "";
-            navigate(
-              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}&accessKind=${accessKind}${amountParam}`,
-            );
+            // Chantier simplification fin de bilan (2026-07-30, demande Thomas) :
+            // avant, on naviguait vers /bilan-termine (écran QR plein écran).
+            // Ça forçait à générer un token d'accès immédiatement + poussait le
+            // coach à "valider" un RDV par défaut pour passer l'étape → 2 emails
+            // envoyés au client pour un RDV pas vraiment posé. Le lien d'accès
+            // client (QR/WhatsApp/SMS) reste disponible à tout moment depuis la
+            // fiche client (onglet Actions > Accès client, ClientAccessModal),
+            // sans dépendre de ce moment précis. On atterrit directement sur la
+            // fiche client, où le "vrai" prochain RDV se pose (Actions > RDV).
+            navigate(`/clients/${clientId}`);
             return;
           }
         }
@@ -3849,25 +3742,11 @@ export function NewAssessmentPage() {
                   onComplete={() => setShowFelicitationsConfetti(false)}
                 />
               ) : null}
-              {showValidationBanner && !hasFollowUpPlanned ? (
-                <ValidationBlockedBanner
-                  onBack={() => {
-                    setShowValidationBanner(false);
-                    goToStepId('follow-up');
-                  }}
-                />
-              ) : null}
               <FelicitationsStep
                 clientFirstName={form.firstName}
                 coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
                 programChoice={form.programChoice}
-                onSave={() => {
-                  if (!hasFollowUpPlanned) {
-                    setShowValidationBanner(true);
-                    return;
-                  }
-                  void handleSaveAssessment();
-                }}
+                onSave={() => void handleSaveAssessment()}
                 saving={saving}
               />
             </>

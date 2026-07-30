@@ -217,7 +217,7 @@ serve(async (req: Request) => {
           headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: `${shopName} <boutique@labase360.fr>`,
-            reply_to: "contact@labase360.fr",
+            reply_to: "labaseverdun@gmail.com",
             to: [order.customer_email],
             subject: `Ta commande ${shopName} est confirmée 🌿`,
             html,

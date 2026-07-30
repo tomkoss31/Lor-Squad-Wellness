@@ -112,11 +112,6 @@ const EditClientSchedulePage = lazy(() =>
     default: module.EditClientSchedulePage
   }))
 );
-const BilanTermineePage = lazy(() =>
-  import("./pages/BilanTermineePage").then((module) => ({
-    default: module.BilanTermineePage,
-  })),
-);
 const NewAssessmentPage = lazy(() =>
   import("./pages/NewAssessmentPage").then((module) => ({
     default: module.NewAssessmentPage
@@ -217,6 +212,11 @@ const PublicNewsletterPage = lazy(() =>
 const RejoindreOpportunitePage = lazy(() =>
   import("./pages/RejoindreOpportunitePage").then((module) => ({
     default: module.RejoindreOpportunitePage,
+  })),
+);
+const DecouvrirPage = lazy(() =>
+  import("./pages/DecouvrirPage").then((module) => ({
+    default: module.DecouvrirPage,
   })),
 );
 const CoachPublicProfilePage = lazy(() =>
@@ -734,6 +734,8 @@ export default function App() {
           <Route path="/boutique/:coachSlug/produit/:productSlug" element={<BoutiqueProductPage />} />
           <Route path="/boutique/:coachSlug/infos" element={<BoutiqueInfosPage />} />
           <Route path="/colis" element={<ColisPage />} />
+          {/* Page découverte publique (ouverte depuis la 3e carte de /welcome) */}
+          <Route path="/decouvrir" element={<DecouvrirPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
@@ -902,11 +904,6 @@ export default function App() {
               />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
               <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
-              {/* Chantier Page remerciement post-bilan (2026-04-27) :
-                  page plein écran avec QR + partage + parrainage, affichée
-                  après "Enregistrer et terminer le bilan". Query params :
-                  ?token=<recap_token>&firstName=<prénom>. */}
-              <Route path="clients/:clientId/bilan-termine" element={<BilanTermineePage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>

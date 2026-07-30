@@ -23,7 +23,7 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 
 const FROM = "La Base 360 News <newsletter@labase360.fr>";
-const REPLY_TO = "newsletter@labase360.fr";
+const REPLY_TO = "labaseverdun@gmail.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
