@@ -17,6 +17,8 @@ export const COMPANY_NAME = "SAS HTM FITLIFE";
 export const COMPANY_ADDRESS = "6 lotissement Bellevue, 55100 Vacherauville, France";
 export const COMPANY_DIRECTOR = "Thomas Houbert";
 export const COMPANY_EMAIL = "labaseverdun@gmail.com";
+/** N° SIRET — obligatoire sur les mentions légales et les CGV d'une boutique. */
+export const COMPANY_SIRET = "931 482 004 00013";
 
 // ─── Hébergement (pour mentions légales + politique conf) ──────────────────
 export const HOSTING_PROVIDER = "Supabase Inc.";
