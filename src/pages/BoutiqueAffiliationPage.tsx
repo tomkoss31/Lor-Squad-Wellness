@@ -17,9 +17,11 @@ import type { BoutiqueInfo } from "../components/boutique/types";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 
-// À REMPLACER par Thomas : lien d'inscription HL SKIN + prix pack démarrage.
-const HL_REGISTER_URL = "";
-const STARTER_PACK_PRICE = "";
+// Décision Thomas (2026-07-30) : PAS de lien d'inscription externe. Une personne
+// intéressée laisse ses coordonnées → lead dans le CRM du distri + notif push →
+// il/elle prend contact manuellement. Le prix du pack de démarrage change (promos
+// en cours) → on ne l'affiche pas, on renvoie vers la coach.
+const PACK_PRICE_NOTE = "Le prix change selon les promos en cours — ta coach te donne le tarif du moment.";
 
 // Médias affiliation (assets officiels HL Beauty, communs à toutes les boutiques).
 const BK_MEDIA =
@@ -70,9 +72,10 @@ export function BoutiqueAffiliationPage() {
     document.title = "Deviens affiliée · Beauté K Skin";
   }, []);
 
+  const [contactOpen, setContactOpen] = useState(false);
+
   const shopName = boutique?.shop_name ?? "Beauté K Skin";
   const firstName = boutique?.first_name ?? null;
-  const registerUrl = HL_REGISTER_URL || `/boutique/${coachSlug}`;
 
   // Illustratif : commission = ton palier de remise appliqué aux achats filleules.
   const monthlyGain = useMemo(() => friends * avgCart * (tierRate / 100), [friends, avgCart, tierRate]);
@@ -81,7 +84,8 @@ export function BoutiqueAffiliationPage() {
     ["Dois-je forcément vendre pour gagner ?", "Non. Tu gagnes une commission sur les achats des personnes que tu parraines. Mais oui, pour toucher quoi que ce soit, l'inscription (enregistrement distributrice) est obligatoire."],
     ["Mes filleules doivent-elles acheter ?", "Aucune obligation d'achat pour elles. Elles commandent quand elles veulent — et chaque commande te récompense."],
     ["Combien je touche exactement ?", "Ça dépend de ton palier (de 25 % jusqu'à 50 % selon ton activité). Le détail t'est expliqué à l'inscription."],
-    ["C'est quoi le pack de démarrage ?", "Un kit pour lancer ton activité en règle. (Prix à préciser.)"],
+    ["C'est quoi le pack de démarrage ?", `Un kit pour lancer ton activité en règle (produits, outils, accompagnement). ${PACK_PRICE_NOTE}`],
+    ["Comment je m'inscris ?", "Tu laisses ton prénom et ton numéro ici : ta coach te rappelle, répond à tes questions et t'accompagne pas à pas pour l'inscription. Rien à faire seule."],
   ];
 
   const eyebrow: React.CSSProperties = { marginBottom: 14 };
@@ -127,9 +131,9 @@ export function BoutiqueAffiliationPage() {
               touches une commission sur leurs achats. Sans stock, sans forcer, à ton rythme.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <a className="bk-btn bk-btn-primary" href={registerUrl}>
-                Rejoindre l'équipe
-              </a>
+              <button className="bk-btn bk-btn-primary" onClick={() => setContactOpen(true)}>
+                Je veux en savoir plus
+              </button>
               <a
                 className="bk-btn bk-btn-ghost"
                 href="#bk-af-how"
@@ -365,21 +369,187 @@ export function BoutiqueAffiliationPage() {
           </div>
           <h2>Rejoins {firstName ? `${firstName} et` : ""} l'aventure.</h2>
           <p>
-            L'inscription (enregistrement distributrice) est obligatoire pour être récompensée.
-            {STARTER_PACK_PRICE ? ` Pack de démarrage : ${STARTER_PACK_PRICE}.` : ""}
+            Laisse-nous ton prénom et ton numéro : {firstName ?? "ta coach"} te rappelle, t'explique
+            tout et t'accompagne pour ton inscription. Sans engagement.
           </p>
-          <a className="bk-cta-btn" href={registerUrl} style={{ textDecoration: "none", display: "inline-block" }}>
-            Je rejoins l'équipe
-          </a>
-          {!HL_REGISTER_URL && (
-            <p style={{ fontSize: 11, color: "color-mix(in srgb,var(--ground) 55%,transparent)", marginTop: 4 }}>
-              (lien d'inscription HL SKIN à brancher)
-            </p>
-          )}
+          <button className="bk-cta-btn" onClick={() => setContactOpen(true)}>
+            Être recontactée
+          </button>
         </div>
       </section>
 
       <BoutiqueFooter coachSlug={coachSlug} shopName={shopName} distriFirstName={firstName} />
+
+      {contactOpen && (
+        <AffiliationContactForm
+          coachSlug={coachSlug}
+          coachUserId={boutique?.user_id}
+          coachFirstName={firstName}
+          onClose={() => setContactOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Formulaire « être recontactée » ────────────────────────────────────────
+// Crée un lead dans le CRM du distri (submit-prospect-lead → prospect_leads) +
+// notif push « nouveau lead ». Le distri prend contact manuellement (décision
+// Thomas : pas d'inscription en autonomie sur la boutique).
+function AffiliationContactForm({
+  coachSlug,
+  coachUserId,
+  coachFirstName,
+  onClose,
+}: {
+  coachSlug?: string;
+  // ⚠️ On envoie referrer_user_id EXPLICITEMENT : la résolution coach_slug de
+  // submit-prospect-lead cherche `users.slug`, colonne qui n'existe pas → le lead
+  // arriverait non attribué. Ici on a déjà l'id via get_boutique_by_slug.
+  coachUserId?: string;
+  coachFirstName: string | null;
+  onClose: () => void;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [note, setNote] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [err, setErr] = useState("");
+
+  const canSend =
+    firstName.trim().length >= 2 &&
+    phone.replace(/\D/g, "").length >= 6 &&
+    state !== "sending";
+
+  async function submit() {
+    if (!canSend) return;
+    setState("sending");
+    setErr("");
+    try {
+      const sb = await getSupabaseClient();
+      const { data, error } = await sb!.functions.invoke("submit-prospect-lead", {
+        body: {
+          first_name: firstName.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          coach_slug: coachSlug,
+          referrer_user_id: coachUserId,
+          source: "affiliation_boutique",
+          consent_recontact: true,
+          metadata: {
+            interet: "Affiliation / opportunité HL Beauty",
+            origine: "Page affiliation boutique HL Skin",
+            boutique_slug: coachSlug ?? null,
+            message: note.trim() || null,
+          },
+        },
+      });
+      const res = data as { success?: boolean; error?: string } | null;
+      if (error || !res?.success) {
+        setErr(res?.error || "Une erreur est survenue. Réessaie.");
+        setState("error");
+        return;
+      }
+      setState("done");
+    } catch {
+      setErr("Une erreur est survenue. Réessaie.");
+      setState("error");
+    }
+  }
+
+  return (
+    <div
+      className="bk-qvm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Être recontactée"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bk-rev-form">
+        <button className="bk-close" onClick={onClose} aria-label="Fermer">
+          ×
+        </button>
+        {state === "done" ? (
+          <div style={{ textAlign: "center", padding: "10px 4px" }}>
+            <div style={{ fontSize: 34 }}>🌿</div>
+            <h3 style={{ margin: "8px 0" }}>C'est noté, merci !</h3>
+            <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>
+              {coachFirstName ?? "Ta coach"} a reçu ta demande et te recontacte très vite pour tout
+              t'expliquer.
+            </p>
+            <button className="bk-btn bk-btn-primary" style={{ marginTop: 16 }} onClick={onClose}>
+              Fermer
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="bk-eyebrow" style={{ marginBottom: 6 }}>
+              Sans engagement
+            </div>
+            <h3 style={{ marginBottom: 6 }}>Être recontactée</h3>
+            <p style={{ color: "var(--ink-soft)", fontSize: 13.5, marginBottom: 16 }}>
+              {coachFirstName ?? "Ta coach"} t'appelle, répond à tes questions (gains, pack de
+              démarrage, temps à y consacrer) et t'accompagne si tu veux te lancer.
+            </p>
+
+            <label className="bk-rev-lbl">Prénom *</label>
+            <input
+              className="bk-rev-in"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Ton prénom"
+              maxLength={40}
+            />
+
+            <label className="bk-rev-lbl">Téléphone *</label>
+            <input
+              className="bk-rev-in"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="06 12 34 56 78"
+              maxLength={20}
+            />
+
+            <label className="bk-rev-lbl">Email (optionnel)</label>
+            <input
+              className="bk-rev-in"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ton@email.fr"
+              maxLength={80}
+            />
+
+            <label className="bk-rev-lbl">Ta question (optionnel)</label>
+            <textarea
+              className="bk-rev-in"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ce que tu aimerais savoir…"
+              rows={3}
+              maxLength={500}
+            />
+
+            {state === "error" && (
+              <div style={{ color: "var(--blush)", fontSize: 13, marginTop: 8 }}>{err}</div>
+            )}
+
+            <button
+              className="bk-btn bk-btn-primary"
+              style={{ width: "100%", marginTop: 12, opacity: canSend ? 1 : 0.5 }}
+              disabled={!canSend}
+              onClick={() => void submit()}
+            >
+              {state === "sending" ? "Envoi…" : "Envoyer ma demande"}
+            </button>
+            <p style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 10, textAlign: "center" }}>
+              Tes coordonnées servent uniquement à te recontacter. Aucun engagement.
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
