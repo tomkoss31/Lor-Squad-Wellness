@@ -55,7 +55,17 @@ export function EvolutionReportPage() {
     ;(async () => {
       const sb = await getSupabaseClient()
       if (!sb) { setError(true); setLoading(false); return }
-      const { data, error: err } = await sb.from('client_evolution_reports').select('*').eq('token', token).single()
+      // Page PUBLIQUE : le visiteur n'a pas de compte, sa seule preuve est le
+      // jeton de l'URL. Fonction privilégiée qui EXIGE ce jeton et ne renvoie
+      // que la ligne correspondante.
+      //
+      // Avant le 2026-07-30 : lecture directe autorisée par la policy
+      // `report_public_read`, qui ne vérifiait QUE `expires_at > now()` — donc
+      // toute ligne non expirée était lisible sans jeton. Retirer cette policy
+      // a fermé la fuite mais cassé cette page ; la fonction répare les deux.
+      const { data, error: err } = await sb
+        .rpc('get_client_evolution_report_by_token', { p_token: token })
+        .maybeSingle()
       if (err || !data) { setError(true); setLoading(false); return }
       setReport(data as ReportData)
       setLoading(false)

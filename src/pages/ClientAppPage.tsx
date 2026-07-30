@@ -449,15 +449,32 @@ export function ClientAppPage() {
       // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
       void loadCoachingData(sb, token)
 
+      // ⚠️ Ces trois lectures étaient des `.from(...).select('*').eq('token', …)`
+      // directs jusqu'au 2026-07-30. Elles marchaient grâce aux policies
+      // `*_public_read`, qui ne vérifiaient QUE `expires_at > now()` — donc
+      // toute ligne non expirée était lisible par n'importe qui, sans jeton
+      // (52 jetons clients récupérables en une requête).
+      //
+      // Retirer ces policies a fermé la fuite mais tué CETTE page : les trois
+      // lectures renvoyaient 0 ligne, `snapshot` restait null, et le client
+      // tombait sur « Lien introuvable ou expiré ». Les fonctions ci-dessous
+      // exigent le jeton en paramètre et ne renvoient que la ligne
+      // correspondante : la page remarche, l'énumération reste impossible.
       let snapshot: Record<string, unknown> | null = null
-      const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
+      const { data: recap } = await sb
+        .rpc('get_client_recap_by_token', { p_token: token })
+        .maybeSingle()
       if (recap) snapshot = recap as Record<string, unknown>
       if (!snapshot) {
-        const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
+        const { data: report } = await sb
+          .rpc('get_client_evolution_report_by_token', { p_token: token })
+          .maybeSingle()
         if (report) snapshot = report as Record<string, unknown>
       }
       if (!snapshot) {
-        const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
+        const { data: appAccount } = await sb
+          .rpc('get_client_app_account_by_token', { p_token: token })
+          .maybeSingle()
         if (appAccount) snapshot = appAccount as Record<string, unknown>
       }
       if (!snapshot) { setLoading(false); return }
@@ -470,9 +487,7 @@ export function ClientAppPage() {
         let onboardedAt = (snapshot as { onboarded_at?: string | null }).onboarded_at
         if (onboardedAt === undefined) {
           const { data: acc } = await sb
-            .from('client_app_accounts')
-            .select('onboarded_at')
-            .eq('token', token)
+            .rpc('get_client_app_account_by_token', { p_token: token })
             .maybeSingle()
           onboardedAt = (acc as { onboarded_at?: string | null } | null)?.onboarded_at ?? null
         }
@@ -488,9 +503,7 @@ export function ClientAppPage() {
         let bAt = (snapshot as { baseline_at?: string | null }).baseline_at
         if (bAt === undefined) {
           const { data: acc2, error: bErr } = await sb
-            .from('client_app_accounts')
-            .select('baseline_at')
-            .eq('token', token)
+            .rpc('get_client_app_account_by_token', { p_token: token })
             .maybeSingle()
           if (bErr) throw bErr
           bAt = (acc2 as { baseline_at?: string | null } | null)?.baseline_at ?? null
