@@ -977,6 +977,13 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   // actif mais hors agenda. Le coach pourra créer un RDV manuel plus tard
   // depuis la fiche (ce qui nécessitera de désactiver le suivi libre d'abord).
   if (!payload.freeFollowUp) {
+    // Chantier simplification fin de bilan (2026-07-30, demande Thomas) :
+    // au bilan initial, la date de RDV est encore un défaut auto-rempli, pas
+    // un vrai créneau confirmé avec le client — on crée donc ce follow_up en
+    // SILENCE (notify_client: false). Aucun email de confirmation ni de
+    // rappel J-1 ne part tant que le coach n'a pas confirmé le VRAI RDV
+    // depuis la fiche client (Actions > Modifier le rendez-vous), qui écrit
+    // alors notify_client explicitement (cf. EditScheduleModal).
     const { error: followUpError } = await client.from("follow_ups").insert({
       client_id: clientId,
       client_name: `${payload.client.firstName} ${payload.client.lastName}`,
@@ -984,7 +991,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       type: payload.followUpType,
       status: payload.followUpStatus,
       program_title: payload.currentProgram || payload.assessment.programTitle,
-      last_assessment_date: payload.assessment.date
+      last_assessment_date: payload.assessment.date,
+      notify_client: false
     });
 
     if (followUpError) {
