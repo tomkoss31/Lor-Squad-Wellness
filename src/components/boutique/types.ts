@@ -45,15 +45,16 @@ export type AppliedPromo = { code: string; kind: string; value: number };
 export const FREE_SHIPPING_THRESHOLD = 90;
 export const SHIPPING_COST = 8.9;
 
-// Les 3 catégories officielles HL/Skin (code couleur packaging).
+// Les 3 catégories officielles HL/Skin (code couleur packaging) + la gamme Aloé.
 export const CONCERN_LABELS: Record<string, { label: string; icon: string; sub: string; hue: string }> = {
   eclat: { label: "Éclat & Luminosité", icon: "✨", sub: "Teint terne, imperfections", hue: "#E8C86A" },
   hydratation: { label: "Hydratation", icon: "💧", sub: "Tiraillements, sécheresse", hue: "#6FB7B0" },
   age: { label: "Beauté à tout âge", icon: "⏳", sub: "Rides, fermeté, éclat", hue: "#9E86C4" },
+  aloe: { label: "Aloe Vera", icon: "🌿", sub: "Apaiser, laver, cheveux", hue: "#7CB342" },
 };
 
-// Ordre d'affichage des catégories (Nettoyer → Cibler → Hydrater).
-export const CONCERN_ORDER = ["eclat", "hydratation", "age"] as const;
+// Ordre d'affichage des catégories (Nettoyer → Cibler → Hydrater → Aloé).
+export const CONCERN_ORDER = ["eclat", "hydratation", "age", "aloe"] as const;
 
 // Produits à venir (teaser vitrine — PAS en vente).
 export type ComingSoonProduct = { name: string; tagline: string; concern: string };
