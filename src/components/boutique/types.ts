@@ -47,10 +47,10 @@ export const SHIPPING_COST = 8.9;
 
 // Les 3 catégories officielles HL/Skin (code couleur packaging) + la gamme Aloé.
 export const CONCERN_LABELS: Record<string, { label: string; icon: string; sub: string; hue: string }> = {
-  eclat: { label: "Éclat & Luminosité", icon: "✨", sub: "Teint terne, imperfections", hue: "#E8C86A" },
+  eclat: { label: "Éclat & Luminosité", icon: "✨", sub: "Teint terne, pores, imperfections", hue: "#E8C86A" },
   hydratation: { label: "Hydratation", icon: "💧", sub: "Tiraillements, sécheresse", hue: "#6FB7B0" },
   age: { label: "Beauté à tout âge", icon: "⏳", sub: "Rides, fermeté, éclat", hue: "#9E86C4" },
-  aloe: { label: "Aloe Vera", icon: "🌿", sub: "Apaiser, laver, cheveux", hue: "#7CB342" },
+  aloe: { label: "Aloe Vera", icon: "🌿", sub: "Apaiser, corps & cheveux", hue: "#7CB342" },
 };
 
 // Ordre d'affichage des catégories (Nettoyer → Cibler → Hydrater → Aloé).
