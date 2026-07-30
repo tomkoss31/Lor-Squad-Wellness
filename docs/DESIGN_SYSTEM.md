@@ -35,7 +35,7 @@ utilisé pour les couleurs sémantiques de marque.**
 | Source | Path | Usage réel |
 |---|---|---|
 | Variables CSS `--ls-*` | `src/styles/globals.css:5-71` | Consommée par >250 composants |
-| Tailwind `lor.*` + `glow.*` | `tailwind.config.js:5-29` | Quasi non utilisée, héritée d'un ancien chantier |
+| Tailwind `lor.*` + `glow.*` | `tailwind.config.ts:8-29` | Quasi non utilisée, héritée d'un ancien chantier |
 | Hardcoded inline `style={{...}}` | partout | Anti-pattern résiduel (cf. §8) |
 
 ### 1.2 Palette dark (défaut)
@@ -133,7 +133,7 @@ Hardcodée elle aussi dans `AppLayout.tsx:388-403` et `BottomNav.tsx:311` :
 - Foreground : `#E24B4A` / `#A32D2D` (mobile)
 - Background : `rgba(226,75,74,0.12)` / `#FCEBEB` (mobile)
 
-### 1.7 Tailwind heritage (`tailwind.config.js`)
+### 1.7 Tailwind heritage (`tailwind.config.ts`)
 
 ```js
 colors: {
@@ -157,7 +157,7 @@ colors: {
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
 ```
 
-Mapping `tailwind.config.js:35-39` :
+Mapping `tailwind.config.ts:36-40` :
 
 ```js
 fontFamily: {
@@ -299,7 +299,7 @@ Les rayons réellement utilisés (inline) :
 --ls-shadow-md: 0 4px 14px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.05);
 ```
 
-Tailwind hérité (`tailwind.config.js:30-34`) :
+Tailwind hérité (`tailwind.config.ts:31-35`) :
 ```js
 soft: "0 10px 30px rgba(0,0,0,0.22)"
 panel: "0 18px 48px rgba(0,0,0,0.22)"
@@ -778,7 +778,7 @@ ajoutée, dark est le défaut). `<ThemeToggle>` bascule la classe.
 - **3 systèmes de couleurs en parallèle** (variables CSS, Tailwind `lor.*`,
   Tailwind `glow.*`, hardcoded). Tailwind `glow` et `lor` ne sont pas
   consommés en pratique.
-- `tailwind.config.js:23 lor.gold2: '#F0C96A'` — défini, jamais utilisé.
+- ~~`tailwind.config.js:23 lor.gold2: '#F0C96A'`~~ — supprimé depuis (commit `ae44b5d`).
 - `--ls-radius` et `--ls-radius-lg` (`globals.css:35-36`) — déclarés,
   jamais référencés.
 - 2 utilitaires shadow distincts : Tailwind (`shadow-soft`, `shadow-luxe`)

@@ -9,6 +9,7 @@ import {
   COMPANY_ADDRESS,
   COMPANY_DIRECTOR,
   COMPANY_EMAIL,
+  COMPANY_SIRET,
 } from "../lib/branding";
 
 export default function LegalNoticePage() {
@@ -62,6 +63,8 @@ export default function LegalNoticePage() {
             <strong>{COMPANY_NAME}</strong>
             <br />
             {COMPANY_ADDRESS}
+            <br />
+            SIRET : {COMPANY_SIRET}
             <br />
             Email :{" "}
             <a href={`mailto:${COMPANY_EMAIL}`} style={linkStyle}>

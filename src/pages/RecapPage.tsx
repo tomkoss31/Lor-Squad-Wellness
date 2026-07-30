@@ -32,7 +32,18 @@ export function RecapPage() {
     ;(async () => {
       const sb = await getSupabaseClient()
       if (!sb) { setNotFound(true); setLoading(false); return }
-      const { data, error } = await sb.from('client_recaps').select('*').eq('token', token).single()
+      // Page PUBLIQUE : le visiteur n'a pas de compte, sa seule preuve est le
+      // jeton de l'URL. On passe par une fonction privilégiée qui EXIGE ce jeton
+      // et ne renvoie que la ligne correspondante.
+      //
+      // Avant le 2026-07-30 : `.from('client_recaps').select('*')` direct,
+      // autorisé par la policy `recap_public_read` qui ne vérifiait QUE
+      // `expires_at > now()` — donc toute ligne non expirée était lisible sans
+      // aucun jeton. Retirer cette policy a fermé la fuite mais cassé cette
+      // page ; la fonction répare les deux.
+      const { data, error } = await sb
+        .rpc('get_client_recap_by_token', { p_token: token })
+        .maybeSingle()
       if (error || !data) setNotFound(true)
       else setRecap(data as RecapData)
       setLoading(false)
@@ -51,7 +62,14 @@ export function RecapPage() {
     setSending(true)
     const sb = await getSupabaseClient()
     if (sb) {
-      await sb.from('client_recaps').update({ referrals: filled }).eq('token', token)
+      // Même raison que la lecture : écriture bornée au jeton, via une fonction
+      // qui ne touche QUE la colonne `referrals` de cette ligne. L'ancien
+      // `.update()` direct répondait `204` sans rien écrire depuis le
+      // 2026-07-29 — « zéro ligne touchée », pas « écrit ».
+      await sb.rpc('set_client_recap_referrals_by_token', {
+        p_token: token,
+        p_referrals: filled,
+      })
       // Envoyer un message au coach pour chaque recommandation
       if (recap) {
         const clientName = `${recap.client_first_name} ${recap.client_last_name}`

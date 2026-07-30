@@ -18,6 +18,7 @@ import {
   COMPANY_ADDRESS,
   COMPANY_DIRECTOR,
   COMPANY_EMAIL,
+  COMPANY_SIRET,
   HOSTING_PROVIDER,
   HOSTING_REGION,
 } from "../lib/branding";
@@ -150,11 +151,13 @@ export function BoutiqueInfosPage() {
           <h2>Conditions générales de vente</h2>
           <p>
             Les présentes CGV régissent les ventes réalisées sur cette boutique, éditée par{" "}
-            <b>{COMPANY_NAME}</b> ({COMPANY_ADDRESS}). Toute commande implique l'acceptation des
-            présentes conditions. Les produits sont ceux de la gamme HL Skin (Herbalife). Les prix
-            sont indiqués en euros TTC ; les frais de port sont précisés avant validation. La vente
-            est conclue au paiement. Le droit de rétractation de 14 jours s'applique (voir Retours).
-            Réclamations : {COMPANY_EMAIL}. {todo("n° SIRET + médiateur de la consommation")}
+            <b>{COMPANY_NAME}</b> ({COMPANY_ADDRESS}), SIRET {COMPANY_SIRET}. Toute commande implique
+            l'acceptation des présentes conditions. Les produits sont ceux de la gamme HL Skin
+            (Herbalife). Les prix sont indiqués en euros TTC ; les frais de port sont précisés avant
+            validation. La vente est conclue au paiement. Le droit de rétractation de 14 jours
+            s'applique (voir Retours). Réclamations :{" "}
+            <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.{" "}
+            {todo("médiateur de la consommation (obligatoire pour la vente en ligne aux particuliers)")}
           </p>
         </section>
 
@@ -165,6 +168,7 @@ export function BoutiqueInfosPage() {
             <li>
               Éditeur : <b>{COMPANY_NAME}</b> — {COMPANY_ADDRESS}.
             </li>
+            <li>SIRET : {COMPANY_SIRET}.</li>
             <li>Directeur de la publication : {COMPANY_DIRECTOR}.</li>
             <li>
               Contact : <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.
@@ -173,7 +177,6 @@ export function BoutiqueInfosPage() {
               Hébergement : {HOSTING_PROVIDER} — {HOSTING_REGION} ; front Vercel.
             </li>
             <li>Marque & produits : HL Skin / Herbalife International.</li>
-            <li>{todo("n° SIRET / RCS")}</li>
           </ul>
         </section>
 

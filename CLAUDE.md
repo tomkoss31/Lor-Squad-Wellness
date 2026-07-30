@@ -214,6 +214,126 @@ doit toujours builder.
 
 ---
 
+## 🖥 Infrastructure — la prod tient sur une `t4g.nano` (incident du 2026-07-29)
+
+**Panne de 2 h 45 un mardi matin : plus personne ne pouvait se connecter.**
+
+### Le diagnostic, dans l'ordre où il faut le refaire
+
+1. **Ne jamais se fier au voyant du tableau de bord** : le projet affichait
+   `ACTIVE_HEALTHY` alors que Postgres était mort. Symptômes réels : `522
+   Cloudflare` sur `/auth` et `/rest`, port 5432 muet, requête admin en timeout.
+2. **Postgres cesse d'écrire ses logs au moment du gel** — il ne laisse rien
+   derrière lui. En revanche **`cron.job_run_details` survit au redémarrage** et
+   contient l'historique à la seconde. Y chercher `job startup timeout` :
+   c'est la signature. Ce n'est pas une lenteur, c'est un **refus d'allouer**.
+3. **Lire le bon indicateur.** La vignette « CPU » compte l'**IOwait** — le
+   processeur qui *attend le disque*, pas qui calcule. L'indicateur qui prédit
+   la panne est **Memory commitment** (Reports → Database) : à 90 %, Linux
+   refuse toute nouvelle allocation et plus aucun processus ne démarre.
+
+### La cause
+
+`t4g.nano` = **0,5 Go de RAM**, CPU à crédits. Postgres y réserve d'office
+224 Mo de `shared_buffers`, plus ~6 Mo par connexion × ~30 connexions : il ne
+reste **rien**, la machine bascule 257 Mo dans le **swap**, et le swap c'est du
+disque → IOwait → tout s'effondre.
+
+**Couper des tâches ne remonte PAS le plafond mémoire.** Seul un passage au
+plan payant (Micro, 1 Go) le fait — le plan gratuit est verrouillé sur Nano.
+⚠️ Facturation **par organisation** : `Shakes&drinks` (Shake Bar) partage la
+même org. Un plan payant interdit le Nano, donc **les deux** projets passent en
+Micro → ~35 $/mois, pas 25.
+
+### Les tâches automatiques : 676 → 221 lancements/jour
+
+- **`max_worker_processes` = 6.** Sept tâches calées sur `0 * * * *` se
+  disputaient 6 emplacements, déjà partagés avec `pg_net` et la réplication →
+  empilement → gel. **Ne JAMAIS reprogrammer une tâche sur la minute `0`** :
+  elles sont désormais étalées (`5,35`, `8,38`, `15,45`, `25`, `40`, `50`…).
+- Coupées : `client-app-data-warmup` (278 lancements/jour qui échouaient tous
+  sur `invalid input syntax for type uuid`), `bbc-call-reminder`
+  (**à rebrancher à l'ouverture du club**), `daily-actions-notifier-18/19`.
+- **`cron.job_run_details` n'est JAMAIS purgée par Supabase** — 32 000 lignes /
+  28 Mo au moment de l'incident. À purger périodiquement.
+
+---
+
+## 💾 Sauvegardes — ce qu'il ne faut plus jamais refaire (2026-07-29)
+
+La sauvegarde quotidienne (`.github/workflows/backup.yml` → `npm run backup`,
+artefact GitHub 90 j, récap en issue le dimanche) était **partielle et
+silencieusement cassée** : 14 tables sur 118, sans les comptes de connexion,
+et elle échouait depuis des mois sur `activity_logs` — **une table supprimée** —
+derrière un récap « ✅ OK ». Corrigée : **117 ensembles, 7 909 enregistrements**.
+
+**Les trois règles :**
+1. **Jamais de liste de tables écrite à la main.** Le script appelle
+   `public.backup_table_list()` : toute table créée demain est couverte.
+2. **Toujours paginer.** `select('*')` se tronque en silence au-delà de la
+   limite API.
+3. **Échec bruyant.** Toute table en erreur → `process.exit(1)` → issue
+   « ❌ SAUVEGARDE ÉCHOUÉE ». Une sauvegarde qui rassure à tort est pire que pas
+   de sauvegarde.
+
+⚠️ **Le plan gratuit ne fait AUCUNE sauvegarde Supabase** (« Last backup: No
+backups »). Ce script est le seul filet. Non couverts, assumés : les fichiers
+binaires du stockage (inventoriés seulement) et l'ordre de restauration
+vis-à-vis des clés étrangères.
+
+---
+
+## ⚠️ Migrations — vérifier le registre après toute application hors `db push`
+
+Constat du 2026-07-29 : `supabase_migrations.schema_migrations` s'arrêtait à
+`20261203270000` alors que **46 migrations postérieures étaient appliquées**
+(boutique, Qualif, BBC, agenda). Le SQL était passé, la comptabilité ne l'avait
+pas enregistré — ça arrive dès qu'on applique autrement que par
+`supabase db push` (MCP, éditeur SQL du dashboard).
+
+Conséquence évitée de justesse : au prochain `db push --include-all`, ces 46
+fichiers auraient été **rejoués**.
+
+```sql
+select max(version) from supabase_migrations.schema_migrations;
+```
+
+Si ça diverge des fichiers : `supabase migration repair --status applied <version>`.
+**Vérifier chaque migration en base AVANT de la marquer appliquée** — sinon on
+efface du vrai travail en silence.
+
+Vérifier aussi les **doublons de numéro** quand plusieurs branches créent des
+migrations le même jour (le numéro est la clé primaire du registre) :
+
+```bash
+ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d
+```
+
+---
+
+## ⚠️ Configs racine : la source est le `.ts` (2026-07-27)
+
+`tailwind.config.ts` et `vite.config.ts` sont les **seules** sources.
+Les `.js` / `.d.ts` correspondants ne sont **ni générés ni committés** :
+`tsconfig.node.json` est en `"noEmit": true` (le `tsc -b` de `npm run build`
+type-check ces configs sans rien émettre), et les 4 noms de fichiers sont
+dans `.gitignore` par sécurité.
+
+**Ne jamais éditer `tailwind.config.js`.** Tailwind résout `tailwind.config.js`
+**avant** `tailwind.config.ts` : un `.js` qui traîne masque silencieusement
+la source `.ts`.
+
+**Pourquoi** : de mai 2026 au 2026-07-27, `tailwind.config.js` était committé
+et avait **divergé** de son `.ts` (commit `ebd66b9` avait ajouté une palette
+`lb360` + fonts Sora/Inter uniquement au `.js`). Résultat : chaque
+`npm run build` régénérait le `.js` depuis le `.ts`, effaçait ces tokens et
+laissait le worktree sale. La palette `lb360` Tailwind (`bg-lb360-*`, etc.)
+n'était utilisée **nulle part** — le code ne consomme que les variables CSS
+`var(--lb360-*)` de `globals.css`, qui sont intactes. Vérifié : le CSS émis
+par Tailwind est **identique** avant / après suppression.
+
+---
+
 ## ⚠️ Règle du livrable complet (2026-05-04)
 
 **Une feature N'EST PAS livrée tant que :**
@@ -771,6 +891,133 @@ WHERE caa.client_id::uuid = clients.id
 Raison : Postgres évalue TOUS les policies permissifs en OR. Si UNE
 seule ligne de `client_app_accounts` contient un `client_id` pas
 UUID-valide, le cast plante et le SELECT entier remonte l'erreur.
+
+---
+
+## 🔒 Sécurité — les 7 règles issues de l’audit du 2026-07-29
+
+> **À relire avant toute création de table ou de policy.** Cet audit a trouvé
+> **deux failles critiques** en une journée, l'app tournant depuis 6 mois. Les
+> deux venaient du même angle mort : on écrit des policies sans jamais vérifier
+> ce qu'elles laissent réellement passer.
+
+### 1. Une condition qui ne teste ni identité ni jeton n'est PAS une sécurité
+
+La faille la plus grave venait de ceci :
+
+```sql
+-- ❌ CE QUI ÉTAIT EN PROD — 52 jetons clients lisibles par n'importe qui
+create policy client_app_public_read on client_app_accounts
+  for select to public using (expires_at > now());
+```
+
+`expires_at > now()` **filtre des lignes, mais n'identifie personne**. Toute
+ligne non expirée était donc lisible par tout le monde. Un `GET
+/rest/v1/client_app_accounts?select=token` renvoyait les 52 jetons — chacun
+ouvrant `/client/:token`, soit le dossier santé complet d'un client.
+
+**Traquer** : toute policy `to public` dont le `qual` ne mentionne ni
+`auth.uid()`, ni `is_admin()`, ni `can_access_owner()`, ni un jeton. Les seules
+exceptions légitimes sont les tables de **capture publique** (`prospect_leads`,
+`online_bilans` en INSERT) et `newsletters` (`status='sent' AND is_public`).
+
+### 2. `USING (true)` sur le rôle `public` = porte ouverte sur Internet
+
+```sql
+-- ❌ CE QUI ÉTAIT EN PROD sur assessments : 774 bilans effaçables par un inconnu
+create policy assessment_delete on assessments for delete using (true);
+```
+
+Le rôle `public` inclut `anon`. Combiné aux GRANT larges par défaut de Supabase,
+ça donnait la suppression à n'importe quel visiteur.
+
+### 3. Le RLS ne doit pas être la seule barrière
+
+`anon` est désormais **en lecture seule sur les 113 tables** (DELETE/UPDATE
+révoqués, TRUNCATE aussi — il contourne le RLS par nature). Sans ça, une seule
+policy permissive posée par erreur rouvre tout en silence. **Ne jamais
+re-`grant` DELETE/UPDATE à `anon`** : l'app client passe par les edge functions
+en `service_role`, les coachs sont `authenticated`.
+
+### 4. Ne jamais conclure à une faille (ni à son absence) sur un code HTTP
+
+Un `DELETE` sur une ligne inexistante renvoie **204 même quand le RLS
+l'interdit** — « zéro ligne touchée » ≠ « autorisé ». Cette erreur m'a fait
+annoncer une faille sur `clients` et `follow_ups` qui n'existait pas.
+
+```sql
+-- ✅ Le seul test qui fait foi
+select policyname, cmd, roles, qual from pg_policies
+ where schemaname='public' and tablename = '<table>';
+```
+
+### 5. `security definer` sans `search_path` = élévation de privilèges
+
+Une fonction privilégiée sans chemin figé prend celui de l'appelant, qui peut y
+glisser un faux objet homonyme. **Toute nouvelle fonction `security definer`
+doit porter `set search_path = public, extensions`.**
+
+### 6. Une policy peut être une faille ET un support fonctionnel
+
+**La leçon la plus coûteuse de l'audit.** Les policies `*_public_read` sur
+`client_app_accounts` / `client_recaps` / `client_evolution_reports` exposaient
+52 jetons — il fallait les retirer. Mais elles étaient AUSSI la seule chose qui
+laissait quatre chemins publics lire leur propre ligne :
+
+```
+ClientAppPage.tsx:453/456/460   cascade de snapshot -> écran « Lien introuvable »
+ClientAppPage.tsx:472/490       onboarded_at, baseline_at
+RecapPage.tsx:35/54             /recap/:token, lecture ET écriture des recos
+EvolutionReportPage.tsx:58      rapport d'évolution
+supabaseService.ts:653          login client par email/mot de passe
+```
+
+Résultat : **l'espace client est resté mort 24 h pour les 52 clients**, et deux
+pages publiques avec lui.
+
+**Le protocole, avant de retirer une policy `to public` :**
+1. `grep` les **DEUX** styles de guillemets — `from("t")` ET `from('t')`. Mon
+   grep n'en cherchait qu'un et a raté quatre appels.
+2. **Ouvrir chaque appel.** J'avais bien vu `supabaseService.ts` dans les
+   résultats, mais j'ai conclu « c'est côté coach » d'après le NOM du fichier.
+   Ce fichier contient aussi le login client.
+3. **Charger la page dans un navigateur.** Un `HTTP 200` sur une SPA ne prouve
+   rien — la coquille répond toujours 200. Seul le rendu fait foi.
+
+**Le remplacement correct** : une policy RLS ne peut pas savoir si l'appelant a
+filtré par jeton (elle ne voit que des lignes), donc « public + `expires_at` »
+est **forcément** énumérable. Il faut une fonction `security definer` qui EXIGE
+le jeton en paramètre et ne renvoie que la ligne correspondante — motif déjà en
+place pour `get_client_messages_by_token` et une dizaine d'autres. Ajoutées le
+2026-07-30 : `get_client_app_account_by_token`, `get_client_recap_by_token`,
+`get_client_evolution_report_by_token`, `set_client_recap_referrals_by_token`,
+`get_my_client_app_token`.
+
+### 7. Jamais de sous-requête sur une table dans sa propre policy
+
+La transformation des 187 policies en `(select auth.uid())` a introduit une
+**récursion infinie sur `users`** : une policy UPDATE contenant
+`EXISTS (SELECT 1 FROM users …)` se re-déclenche à chaque ligne relue. Toute
+écriture sur `users` plantait (`infinite recursion detected in policy`).
+Passer par une fonction `security definer` — `is_admin()` — qui contourne le RLS.
+
+### Le réflexe, après toute migration touchant une table ou une policy
+
+```
+get_advisors(type: "security")   → chercher rls_policy_always_true,
+                                   rls_disabled_in_public, function_search_path_mutable
+```
+
+⚠️ Piège vécu : une table créée à la volée (même temporaire) arrive **sans RLS**
+et est aussitôt lisible par `anon`. Toujours `enable row level security` +
+`revoke all ... from anon, authenticated` dans la foulée.
+
+**Non corrigé, et assumé** : ~240 fonctions `security definer` restent
+exécutables par `anon`/`authenticated`. C'est **voulu** — l'app client PWA
+s'authentifie **par jeton, pas par JWT**, donc ces fonctions doivent être
+joignables et se protègent en interne (vérifié : elles répondent « access
+denied »). Ne pas « corriger » cette alerte sans repenser l'authentification
+client.
 
 ---
 
