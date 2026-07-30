@@ -69,10 +69,21 @@ import type { BbcRole } from "../useBbcRole";
 //     j'irais ».
 //   · `acces`  — comment on y entre, concrètement. C'est le « par où ».
 // Le reste (position du lecteur, mise en avant) est posé par la vue.
+//
+// `critere` s'est ajouté à la 3e recette : « je pense c'est mieux de réduire et
+// faire plutôt un clic ou menu déroulant pour les explications ». Les cinq
+// `apport` affichés en permanence sous chaque marche faisaient un mur de texte
+// avant même qu'on ait cliqué. La liste ne montre donc plus qu'un CRITÈRE court
+// — la condition d'entrée en une ligne — et `apport` / `acces` / `description`
+// ne sortent qu'à l'ouverture de la marche.
+// ⚠️ `critere` est un RÉSUMÉ de `acces`, jamais une information nouvelle : si
+// les deux divergent un jour, c'est `acces` qui fait foi (il est sourcé Drive).
 
 export interface BbcRoleRung {
   role: BbcRole;
   label: string;
+  /** La condition d'entrée en une ligne, pour la liste repliée. Résumé de `acces`. */
+  critere: string;
   /** Ce que la marche APPORTE à celui qui y est. */
   apport: string;
   /** Comment on y accède, concrètement. */
@@ -100,6 +111,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
     role: "membre",
     label: "Membre",
     horsAppCoach: true,
+    critere: "Une évaluation bien-être, puis une carte de visites — sur invitation.",
     apport:
       "Un coach à lui, sa pesée quotidienne, son petit-déjeuner (aloé, thé, shake), son plan de repas et un suivi tous les matins.",
     acces:
@@ -116,6 +128,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
   {
     role: "stagiaire",
     label: "Coach stagiaire",
+    critere: "Entretien de 20 min, plan à 90 jours, 1 service par semaine.",
     apport:
       "Il gagne sur la vente au détail, il apprend au comptoir avec un coach confirmé à côté de lui, et il fait ses 10 premières évaluations sur des volontaires — pas sur de vrais membres.",
     acces:
@@ -133,6 +146,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
   {
     role: "junior",
     label: "Junior partner",
+    critere: "Entretien d'1h30, engagement de 3 à 9 mois, 4 services par semaine.",
     apport:
       "Il apprend à PILOTER un club, pas seulement à y coacher : le loyer, le point mort, les stocks, les statistiques, le planning. Et il encadre les stagiaires.",
     acces:
@@ -151,6 +165,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
   {
     role: "proprietaire",
     label: "Propriétaire",
+    critere: "Les 6 semaines de pré-lancement, et 30 membres le jour de l'ouverture.",
     apport:
       "Son club, son chiffre : les cartes de membre et la vente au détail. Et le terrain de formation qui fabrique les coachs suivants.",
     acces:
@@ -167,6 +182,7 @@ export const BBC_ROLES: BbcRoleRung[] = [
   {
     role: "rollout",
     label: "Roll out",
+    critere: "Ses filleuls ouvrent leurs propres clubs. Rien à cocher : ça se constate.",
     apport:
       "Des royalties sur une organisation, au lieu d'un chiffre qu'il fait lui-même. Il fait tourner le modèle, plus le club.",
     acces:

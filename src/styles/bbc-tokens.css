@@ -94,9 +94,25 @@
   align-items: start;
 }
 
+/* Le panneau d'une marche dépliée (accordéon de l'échelle, recette 2026-07-30).
+   Il s'aligne sur le TITRE de la marche — 44 px de pastille + 13 px de
+   gouttière — pour qu'on voie d'un coup d'œil à quelle marche il appartient.
+   Le retrait vit ICI et pas en style inline pour la raison déjà apprise plus
+   haut sur cette grille : un `marginLeft` inline gagne contre n'importe quel
+   media query. À 390 px, 57 px de retrait ne laissaient que 259 px de panneau,
+   soit ~30 caractères par ligne pour des paragraphes de 3 lignes en desktop. */
+.bbc-rung-detail {
+  margin-left: 57px;
+}
+
 @media (max-width: 900px) {
   .bbc-formation-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  /* Sur mobile la lisibilité passe avant l'alignement : on ne garde que de quoi
+     laisser respirer le rail (21 px) et rester visiblement en retrait. */
+  .bbc-rung-detail {
+    margin-left: 30px;
   }
   .bbc-sidebar {
     display: none;
