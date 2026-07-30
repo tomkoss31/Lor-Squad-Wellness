@@ -60,6 +60,7 @@ async function sendOnePlainText(params: {
   text: string;
   from: string;
   replyTo: string;
+  scheduledAt?: string; // ISO 8601 (ex: "2026-08-01T08:00:00+02:00") ou relatif Resend (ex: "in 1 hour")
 }): Promise<SendResult> {
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -74,6 +75,7 @@ async function sendOnePlainText(params: {
         subject: params.subject,
         text: params.text,
         reply_to: params.replyTo,
+        ...(params.scheduledAt ? { scheduled_at: params.scheduledAt } : {}),
       }),
     });
     const b = await res.json().catch(() => ({}));
@@ -105,6 +107,7 @@ serve(async (req) => {
     from?: string;
     replyTo?: string;
     delayMs?: number;
+    scheduledAt?: string;
     recipients?: Recipient[];
   };
   try {
@@ -149,6 +152,14 @@ serve(async (req) => {
 
   const delayMs = typeof body.delayMs === "number" ? body.delayMs : 3000;
 
+  // scheduledAt optionnel : si fourni, on étale les DATES DE DÉLIVRANCE elles-
+  // mêmes (baseTime + i*delayMs) plutôt que d'espacer les appels API — sinon
+  // Resend relâcherait tout d'un coup à l'heure programmée, ce qui annule
+  // l'intérêt du délai anti-rafale pour la réputation du domaine.
+  const scheduledTimes: (string | undefined)[] = body.scheduledAt
+    ? recipients.map((_, i) => new Date(new Date(body.scheduledAt!).getTime() + i * delayMs).toISOString())
+    : recipients.map(() => undefined);
+
   // ─── dry-run : n'envoie rien ─────────────────────────────────────────────
   if (mode === "dry-run") {
     return json({
@@ -156,26 +167,38 @@ serve(async (req) => {
       mode: "dry-run",
       from,
       reply_to: replyTo ?? "(non défini — requis avant --send)",
-      would_send: recipients.map((r) => ({
+      scheduled: body.scheduledAt ? scheduledTimes : "immédiat",
+      would_send: recipients.map((r, i) => ({
         to: r.to,
         subject: r.subject,
         preview: r.text.slice(0, 120) + (r.text.length > 120 ? "…" : ""),
+        scheduled_at: scheduledTimes[i] ?? "immédiat",
       })),
       results: recipients.map((r) => ({ to: r.to, ok: true, dryRun: true }) as SendResult),
     });
   }
 
-  // ─── send : envoi réel, un par un, avec délai ────────────────────────────
+  // ─── send : envoi réel, un par un ────────────────────────────────────────
+  // Programmé (scheduledAt fourni) : chaque destinataire a sa propre heure de
+  // délivrance étalée, les appels API partent sans attendre entre eux.
+  // Immédiat (pas de scheduledAt) : délai réel entre chaque envoi.
   if (mode === "send") {
     if (!replyTo) return json({ success: false, error: "missing_reply_to" }, 400);
     const results: SendResult[] = [];
     for (let i = 0; i < recipients.length; i++) {
       const r = recipients[i];
-      const result = await sendOnePlainText({ to: r.to, subject: r.subject, text: r.text, from, replyTo });
+      const result = await sendOnePlainText({
+        to: r.to,
+        subject: r.subject,
+        text: r.text,
+        from,
+        replyTo,
+        scheduledAt: scheduledTimes[i],
+      });
       results.push(result);
-      if (i < recipients.length - 1) await sleep(delayMs);
+      if (!body.scheduledAt && i < recipients.length - 1) await sleep(delayMs);
     }
-    return json({ success: true, mode: "send", from, reply_to: replyTo, results });
+    return json({ success: true, mode: "send", from, reply_to: replyTo, scheduled: body.scheduledAt ? scheduledTimes : "immédiat", results });
   }
 
   return json({ success: false, error: "invalid_mode" }, 400);
