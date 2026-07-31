@@ -17,6 +17,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useToast } from "../context/ToastContext";
 import { parseRecipients, type ParseResult } from "../lib/campaignRecipients";
+import {
+  type CampaignRichContent,
+  defaultRichContent,
+  normalizeRichContent,
+} from "../lib/campaignContent";
+import { CampaignEditor } from "../components/campagnes/CampaignEditor";
 
 type CampaignType = "rich" | "plain";
 type CampaignStatus = "draft" | "scheduled" | "sending" | "sent" | "archived";
@@ -26,6 +32,8 @@ interface Campaign {
   title: string;
   type: CampaignType;
   subject: string;
+  body_json: unknown;
+  body_text: string;
   audience_label: string;
   status: CampaignStatus;
   recipient_count: number;
@@ -50,6 +58,13 @@ export function AdminCampagneEditPage() {
   const [finalCount, setFinalCount] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  // état contenu (éditeur)
+  const [title, setTitle] = useState("");
+  const [subject, setSubject] = useState("");
+  const [rich, setRich] = useState<CampaignRichContent>(defaultRichContent());
+  const [plainText, setPlainText] = useState("");
+  const [savingContent, setSavingContent] = useState(false);
+
   useEffect(() => {
     void (async () => {
       if (!id) return;
@@ -60,7 +75,7 @@ export function AdminCampagneEditPage() {
       }
       const { data, error } = await sb
         .from("campaigns")
-        .select("id, title, type, subject, audience_label, status, recipient_count")
+        .select("id, title, type, subject, body_json, body_text, audience_label, status, recipient_count")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -68,7 +83,12 @@ export function AdminCampagneEditPage() {
         navigate("/admin/campagnes");
         return;
       }
-      setCampaign(data as Campaign);
+      const c = data as Campaign;
+      setCampaign(c);
+      setTitle(c.title === "Sans titre" ? "" : c.title);
+      setSubject(c.subject ?? "");
+      setRich(normalizeRichContent(c.body_json));
+      setPlainText(c.body_text ?? "");
       setLoading(false);
     })();
   }, [id, navigate, push]);
@@ -169,6 +189,33 @@ export function AdminCampagneEditPage() {
     setParsed(null);
     push({ tone: "success", title: "Destinataires importés", message: `${total} contact${total > 1 ? "s" : ""} prêt${total > 1 ? "s" : ""}.` });
     setSaving(false);
+  }
+
+  async function saveContent() {
+    if (!campaign) return;
+    setSavingContent(true);
+    const sb = await getSupabaseClient();
+    if (!sb) {
+      setSavingContent(false);
+      return;
+    }
+    const { error } = await sb
+      .from("campaigns")
+      .update({
+        title: title.trim() || "Sans titre",
+        subject: subject.trim(),
+        body_json: rich,
+        body_text: plainText,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", campaign.id);
+    setSavingContent(false);
+    if (error) {
+      push({ tone: "error", title: "Enregistrement échoué", message: error.message });
+      return;
+    }
+    setCampaign({ ...campaign, title: title.trim() || "Sans titre", subject });
+    push({ tone: "success", title: "Contenu enregistré", message: "" });
   }
 
   const recap = useMemo(() => {
@@ -294,10 +341,31 @@ export function AdminCampagneEditPage() {
         Les désabonnés sont exclus automatiquement de toutes tes campagnes, pour toujours.
       </p>
 
-      {/* ── Écrans 4-5 : jalons prochaines étapes ── */}
+      {/* ── Écran 4 : éditeur de contenu + aperçu ── */}
+      <h2 className="ce-h2" style={{ marginTop: 28 }}>Contenu</h2>
+      <label className="ce-label">Nom de la campagne (visible par toi seul)</label>
+      <input
+        className="ce-paste"
+        style={{ minHeight: 0, fontFamily: "'DM Sans',sans-serif", fontSize: 14, marginBottom: 16 }}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Lancement BBC — offre découverte"
+      />
+      <CampaignEditor
+        type={campaign.type}
+        subject={subject}
+        onSubject={setSubject}
+        rich={rich}
+        onRich={setRich}
+        plainText={plainText}
+        onPlain={setPlainText}
+        onSave={saveContent}
+        saving={savingContent}
+      />
+
+      {/* ── Écran 5 : envoi (jalon étape suivante) ── */}
       <div className="ce-stub">
-        ✏️ <b style={{ color: "var(--ls-text)" }}>Éditeur de contenu</b> et 📤 <b style={{ color: "var(--ls-text)" }}>envoi programmé</b>
-        <br />arrivent aux étapes suivantes du chantier.
+        📤 <b style={{ color: "var(--ls-text)" }}>Envoi programmé</b> arrive à l'étape suivante du chantier.
       </div>
     </div>
   );
