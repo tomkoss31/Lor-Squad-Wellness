@@ -32,18 +32,26 @@ import { useBbcCalls } from "../useBbcCalls";
 import { useBbcMembers } from "../useBbcMembers";
 import { getCallsForWeek } from "../data/bbcCalls";
 import { useClubShifts, equipeAffectable, cleJour, type Affectable } from "../useClubShifts";
+import { useClubDiscoveryBookings } from "../../../hooks/useClubDiscoveryBookings";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
+
+/** Objectif de la séance découverte → libellé lisible (tunnel /reserver). */
+const OBJECTIF_LABEL: Record<string, string> = {
+  poids: "perte de poids",
+  muscle: "prise de muscle",
+  energie: "regain d'énergie",
+};
 
 interface BbcSemaineProps {
   userId?: string;
   club?: Club | null;
 }
 
-/** Les 5 familles de la semaine — l'ordre est celui des chips. */
-type Famille = "perm" | "rituel" | "membre" | "classique" | "bilan";
-type Filtre = "all" | "perm" | "rituel" | "rdv" | "bilan";
+/** Les familles de la semaine — l'ordre est celui des chips. */
+type Famille = "perm" | "rituel" | "membre" | "classique" | "bilan" | "decouverte";
+type Filtre = "all" | "perm" | "rituel" | "rdv" | "decouverte" | "bilan";
 
 interface Evenement {
   id: string;
@@ -64,6 +72,7 @@ const CHIPS: Array<{ k: Filtre; label: string }> = [
   { k: "perm", label: "☕ Permanences" },
   { k: "rituel", label: "📞 Rituels" },
   { k: "rdv", label: "👥 RDV" },
+  { k: "decouverte", label: "🥤 Découverte" },
   { k: "bilan", label: "🎁 Bilans" },
 ];
 
@@ -74,6 +83,9 @@ const TEINTE: Record<Famille, string> = {
   membre: "var(--ls-bbc-teal)",
   classique: "var(--ls-bbc-muted)",
   bilan: "var(--ls-bbc-coral)",
+  // Séances découverte du tunnel /reserver : coral, en écho à l'orange de la
+  // marque Breakfast Club. Ne côtoie jamais les bilans (bloc « à caler » séparé).
+  decouverte: "var(--ls-bbc-coral)",
 };
 
 function fmtHeure(d: Date): string {
@@ -123,6 +135,11 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const shifts = useClubShifts(clubId, openHours, lundi);
   const calls = useBbcCalls(userId, settings);
   const { members } = useBbcMembers(userId);
+  // Séances découverte réservées via le tunnel public (/reserver) : résas "club"
+  // (coach = null), lisibles par les admins (RLS 2026-07-31). Contrairement aux
+  // RDV ci-dessous, elles ne sont rattachées à aucun coach → on les affiche pour
+  // le club, pas pour une personne.
+  const { bookings: decouvertesResa } = useClubDiscoveryBookings(clubId);
 
   const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const equipe = useMemo(() => equipeAffectable(users, currentUser?.id), [users, currentUser?.id]);
@@ -205,6 +222,32 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     return out;
   }, [prospects, followUps, clients, currentUser?.id, idsMembres, lundi]);
 
+  // ── Les séances découverte de la semaine (tunnel /reserver) ─────────────
+  // Même fenêtre que les RDV. Portée = le CLUB (pas un coach) : ces résas n'ont
+  // pas de distributeur assigné, on les cale sur le planning commun.
+  const decouvertes = useMemo(() => {
+    const finSemaine = new Date(lundi);
+    finSemaine.setDate(finSemaine.getDate() + 7);
+    const out: Array<Evenement & { at: Date }> = [];
+    for (const b of decouvertesResa) {
+      const at = new Date(b.slot_start);
+      if (Number.isNaN(at.getTime()) || at < lundi || at >= finSemaine) continue;
+      const prenom = (b.first_name ?? "").trim() || "Prospect";
+      const aDeux = b.people_count === 2;
+      const obj = b.objectif ? OBJECTIF_LABEL[b.objectif] ?? null : null;
+      out.push({
+        id: `decouverte-${b.id}`,
+        famille: "decouverte",
+        at,
+        heure: fmtHeure(at),
+        titre: aDeux ? `${prenom} + 1` : prenom,
+        sous: ["séance découverte", obj, aDeux ? "à deux" : null].filter(Boolean).join(" · "),
+        tag: "découverte",
+      });
+    }
+    return out;
+  }, [decouvertesResa, lundi]);
+
   // ── Assemblage jour par jour ────────────────────────────────────────────
   const semaine = useMemo(() => {
     return jours.map((jour) => {
@@ -265,6 +308,11 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         evs.push(r);
       }
 
+      for (const d of decouvertes) {
+        if (!isSameDay(d.at, jour)) continue;
+        evs.push(d);
+      }
+
       // Tri par heure ; la permanence garde sa place de première ligne du jour
       // même si un RDV est posé avant l'ouverture (cas rare mais vécu). Un rang
       // explicite plutôt que des retours -1/1 en cascade : un comparateur
@@ -277,12 +325,12 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
       return { jour, evs };
     });
-  }, [jours, clubId, shifts.parJour, shifts.creneau, shifts.loading, nomsUsers, rituels, calls, rdv]);
+  }, [jours, clubId, shifts.parJour, shifts.creneau, shifts.loading, nomsUsers, rituels, calls, rdv, decouvertes]);
 
   const garde = (f: Famille): boolean => {
     if (filtre === "all") return true;
     // « RDV » couvre membres ET clients classiques : la chip parle de gens, pas
-    // d'appartenance au club.
+    // d'appartenance au club. Les séances découverte ont leur propre chip.
     if (filtre === "rdv") return f === "membre" || f === "classique";
     return filtre === f;
   };
