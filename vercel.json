@@ -5,7 +5,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^(www\\.)?labase-nutrition\\.com$"
+          "value": "^(?:www\\.)?labase-nutrition\\.com$"
         }
       ],
       "destination": "/reserver",

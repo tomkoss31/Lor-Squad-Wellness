@@ -28,8 +28,32 @@
 .rc-badge{display:flex;align-items:center;gap:9px;color:#5F7154;font-size:14px;font-weight:600}
 
 .rc-card{background:#fff;border:1px solid rgba(30,51,48,.1);border-radius:26px;box-shadow:0 34px 60px -40px rgba(30,51,48,.3)}
-.rc-field{width:100%;min-height:54px;padding:14px 18px;border-radius:14px;border:1px solid rgba(30,51,48,.18);background:var(--panel);color:var(--ink);font-family:Poppins,sans-serif;font-size:16px;outline:none;transition:border-color .18s,box-shadow .18s}
-.rc-field:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(147,166,126,.22)}
+/* Champs : globals.css habille TOUS les <input> nus au thème de l'app coach
+   (sombre), avec une spécificité (0,3,1) — et (0,4,2) + !important en thème
+   clair. Un simple .rc-field (0,1,0) perdait : les champs sortaient anthracite
+   sur la carte crème, halo teal au focus. On reprend donc la forme du sélecteur
+   global pour passer devant (0,5,1), et !important pour battre le thème clair.
+   Ne PAS toucher au font-size:16px des media queries : c'est l'anti-zoom iOS. */
+.rc input.rc-field:not([type="range"]):not([type="checkbox"]):not([type="radio"]){
+  width:100%;min-height:54px;padding:14px 18px;border-radius:14px;
+  background:var(--panel) !important;color:var(--ink) !important;
+  border:1px solid rgba(30,51,48,.18) !important;
+  font-family:Poppins,sans-serif;font-size:16px;outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.rc input.rc-field:not([type="range"]):not([type="checkbox"]):not([type="radio"]):focus,
+.rc input.rc-field:not([type="range"]):not([type="checkbox"]):not([type="radio"]):focus-visible{
+  border-color:var(--green) !important;
+  box-shadow:0 0 0 3px rgba(147,166,126,.22) !important;
+  background:var(--panel) !important;
+}
+.rc input.rc-field::placeholder{color:rgba(30,51,48,.36) !important}
+/* globals.css impose min-height:44px à tout <button> : ça déformait les cases
+   carrées du calendrier sur les petits écrans. */
+.rc .rc-day{min-height:0}
+/* globals.css réserve un padding bas à <main> pour la barre de nav de l'app
+   (jusqu'à !important en mobile) — cette page publique n'en a pas. */
+.rc main{padding-bottom:clamp(48px,7vw,80px) !important}
 .rc-lbl{display:block;font-weight:600;font-size:14px;color:var(--ink);margin-bottom:8px}
 .rc-cta{width:100%;min-height:58px;padding:16px 28px;border:none;border-radius:999px;background:var(--grad);color:#fff;font-family:Poppins,sans-serif;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 18px 36px -14px rgba(255,45,60,.6);transition:filter .15s,transform .1s}
 .rc-cta:hover{filter:brightness(1.06)}
