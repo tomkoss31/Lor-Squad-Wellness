@@ -8,7 +8,8 @@
 //             plus MAX_PER_CALL, renvoie `remaining` ; l'UI rappelle jusqu'à 0.
 //             (600 emails dépassent le timeout d'une edge → on découpe.)
 //
-// Sécurité : verify_jwt côté déploiement + contrôle role='admin' ici.
+// Sécurité : déployé --no-verify-jwt (la passerelle ne bloque pas), le contrôle
+// se fait ICI : JWT du user → auth.getUser(token) → users.role='admin'.
 // Exclusion finale des désabonnés (email_suppressions) au moment de l'envoi.
 // Chaque mail porte un lien + en-tête List-Unsubscribe (désabo 1-clic).
 //
@@ -47,10 +48,11 @@ serve(async (req) => {
 
   // ── auth admin ──
   const authHeader = req.headers.get("Authorization") ?? "";
-  const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-  const { data: userData } = await userClient.auth.getUser();
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const userClient = createClient(SUPABASE_URL, ANON_KEY);
+  const { data: userData } = await userClient.auth.getUser(token);
   const uid = userData?.user?.id;
-  if (!uid) return json({ error: "unauthorized" }, 401);
+  if (!uid) return json({ error: "unauthorized", message: "Session non reconnue. Reconnecte-toi et réessaie." }, 401);
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const { data: me } = await sb.from("users").select("role").eq("id", uid).maybeSingle();
