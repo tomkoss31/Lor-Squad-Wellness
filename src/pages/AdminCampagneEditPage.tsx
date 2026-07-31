@@ -37,6 +37,21 @@ interface Campaign {
   audience_label: string;
   status: CampaignStatus;
   recipient_count: number;
+  delivered_count: number;
+  opened_count: number;
+  clicked_count: number;
+  bounced_count: number;
+  unsubscribed_count: number;
+}
+
+interface RecipStat {
+  id: string;
+  email: string;
+  first_name: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  bounced_at: string | null;
+  unsubscribed_at: string | null;
 }
 
 function normEmail(s: string): string {
@@ -72,6 +87,9 @@ export function AdminCampagneEditPage() {
   const [sending, setSending] = useState(false);
   const [sendProgress, setSendProgress] = useState("");
 
+  // stats (campagne envoyée)
+  const [recipStats, setRecipStats] = useState<RecipStat[]>([]);
+
   useEffect(() => {
     void (async () => {
       if (!id) return;
@@ -82,7 +100,7 @@ export function AdminCampagneEditPage() {
       }
       const { data, error } = await sb
         .from("campaigns")
-        .select("id, title, type, subject, body_json, body_text, audience_label, status, recipient_count")
+        .select("id, title, type, subject, body_json, body_text, audience_label, status, recipient_count, delivered_count, opened_count, clicked_count, bounced_count, unsubscribed_count")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -97,6 +115,17 @@ export function AdminCampagneEditPage() {
       setRich(normalizeRichContent(c.body_json));
       setPlainText(c.body_text ?? "");
       setLoading(false);
+
+      // Stats : si la campagne est partie, on charge le détail par destinataire.
+      if (c.status === "sent") {
+        const { data: recs } = await sb
+          .from("campaign_recipients")
+          .select("id, email, first_name, opened_at, clicked_at, bounced_at, unsubscribed_at")
+          .eq("campaign_id", c.id)
+          .order("clicked_at", { ascending: false, nullsFirst: false })
+          .limit(500);
+        setRecipStats((recs ?? []) as RecipStat[]);
+      }
     })();
   }, [id, navigate, push]);
 
@@ -427,9 +456,61 @@ export function AdminCampagneEditPage() {
       />
 
       {/* ── Écran 5 : envoi ── */}
-      <h2 className="ce-h2" style={{ marginTop: 28 }}>Envoi</h2>
+      <h2 className="ce-h2" style={{ marginTop: 28 }}>{campaign.status === "sent" ? "Résultats" : "Envoi"}</h2>
       {campaign.status === "sent" ? (
-        <div className="ce-count">✓ Campagne envoyée</div>
+        (() => {
+          const deliv = campaign.delivered_count || 0;
+          const pctOf = (n: number) => (deliv ? `${Math.round((n / deliv) * 100)} %` : "—");
+          const label = (r: RecipStat): { t: string; c: string } =>
+            r.unsubscribed_at ? { t: "Désabonné", c: "u" }
+            : r.bounced_at ? { t: "Bounce", c: "b" }
+            : r.clicked_at ? { t: "Cliqué", c: "c" }
+            : r.opened_at ? { t: "Ouvert", c: "o" }
+            : { t: "Pas ouvert", c: "d" };
+          return (
+            <>
+              <style>{`
+                .cs-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+                .cs-kpi { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; padding:14px; }
+                .cs-kpi .n { font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:var(--ls-text); }
+                .cs-kpi .l { font-size:11.5px; color:var(--ls-text-muted); margin-top:2px; }
+                .cs-kpi.t .n { color:var(--ls-teal); } .cs-kpi.g .n { color:var(--ls-gold); } .cs-kpi.c .n { color:var(--ls-coral); }
+                .cs-list { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; overflow:hidden; }
+                .cs-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--ls-border); font-size:13px; }
+                .cs-row:last-child { border:0; } .cs-row .em { margin-left:auto; font-size:11px; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+                .cs-row .em.c { background:var(--ls-gold-bg); color:var(--ls-gold); } .cs-row .em.o { background:var(--ls-teal-bg); color:var(--ls-teal); }
+                .cs-row .em.u,.cs-row .em.b { background:var(--ls-coral-bg); color:var(--ls-coral); } .cs-row .em.d { background:rgba(122,128,153,.14); color:var(--ls-text-muted); }
+                .cs-row .nm { font-weight:600; } .cs-row .ml { color:var(--ls-text-hint); font-family:'JetBrains Mono',monospace; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; }
+              `}</style>
+              <div className="cs-grid">
+                <div className="cs-kpi"><div className="n">{deliv}</div><div className="l">Délivrés{campaign.bounced_count ? ` · ${campaign.bounced_count} bounces` : ""}</div></div>
+                <div className="cs-kpi t"><div className="n">{campaign.opened_count || 0}</div><div className="l">Ouverts {pctOf(campaign.opened_count || 0)}</div></div>
+                <div className="cs-kpi g"><div className="n">{campaign.clicked_count || 0}</div><div className="l">Cliqués {pctOf(campaign.clicked_count || 0)}</div></div>
+                <div className="cs-kpi c"><div className="n">{campaign.unsubscribed_count || 0}</div><div className="l">Désabonnés</div></div>
+              </div>
+              <h2 className="ce-h2" style={{ fontSize: 16 }}>Qui a réagi</h2>
+              {recipStats.length === 0 ? (
+                <p className="ce-sub">Les réactions apparaîtront ici au fil des ouvertures.</p>
+              ) : (
+                <div className="cs-list">
+                  {recipStats.slice(0, 100).map((r) => {
+                    const l = label(r);
+                    return (
+                      <div key={r.id} className="cs-row">
+                        <span className="nm">{r.first_name || r.email.split("@")[0]}</span>
+                        <span className="ml">{r.email}</span>
+                        <span className={`em ${l.c}`}>{l.t}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="ce-sub" style={{ marginTop: 12, fontSize: 12 }}>
+                Les stats s'actualisent à chaque ouverture (webhook Resend). Recharge la page pour les derniers chiffres.
+              </p>
+            </>
+          );
+        })()
       ) : (
         <>
           <button type="button" className="ce-btn" style={{ background: "var(--ls-surface2)", color: "var(--ls-text)", border: "1px solid var(--ls-border2)" }} onClick={testDryRun}>
