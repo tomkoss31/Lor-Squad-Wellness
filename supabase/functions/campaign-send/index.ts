@@ -28,7 +28,6 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const APP_ORIGIN = "https://www.labase360.fr";
 const MAX_PER_CALL = 120; // marge sous le timeout edge
 
 const cors = {
@@ -94,7 +93,9 @@ serve(async (req) => {
   const from = (c.from_email as string) || "bonjour@labase360.fr";
   const replyTo = (c.reply_to as string) || "labaseverdun@gmail.com";
   const type = (c.type as string) === "plain" ? "plain" : "rich";
-  const unsubUrlFor = (recipientId: string) => `${APP_ORIGIN}/desabo?r=${recipientId}`;
+  // Désinscription : edge dédiée (GET = page, POST = 1-clic Gmail). `r` = id du
+  // destinataire (uuid aléatoire = jeton non énumérable).
+  const unsubUrlFor = (recipientId: string) => `${SUPABASE_URL}/functions/v1/campaign-unsubscribe?r=${recipientId}`;
 
   // ── dry-run : compile un échantillon, n'envoie rien ──
   if (mode === "dry-run") {
