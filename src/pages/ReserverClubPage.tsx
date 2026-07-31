@@ -103,6 +103,15 @@ export function ReserverClubPage() {
 
   async function submitCapture(e: FormEvent) {
     e.preventDefault();
+    // L'objectif qualifie le lead dès son arrivée dans le CRM : sans lui, le
+    // coach reçoit un prénom et un téléphone sans savoir ce que la personne
+    // vient chercher. Les boutons ne sont pas des <input>, la validation
+    // native du formulaire ne les couvre donc pas.
+    if (!objectif) {
+      setError("Choisis ton objectif pour continuer.");
+      document.getElementById("rc-objectif")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const sb = await getSupabaseClient();
@@ -289,14 +298,15 @@ export function ReserverClubPage() {
               </div>
               <h2 style={{ marginTop: 14, fontSize: "clamp(24px,3.2vw,34px)" }}>Qui es-tu ?</h2>
 
-              <p style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Ton objectif</p>
-              <div className="rc-obj" role="radiogroup" aria-label="Ton objectif" style={{ marginTop: 12 }}>
+              <p id="rc-objectif" style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Ton objectif</p>
+              <div className="rc-obj" role="radiogroup" aria-label="Ton objectif" aria-required="true" style={{ marginTop: 12 }}>
                 {OBJECTIFS.map((o) => (
-                  <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} onClick={() => setObjectif(o.id)}>
+                  <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} onClick={() => { setObjectif(o.id); setError(null); }}>
                     <span className="ic" aria-hidden="true">{o.icon}</span><span className="t">{o.label}</span>
                   </button>
                 ))}
               </div>
+              {error && <div className="rc-err" role="alert">{error}</div>}
 
               <p style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Tu viens…</p>
               <div className="rc-seg" role="radiogroup" aria-label="Nombre de personnes" style={{ marginTop: 12 }}>
