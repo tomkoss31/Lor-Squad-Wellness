@@ -65,6 +65,13 @@ export function AdminCampagneEditPage() {
   const [plainText, setPlainText] = useState("");
   const [savingContent, setSavingContent] = useState(false);
 
+  // état envoi
+  const [dryRun, setDryRun] = useState<{ count: number; subject: string } | null>(null);
+  const [when, setWhen] = useState<"now" | "schedule">("now");
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState("");
+
   useEffect(() => {
     void (async () => {
       if (!id) return;
@@ -218,6 +225,62 @@ export function AdminCampagneEditPage() {
     push({ tone: "success", title: "Contenu enregistré", message: "" });
   }
 
+  async function testDryRun() {
+    if (!campaign) return;
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    const { data, error } = await sb.functions.invoke("campaign-send", {
+      body: { campaign_id: campaign.id, mode: "dry-run" },
+    });
+    if (error || !data?.ok) {
+      const msg = (data as { message?: string })?.message ?? (error?.message ?? "");
+      push({ tone: "error", title: "Test impossible", message: msg || "Vérifie contenu et destinataires." });
+      return;
+    }
+    setDryRun({ count: (data as { would_send: number }).would_send, subject: (data as { subject: string }).subject });
+  }
+
+  async function doSend() {
+    if (!campaign) return;
+    if (when === "schedule" && !scheduleAt) {
+      push({ tone: "warning", title: "Choisis une date", message: "" });
+      return;
+    }
+    setSending(true);
+    const sb = await getSupabaseClient();
+    if (!sb) {
+      setSending(false);
+      return;
+    }
+    const scheduledAt = when === "schedule" ? new Date(scheduleAt).toISOString() : undefined;
+    let totalSent = 0;
+    let totalFailed = 0;
+    // Boucle résumable : l'edge traite un lot puis renvoie `remaining`.
+    for (let guard = 0; guard < 50; guard++) {
+      const { data, error } = await sb.functions.invoke("campaign-send", {
+        body: { campaign_id: campaign.id, mode: "send", scheduledAt },
+      });
+      if (error || !data?.ok) {
+        push({ tone: "error", title: "Envoi interrompu", message: (data as { message?: string })?.message ?? error?.message ?? "" });
+        setSending(false);
+        return;
+      }
+      const d = data as { sent: number; failed: number; remaining: number };
+      totalSent += d.sent;
+      totalFailed += d.failed;
+      setSendProgress(`${totalSent} envoyé${totalSent > 1 ? "s" : ""}…${d.remaining > 0 ? ` (${d.remaining} restant)` : ""}`);
+      if (d.remaining <= 0) break;
+    }
+    setSending(false);
+    setSendProgress("");
+    push({
+      tone: "success",
+      title: scheduledAt ? "Campagne programmée" : "Campagne envoyée",
+      message: `${totalSent} destinataire${totalSent > 1 ? "s" : ""}${totalFailed ? ` · ${totalFailed} en échec` : ""}.`,
+    });
+    setCampaign({ ...campaign, status: "sent" });
+  }
+
   const recap = useMemo(() => {
     if (!parsed) return null;
     return [
@@ -363,10 +426,43 @@ export function AdminCampagneEditPage() {
         saving={savingContent}
       />
 
-      {/* ── Écran 5 : envoi (jalon étape suivante) ── */}
-      <div className="ce-stub">
-        📤 <b style={{ color: "var(--ls-text)" }}>Envoi programmé</b> arrive à l'étape suivante du chantier.
-      </div>
+      {/* ── Écran 5 : envoi ── */}
+      <h2 className="ce-h2" style={{ marginTop: 28 }}>Envoi</h2>
+      {campaign.status === "sent" ? (
+        <div className="ce-count">✓ Campagne envoyée</div>
+      ) : (
+        <>
+          <button type="button" className="ce-btn" style={{ background: "var(--ls-surface2)", color: "var(--ls-text)", border: "1px solid var(--ls-border2)" }} onClick={testDryRun}>
+            🧪 Tester (sans rien envoyer)
+          </button>
+          {dryRun && (
+            <div className="ce-recap" style={{ marginTop: 12 }}>
+              <div className="ce-line"><span>Prêt à partir</span><b className="ok">{dryRun.count}</b></div>
+              <div className="ce-line"><span>Objet</span><b style={{ fontFamily: "'DM Sans',sans-serif" }}>{dryRun.subject}</b></div>
+            </div>
+          )}
+
+          <label className="ce-label" style={{ marginTop: 16 }}>Quand ?</label>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <button type="button" className="ce-tab-btn" data-on={when === "now" ? "1" : "0"} onClick={() => setWhen("now")}>Maintenant</button>
+            <button type="button" className="ce-tab-btn" data-on={when === "schedule" ? "1" : "0"} onClick={() => setWhen("schedule")}>Programmer</button>
+          </div>
+          {when === "schedule" && (
+            <input type="datetime-local" className="ce-paste" style={{ minHeight: 0, fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }} value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} />
+          )}
+
+          <button type="button" className="ce-btn" disabled={sending || !dryRun || dryRun.count === 0} onClick={doSend}>
+            {sending ? sendProgress || "Envoi…" : when === "schedule" ? `Programmer l'envoi` : `Envoyer maintenant`}
+          </button>
+          <p className="ce-sub" style={{ textAlign: "center", marginTop: 8, fontSize: 12 }}>
+            {dryRun ? "Chaque mail porte un lien de désabonnement. Les désabonnés sont re-exclus à l'envoi." : "Lance d'abord un test pour débloquer l'envoi."}
+          </p>
+        </>
+      )}
+      <style>{`
+        .ce-tab-btn { flex:1; text-align:center; font:700 12.5px 'DM Sans'; padding:11px; border-radius:8px; border:1px solid var(--ls-border); background:var(--ls-surface); color:var(--ls-text-muted); cursor:pointer; }
+        .ce-tab-btn[data-on="1"] { background:var(--ls-surface2); color:var(--ls-text); border-color:var(--ls-border2); }
+      `}</style>
     </div>
   );
 }
