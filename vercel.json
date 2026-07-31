@@ -1,6 +1,17 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "^(?:www\\.)?labase-nutrition\\.com$"
+        }
+      ],
+      "destination": "/reserver",
+      "permanent": false
+    },
+    {
       "source": "/opportunite",
       "destination": "/business",
       "permanent": true
