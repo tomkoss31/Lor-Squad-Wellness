@@ -273,6 +273,11 @@ const RdvBookingPage = lazy(() =>
     default: module.RdvBookingPage,
   })),
 );
+const ReserverClubPage = lazy(() =>
+  import("./pages/ReserverClubPage").then((module) => ({
+    default: module.ReserverClubPage,
+  })),
+);
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -715,6 +720,11 @@ export default function App() {
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
           <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
+          {/* Tunnel de réservation "séance découverte" du Breakfast Club (site
+              public www.labase-nutrition.com/reserver). Identité crème propre au
+              club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
+          <Route path="/reserver" element={<ReserverClubPage />} />
+          <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
