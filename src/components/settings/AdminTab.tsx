@@ -43,6 +43,12 @@ const ADMIN_PAGES: Array<{ icon: string; title: string; desc: string; path: stri
     desc: "Crée, édite et envoie les éditions La Base 360 News.",
     path: "/admin/newsletters",
   },
+  {
+    icon: "📣",
+    title: "Campagnes",
+    desc: "Relances et annonces email : import de contacts, envoi, ouvertures et clics suivis.",
+    path: "/admin/campagnes",
+  },
 ];
 
 export function AdminTab({ initialSection = "transferts" }: { initialSection?: AdminSection }) {

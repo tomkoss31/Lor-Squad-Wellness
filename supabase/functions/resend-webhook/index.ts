@@ -120,6 +120,80 @@ async function incrementCounter(
   if (error) console.warn("[resend-webhook] increment compteur échoué:", column, error.message);
 }
 
+// ─── Campagnes (chantier Campagnes, étape 6) ────────────────────────────────
+// Le webhook est PARTAGÉ : si l'email n'est pas une newsletter, on tente une
+// campagne. Table campaign_recipients (miroir), compteurs sur campaigns.
+async function findCampaignRecipient(
+  sb: ReturnType<typeof createClient>,
+  emailId: string,
+) {
+  const { data } = await sb
+    .from("campaign_recipients")
+    .select("id, campaign_id, email, delivered_at, opened_at, clicked_at, bounced_at, unsubscribed_at")
+    .eq("resend_message_id", emailId)
+    .maybeSingle();
+  return data as
+    | { id: string; campaign_id: string; email: string; delivered_at: string | null; opened_at: string | null; clicked_at: string | null; bounced_at: string | null; unsubscribed_at: string | null }
+    | null;
+}
+
+async function incCampaign(
+  sb: ReturnType<typeof createClient>,
+  campaignId: string,
+  column: "delivered_count" | "opened_count" | "clicked_count" | "bounced_count" | "unsubscribed_count",
+) {
+  const { error } = await sb.rpc("increment_campaign_counter", { p_campaign_id: campaignId, p_column: column });
+  if (error) console.warn("[resend-webhook] increment campagne échoué:", column, error.message);
+}
+
+async function handleCampaignEvent(
+  sb: ReturnType<typeof createClient>,
+  event: ResendEvent,
+  rec: NonNullable<Awaited<ReturnType<typeof findCampaignRecipient>>>,
+): Promise<Response> {
+  const now = new Date().toISOString();
+  switch (event.type) {
+    case "email.delivered":
+      if (!rec.delivered_at) {
+        await sb.from("campaign_recipients").update({ delivered_at: now }).eq("id", rec.id);
+        await incCampaign(sb, rec.campaign_id, "delivered_count");
+      }
+      break;
+    case "email.opened":
+      if (!rec.opened_at) {
+        await sb.from("campaign_recipients").update({ opened_at: now }).eq("id", rec.id);
+        await incCampaign(sb, rec.campaign_id, "opened_count");
+      }
+      break;
+    case "email.clicked":
+      if (!rec.clicked_at) {
+        await sb.from("campaign_recipients").update({ clicked_at: now }).eq("id", rec.id);
+        await incCampaign(sb, rec.campaign_id, "clicked_count");
+      }
+      break;
+    case "email.bounced":
+    case "email.complained":
+      if (!rec.bounced_at) {
+        await sb.from("campaign_recipients").update({ bounced_at: now }).eq("id", rec.id);
+        await incCampaign(sb, rec.campaign_id, "bounced_count");
+        // Un hard bounce / une plainte = on n'écrit plus jamais à cette adresse.
+        // (unicité = index sur lower(btrim(email)) → insert normalisé, on avale
+        //  la violation de doublon si l'email est déjà supprimé.)
+        const em = rec.email.trim().toLowerCase();
+        const { error: supErr } = await sb
+          .from("email_suppressions")
+          .insert({ email: em, reason: event.type === "email.complained" ? "complained" : "bounced", campaign_id: rec.campaign_id });
+        if (supErr && supErr.code !== "23505") {
+          console.warn("[resend-webhook] suppression campagne échouée:", supErr.message);
+        }
+      }
+      break;
+    default:
+      return json({ ignored: true, reason: "event_type_not_tracked", type: event.type });
+  }
+  return json({ success: true, scope: "campaign", type: event.type, recipient_id: rec.id });
+}
+
 serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
@@ -148,7 +222,10 @@ serve(async (req) => {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const recipient = await findRecipient(sb, emailId);
   if (!recipient) {
-    // Pas un email envoyé par notre système (ou message_id pas tracké)
+    // Pas une newsletter : peut-être une campagne (webhook partagé).
+    const campRec = await findCampaignRecipient(sb, emailId);
+    if (campRec) return await handleCampaignEvent(sb, event, campRec);
+    // Ni newsletter ni campagne (ou message_id pas tracké).
     return json({ ignored: true, reason: "recipient_not_found", email_id: emailId });
   }
 
