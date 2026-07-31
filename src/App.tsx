@@ -193,6 +193,17 @@ const AdminNewslettersPage = lazy(() =>
     default: module.AdminNewslettersPage,
   })),
 );
+// Chantier Campagnes (2026-08) — outreach email admin (généralise newsletter).
+const AdminCampagnesPage = lazy(() =>
+  import("./pages/AdminCampagnesPage").then((module) => ({
+    default: module.AdminCampagnesPage,
+  })),
+);
+const AdminCampagneEditPage = lazy(() =>
+  import("./pages/AdminCampagneEditPage").then((module) => ({
+    default: module.AdminCampagneEditPage,
+  })),
+);
 const AdminNewsletterEditPage = lazy(() =>
   import("./pages/AdminNewsletterEditPage").then((module) => ({
     default: module.AdminNewsletterEditPage,
@@ -881,6 +892,9 @@ export default function App() {
                 {/* Chantier #8 (2026-05-23) : gestion newsletters La Base 360 News. */}
                 <Route path="admin/newsletters" element={<AdminNewslettersPage />} />
                 <Route path="admin/newsletters/:id/edit" element={<AdminNewsletterEditPage />} />
+                {/* Chantier Campagnes (2026-08) : outreach email admin. */}
+                <Route path="admin/campagnes" element={<AdminCampagnesPage />} />
+                <Route path="admin/campagnes/:id" element={<AdminCampagneEditPage />} />
                 <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
