@@ -51,7 +51,43 @@ export function compilePlainText(letter: string, firstName: string | null, unsub
   return `${body}\n\n—\nLa Base 360 · Verdun, France\nSe désabonner : ${unsubUrl}`;
 }
 
-export function compileCampaignHtml(content: CampRich, firstName: string | null, unsubUrl: string): string {
+// Coerce un body_json quelconque (souvent `[]` par défaut en base) en CampRich
+// sûr — le compilateur ne doit JAMAIS planter sur un contenu incomplet.
+function safeRich(raw: unknown): CampRich {
+  const o = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const offer = (o.offer ?? {}) as Record<string, unknown>;
+  const cta = (o.cta ?? {}) as Record<string, unknown>;
+  return {
+    hero_title: typeof o.hero_title === "string" ? o.hero_title : "",
+    intro: typeof o.intro === "string" ? o.intro : "",
+    blocks: Array.isArray(o.blocks)
+      ? (o.blocks as unknown[]).map((b) => {
+          const bb = (b ?? {}) as Record<string, unknown>;
+          return {
+            emoji: typeof bb.emoji === "string" ? bb.emoji : "",
+            title: typeof bb.title === "string" ? bb.title : "",
+            body: typeof bb.body === "string" ? bb.body : "",
+          };
+        })
+      : [],
+    offer: {
+      enabled: Boolean(offer.enabled),
+      label: String(offer.label ?? ""),
+      value: String(offer.value ?? ""),
+      subtext: String(offer.subtext ?? ""),
+    },
+    cta: { enabled: Boolean(cta.enabled), label: String(cta.label ?? ""), url: String(cta.url ?? "") },
+  };
+}
+
+/** Vrai si le contenu riche est vide (rien à envoyer). */
+export function isRichEmpty(raw: unknown): boolean {
+  const c = safeRich(raw);
+  return !c.hero_title.trim() && !c.intro.trim() && c.blocks.every((b) => !(b.title + b.body).trim()) && !c.offer.enabled && !(c.cta.enabled && c.cta.label);
+}
+
+export function compileCampaignHtml(raw: unknown, firstName: string | null, unsubUrl: string): string {
+  const content = safeRich(raw);
   const p = (s: string) => personalize(s, firstName);
 
   const blocksHtml = content.blocks

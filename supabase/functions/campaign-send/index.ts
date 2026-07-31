@@ -21,7 +21,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import {
   compileCampaignHtml,
   compilePlainText,
-  type CampRich,
+  isRichEmpty,
 } from "./campaign-html.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -97,11 +97,17 @@ serve(async (req) => {
   // destinataire (uuid aléatoire = jeton non énumérable).
   const unsubUrlFor = (recipientId: string) => `${SUPABASE_URL}/functions/v1/campaign-unsubscribe?r=${recipientId}`;
 
+  // Garde-fou contenu vide : on ne compile/n'envoie pas un mail blanc.
+  const empty = type === "plain" ? !(c.body_text as string)?.trim() : isRichEmpty(c.body_json);
+  if (empty) {
+    return json({ error: "campaign_empty", message: "Ajoute du contenu (un titre, un texte ou une section) avant d'envoyer." }, 400);
+  }
+
   // ── dry-run : compile un échantillon, n'envoie rien ──
   if (mode === "dry-run") {
     const s = targets[0];
     const unsub = unsubUrlFor(s.id);
-    const html = type === "rich" ? compileCampaignHtml(c.body_json as unknown as CampRich, s.first_name, unsub) : null;
+    const html = type === "rich" ? compileCampaignHtml(c.body_json, s.first_name, unsub) : null;
     const text = type === "plain" ? compilePlainText(c.body_text as string, s.first_name, unsub) : null;
     return json({
       ok: true,
@@ -125,7 +131,7 @@ serve(async (req) => {
   for (let i = 0; i < batch.length; i++) {
     const r = batch[i];
     const unsub = unsubUrlFor(r.id);
-    const html = type === "rich" ? compileCampaignHtml(c.body_json as unknown as CampRich, r.first_name, unsub) : undefined;
+    const html = type === "rich" ? compileCampaignHtml(c.body_json, r.first_name, unsub) : undefined;
     const text = type === "plain" ? compilePlainText(c.body_text as string, r.first_name, unsub) : undefined;
     const scheduled_at = scheduledAt ? new Date(new Date(scheduledAt).getTime() + i * delayMs).toISOString() : undefined;
 

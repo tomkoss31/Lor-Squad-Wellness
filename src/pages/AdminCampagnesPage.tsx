@@ -115,6 +115,21 @@ export function AdminCampagnesPage() {
     navigate(`/admin/campagnes/${(data as { id: string }).id}`);
   }
 
+  async function deleteCampaign(id: string, title: string) {
+    if (!window.confirm(`Supprimer « ${title || "Sans titre"} » ? Cette action est définitive.`)) return;
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    // ON DELETE CASCADE retire aussi les destinataires. Réservé aux brouillons
+    // (les campagnes envoyées gardent leurs stats — pas de bouton supprimer).
+    const { error } = await sb.from("campaigns").delete().eq("id", id);
+    if (error) {
+      push({ tone: "error", title: "Suppression impossible", message: error.message });
+      return;
+    }
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    push({ tone: "success", title: "Brouillon supprimé", message: "" });
+  }
+
   const FILTERS: { key: Filter; label: string; n: number }[] = [
     { key: "all", label: "Toutes", n: counts.all },
     { key: "draft", label: "Brouillons", n: counts.draft },
@@ -150,6 +165,8 @@ export function AdminCampagnesPage() {
         .cmp-stat .n.g { color:var(--ls-teal); } .cmp-stat .n.o { color:var(--ls-gold); }
         .cmp-stat .l { font-size:10.5px; color:var(--ls-text-muted); text-transform:uppercase; letter-spacing:.04em; margin-top:1px; }
         .cmp-empty { text-align:center; color:var(--ls-text-muted); font-size:14px; padding:40px 16px; border:1px dashed var(--ls-border2); border-radius:16px; }
+        .cmp-del { background:none; border:0; font-size:14px; cursor:pointer; opacity:.5; padding:2px 4px; border-radius:6px; line-height:1; }
+        .cmp-del:hover { opacity:1; background:var(--ls-coral-bg); }
       `}</style>
 
       <h1 className="cmp-h1">Campagnes</h1>
@@ -192,15 +209,32 @@ export function AdminCampagnesPage() {
                 ? `départ le ${fmtDate(r.scheduled_for)}`
                 : `créée le ${fmtDate(r.created_at)}`;
           return (
-            <button
+            <div
               key={r.id}
-              type="button"
+              role="button"
+              tabIndex={0}
               className="cmp-card"
               onClick={() => navigate(`/admin/campagnes/${r.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") navigate(`/admin/campagnes/${r.id}`);
+              }}
             >
               <div className="cmp-top">
                 <span className={`cmp-tag ${r.type}`}>{r.type === "rich" ? "Riche" : "Texte"}</span>
                 <span className={`cmp-st ${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                {r.status === "draft" && (
+                  <button
+                    type="button"
+                    className="cmp-del"
+                    aria-label="Supprimer le brouillon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void deleteCampaign(r.id, r.title);
+                    }}
+                  >
+                    🗑
+                  </button>
+                )}
               </div>
               <h3>{r.title || "Sans titre"}</h3>
               <p className="cmp-meta">
@@ -223,7 +257,7 @@ export function AdminCampagnesPage() {
                   </div>
                 </div>
               )}
-            </button>
+            </div>
           );
         })
       )}

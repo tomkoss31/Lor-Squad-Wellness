@@ -254,6 +254,22 @@ export function AdminCampagneEditPage() {
     push({ tone: "success", title: "Contenu enregistré", message: "" });
   }
 
+  // supabase-js met le corps de l'erreur dans error.context (Response) sur un
+  // non-2xx — sans ça, on n'a que « Edge Function returned a non-2xx… ».
+  async function edgeErrorMessage(error: unknown, data: unknown): Promise<string> {
+    const fromData = (data as { message?: string })?.message;
+    if (fromData) return fromData;
+    try {
+      const ctx = (error as { context?: { json?: () => Promise<unknown> } })?.context;
+      const body = ctx?.json ? ((await ctx.json()) as { message?: string; error?: string }) : null;
+      if (body?.message) return body.message;
+      if (body?.error) return body.error;
+    } catch {
+      /* corps non JSON */
+    }
+    return (error as { message?: string })?.message ?? "";
+  }
+
   async function testDryRun() {
     if (!campaign) return;
     const sb = await getSupabaseClient();
@@ -262,8 +278,8 @@ export function AdminCampagneEditPage() {
       body: { campaign_id: campaign.id, mode: "dry-run" },
     });
     if (error || !data?.ok) {
-      const msg = (data as { message?: string })?.message ?? (error?.message ?? "");
-      push({ tone: "error", title: "Test impossible", message: msg || "Vérifie contenu et destinataires." });
+      const msg = await edgeErrorMessage(error, data);
+      push({ tone: "error", title: "Test impossible", message: msg || "Vérifie le contenu et les destinataires." });
       return;
     }
     setDryRun({ count: (data as { would_send: number }).would_send, subject: (data as { subject: string }).subject });
@@ -290,7 +306,7 @@ export function AdminCampagneEditPage() {
         body: { campaign_id: campaign.id, mode: "send", scheduledAt },
       });
       if (error || !data?.ok) {
-        push({ tone: "error", title: "Envoi interrompu", message: (data as { message?: string })?.message ?? error?.message ?? "" });
+        push({ tone: "error", title: "Envoi interrompu", message: await edgeErrorMessage(error, data) });
         setSending(false);
         return;
       }
