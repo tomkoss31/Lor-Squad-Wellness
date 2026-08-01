@@ -1,203 +1,304 @@
 // =============================================================================
 // ClubLandingPage — vitrine publique du Breakfast Club (Verdun).
-// Route /club (et, à terme, racine de labase-nutrition.com via host-routing).
-// Identité crème PROPRE au club (≠ thème app). Copy = maquette v7 validée.
-// Photos = emplacements « 📷 » à remplir (polish). CTA → tunnel /reserver.
+// Reproduction FIDÈLE de la maquette v7 (page d'accueil). Route /club ; deviendra
+// la racine de labase-nutrition.com. Copy v7. Photos = slots encadrés « 📷 » à
+// remplir. CTA → tunnel /reserver. Pages internes (le-club, le-rituel, …) = à venir.
 // =============================================================================
 
 import "./ClubLandingPage.css";
 
+const MARK = "/brand/breakfast-club/logo-mark.png";
 const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
-const MEDAILLON = "/brand/breakfast-club/logo-medaillon.png";
-const RESERVER = "/reserver?utm_source=site";
-const obj = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
+const R = "/reserver?utm_source=site";
+const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
+const TEL = "tel:+33679448759";
 
-function Photo({ label, sub, minHeight }: { label: string; sub?: string; minHeight?: number }) {
+function Slot({ ratio, label, sub, frame }: { ratio: string; label: string; sub?: string; frame?: string }) {
   return (
-    <div className="cl-ph" style={minHeight ? { minHeight } : undefined}>
-      <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
+    <div className={`cl-frame${frame ? " " + frame : ""}`}>
+      <div className="cl-slot" style={{ aspectRatio: ratio }}>
+        <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
+      </div>
     </div>
   );
 }
 
+const RITUEL = [
+  { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },
+  { n: "02", t: "Le thé aux plantes", d: "Un coup de fouet doux. S'il te tient jusqu'à midi, c'est que le smoothie était bien dosé.", top: "cl-top-p" },
+  { n: "03", t: "Le smoothie", d: "Le vrai repas. Protéines et nutriments : le petit-déjeuner qui cale sans peser.", top: "cl-top-s" },
+  { n: "04", t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach.", top: "cl-top-a" },
+];
+
+const INCLUS = [
+  { n: "01", ic: "🥤", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
+  { n: "02", ic: "⚖️", t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger.", top: "cl-top-p" },
+  { n: "03", ic: "📓", t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours.", top: "cl-top-s" },
+  { n: "04", ic: "💬", t: "Le groupe du club", d: "Un seul canal, pas cinq applications. Pour les jours où tu n'as pas envie de venir.", top: "cl-top-a" },
+  { n: "05", ic: "📸", t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite.", top: "cl-top-o" },
+  { n: "06", ic: "🤝", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
+];
+
+const FAQ = [
+  { q: "Combien ça coûte ?", a: "Le body scan de découverte est offert. Ensuite, si tu veux continuer : une carte de 10 visites à 80 € (8 €/petit-déjeuner) ou 30 visites à 185 € (6,17 €/petit-déjeuner). Rien d'autre.", open: true },
+  { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
+  { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite. Rien à ajouter au comptoir, rien à commander en plus." },
+  { q: "Je n'ai jamais le temps le matin.", a: "Le rituel prend une vingtaine de minutes, et le club est ouvert de 7h à 11h — tu passes quand ça t'arrange dans le créneau." },
+  { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
+  { q: "Au bout de combien de temps je vois quelque chose ?", a: "On fait le point à la 10ᵉ visite : nouvelles mesures, nouvelles photos si tu veux. C'est là qu'on regarde ensemble le chemin parcouru." },
+];
+
 export function ClubLandingPage() {
   return (
     <div className="cl">
-      <header className="cl-header"><div className="cl-wrap in">
-        <a href="#top"><img className="logo" src={WORDMARK} alt="The Breakfast Club by La Base" /></a>
-        <a className="cl-cta" style={{ minHeight: 44, padding: "11px 22px", fontSize: 14 }} href={RESERVER}>Réserver ma séance</a>
-      </div></header>
+      {/* ═══ HEADER ═══ */}
+      <div className="cl-header">
+        <div className="cl-wrap">
+          <div className="bar">
+            <a className="cl-lock" href="#top">
+              <img src={MARK} alt="" aria-hidden="true" />
+              <span><span className="n1">Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
+            </a>
+            <a className="cl-hcta" href={R}>Je commence</a>
+          </div>
+          <nav className="cl-nav" aria-label="Navigation">
+            <a className="on" href="#top">Accueil</a>
+            <a href="#philosophie">Le club</a>
+            <a href="#rituel">Le rituel</a>
+            <a href="#inclus">Ce qui est inclus</a>
+            <a href="#resultats">Résultats</a>
+            <a href="#equipe">Nous</a>
+          </nav>
+        </div>
+      </div>
 
       {/* ═══ HERO ═══ */}
-      <section id="top" style={{ paddingTop: "clamp(32px,4vw,56px)" }}><div className="cl-wrap">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,360px),1fr))", gap: "clamp(28px,4vw,48px)", alignItems: "center" }}>
-          <div>
-            <img src={MEDAILLON} alt="" aria-hidden="true" style={{ width: 88, height: "auto", borderRadius: "50%", marginBottom: 18 }} />
-            <p className="cl-eyebrow">Nouveau à Verdun · 7h–11h</p>
-            <h1 style={{ marginTop: 16, fontSize: "clamp(36px,6vw,66px)" }}>Le club où l'on t'attend, tous les matins.</h1>
-            <p className="cl-lead" style={{ marginTop: 18 }}>On ne change pas ta vie. On change ton premier repas. Ce n'est pas la volonté qui te manque — c'est un rendez-vous.</p>
-            <div className="cl-chips">
-              <span className="cl-chip">☕ 6 matins / semaine</span>
-              <span className="cl-chip">⏱ ≈ 20 min</span>
-              <span className="cl-chip">🎁 Body scan offert</span>
+      <div id="top" className="cl-band">
+        <div className="cl-wrap" style={{ paddingTop: "clamp(64px,12vw,120px)", paddingBottom: "clamp(56px,8vw,96px)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "clamp(36px,5vw,72px)", alignItems: "center" }}>
+            <div>
+              <span className="cl-pill y">Ouverture prochaine · Verdun</span>
+              <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: "min(460px,84%)", marginTop: "clamp(22px,3vw,32px)" }} />
+              <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>
+                Le club où l'on t'attend,<br /><span className="cl-a-sage">tous les matins.</span>
+              </h1>
+              <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>On ne change pas ta vie. On change ton premier repas. Ce n'est pas la volonté qui te manque — c'est un rendez-vous.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28 }}>
+                <a className="cl-cta" href={R}>Réserver mon body scan</a>
+                <a className="cl-ghost" href="#rituel">Voir le rituel</a>
+              </div>
+              <div className="cl-stats">
+                <div className="cl-stat"><div className="v">7h–11h</div><div className="l">à l'ouverture</div></div>
+                <div className="cl-stat"><div className="v">20 min</div><div className="l">à table</div></div>
+                <div className="cl-stat"><div className="v">Offert</div><div className="l">ton body scan</div></div>
+              </div>
             </div>
-            <p style={{ margin: "26px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Choisis ton objectif</p>
-            <div className="cl-obj">
-              <a href={obj("poids")}><span className="ic">⚖️</span>Perdre du poids</a>
-              <a href={obj("muscle")}><span className="ic">💪</span>Reprendre du muscle</a>
-              <a href={obj("energie")}><span className="ic">⚡</span>Retrouver de l'énergie</a>
+            <Slot ratio="4/5" label="Photo hero" sub="ambiance club le matin" />
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ OBJECTIF STRIP ═══ */}
+      <div className="cl-band">
+        <div className="cl-wrap" style={{ maxWidth: 1000, paddingTop: "clamp(20px,3vw,30px)", paddingBottom: "clamp(48px,6vw,72px)", textAlign: "center" }}>
+          <p style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".28em", textTransform: "uppercase", color: "var(--muted2)", margin: "0 0 16px" }}>Choisis ton objectif</p>
+          <div className="cl-obj">
+            <a href={objUrl("poids")}>⚖️ Perdre du poids</a>
+            <a className="p" href={objUrl("muscle")}>💪 Reprendre du muscle</a>
+            <a className="s" href={objUrl("energie")}>⚡ Retrouver de l'énergie</a>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ INFO BAR (dark) ═══ */}
+      <div className="cl-band dark">
+        <div className="cl-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "14px clamp(28px,5vw,64px)", paddingTop: "clamp(22px,3vw,30px)", paddingBottom: "clamp(22px,3vw,30px)" }}>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>11 rue Saint Pierre, Verdun</div></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Horaires</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>Lun–Ven 7h–11h · Sam 8h–11h</div></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Téléphone</div><a href={TEL} style={{ color: "#fff", marginTop: 3, display: "inline-block", textDecoration: "underline", textDecorationColor: "var(--yellow)" }}>06 79 44 87 59</a></div>
+        </div>
+      </div>
+
+      {/* ═══ PHILOSOPHIE ═══ */}
+      <div id="philosophie" className="cl-band">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
+            <div>
+              <span className="cl-pill y">Notre philosophie</span>
+              <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>On ne change<br />pas ta vie.<br /><span className="cl-a-sage">On change ton<br />premier repas.</span></h2>
             </div>
-            <div style={{ marginTop: 26, display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              <a className="cl-cta" href={RESERVER}>Réserver ma séance découverte →</a>
-              <a className="cl-ghost" href="#formule">Voir les formules</a>
+            <div>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Tu sais déjà quoi faire. Le problème, ce n'est pas l'information — c'est de le faire seul, tous les matins, sans que personne ne le remarque.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Le club, c'est l'inverse : un lieu, une heure, une équipe. Tu viens, c'est prêt, et quelqu'un note que tu es venu.</p>
+              <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.05, marginTop: 26 }}>Ce n'est pas la volonté qui te manque. <span className="cl-a-pink">C'est un rendez-vous.</span></p>
             </div>
           </div>
-          <Photo label="Photo hero" sub="ambiance club le matin" minHeight={340} />
         </div>
-      </div></section>
+      </div>
 
-      {/* ═══ CONCEPT ═══ */}
-      <section style={{ background: "var(--panel)" }}><div className="cl-wrap" style={{ maxWidth: 820, textAlign: "center" }}>
-        <h2 style={{ fontSize: "clamp(28px,4vw,46px)" }}>On ne change pas ta vie.<br />On change ton premier repas.</h2>
-        <p className="cl-lead" style={{ marginTop: 18 }}>Un club de petit-déjeuner. Pas un bar, pas une salle de sport. Tu viens, tu prends ton rituel, on note deux chiffres, et ta matinée est lancée — sans rien avoir eu à décider.</p>
-      </div></section>
-
-      {/* ═══ LE RITUEL ═══ */}
-      <section><div className="cl-wrap">
-        <p className="cl-eyebrow">Le rituel du matin</p>
-        <h2 style={{ marginTop: 14, fontSize: "clamp(26px,3.6vw,42px)" }}>Chaque matin, le même rituel.</h2>
-        <p className="cl-lead" style={{ marginTop: 14, maxWidth: 640 }}>Trois boissons dans l'ordre, puis le suivi. C'est ce qui fait qu'on n'a rien à décider en arrivant.</p>
-        <div className="cl-grid4">
-          {[
-            { t: "L'aloe vera", d: "Étape 1 · une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse." },
-            { t: "Le thé aux plantes", d: "Étape 2 · un coup de fouet doux. S'il te tient jusqu'à midi, c'est que le smoothie était bien dosé." },
-            { t: "Le smoothie", d: "Étape 3 · le vrai repas. Protéines et nutriments, le petit-déjeuner qui cale sans peser." },
-            { t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach." },
-          ].map((c) => (
-            <div key={c.t} className="cl-card" style={{ padding: 0, overflow: "hidden" }}>
-              <div className="cl-ph" style={{ border: "none", borderRadius: 0, minHeight: 150 }}><span>📷 {c.t.replace("Le ", "").replace("L'", "").toLowerCase()}</span></div>
-              <div style={{ padding: 18 }}><h3 style={{ fontSize: 22 }}>{c.t}</h3><p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--sub)" }}>{c.d}</p></div>
-            </div>
-          ))}
-        </div>
-      </div></section>
-
-      {/* ═══ CE QUE T'APPORTE ═══ */}
-      <section style={{ background: "var(--panel)" }}><div className="cl-wrap">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: "clamp(28px,4vw,48px)", alignItems: "start" }}>
-          <div style={{ position: "sticky", top: 80 }}>
-            <p className="cl-eyebrow">Tout est inclus</p>
-            <h2 style={{ marginTop: 14, fontSize: "clamp(26px,3.6vw,42px)" }}>Ce que t'apporte chaque matin.</h2>
-            <p className="cl-lead" style={{ marginTop: 14 }}>Tu achètes des visites, et tout est dedans. Rien à ajouter au comptoir, rien à commander en plus.</p>
+      {/* ═══ LE RITUEL (4 cartes) ═══ */}
+      <div id="rituel" className="cl-band">
+        <div className="cl-wrap" style={{ paddingBottom: "clamp(64px,10vw,120px)" }}>
+          <div className="cl-rv" style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
+            <span className="cl-pill o">Le rituel du matin</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)" }}>Chaque matin, <span className="cl-a-orange">le même rituel.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 16 }}>Trois boissons dans l'ordre, puis le suivi. C'est ce qui fait qu'on n'a rien à décider en arrivant.</p>
           </div>
-          <div>
-            {[
-              { t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins." },
-              { t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger." },
-              { t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours." },
-              { t: "Le groupe du club", d: "Un seul canal, pas cinq applications. Pour les jours où tu n'as pas envie de venir." },
-              { t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite." },
-            ].map((i, idx) => (
-              <div key={i.t} className="cl-incl" style={idx === 0 ? { borderTop: "none" } : undefined}>
-                <span aria-hidden="true" style={{ color: "var(--orange)", fontWeight: 800 }}>✓</span>
-                <div><div className="t">{i.t}</div><div className="d">{i.d}</div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
+            {RITUEL.map((c) => (
+              <div key={c.n} className={`cl-card ${c.top}`} style={{ padding: "34px 28px 30px" }}>
+                <div className="cl-num">{c.n}</div>
+                <h3 style={{ marginTop: 16, fontSize: 20 }}>{c.t}</h3>
+                <p style={{ marginTop: 10, fontSize: 16, color: "var(--muted3)" }}>{c.d}</p>
               </div>
             ))}
           </div>
         </div>
-      </div></section>
+      </div>
 
-      {/* ═══ L'ÉQUIPE ═══ */}
-      <section><div className="cl-wrap">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,280px),1fr))", gap: "clamp(24px,3vw,40px)", alignItems: "center" }}>
-          <Photo label="Mélanie & Thomas" sub="portrait de l'équipe au club" minHeight={300} />
-          <div>
-            <p className="cl-eyebrow">Tu n'es jamais seul</p>
-            <h2 style={{ marginTop: 14, fontSize: "clamp(26px,3.6vw,42px)" }}>Le club est neuf.<br />L'équipe, non.</h2>
-            <p className="cl-lead" style={{ marginTop: 16 }}>Mélanie et Thomas accompagnent des gens à Verdun depuis quatre ans. Ça, ça se lit déjà dans les résultats de leurs membres.</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 22 }}>
-              <svg width="46" height="42" viewBox="0 0 32 29" aria-hidden="true"><path d="M16 29S2 20 2 10a7 7 0 0 1 14-2 7 7 0 0 1 14 2c0 10-14 19-14 19Z" fill="var(--orange)" /></svg>
-              <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "var(--green-d)" }}>11 rue Saint&nbsp;Pierre · Verdun</span>
+      {/* ═══ CE QUI EST INCLUS (dark, 6 cartes) ═══ */}
+      <div id="inclus" className="cl-band dark">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ maxWidth: 760 }}>
+            <span className="cl-pill p">Ce qui est inclus</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)", color: "#fff" }}>Ce que t'apporte <span className="cl-a-yellow">chaque matin.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout est dedans. Rien à ajouter au comptoir, rien à commander en plus.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
+            {INCLUS.map((c) => (
+              <div key={c.n} className={`cl-card dark ${c.top}`} style={{ padding: "32px 28px", position: "relative" }}>
+                <span className="cl-num" style={{ position: "absolute", top: 20, right: 22 }}>{c.n}</span>
+                <div style={{ fontSize: 30 }} aria-hidden="true">{c.ic}</div>
+                <h3 style={{ marginTop: 14, fontSize: 19, color: "#fff" }}>{c.t}</h3>
+                <p style={{ marginTop: 8, fontSize: 16, color: "var(--on-dark-2)" }}>{c.d}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>
+            Les compléments Herbalife utilisés au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.
+          </p>
+        </div>
+      </div>
+
+      {/* ═══ COMMUNAUTÉ ═══ */}
+      <div id="equipe" className="cl-band">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
+            <div style={{ order: 2 }}><Slot ratio="4/5" label="Mélanie & Thomas" sub="l'équipe au club" frame="peach" /></div>
+            <div style={{ order: 1 }}>
+              <span className="cl-pill s">Communauté</span>
+              <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,82px)" }}>Tu n'es <span className="cl-a-pink">jamais seul.</span></h2>
+              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 20 }}>Mélanie et Thomas accompagnent des gens à Verdun depuis quatre ans. Ça, ça se lit déjà dans les résultats de leurs membres.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 16 }}>Au club, tu croises les mêmes têtes chaque matin. C'est ce petit rendez-vous social qui fait qu'on revient — et qu'on tient.</p>
             </div>
           </div>
         </div>
-      </div></section>
+      </div>
 
-      {/* ═══ FORMULES ═══ */}
-      <section id="formule" style={{ background: "var(--panel)" }}><div className="cl-wrap">
-        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
-          <p className="cl-eyebrow">Sans engagement</p>
-          <h2 style={{ marginTop: 14, fontSize: "clamp(28px,4vw,46px)" }}>Choisis ta formule.</h2>
-          <p className="cl-lead" style={{ marginTop: 14 }}>On commence toujours par le body scan. Il est offert et n'engage à rien.</p>
-        </div>
-        <div className="cl-grid3" style={{ marginTop: 36 }}>
-          <div className="cl-card" style={{ padding: 28, textAlign: "center", border: "2px solid var(--orange)" }}>
-            <span className="cl-tag">Pour commencer</span>
-            <h3 style={{ marginTop: 16, fontSize: 26 }}>Séance découverte</h3>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--sub)" }}>Body scan + bilan · une vingtaine de minutes</p>
-            <div className="cl-price" style={{ marginTop: 16, color: "#5F7154" }}>0 €</div>
-            <a className="cl-cta" style={{ width: "100%", marginTop: 18 }} href={RESERVER}>Réserver →</a>
+      {/* ═══ RÉSULTATS (teaser + bandeau note) ═══ */}
+      <div id="resultats" className="cl-band">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ maxWidth: 720 }}>
+            <span className="cl-pill peach">Résultats</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>Le club est neuf. <span className="cl-a-sage">L'équipe, non.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 16, maxWidth: "44em" }}>Les photos et les témoignages arrivent avec les premiers membres. En attendant, la note de La Base parle déjà pour nous.</p>
           </div>
-          <div className="cl-card" style={{ padding: 28, textAlign: "center" }}>
-            <h3 style={{ fontSize: 26 }}>10 visites</h3>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--sub)" }}>Pour tester le rythme du club</p>
-            <div className="cl-price" style={{ marginTop: 16 }}>80 €</div>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--green-d)", fontWeight: 700 }}>8 € le petit-déjeuner</p>
-          </div>
-          <div className="cl-card" style={{ padding: 28, textAlign: "center" }}>
-            <span className="cl-tag" style={{ background: "var(--green-d)" }}>Le plus choisi</span>
-            <h3 style={{ marginTop: 16, fontSize: 26 }}>30 visites</h3>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--sub)" }}>Pour installer l'habitude</p>
-            <div className="cl-price" style={{ marginTop: 16 }}>185 €</div>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--green-d)", fontWeight: 700 }}>6,17 € le petit-déjeuner — 23 % de moins</p>
+          <div style={{ background: "var(--dark)", borderRadius: 20, padding: "clamp(26px,3.4vw,40px)", marginTop: 32, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px 28px" }}>
+            <span style={{ color: "var(--yellow)", fontSize: 18, letterSpacing: 3 }}>★★★★★</span>
+            <span style={{ fontFamily: "Anton", fontSize: 38, color: "#fff" }}>4,9 / 5</span>
+            <span style={{ fontSize: 17, color: "var(--on-dark-2)" }}>sur les avis Google de La Base</span>
+            <a className="cl-cta" style={{ marginLeft: "auto", minHeight: 52 }} href="https://www.google.com/search?q=La+Base+Verdun" target="_blank" rel="noopener noreferrer">Voir les avis →</a>
           </div>
         </div>
-        <p style={{ textAlign: "center", maxWidth: 620, margin: "26px auto 0", fontSize: 14, color: "var(--sub)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu choisis ta carte seulement si tu veux continuer.</p>
-      </div></section>
+      </div>
+
+      {/* ═══ FORMULES (bande alt) ═══ */}
+      <div id="formule" className="cl-band alt">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
+            <span className="cl-pill s">Sans engagement</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,80px)" }}>Choisis <span className="cl-a-orange">ta formule.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 16 }}>On commence toujours par le body scan. Il est offert et n'engage à rien.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: 40, alignItems: "stretch" }}>
+            <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
+              <div className="cl-ribbon" style={{ background: "var(--sage)" }}>1ère visite</div>
+              <div className="cl-price" style={{ marginTop: 24, color: "var(--sage-d)" }}>Offert</div>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>Une vingtaine de minutes</p>
+              <a className="cl-cta" style={{ marginTop: "auto", background: "transparent", border: "2px solid var(--sage)", color: "var(--sage-d)", boxShadow: "none" }} href={R}>Je réserve</a>
+            </div>
+            <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
+              <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
+              <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>8 € le petit-déjeuner · 10 visites</p>
+              <a className="cl-cta" style={{ marginTop: "auto" }} href={R}>Je commence</a>
+            </div>
+            <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
+              <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
+              <div className="cl-price" style={{ marginTop: 24, color: "var(--grad-a)" }}>185 €</div>
+              <p style={{ margin: "6px 0 0", color: "var(--yellow)" }}>6,17 € le petit-déjeuner — 23 % de moins · 30 visites</p>
+              <a className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none" }} href={R}>Je commence</a>
+            </div>
+          </div>
+          <p style={{ textAlign: "center", maxWidth: 620, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum.</p>
+        </div>
+      </div>
 
       {/* ═══ FAQ ═══ */}
-      <section><div className="cl-wrap" style={{ maxWidth: 760 }}>
-        <p className="cl-eyebrow" style={{ textAlign: "center" }}>Avant de venir</p>
-        <h2 style={{ marginTop: 14, fontSize: "clamp(26px,3.6vw,42px)", textAlign: "center" }}>Questions fréquentes.</h2>
-        <div style={{ marginTop: 28 }}>
-          {[
-            { q: "Combien ça coûte ?", a: "Le body scan de découverte est offert. Ensuite, si tu veux continuer : une carte de 10 visites à 80 € (8 €/petit-déjeuner) ou 30 visites à 185 € (6,17 €/petit-déjeuner). Rien d'autre.", open: true },
-            { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
-            { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite. Rien à ajouter au comptoir, rien à commander en plus." },
-            { q: "Je n'ai jamais le temps le matin.", a: "Le rituel prend une vingtaine de minutes, et le club est ouvert de 7h à 11h — tu passes quand ça t'arrange dans le créneau." },
-            { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
-            { q: "Au bout de combien de temps je vois quelque chose ?", a: "On fait le point à la 10ᵉ visite : nouvelles mesures, nouvelles photos si tu veux. C'est là qu'on regarde ensemble le chemin parcouru." },
-          ].map((f) => (
+      <div className="cl-band">
+        <div className="cl-wrap cl-sec cl-rv" style={{ maxWidth: 860 }}>
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 32px" }}>
+            <span className="cl-pill p">FAQ</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,80px)" }}>Questions <span className="cl-a-orange">fréquentes.</span></h2>
+          </div>
+          {FAQ.map((f) => (
             <details key={f.q} open={f.open}>
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
+              <summary>{f.q}<span className="cl-plus" aria-hidden="true">+</span></summary>
+              <div className="ans">{f.a}</div>
             </details>
           ))}
+          <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>06 79 44 87 59</a>, on répond entre 7h et 11h.</p>
         </div>
-        <p style={{ textAlign: "center", marginTop: 24, fontSize: 14, color: "var(--sub)" }}>Une question qui n'est pas là ? Appelle-nous au <b style={{ color: "var(--ink)" }}>06 79 44 87 59</b>, on répond entre 7h et 11h.</p>
-      </div></section>
+      </div>
 
-      {/* ═══ CTA FINAL ═══ */}
-      <section style={{ background: "var(--panel)" }}><div className="cl-wrap" style={{ textAlign: "center", maxWidth: 680 }}>
-        <h2 style={{ fontSize: "clamp(30px,5vw,54px)" }}>On se voit demain matin ?</h2>
-        <p className="cl-lead" style={{ marginTop: 16 }}>Le body scan est offert et prend une vingtaine de minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
-        <a className="cl-cta" style={{ marginTop: 26, fontSize: 17 }} href={RESERVER}>Réserver ma séance découverte →</a>
-      </div></section>
+      {/* ═══ CTA FINAL (dark) ═══ */}
+      <div className="cl-band dark">
+        <div className="cl-wrap cl-sec-lg cl-rv" style={{ textAlign: "center", maxWidth: 820 }}>
+          <span className="cl-pill y">On se retrouve</span>
+          <h2 style={{ marginTop: 24, fontSize: "clamp(42px,7vw,92px)", color: "#fff" }}>On se voit <span className="cl-a-yellow">demain matin ?</span></h2>
+          <p className="cl-lead" style={{ marginTop: 18, marginLeft: "auto", marginRight: "auto", maxWidth: 620 }}>Le body scan est offert et prend une vingtaine de minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 28 }}>
+            <a className="cl-cta" href={R}>Mon body scan offert</a>
+            <a className="cl-ghost" href={TEL}>Appeler le club</a>
+          </div>
+        </div>
+      </div>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="cl-footer"><div className="cl-wrap">
-        <img className="logo" src={WORDMARK} alt="The Breakfast Club by La Base" style={{ filter: "brightness(0) invert(1)" }} />
-        <div className="cl-footrow" style={{ marginTop: 26 }}>
-          <div><div className="k">Adresse</div>11 rue Saint&nbsp;Pierre<br />55100 Verdun</div>
-          <div><div className="k">Horaires</div>Lundi au vendredi 7h–11h<br />Samedi 8h–11h</div>
-          <div><div className="k">Téléphone</div>06 79 44 87 59</div>
-          <div><div className="k">En ligne</div>www.labase-nutrition.com</div>
+      <div className="cl-band foot">
+        <div className="cl-wrap" style={{ paddingTop: "clamp(48px,6vw,80px)", paddingBottom: 28 }}>
+          <div className="cl-footgrid">
+            <div>
+              <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: 210, filter: "brightness(0) invert(1)" }} />
+              <p style={{ color: "var(--on-dark-3)", fontSize: 16, marginTop: 16, maxWidth: "34ch" }}>Le club de petit-déjeuner de Verdun. Nutrition, énergie, communauté.</p>
+            </div>
+            <div>
+              <div className="k">Le club</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <a href="#rituel">Le rituel</a><a href="#inclus">Ce qui est inclus</a><a href="#formule">Les formules</a><a href={R}>Réserver</a>
+              </div>
+            </div>
+            <div>
+              <div className="k">Nous trouver</div>
+              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br /><a href={TEL}>06 79 44 87 59</a></div>
+            </div>
+          </div>
+          <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(244,239,228,.14)", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--on-dark-3)" }}>
+            <span style={{ letterSpacing: ".14em", fontWeight: 700 }}>NUTRITION · ÉNERGIE · COMMUNAUTÉ</span>
+            <span>The Breakfast Club by La Base · Verdun</span>
+          </div>
         </div>
-        <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,.14)", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#9FB39A" }}>
-          <span style={{ fontFamily: "'Syne',sans-serif", letterSpacing: ".14em", fontWeight: 700 }}>NUTRITION · ÉNERGIE · COMMUNAUTÉ</span>
-          <span>The Breakfast Club by La Base · Verdun</span>
-        </div>
-      </div></footer>
+      </div>
     </div>
   );
 }
