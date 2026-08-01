@@ -1736,13 +1736,13 @@ export async function deleteSupabaseClient(clientId: string) {
     throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
   }
 
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-delete-client", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ __adminRoute: "delete-client", clientId })
+    body: JSON.stringify({ clientId })
   });
 
   const result = (await response.json()) as { ok: boolean; error?: string };
@@ -1771,13 +1771,13 @@ export async function createSupabaseUserAccess(payload: {
     };
   }
 
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-create-user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ __adminRoute: "create-user", ...payload })
+    body: JSON.stringify(payload)
   });
 
   const result = await readApiResult<{ ok: boolean; error?: string }>(response);
@@ -1806,14 +1806,13 @@ export async function updateSupabaseUserAccess(
     throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
   }
 
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-update-user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
     body: JSON.stringify({
-      __adminRoute: "update-user",
       userId,
       role: payload.role,
       // Fix Thomas (2026-04-30) : referent peut aussi avoir un sponsor (chaine
@@ -1856,13 +1855,13 @@ export async function repairSupabaseUserAccess(payload: {
     };
   }
 
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-repair-user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ __adminRoute: "repair-user", ...payload })
+    body: JSON.stringify(payload)
   });
 
   const result = await readApiResult<{ ok: boolean; error?: string }>(response);
@@ -1894,13 +1893,13 @@ export async function updateSupabaseUserPassword(userId: string, password: strin
     throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
   }
 
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-update-user-password", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ __adminRoute: "update-user-password", userId, password })
+    body: JSON.stringify({ userId, password })
   });
 
   const result = (await response.json()) as { ok: boolean; error?: string };
@@ -2410,13 +2409,13 @@ export async function createSupabaseExternalDistributor(payload: {
   }
   let response: Response;
   try {
-    response = await fetch("/api/admin", {
+    response = await fetch("/api/admin-create-external-distributor", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ __adminRoute: "create-external-distributor", ...payload }),
+      body: JSON.stringify(payload),
     });
   } catch (netErr) {
     console.error("[createExternalDistributor] network", netErr);
@@ -2471,10 +2470,10 @@ export async function createSupabasePassiveSupervisor(payload: {
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
   let response: Response;
   try {
-    response = await fetch("/api/admin", {
+    response = await fetch("/api/admin-create-external-distributor", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ __adminRoute: "create-external-distributor", ...payload, mode: "passive_supervisor" }),
+      body: JSON.stringify({ ...payload, mode: "passive_supervisor" }),
     });
   } catch (netErr) {
     return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };
@@ -2513,13 +2512,13 @@ export async function updateSupabaseExternalDistributor(payload: {
   } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
   // Endpoint fusionné (limite Vercel 12 functions) : flag action=update.
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-create-external-distributor", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ __adminRoute: "create-external-distributor", ...payload, action: "update" }),
+    body: JSON.stringify({ ...payload, action: "update" }),
   });
   const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
   if (!response.ok || !body.ok) {
@@ -2540,13 +2539,13 @@ export async function deleteSupabaseExternalDistributor(
   } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
   // Endpoint fusionné (limite Vercel 12 functions) : flag action=delete.
-  const response = await fetch("/api/admin", {
+  const response = await fetch("/api/admin-create-external-distributor", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ __adminRoute: "create-external-distributor", userId, action: "delete" }),
+    body: JSON.stringify({ userId, action: "delete" }),
   });
   const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
   if (!response.ok || !body.ok) {
