@@ -129,6 +129,14 @@
 /* pricing */
 .cl-price{font-family:"Anton";font-size:60px;line-height:.9}
 .cl-ribbon{margin:-14px -32px 0;padding:14px;text-align:center;font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#fff;border-radius:24px 24px 0 0}
+/* liste de bénéfices dans les cartes tarifs (met la VALEUR de chaque visite) */
+.cl-feats{list-style:none;margin:22px 0 26px;padding:0;display:flex;flex-direction:column;gap:11px;text-align:left}
+.cl-feats li{position:relative;padding-left:29px;font-size:15.5px;line-height:1.45;color:var(--muted)}
+.cl-feats li::before{content:"✓";position:absolute;left:0;top:1px;width:19px;height:19px;line-height:19px;text-align:center;border-radius:50%;background:color-mix(in srgb,var(--sage) 22%,#0000);color:var(--sage-d);font-size:11px;font-weight:800}
+.cl-feats li b{color:var(--ink)}
+.cl-card.dark .cl-feats li{color:var(--on-dark-2)}
+.cl-card.dark .cl-feats li b{color:#fff}
+.cl-card.dark .cl-feats li::before{background:rgba(244,239,228,.14);color:var(--yellow)}
 
 /* footer */
 .cl-footgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(32px,4vw,52px)}

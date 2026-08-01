@@ -16,7 +16,7 @@ const ETAPES = [
   },
   {
     e: "Étape 3 · le repas", t: "Le smoothie nutritionnel", frame: "sage", acc: "cl-a-sage",
-    p1: "Enfin, le smoothie : c'est le vrai petit-déjeuner. Protéines, vitamines, de quoi caler jusqu'au déjeuner sans te sentir lourd.",
+    p1: "Enfin, le smoothie : c'est le vrai petit-déjeuner. Protéines, 20+ vitamines et minéraux — près de 40 % de tes apports de la journée dans un seul verre, de quoi caler jusqu'au déjeuner sans te sentir lourd.",
     p2: "Dosé avec toi selon ton objectif, il remplace le café-croissant qui te lâche à 10h30.",
     no: "Ce que ce n'est pas : un shaker de sportif. C'est un repas complet, servi et ajusté sur place.",
   },
@@ -66,7 +66,7 @@ export function ClubRituelPage() {
       <div className="cl-band alt"><div className="cl-wrap cl-sec cl-rv">
         <div className="cl-card" style={{ background: "#fff", borderLeft: "6px solid var(--orange)", padding: "clamp(30px,4.5vw,52px)" }}>
           <h2 style={{ fontSize: "clamp(24px,3.2vw,38px)" }}>À dire clairement.</h2>
-          <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--muted)", marginTop: 14, maxWidth: "62ch" }}>Les boissons du club sont des produits de bien-être Herbalife, pas des médicaments. Elles ne soignent rien, ne remplacent pas une alimentation variée ni un avis médical. Ce qui marche, c'est la régularité et le suivi — pas un ingrédient magique.</p>
+          <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--muted)", marginTop: 14, maxWidth: "62ch" }}>Les boissons du club sont des produits de bien-être, pas des médicaments. Elles ne soignent rien, ne remplacent pas une alimentation variée ni un avis médical. Ce qui marche, c'est la régularité et le suivi — pas un ingrédient magique.</p>
           <a className="cl-cta" style={{ marginTop: 24 }} href={R}>Venir goûter le rituel — c'est offert</a>
         </div>
       </div></div>

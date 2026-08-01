@@ -52,7 +52,7 @@ export function ClubResultatsPage() {
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ textAlign: "center", maxWidth: 720 }}>
         <h2 style={{ fontSize: "clamp(34px,5.4vw,66px)" }}>Tu veux savoir si ça <span className="cl-a-orange">marcherait pour toi ?</span></h2>
-        <p className="cl-lead" style={{ marginTop: 16, marginLeft: "auto", marginRight: "auto", maxWidth: 560 }}>C'est exactement la question à laquelle le body scan répond. Il est offert et prend une vingtaine de minutes.</p>
+        <p className="cl-lead" style={{ marginTop: 16, marginLeft: "auto", marginRight: "auto", maxWidth: 560 }}>C'est exactement la question à laquelle le body scan répond. Il est offert et dure environ 45 minutes.</p>
         <a className="cl-cta" style={{ marginTop: 26 }} href={R}>Réserver mon body scan</a>
       </div></div>
     </ClubShell>

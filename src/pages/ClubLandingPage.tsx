@@ -11,7 +11,7 @@ const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
 const RITUEL = [
   { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },
   { n: "02", t: "Le thé aux plantes", d: "Un coup de fouet doux. S'il te tient jusqu'à midi, c'est que le smoothie était bien dosé.", top: "cl-top-p" },
-  { n: "03", t: "Le smoothie", d: "Le vrai repas. Protéines et nutriments : le petit-déjeuner qui cale sans peser.", top: "cl-top-s" },
+  { n: "03", t: "Le smoothie", d: "Le vrai repas du matin : protéines, 20+ vitamines et minéraux — près de 40 % de tes apports de la journée dans un seul verre, sans peser sur l'estomac.", top: "cl-top-s" },
   { n: "04", t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach.", top: "cl-top-a" },
 ];
 const INCLUS = [
@@ -23,10 +23,10 @@ const INCLUS = [
   { n: "06", ic: "🤝", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
-  { q: "Combien ça coûte ?", a: "Le body scan de découverte est offert. Ensuite, si tu veux continuer : une carte de 10 visites à 80 € (8 €/petit-déjeuner) ou 30 visites à 185 € (6,17 €/petit-déjeuner). Rien d'autre.", open: true },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix, sans engagement : 10 visites à 80 €, ou 30 visites à 185 € (6,17 € la visite). Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
-  { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite. Rien à ajouter au comptoir, rien à commander en plus." },
-  { q: "Je n'ai jamais le temps le matin.", a: "Le rituel prend une vingtaine de minutes, et le club est ouvert de 7h à 11h — tu passes quand ça t'arrange dans le créneau." },
+  { q: "Suis-je obligé d'acheter des produits ?", a: "Rien n'est obligatoire : tout ce que tu consommes pendant ta visite est déjà compris. Et si tu veux prolonger à la maison, on a de la nutrition à emporter — des collations, ton smoothie et tes boissons pour les matins où tu ne peux pas passer au club. C'est un plus quand tu le veux, jamais une condition." },
+  { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
   { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
   { q: "Au bout de combien de temps je vois quelque chose ?", a: "On fait le point à la 10ᵉ visite : nouvelles mesures, nouvelles photos si tu veux. C'est là qu'on regarde ensemble le chemin parcouru." },
 ];
@@ -51,7 +51,7 @@ export function ClubLandingPage() {
               </div>
               <div className="cl-stats">
                 <div className="cl-stat"><div className="v">7h–11h</div><div className="l">à l'ouverture</div></div>
-                <div className="cl-stat"><div className="v">20 min</div><div className="l">à table</div></div>
+                <div className="cl-stat"><div className="v">Sans RDV</div><div className="l">tu passes quand tu veux</div></div>
                 <div className="cl-stat"><div className="v">Offert</div><div className="l">ton body scan</div></div>
               </div>
             </div>
@@ -126,7 +126,7 @@ export function ClubLandingPage() {
           <div style={{ maxWidth: 760 }}>
             <span className="cl-pill p">Ce qui est inclus</span>
             <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)", color: "#fff" }}>Ce que t'apporte <span className="cl-a-yellow">chaque matin.</span></h2>
-            <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout est dedans. Rien à ajouter au comptoir, rien à commander en plus.</p>
+            <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout le rituel est déjà dedans. Pas de supplément surprise au comptoir — juste, si tu veux, de la nutrition à emporter pour les matins où tu ne passes pas.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
             {INCLUS.map((c) => (
@@ -138,7 +138,7 @@ export function ClubLandingPage() {
               </div>
             ))}
           </div>
-          <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>Les compléments Herbalife utilisés au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.</p>
+          <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>Les boissons et compléments servis au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.</p>
         </div>
       </div>
 
@@ -187,19 +187,39 @@ export function ClubLandingPage() {
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--sage)" }}>1ère visite</div>
               <div className="cl-price" style={{ marginTop: 24, color: "var(--sage-d)" }}>Offert</div>
-              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>Une vingtaine de minutes</p>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>Ton body scan de découverte · 45 min</p>
+              <ul className="cl-feats">
+                <li>Ton <b>bilan bien-être</b> complet avec un coach</li>
+                <li>Ton <b>scan de composition corporelle</b></li>
+                <li>Ta boisson détox + ton smoothie, <b>offerts</b></li>
+                <li>Ton plan de départ, clair et à toi</li>
+                <li>Zéro engagement, tu repars libre</li>
+              </ul>
               <a className="cl-cta" style={{ marginTop: "auto", background: "transparent", border: "2px solid var(--sage)", color: "var(--sage-d)", boxShadow: "none" }} href={R}>Je réserve</a>
             </div>
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
               <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
-              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>8 € le petit-déjeuner · 10 visites</p>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>8 € la visite, tout compris</b></p>
+              <ul className="cl-feats">
+                <li>10 matins <b>complets</b> au club</li>
+                <li>Aloé + thé aux plantes + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
+                <li>Ta <b>pesée et ton point coach</b> chaque matin</li>
+                <li>L'accès au groupe du club</li>
+                <li>Le bilan mesures à la 10ᵉ visite</li>
+              </ul>
               <a className="cl-cta" style={{ marginTop: "auto" }} href={R}>Je commence</a>
             </div>
             <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
               <div className="cl-price" style={{ marginTop: 24, color: "var(--grad-a)" }}>185 €</div>
-              <p style={{ margin: "6px 0 0", color: "var(--yellow)" }}>6,17 € le petit-déjeuner — 23 % de moins · 30 visites</p>
+              <p style={{ margin: "6px 0 0", color: "var(--yellow)" }}>30 visites · <b>6,17 € la visite — 23 % de moins</b></p>
+              <ul className="cl-feats">
+                <li><b>Tout</b> ce qu'il y a dans la carte 10 visites</li>
+                <li><b>3× plus de matins</b> pour ancrer le rituel</li>
+                <li>Le <b>meilleur tarif par visite</b> du club</li>
+                <li>Fait pour t'installer dans la durée</li>
+              </ul>
               <a className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none" }} href={R}>Je commence</a>
             </div>
           </div>
@@ -229,7 +249,7 @@ export function ClubLandingPage() {
         <div className="cl-wrap cl-sec-lg cl-rv" style={{ textAlign: "center", maxWidth: 820 }}>
           <span className="cl-pill y">On se retrouve</span>
           <h2 style={{ marginTop: 24, fontSize: "clamp(42px,7vw,92px)", color: "#fff" }}>On se voit <span className="cl-a-yellow">demain matin ?</span></h2>
-          <p className="cl-lead" style={{ marginTop: 18, marginLeft: "auto", marginRight: "auto", maxWidth: 620 }}>Le body scan est offert et prend une vingtaine de minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
+          <p className="cl-lead" style={{ marginTop: 18, marginLeft: "auto", marginRight: "auto", maxWidth: 620 }}>Le body scan est offert et dure environ 45 minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 28 }}>
             <a className="cl-cta" href={R}>Mon body scan offert</a>
             <a className="cl-ghost" href={TEL}>Appeler le club</a>

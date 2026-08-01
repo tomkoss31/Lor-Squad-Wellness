@@ -2,16 +2,16 @@
 import { ClubShell, InnerHero, R } from "./ClubShell";
 
 const STEPS = [
-  { n: "01", t: "Le body scan — 20 min, offert", top: "cl-top-o", d: "On mesure ta composition corporelle (masse, eau, muscle), on parle de ton objectif, et on repart avec un point de départ clair. Ce que tu dois prévoir : une demi-heure, une tenue normale, rien d'autre.", note: "C'est offert et ça n'engage à rien." },
+  { n: "01", t: "Le body scan — 45 min, offert", top: "cl-top-o", d: "On mesure ta composition corporelle (masse, eau, muscle), on parle vraiment de ton objectif, et tu repars avec un point de départ clair et un plan à toi. Ce que tu dois prévoir : environ 45 minutes, une tenue normale, rien d'autre.", note: "C'est offert et ça n'engage à rien." },
   { n: "02", t: "Les deux premières semaines", top: "cl-top-p", d: "Tu viens le matin, tu prends ton rituel, on cale les dosages avec toi. C'est la période où l'habitude se pose : la même heure, le même geste, jusqu'à ce que ça devienne automatique." },
   { n: "03", t: "Le suivi quotidien", top: "cl-top-s", d: "Chaque matin : la pesée, deux valeurs au carnet, une phrase du coach. Rien de lourd, mais c'est ce fil quotidien qui fait la différence sur la durée." },
   { n: "04", t: "Le point des 10 visites", top: "cl-top-a", d: "On refait les mesures, de nouvelles photos si tu veux, et on regarde ensemble le chemin. Ensuite, tu choisis la suite — sans pression." },
 ];
 const QA = [
-  { q: "Combien ça coûte ?", a: "Le body scan est offert. Ensuite, carte de 10 visites à 80 € ou 30 à 185 €.", top: "cl-top-o" },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, la visite revient à 8 € — et tu y as tes trois boissons, ton smoothie nutritionnel (≈ 40 % de tes apports du jour) et ton point coach. Carte 10 visites à 80 €, ou 30 à 185 € (6,17 € la visite). Sans engagement.", top: "cl-top-o" },
   { q: "Je m'engage sur une durée ?", a: "Non. Pas d'abonnement ni de durée minimum. Tu utilises tes visites à ton rythme.", top: "cl-top-p" },
   { q: "Dois-je acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite.", top: "cl-top-s" },
-  { q: "Je n'ai pas le temps le matin.", a: "Le rituel prend ~20 min, le club est ouvert de 7h à 11h. Tu passes quand ça t'arrange.", top: "cl-top-a" },
+  { q: "Je n'ai pas le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Tes trois boissons se prennent à ton rythme — souvent un quart d'heure, mais rien ne te presse.", top: "cl-top-a" },
   { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. On part d'où tu en es, à ton rythme.", top: "cl-top-o" },
   { q: "Au bout de combien de temps ?", a: "On fait le point à la 10ᵉ visite : c'est là qu'on regarde le chemin parcouru.", top: "cl-top-p" },
 ];
