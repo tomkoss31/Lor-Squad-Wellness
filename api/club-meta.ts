@@ -11,9 +11,15 @@
 // gardent le SPA normal. La fonction renvoie un HTML minimal avec les balises OG
 // du club et redirige un éventuel humain vers la page.
 //
+// ⚠️ EDGE runtime (comme api/og/*) : le plan Vercel Hobby est plafonné à 12
+// fonctions SERVERLESS/déploiement, et le projet y est déjà. Les fonctions edge
+// ne comptent PAS dans ce quota → club-meta doit rester en edge.
+//
 // og:image = bannière 1200×630 générée par api/og/club. Pas de données dynamiques
 // (vitrine fixe) → juste une variation de titre selon la page.
 // =============================================================================
+
+export const config = { runtime: "edge" };
 
 function esc(input: unknown): string {
   return String(input ?? "")
@@ -43,12 +49,13 @@ function metaFor(path: string, sub: string): { title: string; description: strin
   };
 }
 
-export default async function handler(req: any, res: any) {
-  const path = String(req.query?.path ?? "club").trim();
-  const sub = String(req.query?.sub ?? "").trim().replace(/[^a-z-]/g, "");
+export default async function handler(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const path = (url.searchParams.get("path") ?? "club").trim();
+  const sub = (url.searchParams.get("sub") ?? "").trim().replace(/[^a-z-]/g, "");
 
-  const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "www.labase-nutrition.com");
-  const proto = String(req.headers["x-forwarded-proto"] ?? "https");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.labase-nutrition.com";
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
 
   const { title, description, realPath } = metaFor(path, sub);
   const pageUrl = `${proto}://${host}${realPath}`;
@@ -83,7 +90,11 @@ export default async function handler(req: any, res: any) {
 </body>
 </html>`;
 
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=86400");
-  res.status(200).send(html);
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400",
+    },
+  });
 }
