@@ -289,6 +289,11 @@ const ReserverClubPage = lazy(() =>
     default: module.ReserverClubPage,
   })),
 );
+const ClubLandingPage = lazy(() =>
+  import("./pages/ClubLandingPage").then((module) => ({
+    default: module.ClubLandingPage,
+  })),
+);
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -736,6 +741,9 @@ export default function App() {
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />
           <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
+          {/* Vitrine publique du club (étape 2). À terme = racine de
+              labase-nutrition.com (bascule host-based après ajout des photos). */}
+          <Route path="/club" element={<ClubLandingPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />

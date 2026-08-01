@@ -1,0 +1,72 @@
+/* =============================================================================
+   ClubLandingPage — vitrine publique du Breakfast Club (racine de
+   labase-nutrition.com à terme). Identité crème PROPRE au club, scopée sous
+   `.cl` pour battre les sélecteurs d'éléments nus de globals.css (h1-h4, a,
+   button…) — même précaution que ReserverClubPage. Copy = maquette v7.
+   ============================================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Syne:wght@600;700&display=swap");
+
+.cl {
+  --cream:#F7F1E6; --panel:#FBF8F2; --ink:#17201C; --green-d:#1E3330;
+  --green:#93A67E; --orange:#E0532A; --muted:#8A938D; --sub:#55605A;
+  --line:rgba(30,51,48,.12); --grad:linear-gradient(135deg,#FF7A2F,#FF1E3C);
+  background:var(--cream); color:var(--ink);
+  font-family:"Poppins",system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:1.55;
+}
+.cl *{box-sizing:border-box}
+.cl img{max-width:100%;display:block}
+.cl a{color:var(--orange);text-decoration:none}
+.cl h1,.cl h2,.cl h3{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.005em;line-height:.95;margin:0}
+.cl :focus-visible{outline:2px solid var(--green-d);outline-offset:3px}
+
+.cl-wrap{max-width:1140px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.cl-eyebrow{margin:0;font-weight:700;font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--orange)}
+.cl-lead{font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:var(--sub)}
+.cl section{padding:clamp(48px,7vw,88px) 0}
+
+.cl-ph{display:flex;align-items:center;justify-content:center;text-align:center;background:repeating-linear-gradient(-45deg,#EFE7D7,#EFE7D7 10px,#F4EEE1 10px,#F4EEE1 20px);border:1.5px dashed rgba(30,51,48,.22);border-radius:18px;color:#A99C82;font-size:13px;font-weight:600;min-height:200px;padding:20px}
+.cl-ph small{display:block;font-weight:500;margin-top:4px;color:#B8AC92}
+
+.cl-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:16px 30px;border:none;border-radius:999px;background:var(--grad);color:#fff;font-family:Poppins;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 18px 36px -14px rgba(255,45,60,.55);transition:filter .15s}
+.cl-cta:hover{filter:brightness(1.06);color:#fff}
+.cl-ghost{display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:14px 26px;border-radius:999px;border:1.5px solid var(--green-d);color:var(--green-d);font-weight:700;font-size:15px;background:transparent}
+.cl-card{background:#fff;border:1px solid rgba(30,51,48,.1);border-radius:22px;box-shadow:0 30px 54px -40px rgba(30,51,48,.28)}
+
+.cl-header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line);background:rgba(250,246,239,.92);backdrop-filter:blur(12px)}
+.cl-header .in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0}
+.cl-header .logo{height:38px;width:auto}
+
+.cl-obj{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.cl-obj a{display:flex;flex-direction:column;gap:6px;padding:15px 16px;border-radius:16px;background:#fff;border:2px solid rgba(30,51,48,.14);color:var(--ink);font-weight:600;font-size:15px;transition:border-color .15s,box-shadow .15s}
+.cl-obj a:hover{border-color:var(--orange);box-shadow:0 10px 24px -14px rgba(224,83,42,.4)}
+.cl-obj .ic{font-size:22px}
+
+.cl-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.cl-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--green-d)}
+
+.cl-grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:30px}
+.cl-grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:30px}
+
+.cl-incl{display:grid;grid-template-columns:24px 1fr;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
+.cl-incl .t{font-weight:700;font-size:16px}
+.cl-incl .d{font-size:14.5px;color:var(--sub);margin-top:2px}
+
+.cl details{border-top:1px solid var(--line);padding:6px 0}
+.cl summary{cursor:pointer;list-style:none;padding:16px 0;font-weight:700;font-size:16.5px;display:flex;justify-content:space-between;gap:14px}
+.cl summary::-webkit-details-marker{display:none}
+.cl summary::after{content:"+";color:var(--orange);font-size:22px;line-height:1}
+.cl details[open] summary::after{content:"–"}
+.cl details p{margin:0 0 16px;font-size:15px;color:var(--sub);line-height:1.6}
+
+.cl-price{font-family:"Anton";font-size:40px;color:var(--ink)}
+.cl-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--grad);color:#fff}
+
+.cl-footer{background:var(--green-d);color:#EFE9DD;padding:clamp(40px,6vw,64px) 0 28px}
+.cl-footer a{color:#EFE9DD}
+.cl-footer .logo{height:42px;width:auto}
+.cl-footrow{display:flex;flex-wrap:wrap;gap:22px 40px;font-size:14.5px}
+.cl-footrow .k{color:#9FB39A;font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+
+.cl-banner{background:var(--grad);color:#fff;text-align:center;font-family:"Syne";font-weight:700;letter-spacing:.12em;font-size:13px;padding:9px}
+
+@media (prefers-reduced-motion:reduce){.cl{scroll-behavior:auto}}
