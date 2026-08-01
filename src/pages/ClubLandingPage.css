@@ -57,6 +57,15 @@
 .cl-cta:active{transform:translateY(1px)}
 .cl-ghost{display:inline-flex;align-items:center;gap:9px;min-height:58px;padding:17px 30px;border-radius:999px;border:1px solid rgba(23,32,28,.24);color:var(--ink);font-weight:600;font-size:16px;background:transparent}
 .cl-band.dark .cl-ghost{border-color:rgba(244,239,228,.34);color:var(--on-dark)}
+/* Les CTA sont des <a> : la règle .cl a{color:var(--link)} (0,1,1) écrasait leur
+   couleur → texte orange sur fond orange, illisible. On rétablit avec plus de
+   spécificité (0,2,1). Les surcharges inline des cartes tarifs restent gagnantes. */
+.cl a.cl-cta,.cl button.cl-cta{color:#fff}
+.cl a.cl-hcta{color:#fff}
+.cl a.cl-ghost{color:var(--ink)}
+.cl-band.dark a.cl-ghost{color:var(--on-dark)}
+.cl a.cl-sticky-main{color:var(--dark)}
+.cl a.cl-sticky-call{color:var(--yellow)}
 
 /* Cartes : bordure d'accent + grande ombre douce */
 .cl-card{background:#fff;border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
