@@ -125,6 +125,31 @@
 .cl-footgrid .k{color:var(--yellow);font-size:13px;text-transform:uppercase;letter-spacing:.26em;font-weight:600;margin-bottom:12px}
 .cl-footgrid a{color:var(--on-dark-2)} .cl-footgrid a:hover{color:#fff}
 
+/* ── NAV MOBILE / iOS ─────────────────────────────────────────────────────── */
+.cl-burger{display:none;width:44px;height:44px;align-items:center;justify-content:center;border:1px solid rgba(30,51,48,.18);border-radius:12px;background:#fff;color:var(--ink);cursor:pointer;flex:none}
+.cl-menu{position:fixed;inset:0;z-index:60;background:var(--cream);display:flex;flex-direction:column;padding:14px clamp(18px,6vw,32px) calc(18px + env(safe-area-inset-bottom));overflow-y:auto}
+.cl-menu .cl-burger{display:inline-flex}
+.cl-menu-top{display:flex;align-items:center;justify-content:space-between}
+.cl-menu-nav{display:flex;flex-direction:column;gap:2px;margin-top:22px;flex:1}
+.cl-menu-nav a{font-family:"Anton",sans-serif;text-transform:uppercase;letter-spacing:.01em;font-size:clamp(26px,7vw,34px);line-height:1;color:var(--ink);padding:16px 0;border-bottom:1px solid var(--line)}
+.cl-menu-nav a.on{color:var(--orange)}
+.cl-menu-foot{padding-top:18px}
+
+/* barre d'action collée en bas — mobile uniquement */
+.cl-sticky{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(30,51,48,.97);backdrop-filter:blur(14px);border-top:1px solid rgba(201,168,76,.45)}
+.cl-sticky-main{flex:1;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--orange);color:var(--dark);font-weight:700;font-size:16px}
+.cl-sticky-main:hover{color:var(--dark)}
+.cl-sticky-call{flex:none;display:flex;align-items:center;justify-content:center;width:52px;min-height:52px;border-radius:999px;border:1px solid rgba(244,239,228,.34);color:var(--yellow)}
+
+@media (max-width:860px){
+  .cl-nav{display:none}
+  .cl-hcta-desk{display:none}
+  .cl-burger{display:inline-flex}
+  .cl-sticky{display:flex}
+  .cl-band.foot{padding-bottom:74px}     /* dégager la barre collée */
+  .cl-header .bar{padding:10px 0}
+}
+
 /* révélation au scroll — progressive, respecte reduced-motion */
 @keyframes clRise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:no-preference){

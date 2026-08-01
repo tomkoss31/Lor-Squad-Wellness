@@ -1,10 +1,11 @@
 // =============================================================================
 // ClubShell — coquille partagée du site public Breakfast Club (header + nav +
-// footer + wrapper crème `.cl`). Utilisée par la landing et les 6 pages internes.
-// Reproduction fidèle de la maquette v7. CSS = ../ClubLandingPage.css.
+// footer + wrapper crème `.cl`). Reproduction fidèle de la v7.
+// Nav MOBILE/iOS : menu plein écran (hamburger) + barre d'action collée en bas
+// (« Réserver » / « Appeler ») < 860px, avec safe-area. Nav inline ≥ 860px.
 // =============================================================================
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
 
@@ -21,6 +22,7 @@ const NAV: Array<{ to: string; label: string }> = [
   { to: "/club/comment-ca-se-passe", label: "Comment ça se passe" },
   { to: "/club/resultats", label: "Résultats" },
   { to: "/club/nous", label: "Nous" },
+  { to: "/club/rejoindre", label: "Rejoindre l'équipe" },
 ];
 
 /** Emplacement photo encadré (backdrop teinté décalé + slot arrondi). */
@@ -36,24 +38,52 @@ export function Slot({ ratio, label, sub, frame }: { ratio: string; label: strin
 
 export function ClubShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="cl">
       <div className="cl-header">
         <div className="cl-wrap">
           <div className="bar">
-            <Link className="cl-lock" to="/club">
+            <Link className="cl-lock" to="/club" onClick={() => setOpen(false)}>
               <img src={MARK} alt="" aria-hidden="true" />
               <span><span className="n1">Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
             </Link>
-            <a className="cl-hcta" href={R}>Je commence</a>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <a className="cl-hcta cl-hcta-desk" href={R}>Je commence</a>
+              <button type="button" className="cl-burger" aria-label="Ouvrir le menu" aria-expanded={open} onClick={() => setOpen(true)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+              </button>
+            </div>
           </div>
           <nav className="cl-nav" aria-label="Navigation">
-            {NAV.map((n) => (
+            {NAV.slice(0, 6).map((n) => (
               <Link key={n.to} to={n.to} className={pathname === n.to ? "on" : undefined}>{n.label}</Link>
             ))}
           </nav>
         </div>
       </div>
+
+      {/* Menu plein écran mobile */}
+      {open ? (
+        <div className="cl-menu" role="dialog" aria-modal="true" aria-label="Menu">
+          <div className="cl-menu-top">
+            <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ height: 30 }} />
+            <button type="button" className="cl-burger" aria-label="Fermer le menu" onClick={() => setOpen(false)}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+          <nav className="cl-menu-nav" aria-label="Navigation">
+            {NAV.map((n) => (
+              <Link key={n.to} to={n.to} className={pathname === n.to ? "on" : undefined} onClick={() => setOpen(false)}>{n.label}</Link>
+            ))}
+          </nav>
+          <div className="cl-menu-foot">
+            <a className="cl-cta" style={{ width: "100%" }} href={R} onClick={() => setOpen(false)}>Réserver mon body scan</a>
+            <a className="cl-ghost" style={{ width: "100%", marginTop: 10 }} href={TEL}>Appeler · 06 79 44 87 59</a>
+          </div>
+        </div>
+      ) : null}
 
       {children}
 
@@ -84,6 +114,14 @@ export function ClubShell({ children }: { children: ReactNode }) {
             <span>The Breakfast Club by La Base · Verdun · <Link to="/club/rejoindre" style={{ color: "var(--on-dark-3)" }}>Ouvrir un club</Link></span>
           </div>
         </div>
+      </div>
+
+      {/* Barre d'action collée en bas — mobile uniquement (safe-area iOS) */}
+      <div className="cl-sticky">
+        <a className="cl-sticky-main" href={R}>Réserver un matin</a>
+        <a className="cl-sticky-call" href={TEL} aria-label="Appeler le club">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z" /></svg>
+        </a>
       </div>
     </div>
   );
