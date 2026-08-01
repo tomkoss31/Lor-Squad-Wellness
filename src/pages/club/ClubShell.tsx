@@ -8,6 +8,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
+import { useClubHead } from "./useClubHead";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
 const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
@@ -42,6 +43,7 @@ export function Slot({ ratio, label, sub, frame }: { ratio: string; label: strin
 export function ClubShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  useClubHead("The Breakfast Club · Verdun");
 
   return (
     <div className="cl">

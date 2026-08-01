@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { useClubHead } from "./club/useClubHead";
 import "./ReserverClubPage.css";
 
 type Screen = "capture" | "dispo" | "confirm";
@@ -46,6 +47,7 @@ export function ReserverClubPage() {
   const { clubSlug } = useParams<{ clubSlug?: string }>();
   const slug = (clubSlug ?? "verdun").trim() || "verdun";
   const [searchParams] = useSearchParams();
+  useClubHead("Réserver ma séance · The Breakfast Club");
 
   const [screen, setScreen] = useState<Screen>("capture");
 

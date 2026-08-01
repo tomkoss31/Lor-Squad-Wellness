@@ -61,6 +61,50 @@
       "destination": "/api/boutique-meta?slug=:slug"
     },
     {
+      "source": "/club/:sub",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=club&sub=:sub"
+    },
+    {
+      "source": "/club",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=club"
+    },
+    {
+      "source": "/reserver/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=reserver"
+    },
+    {
+      "source": "/reserver",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=reserver"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
