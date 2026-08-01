@@ -35,7 +35,9 @@ export function ClubLandingPage() {
   return (
     <ClubShell>
       {/* HERO */}
-      <div id="top" className="cl-band">
+      <div id="top" className="cl-band cl-rel">
+        <div className="cl-blob" aria-hidden="true" style={{ width: 400, height: 400, background: "var(--yellow)", opacity: .34, top: -150, left: -120 }} />
+        <div className="cl-dots" aria-hidden="true" style={{ width: 260, height: 320, top: 70, right: 0 }} />
         <div className="cl-wrap" style={{ paddingTop: "clamp(64px,12vw,120px)", paddingBottom: "clamp(56px,8vw,96px)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "clamp(36px,5vw,72px)", alignItems: "center" }}>
             <div>
@@ -117,7 +119,9 @@ export function ClubLandingPage() {
       </div>
 
       {/* CE QUI EST INCLUS */}
-      <div id="inclus" className="cl-band dark">
+      <div id="inclus" className="cl-band dark cl-rel">
+        <div className="cl-blob" aria-hidden="true" style={{ width: 440, height: 440, background: "var(--sage)", opacity: .16, top: -130, right: -100 }} />
+        <div className="cl-dots" aria-hidden="true" style={{ width: 220, height: 260, bottom: 30, left: 10 }} />
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 760 }}>
             <span className="cl-pill p">Ce qui est inclus</span>
@@ -139,7 +143,8 @@ export function ClubLandingPage() {
       </div>
 
       {/* COMMUNAUTÉ */}
-      <div id="equipe" className="cl-band">
+      <div id="equipe" className="cl-band cl-rel">
+        <div className="cl-blob b" aria-hidden="true" style={{ width: 380, height: 380, background: "var(--peach)", opacity: .40, bottom: -150, left: -110 }} />
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
             <div style={{ order: 2 }}><Slot ratio="4/5" label="Mélanie & Thomas" sub="l'équipe au club" frame="peach" /></div>
