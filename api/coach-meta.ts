@@ -13,7 +13,14 @@
 //
 // Données : RPC publique get_coach_credibility_by_slug (anon, SECURITY DEFINER,
 // champs safe uniquement). Chantier #13-B (2026-06-08).
+//
+// ⚠️ EDGE runtime (nettoyage 2026-08-01) : le plan Vercel Hobby plafonne à 12
+// fonctions SERVERLESS/déploiement. Les fonctions OG (pur fetch → HTML) n'ont
+// aucune raison d'être serverless → passées en edge pour sortir du quota.
+// Sortie HTML strictement identique à la version serverless précédente.
 // =============================================================================
+
+export const config = { runtime: "edge" };
 
 const FALLBACK_IMAGE =
   "https://www.labase360.fr/brand/labase360/og-image-1200x630.png";
@@ -36,12 +43,13 @@ function normalizeSlug(input: string): string {
     .trim();
 }
 
-export default async function handler(req: any, res: any) {
-  const rawSlug = String(req.query?.slug ?? "").trim();
+export default async function handler(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const rawSlug = String(url.searchParams.get("slug") ?? "").trim();
   const slug = normalizeSlug(rawSlug);
 
-  const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "www.labase360.fr");
-  const proto = String(req.headers["x-forwarded-proto"] ?? "https");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.labase360.fr";
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
   const pageUrl = `${proto}://${host}/coach/${encodeURIComponent(slug)}`;
 
   // Valeurs par défaut (coach inconnu / RPC indispo) → OG générique brandé.
@@ -116,8 +124,12 @@ export default async function handler(req: any, res: any) {
 </body>
 </html>`;
 
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  // Cache court côté CDN : les previews se rafraîchissent sans être figées.
-  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=86400");
-  res.status(200).send(html);
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // Cache court côté CDN : les previews se rafraîchissent sans être figées.
+      "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400",
+    },
+  });
 }
