@@ -74,9 +74,9 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
     <div style="height:18px;"></div>
 
     <div style="background:#101A18;border:1px solid rgba(45,212,191,.22);border-radius:16px;padding:18px 20px;">
-      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${TEAL};font-weight:700;">🥤 Club Nutrition</div>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${TEAL};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
       <div style="font-size:17px;font-weight:700;color:${CREAM};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${MUTED};margin:0 0 14px;">À ton prochain rendez-vous, participe au tirage du Club et repars avec ta boisson offerte.</p>
+      <p style="font-size:13.5px;line-height:1.5;color:${MUTED};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
       ${btn(CONTEST_URL, "Je tente ma chance →", GOLD, "#1A1407")}
     </div>
 

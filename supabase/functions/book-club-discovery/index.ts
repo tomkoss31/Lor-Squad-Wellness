@@ -28,7 +28,22 @@ import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
+// Mélanie veut chaque lead entrant par email (elle ne consulte pas le CRM).
+const LEAD_NOTIFY_EMAIL = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const OBJECTIF_LABELS: Record<string, string> = {
+  poids: "⚖️ Perdre du poids",
+  muscle: "💪 Reprendre du muscle",
+  energie: "⚡ Retrouver de l'énergie",
+};
+function objectifLabel(code: string | null): string {
+  if (!code) return "—";
+  return OBJECTIF_LABELS[code] ?? code;
+}
+function esc(s: string): string {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+}
 
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -42,13 +57,13 @@ function parisHourLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
     });
     return res.ok;
   } catch {
@@ -64,9 +79,14 @@ serve(async (req: Request) => {
     clubSlug?: string;
     slotStart?: string;
     firstName?: string;
+    lastName?: string;
     contact?: string;
+    phone?: string;
+    city?: string;
     peopleCount?: number;
     partnerFirstName?: string;
+    partnerLastName?: string;
+    partnerObjectif?: string;
     objectif?: string;
   };
   try {
@@ -77,9 +97,14 @@ serve(async (req: Request) => {
 
   const clubSlug = (body.clubSlug ?? "").trim();
   const firstName = (body.firstName ?? "").trim();
+  const lastName = (body.lastName ?? "").trim();
   const contact = (body.contact ?? "").trim() || null;
+  const phone = (body.phone ?? "").trim();
+  const city = (body.city ?? "").trim();
   const peopleCount = body.peopleCount === 2 ? 2 : 1;
   const partner = (body.partnerFirstName ?? "").trim() || null;
+  const partnerLast = (body.partnerLastName ?? "").trim();
+  const partnerObjectif = (body.partnerObjectif ?? "").trim();
   const objectif = (body.objectif ?? "").trim() || null;
 
   if (!clubSlug) return jsonResponse({ success: false, error: "club_requis" }, 400);
@@ -156,7 +181,7 @@ serve(async (req: Request) => {
       const html = rdvEmailHtml({
         kind: "confirm",
         firstName,
-        coachName: `l'équipe du ${clubName}`,
+        coachName: "un coach du Breakfast Club",
         dateLabel: parisDateLabel(slotStart.toISOString()),
         hour: parisHourLabel(slotStart.toISOString()),
         location,
@@ -171,6 +196,59 @@ serve(async (req: Request) => {
     } catch (_e) {
       // email best-effort — la résa est déjà enregistrée
     }
+  }
+
+  // 5. Notif email INTERNE à l'équipe (Mélanie ne consulte pas le CRM) — non bloquant
+  try {
+    const dateLabel = parisDateLabel(slotStart.toISOString());
+    const hour = parisHourLabel(slotStart.toISOString());
+    const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+    const location = `11 rue Saint Pierre, ${String((club.city as string) ?? "Verdun").trim() || "Verdun"}`;
+
+    const row = (k: string, v: string) =>
+      `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
+    const partnerBlock = peopleCount === 2
+      ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid #E7E1D6;">
+           <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7A8099;font-weight:700;margin-bottom:6px;">👫 Accompagné·e de</div>
+           <table style="border-collapse:collapse;">
+             ${row("Prénom / Nom", esc(`${partner ?? "—"}${partnerLast ? " " + partnerLast : ""}`))}
+             ${row("Son objectif", esc(objectifLabel(partnerObjectif || null)))}
+           </table>
+         </div>`
+      : "";
+
+    const internalHtml = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
+    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">☕ Breakfast Club · Verdun</div>
+    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau lead — séance découverte</h1>
+    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${esc(fullName)} vient de réserver ${peopleCount === 2 ? "pour 2 personnes" : "une place"} le <b>${esc(dateLabel)} · ${esc(hour)}</b>.</p>
+    <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
+      <table style="border-collapse:collapse;width:100%;">
+        ${row("Prénom / Nom", esc(fullName))}
+        ${row("Objectif", esc(objectifLabel(objectif)))}
+        ${row("Email", contact ? esc(contact) : "—")}
+        ${row("Téléphone", phone ? esc(phone) : "—")}
+        ${row("Ville", city ? esc(city) : "—")}
+        ${row("Nombre", peopleCount === 2 ? "À deux (2 pers.)" : "Seul·e")}
+        ${row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`)}
+        ${row("Lieu", esc(location))}
+      </table>
+      ${partnerBlock}
+    </div>
+    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">Réponds à cet email pour joindre directement le lead. Retrouve-le aussi dans le CRM.</p>
+  </div>
+</body></html>`.trim();
+
+    await sendViaResend(
+      LEAD_NOTIFY_EMAIL,
+      `☕ Nouveau lead — ${fullName}${peopleCount === 2 ? " (+1)" : ""} · ${dateLabel} ${hour}`,
+      internalHtml,
+      contact || undefined, // reply-to = le lead, pour répondre en un clic
+    );
+  } catch (_e) {
+    // notif interne best-effort — la résa est déjà enregistrée
   }
 
   return jsonResponse({ success: true, id: bookingId, confirmEmailSent });
