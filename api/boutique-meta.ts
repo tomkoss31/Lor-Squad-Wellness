@@ -9,7 +9,13 @@
 //
 // Données : RPC publique get_boutique_by_slug (anon) + table shop_products.
 // Chantier Boutique HL SKIN (audit Claude Design, 2026-07-10).
+//
+// ⚠️ EDGE runtime (nettoyage 2026-08-01) : plan Hobby plafonné à 12 fonctions
+// SERVERLESS. Les fonctions OG (fetch → HTML) passent en edge pour sortir du
+// quota. Sortie HTML strictement identique à la version serverless précédente.
 // =============================================================================
+
+export const config = { runtime: "edge" };
 
 const FALLBACK_IMAGE = "https://www.labase360.fr/brand/labase360/og-image-1200x630.png";
 
@@ -31,12 +37,13 @@ function normalizeSlug(input: string): string {
     .trim();
 }
 
-export default async function handler(req: any, res: any) {
-  const slug = normalizeSlug(String(req.query?.slug ?? "").trim());
-  const productSlug = String(req.query?.product ?? "").trim().toLowerCase();
+export default async function handler(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const slug = normalizeSlug(String(url.searchParams.get("slug") ?? "").trim());
+  const productSlug = String(url.searchParams.get("product") ?? "").trim().toLowerCase();
 
-  const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "www.labase360.fr");
-  const proto = String(req.headers["x-forwarded-proto"] ?? "https");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.labase360.fr";
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
   const pageUrl = productSlug
     ? `${proto}://${host}/boutique/${encodeURIComponent(slug)}/produit/${encodeURIComponent(productSlug)}`
     : `${proto}://${host}/boutique/${encodeURIComponent(slug)}`;
@@ -117,7 +124,11 @@ export default async function handler(req: any, res: any) {
 </body>
 </html>`;
 
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=86400");
-  res.status(200).send(html);
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400",
+    },
+  });
 }
