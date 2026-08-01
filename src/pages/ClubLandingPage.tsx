@@ -6,7 +6,8 @@
 
 import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
 
-const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
+// Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
+const WORDMARK = "/brand/breakfast-club/logo-heart.png";
 
 const RITUEL = [
   { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },

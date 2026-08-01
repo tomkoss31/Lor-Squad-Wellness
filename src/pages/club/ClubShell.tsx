@@ -11,6 +11,9 @@ import "../ClubLandingPage.css";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
 const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
+// Wordmark AVEC le cœur rouge — pour les fonds clairs (le footer inverse en blanc,
+// où le cœur rouge ne survivrait pas à l'inversion → il garde WORDMARK).
+const WORDMARK_HEART = "/brand/breakfast-club/logo-heart.png";
 export const R = "/reserver?utm_source=site";
 export const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
 export const TEL = "tel:+33679448759";
@@ -68,7 +71,7 @@ export function ClubShell({ children }: { children: ReactNode }) {
       {open ? (
         <div className="cl-menu" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="cl-menu-top">
-            <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ height: 30 }} />
+            <img src={WORDMARK_HEART} alt="The Breakfast Club by La Base" style={{ height: 34 }} />
             <button type="button" className="cl-burger" aria-label="Fermer le menu" onClick={() => setOpen(false)}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
