@@ -1,27 +1,12 @@
 // =============================================================================
-// ClubLandingPage — vitrine publique du Breakfast Club (Verdun).
-// Reproduction FIDÈLE de la maquette v7 (page d'accueil). Route /club ; deviendra
-// la racine de labase-nutrition.com. Copy v7. Photos = slots encadrés « 📷 » à
-// remplir. CTA → tunnel /reserver. Pages internes (le-club, le-rituel, …) = à venir.
+// ClubLandingPage — accueil du site public Breakfast Club (Verdun).
+// Reproduction fidèle de la v7. Header/footer/nav = <ClubShell>. Copy v7.
+// Photos = slots encadrés « 📷 » à remplir. CTA → tunnel /reserver.
 // =============================================================================
 
-import "./ClubLandingPage.css";
+import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
 
-const MARK = "/brand/breakfast-club/logo-mark.png";
 const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
-const R = "/reserver?utm_source=site";
-const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
-const TEL = "tel:+33679448759";
-
-function Slot({ ratio, label, sub, frame }: { ratio: string; label: string; sub?: string; frame?: string }) {
-  return (
-    <div className={`cl-frame${frame ? " " + frame : ""}`}>
-      <div className="cl-slot" style={{ aspectRatio: ratio }}>
-        <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
-      </div>
-    </div>
-  );
-}
 
 const RITUEL = [
   { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },
@@ -29,7 +14,6 @@ const RITUEL = [
   { n: "03", t: "Le smoothie", d: "Le vrai repas. Protéines et nutriments : le petit-déjeuner qui cale sans peser.", top: "cl-top-s" },
   { n: "04", t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach.", top: "cl-top-a" },
 ];
-
 const INCLUS = [
   { n: "01", ic: "🥤", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
   { n: "02", ic: "⚖️", t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger.", top: "cl-top-p" },
@@ -38,7 +22,6 @@ const INCLUS = [
   { n: "05", ic: "📸", t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite.", top: "cl-top-o" },
   { n: "06", ic: "🤝", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
-
 const FAQ = [
   { q: "Combien ça coûte ?", a: "Le body scan de découverte est offert. Ensuite, si tu veux continuer : une carte de 10 visites à 80 € (8 €/petit-déjeuner) ou 30 visites à 185 € (6,17 €/petit-déjeuner). Rien d'autre.", open: true },
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
@@ -50,38 +33,15 @@ const FAQ = [
 
 export function ClubLandingPage() {
   return (
-    <div className="cl">
-      {/* ═══ HEADER ═══ */}
-      <div className="cl-header">
-        <div className="cl-wrap">
-          <div className="bar">
-            <a className="cl-lock" href="#top">
-              <img src={MARK} alt="" aria-hidden="true" />
-              <span><span className="n1">Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
-            </a>
-            <a className="cl-hcta" href={R}>Je commence</a>
-          </div>
-          <nav className="cl-nav" aria-label="Navigation">
-            <a className="on" href="#top">Accueil</a>
-            <a href="#philosophie">Le club</a>
-            <a href="#rituel">Le rituel</a>
-            <a href="#inclus">Ce qui est inclus</a>
-            <a href="#resultats">Résultats</a>
-            <a href="#equipe">Nous</a>
-          </nav>
-        </div>
-      </div>
-
-      {/* ═══ HERO ═══ */}
+    <ClubShell>
+      {/* HERO */}
       <div id="top" className="cl-band">
         <div className="cl-wrap" style={{ paddingTop: "clamp(64px,12vw,120px)", paddingBottom: "clamp(56px,8vw,96px)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "clamp(36px,5vw,72px)", alignItems: "center" }}>
             <div>
               <span className="cl-pill y">Ouverture prochaine · Verdun</span>
               <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: "min(460px,84%)", marginTop: "clamp(22px,3vw,32px)" }} />
-              <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>
-                Le club où l'on t'attend,<br /><span className="cl-a-sage">tous les matins.</span>
-              </h1>
+              <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>Le club où l'on t'attend,<br /><span className="cl-a-sage">tous les matins.</span></h1>
               <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>On ne change pas ta vie. On change ton premier repas. Ce n'est pas la volonté qui te manque — c'est un rendez-vous.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28 }}>
                 <a className="cl-cta" href={R}>Réserver mon body scan</a>
@@ -98,7 +58,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ OBJECTIF STRIP ═══ */}
+      {/* OBJECTIF STRIP */}
       <div className="cl-band">
         <div className="cl-wrap" style={{ maxWidth: 1000, paddingTop: "clamp(20px,3vw,30px)", paddingBottom: "clamp(48px,6vw,72px)", textAlign: "center" }}>
           <p style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".28em", textTransform: "uppercase", color: "var(--muted2)", margin: "0 0 16px" }}>Choisis ton objectif</p>
@@ -110,7 +70,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ INFO BAR (dark) ═══ */}
+      {/* INFO BAR */}
       <div className="cl-band dark">
         <div className="cl-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "14px clamp(28px,5vw,64px)", paddingTop: "clamp(22px,3vw,30px)", paddingBottom: "clamp(22px,3vw,30px)" }}>
           <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>11 rue Saint Pierre, Verdun</div></div>
@@ -119,7 +79,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ PHILOSOPHIE ═══ */}
+      {/* PHILOSOPHIE */}
       <div id="philosophie" className="cl-band">
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
@@ -136,7 +96,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ LE RITUEL (4 cartes) ═══ */}
+      {/* LE RITUEL */}
       <div id="rituel" className="cl-band">
         <div className="cl-wrap" style={{ paddingBottom: "clamp(64px,10vw,120px)" }}>
           <div className="cl-rv" style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
@@ -156,7 +116,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ CE QUI EST INCLUS (dark, 6 cartes) ═══ */}
+      {/* CE QUI EST INCLUS */}
       <div id="inclus" className="cl-band dark">
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 760 }}>
@@ -174,13 +134,11 @@ export function ClubLandingPage() {
               </div>
             ))}
           </div>
-          <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>
-            Les compléments Herbalife utilisés au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.
-          </p>
+          <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>Les compléments Herbalife utilisés au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.</p>
         </div>
       </div>
 
-      {/* ═══ COMMUNAUTÉ ═══ */}
+      {/* COMMUNAUTÉ */}
       <div id="equipe" className="cl-band">
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
@@ -195,7 +153,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ RÉSULTATS (teaser + bandeau note) ═══ */}
+      {/* RÉSULTATS */}
       <div id="resultats" className="cl-band">
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 720 }}>
@@ -212,7 +170,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ FORMULES (bande alt) ═══ */}
+      {/* FORMULES */}
       <div id="formule" className="cl-band alt">
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
@@ -244,7 +202,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ FAQ ═══ */}
+      {/* FAQ */}
       <div className="cl-band">
         <div className="cl-wrap cl-sec cl-rv" style={{ maxWidth: 860 }}>
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 32px" }}>
@@ -261,7 +219,7 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* ═══ CTA FINAL (dark) ═══ */}
+      {/* CTA FINAL */}
       <div className="cl-band dark">
         <div className="cl-wrap cl-sec-lg cl-rv" style={{ textAlign: "center", maxWidth: 820 }}>
           <span className="cl-pill y">On se retrouve</span>
@@ -273,32 +231,6 @@ export function ClubLandingPage() {
           </div>
         </div>
       </div>
-
-      {/* ═══ FOOTER ═══ */}
-      <div className="cl-band foot">
-        <div className="cl-wrap" style={{ paddingTop: "clamp(48px,6vw,80px)", paddingBottom: 28 }}>
-          <div className="cl-footgrid">
-            <div>
-              <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: 210, filter: "brightness(0) invert(1)" }} />
-              <p style={{ color: "var(--on-dark-3)", fontSize: 16, marginTop: 16, maxWidth: "34ch" }}>Le club de petit-déjeuner de Verdun. Nutrition, énergie, communauté.</p>
-            </div>
-            <div>
-              <div className="k">Le club</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <a href="#rituel">Le rituel</a><a href="#inclus">Ce qui est inclus</a><a href="#formule">Les formules</a><a href={R}>Réserver</a>
-              </div>
-            </div>
-            <div>
-              <div className="k">Nous trouver</div>
-              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br /><a href={TEL}>06 79 44 87 59</a></div>
-            </div>
-          </div>
-          <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(244,239,228,.14)", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--on-dark-3)" }}>
-            <span style={{ letterSpacing: ".14em", fontWeight: 700 }}>NUTRITION · ÉNERGIE · COMMUNAUTÉ</span>
-            <span>The Breakfast Club by La Base · Verdun</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    </ClubShell>
   );
 }

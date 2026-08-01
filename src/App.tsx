@@ -294,6 +294,12 @@ const ClubLandingPage = lazy(() =>
     default: module.ClubLandingPage,
   })),
 );
+const ClubLeClubPage = lazy(() => import("./pages/club/ClubLeClubPage").then((m) => ({ default: m.ClubLeClubPage })));
+const ClubRituelPage = lazy(() => import("./pages/club/ClubRituelPage").then((m) => ({ default: m.ClubRituelPage })));
+const ClubParcoursPage = lazy(() => import("./pages/club/ClubParcoursPage").then((m) => ({ default: m.ClubParcoursPage })));
+const ClubResultatsPage = lazy(() => import("./pages/club/ClubResultatsPage").then((m) => ({ default: m.ClubResultatsPage })));
+const ClubNousPage = lazy(() => import("./pages/club/ClubNousPage").then((m) => ({ default: m.ClubNousPage })));
+const ClubRejoindrePage = lazy(() => import("./pages/club/ClubRejoindrePage").then((m) => ({ default: m.ClubRejoindrePage })));
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -744,6 +750,12 @@ export default function App() {
           {/* Vitrine publique du club (étape 2). À terme = racine de
               labase-nutrition.com (bascule host-based après ajout des photos). */}
           <Route path="/club" element={<ClubLandingPage />} />
+          <Route path="/club/le-club" element={<ClubLeClubPage />} />
+          <Route path="/club/le-rituel" element={<ClubRituelPage />} />
+          <Route path="/club/comment-ca-se-passe" element={<ClubParcoursPage />} />
+          <Route path="/club/resultats" element={<ClubResultatsPage />} />
+          <Route path="/club/nous" element={<ClubNousPage />} />
+          <Route path="/club/rejoindre" element={<ClubRejoindrePage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
