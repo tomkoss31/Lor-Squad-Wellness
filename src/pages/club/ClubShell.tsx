@@ -5,7 +5,7 @@
 // (« Réserver » / « Appeler ») < 860px, avec safe-area. Nav inline ≥ 860px.
 // =============================================================================
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
 import { useClubHead } from "./useClubHead";
@@ -44,6 +44,12 @@ export function ClubShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   useClubHead("The Breakfast Club · Verdun");
+
+  // Reset du scroll au changement de page interne (React Router ne le fait pas).
+  // Garde sur le hash : préserve les ancres type « Voir le rituel » (#rituel).
+  useEffect(() => {
+    if (!window.location.hash) window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div className="cl">

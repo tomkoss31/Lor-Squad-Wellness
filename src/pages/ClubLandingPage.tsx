@@ -50,6 +50,11 @@ export function ClubLandingPage() {
                 <a className="cl-cta" href={R}>Réserver mon body scan</a>
                 <a className="cl-ghost" href="#rituel">Voir le rituel</a>
               </div>
+              <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 14.5 }}>
+                <span aria-hidden="true" style={{ color: "var(--gold,#C9A84C)", letterSpacing: 2 }}>★★★★★</span>
+                <b style={{ color: "var(--ink)" }}>4,9/5</b>
+                <span style={{ color: "var(--muted2)" }}>sur Google · 0 € · sans engagement</span>
+              </div>
               <div className="cl-stats">
                 <div className="cl-stat"><div className="v">7h–11h</div><div className="l">à l'ouverture</div></div>
                 <div className="cl-stat"><div className="v">Sans RDV</div><div className="l">tu passes quand tu veux</div></div>
@@ -200,8 +205,12 @@ export function ClubLandingPage() {
             </div>
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
-              <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
-              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>8 € la visite, tout compris</b></p>
+              <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <div className="cl-price" style={{ color: "var(--orange-h)" }}>80 €</div>
+                <div className="cl-price" style={{ fontSize: 30, color: "var(--muted2)", textDecoration: "line-through", opacity: .6 }}>95 €</div>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--orange-h)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers</div>
+              <p style={{ margin: "10px 0 0", color: "var(--muted2)" }}>10 visites · <b>8 € la visite, tout compris</b></p>
               <ul className="cl-feats">
                 <li>10 matins <b>complets</b> au club</li>
                 <li>Aloé + thé aux plantes + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
@@ -213,8 +222,12 @@ export function ClubLandingPage() {
             </div>
             <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
-              <div className="cl-price" style={{ marginTop: 24, color: "var(--grad-a)" }}>185 €</div>
-              <p style={{ margin: "6px 0 0", color: "var(--yellow)" }}>30 visites · <b>6,17 € la visite — 23 % de moins</b></p>
+              <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <div className="cl-price" style={{ color: "var(--grad-a)" }}>185 €</div>
+                <div className="cl-price" style={{ fontSize: 30, color: "var(--on-dark-3)", textDecoration: "line-through", opacity: .8 }}>210 €</div>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers</div>
+              <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>6,17 € la visite — 23 % de moins</b></p>
               <ul className="cl-feats">
                 <li><b>Tout</b> ce qu'il y a dans la carte 10 visites</li>
                 <li><b>3× plus de matins</b> pour ancrer le rituel</li>
