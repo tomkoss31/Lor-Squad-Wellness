@@ -54,7 +54,7 @@ export function ConfirmDialog({
 
   const toneAccent =
     tone === "danger" ? "var(--ls-coral)" :
-    tone === "warning" ? "var(--ls-gold)" :
+    tone === "warning" ? "var(--ls-coral)" :
     "var(--ls-teal)";
   const toneEmoji = tone === "danger" ? "⚠️" : tone === "warning" ? "💡" : "✨";
 

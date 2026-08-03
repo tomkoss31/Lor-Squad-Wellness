@@ -49,7 +49,7 @@ interface NewsletterPublic {
 
 // Palette light cream du mockup (pas le theme app)
 const PV = {
-  gold: "#C9A84C",
+  gold: "var(--ls-gold)",
   goldLight: "#E5C97D",
   teal: "#2DD4BF",
   tealDark: "#0F766E",
@@ -595,7 +595,7 @@ function PublicSection({
             padding: "16px 18px",
             background: "linear-gradient(135deg, #FAEEDA 0%, #F4DFA8 100%)",
             borderRadius: 12,
-            border: "1px solid rgba(201,168,76,0.3)",
+            border: "1px solid rgba(var(--ls-gold-rgb),0.3)",
             display: "flex",
             alignItems: "center",
             gap: 14,

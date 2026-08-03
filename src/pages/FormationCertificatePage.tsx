@@ -48,7 +48,7 @@ const LEVEL_META: Record<FormationLevelId, LevelMeta> = {
     id: "demarrer",
     name: "Démarrer",
     romanNumeral: "I",
-    accent: "#C9A84C",
+    accent: "var(--ls-gold)",
     accentDark: "#8B6F2A",
     emoji: "🚀",
     tagline: "Les fondations sont posées.",

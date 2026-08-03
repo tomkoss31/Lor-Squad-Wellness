@@ -199,7 +199,7 @@ export function ReplyMessageModal({ open, onClose, parent, onSent }: ReplyMessag
           style={{
             marginTop: 4,
             fontSize: 10,
-            color: reply.length > 900 ? "#C9A84C" : "var(--ls-text-hint)",
+            color: reply.length > 900 ? "var(--ls-gold)" : "var(--ls-text-hint)",
             textAlign: "right",
           }}
         >

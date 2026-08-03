@@ -433,7 +433,7 @@ export function ConversationView() {
             display: "flex",
             justifyContent: "space-between",
             fontSize: 10,
-            color: remaining < 100 ? (remaining < 0 ? "#FB7185" : "#C9A84C") : "var(--ls-text-hint)",
+            color: remaining < 100 ? (remaining < 0 ? "#FB7185" : "var(--ls-gold)") : "var(--ls-text-hint)",
           }}
         >
           <span>
@@ -457,7 +457,7 @@ function Bubble({ msg }: { msg: ClientMessage }) {
           borderRadius: isCoach ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
           background: isCoach ? "#FAEEDA" : "var(--ls-surface)",
           color: isCoach ? "#633806" : "var(--ls-text)",
-          border: isCoach ? "1px solid rgba(201,168,76,0.3)" : "1px solid var(--ls-border)",
+          border: isCoach ? "1px solid rgba(var(--ls-gold-rgb),0.3)" : "1px solid var(--ls-border)",
           fontSize: 14,
           lineHeight: 1.5,
           whiteSpace: "pre-wrap",

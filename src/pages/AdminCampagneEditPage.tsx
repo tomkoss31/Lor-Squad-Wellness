@@ -358,7 +358,7 @@ export function AdminCampagneEditPage() {
         .ce-recap { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; padding:6px 15px; margin:16px 0; }
         .ce-line { display:flex; justify-content:space-between; padding:9px 0; font-size:13.5px; border-bottom:1px solid var(--ls-border); }
         .ce-line:last-child { border:0; } .ce-line b { font-family:'JetBrains Mono',monospace; }
-        .ce-line b.ok { color:var(--ls-teal); } .ce-line b.warn { color:var(--ls-gold); }
+        .ce-line b.ok { color:var(--ls-teal); } .ce-line b.warn { color:var(--ls-coral); }
         .ce-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:14px; border-radius:14px; border:0; font:700 14.5px 'DM Sans'; cursor:pointer; background:var(--ls-teal); color:var(--ls-teal-contrast); }
         .ce-btn:disabled { opacity:.5; cursor:default; }
         .ce-map { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }

@@ -746,7 +746,7 @@ const BODY_SCAN_STYLES = `
 .bs-chart-f b { color:var(--ls-text); }
 
 .is-good { color:var(--ls-teal); }
-.is-warn { color:var(--ls-gold); }
+.is-warn { color:var(--ls-coral); }
 .is-flat { color:var(--ls-text-hint); }
 
 .bs-fold { width:100%; display:flex; align-items:center; gap:10px; text-align:left; background:var(--ls-surface2); border:1px solid var(--ls-border); border-radius:13px; padding:13px 14px; cursor:pointer; color:var(--ls-text); font-size:13.5px; font-weight:600; min-height:52px; }

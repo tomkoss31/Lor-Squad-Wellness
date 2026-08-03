@@ -2121,7 +2121,7 @@ export function NewAssessmentPage() {
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
-                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: '#C9A84C', insuffisant: '#FB7185' }
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-gold)', insuffisant: '#FB7185' }
                   const color = qColors[quality]
                   return (
                     <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -2690,7 +2690,7 @@ export function NewAssessmentPage() {
                   <BodyScanRadar
                     size={280}
                     metrics={[
-                      { label: 'Poids', value: form.weight, max: 120, color: '#C9A84C' },
+                      { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-gold)' },
                       { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
                       { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
                       { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
@@ -3754,7 +3754,7 @@ export function NewAssessmentPage() {
 
           {/* Avertissement validation */}
           {stepWarning && (
-            <div className="rounded-[14px] border border-[rgba(201,168,76,0.25)] bg-[rgba(201,168,76,0.08)] px-4 py-3 text-sm text-[#C9A84C]">
+            <div className="rounded-[14px] border border-[rgba(var(--ls-gold-rgb),0.25)] bg-[rgba(var(--ls-gold-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-gold)]">
               {stepWarning}
             </div>
           )}
