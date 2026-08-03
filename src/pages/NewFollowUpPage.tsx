@@ -513,8 +513,89 @@ export function NewFollowUpPage() {
     );
   }
 
+  /** Carte de réglages de l'étape 3 (type, dates, produits, note, synthèse). */
+  function renderSettingsCard() {
+    return (
+      <Card className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-[var(--ls-text-muted)]">Type de suivi</label>
+          <input value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-[var(--ls-text-muted)]">Date et heure du suivi</label>
+          <input
+            type="datetime-local"
+            value={assessmentDate}
+            onChange={(event) => setAssessmentDate(event.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-[var(--ls-text-muted)]">Prochain rendez-vous</label>
+          <input
+            type="datetime-local"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+          />
+        </div>
+        <FollowUpChoiceGroup
+          label="Produits optionnels pris depuis le dernier point ?"
+          value={optionalProductsToggle}
+          options={["Oui", "Non"]}
+          onChange={setOptionalProductsToggle}
+        />
+        {optionalProductsToggle === "Oui" ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Lesquels ?</label>
+            <input
+              value={optionalProductsUsed}
+              onChange={(event) => setOptionalProductsUsed(event.target.value)}
+              placeholder="Ex : aloe, boisson, booster..."
+            />
+          </div>
+        ) : null}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-[var(--ls-text-muted)]">Note du suivi</label>
+          <textarea
+            rows={4}
+            value={coachNote}
+            onChange={(event) => setCoachNote(event.target.value)}
+            placeholder="Ce que tu veux garder visible dans la fiche client."
+          />
+        </div>
+        {/* Durcissement import (2026-04-21) : recommendations peut être
+            null/undefined sur les clients importés via SQL brut. */}
+        {(latest?.questionnaire?.recommendations?.length ?? 0) > 0 ? (
+          <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
+            <div>
+              <p className="text-sm font-medium text-white">Recommandations contactées</p>
+              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
+                {latest?.questionnaire?.recommendations?.length ?? 0} contact
+                {(latest?.questionnaire?.recommendations?.length ?? 0) > 1 ? "s" : ""} à reprendre pour ce dossier.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
+              checked={recommendationsContacted}
+              onChange={(event) => setRecommendationsContacted(event.target.checked)}
+            />
+          </label>
+        ) : null}
+        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">
+            Synthèse automatique
+          </p>
+          <p className="mt-3 text-sm leading-6 text-[var(--ls-text)]">{followUpSummary}</p>
+          {targetClient.objective === "weight-loss" ? (
+            <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{weightLossPace.label}</p>
+          ) : null}
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <div className="fu-wrap space-y-4">
+    <div className="fu-wrap">
       <style>{FOLLOW_UP_STYLES}</style>
 
       {/* ── En-tête : qui + où on en est ─────────────────────────────────── */}
@@ -819,8 +900,12 @@ export function NewFollowUpPage() {
           <h1 id="fu-t2" className="fu-h1">Suivi &amp; validation</h1>
           <p className="fu-sub">Dernier réglage, puis tu valides. Le bouton est juste en bas.</p>
 
+          {renderSettingsCard()}
+
           {/* Bloc commercial : le client regarde l'écran pendant le RDV, donc
-              PV / commande / « à relancer » restent repliés et signalés. */}
+              PV / commande / « à relancer » restent repliés et signalés.
+              Placé APRÈS les réglages : c'est secondaire, ça ne doit pas
+              ouvrir l'écran de validation. */}
           <Card className="fu-coach space-y-3">
             <p className="fu-coachtag">🔒 Visible par toi seulement</p>
             <button
@@ -892,82 +977,6 @@ export function NewFollowUpPage() {
               </div>
             ) : null}
           </Card>
-
-          <Card className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Type de suivi</label>
-              <input value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Date et heure du suivi</label>
-              <input
-                type="datetime-local"
-                value={assessmentDate}
-                onChange={(event) => setAssessmentDate(event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Prochain rendez-vous</label>
-              <input
-                type="datetime-local"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            </div>
-            <FollowUpChoiceGroup
-              label="Produits optionnels pris depuis le dernier point ?"
-              value={optionalProductsToggle}
-              options={["Oui", "Non"]}
-              onChange={setOptionalProductsToggle}
-            />
-            {optionalProductsToggle === "Oui" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Lesquels ?</label>
-                <input
-                  value={optionalProductsUsed}
-                  onChange={(event) => setOptionalProductsUsed(event.target.value)}
-                  placeholder="Ex : aloe, boisson, booster..."
-                />
-              </div>
-            ) : null}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Note du suivi</label>
-              <textarea
-                rows={4}
-                value={coachNote}
-                onChange={(event) => setCoachNote(event.target.value)}
-                placeholder="Ce que tu veux garder visible dans la fiche client."
-              />
-            </div>
-            {/* Durcissement import (2026-04-21) : recommendations peut être
-                null/undefined sur les clients importés via SQL brut. */}
-            {(latest.questionnaire.recommendations?.length ?? 0) > 0 ? (
-              <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
-                <div>
-                  <p className="text-sm font-medium text-white">Recommandations contactées</p>
-                  <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                    {latest.questionnaire.recommendations?.length ?? 0} contact
-                    {(latest.questionnaire.recommendations?.length ?? 0) > 1 ? "s" : ""} à reprendre pour ce dossier.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
-                  checked={recommendationsContacted}
-                  onChange={(event) => setRecommendationsContacted(event.target.checked)}
-                />
-              </label>
-            ) : null}
-            <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">
-                Synthèse automatique
-              </p>
-              <p className="mt-3 text-sm leading-6 text-[var(--ls-text)]">{followUpSummary}</p>
-              {targetClient.objective === "weight-loss" ? (
-                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{weightLossPace.label}</p>
-              ) : null}
-            </div>
-          </Card>
         </section>
       ) : null}
 
@@ -985,7 +994,7 @@ export function NewFollowUpPage() {
 
         {step < 2 ? (
           <Button className="fu-bar-main" onClick={goNext}>
-            {step === 0 ? "Passer au body scan →" : "Suivant →"}
+            Continuer →
           </Button>
         ) : (
           <Button className="fu-bar-main" onClick={() => void submitGuarded()} disabled={saving}>
@@ -1235,7 +1244,9 @@ function CompactWeightPanel({ label, value }: { label: string; value: string }) 
 // Styles du parcours en 3 étapes. Tokens `--ls-*` uniquement (règle CLAUDE.md :
 // jamais de couleur en dur dans l'app coach — le thème clair/sombre doit suivre).
 const FOLLOW_UP_STYLES = `
-.fu-wrap { padding-bottom: 8px; }
+/* La page occupe la hauteur dispo pour que la barre d'action tombe en bas même
+   quand l'étape est courte (le bouton est toujours au même endroit). */
+.fu-wrap { padding-bottom: 8px; display:flex; flex-direction:column; gap:14px; min-height: calc(100dvh - 230px); }
 
 /* ── en-tête + jauge ── */
 .fu-head { padding: 2px 2px 4px; }
@@ -1289,11 +1300,17 @@ const FOLLOW_UP_STYLES = `
 .fu-coachtag { font-size:10px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--ls-text-hint); margin:0; }
 
 /* ── barre d'action collée en bas ── */
-.fu-bar { position:sticky; bottom:0; z-index:20; display:flex; gap:10px; align-items:center; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent, var(--ls-bg) 34%); }
+.fu-bar { position:sticky; bottom:0; z-index:20; margin-top:auto; display:flex; gap:10px; align-items:center; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent, var(--ls-bg) 34%); }
 .fu-bar > * { flex:0 0 auto; }
 .fu-bar .fu-bar-main { flex:1 1 auto; }
 /* la nav mobile est fixée en bas (<1024px) : on remonte la barre au-dessus */
 @media (max-width: 1023px) { .fu-bar { bottom: calc(66px + env(safe-area-inset-bottom)); } }
+
+/* Le FAB Noaly est fixé en bas à droite (NoalyFab.tsx : right 16px, z-index 60)
+   et passait DEVANT le bouton — c'est ce qui masquait « Valider le suivi » sur
+   l'ancienne page. Plutôt que de déplacer le FAB (fragile : la barre bouge
+   selon la longueur de l'étape), on lui réserve sa place au bout de la barre. */
+@media (max-width: 899px) { .fu-bar { padding-right: 68px; } }
 `;
 
 function formatEditableMetric(value: number) {
