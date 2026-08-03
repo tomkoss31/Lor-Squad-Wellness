@@ -455,7 +455,7 @@ function Header() {
       padding: "36px 22px 28px",
       textAlign: "center",
       background: `
-        radial-gradient(circle at 20% 20%, rgba(201,168,76,0.18), transparent 50%),
+        radial-gradient(circle at 20% 20%, rgba(var(--ls-gold-rgb),0.18), transparent 50%),
         radial-gradient(circle at 80% 30%, rgba(45,212,191,0.14), transparent 50%),
         linear-gradient(180deg, #FAEEDA 0%, var(--ls-cream, #FBF7F0) 100%)
       `,
@@ -509,7 +509,7 @@ function StatsBanner({ stats }: { stats: ProspectionStats }) {
   return (
     <div style={{
       padding: "10px 20px",
-      background: "linear-gradient(90deg, rgba(45,212,191,0.10), rgba(201,168,76,0.06))",
+      background: "linear-gradient(90deg, rgba(45,212,191,0.10), rgba(var(--ls-gold-rgb),0.06))",
       borderBottom: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
       display: "flex", alignItems: "center", justifyContent: "center",
       gap: 18,
@@ -563,7 +563,7 @@ function Stepper({ step }: { step: Step }) {
                   : "var(--ls-text-hint, #9CA3AF)",
             transform: n === step ? "scale(1.15)" : "none",
             boxShadow: n === step
-              ? "0 4px 14px rgba(201,168,76,0.45), 0 0 0 4px rgba(201,168,76,0.18)"
+              ? "0 4px 14px rgba(var(--ls-gold-rgb),0.45), 0 0 0 4px rgba(var(--ls-gold-rgb),0.18)"
               : n < step
                 ? "0 2px 8px rgba(45,212,191,0.30)"
                 : "none",
@@ -664,7 +664,7 @@ function ChoiceCard({
       onClick={onClick}
       style={{
         background: selected
-          ? "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(45,212,191,0.08))"
+          ? "linear-gradient(135deg, rgba(var(--ls-gold-rgb),0.15), rgba(45,212,191,0.08))"
           : "var(--ls-surface, white)",
         border: `2px solid ${selected ? "var(--ls-gold, #C9A84C)" : "var(--ls-border, rgba(11,13,17,0.10))"}`,
         borderRadius: 14,
@@ -673,7 +673,7 @@ function ChoiceCard({
         cursor: "pointer",
         transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
         boxShadow: selected
-          ? "0 8px 24px rgba(201,168,76,0.28), 0 0 0 4px rgba(201,168,76,0.10)"
+          ? "0 8px 24px rgba(var(--ls-gold-rgb),0.28), 0 0 0 4px rgba(var(--ls-gold-rgb),0.10)"
           : "0 2px 8px rgba(11,13,17,0.04)",
         fontFamily: "inherit",
         color: "inherit",
@@ -684,7 +684,7 @@ function ChoiceCard({
         if (!selected) {
           e.currentTarget.style.transform = "translateY(-3px)";
           e.currentTarget.style.boxShadow = "0 6px 18px rgba(11,13,17,0.10)";
-          e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
+          e.currentTarget.style.borderColor = "rgba(var(--ls-gold-rgb),0.5)";
         }
       }}
       onMouseLeave={(e) => {
@@ -765,7 +765,7 @@ function BriefMethodSection({
                   fontFamily: "'Syne', serif",
                   fontWeight: 700, fontSize: 16,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 10px rgba(201,168,76,0.30)",
+                  boxShadow: "0 4px 10px rgba(var(--ls-gold-rgb),0.30)",
                 }}>
                   {i + 1}
                 </span>
@@ -929,8 +929,8 @@ function MarketTimingBanner({
       borderRadius: 14,
       padding: "16px 18px",
       marginBottom: 18,
-      border: "1px solid rgba(201,168,76,0.30)",
-      boxShadow: "0 4px 14px rgba(201,168,76,0.10)",
+      border: "1px solid rgba(var(--ls-gold-rgb),0.30)",
+      boxShadow: "0 4px 14px rgba(var(--ls-gold-rgb),0.10)",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 8,
@@ -1230,7 +1230,7 @@ function highlightVariables(body: string): string {
   return escapeHtml(body).replace(
     /\[([^\]]+)\]/g,
     (_, inner) =>
-      `<strong style="background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(229,201,125,0.18)); padding: 2px 6px; border-radius: 5px; color: #633806; font-weight: 600; box-shadow: 0 1px 2px rgba(201,168,76,0.15);">[${inner}]</strong>`,
+      `<strong style="background: linear-gradient(135deg, rgba(var(--ls-gold-rgb),0.25), rgba(229,201,125,0.18)); padding: 2px 6px; border-radius: 5px; color: #633806; font-weight: 600; box-shadow: 0 1px 2px rgba(var(--ls-gold-rgb),0.15);">[${inner}]</strong>`,
   );
 }
 
@@ -1376,7 +1376,7 @@ function BilanLinkBox({ link }: { link: string }) {
     <div style={{
       marginTop: 24,
       padding: 18,
-      background: "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(201,168,76,0.08))",
+      background: "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(var(--ls-gold-rgb),0.08))",
       border: "1.5px solid var(--ls-teal, #2DD4BF)",
       borderRadius: 16,
       position: "relative",
@@ -1450,7 +1450,7 @@ function BilanLinkBox({ link }: { link: string }) {
             whiteSpace: "nowrap",
             boxShadow: copied
               ? "0 4px 12px rgba(45,212,191,0.35)"
-              : "0 4px 12px rgba(201,168,76,0.30)",
+              : "0 4px 12px rgba(var(--ls-gold-rgb),0.30)",
             transition: "all 0.2s",
           }}
         >
@@ -1472,8 +1472,8 @@ function TipBanner({
     <div style={{
       marginTop: 6,
       padding: "14px 16px",
-      background: "linear-gradient(135deg, rgba(201,168,76,0.10), rgba(201,168,76,0.04))",
-      border: "1px solid rgba(201,168,76,0.30)",
+      background: "linear-gradient(135deg, rgba(var(--ls-gold-rgb),0.10), rgba(var(--ls-gold-rgb),0.04))",
+      border: "1px solid rgba(var(--ls-gold-rgb),0.30)",
       borderRadius: 12,
       fontSize: 13.5,
       lineHeight: 1.55,
@@ -1547,17 +1547,17 @@ function NavRow({
             fontSize: 15,
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 6px 18px rgba(201,168,76,0.35)",
+            boxShadow: "0 6px 18px rgba(var(--ls-gold-rgb),0.35)",
             transition: "all 0.2s",
             letterSpacing: "0.01em",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(201,168,76,0.45)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(var(--ls-gold-rgb),0.45)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 6px 18px rgba(201,168,76,0.35)";
+            e.currentTarget.style.boxShadow = "0 6px 18px rgba(var(--ls-gold-rgb),0.35)";
           }}
         >
           {nextLabel}

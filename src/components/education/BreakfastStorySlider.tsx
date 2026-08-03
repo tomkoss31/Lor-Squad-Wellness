@@ -81,7 +81,7 @@ function getQualitativeLabel(field: keyof BreakfastAnalysis, value: number): str
 
 const TONE_COLOR: Record<Tone, string> = {
   good: "var(--ls-teal)",
-  warning: "var(--ls-gold)",
+  warning: "var(--ls-coral)",
   danger: "var(--ls-coral)",
 };
 

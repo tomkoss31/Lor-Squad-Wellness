@@ -42,7 +42,7 @@ export function ToastHost() {
 function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
   const toneBorder: Record<Toast["tone"], string> = {
     error: "var(--ls-coral)",
-    warning: "var(--ls-gold)",
+    warning: "var(--ls-coral)",
     success: "var(--ls-teal)",
     info: "var(--ls-text-muted)",
   };
