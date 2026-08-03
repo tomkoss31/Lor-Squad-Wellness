@@ -40,12 +40,42 @@ interface MetricDef {
   decimals: number;
   /** true = monter est bon (muscle, hydratation). */
   higherIsBetter: boolean;
+  /**
+   * Seconde unité, permutable par le coach (demande Thomas 2026-08-03).
+   * « 30,4 % de masse grasse » ne parle pas ; « 22,3 kg de gras » si.
+   * Idem à l'envers pour le muscle : les kg bruts ne disent rien sans la
+   * part qu'ils représentent dans le poids total.
+   * La conversion a besoin du POIDS DU MÊME RELEVÉ — d'où le paramètre.
+   */
+  alt?: {
+    unit: string;
+    decimals: number;
+    convert: (value: number, weight: number) => number;
+  };
 }
 
 const METRICS: MetricDef[] = [
   { key: "weight", label: "Poids", unit: "kg", color: "var(--ls-teal)", decimals: 1, higherIsBetter: false },
-  { key: "bodyFat", label: "Masse grasse", unit: "%", color: "var(--ls-coral)", decimals: 1, higherIsBetter: false },
-  { key: "muscleMass", label: "Muscle", unit: "kg", color: "var(--ls-lime)", decimals: 1, higherIsBetter: true },
+  {
+    key: "bodyFat",
+    label: "Masse grasse",
+    unit: "%",
+    color: "var(--ls-coral)",
+    decimals: 1,
+    higherIsBetter: false,
+    // % du poids → kg de masse grasse
+    alt: { unit: "kg", decimals: 1, convert: (percent, weight) => (weight * percent) / 100 }
+  },
+  {
+    key: "muscleMass",
+    label: "Muscle",
+    unit: "kg",
+    color: "var(--ls-lime)",
+    decimals: 1,
+    higherIsBetter: true,
+    // kg de muscle → % du poids
+    alt: { unit: "%", decimals: 1, convert: (kg, weight) => (weight > 0 ? (kg / weight) * 100 : 0) }
+  },
   { key: "hydration", label: "Hydratation", unit: "%", color: "var(--ls-violet, #A78BFA)", decimals: 1, higherIsBetter: true },
   { key: "visceralFat", label: "Graisse visc.", unit: "", color: "var(--ls-teal)", decimals: 0, higherIsBetter: false },
   { key: "metabolicAge", label: "Âge méta.", unit: "ans", color: "var(--ls-lime)", decimals: 0, higherIsBetter: false }
@@ -411,6 +441,10 @@ export function BodyScanTab({
 }) {
   const [selected, setSelected] = useState<MetricKey>("weight");
   const [fullscreen, setFullscreen] = useState(false);
+  // Unité permutée par métrique : masse grasse en % ou en kg, muscle en kg ou
+  // en % du poids. Le choix vaut partout à la fois (tuile, courbe, plein
+  // écran) — sinon on lirait deux unités différentes sur le même écran.
+  const [altUnits, setAltUnits] = useState<Partial<Record<MetricKey, boolean>>>({});
 
   // Historique trié — même tri que la version précédente (les cartes d'insight
   // le refaisaient chacune de leur côté).
@@ -422,10 +456,37 @@ export function BodyScanTab({
     [client.assessments]
   );
 
-  const seriesFor = (key: MetricKey) =>
+  // ── Unité active d'une métrique ───────────────────────────────────────────
+  const isAlt = (m: MetricDef) => Boolean(m.alt && altUnits[m.key]);
+  const unitOf = (m: MetricDef) => (isAlt(m) ? m.alt!.unit : m.unit);
+  const decimalsOf = (m: MetricDef) => (isAlt(m) ? m.alt!.decimals : m.decimals);
+  const toggleUnit = (m: MetricDef) =>
+    setAltUnits((prev) => ({ ...prev, [m.key]: !prev[m.key] }));
+
+  /**
+   * Série d'un indicateur, dans l'unité choisie. La conversion utilise le poids
+   * DU MÊME relevé — pas le poids actuel : 30 % de masse grasse ne pèsent pas
+   * le même nombre de kilos au départ et aujourd'hui.
+   */
+  const seriesFor = (m: MetricDef) =>
     history
-      .filter((a) => (a.bodyScan?.[key] ?? 0) > 0)
-      .map((a) => ({ date: a.date, value: a.bodyScan?.[key] ?? 0 }));
+      .filter((a) => (a.bodyScan?.[m.key] ?? 0) > 0)
+      .map((a) => {
+        const raw = a.bodyScan?.[m.key] ?? 0;
+        const weight = a.bodyScan?.weight ?? 0;
+        return {
+          date: a.date,
+          value: isAlt(m) ? Number(m.alt!.convert(raw, weight).toFixed(2)) : raw
+        };
+      })
+      .filter((p) => p.value > 0);
+
+  /** Valeur du dernier relevé, dans l'unité choisie. */
+  const latestValueOf = (m: MetricDef) => {
+    const raw = latestBodyScan?.[m.key] ?? 0;
+    if (!isAlt(m)) return raw;
+    return m.alt!.convert(raw, latestBodyScan?.weight ?? 0);
+  };
 
   if (!latestBodyScan) {
     return (
@@ -445,7 +506,7 @@ export function BodyScanTab({
   }
 
   const current = METRICS.find((m) => m.key === selected) ?? METRICS[0];
-  const currentSeries = seriesFor(current.key);
+  const currentSeries = seriesFor(current);
   const startWeight = firstAssessment.bodyScan?.weight ?? 0;
   const startMuscle = firstAssessment.bodyScan?.muscleMass ?? 0;
   const weightDelta = Number(((latestBodyScan.weight ?? 0) - startWeight).toFixed(1));
@@ -517,30 +578,56 @@ export function BodyScanTab({
       <p className="bs-mono">Les indicateurs · touche pour la courbe</p>
       <div className="bs-grid">
         {METRICS.map((metric) => {
-          const value = latestBodyScan[metric.key] ?? 0;
-          if (!value) return null;
-          const serie = seriesFor(metric.key);
+          if (!(latestBodyScan[metric.key] ?? 0)) return null;
+          const value = latestValueOf(metric);
+          const unit = unitOf(metric);
+          const decimals = decimalsOf(metric);
+          const serie = seriesFor(metric);
           const delta =
             serie.length > 1 ? Number((serie[serie.length - 1].value - serie[0].value).toFixed(1)) : null;
           const good = delta === null || delta === 0 ? null : metric.higherIsBetter ? delta > 0 : delta < 0;
           return (
-            <button
+            <div
               key={metric.key}
-              type="button"
+              role="button"
+              tabIndex={0}
               className={`bs-m${selected === metric.key ? " is-sel" : ""}`}
               style={{ borderTopColor: metric.color }}
               aria-pressed={selected === metric.key}
               onClick={() => setSelected(metric.key)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setSelected(metric.key);
+              }}
             >
-              <span className="bs-m-lab">{metric.label}</span>
+              <span className="bs-m-top">
+                <span className="bs-m-lab">{metric.label}</span>
+                {/* Inverseur d'unité : la masse grasse parle mieux en kg, le
+                    muscle en % du poids. Le clic ne sélectionne PAS la métrique
+                    (stopPropagation) — sinon on ne pourrait plus permuter sans
+                    changer de courbe. */}
+                {metric.alt ? (
+                  <button
+                    type="button"
+                    className="bs-m-unit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleUnit(metric);
+                    }}
+                    aria-label={`Afficher ${metric.label} en ${isAlt(metric) ? metric.unit : metric.alt.unit}`}
+                    title={`Basculer en ${isAlt(metric) ? metric.unit : metric.alt.unit}`}
+                  >
+                    ⇄ {isAlt(metric) ? metric.unit : metric.alt.unit}
+                  </button>
+                ) : null}
+              </span>
               <span className="bs-m-val">
-                {fmt(value, metric.decimals)}
-                {metric.unit ? <small>{metric.unit}</small> : null}
+                {fmt(value, decimals)}
+                {unit ? <small>{unit}</small> : null}
               </span>
               <span className={`bs-m-d ${good === null ? "is-flat" : good ? "is-good" : "is-warn"}`}>
-                {delta === null ? "—" : delta === 0 ? "=" : `${delta > 0 ? "+" : ""}${fmt(delta, metric.decimals)} ${metric.unit}`}
+                {delta === null ? "—" : delta === 0 ? "=" : `${delta > 0 ? "+" : ""}${fmt(delta, decimals)} ${unit}`}
               </span>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -568,7 +655,7 @@ export function BodyScanTab({
           <span className="bs-mono">{current.label} · {currentSeries.length} relevé{currentSeries.length > 1 ? "s" : ""}</span>
           <span className="bs-chart-actions">
             <span className="bs-chart-now" style={{ color: current.color }}>
-              {fmt(latestBodyScan[current.key] ?? 0, current.decimals)} {current.unit}
+              {fmt(latestValueOf(current), decimalsOf(current))} {unitOf(current)}
             </span>
             {currentSeries.length > 1 ? (
               <button
@@ -582,16 +669,16 @@ export function BodyScanTab({
             ) : null}
           </span>
         </div>
-        <MetricChart points={currentSeries} color={current.color} decimals={current.decimals} />
+        <MetricChart points={currentSeries} color={current.color} decimals={decimalsOf(current)} />
         {currentSeries.length > 1 ? (
           <div className="bs-chart-f">
             <span>
-              Départ <b>{fmt(currentSeries[0].value, current.decimals)} {current.unit}</b> · {formatDate(currentSeries[0].date)}
+              Départ <b>{fmt(currentSeries[0].value, decimalsOf(current))} {unitOf(current)}</b> · {formatDate(currentSeries[0].date)}
             </span>
             <span>
               Écart{" "}
               <b className={deltaIsGood === null ? "is-flat" : deltaIsGood ? "is-good" : "is-warn"}>
-                {currentDelta === 0 ? "stable" : `${(currentDelta ?? 0) > 0 ? "+" : ""}${fmt(currentDelta ?? 0, current.decimals)} ${current.unit}`}
+                {currentDelta === 0 ? "stable" : `${(currentDelta ?? 0) > 0 ? "+" : ""}${fmt(currentDelta ?? 0, decimalsOf(current))} ${unitOf(current)}`}
               </b>
             </span>
           </div>
@@ -699,7 +786,13 @@ export function BodyScanTab({
         </Fold>
       ) : null}
       {fullscreen && currentSeries.length > 1 ? (
-        <ChartFullscreen metric={current} points={currentSeries} onClose={() => setFullscreen(false)} />
+        <ChartFullscreen
+          /* Le plein écran hérite de l'unité choisie sur la tuile : on ne veut
+             pas lire des % ici et des kg là. */
+          metric={{ ...current, unit: unitOf(current), decimals: decimalsOf(current) }}
+          points={currentSeries}
+          onClose={() => setFullscreen(false)}
+        />
       ) : null}
 
     </Card>
@@ -729,7 +822,14 @@ const BODY_SCAN_STYLES = `
 .bs-m { text-align:left; background:var(--ls-surface2); border:1px solid var(--ls-border); border-top:3px solid var(--ls-teal); border-radius:12px; padding:11px 12px; cursor:pointer; transition:.14s; min-height:44px; }
 .bs-m:active { transform:scale(.985); }
 .bs-m.is-sel { border-color:var(--ls-teal); background:color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2)); }
+.bs-m-top { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:22px; }
 .bs-m-lab { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; letter-spacing:.09em; text-transform:uppercase; color:var(--ls-text-muted); }
+/* Inverseur d'unité (masse grasse %/kg, muscle kg/%) — assez grand pour le
+   pouce (32px de haut) sans écraser la tuile. */
+.bs-m-unit { flex:0 0 auto; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; font-weight:700; letter-spacing:.04em;
+  padding:5px 8px; min-height:32px; border-radius:999px; cursor:pointer;
+  background:var(--ls-surface); border:1px solid var(--ls-border); color:var(--ls-text-muted); }
+.bs-m-unit:hover { border-color:var(--ls-teal); color:var(--ls-teal); }
 .bs-m-val { display:block; font-family:'Anton',Impact,sans-serif; font-size:26px; line-height:1.15; color:var(--ls-text); margin-top:2px; }
 .bs-m-val small { font-size:12px; color:var(--ls-text-muted); margin-left:2px; }
 .bs-m-d { display:block; font-size:11px; font-weight:700; margin-top:2px; }
@@ -740,8 +840,11 @@ const BODY_SCAN_STYLES = `
 .bs-chip.is-on { color:var(--ls-teal-contrast); font-weight:700; }
 
 .bs-chart-h { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; }
-.bs-chart-h .bs-mono { margin:0; }
-.bs-chart-now { font-family:'Anton',Impact,sans-serif; font-size:20px; letter-spacing:.4px; }
+/* Le libellé cède la place : c'est la valeur et le bouton qui doivent tenir
+   sur une ligne, pas l'inverse (constaté à 390 px). */
+.bs-chart-h .bs-mono { margin:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bs-chart-actions { flex:0 0 auto; }
+.bs-chart-now { font-family:'Anton',Impact,sans-serif; font-size:20px; letter-spacing:.4px; white-space:nowrap; }
 .bs-chart-f { display:flex; justify-content:space-between; gap:8px; margin-top:8px; padding-top:9px; border-top:1px solid var(--ls-border); font-size:11.5px; color:var(--ls-text-muted); }
 .bs-chart-f b { color:var(--ls-text); }
 
