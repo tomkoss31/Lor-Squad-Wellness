@@ -232,8 +232,8 @@ export function BienvenuePage() {
           transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
         }
         .bienvenue-field-input:focus {
-          border-color: rgba(239,159,39,0.6);
-          box-shadow: 0 0 0 4px rgba(239,159,39,0.12);
+          border-color: rgba(45,212,191,0.6);
+          box-shadow: 0 0 0 4px rgba(45,212,191,0.12);
         }
         html.theme-light .bienvenue-field-input {
           background: rgba(255,255,255,0.85);
@@ -263,7 +263,7 @@ export function BienvenuePage() {
           right: -8%;
           width: 480px;
           height: 480px;
-          background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
+          background: radial-gradient(circle, #2DD4BF 0%, transparent 70%);
           opacity: 0.3;
           animation: bienvenue-float-2 36s ease-in-out infinite alternate;
         }

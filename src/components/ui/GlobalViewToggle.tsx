@@ -46,7 +46,7 @@ export function GlobalViewToggle({
           width: 38,
           height: 22,
           borderRadius: 999,
-          background: globalView ? "#BA7517" : "var(--ls-border)",
+          background: globalView ? "#0F766E" : "var(--ls-border)",
           position: "relative",
           transition: "background 0.2s",
           flexShrink: 0,

@@ -273,14 +273,14 @@ export function XpProgressCard() {
         </div>
         <div
           style={{
-            background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+            background: "linear-gradient(135deg, #2DD4BF, #0F766E)",
             color: "white",
             padding: "8px 16px",
             borderRadius: 10,
             fontFamily: "Syne, sans-serif",
             fontSize: 22,
             fontWeight: 700,
-            boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            boxShadow: "0 4px 12px rgba(15,118,110,0.30)",
           }}
         >
           {data.totalXp.toLocaleString("fr-FR")} XP
@@ -320,9 +320,9 @@ export function XpProgressCard() {
             style={{
               width: `${percentInLevel}%`,
               height: "100%",
-              background: "linear-gradient(90deg, #B8922A, #EF9F27)",
+              background: "linear-gradient(90deg, #B8922A, #2DD4BF)",
               transition: "width 800ms cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 0 8px rgba(239,159,39,0.45)",
+              boxShadow: "0 0 8px rgba(45,212,191,0.45)",
             }}
           />
         </div>

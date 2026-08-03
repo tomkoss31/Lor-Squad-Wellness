@@ -211,7 +211,7 @@ export function ClientSandboxPage() {
             style={{
               width: `${progress}%`,
               height: "100%",
-              background: "linear-gradient(90deg, #EF9F27, #BA7517)",
+              background: "linear-gradient(90deg, #2DD4BF, #0F766E)",
               transition: "width 600ms cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           />
@@ -422,7 +422,7 @@ function Quest1Pesee({
               background:
                 value === null || value <= 0
                   ? "rgba(184,146,42,0.20)"
-                  : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color:
                 value === null || value <= 0 ? "rgba(0,0,0,0.4)" : "#FFFFFF",
               border: "none",
@@ -434,7 +434,7 @@ function Quest1Pesee({
               boxShadow:
                 value === null || value <= 0
                   ? "none"
-                  : "0 4px 14px rgba(186,117,23,0.40)",
+                  : "0 4px 14px rgba(15,118,110,0.40)",
             }}
           >
             Confirmer ma pesée
@@ -848,7 +848,7 @@ function Quest3Programme({
             style={{
               padding: "12px 22px",
               borderRadius: 12,
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: "#FFFFFF",
               border: "none",
               fontSize: 13,
@@ -856,7 +856,7 @@ function Quest3Programme({
               fontFamily: "Syne, sans-serif",
               cursor: "pointer",
               alignSelf: "center",
-              boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+              boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
             }}
           >
             Valider mon programme
@@ -965,7 +965,7 @@ function Quest4Message({
             <div
               style={{
                 padding: "10px 14px",
-                background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                background: "linear-gradient(135deg, #2DD4BF, #0F766E)",
                 color: "white",
                 borderRadius: 14,
                 borderTopRightRadius: 4,
@@ -1019,7 +1019,7 @@ function Quest4Message({
                 background:
                   text.trim().length === 0
                     ? "rgba(184,146,42,0.20)"
-                    : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: text.trim().length === 0 ? "rgba(0,0,0,0.4)" : "white",
                 border: "none",
                 fontSize: 12,
@@ -1178,7 +1178,7 @@ function SandboxFinal({ onClose }: { onClose: () => void }) {
           style={{
             padding: "14px 28px",
             borderRadius: 12,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#FFFFFF",
             border: "none",
             fontFamily: "Syne, sans-serif",
@@ -1186,7 +1186,7 @@ function SandboxFinal({ onClose }: { onClose: () => void }) {
             fontWeight: 700,
             cursor: "pointer",
             letterSpacing: 0.3,
-            boxShadow: "0 6px 20px rgba(186,117,23,0.45)",
+            boxShadow: "0 6px 20px rgba(15,118,110,0.45)",
           }}
         >
           Aller dans ma vraie app →
@@ -1256,7 +1256,7 @@ function QuestCard({
             background: done
               ? "#1D9E75"
               : active
-                ? "linear-gradient(135deg, #EF9F27, #BA7517)"
+                ? "linear-gradient(135deg, #2DD4BF, #0F766E)"
                 : "rgba(184,146,42,0.18)",
             color: done || active ? "white" : "#5C4A0F",
             display: "inline-flex",

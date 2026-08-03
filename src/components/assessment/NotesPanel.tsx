@@ -40,7 +40,7 @@ const TYPE_LABEL: Record<LiveNoteType, string> = {
 };
 const TYPE_COLOR: Record<LiveNoteType, string> = {
   followup: "#1D9E75",
-  product_adjustment: "#EF9F27",
+  product_adjustment: "#2DD4BF",
   feeling: "#D4537E",
   free: "#888780",
 };
@@ -153,8 +153,8 @@ export function NotesPanel({
             padding: "7px 12px",
             borderRadius: 10,
             background: "transparent",
-            border: "1px solid #EF9F27",
-            color: "#BA7517",
+            border: "1px solid #2DD4BF",
+            color: "#0F766E",
             fontSize: 12,
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
@@ -410,7 +410,7 @@ export function NotesPanel({
                   style={{
                     padding: "5px 10px",
                     borderRadius: 6,
-                    background: standaloneContent.trim() ? "#BA7517" : "var(--ls-border)",
+                    background: standaloneContent.trim() ? "#0F766E" : "var(--ls-border)",
                     color: "#FFFFFF",
                     border: "none",
                     fontSize: 10,
@@ -435,7 +435,7 @@ export function NotesPanel({
             width: "100%",
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#BA7517",
+            background: "#0F766E",
             border: "none",
             color: "#FFFFFF",
             cursor: "pointer",

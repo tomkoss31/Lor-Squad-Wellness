@@ -161,7 +161,7 @@ const stackStyle: React.CSSProperties = {
 
 // ─── V7 Phase 6 (2026-05-08) : SideStack re-skin G3 ───────────────────
 // Avant : opp card gold tinte (#FFF8E5 → #FFEBC2) + flex card warm dark
-// (#1A1612 → #2A2419) + accents gold (#D4A937, #EF9F27, #F5DEB3).
+// (#1A1612 → #2A2419) + accents gold (#D4A937, #2DD4BF, #F5DEB3).
 // Apres : opp card cyan tinte (--lb360-card-cyan) + flex card warm
 // dark plus neutre + accents G3 (emerald, cyan, violet).
 const oppCardStyle: React.CSSProperties = {

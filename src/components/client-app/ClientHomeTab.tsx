@@ -282,8 +282,8 @@ export function ClientHomeTab({
         .home-premium > *:nth-child(8) { animation-delay: 450ms; }
         .home-premium > *:nth-child(9) { animation-delay: 500ms; }
         @keyframes rdv-pulse {
-          0%, 100% { box-shadow: 0 4px 16px rgba(186,117,23,0.32); }
-          50% { box-shadow: 0 6px 26px rgba(239,159,39,0.55); }
+          0%, 100% { box-shadow: 0 4px 16px rgba(15,118,110,0.32); }
+          50% { box-shadow: 0 6px 26px rgba(45,212,191,0.55); }
         }
         .home-rdv-imminent { animation: rdv-pulse 2.2s ease-in-out infinite; }
 
@@ -301,7 +301,7 @@ export function ClientHomeTab({
         .ls-client-tile:hover {
           transform: translateY(-2px);
           background: linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%);
-          box-shadow: 0 6px 18px -6px rgba(186,117,23,0.18);
+          box-shadow: 0 6px 18px -6px rgba(15,118,110,0.18);
         }
         .ls-client-cta-gold {
           transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
@@ -309,7 +309,7 @@ export function ClientHomeTab({
         .ls-client-cta-gold:hover {
           transform: translateY(-1px);
           filter: brightness(1.05);
-          box-shadow: 0 6px 16px -4px rgba(186,117,23,0.45);
+          box-shadow: 0 6px 16px -4px rgba(15,118,110,0.45);
         }
         .ls-client-cta-link {
           transition: transform 0.18s ease, background 0.18s ease;
@@ -464,7 +464,7 @@ export function ClientHomeTab({
                 fontFamily: "Inter, system-ui, sans-serif",
                 letterSpacing: "-0.005em",
                 boxShadow: rdvInfo.isImminent
-                  ? "0 4px 10px -3px rgba(186,117,23,0.40)"
+                  ? "0 4px 10px -3px rgba(15,118,110,0.40)"
                   : "0 4px 10px -3px rgba(16,185,129,0.40)",
               }}
             >
@@ -524,7 +524,7 @@ export function ClientHomeTab({
                 gap: 6,
                 textDecoration: "none",
                 fontFamily: "Inter, system-ui, sans-serif",
-                boxShadow: "0 4px 12px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
+                boxShadow: "0 4px 12px -3px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
                 letterSpacing: "-0.005em",
               }}
             >
@@ -684,7 +684,7 @@ export function ClientHomeTab({
             padding: "16px 18px",
             marginBottom: 12,
             borderLeft: "3px solid #06B6D4",
-            boxShadow: "0 4px 12px -6px rgba(186,117,23,0.16)",
+            boxShadow: "0 4px 12px -6px rgba(15,118,110,0.16)",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -780,7 +780,7 @@ export function ClientHomeTab({
               textDecoration: "none",
               fontFamily: "Inter, system-ui, sans-serif",
               flexShrink: 0,
-              boxShadow: "0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
+              boxShadow: "0 4px 10px -3px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
               letterSpacing: "-0.005em",
             }}
           >
@@ -850,7 +850,7 @@ export function ClientHomeTab({
           textAlign: "left",
           cursor: "pointer",
           fontFamily: "Inter, system-ui, sans-serif",
-          boxShadow: "0 4px 12px -4px rgba(186,117,23,0.20)",
+          boxShadow: "0 4px 12px -4px rgba(15,118,110,0.20)",
         }}
       >
         <div
@@ -866,7 +866,7 @@ export function ClientHomeTab({
             justifyContent: "center",
             fontSize: 20,
             flexShrink: 0,
-            boxShadow: "0 4px 10px -3px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+            boxShadow: "0 4px 10px -3px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
           }}
         >
           🎁
@@ -940,7 +940,7 @@ export function ClientHomeTab({
           style={{
             width: 60,
             height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(186,117,23,0.35), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(15,118,110,0.35), transparent)",
             margin: "0 auto 14px",
           }}
         />

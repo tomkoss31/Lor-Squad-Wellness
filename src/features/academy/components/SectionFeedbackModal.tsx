@@ -358,7 +358,7 @@ export function SectionFeedbackModal({
               background:
                 helpful === null
                   ? "var(--ls-surface2)"
-                  : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               border: "none",
               borderRadius: 10,
               color: helpful === null ? "var(--ls-text-hint)" : "white",
@@ -369,7 +369,7 @@ export function SectionFeedbackModal({
               boxShadow:
                 helpful === null
                   ? "none"
-                  : "0 2px 8px rgba(186,117,23,0.30)",
+                  : "0 2px 8px rgba(15,118,110,0.30)",
             }}
           >
             {submitting ? "Envoi…" : "Envoyer"}

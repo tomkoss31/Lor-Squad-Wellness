@@ -92,7 +92,7 @@ export function AcademyTimeline({
             left: `calc(16px + 18px)`,
             width: `calc((100% - 32px - 36px) * ${fillPercent / 100})`,
             height: 3,
-            background: "linear-gradient(90deg, #B8922A, #EF9F27)",
+            background: "linear-gradient(90deg, #B8922A, #2DD4BF)",
             borderRadius: 2,
             zIndex: 1,
             transition: "width 800ms cubic-bezier(0.4, 0, 0.2, 1)",
