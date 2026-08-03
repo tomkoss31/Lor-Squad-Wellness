@@ -581,12 +581,19 @@ export function ClientDetailPage() {
         {/* Rapport déplacé dans le menu ⋮ du header (désengorgement 2026-06-12). */}
       </div>
 
-      {/* Bandeau Prochain RDV (V3) */}
-      <NextAppointmentBanner
-        nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(3)}
-        onViewDetails={() => setActiveTab(3)}
-      />
+      {/* Bandeau Prochain RDV (V3).
+          Masqué sur l'onglet Actions (2026-08-03) : celui-ci ouvre déjà sur la
+          grande carte « Prochain RDV » avec la même date — on affichait donc
+          deux fois la même information à 200 px d'écart. Le bandeau garde tout
+          son sens sur les autres onglets, où le RDV n'est visible nulle part.
+          Il sert aussi de raccourci VERS cet onglet : inutile une fois dedans. */}
+      {activeTab !== 3 && (
+        <NextAppointmentBanner
+          nextAppointmentDate={activeFollowUp?.dueDate ?? null}
+          onPlan={() => setActiveTab(3)}
+          onViewDetails={() => setActiveTab(3)}
+        />
+      )}
       </div>
 
       {reportUrl && (
