@@ -79,14 +79,15 @@ const METRIC_DEFS: {
   /** true = monter est une bonne nouvelle (muscle, hydratation…). */
   higherIsBetter?: boolean;
 }[] = [
+  // Le poids seul dépend de l'objectif (perdre / prendre) : traité à l'usage.
   { key: "weight", label: "Poids", unit: "kg" },
-  { key: "bodyFat", label: "Masse grasse", unit: "%" },
+  { key: "bodyFat", label: "Masse grasse", unit: "%", higherIsBetter: false },
   { key: "muscleMass", label: "Masse musculaire", unit: "kg", higherIsBetter: true },
   { key: "hydration", label: "Hydratation", unit: "%", higherIsBetter: true },
   { key: "boneMass", label: "Masse osseuse", unit: "kg", higherIsBetter: true },
-  { key: "visceralFat", label: "Graisse viscérale", unit: "" },
+  { key: "visceralFat", label: "Graisse viscérale", unit: "", higherIsBetter: false },
   { key: "bmr", label: "BMR", unit: "kcal", higherIsBetter: true },
-  { key: "metabolicAge", label: "Âge métabolique", unit: "ans" }
+  { key: "metabolicAge", label: "Âge métabolique", unit: "ans", higherIsBetter: false }
 ];
 
 function getFollowUpDraftKey(clientId: string) {
