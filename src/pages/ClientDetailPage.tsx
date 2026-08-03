@@ -7,11 +7,6 @@ import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBloc
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
 import { MeasurementsPanel } from "../features/measurements/MeasurementsPanel";
-import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
-import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
-import { MetabolicAgeInsightCard } from "../components/body-scan/MetabolicAgeInsightCard";
-import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -21,12 +16,12 @@ import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { KebabMenu } from "../components/ui/KebabMenu";
+import { BodyScanTab } from "../components/client-detail/BodyScanTab";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab";
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
-import { getEffectiveAge } from "../lib/age";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -101,6 +96,8 @@ export function ClientDetailPage() {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("openAccessModal") === "true";
   });
+  // Onglet Mesures V2 : le panneau mensurations est replié par défaut.
+  const [measurementsOpen, setMeasurementsOpen] = useState(false);
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.
@@ -662,193 +659,50 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 1: Mesures — B1 (2026-06-13) : Body Scan + Mensurations fusionnés
-          (fiche 7→5 onglets). Body Scan en premier, Mensurations dessous (chaque
-          bloc porte son propre sous-titre). */}
+      {/* Tab 1: Mesures — V2 (2026-08-03). Le contenu est passé dans
+          BodyScanTab : l'onglet faisait 13 écrans parce qu'il empilait les 4
+          cartes de lecture en même temps. Une métrique à la fois désormais ;
+          radar et tableau repliés. Aucun calcul modifié, rien supprimé. */}
       {activeTab === 1 && (
-        <Card className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="eyebrow-label">Body Scan</p>
-              <h2 className="mt-2 text-xl font-bold text-[var(--ls-text)]" style={{ fontFamily: 'Syne, sans-serif' }}>
-                Évolution corporelle
-              </h2>
-            </div>
-            <Link
-              to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
-            >
-              + Nouveau scan
-            </Link>
-          </div>
-
-          {/* Dernier scan en grand */}
-          {latestBodyScan && (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { label: 'Poids', value: latestBodyScan.weight ? `${latestBodyScan.weight} kg` : '—', color: 'var(--ls-teal)' },
-                  { label: 'Masse grasse', value: latestBodyScan.bodyFat ? `${latestBodyScan.bodyFat}%` : '—', color: '#FB7185' },
-                  { label: 'Masse musc.', value: latestBodyScan.muscleMass ? `${latestBodyScan.muscleMass} kg` : '—', color: '#2DD4BF' },
-                  { label: 'Hydratation', value: latestBodyScan.hydration ? `${latestBodyScan.hydration}%` : '—', color: '#A78BFA' },
-                ].map(m => (
-                  <div key={m.label} className="rounded-[16px] bg-[var(--ls-surface2)] p-4 text-center" style={{ borderTop: `2px solid ${m.color}` }}>
-                    <div style={{ fontSize: 28, fontFamily: 'Syne, sans-serif', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.value}</div>
-                    <div className="mt-2 text-[11px] text-[var(--ls-text-hint)]">{m.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Métabolisme + viscéral */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[
-                  { label: 'Graisse viscérale', value: latestBodyScan.visceralFat ?? '—', color: 'var(--ls-teal)' },
-                  { label: 'Âge métabolique', value: latestBodyScan.metabolicAge ? `${latestBodyScan.metabolicAge} ans` : '—', color: '#A78BFA' },
-                  { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#5EEAD4' },
-                ].map(m => (
-                  <div key={m.label} className="rounded-[14px] bg-[var(--ls-surface2)] p-3 text-center">
-                    <div style={{ fontSize: 20, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: m.color as string }}>{m.value}</div>
-                    <div className="mt-1 text-[10px] text-[var(--ls-text-hint)]">{m.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Radar 5 branches */}
-              <div className="flex items-center justify-center rounded-[16px] bg-[var(--ls-surface2)] p-6">
-                <BodyScanRadar
-                  size={220}
-                  metrics={[
-                    { label: 'Poids', value: latestBodyScan.weight ?? 0, max: 120, color: 'var(--ls-teal)' },
-                    { label: 'M. grasse', value: latestBodyScan.bodyFat ?? 0, max: 50, color: '#FB7185' },
-                    { label: 'Muscle', value: latestBodyScan.muscleMass ?? 0, max: 80, color: '#2DD4BF' },
-                    { label: 'Hydrat.', value: latestBodyScan.hydration ?? 0, max: 100, color: '#A78BFA' },
-                    { label: 'Viscéral', value: latestBodyScan.visceralFat ?? 0, max: 20, color: 'var(--ls-teal)' },
-                  ]}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Lectures détaillées — insights corporels */}
-          {latestBodyScan && (
-            <>
-              <BodyFatInsightCard
-                current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
-                objective={client.objective}
-                sex={client.sex}
-                age={getEffectiveAge(client)}
-                previous={
-                  previousAssessment
-                    ? {
-                        weight: previousAssessment.bodyScan?.weight ?? 0,
-                        percent: previousAssessment.bodyScan?.bodyFat ?? 0
-                      }
-                    : null
-                }
-                initial={{
-                  weight: firstAssessment.bodyScan?.weight ?? 0,
-                  percent: firstAssessment.bodyScan?.bodyFat ?? 0
-                }}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  percent: assessment.bodyScan?.bodyFat ?? 0
-                }))}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: latestBodyScan.weight, muscleMass: latestBodyScan.muscleMass }}
-                previous={
-                  previousAssessment
-                    ? {
-                        weight: previousAssessment.bodyScan?.weight ?? 0,
-                        muscleMass: previousAssessment.bodyScan?.muscleMass ?? 0
-                      }
-                    : null
-                }
-                initial={{
-                  weight: firstAssessment.bodyScan?.weight ?? 0,
-                  muscleMass: firstAssessment.bodyScan?.muscleMass ?? 0
-                }}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  muscleMass: assessment.bodyScan?.muscleMass ?? 0
-                }))}
-              />
-
-              <HydrationVisceralInsightCard
-                weight={latestBodyScan.weight}
-                hydrationPercent={latestBodyScan.hydration}
-                sex={client.sex}
-                visceralFat={latestBodyScan.visceralFat}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  hydrationPercent: assessment.bodyScan?.hydration ?? 0,
-                  visceralFat: assessment.bodyScan?.visceralFat ?? 0
-                }))}
-              />
-
-              {(latestBodyScan.metabolicAge ?? 0) > 0 && (
-                <MetabolicAgeInsightCard
-                  current={latestBodyScan.metabolicAge}
-                  realAge={getEffectiveAge(client)}
-                  history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                    date: assessment.date,
-                    metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
-                  }))}
-                />
-              )}
-            </>
-          )}
-
-          {/* Historique scans tableau */}
-          {client.assessments.length > 1 && (
-            <div>
-              <p className="eyebrow-label mb-3">Historique des mesures</p>
-              <div className="rounded-[14px] border border-[var(--ls-border)] overflow-hidden">
-                {client.assessments.filter(a => a.bodyScan?.weight).map((a, i) => {
-                  const scan = a.bodyScan;
-                  return (
-                    <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.08)' }}>
-                      <span className="text-sm text-[var(--ls-text-muted)]">{formatDate(a.date)}</span>
-                      {scan?.weight && <span className="text-sm font-semibold text-[var(--ls-teal)]">{scan.weight} kg</span>}
-                      {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
-                      {scan?.muscleMass && <span className="text-sm text-[#2DD4BF]">MM {scan.muscleMass} kg</span>}
-                      {scan?.hydration && <span className="text-sm text-[#A78BFA]">{scan.hydration}%</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {!latestBodyScan && (
-            <div className="rounded-[20px] bg-[var(--ls-surface2)] px-6 py-10 text-center">
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⚖️</div>
-              <p className="text-sm text-[var(--ls-text-muted)]">Aucun body scan enregistré</p>
-              <Link
-                to={`/clients/${client.id}/follow-up/new`}
-                className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
-              >
-                Démarrer un body scan
-              </Link>
-            </div>
-          )}
-        </Card>
+        <BodyScanTab
+          client={client}
+          latestBodyScan={latestBodyScan}
+          previousAssessment={previousAssessment}
+          firstAssessment={firstAssessment}
+        />
       )}
 
       {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté
-          sous l'onglet « Mesures » (activeTab === 1), juste après le Body Scan. */}
+          sous l'onglet « Mesures ». V2 (2026-08-03) : replié par défaut — on ne
+          sort le mètre ruban que certains jours, et le panneau pèse à lui seul
+          5 sous-sections. Un clic pour l'ouvrir, rien n'est retiré. */}
       {activeTab === 1 && (
-        <MeasurementsPanel
-          clientId={client.id}
-          gender={client.sex}
-          authorType="coach"
-          authorUserId={currentUser?.id ?? null}
-          otherAuthorLabel="le client"
-        />
+        <Card>
+          <button
+            type="button"
+            className="bs-fold"
+            aria-expanded={measurementsOpen}
+            onClick={() => setMeasurementsOpen((open) => !open)}
+          >
+            <span className="bs-fold-ico" aria-hidden="true">📏</span>
+            <span>
+              Mensurations au ruban
+              <span className="bs-fold-sub">Tour de taille, hanches, cuisses…</span>
+            </span>
+            <span className="bs-fold-chev" aria-hidden="true">{measurementsOpen ? "▾" : "▸"}</span>
+          </button>
+          {measurementsOpen && (
+            <div className="mt-3">
+              <MeasurementsPanel
+                clientId={client.id}
+                gender={client.sex}
+                authorType="coach"
+                authorUserId={currentUser?.id ?? null}
+                otherAuthorLabel="le client"
+              />
+            </div>
+          )}
+        </Card>
       )}
 
       {/* Historique bilans — B1 (2026-06-13) : rapatrié en bas de l'onglet Vue
