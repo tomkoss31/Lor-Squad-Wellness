@@ -58,7 +58,7 @@ export function DistributorBadge({
 
       {!compact ? (
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+          <p className="truncate text-sm font-semibold text-[var(--ls-text)]">{user.name}</p>
           <p className={`truncate text-xs ${classes.detail}`}>{detail ?? identity.label}</p>
         </div>
       ) : null}

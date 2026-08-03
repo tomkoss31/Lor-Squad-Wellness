@@ -193,7 +193,7 @@ export function SilhouetteSvg({
         const cx = g.position.x;
         const cy = g.position.y;
         // Couleur : draft (orange), rempli persisté (vert), vide (gold)
-        const fillColor = isDraft ? "#EF9F27" : filled ? "#1D9E75" : "#BA7517";
+        const fillColor = isDraft ? "#2DD4BF" : filled ? "#1D9E75" : "#0F766E";
 
         return (
           <g

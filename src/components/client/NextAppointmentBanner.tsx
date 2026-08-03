@@ -87,7 +87,7 @@ export function NextAppointmentBanner({
           borderRadius: 8,
           border: "none",
           background: "transparent",
-          color: "#BA7517",
+          color: "#0F766E",
           fontSize: 11,
           fontWeight: 600,
           fontFamily: "DM Sans, sans-serif",

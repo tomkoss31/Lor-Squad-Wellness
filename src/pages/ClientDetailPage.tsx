@@ -320,15 +320,15 @@ export function ClientDetailPage() {
           border-radius: 24px;
           background: var(--ls-surface);
           border: 0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border));
-          box-shadow: 0 1px 0 0 rgba(201,168,76,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
+          box-shadow: 0 1px 0 0 rgba(45,212,191,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
         }
         .ls-cli-mesh {
           position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
           animation: ls-cli-mesh-shift 24s ease-in-out infinite alternate;
           background:
-            radial-gradient(circle at 0% 0%, rgba(239,159,39,0.18) 0%, transparent 45%),
+            radial-gradient(circle at 0% 0%, rgba(45,212,191,0.18) 0%, transparent 45%),
             radial-gradient(circle at 100% 100%, rgba(13,148,136,0.10) 0%, transparent 50%),
-            radial-gradient(circle at 100% 0%, rgba(186,117,23,0.14) 0%, transparent 60%);
+            radial-gradient(circle at 100% 0%, rgba(15,118,110,0.14) 0%, transparent 60%);
         }
         .ls-cli-shine {
           position: absolute; top: 0; height: 100%; width: 50%; left: 0;
@@ -348,12 +348,12 @@ export function ClientDetailPage() {
           <div className="flex items-center gap-4">
             <div style={{
               width: 64, height: 64, borderRadius: 18, flexShrink: 0,
-              background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+              background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
               color: 'white',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Syne, serif', fontSize: 22, fontWeight: 800,
               letterSpacing: '-0.02em',
-              boxShadow: '0 6px 20px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+              boxShadow: '0 6px 20px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
             }}>
               {(client.firstName?.[0] ?? "?")}{(client.lastName?.[0] ?? "")}
             </div>
@@ -374,7 +374,7 @@ export function ClientDetailPage() {
                 <span
                   style={{
                     display: 'inline-block', width: 6, height: 6, borderRadius: 999,
-                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(45,212,191,0.50)',
                   }}
                 />
                 Fiche client · {(() => {
@@ -389,7 +389,7 @@ export function ClientDetailPage() {
                 }}>
                   <span
                     style={{
-                      background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
+                      background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -410,7 +410,7 @@ export function ClientDetailPage() {
                 />
               </div>
               <p className="text-sm text-[var(--ls-text-muted)]" style={{ margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
-                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-semibold text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
+                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-semibold text-[var(--ls-teal)] transition hover:brightness-110">{client.distributorName}</Link>
                 {' · '}{client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
@@ -427,8 +427,8 @@ export function ClientDetailPage() {
               data-tour-id="client-send-access"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
               style={{
-                background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
-                boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
+                boxShadow: '0 2px 6px rgba(45,212,191,0.25)',
                 fontFamily: 'DM Sans, sans-serif',
               }}
             >
@@ -448,7 +448,7 @@ export function ClientDetailPage() {
                 2026-06-12). Il reste dans la sidebar pour démarrer un prospect. */}
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-teal)] bg-[var(--ls-teal-bg)] px-4 py-2 text-sm font-bold text-[var(--ls-teal)] transition hover:brightness-110"
             >
               📋 Nouveau suivi
             </Link>
@@ -504,7 +504,7 @@ export function ClientDetailPage() {
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
           <div className="mt-4 flex items-center gap-3 rounded-[14px] border border-[var(--ls-border)] bg-white/[0.02] px-4 py-3">
-            <span style={{ fontSize: 11, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
+            <span style={{ fontSize: 11, color: 'var(--ls-teal)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
             <StatusBadge
               label={recommendationsContacted ? `${recommendationCount} contactées` : `${recommendationCount} à contacter`}
               tone={recommendationsContacted ? "green" : "amber"}
@@ -512,7 +512,7 @@ export function ClientDetailPage() {
             {retainedProducts.length > 0 && (
               <div className="flex flex-wrap gap-1 ml-2">
                 {retainedProducts.slice(0, 3).map((p, idx) => (
-                  <span key={idx} className="rounded-full bg-[rgba(201,168,76,0.08)] px-2.5 py-0.5 text-[10px] text-[#C9A84C]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
+                  <span key={idx} className="rounded-full bg-[rgba(45,212,191,0.08)] px-2.5 py-0.5 text-[10px] text-[var(--ls-teal)]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
                 ))}
                 {retainedProducts.length > 3 && <span className="text-[10px] text-[var(--ls-text-hint)]">+{retainedProducts.length - 3}</span>}
               </div>
@@ -663,13 +663,13 @@ export function ClientDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="eyebrow-label">Body Scan</p>
-              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="mt-2 text-xl font-bold text-[var(--ls-text)]" style={{ fontFamily: 'Syne, sans-serif' }}>
                 Évolution corporelle
               </h2>
             </div>
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
             >
               + Nouveau scan
             </Link>
@@ -680,7 +680,7 @@ export function ClientDetailPage() {
             <>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { label: 'Poids', value: latestBodyScan.weight ? `${latestBodyScan.weight} kg` : '—', color: '#C9A84C' },
+                  { label: 'Poids', value: latestBodyScan.weight ? `${latestBodyScan.weight} kg` : '—', color: 'var(--ls-teal)' },
                   { label: 'Masse grasse', value: latestBodyScan.bodyFat ? `${latestBodyScan.bodyFat}%` : '—', color: '#FB7185' },
                   { label: 'Masse musc.', value: latestBodyScan.muscleMass ? `${latestBodyScan.muscleMass} kg` : '—', color: '#2DD4BF' },
                   { label: 'Hydratation', value: latestBodyScan.hydration ? `${latestBodyScan.hydration}%` : '—', color: '#A78BFA' },
@@ -695,9 +695,9 @@ export function ClientDetailPage() {
               {/* Métabolisme + viscéral */}
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
-                  { label: 'Graisse viscérale', value: latestBodyScan.visceralFat ?? '—', color: '#C9A84C' },
+                  { label: 'Graisse viscérale', value: latestBodyScan.visceralFat ?? '—', color: 'var(--ls-teal)' },
                   { label: 'Âge métabolique', value: latestBodyScan.metabolicAge ? `${latestBodyScan.metabolicAge} ans` : '—', color: '#A78BFA' },
-                  { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#F0C96A' },
+                  { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#5EEAD4' },
                 ].map(m => (
                   <div key={m.label} className="rounded-[14px] bg-[var(--ls-surface2)] p-3 text-center">
                     <div style={{ fontSize: 20, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: m.color as string }}>{m.value}</div>
@@ -711,11 +711,11 @@ export function ClientDetailPage() {
                 <BodyScanRadar
                   size={220}
                   metrics={[
-                    { label: 'Poids', value: latestBodyScan.weight ?? 0, max: 120, color: '#C9A84C' },
+                    { label: 'Poids', value: latestBodyScan.weight ?? 0, max: 120, color: 'var(--ls-teal)' },
                     { label: 'M. grasse', value: latestBodyScan.bodyFat ?? 0, max: 50, color: '#FB7185' },
                     { label: 'Muscle', value: latestBodyScan.muscleMass ?? 0, max: 80, color: '#2DD4BF' },
                     { label: 'Hydrat.', value: latestBodyScan.hydration ?? 0, max: 100, color: '#A78BFA' },
-                    { label: 'Viscéral', value: latestBodyScan.visceralFat ?? 0, max: 20, color: '#C9A84C' },
+                    { label: 'Viscéral', value: latestBodyScan.visceralFat ?? 0, max: 20, color: 'var(--ls-teal)' },
                   ]}
                 />
               </div>
@@ -806,7 +806,7 @@ export function ClientDetailPage() {
                   return (
                     <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.08)' }}>
                       <span className="text-sm text-[var(--ls-text-muted)]">{formatDate(a.date)}</span>
-                      {scan?.weight && <span className="text-sm font-semibold text-[#C9A84C]">{scan.weight} kg</span>}
+                      {scan?.weight && <span className="text-sm font-semibold text-[var(--ls-teal)]">{scan.weight} kg</span>}
                       {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
                       {scan?.muscleMass && <span className="text-sm text-[#2DD4BF]">MM {scan.muscleMass} kg</span>}
                       {scan?.hydration && <span className="text-sm text-[#A78BFA]">{scan.hydration}%</span>}
@@ -823,7 +823,7 @@ export function ClientDetailPage() {
               <p className="text-sm text-[var(--ls-text-muted)]">Aucun body scan enregistré</p>
               <Link
                 to={`/clients/${client.id}/follow-up/new`}
-                className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+                className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
               >
                 Démarrer un body scan
               </Link>
@@ -851,7 +851,7 @@ export function ClientDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="eyebrow-label">Historique</p>
-              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="mt-2 text-xl font-bold text-[var(--ls-text)]" style={{ fontFamily: 'Syne, sans-serif' }}>
                 Bilans & suivis
               </h2>
             </div>
@@ -1313,7 +1313,7 @@ export function ClientDetailPage() {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(239,159,39,0.25)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(45,212,191,0.25)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'none';
@@ -1324,10 +1324,10 @@ export function ClientDetailPage() {
                       style={{
                         width: 44, height: 44, flexShrink: 0,
                         borderRadius: 12,
-                        background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                        background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 22,
-                        boxShadow: '0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+                        boxShadow: '0 4px 10px -3px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
                       }}
                     >
                       {getEmoji(r.name)}
@@ -1358,7 +1358,7 @@ export function ClientDetailPage() {
           AppContext existants. */}
       {activeTab === 3 && (
         <ErrorBoundary name="ClientDetailPage/ActionsTab" fallback={(
-          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Actions.</p></Card>
+          <Card><p className="text-sm text-[var(--ls-text)]">Impossible d'afficher l'onglet Actions.</p></Card>
         )}>
           <ActionsTab
             client={client}
@@ -1374,7 +1374,7 @@ export function ClientDetailPage() {
       {/* Onglet Club VIP (VIP-2 2026-06-10 ; B1 : index 6→4) : remises + invitation. */}
       {activeTab === 4 && (
         <ErrorBoundary name="ClientDetailPage/ClientVipPitchTab" fallback={(
-          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Club VIP.</p></Card>
+          <Card><p className="text-sm text-[var(--ls-text)]">Impossible d'afficher l'onglet Club VIP.</p></Card>
         )}>
           <ClientVipPitchTab client={client} onManage={() => setActiveTab(3)} />
         </ErrorBoundary>
