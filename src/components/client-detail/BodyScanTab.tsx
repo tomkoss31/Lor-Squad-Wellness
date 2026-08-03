@@ -55,6 +55,20 @@ function fmt(value: number, decimals: number): string {
   return decimals > 0 ? value.toFixed(decimals).replace(/\.0$/, "") : String(Math.round(value));
 }
 
+/**
+ * Date courte pour l'axe : « 04/05 », ou « 04/05/26 » en plein écran.
+ * `formatDate` rend « 04 mai 2026 » — 11 caractères qui se chevauchent dès
+ * qu'un client a plusieurs relevés. La date complète reste lisible dans le
+ * tableau des relevés et dans le pied du plein écran.
+ */
+function shortDate(iso: string, withYear: boolean): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  return withYear ? `${day}/${month}/${String(d.getFullYear()).slice(2)}` : `${day}/${month}`;
+}
+
 // ─── Courbe ─────────────────────────────────────────────────────────────────
 // SVG maison plutôt que recharts : on veut la valeur écrite sur CHAQUE point
 // et la date en dessous (demande Thomas 2026-08-03), ce que la version
@@ -63,13 +77,19 @@ function MetricChart({
   points,
   color,
   decimals,
-  tall = false
+  tall = false,
+  activeIndex,
+  onPointClick
 }: {
   points: { date: string; value: number }[];
   color: string;
   decimals: number;
   /** Version plein écran : plus haute, plus respirante. */
   tall?: boolean;
+  /** Point sélectionné (plein écran) : mis en avant + repère vertical. */
+  activeIndex?: number;
+  /** Rend les points cliquables — on touche pour lire date + valeur exactes. */
+  onPointClick?: (index: number) => void;
 }) {
   const W = 340;
   const H = tall ? 300 : 176;
@@ -107,6 +127,33 @@ function MetricChart({
     return { value, y: y(value) };
   });
 
+  // ── Densité des étiquettes ────────────────────────────────────────────────
+  // Un client suivi depuis 2 ans a une dizaine de relevés : écrire la date sous
+  // CHAQUE point les empile en bouillie illisible (constaté sur une vraie fiche
+  // à 11 relevés, 2026-08-03). On n'en garde qu'un nombre tenable, réparti
+  // régulièrement — le premier et le dernier toujours, ce sont les deux qui
+  // comptent. Idem pour les valeurs, en un peu plus dense.
+  const pickIndices = (maxCount: number): Set<number> => {
+    const last = points.length - 1;
+    if (points.length <= maxCount) {
+      return new Set(points.map((_, i) => i));
+    }
+    const kept = new Set<number>([0, last]);
+    const inner = maxCount - 2;
+    for (let n = 1; n <= inner; n++) {
+      const index = Math.round((n * last) / (inner + 1));
+      // On évite les étiquettes collées aux extrémités.
+      if (index > 0 && index < last) kept.add(index);
+    }
+    return kept;
+  };
+
+  // Volontairement peu d'étiquettes : en plein écran, toucher un point donne la
+  // date et la valeur exactes, donc l'axe n'a plus besoin de tout écrire.
+  const dateIndices = pickIndices(4);
+  const valueIndices = pickIndices(tall ? 6 : 5);
+  const dense = points.length > 6;
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Courbe d'évolution">
       <defs>
@@ -135,41 +182,78 @@ function MetricChart({
       <path d={area} fill={`url(#${gradientId})`} />
       <path d={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
+      {/* Repère vertical du point sélectionné (plein écran). */}
+      {activeIndex !== undefined && coords[activeIndex] ? (
+        <line
+          x1={coords[activeIndex].x}
+          y1={PT - 8}
+          x2={coords[activeIndex].x}
+          y2={H - PB}
+          stroke={color}
+          strokeWidth="1"
+          strokeDasharray="3 3"
+          opacity="0.55"
+        />
+      ) : null}
+
       {coords.map((c, i) => {
         const isLast = i === coords.length - 1;
-        const anchor = i === 0 ? "start" : isLast ? "end" : "middle";
-        const labelX = i === 0 ? c.x - 4 : isLast ? c.x + 4 : c.x;
+        const isFirst = i === 0;
+        const isActive = activeIndex === i;
+        const anchor = isFirst ? "start" : isLast ? "end" : "middle";
+        const labelX = isFirst ? c.x - 4 : isLast ? c.x + 4 : c.x;
         return (
           <g key={i}>
             <circle
               cx={c.x}
               cy={c.y}
-              r={isLast ? 5 : 3.5}
+              r={isActive ? 6.5 : isLast ? 5 : dense ? 2.6 : 3.5}
               fill={color}
-              stroke={isLast ? "var(--ls-surface)" : undefined}
-              strokeWidth={isLast ? 2 : undefined}
+              stroke={isActive || isLast ? "var(--ls-surface)" : undefined}
+              strokeWidth={isActive || isLast ? 2 : undefined}
             />
-            <text
-              x={labelX}
-              y={c.y - 11}
-              textAnchor={anchor}
-              fontSize={isLast ? 12 : 10.5}
-              fontWeight="700"
-              fill={isLast ? color : "var(--ls-text)"}
-              fontFamily="ui-monospace, monospace"
-            >
-              {fmt(points[i].value, decimals)}
-            </text>
-            <text
-              x={c.x}
-              y={H - 12}
-              textAnchor="middle"
-              fontSize="9.5"
-              fill="var(--ls-text-hint)"
-              fontFamily="ui-monospace, monospace"
-            >
-              {formatDate(points[i].date)}
-            </text>
+            {/* Zone de touche large : un point de 3 px est intouchable au doigt. */}
+            {onPointClick ? (
+              <circle
+                cx={c.x}
+                cy={c.y}
+                r={14}
+                fill="transparent"
+                style={{ cursor: "pointer" }}
+                onClick={() => onPointClick(i)}
+                role="button"
+                tabIndex={0}
+                aria-label={`${formatDate(points[i].date)} : ${fmt(points[i].value, decimals)}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") onPointClick(i);
+                }}
+              />
+            ) : null}
+            {valueIndices.has(i) ? (
+              <text
+                x={labelX}
+                y={c.y - 11}
+                textAnchor={anchor}
+                fontSize={isLast ? 12 : dense ? 9.5 : 10.5}
+                fontWeight="700"
+                fill={isLast ? color : "var(--ls-text)"}
+                fontFamily="ui-monospace, monospace"
+              >
+                {fmt(points[i].value, decimals)}
+              </text>
+            ) : null}
+            {dateIndices.has(i) ? (
+              <text
+                x={labelX}
+                y={H - 12}
+                textAnchor={anchor}
+                fontSize="9.5"
+                fill="var(--ls-text-hint)"
+                fontFamily="ui-monospace, monospace"
+              >
+                {shortDate(points[i].date, tall)}
+              </text>
+            ) : null}
           </g>
         );
       })}
@@ -189,6 +273,11 @@ function ChartFullscreen({
   points: { date: string; value: number }[];
   onClose: () => void;
 }) {
+  // Point sélectionné : le dernier relevé par défaut. On touche un point pour
+  // lire sa date exacte et sa valeur — c'est ce qui permet d'alléger les
+  // étiquettes de l'axe sans rien perdre.
+  const [active, setActive] = useState(points.length - 1);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -219,7 +308,42 @@ function ChartFullscreen({
       </div>
 
       <div className="bs-fs-body">
-        <MetricChart points={points} color={metric.color} decimals={metric.decimals} tall />
+        <MetricChart
+          points={points}
+          color={metric.color}
+          decimals={metric.decimals}
+          tall
+          activeIndex={active}
+          onPointClick={setActive}
+        />
+      </div>
+
+      {/* Détail du point touché : date exacte + valeur + écart avec le relevé
+          précédent. C'est ce qui permet d'alléger les étiquettes de l'axe sans
+          rien perdre (idée Thomas 2026-08-03). */}
+      <div className="bs-fs-point">
+        <div>
+          <span className="bs-fs-point-l">Relevé {active + 1} / {points.length}</span>
+          <span className="bs-fs-point-d">{formatDate(points[active].date)}</span>
+        </div>
+        <div className="bs-fs-point-r">
+          <span className="bs-fs-point-v" style={{ color: metric.color }}>
+            {fmt(points[active].value, metric.decimals)} {metric.unit}
+          </span>
+          {active > 0 ? (
+            (() => {
+              const step = Number((points[active].value - points[active - 1].value).toFixed(1));
+              const stepGood = step === 0 ? null : metric.higherIsBetter ? step > 0 : step < 0;
+              return (
+                <span className={`bs-fs-point-s ${stepGood === null ? "is-flat" : stepGood ? "is-good" : "is-warn"}`}>
+                  {step === 0 ? "= stable" : `${step > 0 ? "+" : ""}${fmt(step, metric.decimals)} vs précédent`}
+                </span>
+              );
+            })()
+          ) : (
+            <span className="bs-fs-point-s is-flat">point de départ</span>
+          )}
+        </div>
       </div>
 
       <div className="bs-fs-foot">
@@ -653,6 +777,12 @@ const BODY_SCAN_STYLES = `
 .bs-fs-foot-l { display:block; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ls-text-hint); }
 .bs-fs-foot-v { display:block; font-family:'Anton',Impact,sans-serif; font-size:21px; letter-spacing:.3px; color:var(--ls-text); margin-top:2px; }
 .bs-fs-foot-d { display:block; font-size:10px; color:var(--ls-text-hint); margin-top:1px; }
+.bs-fs-point { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; padding:12px 14px; background:var(--ls-surface2); border:1px solid var(--ls-border); border-radius:13px; }
+.bs-fs-point-l { display:block; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ls-text-hint); }
+.bs-fs-point-d { display:block; font-size:14.5px; font-weight:700; color:var(--ls-text); margin-top:2px; }
+.bs-fs-point-r { text-align:right; }
+.bs-fs-point-v { display:block; font-family:"Anton",Impact,sans-serif; font-size:24px; letter-spacing:.3px; }
+.bs-fs-point-s { display:block; font-size:11.5px; font-weight:700; margin-top:1px; }
 body:has(.bs-fs) .noaly-fab { display:none; }
 .bs-fs-body { flex:0 1 auto; }
 `;
