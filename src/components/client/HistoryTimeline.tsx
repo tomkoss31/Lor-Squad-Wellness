@@ -33,8 +33,8 @@ export function HistoryTimeline({ entries, onDelete, onToggleInclude }: HistoryT
               <div
                 className="mt-1 h-3 w-3 rounded-full"
                 style={{
-                  background: included ? "#C9A84C" : "var(--ls-text-hint)",
-                  boxShadow: included ? "0 0 16px rgba(201,168,76,0.35)" : "none",
+                  background: included ? "var(--ls-teal)" : "var(--ls-text-hint)",
+                  boxShadow: included ? "0 0 16px rgba(45,212,191,0.35)" : "none",
                 }}
               />
               {index < entries.length - 1 && <div className="mt-2 h-full w-px bg-white/10" />}
@@ -45,7 +45,7 @@ export function HistoryTimeline({ entries, onDelete, onToggleInclude }: HistoryT
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-base font-semibold text-white">{entry.date}</p>
+                  <p className="text-base font-semibold text-[var(--ls-text)]">{entry.date}</p>
                   {entry.typeLabel ? (
                     <span className="rounded-full bg-[var(--ls-bg)]/60 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-[var(--ls-text-muted)]">
                       {entry.typeLabel}
@@ -53,7 +53,7 @@ export function HistoryTimeline({ entries, onDelete, onToggleInclude }: HistoryT
                   ) : null}
                   {entry.isEvolutionBaseline ? (
                     <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
-                      style={{ background: "rgba(201,168,76,0.16)", color: "#C9A84C" }}>
+                      style={{ background: "rgba(45,212,191,0.16)", color: "var(--ls-teal)" }}>
                       📍 Départ évolution
                     </span>
                   ) : !included ? (
@@ -73,7 +73,7 @@ export function HistoryTimeline({ entries, onDelete, onToggleInclude }: HistoryT
                   {entry.editTo ? (
                     <Link
                       to={entry.editTo}
-                      className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2DD4BF] transition hover:bg-[rgba(201,168,76,0.18)]"
+                      className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2DD4BF] transition hover:bg-[rgba(45,212,191,0.18)]"
                     >
                       Modifier
                     </Link>
@@ -98,7 +98,7 @@ export function HistoryTimeline({ entries, onDelete, onToggleInclude }: HistoryT
                     type="checkbox"
                     checked={included}
                     onChange={(e) => onToggleInclude(entry.id, e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: "#C9A84C", cursor: "pointer" }}
+                    style={{ width: 16, height: 16, accentColor: "var(--ls-teal)", cursor: "pointer" }}
                   />
                   Compter dans l'évolution
                 </label>

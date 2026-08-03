@@ -88,15 +88,15 @@ export function CoachNotesPrintView({
         #coach-notes-print-view h2 {
           font-size: 13pt;
           margin: 16pt 0 6pt;
-          border-bottom: 1pt solid #BA7517;
+          border-bottom: 1pt solid #0F766E;
           padding-bottom: 3pt;
-          color: #BA7517;
+          color: #0F766E;
         }
         #coach-notes-print-view .note {
           page-break-inside: avoid;
           margin-bottom: 10pt;
           padding: 8pt 10pt;
-          border-left: 3pt solid #BA7517;
+          border-left: 3pt solid #0F766E;
           background: #FAF7F2;
         }
         #coach-notes-print-view .note-meta {

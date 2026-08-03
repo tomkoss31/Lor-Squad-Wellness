@@ -20,7 +20,7 @@ interface WeightSummaryBlockProps {
 }
 
 const TEAL = "#0F6E56";
-const GOLD = "#BA7517";
+const GOLD = "#0F766E";
 
 function column({
   label,

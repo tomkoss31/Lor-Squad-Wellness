@@ -25,7 +25,7 @@ interface ClientNote {
 
 const TYPE_META: Record<NoteType, { label: string; color: string }> = {
   followup: { label: "Suivi", color: "#1D9E75" },
-  product_adjustment: { label: "Ajustement produits", color: "#EF9F27" },
+  product_adjustment: { label: "Ajustement produits", color: "#2DD4BF" },
   feeling: { label: "Ressenti client", color: "#D4537E" },
   free: { label: "Libre", color: "#888780" },
 };
@@ -158,7 +158,7 @@ export function CoachNotesBlock({
             width: 28,
             height: 28,
             borderRadius: 8,
-            background: "#BA7517",
+            background: "#0F766E",
             color: "#FFFFFF",
             display: "flex",
             alignItems: "center",
@@ -366,7 +366,7 @@ export function CoachNotesBlock({
             style={{
               padding: "8px 14px",
               borderRadius: 8,
-              background: draftContent.trim() ? "#BA7517" : "var(--ls-border)",
+              background: draftContent.trim() ? "#0F766E" : "var(--ls-border)",
               color: draftContent.trim() ? "#FFFFFF" : "var(--ls-text-hint)",
               border: "none",
               fontSize: 12,

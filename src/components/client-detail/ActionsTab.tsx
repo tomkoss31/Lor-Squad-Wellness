@@ -661,8 +661,8 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           --ls-actions-text: #F1EFE8;
           --ls-actions-text-muted: #B4B2A9;
           --ls-actions-text-tertiary: #D3D1C7;
-          --ls-actions-gold-bg: rgba(239,159,39,0.15);
-          --ls-actions-gold-text: #EF9F27;
+          --ls-actions-gold-bg: rgba(45,212,191,0.15);
+          --ls-actions-gold-text: #2DD4BF;
           --ls-actions-teal-bg: rgba(29,158,117,0.2);
           --ls-actions-teal-text: #5DCAA5;
           --ls-actions-red-bg: rgba(224,75,75,0.15);
@@ -679,7 +679,7 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           --ls-actions-text-muted: #888780;
           --ls-actions-text-tertiary: #5F5E5A;
           --ls-actions-gold-bg: #FAEEDA;
-          --ls-actions-gold-text: #854F0B;
+          --ls-actions-gold-text: #0F766E;
           --ls-actions-teal-bg: #E1F5EE;
           --ls-actions-teal-text: #085041;
           --ls-actions-red-bg: #FCEBEB;
