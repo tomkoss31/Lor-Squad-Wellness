@@ -137,6 +137,15 @@
 .cl-card.dark .cl-feats li{color:var(--on-dark-2)}
 .cl-card.dark .cl-feats li b{color:#fff}
 .cl-card.dark .cl-feats li::before{background:rgba(244,239,228,.14);color:var(--yellow)}
+/* micro-interactions (finition) — survol only, respecte prefers-reduced-motion */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .cl-card{transition:transform .22s ease, box-shadow .22s ease}
+  .cl-card:hover{transform:translateY(-5px)}
+  .cl a.cl-cta,.cl a.cl-hcta,.cl a.cl-ghost{transition:transform .16s ease, filter .16s ease}
+  .cl a.cl-cta:hover,.cl a.cl-hcta:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .cl a.cl-ghost:hover{transform:translateY(-2px)}
+}
+.cl a.cl-cta:active,.cl a.cl-hcta:active,.cl a.cl-ghost:active,.cl-sticky-main:active{transform:scale(.98)}
 
 /* footer */
 .cl-footgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(32px,4vw,52px)}
