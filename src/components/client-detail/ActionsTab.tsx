@@ -648,43 +648,31 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       }}
     >
       <style>{`
-        /* Fix dark (2026-07-03) : l'app est DARK par défaut (:root) et LIGHT via
-           html.theme-light — PAS data-theme. L'ancien code inversait + utilisait
-           le mauvais sélecteur → override dark jamais appliqué → carte blanche
-           en mode sombre. Corrigé. */
-        :root {
-          --ls-actions-bg: #1A1916;
-          --ls-actions-card: #252421;
-          --ls-actions-soft: #1A1916;
-          --ls-actions-border: rgba(68,68,65,0.5);
-          --ls-actions-border-soft: rgba(68,68,65,0.3);
-          --ls-actions-text: #F1EFE8;
-          --ls-actions-text-muted: #B4B2A9;
-          --ls-actions-text-tertiary: #D3D1C7;
-          --ls-actions-gold-bg: rgba(239,159,39,0.15);
-          --ls-actions-gold-text: #EF9F27;
-          --ls-actions-teal-bg: rgba(29,158,117,0.2);
-          --ls-actions-teal-text: #5DCAA5;
-          --ls-actions-red-bg: rgba(224,75,75,0.15);
-          --ls-actions-red-text: #F09595;
-          --ls-actions-red-text-dark: #F09595;
-        }
-        html.theme-light {
-          --ls-actions-bg: #FBF9F4;
-          --ls-actions-card: #FFFFFF;
-          --ls-actions-soft: #FBF9F4;
-          --ls-actions-border: rgba(211,209,199,0.6);
-          --ls-actions-border-soft: rgba(211,209,199,0.4);
-          --ls-actions-text: #2C2C2A;
-          --ls-actions-text-muted: #888780;
-          --ls-actions-text-tertiary: #5F5E5A;
-          --ls-actions-gold-bg: #FAEEDA;
-          --ls-actions-gold-text: #854F0B;
-          --ls-actions-teal-bg: #E1F5EE;
-          --ls-actions-teal-text: #085041;
-          --ls-actions-red-bg: #FCEBEB;
-          --ls-actions-red-text: #A32D2D;
-          --ls-actions-red-text-dark: #791F1F;
+        /* 2026-08-03 — fin du design system parallèle.
+           Ce bloc définissait 34 couleurs EN DUR sur :root (fond brun #1A1916
+           contre le noir #0B0D11 de l'app) : c'était la raison pour laquelle
+           l'onglet Actions ne ressemblait pas au reste de la fiche, et ça
+           fuyait sur tout le document tant que l'onglet était monté.
+           Les noms --ls-actions-* sont conservés (une quarantaine de règles
+           .at-* les consomment) mais ne sont plus que des ALIAS vers les vrais
+           tokens, qui gèrent déjà clair/sombre — d'où la disparition du bloc
+           html.theme-light. Portée limitée à .client-actions-tab. */
+        .client-actions-tab {
+          --ls-actions-bg: var(--ls-bg);
+          --ls-actions-card: var(--ls-surface);
+          --ls-actions-soft: var(--ls-surface2);
+          --ls-actions-border: var(--ls-border);
+          --ls-actions-border-soft: color-mix(in srgb, var(--ls-border) 60%, transparent);
+          --ls-actions-text: var(--ls-text);
+          --ls-actions-text-muted: var(--ls-text-muted);
+          --ls-actions-text-tertiary: var(--ls-text-muted);
+          --ls-actions-gold-bg: var(--ls-teal-bg);
+          --ls-actions-gold-text: var(--ls-teal);
+          --ls-actions-teal-bg: var(--ls-teal-bg);
+          --ls-actions-teal-text: var(--ls-teal);
+          --ls-actions-red-bg: var(--ls-coral-bg);
+          --ls-actions-red-text: var(--ls-coral);
+          --ls-actions-red-text-dark: var(--ls-coral);
         }
         .client-actions-tab {
           background: var(--ls-actions-bg);

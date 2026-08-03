@@ -195,8 +195,8 @@ export function MeasurementsHistoryGraph({ open, onClose, sessions }: Props) {
                   <stop offset="100%" stopColor="#1D9E75" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id="area-grad-up" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#BA7517" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#0F766E" stopOpacity="0" />
                 </linearGradient>
               </defs>
 
@@ -239,7 +239,7 @@ export function MeasurementsHistoryGraph({ open, onClose, sessions }: Props) {
               <path
                 d={linePath}
                 fill="none"
-                stroke={descending ? "#1D9E75" : "#BA7517"}
+                stroke={descending ? "#1D9E75" : "#0F766E"}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -253,7 +253,7 @@ export function MeasurementsHistoryGraph({ open, onClose, sessions }: Props) {
                     cy={p.py}
                     r={hoverIndex === i ? 7 : 5}
                     fill="#FFFFFF"
-                    stroke={descending ? "#1D9E75" : "#BA7517"}
+                    stroke={descending ? "#1D9E75" : "#0F766E"}
                     strokeWidth="2"
                     style={{ cursor: "pointer", transition: "r 120ms" }}
                     onMouseEnter={() => setHoverIndex(i)}
@@ -339,11 +339,11 @@ export function MeasurementsHistoryGraph({ open, onClose, sessions }: Props) {
                 style={{
                   marginTop: 10,
                   padding: "10px 12px",
-                  background: descending ? "rgba(29,158,117,0.12)" : "rgba(186,117,23,0.12)",
-                  border: `1px solid ${descending ? "rgba(29,158,117,0.3)" : "rgba(186,117,23,0.3)"}`,
+                  background: descending ? "rgba(29,158,117,0.12)" : "rgba(15,118,110,0.12)",
+                  border: `1px solid ${descending ? "rgba(29,158,117,0.3)" : "rgba(15,118,110,0.3)"}`,
                   borderRadius: 10,
                   fontSize: 13,
-                  color: descending ? "#1D9E75" : "#BA7517",
+                  color: descending ? "#1D9E75" : "#0F766E",
                   fontWeight: 600,
                 }}
               >
