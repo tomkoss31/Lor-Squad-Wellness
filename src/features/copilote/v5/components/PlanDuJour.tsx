@@ -39,7 +39,7 @@ function hexA(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 function prioColor(p: Prio): string {
-  return p === "urgent" ? "#FB7185" : p === "todo" ? "#C9A84C" : "#10B981";
+  return p === "urgent" ? "#FB7185" : p === "todo" ? "var(--ls-gold)" : "#10B981";
 }
 function prioOf(u: DormantUrgency): Prio {
   return u === "never" || u === "high" ? "urgent" : u === "medium" ? "todo" : "ok";
@@ -57,7 +57,7 @@ function useIsMobile(): boolean {
 }
 
 const PARTICLE_DIRS = [[0, -24], [17, -17], [24, 0], [17, 17], [0, 24], [-17, 17], [-24, 0], [-17, -17]];
-const PARTICLE_COLS = ["#10B981", "#06B6D4", "#8B5CF6", "#C9A84C", "#FB7185", "#06B6D4", "#8B5CF6", "#10B981"];
+const PARTICLE_COLS = ["#10B981", "#06B6D4", "#8B5CF6", "var(--ls-gold)", "#FB7185", "#06B6D4", "#8B5CF6", "#10B981"];
 
 // Variables de thème (sombre = :root, clair = html.theme-light) → suit l'app.
 const PDJ_THEME_CSS = `

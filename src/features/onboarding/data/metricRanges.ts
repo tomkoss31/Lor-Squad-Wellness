@@ -14,7 +14,7 @@ export interface MetricRange {
 
 export const COLOR_HEX: Record<MetricColor, string> = {
   green: "#1D9E75",
-  gold: "#EF9F27",
+  gold: "#2DD4BF",
   coral: "#D85A30",
   red: "#E24B4A",
   blue: "#4A90E2",

@@ -385,7 +385,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               style={{
                 width: "100%",
                 padding: "12px 16px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 10,
@@ -393,7 +393,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 fontWeight: 700,
                 fontFamily: "Syne, sans-serif",
                 cursor: togglingActivation ? "wait" : "pointer",
-                boxShadow: "0 4px 14px rgba(186,117,23,0.35)",
+                boxShadow: "0 4px 14px rgba(15,118,110,0.35)",
                 opacity: togglingActivation ? 0.7 : 1,
               }}
             >

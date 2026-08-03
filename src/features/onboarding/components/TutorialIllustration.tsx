@@ -9,7 +9,7 @@
 import type { TutorialIllustrationKind } from "../types";
 
 const GOLD = "#B8922A";
-const GOLD_LIGHT = "#EF9F27";
+const GOLD_LIGHT = "#2DD4BF";
 const TEAL = "#1D9E75";
 const CORAL = "#D85A30";
 const PURPLE = "#7F77DD";

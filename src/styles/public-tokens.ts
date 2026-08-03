@@ -43,7 +43,7 @@ export const PUBLIC_TOKENS = {
   violet: "#A78BFA",
   violetDark: "#7C3AED",
   coral: "#FB7185",
-  gold: "#C9A84C",
+  gold: "var(--ls-gold)",
   goldSoft: "#E5C97D",
   emerald: "#34D399",
   // Identité v2 « premium performance » (2026-07) : lime signature, teal = confiance.

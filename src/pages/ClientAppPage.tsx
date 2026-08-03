@@ -807,7 +807,7 @@ export function ClientAppPage() {
           width: 420px;
           height: 420px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(239,159,39,0.18) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(45,212,191,0.18) 0%, transparent 70%);
           filter: blur(70px);
           pointer-events: none;
           z-index: 0;
@@ -861,7 +861,7 @@ export function ClientAppPage() {
             fontWeight: 700,
             fontSize: 15,
             textAlign: 'center',
-            boxShadow: '0 12px 30px rgba(186,117,23,0.4), 0 2px 6px rgba(239,159,39,0.2)',
+            boxShadow: '0 12px 30px rgba(15,118,110,0.4), 0 2px 6px rgba(45,212,191,0.2)',
             animation: 'clientapp-toast-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >

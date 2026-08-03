@@ -183,7 +183,7 @@ export function PvClientFullPage({
               width: 60,
               height: 60,
               borderRadius: 16,
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -191,7 +191,7 @@ export function PvClientFullPage({
               fontWeight: 800,
               fontSize: 22,
               color: "white",
-              boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+              boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
               flexShrink: 0,
             }}
           >
@@ -387,7 +387,7 @@ function ProductsTab({
             padding: "14px 18px",
             borderRadius: 12,
             border: "none",
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#fff",
             fontSize: 14,
             fontWeight: 700,
@@ -398,16 +398,16 @@ function ProductsTab({
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
-            boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+            boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
             transition: "transform 0.15s, box-shadow 0.15s",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-1px)";
-            e.currentTarget.style.boxShadow = "0 6px 18px rgba(186,117,23,0.50)";
+            e.currentTarget.style.boxShadow = "0 6px 18px rgba(15,118,110,0.50)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 4px 14px rgba(186,117,23,0.40)";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(15,118,110,0.40)";
           }}
         >
           <span style={{ fontSize: 16 }}>🛒</span>
@@ -1514,14 +1514,14 @@ function PremiumOrderBuilder({
             background:
               cart.length === 0
                 ? "var(--ls-border)"
-                : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#fff",
             fontSize: 13,
             fontWeight: 700,
             cursor: submitting ? "wait" : cart.length === 0 ? "not-allowed" : "pointer",
             fontFamily: "Syne, sans-serif",
             opacity: submitting ? 0.7 : 1,
-            boxShadow: cart.length > 0 ? "0 4px 14px rgba(186,117,23,0.40)" : "none",
+            boxShadow: cart.length > 0 ? "0 4px 14px rgba(15,118,110,0.40)" : "none",
             transition: "all 0.15s",
             position: "relative",
             zIndex: 1,

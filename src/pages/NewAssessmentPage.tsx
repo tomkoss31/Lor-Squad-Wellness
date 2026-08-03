@@ -1465,8 +1465,8 @@ export function NewAssessmentPage() {
             transform: "translateX(-50%)",
             zIndex: 999,
             background: "linear-gradient(135deg, #FAEEDA, #F0DBB0)",
-            color: "#5C3A05",
-            border: "1px solid rgba(186,117,23,0.35)",
+            color: "#0B3B36",
+            border: "1px solid rgba(15,118,110,0.35)",
             padding: "8px 16px",
             borderRadius: 999,
             fontSize: 12,
@@ -1509,13 +1509,13 @@ export function NewAssessmentPage() {
             zIndex: 30,
             padding: "10px 14px",
             borderRadius: 999,
-            background: "#BA7517",
+            background: "#0F766E",
             color: "#FFFFFF",
             border: "none",
             fontSize: 13,
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
-            boxShadow: "0 4px 14px rgba(186,117,23,0.4)",
+            boxShadow: "0 4px 14px rgba(15,118,110,0.4)",
             cursor: "pointer",
           }}
         >
@@ -1637,8 +1637,8 @@ export function NewAssessmentPage() {
                     50%      { transform: translate(-12px, 8px) scale(1.08); }
                   }
                   @keyframes ls-hero-dot-pulse {
-                    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(239,159,39,0.50); }
-                    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(239,159,39,0.80); }
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(45,212,191,0.50); }
+                    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(45,212,191,0.80); }
                   }
                   @keyframes ls-hero-fade-up {
                     0%   { opacity: 0; transform: translateY(6px); }
@@ -2121,7 +2121,7 @@ export function NewAssessmentPage() {
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
-                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: '#C9A84C', insuffisant: '#FB7185' }
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-gold)', insuffisant: '#FB7185' }
                   const color = qColors[quality]
                   return (
                     <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -2617,10 +2617,10 @@ export function NewAssessmentPage() {
                           width: `${(filled / total) * 100}%`,
                           background: isComplete
                             ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-gold))'
-                            : 'linear-gradient(90deg, var(--ls-gold), #BA7517)',
+                            : 'linear-gradient(90deg, var(--ls-gold), #0F766E)',
                           borderRadius: 999,
                           transition: 'width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-                          boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(239,159,39,0.45)',
+                          boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(45,212,191,0.45)',
                         }}
                       />
                     </div>
@@ -2690,7 +2690,7 @@ export function NewAssessmentPage() {
                   <BodyScanRadar
                     size={280}
                     metrics={[
-                      { label: 'Poids', value: form.weight, max: 120, color: '#C9A84C' },
+                      { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-gold)' },
                       { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
                       { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
                       { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
@@ -3027,9 +3027,9 @@ export function NewAssessmentPage() {
                   overflow: 'hidden',
                   padding: '20px 24px',
                   borderRadius: 20,
-                  background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 50%, #5C3A05 100%)',
+                  background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 50%, #0B3B36 100%)',
                   border: '0.5px solid color-mix(in srgb, var(--ls-gold) 60%, transparent)',
-                  boxShadow: '0 12px 32px -8px rgba(186,117,23,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  boxShadow: '0 12px 32px -8px rgba(15,118,110,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
                   marginBottom: 4,
                 }}
               >
@@ -3754,7 +3754,7 @@ export function NewAssessmentPage() {
 
           {/* Avertissement validation */}
           {stepWarning && (
-            <div className="rounded-[14px] border border-[rgba(201,168,76,0.25)] bg-[rgba(201,168,76,0.08)] px-4 py-3 text-sm text-[#C9A84C]">
+            <div className="rounded-[14px] border border-[rgba(var(--ls-gold-rgb),0.25)] bg-[rgba(var(--ls-gold-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-gold)]">
               {stepWarning}
             </div>
           )}
@@ -3847,7 +3847,7 @@ export function NewAssessmentPage() {
                   border: 'none',
                   background: currentStep === steps.length - 1
                     ? 'var(--ls-surface2)'
-                    : 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                    : 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
                   color: currentStep === steps.length - 1 ? 'var(--ls-text-hint)' : '#FFFFFF',
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -3859,7 +3859,7 @@ export function NewAssessmentPage() {
                   letterSpacing: '-0.005em',
                   boxShadow: currentStep === steps.length - 1
                     ? 'none'
-                    : '0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
+                    : '0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
                   transition: 'transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease',
                   opacity: currentStep === steps.length - 1 ? 0.55 : 1,
                 }}

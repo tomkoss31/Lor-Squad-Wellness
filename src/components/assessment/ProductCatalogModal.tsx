@@ -298,7 +298,7 @@ export function ProductCatalogModal({
             borderRadius: 24,
             overflow: "hidden",
             boxShadow:
-              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)",
+              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(45,212,191,0.20)",
           }}
         >
           {/* HEADER */}
@@ -307,7 +307,7 @@ export function ProductCatalogModal({
               position: "relative",
               overflow: "hidden",
               padding: "18px 22px",
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
               color: "#FFFFFF",
               flexShrink: 0,
             }}
@@ -476,7 +476,7 @@ export function ProductCatalogModal({
                   alignItems: "center",
                   gap: 6,
                   flexShrink: 0,
-                  boxShadow: activeCategory === "all" ? "0 2px 8px -3px rgba(239,159,39,0.30)" : "none",
+                  boxShadow: activeCategory === "all" ? "0 2px 8px -3px rgba(45,212,191,0.30)" : "none",
                 }}
               >
                 ✨ Tout
@@ -760,9 +760,9 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
               fontFamily: "DM Sans, sans-serif",
               background: isInCart
                 ? "color-mix(in srgb, var(--ls-teal) 15%, var(--ls-surface))"
-                : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: isInCart ? "var(--ls-teal)" : "#FFFFFF",
-              boxShadow: isInCart ? "none" : "0 3px 8px -2px rgba(186,117,23,0.40)",
+              boxShadow: isInCart ? "none" : "0 3px 8px -2px rgba(15,118,110,0.40)",
               transition: "transform 0.15s ease, filter 0.15s ease",
               flexShrink: 0,
               whiteSpace: "nowrap",

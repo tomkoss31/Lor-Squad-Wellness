@@ -673,17 +673,17 @@ export function AgendaPage() {
   const heroHour = new Date().getHours();
   const heroGradient = (() => {
     if (heroHour >= 5 && heroHour < 8)
-      return { primary: "#FFB088", secondary: "#FF8866", tertiary: "#EF9F27", glow: "rgba(255,176,136,0.30)" };
+      return { primary: "#FFB088", secondary: "#FF8866", tertiary: "#2DD4BF", glow: "rgba(255,176,136,0.30)" };
     if (heroHour >= 8 && heroHour < 11)
-      return { primary: "#FFD56B", secondary: "#EF9F27", tertiary: "#BA7517", glow: "rgba(239,159,39,0.28)" };
+      return { primary: "#5EEAD4", secondary: "#2DD4BF", tertiary: "#0F766E", glow: "rgba(45,212,191,0.28)" };
     if (heroHour >= 11 && heroHour < 14)
-      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#0D9488", glow: "rgba(13,148,136,0.22)" };
+      return { primary: "#2DD4BF", secondary: "#0F766E", tertiary: "#0D9488", glow: "rgba(13,148,136,0.22)" };
     if (heroHour >= 14 && heroHour < 17)
-      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#5C3A05", glow: "rgba(186,117,23,0.28)" };
+      return { primary: "#2DD4BF", secondary: "#0F766E", tertiary: "#0B3B36", glow: "rgba(15,118,110,0.28)" };
     if (heroHour >= 17 && heroHour < 20)
-      return { primary: "#FF6B6B", secondary: "#BA7517", tertiary: "#7C3AED", glow: "rgba(255,107,107,0.25)" };
+      return { primary: "#FF6B6B", secondary: "#0F766E", tertiary: "#7C3AED", glow: "rgba(255,107,107,0.25)" };
     if (heroHour >= 20 && heroHour < 23)
-      return { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#BA7517", glow: "rgba(192,132,252,0.25)" };
+      return { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#0F766E", glow: "rgba(192,132,252,0.25)" };
     return { primary: "#A5B4FC", secondary: "#818CF8", tertiary: "#7C3AED", glow: "rgba(165,180,252,0.25)" };
   })();
 
@@ -714,8 +714,8 @@ export function AgendaPage() {
           50% { transform: translateX(150%); opacity: 0.6; }
         }
         @keyframes ls-agenda-cta-glow {
-          0%, 100% { box-shadow: 0 4px 16px rgba(186,117,23,0.30); }
-          50% { box-shadow: 0 6px 24px rgba(186,117,23,0.55), 0 0 0 4px rgba(239,159,39,0.10); }
+          0%, 100% { box-shadow: 0 4px 16px rgba(15,118,110,0.30); }
+          50% { box-shadow: 0 6px 24px rgba(15,118,110,0.55), 0 0 0 4px rgba(45,212,191,0.10); }
         }
         @keyframes ls-agenda-fade-in {
           from { opacity: 0; transform: translateY(8px); }
@@ -1034,7 +1034,7 @@ export function AgendaPage() {
                 width: 50,
                 height: 50,
                 borderRadius: 14,
-                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #FF6B6B 0%, #0F766E 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -2146,7 +2146,7 @@ function ClientFollowUpCard({
           top: 0,
           bottom: 0,
           width: 4,
-          background: "linear-gradient(180deg, #EF9F27 0%, #BA7517 100%)",
+          background: "linear-gradient(180deg, #2DD4BF 0%, #0F766E 100%)",
           borderRadius: "16px 0 0 16px",
         }}
       />
@@ -2188,7 +2188,7 @@ function ClientFollowUpCard({
           width: 38,
           height: 38,
           borderRadius: 12,
-          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -2197,7 +2197,7 @@ function ClientFollowUpCard({
           fontWeight: 800,
           fontSize: 13,
           flexShrink: 0,
-          boxShadow: "0 2px 8px rgba(186,117,23,0.30)",
+          boxShadow: "0 2px 8px rgba(15,118,110,0.30)",
           letterSpacing: "-0.02em",
         }}
       >
@@ -2229,7 +2229,7 @@ function ClientFollowUpCard({
                 fontWeight: 800,
                 padding: "2px 7px",
                 borderRadius: 999,
-                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #FF6B6B 0%, #0F766E 100%)",
                 color: "white",
                 letterSpacing: 0.4,
                 flexShrink: 0,

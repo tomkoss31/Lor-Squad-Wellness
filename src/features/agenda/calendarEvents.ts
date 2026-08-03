@@ -106,7 +106,7 @@ export interface CalendarEvent {
 export const CALENDAR_PALETTE: Array<{ hex: string; label: string }> = [
   { hex: "#2DD4BF", label: "Turquoise" },
   { hex: "#A78BFA", label: "Violet" },
-  { hex: "#C9A84C", label: "Doré" },
+  { hex: "var(--ls-gold)", label: "Doré" },
   { hex: "#06B6D4", label: "Cyan" },
   { hex: "#8FBF3F", label: "Olive" },
   { hex: "#F97316", label: "Orange" },

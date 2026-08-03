@@ -34,39 +34,39 @@ function getTimeGradient(hour: number): { greeting: string; time: string; sparkl
   if (hour >= 5 && hour < 8) {
     // Aube — rose orange
     return {
-      greeting: "linear-gradient(135deg, #FFB088 0%, #FF8866 50%, #EF9F27 100%)",
-      time: "linear-gradient(135deg, var(--ls-text) 0%, #FFB088 60%, #EF9F27 100%)",
+      greeting: "linear-gradient(135deg, #FFB088 0%, #FF8866 50%, #2DD4BF 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #FFB088 60%, #2DD4BF 100%)",
       sparkleColor: "#FF8866",
     };
   }
   if (hour >= 8 && hour < 11) {
     // Matin — gold lumineux
     return {
-      greeting: "linear-gradient(135deg, #FFD56B 0%, #EF9F27 60%, #BA7517 100%)",
-      time: "linear-gradient(135deg, var(--ls-text) 0%, #EF9F27 70%, #BA7517 100%)",
-      sparkleColor: "#EF9F27",
+      greeting: "linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 60%, #0F766E 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #2DD4BF 70%, #0F766E 100%)",
+      sparkleColor: "#2DD4BF",
     };
   }
   if (hour >= 11 && hour < 14) {
     // Midi — gold + teal solaire
     return {
-      greeting: "linear-gradient(135deg, #EF9F27 0%, #BA7517 50%, #0D9488 100%)",
-      time: "linear-gradient(135deg, var(--ls-text) 0%, #EF9F27 60%, #0D9488 100%)",
+      greeting: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 50%, #0D9488 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #2DD4BF 60%, #0D9488 100%)",
       sparkleColor: "#0D9488",
     };
   }
   if (hour >= 14 && hour < 17) {
     // Apres-midi — gold sature
     return {
-      greeting: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
-      time: "linear-gradient(135deg, var(--ls-text) 0%, #BA7517 60%, #5C3A05 100%)",
-      sparkleColor: "#BA7517",
+      greeting: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #0F766E 60%, #0B3B36 100%)",
+      sparkleColor: "#0F766E",
     };
   }
   if (hour >= 17 && hour < 20) {
     // Crepuscule — coral + purple
     return {
-      greeting: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 40%, #7C3AED 100%)",
+      greeting: "linear-gradient(135deg, #FF6B6B 0%, #0F766E 40%, #7C3AED 100%)",
       time: "linear-gradient(135deg, var(--ls-text) 0%, #FF8866 50%, #7C3AED 100%)",
       sparkleColor: "#FF6B6B",
     };
@@ -74,7 +74,7 @@ function getTimeGradient(hour: number): { greeting: string; time: string; sparkl
   if (hour >= 20 && hour < 23) {
     // Soir — purple dark gold
     return {
-      greeting: "linear-gradient(135deg, #C084FC 0%, #7C3AED 50%, #BA7517 100%)",
+      greeting: "linear-gradient(135deg, #C084FC 0%, #7C3AED 50%, #0F766E 100%)",
       time: "linear-gradient(135deg, var(--ls-text) 0%, #C084FC 60%, #7C3AED 100%)",
       sparkleColor: "#C084FC",
     };
@@ -141,8 +141,8 @@ export function ClockHeader({
           to { opacity: 1; transform: translateY(0) scaleY(1); filter: blur(0); }
         }
         @keyframes ls-glow-pulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(239,159,39,0.0), inset 0 0 0 0 rgba(255,255,255,0.04); }
-          50% { box-shadow: 0 0 32px rgba(239,159,39,0.18), inset 0 0 0 0 rgba(255,255,255,0.04); }
+          0%, 100% { box-shadow: 0 0 20px rgba(45,212,191,0.0), inset 0 0 0 0 rgba(255,255,255,0.04); }
+          50% { box-shadow: 0 0 32px rgba(45,212,191,0.18), inset 0 0 0 0 rgba(255,255,255,0.04); }
         }
         .ls-clock-conic {
           position: absolute;
@@ -150,7 +150,7 @@ export function ClockHeader({
           background: conic-gradient(
             from 0deg,
             transparent 0deg,
-            rgba(239,159,39,0.18) 60deg,
+            rgba(45,212,191,0.18) 60deg,
             transparent 120deg,
             rgba(13,148,136,0.14) 180deg,
             transparent 240deg,
@@ -233,7 +233,7 @@ export function ClockHeader({
                 height: 6,
                 borderRadius: 999,
                 background: "var(--ls-gold)",
-                boxShadow: "0 0 8px rgba(239,159,39,0.6)",
+                boxShadow: "0 0 8px rgba(45,212,191,0.6)",
               }}
             />
             {formatDateShort(now)}

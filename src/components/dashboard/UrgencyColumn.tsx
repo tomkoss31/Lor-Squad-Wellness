@@ -81,7 +81,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                     : isToday
                       ? { bg: 'rgba(13,148,136,0.1)', c: 'var(--ls-teal)', bd: 'rgba(13,148,136,0.2)' }
                       : isThisWeek
-                        ? { bg: 'rgba(201,168,76,0.1)', c: 'var(--ls-gold)', bd: 'rgba(201,168,76,0.2)' }
+                        ? { bg: 'rgba(var(--ls-gold-rgb),0.1)', c: 'var(--ls-gold)', bd: 'rgba(var(--ls-gold-rgb),0.2)' }
                         : { bg: 'var(--ls-surface2)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border)' }
                   return (
                   <a
@@ -125,7 +125,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
       ))}
 
       {seeAllLink && seeAllCount && seeAllCount > 0 && (
-        <Link to={seeAllLink} style={{ textAlign: 'center', display: 'block', fontSize: 11, color: '#C9A84C', textDecoration: 'none', padding: '6px 0' }}>
+        <Link to={seeAllLink} style={{ textAlign: 'center', display: 'block', fontSize: 11, color: 'var(--ls-gold)', textDecoration: 'none', padding: '6px 0' }}>
           Voir les {seeAllCount} autres →
         </Link>
       )}

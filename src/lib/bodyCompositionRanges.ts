@@ -38,12 +38,12 @@ export interface MetricRange {
 // Palette chantier (alignée avec les accents UI existants)
 const COLORS = {
   ideal: "#1D9E75",
-  normal: "#EF9F27",
+  normal: "#2DD4BF",
   warning: "#D4537E",
   high: "#E24B4A",
   low: "#D4537E",
   insufficient: "#E24B4A",
-  limit: "#EF9F27",
+  limit: "#2DD4BF",
   overhydrated: "#D4537E",
 };
 

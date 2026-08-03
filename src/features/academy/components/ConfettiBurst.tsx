@@ -24,7 +24,7 @@ const PALETTE = [
   "#1D9E75", // teal
   "#D85A30", // coral
   "#7F77DD", // purple
-  "#EF9F27", // gold light
+  "#2DD4BF", // gold light
   "#FFFFFF", // blanc
 ];
 

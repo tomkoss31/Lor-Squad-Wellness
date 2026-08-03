@@ -61,13 +61,13 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
       <div
         style={{
           background: noMeasures || oneMeasure
-            ? "linear-gradient(135deg, rgba(239,159,39,0.12), rgba(186,117,23,0.08))"
+            ? "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(15,118,110,0.08))"
             : hasProgress
               ? "linear-gradient(135deg, rgba(29,158,117,0.14), rgba(15,110,86,0.1))"
               : "var(--ls-surface2, #f4f1ec)",
           border: `1px solid ${
             noMeasures || oneMeasure
-              ? "rgba(239,159,39,0.25)"
+              ? "rgba(45,212,191,0.25)"
               : hasProgress
                 ? "rgba(29,158,117,0.3)"
                 : "rgba(0,0,0,0.08)"
@@ -79,7 +79,7 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
       >
         {noMeasures ? (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#BA7517", fontFamily: "Syne, sans-serif" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0F766E", fontFamily: "Syne, sans-serif" }}>
               Première mesure ? C&apos;est parti ! 📏
             </div>
             <div style={{ fontSize: 12, color: "#6b6f7a", marginTop: 4, lineHeight: 1.5 }}>
@@ -89,7 +89,7 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
           </>
         ) : oneMeasure ? (
           <>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#BA7517", fontFamily: "Syne, sans-serif" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F766E", fontFamily: "Syne, sans-serif" }}>
               Bravo pour ta première session ! 💪
             </div>
             <div style={{ fontSize: 12, color: "#6b6f7a", marginTop: 4, lineHeight: 1.5 }}>
@@ -107,7 +107,7 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
           </>
         ) : regression ? (
           <>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#BA7517", fontFamily: "Syne, sans-serif" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F766E", fontFamily: "Syne, sans-serif" }}>
               Phase de stabilisation 🔁
             </div>
             <div style={{ fontSize: 12, color: "#6b6f7a", marginTop: 4, lineHeight: 1.5 }}>

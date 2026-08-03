@@ -175,14 +175,14 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
           {!isNone ? (
             <div
               style={{
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "white",
                 padding: "8px 14px",
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 800,
                 fontFamily: "Syne, sans-serif",
-                boxShadow: "0 4px 12px rgba(186,117,23,0.35)",
+                boxShadow: "0 4px 12px rgba(15,118,110,0.35)",
                 flexShrink: 0,
               }}
             >
@@ -244,7 +244,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
               flex: 1,
               minWidth: 140,
               padding: "12px 16px",
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: "white",
               border: "none",
               borderRadius: 12,
@@ -252,7 +252,7 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
               fontWeight: 700,
               fontFamily: "Syne, sans-serif",
               cursor: "pointer",
-              boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+              boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
             }}
           >
             🎮 Calcule ta remise

@@ -172,7 +172,7 @@ export function ClientProductsTab({
         @keyframes prod-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes prod-stagger { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .prod-reco-card { animation: prod-stagger 0.5s cubic-bezier(0.16,1,0.3,1) both; transition: transform 0.25s ease, box-shadow 0.25s ease; }
-        .prod-reco-card:hover { transform: scale(1.02); box-shadow: 0 12px 30px rgba(186,117,23,0.2); }
+        .prod-reco-card:hover { transform: scale(1.02); box-shadow: 0 12px 30px rgba(15,118,110,0.2); }
         .prod-reco-card:nth-child(1){animation-delay:60ms}
         .prod-reco-card:nth-child(2){animation-delay:120ms}
         .prod-reco-card:nth-child(3){animation-delay:180ms}
@@ -195,8 +195,8 @@ export function ClientProductsTab({
             padding: "20px 16px 18px",
             background:
               "linear-gradient(180deg, rgba(245,184,71,0.16) 0%, rgba(255,255,255,0) 100%)",
-            border: "1px solid rgba(239,159,39,0.35)",
-            boxShadow: "0 6px 24px rgba(239,159,39,0.10)",
+            border: "1px solid rgba(45,212,191,0.35)",
+            boxShadow: "0 6px 24px rgba(45,212,191,0.10)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
@@ -616,10 +616,10 @@ function RecommendedCard({
       className="prod-reco-card"
       style={{
         background: "#fff",
-        border: "1px solid rgba(239,159,39,0.28)",
+        border: "1px solid rgba(45,212,191,0.28)",
         borderRadius: 18,
         padding: "14px 14px 12px",
-        boxShadow: "0 4px 16px rgba(186,117,23,0.08)",
+        boxShadow: "0 4px 16px rgba(15,118,110,0.08)",
       }}
     >
       <div
@@ -711,7 +711,7 @@ function RecommendedCard({
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              boxShadow: "0 4px 14px rgba(186,117,23,0.3)",
+              boxShadow: "0 4px 14px rgba(15,118,110,0.3)",
             }}
           >
             <span aria-hidden="true">💬</span>

@@ -96,7 +96,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
             maxHeight: 'calc(100dvh - 32px)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            boxShadow: '0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)',
+            boxShadow: '0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(45,212,191,0.20)',
           }}
         >
           {/* HEADER GRADIENT GOLD */}
@@ -105,7 +105,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
               position: 'relative',
               overflow: 'hidden',
               padding: '18px 20px',
-              background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
+              background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)',
               color: '#FFFFFF',
             }}
           >
@@ -271,7 +271,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
                   borderRadius: 10,
                   padding: 6,
                   boxShadow: mode === 'app'
-                    ? '0 4px 12px -4px rgba(239,159,39,0.40)'
+                    ? '0 4px 12px -4px rgba(45,212,191,0.40)'
                     : '0 4px 12px -4px rgba(167,139,250,0.40)',
                 }}
               >
@@ -416,7 +416,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
                   padding: '11px 18px',
                   borderRadius: 999,
                   border: 'none',
-                  background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                  background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
                   color: '#FFFFFF',
                   fontFamily: 'DM Sans, sans-serif',
                   fontSize: 13,
@@ -428,7 +428,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 6,
-                  boxShadow: '0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  boxShadow: '0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
                   transition: 'transform 0.15s ease, filter 0.15s ease',
                   letterSpacing: '-0.005em',
                 }}

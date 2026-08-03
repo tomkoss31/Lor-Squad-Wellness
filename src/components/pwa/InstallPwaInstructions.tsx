@@ -46,8 +46,8 @@ const COPY: Record<DeviceKind, Instruction> = {
 export function InstallPwaInstructions({
   device,
   compact,
-  accent = "#BA7517",
-  accentBg = "rgba(186,117,23,0.12)",
+  accent = "#0F766E",
+  accentBg = "rgba(15,118,110,0.12)",
 }: {
   device?: DeviceKind;
   compact?: boolean;

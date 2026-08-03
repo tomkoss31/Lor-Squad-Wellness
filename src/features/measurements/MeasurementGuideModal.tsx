@@ -229,7 +229,7 @@ export function MeasurementGuideModal({
                 style={{
                   padding: "10px 16px",
                   borderRadius: 10,
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: "pointer",
@@ -294,7 +294,7 @@ export function MeasurementGuideModal({
             </label>
 
             {delta != null ? (
-              <div style={{ fontSize: 12, color: delta < 0 ? "#1D9E75" : "#BA7517", marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: delta < 0 ? "#1D9E75" : "#0F766E", marginBottom: 12 }}>
                 Évolution actuelle : {delta > 0 ? "+" : ""}{delta.toFixed(1)} cm depuis le départ
               </div>
             ) : null}

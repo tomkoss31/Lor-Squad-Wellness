@@ -457,13 +457,13 @@ export function ClientAccessModal({
         {state.kind === "active" ? (
           <div
             style={{
-              background: "rgba(239,159,39,0.12)",
-              border: "1px solid rgba(239,159,39,0.35)",
+              background: "rgba(45,212,191,0.12)",
+              border: "1px solid rgba(45,212,191,0.35)",
               borderRadius: 10,
               padding: "10px 12px",
               marginBottom: 12,
               fontSize: 12,
-              color: "#BA7517",
+              color: "#0F766E",
               fontWeight: 500,
             }}
           >
@@ -481,7 +481,7 @@ export function ClientAccessModal({
               width: "100%",
               padding: "12px 16px",
               borderRadius: 12,
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               border: "none",
               color: "#FFFFFF",
               cursor: busy ? "wait" : "pointer",
@@ -608,7 +608,7 @@ export function ClientAccessModal({
                 width: "100%",
                 padding: "11px 12px",
                 borderRadius: 10,
-                background: copied ? "#1D9E75" : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: copied ? "#1D9E75" : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
