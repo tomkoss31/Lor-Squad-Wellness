@@ -388,7 +388,7 @@ const greetingStyle: React.CSSProperties = {
 };
 
 // Greeting accent V7 : gradient G3 (emerald → cyan → violet) au lieu du
-// gold/orange V5 (#EF9F27 → #BA7517) qui jurait avec la nouvelle identite.
+// gold/orange V5 (#2DD4BF → #0F766E) qui jurait avec la nouvelle identite.
 const greetingAccentStyle: React.CSSProperties = {
   background: "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
   WebkitBackgroundClip: "text",

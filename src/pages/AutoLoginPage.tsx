@@ -174,7 +174,7 @@ export function AutoLoginPage() {
               style={{
                 padding: "10px 16px",
                 borderRadius: 10,
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",

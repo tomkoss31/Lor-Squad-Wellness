@@ -22,7 +22,7 @@ export function TutorialProgress({
               width: isActive ? 18 : 6,
               height: 6,
               borderRadius: 3,
-              background: isDone ? "#1D9E75" : isActive ? "#BA7517" : "rgba(0,0,0,0.15)",
+              background: isDone ? "#1D9E75" : isActive ? "#0F766E" : "rgba(0,0,0,0.15)",
               transition: "all 0.25s",
             }}
           />

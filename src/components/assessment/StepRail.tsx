@@ -20,7 +20,7 @@ interface StepRailProps {
 }
 
 const STEP_PHASES = [
-  { label: "Client",    emoji: "👤", steps: [0],            color: "#EF9F27" },
+  { label: "Client",    emoji: "👤", steps: [0],            color: "#2DD4BF" },
   { label: "Habitudes", emoji: "🍽️", steps: [1, 2, 3, 4],   color: "#2DD4BF" },
   { label: "Analyse",   emoji: "🧬", steps: [5, 6, 7, 8, 9], color: "#A78BFA" },
   { label: "Clôture",   emoji: "✨", steps: [10, 11, 12, 13, 14], color: "#F0C96A" },
@@ -51,8 +51,8 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
     <>
       <style>{`
         @keyframes ls-rail-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 var(--rail-color, #EF9F27), 0 0 12px 0 var(--rail-color, #EF9F27); }
-          50%      { box-shadow: 0 0 0 6px transparent, 0 0 18px 4px var(--rail-color, #EF9F27); }
+          0%, 100% { box-shadow: 0 0 0 0 var(--rail-color, #2DD4BF), 0 0 12px 0 var(--rail-color, #2DD4BF); }
+          50%      { box-shadow: 0 0 0 6px transparent, 0 0 18px 4px var(--rail-color, #2DD4BF); }
         }
         @keyframes ls-rail-shine {
           0%, 100% { transform: translateX(-50%); opacity: 0; }
@@ -153,7 +153,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 position: "relative",
                 height: "100%",
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, #EF9F27 0%, ${phase.color} 100%)`,
+                background: `linear-gradient(90deg, #2DD4BF 0%, ${phase.color} 100%)`,
                 borderRadius: 999,
                 transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                 boxShadow: `0 0 8px ${phase.color}80`,
@@ -285,7 +285,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 position: "relative",
                 height: "100%",
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, #EF9F27 0%, #BA7517 35%, ${phase.color} 100%)`,
+                background: `linear-gradient(90deg, #2DD4BF 0%, #0F766E 35%, ${phase.color} 100%)`,
                 borderRadius: 999,
                 transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
                 boxShadow: `0 0 12px ${phase.color}66, inset 0 1px 0 rgba(255,255,255,0.25)`,

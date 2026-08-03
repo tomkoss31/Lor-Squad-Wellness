@@ -811,7 +811,7 @@ function buildRecentActivity(
       events.push({
         label: `Nouveau prospect · ${p.firstName} ${p.lastName[0] ?? ""}.`,
         date: p.createdAt,
-        color: "#EF9F27",
+        color: "#2DD4BF",
       });
     });
   allUsers
@@ -873,7 +873,7 @@ export function TreeLevel({
 // Couleur d'accent par rôle (lisibilité d'un coup d'œil dans l'arbre).
 function treeRoleAccent(row: TeamTreeRow): { color: string; label: string } {
   const t = (row.title ?? "").toLowerCase();
-  if (row.role === "admin") return { color: "#BA7517", label: row.title || "Admin" };
+  if (row.role === "admin") return { color: "#0F766E", label: row.title || "Admin" };
   if (/référent|referent/.test(t)) return { color: "var(--ls-purple)", label: row.title || "Référent d'équipe" };
   if (/externe|hors[\s-]?app/.test(t)) return { color: "var(--ls-text-hint)", label: row.title || "Distributeur externe" };
   if (/portefeuille|terrain/.test(t)) return { color: "var(--ls-teal)", label: row.title || "Portefeuille terrain" };
@@ -896,10 +896,10 @@ function TreeCard({
   const row = node.row;
   const isCouple = isCoupleVirtualId(row.user_id);
   const meta = treeRoleAccent(row);
-  const accent = isRoot ? "#BA7517" : meta.color;
+  const accent = isRoot ? "#0F766E" : meta.color;
 
   const baseShadow = isRoot
-    ? "0 12px 32px -12px rgba(186,117,23,0.50)"
+    ? "0 12px 32px -12px rgba(15,118,110,0.50)"
     : isSelected
       ? "0 10px 24px -10px color-mix(in srgb, var(--ls-teal) 60%, transparent)"
       : "0 4px 14px -8px rgba(0,0,0,0.20)";
@@ -907,7 +907,7 @@ function TreeCard({
   const cardStyle: React.CSSProperties = isRoot
     ? {
         background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface)), var(--ls-surface))",
-        border: "1px solid #BA7517",
+        border: "1px solid #0F766E",
         padding: "13px 18px 12px",
         minWidth: 184,
       }
@@ -926,7 +926,7 @@ function TreeCard({
         };
 
   const avatarBg = isRoot
-    ? "linear-gradient(135deg, #EF9F27, #BA7517)"
+    ? "linear-gradient(135deg, #2DD4BF, #0F766E)"
     : isSelected
       ? "var(--ls-teal)"
       : `color-mix(in srgb, ${accent} 24%, var(--ls-surface2))`;
@@ -958,7 +958,7 @@ function TreeCard({
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.boxShadow = isRoot
-          ? "0 16px 38px -12px rgba(186,117,23,0.6)"
+          ? "0 16px 38px -12px rgba(15,118,110,0.6)"
           : "0 12px 26px -8px rgba(0,0,0,0.28)";
       }}
       onMouseLeave={(e) => {
@@ -1110,7 +1110,7 @@ function DistributorDetailCard({
     : "—";
 
   return (
-    <Card style={{ borderTop: isCouple ? "2px solid #BA7517" : "2px solid #0F6E56" }} className="space-y-5">
+    <Card style={{ borderTop: isCouple ? "2px solid #0F766E" : "2px solid #0F6E56" }} className="space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -1120,7 +1120,7 @@ function DistributorDetailCard({
               height: 48,
               borderRadius: "50%",
               background: isCouple
-                ? "linear-gradient(135deg, #EF9F27, #BA7517)"
+                ? "linear-gradient(135deg, #2DD4BF, #0F766E)"
                 : "#0F6E56",
               color: "#fff",
               display: "flex",
@@ -1196,7 +1196,7 @@ function DistributorDetailCard({
         <DonutCard
           label="Fidélisation clients"
           value={stats?.retention_clients_pct != null ? Number(stats.retention_clients_pct) : null}
-          color="#BA7517"
+          color="#0F766E"
           hint={
             stats && stats.retention_clients_total > 0
               ? `${stats.retention_clients_still_active} clients sur ${stats.retention_clients_total} toujours actifs`
@@ -1514,9 +1514,9 @@ function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) 
   const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉";
   const bg =
     rank === 1
-      ? "linear-gradient(90deg, rgba(239,159,39,0.15), rgba(239,159,39,0.02))"
+      ? "linear-gradient(90deg, rgba(45,212,191,0.15), rgba(45,212,191,0.02))"
       : "var(--ls-surface2)";
-  const border = rank === 1 ? "3px solid #EF9F27" : "3px solid transparent";
+  const border = rank === 1 ? "3px solid #2DD4BF" : "3px solid transparent";
 
   const metric =
     entry.clients_delta > 0
@@ -1545,7 +1545,7 @@ function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) 
           width: 24,
           height: 24,
           borderRadius: "50%",
-          background: entryIsCouple ? "linear-gradient(135deg, #EF9F27, #BA7517)" : "#0F6E56",
+          background: entryIsCouple ? "linear-gradient(135deg, #2DD4BF, #0F766E)" : "#0F6E56",
           color: "#fff",
           display: "flex",
           alignItems: "center",

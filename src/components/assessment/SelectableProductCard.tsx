@@ -163,7 +163,7 @@ export function SelectableProductCard({
     : isRec
       ? "var(--ls-gold)"
       : "var(--ls-border)";
-  const accentHex = selected ? "#2DD4BF" : isRec ? "#EF9F27" : "transparent";
+  const accentHex = selected ? "#2DD4BF" : isRec ? "#2DD4BF" : "transparent";
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, button inside handles selection
@@ -185,7 +185,7 @@ export function SelectableProductCard({
         boxShadow: selected
           ? "0 4px 14px -6px rgba(45,212,191,0.30)"
           : isRec
-            ? "0 4px 14px -6px rgba(239,159,39,0.20)"
+            ? "0 4px 14px -6px rgba(45,212,191,0.20)"
             : "none",
         cursor: "default",
       }}
@@ -213,7 +213,7 @@ export function SelectableProductCard({
             right: 10,
             fontSize: 13,
             color: "var(--ls-gold)",
-            filter: "drop-shadow(0 1px 2px rgba(239,159,39,0.40))",
+            filter: "drop-shadow(0 1px 2px rgba(45,212,191,0.40))",
           }}
           aria-label="Recommandé"
           title={highlight?.reason ?? "Recommandé"}
@@ -232,7 +232,7 @@ export function SelectableProductCard({
           background: selected
             ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
             : isRec
-              ? "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)"
+              ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
               : "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
           display: "flex",
           alignItems: "center",
@@ -241,7 +241,7 @@ export function SelectableProductCard({
           boxShadow: selected
             ? "0 4px 12px -4px rgba(45,212,191,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
             : isRec
-              ? "0 4px 12px -4px rgba(239,159,39,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
+              ? "0 4px 12px -4px rgba(45,212,191,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
               : "inset 0 1px 0 rgba(255,255,255,0.05)",
           border: selected || isRec ? "none" : "0.5px solid var(--ls-border)",
           transition: "transform 0.25s ease, background 0.25s ease",
@@ -312,11 +312,11 @@ export function SelectableProductCard({
               transition: "transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease",
               background: selected
                 ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 75%, #000) 100%)"
-                : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: "#FFFFFF",
               boxShadow: selected
                 ? "0 4px 10px -3px rgba(45,212,191,0.45)"
-                : "0 4px 10px -3px rgba(186,117,23,0.40)",
+                : "0 4px 10px -3px rgba(15,118,110,0.40)",
               whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => {

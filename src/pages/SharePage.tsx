@@ -145,7 +145,7 @@ export function SharePage() {
       <div aria-hidden="true" style={{
         position: "absolute", bottom: "-15%", right: "-8%",
         width: 480, height: 480, borderRadius: "50%",
-        background: "radial-gradient(circle, #EF9F27 0%, transparent 70%)",
+        background: "radial-gradient(circle, #2DD4BF 0%, transparent 70%)",
         filter: "blur(90px)", opacity: 0.26, pointerEvents: "none",
         animation: "share-blob-2 36s ease-in-out infinite alternate",
       }} />
@@ -179,16 +179,16 @@ export function SharePage() {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{
                 width: 64, height: 64, borderRadius: 16, margin: "0 auto 14px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 28,
-                boxShadow: "0 8px 24px rgba(186,117,23,0.3)",
+                boxShadow: "0 8px 24px rgba(15,118,110,0.3)",
               }}>
                 ⭐
               </div>
               <div style={{
                 fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "#EF9F27", fontWeight: 700, marginBottom: 8,
+                color: "#2DD4BF", fontWeight: 700, marginBottom: 8,
               }}>
                 Transformation La Base 360
               </div>
@@ -198,7 +198,7 @@ export function SharePage() {
               }}>
                 {data.client_first_name} a pris son{" "}
                 <span style={{
-                  background: "linear-gradient(135deg, #EF9F27 0%, #F5B847 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #F5B847 100%)",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -217,7 +217,7 @@ export function SharePage() {
             {hasProgress ? (
               <div style={{
                 background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(239,159,39,0.22)",
+                border: "1px solid rgba(45,212,191,0.22)",
                 borderRadius: 20,
                 padding: 22,
                 marginBottom: 22,
@@ -244,8 +244,8 @@ export function SharePage() {
               </div>
             ) : (
               <div style={{
-                background: "rgba(239,159,39,0.08)",
-                border: "1px solid rgba(239,159,39,0.25)",
+                background: "rgba(45,212,191,0.08)",
+                border: "1px solid rgba(45,212,191,0.25)",
                 borderRadius: 18,
                 padding: 18,
                 marginBottom: 22,
@@ -262,8 +262,8 @@ export function SharePage() {
 
             {/* CTA générique (pas de contact direct coach — RGPD) */}
             <div style={{
-              background: "linear-gradient(135deg, rgba(239,159,39,0.14), rgba(186,117,23,0.1))",
-              border: "1px solid rgba(239,159,39,0.35)",
+              background: "linear-gradient(135deg, rgba(45,212,191,0.14), rgba(15,118,110,0.1))",
+              border: "1px solid rgba(45,212,191,0.35)",
               borderRadius: 20,
               padding: 22,
               textAlign: "center",
@@ -287,13 +287,13 @@ export function SharePage() {
                   display: "inline-block",
                   padding: "14px 28px",
                   borderRadius: 12,
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   color: "#fff",
                   textDecoration: "none",
                   fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: 14,
-                  boxShadow: "0 4px 18px rgba(186,117,23,0.4)",
+                  boxShadow: "0 4px 18px rgba(15,118,110,0.4)",
                 }}
               >
                 ✨ Je veux mon bilan gratuit
@@ -309,7 +309,7 @@ export function SharePage() {
             }}>
               Partagé avec l&apos;accord de <strong>{data.client_first_name}</strong>.
               <br />
-              Propulsé par <strong style={{ color: "#EF9F27" }}>La Base 360</strong>
+              Propulsé par <strong style={{ color: "#2DD4BF" }}>La Base 360</strong>
               <br />
               <a href="/welcome" style={{ color: "rgba(240,237,232,0.45)", textDecoration: "underline" }}>
                 Découvrir l&apos;app
