@@ -15,7 +15,8 @@
 // d'affichage, pas un changement de logique.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { BodyFatInsightCard } from "../body-scan/BodyFatInsightCard";
 import { BodyScanRadar } from "../body-scan/BodyScanRadar";
@@ -61,18 +62,21 @@ function fmt(value: number, decimals: number): string {
 function MetricChart({
   points,
   color,
-  decimals
+  decimals,
+  tall = false
 }: {
   points: { date: string; value: number }[];
   color: string;
   decimals: number;
+  /** Version plein écran : plus haute, plus respirante. */
+  tall?: boolean;
 }) {
   const W = 340;
-  const H = 176;
-  const PT = 28;
-  const PB = 34;
-  const PL = 38;
-  const PR = 18;
+  const H = tall ? 300 : 176;
+  const PT = tall ? 40 : 28;
+  const PB = tall ? 44 : 34;
+  const PL = tall ? 44 : 38;
+  const PR = tall ? 34 : 18;
 
   if (points.length < 2) {
     return (
@@ -173,6 +177,75 @@ function MetricChart({
   );
 }
 
+// ─── Plein écran ────────────────────────────────────────────────────────────
+// La courbe en pleine page, tous les relevés depuis le démarrage. Utile en RDV
+// pour montrer le chemin parcouru au client (demande Thomas 2026-08-03).
+function ChartFullscreen({
+  metric,
+  points,
+  onClose
+}: {
+  metric: MetricDef;
+  points: { date: string; value: number }[];
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    // On bloque le scroll du fond pendant l'ouverture.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  const delta = points.length > 1 ? Number((last.value - first.value).toFixed(1)) : 0;
+  const good = delta === 0 ? null : metric.higherIsBetter ? delta > 0 : delta < 0;
+
+  return createPortal(
+    <div className="bs-fs" role="dialog" aria-modal="true" aria-label={`Courbe ${metric.label} en plein écran`}>
+      <div className="bs-fs-head">
+        <div>
+          <p className="bs-mono" style={{ margin: 0 }}>Depuis le démarrage · {points.length} relevés</p>
+          <h2 className="bs-fs-title" style={{ color: metric.color }}>{metric.label}</h2>
+        </div>
+        <button type="button" className="bs-fs-close" onClick={onClose} aria-label="Fermer le plein écran">✕</button>
+      </div>
+
+      <div className="bs-fs-body">
+        <MetricChart points={points} color={metric.color} decimals={metric.decimals} tall />
+      </div>
+
+      <div className="bs-fs-foot">
+        <div>
+          <span className="bs-fs-foot-l">Départ</span>
+          <span className="bs-fs-foot-v">{fmt(first.value, metric.decimals)} {metric.unit}</span>
+          <span className="bs-fs-foot-d">{formatDate(first.date)}</span>
+        </div>
+        <div>
+          <span className="bs-fs-foot-l">Aujourd&apos;hui</span>
+          <span className="bs-fs-foot-v" style={{ color: metric.color }}>{fmt(last.value, metric.decimals)} {metric.unit}</span>
+          <span className="bs-fs-foot-d">{formatDate(last.date)}</span>
+        </div>
+        <div>
+          <span className="bs-fs-foot-l">Écart</span>
+          <span className={`bs-fs-foot-v ${good === null ? "is-flat" : good ? "is-good" : "is-warn"}`}>
+            {delta === 0 ? "stable" : `${delta > 0 ? "+" : ""}${fmt(delta, metric.decimals)} ${metric.unit}`}
+          </span>
+          <span className="bs-fs-foot-d">sur toute la période</span>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ─── Bloc repliable ─────────────────────────────────────────────────────────
 function Fold({
   icon,
@@ -213,6 +286,7 @@ export function BodyScanTab({
   firstAssessment: AssessmentRecord;
 }) {
   const [selected, setSelected] = useState<MetricKey>("weight");
+  const [fullscreen, setFullscreen] = useState(false);
 
   // Historique trié — même tri que la version précédente (les cartes d'insight
   // le refaisaient chacune de leur côté).
@@ -368,8 +442,20 @@ export function BodyScanTab({
       <div className="bs-card">
         <div className="bs-chart-h">
           <span className="bs-mono">{current.label} · {currentSeries.length} relevé{currentSeries.length > 1 ? "s" : ""}</span>
-          <span className="bs-chart-now" style={{ color: current.color }}>
-            {fmt(latestBodyScan[current.key] ?? 0, current.decimals)} {current.unit}
+          <span className="bs-chart-actions">
+            <span className="bs-chart-now" style={{ color: current.color }}>
+              {fmt(latestBodyScan[current.key] ?? 0, current.decimals)} {current.unit}
+            </span>
+            {currentSeries.length > 1 ? (
+              <button
+                type="button"
+                className="bs-expand"
+                onClick={() => setFullscreen(true)}
+                aria-label={`Agrandir la courbe ${current.label}`}
+              >
+                ⤢ Agrandir
+              </button>
+            ) : null}
           </span>
         </div>
         <MetricChart points={currentSeries} color={current.color} decimals={current.decimals} />
@@ -407,11 +493,6 @@ export function BodyScanTab({
             weight: firstAssessment.bodyScan?.weight ?? 0,
             percent: firstAssessment.bodyScan?.bodyFat ?? 0
           }}
-          history={history.map((assessment) => ({
-            date: assessment.date,
-            weight: assessment.bodyScan?.weight ?? 0,
-            percent: assessment.bodyScan?.bodyFat ?? 0
-          }))}
         />
       ) : null}
 
@@ -430,11 +511,6 @@ export function BodyScanTab({
             weight: firstAssessment.bodyScan?.weight ?? 0,
             muscleMass: firstAssessment.bodyScan?.muscleMass ?? 0
           }}
-          history={history.map((assessment) => ({
-            date: assessment.date,
-            weight: assessment.bodyScan?.weight ?? 0,
-            muscleMass: assessment.bodyScan?.muscleMass ?? 0
-          }))}
         />
       ) : null}
 
@@ -444,12 +520,6 @@ export function BodyScanTab({
           hydrationPercent={latestBodyScan.hydration}
           sex={client.sex}
           visceralFat={latestBodyScan.visceralFat}
-          history={history.map((assessment) => ({
-            date: assessment.date,
-            weight: assessment.bodyScan?.weight ?? 0,
-            hydrationPercent: assessment.bodyScan?.hydration ?? 0,
-            visceralFat: assessment.bodyScan?.visceralFat ?? 0
-          }))}
         />
       ) : null}
 
@@ -457,10 +527,6 @@ export function BodyScanTab({
         <MetabolicAgeInsightCard
           current={latestBodyScan.metabolicAge}
           realAge={getEffectiveAge(client)}
-          history={history.map((assessment) => ({
-            date: assessment.date,
-            metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
-          }))}
         />
       ) : null}
 
@@ -508,6 +574,10 @@ export function BodyScanTab({
           </div>
         </Fold>
       ) : null}
+      {fullscreen && currentSeries.length > 1 ? (
+        <ChartFullscreen metric={current} points={currentSeries} onClose={() => setFullscreen(false)} />
+      ) : null}
+
     </Card>
   );
 }
@@ -560,4 +630,29 @@ const BODY_SCAN_STYLES = `
 .bs-fold-ico { width:26px; height:26px; flex:0 0 auto; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; background:color-mix(in srgb, var(--ls-teal) 13%, transparent); }
 .bs-fold-sub { display:block; font-size:11px; font-weight:400; color:var(--ls-text-muted); margin-top:1px; }
 .bs-fold-chev { margin-left:auto; color:var(--ls-text-hint); font-size:12px; }
+
+/* ── Bouton « agrandir » + plein écran ── */
+.bs-chart-actions { display:flex; align-items:center; gap:9px; }
+.bs-expand { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:999px; padding:6px 11px; font-size:11.5px; font-weight:700; color:var(--ls-text-muted); cursor:pointer; min-height:34px; white-space:nowrap; }
+.bs-expand:hover { border-color:var(--ls-teal); color:var(--ls-teal); }
+
+.bs-fs { position:fixed; inset:0; z-index:9999; background:var(--ls-bg); display:flex; flex-direction:column;
+  padding:calc(14px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); animation:bs-fs-in .2s ease; }
+@keyframes bs-fs-in { from { opacity:0; transform:scale(.985); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce) { .bs-fs { animation:none; } }
+.bs-fs-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.bs-fs-title { font-family:'Anton',Impact,sans-serif; font-size:30px; letter-spacing:.5px; margin:3px 0 0; }
+.bs-fs-close { flex:0 0 auto; width:42px; height:42px; border-radius:50%; background:var(--ls-surface2); border:1px solid var(--ls-border);
+  color:var(--ls-text); font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.bs-fs-close:hover { border-color:var(--ls-border2); }
+.bs-fs-body { flex:1; display:flex; align-items:center; justify-content:center; min-height:0;
+  background:var(--ls-surface2); border:1px solid var(--ls-border); border-radius:16px; padding:10px; }
+.bs-fs-body svg { max-height:100%; }
+.bs-fs-foot { display:flex; gap:9px; margin-top:12px; }
+.bs-fs-foot > div { flex:1; background:var(--ls-surface2); border:1px solid var(--ls-border); border-radius:12px; padding:11px 10px; text-align:center; }
+.bs-fs-foot-l { display:block; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ls-text-hint); }
+.bs-fs-foot-v { display:block; font-family:'Anton',Impact,sans-serif; font-size:21px; letter-spacing:.3px; color:var(--ls-text); margin-top:2px; }
+.bs-fs-foot-d { display:block; font-size:10px; color:var(--ls-text-hint); margin-top:1px; }
+body:has(.bs-fs) .noaly-fab { display:none; }
+.bs-fs-body { flex:0 1 auto; }
 `;
