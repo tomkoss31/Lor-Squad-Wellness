@@ -194,6 +194,35 @@ export function ReserverClubPage() {
     setScreen("confirm");
   }
 
+  // « Ajouter à mon agenda » : génère un .ics téléchargeable (iOS/Android/desktop).
+  // Réduit les no-shows — l'événement + le rappel natif du téléphone.
+  function addToCalendar() {
+    if (!selectedSlot) return;
+    const start = new Date(selectedSlot.iso);
+    const end = new Date(start.getTime() + 45 * 60_000);
+    const z = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//The Breakfast Club//FR", "CALSCALE:GREGORIAN",
+      "BEGIN:VEVENT",
+      `UID:${start.getTime()}@labase-nutrition.com`,
+      `DTSTAMP:${z(new Date())}`,
+      `DTSTART:${z(start)}`,
+      `DTEND:${z(end)}`,
+      "SUMMARY:Séance découverte · The Breakfast Club",
+      "LOCATION:11 rue Saint Pierre\\, 55100 Verdun",
+      "DESCRIPTION:Ton body scan + bilan bien-être\\, offerts. On t'attend au club !",
+      "END:VEVENT", "END:VCALENDAR",
+    ].join("\r\n");
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "seance-decouverte-breakfast-club.ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
   // ─── Calendrier ────────────────────────────────────────────────────────────
   const todayStart = useMemo(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }, []);
   const firstAvailKey = useMemo(() => [...slotsByDay.keys()].sort()[0] ?? null, [slotsByDay]);
@@ -363,6 +392,7 @@ export function ReserverClubPage() {
               {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
               <button type="submit" className="rc-cta" style={{ marginTop: 26 }} disabled={submitting}>{submitting ? "…" : "Choisir mon créneau →"}</button>
               <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.5, color: "var(--muted)" }}>Tes infos restent chez nous · jamais revendues. Réservation gratuite et sans engagement.</p>
+              <p style={{ margin: "10px 0 0", textAlign: "center", fontSize: 14, lineHeight: 1.5, color: "var(--sub)" }}>Pas prêt à choisir un créneau ? <a href="tel:+33679448759" style={{ color: "var(--orange)", fontWeight: 700, textDecoration: "none" }}>Appelle-nous</a>, on trouve le bon moment ensemble.</p>
             </form>
           </div>
         </main>
@@ -464,6 +494,10 @@ export function ReserverClubPage() {
               <p style={{ margin: "22px 0 0", padding: "18px 20px", borderRadius: 16, background: "var(--panel)", fontSize: 15, lineHeight: 1.55, color: "#5F7154" }}>
                 Ton bilan et ton body scan sont offerts. Après le rendez-vous, tu pourras choisir ta carte de visites si tu veux continuer — aucun engagement d'ici là.
               </p>
+              <button type="button" className="rc-cta" style={{ marginTop: 22, minHeight: 54, width: "100%" }} onClick={addToCalendar}>
+                <span aria-hidden="true">📅</span> Ajouter à mon agenda
+              </button>
+              <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--muted)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
             </div>
           </div>
         </main>
