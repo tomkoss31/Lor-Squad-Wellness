@@ -855,18 +855,23 @@ export function ClientDetailPage() {
                 Bilans & suivis
               </h2>
             </div>
+            {/* PIÈGE CORRIGÉ (2026-08-03) : ce bouton pointait vers
+                /assessments/new, c'est-à-dire la création d'un NOUVEAU CLIENT —
+                depuis l'historique de CE client. Même bug que celui déjà retiré
+                du header (cf. commentaire plus haut). Il mène désormais au
+                suivi de ce client, comme les 4 autres CTA de la page. */}
             <Link
-              to="/assessments/new"
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+              to={`/clients/${client.id}/follow-up/new`}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
             >
-              + Nouveau bilan
+              + Nouveau suivi
             </Link>
           </div>
 
           <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
             Décoche un bilan pour l'exclure du calcul d'évolution (Vue) — utile si
             le client reprend de zéro après une pause. Il reste visible ici. Le
-            <span className="text-[#C9A84C] font-semibold"> point de départ</span> devient
+            <span className="text-[var(--ls-gold)] font-semibold"> point de départ</span> devient
             automatiquement le plus ancien bilan coché.
           </p>
 
