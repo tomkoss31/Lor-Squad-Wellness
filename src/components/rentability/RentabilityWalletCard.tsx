@@ -244,7 +244,7 @@ export function RentabilityWalletCard({
                       gap: 6,
                     }}
                   >
-                    <span aria-hidden="true" style={{ color: "#C9A84C" }}>◆</span>
+                    <span aria-hidden="true" style={{ color: "var(--ls-gold)" }}>◆</span>
                     La Base 360 · Rentabilité
                   </div>
                   <div
@@ -399,9 +399,9 @@ export function RentabilityWalletCard({
                       height: 26,
                       padding: "0 10px",
                       borderRadius: 999,
-                      background: "rgba(201,168,76,.14)",
+                      background: "rgba(var(--ls-gold-rgb),.14)",
                       color: "#e2c878",
-                      border: "1px solid rgba(201,168,76,.3)",
+                      border: "1px solid rgba(var(--ls-gold-rgb),.3)",
                       fontFamily: "DM Sans, sans-serif",
                       fontSize: 12,
                       fontWeight: 600,

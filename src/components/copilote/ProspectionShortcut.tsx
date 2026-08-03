@@ -30,8 +30,8 @@ export function ProspectionShortcut() {
       onClick={() => navigate("/prospection")}
       style={{
         width: "100%",
-        background: "linear-gradient(135deg, rgba(45,212,191,0.10) 0%, rgba(201,168,76,0.10) 100%)",
-        border: "1.5px solid rgba(201,168,76,0.35)",
+        background: "linear-gradient(135deg, rgba(45,212,191,0.10) 0%, rgba(var(--ls-gold-rgb),0.10) 100%)",
+        border: "1.5px solid rgba(var(--ls-gold-rgb),0.35)",
         borderRadius: 16,
         padding: "16px 18px",
         cursor: "pointer",
@@ -59,7 +59,7 @@ export function ProspectionShortcut() {
         background: "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 24,
-        boxShadow: "0 4px 12px rgba(201,168,76,0.35)",
+        boxShadow: "0 4px 12px rgba(var(--ls-gold-rgb),0.35)",
       }} aria-hidden="true">
         🌍
       </span>

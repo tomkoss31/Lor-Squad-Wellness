@@ -230,7 +230,7 @@ export function StatistiquesTab() {
                       width: 22,
                       height: 22,
                       borderRadius: "50%",
-                      background: idx === 0 ? "#C9A84C" : "var(--ls-surface)",
+                      background: idx === 0 ? "var(--ls-gold)" : "var(--ls-surface)",
                       color: idx === 0 ? "#0B0D11" : "var(--ls-text-muted)",
                       display: "flex",
                       alignItems: "center",
@@ -378,7 +378,7 @@ function PvBarChart({ data }: { data: { month: string; pv: number }[] }) {
               width={barW}
               height={h}
               rx={4}
-              fill="#C9A84C"
+              fill="var(--ls-gold)"
               opacity={0.85}
             />
             {d.pv > 0 ? (
