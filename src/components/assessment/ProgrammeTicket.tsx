@@ -109,7 +109,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           color: "var(--ls-text)",
           overflow: "hidden",
           boxShadow:
-            "0 1px 0 0 rgba(239,159,39,0.10), 0 12px 32px -16px rgba(186,117,23,0.30)",
+            "0 1px 0 0 rgba(45,212,191,0.10), 0 12px 32px -16px rgba(15,118,110,0.30)",
         }}
       >
         {/* HEADER GRADIENT GOLD */}
@@ -119,7 +119,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
             overflow: "hidden",
             padding: "16px 18px",
             background:
-              "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
             color: "#FFFFFF",
           }}
         >
@@ -217,7 +217,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 gap: 5,
               }}
             >
-              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 6px rgba(239,159,39,0.50)" }} />
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 6px rgba(45,212,191,0.50)" }} />
               Programme
             </div>
             <div
@@ -239,13 +239,13 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                   height: 36,
                   borderRadius: 10,
                   background:
-                    "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 18,
                   flexShrink: 0,
-                  boxShadow: "0 3px 8px -3px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                  boxShadow: "0 3px 8px -3px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
                 }}
               >
                 ⭐
@@ -570,7 +570,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 e.currentTarget.style.transform = "translateY(-1px)";
                 e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))";
                 e.currentTarget.style.borderColor = "var(--ls-gold)";
-                e.currentTarget.style.boxShadow = "0 4px 12px -4px rgba(239,159,39,0.30)";
+                e.currentTarget.style.boxShadow = "0 4px 12px -4px rgba(45,212,191,0.30)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "none";

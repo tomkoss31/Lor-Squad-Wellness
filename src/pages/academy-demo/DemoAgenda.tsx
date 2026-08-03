@@ -146,7 +146,7 @@ export function DemoAgenda() {
           type="button"
           data-tour-id="agenda-new-rdv"
           style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "white",
             border: "none",
             padding: "10px 18px",
@@ -155,7 +155,7 @@ export function DemoAgenda() {
             fontWeight: 600,
             cursor: "pointer",
             fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+            boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
           }}
         >
           + Nouveau RDV

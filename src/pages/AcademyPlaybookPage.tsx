@@ -151,14 +151,14 @@ export function AcademyPlaybookPage() {
           disabled={downloading}
           style={{
             padding: "12px 22px",
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "white",
             border: "none",
             borderRadius: 10,
             fontSize: 13,
             fontWeight: 700,
             cursor: downloading ? "wait" : "pointer",
-            boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            boxShadow: "0 4px 12px rgba(15,118,110,0.30)",
             opacity: downloading ? 0.7 : 1,
           }}
         >

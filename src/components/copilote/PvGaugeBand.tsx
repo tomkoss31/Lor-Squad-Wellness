@@ -58,8 +58,8 @@ export function PvGaugeBand({
         transition: "box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(239,159,39,0.3)";
-        e.currentTarget.style.boxShadow = "0 4px 24px rgba(239,159,39,0.08)";
+        e.currentTarget.style.borderColor = "rgba(45,212,191,0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 24px rgba(45,212,191,0.08)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -212,7 +212,7 @@ function Gauge({ percent }: { percent: number }) {
           background: conic-gradient(
             from 0deg,
             transparent 0deg,
-            rgba(239,159,39,0.35) 30deg,
+            rgba(45,212,191,0.35) 30deg,
             transparent 60deg,
             transparent 360deg
           );
@@ -225,7 +225,7 @@ function Gauge({ percent }: { percent: number }) {
           position: absolute;
           inset: 8px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(239,159,39,0.2) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(45,212,191,0.2) 0%, transparent 70%);
           animation: pv-gauge-pulse 3s ease-in-out infinite;
           pointer-events: none;
         }
@@ -238,13 +238,13 @@ function Gauge({ percent }: { percent: number }) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" style={{ position: "relative" }}>
         <defs>
           <linearGradient id="pv-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD56B" />
-            <stop offset="40%" stopColor="#EF9F27" />
-            <stop offset="100%" stopColor="#BA7517" />
+            <stop offset="0%" stopColor="#5EEAD4" />
+            <stop offset="40%" stopColor="#2DD4BF" />
+            <stop offset="100%" stopColor="#0F766E" />
           </linearGradient>
           <linearGradient id="pv-gauge-gradient-inner" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(239,159,39,0.4)" />
-            <stop offset="100%" stopColor="rgba(186,117,23,0.4)" />
+            <stop offset="0%" stopColor="rgba(45,212,191,0.4)" />
+            <stop offset="100%" stopColor="rgba(15,118,110,0.4)" />
           </linearGradient>
           <filter id="pv-gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="2" result="blur" />

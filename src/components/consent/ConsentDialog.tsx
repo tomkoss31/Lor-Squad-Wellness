@@ -194,7 +194,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            boxShadow: "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)",
+            boxShadow: "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(45,212,191,0.20)",
           }}
         >
           {/* HEADER GRADIENT GOLD */}
@@ -203,7 +203,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               position: "relative",
               overflow: "hidden",
               padding: "20px 24px 18px",
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
               color: "#FFFFFF",
               flexShrink: 0,
             }}
@@ -509,7 +509,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                 borderRadius: 999,
                 border: "none",
                 background: checked
-                  ? "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)"
+                  ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
                   : "var(--ls-surface2)",
                 color: checked ? "#FFFFFF" : "var(--ls-text-hint)",
                 fontFamily: "DM Sans, sans-serif",
@@ -517,7 +517,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                 fontWeight: 700,
                 cursor: submitting || !checked ? "not-allowed" : "pointer",
                 boxShadow: checked
-                  ? "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
+                  ? "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
                   : "none",
                 transition: "transform 0.15s ease, filter 0.15s ease",
                 display: "inline-flex",

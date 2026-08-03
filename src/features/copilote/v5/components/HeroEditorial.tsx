@@ -382,7 +382,7 @@ const ctaRowStyle: React.CSSProperties = {
   zIndex: 2,
 };
 
-// V7 : bouton primary gradient G3 (au lieu de gold/orange #EF9F27 → #BA7517)
+// V7 : bouton primary gradient G3 (au lieu de gold/orange #2DD4BF → #0F766E)
 const btnPrimaryStyle: React.CSSProperties = {
   background: "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
   color: "white",

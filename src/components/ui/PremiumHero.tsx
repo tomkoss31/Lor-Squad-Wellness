@@ -9,7 +9,7 @@
 //
 // Usage :
 //   <PremiumHero
-//     identity="gold"
+//     identity="teal"
 //     eyebrow="Suivi PV · 12 alertes"
 //     titleAccent="Ton suivi"
 //     titleSuffix=" du moment 🎯"
@@ -37,7 +37,7 @@ interface Props {
 }
 
 export function PremiumHero({
-  identity = "gold",
+  identity = "teal",
   eyebrow,
   titleAccent,
   titleSuffix,

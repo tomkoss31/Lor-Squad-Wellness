@@ -6,7 +6,7 @@ import type { ProgramChoiceId } from "../../data/programs";
  *
  * Codes couleurs :
  *  - Corps bouteille : blanc avec contour doux
- *  - Label Herbalife : vert #0F6E56 (Découverte) / gold #BA7517 (Premium+)
+ *  - Label Herbalife : vert #0F6E56 (Découverte) / gold #0F766E (Premium+)
  *  - Fond selon programme : c-green-50 / c-amber-50 / coral-50 / amber-100
  */
 interface Props {
@@ -52,7 +52,7 @@ const PROGRAM_BG: Record<ProgramChoiceId, string> = {
 
 const PROGRAM_LABEL_COLOR: Record<ProgramChoiceId, string> = {
   discovery: "#0F6E56",
-  premium: "#BA7517",
+  premium: "#0F766E",
   booster1: "#C2414B",
   booster2: "#B8922A",
   unit: "#6B6F7A",

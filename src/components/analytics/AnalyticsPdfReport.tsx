@@ -471,7 +471,7 @@ function TendanceMiniBars({
                   width: "100%",
                   height: `${Math.max(heightPct, 3)}%`,
                   background:
-                    "linear-gradient(180deg, #EF9F27, #BA7517)",
+                    "linear-gradient(180deg, #2DD4BF, #0F766E)",
                   borderRadius: "3px 3px 0 0",
                 }}
               />

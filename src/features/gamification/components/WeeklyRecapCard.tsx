@@ -429,7 +429,7 @@ export function WeeklyRecapCard() {
           onClick={handleDownloadImage}
           disabled={downloading}
           style={{
-            background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+            background: "linear-gradient(135deg, #2DD4BF, #0F766E)",
             color: "white",
             border: "none",
             padding: "10px 16px",
@@ -441,7 +441,7 @@ export function WeeklyRecapCard() {
             display: "flex",
             alignItems: "center",
             gap: 6,
-            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+            boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
             opacity: downloading ? 0.6 : 1,
           }}
         >

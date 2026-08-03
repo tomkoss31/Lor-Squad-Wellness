@@ -107,13 +107,13 @@ export function AnalyticsPage() {
               background:
                 loading || !data
                   ? "var(--ls-surface2)"
-                  : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: loading || !data ? "var(--ls-text-hint)" : "white",
               fontSize: 12,
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 700,
               cursor: exporting ? "wait" : loading || !data ? "not-allowed" : "pointer",
-              boxShadow: loading || !data ? "none" : "0 2px 8px rgba(186,117,23,0.30)",
+              boxShadow: loading || !data ? "none" : "0 2px 8px rgba(15,118,110,0.30)",
             }}
           >
             {exporting ? "Génération…" : "📄 Export PDF"}

@@ -159,7 +159,7 @@ export function InstallPwaBanner() {
                 style={{
                   padding: "10px 16px",
                   borderRadius: 10,
-                  background: "#BA7517",
+                  background: "#0F766E",
                   color: "#FFFFFF",
                   border: "none",
                   fontFamily: "DM Sans, sans-serif",

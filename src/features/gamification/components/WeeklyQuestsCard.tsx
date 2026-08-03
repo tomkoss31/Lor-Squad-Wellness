@@ -188,7 +188,7 @@ export function WeeklyQuestsCard() {
                     height: "100%",
                     background: completed
                       ? "linear-gradient(90deg, #1D9E75, #0F6E56)"
-                      : "linear-gradient(90deg, #B8922A, #EF9F27)",
+                      : "linear-gradient(90deg, #B8922A, #2DD4BF)",
                     transition: "width 600ms cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 />

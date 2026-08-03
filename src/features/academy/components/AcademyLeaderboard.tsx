@@ -179,7 +179,7 @@ export function AcademyLeaderboard() {
         border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
         borderRadius: 20,
         padding: 18,
-        boxShadow: "0 1px 0 0 rgba(239,159,39,0.10), 0 8px 24px -12px rgba(0,0,0,0.10)",
+        boxShadow: "0 1px 0 0 rgba(45,212,191,0.10), 0 8px 24px -12px rgba(0,0,0,0.10)",
       }}
     >
       {/* Header */}
@@ -207,7 +207,7 @@ export function AcademyLeaderboard() {
               gap: 6,
             }}
           >
-            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 8px rgba(239,159,39,0.50)" }} />
+            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 8px rgba(45,212,191,0.50)" }} />
             🏆 Leaderboard Academy
           </div>
           <h3
@@ -407,7 +407,7 @@ export function AcademyLeaderboard() {
                   <SectionsSparkline
                     lastStep={row.lastStep}
                     total={row.totalSections || ACADEMY_SECTIONS.length}
-                    color={row.completedAt ? "#2DD4BF" : "#EF9F27"}
+                    color={row.completedAt ? "#2DD4BF" : "#2DD4BF"}
                   />
 
                   {/* Status pill */}

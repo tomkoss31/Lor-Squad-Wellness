@@ -208,7 +208,7 @@ export function PvOverviewPage() {
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       <PremiumHero
         variant="cockpit"
-        identity="gold"
+        identity="teal"
         eyebrow={`Suivi PV · ${stats.totalClients} client${stats.totalClients > 1 ? "s" : ""} actif${stats.totalClients > 1 ? "s" : ""}`}
         titleAccent="Ton suivi"
         titleSuffix=" PV 🎯"
@@ -407,8 +407,8 @@ function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId,
                       borderRadius: 8,
                       fontSize: 9,
                       fontWeight: 700,
-                      background: "rgba(239,159,39,0.14)",
-                      color: "#BA7517",
+                      background: "rgba(45,212,191,0.14)",
+                      color: "#0F766E",
                       flexShrink: 0,
                       letterSpacing: "0.04em",
                     }}

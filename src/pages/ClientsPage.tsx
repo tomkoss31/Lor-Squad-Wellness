@@ -804,8 +804,8 @@ export function ClientsPage() {
                           borderRadius: 8,
                           fontSize: 9,
                           fontWeight: 700,
-                          background: "rgba(239,159,39,0.14)",
-                          color: "#BA7517",
+                          background: "rgba(45,212,191,0.14)",
+                          color: "#0F766E",
                           flexShrink: 0,
                           letterSpacing: "0.04em",
                         }}
