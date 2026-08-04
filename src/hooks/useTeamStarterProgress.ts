@@ -10,18 +10,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import {
+  ACTIVATION_GATES,
+  GO_PRO_STEPS,
+} from "../features/copilote/salle-ops/goProSteps";
 
-// Les 7 étapes Go Pro (mêmes clés/portes que useSalleOps).
-const STEPS: { label: string; gates: string[] }[] = [
-  { label: "S'équiper", gates: ["commande_250pv"] },
-  { label: "Trouver", gates: ["liste_50"] },
-  { label: "Inviter", gates: ["premiere_story"] },
-  { label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
-  { label: "Relancer", gates: [] },
-  { label: "Démarrer ta recrue", gates: [] },
-  { label: "Dupliquer", gates: [] },
-];
-const GATE_KEYS = ["liste_50", "premiere_story", "premier_bilan", "premier_hom", "premier_pv_pack"];
+// Parcours et portes : importés de goProSteps.ts — LA définition unique,
+// partagée avec le cockpit du coach. Avant le 2026-08-04, ce fichier en avait
+// sa PROPRE copie : le coach lisait « étape 5/7 » pendant que son parrain
+// voyait autre chose ici, et le HOM y comptait encore comme porte alors qu'il
+// avait été retiré côté serveur.
+const STEPS = GO_PRO_STEPS.map((s) => ({ label: s.label, gates: s.gates }));
+const GATE_KEYS: readonly string[] = ACTIVATION_GATES;
 const DAY_MS = 86_400_000;
 
 export type AcademyStepState = "done" | "active" | "todo";

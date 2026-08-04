@@ -10,44 +10,16 @@
 import { useMemo } from "react";
 import { useStarterPlan } from "../../../hooks/useStarterPlan";
 import { ACADEMY_LESSONS, type AcademyLesson } from "./academyLessons";
+import { GO_PRO_STEPS, OPS_PHASES, type GoProStepDef, type OpsPhase } from "./goProSteps";
 
-export type OpsPhase = "allumage" | "acceleration" | "profondeur" | "levier";
+// Ré-export : les composants importaient déjà OPS_PHASES depuis ce module.
+export { OPS_PHASES };
+export type { OpsPhase };
 
-export const OPS_PHASES: { key: OpsPhase; label: string; short: string }[] = [
-  { key: "allumage", label: "Allumage", short: "Allumage" },
-  { key: "acceleration", label: "Accélération", short: "Accél." },
-  { key: "profondeur", label: "Profondeur", short: "Profond." },
-  { key: "levier", label: "Levier", short: "Levier" },
-];
-
-// Le parcours = S'équiper + 6 étapes Go Pro (décision Thomas). Chaque étape
-// « apprendre à faire » mappe une ou plusieurs portes serveur. Les étapes
-// « faire faire » (Démarrer ta recrue / Dupliquer) n'ont pas de porte : ce sont
-// des compétences post-activation, navigables en lecture (V2).
-interface GoProDef {
-  n: number;
-  key: string;
-  label: string;
-  gates: string[];
-  /** Clé de leçon quand l'étape n'a pas de porte (ex. relancer). */
-  lessonKey?: string;
-  locked?: boolean;
-}
-
-const GOPRO: GoProDef[] = [
-  { n: 1, key: "sequiper", label: "S'équiper", gates: ["commande_250pv"] },
-  { n: 2, key: "trouver", label: "Trouver", gates: ["liste_50"] },
-  { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
-  { n: 4, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
-  // « Relancer » n'est PAS une porte d'activation (compétence continue), mais
-  // elle a désormais une clé de SUIVI : sans elle, l'étape n'enregistrait rien
-  // et ne se terminait jamais — le parcours s'y figeait pour tout le monde.
-  // `relances_3` sert uniquement de compteur (meta.count), il n'entre pas dans
-  // le calcul de `activated_at`.
-  { n: 5, key: "relancer", label: "Relancer", gates: ["relances_3"], lessonKey: "relancer" },
-  { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], lessonKey: "demarrer_recrue" },
-  { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], lessonKey: "dupliquer" },
-];
+// Le parcours vient désormais de goProSteps.ts — LA définition unique, partagée
+// avec la grille Apprentissage de l'équipe. Avant, chacun avait sa copie et les
+// deux divergeaient (lot 1 du chantier « l'app d'un débutant », 2026-08-04).
+const GOPRO = GO_PRO_STEPS;
 
 export type StepState = "done" | "active" | "todo" | "locked";
 
@@ -98,7 +70,7 @@ export function useSalleOps(): SalleOpsView {
     const doneByGate = (k: string) => statuses[k] === "done";
 
     const activated = Boolean(activatedAt);
-    const stepDone = (g: GoProDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate(k));
+    const stepDone = (g: GoProStepDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate(k));
 
     // Étape active = 1ʳᵉ étape ni faite ni verrouillée (relancer n'est jamais
     // « done » → devient le focus une fois les portes franchies).
