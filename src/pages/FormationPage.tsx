@@ -96,6 +96,33 @@ export function FormationPage() {
         description={heading.description}
       />
 
+      {/* Nouvelle formation « micro-leçons » (2026-08-04) — entrée en tête, à
+          côté de l'ancien catalogue le temps de la transition. */}
+      <Link
+        to="/formation/apprendre"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "15px 16px",
+          borderRadius: 16,
+          textDecoration: "none",
+          background: "color-mix(in srgb, var(--ls-lime) 12%, var(--ls-surface))",
+          border: "1px solid color-mix(in srgb, var(--ls-lime) 42%, var(--ls-border))",
+        }}
+      >
+        <span aria-hidden="true" style={{ fontSize: 26 }}>🎓</span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontWeight: 800, fontSize: 15, color: "var(--ls-text)" }}>
+            Apprendre en avançant · nouveau
+          </span>
+          <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+            Micro-leçons de 2 min, une idée à la fois. Sans examen.
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ color: "var(--ls-lime)", fontWeight: 800, flexShrink: 0 }}>→</span>
+      </Link>
+
       {/* Recherche transversale — modules + biblio */}
       <FormationSearchBar />
 
