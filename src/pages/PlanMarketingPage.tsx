@@ -12,12 +12,14 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { RANK_ORDER, RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank } from "../types/domain";
 import { useTeamTree } from "../hooks/useTeamData";
 import { buildTreeFromRows, TreeLevel } from "./TeamPage";
+import { StrategyPlanCalculator } from "../components/marketing/StrategyPlanCalculator";
 
 // Critères clés (factuels, condensés) par rang — repère de progression.
 // Seuils alignés sur docs/HERBALIFE_PALIERS_REGLES.md (MAJ 2026-06-09).
@@ -151,6 +153,13 @@ export function PlanMarketingPage() {
   const [ladderZoom, setLadderZoom] = useState(1);
   const [treeZoom, setTreeZoom] = useState(1);
   const [openRank, setOpenRank] = useState<HerbalifeRank | null>(null);
+  // Onglet : « Ma progression » (l'échelle des rangs, existant) OU « Projection
+  // 12 mois » (le Strategy Plan calculator, sorti de l'oubli — demande Thomas).
+  // Deep-link `?tab=projection` (renvoi depuis la formation / boîte à outils).
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<"progression" | "projection">(
+    searchParams.get("tab") === "projection" ? "projection" : "progression",
+  );
 
   // Échelle affichée du plus haut (en haut) au plus bas (on grimpe).
   const ladder = useMemo(() => [...RANK_ORDER].reverse(), []);
@@ -202,6 +211,37 @@ export function PlanMarketingPage() {
         Le chemin des rangs Herbalife, du Distributor au President's Team. Repère où tu en es et le prochain palier à viser.
       </p>
 
+      {/* Onglets : progression (rangs) | projection (calculateur Strategy Plan) */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+        {([["progression", "🏔️ Ma progression"], ["projection", "🧮 Projection 12 mois"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            style={{
+              padding: "9px 16px", borderRadius: 999, cursor: "pointer", fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 700,
+              border: tab === id ? "1.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+              background: tab === id ? "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface))" : "var(--ls-surface)",
+              color: tab === id ? "var(--ls-teal)" : "var(--ls-text-muted)",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "projection" ? (
+        <div>
+          <p style={{ fontSize: 13.5, color: "var(--ls-text-muted)", margin: "0 0 16px", maxWidth: 620, lineHeight: 1.5 }}>
+            Ton GPS chiffré : règle ta cadence (clients, récurrents, panier, coachs) et vois ta projection sur 12 mois — VP, revenus, et les rangs que tu débloques.{" "}
+            <b style={{ color: "var(--ls-text)" }}>Commence par « je veux gagner combien&nbsp;? »</b>, le reste se calcule.
+          </p>
+          <StrategyPlanCalculator />
+        </div>
+      ) : null}
+
+      {tab === "progression" ? (
+      <>
       {/* ── SECTION A : l'échelle ───────────────────────────────────────── */}
       <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 22, padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
@@ -288,6 +328,8 @@ export function PlanMarketingPage() {
             </div>
           )}
         </div>
+      ) : null}
+      </>
       ) : null}
 
       {/* ── Pop-up éducatif d'un rang ───────────────────────────────────── */}

@@ -1720,8 +1720,9 @@ Une vision board avec **5 photos** représentant tes 5 plus grandes récompenses
     icon: "🧮",
     durationMin: 8,
     tag: "Calculateur",
-    // Redirige vers le vrai calculateur interactif (sliders + chart Recharts)
-    externalRoute: "/formation/calculateur",
+    // Renvoie vers l'onglet « Projection 12 mois » du Plan Marketing (calculateur
+    // sorti de l'oubli 2026-08-04). La page /formation/calculateur reste dispo.
+    externalRoute: "/plan-marketing?tab=projection",
     contentMarkdown: `## Ton GPS chiffré sur 12 mois
 
 > Arrête de te demander *« combien d'invits par jour ? »*. Demande-toi d'abord *« je veux gagner combien ? »*. Le reste se calcule.
