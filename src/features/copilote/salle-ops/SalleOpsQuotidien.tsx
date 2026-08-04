@@ -9,7 +9,7 @@
 // rail latéral persistant (phases · parcours 6 étapes · fil de sécurité).
 // =============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
@@ -39,6 +39,16 @@ export function SalleOpsQuotidien({
   // étape (avant/après) sans la valider.
   const [viewedN, setViewedN] = useState<number | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Cockpit plein écran → on masque la barre de nav du bas (mobile) : elle
+  // flottait AU-DESSUS de l'overlay et offrait des sorties accidentelles vers
+  // des pages profondes. Le débutant reste focus (retour Thomas 2026-08-04).
+  // Le « Retour à mon parcours » gère déjà le retour depuis une action.
+  useEffect(() => {
+    if (!fullscreen) return;
+    document.body.classList.add("ls-ops-cockpit-open");
+    return () => document.body.classList.remove("ls-ops-cockpit-open");
+  }, [fullscreen]);
   const activeN = view.activeStepNumber;
   const shownN = viewedN ?? activeN;
   const shownStep = view.steps.find((s) => s.n === shownN) ?? view.steps[0];
@@ -63,8 +73,14 @@ export function SalleOpsQuotidien({
       setInviteOpen(true);
       return;
     }
-    if (lesson.faire.linkPath) navigate(lesson.faire.linkPath);
-    else if (shownGateKey) void view.toggle(shownGateKey);
+    const path = lesson.faire.linkPath;
+    if (path) {
+      // Lien EXTERNE (ex. myHerbalife) → nouvel onglet ; sinon route interne.
+      if (/^https?:\/\//.test(path)) window.open(path, "_blank", "noopener,noreferrer");
+      else navigate(path);
+    } else if (shownGateKey) {
+      void view.toggle(shownGateKey);
+    }
   }
 
   return (
