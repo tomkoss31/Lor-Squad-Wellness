@@ -96,7 +96,7 @@ export function FormationV2Page() {
         <LessonPlayer
           lesson={open}
           chapterLabel={chapterLabelFor(open)}
-          streak={Math.max(streak, doneSet.has(open.slug) ? streak : streak + 1)}
+          streak={streak}
           onClose={() => setOpen(null)}
           onDone={markDone}
         />
