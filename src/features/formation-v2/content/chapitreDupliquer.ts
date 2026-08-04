@@ -49,8 +49,8 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
     {
       slug: "dmo-5-ipa",
       icon: "✅",
-      title: "Ta DMO : 5 actions par jour",
-      pathLabel: "Tes 5 IPA du jour",
+      title: "Tes 5 actions par jour",
+      pathLabel: "Tes 5 actions du jour",
       minutes: 2,
       accent: "teal",
       ideeForce: "Hors IPA, c'est du décor — pas du business.",
