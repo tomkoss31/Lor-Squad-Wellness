@@ -19,6 +19,7 @@ export const CHAPITRE_BILAN: Chapter = {
   theme: "Le bilan",
   title: "Faire vivre le bilan",
   recap: "Mener un bilan qui transforme",
+  badge: "🏠",
   lessons: [
     {
       slug: "app-fait-le-bilan",
@@ -45,6 +46,33 @@ export const CHAPITRE_BILAN: Chapter = {
         ],
         successNote: "Exact. L'humain d'abord. Sans ces 2 minutes de lien, tout le reste sonne commercial.",
         retryNote: "Trop tôt sur l'app = trop froid. Donne 2-3 min d'humain (boisson + une question ouverte) avant de démarrer les étapes du bilan.",
+      },
+    },
+    {
+      slug: "body-scan-sans-juger",
+      icon: "⚖️",
+      title: "Lire un body scan sans juger",
+      pathLabel: "Lire un body scan",
+      minutes: 2,
+      accent: "teal",
+      ideeForce: "Tu commentes les chiffres. Tu ne juges pas.",
+      source: "boite-a-outils-content.ts:471-486 (EBE étape 7 body scan)",
+      blocks: [
+        { kind: "text", text: "Le body scan, c'est bien plus que le poids : masse musculaire, hydratation, graisse viscérale, âge métabolique. Avant de commencer, tu poses le cadre :" },
+        { kind: "example", label: "Le cadrage", text: "On va voir des chiffres que tu n'as jamais vus. Pas pour te juger — pour comprendre." },
+        { kind: "text", text: "Pendant le scan, tu commentes **calmement, factuellement**. Zéro drama, jamais de « oh là là c'est grave ». Tu relies chaque chiffre à un ressenti :" },
+        { kind: "example", label: "Commenter sans juger", text: "Ton hydratation est à 47 %, l'idéal c'est 55-60 %. Ça explique sûrement ta fatigue de l'après-midi. Ta masse musculaire, elle, est correcte — c'est ton capital, on la garde." },
+        { kind: "text", text: "Et tu conclus toujours par l'avenir : **« Ce qui compte, ce n'est pas où tu es aujourd'hui, c'est ce qu'on va construire. »**" },
+      ],
+      check: {
+        question: "Un chiffre du body scan n'est pas idéal. Ta réaction ?",
+        options: [
+          { label: "« Oh là là, là c'est vraiment pas bon… »", correct: false },
+          { label: "Tu commentes calmement et tu relies à un ressenti", correct: true },
+          { label: "Tu passes vite pour ne pas gêner", correct: false },
+        ],
+        successNote: "Voilà. Factuel, sans drama, relié à un ressenti concret (fatigue, fringales). La personne comprend au lieu de culpabiliser.",
+        retryNote: "Ni dramatiser ni fuir : tu commentes calmement et tu relies le chiffre à un ressenti. Le scan sert à comprendre, pas à juger.",
       },
     },
     {

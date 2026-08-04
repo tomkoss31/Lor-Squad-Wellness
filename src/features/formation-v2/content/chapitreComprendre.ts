@@ -24,6 +24,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
   theme: "Comprendre",
   title: "Ton métier, en vrai",
   recap: "Comprendre ton métier & Herbalife",
+  badge: "🧭",
   lessons: [
     {
       slug: "cest-quoi-herbalife",
@@ -134,6 +135,33 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
         ],
         successNote: "Oui. F1 = un repas équilibré et pratique. C'est la base du programme, pour presque tout le monde.",
         retryNote: "F1 n'est ni un brûleur ni un truc de sportif : c'est un repas complet et malin. 25 g de protéines, moins de 200 kcal.",
+      },
+    },
+    {
+      slug: "signe-ta-charte",
+      icon: "📜",
+      title: "Signe ta charte",
+      pathLabel: "Signe ta charte",
+      minutes: 2,
+      accent: "lime",
+      ideeForce: "Une charte signée te tient quand vient la tempête.",
+      source: "boite-a-outils-content.ts:1548-1627 (charte du distributeur)",
+      blocks: [
+        { kind: "text", text: "Une charte **non signée** n'engage personne. Signée, elle devient une chaîne positive qui te tient les jours où tu doutes. On la signe **dans les 24 h après avoir démarré**." },
+        { kind: "bullet", text: "**Mon éthique** — l'humain avant le business, ne recommander que ce que je consomme, aucune pression." },
+        { kind: "bullet", text: "**Mon engagement** — mes 5 actions par jour, honorer ma parole (si je dis « je rappelle vendredi », je rappelle vendredi)." },
+        { kind: "bullet", text: "**Mon pourquoi** — concret, chiffré, daté (« Emmener mes parents en voyage en 2027 »)." },
+        { kind: "text", text: "Tu l'imprimes, tu l'**affiches** là où tu la vois chaque jour. Ce n'est pas de la déco : c'est ton point d'ancrage quand la motivation flanche." },
+      ],
+      check: {
+        question: "Pourquoi SIGNER ta charte (pas juste la lire) ?",
+        options: [
+          { label: "Pour faire plaisir à ton sponsor", correct: false },
+          { label: "Pour t'engager : elle te tient dans les coups durs", correct: true },
+          { label: "C'est purement symbolique, ça ne change rien", correct: false },
+        ],
+        successNote: "Exact. L'engagement écrit et affiché crée une cohérence : les jours sans envie, c'est elle qui te fait avancer quand même.",
+        retryNote: "Signer + afficher, ce n'est pas symbolique : c'est ce qui te tient quand la motivation retombe. Une charte lue puis oubliée n'engage à rien.",
       },
     },
   ],

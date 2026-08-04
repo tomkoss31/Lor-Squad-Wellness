@@ -151,7 +151,7 @@ export function LessonPlayer({
             })}
           </div>
           {answered ? (
-            <div className={`fv-foot ${isCorrect ? "fv-foot-good" : "fv-foot-bad"}`}>
+            <div className={`fv-foot ${isCorrect ? "fv-foot-good" : "fv-foot-bad"}`} role="status" aria-live="polite">
               <div className="fv-fbtitle">{isCorrect ? "Exactement 💪" : "Presque…"}</div>
               <div className="fv-fbdesc">{isCorrect ? check.successNote : check.retryNote}</div>
               {isCorrect ? (
