@@ -113,7 +113,11 @@ export const STARTER_TASKS: StarterTask[] = [
     emoji: "🎤",
     title: "Assiste à ta 1ʳᵉ réunion (HOM)",
     why: "Vois comment on présente l'opportunité, tu dupliqueras ça.",
-    isActivationGate: true,
+    // PLUS une porte d'activation depuis le 2026-08-04 (migration
+    // `activation_sans_hom`). Une réunion physique est invérifiable par l'app :
+    // 2 personnes sur 19 l'avaient cochée, et ça bloquait l'activation de tout
+    // le monde. L'étape reste au programme, elle ne verrouille plus rien.
+    // ⚠ Miroir du serveur — cf. ACTIVATION_GATES dans salle-ops/goProSteps.ts.
   },
   {
     key: "flex_plan",
