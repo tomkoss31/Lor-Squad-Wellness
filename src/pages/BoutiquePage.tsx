@@ -20,6 +20,9 @@ import { ProductQuickView } from "../components/boutique/ProductQuickView";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueBundles } from "../components/boutique/BoutiqueBundles";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { setMetaDescription } from "../components/boutique/seo";
+import { scrollToSection } from "../components/boutique/nav";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -191,7 +194,12 @@ export function BoutiquePage() {
   const distriFirstName = boutique?.first_name ?? null;
   useEffect(() => {
     document.title = `${shopName} · Skincare coréen`;
-  }, [shopName]);
+    // Sans ça, Google et les partages reprennent la description de La Base 360
+    // (« club nutrition à Verdun ») au lieu de celle de la boutique.
+    setMetaDescription(
+      `${shopName} — la routine skincare coréenne HL Skin${distriFirstName ? ` de ${distriFirstName}` : ""} : sérum niacinamide, soins visage, corps et cheveux. Livraison offerte dès 90 €.`,
+    );
+  }, [shopName, distriFirstName]);
 
   // ── Reveal on scroll ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -338,8 +346,9 @@ export function BoutiquePage() {
     return { youtube: false, url: u };
   }, [boutique?.hero_video_url]);
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  // scrollIntoView passait le titre sous l'en-tête collant (et restait sans
+  // effet dans certains navigateurs) → helper avec décalage d'en-tête.
+  const scrollTo = (id: string) => scrollToSection(id);
 
   const addToCart = (id: string) => {
     add(id);
@@ -407,6 +416,13 @@ export function BoutiquePage() {
                   <span className="bk-cartlbl">Panier</span>
                   {count > 0 && <span className="bk-count">{count}</span>}
                 </button>
+                <BoutiqueMobileMenu
+                  coachSlug={coachSlug}
+                  shopName={shopName}
+                  aiScanUrl={boutique?.ai_scan_url}
+                  cartCount={count}
+                  onOpenCart={() => setCartOpen(true)}
+                />
               </div>
             </div>
           </header>
@@ -546,9 +562,12 @@ export function BoutiquePage() {
                 <div className="bk-eyebrow" style={{ marginBottom: 12 }}>
                   Les plus aimés
                 </div>
-                <h2>Six essentiels, zéro superflu.</h2>
+                <h2>L'essentiel, zéro superflu.</h2>
               </div>
-              <p>La sélection resserrée qui compose l'essentiel des routines HL Skin.</p>
+              <p>
+                {catalog.length} soins sélectionnés — visage, corps et cheveux — pour composer ta
+                routine sans te perdre.
+              </p>
             </div>
 
             {availableConcerns.length > 0 && (

@@ -24,7 +24,7 @@ const INCLUS = [
   { n: "06", ic: "🤝", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
-  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix, sans engagement : 10 visites à 80 €, ou 30 visites à 185 € (6,17 € la visite). Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix, sans engagement : 10 visites à 80 €, ou 30 visites à 185 € (6,17 € la visite) — tarif d'ouverture réservé aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Rien n'est obligatoire : tout ce que tu consommes pendant ta visite est déjà compris. Et si tu veux prolonger à la maison, on a de la nutrition à emporter — des collations, ton smoothie et tes boissons pour les matins où tu ne peux pas passer au club. C'est un plus quand tu le veux, jamais une condition." },
   { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
@@ -205,12 +205,8 @@ export function ClubLandingPage() {
             </div>
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
-              <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                <div className="cl-price" style={{ color: "var(--orange-h)" }}>80 €</div>
-                <div className="cl-price" style={{ fontSize: 30, color: "var(--muted2)", textDecoration: "line-through", opacity: .6 }}>95 €</div>
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--orange-h)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers</div>
-              <p style={{ margin: "10px 0 0", color: "var(--muted2)" }}>10 visites · <b>8 € la visite, tout compris</b></p>
+              <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>tout compris</b></p>
               <ul className="cl-feats">
                 <li>10 matins <b>complets</b> au club</li>
                 <li>Aloé + thé aux plantes + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
@@ -225,9 +221,10 @@ export function ClubLandingPage() {
               <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
                 <div className="cl-price" style={{ color: "var(--grad-a)" }}>185 €</div>
                 <div className="cl-price" style={{ fontSize: 30, color: "var(--on-dark-3)", textDecoration: "line-through", opacity: .8 }}>210 €</div>
+                <span style={{ fontFamily: "Anton", fontSize: 19, lineHeight: 1, color: "var(--dark)", background: "var(--yellow)", borderRadius: 8, padding: "5px 9px" }}>−12 %</span>
               </div>
-              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers</div>
-              <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>6,17 € la visite — 23 % de moins</b></p>
+              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers membres</div>
+              <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>23 % moins cher que la carte 10</b></p>
               <ul className="cl-feats">
                 <li><b>Tout</b> ce qu'il y a dans la carte 10 visites</li>
                 <li><b>3× plus de matins</b> pour ancrer le rituel</li>
@@ -237,7 +234,7 @@ export function ClubLandingPage() {
               <a className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none" }} href={R}>Je commence</a>
             </div>
           </div>
-          <p style={{ textAlign: "center", maxWidth: 620, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum.</p>
+          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. <b style={{ color: "var(--ink)" }}>Carte 30 visites à 185 € réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
         </div>
       </div>
 
