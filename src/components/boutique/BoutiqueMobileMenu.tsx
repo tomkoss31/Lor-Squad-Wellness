@@ -11,6 +11,7 @@
 // =============================================================================
 
 import { useEffect, useRef, useState } from "react";
+import { scrollToSection } from "./nav";
 
 type Entry = { id?: string; href: string; label: string; icon: string };
 
@@ -58,13 +59,14 @@ export function BoutiqueMobileMenu({
   ];
 
   // Sur la vitrine, une ancre présente → scroll doux plutôt que rechargement.
+  // Ailleurs (page produit, infos…), on laisse le lien naviguer normalement.
   const go = (e: React.MouseEvent, entry: Entry) => {
-    if (!entry.id) return; // page → navigation normale
-    const el = document.getElementById(entry.id);
-    if (!el) return; // section absente de cette page → navigation normale
+    if (!entry.id) return;
+    if (!document.getElementById(entry.id)) return;
     e.preventDefault();
     setOpen(false);
-    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    // 80 ms : le temps que le panneau se ferme et que le verrou de scroll saute.
+    scrollToSection(entry.id, 80);
   };
 
   return (

@@ -70,17 +70,17 @@ export function BoutiqueAffiliationPage() {
     };
   }, [coachSlug]);
 
+  const [contactOpen, setContactOpen] = useState(false);
+
+  const shopName = boutique?.shop_name ?? "Beauté K Skin";
+  const firstName = boutique?.first_name ?? null;
+
   useEffect(() => {
     document.title = `Deviens affiliée · ${shopName}`;
     setMetaDescription(
       `Partage les soins HL Skin autour de toi et sois récompensée (25 % à 50 %). Sans stock, à ton rythme, accompagnée${firstName ? ` par ${firstName}` : ""}. Découvre comment ça marche.`,
     );
   }, [shopName, firstName]);
-
-  const [contactOpen, setContactOpen] = useState(false);
-
-  const shopName = boutique?.shop_name ?? "Beauté K Skin";
-  const firstName = boutique?.first_name ?? null;
 
   // Illustratif : commission = ton palier de remise appliqué aux achats filleules.
   const monthlyGain = useMemo(() => friends * avgCart * (tierRate / 100), [friends, avgCart, tierRate]);
