@@ -1,0 +1,106 @@
+// =============================================================================
+// FormationV2Page — le hub « chemin » (2026-08-04).
+//
+// Un seul point vert = la prochaine leçon. Les autres sont faites (✓) ou
+// verrouillées mais VISIBLES. Remplace « Module 1/9 · 0/18 validés ».
+// Lot 1 du chantier « formation façon Duolingo ». Maquette :
+// scratchpad/formation-v2.html.
+// =============================================================================
+
+import { useMemo, useState } from "react";
+import { FORMATION_V2_CHAPTERS, FORMATION_V2_LESSONS } from "./content";
+import { LessonPlayer } from "./LessonPlayer";
+import { useFormationV2Progress } from "./useFormationV2Progress";
+import { FORMATION_V2_STYLES } from "./styles";
+import type { Lesson } from "./types";
+
+type NodeState = "done" | "active" | "lock";
+
+export function FormationV2Page() {
+  const { doneSet, streak, activeSlug, markDone, xp } = useFormationV2Progress();
+  const [open, setOpen] = useState<Lesson | null>(null);
+
+  // État de chaque leçon : faite / active / verrouillée (après l'active).
+  const nodeState = useMemo(() => {
+    const activeIndex = FORMATION_V2_LESSONS.findIndex((l) => l.slug === activeSlug);
+    const map = new Map<string, NodeState>();
+    FORMATION_V2_LESSONS.forEach((l, i) => {
+      if (doneSet.has(l.slug)) map.set(l.slug, "done");
+      else if (l.slug === activeSlug) map.set(l.slug, "active");
+      else if (activeIndex === -1 || i > activeIndex) map.set(l.slug, "lock");
+      else map.set(l.slug, "lock");
+    });
+    return map;
+  }, [doneSet, activeSlug]);
+
+  const chapterLabelFor = (lesson: Lesson) => {
+    const ch = FORMATION_V2_CHAPTERS.find((c) => c.lessons.some((l) => l.slug === lesson.slug));
+    return ch ? `Chapitre ${ch.number} · ${ch.theme}` : lesson.title;
+  };
+
+  return (
+    <div className="fv-wrap" style={{ maxWidth: 560, margin: "0 auto", padding: "4px 4px 40px" }}>
+      <style>{FORMATION_V2_STYLES}</style>
+
+      <div className="fv-top">
+        <div>
+          <p className="fv-cn" style={{ margin: 0 }}>Ma formation</p>
+          <h1 style={{ fontFamily: "Anton, Impact, sans-serif", fontSize: 26, letterSpacing: ".4px", margin: "2px 0 0", color: "var(--ls-text)" }}>
+            Apprendre en avançant
+          </h1>
+        </div>
+        <div className="fv-top-sp">
+          <span className="fv-streak">🔥 {streak}</span>
+          <span className="fv-xp">✦ {xp}</span>
+        </div>
+      </div>
+
+      {FORMATION_V2_CHAPTERS.map((chapter) => {
+        const done = chapter.lessons.filter((l) => doneSet.has(l.slug)).length;
+        const pct = Math.round((done / chapter.lessons.length) * 100);
+        return (
+          <section key={chapter.slug}>
+            <div className="fv-chapter">
+              <div className="fv-cn">Chapitre {chapter.number} · {chapter.theme}</div>
+              <div className="fv-ct">{chapter.title}</div>
+              <div className="fv-cbar"><i style={{ width: `${pct}%` }} /></div>
+            </div>
+            <div className="fv-path">
+              {chapter.lessons.map((lesson, i) => {
+                const st = nodeState.get(lesson.slug) ?? "lock";
+                return (
+                  <div key={lesson.slug} style={{ display: "contents" }}>
+                    {i > 0 ? <span className="fv-link" /> : null}
+                    <div className={`fv-node${st === "active" ? " fv-node-active" : ""}`}>
+                      {st === "active" ? <span className="fv-startchip">COMMENCER</span> : null}
+                      <button
+                        type="button"
+                        className={`fv-dot fv-dot-${st}`}
+                        disabled={st === "lock"}
+                        aria-label={lesson.title}
+                        onClick={() => st !== "lock" && setOpen(lesson)}
+                      >
+                        {st === "done" ? "✓" : st === "lock" ? "🔒" : lesson.icon}
+                      </button>
+                      <span className="fv-nl">{lesson.pathLabel}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+
+      {open ? (
+        <LessonPlayer
+          lesson={open}
+          chapterLabel={chapterLabelFor(open)}
+          streak={Math.max(streak, doneSet.has(open.slug) ? streak : streak + 1)}
+          onClose={() => setOpen(null)}
+          onDone={markDone}
+        />
+      ) : null}
+    </div>
+  );
+}
