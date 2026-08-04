@@ -26,7 +26,7 @@ export const CHAPITRE_BILAN: Chapter = {
       pathLabel: "Piloter l'humain",
       minutes: 3,
       accent: "teal",
-      ideeForce: "L'app pilote la trame. Toi, tu portes l'humain.",
+      ideeForce: "L'app gère la technique. Toi, tu portes l'humain.",
       source: "boite-a-outils-content.ts:381-467 (EBE étapes 1-6)",
       blocks: [
         { kind: "text", text: "Prêt·e avant l'arrivée : à l'heure, espace rangé, **tablette chargée à 100 %**, boisson d'accueil sortie. Quand la personne arrive, elle doit sentir qu'on l'attendait **pour elle**." },
@@ -43,7 +43,7 @@ export const CHAPITRE_BILAN: Chapter = {
           { label: "Tu présentes directement les produits", correct: false },
         ],
         successNote: "Exact. L'humain d'abord. Sans ces 2 minutes de lien, tout le reste sonne commercial.",
-        retryNote: "Trop tôt sur l'app = trop froid. Donne 2-3 min d'humain (boisson + une question ouverte) avant de démarrer la trame.",
+        retryNote: "Trop tôt sur l'app = trop froid. Donne 2-3 min d'humain (boisson + une question ouverte) avant de démarrer les étapes du bilan.",
       },
     },
     {
