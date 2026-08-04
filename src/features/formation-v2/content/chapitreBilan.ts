@@ -17,7 +17,7 @@ export const CHAPITRE_BILAN: Chapter = {
   slug: "le-bilan",
   number: 3,
   theme: "Le bilan",
-  title: "Faire vivre une EBE",
+  title: "Faire vivre le bilan",
   recap: "Mener un bilan qui transforme",
   lessons: [
     {
