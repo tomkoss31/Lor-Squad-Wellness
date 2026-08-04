@@ -35,6 +35,24 @@ export interface AcademyLesson {
       manuelle (garde-fou anti-triche : on ne valide pas un vrai bilan/commande
       en cochant une case). */
   autoOnly?: boolean;
+  /**
+   * Preuve CHIFFRÉE : l'étape se valide au bout de N gestes, comptés un par un
+   * (« 1/3 · 2/3 · 3/3 ✓ ») au lieu d'une case tout-ou-rien.
+   *
+   * Ajouté le 2026-08-04 pour « Relancer », qui n'avait AUCUNE condition de
+   * sortie : le parcours s'y figeait et personne n'en sortait jamais. Une
+   * relance n'est pas détectable côté serveur (elle part sur WhatsApp), mais
+   * compter trois gestes concrets vaut mieux qu'une case unique — et surtout,
+   * ça se termine.
+   */
+  proofCounter?: {
+    /** Nombre de gestes à accomplir. */
+    target: number;
+    /** Libellé du bouton d'incrément (« +1 relance envoyée »). */
+    bumpLabel: string;
+    /** Nom de l'unité comptée, au pluriel (« relances »). */
+    unit: string;
+  };
   /** Pré-prompt injecté quand on demande à Noaly sur cette étape. */
   noalyPrompt: string;
 }
@@ -175,6 +193,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
       linkPath: "/crm",
     },
     preuve: "C'est gagné quand tu as relancé 3 contacts cette semaine.",
+    proofCounter: { target: 3, bumpLabel: "+1 relance envoyée", unit: "relances" },
     noalyPrompt: "Écris-moi un message de relance léger pour quelqu'un qui n'a pas répondu, sans mettre la pression.",
   },
 

@@ -35,6 +35,8 @@ const DEMO_VIEW: SalleOpsView = {
   dayNumber: 2,
   jalonPlanMarketing: false,
   toggle: async () => {},
+  counts: {},
+  bump: async () => {},
 };
 
 type Screen = "jour0" | "quotidien" | "live";

@@ -40,6 +40,10 @@ interface UseStarterPlanResult {
   /** Ancre Jour 0 (date de sponsoring) ou null. */
   starterStartedAt: string | null;
   loading: boolean;
+  /** Nombre de gestes accomplis par tâche à preuve chiffrée (meta.count). */
+  counts: Record<string, number>;
+  /** Incrémente la preuve chiffrée d'une étape (« +1 relance »). */
+  bump: (taskKey: string, target: number) => Promise<void>;
   /** Coche / décoche une tâche (toggle done ↔ pending). */
   toggle: (taskKey: string) => Promise<void>;
   refetch: () => Promise<void>;
@@ -48,6 +52,7 @@ interface UseStarterPlanResult {
 export function useStarterPlan(): UseStarterPlanResult {
   const { currentUser } = useAppContext();
   const [statuses, setStatuses] = useState<Record<string, StarterStatus>>({});
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [activatedAt, setActivatedAt] = useState<string | null>(null);
   const [starterStartedAt, setStarterStartedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +72,7 @@ export function useStarterPlan(): UseStarterPlanResult {
       const [progressRes, userRes] = await Promise.all([
         sb
           .from("distributor_starter_progress")
-          .select("task_key, status")
+          .select("task_key, status, meta")
           .eq("user_id", currentUser.id),
         sb.from("users").select("activated_at, starter_started_at").eq("id", currentUser.id).single(),
       ]);
@@ -122,6 +127,39 @@ export function useStarterPlan(): UseStarterPlanResult {
     [currentUser?.id, statuses, refetch],
   );
 
+  /**
+   * Incrémente la preuve chiffrée d'une étape (« +1 relance envoyée »).
+   * Le serveur borne à la cible et bascule la tâche en 'done' à l'arrivée —
+   * c'est ce qui permet à « Relancer » de se terminer, alors qu'elle n'avait
+   * aucune condition de sortie avant le 2026-08-04.
+   */
+  const bump = useCallback(
+    async (taskKey: string, target: number) => {
+      if (!currentUser?.id) return;
+      // Optimiste : on avance tout de suite, le serveur borne de toute façon.
+      setCounts((c) => ({ ...c, [taskKey]: Math.min(target, (c[taskKey] ?? 0) + 1) }));
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { data, error } = await sb.rpc("bump_starter_counter", {
+          p_task_key: taskKey,
+          p_target: target,
+        });
+        if (error) throw error;
+        const res = data as { count?: number; status?: string } | null;
+        if (res) {
+          setCounts((c) => ({ ...c, [taskKey]: Number(res.count ?? 0) }));
+          if (res.status === "done") {
+            setStatuses((s) => ({ ...s, [taskKey]: "done" }));
+          }
+        }
+      } catch {
+        void refetch();
+      }
+    },
+    [currentUser?.id, refetch],
+  );
+
   const tasks = useMemo<StarterTaskState[]>(
     () =>
       STARTER_TASKS.map((t) => ({
@@ -147,6 +185,8 @@ export function useStarterPlan(): UseStarterPlanResult {
     activatedAt,
     starterStartedAt,
     loading,
+    counts,
+    bump,
     toggle,
     refetch,
   };

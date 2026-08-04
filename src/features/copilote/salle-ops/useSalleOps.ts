@@ -39,7 +39,12 @@ const GOPRO: GoProDef[] = [
   { n: 2, key: "trouver", label: "Trouver", gates: ["liste_50"] },
   { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
   { n: 4, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
-  { n: 5, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
+  // « Relancer » n'est PAS une porte d'activation (compétence continue), mais
+  // elle a désormais une clé de SUIVI : sans elle, l'étape n'enregistrait rien
+  // et ne se terminait jamais — le parcours s'y figeait pour tout le monde.
+  // `relances_3` sert uniquement de compteur (meta.count), il n'entre pas dans
+  // le calcul de `activated_at`.
+  { n: 5, key: "relancer", label: "Relancer", gates: ["relances_3"], lessonKey: "relancer" },
   { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], lessonKey: "demarrer_recrue" },
   { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], lessonKey: "dupliquer" },
 ];
@@ -75,12 +80,16 @@ export interface SalleOpsView {
   /** Jalon J30-45 : prêt pour le plan marketing (≥ J30 + 1er bilan réalisé). */
   jalonPlanMarketing: boolean;
   toggle: (taskKey: string) => Promise<void>;
+  /** Gestes accomplis par étape à preuve chiffrée (« 2/3 relances »). */
+  counts: Record<string, number>;
+  /** Incrémente la preuve chiffrée de l'étape en cours. */
+  bump: (taskKey: string, target: number) => Promise<void>;
 }
 
 const DAY_MS = 86_400_000;
 
 export function useSalleOps(): SalleOpsView {
-  const { statuses, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
+  const { statuses, activatedAt, starterStartedAt, loading, toggle, counts, bump } = useStarterPlan();
 
   return useMemo(() => {
     // État LU SUR LES CLÉS BRUTES (statuses) — inclut les clés hors
@@ -104,7 +113,10 @@ export function useSalleOps(): SalleOpsView {
       const gateKey = active
         ? g.gates.find((k) => !doneByGate(k)) ?? null
         : g.gates[0] ?? null;
-      const lessonKey = gateKey ?? g.lessonKey ?? null;
+      // `lessonKey` explicite d'abord : depuis que « Relancer » a une clé de
+      // SUIVI (`relances_3`) qui n'est pas une clé de leçon, se fier au gateKey
+      // faisait disparaître tout le contenu de l'étape.
+      const lessonKey = g.lessonKey ?? gateKey ?? null;
       return {
         n: g.n,
         label: g.label,
@@ -151,6 +163,8 @@ export function useSalleOps(): SalleOpsView {
       dayNumber,
       jalonPlanMarketing,
       toggle,
+      counts,
+      bump,
     };
-  }, [statuses, activatedAt, starterStartedAt, loading, toggle]);
+  }, [statuses, activatedAt, starterStartedAt, loading, toggle, counts, bump]);
 }
