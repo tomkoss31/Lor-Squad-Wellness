@@ -45,7 +45,20 @@ export function CountUp({
       { threshold: 0.4 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    // Filet de sécurité : si l'anim ne s'est jamais déclenchée (page cachée au
+    // chargement, rAF en pause, élément resté hors écran), on affiche la VRAIE
+    // valeur au bout de 4 s — jamais un « 0 » figé sur une page de prix.
+    const safety = window.setTimeout(() => {
+      if (!started.current) {
+        started.current = true;
+        io.disconnect();
+        setVal(end);
+      }
+    }, 4000);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(safety);
+    };
   }, [end, duration]);
 
   const formatted = val.toLocaleString("fr-FR", {
