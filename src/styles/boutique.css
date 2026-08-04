@@ -194,6 +194,15 @@
 .bk-view,.bk-add{border:1px solid var(--jade); color:var(--jade-deep); background:transparent; border-radius:999px;
   padding:8px 14px; font-size:12px; font-weight:600; transition:.2s; white-space:nowrap}
 .bk-view:hover,.bk-add:hover{background:var(--jade); color:#fff}
+/* Mobile : en 2 colonnes la carte fait 165 px — prix (62) + bouton (72) + marges
+   débordaient du cadre. On empile : prix au-dessus, bouton pleine largeur
+   (cible tactile confortable). */
+@media (max-width:560px){
+  .bk-cfoot{flex-direction:column; align-items:stretch; gap:9px}
+  .bk-cfoot .bk-add,.bk-cfoot .bk-view{width:100%; text-align:center; padding:10px 12px; font-size:12.5px}
+  .bk-cbody{padding:14px 13px 15px}
+  .bk-price{font-size:18px}
+}
 
 /* kits / bundles */
 .bk-kits{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
