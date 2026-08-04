@@ -180,6 +180,49 @@ export function SalleOpsQuotidien({
                   <div style={autoNote}>
                     ⏳ Pas besoin de cocher : cette étape se valide <strong style={{ color: "var(--ls-ops-accent-text)" }}>toute seule</strong> dès que l'acte réel est enregistré (anti-triche).
                   </div>
+                ) : lesson.proofCounter && shownGateKey ? (
+                  /* PREUVE CHIFFRÉE — on compte les gestes au lieu d'une case
+                     tout-ou-rien. C'est ce qui donne enfin une sortie à
+                     « Relancer », qui n'en avait aucune : le parcours s'y
+                     figeait et personne n'en sortait (2026-08-04). */
+                  (() => {
+                    const target = lesson.proofCounter.target;
+                    const count = Math.min(target, view.counts[shownGateKey] ?? 0);
+                    const reste = target - count;
+                    return (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+                          {Array.from({ length: target }, (_, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                flex: 1,
+                                height: 7,
+                                borderRadius: 999,
+                                background:
+                                  i < count ? "var(--ls-ops-accent)" : "var(--ls-ops-border)",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div style={{ ...MONO, fontSize: 11, color: "var(--ls-ops-muted)", marginBottom: 10 }}>
+                          {count} / {target} {lesson.proofCounter.unit}
+                          {reste > 0 ? ` · encore ${reste}` : " · étape terminée ✓"}
+                        </div>
+                        {reste > 0 ? (
+                          <button
+                            type="button"
+                            style={doneBtn}
+                            onClick={() =>
+                              shownGateKey && void view.bump(shownGateKey, target)
+                            }
+                          >
+                            {lesson.proofCounter.bumpLabel}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()
                 ) : shownGateKey ? (
                   <button type="button" style={doneBtn} onClick={() => shownGateKey && void view.toggle(shownGateKey)}>
                     ✓ C'est fait — passer à l'étape suivante
