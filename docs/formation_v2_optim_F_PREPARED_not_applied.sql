@@ -1,5 +1,11 @@
 -- =============================================================================
--- Formation V2 — Optim F : MIGRATIONS PRÉPARÉES, **PAS ENCORE APPLIQUÉES**.
+-- ✅ APPLIQUÉES le 2026-08-04 via MCP execute_sql (base partagée = dev + prod).
+--    get_user_xp (V2 comptée) + get_formation_v2_leaderboard sont EN PLACE.
+--    Ce fichier reste comme référence / rollback. Le `create or replace` est
+--    idempotent (re-jouable sans risque). Rollback get_user_xp = la version
+--    SANS le bloc « ▼▼▼ V2 ▼▼▼ » (cf. historique / pg_get_functiondef).
+-- =============================================================================
+-- Formation V2 — Optim F : MIGRATIONS (initialement préparées, appliquées).
 --
 -- ⚠️ Ce fichier n'est PAS dans supabase/migrations exprès : il ne doit PAS
 -- partir tout seul au prochain `db push`. On l'applique À LA MAIN, AVEC Thomas,
