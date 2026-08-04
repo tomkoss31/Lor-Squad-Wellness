@@ -31,7 +31,7 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
       ideeForce: "Tu parles peu. Ton sponsor mène. Tu écoutes.",
       source: "boite-a-outils-content.ts:1309-1476 (Visio à 3)",
       blocks: [
-        { kind: "text", text: "Une visio à 3 = ton prospect + toi + ton sponsor. **30 minutes maximum.** C'est l'arme n°1 du closing, elle est gratuite, et tu peux la faire dès demain matin." },
+        { kind: "text", text: "Une visio à 3 = ton prospect + toi + ton sponsor (ton mentor). **30 minutes maximum.** C'est l'arme n°1 pour conclure une vente, elle est gratuite, et tu peux la faire dès demain matin." },
         { kind: "bullet", text: "**Crédibilité instantanée** — tu débutes ? Peu importe : l'autorité passe sur ton sponsor expérimenté, pas sur toi." },
         { kind: "bullet", text: "**Tu apprends en vivant** — 5 visios à 3 = 50 visios solo en apprentissage. C'est ton vrai bootcamp." },
         { kind: "text", text: "Le secret, c'est le **pré-brief** : 24h avant, tu envoies à ton sponsor le profil du prospect (objectif + blocage principal). Il arrive préparé, pas en impro." },
@@ -44,7 +44,7 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
           { label: "Parler peu, laisser le sponsor mener, écouter", correct: true },
           { label: "Confirmer chaque phrase que dit le sponsor", correct: false },
         ],
-        successNote: "Exact. Tu présentes, puis tu t'effaces. C'est l'expérience du sponsor qui close — et toi tu apprends en direct.",
+        successNote: "Exact. Tu présentes, puis tu t'effaces. C'est l'expérience du sponsor qui conclut — et toi tu apprends en direct.",
         retryNote: "L'erreur n°1, c'est de parler pendant la visio. Tu présentes ton sponsor, puis tu te tais et tu observes.",
       },
     },
@@ -64,7 +64,7 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
         { kind: "bullet", text: "**2 relances** sur des prospects en cours." },
         { kind: "bullet", text: "**1 nouveau contact** ajouté à ta liste." },
         { kind: "bullet", text: "**1 vocal perso** à un membre d'équipe ou un client actif." },
-        { kind: "bullet", text: "**1 contenu publié** (story, reel — lifestyle, pas pitch)." },
+        { kind: "bullet", text: "**1 contenu publié** (une story, une vidéo de ta vraie vie — pas une pub)." },
         { kind: "text", text: "La formule **5-3-1** répétée 12 mois (5 clients/mois, 3 récurrents, 1 coach) = une équipe qui tient. Pas de magie : de la **régularité**." },
       ],
       check: {

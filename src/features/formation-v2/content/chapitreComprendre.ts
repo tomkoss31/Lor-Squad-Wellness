@@ -65,7 +65,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       source: "boite-a-outils-content.ts:381-568 (EBE) + charte:1564",
       blocks: [
         { kind: "text", text: "90 % des distri croient que le bilan, c'est **suivre les étapes une par une**. Faux : les étapes, l'app s'en charge. Toi, ton vrai job, c'est de faire vivre une **expérience** qui transforme quelqu'un en 60 minutes." },
-        { kind: "text", text: "Tu ne vends pas des produits. Tu vends une **transformation**. Et tu ne recommandes que ce que tu **consommes toi-même** — sinon tu pitches du vent." },
+        { kind: "text", text: "Tu ne vends pas des produits. Tu vends une **transformation**. Et tu ne recommandes que ce que tu **consommes toi-même** — sinon tu racontes du vent." },
         { kind: "example", label: "La phrase qui scelle tout (à garder pour la fin)", text: "Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier·e de toi." },
         { kind: "text", text: "Tu la dis en regardant la personne dans les yeux — **et tu te tais**." },
       ],
@@ -87,7 +87,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       pathLabel: "Le cobaye, c'est toi",
       minutes: 3,
       accent: "lime",
-      ideeForce: "Tu consommes avant de vendre. Sinon tu pitches du vent.",
+      ideeForce: "Tu consommes avant de vendre. Sinon tu racontes du vent.",
       source: "boite-a-outils-content.ts:735-798 (protocole 21j cobaye)",
       blocks: [
         { kind: "text", text: "La règle Mark Hughes, le fondateur : **tu testes sur toi avant de proposer aux autres**. 21 jours, c'est le minimum pour ressentir une vraie différence — énergie, peau, sommeil — et avoir un témoignage crédible." },
@@ -118,7 +118,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       ideeForce: "Un produit = une phrase clé. Tu dois la sortir sans hésiter.",
       source: "boite-a-outils-content.ts:816-887 (mémo 5 produits)",
       blocks: [
-        { kind: "text", text: "Si tu hésites au moment du bilan, tu perds en crédibilité. Apprends **une phrase par produit** — tu dois pouvoir en pitcher n'importe lequel en 5 secondes." },
+        { kind: "text", text: "Si tu hésites au moment du bilan, tu perds en crédibilité. Apprends **une phrase par produit** — tu dois pouvoir en présenter n'importe lequel en 5 secondes." },
         { kind: "bullet", text: "**🥤 Formula 1** — « Le repas malin du matin : 25 g de protéines, 25 vitamines, moins de 200 kcal. »" },
         { kind: "bullet", text: "**💪 PDM (Protein Drink Mix)** — « +15 g de protéines pour tenir rassasié plus longtemps. »" },
         { kind: "bullet", text: "**🌿 Aloé Concentré** — « Mon réveil-corps : 1 verre le matin, ça nettoie. »" },

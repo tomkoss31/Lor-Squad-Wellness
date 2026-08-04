@@ -82,24 +82,24 @@ export const CHAPITRE_TROUVER: Chapter = {
       pathLabel: "Tes stories qui accrochent",
       minutes: 2,
       accent: "violet",
-      ideeForce: "Un bon hook fait RESTER, pas vendre.",
-      source: "boite-a-outils-content.ts:222-303 (15 hooks stories)",
+      ideeForce: "Ta première phrase doit faire RESTER, pas vendre.",
+      source: "boite-a-outils-content.ts:222-303 (15 accroches stories)",
       blocks: [
-        { kind: "text", text: "Sur les réseaux, ta 1ʳᵉ slide (le « hook ») n'a qu'un seul but : **faire rester**. Pas vendre. Un bon hook déclenche un *« attends, raconte »* dans la tête." },
-        { kind: "example", label: "🌅 Routine", text: "Mon rituel matin qui a tout changé en 30 jours ⬇️" },
-        { kind: "example", label: "🚫 Anti-vente", text: "Ce post n'est PAS pour te vendre quelque chose. Lis quand même." },
+        { kind: "text", text: "Sur les réseaux (Instagram, Facebook, TikTok), ta **toute première phrase** — l'accroche — n'a qu'un seul but : donner envie de **rester** pour lire la suite. Surtout pas de vendre. Une bonne accroche fait penser « attends, raconte » dans la tête." },
+        { kind: "example", label: "🌅 Ta routine", text: "Mon rituel du matin qui a tout changé en 30 jours ⬇️" },
+        { kind: "example", label: "🚫 « Ce n'est pas une pub »", text: "Ce post n'est PAS pour te vendre quelque chose. Lis quand même." },
         { kind: "example", label: "⏰ Avant / après", text: "Il y a 1 an j'étais [X]. Aujourd'hui [Y]. Voilà comment." },
-        { kind: "text", text: "La règle : **authentique > parfait**. Tu montres du vrai (ton vécu, tes ratés), pas une pub léchée. Et tu ne pitches jamais dans le hook — la porte s'ouvre en message privé, après." },
+        { kind: "text", text: "La règle : **du vrai plutôt que du parfait**. Tu montres ta vraie vie — tes progrès, tes galères — pas une pub léchée. Et tu ne vends jamais dans cette première phrase : la discussion s'ouvre en message privé, plus tard." },
       ],
       check: {
-        question: "Le but d'un hook de story, c'est quoi ?",
+        question: "Le but de ta première phrase (l'accroche) ?",
         options: [
           { label: "Vendre le produit tout de suite", correct: false },
-          { label: "Faire rester le spectateur (créer la curiosité)", correct: true },
+          { label: "Donner envie de rester et de lire la suite", correct: true },
           { label: "Afficher les prix et les promos", correct: false },
         ],
-        successNote: "Oui. Le hook capte l'attention, il ne vend pas. La conversation (et le business) vient ensuite, en privé.",
-        retryNote: "Un hook qui vend fait fuir. Son seul job : accrocher assez pour qu'on reste. La vente, c'est plus tard, en message privé.",
+        successNote: "Oui. L'accroche capte l'attention, elle ne vend pas. La discussion (et le business) vient après, en message privé.",
+        retryNote: "Une accroche qui vend fait fuir. Son seul job : donner assez envie pour qu'on reste. La vente, c'est plus tard, en privé.",
       },
     },
     {
@@ -114,7 +114,7 @@ export const CHAPITRE_TROUVER: Chapter = {
       blocks: [
         { kind: "text", text: "Un contact que tu n'as pas parlé depuis 6 mois : tu ne vends **rien**. Tu **renoues**. La porte business s'ouvre seule, après. Une séquence douce sur 7 jours : J0, J3, J7." },
         { kind: "example", label: "J0 · le retour humain", text: "Hey [Prénom] ! Ça fait un bail, j'espère que tout roule. Je suis tombé·e sur [souvenir commun], ça m'a rappelé plein de bons moments. Comment tu vas, vraiment ?" },
-        { kind: "text", text: "**Pas de pitch.** Le souvenir commun prouve que ce n'est pas un copier-coller. Si pas de réponse à J7, **tu lâches** — jamais de harcèlement." },
+        { kind: "text", text: "**Tu ne vends rien.** Le souvenir commun prouve que ce n'est pas un message copié-collé. Si pas de réponse à J7, **tu lâches** — jamais de harcèlement." },
         { kind: "text", text: "Et quand elle répond : laisse-la te raconter sa vie **5-10 minutes AVANT** de placer ton sujet. Sinon tu casses tout." },
       ],
       check: {
