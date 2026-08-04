@@ -278,7 +278,7 @@ export function CheckoutForm({ slug, products, cart, promo, onClose, onBack }: P
             {loading ? "Redirection…" : `Payer ${formatEuro(total)}`}
           </button>
           <div className="bk-cosec">
-            <span>🔒 Paiement sécurisé Stripe</span>
+            <span>🔒 Paiement 100 % sécurisé</span>
             <span>Tes infos servent à l'expédition</span>
           </div>
         </div>

@@ -129,7 +129,7 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
           )}
           <div className="bk-pdp-sec">
             <h4>Réassurance</h4>
-            <p>🔒 Paiement Stripe sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
+            <p>🔒 Paiement 100 % sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
           </div>
 
           {coachSlug && (
