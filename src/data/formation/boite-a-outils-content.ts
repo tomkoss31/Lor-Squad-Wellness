@@ -1106,6 +1106,9 @@ Et toi sur le côté santé, comment tu te sens en ce moment ? Tu as gardé cert
     icon: "🛡️",
     durationMin: 5,
     tag: "Objections",
+    // Ouvre l'outil ludique « Le pare-objections » (2026-08-04) au lieu du popup
+    // générique : tap l'objection → la réponse. Même contenu (scripts ci-dessous).
+    externalRoute: "/outils/pare-objections",
     contentMarkdown: `## Une objection prévue n'est plus une objection
 
 **C'est juste une étape.** Mémorise ces 7 réponses, fais-les tourner en role-play avec ton sponsor. Au bout de 4 semaines, tu réponds en réflexe.`,
