@@ -457,6 +457,21 @@ const FormationV2Page = lazy(() =>
     default: module.FormationV2Page
   }))
 );
+// Guide « installer l'app pour un nouveau coach » (2026-08-04) — le mode d'emploi
+// duplicable du parrain pour onboarder une recrue de zéro.
+const GuideNouveauCoachPage = lazy(() =>
+  import("./pages/GuideNouveauCoachPage").then((module) => ({
+    default: module.GuideNouveauCoachPage
+  }))
+);
+// « Le pare-objections » (2026-08-04) — 1er outil ludique issu de la Boîte à
+// outils : tape l'objection → la réponse mot-pour-mot. Source unique = l'item
+// « objections-reponses » de boite-a-outils-content.ts.
+const PareObjectionsPage = lazy(() =>
+  import("./pages/PareObjectionsPage").then((module) => ({
+    default: module.PareObjectionsPage
+  }))
+);
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
 // (placeholder en attendant le contenu Notion en Phase 3).
 const FormationModulePage = lazy(() =>
@@ -871,6 +886,8 @@ export default function App() {
               <Route path="plan-marketing" element={<PlanMarketingPage />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/apprendre" element={<FormationV2Page />} />
+              <Route path="guide-nouveau-coach" element={<GuideNouveauCoachPage />} />
+              <Route path="outils/pare-objections" element={<PareObjectionsPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="formation/admin" element={<FormationAdminPage />} />

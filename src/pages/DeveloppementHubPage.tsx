@@ -87,6 +87,16 @@ const CARDS: HubCard[] = [
     section: "apprendre",
   },
   {
+    id: "guide-nouveau-coach",
+    emoji: "📲",
+    title: "Installer l'app pour un nouveau coach",
+    description: "Le mode d'emploi duplicable : de zéro à opérationnel en 5 étapes + un message prêt à envoyer.",
+    cta: "Ouvrir le guide",
+    path: "/guide-nouveau-coach",
+    accent: "var(--ls-teal)",
+    section: "apprendre",
+  },
+  {
     id: "outils",
     emoji: "🛠",
     title: "Boîte à outils",
