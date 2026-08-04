@@ -227,7 +227,17 @@ export function SalleOpsQuotidien({
                   <button type="button" style={doneBtn} onClick={() => shownGateKey && void view.toggle(shownGateKey)}>
                     ✓ C'est fait — passer à l'étape suivante
                   </button>
-                ) : null}
+                ) : (
+                  /* Étapes OUVERTES sans « porte » (Démarrer ta recrue,
+                     Dupliquer) : elles se vivent dans la durée, il n'y a pas
+                     d'acte unique à cocher. On affiche une note plutôt qu'un
+                     vide — le vide donnait un cul-de-sac (audit 2026-08-04). */
+                  <div style={autoNote}>
+                    🌱 Cette étape se vit dans la durée — pas de case à cocher.
+                    Reviens-y au fil de tes recrues ; Noaly et ton parrain sont
+                    là pour t'accompagner.
+                  </div>
+                )}
               </div>
 
               {/* Réponses prêtes (« comment répondre ») */}

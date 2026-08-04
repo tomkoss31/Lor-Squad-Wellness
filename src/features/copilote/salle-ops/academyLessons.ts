@@ -10,7 +10,9 @@
 // =============================================================================
 
 export interface AcademyLesson {
-  /** Étape Go Pro (1 Trouver · 2 Inviter · 3 Présenter · 4 Relancer …). */
+  /** Index d'étape Go Pro, 0-based (0 S'équiper · 1 Trouver · 2 Inviter ·
+   *  3 Présenter · 4 Relancer · 5 Démarrer · 6 Dupliquer). L'UI affiche
+   *  `goProStep + 1` (cf. SalleOpsQuotidien « Étape N »). */
   goProStep: number;
   goProLabel: string;
   /** Titre court de la leçon (Anton, CAPS). */

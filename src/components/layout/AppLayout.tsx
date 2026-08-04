@@ -17,6 +17,7 @@ import { RankSelectorModal } from "../rank/RankSelectorModal";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
+import { OnboardingReturnPill } from "../../features/copilote/salle-ops/OnboardingReturnPill";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
@@ -804,6 +805,11 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {/* Pastille « retour à mon parcours » : ramène au cockpit d'onboarding
+          depuis n'importe quelle page tant que le coach n'est pas activé
+          (retour Thomas 2026-08-04 : les actions du cockpit partaient sans
+          retour). Se cache toute seule dès l'activation / sur /co-pilote. */}
+      <OnboardingReturnPill />
       {/* Migration prod 2026-04-28 : rappel Academy admin only. */}
       {academyTrigger.isOpen && currentUser?.role === "admin" ? (
         <AcademyReminderDialog onClose={academyTrigger.close} />
