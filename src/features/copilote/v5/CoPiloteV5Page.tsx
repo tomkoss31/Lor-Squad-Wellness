@@ -79,6 +79,13 @@ export function CoPiloteV5Page() {
   // DÉJÀ ACTIVÉ (ou un admin comme Thomas) de rouvrir / revoir la Salle des
   // Opérations à la demande — avant, l'entrée n'existait que pour les non-activés.
   const [opsForceOpen, setOpsForceOpen] = useState(false);
+  // Bande « démarrage » du coach déjà lancé (LOT 4) : elle doit dire où il en
+  // est et ce qui vient, pas seulement « revoir le parcours ».
+  const opsDone = ops.steps.length > 0 && ops.steps.every((s) => s.state === "done");
+  const opsNextLabel =
+    ops.steps.find((s) => s.state === "active")?.label ??
+    ops.steps.find((s) => s.state !== "done")?.label ??
+    "Dupliquer";
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -218,14 +225,45 @@ export function CoPiloteV5Page() {
           >
             <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
             <span style={{ flex: 1, minWidth: 0 }}>
+              {/* LOT 4 (2026-08-04) — le cockpit devient une BANDE une fois le
+                  coach lancé, au lieu de disparaître. Elle dit où il en est et
+                  ce qui vient : sans ça, la bande ne racontait rien (« Revoir
+                  mon démarrage guidé ») et le fil se perdait à l'activation. */}
               <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-                {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
+                {opsDone
+                  ? "Démarrage terminé 🎉"
+                  : ops.activated
+                    ? `Ton démarrage · ${ops.activeStepNumber} / ${ops.totalSteps}`
+                    : "Reprendre mon démarrage"}
               </span>
               <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                {ops.activated
-                  ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
-                  : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
+                {opsDone
+                  ? "Les 7 étapes sont faites. Tu peux les revoir quand tu veux."
+                  : ops.activated
+                    ? `Prochaine étape : ${opsNextLabel}`
+                    : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
               </span>
+              {/* Jauge — le même fil unique que dans le cockpit. */}
+              {!opsDone ? (
+                <span style={{ display: "flex", gap: 4, marginTop: 8 }} aria-hidden="true">
+                  {ops.steps.map((s) => (
+                    <span
+                      key={s.n}
+                      style={{
+                        flex: 1,
+                        height: 4,
+                        borderRadius: 999,
+                        background:
+                          s.state === "done"
+                            ? "var(--ls-teal)"
+                            : s.state === "active"
+                              ? "var(--ls-lime)"
+                              : "var(--ls-border)",
+                      }}
+                    />
+                  ))}
+                </span>
+              ) : null}
             </span>
             <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
           </button>
