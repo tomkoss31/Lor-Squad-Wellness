@@ -191,11 +191,17 @@ export function useFormationV2Progress() {
   );
   const streak = useMemo(() => computeStreak(state.streakDays), [state.streakDays]);
 
+  /** Une leçon a-t-elle été validée AUJOURD'HUI ? (pour l'objectif du jour) */
+  const doneToday = useMemo(
+    () => state.streakDays.includes(localDay(new Date())),
+    [state.streakDays],
+  );
+
   /** Slug de la 1ʳᵉ leçon non faite (le point « actif » du chemin). */
   const activeSlug = useMemo(
     () => FORMATION_V2_LESSONS.find((l) => !doneSet.has(l.slug))?.slug ?? null,
     [doneSet],
   );
 
-  return { doneSet, doneCount, streak, activeSlug, markDone, xp: doneCount * 15 };
+  return { doneSet, doneCount, streak, doneToday, activeSlug, markDone, xp: doneCount * 15 };
 }

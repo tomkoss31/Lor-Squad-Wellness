@@ -76,6 +76,8 @@ export interface Chapter {
   title: string;
   /** Ligne de récap « ce que tu sais faire » sur l'écran de fin de parcours. */
   recap: string;
+  /** Emoji-médaille du chapitre (badge décroché quand toutes ses leçons sont ✓). */
+  badge: string;
   lessons: Lesson[];
 }
 

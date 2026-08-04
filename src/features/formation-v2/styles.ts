@@ -107,6 +107,22 @@ export const FORMATION_V2_STYLES = `
   box-shadow:0 4px 14px color-mix(in srgb, var(--ls-lime) 30%, transparent); }
 .fv-donebar:active { transform:scale(.99); }
 
+/* Badges de chapitre + diplôme (strip sous l'en-tête). */
+.fv-badges { display:flex; gap:8px; align-items:center; margin:2px 0 12px; flex-wrap:wrap; }
+.fv-badge { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; background:var(--ls-surface2); border:1px solid var(--ls-border); filter:grayscale(1); opacity:.42; transition:.2s; }
+.fv-badge-on { filter:none; opacity:1; background:color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)); border-color:color-mix(in srgb, var(--ls-teal) 42%, transparent); box-shadow:0 2px 8px color-mix(in srgb, var(--ls-teal) 20%, transparent); }
+.fv-badge-final.fv-badge-on { background:color-mix(in srgb, var(--ls-lime) 16%, var(--ls-surface)); border-color:color-mix(in srgb, var(--ls-lime) 46%, transparent); box-shadow:0 2px 10px color-mix(in srgb, var(--ls-lime) 26%, transparent); }
+
+/* Carte « objectif du jour » / reprendre en 1 tap. */
+.fv-focus { display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:0 0 14px; padding:12px 15px; border-radius:16px; cursor:pointer;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--ls-lime) 12%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 9%, var(--ls-surface)));
+  border:1px solid color-mix(in srgb, var(--ls-lime) 30%, transparent); }
+.fv-focus:active { transform:scale(.99); }
+.fv-focus-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.fv-focus-tag { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--ls-lime); }
+.fv-focus-title { font-size:15px; font-weight:800; color:var(--ls-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fv-focus-cta { font-size:13.5px; font-weight:800; color:var(--ls-teal); flex-shrink:0; }
+
 /* ── écran de fin de parcours (le pont vers le cockpit) ── */
 .fv-done-glow { position:absolute; inset:0; pointer-events:none; z-index:0;
   background:radial-gradient(60% 40% at 50% 20%, color-mix(in srgb, var(--ls-lime) 15%, transparent), transparent 70%),

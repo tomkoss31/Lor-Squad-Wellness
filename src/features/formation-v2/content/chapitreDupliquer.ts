@@ -19,6 +19,7 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
   theme: "Dupliquer",
   title: "De vendeur à bâtisseur",
   recap: "Dupliquer : bâtir une équipe",
+  badge: "👥",
   lessons: [
     {
       slug: "visio-a-3",
