@@ -19,6 +19,7 @@ export const CHAPITRE_VENDRE_SUIVRE: Chapter = {
   number: 4,
   theme: "Vendre & suivre",
   title: "Après le oui, le vrai travail",
+  recap: "Vendre & suivre après le oui",
   lessons: [
     {
       slug: "appel-j1",
