@@ -169,7 +169,10 @@ export function LessonPlayer({
               <div className="fv-rl">✦ XP</div>
             </div>
             <div className="fv-rstat">
-              <div className="fv-rv" style={{ color: "var(--ls-lime)" }}>{streak} 🔥</div>
+              {/* On vient de valider une leçon aujourd'hui : la série vaut au
+                  moins 1 (le compteur parent peut encore afficher 0 le temps
+                  que l'état se propage). */}
+              <div className="fv-rv" style={{ color: "var(--ls-lime)" }}>{Math.max(1, streak)} 🔥</div>
               <div className="fv-rl">Série</div>
             </div>
           </div>

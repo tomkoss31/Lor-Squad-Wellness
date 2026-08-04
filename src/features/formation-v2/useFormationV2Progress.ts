@@ -22,6 +22,18 @@ function keyFor(userId: string) {
   return `ls-formation-v2-${userId}`;
 }
 
+/**
+ * Jour LOCAL au format YYYY-MM-DD. On n'utilise PAS toISOString() (qui renvoie
+ * de l'UTC) : à 11 h en France, minuit local retombe la veille en UTC, et la
+ * série se comparait à un mauvais jour → toujours 0. On lit l'heure locale.
+ */
+function localDay(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function read(userId: string): StoredV2 {
   if (typeof window === "undefined") return { done: [], streakDays: [] };
   try {
@@ -40,16 +52,15 @@ function computeStreak(days: string[]): number {
   const set = new Set(days);
   const dayMs = 86_400_000;
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  today.setHours(12, 0, 0, 0); // midi local : à l'abri des sauts d'heure d'été
   // La série reste valide si la dernière activité est aujourd'hui OU hier.
   let cursor = new Date(today);
-  if (!set.has(iso(cursor))) {
+  if (!set.has(localDay(cursor))) {
     cursor = new Date(today.getTime() - dayMs);
-    if (!set.has(iso(cursor))) return 0;
+    if (!set.has(localDay(cursor))) return 0;
   }
   let streak = 0;
-  while (set.has(iso(cursor))) {
+  while (set.has(localDay(cursor))) {
     streak++;
     cursor = new Date(cursor.getTime() - dayMs);
   }
@@ -65,10 +76,10 @@ export function useFormationV2Progress() {
     (slug: string) => {
       setState((prev) => {
         const done = prev.done.includes(slug) ? prev.done : [...prev.done, slug];
-        const todayIso = new Date().toISOString().slice(0, 10);
-        const streakDays = prev.streakDays.includes(todayIso)
+        const today = localDay(new Date());
+        const streakDays = prev.streakDays.includes(today)
           ? prev.streakDays
-          : [...prev.streakDays, todayIso];
+          : [...prev.streakDays, today];
         const next = { done, streakDays };
         try {
           window.localStorage.setItem(keyFor(uid), JSON.stringify(next));
