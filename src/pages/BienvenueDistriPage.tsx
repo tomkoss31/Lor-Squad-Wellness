@@ -29,6 +29,7 @@ import {
 } from "../lib/flexCalculations";
 import type { DistributorActionPlanInsert } from "../types/flex";
 import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
 
 // Étape 5 = installation PWA (ajoutée 2026-07) : le nouveau distri doit
@@ -576,6 +577,8 @@ export function BienvenueDistriPage() {
             {step === 5 ? (
               <InstallStep
                 onEnter={() => navigate(`/co-pilote?welcome=distri`, { replace: true })}
+                userId={createdUserId}
+                userName={firstName || "Coach"}
               />
             ) : null}
           </>
@@ -586,7 +589,15 @@ export function BienvenueDistriPage() {
 }
 
 // ─── Étape 5 : installe l'app (PWA) ────────────────────────────────────────
-function InstallStep({ onEnter }: { onEnter: () => void }) {
+function InstallStep({ onEnter, userId, userName }: { onEnter: () => void; userId: string | null; userName: string }) {
+  // Activation des notifications DÈS l'inscription (2026-08-03). Avant, la page
+  // les promettait en texte mais ne les demandait jamais : personne ne les avait.
+  const { supported, subscribed, subscribe, error } = usePushNotifications(
+    userId ?? undefined,
+    userName
+  );
+  const [asking, setAsking] = useState(false);
+
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: 22 }}>
@@ -603,13 +614,92 @@ function InstallStep({ onEnter }: { onEnter: () => void }) {
           Dernière étape
         </span>
         <p className="distri-title" style={{ fontSize: 30, marginTop: 14, marginBottom: 10 }}>
-          Installe l&apos;app 📲
+          Garde l&apos;app sous la main 📲
         </p>
         <p style={{ fontSize: 14.5, color: "var(--dw-muted)", lineHeight: 1.6 }}>
-          Ajoute La Base 360 à ton écran d&apos;accueil : tu l&apos;ouvres en 1 tap (comme
-          WhatsApp) et tu reçois tes notifs — RDV, rappels, plan du jour.
+          Deux minutes maintenant, et tu ne chercheras plus jamais comment revenir.
         </p>
       </div>
+
+      {/* ── L'ADRESSE — la chose la plus importante de tout le parcours ──
+          Le lien d'invitation expire en 7 jours ; l'adresse, jamais. Elle
+          n'était dite NULLE PART : c'est ce qui faisait qu'on perdait les gens
+          dès qu'ils fermaient l'onglet. */}
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 14,
+          background: "color-mix(in srgb, var(--dw-lime) 10%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--dw-lime) 40%, transparent)",
+          marginBottom: 14,
+          textAlign: "center",
+        }}
+      >
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--dw-lime)", margin: 0 }}>
+          Ton adresse, à retenir
+        </p>
+        <p style={{ fontSize: 22, fontWeight: 800, color: "var(--dw-text)", margin: "6px 0 4px", letterSpacing: ".3px" }}>
+          labase360.fr
+        </p>
+        <p style={{ fontSize: 12.5, color: "var(--dw-muted)", margin: 0, lineHeight: 1.55 }}>
+          C&apos;est ici que tu te connectes, toujours. Le lien qu&apos;on t&apos;a envoyé ne
+          servait qu&apos;une fois.
+        </p>
+      </div>
+
+      {/* ── Notifications ── */}
+      {supported ? (
+        <div
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            background: "var(--dw-card-2)",
+            border: "1px solid var(--dw-border)",
+            marginBottom: 14,
+          }}
+        >
+          <p style={{ fontSize: 14.5, fontWeight: 700, color: "var(--dw-text)", margin: "0 0 4px" }}>
+            {subscribed ? "🔔 Notifications activées" : "🔔 Active tes notifications"}
+          </p>
+          <p style={{ fontSize: 12.5, color: "var(--dw-muted)", margin: "0 0 12px", lineHeight: 1.55 }}>
+            {subscribed
+              ? "Tu recevras tes rappels de RDV et ton plan du jour."
+              : "Rappels de RDV, messages de tes clients, plan du jour. C'est ce qui te fera penser à revenir."}
+          </p>
+          {!subscribed ? (
+            <button
+              type="button"
+              onClick={async () => {
+                setAsking(true);
+                try {
+                  await subscribe();
+                } finally {
+                  setAsking(false);
+                }
+              }}
+              disabled={asking}
+              style={{
+                width: "100%",
+                minHeight: 46,
+                borderRadius: 12,
+                border: "1px solid var(--dw-lime)",
+                background: "color-mix(in srgb, var(--dw-lime) 14%, transparent)",
+                color: "var(--dw-lime)",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {asking ? "Un instant…" : "Activer les notifications"}
+            </button>
+          ) : null}
+          {error ? (
+            <p style={{ fontSize: 11.5, color: "var(--dw-muted)", margin: "8px 0 0" }}>
+              Tu pourras réessayer depuis tes Paramètres.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div
         style={{
