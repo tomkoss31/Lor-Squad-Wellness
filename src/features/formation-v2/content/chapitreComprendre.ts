@@ -62,7 +62,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       ideeForce: "Ton job : qu'en 30 jours, la personne soit fière d'elle.",
       source: "boite-a-outils-content.ts:381-568 (EBE) + charte:1564",
       blocks: [
-        { kind: "text", text: "90 % des distri croient que le bilan, c'est **suivre la trame**. Faux : la trame, l'app la fait. Toi, ton vrai job, c'est de faire vivre une **expérience** qui transforme quelqu'un en 60 minutes." },
+        { kind: "text", text: "90 % des distri croient que le bilan, c'est **suivre les étapes une par une**. Faux : les étapes, l'app s'en charge. Toi, ton vrai job, c'est de faire vivre une **expérience** qui transforme quelqu'un en 60 minutes." },
         { kind: "text", text: "Tu ne vends pas des produits. Tu vends une **transformation**. Et tu ne recommandes que ce que tu **consommes toi-même** — sinon tu pitches du vent." },
         { kind: "example", label: "La phrase qui scelle tout (à garder pour la fin)", text: "Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier·e de toi." },
         { kind: "text", text: "Tu la dis en regardant la personne dans les yeux — **et tu te tais**." },
@@ -70,12 +70,12 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       check: {
         question: "Pendant un bilan, c'est quoi ton vrai job ?",
         options: [
-          { label: "Suivre la trame de l'app à la lettre", correct: false },
+          { label: "Suivre les étapes de l'app une par une", correct: false },
           { label: "Faire vivre une expérience qui transforme", correct: true },
           { label: "Présenter le plus de produits possible", correct: false },
         ],
         successNote: "Exact. L'app pilote la technique. Toi tu portes l'humain — c'est ça qui transforme une transaction en engagement.",
-        retryNote: "La trame, l'app la fait toute seule. Ton job à toi, c'est l'expérience humaine : c'est elle qui fait dire oui.",
+        retryNote: "Les étapes, l'app les gère toute seule. Ton job à toi, c'est l'expérience humaine : c'est elle qui fait dire oui.",
       },
     },
     {
@@ -117,7 +117,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
       source: "boite-a-outils-content.ts:816-887 (mémo 5 produits)",
       blocks: [
         { kind: "text", text: "Si tu hésites au moment du bilan, tu perds en crédibilité. Apprends **une phrase par produit** — tu dois pouvoir en pitcher n'importe lequel en 5 secondes." },
-        { kind: "bullet", text: "**🥤 Formula 1** — « Le repas malin du matin : 25 % de protéines, 25 vitamines, moins de 200 kcal. »" },
+        { kind: "bullet", text: "**🥤 Formula 1** — « Le repas malin du matin : 25 g de protéines, 25 vitamines, moins de 200 kcal. »" },
         { kind: "bullet", text: "**💪 PDM (Protein Drink Mix)** — « +15 g de protéines pour tenir rassasié plus longtemps. »" },
         { kind: "bullet", text: "**🌿 Aloé Concentré** — « Mon réveil-corps : 1 verre le matin, ça nettoie. »" },
         { kind: "bullet", text: "**🍵 Thé Thermojetics** — « Le boost de l'aprèm sans le coup de barre du café. »" },
@@ -128,11 +128,11 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
         question: "Le Formula 1, c'est quoi en une phrase ?",
         options: [
           { label: "Un complément réservé aux sportifs", correct: false },
-          { label: "Un repas malin : 25 % de protéines, < 200 kcal", correct: true },
+          { label: "Un repas malin : 25 g de protéines, < 200 kcal", correct: true },
           { label: "Un brûleur de graisse", correct: false },
         ],
         successNote: "Oui. F1 = un repas équilibré et pratique. C'est la base du programme, pour presque tout le monde.",
-        retryNote: "F1 n'est ni un brûleur ni un truc de sportif : c'est un repas complet et malin. 25 % de protéines, moins de 200 kcal.",
+        retryNote: "F1 n'est ni un brûleur ni un truc de sportif : c'est un repas complet et malin. 25 g de protéines, moins de 200 kcal.",
       },
     },
   ],
