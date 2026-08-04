@@ -289,7 +289,7 @@ export function BoutiqueAdminPage() {
         🌿 Ma boutique HL Skin
       </h1>
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif", maxWidth: 560 }}>
-        Ta boutique de cosmétiques coréens, à ton nom. Configure-la, partage ton lien, encaisse sur ton Stripe.
+        Ta boutique de cosmétiques coréens, à ton nom. Configure-la, partage ton lien, encaisse sur ton compte (Square ou Stripe).
       </p>
 
       {/* Stats */}
@@ -375,7 +375,7 @@ export function BoutiqueAdminPage() {
             style={{ ...btnPrimary, background: "transparent", color: "var(--ls-text)", border: "0.5px solid var(--ls-border)" }}
             onClick={() => navigate("/encaissement")}
           >
-            Connecter Stripe →
+            Configurer l’encaissement →
           </button>
         </div>
       </div>

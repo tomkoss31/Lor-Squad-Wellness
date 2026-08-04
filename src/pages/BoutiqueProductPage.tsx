@@ -16,6 +16,7 @@ import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { useCart } from "../components/boutique/useCart";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
 import {
   CONCERN_LABELS,
   FREE_SHIPPING_THRESHOLD,
@@ -192,6 +193,13 @@ export function BoutiqueProductPage() {
               <span className="bk-cartlbl">Panier</span>
               {count > 0 && <span className="bk-count">{count}</span>}
             </button>
+            <BoutiqueMobileMenu
+              coachSlug={coachSlug}
+              shopName={shopName}
+              aiScanUrl={boutique?.ai_scan_url}
+              cartCount={count}
+              onOpenCart={() => setCartOpen(true)}
+            />
           </div>
         </div>
       </header>
@@ -300,7 +308,7 @@ export function BoutiqueProductPage() {
             )}
             <div className="bk-pdp-sec">
               <h4>Réassurance</h4>
-              <p>🔒 Paiement Stripe sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
+              <p>🔒 Paiement 100 % sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
             </div>
           </div>
         </div>

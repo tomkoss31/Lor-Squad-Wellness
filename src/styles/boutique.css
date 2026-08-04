@@ -78,6 +78,35 @@
 .bk-iconbtn:hover{border-color:var(--hair-strong); transform:translateY(-1px)}
 @media (max-width:820px){.bk-nav{display:none}}
 
+/* ── menu mobile (burger + panneau) ─────────────────────────────────────── */
+.bk-burger{display:none; width:40px; height:40px; border:1px solid var(--hair); border-radius:999px;
+  background:var(--raised); cursor:pointer; padding:0; flex-direction:column; align-items:center;
+  justify-content:center; gap:4px; flex-shrink:0}
+.bk-burger span{display:block; width:16px; height:1.6px; border-radius:2px; background:var(--ink)}
+@media (max-width:820px){.bk-burger{display:flex}}
+.bk-mm{position:fixed; inset:0; z-index:80}
+.bk-mm-veil{position:absolute; inset:0; background:rgba(20,18,15,.45); backdrop-filter:blur(3px);
+  animation:bk-mm-fade .2s ease}
+.bk-mm-panel{position:absolute; top:0; right:0; bottom:0; width:min(86vw,340px); background:var(--ground);
+  box-shadow:-18px 0 44px -22px rgba(0,0,0,.5); display:flex; flex-direction:column; padding:18px 18px 22px;
+  overflow-y:auto; animation:bk-mm-slide .26s cubic-bezier(.22,1,.36,1); outline:none}
+@keyframes bk-mm-fade{from{opacity:0}to{opacity:1}}
+@keyframes bk-mm-slide{from{transform:translateX(100%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.bk-mm-veil,.bk-mm-panel{animation:none}}
+.bk-mm-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:14px;
+  border-bottom:1px solid var(--hair)}
+.bk-mm-head .bk-close{width:34px; height:34px; border-radius:999px; border:1px solid var(--hair);
+  background:var(--raised); color:var(--ink); font-size:19px; cursor:pointer; flex-shrink:0}
+.bk-mm-nav{display:flex; flex-direction:column; gap:2px; padding:14px 0; flex:1}
+.bk-mm-group{font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+  font-weight:600; margin:12px 0 6px}
+.bk-mm-group:first-child{margin-top:0}
+.bk-mm-nav a{display:flex; align-items:center; gap:11px; padding:13px 12px; border-radius:12px;
+  font-size:15px; color:var(--ink); transition:background .18s}
+.bk-mm-nav a:active,.bk-mm-nav a:hover{background:var(--sunk)}
+.bk-mm-ai{margin-top:14px; background:var(--jade-wash); color:var(--jade-deep) !important; font-weight:600}
+.bk-mm-cart{width:100%; margin-top:6px}
+
 /* hero */
 .bk-hero{padding:26px 24px 34px}
 .bk-hero-grid{display:grid; grid-template-columns:1.02fr .98fr; gap:38px; align-items:center}
@@ -165,6 +194,15 @@
 .bk-view,.bk-add{border:1px solid var(--jade); color:var(--jade-deep); background:transparent; border-radius:999px;
   padding:8px 14px; font-size:12px; font-weight:600; transition:.2s; white-space:nowrap}
 .bk-view:hover,.bk-add:hover{background:var(--jade); color:#fff}
+/* Mobile : en 2 colonnes la carte fait 165 px — prix (62) + bouton (72) + marges
+   débordaient du cadre. On empile : prix au-dessus, bouton pleine largeur
+   (cible tactile confortable). */
+@media (max-width:560px){
+  .bk-cfoot{flex-direction:column; align-items:stretch; gap:9px}
+  .bk-cfoot .bk-add,.bk-cfoot .bk-view{width:100%; text-align:center; padding:10px 12px; font-size:12.5px}
+  .bk-cbody{padding:14px 13px 15px}
+  .bk-price{font-size:18px}
+}
 
 /* kits / bundles */
 .bk-kits{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}

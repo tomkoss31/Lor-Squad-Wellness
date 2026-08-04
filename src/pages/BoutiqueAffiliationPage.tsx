@@ -16,6 +16,8 @@ import { formatEuro } from "../lib/format";
 import type { BoutiqueInfo } from "../components/boutique/types";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { setMetaDescription } from "../components/boutique/seo";
 
 // Décision Thomas (2026-07-30) : PAS de lien d'inscription externe. Une personne
 // intéressée laisse ses coordonnées → lead dans le CRM du distri + notif push →
@@ -68,14 +70,17 @@ export function BoutiqueAffiliationPage() {
     };
   }, [coachSlug]);
 
-  useEffect(() => {
-    document.title = "Deviens affiliée · Beauté K Skin";
-  }, []);
-
   const [contactOpen, setContactOpen] = useState(false);
 
   const shopName = boutique?.shop_name ?? "Beauté K Skin";
   const firstName = boutique?.first_name ?? null;
+
+  useEffect(() => {
+    document.title = `Deviens affiliée · ${shopName}`;
+    setMetaDescription(
+      `Partage les soins HL Skin autour de toi et sois récompensée (25 % à 50 %). Sans stock, à ton rythme, accompagnée${firstName ? ` par ${firstName}` : ""}. Découvre comment ça marche.`,
+    );
+  }, [shopName, firstName]);
 
   // Illustratif : commission = ton palier de remise appliqué aux achats filleules.
   const monthlyGain = useMemo(() => friends * avgCart * (tierRate / 100), [friends, avgCart, tierRate]);
@@ -111,6 +116,11 @@ export function BoutiqueAffiliationPage() {
             >
               {theme === "dark" ? "☀" : "☾"}
             </button>
+            <BoutiqueMobileMenu
+              coachSlug={coachSlug}
+              shopName={shopName}
+              aiScanUrl={boutique?.ai_scan_url}
+            />
           </div>
         </div>
       </header>
