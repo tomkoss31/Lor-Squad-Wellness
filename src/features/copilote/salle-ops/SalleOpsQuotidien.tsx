@@ -122,7 +122,11 @@ export function SalleOpsQuotidien({
           {lesson ? (
             <div style={{ marginTop: 24 }}>
               <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 4 }}>
-                Étape {lesson.goProStep} · {lesson.goProLabel}
+                {/* `goProStep` est un index (0 = S'équiper) alors que l'en-tête
+                    affiche « Étape N sur 7 » en comptant à partir de 1 : on
+                    lisait « Étape 4 · Relancer » sous « Étape 5 sur 7 ».
+                    Deux numéros pour la même étape (repéré 2026-08-04). */}
+                Étape {lesson.goProStep + 1} · {lesson.goProLabel}
               </div>
               <h2 className="ls-ops-display" style={lessonTitle}>{lesson.title}</h2>
 
