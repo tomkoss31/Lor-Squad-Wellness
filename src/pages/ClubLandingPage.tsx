@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
+import { CountUp } from "./club/CountUp";
 
 // Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
 const WORDMARK = "/brand/breakfast-club/logo-heart.png";
@@ -174,9 +175,36 @@ export function ClubLandingPage() {
           </div>
           <div style={{ background: "var(--dark)", borderRadius: 20, padding: "clamp(26px,3.4vw,40px)", marginTop: 32, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px 28px" }}>
             <span style={{ color: "var(--yellow)", fontSize: 18, letterSpacing: 3 }}>★★★★★</span>
-            <span style={{ fontFamily: "Anton", fontSize: 38, color: "#fff" }}>4,9 / 5</span>
+            <span style={{ fontFamily: "Anton", fontSize: 38, color: "#fff" }}><CountUp end={4.9} decimals={1} /> / 5</span>
             <span style={{ fontSize: 17, color: "var(--on-dark-2)" }}>sur les avis Google de La Base</span>
             <a className="cl-cta" style={{ marginLeft: "auto", minHeight: 52 }} href="https://www.google.com/search?q=La+Base+Verdun" target="_blank" rel="noopener noreferrer">Voir les avis →</a>
+          </div>
+        </div>
+      </div>
+
+      {/* MINI 3 ÉTAPES — le parcours en un coup d'œil, juste avant les tarifs */}
+      <div className="cl-band">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
+            <span className="cl-pill o">Comment ça se passe</span>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>3 étapes, <span className="cl-a-orange">c'est tout.</span></h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(40px,6vw,60px)" }}>
+            {[
+              { n: "01", t: "Tu réserves", d: "Ton body scan de découverte, offert. En ligne, 2 minutes.", top: "cl-top-o" },
+              { n: "02", t: "On fait le point", d: "Mesures, objectif, ton plan — 45 min avec un coach.", top: "cl-top-p" },
+              { n: "03", t: "Tu viens le matin", d: "Ton rituel + ton suivi, chaque matin, à ton rythme.", top: "cl-top-s" },
+            ].map((s) => (
+              <div key={s.n} className={`cl-card ${s.top}`} style={{ padding: "34px 28px 30px" }}>
+                <div className="cl-num">{s.n}</div>
+                <h3 style={{ marginTop: 16, fontSize: 20 }}>{s.t}</h3>
+                <p style={{ marginTop: 10, fontSize: 16, color: "var(--muted3)" }}>{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: "clamp(28px,4vw,40px)", display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
+            <a className="cl-cta" href={R}>Réserver mon body scan</a>
+            <a className="cl-ghost" href="/club/comment-ca-se-passe">Voir le détail</a>
           </div>
         </div>
       </div>
@@ -205,7 +233,7 @@ export function ClubLandingPage() {
             </div>
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
-              <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
+              <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}><CountUp end={80} /> €</div>
               <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>tout compris</b></p>
               <ul className="cl-feats">
                 <li>10 matins <b>complets</b> au club</li>
@@ -219,7 +247,7 @@ export function ClubLandingPage() {
             <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
               <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                <div className="cl-price" style={{ color: "var(--grad-a)" }}>185 €</div>
+                <div className="cl-price" style={{ color: "var(--grad-a)" }}><CountUp end={185} /> €</div>
                 <div className="cl-price" style={{ fontSize: 30, color: "var(--on-dark-3)", textDecoration: "line-through", opacity: .8 }}>210 €</div>
                 <span style={{ fontFamily: "Anton", fontSize: 19, lineHeight: 1, color: "var(--dark)", background: "var(--yellow)", borderRadius: 8, padding: "5px 9px" }}>−12 %</span>
               </div>
