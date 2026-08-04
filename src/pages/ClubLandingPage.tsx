@@ -206,7 +206,7 @@ export function ClubLandingPage() {
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
               <div className="cl-price" style={{ marginTop: 24, color: "var(--orange-h)" }}>80 €</div>
-              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>8 € la visite, tout compris</b></p>
+              <p style={{ margin: "6px 0 0", color: "var(--muted2)" }}>10 visites · <b>tout compris</b></p>
               <ul className="cl-feats">
                 <li>10 matins <b>complets</b> au club</li>
                 <li>Aloé + thé aux plantes + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
@@ -224,7 +224,7 @@ export function ClubLandingPage() {
                 <span style={{ fontFamily: "Anton", fontSize: 19, lineHeight: 1, color: "var(--dark)", background: "var(--yellow)", borderRadius: 8, padding: "5px 9px" }}>−12 %</span>
               </div>
               <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers membres</div>
-              <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>6,17 € la visite</b> — soit 23 % de moins que la carte 10</p>
+              <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>23 % moins cher que la carte 10</b></p>
               <ul className="cl-feats">
                 <li><b>Tout</b> ce qu'il y a dans la carte 10 visites</li>
                 <li><b>3× plus de matins</b> pour ancrer le rituel</li>
