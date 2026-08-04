@@ -20,7 +20,10 @@ export const FORMATION_V2_STYLES = `
 .fv-ltrack { flex:1; height:9px; border-radius:999px; background:var(--ls-surface2); overflow:hidden; }
 .fv-ltrack i { display:block; height:100%; background:var(--ls-lime); border-radius:999px; transition:width .3s ease; }
 
-.fv-lbody { flex:1; overflow-y:auto; padding:12px 18px 8px; }
+/* min-height:0 OBLIGATOIRE : sans lui, un enfant flex garde min-height:auto,
+   refuse de rétrécir sous son contenu → overflow-y:auto ne défile JAMAIS et le
+   bas d'une leçon longue part hors écran (bug remonté par Thomas 2026-08-04). */
+.fv-lbody { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:12px 18px 8px; }
 .fv-kicker { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ls-teal); margin-bottom:8px; }
 .fv-lh1 { font-size:23px; font-weight:800; letter-spacing:-.3px; line-height:1.15; margin:0 0 14px; color:var(--ls-text); }
 
