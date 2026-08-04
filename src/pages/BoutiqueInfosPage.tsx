@@ -13,6 +13,8 @@ import { Link, useParams } from "react-router-dom";
 import "../styles/boutique.css";
 import { getSupabaseClient } from "../services/supabaseClient";
 import type { BoutiqueInfo } from "../components/boutique/types";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import {
   COMPANY_NAME,
   COMPANY_ADDRESS,
@@ -78,6 +80,11 @@ export function BoutiqueInfosPage() {
             <Link className="bk-btn bk-btn-ghost" to={`/boutique/${coachSlug}`} style={{ padding: "9px 16px" }}>
               ← Retour
             </Link>
+            <BoutiqueMobileMenu
+              coachSlug={coachSlug}
+              shopName={shopName}
+              aiScanUrl={boutique?.ai_scan_url}
+            />
           </div>
         </div>
       </header>
@@ -140,7 +147,7 @@ export function BoutiqueInfosPage() {
         <section id="paiement" className="bk-infos-sec">
           <h2>Paiement sécurisé</h2>
           <ul>
-            <li>Paiement 100 % sécurisé (Stripe / Square selon la boutique).</li>
+            <li>Paiement 100 % sécurisé, traité par un prestataire bancaire agréé (Square ou Stripe selon la boutique).</li>
             <li>Cartes acceptées : Visa, Mastercard, CB, Apple Pay, Google Pay.</li>
             <li>Tes données bancaires ne transitent jamais par nos serveurs.</li>
             <li>Les prix sont en euros (€), TTC.</li>
@@ -199,12 +206,19 @@ export function BoutiqueInfosPage() {
           </ul>
         </section>
 
-        <div style={{ margin: "34px 0 60px" }}>
+        <div style={{ margin: "34px 0 20px" }}>
           <Link className="bk-btn bk-btn-primary" to={`/boutique/${coachSlug}`} style={{ textDecoration: "none" }}>
             ← Retour à la boutique
           </Link>
         </div>
       </div>
+
+      <BoutiqueFooter
+        coachSlug={coachSlug}
+        shopName={shopName}
+        distriFirstName={boutique?.first_name}
+        aiScanUrl={boutique?.ai_scan_url}
+      />
     </div>
   );
 }
