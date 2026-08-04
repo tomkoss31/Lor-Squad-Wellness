@@ -138,17 +138,10 @@ const CARDS: HubCard[] = [
     requireAcademyPercent: 100,
     infoTerm: "ebe",
   },
-  {
-    id: "routine-du-jour",
-    emoji: "☀️",
-    title: "Ma routine du jour",
-    description: "Tes 5 actions de discipline du jour. Score X/5, jamais bloquante.",
-    cta: "Ouvrir ma routine",
-    path: "/routine-du-jour",
-    accent: "var(--ls-gold)",
-    section: "quotidien",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
+  // Card « Ma routine du jour » retirée 2026-08-04 (retour Thomas : « pas du
+  // tout utilisée, ça surcharge »). La page /routine-du-jour + sa notif 20h +
+  // la table coach_daily_actions existent ENCORE — hard-delete possible sur
+  // demande explicite (touche un cron + une table = prod).
   // Cartes "Comment marche ma routine" et "Comment marche FLEX" retirées
   // 2026-06-10 (remaniement) : les fiches restent accessibles via le bouton
   // 📖 directement sur /routine-du-jour et /flex — doublon de navigation
@@ -253,7 +246,7 @@ export function DeveloppementHubPage() {
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.65, color: "var(--ls-text-muted)" }}>
           <li><strong>Tu débutes ?</strong> Academy → Formation niveau 1 → Cahier de bord J0.</li>
-          <li><strong>Au quotidien :</strong> Ma routine du jour (5 min) + cahier à jour après chaque prospection.</li>
+          <li><strong>Au quotidien :</strong> ton cahier de bord à jour après chaque prospection.</li>
           <li><strong>Une question sur un outil ?</strong> Le bouton 📖 est sur chaque page.</li>
         </ul>
       </div>

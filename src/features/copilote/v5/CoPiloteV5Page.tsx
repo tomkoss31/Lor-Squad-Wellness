@@ -271,10 +271,13 @@ export function CoPiloteV5Page() {
           {/* Accès direct à la formation (LOT 4, 2026-07-27) : sans ça, un coach
               déjà activé devait passer par le cockpit pour la trouver — soit
               plus loin qu'avant, alors que l'objectif est de la rendre PLUS
-              accessible (8 personnes l'avaient ouverte). */}
+              accessible (8 personnes l'avaient ouverte).
+              2026-08-04 : pointe vers le nouveau parcours Duolingo
+              /formation/apprendre (la porte d'entrée débutant), pas l'ancien
+              catalogue. L'ancienne formation reste en référence via le hub. */}
           <button
             type="button"
-            onClick={() => navigate("/formation")}
+            onClick={() => navigate("/formation/apprendre")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -291,12 +294,12 @@ export function CoPiloteV5Page() {
               color: "var(--ls-text)",
             }}
           >
-            <span aria-hidden="true" style={{ fontSize: 17 }}>📚</span>
+            <span aria-hidden="true" style={{ fontSize: 17 }}>🎓</span>
             <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600 }}>
               Ma formation Herbalife
             </span>
             <span style={{ fontSize: 12, color: "var(--ls-text-muted)", flexShrink: 0 }}>
-              Démarrer · Construire · Dupliquer
+              Apprendre en avançant
             </span>
             <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
           </button>

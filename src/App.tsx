@@ -450,6 +450,13 @@ const FormationPage = lazy(() =>
     default: module.FormationPage
   }))
 );
+// Formation V2 — micro-leçons façon Duolingo (2026-08-04). Vit à côté de
+// l'ancienne le temps de la transition, ne la remplace pas.
+const FormationV2Page = lazy(() =>
+  import("./features/formation-v2/FormationV2Page").then((module) => ({
+    default: module.FormationV2Page
+  }))
+);
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
 // (placeholder en attendant le contenu Notion en Phase 3).
 const FormationModulePage = lazy(() =>
@@ -863,6 +870,7 @@ export default function App() {
                   /formation/admin reste gardé pour l'édition de contenu. */}
               <Route path="plan-marketing" element={<PlanMarketingPage />} />
               <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/apprendre" element={<FormationV2Page />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="formation/admin" element={<FormationAdminPage />} />
