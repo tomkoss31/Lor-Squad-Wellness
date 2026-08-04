@@ -27,6 +27,7 @@ import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import type { TeamMemberEngagement } from "../hooks/useTeamEngagement";
 import { XpPodium } from "../components/team/XpPodium";
+import { FormationV2Tracker } from "../components/team/FormationV2Tracker";
 import { EngagementTable } from "../components/team/EngagementTable";
 import { LearningGrid } from "../components/team/LearningGrid";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
@@ -535,6 +536,10 @@ export function TeamPage() {
 
           {/* Leaderboard Academy classique (déplacé depuis l'onglet Équipe). */}
           <AcademyLeaderboard />
+
+          {/* Évolution de l'équipe dans la NOUVELLE formation (Duolingo) — qui
+              avance, qui ne fait rien (retour Thomas 2026-08-04). */}
+          <FormationV2Tracker />
         </>
       ) : null}
 
