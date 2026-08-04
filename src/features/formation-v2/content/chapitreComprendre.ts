@@ -23,6 +23,7 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
   number: 1,
   theme: "Comprendre",
   title: "Ton métier, en vrai",
+  recap: "Comprendre ton métier & Herbalife",
   lessons: [
     {
       slug: "cest-quoi-herbalife",

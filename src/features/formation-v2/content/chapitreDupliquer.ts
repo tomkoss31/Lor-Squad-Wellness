@@ -18,6 +18,7 @@ export const CHAPITRE_DUPLIQUER: Chapter = {
   number: 5,
   theme: "Dupliquer",
   title: "De vendeur à bâtisseur",
+  recap: "Dupliquer : bâtir une équipe",
   lessons: [
     {
       slug: "visio-a-3",

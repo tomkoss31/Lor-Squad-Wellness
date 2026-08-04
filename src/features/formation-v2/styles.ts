@@ -100,4 +100,32 @@ export const FORMATION_V2_STYLES = `
 .fv-node-active .fv-nl { color:var(--ls-text); font-weight:700; }
 .fv-link { width:3px; height:16px; background:var(--ls-border2); border-radius:2px; }
 .fv-startchip { font-size:10px; font-weight:800; letter-spacing:.05em; color:#141a05; background:var(--ls-lime); padding:3px 10px; border-radius:999px; margin-bottom:2px; }
+
+/* Bandeau « parcours terminé » en tête du chemin, une fois tout ✓. */
+.fv-donebar { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:6px 0 12px; border:0; border-radius:14px; padding:13px 16px; font-weight:800; font-size:14px; cursor:pointer; color:#141a05;
+  background:linear-gradient(90deg, var(--ls-lime), color-mix(in srgb, var(--ls-teal) 65%, var(--ls-lime)));
+  box-shadow:0 4px 14px color-mix(in srgb, var(--ls-lime) 30%, transparent); }
+.fv-donebar:active { transform:scale(.99); }
+
+/* ── écran de fin de parcours (le pont vers le cockpit) ── */
+.fv-done-glow { position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(60% 40% at 50% 20%, color-mix(in srgb, var(--ls-lime) 15%, transparent), transparent 70%),
+             radial-gradient(70% 45% at 50% 58%, color-mix(in srgb, var(--ls-teal) 11%, transparent), transparent 72%); }
+.fv-done { text-align:center; position:relative; z-index:1; }
+.fv-done-medal { font-size:56px; margin:10px 0 2px; filter:drop-shadow(0 8px 22px color-mix(in srgb, var(--ls-lime) 35%, transparent)); }
+.fv-done-h1 { font-family:'Anton',Impact,sans-serif; font-size:32px; letter-spacing:.5px; line-height:1.03; margin:6px 0 6px; color:var(--ls-text); }
+.fv-done-sub { font-size:15px; line-height:1.5; color:color-mix(in srgb, var(--ls-text) 88%, transparent); max-width:300px; margin:0 auto; }
+.fv-done-stats { display:flex; gap:10px; justify-content:center; margin:20px 0 4px; }
+.fv-done-recap { text-align:left; background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:18px; padding:16px 16px 6px; margin:22px 0 4px; }
+.fv-done-recap h2 { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ls-text-muted); margin:0 0 12px; }
+.fv-drow { display:flex; align-items:center; gap:11px; margin-bottom:12px; }
+.fv-dcheck { flex:none; width:26px; height:26px; border-radius:50%; background:var(--ls-teal); color:var(--ls-teal-contrast); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+.fv-dtxt { font-size:14.5px; font-weight:600; color:var(--ls-text); }
+.fv-bridge { text-align:left; margin:22px 0 6px; border-radius:20px; padding:19px 18px; position:relative; overflow:hidden;
+  background:linear-gradient(150deg, color-mix(in srgb, var(--ls-lime) 14%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)));
+  border:1px solid color-mix(in srgb, var(--ls-lime) 34%, transparent); }
+.fv-bridge-t { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ls-lime); margin-bottom:7px; }
+.fv-bridge-h { font-family:'Anton',Impact,sans-serif; font-size:22px; letter-spacing:.4px; margin:0 0 7px; color:var(--ls-text); }
+.fv-bridge-p { font-size:14px; line-height:1.5; color:color-mix(in srgb, var(--ls-text) 90%, transparent); margin:0 0 15px; }
+.fv-done-ghost { display:block; width:100%; text-align:center; background:none; border:0; color:var(--ls-text-muted); font-size:13.5px; font-weight:700; padding:16px 0 6px; cursor:pointer; }
 `;

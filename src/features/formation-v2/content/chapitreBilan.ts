@@ -18,6 +18,7 @@ export const CHAPITRE_BILAN: Chapter = {
   number: 3,
   theme: "Le bilan",
   title: "Faire vivre une EBE",
+  recap: "Mener un bilan qui transforme",
   lessons: [
     {
       slug: "app-fait-le-bilan",

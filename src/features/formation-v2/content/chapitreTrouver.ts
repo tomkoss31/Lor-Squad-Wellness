@@ -16,6 +16,7 @@ export const CHAPITRE_TROUVER: Chapter = {
   number: 2,
   theme: "Trouver",
   title: "Tes premiers contacts",
+  recap: "Trouver tes premiers contacts",
   lessons: [
     {
       slug: "liste-100-frank",

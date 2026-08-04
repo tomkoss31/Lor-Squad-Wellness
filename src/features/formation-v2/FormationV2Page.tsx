@@ -8,8 +8,9 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
-import { FORMATION_V2_CHAPTERS, FORMATION_V2_LESSONS } from "./content";
+import { FORMATION_V2_CHAPTERS, FORMATION_V2_LESSONS, FORMATION_V2_TOTAL } from "./content";
 import { LessonPlayer } from "./LessonPlayer";
+import { FormationV2Done } from "./FormationV2Done";
 import { useFormationV2Progress } from "./useFormationV2Progress";
 import { FORMATION_V2_STYLES } from "./styles";
 import type { Lesson } from "./types";
@@ -17,8 +18,13 @@ import type { Lesson } from "./types";
 type NodeState = "done" | "active" | "lock";
 
 export function FormationV2Page() {
-  const { doneSet, streak, activeSlug, markDone, xp } = useFormationV2Progress();
+  const { doneSet, doneCount, streak, activeSlug, markDone, xp } = useFormationV2Progress();
   const [open, setOpen] = useState<Lesson | null>(null);
+  const [showDone, setShowDone] = useState(false);
+
+  const allDone = doneCount === FORMATION_V2_TOTAL;
+  // La leçon ouverte est-elle la DERNIÈRE non faite ? La valider clôt le parcours.
+  const isFinisher = !!open && !doneSet.has(open.slug) && doneCount === FORMATION_V2_TOTAL - 1;
 
   // État de chaque leçon : faite / active / verrouillée (après l'active).
   const nodeState = useMemo(() => {
@@ -54,6 +60,12 @@ export function FormationV2Page() {
           <span className="fv-xp">✦ {xp}</span>
         </div>
       </div>
+
+      {allDone ? (
+        <button type="button" className="fv-donebar" onClick={() => setShowDone(true)}>
+          🎓 Parcours terminé — voir mon bilan →
+        </button>
+      ) : null}
 
       {FORMATION_V2_CHAPTERS.map((chapter) => {
         const done = chapter.lessons.filter((l) => doneSet.has(l.slug)).length;
@@ -99,7 +111,16 @@ export function FormationV2Page() {
           streak={streak}
           onClose={() => setOpen(null)}
           onDone={markDone}
+          finisher={isFinisher}
+          onFinish={() => {
+            setOpen(null);
+            setShowDone(true);
+          }}
         />
+      ) : null}
+
+      {showDone ? (
+        <FormationV2Done xp={xp} streak={streak} onClose={() => setShowDone(false)} />
       ) : null}
     </div>
   );

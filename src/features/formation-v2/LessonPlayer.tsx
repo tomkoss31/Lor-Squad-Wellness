@@ -56,6 +56,8 @@ export function LessonPlayer({
   streak,
   onClose,
   onDone,
+  finisher = false,
+  onFinish,
 }: {
   lesson: Lesson;
   /** « Chapitre 2 · Trouver », affiché en surtitre. */
@@ -65,6 +67,10 @@ export function LessonPlayer({
   onClose: () => void;
   /** Appelé une fois la leçon validée (persiste la progression + XP). */
   onDone: (slug: string) => void;
+  /** Cette leçon est la DERNIÈRE non faite : la valider termine le parcours. */
+  finisher?: boolean;
+  /** Appelé à la place d'onClose quand `finisher` : ouvre l'écran de fin. */
+  onFinish?: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("card");
   const [picked, setPicked] = useState<number | null>(null);
@@ -176,10 +182,17 @@ export function LessonPlayer({
               <div className="fv-rl">Série</div>
             </div>
           </div>
-          <button type="button" className="fv-cta fv-cta-teal" style={{ maxWidth: 240 }} onClick={onClose}>
-            Continuer le parcours →
+          <button
+            type="button"
+            className="fv-cta fv-cta-teal"
+            style={{ maxWidth: 240 }}
+            onClick={finisher && onFinish ? onFinish : onClose}
+          >
+            {finisher ? "Découvrir mon bilan 🎓" : "Continuer le parcours →"}
           </button>
-          <div className="fv-note">Validé tout de suite. Personne à attendre.</div>
+          <div className="fv-note">
+            {finisher ? "Tu viens de finir le parcours 🎉" : "Validé tout de suite. Personne à attendre."}
+          </div>
         </div>
       ) : null}
 

@@ -74,6 +74,8 @@ export interface Chapter {
   theme: string;
   /** Titre affiché du chapitre. */
   title: string;
+  /** Ligne de récap « ce que tu sais faire » sur l'écran de fin de parcours. */
+  recap: string;
   lessons: Lesson[];
 }
 
