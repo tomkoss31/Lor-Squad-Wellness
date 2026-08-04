@@ -35,10 +35,13 @@ export const FORMATION_V2_STYLES = `
 .fv-accent-coral .fv-force-l { color:var(--ls-coral); }
 .fv-force-t { font-size:17px; font-weight:800; line-height:1.35; color:var(--ls-text); }
 
-.fv-text { font-size:14.5px; line-height:1.62; color:var(--ls-text-muted); margin:0 0 12px; }
-.fv-text b { color:var(--ls-text); }
-.fv-bullet { display:flex; gap:9px; font-size:14px; line-height:1.55; color:var(--ls-text-muted); margin:0 0 8px; }
-.fv-bullet b { color:var(--ls-text); }
+/* Corps de leçon : lisibilité d'abord. --ls-text-muted seul était trop pâle
+   pour un paragraphe entier sur mobile (retour Thomas 2026-08-04) → ~87 % du
+   texte plein, le gras reste à 100 % pour garder le contraste d'emphase. */
+.fv-text { font-size:15px; line-height:1.62; color:color-mix(in srgb, var(--ls-text) 87%, transparent); margin:0 0 12px; }
+.fv-text b { color:var(--ls-text); font-weight:700; }
+.fv-bullet { display:flex; gap:9px; font-size:14.5px; line-height:1.55; color:color-mix(in srgb, var(--ls-text) 87%, transparent); margin:0 0 8px; }
+.fv-bullet b { color:var(--ls-text); font-weight:700; }
 .fv-bullet-dot { color:var(--ls-teal); font-weight:800; }
 .fv-example { background:var(--ls-surface); border-left:3px solid var(--ls-lime); border-radius:0 12px 12px 0; padding:11px 14px; font-size:13.5px; line-height:1.55; color:var(--ls-text); margin-bottom:12px; }
 .fv-example-l { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ls-lime); margin-bottom:4px; }

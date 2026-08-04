@@ -6,6 +6,8 @@
 // (3) il connaît ses 5 produits par cœur.
 //
 // Contenu PIOCHÉ, pas réécrit (consigne Thomas) :
+//   • « c'est quoi Herbalife » (1980, 90+ pays, vente directe) → réponse à
+//     l'objection « pyramidal » déjà validée (boite-a-outils-content.ts:1150-1155)
 //   • « l'app fait le bilan, toi l'expérience » + phrase de fin → EBE 10 étapes
 //     (boite-a-outils-content.ts:381-568)
 //   • charte éthique (consomme ce que tu vends) → tk-business-03 (:1564-1570)
@@ -22,6 +24,34 @@ export const CHAPITRE_COMPRENDRE: Chapter = {
   theme: "Comprendre",
   title: "Ton métier, en vrai",
   lessons: [
+    {
+      slug: "cest-quoi-herbalife",
+      icon: "🌍",
+      title: "C'est quoi Herbalife ?",
+      pathLabel: "C'est quoi Herbalife ?",
+      minutes: 2,
+      accent: "teal",
+      ideeForce: "Une vraie entreprise, de vrais produits, depuis 1980.",
+      source: "boite-a-outils-content.ts:1150-1155 (objection « pyramidal »)",
+      blocks: [
+        { kind: "text", text: "Avant de te lancer, tu dois pouvoir répondre à LA question que tout le monde va te poser : **« C'est quoi Herbalife, c'est sérieux ? »** Voilà les faits, à connaître par cœur." },
+        { kind: "bullet", text: "**Depuis 1980** — fondée par Mark Hughes autour d'une idée simple : rendre une bonne nutrition accessible à tous." },
+        { kind: "bullet", text: "**Plus de 90 pays** — une entreprise mondiale de nutrition, avec des produits réels (nutrition, contrôle du poids, énergie)." },
+        { kind: "bullet", text: "**Tu les consommes toi-même** — c'est ton 21 jours cobaye. Tu ne vends que ce que tu as testé." },
+        { kind: "text", text: "**« C'est pas pyramidal ? »** Non. C'est de la **vente directe** : tu vends de vrais produits à de vrais clients. Et on peut profiter des produits comme simple client·e, sans jamais faire de business." },
+        { kind: "text", text: "Tu ne rejoins pas un « plan ». Tu rejoins une entreprise qui existe depuis plus de 40 ans — et une équipe, **La Base 360**, qui t'accompagne pas à pas." },
+      ],
+      check: {
+        question: "« C'est pas une pyramide ton truc ? » — ta réponse ?",
+        options: [
+          { label: "« Euh… je sais pas trop en fait. »", correct: false },
+          { label: "« Non, c'est de la vente directe : de vrais produits, de vrais clients. »", correct: true },
+          { label: "« Un peu, mais c'est légal donc c'est bon. »", correct: false },
+        ],
+        successNote: "Exact. Vente directe depuis 1980, dans 90+ pays. Tu poses le fait calmement — la transparence désamorce le doute.",
+        retryNote: "La bonne réponse est simple et assumée : vente directe, de vrais produits, de vrais clients. Depuis 1980, dans 90+ pays.",
+      },
+    },
     {
       slug: "ton-vrai-metier",
       icon: "🎯",
