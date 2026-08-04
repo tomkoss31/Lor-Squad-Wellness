@@ -107,8 +107,8 @@ export const CHAPITRE_BILAN: Chapter = {
     {
       slug: "closer-sans-forcer",
       icon: "🤝",
-      title: "Closer sans forcer",
-      pathLabel: "Closer sans forcer",
+      title: "Conclure sans forcer",
+      pathLabel: "Conclure sans forcer",
       minutes: 2,
       accent: "coral",
       ideeForce: "Jamais « tu veux démarrer ? ». Toujours un choix entre 2 oui.",
@@ -116,12 +116,12 @@ export const CHAPITRE_BILAN: Chapter = {
       blocks: [
         { kind: "text", text: "Tu ne présentes pas un catalogue. **Maximum 3 produits** — plus tu en proposes, moins elle achète vraiment. Tu reformules d'abord son objectif, puis tu proposes la transformation." },
         { kind: "example", label: "Reformuler avant de proposer", text: "Si je résume, tu veux [X], [Y], [Z] ? Voilà ce que je te propose : 3 produits, 1 mois, pas plus." },
-        { kind: "text", text: "Puis le closing à **choix limité** — jamais une question fermée oui/non :" },
-        { kind: "example", label: "Ton closing", text: "Tu préfères qu'on attaque par 4 semaines ou 1 mois complet ?" },
+        { kind: "text", text: "Puis tu proposes de conclure par un **choix limité** — jamais une question fermée oui/non :" },
+        { kind: "example", label: "Ta phrase pour conclure", text: "Tu préfères qu'on attaque par 4 semaines ou 1 mois complet ?" },
         { kind: "text", text: "Et là, **tu te tais**. Même si le silence dure 30 secondes. La première personne qui parle, ce n'est pas toi." },
       ],
       check: {
-        question: "Ta phrase de closing, c'est laquelle ?",
+        question: "Ta phrase pour conclure, c'est laquelle ?",
         options: [
           { label: "« Alors, tu veux démarrer ? »", correct: false },
           { label: "« Tu préfères 4 semaines ou 1 mois complet ? »", correct: true },

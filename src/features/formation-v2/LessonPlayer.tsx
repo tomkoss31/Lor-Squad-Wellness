@@ -14,18 +14,19 @@ import { FORMATION_V2_STYLES } from "./styles";
 
 type Phase = "card" | "check" | "reward";
 
-/** Rendu minimal du `**gras**` sans dépendance markdown. */
+/**
+ * Rendu minimal du `**gras**` ET de l'`*italique*` sans dépendance markdown.
+ * (Avant, un `*` isolé s'affichait en clair à l'écran — ex. `*« … »*`.)
+ */
 function RichText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
   return (
     <>
-      {parts.map((p, i) =>
-        p.startsWith("**") && p.endsWith("**") ? (
-          <b key={i}>{p.slice(2, -2)}</b>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
-      )}
+      {parts.map((p, i) => {
+        if (p.startsWith("**") && p.endsWith("**")) return <b key={i}>{p.slice(2, -2)}</b>;
+        if (p.startsWith("*") && p.endsWith("*")) return <i key={i}>{p.slice(1, -1)}</i>;
+        return <span key={i}>{p}</span>;
+      })}
     </>
   );
 }
