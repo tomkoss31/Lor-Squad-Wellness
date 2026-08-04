@@ -22,6 +22,7 @@ import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueBundles } from "../components/boutique/BoutiqueBundles";
 import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
 import { setMetaDescription } from "../components/boutique/seo";
+import { scrollToSection } from "../components/boutique/nav";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -345,8 +346,9 @@ export function BoutiquePage() {
     return { youtube: false, url: u };
   }, [boutique?.hero_video_url]);
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  // scrollIntoView passait le titre sous l'en-tête collant (et restait sans
+  // effet dans certains navigateurs) → helper avec décalage d'en-tête.
+  const scrollTo = (id: string) => scrollToSection(id);
 
   const addToCart = (id: string) => {
     add(id);
