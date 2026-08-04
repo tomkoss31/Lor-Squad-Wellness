@@ -48,7 +48,7 @@ export function AppLayout() {
   const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true, currentUser?.role === "admin");
   // Niveau de visibilité (chantier Simplification 2026-07-27) — filtre les
   // menus, jamais les routes. Cf. src/config/appVisibility.ts.
-  const { can } = useAppLevel();
+  const { can, isLocked, lockReason } = useAppLevel();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
@@ -137,7 +137,19 @@ export function AppLayout() {
   //     est admin ET en essentiel : elle garde « Mon équipe », pas le reste.
   // Un item sans `feature` est toujours visible (vue superviseur passif).
   // Rappel : ça masque le MENU, la route reste ouverte pour tout le monde.
-  const navigation = allNavigation.filter((item) => !item.feature || can(item.feature));
+  //
+  // 2026-08-04 — chantier « l'app d'un débutant » : une entrée bloquée par le
+  // PALIER de démarrage n'est pas retirée, elle reste VISIBLE en grisé avec sa
+  // condition (« quand tu auras fait ton 1er bilan »). Un débutant doit savoir
+  // que ça existe et ce qui l'ouvre — sinon il ne sait pas où il en est.
+  // Une entrée masquée par le NIVEAU (essentiel/complet) disparaît, elle.
+  const navigation = allNavigation
+    .filter((item) => !item.feature || can(item.feature) || isLocked(item.feature))
+    .map((item) => ({
+      ...item,
+      locked: Boolean(item.feature && isLocked(item.feature)),
+      lockWhen: item.feature ? lockReason(item.feature) : "",
+    }));
 
   // Ancrage du CTA « + Nouveau bilan » : le 1er item de la section « Mon
   // espace » s'il existe, sinon le dernier item visible. Jamais un chemin en
@@ -342,6 +354,47 @@ export function AppLayout() {
               const insertNewBilanBefore = item.path === newBilanAnchorPath;
               const showSection = !!item.section && item.section !== navigation[idx - 1]?.section;
               const isOutils = item.path === "/outils";
+
+              // ENTRÉE VERROUILLÉE PAR LE PALIER (2026-08-04) : visible mais
+              // inactive, avec la condition qui l'ouvre. On ne cache pas —
+              // sinon le débutant ne sait pas que ça existe. La route, elle,
+              // reste accessible (règle n°1 de appVisibility).
+              if (item.locked) {
+                return (
+                  <div key={item.path} style={{ display: "contents" }}>
+                    {showSection ? (
+                      <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 12px', marginTop: idx === 0 ? 8 : 16, marginBottom: 6 }}>
+                        {item.section}
+                      </div>
+                    ) : null}
+                    <div
+                      aria-disabled="true"
+                      title={`Bientôt — ${item.lockWhen}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 12px 10px 14px",
+                        marginLeft: -2,
+                        borderLeft: "2px solid transparent",
+                        color: "var(--ls-text-hint)",
+                        fontSize: 13,
+                        fontFamily: "'Inter', system-ui, sans-serif",
+                        cursor: "default",
+                        opacity: 0.72,
+                      }}
+                    >
+                      <span aria-hidden="true" style={{ fontSize: 15, width: 20, textAlign: "center" }}>🔒</span>
+                      <span style={{ minWidth: 0 }}>
+                        {item.label}
+                        <span style={{ display: "block", fontSize: 10.5, lineHeight: 1.35, marginTop: 1 }}>
+                          {item.lockWhen}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
 
               return (
                 <div key={item.path} style={{ display: 'contents' }}>
