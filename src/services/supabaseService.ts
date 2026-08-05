@@ -1938,6 +1938,7 @@ export function promoteMemberToDistributor(payload: {
   sponsorId: string;
   name?: string;
   ficheOwner: "keep" | "sponsor";
+  herbalifeId?: string;
 }) {
   return callPromoteMember<PromoteResult>({ action: "promote", ...payload });
 }

@@ -60,6 +60,7 @@ export function PromoteMemberPanel() {
   const [sponsorId, setSponsorId] = useState(currentUser?.id ?? "");
   const [ficheOwner, setFicheOwner] = useState<"keep" | "sponsor">("keep");
   const [name, setName] = useState("");
+  const [herbalifeId, setHerbalifeId] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [doneName, setDoneName] = useState("");
   const [doneReassigned, setDoneReassigned] = useState(false);
@@ -88,6 +89,7 @@ export function PromoteMemberPanel() {
     setSponsorId(currentUser?.id ?? "");
     setFicheOwner("keep");
     setName("");
+    setHerbalifeId("");
     setDoneName("");
     setDoneReassigned(false);
   }
@@ -142,7 +144,8 @@ export function PromoteMemberPanel() {
         email: email.trim().toLowerCase(),
         sponsorId,
         name: name.trim(),
-        ficheOwner
+        ficheOwner,
+        herbalifeId: herbalifeId.trim() || undefined
       });
       if (res.ok) {
         setDoneName(res.name ?? name.trim());
@@ -325,6 +328,21 @@ export function PromoteMemberPanel() {
               placeholder="Peter M."
               style={field}
             />
+
+            <label style={{ ...label, marginTop: 14 }} htmlFor="promote-hlid">
+              ID Herbalife <span style={{ textTransform: "none", fontWeight: 400 }}>(optionnel)</span>
+            </label>
+            <input
+              id="promote-hlid"
+              value={herbalifeId}
+              onChange={(e) => setHerbalifeId(e.target.value)}
+              placeholder="ex. 12A3456789"
+              style={field}
+            />
+            <p style={{ fontSize: 11.5, color: "var(--ls-text-hint)", margin: "8px 0 0", lineHeight: 1.5 }}>
+              Optionnel — s'il ne l'a pas sous la main, il le complétera lui-même dans
+              Paramètres → Profil.
+            </p>
 
             {errorBox ? <div style={{ marginTop: 12 }}>{errorBox}</div> : null}
 
