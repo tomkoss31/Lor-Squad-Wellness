@@ -361,7 +361,7 @@ export function FollowUpStepV2({
             Posons le prochain{" "}
             <span
               style={{
-                background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-teal) 100%)",
+                background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",

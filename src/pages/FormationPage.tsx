@@ -219,7 +219,7 @@ export function FormationPage() {
               width: 56,
               height: 56,
               borderRadius: 16,
-              background: "linear-gradient(135deg, var(--ls-teal) 0%, var(--ls-teal) 100%)",
+              background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
