@@ -1247,10 +1247,14 @@ function CompactWeightPanel({ label, value }: { label: string; value: string }) 
 const FOLLOW_UP_STYLES = `
 /* La page occupe la hauteur dispo pour que la barre d'action tombe en bas même
    quand l'étape est courte (le bouton est toujours au même endroit). */
-/* Colonne centrée : sans max-width, l'écran s'étirait sur toute la largeur du
-   desktop (« trop zoomé », gros vides entre label et input). 680px = colonne
-   confortable. Mobile/tablette (< 680px) : max-width sans effet → INCHANGÉ. */
-.fu-wrap { padding-bottom: 8px; display:flex; flex-direction:column; gap:14px; min-height: calc(100dvh - 230px); width:100%; max-width:680px; margin-inline:auto; }
+.fu-wrap { padding-bottom: 8px; display:flex; flex-direction:column; gap:14px; min-height: calc(100dvh - 230px); }
+/* DESKTOP UNIQUEMENT (≥1280px = layout desktop avec sidebar) : colonne centrée.
+   Sans ça, l'écran s'étirait sur toute la largeur (« trop zoomé », gros vides
+   label↔input). Scopé en min-width pour NE PAS toucher mobile ni tablette
+   (retour Thomas 2026-08-05) — sous 1280px, rien ne change. */
+@media (min-width: 1280px) {
+  .fu-wrap { max-width: 680px; margin-inline: auto; }
+}
 
 /* ── en-tête + jauge ── */
 .fu-head { padding: 2px 2px 4px; }
