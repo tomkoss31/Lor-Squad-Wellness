@@ -18,6 +18,7 @@ import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
 import { OnboardingReturnPill } from "../../features/copilote/salle-ops/OnboardingReturnPill";
+import { MonSuiviPill } from "./MonSuiviPill";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
@@ -741,6 +742,11 @@ export function AppLayout() {
                 <span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>↪</span>
                 Sortir
               </button>
+            </div>
+
+            {/* Bascule double casquette (2026-08-05) : mon suivi perso si fiche liée */}
+            <div style={{ marginTop: 10 }}>
+              <MonSuiviPill variant="drawer" />
             </div>
 
             {/* V7 sidebar refresh (2026-05-08, passe 2) : theme toggle

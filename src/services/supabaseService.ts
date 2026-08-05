@@ -1874,6 +1874,76 @@ export async function repairSupabaseUserAccess(payload: {
   return result;
 }
 
+// ─── Chantier « Promouvoir en distributeur » (2026-08-05) ───────────────────
+// Réutilise le compte auth d'un membre existant (client PWA / BBC) pour lui
+// ajouter la casquette distributeur, SANS créer de 2e compte. Fusionné dans
+// /api/admin-repair-user (admin only) via action:lookup|promote — pour rester
+// sous le plafond de 12 fonctions serverless du plan Vercel Hobby.
+
+export type PromoteLookupResult = {
+  ok: boolean;
+  error?: string;
+  hasAuth?: boolean;
+  isCoach?: boolean;
+  coachRole?: string | null;
+  suggestedName?: string;
+  fiche?: { clientId: string; name: string | null; currentOwnerId: string | null } | null;
+};
+
+export type PromoteResult = {
+  ok: boolean;
+  error?: string;
+  code?: "no_account" | "already_coach" | "slug_collision";
+  mode?: "promoted";
+  ficheReassigned?: boolean;
+  name?: string;
+};
+
+async function callPromoteMember<T extends { ok: boolean; error?: string }>(
+  body: Record<string, unknown>
+): Promise<T> {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      ok: false,
+      error: "La session admin est introuvable. Reconnecte-toi puis recommence."
+    } as T;
+  }
+
+  try {
+    const response = await fetch("/api/admin-repair-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify(body)
+    });
+    return await readApiResult<T>(response);
+  } catch {
+    return { ok: false, error: "Le serveur n'a pas répondu. Réessaie." } as T;
+  }
+}
+
+export function lookupPromotableMember(email: string) {
+  return callPromoteMember<PromoteLookupResult>({ action: "lookup", email });
+}
+
+export function promoteMemberToDistributor(payload: {
+  email?: string;
+  userId?: string;
+  sponsorId: string;
+  name?: string;
+  ficheOwner: "keep" | "sponsor";
+  herbalifeId?: string;
+}) {
+  return callPromoteMember<PromoteResult>({ action: "promote", ...payload });
+}
+
 export async function updateSupabaseUserStatus(userId: string, active: boolean) {
   const client = await requireSupabase();
   const { error } = await client.from("users").update({ active }).eq("id", userId);
