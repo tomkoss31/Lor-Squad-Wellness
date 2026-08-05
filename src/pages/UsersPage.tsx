@@ -6,6 +6,7 @@ import { PushNotificationSettings } from "../components/settings/PushNotificatio
 import { canSponsorDistributors, getRoleLabel } from "../lib/auth";
 import { InviteDistributorModal } from "../components/users/InviteDistributorModal";
 import { PendingInvitationsList } from "../components/users/PendingInvitationsList";
+import { PromoteMemberPanel } from "../components/users/PromoteMemberPanel";
 import { getPortfolioMetrics } from "../lib/portfolio";
 import type { User, HerbalifeRank } from "../types/domain";
 import { RANK_LABELS, RANK_ORDER } from "../types/domain";
@@ -13,7 +14,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { hiddenFeatures, toAppLevel, type AppLevel } from "../config/appVisibility";
 
-type TabKey = "members" | "new" | "repair";
+type TabKey = "members" | "new" | "repair" | "promote";
 type RoleFilter = "all" | "admin" | "referent" | "distributor";
 
 export function UsersPage() {
@@ -34,6 +35,7 @@ export function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [invitationsKey, setInvitationsKey] = useState(0);
   const canInviteDistri = !!currentUser && canSponsorDistributors(currentUser);
+  const isAdmin = currentUser?.role === "admin";
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [search, setSearch] = useState("");
@@ -239,8 +241,20 @@ export function UsersPage() {
                   </svg>
                 ),
               },
+              {
+                key: "promote",
+                label: "Promouvoir",
+                icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <line x1="12" y1="19" x2="12" y2="5" />
+                    <polyline points="5 12 12 5 19 12" />
+                  </svg>
+                ),
+              },
             ] as const
           ).map(({ key, label, icon }) => {
+            // Onglet Promouvoir : admin only (l'endpoint l'exige de toute façon)
+            if (key === "promote" && !isAdmin) return null;
             const isActive = activeTab === key;
             return (
               <button
@@ -720,6 +734,9 @@ export function UsersPage() {
             </form>
           </div>
         )}
+
+        {/* ONGLET PROMOUVOIR (admin only) */}
+        {activeTab === "promote" && isAdmin && <PromoteMemberPanel />}
       </div>
 
       {/* NOTIFICATIONS COMPACTES */}
