@@ -413,7 +413,7 @@ const liveDotStyle: React.CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: "50%",
-  background: "var(--lb360-emerald, #10B981)",
+  background: "var(--lb360-emerald, #2DD4BF)",
   display: "inline-block",
   boxShadow: "0 0 0 4px color-mix(in srgb, var(--lb360-emerald) 22%, transparent)",
 };
@@ -431,7 +431,7 @@ const greetingStyle: React.CSSProperties = {
 // Greeting accent V7 : gradient G3 (emerald → cyan → violet) au lieu du
 // gold/orange V5 (#2DD4BF → #0F766E) qui jurait avec la nouvelle identite.
 const greetingAccentStyle: React.CSSProperties = {
-  background: "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+  background: "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%))",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   WebkitTextFillColor: "transparent",
