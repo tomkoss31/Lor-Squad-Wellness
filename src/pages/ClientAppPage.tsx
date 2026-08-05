@@ -160,8 +160,11 @@ export function ClientAppPage() {
         start_url: `/client/${token}`,
         scope: '/client/',
         display: 'standalone',
-        background_color: '#FFFFFF',
-        theme_color: '#10B981',
+        // Passe de chaleur (2026-08-05) : l'écran d'installation et la barre
+        // d'état affichaient encore l'ancienne identité (émeraude sur blanc)
+        // alors que l'app s'ouvre en vert profond → rupture à chaque install.
+        background_color: '#162624',
+        theme_color: '#162624',
         orientation: 'portrait',
         icons: [
           { src: '/brand/labase360/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
@@ -184,7 +187,7 @@ export function ClientAppPage() {
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
-      meta.content = '#10B981'
+      meta.content = '#162624'
       document.head.appendChild(meta)
 
       const appleMeta = document.createElement('meta')
@@ -367,10 +370,12 @@ export function ClientAppPage() {
 
 
   if (loading)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#94A3B8' }}>Chargement...</div>
+    // Passe de chaleur : ces 2 écrans sont rendus AVANT l'app — ils affichaient
+    // un gris clair hors charte alors que la PWA s'ouvre en vert profond.
+    return <div style={{ minHeight: '100vh', background: '#162624', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#A4B2AA' }}>Chargement...</div>
 
   if (!data)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
+    return <div style={{ minHeight: '100vh', background: '#162624', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#F2775F' }}>Lien introuvable ou expiré.</div>
 
   // ─── Calculs métriques ─────────────────────────────────────────────────
   const metrics = data.metrics_history ?? []

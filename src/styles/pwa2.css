@@ -14,21 +14,25 @@
  * ========================================================================== */
 
 .pwa2 {
-  /* Thème sombre — défaut */
-  --bg: #0a0c0a;
-  --surface: #14171a;
-  --surface2: #1a1e22;
-  --border: rgba(255, 255, 255, 0.1);
-  --border2: rgba(255, 255, 255, 0.17);
-  --text: #f1efe8;
-  --muted: #9aa0a6;
-  --dim: #6b7280;
+  /* Thème sombre — défaut.
+     Passe de chaleur (2026-08-05, validée Thomas) : les fonds passent du noir
+     au VERT PROFOND du club (#162624 / #1E3330 / #26403B) — même famille que
+     l'app coach et le mode BBC. Le lime reste l'accent, le coral s'adoucit. */
+  --bg: #162624;
+  --surface: #1E3330;
+  --surface2: #26403B;
+  --border: rgba(244, 239, 228, 0.12);
+  --border2: rgba(244, 239, 228, 0.20);
+  --text: #f4efe4;
+  --muted: #a4b2aa;
+  --dim: #7d8c85;
   --lime: #c5f82a;
   --lime-d: #8fbf0f;
   --teal: #2dd4bf;
   --teal-d: #0f766e;
   --violet: #a78bfa;
-  --coral: #fb7185;
+  --coral: #f2775f;
+  --sage: #93a67e;
   --gold: #e5c97d;
   --emerald: #34d399;
   --bronze: #d9a15a;
@@ -41,19 +45,22 @@
 
 /* Thème clair — bascule via `.pwa2-light` (posée par le toggle Profil / header) */
 .pwa2-light {
-  --bg: #f1eee6;
+  /* Clair conçu (pas une inversion) : page crème du club, encre vert-noir,
+     bordures presque invisibles — les ombres douces séparent. */
+  --bg: #faf7f0;
   --surface: #ffffff;
-  --surface2: #f5f2ea;
-  --border: rgba(11, 13, 17, 0.1);
-  --border2: rgba(11, 13, 17, 0.18);
-  --text: #12140f;
-  --muted: #5c6470;
-  --dim: #8a929e;
-  --lime: #5f8c06;
+  --surface2: #f5f1eb;
+  --border: rgba(30, 51, 48, 0.07);
+  --border2: rgba(30, 51, 48, 0.13);
+  --text: #17201c;
+  --muted: #55605a;
+  --dim: #8a938d;
+  --lime: #6d8c0b;
   --lime-d: #4d7304;
-  --teal: #0f766e;
+  --teal: #0d9488;
   --violet: #6d28d9;
-  --coral: #e11d48;
+  --coral: #d9553c;
+  --sage: #5f7154;
   --gold: #a8842a;
   --emerald: #059669;
   --bronze: #b07a34;

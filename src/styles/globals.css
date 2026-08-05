@@ -95,37 +95,47 @@
  * bug pour le theme system.
  * ============================================================================= */
 
+/* ── PASSE DE CHALEUR (2026-08-05, validée Thomas) ────────────────────────────
+   Le fond passe du noir bleuté (#0B0D11) au VERT PROFOND du club
+   (#162624 / #1E3330 / #26403B, relevés sur thebreakfast-club.com) : plus doux
+   à l'œil, et l'app devient visuellement la cousine du site du club.
+   Le coral s'adoucit (#FB7185 rose criard → #F2775F), on gagne le SAGE pour les
+   états calmes. Teal, lime et violet ne bougent pas.
+   ⚠️ On ne change QUE des valeurs : aucune mise en page, aucun composant. */
 :root {
-  --ls-bg: #0B0D11;
-  --ls-surface: #13161C;
-  --ls-surface2: #1A1E27;
-  --ls-border: rgba(255,255,255,0.07);
-  --ls-border2: rgba(255,255,255,0.12);
-  --ls-text: #F0EDE8;
-  --ls-text-muted: #7A8099;
-  --ls-text-hint: #4A5068;
+  --ls-bg: #162624;
+  --ls-surface: #1E3330;
+  --ls-surface2: #26403B;
+  --ls-border: rgba(244,239,228,0.10);
+  --ls-border2: rgba(244,239,228,0.17);
+  --ls-text: #F4EFE4;
+  --ls-text-muted: #9BAAA3;
+  --ls-text-hint: #74847C;
   --ls-gold: #C9A84C;
   --ls-teal: #2DD4BF;
   --ls-lime: #c5f82a;
-  --ls-coral: #FB7185;
+  --ls-coral: #F2775F;
+  --ls-sage: #93A67E;
   --ls-purple: #A78BFA;
   --ls-gold-bg: rgba(201,168,76,0.1);
   --ls-teal-bg: rgba(45,212,191,0.1);
-  --ls-coral-bg: rgba(251,113,133,0.1);
+  --ls-coral-bg: rgba(242,119,95,0.1);
+  --ls-sage-bg: rgba(147,166,126,0.12);
   --ls-purple-bg: rgba(167,139,250,0.1);
-  --ls-input-bg: #1A1E27;
-  --ls-sidebar-bg: #13161C;
-  --ls-icon: #7A8099;
-  --ls-icon-active: #F0EDE8;
+  --ls-input-bg: #26403B;
+  --ls-sidebar-bg: #1E3330;
+  --ls-icon: #9BAAA3;
+  --ls-icon-active: #F4EFE4;
   /* UX Polish global (2026-04-20) : tokens étendus */
   --ls-gold-rgb: 201, 168, 76;
   --ls-teal-rgb: 45, 212, 191;
-  --ls-coral-rgb: 251, 113, 133;
+  --ls-coral-rgb: 242, 119, 95;
+  --ls-sage-rgb: 147, 166, 126;
   --ls-purple-rgb: 167, 139, 250;
   /* Gold reste volontairement sombre/dark-on-gold dans les 2 thèmes — gold clair
-     suffit pour un contraste AA avec un texte #0B0D11 */
-  --ls-gold-contrast: #0B0D11;
-  --ls-teal-contrast: #0B0D11;
+     suffit pour un contraste AA avec un texte foncé */
+  --ls-gold-contrast: #17201C;
+  --ls-teal-contrast: #06241F;
   --ls-radius: 8px;
   --ls-radius-lg: 16px;
   --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
@@ -135,20 +145,22 @@
      Palette de la maquette Claude Design validée (2026-06-29). Isolé du reste de
      l'app (comme --biz-* pour BusinessPage) → ne recolore rien d'autre.
      Polices : Anton (titres CAPS) + JetBrains Mono (labels terminal). */
-  --ls-ops-bg: #0a0c0a;
-  --ls-ops-surface: #141813;
-  --ls-ops-surface2: #101510;
-  --ls-ops-rail: #0c0f0c;
-  --ls-ops-border: #20261e;
-  --ls-ops-border-soft: #1c211b;
-  --ls-ops-border-active: #2a3326;
-  --ls-ops-hair: #23291f;
-  --ls-ops-ink: #f6f6f1;
-  --ls-ops-text2: #c3ccc0;
-  --ls-ops-text3: #aeb8ac;
-  --ls-ops-muted: #8a948a;
-  --ls-ops-faint: #5f6a5d;
-  --ls-ops-disabled: #353d31;
+  /* Passe de chaleur (2026-08-05) : mêmes verts profonds que le reste de l'app,
+     l'accent lime de la maquette validée ne bouge pas. */
+  --ls-ops-bg: #162624;
+  --ls-ops-surface: #1E3330;
+  --ls-ops-surface2: #1A2C29;
+  --ls-ops-rail: #132321;
+  --ls-ops-border: #2A413C;
+  --ls-ops-border-soft: #243935;
+  --ls-ops-border-active: #35514A;
+  --ls-ops-hair: #2A413C;
+  --ls-ops-ink: #F4EFE4;
+  --ls-ops-text2: #C7D2CB;
+  --ls-ops-text3: #B0BDB6;
+  --ls-ops-muted: #8FA097;
+  --ls-ops-faint: #66776F;
+  --ls-ops-disabled: #3A4E48;
   --ls-ops-accent: #c5f82a;
   --ls-ops-accent2: #a6d40a;
   --ls-ops-accent-text: #c5f82a;   /* texte lime — lisible sur fond sombre */
@@ -163,49 +175,59 @@
   --ls-ops-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+/* ── PASSE DE CHALEUR — thème CLAIR (2026-08-05) ──────────────────────────────
+   Le clair n'est plus une inversion du sombre : on reprend le geste du site du
+   club. Page CRÈME (#FAF7F0) au lieu du gris, encre VERT-NOIR (#17201C) au lieu
+   du noir bleuté, bordures presque invisibles — ce sont les OMBRES DOUCES (celles
+   du site) qui séparent, pas des traits gris. Accents assombris pour tenir sur
+   du clair (le lime devient olive, sinon illisible sur blanc). */
 html.theme-light {
-  --ls-bg: #F4F2EE;
+  --ls-bg: #FAF7F0;
   --ls-surface: #FFFFFF;
-  --ls-surface2: #F0EDE8;
-  --ls-border: rgba(0,0,0,0.08);
-  --ls-border2: rgba(0,0,0,0.14);
-  --ls-text: #111827;
-  --ls-text-muted: #6B7280;
-  --ls-text-hint: #9CA3AF;
+  --ls-surface2: #F5F1EB;
+  --ls-border: rgba(30,51,48,0.07);
+  --ls-border2: rgba(30,51,48,0.13);
+  --ls-text: #17201C;
+  --ls-text-muted: #55605A;
+  --ls-text-hint: #8A938D;
   --ls-gold: #B8922A;
   --ls-teal: #0D9488;
-  --ls-lime: #6f9e0a;
-  --ls-coral: #DC2626;
-  --ls-purple: #7C3AED;
+  --ls-lime: #6D8C0B;
+  --ls-coral: #D9553C;
+  --ls-sage: #5F7154;
+  --ls-purple: #6D28D9;
   --ls-gold-bg: rgba(184,146,42,0.1);
   --ls-teal-bg: rgba(13,148,136,0.1);
-  --ls-coral-bg: rgba(220,38,38,0.08);
-  --ls-purple-bg: rgba(124,58,237,0.1);
-  --ls-input-bg: #F0EDE8;
+  --ls-coral-bg: rgba(217,85,60,0.09);
+  --ls-sage-bg: rgba(95,113,84,0.10);
+  --ls-purple-bg: rgba(109,40,217,0.1);
+  --ls-input-bg: #F5F1EB;
   --ls-sidebar-bg: #FFFFFF;
   /* UX Polish global (2026-04-20) : overrides light mode */
   --ls-gold-rgb: 184, 146, 42;
   --ls-teal-rgb: 13, 148, 136;
-  --ls-coral-rgb: 220, 38, 38;
-  --ls-purple-rgb: 124, 58, 237;
+  --ls-coral-rgb: 217, 85, 60;
+  --ls-sage-rgb: 95, 113, 84;
+  --ls-purple-rgb: 109, 40, 217;
   --ls-gold-contrast: #FFFFFF;
   --ls-teal-contrast: #FFFFFF;
-  --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
-  --ls-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
-  --ls-icon: #6B7280;
-  --ls-icon-active: #111827;
+  /* Les ombres du site du club : larges, douces, teintées vert (jamais du noir) */
+  --ls-shadow-sm: 0 8px 20px -16px rgba(30,51,48,0.30);
+  --ls-shadow-md: 0 20px 44px -32px rgba(30,51,48,0.34);
+  --ls-icon: #55605A;
+  --ls-icon-active: #17201C;
 
   /* ── Salle des Opérations — CLAIR (theme-aware). Le fill lime reste vif, mais
      le TEXTE lime fonce (#56770a) pour rester lisible sur fond clair. */
-  --ls-ops-bg: #eef1e8;
+  --ls-ops-bg: #FAF7F0;
   --ls-ops-surface: #ffffff;
-  --ls-ops-surface2: #f6f8f0;
-  --ls-ops-rail: #e7ebdd;
-  --ls-ops-border: #e3e7db;
-  --ls-ops-border-soft: #dde1d4;
+  --ls-ops-surface2: #F5F1EB;
+  --ls-ops-rail: #F0ECE3;
+  --ls-ops-border: rgba(30,51,48,0.07);
+  --ls-ops-border-soft: rgba(30,51,48,0.05);
   --ls-ops-border-active: #9fc62e;
-  --ls-ops-hair: #d3d9c6;
-  --ls-ops-ink: #15180f;
+  --ls-ops-hair: rgba(30,51,48,0.10);
+  --ls-ops-ink: #17201C;
   --ls-ops-text2: #495143;
   --ls-ops-text3: #5b6450;
   --ls-ops-muted: #8a917e;
