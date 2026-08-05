@@ -60,9 +60,9 @@ interface TabDef {
 }
 
 const TABS_FULL: TabDef[] = [
-  { key: "overview", label: "Vue d'ensemble", emoji: "📊", color: "var(--ls-gold)" },
+  { key: "overview", label: "Vue d'ensemble", emoji: "📊", color: "var(--ls-teal)" },
   { key: "clients", label: "Clients", emoji: "👥", color: "var(--ls-teal)" },
-  { key: "pv", label: "PV & Rentabilité", emoji: "💰", color: "var(--ls-gold)", adminOnly: true },
+  { key: "pv", label: "PV & Rentabilité", emoji: "💰", color: "var(--ls-teal)", adminOnly: true },
   { key: "activity", label: "Activité", emoji: "📝", color: "var(--ls-teal)", adminOnly: true },
   { key: "settings", label: "Paramètres distri", emoji: "⚙️", color: "var(--ls-coral)", adminOnly: true },
 ];
@@ -322,7 +322,7 @@ export function DistributorPortfolioPage() {
               padding: "8px 14px",
               background: "rgba(184, 146, 42, 0.14)",
               border: "1px solid rgba(184, 146, 42, 0.4)",
-              color: "#B8922A",
+              color: "#0D9488",
               borderRadius: 8,
               fontSize: 12,
               fontFamily: "DM Sans, sans-serif",
@@ -604,7 +604,7 @@ export function DistributorPortfolioPage() {
                 padding: "8px 14px",
                 background: "rgba(184, 146, 42, 0.14)",
                 border: "1px solid rgba(184, 146, 42, 0.4)",
-                color: "#B8922A",
+                color: "#0D9488",
                 borderRadius: 8,
                 fontSize: 12,
                 fontFamily: "DM Sans, sans-serif",
@@ -811,7 +811,7 @@ function PassiveUpgradeButton({ userId, userName }: { userId: string; userName: 
             padding: "8px 14px",
             borderRadius: 10,
             border: "none",
-            background: "linear-gradient(135deg, var(--ls-teal), var(--ls-gold))",
+            background: "linear-gradient(135deg, var(--ls-teal), var(--ls-teal))",
             color: "#fff",
             fontFamily: "DM Sans, sans-serif",
             fontSize: 12.5,
@@ -850,9 +850,9 @@ function PassiveUpgradeButton({ userId, userName }: { userId: string; userName: 
       style={{
         padding: "8px 14px",
         borderRadius: 10,
-        border: "1px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
-        background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
-        color: "var(--ls-gold)",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+        background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+        color: "var(--ls-teal)",
         fontFamily: "DM Sans, sans-serif",
         fontSize: 12.5,
         fontWeight: 700,

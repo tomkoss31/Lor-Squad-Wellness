@@ -90,7 +90,7 @@ export function ClientVipPitchTab({
             🚀
           </span>
           <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: "var(--ls-text-muted)", lineHeight: 1.45 }}>
-            <strong style={{ color: "var(--ls-gold)" }}>-42% à -50%</strong> — en passant
+            <strong style={{ color: "var(--ls-teal)" }}>-42% à -50%</strong> — en passant
             distributeur. Là, {fname} touche aussi une commission sur les achats de ses filleuls.
             {isAmbassador ? " (Statut Ambassadeur déjà atteint 🏆)" : ""}
           </span>
@@ -150,8 +150,8 @@ export function ClientVipPitchTab({
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 16,
   padding: "18px 18px",
   marginBottom: 16,
@@ -163,7 +163,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: 1.2,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 6,
 };
 
@@ -202,7 +202,7 @@ const tierPct = (active: boolean): React.CSSProperties => ({
   fontFamily: "Syne, sans-serif",
   fontSize: 20,
   fontWeight: 800,
-  color: active ? "var(--ls-teal)" : "var(--ls-gold)",
+  color: active ? "var(--ls-teal)" : "var(--ls-teal)",
   minWidth: 58,
 });
 
@@ -223,8 +223,8 @@ const distriRow: React.CSSProperties = {
   gap: 12,
   padding: "11px 14px",
   borderRadius: 12,
-  background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
-  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
 };
 
 const gainBox: React.CSSProperties = {
@@ -242,8 +242,8 @@ const gainBox: React.CSSProperties = {
 const warnBox: React.CSSProperties = {
   padding: "11px 14px",
   borderRadius: 12,
-  background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
   fontSize: 12.5,
   lineHeight: 1.5,
   color: "var(--ls-text)",
@@ -252,7 +252,7 @@ const warnBox: React.CSSProperties = {
 };
 
 const primaryBtn: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-gold)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-teal)))",
   border: "none",
   color: "#04231a",
   fontFamily: "Syne, sans-serif",

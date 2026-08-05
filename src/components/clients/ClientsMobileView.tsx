@@ -62,7 +62,7 @@ const STATUS_LABELS: Record<LifecycleStatus | "fragile" | "all", string> = {
 
 const STATUS_COLORS: Record<LifecycleStatus | "fragile", { bg: string; fg: string }> = {
   active: { bg: "color-mix(in srgb, var(--ls-teal) 14%, transparent)", fg: "var(--ls-teal)" },
-  paused: { bg: "color-mix(in srgb, var(--ls-gold) 14%, transparent)", fg: "var(--ls-gold)" },
+  paused: { bg: "color-mix(in srgb, var(--ls-teal) 14%, transparent)", fg: "var(--ls-teal)" },
   stopped: { bg: "color-mix(in srgb, var(--ls-coral) 14%, transparent)", fg: "var(--ls-coral)" },
   lost: { bg: "color-mix(in srgb, var(--ls-coral) 14%, transparent)", fg: "var(--ls-coral)" },
   not_started: { bg: "var(--ls-surface2)", fg: "var(--ls-text-muted)" },
@@ -219,10 +219,10 @@ export function ClientsMobileView({
                 type="button"
                 onClick={() => setFiltersOpen(true)}
                 className="lb-mini"
-                style={{ background: "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))", cursor: "pointer", border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))" }}
+                style={{ background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))", cursor: "pointer", border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))" }}
                 aria-label={`Filtré sur ${ownerLabel} — taper pour changer`}
               >
-                <span className="v" style={{ fontSize: 14, color: "var(--ls-gold)" }}>{ownerLabel}</span>
+                <span className="v" style={{ fontSize: 14, color: "var(--ls-teal)" }}>{ownerLabel}</span>
                 <span className="l">responsable</span>
               </button>
             ) : null}

@@ -186,7 +186,7 @@ export function WeeklyBilansChallenge() {
                     fontWeight: 700,
                     fontFamily: "DM Sans, sans-serif",
                     textAlign: "center",
-                    color: r.rank <= 3 ? "#B8922A" : "var(--ls-text-hint)",
+                    color: r.rank <= 3 ? "#0D9488" : "var(--ls-text-hint)",
                   }}
                 >
                   {medal}
@@ -209,7 +209,7 @@ export function WeeklyBilansChallenge() {
                   style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: "#B8922A",
+                    color: "#0D9488",
                     fontFamily: "DM Sans, sans-serif",
                   }}
                 >

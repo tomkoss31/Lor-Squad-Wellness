@@ -46,7 +46,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
             justifyContent: "space-between",
             alignItems: "flex-end",
             paddingBottom: 16,
-            borderBottom: "2px solid #B8922A",
+            borderBottom: "2px solid #0D9488",
             marginBottom: 28,
           }}
         >
@@ -56,7 +56,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
                 fontSize: 11,
                 letterSpacing: 2.5,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
                 marginBottom: 6,
               }}
@@ -210,7 +210,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
                     }}
                   >
                     <span style={{ flex: 1 }}>{p.name}</span>
-                    <span style={{ fontWeight: 700, color: "#B8922A" }}>
+                    <span style={{ fontWeight: 700, color: "#0D9488" }}>
                       {Math.round(p.total_pv).toLocaleString("fr-FR")} PV
                     </span>
                   </li>

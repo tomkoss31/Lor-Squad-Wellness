@@ -268,7 +268,7 @@ export function AdminNewslettersPage() {
           onClick={() => setCreateOpen(true)}
           style={{
             padding: "11px 18px",
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             color: "var(--ls-charcoal)",
             border: "none",
             borderRadius: 10,
@@ -503,7 +503,7 @@ function PillButton({
         padding: "8px 14px",
         borderRadius: 999,
         border: "1px solid var(--ls-border)",
-        background: active ? "var(--ls-gold)" : "var(--ls-surface)",
+        background: active ? "var(--ls-teal)" : "var(--ls-surface)",
         color: active ? "var(--ls-charcoal)" : "var(--ls-text)",
         fontSize: 13,
         fontWeight: 600,
@@ -722,7 +722,7 @@ function ActionButton({
   children: ReactNode;
 }) {
   const stylesByVariant = {
-    primary: { background: "var(--ls-gold)", color: "var(--ls-charcoal)", border: "none" },
+    primary: { background: "var(--ls-teal)", color: "var(--ls-charcoal)", border: "none" },
     danger: { background: "var(--ls-coral)", color: "white", border: "none" },
     ghost: {
       background: "transparent",
@@ -752,7 +752,7 @@ function ActionButton({
 }
 
 const STATUS_BADGES: Record<NewsletterStatus, { label: string; bg: string; fg: string }> = {
-  draft: { label: "BROUILLON", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-gold)" },
+  draft: { label: "BROUILLON", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-teal)" },
   scheduled: { label: "PROGRAMMÉ", bg: "rgba(167,139,250,0.16)", fg: "var(--ls-purple)" },
   sent: { label: "ENVOYÉ", bg: "rgba(45,212,191,0.16)", fg: "var(--ls-teal)" },
   archived: { label: "ARCHIVÉ", bg: "rgba(156,163,175,0.16)", fg: "var(--ls-text-muted)" },
@@ -761,7 +761,7 @@ const STATUS_BADGES: Record<NewsletterStatus, { label: string; bg: string; fg: s
 const AUDIENCE_BADGES: Record<NewsletterAudience, { label: string; bg: string; fg: string }> = {
   all: { label: "TOUS", bg: "rgba(167,139,250,0.16)", fg: "var(--ls-purple)" },
   clients: { label: "CLIENTS", bg: "rgba(45,212,191,0.16)", fg: "var(--ls-teal)" },
-  distri: { label: "DISTRI", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-gold)" },
+  distri: { label: "DISTRI", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-teal)" },
 };
 
 const labelStyle: React.CSSProperties = {
@@ -796,7 +796,7 @@ const btnGhostStyle: React.CSSProperties = {
 };
 const btnPrimaryStyle: React.CSSProperties = {
   padding: "10px 18px",
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   border: "none",
   borderRadius: 10,
   color: "var(--ls-charcoal)",

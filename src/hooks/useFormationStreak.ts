@@ -93,7 +93,7 @@ function computeBadge(count: number): FormationStreakBadge {
       level: "legende",
       emoji: "⭐",
       label: "Légende",
-      color: "var(--ls-gold)",
+      color: "var(--ls-teal)",
       hint: "Tu es une légende. 30+ jours d'affilée.",
       daysToNext: 0,
     };

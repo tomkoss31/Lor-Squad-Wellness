@@ -30,7 +30,7 @@ function getTier(filled: number): TierMeta {
     return {
       emoji: "🌟",
       label: "Cadeau premium débloqué",
-      color: "var(--ls-gold)",
+      color: "var(--ls-teal)",
       hint: "Tu as offert l'expérience à 10 personnes — palier max !",
     };
   }
@@ -67,7 +67,7 @@ const CATEGORIES: Array<{
   { value: "famille", label: "Famille", emoji: "👨‍👩‍👧", color: "var(--ls-coral)" },
   { value: "travail", label: "Travail", emoji: "💼", color: "var(--ls-purple)" },
   { value: "sport", label: "Sport", emoji: "🏋️", color: "var(--ls-teal)" },
-  { value: "ami", label: "Ami·e", emoji: "🤝", color: "var(--ls-gold)" },
+  { value: "ami", label: "Ami·e", emoji: "🤝", color: "var(--ls-teal)" },
   { value: "autre", label: "Autre", emoji: "✨", color: "var(--ls-text-muted)" },
 ];
 
@@ -121,7 +121,7 @@ export function RecommendationStepV2({
           padding: "22px 24px 24px",
           borderRadius: 22,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
           border: `0.5px solid color-mix(in srgb, ${tier.color} 30%, var(--ls-border))`,
           boxShadow: `0 8px 28px -16px color-mix(in srgb, ${tier.color} 35%, transparent)`,
           overflow: "hidden",
@@ -272,7 +272,7 @@ export function RecommendationStepV2({
                 width: `${progress}%`,
                 height: "100%",
                 background:
-                  "linear-gradient(90deg, var(--ls-purple) 0%, var(--ls-teal) 50%, var(--ls-gold) 100%)",
+                  "linear-gradient(90deg, var(--ls-purple) 0%, var(--ls-teal) 50%, var(--ls-teal) 100%)",
                 borderRadius: 999,
                 transition: "width 700ms cubic-bezier(0.4, 0, 0.2, 1)",
                 boxShadow: `0 0 8px color-mix(in srgb, ${tier.color} 50%, transparent)`,
@@ -293,12 +293,12 @@ export function RecommendationStepV2({
                 width: 14,
                 height: 14,
                 borderRadius: "50%",
-                background: m.reached ? "var(--ls-gold)" : "var(--ls-surface)",
+                background: m.reached ? "var(--ls-teal)" : "var(--ls-surface)",
                 border: m.reached
                   ? "2px solid var(--ls-bg)"
                   : "2px solid var(--ls-border)",
                 boxShadow: m.reached
-                  ? "0 0 12px color-mix(in srgb, var(--ls-gold) 70%, transparent)"
+                  ? "0 0 12px color-mix(in srgb, var(--ls-teal) 70%, transparent)"
                   : "none",
                 transition: "all 400ms ease",
               }}
@@ -332,7 +332,7 @@ export function RecommendationStepV2({
           <span
             style={{
               fontWeight: filled >= 10 ? 700 : 500,
-              color: filled >= 10 ? "var(--ls-gold)" : "var(--ls-text-muted)",
+              color: filled >= 10 ? "var(--ls-teal)" : "var(--ls-text-muted)",
               transition: "color 400ms ease",
             }}
           >
@@ -389,7 +389,7 @@ export function RecommendationStepV2({
             type="checkbox"
             checked={recommendationsContacted}
             onChange={(event) => onToggleContacted(event.target.checked)}
-            style={{ width: 20, height: 20, accentColor: "var(--ls-gold)" }}
+            style={{ width: 20, height: 20, accentColor: "var(--ls-teal)" }}
           />
         </label>
 
@@ -455,10 +455,10 @@ export function RecommendationStepV2({
             style={{
               padding: "12px 16px",
               borderRadius: 12,
-              background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+              background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
               fontSize: 12.5,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontFamily: "DM Sans, sans-serif",
               fontWeight: 600,
               textAlign: "center",
@@ -506,7 +506,7 @@ function ProspectCard({
       : null;
   const accentColor =
     milestone === "gold"
-      ? "var(--ls-gold)"
+      ? "var(--ls-teal)"
       : milestone === "teal"
         ? "var(--ls-teal)"
         : filled

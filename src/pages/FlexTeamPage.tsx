@@ -273,7 +273,7 @@ function MemberRow({
     <div
       style={{
         background: "var(--ls-surface)",
-        border: expanded ? "1px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
+        border: expanded ? "1px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
         borderRadius: 14,
         overflow: "hidden",
         transition: "all 0.15s",

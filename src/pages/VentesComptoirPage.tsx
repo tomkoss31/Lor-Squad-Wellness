@@ -161,7 +161,7 @@ export function VentesComptoirPage() {
 
       {/* Totaux du mois */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <StatBox label="Chiffre d'affaires" value={euro(totals.price)} accent="var(--ls-gold)" />
+        <StatBox label="Chiffre d'affaires" value={euro(totals.price)} accent="var(--ls-teal)" />
         <StatBox label="PV du mois" value={pvf(totals.pv)} accent="var(--ls-teal)" />
         <StatBox label="Commandes" value={String(totals.count)} accent="var(--ls-purple)" />
       </div>
@@ -209,7 +209,7 @@ export function VentesComptoirPage() {
                 </div>
                 {/* Totaux + suppr */}
                 <div style={{ flex: "0 0 auto", textAlign: "right" }}>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 16, color: "var(--ls-gold)" }}>{euro(o.totalPrice)}</div>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 16, color: "var(--ls-teal)" }}>{euro(o.totalPrice)}</div>
                   <div style={{ fontSize: 11.5, color: "var(--ls-teal)", fontWeight: 600 }}>{pvf(o.totalPv)} PV</div>
                   <button
                     type="button"

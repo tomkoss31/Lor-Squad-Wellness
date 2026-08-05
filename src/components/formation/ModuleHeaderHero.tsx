@@ -17,7 +17,7 @@ interface Props {
   status?: FormationProgressStatus;
   levelTitle: string;
   levelOrder: 1 | 2 | 3;
-  levelAccent: string; // var(--ls-gold) etc.
+  levelAccent: string; // var(--ls-teal) etc.
 }
 
 export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _levelOrder, levelAccent }: Props) {
@@ -132,9 +132,9 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
         <div
           style={{
             position: "relative",
-            background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
-            borderLeft: "3px solid var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 28%, transparent)",
+            borderLeft: "3px solid var(--ls-teal)",
             borderRadius: 12,
             padding: "clamp(10px, 2.5vw, 14px)",
             display: "flex",
@@ -151,7 +151,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _leve
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 fontWeight: 700,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 marginBottom: 4,
               }}
             >

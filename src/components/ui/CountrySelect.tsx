@@ -209,9 +209,9 @@ function CountryOption({ flag, label, selected, onClick }: OptionProps) {
           border: "none",
           borderRadius: 8,
           background: selected
-            ? "color-mix(in srgb, var(--ls-gold) 14%, transparent)"
+            ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)"
             : "transparent",
-          color: selected ? "var(--ls-gold)" : "var(--ls-text)",
+          color: selected ? "var(--ls-teal)" : "var(--ls-text)",
           fontWeight: selected ? 600 : 500,
           fontSize: 13,
           cursor: "pointer",

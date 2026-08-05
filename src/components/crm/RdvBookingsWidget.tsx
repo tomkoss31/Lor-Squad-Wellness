@@ -153,7 +153,7 @@ export function RdvBookingsWidget() {
                   onClick={() => void setStatus(b.id, "confirmed")}
                   style={{
                     padding: "7px 11px", borderRadius: 9, border: "none",
-                    background: "var(--ls-gold)", color: "var(--ls-bg)",
+                    background: "var(--ls-teal)", color: "var(--ls-bg)",
                     fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
                     fontFamily: "DM Sans, sans-serif",
                   }}

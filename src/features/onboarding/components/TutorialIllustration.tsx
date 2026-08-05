@@ -1,6 +1,6 @@
 // Chantier Academy polish C (2026-04-28).
 // Mini-illustrations SVG inline pour les modales center du tour Academy.
-// Palette La Base 360 : gold #B8922A / teal #1D9E75 / coral #D85A30 /
+// Palette La Base 360 : gold #0D9488 / teal #1D9E75 / coral #D85A30 /
 // purple #7F77DD / cream #FAF6E8.
 //
 // Tailles : 240x140 box, design "premium pictogramme" (pas illustration
@@ -8,7 +8,7 @@
 
 import type { TutorialIllustrationKind } from "../types";
 
-const GOLD = "#B8922A";
+const GOLD = "#0D9488";
 const GOLD_LIGHT = "#2DD4BF";
 const TEAL = "#1D9E75";
 const CORAL = "#D85A30";

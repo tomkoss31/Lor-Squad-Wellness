@@ -72,7 +72,7 @@ export function DemoFicheClient() {
               width: 56,
               height: 56,
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #B8922A, #0F766E)",
+              background: "linear-gradient(135deg, #0D9488, #0F766E)",
               color: "white",
               display: "flex",
               alignItems: "center",
@@ -163,7 +163,7 @@ export function DemoFicheClient() {
             label="Poids"
             value={`${DEMO_CLIENT.weight} kg`}
             delta={DEMO_CLIENT.weightDelta}
-            color="#B8922A"
+            color="#0D9488"
             icon="⚖️"
           />
           <MetricTile
@@ -245,7 +245,7 @@ export function DemoFicheClient() {
                 fontFamily: "Syne, sans-serif",
                 fontSize: 22,
                 fontWeight: 600,
-                color: "#B8922A",
+                color: "#0D9488",
                 margin: 0,
               }}
             >
@@ -286,7 +286,7 @@ export function DemoFicheClient() {
                     fontFamily: "Syne, sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "#B8922A",
+                    color: "#0D9488",
                     margin: 0,
                   }}
                 >
@@ -421,7 +421,7 @@ export function DemoFicheClient() {
             <p
               style={{
                 fontSize: 10,
-                color: "#B8922A",
+                color: "#0D9488",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 margin: 0,

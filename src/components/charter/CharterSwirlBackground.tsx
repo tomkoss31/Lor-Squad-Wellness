@@ -20,7 +20,7 @@ export function CharterSwirlBackground() {
       >
         <defs>
           <linearGradient id="charter-swirl-main" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#B8922A" />
+            <stop offset="0%" stopColor="#0D9488" />
             <stop offset="50%" stopColor="#EFD18A" />
             <stop offset="100%" stopColor="#8B6F1F" />
           </linearGradient>
@@ -53,7 +53,7 @@ export function CharterSwirlBackground() {
       >
         <defs>
           <linearGradient id="charter-swirl-2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#B8922A" />
+            <stop offset="0%" stopColor="#0D9488" />
             <stop offset="100%" stopColor="#EFD18A" />
           </linearGradient>
         </defs>

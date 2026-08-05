@@ -289,13 +289,13 @@ export function FollowUpProtocolCard({ client }: Props) {
                         tone === "teal"
                           ? "color-mix(in srgb, var(--ls-teal) 15%, transparent)"
                           : tone === "gold"
-                            ? "var(--ls-gold)"
+                            ? "var(--ls-teal)"
                             : "var(--ls-surface2)",
                       color:
                         tone === "teal"
                           ? "var(--ls-teal)"
                           : tone === "gold"
-                            ? "var(--ls-gold-contrast, #0B0D11)"
+                            ? "var(--ls-teal-contrast, #0B0D11)"
                             : "var(--ls-text-muted)",
                       border: tone === "default" ? "1px solid var(--ls-border)" : "none",
                     }}
@@ -328,8 +328,8 @@ export function FollowUpProtocolCard({ client }: Props) {
                         borderRadius: 999,
                         fontSize: 11,
                         fontWeight: 600,
-                        background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-                        color: "var(--ls-gold)",
+                        background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+                        color: "var(--ls-teal)",
                         flexShrink: 0,
                         fontFamily: "'DM Sans', sans-serif",
                       }}

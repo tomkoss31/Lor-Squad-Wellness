@@ -64,7 +64,7 @@ interface UseTeamEngagementResult {
 
 export const STATUS_META: Record<TeamMemberStatus, { label: string; color: string; emoji: string }> = {
   active: { label: "Actif", color: "var(--ls-teal)", emoji: "✅" },
-  idle: { label: "Discret", color: "var(--ls-gold)", emoji: "🌤" },
+  idle: { label: "Discret", color: "var(--ls-teal)", emoji: "🌤" },
   stuck: { label: "Bloqué", color: "var(--ls-coral)", emoji: "⚠️" },
   decroche: { label: "Décroché", color: "var(--ls-coral)", emoji: "🔻" },
   never_started: { label: "Pas démarré", color: "var(--ls-text-muted)", emoji: "⚪" },

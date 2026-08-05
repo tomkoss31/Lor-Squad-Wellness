@@ -414,7 +414,7 @@ function WelcomeStage({
           fontSize: 10,
           letterSpacing: 2,
           textTransform: "uppercase",
-          color: "#B8922A",
+          color: "#0D9488",
           fontWeight: 700,
           marginBottom: 4,
         }}
@@ -691,7 +691,7 @@ function FinalStage({
             fontSize: 10,
             letterSpacing: 1.4,
             textTransform: "uppercase",
-            color: "#B8922A",
+            color: "#0D9488",
             fontWeight: 700,
             marginBottom: 8,
           }}
@@ -844,7 +844,7 @@ function MetricStage({
           marginBottom: 12,
         }}
       >
-        <span style={{ fontWeight: 600, color: "#B8922A" }}>
+        <span style={{ fontWeight: 600, color: "#0D9488" }}>
           {stepIndex + 1}/{TOTAL_VISIBLE_STEPS}
         </span>
         <button

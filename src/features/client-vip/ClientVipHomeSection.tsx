@@ -361,7 +361,7 @@ function tierBgGradient(tone: string): string {
     case "silver":
       return "linear-gradient(135deg, #D1D5DB 0%, #9CA3AF 100%)";
     case "gold":
-      return "linear-gradient(135deg, #FFE873 0%, #C9A84C 50%, #B8922A 100%)";
+      return "linear-gradient(135deg, #FFE873 0%, #2DD4BF 50%, #0D9488 100%)";
     case "diamond":
       return "linear-gradient(135deg, #C084FC 0%, #9333EA 50%, #7C3AED 100%)";
     default:

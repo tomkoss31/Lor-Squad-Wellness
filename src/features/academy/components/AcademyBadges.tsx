@@ -92,7 +92,7 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
         <span
           style={{
             fontSize: 11,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 600,
             fontFamily: "DM Sans, sans-serif",
           }}
@@ -122,9 +122,9 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
                 padding: "10px 6px",
                 borderRadius: 10,
                 background: unlocked
-                  ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))"
+                  ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))"
                   : "var(--ls-surface)",
-                border: unlocked ? "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "0.5px solid var(--ls-border)",
+                border: unlocked ? "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)" : "0.5px solid var(--ls-border)",
                 opacity: unlocked ? 1 : 0.45,
                 transition: "opacity 300ms",
               }}
@@ -143,7 +143,7 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 10,
                   fontWeight: unlocked ? 600 : 500,
-                  color: unlocked ? "var(--ls-gold)" : "var(--ls-text-hint)",
+                  color: unlocked ? "var(--ls-teal)" : "var(--ls-text-hint)",
                   textAlign: "center",
                   letterSpacing: "0.02em",
                 }}

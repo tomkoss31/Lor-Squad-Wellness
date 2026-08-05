@@ -24,7 +24,7 @@ import { ToolkitItemPopup } from "../components/formation/ToolkitItemPopup";
 import { useAppContext } from "../context/AppContext";
 
 const CATEGORY_ACCENT: Record<FormationToolkitCategory, string> = {
-  prospection: "var(--ls-gold)",
+  prospection: "var(--ls-teal)",
   bilan: "var(--ls-teal)",
   suivi: "var(--ls-purple)",
   business: "var(--ls-coral)",
@@ -163,11 +163,11 @@ export function FormationToolkitPage() {
           padding: "32px 28px",
           borderRadius: 20,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface2)) 100%)",
-          border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface2)) 100%)",
+          border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           marginBottom: 24,
           overflow: "hidden",
-          boxShadow: "0 12px 40px color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+          boxShadow: "0 12px 40px color-mix(in srgb, var(--ls-teal) 12%, transparent)",
         }}
       >
         <div
@@ -202,7 +202,7 @@ export function FormationToolkitPage() {
             fontSize: 10,
             letterSpacing: 3,
             textTransform: "uppercase",
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 700,
             marginBottom: 8,
             fontFamily: "DM Sans, sans-serif",
@@ -261,7 +261,7 @@ export function FormationToolkitPage() {
               width: "100%",
               padding: "12px 16px 12px 44px",
               borderRadius: 999,
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
               background: "var(--ls-surface)",
               color: "var(--ls-text)",
               fontSize: 14,
@@ -271,11 +271,11 @@ export function FormationToolkitPage() {
               transition: "border-color 0.18s, box-shadow 0.18s",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--ls-gold)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-gold) 18%, transparent)";
+              e.currentTarget.style.borderColor = "var(--ls-teal)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-teal) 18%, transparent)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))";
+              e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -290,7 +290,7 @@ export function FormationToolkitPage() {
               fontSize: 10,
               letterSpacing: 2,
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontWeight: 700,
               marginBottom: 10,
               fontFamily: "DM Sans, sans-serif",
@@ -334,7 +334,7 @@ export function FormationToolkitPage() {
           emoji="⭐"
           count={favorites.size}
           active={activeCategory === "favorites"}
-          accent="var(--ls-gold)"
+          accent="var(--ls-teal)"
           onClick={() => setActiveCategory("favorites")}
         />
         {(["prospection", "bilan", "suivi", "business"] as FormationToolkitCategory[]).map((cat) => {
@@ -694,8 +694,8 @@ function FavoriteBtn({
         height: 32,
         borderRadius: "50%",
         border: "none",
-        background: isFavorite ? "color-mix(in srgb, var(--ls-gold) 15%, transparent)" : "transparent",
-        color: isFavorite ? "var(--ls-gold)" : "var(--ls-text-hint)",
+        background: isFavorite ? "color-mix(in srgb, var(--ls-teal) 15%, transparent)" : "transparent",
+        color: isFavorite ? "var(--ls-teal)" : "var(--ls-text-hint)",
         cursor: "pointer",
         fontSize: 16,
         display: "flex",

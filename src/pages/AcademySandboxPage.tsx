@@ -184,7 +184,7 @@ export function AcademySandboxPage() {
                   borderRadius: 999,
                   background:
                     i <= step
-                      ? "var(--ls-gold)"
+                      ? "var(--ls-teal)"
                       : "color-mix(in srgb, var(--ls-border) 60%, transparent)",
                   transition: "background 280ms ease",
                 }}
@@ -258,8 +258,8 @@ export function AcademySandboxPage() {
                 padding: "12px 22px",
                 background:
                   step === 0 && state.firstName.trim().length < 2
-                    ? "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-surface2))"
-                    : "var(--ls-gold)",
+                    ? "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-surface2))"
+                    : "var(--ls-teal)",
                 border: "none",
                 borderRadius: 10,
                 color: "var(--ls-bg)",
@@ -326,10 +326,10 @@ function Step0Profile({
                   padding: "14px 14px",
                   borderRadius: 12,
                   border: selected
-                    ? "0.5px solid var(--ls-gold)"
+                    ? "0.5px solid var(--ls-teal)"
                     : "0.5px solid var(--ls-border)",
                   background: selected
-                    ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))"
+                    ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))"
                     : "var(--ls-surface2)",
                   textAlign: "left",
                   cursor: "pointer",
@@ -488,7 +488,7 @@ function Step2Program({
                 width: 44,
                 height: 44,
                 borderRadius: 10,
-                background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+                background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -599,7 +599,7 @@ function Step3Done({
           onClick={() => navigate("/academy")}
           style={{
             padding: "12px 22px",
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             border: "none",
             borderRadius: 10,
             color: "var(--ls-bg)",

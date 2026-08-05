@@ -328,7 +328,7 @@ export function AcademyCertificatePage() {
           style={{
             background: "white",
             color: "#5C4A0F",
-            border: "1px solid #B8922A",
+            border: "1px solid #0D9488",
             padding: "12px 18px",
             borderRadius: 12,
             fontSize: 14,
@@ -347,7 +347,7 @@ export function AcademyCertificatePage() {
           style={{
             background: "white",
             color: "#5C4A0F",
-            border: "1px solid #B8922A",
+            border: "1px solid #0D9488",
             padding: "12px 18px",
             borderRadius: 12,
             fontSize: 14,

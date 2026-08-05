@@ -27,7 +27,7 @@ const STATUS_META: Record<
   pending_review_sponsor: {
     label: "En attente",
     emoji: "🟡",
-    color: "var(--ls-gold)",
+    color: "var(--ls-teal)",
     pulse: true,
   },
   pending_review_admin: {
@@ -49,8 +49,8 @@ export function FormationStatusBadge({ status, size = "sm" }: Props) {
       {meta.pulse ? (
         <style>{`
           @keyframes ls-formation-pulse {
-            0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-gold) 35%, transparent); }
-            50%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ls-gold) 20%, transparent); }
+            0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-teal) 35%, transparent); }
+            50%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ls-teal) 20%, transparent); }
           }
           @media (prefers-reduced-motion: reduce) {
             .ls-formation-status-pulse { animation: none !important; }

@@ -80,14 +80,14 @@ export function FollowUpStepV2({
   const promises = isSport
     ? [
         { emoji: "📱", title: "Groupe Telegram Sport", desc: "Tips musculation, prise de masse, récup. Échange en direct avec coachs et autres sportifs.", color: "var(--ls-teal)" },
-        { emoji: "🏋️", title: "Programme musculation perso", desc: "Routines adaptées à ton objectif et ta fréquence. Mises à jour selon ta progression.", color: "var(--ls-gold)" },
+        { emoji: "🏋️", title: "Programme musculation perso", desc: "Routines adaptées à ton objectif et ta fréquence. Mises à jour selon ta progression.", color: "var(--ls-teal)" },
         { emoji: "🥩", title: "Recettes haute protéine", desc: "Ebook + recettes hebdo pour tenir tes apports sans effort, à la maison ou nomade.", color: "var(--ls-purple)" },
         { emoji: "👥", title: "Communauté motivée", desc: "Squad de pratiquants au même niveau d'engagement. Le bon entourage change tout.", color: "var(--ls-coral)" },
         { emoji: "🚀", title: "Suivi 24/7", desc: "Une question ? Un doute sur un exercice ou une recette ? Réponse rapide via Telegram.", color: "var(--ls-teal)" },
       ]
     : [
         { emoji: "📱", title: "Groupe Telegram Communauté", desc: "Tips perte de poids, motivation, retours d'autres clientes. Tu n'es jamais seul·e.", color: "var(--ls-teal)" },
-        { emoji: "📖", title: "Ebook recettes minceur", desc: "Recettes simples, savoureuses, équilibrées. Fini la corvée de \"qu'est-ce que je mange ?\"", color: "var(--ls-gold)" },
+        { emoji: "📖", title: "Ebook recettes minceur", desc: "Recettes simples, savoureuses, équilibrées. Fini la corvée de \"qu'est-ce que je mange ?\"", color: "var(--ls-teal)" },
         { emoji: "💡", title: "Conseils quotidiens", desc: "Un message court chaque jour pour garder le cap : motivation, astuce, rappel routine.", color: "var(--ls-purple)" },
         { emoji: "👥", title: "Communauté bienveillante", desc: "Les bonnes personnes au bon moment. Témoignages, partages, encouragements.", color: "var(--ls-coral)" },
         { emoji: "🚀", title: "Suivi 24/7", desc: "Une fringale, un doute, un coup de mou ? Ton coach répond, et le groupe aussi.", color: "var(--ls-teal)" },
@@ -149,12 +149,12 @@ export function FollowUpStepV2({
               borderRadius: 999,
               background: startsImmediately
                 ? "color-mix(in srgb, var(--ls-teal) 16%, transparent)"
-                : "color-mix(in srgb, var(--ls-gold) 16%, transparent)",
-              border: `0.5px solid color-mix(in srgb, ${startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)"} 40%, transparent)`,
+                : "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+              border: `0.5px solid color-mix(in srgb, ${startsImmediately ? "var(--ls-teal)" : "var(--ls-teal)"} 40%, transparent)`,
               fontSize: 10,
               fontWeight: 700,
               fontFamily: "DM Sans, sans-serif",
-              color: startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)",
+              color: startsImmediately ? "var(--ls-teal)" : "var(--ls-teal)",
               textTransform: "uppercase",
               letterSpacing: 1.2,
             }}
@@ -310,9 +310,9 @@ export function FollowUpStepV2({
           padding: "26px 28px 28px",
           borderRadius: 22,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
-          boxShadow: "0 8px 28px -16px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
+          boxShadow: "0 8px 28px -16px color-mix(in srgb, var(--ls-teal) 35%, transparent)",
           overflow: "hidden",
         }}
       >
@@ -326,7 +326,7 @@ export function FollowUpStepV2({
             width: 200,
             height: 200,
             borderRadius: "50%",
-            background: "color-mix(in srgb, var(--ls-gold) 16%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
             filter: "blur(60px)",
             pointerEvents: "none",
           }}
@@ -341,7 +341,7 @@ export function FollowUpStepV2({
               fontWeight: 700,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               marginBottom: 8,
             }}
           >
@@ -361,7 +361,7 @@ export function FollowUpStepV2({
             Posons le prochain{" "}
             <span
               style={{
-                background: "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+                background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-teal) 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -446,7 +446,7 @@ export function FollowUpStepV2({
                 flex: 1,
                 height: 1,
                 background:
-                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-gold) 30%, transparent) 50%, transparent 100%)",
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-teal) 30%, transparent) 50%, transparent 100%)",
               }}
             />
             <span>✦ Ce qui se passe automatiquement</span>
@@ -455,7 +455,7 @@ export function FollowUpStepV2({
                 flex: 1,
                 height: 1,
                 background:
-                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-gold) 30%, transparent) 50%, transparent 100%)",
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-teal) 30%, transparent) 50%, transparent 100%)",
               }}
             />
           </div>
@@ -478,7 +478,7 @@ export function FollowUpStepV2({
               eyebrow="Côté client"
               title="Invitation envoyée"
               desc={`${firstName} reçoit la date par notification + l'accès à son espace personnel après validation du bilan.`}
-              color="var(--ls-gold)"
+              color="var(--ls-teal)"
             />
           </div>
         </div>
@@ -489,15 +489,15 @@ export function FollowUpStepV2({
               marginTop: 14,
               padding: "10px 14px",
               borderRadius: 12,
-              background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+              background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
               fontSize: 12,
               color: "var(--ls-text)",
               lineHeight: 1.5,
               position: "relative",
             }}
           >
-            <strong style={{ color: "var(--ls-gold)" }}>✦ Suivi libre sélectionné.</strong>{" "}
+            <strong style={{ color: "var(--ls-teal)" }}>✦ Suivi libre sélectionné.</strong>{" "}
             Ce client sera actif mais sans rappel automatique. Tu pourras le rebasculer en suivi planifié depuis sa fiche.
           </div>
         ) : null}

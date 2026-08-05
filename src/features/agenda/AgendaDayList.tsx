@@ -201,8 +201,8 @@ export function AgendaDayList({
                       borderRadius: 999,
                       fontSize: 11,
                       fontWeight: 600,
-                      background: "color-mix(in srgb, var(--ls-gold) 16%, transparent)",
-                      color: "color-mix(in srgb, var(--ls-gold) 75%, var(--ls-text))",
+                      background: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
+                      color: "color-mix(in srgb, var(--ls-teal) 75%, var(--ls-text))",
                     }}
                   >
                     🔕 {ev.silentReason}

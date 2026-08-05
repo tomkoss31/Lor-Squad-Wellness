@@ -392,7 +392,7 @@ function CrmLeadListRow({
                 recordTouch();
                 onCopy(message);
               }}
-              style={actionBtn("var(--ls-gold)")}
+              style={actionBtn("var(--ls-teal)")}
             >
               📋 Copier {messageLabel.toLowerCase()}
             </button>
@@ -449,7 +449,7 @@ function CrmLeadListRow({
                     📱 WhatsApp
                   </a>
                 ) : null}
-                <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-gold)")}>
+                <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-teal)")}>
                   📋 Copier
                 </button>
                 <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>

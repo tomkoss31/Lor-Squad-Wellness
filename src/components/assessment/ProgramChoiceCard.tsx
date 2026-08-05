@@ -25,8 +25,8 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
         width: "100%",
         padding: 12,
         borderRadius: 14,
-        border: active ? "2px solid var(--ls-gold)" : "1.5px solid var(--ls-border)",
-        background: active ? "color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface))" : "var(--ls-surface)",
+        border: active ? "2px solid var(--ls-teal)" : "1.5px solid var(--ls-border)",
+        background: active ? "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface))" : "var(--ls-surface)",
         cursor: "pointer",
         fontFamily: "'DM Sans', sans-serif",
         textAlign: "left",
@@ -34,7 +34,7 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
         position: "relative",
       }}
       onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.borderColor = "var(--ls-gold)";
+        if (!active) e.currentTarget.style.borderColor = "var(--ls-teal)";
       }}
       onMouseLeave={(e) => {
         if (!active) e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -48,8 +48,8 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
             right: 8,
             padding: "3px 8px",
             borderRadius: 999,
-            background: "var(--ls-gold)",
-            color: "var(--ls-gold-contrast, #0B0D11)",
+            background: "var(--ls-teal)",
+            color: "var(--ls-teal-contrast, #0B0D11)",
             fontSize: 9,
             fontWeight: 700,
             letterSpacing: "0.04em",
@@ -84,7 +84,7 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
           fontFamily: "'Syne', sans-serif",
           fontWeight: 800,
           fontSize: 20,
-          color: "var(--ls-gold)",
+          color: "var(--ls-teal)",
           marginBottom: 6,
         }}
       >
@@ -109,8 +109,8 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
             width: 22,
             height: 22,
             borderRadius: 999,
-            background: "var(--ls-gold)",
-            color: "var(--ls-gold-contrast, #0B0D11)",
+            background: "var(--ls-teal)",
+            color: "var(--ls-teal-contrast, #0B0D11)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

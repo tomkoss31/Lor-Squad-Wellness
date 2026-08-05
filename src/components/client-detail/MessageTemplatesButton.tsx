@@ -137,8 +137,8 @@ export function MessageTemplatesButton({
           width: "100%",
           padding: "12px 14px",
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface)), color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)))",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
           borderRadius: 12,
           cursor: "pointer",
           fontFamily: "DM Sans, sans-serif",
@@ -148,7 +148,7 @@ export function MessageTemplatesButton({
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "translateY(-1px)";
           e.currentTarget.style.boxShadow =
-            "0 6px 18px color-mix(in srgb, var(--ls-gold) 22%, transparent)";
+            "0 6px 18px color-mix(in srgb, var(--ls-teal) 22%, transparent)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "translateY(0)";

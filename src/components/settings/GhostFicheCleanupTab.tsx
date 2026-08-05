@@ -153,7 +153,7 @@ export function GhostFicheCleanupTab() {
                       {c.migrated ? (
                         <span style={{ fontSize: 10.5, color: "var(--ls-teal)", background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)", borderRadius: 999, padding: "2px 7px", fontWeight: 600 }}>✓ déjà en Ventes comptoir</span>
                       ) : (
-                        <span style={{ fontSize: 10.5, color: "var(--ls-gold)", background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)", borderRadius: 999, padding: "2px 7px", fontWeight: 600 }}>à basculer ({euro(c.total)})</span>
+                        <span style={{ fontSize: 10.5, color: "var(--ls-teal)", background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)", borderRadius: 999, padding: "2px 7px", fontWeight: 600 }}>à basculer ({euro(c.total)})</span>
                       )}
                     </div>
                     {c.products.length > 0 ? (

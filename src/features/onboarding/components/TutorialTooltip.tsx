@@ -151,12 +151,12 @@ export function TutorialTooltip({
           style={{
             padding: "3px 8px",
             borderRadius: 6,
-            background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-            color: "var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+            color: "var(--ls-teal)",
             fontSize: 10,
             fontWeight: 700,
             letterSpacing: "0.05em",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           }}
         >
           {stepIndex + 1}/{totalSteps}
@@ -262,21 +262,21 @@ export function TutorialTooltip({
               onClick={() => onCrossRef?.(ref.sectionId, ref.stepId)}
               style={{
                 padding: "4px 10px",
-                background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+                background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
                 borderRadius: 999,
                 fontSize: 11,
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 600,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 cursor: "pointer",
                 transition: "background 120ms ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 20%, transparent)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 20%, transparent)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 10%, transparent)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 10%, transparent)";
               }}
             >
               {ref.label} →

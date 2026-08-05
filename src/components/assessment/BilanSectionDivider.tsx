@@ -19,7 +19,7 @@ export type BilanSectionColor = "teal" | "gold" | "coral" | "purple";
 
 const COLOR_MAP: Record<BilanSectionColor, { hex: string; var: string }> = {
   teal:   { hex: "#2DD4BF", var: "var(--ls-teal)" },
-  gold:   { hex: "#2DD4BF", var: "var(--ls-gold)" },
+  gold:   { hex: "#2DD4BF", var: "var(--ls-teal)" },
   coral:  { hex: "#FB7185", var: "var(--ls-coral)" },
   purple: { hex: "#A78BFA", var: "var(--ls-purple)" },
 };

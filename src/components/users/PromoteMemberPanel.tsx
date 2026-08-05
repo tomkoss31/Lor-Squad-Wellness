@@ -390,7 +390,7 @@ export function PromoteMemberPanel() {
       {/* ÉTAPE INVITE (cas B : token-only) */}
       {step === "invite" && (
         <div style={card}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-gold)", marginBottom: 4 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-teal)", marginBottom: 4 }}>
             Pas encore de mot de passe
           </div>
           <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "0 0 12px", lineHeight: 1.5 }}>

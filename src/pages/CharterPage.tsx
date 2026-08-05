@@ -222,7 +222,7 @@ export function CharterPage() {
 
 const btnGold: React.CSSProperties = {
   padding: "8px 14px",
-  background: "linear-gradient(135deg, #B8922A, #8B6F1F)",
+  background: "linear-gradient(135deg, #0D9488, #8B6F1F)",
   color: "#FFF8E0",
   border: "none",
   borderRadius: 8,
@@ -238,7 +238,7 @@ const btnGold: React.CSSProperties = {
 const btnGoldGhost: React.CSSProperties = {
   padding: "8px 14px",
   background: "rgba(184, 146, 42, 0.1)",
-  border: "1px solid #B8922A",
+  border: "1px solid #0D9488",
   color: "#E5C476",
   borderRadius: 8,
   fontFamily: "'Cinzel', serif",

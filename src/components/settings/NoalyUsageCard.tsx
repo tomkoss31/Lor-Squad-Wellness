@@ -193,7 +193,7 @@ export function NoalyUsageCard() {
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div style={{ background: "var(--ls-surface2)", borderRadius: 12, padding: "12px 10px", textAlign: "center" }}>
-      <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 19, color: accent ? "var(--ls-gold)" : "var(--ls-text)", lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 19, color: accent ? "var(--ls-teal)" : "var(--ls-text)", lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ls-text-hint)", marginTop: 5, fontWeight: 600 }}>{label}</div>
     </div>
   );

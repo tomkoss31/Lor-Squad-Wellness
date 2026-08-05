@@ -47,7 +47,7 @@ export const URGENCY_META: Record<DormantUrgency, { label: string; color: string
   },
   medium: {
     label: "Dormant",
-    color: "var(--ls-gold)",
+    color: "var(--ls-teal)",
     emoji: "🟡",
     subText: "90 à 149 jours",
   },

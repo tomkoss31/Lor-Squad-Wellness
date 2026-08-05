@@ -47,7 +47,7 @@ export function DormantClientsWidget() {
             <strong style={{ color: "var(--ls-coral)" }}>{clients.length}</strong>
             {" "}client{clients.length > 1 ? "s" : ""} inactif{clients.length > 1 ? "s" : ""}
             {" = "}
-            <strong style={{ color: "var(--ls-gold)" }}>~{totalPv.toLocaleString("fr-FR")} PV</strong>
+            <strong style={{ color: "var(--ls-teal)" }}>~{totalPv.toLocaleString("fr-FR")} PV</strong>
             {" à reconquérir"}
           </h3>
 

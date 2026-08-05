@@ -27,7 +27,7 @@ export interface MetricRange {
 export interface BodyMetricCardProps {
   label: string;
   icon: ReactNode;
-  /** Couleur d accent (var(--ls-gold), --ls-teal, etc.) */
+  /** Couleur d accent (var(--ls-teal), --ls-teal, etc.) */
   accentColor: string;
   value: number;
   /** Plage indicative pour la barre de progression. Si absent, pas de barre. */

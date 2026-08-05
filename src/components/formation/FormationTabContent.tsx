@@ -71,7 +71,7 @@ export function FormationTabContent() {
             icon="🟡"
             title="À valider"
             subtitle={`${sponsorQueue.length} module${sponsorQueue.length > 1 ? "s" : ""} de ta lignée en attente`}
-            color="var(--ls-gold)"
+            color="var(--ls-teal)"
           />
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {sponsorQueue.map((row) => (

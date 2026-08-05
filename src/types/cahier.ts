@@ -85,7 +85,7 @@ export interface EbeJournalEntry {
 export const LISTE_100_STATUS_META: Record<Liste100Status, { label: string; color: string; emoji: string }> = {
   non_contacte: { label: "Non contacté", color: "var(--ls-text-muted)", emoji: "⚪" },
   contacte: { label: "Contacté", color: "var(--ls-teal)", emoji: "💬" },
-  rdv_cale: { label: "RDV calé", color: "var(--ls-gold)", emoji: "📅" },
+  rdv_cale: { label: "RDV calé", color: "var(--ls-teal)", emoji: "📅" },
   ebe_fait: { label: "EBE fait", color: "var(--ls-purple)", emoji: "📊" },
   client: { label: "Client", color: "var(--ls-teal)", emoji: "✅" },
   refus: { label: "Refus", color: "var(--ls-coral)", emoji: "❌" },
@@ -93,7 +93,7 @@ export const LISTE_100_STATUS_META: Record<Liste100Status, { label: string; colo
 
 export const LISTE_100_TEMP_META: Record<Liste100Temperature, { label: string; color: string; emoji: string }> = {
   chaud: { label: "Chaud", color: "var(--ls-coral)", emoji: "🔥" },
-  tiede: { label: "Tiède", color: "var(--ls-gold)", emoji: "🌤" },
+  tiede: { label: "Tiède", color: "var(--ls-teal)", emoji: "🌤" },
   froid: { label: "Froid", color: "var(--ls-teal)", emoji: "❄️" },
 };
 

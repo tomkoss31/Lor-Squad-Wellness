@@ -61,7 +61,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #E5E7EB", paddingBottom: 18, marginBottom: 28 }}>
           <div>
-            <div style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#B8922A", fontWeight: 700 }}>
+            <div style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700 }}>
               La Base 360 · Rentabilité
             </div>
             <div style={{ fontSize: 26, fontFamily: "Syne, sans-serif", fontWeight: 700, color: "#1A1612", marginTop: 6, letterSpacing: "-0.01em" }}>
@@ -131,7 +131,7 @@ export const RentabilityPdfReport = forwardRef<HTMLDivElement, Props>(
         {/* Split Public/VIP/Projection */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 28 }}>
           <StatBlock label="Clients publics" value={fmtEur(data.margin_public_eur)} sub={`${data.clients_public_count} client${data.clients_public_count > 1 ? "s" : ""} · ${fmtEur(data.revenue_public)} CA`} color="#0D9488" />
-          <StatBlock label="Clients VIP" value={fmtEur(data.margin_vip_eur)} sub={`${data.clients_vip_count} VIP · ${fmtEur(data.revenue_vip)} CA`} color="#B8922A" />
+          <StatBlock label="Clients VIP" value={fmtEur(data.margin_vip_eur)} sub={`${data.clients_vip_count} VIP · ${fmtEur(data.revenue_vip)} CA`} color="#0D9488" />
           <StatBlock label="Projection fin de mois" value={fmtEur(data.projection_eur)} sub={`Jour ${data.days_elapsed} / ${data.days_in_month}`} color="#5B21B6" />
         </div>
 

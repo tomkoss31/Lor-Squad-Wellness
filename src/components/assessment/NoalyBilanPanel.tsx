@@ -105,9 +105,9 @@ export function NoalyBilanPanel({ summary, disabled }: Props) {
     <section
       style={{
         borderRadius: 16,
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
         background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+          "linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
         padding: 16,
       }}
     >
@@ -118,7 +118,7 @@ export function NoalyBilanPanel({ summary, disabled }: Props) {
           style={{
             fontSize: 20,
             lineHeight: 1,
-            filter: "drop-shadow(0 0 6px color-mix(in srgb, var(--ls-gold) 50%, transparent))",
+            filter: "drop-shadow(0 0 6px color-mix(in srgb, var(--ls-teal) 50%, transparent))",
           }}
         >
           ✨
@@ -160,7 +160,7 @@ export function NoalyBilanPanel({ summary, disabled }: Props) {
             fontSize: 14,
             color: "#1a1407",
             background:
-              "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
+              "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)) 100%)",
           }}
         >
           {loading
@@ -222,7 +222,7 @@ export function NoalyBilanPanel({ summary, disabled }: Props) {
 
           {/* Pitch à dire */}
           {analysis.pitch && (
-            <Block label="À dire au client" emoji="🎤" color="var(--ls-gold)">
+            <Block label="À dire au client" emoji="🎤" color="var(--ls-teal)">
               <p style={{ ...pStyle, whiteSpace: "pre-wrap", fontStyle: "italic" }}>
                 {analysis.pitch}
               </p>
@@ -233,8 +233,8 @@ export function NoalyBilanPanel({ summary, disabled }: Props) {
                   marginTop: 8,
                   padding: "6px 12px",
                   borderRadius: 9,
-                  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
-                  background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+                  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
+                  background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
                   color: "var(--ls-text)",
                   fontSize: 12.5,
                   fontWeight: 600,

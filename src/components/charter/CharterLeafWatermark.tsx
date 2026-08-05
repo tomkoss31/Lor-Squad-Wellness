@@ -18,7 +18,7 @@ export function CharterLeafWatermark() {
     >
       <defs>
         <linearGradient id="charter-leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#B8922A" />
+          <stop offset="0%" stopColor="#0D9488" />
           <stop offset="100%" stopColor="#EFD18A" />
         </linearGradient>
       </defs>

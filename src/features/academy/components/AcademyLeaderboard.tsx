@@ -44,9 +44,9 @@ function statusLabel(row: ReturnType<typeof useAcademyLeaderboard>["rows"][numbe
   if (row.startedAt) {
     return {
       label: `${row.percentComplete}%`,
-      color: "var(--ls-gold)",
-      bg: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-      border: "color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+      color: "var(--ls-teal)",
+      bg: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+      border: "color-mix(in srgb, var(--ls-teal) 35%, transparent)",
     };
   }
   return {
@@ -176,7 +176,7 @@ export function AcademyLeaderboard() {
         position: "relative",
         overflow: "hidden",
         background: "var(--ls-surface)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
         borderRadius: 20,
         padding: 18,
         boxShadow: "0 1px 0 0 rgba(45,212,191,0.10), 0 8px 24px -12px rgba(0,0,0,0.10)",
@@ -197,7 +197,7 @@ export function AcademyLeaderboard() {
           <div
             style={{
               fontSize: 10,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               textTransform: "uppercase",
               letterSpacing: 1.6,
               fontWeight: 700,
@@ -207,7 +207,7 @@ export function AcademyLeaderboard() {
               gap: 6,
             }}
           >
-            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 8px rgba(45,212,191,0.50)" }} />
+            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 999, background: "var(--ls-teal)", boxShadow: "0 0 8px rgba(45,212,191,0.50)" }} />
             🏆 Leaderboard Academy
           </div>
           <h3
@@ -240,14 +240,14 @@ export function AcademyLeaderboard() {
           </span>
           <span
             style={{
-              background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-              color: "var(--ls-gold)",
+              background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+              color: "var(--ls-teal)",
               padding: "4px 10px",
               borderRadius: 999,
               fontSize: 11,
               fontWeight: 700,
               fontFamily: "DM Sans, sans-serif",
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
             }}
           >
             {totalStarted}/{totalActive} démarrés
@@ -305,13 +305,13 @@ export function AcademyLeaderboard() {
                     gap: 12,
                     padding: "10px 12px",
                     background: isCurrentUser
-                      ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))"
+                      ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))"
                       : "var(--ls-surface2)",
                     borderRadius: 12,
                     border: isCurrentUser
-                      ? "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)"
+                      ? "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)"
                       : "0.5px solid var(--ls-border)",
-                    borderLeft: isCurrentUser ? "3px solid var(--ls-gold)" : undefined,
+                    borderLeft: isCurrentUser ? "3px solid var(--ls-teal)" : undefined,
                     transition: "transform 0.15s ease, box-shadow 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
@@ -348,15 +348,15 @@ export function AcademyLeaderboard() {
                       borderRadius: 999,
                       background: row.completedAt
                         ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
-                        : "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+                        : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: 11,
                       fontFamily: "Syne, sans-serif",
                       fontWeight: 800,
-                      color: row.completedAt ? "#FFFFFF" : "var(--ls-gold)",
-                      border: row.completedAt ? "none" : "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                      color: row.completedAt ? "#FFFFFF" : "var(--ls-teal)",
+                      border: row.completedAt ? "none" : "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
                       letterSpacing: "-0.02em",
                     }}
                   >
@@ -385,7 +385,7 @@ export function AcademyLeaderboard() {
                             fontWeight: 800,
                             padding: "1px 6px",
                             borderRadius: 999,
-                            background: "var(--ls-gold)",
+                            background: "var(--ls-teal)",
                             color: "#FFFFFF",
                             letterSpacing: 0.5,
                             verticalAlign: "middle",

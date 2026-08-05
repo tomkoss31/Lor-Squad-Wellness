@@ -290,7 +290,7 @@ export function useFormationProgress(): UseFormationProgressResult {
   // premier non-locked et non-complete, et dedans le 1er module non valide.
   const nextStep = useMemo<FormationNextStep | null>(() => {
     const accentMap: Record<FormationLevelId, string> = {
-      demarrer: "var(--ls-gold)",
+      demarrer: "var(--ls-teal)",
       construire: "var(--ls-teal)",
       dupliquer: "var(--ls-purple)",
     };

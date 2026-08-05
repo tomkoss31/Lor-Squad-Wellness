@@ -40,7 +40,7 @@ export interface AssessmentSectionV2Props {
 }
 
 const ACCENT_COLORS: Record<SectionAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
   coral: "var(--ls-coral)",

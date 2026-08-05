@@ -105,7 +105,7 @@ export interface CrmLead {
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
   new: { label: "Nouveaux", emoji: "🆕", color: "var(--ls-teal)" },
-  contacted: { label: "Contactés", emoji: "💬", color: "var(--ls-gold)" },
+  contacted: { label: "Contactés", emoji: "💬", color: "var(--ls-teal)" },
   qualified: { label: "Qualifiés / RDV", emoji: "📅", color: "var(--ls-purple)" },
   converted: { label: "Convertis", emoji: "✅", color: "var(--ls-teal)" },
   lost: { label: "Perdus", emoji: "🌙", color: "var(--ls-text-muted)" },

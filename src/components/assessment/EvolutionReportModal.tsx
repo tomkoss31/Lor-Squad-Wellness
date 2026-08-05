@@ -89,7 +89,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
           className="ls-erm-panel"
           style={{
             background: 'var(--ls-surface)',
-            border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))',
+            border: '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))',
             borderRadius: 22,
             width: '100%',
             maxWidth: 440,
@@ -204,7 +204,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
             {/* Toggle App/Rapport — chips premium */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
               {([
-                { key: 'app', label: '📱 App client', subtitle: 'Installable PWA', color: 'var(--ls-gold)' },
+                { key: 'app', label: '📱 App client', subtitle: 'Installable PWA', color: 'var(--ls-teal)' },
                 { key: 'report', label: '📄 Rapport simple', subtitle: 'Lien web', color: 'var(--ls-purple)' },
               ] as const).map((opt) => {
                 const isActive = mode === opt.key
@@ -248,11 +248,11 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
               style={{
                 background:
                   mode === 'app'
-                    ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)'
+                    ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)'
                     : 'linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
                 border:
                   mode === 'app'
-                    ? '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)'
+                    ? '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)'
                     : '0.5px solid color-mix(in srgb, var(--ls-purple) 30%, transparent)',
                 borderRadius: 14,
                 padding: 14,
