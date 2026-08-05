@@ -54,9 +54,9 @@
        differencie La Base 360 d un dashboard SaaS generique
      - --lb360-mono          : data tabulaire, horloges, valeurs precises
      - --lb360-body          : UI courante (Inter) */
-  --lb360-display:        "Sora", system-ui, -apple-system, sans-serif;
-  --lb360-display-serif:  "Fraunces", "Cormorant Garamond", Georgia, serif;
-  --lb360-body:           "Inter", system-ui, -apple-system, sans-serif;
+  --lb360-display:        "Syne", system-ui, -apple-system, sans-serif;
+  --lb360-display-serif:  "Syne", system-ui, sans-serif;
+  --lb360-body:           "DM Sans", system-ui, -apple-system, sans-serif;
   --lb360-mono:           "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 

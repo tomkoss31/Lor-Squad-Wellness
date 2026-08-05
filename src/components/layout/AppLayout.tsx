@@ -292,7 +292,7 @@ export function AppLayout() {
               />
               <div style={{ minWidth: 0, overflow: 'visible' }}>
                 <div style={{
-                  fontFamily: 'Sora, sans-serif',
+                  fontFamily: 'Syne, sans-serif',
                   fontWeight: 700,
                   fontSize: 14,
                   color: '#F0EDE8',
@@ -305,7 +305,7 @@ export function AppLayout() {
                   <span style={{
                     fontStyle: 'italic',
                     fontWeight: 400,
-                    background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                    background: 'linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -463,7 +463,7 @@ export function AppLayout() {
                           borderLeft: '2px solid transparent',
                           border: 'none',
                           background: onOutilsRoute
-                            ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                            ? 'linear-gradient(135deg, color-mix(in srgb, #2DD4BF 14%, transparent) 0%, color-mix(in srgb, #2DD4BF 12%, transparent) 50%, color-mix(in srgb, #c5f82a 14%, transparent) 100%)'
                             : 'transparent',
                           color: onOutilsRoute ? 'var(--ls-text)' : 'var(--ls-text-muted)',
                           fontWeight: onOutilsRoute ? 600 : 500,
@@ -477,7 +477,7 @@ export function AppLayout() {
                         onMouseLeave={e => { if (!onOutilsRoute) e.currentTarget.style.background = 'transparent' }}
                       >
                         {onOutilsRoute ? (
-                          <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 6, bottom: 6, width: 3, borderRadius: 999, background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)', boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)' }} />
+                          <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 6, bottom: 6, width: 3, borderRadius: 999, background: 'linear-gradient(180deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)', boxShadow: '0 0 12px color-mix(in srgb, #2DD4BF 50%, transparent)' }} />
                         ) : null}
                         <span aria-hidden="true" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, fontSize: 16, lineHeight: 1, opacity: onOutilsRoute ? 1 : 0.78 }}>
                           {item.emoji}
@@ -494,7 +494,7 @@ export function AppLayout() {
                               <div key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', fontSize: 12.5, color: 'var(--ls-text-hint)', fontFamily: "'Inter', system-ui, sans-serif", cursor: 'default' }}>
                                 <span aria-hidden="true" style={{ fontSize: 14, opacity: 0.6 }}>{sub.emoji}</span>
                                 <span style={{ flex: 1 }}>{sub.label}</span>
-                                <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))', background: 'color-mix(in srgb, #8B5CF6 14%, transparent)', padding: '2px 6px', borderRadius: 20 }}>Bientôt</span>
+                                <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'color-mix(in srgb, #c5f82a 80%, var(--ls-text))', background: 'color-mix(in srgb, #c5f82a 14%, transparent)', padding: '2px 6px', borderRadius: 20 }}>Bientôt</span>
                               </div>
                             ) : (
                               <NavLink
@@ -542,7 +542,7 @@ export function AppLayout() {
                       marginLeft: -2,
                       borderLeft: '2px solid transparent',
                       background: isActive
-                        ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                        ? 'linear-gradient(135deg, color-mix(in srgb, #2DD4BF 14%, transparent) 0%, color-mix(in srgb, #2DD4BF 12%, transparent) 50%, color-mix(in srgb, #c5f82a 14%, transparent) 100%)'
                         : 'transparent',
                       color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
                       fontWeight: isActive ? 600 : 500,
@@ -569,8 +569,8 @@ export function AppLayout() {
                           bottom: 6,
                           width: 3,
                           borderRadius: 999,
-                          background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
-                          boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)',
+                          background: 'linear-gradient(180deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
+                          boxShadow: '0 0 12px color-mix(in srgb, #2DD4BF 50%, transparent)',
                         }}
                       />
                     ) : null}
@@ -599,9 +599,9 @@ export function AppLayout() {
                         fontSize: 9,
                         padding: '2px 7px',
                         borderRadius: 999,
-                        background: 'color-mix(in srgb, #8B5CF6 16%, transparent)',
-                        color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))',
-                        border: '1px solid color-mix(in srgb, #8B5CF6 30%, transparent)',
+                        background: 'color-mix(in srgb, #c5f82a 16%, transparent)',
+                        color: 'color-mix(in srgb, #c5f82a 80%, var(--ls-text))',
+                        border: '1px solid color-mix(in srgb, #c5f82a 30%, transparent)',
                         fontWeight: 700,
                         marginLeft: 'auto',
                         letterSpacing: '0.08em',
@@ -617,13 +617,13 @@ export function AppLayout() {
                         borderRadius: 999,
                         background: item.urgent
                           ? 'color-mix(in srgb, #D4537E 18%, transparent)'
-                          : 'color-mix(in srgb, #06B6D4 16%, transparent)',
+                          : 'color-mix(in srgb, #2DD4BF 16%, transparent)',
                         color: item.urgent
                           ? 'color-mix(in srgb, #D4537E 80%, var(--ls-text))'
-                          : 'color-mix(in srgb, #06B6D4 80%, var(--ls-text))',
+                          : 'color-mix(in srgb, #2DD4BF 80%, var(--ls-text))',
                         border: item.urgent
                           ? '1px solid color-mix(in srgb, #D4537E 35%, transparent)'
-                          : '1px solid color-mix(in srgb, #06B6D4 30%, transparent)',
+                          : '1px solid color-mix(in srgb, #2DD4BF 30%, transparent)',
                         fontWeight: 700,
                         marginLeft: 'auto',
                         fontFamily: "'JetBrains Mono', monospace",
@@ -672,7 +672,7 @@ export function AppLayout() {
                 width: 36, height: 36, borderRadius: '50%',
                 background: currentUser.avatarUrl
                   ? `url(${currentUser.avatarUrl}) center/cover`
-                  : 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                  : 'linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800, color: '#FFFFFF',
                 fontFamily: "'Sora', sans-serif", flexShrink: 0,
