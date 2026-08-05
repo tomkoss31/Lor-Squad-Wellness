@@ -1876,8 +1876,9 @@ export async function repairSupabaseUserAccess(payload: {
 
 // ─── Chantier « Promouvoir en distributeur » (2026-08-05) ───────────────────
 // Réutilise le compte auth d'un membre existant (client PWA / BBC) pour lui
-// ajouter la casquette distributeur, SANS créer de 2e compte. Endpoint dédié
-// /api/admin-promote-member (admin only), deux actions : lookup + promote.
+// ajouter la casquette distributeur, SANS créer de 2e compte. Fusionné dans
+// /api/admin-repair-user (admin only) via action:lookup|promote — pour rester
+// sous le plafond de 12 fonctions serverless du plan Vercel Hobby.
 
 export type PromoteLookupResult = {
   ok: boolean;
@@ -1914,7 +1915,7 @@ async function callPromoteMember<T extends { ok: boolean; error?: string }>(
   }
 
   try {
-    const response = await fetch("/api/admin-promote-member", {
+    const response = await fetch("/api/admin-repair-user", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
