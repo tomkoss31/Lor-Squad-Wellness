@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useAppContext } from "../context/AppContext";
 import { PushNotificationSettings } from "../components/settings/PushNotificationSettings";
@@ -31,6 +31,7 @@ export function UsersPage() {
 
   // ─── States filtres + onglets ─────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabKey>("members");
+  const [searchParams] = useSearchParams();
   // V2 invitation distributeur (2026-04-24)
   const [inviteOpen, setInviteOpen] = useState(false);
   const [invitationsKey, setInvitationsKey] = useState(0);
@@ -107,6 +108,14 @@ export function UsersPage() {
   useEffect(() => {
     if (repairRole !== "distributor") setRepairSponsorId("");
   }, [repairRole]);
+
+  // Deep-link ?tab=promote|repair|new (ex. bouton « Promouvoir un membre » de Mon équipe)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "promote" && isAdmin) setActiveTab("promote");
+    else if (tab === "repair") setActiveTab("repair");
+    else if (tab === "new") setActiveTab("new");
+  }, [searchParams, isAdmin]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
