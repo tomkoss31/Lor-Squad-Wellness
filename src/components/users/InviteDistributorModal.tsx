@@ -11,6 +11,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
+  initialFirstName?: string;
+  initialPhone?: string;
 }
 
 function buildWhatsAppUrl(phone: string, firstName: string, inviteUrl: string): string {
@@ -24,7 +26,7 @@ function buildInviteUrl(token: string): string {
   return `${window.location.origin}/bienvenue-distri?token=${token}`;
 }
 
-export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
+export function InviteDistributorModal({ open, onClose, onCreated, initialFirstName, initialPhone }: Props) {
   const { push: pushToast } = useToast();
   const [firstName, setFirstName] = useState("");
   const [phone, setPhone] = useState("");
@@ -42,8 +44,12 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
       setGenerated(null);
       setSubmitting(false);
       setCopied(false);
+    } else {
+      // pré-remplissage à l'ouverture (ex. promotion d'un membre token-only)
+      if (initialFirstName) setFirstName(initialFirstName);
+      if (initialPhone) setPhone(initialPhone);
     }
-  }, [open]);
+  }, [open, initialFirstName, initialPhone]);
 
   useEffect(() => {
     if (!open) return;

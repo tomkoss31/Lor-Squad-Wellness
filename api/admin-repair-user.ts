@@ -107,19 +107,22 @@ export default async function handler(req: any, res: any) {
       : null;
 
   if (!authUser && email) {
-    const listedUsers = await admin.auth.admin.listUsers({
-      page: 1,
-      perPage: 500
-    });
-
-    const usersList = (listedUsers.data?.users ?? []) as Array<{
-      id: string;
-      email?: string | null;
-    }>;
-    authUser =
-      (usersList.find((item) => item.email?.toLowerCase() === email) as
-        | typeof authUser
-        | undefined) ?? null;
+    // Fix pagination : listUsers plafonne par page → on parcourt toutes les
+    // pages jusqu'à trouver l'email (avant : seulement les 500 premiers comptes,
+    // introuvable au-delà).
+    const perPage = 1000;
+    for (let page = 1; page <= 100 && !authUser; page += 1) {
+      const listedUsers = await admin.auth.admin.listUsers({ page, perPage });
+      const usersList = (listedUsers.data?.users ?? []) as Array<{
+        id: string;
+        email?: string | null;
+      }>;
+      authUser =
+        (usersList.find((item) => item.email?.toLowerCase() === email) as
+          | typeof authUser
+          | undefined) ?? null;
+      if (usersList.length < perPage) break; // dernière page atteinte
+    }
   }
 
   if (!authUser?.id || !authUser.email) {
