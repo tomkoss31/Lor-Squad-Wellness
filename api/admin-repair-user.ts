@@ -51,8 +51,23 @@ function isSlugCollision(error: { code?: string; message?: string } | null | und
 
 // Fix pagination : listUsers plafonne par page → on parcourt toutes les pages
 // jusqu'à trouver l'email (avant : seulement les 500 premiers comptes).
+//
+// Typage volontairement STRUCTUREL (et non `ReturnType<typeof createClient>`) :
+// les génériques de SupabaseClient changent d'une version à l'autre du SDK, et
+// le client créé ici n'était pas assignable à ce type — build Vercel en erreur
+// TS2345. On ne décrit que ce dont le helper a besoin.
+type AuthUserLister = {
+  auth: {
+    admin: {
+      listUsers: (params: { page: number; perPage: number }) => Promise<{
+        data: { users: unknown[] } | null;
+      }>;
+    };
+  };
+};
+
 async function findAuthUserByEmail(
-  admin: ReturnType<typeof createClient>,
+  admin: AuthUserLister,
   email: string
 ): Promise<AuthUser | null> {
   const target = email.trim().toLowerCase();
@@ -259,7 +274,11 @@ export default async function handler(req: any, res: any) {
     let ficheReassigned = false;
     if (String(payload.ficheOwner ?? "keep").trim() === "sponsor") {
       const fiche = await loadFiche(authUser.id, authUser.email);
-      if (fiche?.id && fiche.currentOwnerId !== sponsorId) {
+      // loadFiche renvoie la ligne brute : le propriétaire est `distributor_id`
+      // (c'est l'action `lookup` qui l'expose sous le nom `currentOwnerId`).
+      // Lire `currentOwnerId` ici donnait undefined → le garde-fou « déjà chez
+      // le bon sponsor » ne filtrait jamais rien.
+      if (fiche?.id && fiche.distributor_id !== sponsorId) {
         const { error: reassignError } = await admin
           .from("clients")
           .update({ distributor_id: sponsorId })
