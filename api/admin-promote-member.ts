@@ -232,6 +232,12 @@ export default async function handler(req: any, res: any) {
       String(authUser.user_metadata?.name ?? "").trim() ||
       deriveNameFromEmail(authUser.email);
 
+    // ID Herbalife optionnel (l'admin peut le renseigner ici, sinon le promu le
+    // complétera dans ses Paramètres > Profil). Ville/tel optionnels aussi.
+    const herbalifeId = String(payload.herbalifeId ?? payload.herbalife_id ?? "").trim().toUpperCase();
+    const phone = String(payload.phone ?? "").trim();
+    const city = String(payload.city ?? "").trim();
+
     const { error: upsertError } = await admin.from("users").upsert({
       id: authUser.id,
       name,
@@ -240,7 +246,14 @@ export default async function handler(req: any, res: any) {
       sponsor_id: sponsorId,
       sponsor_name: sponsor.name,
       active: true,
-      title: "Portefeuille terrain",
+      title: "Accès distributeur",
+      herbalife_id: herbalifeId || null,
+      phone: phone || null,
+      city: city || null,
+      // Ancre « Jour 0 » de La Base Académie = moment de la promotion. Alimente le
+      // compteur « Jour X / 90 » du cockpit démarrage, comme un vrai nouveau distri
+      // (cf. consume-distributor-invite-token). Sans ça, le compteur partait faux.
+      starter_started_at: new Date().toISOString(),
       created_at: authUser.created_at ?? new Date().toISOString()
     });
 
