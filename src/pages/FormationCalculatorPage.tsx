@@ -29,7 +29,7 @@ export function FormationCalculatorPage() {
           </p>
           <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(22px, 4vw, 32px)", letterSpacing: "-0.02em", color: "var(--ls-text)", margin: "10px 0 6px 0" }}>
             Strategy Plan —{" "}
-            <span style={{ background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-teal) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            <span style={{ background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Projection 12 mois
             </span>
           </h1>

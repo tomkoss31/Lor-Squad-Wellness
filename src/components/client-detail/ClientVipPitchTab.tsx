@@ -252,7 +252,7 @@ const warnBox: React.CSSProperties = {
 };
 
 const primaryBtn: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-teal)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, #000))",
   border: "none",
   color: "#04231a",
   fontFamily: "Syne, sans-serif",
