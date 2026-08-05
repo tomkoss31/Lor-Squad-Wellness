@@ -56,8 +56,8 @@ const CARD_STYLE_BASE: React.CSSProperties = {
 function activeStyle(active: boolean): React.CSSProperties {
   return active
     ? {
-        border: "2px solid var(--ls-gold)",
-        background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
+        border: "2px solid var(--ls-teal)",
+        background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
         boxShadow: "0 2px 8px rgba(201,168,76,0.15)",
       }
     : {};

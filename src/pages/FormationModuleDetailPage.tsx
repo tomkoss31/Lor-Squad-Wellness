@@ -33,7 +33,7 @@ import { useAppContext } from "../context/AppContext";
 import { useFormationReviewThread } from "../features/formation";
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
 };
@@ -128,7 +128,7 @@ export function FormationModuleDetailPage() {
           className="ls-skeleton"
           style={{
             height: 220, borderRadius: 18,
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
             border: "0.5px solid var(--ls-border)",
             animation: "ls-skeleton-pulse 1.4s ease-in-out infinite",
           }}
@@ -198,15 +198,15 @@ export function FormationModuleDetailPage() {
             background:
               status === "rejected"
                 ? "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface))"
-                : "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
+                : "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
             border:
               status === "rejected"
                 ? "0.5px solid color-mix(in srgb, var(--ls-coral) 30%, transparent)"
-                : "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                : "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             borderLeft:
               status === "rejected"
                 ? "3px solid var(--ls-coral)"
-                : "3px solid var(--ls-gold)",
+                : "3px solid var(--ls-teal)",
             borderRadius: 14,
             fontFamily: "DM Sans, sans-serif",
             display: "flex",
@@ -223,7 +223,7 @@ export function FormationModuleDetailPage() {
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 fontWeight: 700,
-                color: status === "rejected" ? "var(--ls-coral)" : "var(--ls-gold)",
+                color: status === "rejected" ? "var(--ls-coral)" : "var(--ls-teal)",
                 marginBottom: 4,
               }}
             >
@@ -442,7 +442,7 @@ export function FormationModuleDetailPage() {
               const accentColor = isDone
                 ? "var(--ls-teal)"
                 : isPending
-                ? "var(--ls-gold)"
+                ? "var(--ls-teal)"
                 : "var(--ls-border)";
               return (
                 <Link

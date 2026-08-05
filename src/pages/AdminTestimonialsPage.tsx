@@ -325,7 +325,7 @@ export function AdminTestimonialsPage() {
                 onClick={copyShareLink}
                 style={{
                   padding: "9px 14px",
-                  background: "var(--ls-gold)",
+                  background: "var(--ls-teal)",
                   color: "var(--ls-charcoal)",
                   border: "none",
                   borderRadius: 10,
@@ -444,7 +444,7 @@ export function AdminTestimonialsPage() {
                     flex: 1,
                     padding: "10px 0",
                     border: "1px solid var(--ls-border)",
-                    background: manualForm.rating === n ? "var(--ls-gold)" : "var(--ls-surface)",
+                    background: manualForm.rating === n ? "var(--ls-teal)" : "var(--ls-surface)",
                     color: manualForm.rating === n ? "var(--ls-charcoal)" : "var(--ls-text)",
                     borderRadius: 8,
                     cursor: "pointer",
@@ -551,7 +551,7 @@ function PillButton({ active, onClick, children }: { active: boolean; onClick: (
         padding: "8px 14px",
         borderRadius: 999,
         border: "1px solid var(--ls-border)",
-        background: active ? "var(--ls-gold)" : "var(--ls-surface)",
+        background: active ? "var(--ls-teal)" : "var(--ls-surface)",
         color: active ? "var(--ls-charcoal)" : "var(--ls-text)",
         fontSize: 13,
         fontWeight: 600,
@@ -601,7 +601,7 @@ function TestimonialCard({
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ color: "var(--ls-gold)", fontSize: 18 }}>
+          <span style={{ color: "var(--ls-teal)", fontSize: 18 }}>
             {"★".repeat(row.rating)}<span style={{ opacity: 0.2 }}>{"★".repeat(5 - row.rating)}</span>
           </span>
           <span style={{
@@ -669,7 +669,7 @@ function TestimonialCard({
 }
 
 const STATUS_BADGES: Record<TestimonialStatus, { label: string; bg: string; fg: string }> = {
-  pending: { label: "EN ATTENTE", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-gold)" },
+  pending: { label: "EN ATTENTE", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-teal)" },
   approved: { label: "VALIDÉ", bg: "rgba(45,212,191,0.16)", fg: "var(--ls-teal)" },
   rejected: { label: "REJETÉ", bg: "rgba(251,113,133,0.16)", fg: "var(--ls-coral)" },
 };
@@ -739,7 +739,7 @@ const btnGhostStyle: React.CSSProperties = {
 };
 const btnPrimaryStyle: React.CSSProperties = {
   padding: "10px 18px",
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   border: "none",
   borderRadius: 10,
   color: "var(--ls-charcoal)",

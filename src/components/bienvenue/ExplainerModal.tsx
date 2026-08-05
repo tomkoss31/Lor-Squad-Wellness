@@ -43,7 +43,7 @@ export function ExplainerModal({
           maxWidth: 460,
           width: "100%",
           padding: 28,
-          border: "1px solid rgba(var(--ls-gold-rgb),0.35)",
+          border: "1px solid rgba(var(--ls-teal-rgb),0.35)",
           boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
           color: "#F4E9CF",
         }}
@@ -111,7 +111,7 @@ export function ExplainerModal({
             width: "100%",
             padding: "16px 20px",
             borderRadius: 14,
-            background: "linear-gradient(135deg, #D4B460, #C9A84C)",
+            background: "linear-gradient(135deg, #D4B460, #2DD4BF)",
             color: "#0B0D11",
             border: "none",
             fontFamily: "Syne, sans-serif",
@@ -119,7 +119,7 @@ export function ExplainerModal({
             fontSize: 16,
             cursor: "pointer",
             letterSpacing: 0.3,
-            boxShadow: "0 8px 24px rgba(var(--ls-gold-rgb),0.35)",
+            boxShadow: "0 8px 24px rgba(var(--ls-teal-rgb),0.35)",
           }}
         >
           J'ai compris, c'est parti !

@@ -152,7 +152,7 @@ function ActionRow({
 }
 
 function CountChip({ count, accent }: { count: number; accent: "gold" | "coral" }) {
-  const color = accent === "coral" ? "var(--ls-coral)" : "var(--ls-gold)";
+  const color = accent === "coral" ? "var(--ls-coral)" : "var(--ls-teal)";
   return (
     <span
       style={{
@@ -199,7 +199,7 @@ function ScoreBadge({ score, total }: { score: number; total: number }) {
     ratio >= 0.8
       ? "var(--ls-teal)"
       : ratio >= 0.4
-      ? "var(--ls-gold)"
+      ? "var(--ls-teal)"
       : "var(--ls-coral)";
   return (
     <div
@@ -249,8 +249,8 @@ const backBtn: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 18,
   padding: "24px 20px",
 };
@@ -261,7 +261,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 

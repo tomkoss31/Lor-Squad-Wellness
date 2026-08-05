@@ -219,7 +219,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
       : isHighScore
         ? `Bon score ! ${freeQuestions.length > 0 ? "Ton sponsor relira tes réponses libres et te répondra sous 48h." : "Tu peux passer à la suite."}`
         : "Tu peux relire ci-dessous les bonnes réponses avant de passer au module suivant.";
-    const heroAccent = isHighScore ? "var(--ls-teal)" : "var(--ls-gold)";
+    const heroAccent = isHighScore ? "var(--ls-teal)" : "var(--ls-teal)";
 
     return (
       <>
@@ -329,7 +329,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   fontWeight: 700,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   marginBottom: 10,
                   display: "flex",
                   alignItems: "center",
@@ -461,13 +461,13 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
                 borderRadius: 14,
                 border: "none",
                 background:
-                  "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
+                  "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)) 100%)",
                 color: "var(--ls-bg)",
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 800,
                 fontSize: 14,
                 cursor: "pointer",
-                boxShadow: "0 6px 18px -4px color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+                boxShadow: "0 6px 18px -4px color-mix(in srgb, var(--ls-teal) 40%, transparent)",
                 textAlign: "left",
                 display: "flex",
                 alignItems: "center",
@@ -532,9 +532,9 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
           textAlign: "center",
           fontFamily: "DM Sans, sans-serif",
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
-          borderTop: "3px solid var(--ls-gold)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
+          borderTop: "3px solid var(--ls-teal)",
           borderRadius: 18,
         }}
       >
@@ -598,13 +598,13 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
               borderRadius: 999,
               border: "none",
               background:
-                "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
+                "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)) 100%)",
               color: "var(--ls-bg)",
               fontFamily: "Syne, sans-serif",
               fontWeight: 700,
               fontSize: 14,
               cursor: "pointer",
-              boxShadow: "0 6px 16px -4px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+              boxShadow: "0 6px 16px -4px color-mix(in srgb, var(--ls-teal) 35%, transparent)",
             }}
           >
             🚀 Lancer le quiz
@@ -630,15 +630,15 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
       <div
         style={{
           padding: "12px 14px",
-          background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 12,
           fontSize: 12.5,
           color: "var(--ls-text-muted)",
           lineHeight: 1.5,
         }}
       >
-        💡 <strong style={{ color: "var(--ls-gold)" }}>Comment ça marche :</strong> les QCM
+        💡 <strong style={{ color: "var(--ls-teal)" }}>Comment ça marche :</strong> les QCM
         comptent dans ton score. Les réponses libres ne comptent pas mais sont obligatoires —
         ton sponsor les lira. Si tu fais 100% des QCM = validation auto + félicitations 🎉
       </div>
@@ -688,7 +688,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             style={{
               fontFamily: "Syne, sans-serif",
               fontWeight: 800,
-              color: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-gold)",
+              color: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-teal)",
               fontVariantNumeric: "tabular-nums",
             }}
           >
@@ -700,7 +700,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             style={{
               width: `${progressPct}%`,
               height: "100%",
-              background: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-gold)",
+              background: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-teal)",
               transition: "width 0.4s ease",
             }}
           />
@@ -802,15 +802,15 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
             borderRadius: 999,
             border: "none",
             background:
-              "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, #000) 100%)",
-            color: "var(--ls-gold-contrast, #FFFFFF)",
+              "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
+            color: "var(--ls-teal-contrast, #FFFFFF)",
             fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 14,
             cursor: canSubmit ? "pointer" : "not-allowed",
             opacity: canSubmit ? 1 : 0.5,
             boxShadow: canSubmit
-              ? "0 6px 18px -4px color-mix(in srgb, var(--ls-gold) 40%, transparent)"
+              ? "0 6px 18px -4px color-mix(in srgb, var(--ls-teal) 40%, transparent)"
               : "none",
             transition: "transform 0.15s, filter 0.15s",
           }}

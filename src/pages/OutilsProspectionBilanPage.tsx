@@ -150,7 +150,7 @@ export function OutilsProspectionBilanPage() {
           </a>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-          <button type="button" onClick={() => void copyBilanLink()} style={shareBtn("var(--ls-gold)")}>
+          <button type="button" onClick={() => void copyBilanLink()} style={shareBtn("var(--ls-teal)")}>
             📋 Copier le lien
           </button>
           <a href={waHref} target="_blank" rel="noopener noreferrer" style={shareBtn("#25D366")}>
@@ -201,7 +201,7 @@ export function OutilsProspectionBilanPage() {
           </a>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={() => void copyVipLink()} style={shareBtn("var(--ls-gold)")}>
+          <button type="button" onClick={() => void copyVipLink()} style={shareBtn("var(--ls-teal)")}>
             📋 Copier le lien
           </button>
           <a href={vipWaHref} target="_blank" rel="noopener noreferrer" style={shareBtn("#25D366")}>
@@ -364,8 +364,8 @@ function shareBtn(accent: string): React.CSSProperties {
 }
 
 const tipsBox: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
   borderRadius: 12,
   padding: "12px 16px",
 };

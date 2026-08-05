@@ -38,8 +38,8 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
         padding: 16,
         borderRadius: 18,
         background:
-          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
       }}
     >
       <div
@@ -112,14 +112,14 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
                   height: 36,
                   borderRadius: "50%",
                   background:
-                    "color-mix(in srgb, var(--ls-gold) 20%, var(--ls-surface2))",
+                    "color-mix(in srgb, var(--ls-teal) 20%, var(--ls-surface2))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontFamily: "Syne, sans-serif",
                   fontWeight: 700,
                   fontSize: 12,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   flexShrink: 0,
                 }}
               >
@@ -155,7 +155,7 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
                   fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 14,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   flexShrink: 0,
                 }}
               >
@@ -181,11 +181,11 @@ export function BusinessOpportunitiesCard({ clients }: BusinessOpportunitiesCard
             fontSize: 12,
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             background: "transparent",
             cursor: "pointer",
             borderRadius: 10,
-            border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+            border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, transparent)",
           }}
         >
           <span aria-hidden="true" style={{ transition: "transform .15s", transform: showAll ? "rotate(180deg)" : "none" }}>▾</span>

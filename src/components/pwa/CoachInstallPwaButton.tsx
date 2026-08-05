@@ -54,8 +54,8 @@ export function CoachInstallPwaButton() {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))";
-          e.currentTarget.style.color = "var(--ls-gold)";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))";
+          e.currentTarget.style.color = "var(--ls-teal)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "none";

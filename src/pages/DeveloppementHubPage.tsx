@@ -73,7 +73,7 @@ const CARDS: HubCard[] = [
     path: "/academy",
     accent: "var(--ls-purple)",
     section: "apprendre",
-    tag: { label: "Commence ici", color: "var(--ls-gold)" },
+    tag: { label: "Commence ici", color: "var(--ls-teal)" },
   },
   {
     id: "formation",
@@ -83,7 +83,7 @@ const CARDS: HubCard[] = [
       "La méthode complète en 3 niveaux : Démarrer, Construire, Dupliquer.",
     cta: "Démarrer la formation",
     path: "/formation",
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
     section: "apprendre",
   },
   {
@@ -171,7 +171,7 @@ const CARDS: HubCard[] = [
     description: "Le workflow en 5 étapes : pitcher, inviter, activer, récolter les recos, convertir.",
     cta: "Lire la fiche",
     path: "/developpement/club-vip-explique",
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
     // B5 (2026-06-13) : c'est un « mode d'emploi » → pédago, donc section Apprendre.
     section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
@@ -367,8 +367,8 @@ const pageWrap: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
   borderRadius: 20,
   padding: "26px 22px",
   marginBottom: 22,
@@ -380,7 +380,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -543,7 +543,7 @@ const academyBannerBarTrack: React.CSSProperties = {
 
 const academyBannerBarFill: React.CSSProperties = {
   height: "100%",
-  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-gold))",
+  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-teal))",
   borderRadius: 100,
   transition: "width 0.4s ease",
 };

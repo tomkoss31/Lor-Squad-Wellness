@@ -156,13 +156,13 @@ export function AdminCampagnesPage() {
         .cmp-tag.plain { background:var(--ls-teal-bg); color:var(--ls-teal); }
         .cmp-st { margin-left:auto; font:600 11px 'DM Sans'; padding:3px 9px; border-radius:999px; }
         .cmp-st.draft { background:rgba(122,128,153,.14); color:var(--ls-text-muted); }
-        .cmp-st.scheduled, .cmp-st.sending { background:var(--ls-gold-bg); color:var(--ls-gold); }
+        .cmp-st.scheduled, .cmp-st.sending { background:var(--ls-teal-bg); color:var(--ls-teal); }
         .cmp-st.sent, .cmp-st.archived { background:var(--ls-teal-bg); color:var(--ls-teal); }
         .cmp-card h3 { font-size:15.5px; font-weight:700; margin:0 0 3px; color:var(--ls-text); }
         .cmp-meta { color:var(--ls-text-muted); font-size:12.5px; margin:0; }
         .cmp-stats { display:flex; gap:18px; margin-top:12px; padding-top:12px; border-top:1px solid var(--ls-border); }
         .cmp-stat .n { font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:700; color:var(--ls-text); }
-        .cmp-stat .n.g { color:var(--ls-teal); } .cmp-stat .n.o { color:var(--ls-gold); }
+        .cmp-stat .n.g { color:var(--ls-teal); } .cmp-stat .n.o { color:var(--ls-teal); }
         .cmp-stat .l { font-size:10.5px; color:var(--ls-text-muted); text-transform:uppercase; letter-spacing:.04em; margin-top:1px; }
         .cmp-empty { text-align:center; color:var(--ls-text-muted); font-size:14px; padding:40px 16px; border:1px dashed var(--ls-border2); border-radius:16px; }
         .cmp-del { background:none; border:0; font-size:14px; cursor:pointer; opacity:.5; padding:2px 4px; border-radius:6px; line-height:1; }

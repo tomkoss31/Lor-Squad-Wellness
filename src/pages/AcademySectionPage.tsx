@@ -215,7 +215,7 @@ export function AcademySectionPage() {
               navigate("/academy");
             }}
             style={{
-              background: "#B8922A",
+              background: "#0D9488",
               color: "white",
               border: "none",
               padding: "10px 18px",

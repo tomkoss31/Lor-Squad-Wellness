@@ -25,7 +25,7 @@ interface Props {
 }
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
 };

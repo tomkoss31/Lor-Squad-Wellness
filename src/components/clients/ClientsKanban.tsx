@@ -50,7 +50,7 @@ const COLUMNS: KanbanColumn[] = [
 function getToneColors(tone: KanbanColumn["tone"]) {
   switch (tone) {
     case "gold":
-      return { bg: "color-mix(in srgb, var(--ls-gold) 6%, transparent)", border: "var(--ls-gold)", text: "var(--ls-gold)" };
+      return { bg: "color-mix(in srgb, var(--ls-teal) 6%, transparent)", border: "var(--ls-teal)", text: "var(--ls-teal)" };
     case "teal":
       return { bg: "color-mix(in srgb, var(--ls-teal) 6%, transparent)", border: "var(--ls-teal)", text: "var(--ls-teal)" };
     case "purple":

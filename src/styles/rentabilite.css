@@ -8,7 +8,7 @@
 
 /* ── Tokens light (default) ──────────────────────────────────────────────── */
 .lr {
-  --ls-rentab-gold: #B8922A;
+  --ls-rentab-gold: #0D9488;
   --ls-rentab-gold-soft: #D6B964;
   --ls-rentab-teal: #0D9488;
   --ls-rentab-teal-soft: #14B8A6;
@@ -45,7 +45,7 @@
 :root:not(.theme-light) .lr,
 html:not(.theme-light) .lr,
 .lr[data-rentab-theme="dark"] {
-  --ls-rentab-gold: #C9A84C;
+  --ls-rentab-gold: #2DD4BF;
   --ls-rentab-gold-soft: #E2C878;
   --ls-rentab-teal: #2DD4BF;
   --ls-rentab-teal-soft: #5EEAD4;

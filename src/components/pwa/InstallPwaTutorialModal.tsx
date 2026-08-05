@@ -107,7 +107,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
           className="ls-pwa-panel"
           style={{
             background: "var(--ls-surface)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 22,
             width: "100%",
             maxWidth: 460,
@@ -210,7 +210,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                 minHeight: 200,
                 padding: "16px 0",
                 background:
-                  "radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
+                  "radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
                 borderRadius: 14,
                 border: "0.5px dashed var(--ls-border)",
               }}
@@ -254,7 +254,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
             style={{
               padding: "14px 22px",
               borderTop: "0.5px solid var(--ls-border)",
-              background: "color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface))",
+              background: "color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface))",
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -276,9 +276,9 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                     border: "none",
                     background:
                       i === stage
-                        ? "linear-gradient(135deg, var(--ls-gold) 0%, #0F766E 100%)"
+                        ? "linear-gradient(135deg, var(--ls-teal) 0%, #0F766E 100%)"
                         : i < stage
-                          ? "color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                          ? "color-mix(in srgb, var(--ls-teal) 50%, transparent)"
                           : "var(--ls-border)",
                     cursor: "pointer",
                     transition: "all 0.25s ease",
@@ -484,9 +484,9 @@ const IosStage2Svg = (
             justifyContent: "center",
             width: 22,
             height: 22,
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             borderRadius: 6,
-            boxShadow: "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
+            boxShadow: "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
           }}
         >
           {/* Icone Partager (square + arrow up) */}
@@ -503,7 +503,7 @@ const IosStage2Svg = (
               left: "50%",
               transform: "translateX(-50%)",
               fontSize: 22,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
             }}
             className="ls-pwa-pulse"
           >
@@ -562,13 +562,13 @@ const IosStage3Svg = (
               alignItems: "center",
               gap: 6,
               background: item.highlight
-                ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                 : "transparent",
-              border: item.highlight ? "1px solid var(--ls-gold)" : "none",
+              border: item.highlight ? "1px solid var(--ls-teal)" : "none",
               borderRadius: item.highlight ? 6 : 0,
               margin: item.highlight ? "2px 6px" : 0,
               fontWeight: item.highlight ? 700 : 400,
-              color: item.highlight ? "var(--ls-gold)" : "var(--ls-text)",
+              color: item.highlight ? "var(--ls-teal)" : "var(--ls-text)",
             }}
           >
             <span>{item.icon}</span>
@@ -604,12 +604,12 @@ const IosStage4Svg = (
         <span
           className="ls-pwa-pulse"
           style={{
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 700,
             padding: "2px 6px",
             borderRadius: 4,
-            background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
-            border: "1px solid var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
+            border: "1px solid var(--ls-teal)",
           }}
         >
           Ajouter
@@ -697,10 +697,10 @@ const AndroidStage2Svg = (
             flexDirection: "column",
             gap: 2,
             padding: 4,
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             borderRadius: 6,
             boxShadow:
-              "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
+              "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
           }}
         >
           {[0, 1, 2].map((i) => (
@@ -722,7 +722,7 @@ const AndroidStage2Svg = (
               left: "50%",
               transform: "translateX(-50%)",
               fontSize: 22,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
             }}
           >
             👆
@@ -771,12 +771,12 @@ const AndroidStage3Svg = (
               alignItems: "center",
               gap: 6,
               background: item.highlight
-                ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                 : "transparent",
-              border: item.highlight ? "1px solid var(--ls-gold)" : "none",
+              border: item.highlight ? "1px solid var(--ls-teal)" : "none",
               borderRadius: item.highlight ? 4 : 0,
               fontWeight: item.highlight ? 700 : 400,
-              color: item.highlight ? "var(--ls-gold)" : "var(--ls-text)",
+              color: item.highlight ? "var(--ls-teal)" : "var(--ls-text)",
             }}
           >
             <span>{item.icon}</span>
@@ -865,13 +865,13 @@ const DesktopStage2Svg = (
       style={{
         position: "relative",
         padding: "4px 8px",
-        background: "var(--ls-gold)",
+        background: "var(--ls-teal)",
         borderRadius: 6,
         fontSize: 11,
         fontWeight: 700,
         color: "#FFFFFF",
         boxShadow:
-          "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
+          "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
       }}
     >
       ⊕
@@ -883,7 +883,7 @@ const DesktopStage2Svg = (
           left: "50%",
           transform: "translateX(-50%)",
           fontSize: 18,
-          color: "var(--ls-gold)",
+          color: "var(--ls-teal)",
         }}
       >
         👆

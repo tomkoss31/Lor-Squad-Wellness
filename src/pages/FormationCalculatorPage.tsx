@@ -24,12 +24,12 @@ export function FormationCalculatorPage() {
         </button>
 
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <p style={{ fontSize: 11, color: "var(--ls-gold)", margin: 0, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>
+          <p style={{ fontSize: 11, color: "var(--ls-teal)", margin: 0, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>
             ✦ Formule 5-3-1 · La Base 360 · Calibré France
           </p>
           <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(22px, 4vw, 32px)", letterSpacing: "-0.02em", color: "var(--ls-text)", margin: "10px 0 6px 0" }}>
             Strategy Plan —{" "}
-            <span style={{ background: "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            <span style={{ background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Projection 12 mois
             </span>
           </h1>

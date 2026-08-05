@@ -159,7 +159,7 @@ export function PendingInvitationsList({ refreshKey = 0 }: Props) {
                 borderRadius: 8,
                 background: "transparent",
                 border: "1px solid var(--ls-border)",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 cursor: "pointer",
                 fontSize: 11,
                 fontWeight: 600,

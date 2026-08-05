@@ -267,10 +267,10 @@ export function MessageTemplatesModal({
                     gap: 8,
                     padding: "10px 10px",
                     background: isSelected
-                      ? "color-mix(in srgb, var(--ls-gold) 12%, transparent)"
+                      ? "color-mix(in srgb, var(--ls-teal) 12%, transparent)"
                       : "transparent",
                     border: isSelected
-                      ? "0.5px solid var(--ls-gold)"
+                      ? "0.5px solid var(--ls-teal)"
                       : "0.5px solid transparent",
                     borderRadius: 10,
                     cursor: "pointer",

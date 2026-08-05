@@ -186,7 +186,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
           className="ls-consent-panel"
           style={{
             background: "var(--ls-surface)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 22,
             width: "100%",
             maxWidth: 560,
@@ -394,12 +394,12 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                 background: showError
                   ? "color-mix(in srgb, var(--ls-coral) 10%, transparent)"
                   : checked
-                    ? "color-mix(in srgb, var(--ls-gold) 10%, transparent)"
+                    ? "color-mix(in srgb, var(--ls-teal) 10%, transparent)"
                     : "var(--ls-surface2)",
                 border: showError
                   ? "1.5px solid var(--ls-coral)"
                   : checked
-                    ? "1.5px solid var(--ls-gold)"
+                    ? "1.5px solid var(--ls-teal)"
                     : "0.5px solid var(--ls-border)",
                 borderRadius: 12,
                 cursor: "pointer",
@@ -415,8 +415,8 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                   height: 22,
                   minWidth: 22,
                   borderRadius: 6,
-                  border: `2px solid ${checked ? "var(--ls-gold)" : "var(--ls-text-hint)"}`,
-                  background: checked ? "var(--ls-gold)" : "transparent",
+                  border: `2px solid ${checked ? "var(--ls-teal)" : "var(--ls-text-hint)"}`,
+                  background: checked ? "var(--ls-teal)" : "transparent",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -463,7 +463,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
             style={{
               padding: "14px 24px 16px",
               borderTop: "0.5px solid var(--ls-border)",
-              background: "color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface))",
+              background: "color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface))",
               display: "flex",
               gap: 10,
               justifyContent: "flex-end",

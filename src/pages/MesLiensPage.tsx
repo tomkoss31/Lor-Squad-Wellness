@@ -60,7 +60,7 @@ export function MesLiensPage() {
           {
             id: "business",
             icon: "💼",
-            iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+            iconBg: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
             name: "Opportunité business",
             desc: "Présente l'opportunité La Base 360 à un prospect.",
             url: `${origin}/business?ref=${ref}`,
@@ -92,7 +92,7 @@ export function MesLiensPage() {
           {
             id: "vip",
             icon: "👑",
-            iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+            iconBg: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
             name: "Club VIP",
             desc: "La page des remises clients (15 → 35 %).",
             url: `${origin}/vip/${slug}`,
@@ -224,7 +224,7 @@ export function MesLiensPage() {
           <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 18, padding: 22, maxWidth: 320, width: "100%", textAlign: "center" }}>
             <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "var(--ls-text)", marginBottom: 4 }}>{qr.name}</div>
             <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 16 }}>Fais scanner ce code à ton prospect</div>
-            <div style={{ background: "#fff", padding: 16, borderRadius: 14, display: "inline-block", boxShadow: "0 0 24px color-mix(in srgb, var(--ls-gold) 30%, transparent)" }}>
+            <div style={{ background: "#fff", padding: 16, borderRadius: 14, display: "inline-block", boxShadow: "0 0 24px color-mix(in srgb, var(--ls-teal) 30%, transparent)" }}>
               <QRCodeSVG value={qr.url} size={200} />
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-teal)", fontFamily: "monospace", margin: "14px 0 16px", wordBreak: "break-all" }}>
@@ -232,7 +232,7 @@ export function MesLiensPage() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <ActionBtn onClick={() => copy(qr)} grow>📋 Copier le lien</ActionBtn>
-              <button type="button" onClick={() => setQr(null)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: "var(--ls-gold)", color: "#1a1407", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "Syne, sans-serif" }}>
+              <button type="button" onClick={() => setQr(null)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: "var(--ls-teal)", color: "#1a1407", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "Syne, sans-serif" }}>
                 Fermer
               </button>
             </div>

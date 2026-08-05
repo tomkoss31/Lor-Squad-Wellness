@@ -153,8 +153,8 @@ export function PvClientFullPage({
       <div
         style={{
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
           borderRadius: 18,
           padding: "20px 22px",
           boxShadow: "0 4px 20px rgba(184,146,42,0.10)",
@@ -295,8 +295,8 @@ export function PvClientFullPage({
                   cursor: "pointer",
                   fontSize: 13,
                   fontWeight: isActive ? 700 : 500,
-                  color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                  borderBottom: isActive ? "2px solid var(--ls-gold)" : "2px solid transparent",
+                  color: isActive ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                  borderBottom: isActive ? "2px solid var(--ls-teal)" : "2px solid transparent",
                   marginBottom: -1,
                   fontFamily: "Syne, sans-serif",
                   transition: "all 0.15s",
@@ -632,7 +632,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
             padding: "10px 12px",
             marginBottom: 12,
             background: "var(--ls-surface2)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 10,
           }}
         >
@@ -662,7 +662,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
               padding: "7px 14px",
               borderRadius: 8,
               border: "none",
-              background: "var(--ls-gold)",
+              background: "var(--ls-teal)",
               color: "#fff",
               fontSize: 12,
               fontWeight: 700,
@@ -743,7 +743,7 @@ function ActiveProductCard({ p, record }: { p: PvProductUsage; record: PvClientT
           <div style={{ color: "var(--ls-text-hint)", marginBottom: 2, fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", fontWeight: 600 }}>
             Prochaine commande
           </div>
-          <div style={{ fontWeight: 700, color: "var(--ls-gold)", fontFamily: "Syne, sans-serif", fontSize: 13 }}>
+          <div style={{ fontWeight: 700, color: "var(--ls-teal)", fontFamily: "Syne, sans-serif", fontSize: 13 }}>
             {formatDateLocal(p.nextProbableOrderDate)}
           </div>
         </div>
@@ -962,8 +962,8 @@ function PremiumOrderBuilder({
       className="pv-order-builder"
       style={{
         background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
-        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          "linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
         borderRadius: 14,
         padding: 18,
         marginBottom: 18,
@@ -1010,7 +1010,7 @@ function PremiumOrderBuilder({
         }
         .pv-catalog-card { transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
         .pv-catalog-card:hover { transform: translateY(-2px) scale(1.02); }
-        .pv-catalog-card.is-selected { border-color: var(--ls-gold) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ls-gold) 25%, transparent); }
+        .pv-catalog-card.is-selected { border-color: var(--ls-teal) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ls-teal) 25%, transparent); }
       `}</style>
       {confettiVisible ? <ConfettiOverlay /> : null}
 
@@ -1079,7 +1079,7 @@ function PremiumOrderBuilder({
                 style={{
                   padding: "6px 12px",
                   border: "none",
-                  background: active ? "var(--ls-gold)" : "transparent",
+                  background: active ? "var(--ls-teal)" : "transparent",
                   color: active ? "white" : "var(--ls-text-muted)",
                   fontSize: 11,
                   fontWeight: 600,
@@ -1245,7 +1245,7 @@ function PremiumOrderBuilder({
               className={`pv-catalog-card${inCart ? " is-selected" : ""}`}
               style={{
                 position: "relative",
-                background: inCart ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))" : "var(--ls-surface)",
+                background: inCart ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))" : "var(--ls-surface)",
                 border: "0.5px solid var(--ls-border)",
                 borderRadius: 12,
                 padding: "12px 12px 10px",
@@ -1269,7 +1269,7 @@ function PremiumOrderBuilder({
                       fontWeight: 700,
                       padding: "2px 8px",
                       borderRadius: 999,
-                      background: "var(--ls-gold)",
+                      background: "var(--ls-teal)",
                       color: "white",
                       fontFamily: "Syne, sans-serif",
                       display: "inline-flex",
@@ -1298,7 +1298,7 @@ function PremiumOrderBuilder({
                     fontFamily: "Syne, sans-serif",
                     fontWeight: 800,
                     fontSize: 14,
-                    color: "var(--ls-gold)",
+                    color: "var(--ls-teal)",
                   }}
                 >
                   {p.pv.toFixed(1)} PV
@@ -1317,7 +1317,7 @@ function PremiumOrderBuilder({
         <div
           style={{
             background: "var(--ls-surface)",
-            border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 12,
             padding: 14,
             marginBottom: 12,
@@ -1424,9 +1424,9 @@ function PremiumOrderBuilder({
               marginTop: 12,
               padding: "10px 12px",
               background:
-                "linear-gradient(90deg, color-mix(in srgb, var(--ls-gold) 8%, transparent) 0%, transparent 100%)",
+                "linear-gradient(90deg, color-mix(in srgb, var(--ls-teal) 8%, transparent) 0%, transparent 100%)",
               borderRadius: 10,
-              border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+              border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 35%, transparent)",
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -1438,7 +1438,7 @@ function PremiumOrderBuilder({
                 className="pv-cart-total"
                 style={{ display: "flex", alignItems: "baseline", gap: 10 }}
               >
-                <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: "var(--ls-gold)" }}>
+                <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: "var(--ls-teal)" }}>
                   {totals.pv.toFixed(1)} PV
                 </span>
                 <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
@@ -1626,9 +1626,9 @@ function CategoryChip({
       style={{
         padding: "6px 12px",
         borderRadius: 999,
-        border: active ? "0.5px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
-        background: active ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))" : "var(--ls-surface)",
-        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        border: active ? "0.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+        background: active ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))" : "var(--ls-surface)",
+        color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
         fontSize: 11,
         fontWeight: active ? 700 : 500,
         cursor: "pointer",
@@ -1645,7 +1645,7 @@ function CategoryChip({
           fontSize: 9,
           padding: "1px 6px",
           borderRadius: 999,
-          background: active ? "var(--ls-gold)" : "var(--ls-surface2)",
+          background: active ? "var(--ls-teal)" : "var(--ls-surface2)",
           color: active ? "white" : "var(--ls-text-hint)",
           fontWeight: 700,
         }}
@@ -1705,7 +1705,7 @@ function HistoryTab({ record }: { record: PvClientTrackingRecord }) {
               fontFamily: "Syne, sans-serif",
               fontSize: 14,
               fontWeight: 700,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
             }}
           >
             {tx.pv?.toFixed(2)} PV

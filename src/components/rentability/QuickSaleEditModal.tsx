@@ -244,7 +244,7 @@ export function QuickSaleEditModal({
                   style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "9px 12px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 13, color: "var(--ls-text)" }}
                 >
                   <span style={{ flex: 1, minWidth: 0 }}>{p.name}</span>
-                  <span style={{ color: "var(--ls-gold)", fontWeight: 700 }}>{euro(p.pricePublic)}</span>
+                  <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>{euro(p.pricePublic)}</span>
                 </button>
               ))}
             </div>
@@ -257,7 +257,7 @@ export function QuickSaleEditModal({
             <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
               Total catalogue <span style={{ color: "var(--ls-text-hint)" }}>({pvf(totalPv)} PV)</span>
             </span>
-            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 24, color: "var(--ls-gold)" }}>{euro(total)}</span>
+            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 24, color: "var(--ls-teal)" }}>{euro(total)}</span>
           </div>
           {isVip ? (
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 6 }}>
@@ -277,7 +277,7 @@ export function QuickSaleEditModal({
             type="button"
             onClick={() => void save()}
             disabled={saving}
-            style={{ flex: 1, padding: 13, borderRadius: 13, border: "none", background: "var(--ls-gold)", color: "#1a1407", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 14, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.65 : 1 }}
+            style={{ flex: 1, padding: 13, borderRadius: 13, border: "none", background: "var(--ls-teal)", color: "#1a1407", fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 14, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.65 : 1 }}
           >
             {saving ? "Enregistrement…" : "Enregistrer"}
           </button>

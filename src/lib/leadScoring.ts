@@ -28,7 +28,7 @@ export interface UnifiedLeadScore {
     perturber le funnel gated existant. */
 export const TEMP_META: Record<LeadTemperature, { emoji: string; label: string; color: string }> = {
   hot: { emoji: "🔥", label: "Chaud", color: "var(--ls-coral)" },
-  warm: { emoji: "🌤️", label: "Tiède", color: "var(--ls-gold)" },
+  warm: { emoji: "🌤️", label: "Tiède", color: "var(--ls-teal)" },
   cold: { emoji: "❄️", label: "Froid", color: "var(--ls-text-muted)" },
 };
 

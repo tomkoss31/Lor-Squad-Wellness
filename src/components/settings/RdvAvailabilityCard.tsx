@@ -159,7 +159,7 @@ export function RdvAvailabilityCard() {
           padding: "10px 18px",
           borderRadius: 10,
           border: "none",
-          background: "var(--ls-gold)",
+          background: "var(--ls-teal)",
           color: "var(--ls-bg)",
           fontSize: 13.5,
           fontWeight: 700,

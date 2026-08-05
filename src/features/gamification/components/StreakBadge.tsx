@@ -13,7 +13,7 @@ export function StreakBadge() {
   let color = "#5C4A0F";
   let emoji = "🔥";
   if (streak.count >= 30) {
-    bg = "linear-gradient(135deg, #D85A30, #B8922A)";
+    bg = "linear-gradient(135deg, #D85A30, #0D9488)";
     color = "white";
     emoji = "🔥🔥🔥";
   } else if (streak.count >= 7) {

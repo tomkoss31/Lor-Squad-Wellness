@@ -111,7 +111,7 @@ export function AcademyOverviewPage() {
               cy="42"
               r={ringRadius}
               fill="none"
-              stroke="#B8922A"
+              stroke="#0D9488"
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={ringCircumference}
@@ -126,7 +126,7 @@ export function AcademyOverviewPage() {
               fontFamily="var(--ls-font-serif, Georgia, serif)"
               fontSize="20"
               fontWeight="500"
-              fill="var(--ls-gold)"
+              fill="var(--ls-teal)"
             >
               {view.percentComplete}%
             </text>
@@ -151,7 +151,7 @@ export function AcademyOverviewPage() {
                 type="button"
                 onClick={() => goToSection(view.currentSection.id)}
                 style={{
-                  background: "#B8922A",
+                  background: "#0D9488",
                   color: "white",
                   border: "none",
                   padding: "10px 20px",
@@ -200,7 +200,7 @@ export function AcademyOverviewPage() {
                   type="button"
                   onClick={() => navigate("/academy/playbook")}
                   style={{
-                    background: "linear-gradient(135deg, #FFE873 0%, #C9A84C 100%)",
+                    background: "linear-gradient(135deg, #FFE873 0%, #2DD4BF 100%)",
                     color: "#5C4A0F",
                     border: "none",
                     padding: "8px 16px",
@@ -230,8 +230,8 @@ export function AcademyOverviewPage() {
             gap: 14,
             padding: "16px 18px",
             marginBottom: 18,
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 16%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 16%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
             borderRadius: 14,
             cursor: "pointer",
             textAlign: "left",
@@ -255,7 +255,7 @@ export function AcademyOverviewPage() {
                 fontFamily: "var(--ls-font-serif, Georgia, serif)",
                 fontSize: 16,
                 fontWeight: 600,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 marginBottom: 2,
               }}
             >
@@ -273,7 +273,7 @@ export function AcademyOverviewPage() {
               letterSpacing: 0.5,
               padding: "5px 10px",
               borderRadius: 6,
-              background: "#B8922A",
+              background: "#0D9488",
               color: "white",
               flexShrink: 0,
             }}
@@ -442,7 +442,7 @@ function MotivationBanner({
       }}
     >
       <span style={{ fontSize: 22, flexShrink: 0 }}>{copy.emoji}</span>
-      <p style={{ fontSize: 13, color: "var(--ls-gold)", margin: 0, fontWeight: 500, lineHeight: 1.45 }}>
+      <p style={{ fontSize: 13, color: "var(--ls-teal)", margin: 0, fontWeight: 500, lineHeight: 1.45 }}>
         {copy.text}
       </p>
     </div>
@@ -556,10 +556,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           display: "flex",
           alignItems: "center",
           gap: 12,
-          background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
+          background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
           padding: 14,
           borderRadius: 10,
-          border: "1.5px solid var(--ls-gold)",
+          border: "1.5px solid var(--ls-teal)",
           ...pulseStyle,
         }}
       >
@@ -568,7 +568,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             width: 30,
             height: 30,
             borderRadius: "50%",
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             color: "white",
             display: "flex",
             alignItems: "center",
@@ -584,7 +584,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "var(--ls-text)" }}>
             {section.title}
           </p>
-          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--ls-gold)", fontWeight: 500 }}>
+          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--ls-teal)", fontWeight: 500 }}>
             {section.estimatedDurationMinutes} min · {section.description}
           </p>
         </div>
@@ -593,7 +593,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             type="button"
             onClick={onContinue}
             style={{
-              background: "var(--ls-gold)",
+              background: "var(--ls-teal)",
               color: "white",
               border: "none",
               padding: "6px 12px",

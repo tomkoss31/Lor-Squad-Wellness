@@ -27,7 +27,7 @@ export const LIFECYCLE_TONE_TO_COLORS: Record<
   { bg: string; color: string }
 > = {
   teal: { bg: "rgba(13,148,136,0.1)", color: "var(--ls-teal)" },
-  gold: { bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" },
+  gold: { bg: "rgba(184,146,42,0.1)", color: "var(--ls-teal)" },
   muted: { bg: "var(--ls-surface2)", color: "var(--ls-text-muted)" },
   coral: { bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" },
 };
@@ -47,7 +47,7 @@ export function getClientStatusInfo(client: Client, nextFollowUp: string | undef
   if (nextFollowUp) {
     const daysUntil = getDaysUntil(nextFollowUp);
     if (daysUntil !== null && daysUntil <= 2) {
-      return { label: "RDV", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
+      return { label: "RDV", bg: "rgba(184,146,42,0.1)", color: "var(--ls-teal)" };
     }
   }
   // Priorité 3 : lifecycle basique

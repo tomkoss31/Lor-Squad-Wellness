@@ -21,7 +21,7 @@ interface Props {
 }
 
 const ACCENT: Record<string, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
 };
@@ -57,7 +57,7 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
         padding: 16,
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
-        borderLeft: hasPending ? "3px solid var(--ls-gold)" : "3px solid transparent",
+        borderLeft: hasPending ? "3px solid var(--ls-teal)" : "3px solid transparent",
         borderRadius: 14,
         fontFamily: "DM Sans, sans-serif",
         display: "flex",
@@ -72,8 +72,8 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
             width: 44,
             height: 44,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, #000) 100%)",
-            color: "var(--ls-gold-contrast, #FFFFFF)",
+            background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
+            color: "var(--ls-teal-contrast, #FFFFFF)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -119,7 +119,7 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
               p.status === "validated",
           ).length;
           const percent = totalModules > 0 ? Math.round((completedInLevel / totalModules) * 100) : 0;
-          const accentVar = ACCENT[level.accent] ?? "var(--ls-gold)";
+          const accentVar = ACCENT[level.accent] ?? "var(--ls-teal)";
           return (
             <div
               key={level.id}
@@ -180,10 +180,10 @@ export function RecruteFormationCard({ recrue, progressRows, pendingForMe }: Pro
             alignItems: "center",
             gap: 8,
             padding: "8px 12px",
-            background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             borderRadius: 10,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontSize: 12,
             fontWeight: 600,
             textDecoration: "none",

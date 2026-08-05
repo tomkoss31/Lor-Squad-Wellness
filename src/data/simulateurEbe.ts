@@ -75,7 +75,7 @@ export function scoreBand(score: number): EbeScoreBand {
     return {
       label: "Maître EBE",
       emoji: "🏆",
-      color: "var(--ls-gold)",
+      color: "var(--ls-teal)",
       message: "Tu mènes un EBE qui inspire confiance. Tu peux closer en RDV réel sans hésiter.",
     };
   }

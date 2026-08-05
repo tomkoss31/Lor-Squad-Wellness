@@ -62,7 +62,7 @@ export function PublicProfileShareCard({ name }: { name: string }) {
       style={{
         padding: 18,
         background:
-          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
         border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
       }}
     >
@@ -146,7 +146,7 @@ export function PublicProfileShareCard({ name }: { name: string }) {
         <button
           type="button"
           onClick={() => void copyLink()}
-          style={shareBtn("var(--ls-gold)")}
+          style={shareBtn("var(--ls-teal)")}
         >
           📋 Copier le lien
         </button>

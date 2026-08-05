@@ -184,7 +184,7 @@ export function StartConversationModal({ onClose }: Props) {
           disabled={sending || !clientId || !text.trim()}
           style={{
             width: "100%",
-            background: sending || !clientId || !text.trim() ? "#888" : "#B8922A",
+            background: sending || !clientId || !text.trim() ? "#888" : "#0D9488",
             color: "white",
             border: "none",
             padding: "12px",

@@ -6,11 +6,11 @@
 // =============================================================================
 
 export const FORMATION_V2_STYLES = `
-.fv-wrap { --fv-violet: var(--ls-violet, #a78bfa); }
+.fv-wrap { --fv-violet: var(--ls-purple); }
 
 /* ── écran plein (le player) ── */
 .fv-screen { position:fixed; inset:0; z-index:9999; background:var(--ls-bg); color:var(--ls-text);
-  display:flex; flex-direction:column; --fv-violet: var(--ls-violet, #a78bfa);
+  display:flex; flex-direction:column; --fv-violet: var(--ls-purple);
   animation:fv-in .2s ease; }
 @keyframes fv-in { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:none; } }
 @media (prefers-reduced-motion: reduce) { .fv-screen { animation:none; } }

@@ -130,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div style={{
               position: 'relative',
               overflow: 'hidden',
-              background: 'radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--ls-gold, #C9A84C) 8%, var(--ls-surface, #1a1a1a)) 0%, var(--ls-surface, #1a1a1a) 60%)',
+              background: 'radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--ls-teal, #2DD4BF) 8%, var(--ls-surface, #1a1a1a)) 0%, var(--ls-surface, #1a1a1a) 60%)',
               border: '0.5px solid var(--ls-border, rgba(255,255,255,0.1))',
               borderRadius: 20,
               padding: '40px 28px 28px',
@@ -152,7 +152,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   width: 140,
                   height: 140,
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, color-mix(in srgb, var(--ls-gold, #C9A84C) 22%, transparent) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle, color-mix(in srgb, var(--ls-teal, #2DD4BF) 22%, transparent) 0%, transparent 70%)',
                   pointerEvents: 'none',
                   filter: 'blur(8px)',
                   animation: 'ls-crash-pulse 3.4s ease-in-out infinite',

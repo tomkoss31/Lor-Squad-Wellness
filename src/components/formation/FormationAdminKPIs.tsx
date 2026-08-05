@@ -14,10 +14,10 @@ interface Props {
 
 const CARDS = [
   { key: "active_distri_count", label: "Distri actifs", emoji: "👥", accent: "var(--ls-teal)", suffix: "" },
-  { key: "pending_sponsor_count", label: "Sponsor pending", emoji: "🟡", accent: "var(--ls-gold)", suffix: "" },
+  { key: "pending_sponsor_count", label: "Sponsor pending", emoji: "🟡", accent: "var(--ls-teal)", suffix: "" },
   { key: "admin_relay_count", label: "Admin relay", emoji: "🟣", accent: "var(--ls-purple)", suffix: "" },
   { key: "validated_total", label: "Validés total", emoji: "✓", accent: "var(--ls-teal)", suffix: "" },
-  { key: "validated_today", label: "Validés aujourd'hui", emoji: "🎉", accent: "var(--ls-gold)", suffix: "" },
+  { key: "validated_today", label: "Validés aujourd'hui", emoji: "🎉", accent: "var(--ls-teal)", suffix: "" },
 ] as const;
 
 export function FormationAdminKPIs({ data, loading }: Props) {

@@ -348,7 +348,7 @@ const STYLES = `
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--ls-gold, #C9A84C);
+    color: var(--ls-teal, #2DD4BF);
     margin: 0 0 8px 0;
   }
   .ldbs-section-body {
@@ -363,7 +363,7 @@ const STYLES = `
     font-style: italic;
     color: var(--ls-text-muted, #4B5563);
     padding-left: 10px;
-    border-left: 2px solid var(--ls-gold, #C9A84C);
+    border-left: 2px solid var(--ls-teal, #2DD4BF);
     font-size: 13.5px;
   }
   .ldbs-tags { display: flex; flex-wrap: wrap; gap: 6px; }

@@ -1624,9 +1624,9 @@ export function NewAssessmentPage() {
                   borderRadius: 22,
                   overflow: 'hidden',
                   background:
-                    'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)',
+                    'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)',
                   border:
-                    '0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))',
+                    '0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))',
                 }}
               >
                 {/* Refonte StepHero v2 (etape 5/6 chantier visuel, 2026-11-04) :
@@ -1679,7 +1679,7 @@ export function NewAssessmentPage() {
                     height: 180,
                     borderRadius: '50%',
                     background:
-                      'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
+                      'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
                     filter: 'blur(48px)',
                     pointerEvents: 'none',
                     willChange: 'transform',
@@ -1724,7 +1724,7 @@ export function NewAssessmentPage() {
                         fontWeight: 700,
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
-                        color: 'var(--ls-gold)',
+                        color: 'var(--ls-teal)',
                         margin: 0,
                         marginBottom: 6,
                       }}
@@ -1745,7 +1745,7 @@ export function NewAssessmentPage() {
                       <span
                         style={{
                           background:
-                            'linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 60%, var(--ls-teal) 40%) 100%)',
+                            'linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 60%, var(--ls-teal) 40%) 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
@@ -1788,7 +1788,7 @@ export function NewAssessmentPage() {
                           width: 6,
                           height: 6,
                           borderRadius: 999,
-                          background: 'var(--ls-gold)',
+                          background: 'var(--ls-teal)',
                         }}
                       />
                       <span style={{ fontWeight: 600 }}>
@@ -2045,8 +2045,8 @@ export function NewAssessmentPage() {
                       padding: "16px 18px",
                       borderRadius: 14,
                       background:
-                        "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
-                      border: "0.5px solid color-mix(in srgb, var(--ls-gold) 14%, var(--ls-border))",
+                        "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                      border: "0.5px solid color-mix(in srgb, var(--ls-teal) 14%, var(--ls-border))",
                     }}
                   >
                     <div
@@ -2076,7 +2076,7 @@ export function NewAssessmentPage() {
                           fontWeight: 800,
                           fontSize: 22,
                           letterSpacing: "-0.02em",
-                          color: "var(--ls-gold)",
+                          color: "var(--ls-teal)",
                         }}
                       >
                         {form.motivation}
@@ -2121,7 +2121,7 @@ export function NewAssessmentPage() {
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
-                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-gold)', insuffisant: '#FB7185' }
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-teal)', insuffisant: '#FB7185' }
                   const color = qColors[quality]
                   return (
                     <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -2339,7 +2339,7 @@ export function NewAssessmentPage() {
                   <PlateChartSvg legumes={cfg.legumes} proteines={cfg.proteines} glucides={cfg.glucides} />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 180 }}>
                     <MacroCardItem color="#0D9488" bg="rgba(13,148,136,0.07)" border="rgba(13,148,136,0.15)" label="Légumes" pct={cfg.legumes} desc="Volume, satiété, fibres" fraction="½" />
-                    <MacroCardItem color="var(--ls-gold)" bg="rgba(184,146,42,0.07)" border="rgba(184,146,42,0.15)" label="Protéines" pct={cfg.proteines} desc="Muscles, satiété longue" fraction="¼" />
+                    <MacroCardItem color="var(--ls-teal)" bg="rgba(184,146,42,0.07)" border="rgba(184,146,42,0.15)" label="Protéines" pct={cfg.proteines} desc="Muscles, satiété longue" fraction="¼" />
                     <MacroCardItem color="#7C3AED" bg="rgba(124,58,237,0.06)" border="rgba(124,58,237,0.12)" label="Glucides" pct={cfg.glucides} desc="Énergie, récupération" fraction="¼" />
                   </div>
                 </div>
@@ -2350,7 +2350,7 @@ export function NewAssessmentPage() {
                 <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
                 {[
                   { color: '#0D9488', bg: 'rgba(13,148,136,0.08)', label: 'Légumes · la moitié', items: ['Salade verte', 'Courgettes', 'Brocolis', 'Tomates', 'Carottes', 'Poivrons', 'Concombre'] },
-                  { color: '#B8922A', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
+                  { color: '#0D9488', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
                   { color: '#7C3AED', bg: 'rgba(124,58,237,0.07)', label: 'Glucides · un quart', items: ['Riz complet', 'Patate douce', 'Quinoa', 'Pain complet', 'Pâtes complètes', 'Lentilles'] },
                 ].map(({ color, bg, label, items }, i) => (
                   <div key={label} style={{ borderTop: i > 0 ? '1px solid var(--ls-border)' : 'none', paddingTop: i > 0 ? 14 : 0, marginTop: i > 0 ? 14 : 0 }}>
@@ -2368,14 +2368,14 @@ export function NewAssessmentPage() {
               </div>
 
               <div style={{ background: 'linear-gradient(135deg, rgba(184,146,42,0.08), rgba(184,146,42,0.04))', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 16, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{ width: 38, height: 38, background: 'var(--ls-gold)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(184,146,42,0.25)' }}>
+                <div style={{ width: 38, height: 38, background: 'var(--ls-teal)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(184,146,42,0.25)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <div>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--ls-text)', marginBottom: 6 }}>La règle des 3 doigts</div>
                   <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.75 }}>
                     Pas besoin de peser. Utilise ta main comme repère :<br/>
-                    <span style={{ color: 'var(--ls-gold)', fontWeight: 600 }}>Protéines</span> = 1 paume · <span style={{ color: '#7C3AED', fontWeight: 600 }}>Glucides</span> = 1 poing fermé · <span style={{ color: '#0D9488', fontWeight: 600 }}>Légumes</span> = 2 mains ouvertes
+                    <span style={{ color: 'var(--ls-teal)', fontWeight: 600 }}>Protéines</span> = 1 paume · <span style={{ color: '#7C3AED', fontWeight: 600 }}>Glucides</span> = 1 poing fermé · <span style={{ color: '#0D9488', fontWeight: 600 }}>Légumes</span> = 2 mains ouvertes
                   </div>
                 </div>
               </div>
@@ -2410,9 +2410,9 @@ export function NewAssessmentPage() {
                     alignItems: 'center',
                     gap: 14,
                     padding: '14px 18px',
-                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
-                    borderLeft: '3px solid var(--ls-gold)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
+                    borderLeft: '3px solid var(--ls-teal)',
                     borderRadius: 12,
                   }}
                 >
@@ -2422,16 +2422,16 @@ export function NewAssessmentPage() {
                   </span>
                   {form.age > 0 && (
                     <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                      Âge : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.age}</strong> ans
+                      Âge : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-teal)' }}>{form.age}</strong> ans
                     </span>
                   )}
                   {form.height > 0 && (
                     <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                      Taille : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.height}</strong> cm
+                      Taille : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-teal)' }}>{form.height}</strong> cm
                     </span>
                   )}
                   <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                    Sexe : <strong style={{ fontFamily: 'Syne, serif', fontSize: 15, color: 'var(--ls-gold)' }}>{form.sex === 'male' ? 'Homme' : 'Femme'}</strong>
+                    Sexe : <strong style={{ fontFamily: 'Syne, serif', fontSize: 15, color: 'var(--ls-teal)' }}>{form.sex === 'male' ? 'Homme' : 'Femme'}</strong>
                   </span>
                 </div>
               )}
@@ -2472,13 +2472,13 @@ export function NewAssessmentPage() {
                   range: MetricRange;
                   unit?: string;
                 }> = [
-                  { label: 'Poids', key: 'weight', icon: '⚖️', color: 'var(--ls-gold)', step: '0.1', range: weightRange, unit: 'kg' },
+                  { label: 'Poids', key: 'weight', icon: '⚖️', color: 'var(--ls-teal)', step: '0.1', range: weightRange, unit: 'kg' },
                   { label: 'Masse grasse', key: 'bodyFat', icon: '🔥', color: 'var(--ls-coral)', step: '0.1', range: bodyFatRange, unit: '%' },
                   { label: 'Masse musculaire', key: 'muscleMass', icon: '💪', color: 'var(--ls-teal)', step: '0.1', range: muscleRange, unit: 'kg' },
                   { label: 'Hydratation', key: 'hydration', icon: '💧', color: 'var(--ls-purple)', step: '0.1', range: hydrationRange, unit: '%' },
                   { label: 'Masse osseuse', key: 'boneMass', icon: '🦴', color: 'var(--ls-text-muted)', step: '0.1', range: boneRange, unit: 'kg' },
                   { label: 'Graisse viscérale', key: 'visceralFat', icon: '🫀', color: 'var(--ls-coral)', range: visceralRange },
-                  { label: 'BMR', key: 'bmr', icon: '⚡', color: 'var(--ls-gold)', range: bmrRange, unit: 'kcal' },
+                  { label: 'BMR', key: 'bmr', icon: '⚡', color: 'var(--ls-teal)', range: bmrRange, unit: 'kcal' },
                   { label: 'Âge métabolique', key: 'metabolicAge', icon: '🧬', color: 'var(--ls-purple)', range: ageMetaRange, unit: 'ans' },
                 ];
 
@@ -2523,7 +2523,7 @@ export function NewAssessmentPage() {
                       padding: '14px 18px',
                       borderRadius: 14,
                       background: isComplete
-                        ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 100%)'
+                        ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 100%)'
                         : 'var(--ls-surface)',
                       border: isComplete
                         ? '0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)'
@@ -2568,7 +2568,7 @@ export function NewAssessmentPage() {
                             letterSpacing: 1.4,
                             textTransform: 'uppercase',
                             fontWeight: 700,
-                            color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                            color: isComplete ? 'var(--ls-teal)' : 'var(--ls-teal)',
                             fontFamily: 'DM Sans, sans-serif',
                           }}
                         >
@@ -2595,7 +2595,7 @@ export function NewAssessmentPage() {
                           fontWeight: 800,
                           fontSize: 28,
                           letterSpacing: '-0.03em',
-                          color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                          color: isComplete ? 'var(--ls-teal)' : 'var(--ls-teal)',
                         }}
                       >
                         {filled}/{total}
@@ -2616,8 +2616,8 @@ export function NewAssessmentPage() {
                           height: '100%',
                           width: `${(filled / total) * 100}%`,
                           background: isComplete
-                            ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-gold))'
-                            : 'linear-gradient(90deg, var(--ls-gold), #0F766E)',
+                            ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-teal))'
+                            : 'linear-gradient(90deg, var(--ls-teal), #0F766E)',
                           borderRadius: 999,
                           transition: 'width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
                           boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(45,212,191,0.45)',
@@ -2690,7 +2690,7 @@ export function NewAssessmentPage() {
                   <BodyScanRadar
                     size={280}
                     metrics={[
-                      { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-gold)' },
+                      { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-teal)' },
                       { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
                       { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
                       { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
@@ -2794,7 +2794,7 @@ export function NewAssessmentPage() {
                     padding: "14px 18px",
                     borderRadius: 14,
                     background:
-                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-teal) 6%, transparent))",
                     border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
                   }}
                 >
@@ -2868,11 +2868,11 @@ export function NewAssessmentPage() {
                     padding: 12,
                     borderRadius: 22,
                     background:
-                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
                     border:
-                      "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+                      "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
                     boxShadow:
-                      "0 12px 40px -16px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                      "0 12px 40px -16px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
                     overflow: "hidden",
                   }}
                 >
@@ -2886,7 +2886,7 @@ export function NewAssessmentPage() {
                       width: 220,
                       height: 220,
                       borderRadius: "50%",
-                      background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+                      background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
                       filter: "blur(64px)",
                       pointerEvents: "none",
                     }}
@@ -2900,14 +2900,14 @@ export function NewAssessmentPage() {
                       zIndex: 2,
                       padding: "6px 12px",
                       borderRadius: 999,
-                      background: "color-mix(in srgb, var(--ls-gold) 90%, var(--ls-bg))",
+                      background: "color-mix(in srgb, var(--ls-teal) 90%, var(--ls-bg))",
                       color: "var(--ls-bg)",
                       fontFamily: "DM Sans, sans-serif",
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: "0.14em",
                       textTransform: "uppercase",
-                      boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+                      boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-teal) 35%, transparent)",
                     }}
                   >
                     ✦ Signature La Base 360
@@ -2951,7 +2951,7 @@ export function NewAssessmentPage() {
                   <span
                     style={{
                       background:
-                        "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+                        "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
@@ -3028,7 +3028,7 @@ export function NewAssessmentPage() {
                   padding: '20px 24px',
                   borderRadius: 20,
                   background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 50%, #0B3B36 100%)',
-                  border: '0.5px solid color-mix(in srgb, var(--ls-gold) 60%, transparent)',
+                  border: '0.5px solid color-mix(in srgb, var(--ls-teal) 60%, transparent)',
                   boxShadow: '0 12px 32px -8px rgba(15,118,110,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
                   marginBottom: 4,
                 }}
@@ -3754,7 +3754,7 @@ export function NewAssessmentPage() {
 
           {/* Avertissement validation */}
           {stepWarning && (
-            <div className="rounded-[14px] border border-[rgba(var(--ls-gold-rgb),0.25)] bg-[rgba(var(--ls-gold-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-gold)]">
+            <div className="rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)]">
               {stepWarning}
             </div>
           )}
@@ -3791,7 +3791,7 @@ export function NewAssessmentPage() {
               onMouseEnter={(e) => {
                 if (currentStep > 0) {
                   e.currentTarget.style.transform = 'translateX(-2px)';
-                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))';
                   e.currentTarget.style.color = 'var(--ls-text)';
                 }
               }}
@@ -4415,7 +4415,7 @@ function PlateChartSvg({ legumes, proteines, glucides }: { legumes: number; prot
     <svg width="180" height="180" viewBox="0 0 180 180" style={{ flexShrink: 0 }}>
       <circle cx={cx} cy={cy} r={R + 4} fill="var(--ls-surface2)" stroke="var(--ls-border)" strokeWidth="1"/>
       {slice(a1, legumes, '#0D9488')}
-      {slice(a2, proteines, '#B8922A')}
+      {slice(a2, proteines, '#0D9488')}
       {slice(a3, glucides, '#7C3AED')}
       <circle cx={cx} cy={cy} r={36} fill="var(--ls-surface)"/>
       <circle cx={cx} cy={cy} r={R + 4} fill="none" stroke="var(--ls-border)" strokeWidth="1.5"/>

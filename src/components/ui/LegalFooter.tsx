@@ -36,7 +36,7 @@ export function LegalFooter() {
           transition: "color 0.15s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = "var(--ls-gold)";
+          e.currentTarget.style.color = "var(--ls-teal)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = "var(--ls-text-muted)";
@@ -53,7 +53,7 @@ export function LegalFooter() {
           transition: "color 0.15s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = "var(--ls-gold)";
+          e.currentTarget.style.color = "var(--ls-teal)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = "var(--ls-text-muted)";

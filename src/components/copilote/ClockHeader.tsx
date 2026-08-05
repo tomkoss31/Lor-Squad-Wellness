@@ -116,7 +116,7 @@ export function ClockHeader({
         border: "0.5px solid var(--ls-border)",
         overflow: "hidden",
         boxShadow:
-          "0 1px 0 0 color-mix(in srgb, var(--ls-gold) 12%, transparent), 0 12px 36px -12px rgba(0,0,0,0.10), inset 0 1px 0 0 rgba(255,255,255,0.04)",
+          "0 1px 0 0 color-mix(in srgb, var(--ls-teal) 12%, transparent), 0 12px 36px -12px rgba(0,0,0,0.10), inset 0 1px 0 0 rgba(255,255,255,0.04)",
       }}
     >
       <style>{`
@@ -219,7 +219,7 @@ export function ClockHeader({
               letterSpacing: 2,
               textTransform: "uppercase",
               fontWeight: 700,
-              color: "color-mix(in srgb, var(--ls-gold) 90%, transparent)",
+              color: "color-mix(in srgb, var(--ls-teal) 90%, transparent)",
               marginBottom: 6,
               display: "flex",
               alignItems: "center",
@@ -232,7 +232,7 @@ export function ClockHeader({
                 width: 6,
                 height: 6,
                 borderRadius: 999,
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 boxShadow: "0 0 8px rgba(45,212,191,0.6)",
               }}
             />
@@ -365,10 +365,10 @@ function NeoChip({
         "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px rgba(13,148,136,0.10), 0 0 0 0.5px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
     },
     gold: {
-      bg: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-      fg: "var(--ls-gold)",
+      bg: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+      fg: "var(--ls-teal)",
       shadow:
-        "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px rgba(184,146,42,0.12), 0 0 0 0.5px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+        "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px rgba(184,146,42,0.12), 0 0 0 0.5px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
     },
     muted: {
       bg: "var(--ls-surface)",

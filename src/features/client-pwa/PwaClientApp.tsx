@@ -505,7 +505,7 @@ export function PwaClientApp({
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 14 }}>Jusqu'à <strong style={{ color: 'var(--gold)' }}>−42 % à vie</strong> sur tes courses. Tu n'as pas encore activé ton compte client privilégié.</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button onClick={() => setTab('recommander')} style={{ width: '100%', minHeight: 46, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--gold),#c9a84c)', color: '#221803', fontFamily: SORA, fontWeight: 700, fontSize: 14 }}>Calcule ta remise</button>
+                <button onClick={() => setTab('recommander')} style={{ width: '100%', minHeight: 46, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'linear-gradient(120deg,var(--gold),#2dd4bf)', color: '#221803', fontFamily: SORA, fontWeight: 700, fontSize: 14 }}>Calcule ta remise</button>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button style={{ flex: 1, minHeight: 42, borderRadius: 11, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>M'inscrire</button>
                   <button onClick={() => setTab('recommander')} style={{ flex: 1, minHeight: 42, borderRadius: 11, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Comment ça marche ?</button>

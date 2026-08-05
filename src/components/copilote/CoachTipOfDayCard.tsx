@@ -95,9 +95,9 @@ export function CoachTipOfDayCard() {
       style={{
         position: "relative",
         background:
-          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 7%, var(--ls-surface)) 0%, var(--ls-surface) 60%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))",
-        borderLeft: "3px solid var(--ls-gold)",
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface)) 0%, var(--ls-surface) 60%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
+        borderLeft: "3px solid var(--ls-teal)",
         borderRadius: 14,
         padding: "14px 16px",
         fontFamily: "DM Sans, sans-serif",
@@ -133,13 +133,13 @@ export function CoachTipOfDayCard() {
             gap: 5,
             padding: "3px 9px",
             borderRadius: 999,
-            background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             fontSize: 9.5,
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             fontWeight: 700,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
           }}
         >
           ✦ Tip du jour · {categoryLabel}
@@ -161,8 +161,8 @@ export function CoachTipOfDayCard() {
             transition: "all 0.15s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--ls-gold)";
-            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 40%, transparent)";
+            e.currentTarget.style.color = "var(--ls-teal)";
+            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 40%, transparent)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = "var(--ls-text-muted)";
@@ -203,7 +203,7 @@ export function CoachTipOfDayCard() {
               fontFamily: "Syne, sans-serif",
               fontSize: 11,
               fontWeight: 700,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               letterSpacing: "0.05em",
             }}
           >
@@ -254,9 +254,9 @@ export function CoachTipOfDayCard() {
           style={{
             padding: "6px 12px",
             borderRadius: 999,
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
-            background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-            color: "var(--ls-gold)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+            color: "var(--ls-teal)",
             fontSize: 11.5,
             fontWeight: 600,
             cursor: "pointer",
@@ -267,10 +267,10 @@ export function CoachTipOfDayCard() {
             gap: 4,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 22%, transparent)";
+            e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 22%, transparent)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 10%, transparent)";
+            e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 10%, transparent)";
           }}
         >
           📤 Partager

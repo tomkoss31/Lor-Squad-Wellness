@@ -115,8 +115,8 @@ const bodyStyle: React.CSSProperties = {
 
 const primaryBtn: React.CSSProperties = {
   width: "100%",
-  background: "var(--ls-gold)",
-  color: "var(--ls-gold-contrast)",
+  background: "var(--ls-teal)",
+  color: "var(--ls-teal-contrast)",
   border: "none",
   borderRadius: 12,
   padding: "14px",

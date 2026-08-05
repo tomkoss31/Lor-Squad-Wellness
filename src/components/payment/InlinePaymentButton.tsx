@@ -82,7 +82,7 @@ export function InlinePaymentButton({ amount, description, clientName }: Props) 
               padding: "12px 14px",
               borderRadius: 12,
               border: "none",
-              background: "var(--ls-gold)",
+              background: "var(--ls-teal)",
               color: "#1a1407",
               fontFamily: "Syne, sans-serif",
               fontWeight: 800,

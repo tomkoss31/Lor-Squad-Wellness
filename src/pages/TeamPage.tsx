@@ -936,7 +936,7 @@ function TreeCard({
 
   const cardStyle: React.CSSProperties = isRoot
     ? {
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface)), var(--ls-surface))",
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 22%, var(--ls-surface)), var(--ls-surface))",
         border: "1px solid #0F766E",
         padding: "13px 18px 12px",
         minWidth: 184,

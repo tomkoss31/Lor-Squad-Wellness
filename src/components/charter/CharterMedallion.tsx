@@ -20,7 +20,7 @@ export function CharterMedallion({ size = "lg", text = "L✦S" }: Props) {
         borderRadius: "50%",
         margin: size === "lg" ? "0 auto 22px" : 0,
         background:
-          "radial-gradient(circle at 32% 28%, #FFF4D4 0%, #F5DEB3 18%, #B8922A 50%, #8B6F1F 85%, #5A4612 100%)",
+          "radial-gradient(circle at 32% 28%, #FFF4D4 0%, #F5DEB3 18%, #0D9488 50%, #8B6F1F 85%, #5A4612 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

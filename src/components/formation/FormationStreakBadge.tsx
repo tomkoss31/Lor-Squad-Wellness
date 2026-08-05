@@ -102,7 +102,7 @@ export function FormationStreakBadge() {
         {[
           { at: 3, emoji: "🌱", color: "var(--ls-teal)" },
           { at: 7, emoji: "🔥", color: "var(--ls-coral)" },
-          { at: 30, emoji: "⭐", color: "var(--ls-gold)" },
+          { at: 30, emoji: "⭐", color: "var(--ls-teal)" },
         ].map((p) => {
           const reached = count >= p.at;
           return (

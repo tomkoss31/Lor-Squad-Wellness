@@ -54,7 +54,7 @@ export function BodyScanRadar({ metrics, size = 200 }: BodyScanRadarProps) {
       })}
 
       {/* Data polygon fill */}
-      <path d={dataPath} fill="rgba(201,168,76,0.18)" stroke="var(--ls-gold)" strokeWidth="2" strokeLinejoin="round" />
+      <path d={dataPath} fill="rgba(201,168,76,0.18)" stroke="var(--ls-teal)" strokeWidth="2" strokeLinejoin="round" />
 
       {/* Data points */}
       {dataPoints.map((p, i) => (

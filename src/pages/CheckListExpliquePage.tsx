@@ -28,7 +28,7 @@ const SECTIONS: Section[] = [
       "Revient le lendemain : les pending + skipped repartent en pending",
       "Score X/5 affiché en haut — gamification douce, pas culpabilisante",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
   {
     emoji: "🎯",
@@ -79,7 +79,7 @@ const SECTIONS: Section[] = [
       "Si une action n'est jamais cochable (ex : pas de Leads), c'est un signal stratégique — il faut alimenter le pipeline en amont",
       "L'objectif n'est pas 5/5 chaque jour, c'est 30 actions par semaine en moyenne",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
 ];
 
@@ -158,7 +158,7 @@ export function CheckListExpliquePage() {
           position: absolute;
           left: 4px;
           top: 0;
-          color: var(--ls-gold);
+          color: var(--ls-teal);
           font-size: 12px;
         }
       `}</style>
@@ -187,8 +187,8 @@ const backBtn: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 18,
   padding: "24px 20px",
 };
@@ -199,7 +199,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -286,7 +286,7 @@ const btnPrimary: React.CSSProperties = {
   padding: "12px 22px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 14,

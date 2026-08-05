@@ -90,7 +90,7 @@ export function InboxWidget() {
             height: 36,
             borderRadius: 10,
             background: "rgba(201,168,76,0.1)",
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -171,7 +171,7 @@ export function InboxWidget() {
                   e.currentTarget.style.background = "transparent";
                 }}
               >
-                <span style={{ color: "var(--ls-gold)", fontSize: 11, flexShrink: 0 }}>▸</span>
+                <span style={{ color: "var(--ls-teal)", fontSize: 11, flexShrink: 0 }}>▸</span>
                 <span
                   style={{
                     fontSize: 13,
@@ -211,7 +211,7 @@ export function InboxWidget() {
             to="/messages"
             style={{
               fontSize: 12,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               textDecoration: "none",
               fontWeight: 600,
               display: "inline-flex",
