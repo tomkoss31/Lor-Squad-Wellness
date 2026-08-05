@@ -285,6 +285,31 @@ export function TeamPage() {
         subtitle="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
+      {/* Promouvoir un membre en distributeur (2026-08-05) — accès direct au flux
+          /users?tab=promote (garde le compte du membre, sans 2e compte). Admin only. */}
+      {currentUser?.role === "admin" ? (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Link
+            to="/users?tab=promote"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 16px",
+              borderRadius: 10,
+              background: "linear-gradient(135deg, var(--ls-teal), #0d9488)",
+              color: "#04201c",
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: "none",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            ⬆️ Promouvoir un membre en distributeur
+          </Link>
+        </div>
+      ) : null}
+
       {/* Tabs hub équipe (2026-05-04) — 5 onglets pour centraliser le pilotage */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
