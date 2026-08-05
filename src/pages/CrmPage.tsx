@@ -333,7 +333,7 @@ export function CrmPage() {
       {canFilterTeam && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "12px 0 0" }}>
           <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
-          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-gold)")}>👤 Moi</button>
+          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>👤 Moi</button>
           {line1Ids.size > 0 && (
             <button type="button" onClick={() => setScope("l1")} style={sourceChip(scope === "l1", "var(--ls-teal)")}>
               Ligne 1 ({line1Ids.size})
@@ -513,7 +513,7 @@ export function CrmPage() {
                           📱 Relancer
                         </a>
                       ) : (
-                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-gold)")}>
+                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-teal)")}>
                           📋 Message
                         </button>
                       )}
@@ -1055,7 +1055,7 @@ function LeadCard({
                 📱 Au parrain
               </a>
             ) : null}
-            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-gold)")}>
+            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-teal)")}>
               📋 Copier
             </button>
             <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>
@@ -1131,7 +1131,7 @@ const pageWrap: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)))",
   border: "0.5px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
   borderRadius: 18,
   padding: "22px 20px",
@@ -1344,17 +1344,17 @@ const stagnantBadge: React.CSSProperties = {
 
 const dupeBadge: React.CSSProperties = {
   ...clientBadge,
-  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
-  color: "var(--ls-gold)",
+  background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
+  color: "var(--ls-teal)",
 };
 
 const curiousPanel: React.CSSProperties = {
   marginBottom: 16,
   padding: "12px 16px",
   borderRadius: 14,
-  background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
 };
 
 const curiousHeader: React.CSSProperties = {
@@ -1424,7 +1424,7 @@ const statsBarTrack: React.CSSProperties = {
 const statsBarFill: React.CSSProperties = {
   height: "100%",
   borderRadius: 100,
-  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-gold))",
+  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-teal))",
 };
 
 const actionBtn = (accent: string): React.CSSProperties => ({

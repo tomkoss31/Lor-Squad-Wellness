@@ -102,7 +102,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
             disabled={loading}
             style={{
               width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              background: subscribed ? 'var(--ls-coral-bg)' : 'var(--ls-gold)',
+              background: subscribed ? 'var(--ls-coral-bg)' : 'var(--ls-teal)',
               color: subscribed ? '#FB7185' : 'var(--ls-bg)',
               fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 600,
               opacity: loading ? 0.6 : 1, transition: 'all 0.15s',

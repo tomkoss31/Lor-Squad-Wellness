@@ -288,8 +288,8 @@ export function ProfilTab() {
           style={{
             padding: 18,
             background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
-            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -304,7 +304,7 @@ export function ProfilTab() {
                 fontSize: 10.5,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 fontWeight: 700,
                 marginBottom: 3,
               }}
@@ -331,7 +331,7 @@ export function ProfilTab() {
               padding: "10px 16px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, var(--ls-gold), var(--ls-teal))",
+              background: "linear-gradient(135deg, var(--ls-teal), var(--ls-teal))",
               color: "#0B0D11",
               fontFamily: "DM Sans, sans-serif",
               fontSize: 13,
@@ -339,7 +339,7 @@ export function ProfilTab() {
               cursor: "pointer",
               textDecoration: "none",
               whiteSpace: "nowrap",
-              boxShadow: "0 6px 16px -8px color-mix(in srgb, var(--ls-gold) 60%, transparent)",
+              boxShadow: "0 6px 16px -8px color-mix(in srgb, var(--ls-teal) 60%, transparent)",
             }}
           >
             Ouvrir →
@@ -981,7 +981,7 @@ export function ProfilTab() {
                   transform: "translateY(-50%)",
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   pointerEvents: "none",
                 }}
               >

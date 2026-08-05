@@ -248,7 +248,7 @@ export function FlexOnboardingPage() {
         hint="Net dans ta poche, après marge retail (selon ton rang)."
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16 }}>
-          <span style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "var(--ls-gold)" }}>
+          <span style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "var(--ls-teal)" }}>
             {revenue.toLocaleString("fr-FR")}
           </span>
           <span style={{ color: "var(--ls-text-muted)", fontSize: 18 }}>€/mois</span>
@@ -260,7 +260,7 @@ export function FlexOnboardingPage() {
           step={50}
           value={revenue}
           onChange={(e) => setRevenue(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "var(--ls-gold)" }}
+          style={{ width: "100%", accentColor: "var(--ls-teal)" }}
         />
         <div style={{ display: "flex", justifyContent: "space-between", color: "var(--ls-text-muted)", fontSize: 11, marginTop: 4 }}>
           <span>100 €</span>
@@ -311,10 +311,10 @@ export function FlexOnboardingPage() {
                 padding: "14px 10px",
                 borderRadius: 12,
                 border: dailyTime === opt.value
-                  ? "1px solid var(--ls-gold)"
+                  ? "1px solid var(--ls-teal)"
                   : "0.5px solid var(--ls-border)",
                 background: dailyTime === opt.value
-                  ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface2))"
+                  ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface2))"
                   : "var(--ls-surface)",
                 color: "var(--ls-text)",
                 fontFamily: "DM Sans, sans-serif",
@@ -470,14 +470,14 @@ export function FlexOnboardingPage() {
           position: "sticky",
           bottom: 16,
           background: "var(--ls-surface)",
-          border: "1px solid var(--ls-gold)",
+          border: "1px solid var(--ls-teal)",
           borderRadius: 16,
           padding: 18,
-          boxShadow: "0 12px 40px color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+          boxShadow: "0 12px 40px color-mix(in srgb, var(--ls-teal) 18%, transparent)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-          <span style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-gold)" }}>
+          <span style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-teal)" }}>
             Tes cibles calculées
           </span>
           <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
@@ -522,7 +522,7 @@ export function FlexOnboardingPage() {
             border: "none",
             background: saving
               ? "var(--ls-border)"
-              : "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+              : "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
             color: "var(--ls-bg)",
             fontFamily: "Syne, sans-serif",
             fontSize: 15,
@@ -560,8 +560,8 @@ function SectionCard({ index, title, hint, children }: SectionCardProps) {
             width: 26,
             height: 26,
             borderRadius: 999,
-            background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
-            color: "var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
+            color: "var(--ls-teal)",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",

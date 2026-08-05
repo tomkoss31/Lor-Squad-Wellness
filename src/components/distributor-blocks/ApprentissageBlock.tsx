@@ -21,7 +21,7 @@ export function ApprentissageBlock({ member, hideTitle }: Props) {
           title="Academy"
           primary={`${member.academy_step} / 12`}
           secondary={`${member.academy_percent}% complété`}
-          color={member.academy_percent >= 100 ? "var(--ls-teal)" : "var(--ls-gold)"}
+          color={member.academy_percent >= 100 ? "var(--ls-teal)" : "var(--ls-teal)"}
         />
         <MetricCard
           title="Formation"

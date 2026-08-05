@@ -361,10 +361,10 @@ export function CommandPalette() {
                     padding: "10px 12px",
                     borderRadius: 10,
                     background: isActive
-                      ? "color-mix(in srgb, var(--ls-gold) 12%, transparent)"
+                      ? "color-mix(in srgb, var(--ls-teal) 12%, transparent)"
                       : "transparent",
                     border: isActive
-                      ? "0.5px solid var(--ls-gold)"
+                      ? "0.5px solid var(--ls-teal)"
                       : "0.5px solid transparent",
                     cursor: "pointer",
                     textAlign: "left",
@@ -422,7 +422,7 @@ export function CommandPalette() {
                         fontWeight: 700,
                         padding: "2px 6px",
                         borderRadius: 4,
-                        background: "var(--ls-gold)",
+                        background: "var(--ls-teal)",
                         color: "var(--ls-bg)",
                         flexShrink: 0,
                       }}

@@ -63,7 +63,7 @@ export function OutilsProspectionInternationalPage() {
           <p style={lockDesc}>
             La prospection froide demande de la méthode — elle se débloque une
             fois l'Academy terminée à 100 %. Tu en es à{" "}
-            <strong style={{ color: "var(--ls-gold)" }}>
+            <strong style={{ color: "var(--ls-teal)" }}>
               {academy.percentComplete}%
             </strong>{" "}
             ({academy.completedCount}/{academy.totalCount} sections) : plus
@@ -277,7 +277,7 @@ const marketChip: React.CSSProperties = {
 
 const ghostCta: React.CSSProperties = {
   background: "transparent",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, var(--ls-border))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, var(--ls-border))",
   color: "var(--ls-text)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
@@ -338,7 +338,7 @@ const lockBarTrack: React.CSSProperties = {
 
 const lockBarFill: React.CSSProperties = {
   height: "100%",
-  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-gold))",
+  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-teal))",
   borderRadius: 100,
 };
 

@@ -247,10 +247,10 @@ export function BulkMessageModal({ clients, onClose }: Props) {
                     padding: "10px",
                     marginBottom: 4,
                     background: isSelected
-                      ? "color-mix(in srgb, var(--ls-gold) 12%, transparent)"
+                      ? "color-mix(in srgb, var(--ls-teal) 12%, transparent)"
                       : "transparent",
                     border: isSelected
-                      ? "0.5px solid var(--ls-gold)"
+                      ? "0.5px solid var(--ls-teal)"
                       : "0.5px solid transparent",
                     borderRadius: 10,
                     cursor: "pointer",

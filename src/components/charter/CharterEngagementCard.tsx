@@ -25,7 +25,7 @@ const VARIANT_BG: Record<"gold" | "teal", string> = {
 };
 
 const VARIANT_BORDER: Record<"gold" | "teal", string> = {
-  gold: "#B8922A",
+  gold: "#0D9488",
   teal: "#1D9E75",
 };
 
@@ -41,7 +41,7 @@ const VARIANT_HINT_COLOR: Record<"gold" | "teal", string> = {
 
 const ICON_GRADIENT: Record<"gold" | "teal", string> = {
   gold:
-    "radial-gradient(circle at 32% 28%, #FFF4D4 0%, #F5DEB3 18%, #B8922A 55%, #8B6F1F 100%)",
+    "radial-gradient(circle at 32% 28%, #FFF4D4 0%, #F5DEB3 18%, #0D9488 55%, #8B6F1F 100%)",
   teal:
     "radial-gradient(circle at 32% 28%, #C5F0DD 0%, #6FD4AE 20%, #1D9E75 60%, #14704F 100%)",
 };

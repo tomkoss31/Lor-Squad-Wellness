@@ -51,7 +51,7 @@ function statusInfo(stats: ReturnType<typeof useUserActivityStats>): {
     return { label: "Connecté aujourd'hui", color: "var(--ls-teal)", emoji: "🟢" };
   }
   if (diffH < 48) {
-    return { label: "Connecté hier", color: "var(--ls-gold)", emoji: "🟡" };
+    return { label: "Connecté hier", color: "var(--ls-teal)", emoji: "🟡" };
   }
   if (diffH < 24 * 7) {
     return { label: "Inactif cette semaine", color: "var(--ls-coral)", emoji: "🟠" };
@@ -242,7 +242,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
         <StatCard
           label="Streak actuel"
           value={stats.streakCount > 0 ? `${stats.streakCount}j` : "—"}
-          color="var(--ls-gold)"
+          color="var(--ls-teal)"
           emoji="🔥"
           extra={stats.streakCount > 0 ? "consécutifs" : "à démarrer"}
         />
@@ -419,8 +419,8 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
         style={{
           marginTop: 16,
           padding: "10px 14px",
-          background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 12,
           display: "flex",
           alignItems: "center",
@@ -438,7 +438,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
             fontFamily: "Syne, sans-serif",
             fontSize: 14,
             fontWeight: 800,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             letterSpacing: "-0.02em",
           }}
         >

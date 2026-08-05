@@ -21,7 +21,7 @@ interface Props {
 }
 
 const KIND_META: Record<FormationThreadKind, { label: string; color: string }> = {
-  question: { label: "Question", color: "var(--ls-gold)" },
+  question: { label: "Question", color: "var(--ls-teal)" },
   answer: { label: "Réponse", color: "var(--ls-teal)" },
   validation_decision: { label: "Décision", color: "var(--ls-purple)" },
   feedback: { label: "Message", color: "var(--ls-text-muted)" },
@@ -169,7 +169,7 @@ export function ReviewThreadPanel({ progressId, compact = false }: Props) {
               borderRadius: 999,
               border: "none",
               background:
-                "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, #000) 100%)",
+                "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
               color: "white",
               fontFamily: "Syne, sans-serif",
               fontWeight: 700,

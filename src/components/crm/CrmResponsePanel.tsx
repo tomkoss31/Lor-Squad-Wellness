@@ -149,11 +149,11 @@ const STYLES = `
     cursor: pointer;
     font-family: inherit;
   }
-  .crp-tab:hover { border-color: var(--ls-gold, #C9A84C); }
+  .crp-tab:hover { border-color: var(--ls-teal, #2DD4BF); }
   .crp-tab-active {
-    background: color-mix(in srgb, var(--ls-gold, #C9A84C) 14%, transparent);
-    border-color: var(--ls-gold, #C9A84C);
-    color: var(--ls-gold, #C9A84C);
+    background: color-mix(in srgb, var(--ls-teal, #2DD4BF) 14%, transparent);
+    border-color: var(--ls-teal, #2DD4BF);
+    color: var(--ls-teal, #2DD4BF);
     font-weight: 600;
   }
   .crp-tab-emoji { font-size: 14px; }
@@ -174,8 +174,8 @@ const STYLES = `
   }
   .crp-textarea:focus {
     outline: none;
-    border-color: var(--ls-gold, #C9A84C);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-gold, #C9A84C) 15%, transparent);
+    border-color: var(--ls-teal, #2DD4BF);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-teal, #2DD4BF) 15%, transparent);
   }
 
   .crp-actions {
@@ -201,7 +201,7 @@ const STYLES = `
     justify-content: center;
   }
   .crp-btn:hover { opacity: 0.92; transform: translateY(-1px); }
-  .crp-btn-primary { background: linear-gradient(90deg, var(--ls-gold, #C9A84C) 0%, #E0BF6B 100%); }
+  .crp-btn-primary { background: linear-gradient(90deg, var(--ls-teal, #2DD4BF) 0%, #E0BF6B 100%); }
   .crp-btn-wa { background: #25D366; }
   .crp-btn-sms { background: #0EA5E9; }
   .crp-btn-tg { background: #2AABEE; }

@@ -408,7 +408,7 @@ export function ClientAccessModal({
               style={{
                 width: "100%",
                 padding: "11px 16px",
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "var(--ls-charcoal)",
                 border: "none",
                 borderRadius: 10,

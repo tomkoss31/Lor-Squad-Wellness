@@ -83,7 +83,7 @@ export function usePilotageLevel(userId: string | null | undefined): UsePilotage
 export const PILOTAGE_META: Record<PilotageLevel, { emoji: string; label: string; color: string }> = {
   nouveau: { emoji: "🌱", label: "Nouveau", color: "var(--ls-text-muted)" },
   actif: { emoji: "⚡", label: "Actif", color: "var(--ls-teal)" },
-  ambassadeur: { emoji: "⭐", label: "Ambassadeur", color: "var(--ls-gold)" },
+  ambassadeur: { emoji: "⭐", label: "Ambassadeur", color: "var(--ls-teal)" },
   leader: { emoji: "👑", label: "Leader", color: "var(--ls-purple)" },
   dort: { emoji: "😴", label: "En sommeil", color: "var(--ls-coral)" },
 };

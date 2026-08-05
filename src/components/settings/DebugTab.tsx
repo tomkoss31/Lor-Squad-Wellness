@@ -85,7 +85,7 @@ export function DebugTab() {
             display: "inline-flex",
             padding: "10px 14px",
             borderRadius: 10,
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             color: "#0B0D11",
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
@@ -139,7 +139,7 @@ export function DebugTab() {
                     padding: "1px 6px",
                     borderRadius: 6,
                     background: "var(--ls-surface)",
-                    color: "var(--ls-gold)",
+                    color: "var(--ls-teal)",
                     fontSize: 10,
                     fontFamily: "DM Mono, monospace",
                   }}

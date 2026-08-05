@@ -86,11 +86,11 @@ export function FormationSearchBar() {
     // 1. Modules + lecons
     for (const level of FORMATION_LEVELS) {
       const accentMap: Record<string, string> = {
-        demarrer: "var(--ls-gold)",
+        demarrer: "var(--ls-teal)",
         construire: "var(--ls-teal)",
         dupliquer: "var(--ls-purple)",
       };
-      const accent = accentMap[level.id] ?? "var(--ls-gold)";
+      const accent = accentMap[level.id] ?? "var(--ls-teal)";
       for (const m of level.modules) {
         const haystacks = [
           m.title,
@@ -181,7 +181,7 @@ export function FormationSearchBar() {
             borderRadius: 12,
             background: "var(--ls-input-bg, var(--ls-surface))",
             border: open
-              ? "1.5px solid var(--ls-gold)"
+              ? "1.5px solid var(--ls-teal)"
               : "1.5px solid var(--ls-border)",
             color: "var(--ls-text)",
             fontFamily: "DM Sans, sans-serif",
@@ -189,7 +189,7 @@ export function FormationSearchBar() {
             outline: "none",
             transition: "border-color 180ms ease, box-shadow 180ms ease",
             boxShadow: open
-              ? "0 0 0 4px color-mix(in srgb, var(--ls-gold) 16%, transparent)"
+              ? "0 0 0 4px color-mix(in srgb, var(--ls-teal) 16%, transparent)"
               : "none",
           }}
         />

@@ -165,7 +165,7 @@ export function WeeklyQuestsCard() {
                   style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: completed ? "#1D9E75" : "#B8922A",
+                    color: completed ? "#1D9E75" : "#0D9488",
                     fontFamily: "DM Sans, sans-serif",
                     flexShrink: 0,
                   }}
@@ -188,7 +188,7 @@ export function WeeklyQuestsCard() {
                     height: "100%",
                     background: completed
                       ? "linear-gradient(90deg, #1D9E75, #0F6E56)"
-                      : "linear-gradient(90deg, #B8922A, #2DD4BF)",
+                      : "linear-gradient(90deg, #0D9488, #2DD4BF)",
                     transition: "width 600ms cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 />

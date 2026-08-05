@@ -331,8 +331,8 @@ export function ClientVipCoachPanel({ client }: Props) {
       {!vipActive ? (
         <div
           style={{
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
             borderRadius: 14,
             padding: "14px 16px",
             marginBottom: 14,
@@ -359,7 +359,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                 letterSpacing: 1.4,
                 textTransform: "uppercase",
                 fontWeight: 700,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 marginBottom: 6,
               }}
             >
@@ -591,7 +591,7 @@ export function ClientVipCoachPanel({ client }: Props) {
                   status.data.level === "ambassador"
                     ? "linear-gradient(90deg, #7C3AED, #C084FC)"
                     : status.data.level === "gold"
-                      ? "linear-gradient(90deg, #B8922A, #FFE873)"
+                      ? "linear-gradient(90deg, #0D9488, #FFE873)"
                       : status.data.level === "silver"
                         ? "linear-gradient(90deg, #6B7280, #D1D5DB)"
                         : "linear-gradient(90deg, #B87333, #DA9E5C)",
@@ -667,7 +667,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               disabled={savingId}
               style={{
                 padding: "8px 14px",
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -722,8 +722,8 @@ export function ClientVipCoachPanel({ client }: Props) {
               style={{
                 padding: "4px 10px",
                 background: "transparent",
-                color: "var(--ls-gold)",
-                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+                color: "var(--ls-teal)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
                 borderRadius: 7,
                 fontSize: 11,
                 fontWeight: 600,
@@ -781,7 +781,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               disabled={savingSponsor}
               style={{
                 padding: "8px 14px",
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -887,7 +887,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               disabled={savingPv}
               style={{
                 padding: "8px 14px",
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -1103,7 +1103,7 @@ function IntentionRow({
               intention.status === "converted"
                 ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                 : intention.status === "contacted"
-                  ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                  ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                   : intention.status === "lost"
                     ? "color-mix(in srgb, var(--ls-coral) 18%, transparent)"
                     : "rgba(0,0,0,0.05)",
@@ -1111,7 +1111,7 @@ function IntentionRow({
               intention.status === "converted"
                 ? "var(--ls-teal)"
                 : intention.status === "contacted"
-                  ? "var(--ls-gold)"
+                  ? "var(--ls-teal)"
                   : intention.status === "lost"
                     ? "var(--ls-coral)"
                     : "var(--ls-text-muted)",
@@ -1234,10 +1234,10 @@ function ReferralTreeView({ nodes, rootId }: { nodes: VipTreeNode[]; rootId: str
             gap: 8,
             padding: "6px 10px",
             background: isRoot
-              ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))"
+              ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))"
               : "var(--ls-surface2)",
             border: isRoot
-              ? "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)"
+              ? "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)"
               : "0.5px solid var(--ls-border)",
             borderRadius: 8,
             marginBottom: 4,

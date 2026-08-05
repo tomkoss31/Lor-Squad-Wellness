@@ -27,7 +27,7 @@ export function ActiviteRecenteBlock({ member, hideTitle }: Props) {
           title="RDV 30j"
           primary={String(member.rdv_30d)}
           secondary="follow-ups planifiés"
-          color="var(--ls-gold)"
+          color="var(--ls-teal)"
         />
         <MetricCard
           title="Messages 7j"

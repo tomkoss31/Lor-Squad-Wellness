@@ -34,7 +34,7 @@ const SECTIONS: Section[] = [
       "Tu fais ton check-in chaque jour (30 sec) → tu vois si tu es dans les clous",
       "Tu ajustes en fonction des couleurs (vert/jaune/rouge) → tu progresses sans deviner",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
   {
     emoji: "🧮",
@@ -83,7 +83,7 @@ const SECTIONS: Section[] = [
       "5 bilans / semaine (donc ~1 par jour ouvré)",
       "2 closings / semaine (donc ~1 client tous les 2-3 jours)",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
   {
     emoji: "🧠",
@@ -206,8 +206,8 @@ const backBtn: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 18,
   padding: "24px 20px",
 };
@@ -218,7 +218,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -305,7 +305,7 @@ const btnPrimary: React.CSSProperties = {
   padding: "12px 22px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 14,
@@ -340,7 +340,7 @@ const _injectedBulletCss = (() => {
       position: absolute;
       left: 4px;
       top: 0;
-      color: var(--ls-gold);
+      color: var(--ls-teal);
       font-size: 12px;
     }
   `;

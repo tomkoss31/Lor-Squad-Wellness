@@ -189,7 +189,7 @@ export function ClientSandboxPage() {
               fontSize: 9,
               letterSpacing: 2,
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 700,
             }}
           >
@@ -731,7 +731,7 @@ function Quest3Programme({
                     ? "linear-gradient(135deg, rgba(184,146,42,0.18), rgba(184,146,42,0.08))"
                     : "white",
                   border: isSelected
-                    ? "1px solid #B8922A"
+                    ? "1px solid #0D9488"
                     : "0.5px solid rgba(0,0,0,0.10)",
                   borderRadius: 12,
                   fontFamily: "DM Sans, sans-serif",
@@ -782,7 +782,7 @@ function Quest3Programme({
                 fontSize: 11,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
                 marginBottom: 4,
               }}
@@ -830,7 +830,7 @@ function Quest3Programme({
                     >
                       {p.name}
                       {p.recommended ? (
-                        <span style={{ marginLeft: 5, color: "#B8922A" }}>⭐</span>
+                        <span style={{ marginLeft: 5, color: "#0D9488" }}>⭐</span>
                       ) : null}
                     </div>
                     <div style={{ fontSize: 11, color: "#6B6B62" }}>{p.reason}</div>
@@ -1280,7 +1280,7 @@ function QuestCard({
               lineHeight: 1.2,
             }}
           >
-            <span style={{ color: "#B8922A", marginRight: 6 }}>#{number}</span>
+            <span style={{ color: "#0D9488", marginRight: 6 }}>#{number}</span>
             {title}
           </div>
           <div style={{ fontSize: 11, color: "#6B6B62", marginTop: 2, lineHeight: 1.4 }}>

@@ -521,8 +521,8 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
           padding: "22px 24px",
           borderRadius: 20,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
           position: "relative",
           overflow: "hidden",
         }}
@@ -537,7 +537,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
             height: 200,
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 30%, transparent) 0%, transparent 70%)",
+              "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 30%, transparent) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -547,7 +547,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
               fontSize: 10.5,
               letterSpacing: 1.4,
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontWeight: 700,
               marginBottom: 6,
             }}
@@ -630,7 +630,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
         <button
           type="button"
           onClick={() => navigate("/parametres")}
-          style={passiveCardCtaStyle("var(--ls-gold)")}
+          style={passiveCardCtaStyle("var(--ls-teal)")}
         >
           <span style={{ fontSize: 22 }}>⚙️</span>
           <div style={{ textAlign: "left", flex: 1 }}>

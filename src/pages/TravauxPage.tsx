@@ -46,8 +46,8 @@ const card: React.CSSProperties = {
   padding: "48px 28px",
   borderRadius: 18,
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
 };
 
 const emoji: React.CSSProperties = {

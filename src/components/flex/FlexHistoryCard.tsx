@@ -149,14 +149,14 @@ export function FlexHistoryCard({ userId }: Props) {
       {/* Total mensuel */}
       <div
         style={{
-          background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
           borderRadius: 12,
           padding: "12px 14px",
           marginBottom: 16,
         }}
       >
-        <div style={{ fontSize: 10, fontFamily: "DM Sans, sans-serif", textTransform: "uppercase", letterSpacing: 1.2, color: "var(--ls-gold)", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontFamily: "DM Sans, sans-serif", textTransform: "uppercase", letterSpacing: 1.2, color: "var(--ls-teal)", marginBottom: 8 }}>
           Cumul des 4 dernières semaines
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>

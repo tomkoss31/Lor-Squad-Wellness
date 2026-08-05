@@ -143,7 +143,7 @@ export function FormationPage() {
           icon="✦"
           title="Ton parcours guidé"
           subtitle="3 niveaux · théorie + quiz + validation par ton sponsor."
-          accent="var(--ls-gold)"
+          accent="var(--ls-teal)"
         />
         <div
           style={{
@@ -178,13 +178,13 @@ export function FormationPage() {
             padding: "clamp(14px, 3.5vw, 22px)",
             marginTop: 14,
             background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 50%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 32%, var(--ls-border))",
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 50%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
             borderRadius: 18,
             textDecoration: "none",
             color: "var(--ls-text)",
             fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 6px 22px -12px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            boxShadow: "0 6px 22px -12px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             transition: "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 240ms ease",
             position: "relative",
             overflow: "hidden",
@@ -192,12 +192,12 @@ export function FormationPage() {
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-2px)";
             e.currentTarget.style.boxShadow =
-              "0 12px 30px -12px color-mix(in srgb, var(--ls-gold) 45%, transparent)";
+              "0 12px 30px -12px color-mix(in srgb, var(--ls-teal) 45%, transparent)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "none";
             e.currentTarget.style.boxShadow =
-              "0 6px 22px -12px color-mix(in srgb, var(--ls-gold) 30%, transparent)";
+              "0 6px 22px -12px color-mix(in srgb, var(--ls-teal) 30%, transparent)";
           }}
         >
           <div
@@ -209,7 +209,7 @@ export function FormationPage() {
               width: 160,
               height: 160,
               borderRadius: "50%",
-              background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+              background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
               filter: "blur(56px)",
               pointerEvents: "none",
             }}
@@ -219,13 +219,13 @@ export function FormationPage() {
               width: 56,
               height: 56,
               borderRadius: 16,
-              background: "linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+              background: "linear-gradient(135deg, var(--ls-teal) 0%, var(--ls-teal) 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 28,
               boxShadow:
-                "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.40)",
+                "0 4px 14px color-mix(in srgb, var(--ls-teal) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.40)",
               flexShrink: 0,
               position: "relative",
             }}
@@ -239,7 +239,7 @@ export function FormationPage() {
                 fontWeight: 700,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 marginBottom: 4,
               }}
             >
@@ -269,7 +269,7 @@ export function FormationPage() {
               {FORMATION_TOOLKIT.length} outils prêts à copier-coller pour passer à l&apos;acte.
             </div>
           </div>
-          <span style={{ color: "var(--ls-gold)", fontSize: 22, flexShrink: 0, position: "relative" }}>
+          <span style={{ color: "var(--ls-teal)", fontSize: 22, flexShrink: 0, position: "relative" }}>
             →
           </span>
         </Link>
@@ -306,8 +306,8 @@ export function FormationPage() {
       <div
         style={{
           padding: "14px 16px",
-          background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 12,
           fontSize: 12.5,
           color: "var(--ls-text-muted)",
@@ -315,7 +315,7 @@ export function FormationPage() {
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        💡 <strong style={{ color: "var(--ls-gold)" }}>Le contenu arrive bientôt.</strong> Thomas
+        💡 <strong style={{ color: "var(--ls-teal)" }}>Le contenu arrive bientôt.</strong> Thomas
         finalise les modules de formation. La boîte à outils est déjà 100% utilisable. Pour les
         modules Démarrer / Construire / Dupliquer, encore quelques jours de patience.
       </div>

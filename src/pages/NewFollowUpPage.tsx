@@ -507,7 +507,7 @@ export function NewFollowUpPage() {
     return (
       <Card>
         <p style={{ color: 'var(--ls-text)', fontSize: 14, marginBottom: 12 }}>Ce client n'a pas encore de bilan initial complet. Crée d'abord un bilan avec body scan avant de faire un suivi.</p>
-        <button onClick={() => navigate(`/clients/${targetClient.id}`)} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--ls-gold)', color: '#0B0D11', border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>
+        <button onClick={() => navigate(`/clients/${targetClient.id}`)} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--ls-teal)', color: '#0B0D11', border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>
           Retour à la fiche
         </button>
       </Card>
@@ -963,7 +963,7 @@ export function NewFollowUpPage() {
 
                 <Link
                   to={`/pv/clients?client=${targetClient.id}`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[rgba(var(--ls-gold-rgb),0.16)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[rgba(var(--ls-gold-rgb),0.24)]"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[rgba(var(--ls-teal-rgb),0.16)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[rgba(var(--ls-teal-rgb),0.24)]"
                 >
                   Ouvrir sa fiche point volume
                 </Link>
@@ -1394,7 +1394,7 @@ function StartingPointWeightCard({
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 rounded-full bg-white/10">
             <div className="flex h-full items-center justify-between px-1">
-              <span className="h-3 w-3 rounded-full bg-[var(--ls-gold)] shadow-[0_0_10px_rgba(var(--ls-gold-rgb),0.35)]" />
+              <span className="h-3 w-3 rounded-full bg-[var(--ls-teal)] shadow-[0_0_10px_rgba(var(--ls-teal-rgb),0.35)]" />
               <span className="h-3 w-3 rounded-full bg-slate-300 shadow-[0_0_10px_rgba(226,232,240,0.25)]" />
               <span className="h-3 w-3 rounded-full bg-[#2DD4BF] shadow-[0_0_10px_rgba(110,231,183,0.45)]" />
             </div>
@@ -1426,7 +1426,7 @@ function WeightMilestoneCard({
     tone === "green"
       ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
       : tone === "blue"
-        ? "bg-[rgba(var(--ls-gold-rgb),0.07)] ring-1 ring-[rgba(var(--ls-gold-rgb),0.12)]"
+        ? "bg-[rgba(var(--ls-teal-rgb),0.07)] ring-1 ring-[rgba(var(--ls-teal-rgb),0.12)]"
         : "bg-[var(--ls-surface2)] ring-1 ring-white/6";
 
   return (

@@ -98,7 +98,7 @@ export function BodyFatInsightCard({
             </div>
 
             <div className="mt-4">
-              <div className="relative h-3 rounded-full bg-gradient-to-r from-[#2DD4BF] via-[#C9A84C] to-rose-500">
+              <div className="relative h-3 rounded-full bg-gradient-to-r from-[#2DD4BF] via-[#2DD4BF] to-rose-500">
                 <div
                   className="absolute top-1/2 h-6 -translate-y-1/2 rounded-full border border-white/60 bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]"
                   style={{
@@ -199,7 +199,7 @@ function GaugeLegendChip({
     tone === "green"
       ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
       : tone === "blue"
-        ? { rgb: "201,168,76", hex: "var(--ls-gold)" }
+        ? { rgb: "201,168,76", hex: "var(--ls-teal)" }
         : tone === "amber"
           ? { rgb: "245,158,11", hex: "#F59E0B" }
           : { rgb: "251,113,133", hex: "var(--ls-coral)" };

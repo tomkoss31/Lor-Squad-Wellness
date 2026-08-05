@@ -142,7 +142,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         </div>
 
         <div style={{
-          background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface2))",
+          background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface2))",
           borderRadius: "12px",
           padding: "16px",
           fontSize: "15px",
@@ -262,7 +262,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
           disabled={sending}
           style={{
             width: "100%",
-            background: sending ? "var(--ls-text-hint)" : "var(--ls-gold)",
+            background: sending ? "var(--ls-text-hint)" : "var(--ls-teal)",
             color: sending ? "var(--ls-surface)" : "#1a1407",
             border: "none",
             padding: "14px",

@@ -21,7 +21,7 @@ interface Props {
 }
 
 const PV = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   goldLight: "#E5C97D",
   teal: "#2DD4BF",
   tealDark: "#0F766E",

@@ -208,7 +208,7 @@ export function CoachNotesBlock({
             borderRadius: 8,
             border: "1px solid var(--ls-border)",
             background: "transparent",
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             cursor: "pointer",
             fontSize: 11,
             fontFamily: "DM Sans, sans-serif",

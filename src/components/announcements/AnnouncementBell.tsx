@@ -50,8 +50,8 @@ export function AnnouncementBell() {
           "Nouveautés app" retirée du hub Développement. */}
       <style>{`
         @keyframes ls-bell-glow {
-          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-gold) 40%, transparent); }
-          50% { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--ls-gold) 38%, transparent); }
+          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-teal) 40%, transparent); }
+          50% { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--ls-teal) 38%, transparent); }
         }
         @keyframes ls-bell-swing {
           0%, 55%, 100% { transform: rotate(0); }
@@ -61,8 +61,8 @@ export function AnnouncementBell() {
         }
         .ls-bell-unread {
           animation: ls-bell-glow 2.4s ease-in-out infinite;
-          border-color: color-mix(in srgb, var(--ls-gold) 55%, var(--ls-border)) !important;
-          color: var(--ls-gold) !important;
+          border-color: color-mix(in srgb, var(--ls-teal) 55%, var(--ls-border)) !important;
+          color: var(--ls-teal) !important;
         }
         .ls-bell-unread svg {
           animation: ls-bell-swing 2.4s ease-in-out infinite;
@@ -297,7 +297,7 @@ const seeAllBtn: React.CSSProperties = {
   background: "var(--ls-surface2)",
   border: "none",
   borderTop: "0.5px solid var(--ls-border)",
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 12,
   fontWeight: 700,

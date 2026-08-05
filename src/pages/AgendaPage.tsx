@@ -1000,7 +1000,7 @@ export function AgendaPage() {
               alignItems: "center",
               gap: 16,
               padding: "16px 22px",
-              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
               border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, var(--ls-border))",
               borderRadius: 18,
               textDecoration: "none",
@@ -2013,22 +2013,22 @@ function EntityTab({
         background: active && dot
           ? `linear-gradient(135deg, color-mix(in srgb, ${dot} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
           : active
-            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
             : "var(--ls-surface)",
         border: active && dot
           ? `0.5px solid color-mix(in srgb, ${dot} 50%, transparent)`
           : active
-            ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+            ? "0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)"
             : "0.5px solid var(--ls-border)",
         borderRadius: 999,
-        color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
+        color: active ? (dot ?? "var(--ls-teal)") : "var(--ls-text-muted)",
         transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
         boxShadow: active && dot ? `0 4px 12px -4px color-mix(in srgb, ${dot} 30%, transparent)` : "none",
       }}
       onMouseEnter={(e) => {
         if (!active) {
           e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))";
         }
       }}
       onMouseLeave={(e) => {
@@ -2063,8 +2063,8 @@ function EntityTab({
           background: active
             ? "var(--ls-bg)"
             : "var(--ls-surface2)",
-          color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
-          border: active ? `0.5px solid ${dot ?? "var(--ls-gold)"}` : "0.5px solid transparent",
+          color: active ? (dot ?? "var(--ls-teal)") : "var(--ls-text-muted)",
+          border: active ? `0.5px solid ${dot ?? "var(--ls-teal)"}` : "0.5px solid transparent",
           minWidth: 22,
           textAlign: "center",
           letterSpacing: -0.2,
@@ -2117,8 +2117,8 @@ function ClientFollowUpCard({
         gap: 14,
         padding: "14px 16px 14px 18px",
         background:
-          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
         borderRadius: 16,
         textDecoration: "none",
         color: "inherit",
@@ -2129,12 +2129,12 @@ function ClientFollowUpCard({
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.boxShadow = "0 8px 22px -10px rgba(184,146,42,0.35)";
-        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 60%, var(--ls-border))";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 60%, var(--ls-border))";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "none";
         e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))";
       }}
     >
       {/* Border-left gold gradient */}
@@ -2158,8 +2158,8 @@ function ClientFollowUpCard({
           textAlign: "center",
           flexShrink: 0,
           padding: "8px 6px",
-          background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 10,
         }}
       >
@@ -2168,7 +2168,7 @@ function ClientFollowUpCard({
             fontFamily: "Syne, sans-serif",
             fontWeight: 800,
             fontSize: 14,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             lineHeight: 1.1,
             letterSpacing: "-0.02em",
           }}
@@ -2282,8 +2282,8 @@ function ClientFollowUpCard({
           fontWeight: 800,
           letterSpacing: 0.4,
           background: "rgba(184,146,42,0.14)",
-          color: "var(--ls-gold)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+          color: "var(--ls-teal)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
           textTransform: "uppercase",
           fontFamily: "DM Sans, sans-serif",
         }}
@@ -2333,12 +2333,12 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
         fontSize: 12,
         padding: "7px 14px",
         background: active
-          ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+          ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
           : "var(--ls-surface)",
         border: active
-          ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+          ? "0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)"
           : "0.5px solid var(--ls-border)",
-        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
         fontWeight: active ? 700 : 500,
         fontFamily: "DM Sans, sans-serif",
         borderRadius: 999,
@@ -2349,7 +2349,7 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
       onMouseEnter={(e) => {
         if (!active) {
           e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))";
         }
       }}
       onMouseLeave={(e) => {
@@ -2821,7 +2821,7 @@ function TeamStatsWidget({ prospects }: { prospects: Prospect[] }) {
             fontFamily: "Syne, sans-serif",
             fontWeight: 700,
             fontSize: 18,
-            color: stats.conversionRate >= 40 ? "var(--ls-teal)" : stats.conversionRate >= 20 ? "var(--ls-gold)" : "var(--ls-text-muted)",
+            color: stats.conversionRate >= 40 ? "var(--ls-teal)" : stats.conversionRate >= 20 ? "var(--ls-teal)" : "var(--ls-text-muted)",
           }}
         >
           {stats.conversionRate}%

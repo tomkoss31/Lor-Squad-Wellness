@@ -6,7 +6,7 @@
 import type { PodiumAccent } from "./PodiumTop3";
 
 const ACCENT_MAP: Record<PodiumAccent, { primary: string; cssVar: string }> = {
-  gold:   { primary: "#2DD4BF", cssVar: "var(--ls-gold)" },
+  gold:   { primary: "#2DD4BF", cssVar: "var(--ls-teal)" },
   purple: { primary: "#A78BFA", cssVar: "var(--ls-purple)" },
   teal:   { primary: "#2DD4BF", cssVar: "var(--ls-teal)" },
   coral:  { primary: "#FB7185", cssVar: "var(--ls-coral)" },

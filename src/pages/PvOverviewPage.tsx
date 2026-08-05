@@ -388,13 +388,13 @@ function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId,
               cursor: "pointer",
               transition: "all 0.15s",
               background: isSelected ? "rgba(184,146,42,0.06)" : "transparent",
-              borderLeft: isSelected ? "3px solid var(--ls-gold)" : "3px solid transparent",
+              borderLeft: isSelected ? "3px solid var(--ls-teal)" : "3px solid transparent",
               paddingLeft: isSelected ? 13 : 16,
               gap: 8,
             }}
           >
             <div className="pv-cell-client" style={{ flex: 2, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--ls-teal)" : "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {r.clientName}
                 </span>
@@ -445,10 +445,10 @@ function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId,
             <div className="pv-cell-program" style={{ flex: 1.5, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
               {r.program ?? "—"}
             </div>
-            <div className="pv-cell-pv" style={{ flex: 1, fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)" }}>
+            <div className="pv-cell-pv" style={{ flex: 1, fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: isSelected ? "var(--ls-teal)" : "var(--ls-text)" }}>
               {(r.pvCumulative ?? 0).toFixed(0)}
             </div>
-            <div className="pv-cell-days" style={{ flex: 1, fontSize: 12, color: r.daysSinceStart > 60 ? "var(--ls-coral)" : r.daysSinceStart > 30 ? "var(--ls-gold)" : "var(--ls-text-muted)" }}>
+            <div className="pv-cell-days" style={{ flex: 1, fontSize: 12, color: r.daysSinceStart > 60 ? "var(--ls-coral)" : r.daysSinceStart > 30 ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>
               {r.daysSinceStart ?? 0} j
             </div>
             <div className="pv-cell-status" style={{ width: 90 }}>
@@ -475,7 +475,7 @@ function getStatusInfo(status: PvClientTrackingRecord["status"]) {
       return { label: "Retard", bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" };
     case "watch":
     case "follow-up":
-      return { label: "À relancer", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
+      return { label: "À relancer", bg: "rgba(184,146,42,0.1)", color: "var(--ls-teal)" };
     case "ok":
     default:
       return { label: "OK", bg: "rgba(13,148,136,0.1)", color: "var(--ls-teal)" };

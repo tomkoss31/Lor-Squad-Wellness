@@ -44,8 +44,8 @@ export function FelicitationsStep({
         margin: "0 auto",
         padding: "clamp(24px, 5vw, 40px)",
         background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-        border: "1px solid color-mix(in srgb, var(--ls-gold) 22%, transparent)",
+          "linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 22%, transparent)",
       }}
     >
       {/* Emoji + titre */}
@@ -78,7 +78,7 @@ export function FelicitationsStep({
             fontFamily: "'Syne', sans-serif",
             fontWeight: 500,
             fontSize: 16,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             margin: "8px 0 0",
           }}
         >
@@ -202,8 +202,8 @@ export function FelicitationsStep({
                   width: 22,
                   height: 22,
                   borderRadius: "50%",
-                  background: "var(--ls-gold)",
-                  color: "var(--ls-gold-contrast, #0B0D11)",
+                  background: "var(--ls-teal)",
+                  color: "var(--ls-teal-contrast, #0B0D11)",
                   fontWeight: 700,
                   fontSize: 11,
                   display: "flex",
@@ -230,7 +230,7 @@ export function FelicitationsStep({
         <p
           style={{
             fontSize: 13,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 600,
             fontFamily: "'Syne', sans-serif",
             margin: 0,

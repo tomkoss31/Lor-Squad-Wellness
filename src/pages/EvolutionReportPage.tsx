@@ -107,7 +107,7 @@ export function EvolutionReportPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 32, height: 32, border: '2px solid rgba(184,146,42,0.2)', borderTop: '2px solid #B8922A', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: '2px solid rgba(184,146,42,0.2)', borderTop: '2px solid #0D9488', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
@@ -115,7 +115,7 @@ export function EvolutionReportPage() {
   if (error || !report) return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'DM Sans, sans-serif' }}>
       <div>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: '#B8922A', marginBottom: 16, opacity: 0.3 }}>404</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: '#0D9488', marginBottom: 16, opacity: 0.3 }}>404</div>
         <div style={{ fontSize: 16, color: '#111827', marginBottom: 8 }}>Rapport introuvable ou expiré</div>
         <div style={{ fontSize: 13, color: '#9CA3AF' }}>Ce lien est valable 90 jours après génération.</div>
       </div>
@@ -144,19 +144,19 @@ export function EvolutionReportPage() {
           <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '28px 24px 24px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 30, height: 30, background: '#B8922A', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 30, height: 30, background: '#0D9488', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#111827' }}>Lor&apos;<span style={{ color: '#B8922A' }}>Squad</span> Wellness</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#111827' }}>Lor&apos;<span style={{ color: '#0D9488' }}>Squad</span> Wellness</div>
               </div>
               <a href={GOOGLE_MAPS} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(184,146,42,0.1)', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 20, padding: '5px 12px', textDecoration: 'none' }}>
-                <span style={{ color: '#B8922A', fontSize: 11 }}>★★★★★</span>
-                <span style={{ fontSize: 11, color: '#B8922A', fontWeight: 500 }}>Avis Google</span>
+                <span style={{ color: '#0D9488', fontSize: 11 }}>★★★★★</span>
+                <span style={{ fontSize: 11, color: '#0D9488', fontWeight: 500 }}>Avis Google</span>
               </a>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(184,146,42,0.15)', border: '2px solid rgba(184,146,42,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#B8922A', flexShrink: 0 }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(184,146,42,0.15)', border: '2px solid rgba(184,146,42,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#0D9488', flexShrink: 0 }}>
                 {(report.client_first_name as string)?.[0]}{(report.client_last_name as string)?.[0]}
               </div>
               <div>
@@ -186,7 +186,7 @@ export function EvolutionReportPage() {
                 <div style={{ fontSize: 10, color: '#9CA3AF', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10 }}>Évolution depuis le début</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {[
-                    { label: 'Poids', unit: 'kg', first: Number(first.weight), latest: Number(latest.weight), color: '#B8922A', reverse: true },
+                    { label: 'Poids', unit: 'kg', first: Number(first.weight), latest: Number(latest.weight), color: '#0D9488', reverse: true },
                     { label: 'Masse grasse', unit: 'kg', first: Number(first.bodyFat) * Number(first.weight) / 100, latest: Number(latest.bodyFat) * Number(latest.weight) / 100, color: '#DC2626', reverse: true },
                     { label: 'Masse musculaire', unit: '%', first: (Number(first.muscleMass) / Number(first.weight)) * 100, latest: (Number(latest.muscleMass) / Number(latest.weight)) * 100, color: '#0D9488', reverse: false },
                     { label: 'Hydratation', unit: '%', first: Number(first.hydration), latest: Number(latest.hydration), color: '#7C3AED', reverse: false },
@@ -213,7 +213,7 @@ export function EvolutionReportPage() {
                 <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 16 }}>Progression sur l&apos;ensemble des bilans</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {[
-                    { label: 'Poids (kg)', field: 'weight', color: '#B8922A' },
+                    { label: 'Poids (kg)', field: 'weight', color: '#0D9488' },
                     { label: 'Masse grasse (kg)', field: 'bodyFatKg', color: '#DC2626' },
                     { label: 'Masse musculaire (%)', field: 'musclePct', color: '#0D9488' },
                   ].map(({ label, field, color }) => (
@@ -278,7 +278,7 @@ export function EvolutionReportPage() {
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 12 }}>Ce qui a évolué</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {insights.map((insight, i) => {
-                    const borderColor = insight.type === 'positive' ? '#0D9488' : insight.type === 'warning' ? '#DC2626' : insight.type === 'goal' ? '#B8922A' : '#7C3AED'
+                    const borderColor = insight.type === 'positive' ? '#0D9488' : insight.type === 'warning' ? '#DC2626' : insight.type === 'goal' ? '#0D9488' : '#7C3AED'
                     const bgColor = insight.type === 'positive' ? 'rgba(13,148,136,0.05)' : insight.type === 'warning' ? 'rgba(220,38,38,0.05)' : insight.type === 'goal' ? 'rgba(184,146,42,0.05)' : 'rgba(124,58,237,0.05)'
                     return (
                       <div key={i} style={{ background: bgColor, border: `1px solid ${borderColor}20`, borderLeft: `3px solid ${borderColor}`, borderRadius: '0 10px 10px 0', padding: '12px 14px' }}>
@@ -299,7 +299,7 @@ export function EvolutionReportPage() {
                 {recommendations.map((reco, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(184,146,42,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8922A" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{reco.name}</div>
@@ -369,7 +369,7 @@ export function EvolutionReportPage() {
                       Google Play
                     </a>
                     <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(184,146,42,0.2)', background: 'rgba(184,146,42,0.06)', color: '#B8922A', fontSize: 10, fontWeight: 600, textDecoration: 'none' }}>
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(184,146,42,0.2)', background: 'rgba(184,146,42,0.06)', color: '#0D9488', fontSize: 10, fontWeight: 600, textDecoration: 'none' }}>
                       MyHerbalife.com
                     </a>
                   </div>
@@ -409,7 +409,7 @@ export function EvolutionReportPage() {
                     <button onClick={shareWA} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>WhatsApp</button>
                     <button onClick={shareTG} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: 'rgba(0,136,204,0.1)', color: '#0088CC', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Telegram</button>
                     <button onClick={shareSMS} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: 'rgba(0,0,0,0.06)', color: '#6B7280', fontSize: 10, fontWeight: 500, cursor: 'pointer' }}>SMS</button>
-                    <button onClick={copyLink} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontSize: 10, fontWeight: 500, cursor: 'pointer' }}>Copier</button>
+                    <button onClick={copyLink} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: 'rgba(184,146,42,0.1)', color: '#0D9488', fontSize: 10, fontWeight: 500, cursor: 'pointer' }}>Copier</button>
                   </div>
                 </div>
               </div>

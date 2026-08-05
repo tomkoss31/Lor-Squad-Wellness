@@ -34,7 +34,7 @@ const STATUS_META: Record<PvStatus, { label: string; tone: string; icon: string;
   },
   on_track: {
     label: "Au cap",
-    tone: "var(--ls-gold)",
+    tone: "var(--ls-teal)",
     icon: "🟡",
     hint: "Tu suis ton rythme. Consolide en activant les leviers ci-dessous.",
   },
@@ -332,8 +332,8 @@ export function PvActionPlanCard({ userId, hideOnError = false }: Props) {
             marginTop: 12,
             padding: "10px 12px",
             background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             borderRadius: 10,
             display: "flex",
             alignItems: "center",
@@ -347,7 +347,7 @@ export function PvActionPlanCard({ userId, hideOnError = false }: Props) {
               style={{
                 fontFamily: "Syne, sans-serif",
                 fontWeight: 700,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
               }}
             >
               ~{data.expected_gain.toLocaleString("fr-FR")} PV

@@ -236,7 +236,7 @@ const avatarBigStyle: CSSProperties = {
   height: 56,
   borderRadius: 14,
   background:
-    "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)))",
+    "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -288,7 +288,7 @@ const primaryBtnStyle: CSSProperties = {
   borderRadius: 12,
   border: "none",
   background:
-    "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+    "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 13,

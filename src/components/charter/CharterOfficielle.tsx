@@ -88,7 +88,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
           style={{
             position: "absolute",
             inset: 28,
-            border: "1px solid #B8922A",
+            border: "1px solid #0D9488",
             pointerEvents: "none",
             zIndex: 1,
             boxShadow:
@@ -137,7 +137,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
               fontSize: 78,
               fontWeight: 700,
               backgroundImage:
-                "linear-gradient(180deg, #F8DDA0 0%, #E5C476 18%, #D4A937 35%, #B8922A 55%, #8B6F1F 80%, #5A4612 100%)",
+                "linear-gradient(180deg, #F8DDA0 0%, #E5C476 18%, #D4A937 35%, #0D9488 55%, #8B6F1F 80%, #5A4612 100%)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -172,7 +172,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
                 left: -2,
                 top: -8,
                 fontSize: 36,
-                color: "#B8922A",
+                color: "#0D9488",
                 fontFamily: "'Cormorant Garamond', serif",
                 lineHeight: 1,
               }}
@@ -189,7 +189,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
                 right: -2,
                 bottom: -18,
                 fontSize: 36,
-                color: "#B8922A",
+                color: "#0D9488",
                 fontFamily: "'Cormorant Garamond', serif",
                 lineHeight: 1,
               }}
@@ -211,11 +211,11 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             zIndex: 3,
           }}
         >
-          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)", flex: 1, maxWidth: 140 }} />
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)", flex: 1, maxWidth: 140 }} />
           <span style={diamondStyle} aria-hidden="true" />
-          <span style={{ fontSize: 14, color: "#B8922A" }} aria-hidden="true">✦</span>
+          <span style={{ fontSize: 14, color: "#0D9488" }} aria-hidden="true">✦</span>
           <span style={diamondStyle} aria-hidden="true" />
-          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)", flex: 1, maxWidth: 140 }} />
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)", flex: 1, maxWidth: 140 }} />
         </div>
 
         {/* CARDS ENGAGEMENTS */}
@@ -289,7 +289,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
               transform: "translateX(-50%)",
               width: "70%",
               height: 1,
-              background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)",
+              background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)",
             }}
           />
           <CharterSignatureBlock
@@ -309,7 +309,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             signedAt={cosigner.signedAt}
             mode={mode}
             onSignClick={onCosignClick}
-            cursiveColor="#B8922A"
+            cursiveColor="#0D9488"
           />
         </div>
 
@@ -341,7 +341,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             style={{
               fontFamily: "'Dancing Script', cursive",
               fontSize: 24,
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 600,
               lineHeight: 1.1,
               fontStyle: "italic",
@@ -376,7 +376,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             }}
           >
             Établi le {docDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-            <span style={{ color: "#B8922A", margin: "0 8px" }}>·</span>
+            <span style={{ color: "#0D9488", margin: "0 8px" }}>·</span>
             La Base 360 {docDate.getFullYear()}
           </p>
         </div>
@@ -388,13 +388,13 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
 const overlineLine: React.CSSProperties = {
   width: 50,
   height: 1,
-  background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)",
+  background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)",
 };
 
 const diamondStyle: React.CSSProperties = {
   width: 8,
   height: 8,
-  background: "#B8922A",
+  background: "#0D9488",
   transform: "rotate(45deg)",
   display: "inline-block",
   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.15)",

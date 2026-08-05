@@ -166,9 +166,9 @@ export function StrategyPlanCalculator() {
                 style={{
                   flex: "1 1 80px",
                   padding: "9px 6px",
-                  background: active ? "var(--ls-gold)" : "var(--ls-surface2)",
+                  background: active ? "var(--ls-teal)" : "var(--ls-surface2)",
                   color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
-                  border: active ? "0.5px solid var(--ls-gold)" : "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+                  border: active ? "0.5px solid var(--ls-teal)" : "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
                   borderRadius: 8,
                   fontSize: 12,
                   fontWeight: 700,
@@ -205,7 +205,7 @@ export function StrategyPlanCalculator() {
 
         <div style={{ display: "flex", gap: 18, fontSize: 11, color: "var(--ls-text-muted)", margin: "8px 0", flexWrap: "wrap" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 12, height: 12, borderRadius: 2, background: "var(--ls-gold)" }} />VP perso (axe gauche)
+            <span style={{ width: 12, height: 12, borderRadius: 2, background: "var(--ls-teal)" }} />VP perso (axe gauche)
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 12, height: 12, borderRadius: 2, background: "var(--ls-teal)" }} />Royalty Overrides (axe droit)
@@ -217,14 +217,14 @@ export function StrategyPlanCalculator() {
             <ComposedChart data={data} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
               <CartesianGrid stroke="color-mix(in srgb, var(--ls-text) 6%, transparent)" strokeDasharray="3 3" />
               <XAxis dataKey="m" tickFormatter={(v: unknown) => `M${v}`} tick={{ fill: "var(--ls-text-hint)", fontSize: 10 }} axisLine={{ stroke: "var(--ls-border)" }} />
-              <YAxis yAxisId="left" tick={{ fill: "var(--ls-gold)", fontSize: 9 }} axisLine={{ stroke: "var(--ls-border)" }} />
+              <YAxis yAxisId="left" tick={{ fill: "var(--ls-teal)", fontSize: 9 }} axisLine={{ stroke: "var(--ls-border)" }} />
               <YAxis yAxisId="right" orientation="right" tick={{ fill: "var(--ls-teal)", fontSize: 9 }} axisLine={{ stroke: "var(--ls-border)" }} />
               <Tooltip
-                contentStyle={{ background: "var(--ls-surface)", border: "1px solid var(--ls-gold)", borderRadius: 8, fontFamily: "DM Sans, sans-serif", fontSize: 12 }}
+                contentStyle={{ background: "var(--ls-surface)", border: "1px solid var(--ls-teal)", borderRadius: 8, fontFamily: "DM Sans, sans-serif", fontSize: 12 }}
                 labelFormatter={(v: unknown) => `Mois ${v}`}
                 formatter={(value: unknown, name: unknown) => [formatNumber(Number(value ?? 0)), String(name) === "vp" ? "VP perso" : "Royalty Overrides"]}
               />
-              <Bar yAxisId="left" dataKey="vp" fill="var(--ls-gold)" radius={[3, 3, 0, 0]} barSize={22} />
+              <Bar yAxisId="left" dataKey="vp" fill="var(--ls-teal)" radius={[3, 3, 0, 0]} barSize={22} />
               <Line yAxisId="right" type="monotone" dataKey="ro" stroke="var(--ls-teal)" strokeWidth={2} dot={{ r: 3, fill: "var(--ls-teal)" }} activeDot={{ r: 5 }} />
             </ComposedChart>
           </ResponsiveContainer>
@@ -244,7 +244,7 @@ export function StrategyPlanCalculator() {
               {data.map((d) => (
                 <tr key={d.m}>
                   <td style={{ padding: "9px 10px", borderBottom: "0.5px solid color-mix(in srgb, var(--ls-text) 4%, transparent)", color: "var(--ls-text)" }}>M{d.m}</td>
-                  <td style={{ padding: "9px 10px", borderBottom: "0.5px solid color-mix(in srgb, var(--ls-text) 4%, transparent)", color: "var(--ls-gold)", fontWeight: 600 }}>{formatNumber(d.vp)}</td>
+                  <td style={{ padding: "9px 10px", borderBottom: "0.5px solid color-mix(in srgb, var(--ls-text) 4%, transparent)", color: "var(--ls-teal)", fontWeight: 600 }}>{formatNumber(d.vp)}</td>
                   <td style={{ padding: "9px 10px", borderBottom: "0.5px solid color-mix(in srgb, var(--ls-text) 4%, transparent)", color: "var(--ls-teal)", fontWeight: 600 }}>{formatNumber(d.ro)}</td>
                   <td style={{ padding: "9px 10px", borderBottom: "0.5px solid color-mix(in srgb, var(--ls-text) 4%, transparent)", color: "var(--ls-text-muted)", fontSize: 10.5 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -260,8 +260,8 @@ export function StrategyPlanCalculator() {
         </div>
       </Card>
 
-      <div style={{ fontSize: 10.5, color: "var(--ls-text-muted)", lineHeight: 1.7, padding: "14px 16px", borderLeft: "2px solid var(--ls-gold)", background: "var(--ls-surface2)", borderRadius: "0 8px 8px 0", marginTop: 16 }}>
-        <strong style={{ color: "var(--ls-gold)" }}>*Avertissement réglementaire (DGCCRF / Herbalife)</strong> — Les montants présentés sont donnés à titre illustratif et ne constituent en aucun cas une garantie de résultats. Les résultats réels dépendent du temps et des efforts que chaque distributeur consacre à son activité indépendante. La plupart des distributeurs génèrent un revenu supplémentaire. Pour les chiffres officiels : <a href="https://www.herbalife.com/STE" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ls-gold)" }}>Herbalife.com/STE</a>. Calibrage : 1 VP = 1,50 € · marge perso 50 % · 1 RO = 1,50 €.
+      <div style={{ fontSize: 10.5, color: "var(--ls-text-muted)", lineHeight: 1.7, padding: "14px 16px", borderLeft: "2px solid var(--ls-teal)", background: "var(--ls-surface2)", borderRadius: "0 8px 8px 0", marginTop: 16 }}>
+        <strong style={{ color: "var(--ls-teal)" }}>*Avertissement réglementaire (DGCCRF / Herbalife)</strong> — Les montants présentés sont donnés à titre illustratif et ne constituent en aucun cas une garantie de résultats. Les résultats réels dépendent du temps et des efforts que chaque distributeur consacre à son activité indépendante. La plupart des distributeurs génèrent un revenu supplémentaire. Pour les chiffres officiels : <a href="https://www.herbalife.com/STE" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ls-teal)" }}>Herbalife.com/STE</a>. Calibrage : 1 VP = 1,50 € · marge perso 50 % · 1 RO = 1,50 €.
       </div>
     </div>
   );
@@ -270,27 +270,27 @@ export function StrategyPlanCalculator() {
 // ─── Sous-composants ─────────────────────────────────────────────────────────
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--ls-surface)", border: "0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))", borderRadius: 14, padding: "20px 22px", marginBottom: 14 }}>
+    <div style={{ background: "var(--ls-surface)", border: "0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))", borderRadius: 14, padding: "20px 22px", marginBottom: 14 }}>
       {children}
     </div>
   );
 }
 function CardTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 style={{ fontSize: 11, fontWeight: 700, margin: "0 0 16px 0", color: "var(--ls-gold)", letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</h3>
+    <h3 style={{ fontSize: 11, fontWeight: 700, margin: "0 0 16px 0", color: "var(--ls-teal)", letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</h3>
   );
 }
 function SliderRow({ label, value, onChange, min, max, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; step: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12, flexWrap: "wrap" }}>
       <label style={{ flex: "0 0 170px", color: "var(--ls-text)", fontSize: 13 }}>{label}</label>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ flex: 1, minWidth: 140, accentColor: "var(--ls-gold)" }} />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ flex: 1, minWidth: 140, accentColor: "var(--ls-teal)" }} />
       <span style={{ flex: "0 0 60px", textAlign: "right", color: "var(--ls-teal)", fontWeight: 700, fontSize: 14 }}>{value}</span>
     </div>
   );
 }
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: "gold" | "teal" }) {
-  const color = tone === "gold" ? "var(--ls-gold)" : "var(--ls-teal)";
+  const color = tone === "gold" ? "var(--ls-teal)" : "var(--ls-teal)";
   return (
     <div style={{ background: "var(--ls-surface2)", border: `0.5px solid color-mix(in srgb, ${color} 25%, var(--ls-border))`, borderRadius: 10, padding: 14 }}>
       <div style={{ fontSize: 10, color: "var(--ls-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>

@@ -233,8 +233,8 @@ export function NotificationsTab() {
       <div
         style={{
           padding: "12px 14px",
-          background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 12,
           fontSize: 11.5,
           color: "var(--ls-text-muted)",

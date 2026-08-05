@@ -255,7 +255,7 @@ export function InviteDistributorModal({ open, onClose, onCreated, initialFirstN
                 style={{
                   padding: "10px 18px",
                   borderRadius: 10,
-                  background: "var(--ls-gold)",
+                  background: "var(--ls-teal)",
                   border: "none",
                   color: "#1a1407",
                   cursor: submitting ? "wait" : "pointer",
@@ -299,7 +299,7 @@ export function InviteDistributorModal({ open, onClose, onCreated, initialFirstN
                   flex: 1,
                   padding: "11px 14px",
                   borderRadius: 10,
-                  background: copied ? "var(--ls-teal)" : "var(--ls-gold)",
+                  background: copied ? "var(--ls-teal)" : "var(--ls-teal)",
                   border: "none",
                   color: copied ? "#04120f" : "#1a1407",
                   cursor: "pointer",

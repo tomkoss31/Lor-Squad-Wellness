@@ -92,7 +92,7 @@ export function ClientVipExplainModal({
               fontSize: 9,
               letterSpacing: 2,
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 700,
               marginBottom: 4,
             }}
@@ -111,7 +111,7 @@ export function ClientVipExplainModal({
           >
             Tes courses Herbalife,
             <br />
-            jusqu&apos;à <span style={{ color: "#B8922A" }}>-42 % à vie</span> 🎁
+            jusqu&apos;à <span style={{ color: "#0D9488" }}>-42 % à vie</span> 🎁
           </h2>
           <p
             style={{
@@ -220,7 +220,7 @@ export function ClientVipExplainModal({
               background:
                 "linear-gradient(135deg, rgba(255,254,245,0.8) 0%, rgba(252,229,193,0.4) 100%)",
               border: "0.5px solid rgba(184,146,42,0.30)",
-              borderLeft: "3px solid #B8922A",
+              borderLeft: "3px solid #0D9488",
               borderRadius: 12,
               fontSize: 13,
               color: "#5C4A0F",
@@ -232,7 +232,7 @@ export function ClientVipExplainModal({
                 fontSize: 10,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
                 marginBottom: 6,
               }}

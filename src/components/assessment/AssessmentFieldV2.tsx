@@ -109,7 +109,7 @@ export function AssessmentFieldV2({
         >
           {label}
           {required ? (
-            <span style={{ color: "var(--ls-gold)", marginLeft: 4 }} aria-hidden="true">
+            <span style={{ color: "var(--ls-teal)", marginLeft: 4 }} aria-hidden="true">
               *
             </span>
           ) : null}

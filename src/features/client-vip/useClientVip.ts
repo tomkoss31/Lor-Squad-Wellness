@@ -113,7 +113,7 @@ export const VIP_LEVELS: VipLevelMeta[] = [
     threshold: 500,
     hint: "500 pts cumulés — remise max client privilégié",
     tone: "gold",
-    color: "#B8922A",
+    color: "#0D9488",
   },
   {
     level: "ambassador",

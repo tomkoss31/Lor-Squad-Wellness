@@ -55,7 +55,7 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
         )}
         {hasPhone && (
           <a href={`tel:${cleanPhone}`}
-            style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(201,168,76,0.08)', color: 'var(--ls-gold)', textDecoration: 'none', fontWeight: 600 }}>
+            style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(201,168,76,0.08)', color: 'var(--ls-teal)', textDecoration: 'none', fontWeight: 600 }}>
             Appeler
           </a>
         )}
@@ -73,7 +73,7 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
 function typeBadge(type: ClientMessage['message_type']): { label: string; color: string; bg: string } {
   switch (type) {
     case 'product_request':
-      return { label: '🛒 Demande produit', color: '#B8922A', bg: 'rgba(184,146,42,0.12)' }
+      return { label: '🛒 Demande produit', color: '#0D9488', bg: 'rgba(184,146,42,0.12)' }
     case 'recommendation':
       return { label: '👥 Recommandation', color: '#7C3AED', bg: 'rgba(124,58,237,0.12)' }
     case 'rdv_request':
@@ -216,7 +216,7 @@ function MessageCard({
               💬 Conversation
             </button>
             <button onClick={onReply}
-              style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-gold)', border: 'none', color: '#0B0D11', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
+              style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-teal)', border: 'none', color: '#0B0D11', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
               Répondre
             </button>
             {msg.client_id && (
@@ -627,7 +627,7 @@ export function MessagesPage() {
                   label: "Formation lignée",
                   value: formationBadgeCount,
                   total: formationBadgeCount,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   key: "formation" as Tab,
                 }]
               : []),

@@ -55,7 +55,7 @@ export function ClubDiscoveryWidget() {
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span aria-hidden="true" style={{ fontSize: 20 }}>🥤</span>
         <div style={{ flex: 1 }}>
-          <p className="eyebrow-label" style={{ color: "var(--ls-gold)" }}>Séances découverte du club</p>
+          <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>Séances découverte du club</p>
           <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginTop: 2 }}>
             {bookings.length} personne{bookings.length > 1 ? "s ont" : " a"} réservé via le site du club.
           </p>
@@ -88,7 +88,7 @@ export function ClubDiscoveryWidget() {
                   <span style={{
                     fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
                     padding: "2px 7px", borderRadius: 999,
-                    background: "color-mix(in srgb, var(--ls-gold) 16%, transparent)", color: "var(--ls-gold)",
+                    background: "color-mix(in srgb, var(--ls-teal) 16%, transparent)", color: "var(--ls-teal)",
                   }}>
                     découverte
                   </span>
@@ -125,7 +125,7 @@ export function ClubDiscoveryWidget() {
                     onClick={() => void setStatus(b.id, "confirmed")}
                     style={{
                       padding: "7px 11px", borderRadius: 9, border: "none",
-                      background: "var(--ls-gold)", color: "var(--ls-bg)",
+                      background: "var(--ls-teal)", color: "var(--ls-bg)",
                       fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
                       fontFamily: "DM Sans, sans-serif",
                     }}

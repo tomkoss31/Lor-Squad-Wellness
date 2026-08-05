@@ -92,14 +92,14 @@ export function BirthdayBlock({ clients, coachFirstName = "Thomas" }: Props) {
           borderRadius: 12,
           padding: 16,
           marginBottom: 16,
-          borderLeft: "4px solid var(--ls-gold)",
+          borderLeft: "4px solid var(--ls-teal)",
           border: "0.5px solid var(--ls-border)",
         }}
       >
         <div
           style={{
             fontSize: 11,
-            color: "#B8922A",
+            color: "#0D9488",
             letterSpacing: "1.5px",
             fontWeight: 500,
             marginBottom: 12,
@@ -147,7 +147,7 @@ export function BirthdayBlock({ clients, coachFirstName = "Thomas" }: Props) {
                   type="button"
                   onClick={() => setOpenClient(client)}
                   style={{
-                    background: "#B8922A",
+                    background: "#0D9488",
                     color: "white",
                     padding: "8px 14px",
                     borderRadius: 8,

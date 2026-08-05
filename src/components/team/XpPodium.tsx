@@ -76,7 +76,7 @@ function PodiumSlot({ member, rank, onClick }: PodiumSlotProps) {
   const heightFactor = rank === 1 ? 1 : rank === 2 ? 0.78 : 0.62;
   const accent =
     rank === 1
-      ? "var(--ls-gold)"
+      ? "var(--ls-teal)"
       : rank === 2
         ? "color-mix(in srgb, var(--ls-text-muted) 60%, var(--ls-text))"
         : "var(--ls-coral)";

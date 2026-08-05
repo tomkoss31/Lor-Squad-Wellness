@@ -224,7 +224,7 @@ export function BienvenuePage() {
           padding: 16px 16px;
           border-radius: 12px;
           background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(var(--ls-gold-rgb),0.22);
+          border: 1px solid rgba(var(--ls-teal-rgb),0.22);
           color: #F4E9CF;
           font-size: 16px;
           font-family: 'DM Sans', sans-serif;
@@ -428,8 +428,8 @@ export function BienvenuePage() {
                   padding: "18px 20px",
                   borderRadius: 14,
                   background: submitting
-                    ? "rgba(var(--ls-gold-rgb),0.4)"
-                    : "linear-gradient(135deg, #D4B460, #C9A84C)",
+                    ? "rgba(var(--ls-teal-rgb),0.4)"
+                    : "linear-gradient(135deg, #D4B460, #2DD4BF)",
                   color: "#0B0D11",
                   border: "none",
                   fontFamily: "Syne, sans-serif",
@@ -437,7 +437,7 @@ export function BienvenuePage() {
                   fontSize: 17,
                   cursor: submitting ? "default" : "pointer",
                   letterSpacing: 0.3,
-                  boxShadow: submitting ? "none" : "0 10px 30px rgba(var(--ls-gold-rgb),0.35)",
+                  boxShadow: submitting ? "none" : "0 10px 30px rgba(var(--ls-teal-rgb),0.35)",
                 }}
               >
                 {submitting ? "Création…" : "Créer mon accès"}
@@ -479,7 +479,7 @@ function InstallPwaStep({
     <div
       style={{
         background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(var(--ls-gold-rgb),0.3)",
+        border: "1px solid rgba(var(--ls-teal-rgb),0.3)",
         borderRadius: 22,
         padding: 28,
         color: "#F4E9CF",
@@ -574,7 +574,7 @@ function InstallPwaStep({
           width: "100%",
           padding: "14px 20px",
           borderRadius: 14,
-          background: "linear-gradient(135deg, #D4B460, #C9A84C)",
+          background: "linear-gradient(135deg, #D4B460, #2DD4BF)",
           color: "#0B0D11",
           border: "none",
           fontFamily: "Syne, sans-serif",
@@ -582,7 +582,7 @@ function InstallPwaStep({
           fontSize: 16,
           cursor: "pointer",
           letterSpacing: 0.3,
-          boxShadow: "0 8px 24px rgba(var(--ls-gold-rgb),0.25)",
+          boxShadow: "0 8px 24px rgba(var(--ls-teal-rgb),0.25)",
         }}
       >
         J'ai installé, c'est parti !

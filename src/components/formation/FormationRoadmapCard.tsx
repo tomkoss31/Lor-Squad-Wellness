@@ -43,9 +43,9 @@ export function FormationRoadmapCard({
           padding: "clamp(18px, 5vw, 26px) clamp(18px, 5vw, 28px)",
           borderRadius: 22,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
-          boxShadow: "0 12px 36px -16px color-mix(in srgb, var(--ls-gold) 50%, transparent)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
+          boxShadow: "0 12px 36px -16px color-mix(in srgb, var(--ls-teal) 50%, transparent)",
           overflow: "hidden",
           textAlign: "center",
         }}
@@ -59,7 +59,7 @@ export function FormationRoadmapCard({
             width: 200,
             height: 200,
             borderRadius: "50%",
-            background: "color-mix(in srgb, var(--ls-gold) 22%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 22%, transparent)",
             filter: "blur(60px)",
             pointerEvents: "none",
           }}
@@ -75,7 +75,7 @@ export function FormationRoadmapCard({
               fontWeight: 700,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               marginBottom: 6,
             }}
           >
@@ -92,7 +92,7 @@ export function FormationRoadmapCard({
               margin: 0,
             }}
           >
-            Tu as <span style={{ color: "var(--ls-gold)" }}>tout validé</span>. Bravo.
+            Tu as <span style={{ color: "var(--ls-teal)" }}>tout validé</span>. Bravo.
           </h2>
           <p
             style={{
@@ -248,7 +248,7 @@ export function FormationRoadmapCard({
             gap: 8,
             padding: "12px 20px",
             borderRadius: 14,
-            background: `linear-gradient(135deg, ${accent} 0%, color-mix(in srgb, ${accent} 75%, var(--ls-gold)) 100%)`,
+            background: `linear-gradient(135deg, ${accent} 0%, color-mix(in srgb, ${accent} 75%, var(--ls-teal)) 100%)`,
             color: "var(--ls-bg)",
             fontFamily: "DM Sans, sans-serif",
             fontSize: 14,

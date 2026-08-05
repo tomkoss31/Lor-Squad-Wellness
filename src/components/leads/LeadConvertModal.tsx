@@ -516,7 +516,7 @@ const STYLES = `
   .lcm-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
   .lcm-primary {
     flex: 1; min-width: 180px; padding: 12px 18px; border: none; border-radius: 11px;
-    background: var(--ls-gold, #C9A84C); color: var(--ls-gold-contrast, #0B0D11);
+    background: var(--ls-teal, #2DD4BF); color: var(--ls-teal-contrast, #0B0D11);
     font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
     transition: opacity 0.15s ease;
   }
