@@ -43,7 +43,10 @@ export function Slot({ ratio, label, sub, frame }: { ratio: string; label: strin
 export function ClubShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  useClubHead("The Breakfast Club · Verdun");
+  useClubHead(
+    "The Breakfast Club · Verdun",
+    "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
+  );
 
   // Reset du scroll au changement de page interne (React Router ne le fait pas).
   // Garde sur le hash : préserve les ancres type « Voir le rituel » (#rituel).
@@ -107,6 +110,12 @@ export function ClubShell({ children }: { children: ReactNode }) {
             <div>
               <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: 210, filter: "brightness(0) invert(1)" }} />
               <p style={{ color: "var(--on-dark-3)", fontSize: 16, marginTop: 16, maxWidth: "34ch" }}>Le club de petit-déjeuner de Verdun. Nutrition, énergie, communauté.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 18 }}>
+                <a className="cl-social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a className="cl-social" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a>
+                {/* Google : remplacer par la vraie fiche Google Business du club */}
+                <a className="cl-social" href="https://www.google.com/search?q=La+Base+Shakes+%26+Drinks+Verdun" target="_blank" rel="noopener noreferrer">Google</a>
+              </div>
             </div>
             <div>
               <div className="k">Le club</div>
@@ -120,12 +129,19 @@ export function ClubShell({ children }: { children: ReactNode }) {
             </div>
             <div>
               <div className="k">Nous trouver</div>
-              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br /><a href={TEL}>06 79 44 87 59</a></div>
+              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br />Dimanche fermé<br /><a href={TEL}>06 79 44 87 59</a></div>
             </div>
           </div>
-          <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(244,239,228,.14)", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--on-dark-3)" }}>
-            <span style={{ letterSpacing: ".14em", fontWeight: 700 }}>NUTRITION · ÉNERGIE · COMMUNAUTÉ</span>
-            <span>The Breakfast Club by La Base · Verdun · <Link to="/club/rejoindre" style={{ color: "var(--on-dark-3)" }}>Ouvrir un club</Link></span>
+          <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(244,239,228,.14)", fontSize: 12.5, color: "var(--on-dark-3)" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 20px", marginBottom: 10 }}>
+              <Link to="/legal/mentions" style={{ color: "var(--on-dark-2)", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Mentions légales</Link>
+              <Link to="/legal/confidentialite" style={{ color: "var(--on-dark-2)", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Politique de confidentialité</Link>
+            </div>
+            <p style={{ margin: "0 0 14px", maxWidth: "82ch", lineHeight: 1.6 }}>Les informations de ce site ne constituent pas un avis médical et les produits présentés ne sont pas des médicaments. Pour toute question de santé, consultez un professionnel de santé. Une alimentation variée et équilibrée et un mode de vie sain sont recommandés.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ letterSpacing: ".14em", fontWeight: 700 }}>NUTRITION · ÉNERGIE · COMMUNAUTÉ</span>
+              <span>© 2026 Breakfast Club by La Base — Verdun · <Link to="/club/rejoindre" style={{ color: "var(--on-dark-3)" }}>Ouvrir un club</Link></span>
+            </div>
           </div>
         </div>
       </div>

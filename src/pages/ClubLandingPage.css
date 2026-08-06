@@ -188,6 +188,10 @@
   background-image:radial-gradient(currentColor 1.5px,transparent 1.6px);background-size:22px 22px}
 .cl-band.dark .cl-dots{color:rgba(244,239,228,.10)}
 
+/* pastilles réseaux sociaux (footer) */
+.cl-social{min-height:44px;display:inline-flex;align-items:center;padding:10px 20px;border-radius:999px;border:1px solid rgba(244,239,228,.24);color:var(--on-dark-2);font-size:14px;font-weight:600;transition:border-color .15s,color .15s}
+.cl-social:hover{border-color:var(--orange);color:var(--yellow)}
+
 /* ── ANIMATIONS AU SCROLL ─────────────────────────────────────────────────── */
 @keyframes clRise{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
 @keyframes clZoom{from{transform:scale(1.16)}to{transform:scale(1)}}
