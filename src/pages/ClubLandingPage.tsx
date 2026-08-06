@@ -110,7 +110,7 @@ export function ClubLandingPage() {
         <div className="cl-wrap" style={{ paddingBottom: "clamp(64px,10vw,120px)" }}>
           <div className="cl-rv" style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
             <span className="cl-pill o">Le rituel du matin</span>
-            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)" }}>Chaque matin, <span className="cl-a-orange">le même rituel.</span></h2>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)" }}>Chaque matin,<br /><span className="cl-a-orange">le même rituel.</span></h2>
             <p className="cl-lead" style={{ marginTop: 16 }}>Trois boissons dans l'ordre, puis le suivi. C'est ce qui fait qu'on n'a rien à décider en arrivant.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
@@ -132,7 +132,7 @@ export function ClubLandingPage() {
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 760 }}>
             <span className="cl-pill p">Ce qui est inclus</span>
-            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)", color: "#fff" }}>Ce que t'apporte <span className="cl-a-yellow">chaque matin.</span></h2>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)", color: "#fff" }}>Ce que t'apporte<br /><span className="cl-a-yellow">chaque matin.</span></h2>
             <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout le rituel est déjà dedans. Pas de supplément surprise au comptoir — juste, si tu veux, de la nutrition à emporter pour les matins où tu ne passes pas.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
@@ -170,7 +170,7 @@ export function ClubLandingPage() {
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 720 }}>
             <span className="cl-pill peach">Résultats</span>
-            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>Le club est neuf. <span className="cl-a-sage">L'équipe, non.</span></h2>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>Le club est neuf.<br /><span className="cl-a-sage">L'équipe, non.</span></h2>
             <p className="cl-lead" style={{ marginTop: 16, maxWidth: "44em" }}>Les photos et les témoignages arrivent avec les premiers membres. En attendant, la note de La Base parle déjà pour nous.</p>
           </div>
           <div style={{ background: "var(--dark)", borderRadius: 20, padding: "clamp(26px,3.4vw,40px)", marginTop: 32, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px 28px" }}>
@@ -287,7 +287,7 @@ export function ClubLandingPage() {
       <div className="cl-band dark">
         <div className="cl-wrap cl-sec-lg cl-rv" style={{ textAlign: "center", maxWidth: 820 }}>
           <span className="cl-pill y">On se retrouve</span>
-          <h2 style={{ marginTop: 24, fontSize: "clamp(42px,7vw,92px)", color: "#fff" }}>On se voit <span className="cl-a-yellow">demain matin ?</span></h2>
+          <h2 style={{ marginTop: 24, fontSize: "clamp(42px,7vw,92px)", color: "#fff" }}>On se voit<br /><span className="cl-a-yellow">demain matin ?</span></h2>
           <p className="cl-lead" style={{ marginTop: 18, marginLeft: "auto", marginRight: "auto", maxWidth: 620 }}>Le body scan est offert et dure environ 45 minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 28 }}>
             <a className="cl-cta" href={R}>Mon body scan offert</a>
