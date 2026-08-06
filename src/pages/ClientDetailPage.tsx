@@ -22,6 +22,7 @@ import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
+import { ClientMomentToolbar } from "../components/toolkit/ClientMomentToolbar";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -517,6 +518,10 @@ export function ClientDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Boîte à outils « au bon moment » — 1 tap vers le bon script, avec le
+          contexte de ce client (chantier Boîte à outils 2026-08-06). */}
+      <ClientMomentToolbar clientId={client.id} lifecycleStatus={client.lifecycleStatus} />
 
       {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
