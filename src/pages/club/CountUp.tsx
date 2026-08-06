@@ -45,11 +45,14 @@ export function CountUp({
       { threshold: 0.4 },
     );
     io.observe(el);
-    // Filet de sécurité : si l'anim ne s'est jamais déclenchée (page cachée au
-    // chargement, rAF en pause, élément resté hors écran), on affiche la VRAIE
-    // valeur au bout de 4 s — jamais un « 0 » figé sur une page de prix.
+    // Filet de sécurité anti « 0 » figé, MAIS seulement si l'onglet est en
+    // arrière-plan au chargement (rAF en pause → l'animation ne peut pas tourner).
+    // Sur une page VISIBLE on ne force jamais : on laisse l'IntersectionObserver
+    // animer quand l'utilisateur ARRIVE sur l'élément, même en scrollant lentement
+    // (les prix sont loin dans la page — un délai fixe coupait l'anim avant qu'il
+    // n'y arrive). Hors écran, la valeur reste à 0 sans que personne ne la voie.
     const safety = window.setTimeout(() => {
-      if (!started.current) {
+      if (!started.current && document.hidden) {
         started.current = true;
         io.disconnect();
         setVal(end);
