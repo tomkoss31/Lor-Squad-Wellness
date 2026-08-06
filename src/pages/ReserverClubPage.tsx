@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { useClubHead } from "./club/useClubHead";
 import "./ReserverClubPage.css";
 
 type Screen = "capture" | "dispo" | "confirm";
@@ -46,6 +47,7 @@ export function ReserverClubPage() {
   const { clubSlug } = useParams<{ clubSlug?: string }>();
   const slug = (clubSlug ?? "verdun").trim() || "verdun";
   const [searchParams] = useSearchParams();
+  useClubHead("Réserver ma séance · The Breakfast Club");
 
   const [screen, setScreen] = useState<Screen>("capture");
 
@@ -53,6 +55,8 @@ export function ReserverClubPage() {
   const [objectif, setObjectif] = useState<Objectif | "">("");
   const [people, setPeople] = useState<1 | 2>(1);
   const [partner, setPartner] = useState("");
+  const [partnerNom, setPartnerNom] = useState("");
+  const [partnerObjectif, setPartnerObjectif] = useState<Objectif | "">("");
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -112,6 +116,11 @@ export function ReserverClubPage() {
       document.getElementById("rc-objectif")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    if (people === 2 && (!partner.trim() || !partnerNom.trim() || !partnerObjectif)) {
+      setError("Complète le prénom, le nom et l'objectif de la personne qui t'accompagne.");
+      document.getElementById("rc-binome")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const sb = await getSupabaseClient();
@@ -134,6 +143,8 @@ export function ReserverClubPage() {
               objectif: objectif || null,
               people_count: people,
               partner_first_name: people === 2 ? partner.trim() || null : null,
+              partner_last_name: people === 2 ? partnerNom.trim() || null : null,
+              partner_objectif: people === 2 ? partnerObjectif || null : null,
             },
           },
         });
@@ -155,9 +166,14 @@ export function ReserverClubPage() {
         clubSlug: slug,
         slotStart: selectedSlot.iso,
         firstName: prenom.trim(),
+        lastName: nom.trim(),
         contact: email.trim(),
+        phone: tel.trim(),
+        city: ville.trim(),
         peopleCount: people,
         partnerFirstName: people === 2 ? partner.trim() : "",
+        partnerLastName: people === 2 ? partnerNom.trim() : "",
+        partnerObjectif: people === 2 ? partnerObjectif || "" : "",
         objectif: objectif || "",
       },
     });
@@ -176,6 +192,35 @@ export function ReserverClubPage() {
     }
     setSubmitting(false);
     setScreen("confirm");
+  }
+
+  // « Ajouter à mon agenda » : génère un .ics téléchargeable (iOS/Android/desktop).
+  // Réduit les no-shows — l'événement + le rappel natif du téléphone.
+  function addToCalendar() {
+    if (!selectedSlot) return;
+    const start = new Date(selectedSlot.iso);
+    const end = new Date(start.getTime() + 45 * 60_000);
+    const z = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//The Breakfast Club//FR", "CALSCALE:GREGORIAN",
+      "BEGIN:VEVENT",
+      `UID:${start.getTime()}@labase-nutrition.com`,
+      `DTSTAMP:${z(new Date())}`,
+      `DTSTART:${z(start)}`,
+      `DTEND:${z(end)}`,
+      "SUMMARY:Séance découverte · The Breakfast Club",
+      "LOCATION:11 rue Saint Pierre\\, 55100 Verdun",
+      "DESCRIPTION:Ton body scan + bilan bien-être\\, offerts. On t'attend au club !",
+      "END:VEVENT", "END:VCALENDAR",
+    ].join("\r\n");
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "seance-decouverte-breakfast-club.ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   // ─── Calendrier ────────────────────────────────────────────────────────────
@@ -272,7 +317,7 @@ export function ReserverClubPage() {
               <aside className="rc-card" style={{ padding: "clamp(26px,3vw,38px)" }}>
                 <p className="rc-eyebrow" style={{ fontSize: 12, letterSpacing: ".22em" }}>Ce que tu réserves</p>
                 <h2 style={{ marginTop: 12, fontSize: "clamp(26px,3.2vw,38px)" }}>Séance découverte</h2>
-                <p style={{ margin: "8px 0 0", fontSize: 16, color: "#5F7154" }}>≈ 20 min avec un coach, au club de Verdun.</p>
+                <p style={{ margin: "8px 0 0", fontSize: 16, color: "#5F7154" }}>≈ 45 min avec un coach, au club de Verdun.</p>
                 <ul style={{ listStyle: "none", margin: "24px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 13 }}>
                   {["Analyse de composition corporelle (body scan)", "Bilan bien-être personnalisé", "Tes objectifs, à ton rythme", "Seul·e ou à deux — comme tu veux", "Aucun paiement, aucun engagement"].map((t) => (
                     <li key={t} style={{ display: "grid", gridTemplateColumns: "22px 1fr", gap: 12, fontSize: 16, lineHeight: 1.4, color: "#3A443F" }}>
@@ -306,23 +351,16 @@ export function ReserverClubPage() {
                   </button>
                 ))}
               </div>
-              {error && <div className="rc-err" role="alert">{error}</div>}
 
               <p style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Tu viens…</p>
               <div className="rc-seg" role="radiogroup" aria-label="Nombre de personnes" style={{ marginTop: 12 }}>
                 <button type="button" aria-pressed={people === 1} onClick={() => setPeople(1)}><span aria-hidden="true">🙋</span>Seul·e</button>
                 <button type="button" aria-pressed={people === 2} onClick={() => setPeople(2)}><span aria-hidden="true">👫</span>À deux</button>
               </div>
-              {people === 2 && (
-                <label style={{ display: "block", marginTop: 14 }}>
-                  <span className="rc-lbl">Prénom de ton binôme <span style={{ color: "var(--muted)", fontWeight: 400 }}>(optionnel)</span></span>
-                  <input className="rc-field" type="text" value={partner} onChange={(e) => setPartner(e.target.value)} placeholder="Alex" />
-                </label>
-              )}
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 22 }}>
-                <label><span className="rc-lbl">Prénom</span><input className="rc-field" type="text" required value={prenom} onChange={(e) => setPrenom(e.target.value)} autoComplete="given-name" placeholder="Marie" /></label>
-                <label><span className="rc-lbl">Nom</span><input className="rc-field" type="text" required value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="family-name" placeholder="Dupont" /></label>
+                <label><span className="rc-lbl">Ton prénom</span><input className="rc-field" type="text" required value={prenom} onChange={(e) => setPrenom(e.target.value)} autoComplete="given-name" placeholder="Marie" /></label>
+                <label><span className="rc-lbl">Ton nom</span><input className="rc-field" type="text" required value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="family-name" placeholder="Dupont" /></label>
               </div>
               <label style={{ display: "block", marginTop: 14 }}><span className="rc-lbl">Email</span><input className="rc-field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="marie.dupont@email.com" /></label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
@@ -330,8 +368,31 @@ export function ReserverClubPage() {
                 <label><span className="rc-lbl">Ville</span><input className="rc-field" type="text" required value={ville} onChange={(e) => setVille(e.target.value)} autoComplete="address-level2" placeholder="Verdun" /></label>
               </div>
 
+              {people === 2 && (
+                <div id="rc-binome" style={{ marginTop: 26, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span aria-hidden="true" style={{ fontSize: 20 }}>👫</span>
+                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--orange)" }}>La personne qui t'accompagne</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 }}>
+                    <label><span className="rc-lbl">Son prénom</span><input className="rc-field" type="text" required value={partner} onChange={(e) => setPartner(e.target.value)} placeholder="Alex" /></label>
+                    <label><span className="rc-lbl">Son nom</span><input className="rc-field" type="text" required value={partnerNom} onChange={(e) => setPartnerNom(e.target.value)} placeholder="Martin" /></label>
+                  </div>
+                  <p style={{ margin: "18px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Son objectif</p>
+                  <div className="rc-obj" role="radiogroup" aria-label="Objectif de la personne qui t'accompagne" aria-required="true" style={{ marginTop: 12 }}>
+                    {OBJECTIFS.map((o) => (
+                      <button type="button" key={o.id} role="radio" aria-checked={partnerObjectif === o.id} onClick={() => { setPartnerObjectif(o.id); setError(null); }}>
+                        <span className="ic" aria-hidden="true">{o.icon}</span><span className="t">{o.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
               <button type="submit" className="rc-cta" style={{ marginTop: 26 }} disabled={submitting}>{submitting ? "…" : "Choisir mon créneau →"}</button>
               <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.5, color: "var(--muted)" }}>Tes infos restent chez nous · jamais revendues. Réservation gratuite et sans engagement.</p>
+              <p style={{ margin: "10px 0 0", textAlign: "center", fontSize: 14, lineHeight: 1.5, color: "var(--sub)" }}>Pas prêt à choisir un créneau ? <a href="tel:+33679448759" style={{ color: "var(--orange)", fontWeight: 700, textDecoration: "none" }}>Appelle-nous</a>, on trouve le bon moment ensemble.</p>
             </form>
           </div>
         </main>
@@ -354,7 +415,7 @@ export function ReserverClubPage() {
               <h2 style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>Séance découverte</h2>
               <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Body scan + bilan bien-être</p>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 13, fontSize: 15, color: "var(--sub)" }}>
-                <div>🕒 ≈ 20 min</div>
+                <div>🕒 45 min de RDV · créneau réservé 1h</div>
                 <div>📍 En personne · 11 rue Saint&nbsp;Pierre</div>
                 <div>👥 {people === 2 ? "Pour 2 personnes" : "Pour 1 personne"}</div>
               </div>
@@ -433,6 +494,10 @@ export function ReserverClubPage() {
               <p style={{ margin: "22px 0 0", padding: "18px 20px", borderRadius: 16, background: "var(--panel)", fontSize: 15, lineHeight: 1.55, color: "#5F7154" }}>
                 Ton bilan et ton body scan sont offerts. Après le rendez-vous, tu pourras choisir ta carte de visites si tu veux continuer — aucun engagement d'ici là.
               </p>
+              <button type="button" className="rc-cta" style={{ marginTop: 22, minHeight: 54, width: "100%" }} onClick={addToCalendar}>
+                <span aria-hidden="true">📅</span> Ajouter à mon agenda
+              </button>
+              <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--muted)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
             </div>
           </div>
         </main>
