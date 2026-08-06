@@ -533,7 +533,7 @@ const OP_STYLES = `
   --op-emerald: #10B981;
   --op-cyan: #06B6D4;
   --op-violet: #8B5CF6;
-  --op-gold: #B8922A;
+  --op-gold: #0D9488;
   --op-ink: var(--ls-text, #0F172A);
   --op-muted: var(--ls-text-muted, #64748b);
   --op-line: var(--ls-border, #e2e8f0);

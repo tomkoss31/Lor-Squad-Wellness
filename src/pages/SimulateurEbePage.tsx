@@ -132,7 +132,7 @@ export function SimulateurEbePage() {
               entry.quality === "excellent"
                 ? "var(--ls-teal)"
                 : entry.quality === "moyen"
-                  ? "var(--ls-gold)"
+                  ? "var(--ls-teal)"
                   : "var(--ls-coral)";
             const emoji = entry.quality === "excellent" ? "✨" : entry.quality === "moyen" ? "⚠️" : "❌";
             return (
@@ -489,7 +489,7 @@ const choiceBtn: React.CSSProperties = {
 };
 
 const feedbackColor = (q: EbeChoiceQuality) =>
-  q === "excellent" ? "var(--ls-teal)" : q === "moyen" ? "var(--ls-gold)" : "var(--ls-coral)";
+  q === "excellent" ? "var(--ls-teal)" : q === "moyen" ? "var(--ls-teal)" : "var(--ls-coral)";
 
 const feedbackBox = (q: EbeChoiceQuality): React.CSSProperties => ({
   marginTop: 18,
@@ -522,7 +522,7 @@ const btnPrimary: React.CSSProperties = {
   padding: "12px 22px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 14,

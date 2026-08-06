@@ -83,7 +83,7 @@ export function ValidationDecisionDialog({
         style={{
           background: "var(--ls-surface)",
           border: "0.5px solid var(--ls-border)",
-          borderTop: `3px solid ${isAdminRelay ? "var(--ls-purple)" : "var(--ls-gold)"}`,
+          borderTop: `3px solid ${isAdminRelay ? "var(--ls-purple)" : "var(--ls-teal)"}`,
           borderRadius: 18,
           width: "100%",
           maxWidth: 560,
@@ -111,7 +111,7 @@ export function ValidationDecisionDialog({
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 fontWeight: 700,
-                color: isAdminRelay ? "var(--ls-purple)" : "var(--ls-gold)",
+                color: isAdminRelay ? "var(--ls-purple)" : "var(--ls-teal)",
                 marginBottom: 2,
               }}
             >
@@ -160,7 +160,7 @@ export function ValidationDecisionDialog({
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               fontWeight: 700,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               marginBottom: 8,
               display: "flex",
               alignItems: "center",
@@ -210,7 +210,7 @@ export function ValidationDecisionDialog({
               type="button"
               disabled={busy}
               onClick={() => setMode("request")}
-              style={secondaryButtonStyle("var(--ls-gold)")}
+              style={secondaryButtonStyle("var(--ls-teal)")}
             >
               💬 Demander un complément
             </button>
@@ -245,7 +245,7 @@ export function ValidationDecisionDialog({
         {mode === "request" ? (
           <ActionPanel
             title="Demander un complément"
-            color="var(--ls-gold)"
+            color="var(--ls-teal)"
             placeholder="Décris ce qui manque ou ce que tu veux mieux comprendre…"
             value={feedback}
             onChange={setFeedback}

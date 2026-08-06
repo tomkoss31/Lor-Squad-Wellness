@@ -204,7 +204,7 @@ export function AdminNewsletterStatsPage() {
           label="Ouvertures"
           value={counts.opened}
           hint={`${pct(counts.opened)}% des envois`}
-          color="var(--ls-gold)"
+          color="var(--ls-teal)"
         />
         <KpiCard
           label="Clics"
@@ -247,7 +247,7 @@ export function AdminNewsletterStatsPage() {
         </h3>
         <FunnelStep label="Envoyés" count={counts.total} total={counts.total} color="var(--ls-text-muted)" />
         <FunnelStep label="Délivrés" count={counts.delivered} total={counts.total} color="var(--ls-teal)" />
-        <FunnelStep label="Ouverts" count={counts.opened} total={counts.total} color="var(--ls-gold)" />
+        <FunnelStep label="Ouverts" count={counts.opened} total={counts.total} color="var(--ls-teal)" />
         <FunnelStep label="Cliqués (toute origine)" count={counts.clicked} total={counts.total} color="var(--ls-coral)" />
       </div>
 
@@ -264,7 +264,7 @@ export function AdminNewsletterStatsPage() {
           label="🎯 Clics CTA Bilan"
           value={counts.clickedBilan}
           hint={`${pct(counts.clickedBilan)}% des envois`}
-          color="var(--ls-gold)"
+          color="var(--ls-teal)"
         />
         <KpiCard
           label="💼 Clics CTA Business"
@@ -502,7 +502,7 @@ function RecipientRow({ row }: { row: RecipientRow }) {
         )}
       </div>
       <CellStatus done={!!row.delivered_at} label={fmt(row.delivered_at)} good="var(--ls-teal)" />
-      <CellStatus done={!!row.opened_at} label={fmt(row.opened_at)} good="var(--ls-gold)" />
+      <CellStatus done={!!row.opened_at} label={fmt(row.opened_at)} good="var(--ls-teal)" />
       <CellStatus done={!!row.clicked_bilan_at} label={fmt(row.clicked_bilan_at)} good="var(--ls-coral)" />
       <CellStatus done={!!row.clicked_business_at} label={fmt(row.clicked_business_at)} good="var(--ls-teal)" />
     </div>
@@ -526,7 +526,7 @@ function PillButton({ active, onClick, children }: { active: boolean; onClick: (
         padding: "7px 12px",
         borderRadius: 999,
         border: "1px solid var(--ls-border)",
-        background: active ? "var(--ls-gold)" : "var(--ls-surface)",
+        background: active ? "var(--ls-teal)" : "var(--ls-surface)",
         color: active ? "var(--ls-charcoal)" : "var(--ls-text)",
         fontSize: 12,
         fontWeight: 600,

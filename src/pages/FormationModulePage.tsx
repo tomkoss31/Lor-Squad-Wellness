@@ -21,7 +21,7 @@ import { useMyFormationProgress } from "../features/formation";
 import { FormationStatusBadge } from "../components/formation/FormationStatusBadge";
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
 };
@@ -39,7 +39,7 @@ export function FormationModulePage() {
       <div className="space-y-4" style={{ padding: 20 }}>
         <p style={{ color: "var(--ls-text-muted)" }}>
           Niveau introuvable.{" "}
-          <Link to="/formation" style={{ color: "var(--ls-gold)" }}>Retour à la formation</Link>
+          <Link to="/formation" style={{ color: "var(--ls-teal)" }}>Retour à la formation</Link>
         </p>
       </div>
     );

@@ -127,7 +127,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
               <span
                 style={{
                   background: "rgba(184,146,42,0.12)",
-                  color: "#B8922A",
+                  color: "#0D9488",
                   padding: "4px 10px",
                   borderRadius: 8,
                   fontSize: 11,
@@ -180,7 +180,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
                     color = "#888";
                   }
                 } else if (isSelected) {
-                  borderColor = "#B8922A";
+                  borderColor = "#0D9488";
                 }
                 return (
                   <button
@@ -352,7 +352,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
                     margin: "8px 0 4px",
                     padding: "5px 12px",
                     borderRadius: 999,
-                    background: "linear-gradient(135deg, #FFE873 0%, #C9A84C 100%)",
+                    background: "linear-gradient(135deg, #FFE873 0%, #2DD4BF 100%)",
                     color: "#5C4A0F",
                     fontSize: 11,
                     fontWeight: 700,
@@ -366,7 +366,7 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
                 </div>
               ) : null}
               <p style={{ fontSize: 14, color: "#5F5E5A", margin: 0 }}>
-                Score : <strong style={{ color: passed ? "#1D9E75" : "#B8922A" }}>{score} / {total}</strong>{" "}
+                Score : <strong style={{ color: passed ? "#1D9E75" : "#0D9488" }}>{score} / {total}</strong>{" "}
                 ({finalPercent} %)
               </p>
               <p style={{ fontSize: 13, color: "#6B6B62", margin: "12px 0 0", lineHeight: 1.5 }}>

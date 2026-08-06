@@ -126,8 +126,8 @@ const backBtn: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 18,
   padding: "24px 20px",
   marginBottom: 20,
@@ -139,7 +139,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -175,7 +175,7 @@ const stepEmoji: React.CSSProperties = {
   width: 40,
   height: 40,
   borderRadius: 11,
-  background: "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface2))",
+  background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface2))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -199,8 +199,8 @@ const stepDetail: React.CSSProperties = {
 };
 
 const ctaBtn: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface2))",
-  border: "1px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+  background: "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface2))",
+  border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
   color: "var(--ls-text)",
   fontFamily: "Syne, sans-serif",
   fontSize: 14,

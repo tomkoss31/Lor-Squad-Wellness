@@ -122,7 +122,7 @@ export default function LegalNoticePage() {
 }
 
 const linkStyle: React.CSSProperties = {
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   textDecoration: "none",
   fontWeight: 600,
 };
@@ -139,7 +139,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
           letterSpacing: "-0.01em",
           margin: "0 0 12px 0",
           paddingBottom: 8,
-          borderBottom: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+          borderBottom: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
         }}
       >
         {title}

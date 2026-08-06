@@ -160,8 +160,8 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
         key: "watch",
         label: "À relancer",
         emoji: "🟡",
-        color: "var(--ls-gold)",
-        bgTint: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
+        color: "var(--ls-teal)",
+        bgTint: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
         cards: watch,
       },
       {
@@ -319,8 +319,8 @@ function PvKanbanCard({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = "0 3px 10px color-mix(in srgb, var(--ls-gold) 14%, transparent)";
-        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        e.currentTarget.style.boxShadow = "0 3px 10px color-mix(in srgb, var(--ls-teal) 14%, transparent)";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "none";
@@ -516,7 +516,7 @@ function toneColor(tone: "coral" | "gold" | "purple" | "teal"): string {
     case "coral":
       return "var(--ls-coral)";
     case "gold":
-      return "var(--ls-gold)";
+      return "var(--ls-teal)";
     case "purple":
       return "var(--ls-purple)";
     case "teal":

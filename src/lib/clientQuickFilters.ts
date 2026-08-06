@@ -253,9 +253,9 @@ export function getQuickFilterToneColors(tone: QuickFilter["tone"]): {
   switch (tone) {
     case "gold":
       return {
-        bg: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-        border: "var(--ls-gold)",
-        text: "var(--ls-gold)",
+        bg: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+        border: "var(--ls-teal)",
+        text: "var(--ls-teal)",
       };
     case "teal":
       return {

@@ -59,7 +59,7 @@ export function EmptyState({
           gap: 14,
           borderRadius: variant === "default" ? 16 : 0,
           background: variant === "default"
-            ? "radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
+            ? "radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
             : "transparent",
           border: variant === "default" ? "0.5px dashed var(--ls-border)" : "none",
         }}
@@ -76,7 +76,7 @@ export function EmptyState({
               width: compact ? 80 : 120,
               height: compact ? 80 : 120,
               borderRadius: "50%",
-              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 14%, transparent) 0%, transparent 70%)",
+              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 14%, transparent) 0%, transparent 70%)",
               pointerEvents: "none",
               filter: "blur(4px)",
             }}

@@ -27,6 +27,7 @@ import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import type { TeamMemberEngagement } from "../hooks/useTeamEngagement";
 import { XpPodium } from "../components/team/XpPodium";
+import { FormationV2Tracker } from "../components/team/FormationV2Tracker";
 import { EngagementTable } from "../components/team/EngagementTable";
 import { LearningGrid } from "../components/team/LearningGrid";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
@@ -284,6 +285,31 @@ export function TeamPage() {
         subtitle="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
+      {/* Promouvoir un membre en distributeur (2026-08-05) — accès direct au flux
+          /users?tab=promote (garde le compte du membre, sans 2e compte). Admin only. */}
+      {currentUser?.role === "admin" ? (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Link
+            to="/users?tab=promote"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 16px",
+              borderRadius: 10,
+              background: "linear-gradient(135deg, var(--ls-teal), #0d9488)",
+              color: "#04201c",
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: "none",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            ⬆️ Promouvoir un membre en distributeur
+          </Link>
+        </div>
+      ) : null}
+
       {/* Tabs hub équipe (2026-05-04) — 5 onglets pour centraliser le pilotage */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
@@ -535,6 +561,10 @@ export function TeamPage() {
 
           {/* Leaderboard Academy classique (déplacé depuis l'onglet Équipe). */}
           <AcademyLeaderboard />
+
+          {/* Évolution de l'équipe dans la NOUVELLE formation (Duolingo) — qui
+              avance, qui ne fait rien (retour Thomas 2026-08-04). */}
+          <FormationV2Tracker />
         </>
       ) : null}
 
@@ -906,7 +936,7 @@ function TreeCard({
 
   const cardStyle: React.CSSProperties = isRoot
     ? {
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface)), var(--ls-surface))",
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 22%, var(--ls-surface)), var(--ls-surface))",
         border: "1px solid #0F766E",
         padding: "13px 18px 12px",
         minWidth: 184,

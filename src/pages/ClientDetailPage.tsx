@@ -22,6 +22,7 @@ import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
+import { ClientMomentToolbar } from "../components/toolkit/ClientMomentToolbar";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -176,7 +177,7 @@ export function ClientDetailPage() {
               type="button"
               onClick={() => { retriedRef.current = false; void reloadClients(); }}
               style={{
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "var(--ls-ink)",
                 padding: "8px 14px",
                 borderRadius: 10,
@@ -316,7 +317,7 @@ export function ClientDetailPage() {
           padding: 24px 26px;
           border-radius: 24px;
           background: var(--ls-surface);
-          border: 0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border));
+          border: 0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border));
           box-shadow: 0 1px 0 0 rgba(45,212,191,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
         }
         .ls-cli-mesh {
@@ -361,7 +362,7 @@ export function ClientDetailPage() {
                   letterSpacing: 1.6,
                   textTransform: 'uppercase',
                   fontWeight: 700,
-                  color: 'var(--ls-gold)',
+                  color: 'var(--ls-teal)',
                   marginBottom: 4,
                   display: 'flex',
                   alignItems: 'center',
@@ -371,7 +372,7 @@ export function ClientDetailPage() {
                 <span
                   style={{
                     display: 'inline-block', width: 6, height: 6, borderRadius: 999,
-                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(45,212,191,0.50)',
+                    background: 'var(--ls-teal)', boxShadow: '0 0 8px rgba(45,212,191,0.50)',
                   }}
                 />
                 Fiche client · {(() => {
@@ -518,15 +519,19 @@ export function ClientDetailPage() {
         )}
       </div>
 
+      {/* Boîte à outils « au bon moment » — 1 tap vers le bon script, avec le
+          contexte de ce client (chantier Boîte à outils 2026-08-06). */}
+      <ClientMomentToolbar clientId={client.id} lifecycleStatus={client.lifecycleStatus} />
+
       {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="client-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {([
-          { label: 'Vue', emoji: '🏠', color: 'var(--ls-gold)' },
+          { label: 'Vue', emoji: '🏠', color: 'var(--ls-teal)' },
           { label: 'Mesures', emoji: '📐', color: 'var(--ls-teal)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
+          { label: 'Produits', emoji: '💊', color: 'var(--ls-teal)', count: retainedProducts.length },
           { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
-          { label: 'Club VIP', emoji: '👑', color: 'var(--ls-gold)' },
+          { label: 'Club VIP', emoji: '👑', color: 'var(--ls-teal)' },
         ]).map((tab, i) => {
           const isActive = activeTab === i;
           return (
@@ -732,7 +737,7 @@ export function ClientDetailPage() {
           <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
             Décoche un bilan pour l'exclure du calcul d'évolution (Vue) — utile si
             le client reprend de zéro après une pause. Il reste visible ici. Le
-            <span className="text-[var(--ls-gold)] font-semibold"> point de départ</span> devient
+            <span className="text-[var(--ls-teal)] font-semibold"> point de départ</span> devient
             automatiquement le plus ancien bilan coché.
           </p>
 
@@ -913,7 +918,7 @@ export function ClientDetailPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))';
                 e.currentTarget.style.color = 'var(--ls-text)';
               }}
               onMouseLeave={(e) => {
@@ -967,11 +972,11 @@ export function ClientDetailPage() {
                     textAlign: 'right',
                     padding: '8px 14px',
                     borderRadius: 12,
-                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)',
                   }}
                 >
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ls-gold)', fontFamily: 'Syne, serif', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ls-teal)', fontFamily: 'Syne, serif', letterSpacing: '-0.02em' }}>
                     {totalPv.toFixed(1)}<span style={{ fontSize: 11, marginLeft: 2, opacity: 0.75 }}>PV</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
@@ -1029,9 +1034,9 @@ export function ClientDetailPage() {
                           style={{
                             fontSize: 10.5, fontWeight: 700,
                             padding: '2px 8px', borderRadius: 999,
-                            background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
-                            color: 'var(--ls-gold)',
-                            border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                            background: 'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
+                            color: 'var(--ls-teal)',
+                            border: '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)',
                           }}
                         >
                           {product.pricePublic.toFixed(2)}€
@@ -1117,8 +1122,8 @@ export function ClientDetailPage() {
                 padding: '18px 20px',
                 borderRadius: 18,
                 background: 'var(--ls-surface)',
-                border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))',
-                borderLeft: '3px solid var(--ls-gold)',
+                border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))',
+                borderLeft: '3px solid var(--ls-teal)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -1126,8 +1131,8 @@ export function ClientDetailPage() {
                   style={{
                     width: 44, height: 44, flexShrink: 0,
                     borderRadius: 12,
-                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 22,
                   }}
@@ -1135,7 +1140,7 @@ export function ClientDetailPage() {
                   ✨
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'DM Sans, sans-serif' }}>
+                  <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-teal)', fontFamily: 'DM Sans, sans-serif' }}>
                     Recommandations
                   </div>
                   <div style={{ fontFamily: 'Syne, serif', fontSize: 17, fontWeight: 700, color: 'var(--ls-text)', marginTop: 2, letterSpacing: '-0.01em' }}>
@@ -1149,9 +1154,9 @@ export function ClientDetailPage() {
                   style={{
                     fontSize: 11, fontWeight: 800, fontFamily: 'Syne, serif',
                     padding: '3px 10px', borderRadius: 999,
-                    background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
-                    color: 'var(--ls-gold)',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
+                    color: 'var(--ls-teal)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
                   }}
                 >
                   {upsells.length}
@@ -1168,8 +1173,8 @@ export function ClientDetailPage() {
                       gap: 12,
                       padding: '12px 14px',
                       borderRadius: 14,
-                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
-                      border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)',
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
+                      border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)',
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
@@ -1345,7 +1350,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        style={{ width: '100%', padding: '12px', borderRadius: 10, border: '2px dashed var(--ls-border2)', background: 'transparent', color: 'var(--ls-gold)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        style={{ width: '100%', padding: '12px', borderRadius: 10, border: '2px dashed var(--ls-border2)', background: 'transparent', color: 'var(--ls-teal)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Ajouter un produit (upsell)
       </button>
@@ -1372,7 +1377,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)' }}>{product.name}</div>
               <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>{product.category} · {product.pv} PV</div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ls-gold)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
+            <div style={{ fontSize: 11, color: 'var(--ls-teal)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
           </button>
         ))}
         {available.length === 0 && <div style={{ fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center', padding: 12 }}>Tous les produits ont été ajoutés</div>}
@@ -1388,7 +1393,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
 // ─── Lifecycle UI (Chantier 2) ─────────────────────────────────────────
 const LIFECYCLE_TONE_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg: string; text: string }> = {
   teal:  { bg: "rgba(13,148,136,0.12)",  text: "var(--ls-teal)" },
-  gold:  { bg: "rgba(184,146,42,0.12)",  text: "var(--ls-gold)" },
+  gold:  { bg: "rgba(184,146,42,0.12)",  text: "var(--ls-teal)" },
   muted: { bg: "var(--ls-surface2)",     text: "var(--ls-text-muted)" },
   coral: { bg: "rgba(220,38,38,0.1)",    text: "var(--ls-coral)" },
 };
@@ -1449,8 +1454,8 @@ function FreeFollowUpBadge() {
         borderRadius: 12,
         fontSize: 11,
         fontWeight: 600,
-        background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-        color: "var(--ls-gold)",
+        background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+        color: "var(--ls-teal)",
         fontFamily: "DM Sans, sans-serif",
       }}
     >

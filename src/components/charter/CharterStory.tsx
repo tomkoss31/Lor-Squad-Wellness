@@ -204,7 +204,7 @@ export const CharterStory = forwardRef<HTMLDivElement, Props>(
                 fontWeight: 700,
                 fontStyle: "italic",
                 backgroundImage:
-                  "linear-gradient(180deg, #FFF4D4 0%, #F8DDA0 12%, #E5C476 28%, #D4A937 50%, #B8922A 75%, #8B6F1F 95%, #5A4612 100%)",
+                  "linear-gradient(180deg, #FFF4D4 0%, #F8DDA0 12%, #E5C476 28%, #D4A937 50%, #0D9488 75%, #8B6F1F 95%, #5A4612 100%)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",

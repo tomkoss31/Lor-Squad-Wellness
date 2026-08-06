@@ -230,7 +230,7 @@ export function StatistiquesTab() {
                       width: 22,
                       height: 22,
                       borderRadius: "50%",
-                      background: idx === 0 ? "var(--ls-gold)" : "var(--ls-surface)",
+                      background: idx === 0 ? "var(--ls-teal)" : "var(--ls-surface)",
                       color: idx === 0 ? "#0B0D11" : "var(--ls-text-muted)",
                       display: "flex",
                       alignItems: "center",
@@ -251,7 +251,7 @@ export function StatistiquesTab() {
                       fontFamily: "Syne, sans-serif",
                       fontWeight: 700,
                       fontSize: 14,
-                      color: "var(--ls-gold)",
+                      color: "var(--ls-teal)",
                     }}
                   >
                     {r.pv.toLocaleString("fr-FR")} PV
@@ -378,7 +378,7 @@ function PvBarChart({ data }: { data: { month: string; pv: number }[] }) {
               width={barW}
               height={h}
               rx={4}
-              fill="var(--ls-gold)"
+              fill="var(--ls-teal)"
               opacity={0.85}
             />
             {d.pv > 0 ? (

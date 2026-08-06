@@ -10,7 +10,9 @@
 // =============================================================================
 
 export interface AcademyLesson {
-  /** Étape Go Pro (1 Trouver · 2 Inviter · 3 Présenter · 4 Relancer …). */
+  /** Index d'étape Go Pro, 0-based (0 S'équiper · 1 Trouver · 2 Inviter ·
+   *  3 Présenter · 4 Relancer · 5 Démarrer · 6 Dupliquer). L'UI affiche
+   *  `goProStep + 1` (cf. SalleOpsQuotidien « Étape N »). */
   goProStep: number;
   goProLabel: string;
   /** Titre court de la leçon (Anton, CAPS). */
@@ -35,6 +37,24 @@ export interface AcademyLesson {
       manuelle (garde-fou anti-triche : on ne valide pas un vrai bilan/commande
       en cochant une case). */
   autoOnly?: boolean;
+  /**
+   * Preuve CHIFFRÉE : l'étape se valide au bout de N gestes, comptés un par un
+   * (« 1/3 · 2/3 · 3/3 ✓ ») au lieu d'une case tout-ou-rien.
+   *
+   * Ajouté le 2026-08-04 pour « Relancer », qui n'avait AUCUNE condition de
+   * sortie : le parcours s'y figeait et personne n'en sortait jamais. Une
+   * relance n'est pas détectable côté serveur (elle part sur WhatsApp), mais
+   * compter trois gestes concrets vaut mieux qu'une case unique — et surtout,
+   * ça se termine.
+   */
+  proofCounter?: {
+    /** Nombre de gestes à accomplir. */
+    target: number;
+    /** Libellé du bouton d'incrément (« +1 relance envoyée »). */
+    bumpLabel: string;
+    /** Nom de l'unité comptée, au pluriel (« relances »). */
+    unit: string;
+  };
   /** Pré-prompt injecté quand on demande à Noaly sur cette étape. */
   noalyPrompt: string;
 }
@@ -49,9 +69,11 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     apprendre:
       "Avant de vendre quoi que ce soit, tu t'équipes. Ta 1ʳᵉ commande de 250 PV débloque ta marge à 35 % ET fait de toi le cobaye n°1 : tu testes les produits sur TOI pour parler de ton vécu, pas d'un script. Avec les seuils raccourcis, 250 PV suffit — c'est le seul geste qui ouvre tout le reste.",
     faire: {
-      instruction: "Passe ta 1ʳᵉ commande de 250 PV (ton programme + des produits à tester sur toi).",
-      ctaLabel: "Passer ma commande",
-      linkPath: "/panier",
+      // La commande 250 PV du distri se passe sur myHerbalife (pas le panier
+      // interne, qui est un calculateur client). Retour Thomas 2026-08-04.
+      instruction: "Passe ta 1ʳᵉ commande de 250 PV sur myHerbalife (ton programme + des produits à tester sur toi).",
+      ctaLabel: "Commander sur myHerbalife",
+      linkPath: "https://www.myherbalife.fr",
     },
     preuve: "C'est gagné quand ta commande 250 PV est passée — et tu démarres tes 21 jours cobaye sur toi.",
     noalyPrompt: "Qu'est-ce que je commande pour ma 1ʳᵉ commande 250 PV pour bien démarrer ?",
@@ -175,6 +197,7 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
       linkPath: "/crm",
     },
     preuve: "C'est gagné quand tu as relancé 3 contacts cette semaine.",
+    proofCounter: { target: 3, bumpLabel: "+1 relance envoyée", unit: "relances" },
     noalyPrompt: "Écris-moi un message de relance léger pour quelqu'un qui n'a pas répondu, sans mettre la pression.",
   },
 
@@ -212,9 +235,11 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
     apprendre:
       "Dupliquer = créer des coachs qui ont leurs propres coachs. Profondeur d'abord : tu installes LA méthode dans une ligne jusqu'à trouver 1 vrai leader (une jambe profonde = sécurité + preuve duplicable). La largeur fait le revenu, mais seulement après avoir prouvé la profondeur. Vision en grand (Club, leaders), étapes en petit.",
     faire: {
-      instruction: "Aide ta recrue à parrainer SA 1ʳᵉ recrue (ta 2ᵉ génération). C'est là que le revenu décolle.",
-      ctaLabel: "Voir mon équipe",
-      linkPath: "/team",
+      // Pas de bouton : « /team » est réservé aux admins → un distri se faisait
+      // rebondir dehors (retour Thomas 2026-08-04). Étape d'accompagnement, pas
+      // un geste app unique — l'instruction se suffit à elle-même.
+      instruction: "Aide ta recrue à parrainer SA 1ʳᵉ recrue (ta 2ᵉ génération), comme ton parrain t'a accompagné·e. C'est là que le revenu décolle.",
+      ctaLabel: "J'accompagne ma recrue",
     },
     preuve: "C'est gagné quand ta recrue a démarré quelqu'un à son tour — ta 1ʳᵉ duplication.",
     noalyPrompt: "Comment j'aide ma recrue à dupliquer (parrainer et démarrer quelqu'un à son tour) ?",

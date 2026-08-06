@@ -11,6 +11,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
+  initialFirstName?: string;
+  initialPhone?: string;
 }
 
 function buildWhatsAppUrl(phone: string, firstName: string, inviteUrl: string): string {
@@ -24,7 +26,7 @@ function buildInviteUrl(token: string): string {
   return `${window.location.origin}/bienvenue-distri?token=${token}`;
 }
 
-export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
+export function InviteDistributorModal({ open, onClose, onCreated, initialFirstName, initialPhone }: Props) {
   const { push: pushToast } = useToast();
   const [firstName, setFirstName] = useState("");
   const [phone, setPhone] = useState("");
@@ -42,8 +44,12 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
       setGenerated(null);
       setSubmitting(false);
       setCopied(false);
+    } else {
+      // pré-remplissage à l'ouverture (ex. promotion d'un membre token-only)
+      if (initialFirstName) setFirstName(initialFirstName);
+      if (initialPhone) setPhone(initialPhone);
     }
-  }, [open]);
+  }, [open, initialFirstName, initialPhone]);
 
   useEffect(() => {
     if (!open) return;
@@ -249,7 +255,7 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
                 style={{
                   padding: "10px 18px",
                   borderRadius: 10,
-                  background: "var(--ls-gold)",
+                  background: "var(--ls-teal)",
                   border: "none",
                   color: "#1a1407",
                   cursor: submitting ? "wait" : "pointer",
@@ -293,7 +299,7 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
                   flex: 1,
                   padding: "11px 14px",
                   borderRadius: 10,
-                  background: copied ? "var(--ls-teal)" : "var(--ls-gold)",
+                  background: copied ? "var(--ls-teal)" : "var(--ls-teal)",
                   border: "none",
                   color: copied ? "#04120f" : "#1a1407",
                   cursor: "pointer",

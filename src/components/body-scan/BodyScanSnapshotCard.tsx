@@ -144,7 +144,7 @@ function SnapshotMetricCard({
     : tone === "red"
       ? "var(--ls-coral)"
       : tone === "amber"
-        ? "var(--ls-gold)"
+        ? "var(--ls-teal)"
         : tone === "green"
           ? "var(--ls-teal)"
           : "var(--ls-text)";

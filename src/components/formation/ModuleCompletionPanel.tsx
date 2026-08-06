@@ -147,8 +147,8 @@ function PendingState({
         style={{
           padding: "10px 12px",
           borderRadius: 10,
-          background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
           color: "var(--ls-text)",
           fontSize: 13,
           fontWeight: 500,

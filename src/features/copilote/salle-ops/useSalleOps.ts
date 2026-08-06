@@ -10,39 +10,16 @@
 import { useMemo } from "react";
 import { useStarterPlan } from "../../../hooks/useStarterPlan";
 import { ACADEMY_LESSONS, type AcademyLesson } from "./academyLessons";
+import { GO_PRO_STEPS, OPS_PHASES, type GoProStepDef, type OpsPhase } from "./goProSteps";
 
-export type OpsPhase = "allumage" | "acceleration" | "profondeur" | "levier";
+// Ré-export : les composants importaient déjà OPS_PHASES depuis ce module.
+export { OPS_PHASES };
+export type { OpsPhase };
 
-export const OPS_PHASES: { key: OpsPhase; label: string; short: string }[] = [
-  { key: "allumage", label: "Allumage", short: "Allumage" },
-  { key: "acceleration", label: "Accélération", short: "Accél." },
-  { key: "profondeur", label: "Profondeur", short: "Profond." },
-  { key: "levier", label: "Levier", short: "Levier" },
-];
-
-// Le parcours = S'équiper + 6 étapes Go Pro (décision Thomas). Chaque étape
-// « apprendre à faire » mappe une ou plusieurs portes serveur. Les étapes
-// « faire faire » (Démarrer ta recrue / Dupliquer) n'ont pas de porte : ce sont
-// des compétences post-activation, navigables en lecture (V2).
-interface GoProDef {
-  n: number;
-  key: string;
-  label: string;
-  gates: string[];
-  /** Clé de leçon quand l'étape n'a pas de porte (ex. relancer). */
-  lessonKey?: string;
-  locked?: boolean;
-}
-
-const GOPRO: GoProDef[] = [
-  { n: 1, key: "sequiper", label: "S'équiper", gates: ["commande_250pv"] },
-  { n: 2, key: "trouver", label: "Trouver", gates: ["liste_50"] },
-  { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
-  { n: 4, key: "presenter", label: "Présenter", gates: ["premier_bilan", "premier_hom", "premier_pv_pack"] },
-  { n: 5, key: "relancer", label: "Relancer", gates: [], lessonKey: "relancer" },
-  { n: 6, key: "demarrer", label: "Démarrer ta recrue", gates: [], lessonKey: "demarrer_recrue" },
-  { n: 7, key: "dupliquer", label: "Dupliquer", gates: [], lessonKey: "dupliquer" },
-];
+// Le parcours vient désormais de goProSteps.ts — LA définition unique, partagée
+// avec la grille Apprentissage de l'équipe. Avant, chacun avait sa copie et les
+// deux divergeaient (lot 1 du chantier « l'app d'un débutant », 2026-08-04).
+const GOPRO = GO_PRO_STEPS;
 
 export type StepState = "done" | "active" | "todo" | "locked";
 
@@ -75,12 +52,16 @@ export interface SalleOpsView {
   /** Jalon J30-45 : prêt pour le plan marketing (≥ J30 + 1er bilan réalisé). */
   jalonPlanMarketing: boolean;
   toggle: (taskKey: string) => Promise<void>;
+  /** Gestes accomplis par étape à preuve chiffrée (« 2/3 relances »). */
+  counts: Record<string, number>;
+  /** Incrémente la preuve chiffrée de l'étape en cours. */
+  bump: (taskKey: string, target: number) => Promise<void>;
 }
 
 const DAY_MS = 86_400_000;
 
 export function useSalleOps(): SalleOpsView {
-  const { statuses, activatedAt, starterStartedAt, loading, toggle } = useStarterPlan();
+  const { statuses, activatedAt, starterStartedAt, loading, toggle, counts, bump } = useStarterPlan();
 
   return useMemo(() => {
     // État LU SUR LES CLÉS BRUTES (statuses) — inclut les clés hors
@@ -89,7 +70,7 @@ export function useSalleOps(): SalleOpsView {
     const doneByGate = (k: string) => statuses[k] === "done";
 
     const activated = Boolean(activatedAt);
-    const stepDone = (g: GoProDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate(k));
+    const stepDone = (g: GoProStepDef) => g.gates.length > 0 && g.gates.every((k) => doneByGate(k));
 
     // Étape active = 1ʳᵉ étape ni faite ni verrouillée (relancer n'est jamais
     // « done » → devient le focus une fois les portes franchies).
@@ -104,7 +85,10 @@ export function useSalleOps(): SalleOpsView {
       const gateKey = active
         ? g.gates.find((k) => !doneByGate(k)) ?? null
         : g.gates[0] ?? null;
-      const lessonKey = gateKey ?? g.lessonKey ?? null;
+      // `lessonKey` explicite d'abord : depuis que « Relancer » a une clé de
+      // SUIVI (`relances_3`) qui n'est pas une clé de leçon, se fier au gateKey
+      // faisait disparaître tout le contenu de l'étape.
+      const lessonKey = g.lessonKey ?? gateKey ?? null;
       return {
         n: g.n,
         label: g.label,
@@ -151,6 +135,8 @@ export function useSalleOps(): SalleOpsView {
       dayNumber,
       jalonPlanMarketing,
       toggle,
+      counts,
+      bump,
     };
-  }, [statuses, activatedAt, starterStartedAt, loading, toggle]);
+  }, [statuses, activatedAt, starterStartedAt, loading, toggle, counts, bump]);
 }

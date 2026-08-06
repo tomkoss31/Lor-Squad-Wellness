@@ -62,8 +62,8 @@ export function BusinessAmbitionStep({
           padding: "32px 24px",
           borderRadius: 24,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
           textAlign: "center",
           overflow: "hidden",
         }}
@@ -77,7 +77,7 @@ export function BusinessAmbitionStep({
             width: 160,
             height: 160,
             borderRadius: "50%",
-            background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
             filter: "blur(40px)",
           }}
         />
@@ -89,7 +89,7 @@ export function BusinessAmbitionStep({
             fontWeight: 700,
             letterSpacing: "0.18em",
             textTransform: "uppercase",
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             marginBottom: 12,
           }}
         >
@@ -112,7 +112,7 @@ export function BusinessAmbitionStep({
           <span
             style={{
               background:
-                "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+                "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -187,11 +187,11 @@ export function BusinessAmbitionStep({
                 borderRadius: 18,
                 background: active
                   ? opt.highlight
-                    ? "color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface))"
+                    ? "color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface))"
                     : "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface))"
                   : "var(--ls-surface)",
                 border: active
-                  ? `1.5px solid ${opt.highlight ? "var(--ls-gold)" : "var(--ls-teal)"}`
+                  ? `1.5px solid ${opt.highlight ? "var(--ls-teal)" : "var(--ls-teal)"}`
                   : "0.5px solid var(--ls-border)",
                 color: "var(--ls-text)",
                 cursor: "pointer",
@@ -199,7 +199,7 @@ export function BusinessAmbitionStep({
                 transition: "all 180ms cubic-bezier(0.4, 0, 0.2, 1)",
                 transform: active ? "scale(1.02)" : "scale(1)",
                 boxShadow: active
-                  ? "0 8px 24px color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                  ? "0 8px 24px color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                   : "none",
               }}
             >
@@ -212,7 +212,7 @@ export function BusinessAmbitionStep({
                   fontWeight: 800,
                   fontSize: 15,
                   letterSpacing: "-0.01em",
-                  color: active && opt.highlight ? "var(--ls-gold)" : "var(--ls-text)",
+                  color: active && opt.highlight ? "var(--ls-teal)" : "var(--ls-text)",
                 }}
               >
                 {opt.label}
@@ -238,8 +238,8 @@ export function BusinessAmbitionStep({
           style={{
             padding: 16,
             borderRadius: 14,
-            background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
           }}
         >
           <label

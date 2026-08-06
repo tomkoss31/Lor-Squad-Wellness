@@ -1,0 +1,26 @@
+{
+  // Fonctions serverless Vercel (dossier api/).
+  //
+  // Pourquoi ce fichier existe : tsconfig.app.json n'inclut QUE "src", donc le
+  // dossier api/ n'était jamais type-vérifié en local. Résultat le 2026-08-05 :
+  // deux erreurs TS dans api/admin-repair-user.ts sont passées à travers un
+  // `npm run build` vert, et ne sont apparues que dans les logs Vercel (qui
+  // type-vérifie api/ de son côté, sans bloquer le déploiement — donc l'erreur
+  // pouvait rester invisible longtemps).
+  //
+  // Référencé depuis tsconfig.json → `tsc -b` (donc `npm run build`) le couvre.
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["api"]
+}

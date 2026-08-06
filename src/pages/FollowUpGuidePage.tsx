@@ -127,7 +127,7 @@ function StepCard({
             width: 40,
             height: 40,
             borderRadius: 12,
-            background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -294,7 +294,7 @@ function BulletList({ items }: { items: string[] }) {
             color: "var(--ls-text)",
           }}
         >
-          <span style={{ color: "var(--ls-gold)", flexShrink: 0, marginTop: 1 }} aria-hidden="true">
+          <span style={{ color: "var(--ls-teal)", flexShrink: 0, marginTop: 1 }} aria-hidden="true">
             •
           </span>
           <span style={{ flex: 1 }}>{item}</span>

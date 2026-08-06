@@ -30,7 +30,7 @@ function getPhaseColor(stepIndex: number): string {
   for (const phase of STEP_PHASES) {
     if (phase.steps.includes(stepIndex)) return phase.color;
   }
-  return "var(--ls-gold)";
+  return "var(--ls-teal)";
 }
 
 function getPhaseForStep(stepIndex: number): { label: string; emoji: string; color: string } {
@@ -39,7 +39,7 @@ function getPhaseForStep(stepIndex: number): { label: string; emoji: string; col
       return { label: phase.label, emoji: phase.emoji, color: phase.color };
     }
   }
-  return { label: "Étape", emoji: "✦", color: "var(--ls-gold)" };
+  return { label: "Étape", emoji: "✦", color: "var(--ls-teal)" };
 }
 
 export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
@@ -185,7 +185,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
             position: "relative",
             overflow: "hidden",
             background:
-              "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+              "linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
             border: `0.5px solid color-mix(in srgb, ${phase.color} 25%, var(--ls-border))`,
             borderRadius: 20,
             padding: "18px 22px",

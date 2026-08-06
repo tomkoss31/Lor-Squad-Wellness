@@ -307,7 +307,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                     }}
                   >
                     <span style={{ color: "var(--ls-text)", flex: 1 }}>{p.name}</span>
-                    <span style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif", marginRight: 6 }}>
+                    <span style={{ color: "var(--ls-teal)", fontWeight: 600, fontFamily: "Syne, sans-serif", marginRight: 6 }}>
                       {p.total_pv} PV
                     </span>
                     <span style={{ fontSize: 10, color: "var(--ls-text-hint)" }} aria-hidden="true">
@@ -370,7 +370,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background =
-                          "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))";
+                          "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "var(--ls-surface2)";
@@ -596,7 +596,7 @@ function KpiCard({
   isText?: boolean;
 }) {
   const colors = {
-    gold: { bg: "color-mix(in srgb, var(--ls-gold) 6%, transparent)", border: "var(--ls-gold)", text: "var(--ls-gold)" },
+    gold: { bg: "color-mix(in srgb, var(--ls-teal) 6%, transparent)", border: "var(--ls-teal)", text: "var(--ls-teal)" },
     teal: { bg: "color-mix(in srgb, var(--ls-teal) 6%, transparent)", border: "var(--ls-teal)", text: "var(--ls-teal)" },
     purple: { bg: "color-mix(in srgb, var(--ls-purple) 6%, transparent)", border: "var(--ls-purple)", text: "var(--ls-purple)" },
     coral: { bg: "color-mix(in srgb, var(--ls-coral) 6%, transparent)", border: "var(--ls-coral)", text: "var(--ls-coral)" },
@@ -662,8 +662,8 @@ function TendanceChart({ data }: { data: { month_start: string; bilans: number }
         <AreaChart data={formatted} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
           <defs>
             <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#B8922A" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="#B8922A" stopOpacity={0.04} />
+              <stop offset="0%" stopColor="#0D9488" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#0D9488" stopOpacity={0.04} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="2 4" stroke="var(--ls-border)" vertical={false} />
@@ -680,14 +680,14 @@ function TendanceChart({ data }: { data: { month_start: string; bilans: number }
             tickLine={false}
             width={32}
           />
-          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--ls-gold)", strokeOpacity: 0.3 }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--ls-teal)", strokeOpacity: 0.3 }} />
           <Area
             type="monotone"
             dataKey="bilans"
-            stroke="#B8922A"
+            stroke="#0D9488"
             strokeWidth={2.5}
             fill="url(#goldGradient)"
-            dot={{ fill: "#B8922A", r: 3, strokeWidth: 0 }}
+            dot={{ fill: "#0D9488", r: 3, strokeWidth: 0 }}
             activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }}
           />
         </AreaChart>
@@ -718,7 +718,7 @@ function ChartTooltip(props: TooltipProps<number, string>) {
       }}
     >
       <div style={{ color: "var(--ls-text-muted)", marginBottom: 2 }}>{item.payload?.month}</div>
-      <div style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif", fontSize: 14 }}>
+      <div style={{ color: "var(--ls-teal)", fontWeight: 600, fontFamily: "Syne, sans-serif", fontSize: 14 }}>
         {item.value} bilan{Number(item.value) > 1 ? "s" : ""}
       </div>
     </div>
@@ -727,7 +727,7 @@ function ChartTooltip(props: TooltipProps<number, string>) {
 
 function FunnelView({ funnel }: { funnel: { bilans: number; inscrits: number; actifs: number; actifs_30d: number } }) {
   const data = [
-    { name: "Bilans", value: funnel.bilans, color: "#B8922A" },
+    { name: "Bilans", value: funnel.bilans, color: "#0D9488" },
     { name: "Inscrits", value: funnel.inscrits, color: "#0D9488" },
     { name: "Actifs", value: funnel.actifs, color: "#A78BFA" },
     { name: "≥30j", value: funnel.actifs_30d, color: "#FB7185" },

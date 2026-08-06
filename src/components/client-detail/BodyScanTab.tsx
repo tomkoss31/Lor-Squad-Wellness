@@ -76,7 +76,7 @@ const METRICS: MetricDef[] = [
     // kg de muscle → % du poids
     alt: { unit: "%", decimals: 1, convert: (kg, weight) => (weight > 0 ? (kg / weight) * 100 : 0) }
   },
-  { key: "hydration", label: "Hydratation", unit: "%", color: "var(--ls-violet, #A78BFA)", decimals: 1, higherIsBetter: true },
+  { key: "hydration", label: "Hydratation", unit: "%", color: "var(--ls-purple)", decimals: 1, higherIsBetter: true },
   { key: "visceralFat", label: "Graisse visc.", unit: "", color: "var(--ls-teal)", decimals: 0, higherIsBetter: false },
   { key: "metabolicAge", label: "Âge méta.", unit: "ans", color: "var(--ls-lime)", decimals: 0, higherIsBetter: false }
 ];

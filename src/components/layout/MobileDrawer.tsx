@@ -24,6 +24,7 @@ import { useFormationStreak } from "../../hooks/useFormationStreak";
 import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { MonSuiviPill } from "./MonSuiviPill";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { useAppLevel } from "../../hooks/useAppLevel";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
@@ -134,6 +135,11 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
             </svg>
           </button>
         </header>
+
+        {/* Bascule double casquette (2026-08-05) : mon suivi perso si fiche liée */}
+        <div style={{ padding: "8px 16px 0" }} onClick={onClose}>
+          <MonSuiviPill variant="drawer" />
+        </div>
 
         {/* Body : sections */}
         <div className="lb-drawer-body">

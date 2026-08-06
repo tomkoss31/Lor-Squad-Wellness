@@ -27,10 +27,10 @@ const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
 
 const LINKS: Array<{ emoji: string; label: string; hint: string; path: string }> = [
   {
-    emoji: "📚",
-    label: "Formation distributeur Herbalife",
-    hint: "La méthode complète en 3 niveaux : Démarrer, Construire, Dupliquer.",
-    path: "/formation",
+    emoji: "🎓",
+    label: "Apprendre en avançant",
+    hint: "Le parcours en micro-leçons : comprendre, trouver, vendre, dupliquer.",
+    path: "/formation/apprendre",
   },
   {
     emoji: "🛠",

@@ -42,9 +42,9 @@ const TONE_COLORS: Record<string, { bg: string; text: string; border: string }> 
     border: "color-mix(in srgb, #94A3B8 30%, transparent)",
   },
   bronze: {
-    bg: "color-mix(in srgb, #B8922A 14%, transparent)",
+    bg: "color-mix(in srgb, #0D9488 14%, transparent)",
     text: "#A87132",
-    border: "color-mix(in srgb, #B8922A 32%, transparent)",
+    border: "color-mix(in srgb, #0D9488 32%, transparent)",
   },
   silver: {
     bg: "color-mix(in srgb, #94A3B8 14%, transparent)",
@@ -52,9 +52,9 @@ const TONE_COLORS: Record<string, { bg: string; text: string; border: string }> 
     border: "color-mix(in srgb, #94A3B8 32%, transparent)",
   },
   gold: {
-    bg: "color-mix(in srgb, #B8922A 16%, transparent)",
-    text: "#B8922A",
-    border: "color-mix(in srgb, #B8922A 36%, transparent)",
+    bg: "color-mix(in srgb, #0D9488 16%, transparent)",
+    text: "#0D9488",
+    border: "color-mix(in srgb, #0D9488 36%, transparent)",
   },
   diamond: {
     bg: "color-mix(in srgb, #8B5CF6 14%, transparent)",

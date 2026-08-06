@@ -9,7 +9,7 @@ const ACCENT_COLORS: Record<NonNullable<MetricTileProps["accent"]>, string> = {
   blue:  "var(--ls-teal)",
   green: "var(--ls-teal)",
   red:   "var(--ls-coral)",
-  amber: "var(--ls-gold)",
+  amber: "var(--ls-teal)",
   muted: "var(--ls-text-muted)",
 }
 

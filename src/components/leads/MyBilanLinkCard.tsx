@@ -164,12 +164,12 @@ const STYLES = `
     border-radius: 8px;
     padding: 10px 12px;
     font-size: 13px;
-    color: var(--ls-gold, #C9A84C);
+    color: var(--ls-teal, #2DD4BF);
     font-family: 'SFMono-Regular', Consolas, monospace;
     word-break: break-all;
     cursor: pointer;
   }
-  .mblc-url:hover { border-color: var(--ls-gold, #C9A84C); }
+  .mblc-url:hover { border-color: var(--ls-teal, #2DD4BF); }
 
   .mblc-actions {
     display: flex;
@@ -192,7 +192,7 @@ const STYLES = `
     min-height: 38px;
   }
   .mblc-btn-copy {
-    background: linear-gradient(90deg, #C9A84C 0%, #E0BF6B 100%);
+    background: linear-gradient(90deg, #2DD4BF 0%, #E0BF6B 100%);
     flex-shrink: 0;
   }
   .mblc-btn-ghost {

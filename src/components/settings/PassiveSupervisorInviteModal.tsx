@@ -202,7 +202,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
               width: 160,
               height: 160,
               borderRadius: "50%",
-              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 30%, transparent) 0%, transparent 70%)",
+              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 30%, transparent) 0%, transparent 70%)",
               pointerEvents: "none",
             }}
           />
@@ -225,7 +225,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
           >
             ×
           </button>
-          <div style={{ fontSize: 10.5, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ fontSize: 10.5, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 700, marginBottom: 6 }}>
             ✨ Distri Light · Compte passif
           </div>
           <h2
@@ -426,15 +426,15 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
                   style={{
                     marginTop: 8,
                     padding: "12px 14px",
-                    background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-                    border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+                    background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+                    border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
                     borderRadius: 10,
                     fontSize: 11.5,
                     color: "var(--ls-text-muted)",
                     lineHeight: 1.55,
                   }}
                 >
-                  <strong style={{ color: "var(--ls-gold)" }}>⚠️ Note ce mot de passe</strong> — il n'est pas
+                  <strong style={{ color: "var(--ls-teal)" }}>⚠️ Note ce mot de passe</strong> — il n'est pas
                   récupérable une fois la modale fermée. Le distri pourra le changer après sa première
                   connexion via <strong>Paramètres</strong>.
                 </div>

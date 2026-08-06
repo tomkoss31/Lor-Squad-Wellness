@@ -705,6 +705,67 @@ async function handleCrmSummary(sb: SupabaseClient, body: Record<string, unknown
   return json({ summary, model: MODEL, usage: data.usage });
 }
 
+// ─── Mode 7 : personalize_script (Boîte à outils, 2026-08-06) ────────────────
+//
+// Le coach a un SCRIPT tout prêt sous les yeux (invitation, suivi/relance,
+// demande de reco, réponse à une objection) et demande à Noaly de l'adapter à
+// un contact précis. Noaly GARDE l'intention et la structure — elle ne réécrit
+// pas de zéro — remplace les [crochets], adapte le ton. Contexte client fourni
+// par le front UNIQUEMENT quand l'écran est ouvert depuis une fiche (?client=).
+// Coach-facing → modèle par défaut. Cap mensuel coach.
+
+const PERSONALIZE_SYSTEM = `Tu es Noaly, l'assistante IA de La Base 360 (club de coaching bien-être/nutrition, méthode Herbalife).
+Le coach a sous les yeux un SCRIPT tout prêt (invitation, message de suivi/relance, demande de recommandation, ou réponse à une objection). Tu le PERSONNALISES pour un contact précis.
+Règles :
+- Garde l'INTENTION et la structure du script d'origine — tu l'adaptes, tu ne le réécris pas de zéro.
+- Remplace les [crochets] (prénom, etc.) par les vraies infos si tu les as ; sinon reformule pour qu'il n'en reste AUCUN.
+- Ton chaleureux, naturel, tutoiement, oral. 0 à 2 emojis maximum. Court : 6 lignes max.
+- Pas de promesse santé, pas de perte de poids chiffrée, pas de jargon, jamais commercial agressif.
+Tu réponds UNIQUEMENT avec le message final prêt à envoyer (aucun préambule, aucune option multiple, pas de guillemets).`;
+
+async function handlePersonalizeScript(sb: SupabaseClient, body: Record<string, unknown>) {
+  const coachUserId = (body.coachUserId as string) ?? null;
+  const script = String(body.script ?? "").trim();
+  if (!script) return json({ error: "script requis" }, 400);
+
+  if (coachUserId && (await coachCapReached(sb, coachUserId))) {
+    return json(
+      {
+        error: "cap_reached",
+        message:
+          "Tu as atteint ton quota Noaly du mois 🙏 Il se réinitialise le 1er. (L'admin peut l'augmenter.)",
+      },
+      429,
+    );
+  }
+
+  const coach = String(body.coachFirstName ?? "ton coach").trim();
+  const toolTitle = String(body.toolTitle ?? "message").trim();
+  const clientContext = String(body.clientContext ?? "").trim();
+
+  const userPrompt =
+    `Script d'origine (${toolTitle}) :\n"""\n${script}\n"""\n\n` +
+    (clientContext
+      ? `Adapte-le pour ce contact : ${clientContext}\n`
+      : `Personnalise-le en variant le ton et les tournures, sans inventer d'infos sur le contact.\n`) +
+    `Signe si besoin avec le prénom du coach : ${coach}.`;
+
+  const data = await callAnthropic({
+    max_tokens: 600,
+    system: PERSONALIZE_SYSTEM,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const message = (data.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("")
+    .trim();
+
+  logUsage(sb, "personalize_script", data.usage, coachUserId, null);
+  return json({ message, model: MODEL, usage: data.usage });
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -721,6 +782,7 @@ serve(async (req: Request) => {
     if (body.mode === "bilan_analysis") return await handleBilanAnalysis(sb, body);
     if (body.mode === "colis_reflection") return await handleColisReflection(sb, body);
     if (body.mode === "crm_summary") return await handleCrmSummary(sb, body);
+    if (body.mode === "personalize_script") return await handlePersonalizeScript(sb, body);
     // Défaut / rétro-compat : génération message CRM (body.lead + mode first_contact/relance).
     return await handleCrmMessage(sb, body);
   } catch (e) {

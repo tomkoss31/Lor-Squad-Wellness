@@ -8,20 +8,25 @@
  * Dark par défaut. Variante claire via `.bbc-light` sur le wrapper.
  * ========================================================================== */
 
+/* Passe de chaleur (2026-08-05, validée Thomas) : les fonds passent du noir
+   bleuté au VERT PROFOND du club — même famille que l'app coach et la PWA
+   client. Les accents sémantiques (lime=club, teal=membre, coral=urgent,
+   ambre=silence, violet=rituel) sont conservés ; seul le coral s'adoucit. */
 .bbc-mode {
-  --ls-bbc-bg: #0B0D11;
-  --ls-bbc-s1: #131820;
-  --ls-bbc-s2: #1A2029;
-  --ls-bbc-s3: #20262F;
-  --ls-bbc-line: rgba(251, 247, 240, 0.10);
-  --ls-bbc-line2: rgba(251, 247, 240, 0.18);
-  --ls-bbc-text: #FBF7F0;
-  --ls-bbc-muted: rgba(251, 247, 240, 0.60);
-  --ls-bbc-hint: rgba(251, 247, 240, 0.34);
+  --ls-bbc-bg: #162624;
+  --ls-bbc-s1: #1E3330;
+  --ls-bbc-s2: #26403B;
+  --ls-bbc-s3: #2E4A44;
+  --ls-bbc-line: rgba(244, 239, 228, 0.12);
+  --ls-bbc-line2: rgba(244, 239, 228, 0.20);
+  --ls-bbc-text: #F4EFE4;
+  --ls-bbc-muted: rgba(244, 239, 228, 0.68);
+  --ls-bbc-hint: rgba(244, 239, 228, 0.46);
   --ls-bbc-lime: #C5F82A;
   --ls-bbc-teal: #2DD4BF;
-  --ls-bbc-coral: #FB7185;
-  --ls-bbc-amber: #E9A23B;
+  --ls-bbc-coral: #F2775F;
+  --ls-bbc-sage: #93A67E;
+  --ls-bbc-amber: #E8A93A;
   /* Les rituels du club (« La semaine du club », 2026-07-28). Il fallait une
      5e teinte : le lime dit « club », le teal « membre », le coral « urgent »,
      l'ambre « personne n'ouvre » — un rituel n'est rien de tout ça. */
@@ -34,18 +39,19 @@
 }
 
 .bbc-mode.bbc-light {
-  --ls-bbc-bg: #F3F4EF;
+  --ls-bbc-bg: #FAF7F0;
   --ls-bbc-s1: #FFFFFF;
-  --ls-bbc-s2: #F4F5EF;
-  --ls-bbc-s3: #EAEBE3;
-  --ls-bbc-line: rgba(11, 13, 17, 0.10);
-  --ls-bbc-line2: rgba(11, 13, 17, 0.18);
-  --ls-bbc-text: #0B0D11;
-  --ls-bbc-muted: rgba(11, 13, 17, 0.62);
-  --ls-bbc-hint: rgba(11, 13, 17, 0.38);
-  --ls-bbc-lime: #8FBF0F;
-  --ls-bbc-teal: #0F766E;
-  --ls-bbc-coral: #E11D48;
+  --ls-bbc-s2: #F5F1EB;
+  --ls-bbc-s3: #EFEAE1;
+  --ls-bbc-line: rgba(30, 51, 48, 0.07);
+  --ls-bbc-line2: rgba(30, 51, 48, 0.13);
+  --ls-bbc-text: #17201C;
+  --ls-bbc-muted: #55605A;
+  --ls-bbc-hint: #8A938D;
+  --ls-bbc-lime: #6D8C0B;
+  --ls-bbc-teal: #0D9488;
+  --ls-bbc-coral: #D9553C;
+  --ls-bbc-sage: #5F7154;
   --ls-bbc-amber: #B7791F;
   --ls-bbc-violet: #6D28D9;
   --ls-bbc-lime-text: #4D7A06;

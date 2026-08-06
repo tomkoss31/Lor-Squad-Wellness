@@ -497,7 +497,7 @@ export function CrmLeadDetailPage() {
                     💡 Suggestion : <strong style={{ color: "var(--ls-text)" }}>{ownerSuggestion.name}</strong>{" "}
                     ({ownerSuggestion.activeLeadCount} lead{ownerSuggestion.activeLeadCount > 1 ? "s" : ""} actif{ownerSuggestion.activeLeadCount > 1 ? "s" : ""})
                   </span>
-                  <button type="button" onClick={() => void handleAssign(ownerSuggestion.id)} style={actionBtn("var(--ls-gold)")}>
+                  <button type="button" onClick={() => void handleAssign(ownerSuggestion.id)} style={actionBtn("var(--ls-teal)")}>
                     Assigner
                   </button>
                 </div>
@@ -598,7 +598,7 @@ export function CrmLeadDetailPage() {
               <button
                 type="button"
                 onClick={() => { recordTouch(); copyMessage(message); }}
-                style={actionBtn("var(--ls-gold)")}
+                style={actionBtn("var(--ls-teal)")}
               >
                 📋 Copier {messageLabel.toLowerCase()}
               </button>
@@ -627,7 +627,7 @@ export function CrmLeadDetailPage() {
                       📱 WhatsApp
                     </a>
                   ) : null}
-                  <button type="button" onClick={() => copyMessage(aiMessage)} style={actionBtn("var(--ls-gold)")}>📋 Copier</button>
+                  <button type="button" onClick={() => copyMessage(aiMessage)} style={actionBtn("var(--ls-teal)")}>📋 Copier</button>
                   <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>✕ Fermer</button>
                 </div>
               </div>
@@ -651,7 +651,7 @@ export function CrmLeadDetailPage() {
                       <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #8b5cf6)")}>
                         👁️ Voir la page (vérif)
                       </a>
-                      <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-gold)")}>
+                      <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-teal)")}>
                         📋 Copier le message + lien
                       </button>
                       {lead.contactIsPhone ? (
@@ -886,7 +886,7 @@ const colTitle: React.CSSProperties = {
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.06em",
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   margin: "0 0 14px",
 };
 
@@ -961,8 +961,8 @@ const primaryBtn: React.CSSProperties = {
   padding: "12px 16px",
   border: "none",
   borderRadius: 11,
-  background: "var(--ls-gold)",
-  color: "var(--ls-gold-contrast, #0B0D11)",
+  background: "var(--ls-teal)",
+  color: "var(--ls-teal-contrast, #0B0D11)",
   fontFamily: "Syne, sans-serif",
   fontSize: 13.5,
   fontWeight: 700,

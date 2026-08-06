@@ -513,7 +513,7 @@ function CheckinForm({
             border: "none",
             background: saving
               ? "var(--ls-border)"
-              : "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+              : "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
             color: "var(--ls-bg)",
             fontFamily: "Syne, sans-serif",
             fontSize: 14,
@@ -571,7 +571,7 @@ function CheckinSummary({ checkin, plan }: { checkin: DailyActionCheckin; plan: 
         })}
       </div>
       {checkin.daily_win && (
-        <div style={summaryNote("var(--ls-gold)")}>
+        <div style={summaryNote("var(--ls-teal)")}>
           <strong>✨ Victoire :</strong> {checkin.daily_win}
         </div>
       )}

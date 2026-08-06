@@ -56,7 +56,7 @@ export function BusinessCuriosityCard({ value, onChange }: BusinessCuriosityCard
                 padding: "14px 14px 12px",
                 borderRadius: 14,
                 background: active
-                  ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 78%, var(--ls-gold)) 100%)"
+                  ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
                   : "var(--ls-surface2)",
                 border: active
                   ? "1px solid var(--ls-teal)"

@@ -194,7 +194,7 @@ export function RentabilityPvTeamTab({
                         {m.name}
                       </span>
                       {u?.currentRank?.endsWith("_50") && u.rankSetAt && (
-                        <span style={{ display: "block", fontSize: 11, color: "var(--ls-gold)", marginTop: 2 }}>
+                        <span style={{ display: "block", fontSize: 11, color: "var(--ls-teal)", marginTop: 2 }}>
                           👑 {RANK_LABELS[u.currentRank] ?? "Superviseur"} depuis le{" "}
                           {new Date(u.rankSetAt).toLocaleDateString("fr-FR")}
                         </span>

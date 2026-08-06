@@ -161,7 +161,7 @@ export function SelectableProductCard({
   const accentColor = selected
     ? "var(--ls-teal)"
     : isRec
-      ? "var(--ls-gold)"
+      ? "var(--ls-teal)"
       : "var(--ls-border)";
   const accentHex = selected ? "#2DD4BF" : isRec ? "#2DD4BF" : "transparent";
 
@@ -177,7 +177,7 @@ export function SelectableProductCard({
         background: selected
           ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
           : isRec
-            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
+            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
             : "var(--ls-surface)",
         border: `0.5px solid ${selected ? "color-mix(in srgb, var(--ls-teal) 35%, transparent)" : "var(--ls-border)"}`,
         borderLeft: `3px solid ${accentColor}`,
@@ -193,7 +193,7 @@ export function SelectableProductCard({
         e.currentTarget.style.transform = "translateY(-2px)";
         if (!selected && !isRec) {
           e.currentTarget.style.boxShadow = "0 6px 18px -8px rgba(0,0,0,0.18)";
-          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))";
         }
       }}
       onMouseLeave={(e) => {
@@ -212,7 +212,7 @@ export function SelectableProductCard({
             top: 8,
             right: 10,
             fontSize: 13,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             filter: "drop-shadow(0 1px 2px rgba(45,212,191,0.40))",
           }}
           aria-label="Recommandé"
@@ -233,7 +233,7 @@ export function SelectableProductCard({
             ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
             : isRec
               ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
-              : "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+              : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -282,7 +282,7 @@ export function SelectableProductCard({
                 style={{
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 11,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   fontStyle: "italic",
                   marginTop: 4,
                   lineHeight: 1.4,
@@ -372,10 +372,10 @@ export function SelectableProductCard({
               fontWeight: 700,
               padding: "3px 10px",
               borderRadius: 999,
-              background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-              color: "var(--ls-gold)",
+              background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+              color: "var(--ls-teal)",
               fontFamily: "DM Sans, sans-serif",
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
             }}
           >
             {formatPriceEuro(prixPublic)}

@@ -46,8 +46,8 @@ export function EngagementTotalBlock({ member }: Props) {
 
 const xpBigCardStyle: CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 14,
   padding: "16px 18px",
   marginBottom: 18,
@@ -57,14 +57,14 @@ const xpTotalStyle: CSSProperties = {
   fontFamily: "Syne, sans-serif",
   fontSize: 32,
   fontWeight: 800,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
 };
 
 const levelBadgeStyle: CSSProperties = {
   marginLeft: "auto",
   padding: "4px 10px",
   borderRadius: 8,
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   color: "var(--ls-bg)",
   fontSize: 11,
   fontFamily: "Syne, sans-serif",

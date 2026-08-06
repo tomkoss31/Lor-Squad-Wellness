@@ -3,7 +3,7 @@
 //
 // Implémentation FIDÈLE du design Claude Design validé par Thomas
 // (bundle co-pilote-v6 / « Plan du jour.dc.html »). Warm dark + gradient G3,
-// titre Fraunces italic, vrai pin de rang en filigrane + « 360 », glows,
+// titre Anton (charte), vrai pin de rang en filigrane + « 360 », glows,
 // états « journée pleine » / « journée calme », file de tâches priorisée
 // (badge MAINTENANT), anneau rentabilité G3, anim de validation.
 //
@@ -39,7 +39,7 @@ function hexA(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 function prioColor(p: Prio): string {
-  return p === "urgent" ? "#FB7185" : p === "todo" ? "var(--ls-gold)" : "#10B981";
+  return p === "urgent" ? "#FB7185" : p === "todo" ? "var(--ls-teal)" : "#2DD4BF";
 }
 function prioOf(u: DormantUrgency): Prio {
   return u === "never" || u === "high" ? "urgent" : u === "medium" ? "todo" : "ok";
@@ -57,26 +57,26 @@ function useIsMobile(): boolean {
 }
 
 const PARTICLE_DIRS = [[0, -24], [17, -17], [24, 0], [17, 17], [0, 24], [-17, 17], [-24, 0], [-17, -17]];
-const PARTICLE_COLS = ["#10B981", "#06B6D4", "#8B5CF6", "var(--ls-gold)", "#FB7185", "#06B6D4", "#8B5CF6", "#10B981"];
+const PARTICLE_COLS = ["#2DD4BF", "#2DD4BF", "#c5f82a", "var(--ls-teal)", "#FB7185", "#2DD4BF", "#c5f82a", "#2DD4BF"];
 
 // Variables de thème (sombre = :root, clair = html.theme-light) → suit l'app.
 const PDJ_THEME_CSS = `
 :root{
   --pdj-text-strong:#F8FAFC;--pdj-text:#F1F5F9;--pdj-text-sec:rgba(241,245,249,0.6);--pdj-text-faint:rgba(241,245,249,0.42);
-  --pdj-hero-bg:linear-gradient(135deg,#1A1410 0%,#1C1817 50%,#15131A 100%);--pdj-hero-border:rgba(241,245,249,0.07);--pdj-hero-shadow:0 40px 100px rgba(0,0,0,0.5);
+  --pdj-hero-bg:linear-gradient(140deg,#1E3330 0%,#1A2C29 55%,#162624 100%);--pdj-hero-border:rgba(241,245,249,0.07);--pdj-hero-shadow:0 40px 100px rgba(0,0,0,0.5);
   --pdj-card-bg:rgba(241,245,249,0.03);--pdj-card-border:rgba(241,245,249,0.08);--pdj-card-shadow:none;--pdj-divider:rgba(241,245,249,0.1);
   --pdj-ghost-border:rgba(241,245,249,0.14);--pdj-ghost-bg:rgba(241,245,249,0.05);--pdj-checkbox-border:rgba(241,245,249,0.22);
-  --pdj-rdv-bg:rgba(6,182,212,0.06);--pdj-rdv-border:rgba(6,182,212,0.18);--pdj-calm-bg:rgba(16,185,129,0.06);--pdj-calm-border:rgba(16,185,129,0.20);
-  --pdj-glow-em:rgba(16,185,129,0.20);--pdj-glow-vi:rgba(139,92,246,0.18);--pdj-ring-track:rgba(241,245,249,0.12);--pdj-ring-text:#F8FAFC;
+  --pdj-rdv-bg:rgba(6,182,212,0.06);--pdj-rdv-border:rgba(6,182,212,0.18);--pdj-calm-bg:rgba(45,212,191,0.06);--pdj-calm-border:rgba(45,212,191,0.20);
+  --pdj-glow-em:rgba(45,212,191,0.20);--pdj-glow-vi:rgba(197,248,42,0.18);--pdj-ring-track:rgba(241,245,249,0.12);--pdj-ring-text:#F8FAFC;
   --pdj-pin-op:0.13;--pdj-ten-op:0.13;
 }
 html.theme-light{
   --pdj-text-strong:#211B16;--pdj-text:#2E2722;--pdj-text-sec:rgba(46,39,34,0.62);--pdj-text-faint:rgba(46,39,34,0.46);
-  --pdj-hero-bg:linear-gradient(135deg,#FFFDFB 0%,#FBF6F1 50%,#F7F3FA 100%);--pdj-hero-border:rgba(46,39,34,0.10);--pdj-hero-shadow:0 30px 80px rgba(46,39,34,0.14);
+  --pdj-hero-bg:linear-gradient(140deg,#FFFFFF 0%,#FAF7F0 55%,#F5F1EB 100%);--pdj-hero-border:rgba(46,39,34,0.10);--pdj-hero-shadow:0 30px 80px rgba(46,39,34,0.14);
   --pdj-card-bg:#FFFFFF;--pdj-card-border:rgba(46,39,34,0.09);--pdj-card-shadow:0 1px 2px rgba(46,39,34,0.05);--pdj-divider:rgba(46,39,34,0.12);
   --pdj-ghost-border:rgba(46,39,34,0.16);--pdj-ghost-bg:rgba(46,39,34,0.04);--pdj-checkbox-border:rgba(46,39,34,0.28);
-  --pdj-rdv-bg:rgba(6,182,212,0.09);--pdj-rdv-border:rgba(6,182,212,0.28);--pdj-calm-bg:rgba(16,185,129,0.09);--pdj-calm-border:rgba(16,185,129,0.30);
-  --pdj-glow-em:rgba(16,185,129,0.14);--pdj-glow-vi:rgba(139,92,246,0.12);--pdj-ring-track:rgba(46,39,34,0.13);--pdj-ring-text:#211B16;
+  --pdj-rdv-bg:rgba(6,182,212,0.09);--pdj-rdv-border:rgba(6,182,212,0.28);--pdj-calm-bg:rgba(45,212,191,0.09);--pdj-calm-border:rgba(45,212,191,0.30);
+  --pdj-glow-em:rgba(45,212,191,0.14);--pdj-glow-vi:rgba(197,248,42,0.12);--pdj-ring-track:rgba(46,39,34,0.13);--pdj-ring-text:#211B16;
   --pdj-pin-op:0.07;--pdj-ten-op:0.09;
 }
 @keyframes pdj-sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
@@ -205,14 +205,14 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
       </div>
 
       {/* « 360 » filigrane gradient G3 (bas-droite) */}
-      <div aria-hidden="true" style={{ position: "absolute", right: 18, bottom: -48, fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 300, lineHeight: 0.8, background: "linear-gradient(135deg,#10B981 0%,#06B6D4 50%,#8B5CF6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", opacity: "var(--pdj-ten-op)" as unknown as number, pointerEvents: "none", userSelect: "none", zIndex: 0 }}>360</div>
+      <div aria-hidden="true" style={{ position: "absolute", right: 18, bottom: -48, fontFamily: "'Anton', sans-serif", fontWeight: 400, fontSize: 300, lineHeight: 0.8, background: "linear-gradient(135deg,#2DD4BF 0%,#2DD4BF 50%,#c5f82a 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", opacity: "var(--pdj-ten-op)" as unknown as number, pointerEvents: "none", userSelect: "none", zIndex: 0 }}>360</div>
 
       <div style={{ position: "relative", zIndex: 2 }}>
         {/* Ligne Noaly */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-          <div aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(135deg,#10B981 0%,#06B6D4 50%,#8B5CF6 100%)", flex: "0 0 auto", boxShadow: "0 4px 14px rgba(6,182,212,0.4)" }} />
+          <div aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(135deg,#2DD4BF 0%,#2DD4BF 50%,#c5f82a 100%)", flex: "0 0 auto", boxShadow: "0 4px 14px rgba(6,182,212,0.4)" }} />
           <div style={{ fontSize: 13.5, lineHeight: 1.45, color: "var(--pdj-text-sec)" }}>
-            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, color: "var(--pdj-text-strong)" }}>Noaly</span> · {noalyText}
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: "var(--pdj-text-strong)" }}>Noaly</span> · {noalyText}
           </div>
         </div>
 
@@ -220,12 +220,12 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
         <div style={isMobile ? { display: "flex", flexDirection: "column", gap: 18 } : { display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "22px 24px" }}>
           <div style={{ minWidth: 240, flex: "1 0 320px" }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.16em", color: "var(--pdj-text-faint)", marginBottom: 10, whiteSpace: "nowrap" }}>{eyebrow} · TON PLAN DU JOUR</div>
-            <h1 style={{ margin: 0, fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: isMobile ? 33 : 40, lineHeight: 1.04, color: "var(--pdj-text-strong)", letterSpacing: "-0.01em" }}>Ton plan du jour</h1>
+            <h1 style={{ margin: 0, fontFamily: "'Anton', sans-serif", fontWeight: 400, fontSize: isMobile ? 34 : 42, lineHeight: 1.03, textTransform: "uppercase", color: "var(--pdj-text-strong)", letterSpacing: "0.01em" }}>Ton plan du jour</h1>
             <div style={{ marginTop: 10, fontSize: 14.5, color: "var(--pdj-text-sec)" }}>Ce qui compte aujourd'hui · rangé par priorité</div>
             {!isCalme && total > 0 ? (
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16, maxWidth: 330 }}>
                 <div style={{ flex: 1, height: 5, borderRadius: 3, background: "var(--pdj-ring-track)", overflow: "hidden" }}>
-                  <div style={{ width: `${total > 0 ? Math.round((treated / total) * 100) : 0}%`, height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#10B981,#06B6D4,#8B5CF6)", transition: "width .4s ease" }} />
+                  <div style={{ width: `${total > 0 ? Math.round((treated / total) * 100) : 0}%`, height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#2DD4BF,#2DD4BF,#c5f82a)", transition: "width .4s ease" }} />
                 </div>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--pdj-text-sec)", whiteSpace: "nowrap" }}>{treated} / {total} traité</span>
               </div>
@@ -239,9 +239,9 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <Ring pct={pct} size={isMobile ? 72 : 78} />
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 26, color: "var(--pdj-text-strong)", lineHeight: 1 }}>{amount}</span>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 26, color: "var(--pdj-text-strong)", lineHeight: 1 }}>{amount}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--pdj-text-faint)" }}>ce mois · {pct} % proj.</span>
-                <button type="button" onClick={() => navigate("/rentabilite")} style={{ marginTop: 6, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--pdj-ghost-bg)", border: "1px solid var(--pdj-ghost-border)", color: "var(--pdj-text-sec)", fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 500, padding: "6px 11px", borderRadius: 9, cursor: "pointer" }}>+ commande hors-app</button>
+                <button type="button" onClick={() => navigate("/rentabilite")} style={{ marginTop: 6, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--pdj-ghost-bg)", border: "1px solid var(--pdj-ghost-border)", color: "var(--pdj-text-sec)", fontFamily: "'DM Sans', sans-serif", fontSize: 11.5, fontWeight: 500, padding: "6px 11px", borderRadius: 9, cursor: "pointer" }}>+ commande hors-app</button>
               </div>
             </div>
           </div>
@@ -261,10 +261,10 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                         <div style={{ width: 1, height: 36, background: "var(--pdj-divider)", flex: "0 0 auto" }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ display: "inline-block", fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", color: "#0891B2", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.28)", padding: "2px 7px", borderRadius: 6, marginBottom: 5 }}>{r.tag}</span>
-                          <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)" }}>{r.name}</div>
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)" }}>{r.name}</div>
                           <div style={{ fontSize: 13, color: "var(--pdj-text-sec)", marginTop: 2 }}>{r.sub}</div>
                         </div>
-                        <button type="button" onClick={() => navigate(`/clients/${r.clientId}`)} style={{ flex: "0 0 auto", background: "rgba(6,182,212,0.16)", border: "1px solid rgba(6,182,212,0.34)", color: "#0E7490", fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 18px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
+                        <button type="button" onClick={() => navigate(`/clients/${r.clientId}`)} style={{ flex: "0 0 auto", background: "rgba(6,182,212,0.16)", border: "1px solid rgba(6,182,212,0.34)", color: "#0E7490", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 18px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
                       </div>
                     ))}
                   </div>
@@ -285,7 +285,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                             <span style={{ display: "inline-block", fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", color: c, background: hexA(c, 0.13), border: `1px solid ${hexA(c, 0.28)}`, padding: "2px 7px", borderRadius: 6 }}>{t.tag}</span>
                             {focus ? (
-                              <span style={{ fontSize: 9.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", fontWeight: 600, color: "#fff", background: "linear-gradient(135deg,#10B981,#06B6D4,#8B5CF6)", padding: "3px 8px", borderRadius: 6 }}>MAINTENANT</span>
+                              <span style={{ fontSize: 9.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", fontWeight: 600, color: "#fff", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF,#c5f82a)", padding: "3px 8px", borderRadius: 6 }}>MAINTENANT</span>
                             ) : null}
                           </div>
                           <div
@@ -294,7 +294,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                             tabIndex={0}
                             onKeyDown={(e) => { if (e.key === "Enter") { t.kind === "relance" ? navigate(`/clients/${t.id}?tab=actions`) : navigate("/messages"); } }}
                             title={t.kind === "relance" ? "Ouvrir la fiche client" : "Ouvrir la messagerie"}
-                            style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)", marginTop: 5, cursor: "pointer", textDecoration: "underline", textDecorationColor: "transparent", textUnderlineOffset: 3, transition: "text-decoration-color .15s" }}
+                            style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)", marginTop: 5, cursor: "pointer", textDecoration: "underline", textDecorationColor: "transparent", textUnderlineOffset: 3, transition: "text-decoration-color .15s" }}
                             onMouseEnter={(e) => { e.currentTarget.style.textDecorationColor = "currentColor"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
                           >
@@ -308,17 +308,17 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                           <>
                             {t.kind === "relance" ? (
                               <>
-                                <button type="button" onClick={() => relanceWA(t)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#25D366,#1FA855)", border: "none", color: "#fff", fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 14px", borderRadius: 10, cursor: "pointer", boxShadow: "0 6px 16px rgba(37,211,102,0.26)" }}>✨ WhatsApp</button>
-                                <button type="button" onClick={() => setStatus(t.id, "later")} style={{ background: "transparent", border: "1px solid var(--pdj-ghost-border)", color: "var(--pdj-text-sec)", fontFamily: "'Inter', sans-serif", fontSize: 13, padding: "9px 12px", borderRadius: 10, cursor: "pointer" }}>Plus tard</button>
+                                <button type="button" onClick={() => relanceWA(t)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#25D366,#1FA855)", border: "none", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 14px", borderRadius: 10, cursor: "pointer", boxShadow: "0 6px 16px rgba(37,211,102,0.26)" }}>✨ WhatsApp</button>
+                                <button type="button" onClick={() => setStatus(t.id, "later")} style={{ background: "transparent", border: "1px solid var(--pdj-ghost-border)", color: "var(--pdj-text-sec)", fontFamily: "'DM Sans', sans-serif", fontSize: 13, padding: "9px 12px", borderRadius: 10, cursor: "pointer" }}>Plus tard</button>
                               </>
                             ) : (
-                              <button type="button" onClick={() => navigate("/messages")} style={{ background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.34)", color: "#059669", fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
+                              <button type="button" onClick={() => navigate("/messages")} style={{ background: "rgba(45,212,191,0.14)", border: "1px solid rgba(45,212,191,0.34)", color: "#059669", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
                             )}
                             <div onClick={() => complete(t.id)} title="Marquer comme fait" role="button" tabIndex={0} style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid var(--pdj-checkbox-border)", cursor: "pointer", flex: "0 0 auto" }} />
                           </>
                         ) : (
                           <div style={{ position: "relative", width: 30, height: 30, flex: "0 0 auto" }}>
-                            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 15, animation: "pdj-pop .4s ease", boxShadow: "0 0 18px rgba(16,185,129,0.5)" }}>✓</div>
+                            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 15, animation: "pdj-pop .4s ease", boxShadow: "0 0 18px rgba(45,212,191,0.5)" }}>✓</div>
                             {PARTICLE_DIRS.map((d, pi) => (
                               <span key={pi} style={{ position: "absolute", left: "50%", top: "50%", width: 6, height: 6, borderRadius: "50%", background: PARTICLE_COLS[pi], ["--tx" as string]: `${d[0]}px`, ["--ty" as string]: `${d[1]}px`, animation: "pdj-burst .6s ease-out forwards", pointerEvents: "none" } as React.CSSProperties} />
                             ))}
@@ -330,7 +330,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                 })}
 
                 {active.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: 30, border: "1px solid var(--pdj-calm-border)", borderRadius: 14, background: "linear-gradient(110deg, var(--pdj-calm-bg), var(--pdj-calm-bg)), linear-gradient(110deg, rgba(16,185,129,0) 30%, rgba(6,182,212,0.18) 50%, rgba(139,92,246,0) 70%)", backgroundSize: "100% 100%, 200% 100%", animation: "pdj-sheen 3.5s linear infinite", color: "#10B981", fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 15 }}>Liste à jour ✓ — tout est traité, belle journée</div>
+                  <div style={{ textAlign: "center", padding: 30, border: "1px solid var(--pdj-calm-border)", borderRadius: 14, background: "linear-gradient(110deg, var(--pdj-calm-bg), var(--pdj-calm-bg)), linear-gradient(110deg, rgba(45,212,191,0) 30%, rgba(6,182,212,0.18) 50%, rgba(197,248,42,0) 70%)", backgroundSize: "100% 100%, 200% 100%", animation: "pdj-sheen 3.5s linear infinite", color: "#2DD4BF", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15 }}>Liste à jour ✓ — tout est traité, belle journée</div>
                 ) : null}
               </div>
 
@@ -339,8 +339,8 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.14em", color: "var(--pdj-text-faint)", marginBottom: 6 }}>FAIT AUJOURD'HUI</div>
                   {done.map((d) => (
                     <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 18px", opacity: 0.55 }}>
-                      <div onClick={() => setStatus(d.id, "active")} role="button" tabIndex={0} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 14, cursor: "pointer", flex: "0 0 auto" }}>✓</div>
-                      <div style={{ flex: 1, minWidth: 0, fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 14.5, color: "var(--pdj-text)", textDecoration: "line-through" }}>{d.name}</div>
+                      <div onClick={() => setStatus(d.id, "active")} role="button" tabIndex={0} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 14, cursor: "pointer", flex: "0 0 auto" }}>✓</div>
+                      <div style={{ flex: 1, minWidth: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14.5, color: "var(--pdj-text)", textDecoration: "line-through" }}>{d.name}</div>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--pdj-text-faint)" }}>{status(d.id) === "later" ? "Reporté" : "Fait"}</span>
                     </div>
                   ))}
@@ -366,9 +366,9 @@ function Ring({ pct, size }: { pct: number; size: number }) {
     <svg width={size} height={size} viewBox="0 0 88 88" style={{ display: "block", flex: "0 0 auto" }} aria-hidden="true">
       <defs>
         <linearGradient id="pdj-g3ring" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#10B981" />
-          <stop offset="50%" stopColor="#06B6D4" />
-          <stop offset="100%" stopColor="#8B5CF6" />
+          <stop offset="0%" stopColor="#2DD4BF" />
+          <stop offset="50%" stopColor="#2DD4BF" />
+          <stop offset="100%" stopColor="#c5f82a" />
         </linearGradient>
       </defs>
       <circle cx={44} cy={44} r={R} fill="none" stroke="var(--pdj-ring-track)" strokeWidth={7} />
@@ -380,18 +380,18 @@ function Ring({ pct, size }: { pct: number; size: number }) {
 
 function CalmeState({ navigate }: { navigate: (p: string) => void }) {
   const suggestions = [
-    { id: "s1", color: "#10B981", name: "Prospecter 3 nouveaux contacts", sub: "Relance ta liste d'invités · objectif 3 messages envoyés", to: "/crm" },
-    { id: "s2", color: "#06B6D4", name: "Préparer les RDV de demain", sub: "Relis les bilans avant tes prochains rendez-vous", to: "/agenda" },
-    { id: "s3", color: "#8B5CF6", name: "Réveiller tes « Très dormants »", sub: "Tes contacts sans nouvelle depuis longtemps", to: "/pv" },
+    { id: "s1", color: "#2DD4BF", name: "Prospecter 3 nouveaux contacts", sub: "Relance ta liste d'invités · objectif 3 messages envoyés", to: "/crm" },
+    { id: "s2", color: "#2DD4BF", name: "Préparer les RDV de demain", sub: "Relis les bilans avant tes prochains rendez-vous", to: "/agenda" },
+    { id: "s3", color: "#c5f82a", name: "Réveiller tes « Très dormants »", sub: "Tes contacts sans nouvelle depuis longtemps", to: "/pv" },
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 22, padding: 30, background: "var(--pdj-calm-bg)", border: "1px solid var(--pdj-calm-border)", borderRadius: 18 }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", boxShadow: "0 10px 30px rgba(16,185,129,0.35)" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", boxShadow: "0 10px 30px rgba(45,212,191,0.35)" }}>
           <span style={{ color: "#04241a", fontSize: 30, fontWeight: 800 }}>✓</span>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 26, color: "var(--pdj-text-strong)" }}>Journée libre</div>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontWeight: 400, fontSize: 28, textTransform: "uppercase", letterSpacing: "0.01em", color: "var(--pdj-text-strong)" }}>Journée libre</div>
           <div style={{ fontSize: 14, color: "var(--pdj-text-sec)", marginTop: 6, lineHeight: 1.55 }}>Aucun RDV, ta liste est à jour. Profites-en pour prospecter ou préparer demain — l'avance d'aujourd'hui, c'est le chiffre de la semaine prochaine.</div>
         </div>
       </div>
@@ -401,10 +401,10 @@ function CalmeState({ navigate }: { navigate: (p: string) => void }) {
           <div key={s.id} onClick={() => navigate(s.to)} role="button" tabIndex={0} style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 18px", background: "var(--pdj-card-bg)", border: "1px solid var(--pdj-card-border)", boxShadow: "var(--pdj-card-shadow)", borderRadius: 14, cursor: "pointer" }}>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.color, boxShadow: `0 0 12px ${hexA(s.color, 0.6)}`, flex: "0 0 auto" }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 15, color: "var(--pdj-text-strong)" }}>{s.name}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, color: "var(--pdj-text-strong)" }}>{s.name}</div>
               <div style={{ fontSize: 13, color: "var(--pdj-text-sec)", marginTop: 2 }}>{s.sub}</div>
             </div>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "var(--pdj-text-faint)" }}>→</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "var(--pdj-text-faint)" }}>→</span>
           </div>
         ))}
       </div>

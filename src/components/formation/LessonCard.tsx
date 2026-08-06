@@ -76,8 +76,8 @@ export function LessonCard({ lesson, index }: Props) {
             fontFamily: "Syne, sans-serif",
             fontSize: 13,
             fontWeight: 800,
-            color: "var(--ls-gold)",
-            background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+            color: "var(--ls-teal)",
+            background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
             padding: "2px 8px",
             borderRadius: 6,
             letterSpacing: "0.02em",
@@ -267,7 +267,7 @@ function ChecklistBody({ lesson }: { lesson: FormationLesson }) {
             style={{
               width: `${(doneCount / items.length) * 100}%`,
               height: "100%",
-              background: allDone ? "var(--ls-teal)" : "var(--ls-gold)",
+              background: allDone ? "var(--ls-teal)" : "var(--ls-teal)",
               transition: "width 300ms ease, background 300ms ease",
             }}
           />

@@ -14,7 +14,7 @@ export const BIZ_STYLES = `
   --biz-cyan:    #06B6D4;
   --biz-violet:  #8B5CF6;
   --biz-violet-soft: #A78BFA;
-  --biz-gold:    #B8922A;
+  --biz-gold:    #0D9488;
   --biz-gold-soft: #D4B254;
   --biz-ink:     #0F172A;
   --biz-ink-2:   #1E293B;

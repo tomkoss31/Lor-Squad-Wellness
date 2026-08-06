@@ -9,7 +9,7 @@
 // rail latéral persistant (phases · parcours 6 étapes · fil de sécurité).
 // =============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
@@ -39,6 +39,16 @@ export function SalleOpsQuotidien({
   // étape (avant/après) sans la valider.
   const [viewedN, setViewedN] = useState<number | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Cockpit plein écran → on masque la barre de nav du bas (mobile) : elle
+  // flottait AU-DESSUS de l'overlay et offrait des sorties accidentelles vers
+  // des pages profondes. Le débutant reste focus (retour Thomas 2026-08-04).
+  // Le « Retour à mon parcours » gère déjà le retour depuis une action.
+  useEffect(() => {
+    if (!fullscreen) return;
+    document.body.classList.add("ls-ops-cockpit-open");
+    return () => document.body.classList.remove("ls-ops-cockpit-open");
+  }, [fullscreen]);
   const activeN = view.activeStepNumber;
   const shownN = viewedN ?? activeN;
   const shownStep = view.steps.find((s) => s.n === shownN) ?? view.steps[0];
@@ -63,8 +73,14 @@ export function SalleOpsQuotidien({
       setInviteOpen(true);
       return;
     }
-    if (lesson.faire.linkPath) navigate(lesson.faire.linkPath);
-    else if (shownGateKey) void view.toggle(shownGateKey);
+    const path = lesson.faire.linkPath;
+    if (path) {
+      // Lien EXTERNE (ex. myHerbalife) → nouvel onglet ; sinon route interne.
+      if (/^https?:\/\//.test(path)) window.open(path, "_blank", "noopener,noreferrer");
+      else navigate(path);
+    } else if (shownGateKey) {
+      void view.toggle(shownGateKey);
+    }
   }
 
   return (
@@ -180,11 +196,64 @@ export function SalleOpsQuotidien({
                   <div style={autoNote}>
                     ⏳ Pas besoin de cocher : cette étape se valide <strong style={{ color: "var(--ls-ops-accent-text)" }}>toute seule</strong> dès que l'acte réel est enregistré (anti-triche).
                   </div>
+                ) : lesson.proofCounter && shownGateKey ? (
+                  /* PREUVE CHIFFRÉE — on compte les gestes au lieu d'une case
+                     tout-ou-rien. C'est ce qui donne enfin une sortie à
+                     « Relancer », qui n'en avait aucune : le parcours s'y
+                     figeait et personne n'en sortait (2026-08-04). */
+                  (() => {
+                    const target = lesson.proofCounter.target;
+                    const count = Math.min(target, view.counts[shownGateKey] ?? 0);
+                    const reste = target - count;
+                    return (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+                          {Array.from({ length: target }, (_, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                flex: 1,
+                                height: 7,
+                                borderRadius: 999,
+                                background:
+                                  i < count ? "var(--ls-ops-accent)" : "var(--ls-ops-border)",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div style={{ ...MONO, fontSize: 11, color: "var(--ls-ops-muted)", marginBottom: 10 }}>
+                          {count} / {target} {lesson.proofCounter.unit}
+                          {reste > 0 ? ` · encore ${reste}` : " · étape terminée ✓"}
+                        </div>
+                        {reste > 0 ? (
+                          <button
+                            type="button"
+                            style={doneBtn}
+                            onClick={() =>
+                              shownGateKey && void view.bump(shownGateKey, target)
+                            }
+                          >
+                            {lesson.proofCounter.bumpLabel}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()
                 ) : shownGateKey ? (
                   <button type="button" style={doneBtn} onClick={() => shownGateKey && void view.toggle(shownGateKey)}>
                     ✓ C'est fait — passer à l'étape suivante
                   </button>
-                ) : null}
+                ) : (
+                  /* Étapes OUVERTES sans « porte » (Démarrer ta recrue,
+                     Dupliquer) : elles se vivent dans la durée, il n'y a pas
+                     d'acte unique à cocher. On affiche une note plutôt qu'un
+                     vide — le vide donnait un cul-de-sac (audit 2026-08-04). */
+                  <div style={autoNote}>
+                    🌱 Cette étape se vit dans la durée — pas de case à cocher.
+                    Reviens-y au fil de tes recrues ; Noaly et ton parrain sont
+                    là pour t'accompagner.
+                  </div>
+                )}
               </div>
 
               {/* Réponses prêtes (« comment répondre ») */}

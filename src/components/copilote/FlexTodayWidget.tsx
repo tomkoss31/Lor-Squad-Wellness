@@ -195,10 +195,10 @@ function Wrapper({ children }: { children: React.ReactNode }) {
     <div
       style={{
         background: "var(--ls-surface)",
-        border: "1px solid var(--ls-gold)",
+        border: "1px solid var(--ls-teal)",
         borderRadius: 16,
         padding: 18,
-        boxShadow: "0 8px 28px color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+        boxShadow: "0 8px 28px color-mix(in srgb, var(--ls-teal) 14%, transparent)",
       }}
     >
       {children}
@@ -214,7 +214,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
         fontFamily: "DM Sans, sans-serif",
         textTransform: "uppercase",
         letterSpacing: 1.2,
-        color: "var(--ls-gold)",
+        color: "var(--ls-teal)",
         marginBottom: 4,
       }}
     >
@@ -269,7 +269,7 @@ const ctaStyle: React.CSSProperties = {
   padding: "10px 18px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 13,

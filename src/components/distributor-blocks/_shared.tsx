@@ -141,7 +141,7 @@ export function PvTierRow({
             padding: 0,
             width: 22,
             opacity: vipFlag ? 1 : 0.4,
-            color: vipFlag ? "var(--ls-gold)" : "var(--ls-text-muted)",
+            color: vipFlag ? "var(--ls-teal)" : "var(--ls-text-muted)",
           }}
         >
           {vipFlag ? "⭐" : "☆"}

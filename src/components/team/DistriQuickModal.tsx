@@ -68,7 +68,7 @@ function statusInfo(lastActiveAt: Date | null): {
   if (!lastActiveAt) return { label: "Jamais connecté", color: "var(--ls-text-hint)", emoji: "💤" };
   const diffH = (Date.now() - lastActiveAt.getTime()) / 3600000;
   if (diffH < 24) return { label: "Aujourd'hui", color: "var(--ls-teal)", emoji: "🟢" };
-  if (diffH < 48) return { label: "Hier", color: "var(--ls-gold)", emoji: "🟡" };
+  if (diffH < 48) return { label: "Hier", color: "var(--ls-teal)", emoji: "🟡" };
   if (diffH < 168) return { label: "Cette semaine", color: "var(--ls-coral)", emoji: "🟠" };
   return { label: "Inactif >1 sem", color: "#DC2626", emoji: "🔴" };
 }
@@ -393,7 +393,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose, coupleMemb
                     emoji="🔥"
                     label="Streak"
                     value={stats.streakCount > 0 ? `${stats.streakCount}j` : "—"}
-                    color="var(--ls-gold)"
+                    color="var(--ls-teal)"
                     extra={`${stats.lifetimeLoginCount}j cumulés`}
                   />
                   <QuickStat

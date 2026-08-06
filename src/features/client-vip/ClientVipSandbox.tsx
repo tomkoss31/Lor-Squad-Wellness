@@ -201,7 +201,7 @@ export function ClientVipSandbox({
                 fontSize: 10,
                 letterSpacing: 2,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
               }}
             >
@@ -516,7 +516,7 @@ function SliderRow({
             fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 700,
-            color: "#B8922A",
+            color: "#0D9488",
           }}
         >
           {value} <span style={{ fontSize: 11, color: "#888" }}>{suffix}</span>
@@ -531,7 +531,7 @@ function SliderRow({
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
           width: "100%",
-          accentColor: "#B8922A",
+          accentColor: "#0D9488",
           cursor: "pointer",
         }}
       />
@@ -715,7 +715,7 @@ function ProspectInput({
             height: 26,
             borderRadius: "50%",
             background: "rgba(184,146,42,0.15)",
-            color: "#B8922A",
+            color: "#0D9488",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",

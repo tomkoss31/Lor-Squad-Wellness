@@ -192,5 +192,5 @@ export function flexKpiStatus(ratioPct: number): FlexKpiStatus {
 export const FLEX_KPI_COLOR: Record<FlexKpiStatus, string> = {
   behind: "var(--ls-coral)",
   ontrack: "var(--ls-teal)",
-  ahead: "var(--ls-gold)",
+  ahead: "var(--ls-teal)",
 };

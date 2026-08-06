@@ -205,7 +205,7 @@ function RecalcModal({
         </h2>
         <p style={{ margin: "8px 0 22px 0", fontSize: 13, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", lineHeight: 1.55 }}>
           Rang actuel : <strong>{RANK_LABELS[userRank]}</strong>. Avec ces
-          réglages, tu gagnes <strong style={{ color: "var(--ls-gold)" }}>{breakdown.net_per_client.toFixed(2)} €</strong> net par client.
+          réglages, tu gagnes <strong style={{ color: "var(--ls-teal)" }}>{breakdown.net_per_client.toFixed(2)} €</strong> net par client.
         </p>
 
         <Field label="Objectif revenu mensuel" suffix="€/mois">
@@ -216,9 +216,9 @@ function RecalcModal({
             step={50}
             value={revenue}
             onChange={(e) => setRevenue(Number(e.target.value))}
-            style={{ width: "100%", accentColor: "var(--ls-gold)" }}
+            style={{ width: "100%", accentColor: "var(--ls-teal)" }}
           />
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "var(--ls-gold)", textAlign: "center", marginTop: 8 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "var(--ls-teal)", textAlign: "center", marginTop: 8 }}>
             {revenue.toLocaleString("fr-FR")} €
           </div>
         </Field>
@@ -239,7 +239,7 @@ function RecalcModal({
         </Field>
 
         <div style={{ background: "var(--ls-surface2)", borderRadius: 12, padding: 14, marginTop: 16 }}>
-          <div style={{ fontSize: 10, fontFamily: "DM Sans, sans-serif", textTransform: "uppercase", letterSpacing: 1.2, color: "var(--ls-gold)", marginBottom: 8 }}>
+          <div style={{ fontSize: 10, fontFamily: "DM Sans, sans-serif", textTransform: "uppercase", letterSpacing: 1.2, color: "var(--ls-teal)", marginBottom: 8 }}>
             Nouvelles cibles
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>

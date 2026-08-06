@@ -490,11 +490,11 @@ export function AdminCampagneEditPage() {
                 .cs-kpi { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; padding:14px; }
                 .cs-kpi .n { font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:var(--ls-text); }
                 .cs-kpi .l { font-size:11.5px; color:var(--ls-text-muted); margin-top:2px; }
-                .cs-kpi.t .n { color:var(--ls-teal); } .cs-kpi.g .n { color:var(--ls-gold); } .cs-kpi.c .n { color:var(--ls-coral); }
+                .cs-kpi.t .n { color:var(--ls-teal); } .cs-kpi.g .n { color:var(--ls-teal); } .cs-kpi.c .n { color:var(--ls-coral); }
                 .cs-list { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; overflow:hidden; }
                 .cs-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--ls-border); font-size:13px; }
                 .cs-row:last-child { border:0; } .cs-row .em { margin-left:auto; font-size:11px; padding:3px 8px; border-radius:999px; white-space:nowrap; }
-                .cs-row .em.c { background:var(--ls-gold-bg); color:var(--ls-gold); } .cs-row .em.o { background:var(--ls-teal-bg); color:var(--ls-teal); }
+                .cs-row .em.c { background:var(--ls-teal-bg); color:var(--ls-teal); } .cs-row .em.o { background:var(--ls-teal-bg); color:var(--ls-teal); }
                 .cs-row .em.u,.cs-row .em.b { background:var(--ls-coral-bg); color:var(--ls-coral); } .cs-row .em.d { background:rgba(122,128,153,.14); color:var(--ls-text-muted); }
                 .cs-row .nm { font-weight:600; } .cs-row .ml { color:var(--ls-text-hint); font-family:'JetBrains Mono',monospace; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; }
               `}</style>

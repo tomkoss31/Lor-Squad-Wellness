@@ -11,7 +11,7 @@ export function CharterCachet() {
         left: 70,
         width: 95,
         height: 95,
-        border: "2px solid #B8922A",
+        border: "2px solid #0D9488",
         borderRadius: "50%",
         display: "flex",
         flexDirection: "column",
@@ -25,7 +25,7 @@ export function CharterCachet() {
         background: "rgba(251, 247, 233, 0.4)",
         opacity: 0.85,
         boxShadow:
-          "inset 0 0 0 5px rgba(251, 247, 233, 0.6), inset 0 0 0 6px #B8922A",
+          "inset 0 0 0 5px rgba(251, 247, 233, 0.6), inset 0 0 0 6px #0D9488",
       }}
       aria-hidden="true"
     >

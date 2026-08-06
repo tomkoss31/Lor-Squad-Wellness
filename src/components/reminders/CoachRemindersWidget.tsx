@@ -167,9 +167,9 @@ const titleStyle: React.CSSProperties = {
 const countPill: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
-  color: "var(--ls-gold)",
-  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-  border: "0.5px solid var(--ls-gold)",
+  color: "var(--ls-teal)",
+  background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+  border: "0.5px solid var(--ls-teal)",
   borderRadius: 999,
   padding: "1px 8px",
 };
@@ -280,7 +280,7 @@ const dateInput: React.CSSProperties = { ...inputStyle, width: "auto", flex: 1 }
 const saveBtn: React.CSSProperties = {
   flex: 1,
   padding: "9px 12px",
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   color: "var(--ls-bg)",
   border: "none",
   borderRadius: 10,

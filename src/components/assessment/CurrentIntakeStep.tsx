@@ -59,7 +59,7 @@ export function CurrentIntakeStep({ value, onChange, weightKg, subObjective }: P
     if (!targetObj) return "var(--ls-text-muted)";
     const ratio = total / targetObj.target;
     if (ratio < 0.6) return "var(--ls-coral)";
-    if (ratio < 1.0) return "var(--ls-gold)";
+    if (ratio < 1.0) return "var(--ls-teal)";
     return "var(--ls-teal)";
   })();
 
@@ -160,8 +160,8 @@ export function CurrentIntakeStep({ value, onChange, weightKg, subObjective }: P
         style={{
           padding: "14px 16px",
           borderRadius: 14,
-          background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, transparent), color-mix(in srgb, var(--ls-teal) 6%, transparent))",
-          border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-teal) 6%, transparent))",
+          border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           position: "sticky",
           bottom: 8,
         }}

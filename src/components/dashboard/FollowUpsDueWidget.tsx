@@ -197,7 +197,7 @@ function DueRow({
           width: 3,
           alignSelf: "stretch",
           borderRadius: 3,
-          background: isLate ? "var(--ls-coral)" : "var(--ls-gold)",
+          background: isLate ? "var(--ls-coral)" : "var(--ls-teal)",
           flexShrink: 0,
         }}
       />
@@ -258,8 +258,8 @@ function DueRow({
           padding: "7px 12px",
           borderRadius: 9,
           border: "none",
-          background: "var(--ls-gold)",
-          color: "var(--ls-gold-contrast, #0B0D11)",
+          background: "var(--ls-teal)",
+          color: "var(--ls-teal-contrast, #0B0D11)",
           fontSize: 12,
           fontWeight: 700,
           cursor: "pointer",

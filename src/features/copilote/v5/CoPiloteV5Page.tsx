@@ -79,6 +79,13 @@ export function CoPiloteV5Page() {
   // DÉJÀ ACTIVÉ (ou un admin comme Thomas) de rouvrir / revoir la Salle des
   // Opérations à la demande — avant, l'entrée n'existait que pour les non-activés.
   const [opsForceOpen, setOpsForceOpen] = useState(false);
+  // Bande « démarrage » du coach déjà lancé (LOT 4) : elle doit dire où il en
+  // est et ce qui vient, pas seulement « revoir le parcours ».
+  const opsDone = ops.steps.length > 0 && ops.steps.every((s) => s.state === "done");
+  const opsNextLabel =
+    ops.steps.find((s) => s.state === "active")?.label ??
+    ops.steps.find((s) => s.state !== "done")?.label ??
+    "Dupliquer";
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -218,14 +225,45 @@ export function CoPiloteV5Page() {
           >
             <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
             <span style={{ flex: 1, minWidth: 0 }}>
+              {/* LOT 4 (2026-08-04) — le cockpit devient une BANDE une fois le
+                  coach lancé, au lieu de disparaître. Elle dit où il en est et
+                  ce qui vient : sans ça, la bande ne racontait rien (« Revoir
+                  mon démarrage guidé ») et le fil se perdait à l'activation. */}
               <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-                {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
+                {opsDone
+                  ? "Démarrage terminé 🎉"
+                  : ops.activated
+                    ? `Ton démarrage · ${ops.activeStepNumber} / ${ops.totalSteps}`
+                    : "Reprendre mon démarrage"}
               </span>
               <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                {ops.activated
-                  ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
-                  : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
+                {opsDone
+                  ? "Les 7 étapes sont faites. Tu peux les revoir quand tu veux."
+                  : ops.activated
+                    ? `Prochaine étape : ${opsNextLabel}`
+                    : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
               </span>
+              {/* Jauge — le même fil unique que dans le cockpit. */}
+              {!opsDone ? (
+                <span style={{ display: "flex", gap: 4, marginTop: 8 }} aria-hidden="true">
+                  {ops.steps.map((s) => (
+                    <span
+                      key={s.n}
+                      style={{
+                        flex: 1,
+                        height: 4,
+                        borderRadius: 999,
+                        background:
+                          s.state === "done"
+                            ? "var(--ls-teal)"
+                            : s.state === "active"
+                              ? "var(--ls-lime)"
+                              : "var(--ls-border)",
+                      }}
+                    />
+                  ))}
+                </span>
+              ) : null}
             </span>
             <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
           </button>
@@ -233,10 +271,13 @@ export function CoPiloteV5Page() {
           {/* Accès direct à la formation (LOT 4, 2026-07-27) : sans ça, un coach
               déjà activé devait passer par le cockpit pour la trouver — soit
               plus loin qu'avant, alors que l'objectif est de la rendre PLUS
-              accessible (8 personnes l'avaient ouverte). */}
+              accessible (8 personnes l'avaient ouverte).
+              2026-08-04 : pointe vers le nouveau parcours Duolingo
+              /formation/apprendre (la porte d'entrée débutant), pas l'ancien
+              catalogue. L'ancienne formation reste en référence via le hub. */}
           <button
             type="button"
-            onClick={() => navigate("/formation")}
+            onClick={() => navigate("/formation/apprendre")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -253,12 +294,12 @@ export function CoPiloteV5Page() {
               color: "var(--ls-text)",
             }}
           >
-            <span aria-hidden="true" style={{ fontSize: 17 }}>📚</span>
+            <span aria-hidden="true" style={{ fontSize: 17 }}>🎓</span>
             <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600 }}>
               Ma formation Herbalife
             </span>
             <span style={{ fontSize: 12, color: "var(--ls-text-muted)", flexShrink: 0 }}>
-              Démarrer · Construire · Dupliquer
+              Apprendre en avançant
             </span>
             <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
           </button>
@@ -372,7 +413,7 @@ const liveDotStyle: React.CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: "50%",
-  background: "var(--lb360-emerald, #10B981)",
+  background: "var(--lb360-emerald, #2DD4BF)",
   display: "inline-block",
   boxShadow: "0 0 0 4px color-mix(in srgb, var(--lb360-emerald) 22%, transparent)",
 };
@@ -390,7 +431,7 @@ const greetingStyle: React.CSSProperties = {
 // Greeting accent V7 : gradient G3 (emerald → cyan → violet) au lieu du
 // gold/orange V5 (#2DD4BF → #0F766E) qui jurait avec la nouvelle identite.
 const greetingAccentStyle: React.CSSProperties = {
-  background: "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+  background: "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%))",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   WebkitTextFillColor: "transparent",
@@ -480,8 +521,8 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
           padding: "22px 24px",
           borderRadius: 20,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
           position: "relative",
           overflow: "hidden",
         }}
@@ -496,7 +537,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
             height: 200,
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 30%, transparent) 0%, transparent 70%)",
+              "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 30%, transparent) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -506,7 +547,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
               fontSize: 10.5,
               letterSpacing: 1.4,
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontWeight: 700,
               marginBottom: 6,
             }}
@@ -589,7 +630,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
         <button
           type="button"
           onClick={() => navigate("/parametres")}
-          style={passiveCardCtaStyle("var(--ls-gold)")}
+          style={passiveCardCtaStyle("var(--ls-teal)")}
         >
           <span style={{ fontSize: 22 }}>⚙️</span>
           <div style={{ textAlign: "left", flex: 1 }}>

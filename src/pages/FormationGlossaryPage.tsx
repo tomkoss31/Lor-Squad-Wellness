@@ -216,7 +216,7 @@ const TERMS: GlossaryTerm[] = [
 ];
 
 const CATEGORY_META = {
-  volumes: { label: "Volumes & rangs", emoji: "📊", color: "var(--ls-gold)" },
+  volumes: { label: "Volumes & rangs", emoji: "📊", color: "var(--ls-teal)" },
   activite: { label: "Activité & méthode", emoji: "⚡", color: "var(--ls-teal)" },
   produits: { label: "Produits & commissions", emoji: "💼", color: "var(--ls-purple)" },
   "la-base-360": { label: "Vocabulaire La Base 360", emoji: "✦", color: "var(--ls-coral)" },

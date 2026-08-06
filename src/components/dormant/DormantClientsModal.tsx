@@ -184,14 +184,14 @@ const titleStyle: React.CSSProperties = {
 const pvBigStyle: React.CSSProperties = {
   display: "inline-flex", alignItems: "baseline", gap: 6,
   padding: "10px 18px", borderRadius: 14,
-  background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface2))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+  background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
   marginBottom: 10,
 };
 
 const pvNumberStyle: React.CSSProperties = {
   fontFamily: "Syne, sans-serif",
-  fontSize: 28, fontWeight: 800, color: "var(--ls-gold)",
+  fontSize: 28, fontWeight: 800, color: "var(--ls-teal)",
 };
 
 const pvUnitStyle: React.CSSProperties = {
@@ -230,10 +230,10 @@ const urgencyPillStyle = (color: string): React.CSSProperties => ({
 
 const pvPillStyle: React.CSSProperties = {
   fontSize: 12, fontFamily: "Syne, sans-serif", fontWeight: 700,
-  color: "var(--ls-gold)",
-  background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+  color: "var(--ls-teal)",
+  background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
   padding: "3px 10px", borderRadius: 8,
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
   whiteSpace: "nowrap",
 };
 

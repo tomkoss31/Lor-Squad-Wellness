@@ -137,7 +137,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
         ) : !view.hasStarted ? (
           <StatCard label="Statut" value="Pas commencé" accentColor="#888780" />
         ) : (
-          <StatCard label="En cours" value={view.currentSection.shortLabel} accentColor="#B8922A" />
+          <StatCard label="En cours" value={view.currentSection.shortLabel} accentColor="#0D9488" />
         )}
       </div>
 

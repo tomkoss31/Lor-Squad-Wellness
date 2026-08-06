@@ -92,7 +92,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
               fontSize: 58,
               fontWeight: 800,
               backgroundImage:
-                "linear-gradient(180deg, #FFF4D4 0%, #F8DDA0 12%, #E5C476 28%, #D4A937 50%, #B8922A 72%, #8B6F1F 88%, #5A4612 100%)",
+                "linear-gradient(180deg, #FFF4D4 0%, #F8DDA0 12%, #E5C476 28%, #D4A937 50%, #0D9488 72%, #8B6F1F 88%, #5A4612 100%)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -133,7 +133,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
               fontFamily: "'Cinzel', serif",
               fontSize: 11,
               letterSpacing: 6,
-              color: "#B8922A",
+              color: "#0D9488",
               textTransform: "uppercase",
               fontWeight: 600,
               marginBottom: 10,
@@ -297,7 +297,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
               width: "60%",
               height: 1,
               background:
-                "linear-gradient(90deg, transparent, #B8922A 50%, transparent)",
+                "linear-gradient(90deg, transparent, #0D9488 50%, transparent)",
             }}
           />
           <ManifesteSignBlock
@@ -317,7 +317,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
             signedAt={cosigner.signedAt}
             mode={mode}
             onSignClick={onCosignClick}
-            cursiveColor="#B8922A"
+            cursiveColor="#0D9488"
           />
         </div>
 
@@ -366,16 +366,16 @@ function Divider() {
       <div
         style={{
           height: 1,
-          background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)",
+          background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)",
           flex: 1,
           maxWidth: 140,
         }}
       />
-      <span style={{ fontSize: 16, color: "#B8922A" }} aria-hidden="true">✦</span>
+      <span style={{ fontSize: 16, color: "#0D9488" }} aria-hidden="true">✦</span>
       <div
         style={{
           height: 1,
-          background: "linear-gradient(90deg, transparent, #B8922A 50%, transparent)",
+          background: "linear-gradient(90deg, transparent, #0D9488 50%, transparent)",
           flex: 1,
           maxWidth: 140,
         }}
@@ -392,7 +392,7 @@ function SermentSection({ title, children }: { title: string; children: React.Re
           fontFamily: "'Cinzel', serif",
           fontSize: 11,
           letterSpacing: 5,
-          color: "#B8922A",
+          color: "#0D9488",
           textTransform: "uppercase",
           fontWeight: 700,
           margin: "24px 0 12px",

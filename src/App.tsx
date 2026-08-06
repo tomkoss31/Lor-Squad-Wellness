@@ -461,6 +461,30 @@ const FormationPage = lazy(() =>
     default: module.FormationPage
   }))
 );
+// Formation V2 — micro-leçons façon Duolingo (2026-08-04). Vit à côté de
+// l'ancienne le temps de la transition, ne la remplace pas.
+const FormationV2Page = lazy(() =>
+  import("./features/formation-v2/FormationV2Page").then((module) => ({
+    default: module.FormationV2Page
+  }))
+);
+// Guide « installer l'app pour un nouveau coach » (2026-08-04) — le mode d'emploi
+// duplicable du parrain pour onboarder une recrue de zéro.
+const GuideNouveauCoachPage = lazy(() =>
+  import("./pages/GuideNouveauCoachPage").then((module) => ({
+    default: module.GuideNouveauCoachPage
+  }))
+);
+// « Outils du moment » (chantier Boîte à outils, 2026-08-06) — le pare-objections
+// (2026-08-04) généralisé : tape la situation → le script mot-pour-mot. Un seul
+// écran (MomentToolScreen) piloté par momentTools.ts ; source de contenu unique =
+// les `scripts` de boite-a-outils-content.ts. Décliné sur inviter / relancer /
+// recos / réveiller. Route param /outils/moment/:tool + legacy /outils/pare-objections.
+const MomentToolPage = lazy(() =>
+  import("./pages/MomentToolPage").then((module) => ({
+    default: module.MomentToolPage
+  }))
+);
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
 // (placeholder en attendant le contenu Notion en Phase 3).
 const FormationModulePage = lazy(() =>
@@ -883,6 +907,10 @@ export default function App() {
                   /formation/admin reste gardé pour l'édition de contenu. */}
               <Route path="plan-marketing" element={<PlanMarketingPage />} />
               <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/apprendre" element={<FormationV2Page />} />
+              <Route path="guide-nouveau-coach" element={<GuideNouveauCoachPage />} />
+              <Route path="outils/pare-objections" element={<MomentToolPage toolKey="objections" />} />
+              <Route path="outils/moment/:tool" element={<MomentToolPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="formation/admin" element={<FormationAdminPage />} />
