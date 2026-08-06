@@ -33,10 +33,10 @@ function Ico({ name, size = 30 }: { name: string; size?: number }) {
 }
 
 const RITUEL = [
-  { n: "01", t: "L'aloe vera", d: "On commence par t'hydrater. Un grand verre d'eau à l'aloe vera pour réveiller ton corps en douceur et préparer la digestion.", top: "cl-top-o" },
-  { n: "02", t: "Le thé aux plantes", d: "On relance ton énergie. Un thé aux plantes peu sucré qui réveille sans t'énerver — le coup de fouet, version douce.", top: "cl-top-p" },
-  { n: "03", t: "Le smoothie", d: "On te nourrit vraiment. Un smoothie protéiné complet — protéines, plus de 20 vitamines et minéraux — un vrai petit-déjeuner dans un seul verre, sans peser sur l'estomac.", top: "cl-top-s" },
-  { n: "04", t: "Le suivi", d: "On mesure tes progrès. Une pesée rapide, tes chiffres qui bougent semaine après semaine, et un conseil du coach rien que pour toi.", top: "cl-top-a" },
+  { n: "01", t: "L'aloe vera", d: "De l'eau et un concentré de pulpe d'aloe vera. Après une nuit sans boire, la première chose dont ton corps a besoin, c'est de l'eau — pas un café.", top: "cl-top-o" },
+  { n: "02", t: "Le thé aux plantes", d: "Thé vert, hibiscus, extraits de plantes. Chaud ou glacé, un peu de caféine. C'est le verre qu'on prend assis, celui pendant lequel on discute.", top: "cl-top-p" },
+  { n: "03", t: "Le smoothie", d: "Le vrai petit-déjeuner complet : protéines végétales, 26 vitamines et minéraux, fibres — sans lactose ni gluten. Dosage ajusté à ton objectif, parfum au choix.", top: "cl-top-s" },
+  { n: "04", t: "Le suivi", d: "Avant de repartir : la pesée, deux lignes dans ton carnet, une phrase avec ton coach. La partie qu'on sous-estime, et celle qui fait la différence.", top: "cl-top-a" },
 ];
 const INCLUS = [
   { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
@@ -116,11 +116,11 @@ export function ClubLandingPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
             <div>
               <span className="cl-pill y">Notre philosophie</span>
-              <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>On ne change<br />pas ta vie.<br /><span className="cl-a-sage">On change ton<br />premier repas.</span></h2>
+              <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>Du concret,<br /><span className="cl-a-sage">pas des promesses.</span></h2>
             </div>
             <div>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Tu sais déjà quoi faire. Le problème, ce n'est pas l'information — c'est de le faire seul, tous les matins, sans que personne ne le remarque.</p>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Le club, c'est l'inverse : un lieu, une heure, une équipe. Tu viens, c'est prêt, et quelqu'un note que tu es venu.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de régime express, pas de poudre magique. Ce qui marche, c'est la régularité : un bon petit-déjeuner pris chaque matin au même endroit, avec quelqu'un qui suit tes chiffres — c'est ça qui finit par tout changer. Ici, tu trouves tout au même endroit : de quoi bien manger, un coach qui te suit, et un groupe qui t'attend, dès 7h.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>On t'aide à installer des habitudes qui tiennent et à comprendre ce dont ton corps a besoin — pas à suivre un plan que tu lâcheras dans deux semaines. Au bout du compte : plus d'énergie dès le réveil, un corps qui bouge dans le bon sens, et la fierté de t'y être tenu.</p>
               <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.05, marginTop: 26 }}>Ce n'est pas la volonté qui te manque. <span className="cl-a-pink">C'est un rendez-vous.</span></p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function ClubLandingPage() {
         <div className="cl-wrap" style={{ paddingBottom: "clamp(64px,10vw,120px)" }}>
           <div className="cl-rv" style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
             <span className="cl-pill o">Le rituel du matin</span>
-            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)" }}>Chaque matin,<br /><span className="cl-a-orange">le même rituel.</span></h2>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(34px,4.8vw,60px)" }}>Chaque matin,<br /><span className="cl-a-orange">le même rituel.</span></h2>
             <p className="cl-lead" style={{ marginTop: 16 }}>Le même déroulé chaque matin, pensé pour un seul objectif : que tu repartes plein d'énergie et un pas plus près du tien. Tu pousses la porte, tout est prêt — rien à préparer, rien à décider.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
