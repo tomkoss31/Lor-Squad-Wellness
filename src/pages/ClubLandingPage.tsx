@@ -37,16 +37,16 @@ const RITUEL = [
 ];
 const INCLUS = [
   { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
-  { n: "02", ic: "pulse", t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger.", top: "cl-top-p" },
+  { n: "02", ic: "pulse", t: "La pesée", d: "Dix secondes chaque matin. On mesure pour ajuster ton plan, jamais pour te juger.", top: "cl-top-p" },
   { n: "03", ic: "book", t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours.", top: "cl-top-s" },
-  { n: "04", ic: "chat", t: "Le groupe du club", d: "Un seul canal, pas cinq applications. Pour les jours où tu n'as pas envie de venir.", top: "cl-top-a" },
-  { n: "05", ic: "camera", t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite.", top: "cl-top-o" },
+  { n: "04", ic: "chat", t: "Le groupe du club", d: "L'équipe et les autres membres, dans un seul groupe. Pour les matins où la motivation n'y est pas.", top: "cl-top-a" },
+  { n: "05", ic: "camera", t: "Le point des 10 visites", d: "Nouvelles mesures, tes photos avant/après, et on décide ensemble de la suite.", top: "cl-top-o" },
   { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
   { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix, sans engagement : 10 visites à 80 €, ou 30 visites à 185 € (6,17 € la visite) — tarif d'ouverture réservé aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique, pas de durée minimum. Tu prends une carte de visites, tu l'utilises à ton rythme." },
-  { q: "Suis-je obligé d'acheter des produits ?", a: "Rien n'est obligatoire : tout ce que tu consommes pendant ta visite est déjà compris. Et si tu veux prolonger à la maison, on a de la nutrition à emporter — des collations, ton smoothie et tes boissons pour les matins où tu ne peux pas passer au club. C'est un plus quand tu le veux, jamais une condition." },
+  { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
   { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
   { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
   { q: "Au bout de combien de temps je vois quelque chose ?", a: "On fait le point à la 10ᵉ visite : nouvelles mesures, nouvelles photos si tu veux. C'est là qu'on regarde ensemble le chemin parcouru." },
@@ -152,7 +152,7 @@ export function ClubLandingPage() {
           <div style={{ maxWidth: 760 }}>
             <span className="cl-pill p">Ce qui est inclus</span>
             <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)", color: "#fff" }}>Ce que t'apporte<br /><span className="cl-a-yellow">chaque matin.</span></h2>
-            <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout le rituel est déjà dedans. Pas de supplément surprise au comptoir — juste, si tu veux, de la nutrition à emporter pour les matins où tu ne passes pas.</p>
+            <p className="cl-lead" style={{ marginTop: 16 }}>Tu achètes des visites, et tout le rituel est déjà dedans — aucun supplément surprise au comptoir. Et pour les matins où tu ne passes pas, ce qu'il te faut pour garder le rythme à la maison : tes boissons et ton smoothie à emporter.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
             {INCLUS.map((c) => (
@@ -177,8 +177,8 @@ export function ClubLandingPage() {
             <div style={{ order: 1 }}>
               <span className="cl-pill s">Communauté</span>
               <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,82px)" }}>Tu n'es <span className="cl-a-pink">jamais seul.</span></h2>
-              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 20 }}>Mélanie et Thomas accompagnent des gens à Verdun depuis quatre ans. Ça, ça se lit déjà dans les résultats de leurs membres.</p>
-              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 16 }}>Au club, tu croises les mêmes têtes chaque matin. C'est ce petit rendez-vous social qui fait qu'on revient — et qu'on tient.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 20 }}>Mélanie et Thomas accompagnent des habitants de Verdun depuis quatre ans — et ça se voit dans les résultats de leurs membres.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.72, color: "var(--muted)", marginTop: 16 }}>Au club, tu retrouves les mêmes visages chaque matin. C'est ce rendez-vous-là qui fait qu'on revient — et qu'on tient sur la durée.</p>
             </div>
           </div>
         </div>
@@ -189,8 +189,8 @@ export function ClubLandingPage() {
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ maxWidth: 720 }}>
             <span className="cl-pill peach">Résultats</span>
-            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>Le club est neuf.<br /><span className="cl-a-sage">L'équipe, non.</span></h2>
-            <p className="cl-lead" style={{ marginTop: 16, maxWidth: "44em" }}>Les photos et les témoignages arrivent avec les premiers membres. En attendant, la note de La Base parle déjà pour nous.</p>
+            <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,72px)" }}>Le club est neuf.<br /><span className="cl-a-sage">L'expérience, non.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 16, maxWidth: "44em" }}>Les photos et les témoignages du club arriveront avec ses premiers membres. En attendant, les avis Google de La Base parlent déjà pour nous.</p>
           </div>
           <div style={{ background: "var(--dark)", borderRadius: 20, padding: "clamp(26px,3.4vw,40px)", marginTop: 32, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px 28px" }}>
             <span style={{ color: "var(--yellow)", fontSize: 18, letterSpacing: 3 }}>★★★★★</span>
