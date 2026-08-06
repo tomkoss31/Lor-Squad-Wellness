@@ -4,11 +4,30 @@
 // Photos = slots encadrés « 📷 » à remplir. CTA → tunnel /reserver.
 // =============================================================================
 
+import type { ReactNode } from "react";
 import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
 
 // Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
 const WORDMARK = "/brand/breakfast-club/logo-heart.png";
+
+// Icônes filaires (style Feather) — remplacent les emoji (rendu incohérent selon
+// l'OS). Monochrome, stroke = currentColor (couleur portée par le parent).
+const IIC: Record<string, ReactNode> = {
+  drink: <><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></>,
+  pulse: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />,
+  book: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>,
+  chat: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
+  camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>,
+  heart: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />,
+};
+function Ico({ name }: { name: string }) {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {IIC[name]}
+    </svg>
+  );
+}
 
 const RITUEL = [
   { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },
@@ -17,12 +36,12 @@ const RITUEL = [
   { n: "04", t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach.", top: "cl-top-a" },
 ];
 const INCLUS = [
-  { n: "01", ic: "🥤", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
-  { n: "02", ic: "⚖️", t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger.", top: "cl-top-p" },
-  { n: "03", ic: "📓", t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours.", top: "cl-top-s" },
-  { n: "04", ic: "💬", t: "Le groupe du club", d: "Un seul canal, pas cinq applications. Pour les jours où tu n'as pas envie de venir.", top: "cl-top-a" },
-  { n: "05", ic: "📸", t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite.", top: "cl-top-o" },
-  { n: "06", ic: "🤝", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
+  { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
+  { n: "02", ic: "pulse", t: "La pesée", d: "Dix secondes, tous les matins. Pour informer la suite, jamais pour juger.", top: "cl-top-p" },
+  { n: "03", ic: "book", t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours.", top: "cl-top-s" },
+  { n: "04", ic: "chat", t: "Le groupe du club", d: "Un seul canal, pas cinq applications. Pour les jours où tu n'as pas envie de venir.", top: "cl-top-a" },
+  { n: "05", ic: "camera", t: "Le point des 10 visites", d: "Nouvelles mesures, nouvelles photos si tu veux, et on décide ensemble de la suite.", top: "cl-top-o" },
+  { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
   { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix, sans engagement : 10 visites à 80 €, ou 30 visites à 185 € (6,17 € la visite) — tarif d'ouverture réservé aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
@@ -139,7 +158,7 @@ export function ClubLandingPage() {
             {INCLUS.map((c) => (
               <div key={c.n} className={`cl-card dark ${c.top}`} style={{ padding: "32px 28px", position: "relative" }}>
                 <span className="cl-num" style={{ position: "absolute", top: 20, right: 22 }}>{c.n}</span>
-                <div style={{ fontSize: 30 }} aria-hidden="true">{c.ic}</div>
+                <div style={{ color: "var(--yellow)" }} aria-hidden="true"><Ico name={c.ic} /></div>
                 <h3 style={{ marginTop: 14, fontSize: 19, color: "#fff" }}>{c.t}</h3>
                 <p style={{ marginTop: 8, fontSize: 16, color: "var(--on-dark-2)" }}>{c.d}</p>
               </div>
