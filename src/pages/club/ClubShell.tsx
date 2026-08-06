@@ -9,6 +9,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
 import { useClubHead } from "./useClubHead";
+import { ClubNewsletter } from "./ClubNewsletter";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
 const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
@@ -131,6 +132,7 @@ export function ClubShell({ children }: { children: ReactNode }) {
               <div className="k">Nous trouver</div>
               <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br />Dimanche fermé<br /><a href={TEL}>06 79 44 87 59</a></div>
             </div>
+            <ClubNewsletter />
           </div>
           <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid rgba(244,239,228,.14)", fontSize: 12.5, color: "var(--on-dark-3)" }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 20px", marginBottom: 10 }}>
