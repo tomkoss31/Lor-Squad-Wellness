@@ -20,10 +20,13 @@ const IIC: Record<string, ReactNode> = {
   chat: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
   camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>,
   heart: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />,
+  weight: <><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></>,
+  muscle: <><path d="M6.5 6.5v11" /><path d="M17.5 6.5v11" /><path d="M3.5 9v6" /><path d="M20.5 9v6" /><line x1="6.5" y1="12" x2="17.5" y2="12" /></>,
+  energy: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
 };
-function Ico({ name }: { name: string }) {
+function Ico({ name, size = 30 }: { name: string; size?: number }) {
   return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {IIC[name]}
     </svg>
   );
@@ -91,9 +94,9 @@ export function ClubLandingPage() {
         <div className="cl-wrap" style={{ maxWidth: 1000, paddingTop: "clamp(20px,3vw,30px)", paddingBottom: "clamp(48px,6vw,72px)", textAlign: "center" }}>
           <p style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".28em", textTransform: "uppercase", color: "var(--muted2)", margin: "0 0 16px" }}>Choisis ton objectif</p>
           <div className="cl-obj">
-            <a href={objUrl("poids")}>⚖️ Perdre du poids</a>
-            <a className="p" href={objUrl("muscle")}>💪 Reprendre du muscle</a>
-            <a className="s" href={objUrl("energie")}>⚡ Retrouver de l'énergie</a>
+            <a href={objUrl("poids")}><Ico name="weight" size={19} />Perdre du poids</a>
+            <a className="p" href={objUrl("muscle")}><Ico name="muscle" size={19} />Reprendre du muscle</a>
+            <a className="s" href={objUrl("energie")}><Ico name="energy" size={19} />Retrouver de l'énergie</a>
           </div>
         </div>
       </div>
