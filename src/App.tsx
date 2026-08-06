@@ -475,12 +475,14 @@ const GuideNouveauCoachPage = lazy(() =>
     default: module.GuideNouveauCoachPage
   }))
 );
-// « Le pare-objections » (2026-08-04) — 1er outil ludique issu de la Boîte à
-// outils : tape l'objection → la réponse mot-pour-mot. Source unique = l'item
-// « objections-reponses » de boite-a-outils-content.ts.
-const PareObjectionsPage = lazy(() =>
-  import("./pages/PareObjectionsPage").then((module) => ({
-    default: module.PareObjectionsPage
+// « Outils du moment » (chantier Boîte à outils, 2026-08-06) — le pare-objections
+// (2026-08-04) généralisé : tape la situation → le script mot-pour-mot. Un seul
+// écran (MomentToolScreen) piloté par momentTools.ts ; source de contenu unique =
+// les `scripts` de boite-a-outils-content.ts. Décliné sur inviter / relancer /
+// recos / réveiller. Route param /outils/moment/:tool + legacy /outils/pare-objections.
+const MomentToolPage = lazy(() =>
+  import("./pages/MomentToolPage").then((module) => ({
+    default: module.MomentToolPage
   }))
 );
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
@@ -907,7 +909,8 @@ export default function App() {
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/apprendre" element={<FormationV2Page />} />
               <Route path="guide-nouveau-coach" element={<GuideNouveauCoachPage />} />
-              <Route path="outils/pare-objections" element={<PareObjectionsPage />} />
+              <Route path="outils/pare-objections" element={<MomentToolPage toolKey="objections" />} />
+              <Route path="outils/moment/:tool" element={<MomentToolPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="formation/admin" element={<FormationAdminPage />} />

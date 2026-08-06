@@ -21,6 +21,7 @@ import {
   type FormationToolkitCategory,
 } from "../data/formation";
 import { ToolkitItemPopup } from "../components/formation/ToolkitItemPopup";
+import { MOMENT_TOOLS, MOMENT_TOOL_ORDER, type MomentToolDef } from "../data/momentTools";
 import { useAppContext } from "../context/AppContext";
 
 const CATEGORY_ACCENT: Record<FormationToolkitCategory, string> = {
@@ -41,13 +42,6 @@ const FORMAT_TAG: Record<string, { emoji: string; label: string }> = {
   popup: { emoji: "💬", label: "Script" },
   page: { emoji: "📄", label: "Fiche" },
 };
-
-// 3 outils stars affichés dans "À ne pas manquer"
-const FEATURED_SLUGS = [
-  "scripts-invitation",
-  "bases-presentiel",
-  "phrase-magique-recos",
-];
 
 const STORAGE_FAVORITES_PREFIX = "ls-toolkit-favorites-";
 
@@ -114,14 +108,6 @@ export function FormationToolkitPage() {
       return true;
     });
   }, [activeCategory, searchQuery, favorites]);
-
-  const featured = useMemo(
-    () =>
-      FEATURED_SLUGS.map((slug) => FORMATION_TOOLKIT.find((it) => it.slug === slug)).filter(
-        (x): x is FormationToolkitItem => !!x,
-      ),
-    [],
-  );
 
   function handleItemClick(item: FormationToolkitItem) {
     if (item.externalRoute) {
@@ -282,37 +268,47 @@ export function FormationToolkitPage() {
         </div>
       </div>
 
-      {/* À NE PAS MANQUER (visible quand pas de filtre actif) */}
-      {activeCategory === "all" && !searchQuery && featured.length > 0 && (
+      {/* AU BON MOMENT — les outils qui sortent LE bon script quand le besoin
+          tombe (chantier Boîte à outils 2026-08-06). Le vrai point d'entrée ;
+          la bibliothèque complète reste dessous. Masqué en filtre/recherche. */}
+      {activeCategory === "all" && !searchQuery && (
         <section style={{ marginBottom: 28 }}>
           <div
             style={{
               fontSize: 10,
               letterSpacing: 2,
               textTransform: "uppercase",
-              color: "var(--ls-teal)",
+              color: "var(--ls-lime)",
               fontWeight: 700,
-              marginBottom: 10,
+              marginBottom: 4,
+              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            }}
+          >
+            ⚡ Au bon moment
+          </div>
+          <p
+            style={{
+              fontSize: 12.5,
+              color: "var(--ls-text-muted)",
+              margin: "0 0 12px",
               fontFamily: "DM Sans, sans-serif",
             }}
           >
-            ⭐ À ne pas manquer
-          </div>
+            Choisis la situation → on te sort le script prêt à envoyer.
+          </p>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 12,
             }}
           >
-            {featured.map((item, idx) => (
-              <FeaturedCard
-                key={item.slug}
-                item={item}
+            {MOMENT_TOOL_ORDER.map((key, idx) => (
+              <MomentActionCard
+                key={key}
+                tool={MOMENT_TOOLS[key]}
                 index={idx}
-                isFavorite={favorites.has(item.slug)}
-                onToggleFavorite={(e) => toggleFavorite(item.slug, e)}
-                onClick={() => handleItemClick(item)}
+                onClick={() => navigate(MOMENT_TOOLS[key].path)}
               />
             ))}
           </div>
@@ -507,80 +503,66 @@ function FilterChip({
   );
 }
 
-function FeaturedCard({
-  item,
+function MomentActionCard({
+  tool,
   index,
-  isFavorite,
-  onToggleFavorite,
   onClick,
 }: {
-  item: FormationToolkitItem;
+  tool: MomentToolDef;
   index: number;
-  isFavorite: boolean;
-  onToggleFavorite: (e: React.MouseEvent) => void;
   onClick: () => void;
 }) {
-  const accent = CATEGORY_ACCENT[item.category];
   return (
     <button
       type="button"
       onClick={onClick}
       className="ls-toolkit-card"
       style={{
-        animationDelay: `${index * 80}ms`,
-        background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 14%, var(--ls-surface)) 0%, color-mix(in srgb, ${accent} 4%, var(--ls-surface2)) 100%)`,
-        border: `1px solid ${accent}`,
+        animationDelay: `${index * 70}ms`,
+        background:
+          "linear-gradient(150deg, color-mix(in srgb, var(--ls-teal) 16%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2)) 100%)",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
         borderRadius: 16,
-        padding: 18,
+        padding: 16,
         textAlign: "left",
         cursor: "pointer",
-        position: "relative",
-        boxShadow: `0 6px 18px color-mix(in srgb, ${accent} 16%, transparent)`,
+        boxShadow: "0 6px 18px color-mix(in srgb, var(--ls-teal) 14%, transparent)",
         fontFamily: "DM Sans, sans-serif",
         color: "var(--ls-text)",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 122,
       }}
     >
-      <FavoriteBtn isFavorite={isFavorite} onClick={onToggleFavorite} />
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 28, lineHeight: 1 }} aria-hidden="true">
-          {item.icon ?? "✦"}
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              color: accent,
-              fontWeight: 700,
-              marginBottom: 2,
-            }}
-          >
-            ⭐ Star · {CATEGORY_META[item.category].label}
-          </div>
-          <h3
-            style={{
-              fontFamily: "Syne, sans-serif",
-              fontSize: 16,
-              fontWeight: 700,
-              margin: 0,
-              color: "var(--ls-text)",
-              lineHeight: 1.25,
-            }}
-          >
-            {item.title}
-          </h3>
-        </div>
-      </div>
-      <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.5 }}>
-        {item.description}
+      <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">
+        {tool.icon}
+      </span>
+      <h3
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: 15,
+          fontWeight: 800,
+          margin: "8px 0 3px",
+          color: "var(--ls-text)",
+          lineHeight: 1.2,
+        }}
+      >
+        {tool.label}
+      </h3>
+      <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.4 }}>
+        {tool.blurb}
       </p>
-      <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-        <SmallTag>⏱ {item.durationMin} min</SmallTag>
-        <SmallTag>
-          {FORMAT_TAG[item.format]?.emoji} {FORMAT_TAG[item.format]?.label}
-        </SmallTag>
-      </div>
+      <span
+        style={{
+          marginTop: "auto",
+          paddingTop: 10,
+          fontSize: 11,
+          fontWeight: 800,
+          color: "var(--ls-teal)",
+        }}
+      >
+        Ouvrir →
+      </span>
     </button>
   );
 }
