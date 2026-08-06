@@ -33,6 +33,9 @@ export const TOOLKIT_PROSPECTION: FormationToolkitItem[] = [
   {
     id: "tk-prospection-01",
     slug: "scripts-invitation",
+    // Ouvre l'outil du moment « Inviter » (2026-08-06) — même contenu, format
+    // ludique (tape la situation → le message). Cf. objections-reponses.
+    externalRoute: "/outils/moment/inviter",
     category: "prospection",
     title: "10 messages d'invitation prêts à copier",
     description: "Pour chaud, tiède, froid et réveil. Adaptés à WhatsApp, SMS, Messenger.",
@@ -899,6 +902,7 @@ export const TOOLKIT_SUIVI: FormationToolkitItem[] = [
   {
     id: "tk-suivi-01",
     slug: "templates-suivi-jours",
+    externalRoute: "/outils/moment/relancer",
     category: "suivi",
     title: "Templates de suivi J+1 / J+3 / J+7 / J+14 / J+30",
     description: "Les 5 messages systématiques qui font qu'un client tient les 30 jours et redemande.",
@@ -977,6 +981,7 @@ Tu m'as autorisée à partager ton résultat ? J'aimerais que tu sois la prochai
   {
     id: "tk-suivi-02",
     slug: "phrase-magique-recos",
+    externalRoute: "/outils/moment/recos",
     category: "suivi",
     title: "La phrase magique pour demander des recos",
     description: "Comment formuler ta demande de recos à chaud sans avoir l'air mendiante. Timing + script + relance.",
@@ -1037,6 +1042,7 @@ On en reparle dimanche ? »`,
   {
     id: "tk-suivi-03",
     slug: "reveiller-client-pause",
+    externalRoute: "/outils/moment/reveil",
     category: "suivi",
     title: "Réveiller un client en pause",
     description: "Le client qui ne re-commande pas depuis 30, 60 ou 90 jours. Comment le rouvrir sans pression.",
