@@ -199,7 +199,7 @@ export function ClubLandingPage() {
             <span style={{ color: "var(--yellow)", fontSize: 18, letterSpacing: 3 }}>★★★★★</span>
             <span style={{ fontFamily: "Anton", fontSize: 38, color: "#fff" }}><CountUp end={4.9} decimals={1} duration={1400} /> / 5</span>
             <span style={{ fontSize: 17, color: "var(--on-dark-2)" }}>sur les avis Google de La Base</span>
-            <a className="cl-cta" style={{ marginLeft: "auto", minHeight: 52 }} href="https://www.google.com/search?q=La+Base+Verdun" target="_blank" rel="noopener noreferrer">Voir les avis →</a>
+            <a className="cl-cta" style={{ marginLeft: "auto", minHeight: 52 }} href="https://www.google.com/maps/place//data=!4m3!3m2!1s0x47eb1d44e38c23ab:0x685b5b72dd6c5ae2!12e1?source=g.page.m._&laa=merchant-review-solicitation" target="_blank" rel="noopener noreferrer">Voir les avis →</a>
           </div>
         </div>
       </div>
@@ -304,6 +304,30 @@ export function ClubLandingPage() {
           <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>06 79 44 87 59</a>, on répond entre 7h et 11h.</p>
         </div>
       </div>
+
+      {/* NOUS TROUVER — carte + itinéraire (bas de page) */}
+      <div className="cl-band alt"><div className="cl-wrap cl-sec cl-rv">
+        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
+          <span className="cl-pill s">Nous trouver</span>
+          <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>On t'attend <span className="cl-a-sage">rue Saint Pierre.</span></h2>
+          <p className="cl-lead" style={{ marginTop: 16 }}>11 rue Saint Pierre, 55100 Verdun. Ouvert Lun–Ven 7h–11h et Sam 8h–11h.</p>
+        </div>
+        <div style={{ marginTop: 32, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(30,51,48,.14)", boxShadow: "0 12px 40px rgba(0,0,0,.08)" }}>
+          <iframe
+            title="Carte — The Breakfast Club, 11 rue Saint Pierre, Verdun"
+            src="https://www.google.com/maps?q=11+rue+Saint+Pierre+55100+Verdun&output=embed"
+            width="100%"
+            height="360"
+            style={{ border: 0, display: "block" }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+        </div>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <a className="cl-cta" href="https://www.google.com/maps/dir/?api=1&destination=11+rue+Saint+Pierre+55100+Verdun" target="_blank" rel="noopener noreferrer">Itinéraire →</a>
+        </div>
+      </div></div>
 
       {/* CTA FINAL */}
       <div className="cl-band dark">

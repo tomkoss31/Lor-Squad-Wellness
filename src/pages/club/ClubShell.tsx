@@ -115,7 +115,7 @@ export function ClubShell({ children }: { children: ReactNode }) {
                 <a className="cl-social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
                 <a className="cl-social" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a>
                 {/* Google : remplacer par la vraie fiche Google Business du club */}
-                <a className="cl-social" href="https://www.google.com/search?q=La+Base+Shakes+%26+Drinks+Verdun" target="_blank" rel="noopener noreferrer">Google</a>
+                <a className="cl-social" href="https://www.google.com/maps/place//data=!4m3!3m2!1s0x47eb1d44e38c23ab:0x685b5b72dd6c5ae2!12e1?source=g.page.m._&laa=merchant-review-solicitation" target="_blank" rel="noopener noreferrer">Google</a>
               </div>
             </div>
             <div>
