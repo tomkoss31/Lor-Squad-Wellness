@@ -30,10 +30,10 @@ function Ico({ name }: { name: string }) {
 }
 
 const RITUEL = [
-  { n: "01", t: "L'aloe vera", d: "Une boisson d'hydratation pour bien démarrer. Ni détox, ni brûle-graisse — juste le bon geste d'ouverture.", top: "cl-top-o" },
-  { n: "02", t: "Le thé aux plantes", d: "Un coup de fouet doux. S'il te tient jusqu'à midi, c'est que le smoothie était bien dosé.", top: "cl-top-p" },
-  { n: "03", t: "Le smoothie", d: "Le vrai repas du matin : protéines, 20+ vitamines et minéraux — près de 40 % de tes apports de la journée dans un seul verre, sans peser sur l'estomac.", top: "cl-top-s" },
-  { n: "04", t: "Le suivi", d: "La partie que personne ne photographie : la pesée, deux chiffres, et une phrase du coach.", top: "cl-top-a" },
+  { n: "01", t: "L'aloe vera", d: "On commence par t'hydrater. Un grand verre d'eau à l'aloe vera pour réveiller ton corps en douceur et préparer la digestion.", top: "cl-top-o" },
+  { n: "02", t: "Le thé aux plantes", d: "On relance ton énergie. Un thé aux plantes peu sucré qui réveille sans t'énerver — le coup de fouet, version douce.", top: "cl-top-p" },
+  { n: "03", t: "Le smoothie", d: "On te nourrit vraiment. Un smoothie protéiné complet — protéines, plus de 20 vitamines et minéraux — un vrai petit-déjeuner dans un seul verre, sans peser sur l'estomac.", top: "cl-top-s" },
+  { n: "04", t: "Le suivi", d: "On mesure tes progrès. Une pesée rapide, tes chiffres qui bougent semaine après semaine, et un conseil du coach rien que pour toi.", top: "cl-top-a" },
 ];
 const INCLUS = [
   { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
@@ -64,8 +64,8 @@ export function ClubLandingPage() {
             <div>
               <span className="cl-pill y">Ouverture prochaine · Verdun</span>
               <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: "min(460px,84%)", marginTop: "clamp(22px,3vw,32px)" }} />
-              <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>Le club où l'on t'attend,<br /><span className="cl-a-sage">tous les matins.</span></h1>
-              <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>On ne change pas ta vie. On change ton premier repas. Ce n'est pas la volonté qui te manque — c'est un rendez-vous.</p>
+              <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>Reprends ta forme,<br /><span className="cl-a-sage">un matin à la fois.</span></h1>
+              <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>Le club de petit-déjeuner et de coaching nutrition de Verdun. On t'accompagne chaque matin pour atteindre ton objectif. C'est quoi, le tien ?</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28 }}>
                 <a className="cl-cta" href={R}>Réserver mon body scan</a>
                 <a className="cl-ghost" href="#rituel">Voir le rituel</a>
@@ -130,7 +130,7 @@ export function ClubLandingPage() {
           <div className="cl-rv" style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
             <span className="cl-pill o">Le rituel du matin</span>
             <h2 style={{ marginTop: 24, fontSize: "clamp(38px,6vw,76px)" }}>Chaque matin,<br /><span className="cl-a-orange">le même rituel.</span></h2>
-            <p className="cl-lead" style={{ marginTop: 16 }}>Trois boissons dans l'ordre, puis le suivi. C'est ce qui fait qu'on n'a rien à décider en arrivant.</p>
+            <p className="cl-lead" style={{ marginTop: 16 }}>Le même déroulé chaque matin, pensé pour un seul objectif : que tu repartes plein d'énergie et un pas plus près du tien. Tu pousses la porte, tout est prêt — rien à préparer, rien à décider.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: "clamp(18px,2.4vw,26px)", marginTop: "clamp(44px,6vw,64px)" }}>
             {RITUEL.map((c) => (
