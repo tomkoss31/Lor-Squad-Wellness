@@ -8,10 +8,10 @@ const PAS = [
   "Pas un abonnement piège : tu prends des visites, tu les utilises, point.",
 ];
 const MATINEE = [
-  { h: "7h00", t: "Tu passes la porte", d: "On te connaît, ton aloe est déjà prêt. Pas de file, pas d'attente." },
-  { h: "8h30", t: "Ton rituel", d: "Les trois boissons dans l'ordre, à ton rythme, assis ou à emporter." },
-  { h: "10h00", t: "La pesée + deux mots", d: "Dix secondes sur la balance, une remarque du coach sur hier." },
-  { h: "11h00", t: "Tu repars lancé", d: "Ta matinée est réglée. Le reste de ta journée t'appartient." },
+  { h: "0 min", t: "Tu passes la porte", d: "On te connaît, ton aloe est déjà prêt. Pas de file, pas d'attente." },
+  { h: "5 min", t: "Ton rituel", d: "Les trois boissons dans l'ordre, à ton rythme, assis ou à emporter." },
+  { h: "12 min", t: "La pesée + deux mots", d: "Dix secondes sur la balance, une remarque du coach sur hier." },
+  { h: "15 min", t: "Tu repars lancé", d: "C'est réglé pour la journée. Le reste t'appartient." },
 ];
 
 export function ClubLeClubPage() {
@@ -49,8 +49,9 @@ export function ClubLeClubPage() {
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv">
-        <span className="cl-pill o">Une matinée type</span>
-        <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>De 7h à 11h, <span className="cl-a-orange">comment ça se passe.</span></h2>
+        <span className="cl-pill o">Une visite type</span>
+        <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>Un quart d'heure, <span className="cl-a-orange">pas ta matinée.</span></h2>
+        <p className="cl-lead" style={{ marginTop: 16, maxWidth: "52ch" }}>Tu passes une seule fois, quand tu veux entre 7h et 11h, sans rendez-vous. Compte un quart d'heure — un peu plus si tu t'assois pour discuter.</p>
         <ul style={{ listStyle: "none", padding: 0, margin: "30px 0 0" }}>
           {MATINEE.map((m) => (
             <li key={m.h} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "clamp(12px,3vw,28px)", padding: "22px 0", borderTop: "1px solid rgba(30,51,48,.16)" }}>
