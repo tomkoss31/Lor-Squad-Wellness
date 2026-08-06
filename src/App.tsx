@@ -300,6 +300,7 @@ const ClubParcoursPage = lazy(() => import("./pages/club/ClubParcoursPage").then
 const ClubResultatsPage = lazy(() => import("./pages/club/ClubResultatsPage").then((m) => ({ default: m.ClubResultatsPage })));
 const ClubNousPage = lazy(() => import("./pages/club/ClubNousPage").then((m) => ({ default: m.ClubNousPage })));
 const ClubRejoindrePage = lazy(() => import("./pages/club/ClubRejoindrePage").then((m) => ({ default: m.ClubRejoindrePage })));
+const ClubRejoindreRdvPage = lazy(() => import("./pages/club/ClubRejoindreRdvPage").then((m) => ({ default: m.ClubRejoindreRdvPage })));
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -780,6 +781,14 @@ export default function App() {
           <Route path="/club/resultats" element={<ClubResultatsPage />} />
           <Route path="/club/nous" element={<ClubNousPage />} />
           <Route path="/club/rejoindre" element={<ClubRejoindrePage />} />
+          {/* Tunnel « En parler avec l'équipe » (recrutement « ouvrir un club »).
+              Jumeau visuel de /reserver, mais back-end book-rdv → agenda RÉEL du
+              coach + rdv_bookings (bookingType='recrutement'). Défaut coach =
+              thomas ; :coachSlug pour router ailleurs. Alias joli demandé par
+              Thomas : /rdv-rejoindre-l-equipe. */}
+          <Route path="/club/rejoindre/rdv" element={<ClubRejoindreRdvPage />} />
+          <Route path="/club/rejoindre/rdv/:coachSlug" element={<ClubRejoindreRdvPage />} />
+          <Route path="/rdv-rejoindre-l-equipe" element={<ClubRejoindreRdvPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />

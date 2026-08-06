@@ -7,7 +7,7 @@ const CHERCHE = [
   "Envie de construire un lieu de quartier, pas de faire un coup rapide.",
 ];
 const COMMENT = [
-  { n: "01", t: "On se rencontre", d: "Un café, on t'explique le modèle en vrai, sans discours de vente. Tu poses toutes tes questions.", top: "cl-top-o" },
+  { n: "01", t: "On se rencontre", d: "On t'explique le modèle en vrai, sans discours de vente. Tu poses toutes tes questions.", top: "cl-top-o" },
   { n: "02", t: "Tu testes le terrain", d: "Tu viens au club plusieurs matins, tu vois l'envers du décor, tu sens si c'est pour toi.", top: "cl-top-p" },
   { n: "03", t: "On te forme", d: "Rituel, suivi, gestion d'un club : on t'accompagne pas à pas, avec l'expérience de La Base.", top: "cl-top-s" },
   { n: "04", t: "Tu ouvres le tien", d: "Ton lieu, ton équipe, ton quartier. On reste derrière toi, tu n'es jamais lâché seul.", top: "cl-top-a" },
@@ -55,10 +55,10 @@ export function ClubRejoindrePage() {
 
       <div className="cl-band alt"><div className="cl-wrap cl-sec cl-rv" style={{ textAlign: "center", maxWidth: 680 }}>
         <span className="cl-pill o">On en parle ?</span>
-        <h2 style={{ marginTop: 20, fontSize: "clamp(30px,5vw,60px)" }}>Le premier pas, <span className="cl-a-orange">c'est un café.</span></h2>
+        <h2 style={{ marginTop: 20, fontSize: "clamp(30px,5vw,60px)" }}>Le premier pas, <span className="cl-a-orange">c'est d'en parler.</span></h2>
         <p className="cl-lead" style={{ marginTop: 16, marginLeft: "auto", marginRight: "auto", maxWidth: 540 }}>Écris-nous ou appelle, on te rappelle et on prend le temps d'en discuter sans engagement.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 26 }}>
-          <a className="cl-cta" href="/rejoindre?utm_source=site-club">En parler avec l'équipe</a>
+          <a className="cl-cta" href="/club/rejoindre/rdv?utm_source=site-club">En parler avec l'équipe</a>
           <a className="cl-ghost" href={TEL}>06 79 44 87 59</a>
         </div>
       </div></div>

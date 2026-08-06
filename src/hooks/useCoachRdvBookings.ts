@@ -6,6 +6,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 
+export interface RdvBookingMetadata {
+  last_name?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  looking?: string | null;
+  timing?: string | null;
+  note?: string | null;
+}
+
 export interface RdvBooking {
   id: string;
   first_name: string | null;
@@ -16,6 +25,10 @@ export interface RdvBooking {
   status: "requested" | "confirmed" | "canceled";
   confirm_email_sent_at: string | null;
   reminder_email_sent_at: string | null;
+  // Recrutement « ouvrir un club » (tunnel /club/rejoindre/rdv). 'bilan' = défaut
+  // historique. metadata porte les réponses PRO du candidat.
+  booking_type: "bilan" | "recrutement";
+  metadata: RdvBookingMetadata | null;
 }
 
 interface Result {
@@ -44,7 +57,7 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
     }
     const { data, error } = await sb
       .from("rdv_bookings")
-      .select("id, first_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at")
+      .select("id, first_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at, booking_type, metadata")
       .eq("coach_user_id", coachUserId)
       .neq("status", "canceled")
       .gte("slot_start", new Date().toISOString())

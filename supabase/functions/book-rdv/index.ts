@@ -27,6 +27,27 @@ const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Recrutement (« ouvrir un club », tunnel /club/rejoindre/rdv) : on prévient
+// l'équipe par email en plus du push — elle ne consulte pas toujours le CRM.
+const TEAM_NOTIFY_EMAIL = "labaseverdun@gmail.com";
+const LOOKING_LABELS: Record<string, string> = {
+  reconversion: "🔄 Une reconversion",
+  complement: "💶 Un complément de revenu",
+  curieux: "👀 Juste curieux·se",
+};
+const TIMING_LABELS: Record<string, string> = {
+  asap: "Dès que possible",
+  "few-months": "Dans quelques mois",
+  info: "Se renseigne d'abord",
+};
+function lbl(map: Record<string, string>, code: string | null | undefined): string {
+  const c = (code ?? "").trim();
+  return c ? (map[c] ?? c) : "—";
+}
+function esc(s: string): string {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+}
+
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris",
@@ -39,13 +60,13 @@ function parisHourLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
     });
     return res.ok;
   } catch {
@@ -64,6 +85,14 @@ serve(async (req: Request) => {
     firstName?: string;
     contact?: string;
     onlineBilanId?: string;
+    // Recrutement « ouvrir un club » (tunnel /club/rejoindre/rdv)
+    bookingType?: string;
+    lastName?: string;
+    phone?: string;
+    city?: string;
+    looking?: string;
+    timing?: string;
+    note?: string;
   };
   try {
     body = await req.json();
@@ -75,6 +104,16 @@ serve(async (req: Request) => {
   const mode = (body.mode ?? "").trim();
   const firstName = (body.firstName ?? "").trim();
   const contact = (body.contact ?? "").trim() || null;
+
+  // Type de RDV : 'recrutement' = candidat « ouvrir un club ». Défaut 'bilan'
+  // → le comportement historique du funnel /rdv reste strictement inchangé.
+  const isRecrut = (body.bookingType ?? "").trim() === "recrutement";
+  const lastName = (body.lastName ?? "").trim();
+  const phone = (body.phone ?? "").trim();
+  const city = (body.city ?? "").trim();
+  const looking = (body.looking ?? "").trim();
+  const timing = (body.timing ?? "").trim();
+  const note = (body.note ?? "").trim();
 
   if (mode !== "presentiel" && mode !== "visio") {
     return jsonResponse({ success: false, error: "mode_invalide" }, 400);
@@ -126,20 +165,35 @@ serve(async (req: Request) => {
     return jsonResponse({ success: false, error: "creneau_pris" }, 409);
   }
 
-  // 3. Insert
+  // 3. Insert. Le chemin bilan reste STRICTEMENT identique (aucune colonne
+  //    booking_type / metadata écrite) → l'edge continue de tourner même si la
+  //    migration recrutement n'est pas encore appliquée. Seul le recrutement
+  //    écrit ces colonnes, il dépend donc de la migration 20261209100000.
+  const insertRow: Record<string, unknown> = {
+    coach_user_id: coachUserId,
+    coach_slug: coachSlug || null,
+    first_name: firstName,
+    contact,
+    mode,
+    slot_start: slotStart.toISOString(),
+    slot_end: slotEnd.toISOString(),
+    status: "requested",
+    online_bilan_id: body.onlineBilanId ?? null,
+  };
+  if (isRecrut) {
+    insertRow.booking_type = "recrutement";
+    insertRow.metadata = {
+      last_name: lastName || null,
+      phone: phone || null,
+      city: city || null,
+      looking: looking || null,
+      timing: timing || null,
+      note: note || null,
+    };
+  }
   const { data: inserted, error: insErr } = await sb
     .from("rdv_bookings")
-    .insert({
-      coach_user_id: coachUserId,
-      coach_slug: coachSlug || null,
-      first_name: firstName,
-      contact,
-      mode,
-      slot_start: slotStart.toISOString(),
-      slot_end: slotEnd.toISOString(),
-      status: "requested",
-      online_bilan_id: body.onlineBilanId ?? null,
-    })
+    .insert(insertRow)
     .select("id")
     .single();
   if (insErr) {
@@ -147,26 +201,75 @@ serve(async (req: Request) => {
   }
 
   // 4. Notif coach (non bloquant)
+  const whenParis = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  }).format(slotStart);
   try {
-    const whenParis = new Intl.DateTimeFormat("fr-FR", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Paris",
-    }).format(slotStart);
     await sendPushToUser(sb, {
       userId: coachUserId,
-      payload: {
-        title: "🗓️ Nouveau RDV demandé",
-        body: `${firstName} — ${whenParis} (${mode === "visio" ? "visio" : "présentiel"})`,
-        url: "/crm",
-        type: "rdv_booking",
-      },
+      payload: isRecrut
+        ? {
+            title: "🤝 Nouveau candidat équipe",
+            body: `${firstName}${lastName ? " " + lastName : ""} — ${whenParis}${looking ? ` · ${lbl(LOOKING_LABELS, looking)}` : ""}`,
+            url: "/crm",
+            type: "rdv_recrutement",
+          }
+        : {
+            title: "🗓️ Nouveau RDV demandé",
+            body: `${firstName} — ${whenParis} (${mode === "visio" ? "visio" : "présentiel"})`,
+            url: "/crm",
+            type: "rdv_booking",
+          },
     });
   } catch (_e) {
     // push best-effort — la résa est déjà enregistrée
+  }
+
+  // 4b. Recrutement : notif email à l'équipe (le push ne suffit pas — pas
+  //     toujours activé). Reply-to = le candidat, pour répondre en un clic.
+  if (isRecrut) {
+    try {
+      const dateLabel = parisDateLabel(slotStart.toISOString());
+      const hour = parisHourLabel(slotStart.toISOString());
+      const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+      const row = (k: string, v: string) =>
+        `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
+      const internalHtml = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
+    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">🤝 Breakfast Club · Recrutement</div>
+    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau candidat — ouvrir un club</h1>
+    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${mode === "visio" ? "visio" : "présentiel"}).</p>
+    <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
+      <table style="border-collapse:collapse;width:100%;">
+        ${row("Prénom / Nom", esc(fullName))}
+        ${row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking)))}
+        ${row("Se projette", esc(lbl(TIMING_LABELS, timing)))}
+        ${row("Email", contact ? esc(contact) : "—")}
+        ${row("Téléphone", phone ? esc(phone) : "—")}
+        ${row("Ville", city ? esc(city) : "—")}
+        ${row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`)}
+        ${note ? row("Son mot", esc(note)) : ""}
+      </table>
+    </div>
+    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).</p>
+  </div>
+</body></html>`.trim();
+      await sendViaResend(
+        TEAM_NOTIFY_EMAIL,
+        `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
+        internalHtml,
+        contact || undefined,
+      );
+    } catch (_e) {
+      // notif interne best-effort — la résa est déjà enregistrée
+    }
   }
 
   // 5. Email de confirmation au prospect (non bloquant) — seulement si le

@@ -19,6 +19,47 @@ function fmtWhen(iso: string): string {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Libellés des réponses PRO du candidat recrutement (métadata rdv_bookings).
+const LOOKING_LABELS: Record<string, string> = {
+  reconversion: "Reconversion",
+  complement: "Complément de revenu",
+  curieux: "Curieux·se",
+};
+const TIMING_LABELS: Record<string, string> = {
+  asap: "Dès que possible",
+  "few-months": "Dans quelques mois",
+  info: "Se renseigne",
+};
+
+function recruitFullName(b: RdvBooking): string {
+  const first = b.first_name ?? "";
+  const last = b.booking_type === "recrutement" ? (b.metadata?.last_name ?? "") : "";
+  return `${first}${last ? " " + last : ""}`.trim();
+}
+
+// Ligne « ce que le candidat cherche » + son mot, sous le nom (recrutement only).
+function RecruitDetails({ booking }: { booking: RdvBooking }) {
+  const m = booking.metadata ?? {};
+  const bits: string[] = [];
+  if (m.looking) bits.push(LOOKING_LABELS[m.looking] ?? m.looking);
+  if (m.timing) bits.push(TIMING_LABELS[m.timing] ?? m.timing);
+  if (m.city) bits.push(m.city);
+  const note = (m.note ?? "").trim();
+  if (bits.length === 0 && !note) return null;
+  return (
+    <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5 }}>
+      {bits.length > 0 && (
+        <div style={{ color: "var(--ls-text)" }}>
+          <span aria-hidden="true" style={{ color: "var(--ls-gold)" }}>🎯</span> {bits.join(" · ")}
+        </div>
+      )}
+      {note && (
+        <div style={{ marginTop: 3, fontStyle: "italic", color: "var(--ls-text-muted)" }}>« {note} »</div>
+      )}
+    </div>
+  );
+}
+
 function fmtShort(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris",
@@ -67,11 +108,15 @@ function EmailStatus({ booking }: { booking: RdvBooking }) {
 function googleCalUrl(b: RdvBooking): string {
   const fmt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const modeLabel = b.mode === "visio" ? "Visio" : "Présentiel";
+  const isRecruit = b.booking_type === "recrutement";
+  const phone = isRecruit ? (b.metadata?.phone ?? "") : "";
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: `RDV bilan — ${b.first_name ?? "Prospect"}`,
+    text: isRecruit
+      ? `RDV équipe — ${recruitFullName(b) || "Candidat"}`
+      : `RDV bilan — ${b.first_name ?? "Prospect"}`,
     dates: `${fmt(b.slot_start)}/${fmt(b.slot_end)}`,
-    details: `RDV pris via La Base 360 (${modeLabel}).${b.contact ? ` Contact : ${b.contact}` : ""}`,
+    details: `${isRecruit ? "Candidat « ouvrir un club »" : "RDV"} pris via La Base 360 (${modeLabel}).${b.contact ? ` Contact : ${b.contact}` : ""}${phone ? ` · Tél : ${phone}` : ""}`,
     location: b.mode === "visio" ? "Visioconférence" : "La Base 360",
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -83,6 +128,8 @@ export function RdvBookingsWidget() {
 
   if (loading || bookings.length === 0) return null;
 
+  const recruitCount = bookings.filter((b) => b.booking_type === "recrutement").length;
+
   return (
     <Card className="space-y-3">
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -90,7 +137,7 @@ export function RdvBookingsWidget() {
         <div style={{ flex: 1 }}>
           <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>RDV demandés</p>
           <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginTop: 2 }}>
-            {bookings.length} prospect{bookings.length > 1 ? "s ont" : " a"} réservé via ton bilan en ligne.
+            {bookings.length} personne{bookings.length > 1 ? "s ont" : " a"} réservé un RDV via tes pages publiques{recruitCount > 0 ? `, dont ${recruitCount} candidat${recruitCount > 1 ? "s" : ""} équipe 🤝` : ""}.
           </p>
         </div>
       </div>
@@ -113,8 +160,17 @@ export function RdvBookingsWidget() {
             <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
-                  {b.first_name || "Prospect"}
+                  {recruitFullName(b) || "Prospect"}
                 </span>
+                {b.booking_type === "recrutement" && (
+                  <span style={{
+                    fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
+                    padding: "2px 7px", borderRadius: 999,
+                    background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)", color: "var(--ls-gold)",
+                  }}>
+                    🤝 Candidat équipe
+                  </span>
+                )}
                 <span style={{
                   fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
                   padding: "2px 7px", borderRadius: 999,
@@ -127,8 +183,9 @@ export function RdvBookingsWidget() {
                 )}
               </div>
               <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 3 }}>
-                {fmtWhen(b.slot_start)}{b.contact ? ` · ${b.contact}` : ""}
+                {fmtWhen(b.slot_start)}{b.contact ? ` · ${b.contact}` : ""}{b.booking_type === "recrutement" && b.metadata?.phone ? ` · ${b.metadata.phone}` : ""}
               </div>
+              {b.booking_type === "recrutement" && <RecruitDetails booking={b} />}
               <EmailStatus booking={b} />
             </div>
 

@@ -1,0 +1,23 @@
+/* =============================================================================
+   ClubRejoindreRdvPage — supplément au tunnel crème `.rc` (ReserverClubPage.css).
+   On réutilise TOUT le système `.rc` (header, cartes, calendrier, CTA, champs) ;
+   ici on n'ajoute que ce que le modèle « séance découverte » n'avait pas : un
+   <textarea> (mot libre du candidat) habillé comme les .rc-field.
+   Spécificité (0,2,1) + !important pour passer devant globals.css (thème app).
+   ============================================================================= */
+
+.rc textarea.rc-field {
+  width: 100%; min-height: 96px; padding: 14px 18px; border-radius: 14px;
+  background: var(--panel) !important; color: var(--ink) !important;
+  border: 1px solid rgba(30, 51, 48, .18) !important;
+  font-family: Poppins, sans-serif; font-size: 16px; line-height: 1.5;
+  outline: none; resize: vertical;
+  transition: border-color .18s, box-shadow .18s;
+}
+.rc textarea.rc-field:focus,
+.rc textarea.rc-field:focus-visible {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(147, 166, 126, .22) !important;
+  background: var(--panel) !important;
+}
+.rc textarea.rc-field::placeholder { color: rgba(30, 51, 48, .36) !important; }
