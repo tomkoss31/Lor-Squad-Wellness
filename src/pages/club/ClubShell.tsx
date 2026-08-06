@@ -57,8 +57,11 @@ export function ClubShell({ children }: { children: ReactNode }) {
         <div className="cl-wrap">
           <div className="bar">
             <Link className="cl-lock" to="/club" onClick={() => setOpen(false)}>
-              <img src={MARK} alt="" aria-hidden="true" />
-              <span><span className="n1">Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
+              <span className="cl-medal">
+                <img src={MARK} alt="" aria-hidden="true" />
+                <svg className="cl-heart-badge" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 26.5C7.4 21 4.8 15.6 8.3 12.3c2.3-2.1 5.3-1 6.7 1.4l1 1.6 1-1.6c1.4-2.4 4.4-3.5 6.7-1.4 3.5 3.3.9 8.7-7.7 14.2z" fill="#E5352B" stroke="#F7F1E6" stroke-width="2.4" paint-order="stroke" /></svg>
+              </span>
+              <span className="cl-name"><span className="n1">The Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <a className="cl-hcta cl-hcta-desk" href={R}>Je commence</a>
