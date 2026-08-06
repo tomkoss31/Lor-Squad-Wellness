@@ -142,12 +142,14 @@ function groupLabel(entry: AgendaEntry, today: Date): string {
   return "Plus tard";
 }
 
-// « En retard » en TÊTE (2026-07-27). Avant, groupLabel ne regardait que la
-// date : un suivi dû il y a 9 jours et un RDV converti d'avril tombaient dans
-// le même sac « Passés », tout en bas de la liste. Or l'un attend une action
-// et l'autre est réglé. Mesuré en prod : 82 suivis en retard, dont 66 sur des
-// clients actifs, et 11 RDV prospects passés jamais qualifiés.
-const GROUP_ORDER = ["En retard", "Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
+// « En retard » en DERNIER (demande Mélanie, 2026-08-05). L'avait mis en tête le
+// 2026-07-27 (le retard = une action à faire), mais à l'usage 33 RDV en retard
+// t'accueillent en haut à chaque ouverture et noient le à-venir. Mélanie (65
+// clients, la plus active) veut voir d'abord ce qui arrive ; le backlog de
+// retard reste consultable, tout en bas. On garde la SÉPARATION du groupe « En
+// retard » vs « Passés » (l'un attend une action, l'autre est réglé), on change
+// juste sa POSITION.
+const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés", "En retard"];
 
 const AGENDA_FILTER_KEY = "labase360.agenda.filter";
 const AGENDA_ENTITY_KEY = "labase360.agenda.entity-filter";
