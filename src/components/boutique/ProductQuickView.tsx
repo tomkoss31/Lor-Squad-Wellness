@@ -67,6 +67,8 @@ export function ProductQuickView({ product, onClose, onAdd, coachSlug }: Props) 
                   className="bk-th"
                   key={img.url}
                   onClick={() => setBigIdx(i)}
+                  aria-label={`Voir la photo ${i + 1} de ${product.name}`}
+                  aria-current={bigIdx === i}
                   style={{ borderColor: bigIdx === i ? "var(--jade)" : undefined, cursor: "pointer" }}
                 >
                   <img

@@ -17,6 +17,7 @@ import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { useCart } from "../components/boutique/useCart";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 import {
   CONCERN_LABELS,
   FREE_SHIPPING_THRESHOLD,
@@ -240,6 +241,8 @@ export function BoutiqueProductPage() {
                     className="bk-th"
                     key={img.url}
                     onClick={() => setHeroIdx(i)}
+                    aria-label={`Voir la photo ${i + 1} de ${product.name}`}
+                    aria-current={heroIdx === i}
                     style={{
                       borderColor: heroIdx === i ? "var(--jade)" : undefined,
                       cursor: "pointer",
@@ -351,6 +354,15 @@ export function BoutiqueProductPage() {
           </div>
         )}
       </div>
+
+      {/* Avis clients réels (catégorie skin) + formulaire — même vivier que la vitrine */}
+      <BoutiqueReviews
+        coachSlug={coachSlug}
+        coachUserId={boutique?.user_id}
+        eyebrow="Elles ont testé"
+        title={`Ce qu'elles en pensent.`}
+        subtitle={`De vrais avis de clientes sur la routine ${shopName}. Tu as testé ce produit ? Partage ton expérience.`}
+      />
 
       <BoutiqueFooter
         coachSlug={coachSlug}
