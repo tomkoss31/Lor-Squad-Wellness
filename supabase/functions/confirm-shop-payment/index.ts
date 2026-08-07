@@ -28,6 +28,18 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SQUARE_VERSION = "2026-05-20";
+const SITE_URL = "https://labase360.fr";
+
+// Même normalisation que submit-online-bilan (le slug /bilan-online se résout
+// sur le 1er mot de users.name) — garder les deux alignés.
+function normalizeSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +58,10 @@ const esc = (s: unknown) =>
 const euro = (cents: number) =>
   (cents / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 
+function cta(url: string, label: string): string {
+  return `<a href="${esc(url)}" style="display:inline-block;background:#4F8B72;color:#fff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:600;padding:12px 24px;border-radius:999px;">${esc(label)}</a>`;
+}
+
 // Email de confirmation de commande — identité céladon, HTML inline email-safe.
 function orderConfirmationHtml(p: {
   firstName?: string;
@@ -57,6 +73,9 @@ function orderConfirmationHtml(p: {
   shippingCents: number;
   totalCents: number;
   address?: Record<string, string> | null;
+  aiScanUrl?: string | null;
+  bilanUrl?: string | null;
+  coachFirstName?: string | null;
 }): string {
   const hi = p.firstName ? `Merci ${esc(p.firstName)} !` : "Merci !";
   const rows = p.items
@@ -80,7 +99,7 @@ function orderConfirmationHtml(p: {
 <tr><td style="padding:26px 30px 30px;">
   <div style="font-size:20px;">${hi}</div>
   <p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#6E7268;margin:12px 0 18px;">
-    Ta commande est confirmée. Ta coach prépare ton envoi (expédition sous 48 h). Récapitulatif :
+    Ton paiement est bien reçu et ta commande est confirmée. Voici ton récapitulatif :
   </p>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E2DED4;border-bottom:1px solid #E2DED4;margin:6px 0;">${rows}</table>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;font-family:Arial,sans-serif;font-size:13px;color:#6E7268;">
@@ -91,6 +110,57 @@ function orderConfirmationHtml(p: {
   </table>
   ${addr ? `<p style="font-family:Arial,sans-serif;font-size:12px;color:#6E7268;margin-top:18px;">📦 Livraison : ${addr}</p>` : ""}
 </td></tr>
+
+<!-- La suite : ce qui va se passer, pour éviter la question « et maintenant ? » -->
+<tr><td style="padding:0 30px 26px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F2EC;border-radius:12px;">
+    <tr><td style="padding:18px 20px;font-family:Arial,sans-serif;font-size:13px;line-height:1.7;color:#6E7268;">
+      <div style="font-family:Georgia,serif;font-size:16px;color:#232620;margin-bottom:8px;">La suite</div>
+      <b style="color:#232620;">1.</b> ${p.coachFirstName ? esc(p.coachFirstName) : "Ta coach"} prépare ton colis (expédition sous 48 h ouvrées).<br />
+      <b style="color:#232620;">2.</b> Tu reçois ta routine chez toi.<br />
+      <b style="color:#232620;">3.</b> Une question sur l'ordre d'application ou ta peau ? Réponds à cet email — c'est ${p.coachFirstName ? esc(p.coachFirstName) : "ta coach"} qui te lit.
+    </td></tr>
+  </table>
+</td></tr>
+
+${
+  p.aiScanUrl
+    ? `<!-- Diagnostic IA : cible la routine sur SA peau, pas une routine générique -->
+<tr><td style="padding:0 30px 22px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E2DED4;border-radius:12px;">
+    <tr><td style="padding:20px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#35664F;font-family:Arial,sans-serif;">Pendant que ton colis arrive</div>
+      <div style="font-family:Georgia,serif;font-size:18px;color:#232620;margin:6px 0 8px;">Fais analyser ta peau 🔬</div>
+      <p style="font-family:Arial,sans-serif;font-size:13px;line-height:1.6;color:#6E7268;margin:0 0 16px;">
+        Un scan gratuit en 2 minutes depuis ton téléphone : hydratation, pores, éclat, rides.
+        Tu sauras exactement quoi appliquer en priorité — et tu pourras mesurer tes progrès dans un mois.
+      </p>
+      ${cta(p.aiScanUrl, "Analyser ma peau")}
+    </td></tr>
+  </table>
+</td></tr>`
+    : ""
+}
+
+${
+  p.bilanUrl
+    ? `<!-- Bilan bien-être : la peau se joue aussi de l'intérieur (cross-canal nutrition) -->
+<tr><td style="padding:0 30px 26px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF3EF;border-radius:12px;">
+    <tr><td style="padding:20px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#35664F;font-family:Arial,sans-serif;">Aller plus loin</div>
+      <div style="font-family:Georgia,serif;font-size:18px;color:#232620;margin:6px 0 8px;">Une belle peau se joue aussi de l'intérieur 🌿</div>
+      <p style="font-family:Arial,sans-serif;font-size:13px;line-height:1.6;color:#6E7268;margin:0 0 16px;">
+        Hydratation, sommeil, sucre, digestion : ce que tu mets dans ton assiette se voit sur ton
+        visage. Le bilan bien-être est gratuit, en ligne, et ${p.coachFirstName ? esc(p.coachFirstName) : "ta coach"} te renvoie une lecture personnalisée.
+      </p>
+      ${cta(p.bilanUrl, "Faire mon bilan offert")}
+    </td></tr>
+  </table>
+</td></tr>`
+    : ""
+}
+
 <tr><td style="padding:20px 30px;border-top:1px solid #E2DED4;font-family:Arial,sans-serif;font-size:11px;color:#6E7268;">
   ${esc(p.shopName)} · propulsé par La Base 360
 </td></tr>
@@ -262,7 +332,28 @@ serve(async (req: Request) => {
     const { data: boutique } = await sb.rpc("get_boutique_by_slug", {
       p_slug: order.boutique_slug ?? "",
     });
-    const shopName = (boutique as { shop_name?: string } | null)?.shop_name ?? "Beauté K Skin";
+    const b = boutique as { shop_name?: string; first_name?: string; ai_scan_url?: string } | null;
+    const shopName = b?.shop_name ?? "Beauté K Skin";
+    const aiScanUrl = b?.ai_scan_url?.trim() || null;
+
+    // Lien bilan bien-être : ⚠️ le slug de /bilan-online se résout sur le 1er mot
+    // de `users.name` (cf. submit-online-bilan), PAS sur boutique_slug — Mélanie
+    // est « hlskinmelanie » en boutique mais « melanie » côté bilan.
+    let bilanUrl: string | null = null;
+    let coachFirstName: string | null = b?.first_name?.trim() || null;
+    try {
+      const { data: coachRow } = await sb
+        .from("users")
+        .select("name")
+        .eq("id", order.coach_user_id)
+        .maybeSingle();
+      const firstWord = String(coachRow?.name ?? "").trim().split(/\s+/)[0] ?? "";
+      const bilanSlug = normalizeSlug(firstWord);
+      if (bilanSlug.length >= 2) bilanUrl = `${SITE_URL}/bilan-online/${bilanSlug}`;
+      if (!coachFirstName && firstWord) coachFirstName = firstWord;
+    } catch (e) {
+      console.warn("[confirm-shop-payment] bilanUrl:", e instanceof Error ? e.message : e);
+    }
 
     // Email de confirmation au client — best-effort.
     try {
@@ -277,6 +368,9 @@ serve(async (req: Request) => {
           shippingCents: order.shipping_cents,
           totalCents: order.total_cents,
           address: order.shipping_address as Record<string, string> | null,
+          aiScanUrl,
+          bilanUrl,
+          coachFirstName,
         });
         await fetch("https://api.resend.com/emails", {
           method: "POST",

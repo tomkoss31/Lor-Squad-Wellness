@@ -4,9 +4,16 @@
 // 1. PANIER ABANDONNÉ : commande restée `pending` (lead capturé mais paiement
 //    non finalisé) entre 2 h et 72 h → email de relance douce. 1 seule fois
 //    (relance_email_sent_at).
-// 2. DEMANDE D'AVIS : commande `paid` depuis ≥ 7 jours → email invitant à
+// 2. ALERTE COACH panier abandonné → email À LA COACH avec les coordonnées du
+//    prospect pour un rappel personnel. 1 seule fois
+//    (coach_abandon_alert_sent_at, drapeau DISTINCT de la relance client).
+// 3. DEMANDE D'AVIS : commande `paid` depuis ≥ 7 jours → email invitant à
 //    laisser un avis (alimente les témoignages skin). 1 seule fois
 //    (review_request_sent_at).
+//
+// ⚠️ Incident 2026-08-07 : la coach n'était prévenue de RIEN (ni commande payée,
+// ni panier abandonné) — le seul canal était un push, muet pour qui n'a pas
+// d'abonnement. Toute info qui demande une ACTION part désormais par email.
 //
 // Déclenchée par pg_cron avec le service_role (Vault). Best-effort, batch borné.
 // Déploiement : supabase functions deploy shop-relance-notifier --no-verify-jwt
@@ -22,6 +29,11 @@ const SITE_URL = "https://labase360.fr";
 
 const esc = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const euro = (cents: number) =>
+  (Number(cents ?? 0) / 100).toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }) + " €";
 
 function shell(title: string, bodyHtml: string, shopName: string): string {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
@@ -43,14 +55,20 @@ function cta(url: string, label: string): string {
   return `<a href="${esc(url)}" style="display:inline-block;background:#4F8B72;color:#fff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:600;padding:13px 26px;border-radius:999px;">${esc(label)}</a>`;
 }
 
-async function sendEmail(shopName: string, to: string, subject: string, html: string) {
+async function sendEmail(
+  shopName: string,
+  to: string,
+  subject: string,
+  html: string,
+  replyTo?: string,
+) {
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     signal: AbortSignal.timeout(8000),
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: `${shopName} <boutique@labase360.fr>`,
-      reply_to: "labaseverdun@gmail.com",
+      reply_to: replyTo || "labaseverdun@gmail.com",
       to: [to],
       subject,
       html,
@@ -63,7 +81,7 @@ serve(async (req: Request) => {
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const nowIso = new Date().toISOString();
-  const result = { abandoned: 0, review: 0 };
+  const result = { abandoned: 0, coach_alerts: 0, review: 0 };
 
   if (!RESEND_API_KEY) {
     console.warn("[shop-relance-notifier] RESEND_API_KEY manquant");
@@ -84,6 +102,22 @@ serve(async (req: Request) => {
     }
     shopNameCache.set(key, name);
     return name;
+  }
+
+  // Cache email coach (adresse de connexion auth.users) par user_id.
+  const coachEmailCache = new Map<string, string | null>();
+  async function coachEmail(userId: string | null): Promise<string | null> {
+    if (!userId) return null;
+    if (coachEmailCache.has(userId)) return coachEmailCache.get(userId)!;
+    let email: string | null = null;
+    try {
+      const { data } = await sb.auth.admin.getUserById(userId);
+      email = data?.user?.email ?? null;
+    } catch (e) {
+      console.warn("[shop-relance-notifier] coachEmail:", e instanceof Error ? e.message : e);
+    }
+    coachEmailCache.set(userId, email);
+    return email;
   }
 
   // ── 1. PANIER ABANDONNÉ ────────────────────────────────────────────────────
@@ -126,7 +160,84 @@ serve(async (req: Request) => {
     console.warn("[shop-relance-notifier] abandoned:", e instanceof Error ? e.message : e);
   }
 
-  // ── 2. DEMANDE D'AVIS POST-ACHAT ───────────────────────────────────────────
+  // ── 2. ALERTE COACH — panier abandonné ─────────────────────────────────────
+  // Un panier abandonné est un prospect chaud (email + tél + adresse déjà
+  // donnés) : la coach doit pouvoir décrocher son téléphone. Drapeau distinct
+  // de la relance client pour que l'échec de l'un ne masque pas l'autre.
+  try {
+    const from = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+    const to = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+    const { data: orders } = await sb
+      .from("shop_orders")
+      .select(
+        "id, coach_user_id, boutique_slug, customer_email, customer_first_name, customer_last_name, customer_phone, total_cents, created_at",
+      )
+      .eq("status", "pending")
+      .is("coach_abandon_alert_sent_at", null)
+      .gte("created_at", from)
+      .lte("created_at", to)
+      .limit(40);
+
+    for (const o of orders ?? []) {
+      const mail = await coachEmail(o.coach_user_id);
+      if (!mail) {
+        // Pas d'adresse coach → on ne marque PAS comme envoyé (retry au prochain
+        // passage), mais on le dit dans les logs : plus de panne silencieuse.
+        console.warn("[shop-relance-notifier] pas d'email coach pour", o.coach_user_id);
+        continue;
+      }
+      const name = await shopName(o.boutique_slug);
+      const who =
+        [o.customer_first_name, o.customer_last_name].filter(Boolean).join(" ") || "Une visiteuse";
+
+      // Détail des lignes du panier abandonné.
+      const { data: items } = await sb
+        .from("shop_order_items")
+        .select("product_name, quantity, line_total_cents")
+        .eq("order_id", o.id);
+      const rows = (items ?? [])
+        .map(
+          (i) =>
+            `<tr><td style="padding:6px 0;font-family:Arial,sans-serif;font-size:13px;color:#232620;">${esc(i.product_name)} × ${i.quantity}</td><td align="right" style="padding:6px 0;font-family:Arial,sans-serif;font-size:13px;color:#232620;">${euro(i.line_total_cents)}</td></tr>`,
+        )
+        .join("");
+
+      const html = shell(
+        "Panier abandonné",
+        `<div style="font-size:20px;">🛒 ${esc(who)} n'a pas finalisé</div>
+         <p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#6E7268;margin:12px 0 16px;">
+           Elle a rempli ses coordonnées puis quitté la caisse. C'est un contact chaud :
+           un message ou un appel change souvent tout. Elle a aussi reçu une relance automatique.
+         </p>
+         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;font-size:13px;color:#232620;margin-bottom:14px;">
+           ${o.customer_email ? `<tr><td style="padding:3px 0;color:#6E7268;">Email</td><td align="right"><a href="mailto:${esc(o.customer_email)}" style="color:#232620;">${esc(o.customer_email)}</a></td></tr>` : ""}
+           ${o.customer_phone ? `<tr><td style="padding:3px 0;color:#6E7268;">Téléphone</td><td align="right"><a href="tel:${esc(o.customer_phone)}" style="color:#232620;">${esc(o.customer_phone)}</a></td></tr>` : ""}
+         </table>
+         ${rows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E2DED4;border-bottom:1px solid #E2DED4;margin:6px 0 10px;">${rows}</table>` : ""}
+         <p style="font-family:Arial,sans-serif;font-size:14px;color:#232620;margin:10px 0 18px;">
+           Panier : <b>${euro(o.total_cents)}</b>
+         </p>
+         <div style="margin:6px 0 4px;">${cta(`${SITE_URL}/ma-boutique`, "Voir mes commandes")}</div>
+         <p style="font-family:Arial,sans-serif;font-size:12px;color:#847F72;margin-top:16px;">
+           « Répondre » à cet email écrit directement à ${esc(o.customer_first_name || "la personne")}.
+         </p>`,
+        name,
+      );
+      await sendEmail(
+        "La Base 360",
+        mail,
+        `🛒 Panier abandonné ${name} — ${who} (${euro(o.total_cents)})`,
+        html,
+        o.customer_email ?? undefined,
+      );
+      await sb.from("shop_orders").update({ coach_abandon_alert_sent_at: nowIso }).eq("id", o.id);
+      result.coach_alerts++;
+    }
+  } catch (e) {
+    console.warn("[shop-relance-notifier] coach alert:", e instanceof Error ? e.message : e);
+  }
+
+  // ── 3. DEMANDE D'AVIS POST-ACHAT ───────────────────────────────────────────
   try {
     const paidBefore = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
     const { data: orders } = await sb
