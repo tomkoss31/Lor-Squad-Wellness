@@ -285,6 +285,43 @@ export function PaymentSettingsCard() {
                 <Step n={3}>Colle-la ci-dessous, enregistre, active. C&apos;est tout. 🌿</Step>
               </div>
 
+              <details style={helpBox}>
+                <summary style={helpSummary}>
+                  🔑 Ta clé « sk_live_ » n&apos;apparaît pas ? — documents &amp; délai
+                </summary>
+                <div style={helpBody}>
+                  <p style={{ margin: "0 0 8px" }}>
+                    C&apos;est normal <strong>si ton compte n&apos;est pas encore activé</strong> : Stripe ne
+                    montre la vraie clé <code>sk_live_</code> qu&apos;une fois ton compte validé (avant, tu ne
+                    vois que des clés de test). Vérifie aussi que le <strong>« Mode test »</strong>, en haut à
+                    droite du dashboard, est bien <strong>désactivé</strong>.
+                  </p>
+                  <p style={{ margin: "0 0 4px", fontWeight: 700 }}>Documents à préparer pour l&apos;activation :</p>
+                  <ul style={helpList}>
+                    <li>une <strong>pièce d&apos;identité</strong> (carte d&apos;identité ou passeport)</li>
+                    <li>ton <strong>IBAN</strong> — le compte où tu veux recevoir l&apos;argent</li>
+                    <li>
+                      ton <strong>statut</strong> (particulier / auto-entrepreneur — n° SIRET si tu en as un) +
+                      ton adresse et ta date de naissance
+                    </li>
+                    <li>
+                      une courte <strong>description de ton activité</strong> (ex. « accompagnement nutrition,
+                      vente de compléments »)
+                    </li>
+                  </ul>
+                  <p style={{ margin: "8px 0 0" }}>
+                    <strong>Délai de validation :</strong> en général <strong>immédiat</strong> (quelques
+                    minutes). Si Stripe demande une vérification en plus, compte <strong>24 à 48 h</strong>. Ton
+                    1<sup>er</sup> virement peut être libéré ~7 jours après le 1<sup>er</sup> paiement (règle
+                    Stripe pour les nouveaux comptes).
+                  </p>
+                  <p style={{ margin: "8px 0 0", color: "var(--ls-teal)" }}>
+                    🔒 Ta clé secrète ne se partage avec <strong>personne</strong> — tu la colles uniquement
+                    ici.
+                  </p>
+                </div>
+              </details>
+
               <Field
                 label="Clé secrète Stripe"
                 hint="Stripe → Développeurs → Clés API → « Clé secrète ». Reste privée — on ne l'affiche jamais en clair ailleurs."
@@ -378,4 +415,31 @@ const inputStyle: React.CSSProperties = {
   color: "var(--ls-text)",
   fontSize: 13.5,
   outline: "none",
+};
+
+const helpBox: React.CSSProperties = {
+  borderRadius: 12,
+  border: "1px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  padding: "10px 14px",
+};
+const helpSummary: React.CSSProperties = {
+  cursor: "pointer",
+  fontSize: 12.5,
+  fontWeight: 700,
+  color: "var(--ls-teal)",
+  listStyle: "none",
+};
+const helpBody: React.CSSProperties = {
+  marginTop: 10,
+  fontSize: 12.5,
+  lineHeight: 1.55,
+  color: "var(--ls-text-muted)",
+};
+const helpList: React.CSSProperties = {
+  margin: "0",
+  paddingLeft: 18,
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
 };
