@@ -84,7 +84,14 @@ export function ClubLandingPage() {
                 <div className="cl-stat"><div className="v">Offert</div><div className="l">ton body scan</div></div>
               </div>
             </div>
-            <Slot ratio="4/5" label="Photo hero" sub="ambiance club le matin" />
+            <Slot
+              ratio="4/5"
+              label="Photo hero"
+              sub="ambiance club le matin"
+              src="/brand/breakfast-club/photos/club-salle.jpg"
+              alt="Six personnes attablées au Breakfast Club de Verdun un matin, boissons et carnet de coaching sur la table."
+              priority
+            />
           </div>
         </div>
       </div>
@@ -176,7 +183,16 @@ export function ClubLandingPage() {
         <div className="cl-blob b" aria-hidden="true" style={{ width: 380, height: 380, background: "var(--peach)", opacity: .40, bottom: -150, left: -110 }} />
         <div className="cl-wrap cl-sec cl-rv">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(32px,5vw,64px)", alignItems: "center" }}>
-            <div style={{ order: 2 }}><Slot ratio="4/5" label="Mélanie & Thomas" sub="l'équipe au club" frame="peach" /></div>
+            <div style={{ order: 2 }}>
+              <Slot
+                ratio="4/5"
+                label="Mélanie & Thomas"
+                sub="l'équipe au club"
+                frame="peach"
+                src="/brand/breakfast-club/photos/equipe-portrait.jpg"
+                alt="Mélanie et Thomas, les coachs du club, devant le mur végétal et l'enseigne La Base."
+              />
+            </div>
             <div style={{ order: 1 }}>
               <span className="cl-pill s">Communauté</span>
               <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,82px)" }}>Tu n'es <span className="cl-a-pink">jamais seul.</span></h2>

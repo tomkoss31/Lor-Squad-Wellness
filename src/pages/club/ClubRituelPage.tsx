@@ -4,18 +4,24 @@ import { ClubShell, InnerHero, Slot, R } from "./ClubShell";
 const ETAPES = [
   {
     e: "Étape 1 · environ 2 minutes", t: "L'aloe vera", frame: "orange", acc: "cl-a-orange",
+    img: "/brand/breakfast-club/photos/rituel-aloe.jpg",
+    alt: "Un verre d'aloe vera glacé posé sur une table claire, à côté d'un bol de mangue et d'un plant d'aloe.",
     p1: "On commence par une boisson d'aloe. C'est le geste d'ouverture : on hydrate, on réveille le système en douceur, on prépare le terrain pour le reste.",
     p2: "Rien de spectaculaire, et c'est le but. Un premier verre simple qui lance la mécanique du matin.",
     no: "Ce que ce n'est pas : un détox, un brûle-graisse, ni un médicament. C'est une boisson d'hydratation.",
   },
   {
     e: "Étape 2 · le temps de t'asseoir", t: "Le thé aux plantes", frame: "pink", acc: "cl-a-pink",
+    img: "/brand/breakfast-club/photos/rituel-the.jpg",
+    alt: "Une femme souriante porte à ses lèvres un verre de thé aux plantes ambré, dehors, ciel bleu derrière elle.",
     p1: "Ensuite, un thé aux plantes. Un coup de fouet doux qui accompagne le début de matinée sans t'agiter.",
     p2: "C'est le moment où on souffle deux minutes avant le vrai repas.",
     no: "Ce que ce n'est pas : un coupe-faim. S'il te tient jusqu'à midi, c'est que ton smoothie était bien dosé.",
   },
   {
     e: "Étape 3 · le repas", t: "Le smoothie nutritionnel", frame: "sage", acc: "cl-a-sage",
+    img: "/brand/breakfast-club/photos/rituel-smoothie.jpg",
+    alt: "Un grand verre de smoothie crémeux avec une paille en verre, posé sur une table en bois clair.",
     p1: "Enfin, le smoothie : c'est le vrai petit-déjeuner. Protéines, 20+ vitamines et minéraux — près de 40 % de tes apports de la journée dans un seul verre, de quoi caler jusqu'au déjeuner sans te sentir lourd.",
     p2: "Dosé avec toi selon ton objectif, il remplace le café-croissant qui te lâche à 10h30.",
     no: "Ce que ce n'est pas : un shaker de sportif. C'est un repas complet, servi et ajusté sur place.",
@@ -42,7 +48,9 @@ export function ClubRituelPage() {
               <p style={{ fontSize: 18, lineHeight: 1.7, color: "var(--muted)", marginTop: 14 }}>{s.p2}</p>
               <p style={{ fontSize: 15, color: "var(--muted2)", marginTop: 18, fontStyle: "italic" }}>{s.no}</p>
             </div>
-            <div style={{ order: i % 2 === 0 ? 2 : 1 }}><Slot ratio="1/1" label={s.t} sub="photo de la boisson" frame={s.frame} /></div>
+            <div style={{ order: i % 2 === 0 ? 2 : 1 }}>
+              <Slot ratio="1/1" label={s.t} sub="photo de la boisson" frame={s.frame} src={s.img} alt={s.alt} />
+            </div>
           </div>
         </div></div>
       ))}

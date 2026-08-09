@@ -30,12 +30,44 @@ const NAV: Array<{ to: string; label: string }> = [
   { to: "/club/rejoindre", label: "Rejoindre l'équipe" },
 ];
 
-/** Emplacement photo encadré (backdrop teinté décalé + slot arrondi). */
-export function Slot({ ratio, label, sub, frame }: { ratio: string; label: string; sub?: string; frame?: string }) {
+/**
+ * Emplacement photo encadré (backdrop teinté décalé + slot arrondi).
+ *
+ * Sans `src`, affiche le repère « 📷 … » — l'emplacement attend sa photo.
+ * Avec `src`, affiche la vraie image DANS le même cadre : le panneau teinté
+ * décalé et les coins arrondis sont conservés, rien du design ne bouge.
+ * `priority` pour la seule image visible d'emblée (le hero) : les autres sont
+ * chargées paresseusement, elles sont toutes sous la ligne de flottaison.
+ */
+export function Slot({
+  ratio, label, sub, frame, src, alt, priority,
+}: {
+  ratio: string;
+  label: string;
+  sub?: string;
+  frame?: string;
+  src?: string;
+  /** Décrit la photo pour qui ne la voit pas. Obligatoire dès qu'il y a `src`. */
+  alt?: string;
+  priority?: boolean;
+}) {
   return (
     <div className={`cl-frame${frame ? " " + frame : ""}`}>
       <div className="cl-slot" style={{ aspectRatio: ratio }}>
-        <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
+        {src ? (
+          <img
+            src={src}
+            alt={alt ?? ""}
+            width="100%"
+            height="100%"
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : undefined}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
+        )}
       </div>
     </div>
   );

@@ -21,7 +21,14 @@ export function ClubNousPage() {
       <InnerHero pill="Nous" pillClass="s" title="Mélanie, Thomas," accent="et un local rue Saint Pierre." intro="Pas une franchise anonyme. Deux personnes de Verdun qui accompagnent des gens depuis quatre ans, et un lieu bien réel où l'on t'attend le matin." />
 
       <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>
-        <Slot ratio="16/9" label="Mélanie & Thomas au club" sub="portrait de l'équipe" frame="peach" />
+        <Slot
+          ratio="16/9"
+          label="Mélanie & Thomas au club"
+          sub="portrait de l'équipe"
+          frame="peach"
+          src="/brand/breakfast-club/photos/equipe-paysage.jpg"
+          alt="Mélanie et Thomas au club, devant le mur végétal et l'enseigne lumineuse La Base."
+        />
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0, maxWidth: 760 }}>

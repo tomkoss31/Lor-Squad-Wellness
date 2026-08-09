@@ -20,7 +20,14 @@ export function ClubLeClubPage() {
       <InnerHero pill="Le club" pillClass="p" title="Un club de petit-déjeuner." accent="Pas un bar, pas une salle de sport." intro="Un lieu simple, ouvert tous les matins, où l'on prend soin de toi sans en faire tout un cinéma. Voilà ce que c'est — et ce que ce n'est pas." />
 
       <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>
-        <Slot ratio="16/9" label="Le local rue Saint Pierre" sub="façade / intérieur du club" frame="orange" />
+        <Slot
+          ratio="16/9"
+          label="Le local rue Saint Pierre"
+          sub="façade / intérieur du club"
+          frame="orange"
+          src="/brand/breakfast-club/photos/club-facade.jpg"
+          alt="La devanture de La Base Shakes & Drinks, 11 rue Saint Pierre à Verdun : Breakfast Club de 7h à 11h, bar healthy de 11h à 17h30."
+        />
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0 }}>
