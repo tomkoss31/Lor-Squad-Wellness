@@ -1,0 +1,4 @@
+/* La Base 360 — webfonts. All families are on Google Fonts; imported remotely.
+   Anton (titles), Syne (editorial), DM Sans (app body), JetBrains Mono (data),
+   Poppins (Breakfast Club site body), Inter (Mode BBC body). */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Syne:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500;600&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap');

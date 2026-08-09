@@ -1,0 +1,97 @@
+/* ============================================================================
+   COLORS — La Base 360 identity
+   Three systems share one color family but must never mix tokens:
+     --ls-*      La Base 360 app (dark by default)
+     --bc-*      Breakfast Club public site (light, cream + orange)
+     --ls-bbc-*  Mode BBC inside the app (dark, same family as the app)
+   All hex values come from the production identity spec (9 Aug 2026).
+   ============================================================================ */
+
+:root {
+  /* ---------- LA BASE 360 — APP · dark (default) ---------- */
+  --ls-bg: #162624;          /* page background — deep green, never black */
+  --ls-surface: #1E3330;     /* cards */
+  --ls-surface2: #26403B;    /* fields */
+  --ls-border: rgba(244, 239, 228, .10);
+  --ls-border2: rgba(244, 239, 228, .17);
+  --ls-text: #F4EFE4;
+  --ls-text-muted: #9BAAA3;
+  --ls-text-hint: #74847C;
+
+  /* Accents — each carries meaning */
+  --ls-teal: #2DD4BF;        /* structure · signature color */
+  --ls-lime: #C5F82A;        /* WINS ONLY — never a base fill */
+  --ls-coral: #F2775F;       /* urgency · alert */
+  --ls-sage: #93A67E;        /* calm · neutral-positive */
+  --ls-amber: #E8A93A;       /* attention · silence */
+  --ls-purple: #A78BFA;      /* XP · gamification */
+  --ls-gold: #2DD4BF;        /* DEPRECATED (5 Aug 2026) — points at teal, never re-gild */
+
+  /* ---------- LA BASE 360 — APP · light ---------- */
+  /* Light is NOT an inversion: cream ground, green-ink, soft tinted shadows. */
+  --ls-l-bg: #FAF7F0;
+  --ls-l-surface: #FFFFFF;
+  --ls-l-surface2: #F5F1EB;
+  --ls-l-border: rgba(30, 51, 48, .07);   /* nearly invisible on purpose */
+  --ls-l-text: #17201C;
+  --ls-l-text-muted: #55605A;
+  --ls-l-text-hint: #8A938D;
+  --ls-l-teal: #0D9488;
+  --ls-l-lime: #6D8C0B;      /* becomes olive — vivid lime is illegible on white */
+  --ls-l-coral: #D9553C;
+  --ls-l-sage: #5F7154;
+  --ls-l-amber: #B7791F;
+  --ls-l-purple: #6D28D9;
+
+  /* ---------- BREAKFAST CLUB — PUBLIC SITE (light, warm) ---------- */
+  --bc-cream: #FCF8F1;       /* page background */
+  --bc-cream-alt: #F0E7D7;   /* alternating bands */
+  --bc-green: #1E3330;       /* dark bands */
+  --bc-card-dark: #26403B;
+  --bc-footer: #162624;
+  --bc-ink: #17201C;
+  --bc-text: #1E3330;
+  --bc-on-dark: #F4EFE4;
+  --bc-on-dark-muted: #C3CCC7;
+  --bc-on-dark-hint: #8FA09B;
+
+  --bc-orange: #FF6A2B;      /* primary CTA */
+  --bc-orange-hover: #FF3B2E;
+  --bc-link: #E0532A;
+  --bc-cta-gradient: linear-gradient(135deg, #FF7A2F, #FF1E3C); /* @kind color */
+  --bc-cta-shadow: 0 16px 34px -14px rgba(255, 45, 60, .6);
+  --bc-pink: #F5178F;
+  --bc-pink-dark: #C1136F;
+  --bc-sage: #93A67E;
+  --bc-sage-dark: #5F7154;
+  --bc-yellow: #F1E27E;      /* eyebrow pills */
+  --bc-amber: #E8A93A;
+  --bc-peach: #F6C6A0;       /* ghost numerals */
+  --bc-heart: #E5352B;       /* the red heart in the wordmark */
+
+  /* ---------- MODE BBC — inside the app (dark) ---------- */
+  --ls-bbc-bg: #162624;
+  --ls-bbc-surface: #1E3330;
+  --ls-bbc-surface2: #26403B;
+  --ls-bbc-surface3: #2E4A44;
+  --ls-bbc-border: rgba(244, 239, 228, .12);
+  --ls-bbc-text: #F4EFE4;
+  --ls-bbc-text-muted: rgba(244, 239, 228, .68);
+  /* The five carrier accents — each one says something */
+  --ls-bbc-lime: #C5F82A;    /* the club */
+  --ls-bbc-teal: #2DD4BF;    /* a member */
+  --ls-bbc-coral: #F2775F;   /* urgent */
+  --ls-bbc-amber: #E8A93A;   /* nobody opens / silence */
+  --ls-bbc-purple: #A78BFA;  /* a ritual */
+  /* Mode BBC — light */
+  --ls-bbc-l-bg: #FAF7F0;
+  --ls-bbc-l-surface: #FFFFFF;
+  --ls-bbc-l-surface2: #F5F1EB;
+  --ls-bbc-l-surface3: #EFEAE1;
+  --ls-bbc-l-text: #17201C;
+  --ls-bbc-l-lime: #6D8C0B;
+  --ls-bbc-l-teal: #0D9488;
+  --ls-bbc-l-coral: #D9553C;
+  --ls-bbc-l-amber: #B7791F;
+  --ls-bbc-l-purple: #6D28D9;
+}
