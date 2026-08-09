@@ -145,19 +145,29 @@ serve(async (req: Request) => {
   if (bookErr) return jsonResponse({ success: false, error: "insert_failed", detail: bookErr.message }, 500);
   if (!bookingId) return jsonResponse({ success: false, error: "creneau_pris" }, 409);
 
-  // 3. Notif push aux admins du club (non bloquant)
+  // Les coachs du club = les admins actifs. Récupérés UNE fois : ils servent au
+  // push (3) et au mail interne (5) — chacun reçoit le lead sur SA propre boîte,
+  // plus seulement la boîte partagée de l'équipe.
+  let clubStaff: Array<{ id: string; email: string | null }> = [];
   try {
     const { data: admins } = await sb
       .from("users")
-      .select("id")
+      .select("id, email")
       .eq("role", "admin")
       .eq("active", true);
+    clubStaff = (admins ?? []) as Array<{ id: string; email: string | null }>;
+  } catch (_e) {
+    // best-effort — la résa est déjà enregistrée
+  }
+
+  // 3. Notif push aux coachs du club (non bloquant)
+  try {
     const whenParis = new Intl.DateTimeFormat("fr-FR", {
       weekday: "short", day: "2-digit", month: "short",
       hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris",
     }).format(slotStart);
     const peopleTag = peopleCount === 2 ? " · 2 pers." : "";
-    for (const a of (admins ?? []) as Array<{ id: string }>) {
+    for (const a of clubStaff) {
       await sendPushToUser(sb, {
         userId: a.id,
         payload: {
@@ -241,12 +251,21 @@ serve(async (req: Request) => {
   </div>
 </body></html>`.trim();
 
-    await sendViaResend(
-      LEAD_NOTIFY_EMAIL,
-      `☕ Nouveau lead — ${fullName}${peopleCount === 2 ? " (+1)" : ""} · ${dateLabel} ${hour}`,
-      internalHtml,
-      contact || undefined, // reply-to = le lead, pour répondre en un clic
+    // Destinataires : la boîte partagée de l'équipe + la boîte PERSO de chaque
+    // coach du club. Dédupliqué (en minuscules) pour ne jamais envoyer deux fois
+    // au même endroit si un coach utilise l'adresse partagée.
+    const recipients = Array.from(
+      new Set(
+        [LEAD_NOTIFY_EMAIL, ...clubStaff.map((s) => s.email ?? "")]
+          .map((e) => e.trim().toLowerCase())
+          .filter((e) => e && EMAIL_RE.test(e)),
+      ),
     );
+    const subject = `☕ Nouveau lead — ${fullName}${peopleCount === 2 ? " (+1)" : ""} · ${dateLabel} ${hour}`;
+    for (const to of recipients) {
+      // reply-to = le lead, pour répondre en un clic
+      await sendViaResend(to, subject, internalHtml, contact || undefined);
+    }
   } catch (_e) {
     // notif interne best-effort — la résa est déjà enregistrée
   }
