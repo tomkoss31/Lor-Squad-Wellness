@@ -68,6 +68,12 @@ export function ClubShell({ children }: { children: ReactNode }) {
               <span className="cl-name"><span className="n1">The Breakfast Club</span><span className="n2">by La Base · Verdun</span></span>
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Action distincte de la navigation informative : le 7e item de
+                  NAV (« Rejoindre l'équipe ») était coupé par le slice(0,6) du
+                  menu desktop et n'était visible que dans le menu mobile plein
+                  écran. Recrutement ≠ parcourir le site → sa propre place à
+                  côté du CTA principal, pas une 7e entrée dans la nav. */}
+              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Rejoindre l'équipe</Link>
               <a className="cl-hcta cl-hcta-desk" href={R}>Je commence</a>
               <button type="button" className="cl-burger" aria-label="Ouvrir le menu" aria-expanded={open} onClick={() => setOpen(true)}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -125,6 +131,7 @@ export function ClubShell({ children }: { children: ReactNode }) {
                 <Link to="/club/comment-ca-se-passe">Comment ça se passe</Link>
                 <Link to="/club/resultats">Résultats</Link>
                 <Link to="/club/nous">Nous</Link>
+                <Link to="/club/rejoindre">Rejoindre l'équipe</Link>
                 <a href={R}>Réserver</a>
               </div>
             </div>
