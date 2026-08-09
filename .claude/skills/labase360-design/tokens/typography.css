@@ -1,0 +1,41 @@
+/* ============================================================================
+   TYPOGRAPHY — La Base 360
+   Four families in the app, strict roles. Never substitute.
+     Anton          titles — one weight (400), ALWAYS UPPERCASE
+     Syne           editorial signature — weights 500..800
+     DM Sans        app body & UI
+     JetBrains Mono data, timestamps, spaced-caps eyebrows
+   Breakfast Club site body is Poppins; Mode BBC body is Inter (intentional).
+   ============================================================================ */
+
+:root {
+  --font-title: 'Anton', system-ui, sans-serif;        /* app + site titles */
+  --font-editorial: 'Syne', system-ui, sans-serif;     /* premium headings, amounts */
+  --font-body: 'DM Sans', system-ui, sans-serif;       /* app body & UI */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-bc-body: 'Poppins', system-ui, sans-serif;    /* Breakfast Club site */
+  --font-bbc-body: 'Inter', system-ui, sans-serif;     /* Mode BBC body */
+
+  /* Title tuning */
+  --title-tracking: .01em;      /* app titles */
+  --title-tracking-site: .005em;/* site titles */
+  --title-leading: 1.04;
+
+  /* Mono eyebrow tuning */
+  --eyebrow-tracking: .2em;
+  --eyebrow-size: 10px;
+
+  /* Type scale (app / UI) */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+  --text-display: 56px;
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+}
