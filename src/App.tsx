@@ -66,6 +66,12 @@ const EncaissementPage = lazy(() =>
     default: module.EncaissementPage
   }))
 );
+// RDV du club — séances découverte réservées depuis /reserver (chantier 2026-08-09).
+const RdvClubPage = lazy(() =>
+  import("./pages/RdvClubPage").then((module) => ({
+    default: module.RdvClubPage
+  }))
+);
 // Cockpit config boutique HL SKIN (chantier 2026-07-10).
 const BoutiqueAdminPage = lazy(() =>
   import("./pages/BoutiqueAdminPage").then((module) => ({
@@ -952,6 +958,7 @@ export default function App() {
               <Route path="mes-liens" element={<MesLiensPage />} />
               <Route path="panier" element={<PanierPage />} />
               <Route path="ventes-comptoir" element={<VentesComptoirPage />} />
+              <Route path="rdv-club" element={<RdvClubPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
