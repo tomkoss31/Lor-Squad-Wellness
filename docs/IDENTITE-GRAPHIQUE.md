@@ -7,6 +7,11 @@ outil de design ou à un prestataire.
 > Toutes les valeurs viennent du code réel en production (`src/styles/globals.css`,
 > `src/styles/bbc-tokens.css`, `src/pages/ClubLandingPage.css`).
 
+**Ce document est autosuffisant.** Tout ce qu'il faut pour travailler est dedans — y compris **le
+logo lui-même, en SVG prêt à coller** (annexe A) et un **récapitulatif à copier-coller** (section 10).
+On le donne tel quel à un outil de design, à une IA ou à un prestataire : **on ne redessine rien, on
+réutilise ce qui existe.**
+
 ---
 
 ## Sommaire
@@ -366,3 +371,60 @@ lime #C5F82A = le club · teal #2DD4BF = un membre
 corail #F2775F = urgent · ambre #E8A93A = silence · violet #A78BFA = rituel
 titres : Anton · corps : Inter · labels : JetBrains Mono
 ```
+
+---
+
+## Annexe A — Le logo La Base 360, prêt à coller
+
+⚠️ **Ce n'est PAS une consigne pour refaire le logo — c'est le logo lui-même, écrit en texte.**
+Le symbole EST ce bloc SVG. Le coller quelque part = afficher le vrai logo, à l'identique, net à
+toutes les tailles. On ne le redessine jamais : **on colle ce bloc, point.**
+*(C'est même la seule façon d'afficher le vrai logo dans un artefact Claude Design, qui ne peut pas
+charger de fichier image externe — un SVG collé dans le code, si.)*
+
+### Version principale (fond sombre)
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="La Base 360">
+  <path d="M 176.3 71.6 A 80 80 0 1 1 128.3 23.6" fill="none" stroke="#2DD4BF" stroke-width="13" stroke-linecap="round"/>
+  <rect x="-24" y="-6.5" width="48" height="13" rx="6.5" fill="#C5F82A" transform="translate(159 41) rotate(-45)"/>
+  <path fill-rule="evenodd" fill="#FFFFFF" d="M 66 52 L 111 52 C 131 52 144 63.5 144 77 C 144 88 137 95.5 127 99.5 C 139.5 103 149 112.5 149 126 C 149 140.5 135 151 113 151 L 66 151 Z M 87 70 L 87 91 L 109 91 C 118.5 91 124 86.5 124 80.5 C 124 74.5 118.5 70 109 70 Z M 87 110 L 87 133 L 112 133 C 122 133 128 128 128 121.5 C 128 115 122 110 112 110 Z"/>
+</svg>
+```
+
+### Version fond clair
+
+Mêmes tracés — seules changent les 3 couleurs : anneau `#0D9488`, barre `#6D8C0B`, lettre `#17201C`.
+
+### Version une seule couleur
+
+Mêmes tracés — remplacer les 3 couleurs par `currentColor` (le logo prend alors la couleur du texte
+qui l'entoure : idéal pour broderie, tampon, gravure).
+
+### À quoi correspond chaque ligne (pour info — pas une consigne)
+
+Utile seulement si un jour il faut ajuster une couleur ou une taille. Sinon, ignorer et coller le bloc.
+
+1. **L'anneau** — un arc de cercle (rayon 80, centre 100/100) ouvert de ~55° en haut à droite.
+2. **La barre** — un rectangle arrondi 48 × 13, tourné à −45°, posé dans l'ouverture.
+3. **La lettre B** — un tracé plein (`fill-rule="evenodd"` : le contour + les deux trous soustraits).
+
+### Le lockup complet
+
+Le texte « LA BASE 360 » se compose **à côté** du SVG, en HTML, avec la police **Anton** (majuscules),
+et la tagline « THE WELLNESS NUTRITION CLUB » en **JetBrains Mono** (`letter-spacing: .24em`). Ne pas
+intégrer le texte dans le SVG (il ne s'afficherait correctement que si la police est installée sur la
+machine qui l'ouvre).
+
+---
+
+## Annexe B — Le logo Breakfast Club
+
+Le logo BBC est un **PNG déjà dessiné** (le wordmark calligraphique avec le cœur) — on l'**utilise
+tel quel**, on ne le refait pas. Fichiers dans `public/brand/breakfast-club/`, voir le tableau de la
+[section 6](#6-breakfast-club--site-public). Seule couleur à retenir : le **cœur rouge `#E5352B`**.
+
+- **Sur un vrai site, dans Figma, sur un support imprimé** → on pointe directement le fichier PNG. Rien à faire de plus.
+- **Dans un artefact Claude Design** (qui ne charge pas d'image externe) → il faut coller le PNG en
+  base64 dans le code. Ce n'est pas dans ce document (ça pèserait ~185 Ko) : demander la version
+  base64 de `logo-heart.png` au moment où on en a besoin.
