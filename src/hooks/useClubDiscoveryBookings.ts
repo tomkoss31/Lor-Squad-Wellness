@@ -29,7 +29,8 @@ interface Result {
   bookings: ClubDiscoveryBooking[];
   loading: boolean;
   reload: () => Promise<void>;
-  setStatus: (id: string, status: ClubDiscoveryBooking["status"]) => Promise<void>;
+  /** Retourne false sur échec (réseau, RLS…) — l'appelant décide quoi en dire. */
+  setStatus: (id: string, status: ClubDiscoveryBooking["status"]) => Promise<boolean>;
 }
 
 export function useClubDiscoveryBookings(clubId: string | null | undefined): Result {
@@ -73,17 +74,17 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
   }, [reload]);
 
   const setStatus = useCallback(
-    async (id: string, status: ClubDiscoveryBooking["status"]) => {
+    async (id: string, status: ClubDiscoveryBooking["status"]): Promise<boolean> => {
       const sb = await getSupabaseClient();
-      if (!sb) return;
+      if (!sb) return false;
       const { error } = await sb.from("rdv_bookings").update({ status }).eq("id", id);
-      if (!error) {
-        setBookings((prev) =>
-          status === "canceled"
-            ? prev.filter((b) => b.id !== id)
-            : prev.map((b) => (b.id === id ? { ...b, status } : b)),
-        );
-      }
+      if (error) return false;
+      setBookings((prev) =>
+        status === "canceled"
+          ? prev.filter((b) => b.id !== id)
+          : prev.map((b) => (b.id === id ? { ...b, status } : b)),
+      );
+      return true;
     },
     [],
   );
