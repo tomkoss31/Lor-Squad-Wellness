@@ -91,7 +91,9 @@
 .cl-header .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap;padding:12px 0}
 .cl-lock{display:flex;align-items:center;gap:12px;min-width:0;text-decoration:none}
 .cl-medal{position:relative;flex:none;display:inline-flex;line-height:0}
-.cl-medal img{width:46px;height:46px;flex:none;border-radius:50%;box-shadow:0 0 0 1px rgba(201,168,76,.55)}
+/* Anneau du médaillon : hairline vert tramé (comme la bordure du header),
+   plus le doré abandonné (#C9A84C, retiré 5 août 2026 — cf. design system). */
+.cl-medal img{width:46px;height:46px;flex:none;border-radius:50%;box-shadow:0 0 0 1px rgba(30,51,48,.14)}
 .cl-heart-badge{position:absolute;top:-3px;right:-4px;width:18px;height:18px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.28))}
 .cl-name{display:flex;flex-direction:column;min-width:0}
 .cl-lock .n1{display:block;font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:clamp(15px,4vw,19px);letter-spacing:.01em;color:var(--ink);white-space:nowrap;line-height:1.05}
@@ -172,7 +174,7 @@
 .cl-menu-foot{padding-top:18px}
 
 /* barre d'action collée en bas — mobile uniquement */
-.cl-sticky{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(30,51,48,.97);backdrop-filter:blur(14px);border-top:1px solid rgba(201,168,76,.45)}
+.cl-sticky{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(30,51,48,.97);backdrop-filter:blur(14px);border-top:1px solid rgba(244,239,228,.16)}
 .cl-sticky-main{flex:1;display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--orange);color:var(--dark);font-weight:700;font-size:16px}
 .cl-sticky-main:hover{color:var(--dark)}
 .cl-sticky-call{flex:none;display:flex;align-items:center;justify-content:center;width:52px;min-height:52px;border-radius:999px;border:1px solid rgba(244,239,228,.34);color:var(--yellow)}

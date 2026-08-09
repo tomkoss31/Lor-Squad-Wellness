@@ -74,7 +74,7 @@ export function ClubLandingPage() {
                 <a className="cl-ghost" href="#rituel">Voir le rituel</a>
               </div>
               <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 14.5 }}>
-                <span aria-hidden="true" style={{ color: "var(--gold,#2DD4BF)", letterSpacing: 2 }}>★★★★★</span>
+                <span aria-hidden="true" style={{ color: "var(--amber)", letterSpacing: 2 }}>★★★★★</span>
                 <b style={{ color: "var(--ink)" }}>4,9/5</b>
                 <span style={{ color: "var(--muted2)" }}>sur Google · 0 € · sans engagement</span>
               </div>
