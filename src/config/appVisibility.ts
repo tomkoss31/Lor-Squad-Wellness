@@ -43,7 +43,6 @@ export type FeatureKey =
   | "business.encaissement"
   | "business.panier"
   | "business.ventes-comptoir"
-  | "business.rdv-club"
   | "business.mes-liens"
   | "business.rentabilite"
   | "business.pv"
@@ -85,7 +84,6 @@ export const FEATURE_LEVEL: Record<FeatureKey, AppLevel> = {
   "business.encaissement": "essentiel", // remonté en tête (LOT 3)
   "business.panier": "essentiel",
   "business.ventes-comptoir": "essentiel",
-  "business.rdv-club": "essentiel", // RDV du club — réservations du site public
   "business.mes-liens": "essentiel",
   "business.rentabilite": "essentiel",
   "business.pv": "essentiel",

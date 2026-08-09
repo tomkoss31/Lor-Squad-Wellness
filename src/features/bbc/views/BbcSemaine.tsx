@@ -26,13 +26,14 @@
 // une intention explicite de l'utilisateur : là, il a le droit de tout réduire.
 // =============================================================================
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { useBbcCalls } from "../useBbcCalls";
 import { useBbcMembers } from "../useBbcMembers";
 import { getCallsForWeek } from "../data/bbcCalls";
 import { useClubShifts, equipeAffectable, cleJour, type Affectable } from "../useClubShifts";
 import { useClubDiscoveryBookings } from "../../../hooks/useClubDiscoveryBookings";
+import { setClubDayClosed } from "../../../services/sb/club-bookings";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
@@ -140,6 +141,30 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   // RDV ci-dessous, elles ne sont rattachées à aucun coach → on les affiche pour
   // le club, pas pour une personne.
   const { bookings: decouvertesResa } = useClubDiscoveryBookings(clubId);
+
+  // Journées fermées aux réservations du site (discovery.holidays). Servait
+  // jusqu'ici uniquement aux fériés ; c'est aussi le « demain je ne suis pas
+  // là » du coach (chantier RDV du club, 2026-08-09). On part de la valeur
+  // portée par le club et on la garde à jour localement après chaque bascule.
+  const [joursFermes, setJoursFermes] = useState<string[]>(
+    () => (((club?.settings as { discovery?: { holidays?: string[] } } | null)?.discovery?.holidays) ?? []),
+  );
+  const basculerJour = useCallback(
+    async (jour: Date) => {
+      if (!clubId) return;
+      const cle = cleJour(jour);
+      const ferme = joursFermes.includes(cle);
+      // Optimiste : l'interrupteur répond tout de suite, on recale au retour.
+      setJoursFermes((prev) => (ferme ? prev.filter((d) => d !== cle) : [...prev, cle]));
+      try {
+        const next = await setClubDayClosed(clubId, cle, !ferme);
+        setJoursFermes(next);
+      } catch {
+        setJoursFermes((prev) => (ferme ? [...prev, cle] : prev.filter((d) => d !== cle)));
+      }
+    },
+    [clubId, joursFermes],
+  );
 
   const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const equipe = useMemo(() => equipeAffectable(users, currentUser?.id), [users, currentUser?.id]);
@@ -444,7 +469,12 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
         {joursVisibles.map(({ jour, evs }) => (
           <div key={cleJour(jour)}>
-            <EnTeteJour libelle={fmtJour(jour)} aujourdhui={isSameDay(jour, new Date())} />
+            <EnTeteJour
+              libelle={fmtJour(jour)}
+              aujourdhui={isSameDay(jour, new Date())}
+              ferme={joursFermes.includes(cleJour(jour))}
+              onBasculer={clubId ? () => void basculerJour(jour) : undefined}
+            />
             {evs.map((ev) => (
               <LigneEvenement key={ev.id} ev={ev} onClick={ev.jour ? () => ouvrirFeuille(ev.jour!) : undefined} />
             ))}
@@ -490,7 +520,19 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
 // ─── Briques d'affichage ─────────────────────────────────────────────────────
 
-function EnTeteJour({ libelle, aujourdhui }: { libelle: string; aujourdhui?: boolean }) {
+function EnTeteJour({
+  libelle,
+  aujourdhui,
+  ferme,
+  onBasculer,
+}: {
+  libelle: string;
+  aujourdhui?: boolean;
+  /** Journée fermée aux réservations du site (discovery.holidays). */
+  ferme?: boolean;
+  /** Absent = journée non pilotable (pas de club, ou pas d'ouverture ce jour). */
+  onBasculer?: () => void;
+}) {
   return (
     <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 7 }}>
       <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
@@ -502,6 +544,30 @@ function EnTeteJour({ libelle, aujourdhui }: { libelle: string; aujourdhui?: boo
         </span>
       ) : null}
       <span style={{ flex: 1, height: 1, background: "var(--ls-bbc-line)" }} />
+      {/* Fermer une journée aux réservations — le « demain matin je fais du
+          vélo ». Écrit dans discovery.holidays : effet immédiat sur le site. */}
+      {onBasculer ? (
+        <button
+          type="button"
+          onClick={onBasculer}
+          aria-pressed={Boolean(ferme)}
+          title={ferme ? "Rouvrir cette journée aux réservations" : "Fermer cette journée aux réservations"}
+          style={{
+            flex: "none",
+            fontFamily: "var(--ls-bbc-font-mono)",
+            fontSize: 9.5,
+            fontWeight: 700,
+            padding: "3px 9px",
+            borderRadius: 999,
+            cursor: "pointer",
+            border: `1px solid ${ferme ? "var(--ls-bbc-amber)" : "var(--ls-bbc-line)"}`,
+            background: ferme ? "color-mix(in srgb, var(--ls-bbc-amber) 18%, transparent)" : "transparent",
+            color: ferme ? "var(--ls-bbc-amber)" : "var(--ls-bbc-muted)",
+          }}
+        >
+          {ferme ? "réservations fermées" : "réservations ouvertes"}
+        </button>
+      ) : null}
     </div>
   );
 }

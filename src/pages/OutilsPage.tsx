@@ -64,15 +64,6 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         feature: "business.ventes-comptoir",
       },
       {
-        id: "rdv-club",
-        icon: "🗓️",
-        iconBg: "color-mix(in srgb, var(--ls-coral) 16%, transparent)",
-        name: "RDV du club",
-        desc: "Les séances découverte réservées depuis le site du club : qui vient, quand, et un bouton pour fermer une journée aux réservations.",
-        path: "/rdv-club",
-        feature: "business.rdv-club",
-      },
-      {
         id: "ma-boutique",
         icon: "🌿",
         iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",

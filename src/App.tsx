@@ -66,12 +66,6 @@ const EncaissementPage = lazy(() =>
     default: module.EncaissementPage
   }))
 );
-// RDV du club — séances découverte réservées depuis /reserver (chantier 2026-08-09).
-const RdvClubPage = lazy(() =>
-  import("./pages/RdvClubPage").then((module) => ({
-    default: module.RdvClubPage
-  }))
-);
 // Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
 const GererRdvClubPage = lazy(() =>
   import("./pages/GererRdvClubPage").then((module) => ({
@@ -968,7 +962,6 @@ export default function App() {
               <Route path="mes-liens" element={<MesLiensPage />} />
               <Route path="panier" element={<PanierPage />} />
               <Route path="ventes-comptoir" element={<VentesComptoirPage />} />
-              <Route path="rdv-club" element={<RdvClubPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
