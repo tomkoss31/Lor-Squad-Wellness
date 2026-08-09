@@ -987,7 +987,7 @@ export function BusinessPage() {
                         style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", marginLeft: -16, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
                       />
                     ) : (
-                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#F2775F)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
                     )}
                   </div>
                   <div>

@@ -30,9 +30,9 @@ const ACCENT_COLORS: Record<Accent, { bg: string; bgDark: string; text: string }
     text: "#c5f82a",
   },
   magenta: {
-    bg: "rgba(251, 113, 133, 0.16)",
-    bgDark: "rgba(251, 113, 133, 0.22)",
-    text: "#FB7185",
+    bg: "rgba(242, 119, 95, 0.16)",
+    bgDark: "rgba(242, 119, 95, 0.22)",
+    text: "#F2775F",
   },
 };
 
@@ -124,7 +124,7 @@ export function ProfileCard({
         /* Au hover, le titre prend la couleur d accent — friendly + match page */
         .welcome-profile-card--teal:hover .welcome-profile-card__title { color: #2DD4BF; }
         .welcome-profile-card--gold:hover .welcome-profile-card__title { color: #c5f82a; }
-        .welcome-profile-card--magenta:hover .welcome-profile-card__title { color: #FB7185; }
+        .welcome-profile-card--magenta:hover .welcome-profile-card__title { color: #F2775F; }
         .welcome-profile-card__arrow {
           font-size: 18px;
           color: rgba(240, 237, 232, 0.32);

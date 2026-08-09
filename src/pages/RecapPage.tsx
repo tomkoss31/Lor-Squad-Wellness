@@ -160,7 +160,7 @@ export function RecapPage() {
             {[
               { label: 'Poids', val: scan.weight ? `${scan.weight} kg` : '—', color: 'var(--ls-teal)', sub: 'Point de départ' },
               { label: 'Objectif', val: recap.objective || '—', color: '#2DD4BF', sub: 'Cap du programme' },
-              { label: 'Masse grasse', val: scan.bodyFat ? `${scan.bodyFat}%` : '—', color: '#FB7185', sub: scan.bodyFat && scan.weight ? `≈ ${((scan.bodyFat/100)*scan.weight).toFixed(1)} kg` : '' },
+              { label: 'Masse grasse', val: scan.bodyFat ? `${scan.bodyFat}%` : '—', color: '#F2775F', sub: scan.bodyFat && scan.weight ? `≈ ${((scan.bodyFat/100)*scan.weight).toFixed(1)} kg` : '' },
               { label: 'Âge métabo.', val: scan.metabolicAge ? `${scan.metabolicAge} ans` : '—', color: '#A78BFA', sub: '' },
             ].map(m => (
               <div key={m.label} style={{ background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', borderTop: `2px solid ${m.color}`, borderRadius: 10, padding: 12 }}>
@@ -177,7 +177,7 @@ export function RecapPage() {
               {[
                 { label: 'Masse musc.', v: scan.muscleMass, unit: 'kg', max: 80, c: '#2DD4BF' },
                 { label: 'Hydratation', v: scan.hydration, unit: '%', max: 100, c: '#A78BFA' },
-                { label: 'Graisse visc.', v: scan.visceralFat, unit: '', max: 30, c: (scan.visceralFat ?? 0) > 9 ? '#FB7185' : '#2DD4BF' },
+                { label: 'Graisse visc.', v: scan.visceralFat, unit: '', max: 30, c: (scan.visceralFat ?? 0) > 9 ? '#F2775F' : '#2DD4BF' },
               ].filter(m => m.v).map((m, i, arr) => (
                 <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
                   <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', width: 90, flexShrink: 0 }}>{m.label}</div>

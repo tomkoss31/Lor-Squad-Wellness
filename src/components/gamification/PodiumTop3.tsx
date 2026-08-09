@@ -18,7 +18,7 @@ const ACCENT_MAP: Record<PodiumAccent, { primary: string; secondary: string; css
   gold:   { primary: "#2DD4BF", secondary: "#0F766E", cssVar: "var(--ls-teal)" },
   purple: { primary: "#A78BFA", secondary: "#7F77DD", cssVar: "var(--ls-purple)" },
   teal:   { primary: "#2DD4BF", secondary: "#0F6E56", cssVar: "var(--ls-teal)" },
-  coral:  { primary: "#FB7185", secondary: "#DC2626", cssVar: "var(--ls-coral)" },
+  coral:  { primary: "#F2775F", secondary: "#DC2626", cssVar: "var(--ls-coral)" },
 };
 
 const MEDAL_COLORS = {

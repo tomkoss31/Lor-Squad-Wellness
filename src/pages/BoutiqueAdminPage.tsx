@@ -40,7 +40,7 @@ const label: React.CSSProperties = {
 };
 const input: React.CSSProperties = {
   width: "100%",
-  background: "var(--ls-surface-2, var(--ls-bg))",
+  background: "var(--ls-surface2)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 10,
   padding: "11px 13px",
