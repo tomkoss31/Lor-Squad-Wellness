@@ -72,6 +72,12 @@ const RdvClubPage = lazy(() =>
     default: module.RdvClubPage
   }))
 );
+// Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
+const GererRdvClubPage = lazy(() =>
+  import("./pages/GererRdvClubPage").then((module) => ({
+    default: module.GererRdvClubPage
+  }))
+);
 // Cockpit config boutique HL SKIN (chantier 2026-07-10).
 const BoutiqueAdminPage = lazy(() =>
   import("./pages/BoutiqueAdminPage").then((module) => ({
@@ -778,6 +784,10 @@ export default function App() {
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />
           <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
+          {/* « Modifier / annuler mon rendez-vous » — cible du lien envoyé dans
+              l'email de confirmation (jeton rdv_bookings.manage_token). Placée
+              après /rdv/:coachSlug : 3 segments, aucun conflit de résolution. */}
+          <Route path="/rdv/gerer/:token" element={<GererRdvClubPage />} />
           {/* Vitrine publique du club (étape 2). À terme = racine de
               labase-nutrition.com (bascule host-based après ajout des photos). */}
           <Route path="/club" element={<ClubLandingPage />} />

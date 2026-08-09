@@ -30,6 +30,8 @@ const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 // Mélanie veut chaque lead entrant par email (elle ne consulte pas le CRM).
 const LEAD_NOTIFY_EMAIL = "labaseverdun@gmail.com";
+// Domaine public du club — sert à construire le lien de gestion du RDV.
+const PUBLIC_SITE_URL = "https://www.labase-nutrition.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const OBJECTIF_LABELS: Record<string, string> = {
@@ -188,6 +190,19 @@ serve(async (req: Request) => {
     try {
       const clubName = String((club.name as string) ?? "").trim() || "le Breakfast Club";
       const location = `11 rue Saint Pierre, ${String((club.city as string) ?? "Verdun").trim() || "Verdun"}`;
+      // Jeton personnel de gestion → lien « Modifier / annuler » dans l'email.
+      let manageUrl: string | undefined;
+      try {
+        const { data: tok } = await sb
+          .from("rdv_bookings")
+          .select("manage_token")
+          .eq("id", bookingId as string)
+          .maybeSingle();
+        const t = (tok as { manage_token?: string } | null)?.manage_token;
+        if (t) manageUrl = `${PUBLIC_SITE_URL}/rdv/gerer/${t}`;
+      } catch (_e) {
+        // sans jeton, l'email garde simplement le bouton « mon espace »
+      }
       const html = rdvEmailHtml({
         kind: "confirm",
         firstName,
@@ -195,6 +210,7 @@ serve(async (req: Request) => {
         dateLabel: parisDateLabel(slotStart.toISOString()),
         hour: parisHourLabel(slotStart.toISOString()),
         location,
+        manageUrl,
       });
       confirmEmailSent = await sendViaResend(contact, "✅ Ta séance découverte est réservée", html);
       if (confirmEmailSent) {

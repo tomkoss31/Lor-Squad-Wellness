@@ -31,6 +31,12 @@ export interface RdvEmailParams {
   dateLabel: string; // ex « mardi 1 juillet »
   hour: string;      // ex « 13:30 »
   location: string;
+  /**
+   * Lien « Modifier / annuler mon rendez-vous » (chantier RDV du club, 2026-08-09).
+   * Optionnel : seuls les RDV qui portent un manage_token le passent. Les autres
+   * appelants (book-rdv, rdv-confirm-client, client-rdv-reminder) sont inchangés.
+   */
+  manageUrl?: string;
 }
 
 export function rdvEmailHtml(p: RdvEmailParams): string {
@@ -42,9 +48,14 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
   const intro = isConfirm
     ? `Ton rendez-vous avec <b style="color:${CREAM};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
     : `Petit rappel : ton rendez-vous avec <b style="color:${CREAM};">${coach}</b>, c'est demain.`;
-  const closing = isConfirm
-    ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
-    : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`;
+  // Avec un lien de gestion, on invite à se servir tout seul plutôt qu'à écrire.
+  const closing = p.manageUrl
+    ? (isConfirm
+        ? `Un rappel t'arrivera la veille. Un empêchement ? Tu peux déplacer ou annuler toi-même, en deux clics 👇`
+        : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Déplace ou annule toi-même 👇`)
+    : (isConfirm
+        ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
+        : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`);
 
   const btn = (href: string, label: string, bg: string, fg: string) =>
     `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:15px 18px;background:${bg};color:${fg};border-radius:13px;text-decoration:none;font-size:15px;font-weight:700;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">${label}</a>`;
@@ -69,7 +80,9 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
 
     <p style="font-size:14px;line-height:1.55;color:${MUTED};margin:18px 0 18px;">${closing}</p>
 
-    ${btn(APP_URL, "Accéder à mon espace →", TEAL, "#04231A")}
+    ${p.manageUrl
+      ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", TEAL, "#04231A")
+      : btn(APP_URL, "Accéder à mon espace →", TEAL, "#04231A")}
 
     <div style="height:18px;"></div>
 
