@@ -3,6 +3,7 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { hasRequiredRole } from "../../lib/auth";
 import type { UserRole } from "../../types/domain";
+import { LogoMark } from "../brand/LogoMark";
 
 export function ProtectedRoute() {
   const { authReady, currentUser } = useAppContext();
@@ -257,18 +258,14 @@ function AuthBootSplash() {
                 willChange: "transform",
               }}
             />
-            <img
-              src="/brand/labase360/app-icon-512.svg"
-              alt="La Base 360"
+            <LogoMark
+              size={116}
               className="lb360-anim"
               style={{
-                width: 116,
-                height: 116,
-                borderRadius: 26,
                 animation: "lb360-logo-breathe 4s ease-in-out infinite 600ms",
                 willChange: "transform, opacity",
                 filter:
-                  "drop-shadow(0 0 28px rgba(16,185,129,0.35)) drop-shadow(0 12px 32px rgba(6,182,212,0.25))",
+                  "drop-shadow(0 0 28px rgba(45,212,191,0.35)) drop-shadow(0 12px 32px rgba(197,248,42,0.18))",
               }}
             />
           </div>

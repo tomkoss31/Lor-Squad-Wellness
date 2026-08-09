@@ -29,6 +29,7 @@ import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
+import { LogoMark } from "../brand/LogoMark";
 // Chargé à la demande : un coach classique ne télécharge pas tout le module BBC.
 const BbcApp = lazy(() => import("../../features/bbc/BbcApp").then((m) => ({ default: m.BbcApp })));
 
@@ -285,11 +286,7 @@ export function AppLayout() {
           {/* ZONE 1 — Logo La Base 360 (rebrand 2026-05-05) */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img
-                src="/brand/labase360/app-icon-512.svg"
-                alt="La Base 360"
-                style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }}
-              />
+              <LogoMark size={34} />
               <div style={{ minWidth: 0, overflow: 'visible' }}>
                 <div style={{
                   fontFamily: 'Syne, sans-serif',

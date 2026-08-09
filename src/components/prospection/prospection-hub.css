@@ -419,7 +419,7 @@
    MODULE — MINDSET
    ============================================================ */
 .ph-truth {
-  background: var(--ls-charcoal, #0B0D11);
+  background: var(--ls-bg);
   color: #fff;
   border-radius: 18px;
   padding: 18px 18px 16px;
@@ -962,7 +962,7 @@
 }
 
 .ph-src-card {
-  background: var(--ls-charcoal, #0B0D11);
+  background: var(--ls-bg);
   color: #fff;
   border-radius: 14px;
   padding: 14px 16px;
@@ -1307,7 +1307,7 @@
    MODULE — ROUTINE
    ============================================================ */
 .ph-routine-summary {
-  background: var(--ls-charcoal, #0B0D11);
+  background: var(--ls-bg);
   color: #fff;
   border-radius: 14px;
   padding: 14px 16px;
@@ -1396,7 +1396,7 @@
 .ph-toast {
   position: fixed;
   right: 24px; bottom: 24px;
-  background: var(--ls-charcoal, #0B0D11);
+  background: var(--ls-bg);
   color: #fff;
   padding: 10px 16px;
   border-radius: 99px;
