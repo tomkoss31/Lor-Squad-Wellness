@@ -729,7 +729,7 @@ export function NewFollowUpPage() {
           <div className="fu-chips">
             <div className="fu-chip">
               <span className="fu-chip-l">Âge</span>
-              <span className="fu-chip-v">{targetClient.age} ans</span>
+              <span className="fu-chip-v">{getEffectiveAge(targetClient) ?? targetClient.age} ans</span>
             </div>
             <div className="fu-chip">
               <span className="fu-chip-l">Taille</span>
