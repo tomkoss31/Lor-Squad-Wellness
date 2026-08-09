@@ -40,10 +40,10 @@ export function PvDismissAlert({ clients }: PvDismissAlertProps) {
   if (globalDismissed || visible.length === 0) return null
 
   return (
-    <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(251,113,133,0.25)', borderRadius: 12, padding: 16, marginBottom: 4 }}>
+    <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(242,119,95,0.25)', borderRadius: 12, padding: 16, marginBottom: 4 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FB7185" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#FB7185' }}>Réassorts à prévoir</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2775F" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#F2775F' }}>Réassorts à prévoir</span>
         <span style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginLeft: 2 }}>{visible.length} client{visible.length > 1 ? 's' : ''} dépassé{visible.length > 1 ? 's' : ''}</span>
         <button onClick={dismissAll} style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--ls-text-hint)', background: 'rgba(128,128,128,0.06)', border: 'none', borderRadius: 6, padding: '3px 10px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>× Ignorer tout</button>
       </div>
@@ -51,12 +51,12 @@ export function PvDismissAlert({ clients }: PvDismissAlertProps) {
         const initials = getInitials(client.name)
         return (
           <div key={client.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: i > 0 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: 'rgba(251,113,133,0.12)', color: '#FB7185', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials}</div>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: 'rgba(242,119,95,0.12)', color: '#F2775F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)' }}>{client.name}</div>
-              <div style={{ fontSize: 11, color: '#FB7185', marginTop: 1 }}>{client.program} · dépassé de {client.overdueDays} j</div>
+              <div style={{ fontSize: 11, color: '#F2775F', marginTop: 1 }}>{client.program} · dépassé de {client.overdueDays} j</div>
             </div>
-            <Link to="/pv" style={{ fontSize: 11, padding: '4px 12px', borderRadius: 7, background: 'rgba(251,113,133,0.1)', color: '#FB7185', textDecoration: 'none', fontWeight: 500, flexShrink: 0 }}>Ouvrir</Link>
+            <Link to="/pv" style={{ fontSize: 11, padding: '4px 12px', borderRadius: 7, background: 'rgba(242,119,95,0.1)', color: '#F2775F', textDecoration: 'none', fontWeight: 500, flexShrink: 0 }}>Ouvrir</Link>
             <button onClick={() => dismissOne(client.id)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 7, background: 'rgba(128,128,128,0.06)', color: 'var(--ls-text-hint)', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', flexShrink: 0 }}>Ignorer</button>
           </div>
         )

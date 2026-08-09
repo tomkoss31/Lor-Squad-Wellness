@@ -34,12 +34,12 @@
   --teal-dark: #0F766E;
   --violet: #A78BFA;
   --violet-dark: #7C3AED;
-  --coral: #FB7185;
+  --coral: #F2775F;
   --gold: #2DD4BF;
   --gold-soft: #E5C97D;
   --emerald: #34D399;
 
-  --grad-headline: linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #FB7185 100%);
+  --grad-headline: linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #F2775F 100%);
   --grad-cta: linear-gradient(135deg, #2DD4BF 0%, #7C3AED 100%);
   --grad-cta-hover: linear-gradient(135deg, #34D399 0%, #A78BFA 100%);
   --grad-progress: linear-gradient(90deg, #2DD4BF 0%, #A78BFA 100%);
@@ -149,7 +149,7 @@
   background:
     radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.18), transparent 38%),
     radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.16), transparent 38%),
-    radial-gradient(circle at 50% 105%, rgba(251, 113, 133, 0.12), transparent 45%),
+    radial-gradient(circle at 50% 105%, rgba(242, 119, 95, 0.12), transparent 45%),
     linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
 }
 

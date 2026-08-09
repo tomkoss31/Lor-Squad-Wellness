@@ -500,7 +500,7 @@ export function ClientsPage() {
           {visibleRelanceCount > 0 ? (
             <>
               <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--ls-border)" }} />
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#FB7185" }}>🔥 <strong>{visibleRelanceCount}</strong> <span style={{ fontWeight: 500 }}>à reprendre</span></span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#F2775F" }}>🔥 <strong>{visibleRelanceCount}</strong> <span style={{ fontWeight: 500 }}>à reprendre</span></span>
             </>
           ) : null}
         </span>

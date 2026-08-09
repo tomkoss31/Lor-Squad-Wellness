@@ -186,7 +186,7 @@ export function HydrationVisceralInsightCard({
               unitLabel="Graisse viscerale"
               points={visceralTrendPoints}
               gradientId="visceral-balance-line"
-              gradientFrom="#fb7185"
+              gradientFrom="#F2775F"
               gradientTo="#fdba74"
               accentClass="border-rose-300/18 bg-rose-400/[0.08]"
             />
@@ -243,7 +243,7 @@ function VisceralRangeChip({
         : {
             base: "bg-rose-400/[0.08] ring-1 ring-rose-300/12",
             active:
-              "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
+              "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(242,119,95,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
             label: "text-rose-50/90"
           };
 

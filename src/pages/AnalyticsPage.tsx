@@ -730,7 +730,7 @@ function FunnelView({ funnel }: { funnel: { bilans: number; inscrits: number; ac
     { name: "Bilans", value: funnel.bilans, color: "#0D9488" },
     { name: "Inscrits", value: funnel.inscrits, color: "#0D9488" },
     { name: "Actifs", value: funnel.actifs, color: "#A78BFA" },
-    { name: "≥30j", value: funnel.actifs_30d, color: "#FB7185" },
+    { name: "≥30j", value: funnel.actifs_30d, color: "#F2775F" },
   ];
 
   return (

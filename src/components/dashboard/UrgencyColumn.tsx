@@ -29,7 +29,7 @@ interface UrgencyColumnProps {
 export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, seeAllLink, seeAllCount, onMarkContacted, onDismiss }: UrgencyColumnProps) {
   const initials = (name: string) => getInitials(name)
   const urgencyKind =
-    color === '#FB7185' || color === '#DC2626'
+    color === '#F2775F' || color === '#DC2626'
       ? 'urgent'
       : color === '#A78BFA' || color === '#7C3AED'
         ? 'watch'
@@ -67,7 +67,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--ls-text-hint)' }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 {formatDateTime(item.dueDate)}
-                {item.status === 'pending' && <span style={{ color: '#FB7185', marginLeft: 4 }}>· En retard</span>}
+                {item.status === 'pending' && <span style={{ color: '#F2775F', marginLeft: 4 }}>· En retard</span>}
                 {item.status === 'scheduled' && (() => {
                   const due = new Date(item.dueDate)
                   const now = new Date()
