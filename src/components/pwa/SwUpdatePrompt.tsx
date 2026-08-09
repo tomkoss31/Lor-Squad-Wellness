@@ -20,6 +20,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { LogoMark } from "../brand/LogoMark";
 
 const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
 
@@ -204,16 +205,7 @@ export function SwUpdatePrompt({ userId, userName }: Props) {
               filter: "blur(4px)",
             }}
           />
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt=""
-            style={{
-              position: "relative",
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-            }}
-          />
+          <LogoMark size={40} title="" style={{ position: "relative" }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>

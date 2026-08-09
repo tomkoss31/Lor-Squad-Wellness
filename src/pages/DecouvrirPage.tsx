@@ -22,6 +22,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { LogoMark } from "../components/brand/LogoMark";
 
 // Attribution par défaut : Thomas (owner). Aligné sur la 3e carte de WelcomePage.
 const THOMAS_REF = "656dcf35-4859-4a70-9d20-990104813423";
@@ -86,7 +87,7 @@ export function DecouvrirPage() {
         .dec-orbe::before { content:''; position:absolute; inset:-7px; border-radius:50%;
           background: conic-gradient(from 0deg,transparent,rgba(197,248,42,.4) 25%,rgba(45,212,191,.5) 50%,rgba(167,139,250,.4) 75%,transparent); animation: dec-rot 6s linear infinite; opacity:.7; }
         .dec-orbe::after { content:''; position:absolute; inset:-3px; border-radius:50%; background:#0a0c0a; }
-        .dec-orbe img { position:relative; z-index:1; width:96px; height:96px; border-radius:24px; object-fit:contain;
+        .dec-orbe img, .dec-orbe svg { position:relative; z-index:1; width:96px; height:96px; border-radius:24px; object-fit:contain;
           animation: dec-breathe 3.5s ease-in-out infinite alternate;
           filter: drop-shadow(0 0 26px rgba(197,248,42,.32)) drop-shadow(0 12px 32px rgba(45,212,191,.2)); }
         @keyframes dec-rot { to { transform: rotate(360deg); } }
@@ -147,7 +148,7 @@ export function DecouvrirPage() {
         @keyframes dec-in { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
         @media (prefers-reduced-motion: reduce) {
           .dec-orbe, .dec-hero, .dec-sec { animation: none !important; }
-          .dec-orbe::before, .dec-orbe img, .dec-blob { animation: none !important; }
+          .dec-orbe::before, .dec-orbe img, .dec-orbe svg, .dec-blob { animation: none !important; }
           .dec-cta:hover { transform: none; }
         }
       `}</style>
@@ -161,7 +162,7 @@ export function DecouvrirPage() {
         {/* Hero */}
         <div className="dec-hero">
           <div className="dec-orbe">
-            <img src="/brand/labase360/app-icon-512.svg" alt="La Base 360" />
+            <LogoMark size={96} />
           </div>
           <div className="dec-center">
             <span className="dec-badge">★ Since 2022 · Verdun ★</span>

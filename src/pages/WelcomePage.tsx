@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { ProfileCard } from "../components/welcome/ProfileCard";
 import { ClientModal } from "../components/welcome/ClientModal";
 import { ProspectFormModal } from "../components/welcome/ProspectFormModal";
+import { LogoMark } from "../components/brand/LogoMark";
 
 export function WelcomePage() {
   const navigate = useNavigate();
@@ -337,11 +338,7 @@ export function WelcomePage() {
         {/* Logo orbe + heritage badge */}
         <div className="welcome-logo-wrap">
           <div className="welcome-logo-ring" aria-hidden="true">
-            <img
-              src="/brand/labase360/app-icon-512.svg"
-              alt="La Base 360"
-              className="welcome-logo"
-            />
+            <LogoMark size={96} className="welcome-logo" />
           </div>
           <span className="welcome-heritage">★ Since 2022 ★</span>
         </div>
