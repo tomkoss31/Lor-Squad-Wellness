@@ -23,21 +23,25 @@ import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
 import { useClubShifts } from "../features/agenda/useClubShifts";
 import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
+import { useBbcMode } from "../features/bbc/useBbcMode";
+import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
 import {
   toCalendarEvents,
   startOfWeekMonday,
   makeOwnerColorResolver,
   makeEventColor,
   KIND_COLORS,
+  isSameDay,
   type AgendaEntry as AgendaEntryBase,
   type DayBand,
+  type DiscoverySession,
 } from "../features/agenda/calendarEvents";
 
 type DateFilter = "today" | "week" | "all";
 type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
 // Chantier Agenda unifié (2026-04-20) : onglets au-dessus des filtres date/statut
 // + onglet Suivis ajouté dans le chantier Protocole Agenda+Dashboard.
-type EntityFilter = "all" | "clients" | "prospects" | "followups";
+type EntityFilter = "all" | "clients" | "prospects" | "followups" | "discovery";
 
 // Entrée unifiée : follow-up client, prospect, OU suivi protocole.
 // Le type vit désormais dans features/agenda/calendarEvents.ts (chantier
@@ -116,6 +120,8 @@ function stillActionable(entry: AgendaEntry): boolean {
   if (entry.kind === "client") {
     return entry.followUp.status === "scheduled" || entry.followUp.status === "pending";
   }
+  // RDV découverte : il attend une action tant qu'il n'est pas confirmé.
+  if (entry.kind === "discovery") return entry.discovery.status !== "confirmed";
   // Suivi de protocole : le scheduler donne déjà le retard.
   return (
     entry.due.status === "due_today" ||
@@ -162,6 +168,15 @@ export function AgendaPage() {
   } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
+
+  // RDV découverte du club (tunnel public /reserver). Elles vivaient
+  // uniquement dans la vue BBC « La semaine » : la même journée ne se lisait
+  // donc pas pareil selon le mode. Elles rejoignent l'agenda classique
+  // (chantier RDV du club, 2026-08-09) — même source, même hook, aucune requête
+  // dupliquée. Sans club (coach non-BBC), le hook renvoie simplement une liste
+  // vide et rien ne change à l'écran.
+  const { activeClub } = useBbcMode(currentUser?.id, currentUser?.role === "admin");
+  const { bookings: clubDiscoveries } = useClubDiscoveryBookings(activeClub?.id ?? null);
 
   // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
   // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
@@ -368,8 +383,36 @@ export function AgendaPage() {
       }
     }
 
+    // 4. RDV découverte du club — chantier RDV du club (2026-08-09).
+    // Le hook ne remonte que les résas à venir et non annulées. Elles n'ont pas
+    // de coach : on les rattache au propriétaire du club pour qu'elles suivent
+    // le sélecteur d'équipe comme le reste.
+    if (entityFilter === "all" || entityFilter === "discovery") {
+      const clubOwnerId = activeClub?.ownerUserId ?? currentUser?.id ?? "";
+      for (const b of clubDiscoveries) {
+        const d = new Date(b.slot_start);
+        if (Number.isNaN(d.getTime())) continue;
+        if (effectiveDateFilter === "today" && !isSameDay(d, todayStart)) continue;
+        if (effectiveDateFilter === "week" && (d < todayStart || d > weekEnd)) continue;
+        if (!isInScope(clubOwnerId)) continue;
+        entries.push({
+          kind: "discovery",
+          id: b.id,
+          date: b.slot_start,
+          distributorId: clubOwnerId,
+          discovery: {
+            firstName: (b.first_name ?? "").trim() || "Prospect",
+            peopleCount: b.people_count,
+            partnerFirstName: b.partner_first_name,
+            objectif: b.objectif,
+            status: b.status,
+          },
+        });
+      }
+    }
+
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -456,13 +499,26 @@ export function AgendaPage() {
         }
       }
     }
+    // RDV découverte du club (chantier RDV du club) : le hook ne remonte
+    // déjà que les résas à venir et non annulées, seul le filtre de date reste
+    // à appliquer pour rester cohérent avec les autres compteurs.
+    let discoveryCount = 0;
+    for (const b of clubDiscoveries) {
+      const d = new Date(b.slot_start);
+      if (Number.isNaN(d.getTime())) continue;
+      if (dateFilter === "today" && !isSameDay(d, todayStart)) continue;
+      if (dateFilter === "week" && (d < todayStart || d > weekEnd)) continue;
+      discoveryCount += 1;
+    }
+
     return {
       clients: clientCount,
       prospects: prospectCount,
       followups: protocolCount,
-      all: clientCount + prospectCount + protocolCount,
+      discovery: discoveryCount,
+      all: clientCount + prospectCount + protocolCount + discoveryCount,
     };
-  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries]);
 
   // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
   // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
@@ -549,6 +605,9 @@ export function AgendaPage() {
         setOpenProtocol(entry.due);
         return;
       }
+      // RDV découverte : personne à contacter côté fiche (le prospect n'a
+      // pas encore de dossier). On la pilote depuis la semaine du club.
+      if (entry.kind === "discovery") return;
       // Suivi client : feuille d'action sur place (2026-07-27). C'était la
       // dernière branche qui éjectait vers la fiche — et la majoritaire :
       // 44 des 46 RDV à venir en base.
@@ -981,12 +1040,18 @@ export function AgendaPage() {
           ? `${nextRdv.client.firstName} ${nextRdv.client.lastName}`
           : nextRdv.kind === "prospect"
             ? `${nextRdv.prospect.firstName} ${nextRdv.prospect.lastName}`
-            : `${nextRdv.due.client.firstName} ${nextRdv.due.client.lastName}`;
+            : nextRdv.kind === "discovery"
+              ? (nextRdv.discovery.peopleCount === 2
+                  ? `${nextRdv.discovery.firstName} + 1`
+                  : nextRdv.discovery.firstName)
+              : `${nextRdv.due.client.firstName} ${nextRdv.due.client.lastName}`;
         const subtitle = nextRdv.kind === "client"
           ? (nextRdv.followUp.type || "Suivi")
           : nextRdv.kind === "prospect"
             ? "Prospect · 1er contact"
-            : `${nextRdv.due.stepIconEmoji} ${nextRdv.due.stepShortTitle}`;
+            : nextRdv.kind === "discovery"
+              ? "Club · RDV découverte"
+              : `${nextRdv.due.stepIconEmoji} ${nextRdv.due.stepShortTitle}`;
         const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
         const targetUrl = nextRdv.kind === "client"
           ? `/clients/${nextRdv.client.id}`
@@ -1280,6 +1345,17 @@ export function AgendaPage() {
           onClick={() => setEntityFilter("followups")}
           dot={KIND_COLORS.protocol}
         />
+        {/* RDV du club : n'apparaît que si le coach a un club, sinon
+            l'onglet resterait vide à vie (chantier RDV du club, 2026-08-09). */}
+        {activeClub ? (
+          <EntityTab
+            label="Club"
+            count={isCalendarView ? null : entityCounts.discovery}
+            active={entityFilter === "discovery"}
+            onClick={() => setEntityFilter("discovery")}
+            dot={KIND_COLORS.discovery}
+          />
+        ) : null}
       </div>
 
       {/* Bascule Liste / Semaine (Agenda V2, 2026-07-27). La liste reste le
@@ -1579,6 +1655,16 @@ export function AgendaPage() {
                     />
                   );
                 }
+                if (entry.kind === "discovery") {
+                  return (
+                    <DiscoveryAgendaCard
+                      key={`disc-${entry.id}`}
+                      date={entry.date}
+                      session={entry.discovery}
+                      showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                    />
+                  );
+                }
                 // kind === "protocol"
                 return (
                   <ProtocolAgendaCard
@@ -1763,6 +1849,77 @@ export function AgendaPage() {
     </div>
   );
 }
+
+// ─── Carte RDV découverte du club (chantier RDV du club, 2026-08-09) ──────
+// Lecture seule ici : on confirme et on annule depuis la semaine du club, qui
+// est l'écran de pilotage. L'agenda sert à SAVOIR que quelqu'un vient.
+function DiscoveryAgendaCard({
+  date,
+  session,
+  showDate,
+}: {
+  date: string;
+  session: DiscoverySession;
+  showDate: boolean;
+}) {
+  const d = new Date(date);
+  const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const jour = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const objectif = session.objectif ? DISCOVERY_LABELS[session.objectif] ?? session.objectif : null;
+  const nom = session.peopleCount === 2 ? `${session.firstName} + 1` : session.firstName;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        background: "var(--ls-surface)",
+        border: "1px solid var(--ls-border)",
+        borderLeft: `3px solid ${KIND_COLORS.discovery}`,
+        borderRadius: 12,
+        padding: "12px 14px",
+      }}
+    >
+      <div style={{ flex: "none", textAlign: "center", minWidth: 52 }}>
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--ls-text)", fontVariantNumeric: "tabular-nums" }}>
+          {heure}
+        </div>
+        {showDate ? <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>{jour}</div> : null}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ls-text)", display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+          {nom}
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: ".04em",
+              textTransform: "uppercase",
+              padding: "2px 7px",
+              borderRadius: 6,
+              background: "var(--ls-coral-bg)",
+              color: "var(--ls-coral)",
+            }}
+          >
+            Club
+          </span>
+        </div>
+        <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+          {["RDV découverte", objectif, session.status === "confirmed" ? "confirmé" : "à confirmer"]
+            .filter(Boolean)
+            .join(" · ")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const DISCOVERY_LABELS: Record<string, string> = {
+  poids: "perte de poids",
+  muscle: "prise de muscle",
+  energie: "énergie",
+};
 
 // ─── Carte RDV protocole (agenda unifié / onglet Suivis) ─────────────────
 function ProtocolAgendaCard({

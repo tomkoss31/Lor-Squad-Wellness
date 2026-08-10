@@ -26,24 +26,36 @@
 // une intention explicite de l'utilisateur : là, il a le droit de tout réduire.
 // =============================================================================
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { useBbcCalls } from "../useBbcCalls";
 import { useBbcMembers } from "../useBbcMembers";
 import { getCallsForWeek } from "../data/bbcCalls";
 import { useClubShifts, equipeAffectable, cleJour, type Affectable } from "../useClubShifts";
+import {
+  useClubDiscoveryBookings,
+  type ClubDiscoveryBooking,
+} from "../../../hooks/useClubDiscoveryBookings";
+import { setClubDayClosed } from "../../../services/sb/club-bookings";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
+
+/** Objectif du RDV découverte → libellé lisible (tunnel /reserver). */
+const OBJECTIF_LABEL: Record<string, string> = {
+  poids: "perte de poids",
+  muscle: "prise de muscle",
+  energie: "regain d'énergie",
+};
 
 interface BbcSemaineProps {
   userId?: string;
   club?: Club | null;
 }
 
-/** Les 5 familles de la semaine — l'ordre est celui des chips. */
-type Famille = "perm" | "rituel" | "membre" | "classique" | "bilan";
-type Filtre = "all" | "perm" | "rituel" | "rdv" | "bilan";
+/** Les familles de la semaine — l'ordre est celui des chips. */
+type Famille = "perm" | "rituel" | "membre" | "classique" | "bilan" | "decouverte";
+type Filtre = "all" | "perm" | "rituel" | "rdv" | "decouverte" | "bilan";
 
 interface Evenement {
   id: string;
@@ -57,6 +69,9 @@ interface Evenement {
   vide?: boolean;
   /** Le jour à affecter — présent uniquement sur les permanences. */
   jour?: Date;
+  /** id rdv_bookings — présent uniquement sur les RDV découverte, ouvre la
+   *  feuille Confirmer/Annuler au lieu de la feuille permanence. */
+  bookingId?: string;
 }
 
 const CHIPS: Array<{ k: Filtre; label: string }> = [
@@ -64,6 +79,7 @@ const CHIPS: Array<{ k: Filtre; label: string }> = [
   { k: "perm", label: "☕ Permanences" },
   { k: "rituel", label: "📞 Rituels" },
   { k: "rdv", label: "👥 RDV" },
+  { k: "decouverte", label: "🥤 Découverte" },
   { k: "bilan", label: "🎁 Bilans" },
 ];
 
@@ -74,6 +90,9 @@ const TEINTE: Record<Famille, string> = {
   membre: "var(--ls-bbc-teal)",
   classique: "var(--ls-bbc-muted)",
   bilan: "var(--ls-bbc-coral)",
+  // RDV découverte du tunnel /reserver : coral, en écho à l'orange de la
+  // marque Breakfast Club. Ne côtoie jamais les bilans (bloc « à caler » séparé).
+  decouverte: "var(--ls-bbc-coral)",
 };
 
 function fmtHeure(d: Date): string {
@@ -123,6 +142,52 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const shifts = useClubShifts(clubId, openHours, lundi);
   const calls = useBbcCalls(userId, settings);
   const { members } = useBbcMembers(userId);
+  // RDV découverte réservés via le tunnel public (/reserver) : résas "club"
+  // (coach = null), lisibles par les admins (RLS 2026-07-31). Contrairement aux
+  // RDV ci-dessous, elles ne sont rattachées à aucun coach → on les affiche pour
+  // le club, pas pour une personne.
+  const { bookings: decouvertesResa, setStatus: setStatutDecouverte } = useClubDiscoveryBookings(clubId);
+
+  // RDV découverte dont la feuille est ouverte — le booking, pas juste son
+  // id : dérivé de `decouvertesResa` pour rester réactif (ex. la feuille se
+  // referme d'elle-même quand une annulation retire la résa de la liste).
+  const [decouverteId, setDecouverteId] = useState<string | null>(null);
+  const decouverteOuverte = decouverteId
+    ? (decouvertesResa.find((b) => b.id === decouverteId) ?? null)
+    : null;
+  const [erreurDecouverte, setErreurDecouverte] = useState<string | null>(null);
+  const ouvrirDecouverte = (id: string) => {
+    setErreurDecouverte(null);
+    setDecouverteId(id);
+  };
+  const fermerDecouverte = () => {
+    setDecouverteId(null);
+    setErreurDecouverte(null);
+  };
+
+  // Journées fermées aux réservations du site (discovery.holidays). Servait
+  // jusqu'ici uniquement aux fériés ; c'est aussi le « demain je ne suis pas
+  // là » du coach (chantier RDV du club, 2026-08-09). On part de la valeur
+  // portée par le club et on la garde à jour localement après chaque bascule.
+  const [joursFermes, setJoursFermes] = useState<string[]>(
+    () => (((club?.settings as { discovery?: { holidays?: string[] } } | null)?.discovery?.holidays) ?? []),
+  );
+  const basculerJour = useCallback(
+    async (jour: Date) => {
+      if (!clubId) return;
+      const cle = cleJour(jour);
+      const ferme = joursFermes.includes(cle);
+      // Optimiste : l'interrupteur répond tout de suite, on recale au retour.
+      setJoursFermes((prev) => (ferme ? prev.filter((d) => d !== cle) : [...prev, cle]));
+      try {
+        const next = await setClubDayClosed(clubId, cle, !ferme);
+        setJoursFermes(next);
+      } catch {
+        setJoursFermes((prev) => (ferme ? [...prev, cle] : prev.filter((d) => d !== cle)));
+      }
+    },
+    [clubId, joursFermes],
+  );
 
   const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const equipe = useMemo(() => equipeAffectable(users, currentUser?.id), [users, currentUser?.id]);
@@ -205,6 +270,35 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     return out;
   }, [prospects, followUps, clients, currentUser?.id, idsMembres, lundi]);
 
+  // ── Les RDV découverte de la semaine (tunnel /reserver) ─────────────
+  // Même fenêtre que les RDV. Portée = le CLUB (pas un coach) : ces résas n'ont
+  // pas de distributeur assigné, on les cale sur le planning commun.
+  const decouvertes = useMemo(() => {
+    const finSemaine = new Date(lundi);
+    finSemaine.setDate(finSemaine.getDate() + 7);
+    const out: Array<Evenement & { at: Date }> = [];
+    for (const b of decouvertesResa) {
+      const at = new Date(b.slot_start);
+      if (Number.isNaN(at.getTime()) || at < lundi || at >= finSemaine) continue;
+      const prenom = (b.first_name ?? "").trim() || "Prospect";
+      const aDeux = b.people_count === 2;
+      const obj = b.objectif ? OBJECTIF_LABEL[b.objectif] ?? null : null;
+      out.push({
+        id: `decouverte-${b.id}`,
+        famille: "decouverte",
+        at,
+        heure: fmtHeure(at),
+        titre: aDeux ? `${prenom} + 1` : prenom,
+        sous: ["RDV découverte", obj, aDeux ? "à deux" : null, b.status === "confirmed" ? "confirmé" : null]
+          .filter(Boolean)
+          .join(" · "),
+        tag: "découverte",
+        bookingId: b.id,
+      });
+    }
+    return out;
+  }, [decouvertesResa, lundi]);
+
   // ── Assemblage jour par jour ────────────────────────────────────────────
   const semaine = useMemo(() => {
     return jours.map((jour) => {
@@ -265,6 +359,11 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         evs.push(r);
       }
 
+      for (const d of decouvertes) {
+        if (!isSameDay(d.at, jour)) continue;
+        evs.push(d);
+      }
+
       // Tri par heure ; la permanence garde sa place de première ligne du jour
       // même si un RDV est posé avant l'ouverture (cas rare mais vécu). Un rang
       // explicite plutôt que des retours -1/1 en cascade : un comparateur
@@ -277,12 +376,12 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
       return { jour, evs };
     });
-  }, [jours, clubId, shifts.parJour, shifts.creneau, shifts.loading, nomsUsers, rituels, calls, rdv]);
+  }, [jours, clubId, shifts.parJour, shifts.creneau, shifts.loading, nomsUsers, rituels, calls, rdv, decouvertes]);
 
   const garde = (f: Famille): boolean => {
     if (filtre === "all") return true;
     // « RDV » couvre membres ET clients classiques : la chip parle de gens, pas
-    // d'appartenance au club.
+    // d'appartenance au club. Les RDV découverte ont leur propre chip.
     if (filtre === "rdv") return f === "membre" || f === "classique";
     return filtre === f;
   };
@@ -396,9 +495,24 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
         {joursVisibles.map(({ jour, evs }) => (
           <div key={cleJour(jour)}>
-            <EnTeteJour libelle={fmtJour(jour)} aujourdhui={isSameDay(jour, new Date())} />
+            <EnTeteJour
+              libelle={fmtJour(jour)}
+              aujourdhui={isSameDay(jour, new Date())}
+              ferme={joursFermes.includes(cleJour(jour))}
+              onBasculer={clubId ? () => void basculerJour(jour) : undefined}
+            />
             {evs.map((ev) => (
-              <LigneEvenement key={ev.id} ev={ev} onClick={ev.jour ? () => ouvrirFeuille(ev.jour!) : undefined} />
+              <LigneEvenement
+                key={ev.id}
+                ev={ev}
+                onClick={
+                  ev.jour
+                    ? () => ouvrirFeuille(ev.jour!)
+                    : ev.bookingId
+                      ? () => ouvrirDecouverte(ev.bookingId!)
+                      : undefined
+                }
+              />
             ))}
           </div>
         ))}
@@ -436,13 +550,46 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           }}
         />
       ) : null}
+
+      {/* ── Feuille RDV découverte — confirmer / annuler ─────────────── */}
+      {decouverteOuverte ? (
+        <FeuilleDecouverte
+          booking={decouverteOuverte}
+          erreur={erreurDecouverte}
+          onFermer={fermerDecouverte}
+          onConfirmer={async () => {
+            setErreurDecouverte(null);
+            const ok = await setStatutDecouverte(decouverteOuverte.id, "confirmed");
+            if (!ok) setErreurDecouverte("Impossible de confirmer — vérifie ta connexion, puis réessaie.");
+          }}
+          onAnnuler={async () => {
+            setErreurDecouverte(null);
+            const ok = await setStatutDecouverte(decouverteOuverte.id, "canceled");
+            // Succès : la résa sort de `decouvertesResa`, la feuille se referme
+            // d'elle-même (decouverteOuverte redevient null au prochain render).
+            if (!ok) setErreurDecouverte("Impossible d'annuler — réessaie.");
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
 // ─── Briques d'affichage ─────────────────────────────────────────────────────
 
-function EnTeteJour({ libelle, aujourdhui }: { libelle: string; aujourdhui?: boolean }) {
+function EnTeteJour({
+  libelle,
+  aujourdhui,
+  ferme,
+  onBasculer,
+}: {
+  libelle: string;
+  aujourdhui?: boolean;
+  /** Journée fermée aux réservations du site (discovery.holidays). */
+  ferme?: boolean;
+  /** Absent = journée non pilotable (pas de club, ou pas d'ouverture ce jour). */
+  onBasculer?: () => void;
+}) {
   return (
     <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 7 }}>
       <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
@@ -454,6 +601,30 @@ function EnTeteJour({ libelle, aujourdhui }: { libelle: string; aujourdhui?: boo
         </span>
       ) : null}
       <span style={{ flex: 1, height: 1, background: "var(--ls-bbc-line)" }} />
+      {/* Fermer une journée aux réservations — le « demain matin je fais du
+          vélo ». Écrit dans discovery.holidays : effet immédiat sur le site. */}
+      {onBasculer ? (
+        <button
+          type="button"
+          onClick={onBasculer}
+          aria-pressed={Boolean(ferme)}
+          title={ferme ? "Rouvrir cette journée aux réservations" : "Fermer cette journée aux réservations"}
+          style={{
+            flex: "none",
+            fontFamily: "var(--ls-bbc-font-mono)",
+            fontSize: 9.5,
+            fontWeight: 700,
+            padding: "3px 9px",
+            borderRadius: 999,
+            cursor: "pointer",
+            border: `1px solid ${ferme ? "var(--ls-bbc-amber)" : "var(--ls-bbc-line)"}`,
+            background: ferme ? "color-mix(in srgb, var(--ls-bbc-amber) 18%, transparent)" : "transparent",
+            color: ferme ? "var(--ls-bbc-amber)" : "var(--ls-bbc-muted)",
+          }}
+        >
+          {ferme ? "réservations fermées" : "réservations ouvertes"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -711,6 +882,183 @@ function FeuilleAffectation({
             libérer ce matin
           </button>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ─── Feuille RDV découverte — confirmer / annuler ──────────────────────
+// Contrepartie BBC de ClubDiscoveryWidget (CRM, mode Classic) : mêmes deux
+// gestes (confirmer, annuler), même hook. Volontairement plus sobre — pas de
+// lien Google Agenda ici, ce n'est pas le rôle de cette feuille.
+function FeuilleDecouverte({
+  booking,
+  erreur,
+  onFermer,
+  onConfirmer,
+  onAnnuler,
+}: {
+  booking: ClubDiscoveryBooking;
+  erreur: string | null;
+  onFermer: () => void;
+  onConfirmer: () => Promise<void>;
+  onAnnuler: () => Promise<void>;
+}) {
+  // L'écriture passe par un aller-retour réseau : sans cet état, un appui
+  // pendant le vol relançait un second update pour rien (même pattern que
+  // FeuilleAffectation ci-dessus).
+  const [envoi, setEnvoi] = useState<"confirmer" | "annuler" | null>(null);
+
+  const lancer = async (geste: "confirmer" | "annuler", action: () => Promise<void>) => {
+    if (envoi) return;
+    setEnvoi(geste);
+    try {
+      await action();
+    } finally {
+      setEnvoi(null);
+    }
+  };
+
+  const aDeux = booking.people_count === 2;
+  const prenom = (booking.first_name ?? "").trim() || "Prospect";
+  const obj = booking.objectif ? OBJECTIF_LABEL[booking.objectif] ?? null : null;
+  const quand = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+    timeZone: "Europe/Paris",
+  }).format(new Date(booking.slot_start));
+
+  return (
+    <div
+      onClick={onFermer}
+      style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bbc-mode"
+        role="dialog"
+        aria-modal="true"
+        aria-label="RDV découverte"
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          maxHeight: "84vh",
+          overflowY: "auto",
+          background: "var(--ls-bbc-s1)",
+          border: "1px solid var(--ls-bbc-line2)",
+          borderRadius: "22px 22px 0 0",
+          padding: "18px 18px calc(26px + env(safe-area-inset-bottom))",
+          color: "var(--ls-bbc-text)",
+          fontFamily: "var(--ls-bbc-font-body)",
+        }}
+      >
+        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20 }}>
+          {aDeux ? `${prenom} + 1` : prenom}
+        </div>
+        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 4, marginBottom: 15 }}>
+          {quand}
+          {obj ? ` · ${obj}` : ""}
+          {aDeux ? " · à deux" : ""}
+        </div>
+
+        <div
+          style={{
+            padding: "12px 13px",
+            borderRadius: 12,
+            background: "var(--ls-bbc-s2)",
+            border: "1px solid var(--ls-bbc-line)",
+            fontSize: 13,
+            marginBottom: 6,
+          }}
+        >
+          <div style={{ color: "var(--ls-bbc-hint)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
+            Statut
+          </div>
+          {booking.status === "confirmed" ? "✓ Confirmée" : "À confirmer"}
+          {booking.contact ? (
+            <div style={{ marginTop: 8, color: "var(--ls-bbc-text)" }}>{booking.contact}</div>
+          ) : null}
+        </div>
+
+        {erreur ? (
+          <div
+            role="alert"
+            style={{
+              marginTop: 12,
+              padding: "10px 12px",
+              borderRadius: 11,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+              color: "var(--ls-bbc-coral)",
+              background: "color-mix(in srgb, var(--ls-bbc-coral) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-bbc-coral) 35%, transparent)",
+            }}
+          >
+            {erreur}
+          </div>
+        ) : null}
+
+        {booking.status !== "confirmed" ? (
+          <button
+            type="button"
+            disabled={envoi !== null}
+            onClick={() => void lancer("confirmer", onConfirmer)}
+            style={{
+              width: "100%",
+              minHeight: 50,
+              border: 0,
+              borderRadius: 13,
+              marginTop: 14,
+              cursor: envoi ? "default" : "pointer",
+              opacity: envoi && envoi !== "confirmer" ? 0.5 : 1,
+              background: "var(--ls-bbc-lime)",
+              color: "var(--ls-bbc-lime-ink)",
+              fontFamily: "var(--ls-bbc-font-body)",
+              fontSize: 15,
+              fontWeight: 800,
+            }}
+          >
+            {envoi === "confirmer" ? "…" : "Confirmer"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          disabled={envoi !== null}
+          onClick={() => void lancer("annuler", onAnnuler)}
+          style={{
+            width: "100%",
+            minHeight: 44,
+            marginTop: 8,
+            borderRadius: 12,
+            border: "1px solid var(--ls-bbc-line2)",
+            background: "transparent",
+            color: envoi === "annuler" ? "var(--ls-bbc-muted)" : "var(--ls-bbc-coral)",
+            fontFamily: "var(--ls-bbc-font-body)",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: envoi ? "default" : "pointer",
+            opacity: envoi && envoi !== "annuler" ? 0.5 : 1,
+          }}
+        >
+          {envoi === "annuler" ? "…" : "Annuler le RDV"}
+        </button>
+        <button
+          type="button"
+          onClick={onFermer}
+          style={{
+            width: "100%",
+            minHeight: 40,
+            marginTop: 8,
+            borderRadius: 12,
+            border: "none",
+            background: "transparent",
+            color: "var(--ls-bbc-hint)",
+            fontFamily: "var(--ls-bbc-font-body)",
+            fontSize: 12.5,
+            cursor: "pointer",
+          }}
+        >
+          Fermer
+        </button>
       </div>
     </div>
   );
