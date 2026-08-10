@@ -289,6 +289,12 @@ const ReserverClubPage = lazy(() =>
     default: module.ReserverClubPage,
   })),
 );
+// Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
+const GererRdvClubPage = lazy(() =>
+  import("./pages/GererRdvClubPage").then((module) => ({
+    default: module.GererRdvClubPage,
+  })),
+);
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -761,6 +767,12 @@ export default function App() {
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />
           <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
+          {/* Page publique « Modifier / annuler mon rendez-vous » : la cible du
+              lien envoyé dans l'email de confirmation du club. Authentifiée par
+              le jeton de l'URL (rdv_bookings.manage_token), donc hors AppLayout
+              — la personne n'a pas de compte. 3 segments, aucun conflit avec
+              /rdv/:coachSlug juste au-dessus qui n'en a que 2. */}
+          <Route path="/rdv/gerer/:token" element={<GererRdvClubPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
