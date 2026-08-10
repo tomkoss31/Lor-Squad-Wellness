@@ -1,11 +1,11 @@
 // =============================================================================
-// useClubDiscoveryBookings — séances découverte réservées via le tunnel public
+// useClubDiscoveryBookings — RDV découverte réservés via le tunnel public
 // du Breakfast Club (/reserver). Table rdv_bookings, lignes "club" :
 // coach_user_id = null, club_id = <club>. Lisibles par les admins (RLS
 // rdv_bookings_club_admin_read, 2026-07-31).
 //
 // Jumeau de useCoachRdvBookings, mais scopé au club et avec les champs propres
-// à la séance découverte (nb de personnes, binôme, objectif).
+// au RDV découverte (nb de personnes, binôme, objectif).
 // =============================================================================
 
 import { useCallback, useEffect, useState } from "react";

@@ -22,7 +22,7 @@ import type { Client, FollowUp, Prospect } from "../../types/domain";
 import type { FollowUpDueItem } from "../../lib/followUpProtocolScheduler";
 
 /**
- * Séance découverte réservée depuis le site public du club (/reserver).
+ * RDV découverte réservé depuis le site public du club (/reserver).
  * Forme minimale volontaire : l'agenda n'a pas à connaître la table
  * rdv_bookings ni le hook qui la charge.
  */
@@ -36,9 +36,9 @@ export interface DiscoverySession {
 
 /**
  * Entrée unifiée de l'agenda : follow-up client, prospect, suivi protocole,
- * OU séance découverte du club.
+ * OU RDV découverte du club.
  *
- * `discovery` ajoutée le 2026-08-09 (chantier RDV du club) : ces séances
+ * `discovery` ajoutée le 2026-08-09 (chantier RDV du club) : ces RDV
  * n'apparaissaient que dans la vue BBC « La semaine », l'agenda classique les
  * ignorait — la même journée ne se lisait donc pas pareil selon le mode.
  * Elles ne sont rattachées à AUCUN coach (coach_user_id = null) : on les range
@@ -50,7 +50,7 @@ export type AgendaEntry =
   | { kind: "protocol"; id: string; date: string; distributorId: string; due: FollowUpDueItem }
   | { kind: "discovery"; id: string; date: string; distributorId: string; discovery: DiscoverySession };
 
-/** Libellés des objectifs choisis au moment de réserver une séance découverte. */
+/** Libellés des objectifs choisis au moment de réserver un RDV découverte. */
 const DISCOVERY_OBJECTIFS: Record<string, string> = {
   poids: "perte de poids",
   muscle: "prise de muscle",
@@ -204,7 +204,7 @@ export const KIND_COLORS: Record<AgendaEntry["kind"], string> = {
   prospect: "var(--ls-teal)",
   client: "var(--ls-purple)",
   protocol: "var(--ls-teal)",
-  // Les séances du club se repèrent d'un coup d'œil au milieu des suivis.
+  // Les RDV du club se repèrent d'un coup d'œil au milieu des suivis.
   discovery: "var(--ls-coral)",
 };
 
@@ -318,7 +318,7 @@ export function toCalendarEvent(
     return {
       ...base,
       title: d.peopleCount === 2 ? `${d.firstName} + 1` : d.firstName,
-      subtitle: ["séance découverte", objectif].filter(Boolean).join(" · "),
+      subtitle: ["RDV découverte", objectif].filter(Boolean).join(" · "),
     };
   }
 

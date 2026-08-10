@@ -1,5 +1,5 @@
 // =============================================================================
-// RDV du club — lecture des réservations « séance découverte » (tunnel /reserver)
+// RDV du club — lecture des réservations « RDV découverte » (tunnel /reserver)
 // et pilotage des jours d'ouverture. Chantier « RDV du club » (2026-08-09).
 // =============================================================================
 //

@@ -1,5 +1,5 @@
 // =============================================================================
-// ClubDiscoveryWidget — séances découverte réservées via le tunnel public du
+// ClubDiscoveryWidget — RDV découverte réservés via le tunnel public du
 // Breakfast Club (/reserver), à gérer côté CRM classique.
 //
 // Jumeau de RdvBookingsWidget, mais pour les résas "club" (coach = null) : les
@@ -34,9 +34,9 @@ function googleCalUrl(b: ClubDiscoveryBooking): string {
   const qui = b.people_count === 2 ? `${b.first_name ?? "Prospect"} +1` : b.first_name ?? "Prospect";
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: `Séance découverte — ${qui}`,
+    text: `RDV découverte — ${qui}`,
     dates: `${fmt(b.slot_start)}/${fmt(b.slot_end)}`,
-    details: `Séance découverte (body scan + bilan) réservée via le site du club.${b.contact ? ` Contact : ${b.contact}` : ""}`,
+    details: `RDV découverte (body scan + bilan) réservé via le site du club.${b.contact ? ` Contact : ${b.contact}` : ""}`,
     location: "11 rue Saint Pierre, Verdun",
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -55,7 +55,7 @@ export function ClubDiscoveryWidget() {
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span aria-hidden="true" style={{ fontSize: 20 }}>🥤</span>
         <div style={{ flex: 1 }}>
-          <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>Séances découverte du club</p>
+          <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>RDV découverte du club</p>
           <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginTop: 2 }}>
             {bookings.length} personne{bookings.length > 1 ? "s ont" : " a"} réservé via le site du club.
           </p>
@@ -136,7 +136,7 @@ export function ClubDiscoveryWidget() {
                 <button
                   type="button"
                   onClick={() => void setStatus(b.id, "canceled")}
-                  aria-label="Annuler cette séance"
+                  aria-label="Annuler ce RDV"
                   style={{
                     padding: "7px 10px", borderRadius: 9,
                     background: "transparent", border: "0.5px solid var(--ls-border)",

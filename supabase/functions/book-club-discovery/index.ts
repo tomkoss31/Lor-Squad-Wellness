@@ -1,13 +1,16 @@
 // =============================================================================
-// book-club-discovery — Réservation d'une séance découverte "club" (Breakfast
+// book-club-discovery — Réservation d'un RDV découverte "club" (Breakfast
 // Club Verdun), depuis le tunnel public www.labase-nutrition.com/reserver.
 //
 // POST { clubSlug, slotStart (ISO), firstName, contact?(email),
 //        peopleCount?(1|2), partnerFirstName?, objectif? }
 //   1. Résout le club par slug (clubs.slug, actif).
 //   2. Réserve via la RPC atomique book_club_discovery (verrou + capacité N).
-//   3. Notifie les admins du club par push.
-//   4. Envoie l'email de confirmation au prospect (si contact = email).
+//   3. Notifie les admins du club par push (vers /crm, où le widget permet de
+//      confirmer / annuler — l'écran /rdv-club a été retiré le 2026-08-09).
+//   4. Envoie l'email de confirmation au prospect, avec son lien personnel
+//      « Modifier / annuler mon rendez-vous » (manage_token).
+//   5. Envoie le lead à la boîte partagée ET à la boîte perso de chaque coach.
 //
 // Réutilise la table rdv_bookings (club_id, coach_user_id=null) → le rappel J-1
 // (client-rdv-reminder) fonctionne déjà pour ces lignes.
@@ -173,7 +176,7 @@ serve(async (req: Request) => {
       await sendPushToUser(sb, {
         userId: a.id,
         payload: {
-          title: "☕ Nouvelle séance découverte",
+          title: "☕ Nouveau RDV découverte",
           body: `${firstName}${peopleTag} — ${whenParis}`,
           url: "/crm",
           type: "club_discovery_booking",
@@ -212,7 +215,7 @@ serve(async (req: Request) => {
         location,
         manageUrl,
       });
-      confirmEmailSent = await sendViaResend(contact, "✅ Ta séance découverte est réservée", html);
+      confirmEmailSent = await sendViaResend(contact, "✅ Ton RDV découverte est réservé", html);
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")
@@ -248,7 +251,7 @@ serve(async (req: Request) => {
 <body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
   <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
     <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">☕ Breakfast Club · Verdun</div>
-    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau lead — séance découverte</h1>
+    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau lead — RDV découverte</h1>
     <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${esc(fullName)} vient de réserver ${peopleCount === 2 ? "pour 2 personnes" : "une place"} le <b>${esc(dateLabel)} · ${esc(hour)}</b>.</p>
     <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
       <table style="border-collapse:collapse;width:100%;">

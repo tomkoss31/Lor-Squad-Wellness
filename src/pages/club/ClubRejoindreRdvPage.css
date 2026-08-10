@@ -1,7 +1,7 @@
 /* =============================================================================
    ClubRejoindreRdvPage — supplément au tunnel crème `.rc` (ReserverClubPage.css).
    On réutilise TOUT le système `.rc` (header, cartes, calendrier, CTA, champs) ;
-   ici on n'ajoute que ce que le modèle « séance découverte » n'avait pas : un
+   ici on n'ajoute que ce que le modèle « RDV découverte » n'avait pas : un
    <textarea> (mot libre du candidat) habillé comme les .rc-field.
    Spécificité (0,2,1) + !important pour passer devant globals.css (thème app).
    ============================================================================= */

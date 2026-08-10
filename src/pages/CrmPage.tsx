@@ -316,7 +316,7 @@ export function CrmPage() {
           masqué s'il n'y en a pas. */}
       <RdvBookingsWidget />
 
-      {/* Séances découverte réservées via le site du club (/reserver) — visible
+      {/* RDV découverte réservés via le site du club (/reserver) — visible
           pour les admins, masqué s'il n'y en a pas (chantier 1d, 2026-07-31). */}
       <ClubDiscoveryWidget />
 

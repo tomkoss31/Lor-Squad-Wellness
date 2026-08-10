@@ -774,7 +774,7 @@ export default function App() {
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
           <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
-          {/* Tunnel de réservation "séance découverte" du Breakfast Club (site
+          {/* Tunnel de réservation "RDV découverte" du Breakfast Club (site
               public www.labase-nutrition.com/reserver). Identité crème propre au
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />

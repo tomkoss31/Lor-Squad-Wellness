@@ -3,7 +3,7 @@
 // Route : /club/rejoindre/rdv[/:coachSlug]  (+ alias /rdv-rejoindre-l-equipe).
 // CTA source : /club/rejoindre (« En parler avec l'équipe »).
 //
-// C'est le JUMEAU du tunnel "séance découverte" /reserver (même identité crème,
+// C'est le JUMEAU du tunnel "RDV découverte" /reserver (même identité crème,
 // même calendrier), mais :
 //   - SANS questions santé/poids → 2 courtes questions PRO (Tu cherches quoi ? /
 //     Tu te projettes quand ?) + un mot libre facultatif.

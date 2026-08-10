@@ -120,7 +120,7 @@ function stillActionable(entry: AgendaEntry): boolean {
   if (entry.kind === "client") {
     return entry.followUp.status === "scheduled" || entry.followUp.status === "pending";
   }
-  // Séance découverte : elle attend une action tant qu'elle n'est pas confirmée.
+  // RDV découverte : il attend une action tant qu'il n'est pas confirmé.
   if (entry.kind === "discovery") return entry.discovery.status !== "confirmed";
   // Suivi de protocole : le scheduler donne déjà le retard.
   return (
@@ -169,7 +169,7 @@ export function AgendaPage() {
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
-  // Séances découverte du club (tunnel public /reserver). Elles vivaient
+  // RDV découverte du club (tunnel public /reserver). Elles vivaient
   // uniquement dans la vue BBC « La semaine » : la même journée ne se lisait
   // donc pas pareil selon le mode. Elles rejoignent l'agenda classique
   // (chantier RDV du club, 2026-08-09) — même source, même hook, aucune requête
@@ -383,7 +383,7 @@ export function AgendaPage() {
       }
     }
 
-    // 4. Séances découverte du club — chantier RDV du club (2026-08-09).
+    // 4. RDV découverte du club — chantier RDV du club (2026-08-09).
     // Le hook ne remonte que les résas à venir et non annulées. Elles n'ont pas
     // de coach : on les rattache au propriétaire du club pour qu'elles suivent
     // le sélecteur d'équipe comme le reste.
@@ -499,7 +499,7 @@ export function AgendaPage() {
         }
       }
     }
-    // Séances découverte du club (chantier RDV du club) : le hook ne remonte
+    // RDV découverte du club (chantier RDV du club) : le hook ne remonte
     // déjà que les résas à venir et non annulées, seul le filtre de date reste
     // à appliquer pour rester cohérent avec les autres compteurs.
     let discoveryCount = 0;
@@ -605,7 +605,7 @@ export function AgendaPage() {
         setOpenProtocol(entry.due);
         return;
       }
-      // Séance découverte : personne à contacter côté fiche (le prospect n'a
+      // RDV découverte : personne à contacter côté fiche (le prospect n'a
       // pas encore de dossier). On la pilote depuis la semaine du club.
       if (entry.kind === "discovery") return;
       // Suivi client : feuille d'action sur place (2026-07-27). C'était la
@@ -1050,7 +1050,7 @@ export function AgendaPage() {
           : nextRdv.kind === "prospect"
             ? "Prospect · 1er contact"
             : nextRdv.kind === "discovery"
-              ? "Club · séance découverte"
+              ? "Club · RDV découverte"
               : `${nextRdv.due.stepIconEmoji} ${nextRdv.due.stepShortTitle}`;
         const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
         const targetUrl = nextRdv.kind === "client"
@@ -1345,7 +1345,7 @@ export function AgendaPage() {
           onClick={() => setEntityFilter("followups")}
           dot={KIND_COLORS.protocol}
         />
-        {/* Séances du club : n'apparaît que si le coach a un club, sinon
+        {/* RDV du club : n'apparaît que si le coach a un club, sinon
             l'onglet resterait vide à vie (chantier RDV du club, 2026-08-09). */}
         {activeClub ? (
           <EntityTab
@@ -1850,7 +1850,7 @@ export function AgendaPage() {
   );
 }
 
-// ─── Carte séance découverte du club (chantier RDV du club, 2026-08-09) ──────
+// ─── Carte RDV découverte du club (chantier RDV du club, 2026-08-09) ──────
 // Lecture seule ici : on confirme et on annule depuis la semaine du club, qui
 // est l'écran de pilotage. L'agenda sert à SAVOIR que quelqu'un vient.
 function DiscoveryAgendaCard({
@@ -1906,7 +1906,7 @@ function DiscoveryAgendaCard({
           </span>
         </div>
         <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-          {["séance découverte", objectif, session.status === "confirmed" ? "confirmée" : "à confirmer"]
+          {["RDV découverte", objectif, session.status === "confirmed" ? "confirmé" : "à confirmer"]
             .filter(Boolean)
             .join(" · ")}
         </div>

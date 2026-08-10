@@ -41,7 +41,7 @@ import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEve
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
 
-/** Objectif de la séance découverte → libellé lisible (tunnel /reserver). */
+/** Objectif du RDV découverte → libellé lisible (tunnel /reserver). */
 const OBJECTIF_LABEL: Record<string, string> = {
   poids: "perte de poids",
   muscle: "prise de muscle",
@@ -69,7 +69,7 @@ interface Evenement {
   vide?: boolean;
   /** Le jour à affecter — présent uniquement sur les permanences. */
   jour?: Date;
-  /** id rdv_bookings — présent uniquement sur les séances découverte, ouvre la
+  /** id rdv_bookings — présent uniquement sur les RDV découverte, ouvre la
    *  feuille Confirmer/Annuler au lieu de la feuille permanence. */
   bookingId?: string;
 }
@@ -90,7 +90,7 @@ const TEINTE: Record<Famille, string> = {
   membre: "var(--ls-bbc-teal)",
   classique: "var(--ls-bbc-muted)",
   bilan: "var(--ls-bbc-coral)",
-  // Séances découverte du tunnel /reserver : coral, en écho à l'orange de la
+  // RDV découverte du tunnel /reserver : coral, en écho à l'orange de la
   // marque Breakfast Club. Ne côtoie jamais les bilans (bloc « à caler » séparé).
   decouverte: "var(--ls-bbc-coral)",
 };
@@ -142,13 +142,13 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const shifts = useClubShifts(clubId, openHours, lundi);
   const calls = useBbcCalls(userId, settings);
   const { members } = useBbcMembers(userId);
-  // Séances découverte réservées via le tunnel public (/reserver) : résas "club"
+  // RDV découverte réservés via le tunnel public (/reserver) : résas "club"
   // (coach = null), lisibles par les admins (RLS 2026-07-31). Contrairement aux
   // RDV ci-dessous, elles ne sont rattachées à aucun coach → on les affiche pour
   // le club, pas pour une personne.
   const { bookings: decouvertesResa, setStatus: setStatutDecouverte } = useClubDiscoveryBookings(clubId);
 
-  // Séance découverte dont la feuille est ouverte — le booking, pas juste son
+  // RDV découverte dont la feuille est ouverte — le booking, pas juste son
   // id : dérivé de `decouvertesResa` pour rester réactif (ex. la feuille se
   // referme d'elle-même quand une annulation retire la résa de la liste).
   const [decouverteId, setDecouverteId] = useState<string | null>(null);
@@ -270,7 +270,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     return out;
   }, [prospects, followUps, clients, currentUser?.id, idsMembres, lundi]);
 
-  // ── Les séances découverte de la semaine (tunnel /reserver) ─────────────
+  // ── Les RDV découverte de la semaine (tunnel /reserver) ─────────────
   // Même fenêtre que les RDV. Portée = le CLUB (pas un coach) : ces résas n'ont
   // pas de distributeur assigné, on les cale sur le planning commun.
   const decouvertes = useMemo(() => {
@@ -289,7 +289,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         at,
         heure: fmtHeure(at),
         titre: aDeux ? `${prenom} + 1` : prenom,
-        sous: ["séance découverte", obj, aDeux ? "à deux" : null, b.status === "confirmed" ? "confirmée" : null]
+        sous: ["RDV découverte", obj, aDeux ? "à deux" : null, b.status === "confirmed" ? "confirmé" : null]
           .filter(Boolean)
           .join(" · "),
         tag: "découverte",
@@ -381,7 +381,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const garde = (f: Famille): boolean => {
     if (filtre === "all") return true;
     // « RDV » couvre membres ET clients classiques : la chip parle de gens, pas
-    // d'appartenance au club. Les séances découverte ont leur propre chip.
+    // d'appartenance au club. Les RDV découverte ont leur propre chip.
     if (filtre === "rdv") return f === "membre" || f === "classique";
     return filtre === f;
   };
@@ -551,7 +551,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         />
       ) : null}
 
-      {/* ── Feuille séance découverte — confirmer / annuler ─────────────── */}
+      {/* ── Feuille RDV découverte — confirmer / annuler ─────────────── */}
       {decouverteOuverte ? (
         <FeuilleDecouverte
           booking={decouverteOuverte}
@@ -887,7 +887,7 @@ function FeuilleAffectation({
   );
 }
 
-// ─── Feuille séance découverte — confirmer / annuler ──────────────────────
+// ─── Feuille RDV découverte — confirmer / annuler ──────────────────────
 // Contrepartie BBC de ClubDiscoveryWidget (CRM, mode Classic) : mêmes deux
 // gestes (confirmer, annuler), même hook. Volontairement plus sobre — pas de
 // lien Google Agenda ici, ce n'est pas le rôle de cette feuille.
@@ -937,7 +937,7 @@ function FeuilleDecouverte({
         className="bbc-mode"
         role="dialog"
         aria-modal="true"
-        aria-label="Séance découverte"
+        aria-label="RDV découverte"
         style={{
           width: "100%",
           maxWidth: 460,
@@ -1039,7 +1039,7 @@ function FeuilleDecouverte({
             opacity: envoi && envoi !== "annuler" ? 0.5 : 1,
           }}
         >
-          {envoi === "annuler" ? "…" : "Annuler la séance"}
+          {envoi === "annuler" ? "…" : "Annuler le RDV"}
         </button>
         <button
           type="button"
