@@ -206,7 +206,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           <div>
             <div
               style={{
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: 1.6,
                 textTransform: "uppercase",
                 color: "var(--ls-teal)",
@@ -294,7 +294,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           <div>
             <div
               style={{
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: 1.6,
                 textTransform: "uppercase",
                 color: "var(--ls-teal)",

@@ -145,7 +145,7 @@ export function AssessmentFieldV2({
         {prefilled ? (
           <span
             style={{
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",

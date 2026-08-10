@@ -1215,12 +1215,12 @@ export function NewAssessmentPage() {
       // Multi : "prise de masse + énergie" plutôt qu'un seul mot.
       summary: startsImmediately
         ? `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
-        : `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
+        : `Premier bilan orienté ${objectiveFocusLabel.toLowerCase()} sans démarrage immédiat, relance à prévoir.`,
       notes:
         form.comment.trim() ||
         (startsImmediately
           ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà pose."
-          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance déjà prevue."),
+          : "Le client repart avec un bilan clair, sans démarrage immédiat, et une relance déjà prévue."),
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -1283,7 +1283,7 @@ export function NewAssessmentPage() {
           form.comment.trim() ||
           (startedEffective
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
-            : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
+            : "Bilan enregistré sans démarrage. Une relance est à prévoir."),
         afterAssessmentAction: form.afterAssessmentAction,
         freeFollowUp: isFreeFollowUp
       });
@@ -2424,7 +2424,7 @@ export function NewAssessmentPage() {
             return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
                 <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--ls-text)', margin: '0 0 8px' }}>{cfg.title}</h2>
                 <p style={{ fontSize: 13, color: 'var(--ls-text-muted)', lineHeight: 1.7, margin: 0, maxWidth: 520 }}>Construisons une assiette simple que tu peux reproduire tous les jours, sans te peser, sans calculer.</p>
               </div>
@@ -2442,7 +2442,7 @@ export function NewAssessmentPage() {
               </div>
 
               <div style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
                 {[
                   { color: '#0D9488', bg: 'rgba(13,148,136,0.08)', label: 'Légumes · la moitié', items: ['Salade verte', 'Courgettes', 'Brocolis', 'Tomates', 'Carottes', 'Poivrons', 'Concombre'] },
                   { color: '#0D9488', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
@@ -3246,11 +3246,11 @@ export function NewAssessmentPage() {
                     <section className="space-y-3">
                       <BilanSectionDivider
                         number={1}
-                        eyebrow="Tes besoins detectes"
+                        eyebrow="Tes besoins détectés"
                         title="Ce que ton corps demande"
                         description={form.objective === "sport"
-                          ? "Hydratation, proteines et profil sportif personnalise."
-                          : "Hydratation et proteines calculees sur ton poids actuel."}
+                          ? "Hydratation, protéines et profil sportif personnalisé."
+                          : "Hydratation et protéines calculées sur ton poids actuel."}
                         color="teal"
                       />
 
@@ -3288,7 +3288,7 @@ export function NewAssessmentPage() {
                           </div>
                           <div>
                             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
-                              🥩 Proteines cible
+                              🥩 Protéines cible
                             </div>
                             <div
                               style={{
@@ -3323,7 +3323,7 @@ export function NewAssessmentPage() {
                           )}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 12, fontFamily: "DM Sans, sans-serif" }}>
-                          Calcule sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
+                          Calculé sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
                         </div>
                       </div>
                     </section>
@@ -3335,7 +3335,7 @@ export function NewAssessmentPage() {
                   <section className="space-y-3">
                     <BilanSectionDivider
                       number={2}
-                      eyebrow="Le programme coeur"
+                      eyebrow="Le programme cœur"
                       title={chosenProgram ? `Programme : ${chosenProgram.title}` : "Choisis le programme adapte"}
                       description="La base nutritionnelle qui structure ta journee. 4 niveaux pour s&apos;adapter a ton mode de vie."
                       color="gold"
@@ -3373,7 +3373,7 @@ export function NewAssessmentPage() {
 
                   {/* ═══════════════════════════════════════════════════════
                       § 3 · POUR ALLER PLUS LOIN (coral)
-                      Boosters sport + besoins detectes + upsells.
+                      Boosters sport + besoins détectés + upsells.
                       Affichee meme en perte de poids (pour besoins + upsells).
                       ═══════════════════════════════════════════════════════ */}
                   {(form.objective === "sport" ||
@@ -3384,7 +3384,7 @@ export function NewAssessmentPage() {
                         number={3}
                         eyebrow="Pour aller plus loin"
                         title="Ce qu&apos;on peut ajouter au programme"
-                        description="Boosters, besoins detectes par le bilan, options. Tout est optionnel."
+                        description="Boosters, besoins détectés par le bilan, options. Tout est optionnel."
                         color="coral"
                       />
 
@@ -3507,7 +3507,7 @@ export function NewAssessmentPage() {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
-                              Besoins detectes
+                              Besoins détectés
                             </div>
                             <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                               Ce que le bilan fait ressortir en priorite
@@ -3630,7 +3630,7 @@ export function NewAssessmentPage() {
                       number={4}
                       eyebrow="Suite apres le bilan"
                       title="La personne demarre maintenant ou revient plus tard ?"
-                      description="Choix du jour : demarrage immediat ou bilan sans demarrage (a relancer plus tard)."
+                      description="Choix du jour : démarrage immédiat ou bilan sans démarrage (à relancer plus tard)."
                       color="purple"
                       rightSlot={
                         <StatusBadge
@@ -3663,7 +3663,7 @@ export function NewAssessmentPage() {
                       <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
                         {[
                           { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
-                          { value: "pending" as const, label: "A relancer plus tard", subtitle: "Bilan sans demarrage immediat", emoji: "⏳", color: "#A78BFA" },
+                          { value: "pending" as const, label: "À relancer plus tard", subtitle: "Bilan sans démarrage immédiat", emoji: "⏳", color: "#A78BFA" },
                         ].map((opt) => {
                           const isActive = form.afterAssessmentAction === opt.value;
                           return (

@@ -644,7 +644,7 @@ function AutoActionCard({
         <div
           style={{
             fontFamily: "DM Sans, sans-serif",
-            fontSize: 9.5,
+            fontSize: 11,
             fontWeight: 700,
             letterSpacing: "0.18em",
             textTransform: "uppercase",

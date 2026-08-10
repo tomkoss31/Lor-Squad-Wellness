@@ -745,7 +745,7 @@ export function EditInitialAssessmentPage() {
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <TextField label="Legumes chaque jour" value={questionnaire.vegetablesDaily} onChange={(value) => updateQuestionnaire("vegetablesDaily", value)} />
-              <TextField label="Proteines a chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
+              <TextField label="Protéines à chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
               <TextField label="Produits sucres" value={questionnaire.sugaryProducts} onChange={(value) => updateQuestionnaire("sugaryProducts", value)} />
               <TextField label="Frequence du grignotage" value={questionnaire.snackingFrequency} onChange={(value) => updateQuestionnaire("snackingFrequency", value)} />
               {/* Multi depuis 2026-07-16 : édités ici en liste séparée par des

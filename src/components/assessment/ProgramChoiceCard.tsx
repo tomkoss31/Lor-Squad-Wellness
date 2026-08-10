@@ -50,7 +50,7 @@ export function ProgramChoiceCard({ program, active, onSelect }: Props) {
             borderRadius: 999,
             background: "var(--ls-teal)",
             color: "var(--ls-teal-contrast, #0B0D11)",
-            fontSize: 9,
+            fontSize: 11,
             fontWeight: 700,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
