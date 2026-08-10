@@ -45,6 +45,7 @@ import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
+import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
@@ -314,6 +315,10 @@ export function CrmPage() {
       {/* RDV demandés via le bilan en ligne (RDV V2 brique 4, 2026-06-14) —
           masqué s'il n'y en a pas. */}
       <RdvBookingsWidget />
+
+      {/* RDV découverte réservés via le site du club (/reserver) — visible
+          pour les admins, masqué s'il n'y en a pas (chantier 1d, 2026-07-31). */}
+      <ClubDiscoveryWidget />
 
       {error ? (
         <div style={errorBanner}>
