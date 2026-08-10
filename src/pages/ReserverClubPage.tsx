@@ -395,8 +395,13 @@ export function ReserverClubPage() {
 
               {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
               <button type="submit" className="rc-cta" style={{ marginTop: 26 }} disabled={submitting}>{submitting ? "…" : "Choisir mon créneau →"}</button>
-              <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.5, color: "var(--muted)" }}>Tes infos restent chez nous · jamais revendues. Réservation gratuite et sans engagement.</p>
-              <p style={{ margin: "10px 0 0", textAlign: "center", fontSize: 14, lineHeight: 1.5, color: "var(--sub)" }}>Pas prêt à choisir un créneau ? <a href="tel:+33679448759" style={{ color: "var(--orange)", fontWeight: 700, textDecoration: "none" }}>Appelle-nous</a>, on trouve le bon moment ensemble.</p>
+              {/* Retirés le 2026-08-09 (Thomas) : la ligne « tes infos restent
+                  chez nous · jamais revendues » et le repli « pas prêt à choisir
+                  un créneau ? appelle-nous ». Le bandeau « Sans engagement » en
+                  haut de page le dit déjà, et proposer d'appeler juste sous le
+                  bouton principal offrait une porte de sortie au moment où la
+                  personne allait valider. Le numéro reste joignable ailleurs
+                  (pied de page du site, mail de confirmation). */}
             </form>
           </div>
         </main>
