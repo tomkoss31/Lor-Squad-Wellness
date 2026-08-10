@@ -1,5 +1,5 @@
 // =============================================================================
-// ReserverClubPage — tunnel public "séance découverte" du Breakfast Club.
+// ReserverClubPage — tunnel public "RDV découverte" du Breakfast Club.
 // Route : /reserver  (et /reserver/:clubSlug, défaut "verdun").
 //
 // Écran 1 capture  → crée un lead CRM (edge submit-prospect-lead, source=site-club).
@@ -21,7 +21,11 @@ import "./ReserverClubPage.css";
 type Screen = "capture" | "dispo" | "confirm";
 type Objectif = "poids" | "muscle" | "energie";
 
-const LOGO = "/brand/breakfast-club/logo-wordmark-dark.png";
+// En-tête sur fond crème → wordmark AVEC le cœur rouge (logo-heart), le même
+// que le menu du site. `logo-wordmark-dark` en est la version SANS cœur : elle
+// était utilisée ici, d'où le « y'a plus le petit cœur rouge en haut de la page »
+// de Thomas (2026-08-09).
+const LOGO = "/brand/breakfast-club/logo-heart.png";
 const HEART = "/brand/breakfast-club/logo-heart.png";
 const OBJECTIFS: { id: Objectif; label: string; icon: string }[] = [
   { id: "poids", label: "Perdre du poids", icon: "⚖️" },
@@ -47,7 +51,7 @@ export function ReserverClubPage() {
   const { clubSlug } = useParams<{ clubSlug?: string }>();
   const slug = (clubSlug ?? "verdun").trim() || "verdun";
   const [searchParams] = useSearchParams();
-  useClubHead("Réserver ma séance · The Breakfast Club");
+  useClubHead("Réserver mon RDV découverte · The Breakfast Club");
 
   const [screen, setScreen] = useState<Screen>("capture");
 
@@ -208,7 +212,7 @@ export function ReserverClubPage() {
       `DTSTAMP:${z(new Date())}`,
       `DTSTART:${z(start)}`,
       `DTEND:${z(end)}`,
-      "SUMMARY:Séance découverte · The Breakfast Club",
+      "SUMMARY:RDV découverte · The Breakfast Club",
       "LOCATION:11 rue Saint Pierre\\, 55100 Verdun",
       "DESCRIPTION:Ton body scan + bilan bien-être\\, offerts. On t'attend au club !",
       "END:VEVENT", "END:VCALENDAR",
@@ -305,7 +309,7 @@ export function ReserverClubPage() {
         <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
           <div style={{ maxWidth: 640 }}>
             <p className="rc-eyebrow">Étape 1 sur 2 · Réservation</p>
-            <h1 style={{ marginTop: 12, fontSize: "clamp(30px,4.4vw,48px)" }}>Ta séance découverte commence ici.</h1>
+            <h1 style={{ marginTop: 12, fontSize: "clamp(30px,4.4vw,48px)" }}>Ton RDV découverte commence ici.</h1>
             <p style={{ margin: "14px 0 0", fontSize: "clamp(15px,1.4vw,17px)", lineHeight: 1.6, color: "var(--sub)" }}>
               Dis-nous où tu en es, puis choisis ton créneau. Le body scan et le bilan bien-être sont <strong>offerts</strong>, sans aucun engagement.
             </p>
@@ -316,7 +320,7 @@ export function ReserverClubPage() {
             <div>
               <aside className="rc-card" style={{ padding: "clamp(26px,3vw,38px)" }}>
                 <p className="rc-eyebrow" style={{ fontSize: 12, letterSpacing: ".22em" }}>Ce que tu réserves</p>
-                <h2 style={{ marginTop: 12, fontSize: "clamp(26px,3.2vw,38px)" }}>Séance découverte</h2>
+                <h2 style={{ marginTop: 12, fontSize: "clamp(26px,3.2vw,38px)" }}>RDV découverte</h2>
                 <p style={{ margin: "8px 0 0", fontSize: 16, color: "#5F7154" }}>≈ 45 min avec un coach, au club de Verdun.</p>
                 <ul style={{ listStyle: "none", margin: "24px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 13 }}>
                   {["Analyse de composition corporelle (body scan)", "Bilan bien-être personnalisé", "Tes objectifs, à ton rythme", "Seul·e ou à deux — comme tu veux", "Aucun paiement, aucun engagement"].map((t) => (
@@ -412,7 +416,7 @@ export function ReserverClubPage() {
                 <span style={{ flex: "none", width: 44, height: 44, borderRadius: 999, background: "#E7DCC4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }} aria-hidden="true">☕</span>
                 <span style={{ fontWeight: 600, fontSize: 15, color: "#3A443F" }}>Breakfast Club · Verdun</span>
               </div>
-              <h2 style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>Séance découverte</h2>
+              <h2 style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>RDV découverte</h2>
               <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Body scan + bilan bien-être</p>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 13, fontSize: 15, color: "var(--sub)" }}>
                 <div>🕒 45 min de RDV · créneau réservé 1h</div>
