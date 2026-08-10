@@ -3556,7 +3556,7 @@ export function NewAssessmentPage() {
                               Besoins détectés
                             </div>
                             <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
-                              Ce que le bilan fait ressortir en priorite
+                              Ce que le bilan fait ressortir en priorité
                             </div>
                           </div>
                           {recommendationPlan.needs.length > 0 && (
@@ -3589,7 +3589,7 @@ export function NewAssessmentPage() {
                           </div>
                         ) : (
                           <div className="rounded-[12px] bg-[var(--ls-surface2)] p-4 text-sm leading-7 text-[var(--ls-text-muted)]">
-                            Le bilan ne fait pas ressortir une priorite forte. On peut partir sur la base simple,
+                            Le bilan ne fait pas ressortir une priorité forte. On peut partir sur la base simple,
                             puis personnaliser au premier suivi.
                           </div>
                         )}
@@ -3674,13 +3674,13 @@ export function NewAssessmentPage() {
                   <section className="space-y-3">
                     <BilanSectionDivider
                       number={4}
-                      eyebrow="Suite apres le bilan"
-                      title="La personne demarre maintenant ou revient plus tard ?"
+                      eyebrow="Suite après le bilan"
+                      title="La personne démarre maintenant ou revient plus tard ?"
                       description="Choix du jour : démarrage immédiat ou bilan sans démarrage (à relancer plus tard)."
                       color="purple"
                       rightSlot={
                         <StatusBadge
-                          label={startsImmediately ? "Demarrage maintenant" : "A relancer"}
+                          label={startsImmediately ? "Démarrage maintenant" : "À relancer"}
                           tone={startsImmediately ? "green" : "amber"}
                         />
                       }
@@ -3708,7 +3708,7 @@ export function NewAssessmentPage() {
                       </div>
                       <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
                         {[
-                          { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
+                          { value: "started" as const, label: "Démarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
                           { value: "pending" as const, label: "À relancer plus tard", subtitle: "Bilan sans démarrage immédiat", emoji: "⏳", color: "#A78BFA" },
                         ].map((opt) => {
                           const isActive = form.afterAssessmentAction === opt.value;
