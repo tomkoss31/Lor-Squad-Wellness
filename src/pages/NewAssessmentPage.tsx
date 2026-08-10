@@ -1594,9 +1594,27 @@ export function NewAssessmentPage() {
         </div>
       )}
 
-      <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
+      {/* Le conteneur est collant : sans fond opaque, le formulaire défilerait
+          au travers du filet de progression sur téléphone. */}
+      <div
+        ref={stepRailRef}
+        className="step-rail-wrapper"
+        style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}
+      >
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
+      <style>{`
+        @media (max-width: 767px) {
+          .step-rail-wrapper {
+            padding-top: 6px !important;
+            padding-bottom: 7px !important;
+            background: color-mix(in srgb, var(--ls-bg) 88%, transparent);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 0.5px solid color-mix(in srgb, var(--ls-teal) 16%, transparent);
+          }
+        }
+      `}</style>
 
       <style>{`
         /* Refonte transitions bilan (2026-11-04) :
@@ -1852,7 +1870,13 @@ export function NewAssessmentPage() {
                   description="Les bases administratives et le contexte du client. Tout ce qu'il faut pour ouvrir un dossier propre."
                   accent="gold"
                 >
-                  <div className="grid gap-4 md:grid-cols-2">
+                  {/* Deux colonnes DÈS le téléphone (audit mobile 2026-08-10).
+                      La tablette le faisait déjà — 1,58 champ par rangée contre
+                      1 sur iPhone — ce qui expliquait à lui seul 1700 px d'écart
+                      de défilement sur cette étape. Les champs qui ont besoin de
+                      largeur (date+heure, liste déroulante, libellés longs)
+                      gardent toute la ligne via `col-span-2`. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     {/* autoComplete + enterKeyHint : sur iPhone, iOS propose le
                         contact et la touche entrée enchaîne au champ suivant au
                         lieu d'afficher « retour ». (audit mobile 2026-08-10) */}
@@ -1896,21 +1920,25 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("email", v)}
                       prefilled={prefilledFields.email}
                     />
-                    <AssessmentFieldV2
-                      label="Invité par / recommandé par"
-                      icon="🤝"
-                      value={form.referredByName}
-                      onChange={(v) => update("referredByName", v)}
-                    />
-                    <AssessmentFieldV2
-                      label="Date et heure du bilan"
-                      icon="📅"
-                      type="datetime-local"
-                      value={form.assessmentDate}
-                      onChange={(v) => update("assessmentDate", v)}
-                    />
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Invité par / recommandé par"
+                        icon="🤝"
+                        value={form.referredByName}
+                        onChange={(v) => update("referredByName", v)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Date et heure du bilan"
+                        icon="📅"
+                        type="datetime-local"
+                        value={form.assessmentDate}
+                        onChange={(v) => update("assessmentDate", v)}
+                      />
+                    </div>
                     {currentUser?.role === "admin" ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div className="col-span-2" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
                           <label
@@ -1951,29 +1979,36 @@ export function NewAssessmentPage() {
                         ) : null}
                       </div>
                     ) : null}
-                    <ChoiceGroup
-                      label="Sexe"
-                      value={form.sex}
-                      options={["female", "male"]}
-                      onChange={(v) => update("sex", v as BiologicalSex)}
-                      formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
-                    />
-                    <AssessmentFieldV2
-                      label="Date de naissance"
-                      icon="🎂"
-                      type="date"
-                      value={form.birthDate ?? ""}
-                      onChange={(v) => {
-                        update("birthDate", v);
-                        const computed = calculateAge(v);
-                        if (computed !== null) update("age", computed);
-                      }}
-                      helper={
-                        form.birthDate && form.age > 0
-                          ? `Âge calculé : ${form.age} ans`
-                          : undefined
-                      }
-                    />
+                    <div className="col-span-2">
+                      <ChoiceGroup
+                        label="Sexe"
+                        value={form.sex}
+                        options={["female", "male"]}
+                        onChange={(v) => update("sex", v as BiologicalSex)}
+                        formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
+                      />
+                    </div>
+                    {/* Ligne entière : un champ date fait 133 px en demi-colonne,
+                        et sur iOS le « jj/mm/aaaa » plus l'icône calendrier n'y
+                        tiennent qu'à la limite. */}
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Date de naissance"
+                        icon="🎂"
+                        type="date"
+                        value={form.birthDate ?? ""}
+                        onChange={(v) => {
+                          update("birthDate", v);
+                          const computed = calculateAge(v);
+                          if (computed !== null) update("age", computed);
+                        }}
+                        helper={
+                          form.birthDate && form.age > 0
+                            ? `Âge calculé : ${form.age} ans`
+                            : undefined
+                        }
+                      />
+                    </div>
                     {/* `|| ""` : sans ça le champ s'ouvre pré-rempli d'un « 0 »
                         qu'il faut sélectionner et effacer avant de taper. */}
                     <AssessmentFieldV2
@@ -2077,7 +2112,9 @@ export function NewAssessmentPage() {
                       helper="en kg — où le client veut aller"
                     />
                   )}
-                  <div className="grid gap-4 md:grid-cols-2">
+                  {/* Les deux tailles de vêtement tiennent côte à côte dès le
+                      téléphone : ce sont deux listes déroulantes courtes. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <ClothingSizeSelect
                       label="Taille vêtement actuelle"
                       value={form.currentClothingSize}
@@ -3949,32 +3986,55 @@ export function NewAssessmentPage() {
               continuait dessous, et au body scan un champ tapable se trouvait
               dans cette bande, sous une barre qui signale « fin de page ».
               (`lg:bottom-3` était mort : le bloc est `md:hidden`.) */}
-          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
-            <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ls-text-hint)' }}>
-                Étape {currentStep + 1} / {steps.length}
-              </p>
-              <p className="text-xs" style={{ color: 'var(--ls-text-muted)' }}>{steps[currentStep]}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-center"
-                onClick={goToPreviousStep}
-                disabled={currentStep === 0}
-              >
-                Précédente
-              </Button>
-              <Button
-                className="w-full justify-center"
-                onClick={goToNextStep}
-                disabled={currentStep === steps.length - 1}
-              >
-                Suivante
-              </Button>
-            </div>
-            <Button variant="secondary" className="mt-2 w-full justify-center" onClick={() => void handleSaveAssessment()}>
-              Enregistrer le bilan
+          {/* « Enregistrer le bilan » quitte la barre permanente pour la fin du
+              formulaire : on enregistre quand on a fini de saisir, pas à chaque
+              écran. Ça rend 46 px à chaque écran du bilan. */}
+          <Button
+            variant="secondary"
+            className="mt-4 w-full justify-center md:hidden"
+            onClick={() => void handleSaveAssessment()}
+          >
+            Enregistrer le bilan
+          </Button>
+
+          <div
+            className="sticky bottom-0 z-20 -mx-4 mt-3 flex items-center gap-2 px-4 md:hidden"
+            style={{
+              height: 56,
+              background: 'color-mix(in srgb, var(--ls-bg) 92%, transparent)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderTop: '0.5px solid color-mix(in srgb, var(--ls-teal) 18%, var(--ls-border))',
+              color: 'var(--ls-text)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0}
+              aria-label="Étape précédente"
+              style={{
+                width: 44,
+                height: 44,
+                flex: 'none',
+                borderRadius: 12,
+                border: '0.5px solid var(--ls-border)',
+                background: 'var(--ls-surface)',
+                color: currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)',
+                fontSize: 18,
+                lineHeight: 1,
+                cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+                opacity: currentStep === 0 ? 0.45 : 1,
+              }}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <Button
+              className="h-11 min-h-[44px] flex-1 justify-center"
+              onClick={goToNextStep}
+              disabled={currentStep === steps.length - 1}
+            >
+              Suivante
             </Button>
           </div>
           {saveError ? (
