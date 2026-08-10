@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, type ReactNode } from "react";
+﻿import { useState, useMemo, useId, type ReactNode } from "react";
 // lazy retiré — Chantier nettoyage bilan (2026-04-20)
 // Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
 // supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
@@ -690,6 +690,29 @@ export function NewAssessmentPage() {
   };
 
   const [stepWarning, setStepWarning] = useState("");
+  const stepWarningRef = useRef<HTMLDivElement | null>(null);
+  // Compteur de blocages. Sans lui, retaper « Suivante » sur le même blocage ne
+  // relancerait ni l'annonce VoiceOver ni le défilement : la valeur d'état n'a
+  // pas changé, donc l'effet ne se rejoue pas. Or retaper est EXACTEMENT ce que
+  // fait le coach quand rien ne se passe.
+  const [stepBlockTick, setStepBlockTick] = useState(0);
+
+  // Blocage : affiche le message ET amène l'écran dessus.
+  // Audit mobile 2026-08-10 : le message s'affichait 1259 px sous le bas de
+  // l'iPhone, sans role ni aria-live. Le coach tapait « Suivante » devant sa
+  // cliente et il ne se passait strictement rien.
+  const blockStep = (message: string) => {
+    setStepWarning(message);
+    setStepBlockTick((n) => n + 1);
+  };
+
+  useEffect(() => {
+    if (!stepBlockTick) return;
+    // Défilement IMMÉDIAT, pas `smooth` : un blocage doit se voir tout de suite,
+    // et `smooth` est purement décoratif ici (il est même inopérant dans
+    // certains moteurs, ce qui reproduisait exactement le bug d'origine).
+    stepWarningRef.current?.scrollIntoView({ block: "center" });
+  }, [stepBlockTick]);
 
   const goToNextStep = () => {
     setStepWarning("");
@@ -697,13 +720,13 @@ export function NewAssessmentPage() {
     // Validation étape 0 — infos client
     if (currentStep === 0) {
       if (!form.firstName.trim() || !form.lastName.trim()) {
-        setStepWarning("Prénom et nom du client sont obligatoires pour continuer.");
+        blockStep("Prénom et nom du client sont obligatoires pour continuer.");
         return;
       }
       // ⚠️ Multi depuis 2026-07-16 : `[]` est TRUTHY, un simple `!form.x`
       // laisserait passer un bilan sans aucun objectif coché.
       if (form.objectiveFocus.length === 0) {
-        setStepWarning("Choisis au moins un objectif pour le client.");
+        blockStep("Choisis au moins un objectif pour le client.");
         return;
       }
     }
@@ -1830,9 +1853,14 @@ export function NewAssessmentPage() {
                   accent="gold"
                 >
                   <div className="grid gap-4 md:grid-cols-2">
+                    {/* autoComplete + enterKeyHint : sur iPhone, iOS propose le
+                        contact et la touche entrée enchaîne au champ suivant au
+                        lieu d'afficher « retour ». (audit mobile 2026-08-10) */}
                     <AssessmentFieldV2
                       label="Prénom"
                       icon="✦"
+                      autoComplete="given-name"
+                      enterKeyHint="next"
                       value={form.firstName}
                       onChange={(v) => update("firstName", v)}
                       prefilled={prefilledFields.firstName}
@@ -1840,6 +1868,8 @@ export function NewAssessmentPage() {
                     <AssessmentFieldV2
                       label="Nom"
                       icon="✦"
+                      autoComplete="family-name"
+                      enterKeyHint="next"
                       value={form.lastName}
                       onChange={(v) => update("lastName", v)}
                       prefilled={prefilledFields.lastName}
@@ -1848,6 +1878,9 @@ export function NewAssessmentPage() {
                       label="Téléphone"
                       icon="📞"
                       required
+                      type="tel"
+                      autoComplete="tel"
+                      enterKeyHint="next"
                       value={form.phone}
                       onChange={(v) => update("phone", v)}
                       prefilled={prefilledFields.phone}
@@ -1857,6 +1890,8 @@ export function NewAssessmentPage() {
                       icon="✉️"
                       required
                       type="email"
+                      autoComplete="email"
+                      enterKeyHint="next"
                       value={form.email}
                       onChange={(v) => update("email", v)}
                       prefilled={prefilledFields.email}
@@ -1879,6 +1914,7 @@ export function NewAssessmentPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
                           <label
+                            htmlFor="ls-responsable-dossier"
                             style={{
                               fontFamily: "DM Sans, sans-serif",
                               fontSize: 13,
@@ -1890,6 +1926,7 @@ export function NewAssessmentPage() {
                           </label>
                         </div>
                         <select
+                          id="ls-responsable-dossier"
                           value={assignedUserId}
                           onChange={(event) => setAssignedUserId(event.target.value)}
                         >
@@ -1937,11 +1974,14 @@ export function NewAssessmentPage() {
                           : undefined
                       }
                     />
+                    {/* `|| ""` : sans ça le champ s'ouvre pré-rempli d'un « 0 »
+                        qu'il faut sélectionner et effacer avant de taper. */}
                     <AssessmentFieldV2
                       label="Âge"
                       icon="⌛"
                       type="number"
-                      value={form.age}
+                      inputMode="numeric"
+                      value={form.age || ""}
                       onChange={(v) => update("age", Number(v))}
                       helper="Saisie manuelle si pas de date de naissance"
                     />
@@ -1949,19 +1989,24 @@ export function NewAssessmentPage() {
                       label="Taille"
                       icon="📏"
                       type="number"
-                      value={form.height}
+                      inputMode="numeric"
+                      value={form.height || ""}
                       onChange={(v) => update("height", Number(v))}
                       helper="en cm"
                     />
                     <AssessmentFieldV2
                       label="Profession"
                       icon="💼"
+                      autoComplete="organization-title"
+                      enterKeyHint="next"
                       value={form.job}
                       onChange={(v) => update("job", v)}
                     />
                     <AssessmentFieldV2
                       label="Ville"
                       icon="📍"
+                      autoComplete="address-level2"
+                      enterKeyHint="next"
                       value={form.city ?? ""}
                       onChange={(v) => update("city", v)}
                     />
@@ -2026,7 +2071,8 @@ export function NewAssessmentPage() {
                       icon="⚖️"
                       type="number"
                       step="0.1"
-                      value={form.targetWeight}
+                      inputMode="decimal"
+                      value={form.targetWeight || ""}
                       onChange={(v) => update("targetWeight", Number(v))}
                       helper="en kg — où le client veut aller"
                     />
@@ -2069,6 +2115,7 @@ export function NewAssessmentPage() {
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span aria-hidden="true" style={{ fontSize: 14 }}>🔥</span>
                         <label
+                          htmlFor="ls-motivation"
                           style={{
                             fontFamily: "DM Sans, sans-serif",
                             fontSize: 13,
@@ -2095,10 +2142,12 @@ export function NewAssessmentPage() {
                       </span>
                     </div>
                     <input
+                      id="ls-motivation"
                       type="range"
                       min={0}
                       max={10}
                       value={form.motivation}
+                      aria-valuetext={`${form.motivation} sur 10`}
                       onChange={(event) => update("motivation", Number(event.target.value))}
                     />
                   </div>
@@ -3761,9 +3810,14 @@ export function NewAssessmentPage() {
             </>
           )}
 
-          {/* Avertissement validation */}
+          {/* Avertissement validation — role/aria-live obligatoires : sans eux
+              VoiceOver reste muet quand « Suivante » refuse d'avancer. */}
           {stepWarning && (
-            <div className="rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)]">
+            <div
+              ref={stepWarningRef}
+              role="alert"
+              aria-live="assertive"
+              className="rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)]">
               {stepWarning}
             </div>
           )}
@@ -3888,7 +3942,14 @@ export function NewAssessmentPage() {
               </button>
             </div>
           </div>
-          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
+          {/* Barre de navigation mobile.
+              `bottom-20` (80 px) réservait la place de la BottomNav — or
+              BottomNav.tsx:29 renvoie `null` sur /assessments/new depuis le
+              2026-07-01. Ces 80 px n'étaient donc pas vides : le formulaire
+              continuait dessous, et au body scan un champ tapable se trouvait
+              dans cette bande, sous une barre qui signale « fin de page ».
+              (`lg:bottom-3` était mort : le bloc est `md:hidden`.) */}
+          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ls-text-hint)' }}>
                 Étape {currentStep + 1} / {steps.length}
@@ -4034,10 +4095,12 @@ function ClothingSizeSelect({
   const sizes =
     sex === "female" ? femaleSizes : sex === "male" ? maleSizes : Array.from(new Set([...femaleSizes, ...maleSizes])).sort((a, b) => a - b);
 
+  const selectId = useId();
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <label htmlFor={selectId} className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <select id={selectId} value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">— Choisir —</option>
         {sizes.map((size) => (
           <option key={size} value={size}>{size}</option>
@@ -4109,10 +4172,11 @@ function DecimalInput({
 }
 
 function AreaField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void; }) {
+  const areaId = useId();
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
+      <label htmlFor={areaId} className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <textarea id={areaId} rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }
@@ -4144,15 +4208,18 @@ function MultiChoiceGroup({
   hint?: string;
 }) {
   const selected = normalizeMultiValue(values);
+  // Même correctif que ChoiceGroup : role="group" + aria-labelledby, sinon la
+  // question n'est jamais annoncée. (audit mobile 2026-08-10)
+  const groupId = useId();
   return (
     <div className="space-y-2">
-      <label className="ls-field-label">
+      <span id={groupId} className="ls-field-label">
         {label}
         <span style={{ fontWeight: 400, color: "var(--ls-text-muted)", marginLeft: 6 }}>
           {hint ?? "· plusieurs possibles"}
         </span>
-      </label>
-      <div className="flex flex-wrap gap-2">
+      </span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = selected.includes(option);
           return (
@@ -4196,10 +4263,16 @@ function ChoiceGroup({
   onChange: (value: string) => void;
   formatOption?: (value: string) => string;
 }) {
+  // Un <label> ne peut pas nommer un groupe de boutons : il n'a pas de contrôle
+  // à désigner, donc VoiceOver ne l'annonce jamais et la question elle-même est
+  // perdue. `role="group"` + `aria-labelledby` est le seul motif qui la restitue.
+  // (.ls-field-label est en display:block, le passage en <span> ne change rien.)
+  const groupId = useId();
+
   return (
     <div className="space-y-2">
-      <label className="ls-field-label">{label}</label>
-      <div className="flex flex-wrap gap-2">
+      <span id={groupId} className="ls-field-label">{label}</span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = value === option;
           return (
@@ -4310,11 +4383,15 @@ function TimelineChoiceField({
   onChange: (value: string) => void;
 }) {
   const isCustom = Boolean(value && !options.includes(value));
+  // Même correctif d'accessibilité que ChoiceGroup, + un libellé propre sur la
+  // saisie libre qui suit les pastilles. (audit mobile 2026-08-10)
+  const groupId = useId();
+  const libreId = useId();
 
   return (
     <div className="space-y-3">
-      <label className="ls-field-label">{label}</label>
-      <div className="flex flex-wrap gap-2">
+      <span id={groupId} className="ls-field-label">{label}</span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isActive = value === option;
           return (
@@ -4353,7 +4430,9 @@ function TimelineChoiceField({
           Choix libre
         </button>
       </div>
+      <label htmlFor={libreId} className="sr-only">{label} — saisie libre</label>
       <input
+        id={libreId}
         value={isCustom ? value : ""}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Ex : 2 mois, 4 mois, 5 mois"

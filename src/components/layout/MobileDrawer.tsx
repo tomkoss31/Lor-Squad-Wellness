@@ -16,7 +16,7 @@
 // Styles : classes lb-drawer, lb-scrim, lb-drawer-* dans globals.css
 // =============================================================================
 
-import { useEffect, useState  } from "react";
+import { useEffect, useRef, useState  } from "react";
 import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
@@ -62,6 +62,20 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
+  // Sortir le tiroir fermé du parcours clavier et de VoiceOver.
+  // Audit mobile 2026-08-10 : fermé, il est en translateX(-100%) — hors écran —
+  // mais garde visibility:visible, et ses 15 éléments prennent effectivement le
+  // focus derrière un aria-hidden="true". C'est la combinaison explicitement
+  // interdite par WCAG : on tabule dans un menu invisible.
+  // `inert` est posé en impératif car React 18 ne connaît pas encore l'attribut.
+  const drawerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = drawerRef.current;
+    if (!el) return;
+    if (open) el.removeAttribute("inert");
+    else el.setAttribute("inert", "");
+  }, [open]);
+
   // Lock body scroll quand drawer ouvert
   useEffect(() => {
     if (!open) return;
@@ -104,6 +118,7 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
     <>
       {open && <div className="lb-scrim" onClick={onClose} aria-hidden="true" />}
       <aside
+        ref={drawerRef}
         className="lb-drawer"
         role="dialog"
         aria-modal="true"
