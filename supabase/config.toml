@@ -1,0 +1,61 @@
+# =============================================================================
+# Réglages par fonction — la vérification du jeton, écrite dans le dépôt.
+#
+# POURQUOI CE FICHIER EXISTE (2026-08-10)
+# `verify_jwt` vivait uniquement dans le projet Supabase, invisible depuis le
+# code. En redéployant cinq fonctions avec un `--no-verify-jwt` appliqué au lot
+# sans vérifier leur réglage d'origine, j'ai ouvert trois endpoints qui
+# exigeaient un jeton — dont `notify-club-booking-moved`, qui répondait 401
+# quelques heures plus tôt. Rien dans le dépôt ne pouvait le signaler, et un
+# `deploy` sans drapeau ne restaure pas la valeur : il conserve l'existante.
+#
+# Déclaré ici, le réglage est relu à chaque déploiement. Une modification passe
+# donc par une relecture de diff, comme n'importe quel changement de sécurité.
+#
+# ⚠ Ce n'est PAS la sécurité elle-même : le contrôle d'accès réel reste RLS +
+# les vérifications faites dans chaque fonction. `verify_jwt` ne fait que
+# refuser à la porte ce qui n'a aucun jeton.
+#
+# RÈGLE : `false` uniquement si un appelant SANS jeton doit pouvoir entrer —
+# une page publique, un webhook d'un tiers. Sinon on ne met rien (défaut vrai).
+# =============================================================================
+
+# ── Ouvertes, et c'est voulu ────────────────────────────────────────────────
+# Pages publiques : le visiteur n'a aucun compte.
+[functions.book-rdv]
+verify_jwt = false
+
+[functions.book-club-discovery]
+verify_jwt = false
+
+[functions.manage-club-booking]
+verify_jwt = false  # le lead gère son RDV depuis son email — l'auth est le jeton de l'URL
+
+[functions.create-club-card-payment]
+verify_jwt = false  # achat d'une carte depuis le site du club
+
+# Webhook Square : l'authentification EST la signature HMAC, vérifiée dedans.
+[functions.square-payment-webhook]
+verify_jwt = false
+
+[functions.create-payment-link]
+verify_jwt = false
+
+[functions.confirm-stripe-payment]
+verify_jwt = false
+
+# ── Fermées : tous les appelants portent déjà un jeton ──────────────────────
+# Déclencheur Postgres (pg_net, clé de service).
+[functions.rdv-confirm-client]
+verify_jwt = true
+
+# Cron (pg_net, clé de service).
+[functions.client-rdv-reminder]
+verify_jwt = true
+
+# Front coach authentifié — JWT du coach, re-contrôlé dans la fonction.
+[functions.notify-club-booking-moved]
+verify_jwt = true
+
+[functions.create-manual-payment-link]
+verify_jwt = true
