@@ -300,7 +300,7 @@ export function ConversationView() {
             width: 40,
             height: 40,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, #2DD4BF, #2DD4BF)",
+            background: "linear-gradient(135deg, #2DD4BF, #0D9488)",
             color: "#0B0D11",
             display: "flex",
             alignItems: "center",

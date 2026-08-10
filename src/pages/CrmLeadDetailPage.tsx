@@ -648,7 +648,7 @@ export function CrmLeadDetailPage() {
                   const msg = `Coucou ${lead.firstName} 🌿 j'ai préparé ta page perso avec ton bilan complet et le programme qu'on a vu ensemble. Tout est ici (tu peux même démarrer directement) 👉 ${link}\n\nDis-moi si tu as la moindre question, je suis là 💛\n${msgCtx.coachFirstName}`;
                   return (
                     <>
-                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #8b5cf6)")}>
+                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #A78BFA)")}>
                         👁️ Voir la page (vérif)
                       </a>
                       <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-teal)")}>

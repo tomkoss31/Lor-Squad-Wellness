@@ -49,7 +49,7 @@ html:not(.theme-light) .lr,
   --ls-rentab-gold-soft: #E2C878;
   --ls-rentab-teal: #2DD4BF;
   --ls-rentab-teal-soft: #5EEAD4;
-  --ls-rentab-purple: #8B5CF6;
+  --ls-rentab-purple: #A78BFA;
   --ls-rentab-purple-soft: #A78BFA;
   --ls-rentab-coral: #F2775F;
   --ls-rentab-coral-soft: #FDA4AF;
@@ -64,8 +64,8 @@ html:not(.theme-light) .lr,
   --ls-rentab-line: rgba(244, 241, 234, 0.08);
   --ls-rentab-line-2: rgba(244, 241, 234, 0.14);
 
-  --ls-rentab-purple-tint: rgba(139, 92, 246, 0.12);
-  --ls-rentab-purple-tint-2: rgba(139, 92, 246, 0.18);
+  --ls-rentab-purple-tint: rgba(167, 139, 250, 0.12);
+  --ls-rentab-purple-tint-2: rgba(167, 139, 250, 0.18);
   --ls-rentab-teal-tint: rgba(45, 212, 191, 0.10);
   --ls-rentab-gold-tint: rgba(201, 168, 76, 0.10);
   --ls-rentab-coral-tint: rgba(242, 119, 95, 0.12);

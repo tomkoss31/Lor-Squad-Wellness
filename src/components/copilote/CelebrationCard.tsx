@@ -318,7 +318,7 @@ const actionsStyle: React.CSSProperties = {
 
 const btnPrimaryStyle: React.CSSProperties = {
   background:
-    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+    "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%))",
   color: "white",
   border: "none",
   padding: "8px 14px",
@@ -328,7 +328,7 @@ const btnPrimaryStyle: React.CSSProperties = {
   cursor: "pointer",
   fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   letterSpacing: "0.01em",
-  boxShadow: "0 4px 12px -4px color-mix(in srgb, #10B981 50%, transparent)",
+  boxShadow: "0 4px 12px -4px color-mix(in srgb, #2DD4BF 50%, transparent)",
   transition: "transform 0.18s ease, filter 0.18s ease",
 };
 

@@ -1129,7 +1129,7 @@ function RouteLoadingScreen() {
               height: 80,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(6,182,212,0.20) 40%, transparent 70%)",
+                "radial-gradient(circle, rgba(45, 212, 191,0.35) 0%, rgba(45, 212, 191,0.20) 40%, transparent 70%)",
               transform: "translate(-50%, -50%)",
               filter: "blur(8px)",
               animation: "lb360-route-halo 1.4s ease-in-out infinite",
