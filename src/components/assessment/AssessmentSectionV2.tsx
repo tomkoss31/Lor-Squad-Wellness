@@ -59,6 +59,19 @@ export function AssessmentSectionV2({
   const accentColor = ACCENT_COLORS[accent];
 
   return (
+    <>
+      {/* Audit mobile 2026-08-10 : `padding: 26px 28px 28px` mangeait 56 px de
+          LARGEUR sur un écran de 375 — les champs n'avaient plus la place de
+          tenir à deux par rangée — et 54 px de hauteur par section, sur trois
+          sections par étape. Ici on rend la largeur aux champs et on resserre
+          les respirations. Au-delà de 767 px, rien ne bouge. */}
+      <style>{`
+        @media (max-width: 767px) {
+          .ls-section-v2 { padding: 18px 15px 20px !important; border-radius: 18px !important; }
+          .ls-section-v2 .ls-section-v2__tete { margin-bottom: 15px !important; }
+          .ls-section-v2 .ls-section-v2__corps { gap: 15px !important; }
+        }
+      `}</style>
     <section
       data-tour-id={dataTourId}
       className="ls-section-v2"
@@ -102,6 +115,7 @@ export function AssessmentSectionV2({
 
       {/* Header : eyebrow + titre + description */}
       <header
+        className="ls-section-v2__tete"
         style={{
           position: "relative",
           marginBottom: 22,
@@ -170,9 +184,10 @@ export function AssessmentSectionV2({
       </header>
 
       {/* Contenu */}
-      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="ls-section-v2__corps" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 20 }}>
         {children}
       </div>
     </section>
+    </>
   );
 }
