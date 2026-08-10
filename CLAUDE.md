@@ -214,6 +214,34 @@ doit toujours builder.
 
 ---
 
+## ⚠️ Le dossier `api/` est plafonné — 13 fonctions (2026-08-10)
+
+**Avant d'ajouter un fichier dans `api/`, compter ce qu'il y a déjà.**
+Vercel plan **Hobby** : 13 fonctions passent, **14 échoue** au déploiement
+(`exceeded_serverless_functions_per_deployment`). On est **au plafond**.
+
+> **Le `npm run build` local ne peut PAS attraper ça** : la limite est
+> appliquée par la plateforme **après** le build. Build vert ≠ deploy vert.
+
+Trois issues quand une nouvelle route est nécessaire :
+
+1. **Contenu statique** (balises Open Graph d'une page qui ne bouge pas) →
+   un fichier dans `public/` + une réécriture bot dans `vercel.json`.
+   Zéro fonction, zéro démarrage à froid. Cf. `public/club-meta.html`.
+2. **Vraiment dynamique** → regrouper d'abord les **6 `admin-*`** (1 240 L,
+   toutes appelées depuis le seul `supabaseService.ts`) derrière un routeur
+   `action`, logique déplacée dans `api/_lib/` — **le préfixe `_` fait que
+   Vercel ne les compte pas**. Le motif existe déjà : `admin-repair-user`
+   route `action:lookup|promote` (il a absorbé `admin-promote-member`).
+   Gain : 13 → 8. Plan détaillé : `docs/audits/AUDIT_FONCTIONS_VERCEL_2026-08-10.md`.
+3. **Sinon** → plan Pro.
+
+⚠️ `api/runtime-config.ts` (14 lignes) est la plus petite donc la plus
+tentante à supprimer : **ne pas y toucher**, elle sert les identifiants
+Supabase au navigateur quand les variables de build manquent.
+
+---
+
 ## 🖥 Infrastructure — la prod tient sur une `t4g.nano` (incident du 2026-07-29)
 
 **Panne de 2 h 45 un mardi matin : plus personne ne pouvait se connecter.**
