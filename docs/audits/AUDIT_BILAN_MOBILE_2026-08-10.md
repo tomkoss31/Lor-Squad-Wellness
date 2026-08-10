@@ -263,11 +263,63 @@ rupture d'identité, pas une amélioration.
 
 ---
 
-## 6. Ce qui reste ouvert
+## 6. Lot 5 — l'étape 11, le panier composé à l'aveugle (`2f8abb0`)
 
-- **Étape 11 à 5240 px** reste la plus longue de loin. Le catalogue produit y
-  pèse 2581 px à lui seul. C'est l'écran qui décide du panier — il mérite son
-  propre chantier, pas une retouche.
+Maquette validée : deux décisions, périmètre **téléphone ET tablette**.
+
+### Le diagnostic
+
+| | iPhone 375 | iPad 768 |
+|---|---|---|
+| Page | 5247 px | 4050 px |
+| **Le panier commence à** | **82 %** | **69 %** |
+
+Le panier est en fin de flux. Il porte bien `position: sticky`, mais **coller un
+bloc en fin de conteneur ne le fait jamais remonter** : il se fige seulement une
+fois qu'on est arrivé dessus. Et la colonne latérale du bureau ne démarre qu'à
+**1280 px** (`xl`) — donc sous ce seuil, iPad compris, le coach compose le ticket
+sans jamais voir le total.
+
+### Décision 1 — les cinq prix se comparent
+
+Choisir un programme, c'est comparer quatre prix. Les cartes ne le permettaient à
+aucune largeur : **5 empilées à 375 px, 2+2+1 à 479 px** (la cinquième
+orpheline), **4+1 à 768 px**. Nouveau `ProgramChoiceList` : une ligne par
+programme, prix alignés dans une même colonne, chiffres à chasse fixe, et le
+programme retenu se déplie pour lister les produits de sa routine.
+
+    hauteur du bloc   1478 px  →  387 px (iPhone) · 369 px (iPad)
+
+### Décision 2 — le total ne quitte plus l'écran
+
+Le panier remonte dans la barre de navigation, au-dessus de « Suivante ». Le
+montant bouge à chaque ajout ; un tap ouvre le détail ligne à ligne. La barre
+passe de 56 à **101 px sur cet écran seulement** — la ligne panier doit faire
+44 px, c'est un vrai bouton.
+
+Le calcul reste à **un seul endroit** : `panierProgramme` porte le total (qui
+alimentait déjà l'encaissement Stripe) et expose désormais ses lignes. La barre
+rend les mêmes données que le ticket, elle ne les recalcule pas.
+
+### Le seuil
+
+`md` → `xl` sur la barre tactile, la navigation bureau et la colonne panier.
+Sans ça l'iPad affichait **deux navigations à la fois**. Vérifié à 1440 px :
+cartes, colonne collante et navigation bureau intactes.
+
+    page étape 11   5247 → 4300 px (iPhone)   ·   4050 → 3523 px (iPad)
+
+---
+
+## 7. Ce qui reste ouvert
+
+- **La passe bureau** (≥ 1280 px), à faire une fois la recette mobile validée.
+  À y regarder : les cartes programme y restent pertinentes, mais la liste
+  comparable pourrait s'y défendre aussi.
+- **Le rail tablette pèse encore 147 px** (la version condensée), contre 41 px
+  sur téléphone. Volontairement laissé : l'iPad a la place. À trancher avec la
+  passe bureau.
+- **La section « Pour aller plus loin » à 1590 px** n'a pas été touchée.
 - **Un service worker périmé peut servir une coquille obsolète** après un
   déploiement : rencontré pendant la recette, l'app restait bloquée sur
   « Le club s'allume… ». `navigator.serviceWorker.getRegistrations()` puis
