@@ -18,6 +18,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { deleteCalendarEvent } from "../_shared/googleCalendar.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -121,7 +122,7 @@ serve(async (req: Request) => {
 
   const { data: booking, error: bErr } = await sb
     .from("rdv_bookings")
-    .select("id, first_name, slot_start, slot_end, status, people_count, partner_first_name, club_id")
+    .select("id, first_name, slot_start, slot_end, status, people_count, partner_first_name, club_id, google_event_id")
     .eq("manage_token", token)
     .maybeSingle();
 
@@ -175,6 +176,24 @@ serve(async (req: Request) => {
   if (action === "cancel") {
     const { error } = await sb.from("rdv_bookings").update({ status: "canceled" }).eq("id", b.id);
     if (error) return json({ success: false, error: "cancel_failed" }, 500);
+
+    // L'événement disparaît aussi de l'agenda Google de l'équipe. Sans ça, la
+    // place se rouvrait côté site mais la journée restait bloquée côté agenda —
+    // le coach aurait vu un rendez-vous que plus personne n'honore.
+    // Best-effort : l'annulation est déjà enregistrée, on ne la refuse pas si
+    // Google répond mal.
+    if (b.google_event_id) {
+      try {
+        const del = await deleteCalendarEvent(b.google_event_id as string);
+        if (del.ok) {
+          await sb.from("rdv_bookings").update({ google_event_id: null }).eq("id", b.id);
+        } else if (del.reason && del.reason !== "not_configured") {
+          console.warn(`[manage-club-booking] suppression agenda KO : ${del.reason}`);
+        }
+      } catch (_e) {
+        // agenda best-effort
+      }
+    }
 
     await notifyStaff(
       sb,

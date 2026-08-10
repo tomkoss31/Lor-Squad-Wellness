@@ -27,6 +27,7 @@ import {
   jsonResponse,
 } from "../_shared/push.ts";
 import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
+import { createCalendarEvent } from "../_shared/googleCalendar.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
@@ -229,6 +230,45 @@ serve(async (req: Request) => {
   });
   if (bookErr) return jsonResponse({ success: false, error: "insert_failed", detail: bookErr.message }, 500);
   if (!bookingId) return jsonResponse({ success: false, error: "creneau_pris" }, 409);
+
+  // 2b. Agenda Google de l'équipe — le rendez-vous s'y pose tout seul.
+  // BEST-EFFORT, comme le push et les mails : la réservation est DÉJÀ
+  // enregistrée, une panne d'agenda ne doit rien casser. Si le secret n'est pas
+  // configuré, createCalendarEvent renvoie simplement ok:false sans rien tenter.
+  // On mémorise l'id : c'est lui qui permettra de retirer l'événement si le
+  // prospect annule (sinon on saurait poser, jamais retirer).
+  try {
+    const fullNameCal = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+    const cal = await createCalendarEvent({
+      summary: `RDV découverte — ${fullNameCal}${peopleCount === 2 ? " +1" : ""}`,
+      description: [
+        `Objectif : ${objectifLabel(objectif)}`,
+        contact ? `Email : ${contact}` : null,
+        phone ? `Téléphone : ${phone}` : null,
+        city ? `Ville : ${city}` : null,
+        peopleCount === 2
+          ? `Vient à deux${partner ? ` avec ${partner}${partnerLast ? " " + partnerLast : ""}` : ""}`
+          : null,
+        "",
+        "Réservé depuis le site du club.",
+      ].filter((l) => l !== null).join("\n"),
+      location: `11 rue Saint Pierre, ${String((club.city as string) ?? "Verdun").trim() || "Verdun"}`,
+      start: slotStart,
+      end: slotEnd,
+    });
+    if (cal.ok && cal.eventId) {
+      await sb.from("rdv_bookings")
+        .update({ google_event_id: cal.eventId })
+        .eq("id", bookingId as string);
+    } else if (cal.reason && cal.reason !== "not_configured") {
+      // Un échec silencieux serait le pire cas : on ne saurait jamais que
+      // l'agenda a décroché. « not_configured » est normal tant que le secret
+      // n'est pas posé, on ne bruite pas pour ça.
+      console.warn(`[book-club-discovery] agenda Google KO : ${cal.reason}`);
+    }
+  } catch (_e) {
+    // agenda best-effort — la résa est déjà enregistrée
+  }
 
   // Les coachs du club = les admins actifs. Servent UNIQUEMENT au push (3).
   // Le mail de lead, lui, ne part plus qu'à la boîte partagée (« sinon on
