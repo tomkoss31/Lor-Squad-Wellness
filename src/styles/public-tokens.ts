@@ -42,7 +42,7 @@ export const PUBLIC_TOKENS = {
   tealDark: "#0F766E",
   violet: "#A78BFA",
   violetDark: "#7C3AED",
-  coral: "#FB7185",
+  coral: "#F2775F",
   gold: "var(--ls-teal)",
   goldSoft: "#E5C97D",
   emerald: "#34D399",

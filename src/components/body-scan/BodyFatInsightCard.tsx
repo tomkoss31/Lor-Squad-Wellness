@@ -202,7 +202,7 @@ function GaugeLegendChip({
         ? { rgb: "201,168,76", hex: "var(--ls-teal)" }
         : tone === "amber"
           ? { rgb: "245,158,11", hex: "#F59E0B" }
-          : { rgb: "251,113,133", hex: "var(--ls-coral)" };
+          : { rgb: "242,119,95", hex: "var(--ls-coral)" };
 
   return (
     <div
@@ -284,7 +284,7 @@ function BodyFatProgressChart({
         <svg viewBox={`0 0 ${width} ${height}`} className="h-28 w-full overflow-visible">
           <defs>
             <linearGradient id="body-fat-line" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#fb7185" />
+              <stop offset="0%" stopColor="#F2775F" />
               <stop offset="100%" stopColor="#fdba74" />
             </linearGradient>
           </defs>

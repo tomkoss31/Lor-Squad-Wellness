@@ -183,8 +183,8 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
 
         {error && (
           <div style={{
-            background: "rgba(251,113,133,0.08)", border: "1px solid rgba(251,113,133,0.2)",
-            borderRadius: 10, padding: "10px 14px", color: "#FB7185", fontSize: 13, marginTop: 16
+            background: "rgba(242,119,95,0.08)", border: "1px solid rgba(242,119,95,0.2)",
+            borderRadius: 10, padding: "10px 14px", color: "#F2775F", fontSize: 13, marginTop: 16
           }}>
             {error}
           </div>

@@ -82,7 +82,7 @@ export function ClientXpBanner({ token }: Props) {
           width: 120,
           height: 120,
           background:
-            "radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(45, 212, 191,0.18) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -104,13 +104,13 @@ export function ClientXpBanner({ token }: Props) {
             height: 48,
             borderRadius: 14,
             background:
-              "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 26,
             boxShadow:
-              "0 4px 14px rgba(16,185,129,0.30), inset 0 1px 0 rgba(255,255,255,0.5)",
+              "0 4px 14px rgba(45, 212, 191,0.30), inset 0 1px 0 rgba(255,255,255,0.5)",
             flexShrink: 0,
           }}
         >
@@ -122,7 +122,7 @@ export function ClientXpBanner({ token }: Props) {
               fontSize: 9,
               letterSpacing: 1.8,
               textTransform: "uppercase",
-              color: "#10B981",
+              color: "#2DD4BF",
               fontWeight: 700,
               marginBottom: 2,
             }}
@@ -145,14 +145,14 @@ export function ClientXpBanner({ token }: Props) {
         <div
           style={{
             background:
-              "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             color: "white",
             padding: "8px 14px",
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 800,
             fontFamily: "Sora, system-ui, sans-serif",
-            boxShadow: "0 4px 12px rgba(16,185,129,0.30)",
+            boxShadow: "0 4px 12px rgba(45, 212, 191,0.30)",
             flexShrink: 0,
           }}
         >
@@ -184,7 +184,7 @@ export function ClientXpBanner({ token }: Props) {
         <div
           style={{
             height: 10,
-            background: "rgba(16,185,129,0.10)",
+            background: "rgba(45, 212, 191,0.10)",
             borderRadius: 5,
             overflow: "hidden",
             boxShadow: "inset 0 1px 2px rgba(0,0,0,0.10)",
@@ -195,9 +195,9 @@ export function ClientXpBanner({ token }: Props) {
               width: `${pct}%`,
               height: "100%",
               background:
-                "linear-gradient(90deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                "linear-gradient(90deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
               transition: "width 700ms cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 0 10px rgba(16,185,129,0.45)",
+              boxShadow: "0 0 10px rgba(45, 212, 191,0.45)",
             }}
           />
         </div>
@@ -240,7 +240,7 @@ export function ClientXpBanner({ token }: Props) {
               fontSize: 10,
               letterSpacing: 1.4,
               textTransform: "uppercase",
-              color: "#10B981",
+              color: "#2DD4BF",
               fontWeight: 700,
               marginBottom: 8,
             }}
@@ -260,10 +260,10 @@ export function ClientXpBanner({ token }: Props) {
                     gap: 8,
                     padding: "5px 9px",
                     background: isCurrent
-                      ? "rgba(16,185,129,0.08)"
+                      ? "rgba(45, 212, 191,0.08)"
                       : "rgba(255,255,255,0.5)",
                     border: isCurrent
-                      ? "0.5px solid rgba(16,185,129,0.50)"
+                      ? "0.5px solid rgba(45, 212, 191,0.50)"
                       : "0.5px solid #E2E8F0",
                     borderRadius: 7,
                     opacity: isReached ? 1 : 0.5,
@@ -312,7 +312,7 @@ export function ClientXpBanner({ token }: Props) {
                       fontSize: 10,
                       letterSpacing: 1.4,
                       textTransform: "uppercase",
-                      color: "#10B981",
+                      color: "#2DD4BF",
                       fontWeight: 700,
                       marginBottom: 6,
                     }}
@@ -360,7 +360,7 @@ export function ClientXpBanner({ token }: Props) {
                             fontFamily: "Sora, system-ui, sans-serif",
                             fontSize: 12,
                             fontWeight: 700,
-                            color: "#10B981",
+                            color: "#2DD4BF",
                             flexShrink: 0,
                           }}
                         >

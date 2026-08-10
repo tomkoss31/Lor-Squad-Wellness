@@ -623,7 +623,7 @@ function TestimonialCard({
         color: "var(--ls-text)",
         lineHeight: 1.55,
         whiteSpace: "pre-wrap",
-        background: "var(--ls-surface-2)",
+        background: "var(--ls-surface2)",
         padding: 12,
         borderRadius: 10,
         border: "1px solid var(--ls-border)",

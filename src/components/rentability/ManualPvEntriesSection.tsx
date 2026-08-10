@@ -746,7 +746,7 @@ const primaryBtnStyle: React.CSSProperties = {
   padding: "9px 16px",
   borderRadius: 10,
   border: "none",
-  background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+  background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
   color: "#FFFFFF",
   fontFamily: "Sora, system-ui, sans-serif",
   fontSize: 12,

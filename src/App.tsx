@@ -720,6 +720,7 @@ import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
 import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
+import { LogoMark } from "./components/brand/LogoMark";
 
 export default function App() {
   useTheme()
@@ -1128,27 +1129,24 @@ function RouteLoadingScreen() {
               height: 80,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(6,182,212,0.20) 40%, transparent 70%)",
+                "radial-gradient(circle, rgba(45, 212, 191,0.35) 0%, rgba(45, 212, 191,0.20) 40%, transparent 70%)",
               transform: "translate(-50%, -50%)",
               filter: "blur(8px)",
               animation: "lb360-route-halo 1.4s ease-in-out infinite",
             }}
           />
           {/* Logo orbe pulsant */}
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt="Chargement…"
+          <LogoMark
+            size={56}
+            title="Chargement…"
             className="lb360-route-anim"
             style={{
               position: "relative",
-              width: 56,
-              height: 56,
-              borderRadius: 14,
               top: 12,
               left: 12,
               animation: "lb360-route-heartbeat 1.4s ease-in-out infinite",
               willChange: "transform, opacity",
-              filter: "drop-shadow(0 4px 12px rgba(16,185,129,0.30))",
+              filter: "drop-shadow(0 4px 12px rgba(45,212,191,0.30))",
             }}
           />
         </div>

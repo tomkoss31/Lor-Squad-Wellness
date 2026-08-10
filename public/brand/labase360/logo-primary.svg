@@ -1,54 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-  <defs>
-    <linearGradient id="vitalFusion" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10B981"/>
-      <stop offset="50%" stop-color="#06B6D4"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
-    </linearGradient>
-    <linearGradient id="topShine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.35)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </linearGradient>
-    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
-      <feOffset dx="0" dy="8" result="offsetblur"/>
-      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <!-- Cercle principal (centré dans 600x600 avec marge pour pastille) -->
-  <!-- Cercle = 440px, centré à (260, 320) pour laisser place à pastille en haut-droite -->
-  <circle cx="260" cy="320" r="220" fill="url(#vitalFusion)" filter="url(#dropShadow)"/>
-
-  <!-- Reflet brillant haut -->
-  <ellipse cx="260" cy="190" rx="170" ry="60" fill="url(#topShine)"/>
-
-  <!-- Lettre B blanche, centrée dans le cercle -->
-  <text x="260" y="395"
-        font-family="Sora, sans-serif"
-        font-weight="700"
-        font-size="280"
-        fill="#FFFFFF"
-        text-anchor="middle"
-        letter-spacing="-15">B</text>
-
-  <!-- Pastille "360" en haut-droite, ENTIÈREMENT VISIBLE dans le viewBox -->
-  <!-- Centre pastille à (470, 130), taille 130x70 -->
-  <g transform="translate(470, 130) rotate(8)">
-    <rect x="-70" y="-35" width="140" height="70" rx="20"
-          fill="#FFFFFF"
-          filter="url(#dropShadow)"/>
-    <text x="0" y="14"
-          font-family="Sora, sans-serif"
-          font-weight="600"
-          font-size="42"
-          font-style="italic"
-          fill="url(#vitalFusion)"
-          text-anchor="middle"
-          letter-spacing="2">360</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="La Base 360">
+  <!-- Pastille : fond vert profond de la charte. INDISPENSABLE — le monogramme
+       a un B blanc, il serait invisible posé sur une surface claire (sidebar en
+       thème clair, page blanche). Le mark à fond transparent est dans
+       logo-mark.svg, à n'utiliser que sur un fond sombre maîtrisé. -->
+  <rect width="200" height="200" rx="44" fill="#162624"/>
+  <g transform="translate(24 24) scale(0.76)">
+    <path d="M 176.3 71.6 A 80 80 0 1 1 128.3 23.6" fill="none" stroke="#2DD4BF" stroke-width="13" stroke-linecap="round"/>
+    <rect x="-24" y="-6.5" width="48" height="13" rx="6.5" fill="#C5F82A" transform="translate(159 41) rotate(-45)"/>
+    <path fill-rule="evenodd" fill="#FFFFFF" d="M 66 52 L 111 52 C 131 52 144 63.5 144 77 C 144 88 137 95.5 127 99.5 C 139.5 103 149 112.5 149 126 C 149 140.5 135 151 113 151 L 66 151 Z M 87 70 L 87 91 L 109 91 C 118.5 91 124 86.5 124 80.5 C 124 74.5 118.5 70 109 70 Z M 87 110 L 87 133 L 112 133 C 122 133 128 128 128 121.5 C 128 115 122 110 112 110 Z"/>
   </g>
 </svg>

@@ -239,7 +239,7 @@ export function ResetPasswordPage() {
               style={{
                 marginTop: 14,
                 width: "100%",
-                background: "linear-gradient(135deg, #c5f82a, #c5f82a)",
+                background: "linear-gradient(135deg, #c5f82a, #6D8C0B)",
                 color: "#0a0c0a",
                 border: "none",
                 borderRadius: 12,
@@ -333,7 +333,7 @@ export function ResetPasswordPage() {
                 type="submit"
                 disabled={phase === "updating"}
                 style={{
-                  background: "linear-gradient(135deg, #c5f82a, #c5f82a)",
+                  background: "linear-gradient(135deg, #c5f82a, #6D8C0B)",
                   color: "#0a0c0a",
                   border: "none",
                   borderRadius: 12,

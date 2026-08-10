@@ -121,7 +121,7 @@ export function PinAWTCinematic({
               letterSpacing: "-0.07em",
               // Gradient G3 tres subtil sur le 360 — visible sans dominer.
               background:
-                "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+                "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%))",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               color: "transparent",

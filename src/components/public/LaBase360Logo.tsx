@@ -8,14 +8,20 @@
 // dupliquer les URLs en dur.
 //
 // Deux variants disponibles :
-//   - "mark"       → carré gradient seul (Vital Fusion emerald→cyan→violet)
-//                    avec lettre B + pastille 360. Idéal pour eyebrows, cards,
-//                    coach cards (remplace l'avatar initiales).
-//   - "horizontal" → version horizontale (logo + wordmark côte à côte).
-//                    Idéal pour headers / footers.
+//   - "mark"       → le monogramme : B blanc plein dans un anneau teal ouvert
+//                    en haut à droite + barre lime à 45°. Idéal pour eyebrows,
+//                    cards, coach cards (remplace l'avatar initiales).
+//   - "horizontal" → historiquement le lockup logo + wordmark. ⚠️ N'est
+//                    utilisé NULLE PART aujourd'hui, et sert le même fichier
+//                    que "mark". Le lockup avec texte se compose en HTML
+//                    (mark + vrai Anton), jamais en SVG : un SVG chargé en
+//                    <img> n'hérite pas des polices de la page.
 //
-// Fallback gracieux : si le fichier ne charge pas (404), affiche un cercle
-// gradient teal→violet vide. Jamais d'image cassée.
+// Fallback gracieux : si le fichier ne charge pas (404), affiche une pastille
+// teal pleine. Jamais d'image cassée.
+//
+// Logo mis à jour le 2026-08-09 (charte docs/IDENTITE-GRAPHIQUE.md). L'ancien
+// dégradé émeraude→cyan→violet est abandonné — ne pas le réintroduire.
 // =============================================================================
 
 import { useState } from "react";
@@ -51,8 +57,9 @@ export function LaBase360Logo({
   const px = size ?? (variant === "horizontal" ? 36 : 48);
 
   if (errored) {
-    // Fallback : cercle gradient teal→violet pour ne JAMAIS afficher
-    // d'image cassée. Respecte la palette brand publique.
+    // Fallback : pastille teal pour ne JAMAIS afficher d'image cassée.
+    // Palette de la charte 2026-08 (le dégradé émeraude→cyan→violet de
+    // l'ancienne identité a été retiré avec le reste du doré/violet).
     return (
       <div
         className={className}
@@ -62,7 +69,7 @@ export function LaBase360Logo({
           width: px,
           height: px,
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+          background: "var(--ls-teal, #2DD4BF)",
           flexShrink: 0,
           ...style,
         }}

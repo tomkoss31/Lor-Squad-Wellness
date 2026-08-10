@@ -104,12 +104,12 @@ export function ProspectFormModal({ open, onClose }: Props) {
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)",
-          border: "1px solid color-mix(in srgb, #10B981 20%, transparent)",
+          border: "1px solid color-mix(in srgb, #2DD4BF 20%, transparent)",
           borderRadius: 22,
           maxWidth: 480,
           width: "100%",
           padding: 28,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 8px 24px rgba(16,185,129,0.12)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 8px 24px rgba(45, 212, 191,0.12)",
           fontFamily: "Inter, sans-serif",
           color: "var(--ls-text)",
           position: "relative",
@@ -125,7 +125,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
             right: -60,
             width: 240,
             height: 240,
-            background: "radial-gradient(circle, rgba(16,185,129,0.16), transparent 65%)",
+            background: "radial-gradient(circle, rgba(45, 212, 191,0.16), transparent 65%)",
             borderRadius: "50%",
             pointerEvents: "none",
           }}
@@ -138,7 +138,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
             left: -40,
             width: 200,
             height: 200,
-            background: "radial-gradient(circle, rgba(139,92,246,0.14), transparent 65%)",
+            background: "radial-gradient(circle, rgba(167, 139, 250,0.14), transparent 65%)",
             borderRadius: "50%",
             pointerEvents: "none",
           }}
@@ -151,7 +151,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #10B981, #06B6D4)",
+                background: "linear-gradient(135deg, #2DD4BF, #C5F82A)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -159,7 +159,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 fontSize: 32,
                 color: "white",
                 fontWeight: 800,
-                boxShadow: "0 8px 24px rgba(16,185,129,0.35)",
+                boxShadow: "0 8px 24px rgba(45, 212, 191,0.35)",
               }}
             >
               ✓
@@ -196,14 +196,14 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 width: "100%",
                 padding: "13px 16px",
                 borderRadius: 12,
-                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
                 fontSize: 14,
                 fontWeight: 700,
                 fontFamily: "Sora, sans-serif",
-                boxShadow: "0 8px 22px rgba(16,185,129,0.32)",
+                boxShadow: "0 8px 22px rgba(45, 212, 191,0.32)",
               }}
             >
               Fermer
@@ -220,12 +220,12 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 fontSize: 11,
                 letterSpacing: "1.4px",
                 textTransform: "uppercase",
-                color: "#10B981",
+                color: "#2DD4BF",
                 fontWeight: 700,
                 padding: "5px 12px",
                 borderRadius: 999,
-                background: "color-mix(in srgb, #10B981 12%, transparent)",
-                border: "0.5px solid color-mix(in srgb, #10B981 24%, transparent)",
+                background: "color-mix(in srgb, #2DD4BF 12%, transparent)",
+                border: "0.5px solid color-mix(in srgb, #2DD4BF 24%, transparent)",
                 marginBottom: 14,
               }}
             >
@@ -234,8 +234,8 @@ export function ProspectFormModal({ open, onClose }: Props) {
                   width: 6,
                   height: 6,
                   borderRadius: "50%",
-                  background: "#10B981",
-                  boxShadow: "0 0 0 4px color-mix(in srgb, #10B981 22%, transparent)",
+                  background: "#2DD4BF",
+                  boxShadow: "0 0 0 4px color-mix(in srgb, #2DD4BF 22%, transparent)",
                 }}
               />
               Rejoindre l&apos;aventure
@@ -254,7 +254,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
               Et si tu transformais ce que tu fais déjà en{" "}
               <span
                 style={{
-                  background: "linear-gradient(120deg, #10B981, #06B6D4 55%, #8B5CF6)",
+                  background: "linear-gradient(120deg, #2DD4BF, #2DD4BF 55%, #C5F82A)",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   color: "transparent",
@@ -293,8 +293,8 @@ export function ProspectFormModal({ open, onClose }: Props) {
                     transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#10B981";
-                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                    e.currentTarget.style.borderColor = "#2DD4BF";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #2DD4BF 18%, transparent)";
                   }}
                   onBlur={(e) => {
                     e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -324,8 +324,8 @@ export function ProspectFormModal({ open, onClose }: Props) {
                     transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#10B981";
-                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                    e.currentTarget.style.borderColor = "#2DD4BF";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #2DD4BF 18%, transparent)";
                   }}
                   onBlur={(e) => {
                     e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -355,8 +355,8 @@ export function ProspectFormModal({ open, onClose }: Props) {
                     transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#10B981";
-                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                    e.currentTarget.style.borderColor = "#2DD4BF";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #2DD4BF 18%, transparent)";
                   }}
                   onBlur={(e) => {
                     e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -408,14 +408,14 @@ export function ProspectFormModal({ open, onClose }: Props) {
                   borderRadius: 12,
                   background: phase === "submitting"
                     ? "var(--ls-surface2)"
-                    : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                    : "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: phase === "submitting" ? "wait" : "pointer",
                   fontSize: 14,
                   fontWeight: 700,
                   fontFamily: "Sora, sans-serif",
-                  boxShadow: phase === "submitting" ? "none" : "0 8px 22px rgba(16,185,129,0.32)",
+                  boxShadow: phase === "submitting" ? "none" : "0 8px 22px rgba(45, 212, 191,0.32)",
                   transition: "transform 0.15s ease",
                 }}
               >

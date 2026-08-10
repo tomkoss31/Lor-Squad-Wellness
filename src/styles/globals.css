@@ -11,30 +11,30 @@
  * conserves pour ne pas casser les pages non-encore-rebrand.
  * ============================================================================= */
 :root {
-  --lb360-emerald:   #10B981;
-  --lb360-cyan:      #06B6D4;
-  --lb360-violet:    #8B5CF6;
+  --lb360-emerald:   #2DD4BF;
+  --lb360-cyan:      #2DD4BF;
+  --lb360-violet:    #A78BFA;
   --lb360-gold:      #0D9488;  /* doré abandonné 2026-08-05 → alias teal */
   --lb360-coral:     #D4537E;
-  --lb360-gradient:  linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+  --lb360-gradient:  linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%);
   --lb360-gradient-soft: linear-gradient(135deg, #F0FDF4 0%, #ECFEFF 50%, #F5F3FF 100%);
 
   /* Co-pilote V7 (chantier 2026-05-08) — gradients de cards tintees G3.
      Utilises pour la card rentabilite, les stats row pastels, etc.
      Suivent var(--ls-surface) automatiquement → bascule light/dark OK. */
   --lb360-card-emerald: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 9%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-cyan: linear-gradient(135deg,
-    color-mix(in srgb, #06B6D4 6%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 6%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-violet: linear-gradient(135deg,
-    color-mix(in srgb, #8B5CF6 9%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #A78BFA 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 100%);
   --lb360-card-rentab: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 7%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 50%,
-    color-mix(in srgb, #8B5CF6 7%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #2DD4BF 7%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 50%,
+    color-mix(in srgb, #A78BFA 7%, var(--ls-surface)) 100%);
 
   --lb360-white:     #FFFFFF;
   --lb360-mist:      #F8FAFC;
@@ -42,10 +42,10 @@
   --lb360-ink-soft:  #475569;
   --lb360-border:    #E2E8F0;
 
-  --lb360-success:   #10B981;
+  --lb360-success:   #2DD4BF;
   --lb360-warning:   #F59E0B;
   --lb360-danger:    #EF4444;
-  --lb360-info:      #06B6D4;
+  --lb360-info:      #2DD4BF;
 
   /* Typography stack — chantier Co-pilote V7 (2026-05-08).
      - --lb360-display       : titres UI / nombres (Sora 800)
@@ -99,7 +99,7 @@
    Le fond passe du noir bleuté (#0B0D11) au VERT PROFOND du club
    (#162624 / #1E3330 / #26403B, relevés sur thebreakfast-club.com) : plus doux
    à l'œil, et l'app devient visuellement la cousine du site du club.
-   Le coral s'adoucit (#FB7185 rose criard → #F2775F), on gagne le SAGE pour les
+   Le coral s'adoucit (#F2775F rose criard → #F2775F), on gagne le SAGE pour les
    états calmes. Teal, lime et violet ne bougent pas.
    ⚠️ On ne change QUE des valeurs : aucune mise en page, aucun composant. */
 :root {
@@ -146,6 +146,24 @@
   --ls-radius-lg: 16px;
   --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
   --ls-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+
+  /* ── TOKENS FANTÔMES — réparés le 2026-08-09 ────────────────────────────────
+     Ces variables étaient APPELÉES dans le code mais DÉFINIES NULLE PART. Le
+     repli de `var(--x, repli)` s'appliquait donc TOUJOURS — et ces replis ne
+     respectaient pas la charte. Le pire : 28 endroits (surtout l'Academy)
+     s'affichaient en system-ui / Georgia / monospace au lieu de DM Sans / Syne /
+     JetBrains Mono. Invisible en relisant le code, trouvé en comparant les
+     tokens utilisés aux tokens réellement déclarés.
+     ⚠️ Avant d'écrire var(--nouveau-token, …), vérifier qu'il existe ici. */
+  --ls-font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --ls-font-serif: "Syne", system-ui, sans-serif;   /* l'éditorial de la charte, pas Georgia */
+  --ls-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ls-cream: #FAF7F0;             /* le crème exact de la charte (le repli disait #FBF7F0) */
+  --ls-teal-dark: #0F766E;
+  --ls-charcoal: var(--ls-text);   /* toujours appelé comme une couleur de TEXTE */
+  --ls-actions-bg: var(--ls-surface);
+  --ls-surface-elevated: var(--ls-surface);
+  --ls-ops-coral: var(--ls-coral); /* le repli #E24B4A n'était pas le corail de la charte */
 
   /* ── Salle des Opérations (war-room onboarding distri) — namespace dédié, DARK.
      Palette de la maquette Claude Design validée (2026-06-29). Isolé du reste de
@@ -211,6 +229,8 @@ html.theme-light {
   --ls-purple-bg: rgba(109,40,217,0.1);
   --ls-input-bg: #F5F1EB;
   --ls-sidebar-bg: #FFFFFF;
+  /* Tokens fantômes réparés (cf. bloc :root) — variantes claires. */
+  --ls-teal-dark: #0D9488;
   /* UX Polish global (2026-04-20) : overrides light mode */
   --ls-gold-rgb: 184, 146, 42;
   --ls-teal-rgb: 13, 148, 136;
@@ -402,8 +422,8 @@ html.theme-light .border-gray-700 {
 /* Couleurs hardcodées texte accents → variables sémantiques */
 html.theme-light [style*="color: #2DD4BF"],
 html.theme-light [style*="color:#2DD4BF"] { color: var(--ls-teal) !important; }
-html.theme-light [style*="color: #FB7185"],
-html.theme-light [style*="color:#FB7185"] { color: var(--ls-coral) !important; }
+html.theme-light [style*="color: #F2775F"],
+html.theme-light [style*="color:#F2775F"] { color: var(--ls-coral) !important; }
 html.theme-light [style*="color: #C9A84C"],
 html.theme-light [style*="color:#C9A84C"] { color: var(--ls-teal) !important; }
 html.theme-light [style*="color: #A78BFA"],
@@ -559,7 +579,7 @@ html.theme-light nav {
 
 /* ═══ 7. BADGES URGENCE BIEN VISIBLES ═══ */
 html.theme-light [style*="color: #DC2626"][style*="border-radius: 10px"],
-html.theme-light [style*="color: #FB7185"][style*="border-radius: 10px"] {
+html.theme-light [style*="color: #F2775F"][style*="border-radius: 10px"] {
   background: rgba(220,38,38,0.1) !important;
   font-weight: 600 !important;
 }
@@ -2699,7 +2719,7 @@ html.theme-sunset {
   --ls-text-muted: #B89888;
   --ls-text-hint: #8B6F5A;
   --ls-gold: #F97316;
-  --ls-teal: #FB7185;
+  --ls-teal: #F2775F;
   --ls-coral: #DC2626;
   --ls-purple: #C084FC;
   --ls-input-bg: #3D2419;

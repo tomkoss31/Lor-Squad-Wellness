@@ -22,9 +22,9 @@ import { scoreOpportunityLead, type OpportunityScore } from "../lib/opportunityL
 import { buildPreEvaluation } from "../lib/opportunityPreEval";
 
 const C = {
-  emerald: "#10B981",
-  cyan: "#06B6D4",
-  violet: "#8B5CF6",
+  emerald: "#2DD4BF",
+  cyan: "#2DD4BF",
+  violet: "#A78BFA",
   ink: "#0B0D11",
   cream: "#F0EDE8",
   creamMuted: "rgba(240,237,232,0.62)",
@@ -625,8 +625,8 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     background:
-      "radial-gradient(ellipse at top, rgba(16,185,129,0.12) 0%, transparent 55%)," +
-      "radial-gradient(ellipse at bottom right, rgba(139,92,246,0.10) 0%, transparent 55%)," +
+      "radial-gradient(ellipse at top, rgba(45, 212, 191,0.12) 0%, transparent 55%)," +
+      "radial-gradient(ellipse at bottom right, rgba(167, 139, 250,0.10) 0%, transparent 55%)," +
       C.ink,
     color: C.cream,
     fontFamily: "Inter, system-ui, sans-serif",
@@ -639,7 +639,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: -80,
     width: 320,
     height: 320,
-    background: "radial-gradient(circle, rgba(16,185,129,0.16), transparent 65%)",
+    background: "radial-gradient(circle, rgba(45, 212, 191,0.16), transparent 65%)",
     pointerEvents: "none",
     filter: "blur(8px)",
   },
@@ -727,8 +727,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   optionSelected: {
     borderColor: C.emerald,
-    background: "color-mix(in srgb, #10B981 14%, transparent)",
-    boxShadow: "0 0 0 3px color-mix(in srgb, #10B981 16%, transparent)",
+    background: "color-mix(in srgb, #2DD4BF 14%, transparent)",
+    boxShadow: "0 0 0 3px color-mix(in srgb, #2DD4BF 16%, transparent)",
   },
   optionEmoji: { fontSize: 22, flexShrink: 0 },
   consent: {
@@ -753,7 +753,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "Sora, sans-serif",
     fontWeight: 700,
     fontSize: 16,
-    boxShadow: "0 10px 28px rgba(16,185,129,0.30)",
+    boxShadow: "0 10px 28px rgba(45, 212, 191,0.30)",
   },
   trustDone: { marginTop: 18, fontSize: 12.5, color: C.creamHint, textAlign: "center" },
   h1: {

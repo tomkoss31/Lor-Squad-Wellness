@@ -289,7 +289,7 @@ function KindPill({ kind }: { kind: ProspectionScriptKind }) {
     first_contact: { bg: "var(--ls-surface2)", color: "var(--ls-text-muted)", label: "1er contact" },
     j3_followup:   { bg: "#FEF3C7", color: "#92400E", label: "Relance J+3" },
     referral:      { bg: "rgba(45,212,191,0.15)", color: "#0F766E", label: "Après reco" },
-    pitch:         { bg: "rgba(139,92,246,0.15)", color: "#6D28D9", label: "Pitch" },
+    pitch:         { bg: "rgba(167, 139, 250,0.15)", color: "#6D28D9", label: "Pitch" },
     direct:        { bg: "rgba(45,212,191,0.10)", color: "#0F766E", label: "Direct" },
   };
   const c = colors[kind];

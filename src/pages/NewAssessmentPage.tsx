@@ -1715,7 +1715,16 @@ export function NewAssessmentPage() {
                     gap: 16,
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* ⚠️ `minWidth: 0` + `flex: 1` (donc flex-basis 0) faisait que ce
+                      bloc ne déclenchait JAMAIS le retour à la ligne de la rangée :
+                      sa largeur de référence valant 0, il se contentait de rétrécir.
+                      Sur iPhone (rangée de 265 px), la pastille « Parcours
+                      accompagnement » est en white-space:nowrap et prend 211 px →
+                      il restait 38 px au texte, qui s'affichait à un ou deux mots
+                      par ligne sur 272 px de haut. Mesuré, pas supposé.
+                      `flexBasis: 240px` force la pastille à passer à la ligne dès
+                      qu'il reste moins de 240 px. Aucun effet en desktop (large). */}
+                  <div style={{ flex: '1 1 240px', minWidth: 0 }}>
                     <p
                       className="ls-hero-eyebrow"
                       style={{
@@ -2121,7 +2130,7 @@ export function NewAssessmentPage() {
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
-                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-teal)', insuffisant: '#FB7185' }
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-teal)', insuffisant: '#F2775F' }
                   const color = qColors[quality]
                   return (
                     <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -2691,10 +2700,10 @@ export function NewAssessmentPage() {
                     size={280}
                     metrics={[
                       { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-teal)' },
-                      { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
+                      { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#F2775F' },
                       { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
                       { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
-                      { label: 'Viscéral', value: form.visceralFat, max: 30, color: '#FB7185' },
+                      { label: 'Viscéral', value: form.visceralFat, max: 30, color: '#F2775F' },
                     ]}
                   />
                 </Card>
@@ -3314,7 +3323,7 @@ export function NewAssessmentPage() {
                               transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -3391,7 +3400,7 @@ export function NewAssessmentPage() {
                           transition: "box-shadow 0.2s ease",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.boxShadow = "none";
@@ -3467,7 +3476,7 @@ export function NewAssessmentPage() {
                             transition: "box-shadow 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.boxShadow = "none";

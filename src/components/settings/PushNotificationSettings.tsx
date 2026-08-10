@@ -77,7 +77,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
         {[
-          { label: 'Relances en retard', desc: 'Clients à relancer immédiatement', color: '#FB7185' },
+          { label: 'Relances en retard', desc: 'Clients à relancer immédiatement', color: '#F2775F' },
           { label: 'RDV dans moins d\'1h', desc: 'Rappel avant le rendez-vous', color: '#2DD4BF' },
           { label: 'Réassorts PV dépassés', desc: 'Produits à renouveler', color: '#A78BFA' },
         ].map(n => (
@@ -92,7 +92,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
       </div>
 
       {denied ? (
-        <div style={{ background: 'var(--ls-coral-bg)', border: '1px solid rgba(251,113,133,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#FB7185', lineHeight: 1.6 }}>
+        <div style={{ background: 'var(--ls-coral-bg)', border: '1px solid rgba(242,119,95,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#F2775F', lineHeight: 1.6 }}>
           Les notifications ont été bloquées. Pour les réactiver, va dans les réglages de ton navigateur → Autorisations → Notifications.
         </div>
       ) : (
@@ -103,7 +103,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
             style={{
               width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
               background: subscribed ? 'var(--ls-coral-bg)' : 'var(--ls-teal)',
-              color: subscribed ? '#FB7185' : 'var(--ls-bg)',
+              color: subscribed ? '#F2775F' : 'var(--ls-bg)',
               fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 600,
               opacity: loading ? 0.6 : 1, transition: 'all 0.15s',
             }}
@@ -157,11 +157,11 @@ export function PushNotificationSettings({ userId, userName }: Props) {
             <div style={{
               marginTop: 10,
               background: 'var(--ls-coral-bg)',
-              border: '1px solid rgba(251,113,133,0.25)',
+              border: '1px solid rgba(242,119,95,0.25)',
               borderRadius: 10,
               padding: '10px 12px',
               fontSize: 11.5,
-              color: '#FB7185',
+              color: '#F2775F',
               lineHeight: 1.5,
               display: 'flex',
               alignItems: 'flex-start',
@@ -175,7 +175,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#FB7185',
+                  color: '#F2775F',
                   cursor: 'pointer',
                   padding: 0,
                   fontSize: 14,
