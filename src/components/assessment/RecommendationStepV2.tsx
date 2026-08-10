@@ -540,7 +540,7 @@ function ProspectCard({
             borderRadius: 999,
             background: accentColor,
             color: "var(--ls-bg)",
-            fontSize: 9,
+            fontSize: 11,
             fontWeight: 800,
             fontFamily: "DM Sans, sans-serif",
             letterSpacing: "0.08em",

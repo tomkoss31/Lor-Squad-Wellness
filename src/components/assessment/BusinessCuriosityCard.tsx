@@ -50,7 +50,9 @@ export function BusinessCuriosityCard({ value, onChange }: BusinessCuriosityCard
           }
           .ls-curiosite-choix .em { font-size: 18px !important; margin-bottom: 4px !important; }
           .ls-curiosite-choix .lab { font-size: 12px !important; }
-          .ls-curiosite-choix .ind { font-size: 10px !important; }
+          /* 11px minimum : c'est du texte courant, pas un sur-titre en
+             capitales. Descendre à 10 le rendait illisible au bras tendu. */
+          .ls-curiosite-choix .ind { font-size: 11px !important; line-height: 1.3 !important; }
           .ls-curiosite-choix .coche { top: 5px !important; right: 5px !important; }
         }
       `}</style>

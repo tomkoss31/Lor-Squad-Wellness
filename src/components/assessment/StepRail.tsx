@@ -448,7 +448,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                   </div>
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 11,
                       lineHeight: 1.25,
                       textAlign: "center",
                       maxWidth: 72,

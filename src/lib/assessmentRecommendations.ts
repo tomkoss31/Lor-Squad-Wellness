@@ -449,7 +449,7 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
         source.proteinEachMeal === "Non" ? 8 : musclePercent > 0 ? 7 : 6,
       reasonLabel:
         source.proteinEachMeal === "Non"
-          ? "Les apports proteines ne sont pas encore reguliers."
+          ? "Les apports en protéines ne sont pas encore réguliers."
           : "La masse musculaire merite un meilleur soutien."
     });
   }
