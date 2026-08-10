@@ -691,18 +691,25 @@ export function NewAssessmentPage() {
 
   const [stepWarning, setStepWarning] = useState("");
   const stepWarningRef = useRef<HTMLDivElement | null>(null);
+  // Ancres des champs qui peuvent bloquer l'étape 1. On amène l'écran SUR LE
+  // CHAMP fautif, pas sur le message : le coach doit atterrir là où il corrige.
+  const ancreIdentite = useRef<HTMLDivElement | null>(null);
+  const ancreContact = useRef<HTMLDivElement | null>(null);
+  const ancreObjectifs = useRef<HTMLDivElement | null>(null);
   // Compteur de blocages. Sans lui, retaper « Suivante » sur le même blocage ne
   // relancerait ni l'annonce VoiceOver ni le défilement : la valeur d'état n'a
   // pas changé, donc l'effet ne se rejoue pas. Or retaper est EXACTEMENT ce que
   // fait le coach quand rien ne se passe.
   const [stepBlockTick, setStepBlockTick] = useState(0);
+  const cibleBlocage = useRef<React.RefObject<HTMLDivElement | null> | null>(null);
 
-  // Blocage : affiche le message ET amène l'écran dessus.
+  // Blocage : affiche le message ET amène l'écran sur le champ à corriger.
   // Audit mobile 2026-08-10 : le message s'affichait 1259 px sous le bas de
   // l'iPhone, sans role ni aria-live. Le coach tapait « Suivante » devant sa
   // cliente et il ne se passait strictement rien.
-  const blockStep = (message: string) => {
+  const blockStep = (message: string, cible?: React.RefObject<HTMLDivElement | null>) => {
     setStepWarning(message);
+    cibleBlocage.current = cible ?? null;
     setStepBlockTick((n) => n + 1);
   };
 
@@ -711,7 +718,8 @@ export function NewAssessmentPage() {
     // Défilement IMMÉDIAT, pas `smooth` : un blocage doit se voir tout de suite,
     // et `smooth` est purement décoratif ici (il est même inopérant dans
     // certains moteurs, ce qui reproduisait exactement le bug d'origine).
-    stepWarningRef.current?.scrollIntoView({ block: "center" });
+    const cible = cibleBlocage.current?.current ?? stepWarningRef.current;
+    cible?.scrollIntoView({ block: "center" });
   }, [stepBlockTick]);
 
   const goToNextStep = () => {
@@ -720,13 +728,23 @@ export function NewAssessmentPage() {
     // Validation étape 0 — infos client
     if (currentStep === 0) {
       if (!form.firstName.trim() || !form.lastName.trim()) {
-        blockStep("Prénom et nom du client sont obligatoires pour continuer.");
+        blockStep("Il manque le prénom ou le nom du client.", ancreIdentite);
+        return;
+      }
+      // Au moins un moyen de contact (décision Thomas, 2026-08-10).
+      // Sans téléphone NI email, on ne peut ni envoyer l'accès à l'espace
+      // client, ni relancer, ni encaisser : tout l'aval du bilan est mort.
+      // L'astérisque des deux champs promettait cette contrainte sans que rien
+      // ne l'applique — on l'honore, en exigeant l'un OU l'autre, pas les deux
+      // (des clientes n'ont pas d'email).
+      if (!form.phone.trim() && !form.email.trim()) {
+        blockStep("Il faut au moins un moyen de contact : téléphone ou email.", ancreContact);
         return;
       }
       // ⚠️ Multi depuis 2026-07-16 : `[]` est TRUTHY, un simple `!form.x`
       // laisserait passer un bilan sans aucun objectif coché.
       if (form.objectiveFocus.length === 0) {
-        blockStep("Choisis au moins un objectif pour le client.");
+        blockStep("Choisis au moins un objectif pour le client.", ancreObjectifs);
         return;
       }
     }
@@ -1880,46 +1898,72 @@ export function NewAssessmentPage() {
                     {/* autoComplete + enterKeyHint : sur iPhone, iOS propose le
                         contact et la touche entrée enchaîne au champ suivant au
                         lieu d'afficher « retour ». (audit mobile 2026-08-10) */}
-                    <AssessmentFieldV2
-                      label="Prénom"
-                      icon="✦"
-                      autoComplete="given-name"
-                      enterKeyHint="next"
-                      value={form.firstName}
-                      onChange={(v) => update("firstName", v)}
-                      prefilled={prefilledFields.firstName}
-                    />
+                    <div ref={ancreIdentite}>
+                      <AssessmentFieldV2
+                        label="Prénom"
+                        icon="✦"
+                        required
+                        autoComplete="given-name"
+                        enterKeyHint="next"
+                        value={form.firstName}
+                        onChange={(v) => update("firstName", v)}
+                        prefilled={prefilledFields.firstName}
+                      />
+                    </div>
                     <AssessmentFieldV2
                       label="Nom"
                       icon="✦"
+                      required
                       autoComplete="family-name"
                       enterKeyHint="next"
                       value={form.lastName}
                       onChange={(v) => update("lastName", v)}
                       prefilled={prefilledFields.lastName}
                     />
-                    <AssessmentFieldV2
-                      label="Téléphone"
-                      icon="📞"
-                      required
-                      type="tel"
-                      autoComplete="tel"
-                      enterKeyHint="next"
-                      value={form.phone}
-                      onChange={(v) => update("phone", v)}
-                      prefilled={prefilledFields.phone}
-                    />
-                    <AssessmentFieldV2
-                      label="Email"
-                      icon="✉️"
-                      required
-                      type="email"
-                      autoComplete="email"
-                      enterKeyHint="next"
-                      value={form.email}
-                      onChange={(v) => update("email", v)}
-                      prefilled={prefilledFields.email}
-                    />
+                    {/* L'astérisque de ces deux champs n'était que décorative.
+                        Depuis le 2026-08-10 elle est vraie : au moins l'un des
+                        deux est exigé (cf. goToNextStep). D'où le libellé de
+                        contrainte porté par le groupe, pas par chaque champ. */}
+                    <div ref={ancreContact} className="col-span-2">
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <AssessmentFieldV2
+                          label="Téléphone"
+                          icon="📞"
+                          type="tel"
+                          autoComplete="tel"
+                          enterKeyHint="next"
+                          value={form.phone}
+                          onChange={(v) => update("phone", v)}
+                          prefilled={prefilledFields.phone}
+                        />
+                        <AssessmentFieldV2
+                          label="Email"
+                          icon="✉️"
+                          type="email"
+                          autoComplete="email"
+                          enterKeyHint="next"
+                          value={form.email}
+                          onChange={(v) => update("email", v)}
+                          prefilled={prefilledFields.email}
+                        />
+                      </div>
+                      <p
+                        style={{
+                          fontFamily: "DM Sans, sans-serif",
+                          fontSize: 11.5,
+                          color:
+                            !form.phone.trim() && !form.email.trim()
+                              ? "var(--ls-coral)"
+                              : "var(--ls-text-hint)",
+                          margin: "8px 0 0",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span aria-hidden="true" style={{ color: "var(--ls-teal)" }}>*</span>{" "}
+                        Au moins l&apos;un des deux — sans ça, pas d&apos;accès à l&apos;espace
+                        client ni de relance possible.
+                      </p>
+                    </div>
                     <div className="col-span-2">
                       <AssessmentFieldV2
                         label="Invité par / recommandé par"
@@ -2067,12 +2111,14 @@ export function NewAssessmentPage() {
                         à la fois ("prise de masse ET énergie"). Cocher "Prise de
                         masse" bascule le bilan en parcours sport (cf.
                         updateObjectiveFocus). */}
-                    <MultiChoiceGroup
-                      label="Objectifs"
-                      values={normalizeMultiValue(form.objectiveFocus)}
-                      options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
-                      onToggle={updateObjectiveFocus}
-                    />
+                    <div ref={ancreObjectifs}>
+                      <MultiChoiceGroup
+                        label="Objectifs"
+                        values={normalizeMultiValue(form.objectiveFocus)}
+                        options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
+                        onToggle={updateObjectiveFocus}
+                      />
+                    </div>
                     <TimelineChoiceField
                       label="Délai souhaité"
                       value={form.desiredTimeline}
@@ -3847,14 +3893,17 @@ export function NewAssessmentPage() {
             </>
           )}
 
-          {/* Avertissement validation — role/aria-live obligatoires : sans eux
-              VoiceOver reste muet quand « Suivante » refuse d'avancer. */}
+          {/* Avertissement validation — BUREAU uniquement (`hidden md:block`).
+              Sur téléphone le message vit dans la barre de navigation, au ras du
+              pouce ; le laisser ici aussi le ferait annoncer DEUX FOIS par
+              VoiceOver. `display:none` le sort de l'arbre d'accessibilité, donc
+              un seul des deux parle selon la taille d'écran. */}
           {stepWarning && (
             <div
               ref={stepWarningRef}
               role="alert"
               aria-live="assertive"
-              className="rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)]">
+              className="hidden rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)] md:block">
               {stepWarning}
             </div>
           )}
@@ -3997,10 +4046,14 @@ export function NewAssessmentPage() {
             Enregistrer le bilan
           </Button>
 
+          {/* La raison du blocage s'affiche ICI, collée au-dessus de « Suivante »,
+              là où le pouce vient de taper — et non 1259 px plus bas comme avant
+              (décision Thomas, 2026-08-10). L'écran, lui, part sur le champ à
+              corriger. Le bloc `role="alert"` du flux reste pour le bureau, où
+              cette barre n'existe pas. */}
           <div
-            className="sticky bottom-0 z-20 -mx-4 mt-3 flex items-center gap-2 px-4 md:hidden"
+            className="sticky bottom-0 z-20 -mx-4 mt-3 flex flex-col md:hidden"
             style={{
-              height: 56,
               background: 'color-mix(in srgb, var(--ls-bg) 92%, transparent)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
@@ -4008,6 +4061,27 @@ export function NewAssessmentPage() {
               color: 'var(--ls-text)',
             }}
           >
+            {stepWarning ? (
+              <p
+                role="alert"
+                aria-live="assertive"
+                style={{
+                  margin: 0,
+                  padding: '9px 16px',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 12.5,
+                  lineHeight: 1.4,
+                  fontWeight: 550,
+                  color: 'var(--ls-coral)',
+                  background: 'color-mix(in srgb, var(--ls-coral) 10%, transparent)',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-coral) 25%, transparent)',
+                }}
+              >
+                <span aria-hidden="true" style={{ marginRight: 6 }}>⚠️</span>
+                {stepWarning}
+              </p>
+            ) : null}
+            <div className="flex items-center gap-2 px-4" style={{ height: 56 }}>
             <button
               type="button"
               onClick={goToPreviousStep}
@@ -4036,6 +4110,7 @@ export function NewAssessmentPage() {
             >
               Suivante
             </Button>
+            </div>
           </div>
           {saveError ? (
             <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">

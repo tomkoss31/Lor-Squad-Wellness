@@ -222,13 +222,53 @@ vrai : elle annonce un champ obligatoire que rien n'exige côté logique.
 
 ---
 
-## 5. Ce qui reste ouvert
+## 5. Lot 4 — les arbitrages tranchés (`bd9ac05`)
 
-- **Où afficher le message de blocage.** Il apparaît en bas de page. Le coach le
-  voit, avec le bouton sous le pouce, mais doit remonter pour corriger. Le mettre
-  *dans* la barre de navigation serait mieux — c'est un choix visuel à trancher.
-- **L'astérisque de « Téléphone » et « Email »** : décorative ou vraie contrainte ?
-- **Les sur-titres à 10 / 10,5 px** : gardés tels quels (capitales avec
-  interlettrage, convention assumée). À revoir si quelqu'un se plaint.
+Thomas : « décide pour moi et pousse les améliorations. »
+
+### Le message de blocage monte dans la barre de navigation
+
+Il s'affichait en bas de page : on le voyait, mais il fallait remonter pour
+corriger. Désormais **deux choses se produisent en même temps** :
+
+- le message apparaît **dans la barre de navigation**, mesuré à **5 px au-dessus
+  du bouton « Suivante »** — là où le pouce vient de taper ;
+- l'écran part **sur le champ fautif**, pas sur le message.
+
+Trois ancres (`ancreIdentite`, `ancreContact`, `ancreObjectifs`) portées par
+`blockStep(message, cible)`. Vérifié : le coach atterrit sur Prénom/Nom, sur
+Téléphone/Email, ou sur les boutons d'objectif selon ce qui manque.
+
+Le bloc du flux passe en `hidden md:block` : sur téléphone il ferait annoncer
+le message **deux fois** par VoiceOver. `display:none` le sort de l'arbre
+d'accessibilité, donc un seul des deux parle selon la taille d'écran — mesuré,
+une seule alerte visible dans les deux cas.
+
+### L'astérisque devient vraie
+
+Elle promettait une obligation que rien n'appliquait. Désormais **au moins un
+moyen de contact est exigé — téléphone OU email**, pas les deux (des clientes
+n'ont pas d'email). Sans l'un des deux, on ne peut ni envoyer l'accès à l'espace
+client, ni relancer, ni encaisser : tout l'aval du bilan est mort.
+
+L'astérisque quitte les deux champs pour se poser sur le groupe, avec sa raison
+écrite noir sur blanc, et **passe en corail tant que les deux sont vides**.
+`Prénom` et `Nom` récupèrent la leur, qui elle était déjà appliquée.
+
+### Ce qui a été gardé tel quel, volontairement
+
+**Les sur-titres à 10 / 10,5 px.** Capitales avec interlettrage : c'est le
+langage typographique de toute l'app, pas un oubli. Les remonter serait une
+rupture d'identité, pas une amélioration.
+
+---
+
+## 6. Ce qui reste ouvert
+
 - **Étape 11 à 5240 px** reste la plus longue de loin. Le catalogue produit y
-  pèse 2581 px à lui seul.
+  pèse 2581 px à lui seul. C'est l'écran qui décide du panier — il mérite son
+  propre chantier, pas une retouche.
+- **Un service worker périmé peut servir une coquille obsolète** après un
+  déploiement : rencontré pendant la recette, l'app restait bloquée sur
+  « Le club s'allume… ». `navigator.serviceWorker.getRegistrations()` puis
+  `unregister()` débloque. À garder en tête avant de conclure à une régression.
