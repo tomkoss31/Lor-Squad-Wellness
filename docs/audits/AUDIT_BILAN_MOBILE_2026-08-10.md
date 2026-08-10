@@ -164,18 +164,71 @@ demie moins de scroll, sans rien retirer du contenu.
 
 ---
 
-## 4. Ordre de bataille proposé
+## 4. Ce qui a été fait — livré sur `dev/thomas-test` le 2026-08-10
 
-**Lot 1 — ce qui casse le rendez-vous** (rapide, invisible, sans maquette)
-1. S1 : `role="alert"` + défilement vers le message de blocage
-2. S2 : `htmlFor`/`id` + `autoComplete`/`inputMode`/`enterKeyHint` dans `AssessmentFieldV2`
-3. S3 : `bottom-0` + padding de fin
-4. S4 : `inert` sur le tiroir fermé
-5. Étape 1 : champs numériques vides au lieu de `0`
-6. Boutons « + Ajouter » : 38 → 44 px
+### ✅ Lot 1 — ce qui casse le rendez-vous (`319451b`)
 
-**Lot 2 — le scroll** (maquette cliquable d'abord, testée à 390 px)
-Les 4 leviers ci-dessus, à valider visuellement avant de coder.
+| | Avant | Après |
+|---|---|---|
+| Message de blocage | 1259 px hors écran, sans `role` | visible + `role="alert"` + `aria-live` |
+| Champs sans libellé (étape 1) | 18 / 18 | **0 / 18** |
+| Barre de navigation | `bottom: 80px` pour une nav absente | `bottom: 0` |
+| Tiroir fermé | 15 éléments focusables | `inert` |
+| Taille / Poids cible | `0` à effacer | vides |
+| Boutons « + Ajouter » | 38 px | 44 px |
 
-**Lot 3 — la copie**
-Accents manquants, astérisques décoratives, tailles sous 11 px.
+Le correctif du libellé porte sur `AssessmentFieldV2` (**102 usages, 14 fichiers**)
+plus `AreaField`, `ClothingSizeSelect`, le select responsable et le curseur
+motivation. `ChoiceGroup` / `MultiChoiceGroup` passent en `role="group"` +
+`aria-labelledby` : un `<label>` ne peut pas nommer un groupe de boutons, donc
+la question elle-même n'était jamais annoncée.
+
+> **Corrigé en cours de route** : le défilement vers le message était écrit en
+> `behavior: "smooth"` — à l'essai, il ne se passait rien, ce qui reproduisait
+> exactement le bug d'origine. Passé en défilement immédiat, qui est de toute
+> façon le bon choix pour une erreur.
+
+### ✅ Lot 2 — le défilement (`3f5b5c7`)
+
+Maquette validée en amont : deux écrans liés au même curseur, mesures prises
+en direct par la page elle-même.
+
+| Mesuré sur les 13 étapes | Avant | Après |
+|---|---|---|
+| Défilement cumulé | 40 157 px | **35 328 px** |
+| Chrome empilé (étape 1) | 363 px | **161 px** |
+| Fenêtre de lecture | 449 px | **614 px** |
+| **Gestes de pouce** | **76,4** | **44,5** |
+
+Aucune étape ne s'allonge. Plus gros gains : étape 1 (−955 px), étape 11
+« Le programme proposé » (−1348 px). Tout est cloisonné sous 768 px —
+vérifié à 1280 px : padding 26/28/28, rail complet 184 px, barre mobile
+masquée, cartes à 276 px comme avant.
+
+### ✅ Lot 3 — la copie (`a4e5809`)
+
+17 chaînes affichées ré-accentuées, dont trois qui partaient aussi dans les
+notes du dossier client — la faute était donc recopiée en base à chaque bilan.
+9 textes de 9 px remontés à 11 px.
+
+**Non fait, volontairement** : les noms de produits de `pvCatalog.ts` ont aussi
+des accents manquants, mais ce catalogue est **dupliqué** dans
+`api/update-assessment.ts` et sert d'appariement. Le toucher pour une correction
+cosmétique fait courir un risque de données.
+
+**Retiré de cet audit** : « l'astérisque est collée au mot » était faux — elle a
+bien 4 px de marge, c'est ma lecture du `textContent` qui les concaténait. Reste
+vrai : elle annonce un champ obligatoire que rien n'exige côté logique.
+
+---
+
+## 5. Ce qui reste ouvert
+
+- **Où afficher le message de blocage.** Il apparaît en bas de page. Le coach le
+  voit, avec le bouton sous le pouce, mais doit remonter pour corriger. Le mettre
+  *dans* la barre de navigation serait mieux — c'est un choix visuel à trancher.
+- **L'astérisque de « Téléphone » et « Email »** : décorative ou vraie contrainte ?
+- **Les sur-titres à 10 / 10,5 px** : gardés tels quels (capitales avec
+  interlettrage, convention assumée). À revoir si quelqu'un se plaint.
+- **Étape 11 à 5240 px** reste la plus longue de loin. Le catalogue produit y
+  pèse 2581 px à lui seul.
