@@ -25,12 +25,13 @@ import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 // ProgramChoiceCard + RoutineMatinList + ProgrammeTicket.
 import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionToggle";
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
+import { ProgramChoiceList } from "../components/assessment/ProgramChoiceList";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { InlinePaymentButton } from "../components/payment/InlinePaymentButton";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
-import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoice, type ProgramChoiceId } from "../data/programs";
 import { normalizeMultiValue } from "../lib/multiChoice";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
@@ -702,6 +703,9 @@ export function NewAssessmentPage() {
   // fait le coach quand rien ne se passe.
   const [stepBlockTick, setStepBlockTick] = useState(0);
   const cibleBlocage = useRef<React.RefObject<HTMLDivElement | null> | null>(null);
+  // Le détail du panier, déplié depuis la barre. Fermé par défaut : c'est le
+  // TOTAL qui doit être permanent, pas la liste.
+  const [panierOuvert, setPanierOuvert] = useState(false);
 
   // Blocage : affiche le message ET amène l'écran sur le champ à corriger.
   // Audit mobile 2026-08-10 : le message s'affichait 1259 px sous le bas de
@@ -1011,14 +1015,40 @@ export function NewAssessmentPage() {
     }));
   }
 
-  // Total du panier programme (= ProgrammeTicket : program.price + Σ addOns).
+  // Les programmes proposables : ceux de l'objectif retenu, plus « À l'unité ».
+  // ⚠️ On part de PROGRAM_CHOICES, jamais de PROGRAMS_LEGACY qui exclut `unit`
+  // (cf. CLAUDE.md — règle programmes / produits).
+  const programmesDisponibles = useMemo(
+    () => PROGRAM_CHOICES.filter((p) => p.category === form.objective || p.category === "unit"),
+    [form.objective],
+  );
+
+  // Un montant, écrit comme on l'écrit en français : virgule décimale et
+  // espace insécable avant l'euro. C'est le chiffre le plus regardé de l'étape
+  // programme — il est lu à voix haute devant la cliente.
+  const enEuros = (montant: number) =>
+    `${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+  // Ce que contient un programme, écrit en clair sous celui qu'on retient.
+  // La liste comparable n'affiche que le nom et le prix : le détail arrive au
+  // moment où il sert, c'est-à-dire une fois le choix fait.
+  const decrireProgramme = (programme: ProgramChoice): string | null => {
+    const noms = (programme.routineProductIds ?? [])
+      .map((id) => pvProductCatalog.find((p) => p.id === id)?.name)
+      .filter((n): n is string => !!n);
+    return noms.length ? `Contient : ${noms.join(" · ")}` : null;
+  };
+
+  // Le panier programme (= ProgrammeTicket : program.price + Σ addOns).
   // Sert à pré-remplir l'encaissement Stripe sur la page « Bilan terminé »
-  // (chantier Encaissement distri 2026-06-15) — même formule que le ticket.
-  const programmeTotalEuros = (() => {
+  // (chantier Encaissement distri 2026-06-15) — même formule que le ticket —
+  // et, depuis le 2026-08-10, à alimenter le total permanent de la barre de
+  // navigation sous 1280 px. Une seule source, pas deux formules qui dérivent.
+  const panierProgramme = (() => {
     const chosen = getProgramById(form.programChoice);
     const base = chosen?.price ?? 0;
     const boosterAddOns = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).map(
-      (b) => ({ id: b.id, price: b.price }),
+      (b) => ({ id: b.id, nom: b.title, price: b.price }),
     );
     const knownIds = new Set([
       ...addOnProducts.map((p) => p.id),
@@ -1028,15 +1058,30 @@ export function NewAssessmentPage() {
       .filter((id) => !knownIds.has(id))
       .map((id) => pvProductCatalog.find((p) => p.id === id))
       .filter((p): p is NonNullable<typeof p> => !!p)
-      .map((p) => ({ id: p.id, price: p.pricePublic }));
+      .map((p) => ({ id: p.id, nom: p.name, price: p.pricePublic }));
     const allAddOns = [
-      ...addOnProducts.map((p) => ({ id: p.id, price: p.prixPublic })),
+      ...addOnProducts.map((p) => ({ id: p.id, nom: p.name, price: p.prixPublic })),
       ...boosterAddOns,
       ...catalogExtra,
     ].filter((v, i, arr) => arr.findIndex((x) => x.id === v.id) === i);
     const addOnsTotal = allAddOns.reduce((s, a) => s + a.price * getQty(a.id), 0);
-    return Math.round((base + addOnsTotal) * 100) / 100;
+    return {
+      titreProgramme: chosen?.title ?? null,
+      prixProgramme: base,
+      // Les lignes du panier, pour que la barre affiche le détail sans
+      // ré-implémenter ProgrammeTicket : même source, deux rendus.
+      lignes: allAddOns.map((a) => ({
+        id: a.id,
+        nom: a.nom ?? a.id,
+        prix: a.price,
+        qte: getQty(a.id),
+      })),
+      nbAjouts: allAddOns.length,
+      total: Math.round((base + addOnsTotal) * 100) / 100,
+    };
   })();
+
+  const programmeTotalEuros = panierProgramme.total;
 
 
   /**
@@ -3387,20 +3432,34 @@ export function NewAssessmentPage() {
                       color="gold"
                     />
 
+                    {/* Sous 1280 px — liste comparable (maquette validée
+                        2026-08-10). Les cartes ne mettent jamais les cinq prix
+                        en regard : à 375 px elles s'empilent, à 479 px la 5e
+                        reste orpheline, à 768 px c'est 4 + 1. Or choisir un
+                        programme, c'est comparer quatre prix.
+                        Au-delà de 1280 px la mise en page bureau a la place de
+                        les aligner — elle garde les cartes, refonte à venir. */}
+                    <div className="xl:hidden">
+                      <ProgramChoiceList
+                        programs={programmesDisponibles}
+                        activeId={form.programChoice}
+                        onSelect={(id) => update("programChoice", id)}
+                        detailFor={decrireProgramme}
+                      />
+                    </div>
+
                     <div
-                      className="grid gap-3"
+                      className="hidden gap-3 xl:grid"
                       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
                     >
-                      {PROGRAM_CHOICES
-                        .filter((p) => p.category === form.objective || p.category === "unit")
-                        .map((p) => (
-                          <ProgramChoiceCard
-                            key={p.id}
-                            program={p}
-                            active={form.programChoice === p.id}
-                            onSelect={() => update("programChoice", p.id)}
-                          />
-                        ))}
+                      {programmesDisponibles.map((p) => (
+                        <ProgramChoiceCard
+                          key={p.id}
+                          program={p}
+                          active={form.programChoice === p.id}
+                          onSelect={() => update("programChoice", p.id)}
+                        />
+                      ))}
                     </div>
 
                     {/* Banner confirmation supprime (2026-04-29) — le hero
@@ -3820,8 +3879,17 @@ export function NewAssessmentPage() {
 
                 </div>
 
-                {/* ─── Colonne ticket sticky ──────────────────────────── */}
+                {/* ─── Colonne ticket sticky ────────────────────────────
+                    `xl:block` depuis le 2026-08-10 : cette colonne n'est
+                    réellement latérale qu'à partir de 1280 px (c'est le seuil
+                    du `xl:grid-cols` ci-dessus). En dessous, elle retombait en
+                    fin de flux — à 69 % de la page sur tablette, 82 % sur
+                    iPhone — et `position: sticky` ne la faisait jamais remonter :
+                    un bloc collant en fin de conteneur ne se fige qu'une fois
+                    qu'on est arrivé dessus. C'est la barre tactile qui porte le
+                    panier sous ce seuil. */}
                 <div
+                  className="hidden xl:block"
                   style={{
                     position: "sticky",
                     top: 16,
@@ -3909,8 +3977,12 @@ export function NewAssessmentPage() {
           )}
 
           {/* Footer navigation desktop — refonte premium V2 (2026-04-29) */}
+          {/* Navigation bureau — `xl` et non `md` depuis le 2026-08-10 : sous
+              1280 px c'est la barre tactile qui prend le relais, tablette
+              comprise. Deux navigations affichées en même temps sur iPad,
+              c'était le défaut à éviter. */}
           <div
-            className="hidden items-center justify-between gap-3 md:flex"
+            className="hidden items-center justify-between gap-3 xl:flex"
             style={{
               marginTop: 24,
               paddingTop: 18,
@@ -4028,19 +4100,24 @@ export function NewAssessmentPage() {
               </button>
             </div>
           </div>
-          {/* Barre de navigation mobile.
-              `bottom-20` (80 px) réservait la place de la BottomNav — or
-              BottomNav.tsx:29 renvoie `null` sur /assessments/new depuis le
-              2026-07-01. Ces 80 px n'étaient donc pas vides : le formulaire
-              continuait dessous, et au body scan un champ tapable se trouvait
-              dans cette bande, sous une barre qui signale « fin de page ».
-              (`lg:bottom-3` était mort : le bloc est `md:hidden`.) */}
+          {/* Barre de navigation tactile — téléphone ET tablette.
+              Le seuil est passé de `md` (768) à `xl` (1280) le 2026-08-10 : la
+              colonne panier de la mise en page bureau ne démarre qu'à `xl`, donc
+              sous ce seuil — iPhone, iPad, petit portable — le panier se
+              retrouve en fin de flux, à 69 % de la page sur tablette et 82 % sur
+              iPhone. Coller un bloc en fin de conteneur ne le fait jamais
+              remonter : il ne se fige qu'une fois qu'on est arrivé dessus.
+
+              `bottom-20` (80 px) réservait par ailleurs la place de la BottomNav,
+              que BottomNav.tsx:29 masque sur cette route depuis le 2026-07-01.
+              Ces 80 px n'étaient donc pas vides : le formulaire continuait
+              dessous, et au body scan un champ tapable s'y trouvait. */}
           {/* « Enregistrer le bilan » quitte la barre permanente pour la fin du
               formulaire : on enregistre quand on a fini de saisir, pas à chaque
               écran. Ça rend 46 px à chaque écran du bilan. */}
           <Button
             variant="secondary"
-            className="mt-4 w-full justify-center md:hidden"
+            className="mt-4 w-full justify-center xl:hidden"
             onClick={() => void handleSaveAssessment()}
           >
             Enregistrer le bilan
@@ -4052,7 +4129,7 @@ export function NewAssessmentPage() {
               corriger. Le bloc `role="alert"` du flux reste pour le bureau, où
               cette barre n'existe pas. */}
           <div
-            className="sticky bottom-0 z-20 -mx-4 mt-3 flex flex-col md:hidden"
+            className="sticky bottom-0 z-20 -mx-4 mt-3 flex flex-col xl:hidden"
             style={{
               background: 'color-mix(in srgb, var(--ls-bg) 92%, transparent)',
               backdropFilter: 'blur(12px)',
@@ -4061,6 +4138,145 @@ export function NewAssessmentPage() {
               color: 'var(--ls-text)',
             }}
           >
+            {/* Le total du panier, en permanence, sur l'étape qui le construit.
+                Avant : il fallait défiler jusqu'à 82 % de la page pour découvrir
+                le montant qu'on venait de composer. (maquette validée
+                2026-08-10) — 44 px de plus sur CET écran seulement. */}
+            {currentStepId === 'program' ? (
+              <button
+                type="button"
+                onClick={() => setPanierOuvert((v) => !v)}
+                aria-expanded={panierOuvert}
+                aria-controls="ls-panier-detail"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  width: '100%',
+                  minHeight: 44,
+                  padding: '6px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-border) 70%, transparent)',
+                  color: 'var(--ls-text)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 15, flex: 'none' }}>🛒</span>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 12,
+                    color: 'var(--ls-text-muted)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {panierProgramme.titreProgramme ?? 'Aucun programme retenu'}
+                  {panierProgramme.nbAjouts
+                    ? ` + ${panierProgramme.nbAjouts} ajout${panierProgramme.nbAjouts > 1 ? 's' : ''}`
+                    : ''}
+                </span>
+                <span
+                  style={{
+                    flex: 'none',
+                    fontFamily: 'Syne, sans-serif',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: 16,
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ls-lime)',
+                  }}
+                >
+                  {enEuros(panierProgramme.total)}
+                </span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    flex: 'none',
+                    fontSize: 11,
+                    color: 'var(--ls-text-hint)',
+                    transform: panierOuvert ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 200ms ease',
+                  }}
+                >
+                  ⌃
+                </span>
+              </button>
+            ) : null}
+
+            {currentStepId === 'program' && panierOuvert ? (
+              <div
+                id="ls-panier-detail"
+                style={{
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                  padding: '9px 16px 11px',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-border) 70%, transparent)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 12,
+                }}
+              >
+                <p style={{ margin: '0 0 3px', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--ls-text-hint)' }}>
+                  Programme
+                </p>
+                {panierProgramme.titreProgramme && panierProgramme.prixProgramme ? (
+                  <p style={{ margin: 0, display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0' }}>
+                    <span>{panierProgramme.titreProgramme}</span>
+                    <span style={{ fontVariantNumeric: 'tabular-nums' }}>{enEuros(panierProgramme.prixProgramme)}</span>
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, padding: '4px 0', color: 'var(--ls-text-hint)' }}>
+                    À l&apos;unité — pas de programme cadre.
+                  </p>
+                )}
+
+                <p style={{ margin: '7px 0 3px', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--ls-text-hint)' }}>
+                  Ajouts
+                </p>
+                {panierProgramme.lignes.length ? (
+                  panierProgramme.lignes.map((l) => (
+                    <p key={l.id} style={{ margin: 0, display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0', borderBottom: '0.5px dashed color-mix(in srgb, var(--ls-border) 60%, transparent)' }}>
+                      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {l.nom}{l.qte > 1 ? ` × ${l.qte}` : ''}
+                      </span>
+                      <span style={{ fontVariantNumeric: 'tabular-nums', flex: 'none' }}>
+                        {enEuros(l.prix * l.qte)}
+                      </span>
+                    </p>
+                  ))
+                ) : (
+                  <p style={{ margin: 0, padding: '4px 0', color: 'var(--ls-text-hint)' }}>
+                    Aucun ajout retenu pour l&apos;instant.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogModal(true)}
+                  style={{
+                    marginTop: 9,
+                    minHeight: 44,
+                    width: '100%',
+                    borderRadius: 11,
+                    border: '0.5px solid var(--ls-border)',
+                    background: 'var(--ls-surface)',
+                    color: 'var(--ls-text-muted)',
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🛍️ Ajouter un produit du catalogue
+                </button>
+              </div>
+            ) : null}
+
             {stepWarning ? (
               <p
                 role="alert"
