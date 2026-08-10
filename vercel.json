@@ -69,7 +69,7 @@
           "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
         }
       ],
-      "destination": "/api/club-meta"
+      "destination": "/club-meta.html"
     },
     {
       "source": "/reserver/:clubSlug",
@@ -80,7 +80,7 @@
           "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
         }
       ],
-      "destination": "/api/club-meta"
+      "destination": "/club-meta.html"
     },
     {
       "source": "/(.*)",
