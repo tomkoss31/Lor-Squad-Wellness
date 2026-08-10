@@ -214,14 +214,33 @@ doit toujours builder.
 
 ---
 
-## ⚠️ Le dossier `api/` est plafonné — 13 fonctions (2026-08-10)
+## ⚠️ Le dossier `api/` peut faire échouer un déploiement (2026-08-10)
 
-**Avant d'ajouter un fichier dans `api/`, compter ce qu'il y a déjà.**
-Vercel plan **Hobby** : 13 fonctions passent, **14 échoue** au déploiement
-(`exceeded_serverless_functions_per_deployment`). On est **au plafond**.
+**Après avoir ajouté un fichier dans `api/`, vérifier que le déploiement
+Vercel passe vraiment.** Un jour, il refuse :
+
+```
+exceeded_serverless_functions_per_deployment
+No more than 12 Serverless Functions on the Hobby plan
+```
 
 > **Le `npm run build` local ne peut PAS attraper ça** : la limite est
 > appliquée par la plateforme **après** le build. Build vert ≠ deploy vert.
+
+⚠️ **Ne pas se fier à un nombre de fichiers.** Ce que j'ai mesuré le
+2026-08-10, et qui ne se résume pas en une règle :
+
+| branche | fichiers dans `api/` | déploiement |
+|---|---:|---|
+| `main` | 13 | ✅ passe |
+| `dev/thomas-test` | 15 | ✅ passe |
+| une branche partie de `main` + 1 fichier | 14 | ❌ **refusé** |
+
+Le message annonce 12, la prod en fait tourner 13, dev 15 — et c'est un
+14ᵉ qui a été refusé. Le compte de fichiers n'explique donc pas le
+déclenchement, et je n'ai pas su reproduire la règle exacte. **Conclusion
+pratique : le plafond existe et peut tomber sans prévenir — ce qui compte
+est de regarder le déploiement, pas de compter avant.**
 
 Trois issues quand une nouvelle route est nécessaire :
 

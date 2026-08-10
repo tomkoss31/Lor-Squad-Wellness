@@ -85,8 +85,19 @@ la meilleure solution pour du contenu qui ne change pas.
 
 ## La règle à retenir
 
-**Avant d'ajouter un fichier dans `api/`, vérifier le compte.** On est à 13 sur
-un plafond de 12 annoncé (13 passe, 14 échoue — mesuré). Trois issues :
+**Après avoir ajouté un fichier dans `api/`, aller regarder le déploiement.**
+Et non pas compter avant — le nombre de fichiers n'explique pas le refus.
+
+| branche | fichiers dans `api/` | déploiement |
+|---|---:|---|
+| `main` | 13 | ✅ passe |
+| `dev/thomas-test` | 15 | ✅ passe |
+| une branche partie de `main` + 1 fichier | 14 | ❌ refusé |
+
+Le message annonce 12, la prod en fait tourner 13, dev 15 — et c'est un 14ᵉ qui
+a été refusé. Je n'ai pas su reproduire la règle exacte de Vercel, et une règle
+fausse serait pire que pas de règle du tout. Ce qui reste vrai : **le refus
+tombe à l'étape de déploiement, après un build vert.** Trois issues :
 
 1. **Le contenu est statique ?** → un fichier dans `public/`. Zéro fonction,
    zéro démarrage à froid, servi par le CDN. C'est ce qu'on a fait pour
