@@ -62,18 +62,86 @@ function parisHourLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 }
 
-async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
+interface MailAttachment { filename: string; content: string }
+
+async function sendViaResend(
+  to: string,
+  subject: string,
+  html: string,
+  replyTo?: string,
+  attachments?: MailAttachment[],
+): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
+    const payload: Record<string, unknown> = {
+      from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html,
+    };
+    if (attachments?.length) payload.attachments = attachments;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify(payload),
     });
     return res.ok;
   } catch {
     return false;
   }
+}
+
+/**
+ * Invitation iCalendar du rendez-vous, jointe au mail de lead pour qu'il
+ * atterrisse dans l'agenda Google de la boîte de l'équipe.
+ *
+ * METHOD:REQUEST + ORGANIZER + ATTENDEE = une VRAIE invitation : Gmail la
+ * reconnaît comme telle et la pose sur l'agenda, au lieu d'un simple fichier
+ * joint qu'il faudrait ouvrir à la main. Le bouton « Ajouter à Google Agenda »
+ * du corps du mail reste le filet de sécurité : lui marche toujours, en un clic.
+ *
+ * Repliement des lignes à 75 octets non géré : les nôtres restent courtes.
+ */
+function buildIcs(opts: {
+  uid: string; start: Date; end: Date;
+  summary: string; description: string; location: string; attendee: string;
+}): string {
+  const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  // Dans un .ics ces caractères sont structurants : il faut les échapper.
+  const t = (s: string) =>
+    s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//La Base 360//Breakfast Club//FR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${opts.uid}`,
+    `DTSTAMP:${stamp(new Date())}`,
+    `DTSTART:${stamp(opts.start)}`,
+    `DTEND:${stamp(opts.end)}`,
+    `SUMMARY:${t(opts.summary)}`,
+    `DESCRIPTION:${t(opts.description)}`,
+    `LOCATION:${t(opts.location)}`,
+    "ORGANIZER;CN=The Breakfast Club:mailto:rdv@labase360.fr",
+    `ATTENDEE;CN=La Base Verdun;RSVP=FALSE;PARTSTAT=ACCEPTED:mailto:${opts.attendee}`,
+    "STATUS:CONFIRMED",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
+/** Lien « Ajouter à Google Agenda » — pré-rempli, un seul clic. */
+function googleCalUrl(opts: {
+  start: Date; end: Date; text: string; details: string; location: string;
+}): string {
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const p = new URLSearchParams({
+    action: "TEMPLATE",
+    text: opts.text,
+    dates: `${fmt(opts.start)}/${fmt(opts.end)}`,
+    details: opts.details,
+    location: opts.location,
+  });
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
 }
 
 serve(async (req: Request) => {
@@ -133,6 +201,18 @@ serve(async (req: Request) => {
   if (clubErr) return jsonResponse({ success: false, error: "club_lookup_failed" }, 500);
   if (!club) return jsonResponse({ success: false, error: "club_introuvable" }, 404);
 
+  // 1b. Délai de réservation — MÊME règle que l'affichage (club_slot_bookable :
+  // midi la veille, lundi avant vendredi 21h). La RPC d'écriture la revérifie
+  // de toute façon ; on la teste ICI pour pouvoir répondre une erreur PARLANTE.
+  // Sans ça, un refus pour délai remonterait en « creneau_pris », ce qui est
+  // faux : la personne irait chercher un autre horaire au lieu d'un autre jour.
+  const { data: bookable, error: bookableErr } = await sb.rpc("club_slot_bookable", {
+    p_slot_start: slotStart.toISOString(),
+  });
+  if (!bookableErr && bookable === false) {
+    return jsonResponse({ success: false, error: "delai_depasse" }, 409);
+  }
+
   const stepMin = Number((club.settings as { discovery?: { slot_step_min?: number } })?.discovery?.slot_step_min ?? 30) || 30;
   const slotEnd = new Date(slotStart.getTime() + stepMin * 60_000);
 
@@ -150,17 +230,18 @@ serve(async (req: Request) => {
   if (bookErr) return jsonResponse({ success: false, error: "insert_failed", detail: bookErr.message }, 500);
   if (!bookingId) return jsonResponse({ success: false, error: "creneau_pris" }, 409);
 
-  // Les coachs du club = les admins actifs. Récupérés UNE fois : ils servent au
-  // push (3) et au mail interne (5) — chacun reçoit le lead sur SA propre boîte,
-  // plus seulement la boîte partagée de l'équipe.
-  let clubStaff: Array<{ id: string; email: string | null }> = [];
+  // Les coachs du club = les admins actifs. Servent UNIQUEMENT au push (3).
+  // Le mail de lead, lui, ne part plus qu'à la boîte partagée (« sinon on
+  // reçoit trop de mail », Thomas 2026-08-09) : le push est le canal
+  // individuel, l'email le canal collectif.
+  let clubStaff: Array<{ id: string }> = [];
   try {
     const { data: admins } = await sb
       .from("users")
-      .select("id, email")
+      .select("id")
       .eq("role", "admin")
       .eq("active", true);
-    clubStaff = (admins ?? []) as Array<{ id: string; email: string | null }>;
+    clubStaff = (admins ?? []) as Array<{ id: string }>;
   } catch (_e) {
     // best-effort — la résa est déjà enregistrée
   }
@@ -271,25 +352,45 @@ serve(async (req: Request) => {
       </table>
       ${partnerBlock}
     </div>
-    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">Réponds à cet email pour joindre directement le lead. Retrouve-le aussi dans le CRM.</p>
+    <a href="${googleCalUrl({
+      start: slotStart,
+      end: slotEnd,
+      text: `RDV découverte — ${fullName}${peopleCount === 2 ? " +1" : ""}`,
+      details: [
+        `Objectif : ${objectifLabel(objectif)}`,
+        contact ? `Email : ${contact}` : "",
+        phone ? `Téléphone : ${phone}` : "",
+      ].filter(Boolean).join(" · "),
+      location,
+    })}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;margin:18px 0 0;padding:14px 18px;background:#1E3330;color:#F4EFE4;border-radius:12px;text-decoration:none;font-size:14.5px;font-weight:700;">📅 Ajouter à Google Agenda</a>
+    <p style="font-size:12px;color:#8A8578;margin:14px 0 0;">L'invitation est aussi jointe à cet email (.ics) — Gmail la pose directement sur l'agenda. Réponds à cet email pour joindre le lead. Retrouve-le aussi dans le CRM.</p>
   </div>
 </body></html>`.trim();
 
-    // Destinataires : la boîte partagée de l'équipe + la boîte PERSO de chaque
-    // coach du club. Dédupliqué (en minuscules) pour ne jamais envoyer deux fois
-    // au même endroit si un coach utilise l'adresse partagée.
-    const recipients = Array.from(
-      new Set(
-        [LEAD_NOTIFY_EMAIL, ...clubStaff.map((s) => s.email ?? "")]
-          .map((e) => e.trim().toLowerCase())
-          .filter((e) => e && EMAIL_RE.test(e)),
-      ),
-    );
+    // UNE SEULE adresse : la boîte partagée de l'équipe.
+    // Les boîtes perso de chaque coach ont été retirées le 2026-08-09 — « sinon
+    // on reçoit trop de mail » (Thomas). Le push, lui, continue d'aller à
+    // chacun : c'est le canal individuel, l'email reste le canal collectif.
     const subject = `☕ Nouveau lead — ${fullName}${peopleCount === 2 ? " (+1)" : ""} · ${dateLabel} ${hour}`;
-    for (const to of recipients) {
-      // reply-to = le lead, pour répondre en un clic
-      await sendViaResend(to, subject, internalHtml, contact || undefined);
-    }
+    const ics = buildIcs({
+      uid: `club-${bookingId}@labase360.fr`,
+      start: slotStart,
+      end: slotEnd,
+      summary: `RDV découverte — ${fullName}${peopleCount === 2 ? " +1" : ""}`,
+      description: [
+        `Objectif : ${objectifLabel(objectif)}`,
+        contact ? `Email : ${contact}` : null,
+        phone ? `Téléphone : ${phone}` : null,
+        peopleCount === 2 ? "Vient à deux" : null,
+      ].filter(Boolean).join("\n"),
+      location,
+      attendee: LEAD_NOTIFY_EMAIL,
+    });
+    // reply-to = le lead, pour répondre en un clic.
+    // L'invitation .ics est jointe : Gmail la pose sur l'agenda de la boîte.
+    await sendViaResend(LEAD_NOTIFY_EMAIL, subject, internalHtml, contact || undefined, [
+      { filename: "rdv-decouverte.ics", content: btoa(unescape(encodeURIComponent(ics))) },
+    ]);
   } catch (_e) {
     // notif interne best-effort — la résa est déjà enregistrée
   }
