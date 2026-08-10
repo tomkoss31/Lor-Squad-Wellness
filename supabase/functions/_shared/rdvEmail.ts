@@ -125,13 +125,12 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
       ? ""
       : btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk);
 
-  // En-tête. Côté club, le vrai logo plutôt qu'un simple libellé — la personne
-  // reconnaît la marque qu'elle vient de quitter. La ligne de texte est GARDÉE
-  // sous l'image : beaucoup de messageries bloquent les images distantes par
-  // défaut, l'expéditeur doit rester lisible même sans elle.
+  // En-tête. Côté club, le logo SEUL : il porte déjà « by La Base », répéter
+  // « by La Base · Verdun » en dessous faisait doublon (retour Thomas
+  // 2026-08-09). Le `alt` reste la sécurité quand la messagerie bloque les
+  // images distantes, et le pied de page redonne de toute façon le nom complet.
   const brand = (p.theme ?? "app") === "club"
-    ? `<img src="${CLUB_URL}/brand/breakfast-club/logo-heart.png" alt="The Breakfast Club by La Base" width="190" style="width:190px;max-width:72%;height:auto;display:block;border:0;margin:0 0 10px;">
-    <div style="font-size:11px;color:${t.faint};letter-spacing:.14em;text-transform:uppercase;">${t.tagline}</div>`
+    ? `<img src="${CLUB_URL}/brand/breakfast-club/logo-heart.png" alt="The Breakfast Club by La Base" width="190" style="width:190px;max-width:72%;height:auto;display:block;border:0;margin:0;">`
     : `<div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
     <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:2px;">${t.tagline}</div>`;
 
