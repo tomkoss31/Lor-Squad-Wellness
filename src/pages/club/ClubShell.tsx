@@ -73,6 +73,26 @@ export function Slot({
   );
 }
 
+/**
+ * Bande photo pleine largeur qui sépare deux sections.
+ *
+ * Purement décorative : chaque vignette porte `alt=""` et la bande est
+ * `aria-hidden`. Les photos ne portent aucune information qui ne soit pas
+ * déjà dans le texte des sections qu'elles séparent — les décrire une à une
+ * ne ferait qu'allonger la lecture d'un lecteur d'écran sans rien lui
+ * apprendre. Si un jour une vignette porte une info propre, elle sort de la
+ * bande et devient un <Slot> légendé.
+ */
+export function PhotoBand({ srcs }: { srcs: string[] }) {
+  return (
+    <div className="cl-photoband" aria-hidden="true">
+      {srcs.map((s) => (
+        <img key={s} src={s} alt="" loading="lazy" decoding="async" />
+      ))}
+    </div>
+  );
+}
+
 export function ClubShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);

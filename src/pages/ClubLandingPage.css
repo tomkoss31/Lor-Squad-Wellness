@@ -196,6 +196,18 @@
   background-image:radial-gradient(currentColor 1.5px,transparent 1.6px);background-size:22px 22px}
 .cl-band.dark .cl-dots{color:rgba(244,239,228,.10)}
 
+/* ── BANDE PHOTO — séparateur pleine largeur entre deux sections ───────────
+   Bord à bord, sans gouttière : c'est la bande elle-même qui fait la coupure ;
+   une gouttière la transformerait en galerie. Hauteur fixée (et non un
+   aspect-ratio par vignette) pour que la bande garde la même épaisseur quel
+   que soit le nombre de vignettes affichées.
+   On RETIRE des vignettes en descendant, on ne les rétrécit pas : à 5 sur un
+   téléphone, chacune ferait ~75 px de large et on n'y verrait plus rien. */
+.cl-photoband{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;line-height:0;overflow:hidden}
+.cl-photoband img{width:100%;height:clamp(118px,15vw,210px);object-fit:cover;display:block}
+@media (max-width:860px){.cl-photoband>:nth-child(n+5){display:none}}
+@media (max-width:560px){.cl-photoband>:nth-child(n+4){display:none}}
+
 /* pastilles réseaux sociaux (footer) */
 .cl-social{min-height:44px;display:inline-flex;align-items:center;padding:10px 20px;border-radius:999px;border:1px solid rgba(244,239,228,.24);color:var(--on-dark-2);font-size:14px;font-weight:600;transition:border-color .15s,color .15s}
 .cl-social:hover{border-color:var(--orange);color:var(--yellow)}
