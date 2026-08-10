@@ -63,7 +63,7 @@ export function ClientModal({ open, onClose }: Props) {
           maxWidth: 440,
           width: "100%",
           padding: 28,
-          boxShadow: "0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(16,185,129,0.06)",
+          boxShadow: "0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(45, 212, 191,0.06)",
           fontFamily: "Inter, system-ui, sans-serif",
           color: "#0F172A",
         }}
@@ -95,14 +95,14 @@ export function ClientModal({ open, onClose }: Props) {
                   width: "100%",
                   padding: "14px 14px",
                   borderRadius: 12,
-                  background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: "pointer",
                   fontSize: 13.5,
                   fontWeight: 600,
                   fontFamily: "Sora, system-ui, sans-serif",
-                  boxShadow: "0 4px 16px rgba(16,185,129,0.30)",
+                  boxShadow: "0 4px 16px rgba(45, 212, 191,0.30)",
                 }}
               >
                 Oui, je me connecte
@@ -148,8 +148,8 @@ export function ClientModal({ open, onClose }: Props) {
             <div
               style={{
                 padding: "12px 14px",
-                background: "linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(6,182,212,0.06) 100%)",
-                border: "1px solid rgba(16,185,129,0.20)",
+                background: "linear-gradient(135deg, rgba(45, 212, 191,0.06) 0%, rgba(45, 212, 191,0.06) 100%)",
+                border: "1px solid rgba(45, 212, 191,0.20)",
                 borderRadius: 12,
                 fontSize: 12.5,
                 color: "#0F172A",

@@ -11,30 +11,30 @@
  * conserves pour ne pas casser les pages non-encore-rebrand.
  * ============================================================================= */
 :root {
-  --lb360-emerald:   #10B981;
-  --lb360-cyan:      #06B6D4;
-  --lb360-violet:    #8B5CF6;
+  --lb360-emerald:   #2DD4BF;
+  --lb360-cyan:      #2DD4BF;
+  --lb360-violet:    #A78BFA;
   --lb360-gold:      #0D9488;  /* doré abandonné 2026-08-05 → alias teal */
   --lb360-coral:     #D4537E;
-  --lb360-gradient:  linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+  --lb360-gradient:  linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%);
   --lb360-gradient-soft: linear-gradient(135deg, #F0FDF4 0%, #ECFEFF 50%, #F5F3FF 100%);
 
   /* Co-pilote V7 (chantier 2026-05-08) — gradients de cards tintees G3.
      Utilises pour la card rentabilite, les stats row pastels, etc.
      Suivent var(--ls-surface) automatiquement → bascule light/dark OK. */
   --lb360-card-emerald: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 9%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-cyan: linear-gradient(135deg,
-    color-mix(in srgb, #06B6D4 6%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 6%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-violet: linear-gradient(135deg,
-    color-mix(in srgb, #8B5CF6 9%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #A78BFA 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 100%);
   --lb360-card-rentab: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 7%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 50%,
-    color-mix(in srgb, #8B5CF6 7%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #2DD4BF 7%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 50%,
+    color-mix(in srgb, #A78BFA 7%, var(--ls-surface)) 100%);
 
   --lb360-white:     #FFFFFF;
   --lb360-mist:      #F8FAFC;
@@ -42,10 +42,10 @@
   --lb360-ink-soft:  #475569;
   --lb360-border:    #E2E8F0;
 
-  --lb360-success:   #10B981;
+  --lb360-success:   #2DD4BF;
   --lb360-warning:   #F59E0B;
   --lb360-danger:    #EF4444;
-  --lb360-info:      #06B6D4;
+  --lb360-info:      #2DD4BF;
 
   /* Typography stack — chantier Co-pilote V7 (2026-05-08).
      - --lb360-display       : titres UI / nombres (Sora 800)

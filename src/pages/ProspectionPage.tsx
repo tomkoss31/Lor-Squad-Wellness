@@ -976,7 +976,7 @@ function MarketTimingBanner({
 const KIND_BADGES: Record<string, { label: string; bg: string; color: string }> = {
   j3_followup: { label: "Relance J+3",    bg: "linear-gradient(135deg, #F59E0B, #FBBF24)", color: "white" },
   referral:    { label: "Après reco",     bg: "linear-gradient(135deg, #2DD4BF, #5EEAD4)", color: "white" },
-  pitch:       { label: "Pitch business", bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)", color: "white" },
+  pitch:       { label: "Pitch business", bg: "linear-gradient(135deg, #A78BFA, #6D28D9)", color: "white" },
   direct:      { label: "Contact direct", bg: "rgba(45,212,191,0.15)", color: "#0F766E" },
   first_contact: { label: "", bg: "", color: "" },
 };

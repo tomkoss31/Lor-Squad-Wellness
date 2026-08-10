@@ -66,7 +66,7 @@ const PDJ_THEME_CSS = `
   --pdj-hero-bg:linear-gradient(140deg,#1E3330 0%,#1A2C29 55%,#162624 100%);--pdj-hero-border:rgba(241,245,249,0.07);--pdj-hero-shadow:0 40px 100px rgba(0,0,0,0.5);
   --pdj-card-bg:rgba(241,245,249,0.03);--pdj-card-border:rgba(241,245,249,0.08);--pdj-card-shadow:none;--pdj-divider:rgba(241,245,249,0.1);
   --pdj-ghost-border:rgba(241,245,249,0.14);--pdj-ghost-bg:rgba(241,245,249,0.05);--pdj-checkbox-border:rgba(241,245,249,0.22);
-  --pdj-rdv-bg:rgba(6,182,212,0.06);--pdj-rdv-border:rgba(6,182,212,0.18);--pdj-calm-bg:rgba(45,212,191,0.06);--pdj-calm-border:rgba(45,212,191,0.20);
+  --pdj-rdv-bg:rgba(45, 212, 191,0.06);--pdj-rdv-border:rgba(45, 212, 191,0.18);--pdj-calm-bg:rgba(45,212,191,0.06);--pdj-calm-border:rgba(45,212,191,0.20);
   --pdj-glow-em:rgba(45,212,191,0.20);--pdj-glow-vi:rgba(197,248,42,0.18);--pdj-ring-track:rgba(241,245,249,0.12);--pdj-ring-text:#F8FAFC;
   --pdj-pin-op:0.13;--pdj-ten-op:0.13;
 }
@@ -75,7 +75,7 @@ html.theme-light{
   --pdj-hero-bg:linear-gradient(140deg,#FFFFFF 0%,#FAF7F0 55%,#F5F1EB 100%);--pdj-hero-border:rgba(46,39,34,0.10);--pdj-hero-shadow:0 30px 80px rgba(46,39,34,0.14);
   --pdj-card-bg:#FFFFFF;--pdj-card-border:rgba(46,39,34,0.09);--pdj-card-shadow:0 1px 2px rgba(46,39,34,0.05);--pdj-divider:rgba(46,39,34,0.12);
   --pdj-ghost-border:rgba(46,39,34,0.16);--pdj-ghost-bg:rgba(46,39,34,0.04);--pdj-checkbox-border:rgba(46,39,34,0.28);
-  --pdj-rdv-bg:rgba(6,182,212,0.09);--pdj-rdv-border:rgba(6,182,212,0.28);--pdj-calm-bg:rgba(45,212,191,0.09);--pdj-calm-border:rgba(45,212,191,0.30);
+  --pdj-rdv-bg:rgba(45, 212, 191,0.09);--pdj-rdv-border:rgba(45, 212, 191,0.28);--pdj-calm-bg:rgba(45,212,191,0.09);--pdj-calm-border:rgba(45,212,191,0.30);
   --pdj-glow-em:rgba(45,212,191,0.14);--pdj-glow-vi:rgba(197,248,42,0.12);--pdj-ring-track:rgba(46,39,34,0.13);--pdj-ring-text:#211B16;
   --pdj-pin-op:0.07;--pdj-ten-op:0.09;
 }
@@ -210,7 +210,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
       <div style={{ position: "relative", zIndex: 2 }}>
         {/* Ligne Noaly */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-          <div aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(135deg,#2DD4BF 0%,#2DD4BF 50%,#c5f82a 100%)", flex: "0 0 auto", boxShadow: "0 4px 14px rgba(6,182,212,0.4)" }} />
+          <div aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(135deg,#2DD4BF 0%,#2DD4BF 50%,#c5f82a 100%)", flex: "0 0 auto", boxShadow: "0 4px 14px rgba(45, 212, 191,0.4)" }} />
           <div style={{ fontSize: 13.5, lineHeight: 1.45, color: "var(--pdj-text-sec)" }}>
             <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: "var(--pdj-text-strong)" }}>Noaly</span> · {noalyText}
           </div>
@@ -260,11 +260,11 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 15, color: "#0891B2", width: 50, flex: "0 0 auto" }}>{r.time}</div>
                         <div style={{ width: 1, height: 36, background: "var(--pdj-divider)", flex: "0 0 auto" }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: "inline-block", fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", color: "#0891B2", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.28)", padding: "2px 7px", borderRadius: 6, marginBottom: 5 }}>{r.tag}</span>
+                          <span style={{ display: "inline-block", fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", color: "#0891B2", background: "rgba(45, 212, 191,0.12)", border: "1px solid rgba(45, 212, 191,0.28)", padding: "2px 7px", borderRadius: 6, marginBottom: 5 }}>{r.tag}</span>
                           <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)" }}>{r.name}</div>
                           <div style={{ fontSize: 13, color: "var(--pdj-text-sec)", marginTop: 2 }}>{r.sub}</div>
                         </div>
-                        <button type="button" onClick={() => navigate(`/clients/${r.clientId}`)} style={{ flex: "0 0 auto", background: "rgba(6,182,212,0.16)", border: "1px solid rgba(6,182,212,0.34)", color: "#0E7490", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 18px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
+                        <button type="button" onClick={() => navigate(`/clients/${r.clientId}`)} style={{ flex: "0 0 auto", background: "rgba(45, 212, 191,0.16)", border: "1px solid rgba(45, 212, 191,0.34)", color: "#0E7490", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 18px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
                       </div>
                     ))}
                   </div>
@@ -318,7 +318,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                           </>
                         ) : (
                           <div style={{ position: "relative", width: 30, height: 30, flex: "0 0 auto" }}>
-                            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 15, animation: "pdj-pop .4s ease", boxShadow: "0 0 18px rgba(45,212,191,0.5)" }}>✓</div>
+                            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#0D9488)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 15, animation: "pdj-pop .4s ease", boxShadow: "0 0 18px rgba(45,212,191,0.5)" }}>✓</div>
                             {PARTICLE_DIRS.map((d, pi) => (
                               <span key={pi} style={{ position: "absolute", left: "50%", top: "50%", width: 6, height: 6, borderRadius: "50%", background: PARTICLE_COLS[pi], ["--tx" as string]: `${d[0]}px`, ["--ty" as string]: `${d[1]}px`, animation: "pdj-burst .6s ease-out forwards", pointerEvents: "none" } as React.CSSProperties} />
                             ))}
@@ -330,7 +330,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                 })}
 
                 {active.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: 30, border: "1px solid var(--pdj-calm-border)", borderRadius: 14, background: "linear-gradient(110deg, var(--pdj-calm-bg), var(--pdj-calm-bg)), linear-gradient(110deg, rgba(45,212,191,0) 30%, rgba(6,182,212,0.18) 50%, rgba(197,248,42,0) 70%)", backgroundSize: "100% 100%, 200% 100%", animation: "pdj-sheen 3.5s linear infinite", color: "#2DD4BF", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15 }}>Liste à jour ✓ — tout est traité, belle journée</div>
+                  <div style={{ textAlign: "center", padding: 30, border: "1px solid var(--pdj-calm-border)", borderRadius: 14, background: "linear-gradient(110deg, var(--pdj-calm-bg), var(--pdj-calm-bg)), linear-gradient(110deg, rgba(45,212,191,0) 30%, rgba(45, 212, 191,0.18) 50%, rgba(197,248,42,0) 70%)", backgroundSize: "100% 100%, 200% 100%", animation: "pdj-sheen 3.5s linear infinite", color: "#2DD4BF", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15 }}>Liste à jour ✓ — tout est traité, belle journée</div>
                 ) : null}
               </div>
 
@@ -339,7 +339,7 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.14em", color: "var(--pdj-text-faint)", marginBottom: 6 }}>FAIT AUJOURD'HUI</div>
                   {done.map((d) => (
                     <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 18px", opacity: 0.55 }}>
-                      <div onClick={() => setStatus(d.id, "active")} role="button" tabIndex={0} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 14, cursor: "pointer", flex: "0 0 auto" }}>✓</div>
+                      <div onClick={() => setStatus(d.id, "active")} role="button" tabIndex={0} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#0D9488)", display: "flex", alignItems: "center", justifyContent: "center", color: "#04241a", fontWeight: 800, fontSize: 14, cursor: "pointer", flex: "0 0 auto" }}>✓</div>
                       <div style={{ flex: 1, minWidth: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14.5, color: "var(--pdj-text)", textDecoration: "line-through" }}>{d.name}</div>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--pdj-text-faint)" }}>{status(d.id) === "later" ? "Reporté" : "Fait"}</span>
                     </div>
@@ -387,7 +387,7 @@ function CalmeState({ navigate }: { navigate: (p: string) => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 22, padding: 30, background: "var(--pdj-calm-bg)", border: "1px solid var(--pdj-calm-border)", borderRadius: 18 }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#2DD4BF)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", boxShadow: "0 10px 30px rgba(45,212,191,0.35)" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#0D9488)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto", boxShadow: "0 10px 30px rgba(45,212,191,0.35)" }}>
           <span style={{ color: "#04241a", fontSize: 30, fontWeight: 800 }}>✓</span>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>

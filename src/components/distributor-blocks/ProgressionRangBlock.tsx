@@ -101,9 +101,9 @@ export function ProgressionRangBlock({ memberId, fullUser, monthIso }: Props) {
             width: `${progression.pct}%`,
             background:
               progression.pct >= 100
-                ? "linear-gradient(90deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)"
+                ? "linear-gradient(90deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)"
                 : progression.pct >= 75
-                  ? "linear-gradient(90deg, #10B981 0%, #06B6D4 100%)"
+                  ? "linear-gradient(90deg, #2DD4BF 0%, #C5F82A 100%)"
                   : "var(--ls-teal)",
             transition: "width 0.4s ease",
           }}

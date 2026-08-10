@@ -845,7 +845,7 @@ const DesktopStage2Svg = (
     <div style={{ display: "flex", gap: 4 }}>
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444" }} />
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B" }} />
-      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2DD4BF" }} />
     </div>
     <span style={{ fontSize: 9, color: "var(--ls-text-hint)", flex: 1 }}>← →</span>
     <div

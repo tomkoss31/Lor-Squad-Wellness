@@ -127,8 +127,8 @@ export function SendBusinessPlanButton({ client }: Props) {
           marginTop: 12,
           borderRadius: 16,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, #10B981 8%, var(--ls-surface)) 0%, color-mix(in srgb, #8B5CF6 6%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, #10B981 30%, transparent)",
+            "linear-gradient(135deg, color-mix(in srgb, #2DD4BF 8%, var(--ls-surface)) 0%, color-mix(in srgb, #A78BFA 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, #2DD4BF 30%, transparent)",
         }}
       >
         <div
@@ -148,8 +148,8 @@ export function SendBusinessPlanButton({ client }: Props) {
             style={{
               padding: "2px 8px",
               borderRadius: 6,
-              background: "color-mix(in srgb, #10B981 14%, transparent)",
-              color: "#10B981",
+              background: "color-mix(in srgb, #2DD4BF 14%, transparent)",
+              color: "#2DD4BF",
               fontSize: 11,
               fontWeight: 700,
             }}
@@ -177,13 +177,13 @@ export function SendBusinessPlanButton({ client }: Props) {
             padding: "10px 16px",
             borderRadius: 10,
             border: "none",
-            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             color: "white",
             fontFamily: "Sora, sans-serif",
             fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+            boxShadow: "0 4px 14px rgba(45, 212, 191,0.25)",
           }}
         >
           📨 {wasSent ? "Renvoyer le plan d'opportunité" : "Envoyer le plan d'opportunité"}
@@ -312,9 +312,9 @@ export function SendBusinessPlanButton({ client }: Props) {
                   marginTop: 12,
                   padding: "10px 14px",
                   borderRadius: 10,
-                  border: "0.5px dashed color-mix(in srgb, #10B981 35%, var(--ls-border))",
-                  background: "color-mix(in srgb, #10B981 6%, var(--ls-surface2))",
-                  color: "#10B981",
+                  border: "0.5px dashed color-mix(in srgb, #2DD4BF 35%, var(--ls-border))",
+                  background: "color-mix(in srgb, #2DD4BF 6%, var(--ls-surface2))",
+                  color: "#2DD4BF",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 12,
                   fontWeight: 600,

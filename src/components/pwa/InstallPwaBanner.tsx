@@ -48,8 +48,8 @@ export function InstallPwaBanner() {
       <div
         style={{
           padding: "12px 14px",
-          background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.06) 50%, rgba(139,92,246,0.05) 100%)",
-          borderBottom: "1px solid rgba(16,185,129,0.20)",
+          background: "linear-gradient(135deg, rgba(45, 212, 191,0.08) 0%, rgba(45, 212, 191,0.06) 50%, rgba(167, 139, 250,0.05) 100%)",
+          borderBottom: "1px solid rgba(45, 212, 191,0.20)",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -62,13 +62,13 @@ export function InstallPwaBanner() {
             width: 28,
             height: 28,
             borderRadius: 8,
-            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #C5F82A 100%)",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 14,
             flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(16,185,129,0.20)",
+            boxShadow: "0 2px 8px rgba(45, 212, 191,0.20)",
           }}
         >
           📱
@@ -82,7 +82,7 @@ export function InstallPwaBanner() {
           style={{
             padding: "7px 14px",
             borderRadius: 10,
-            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             color: "#FFFFFF",
             border: "none",
             fontSize: 12,
@@ -90,7 +90,7 @@ export function InstallPwaBanner() {
             fontWeight: 600,
             cursor: "pointer",
             flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(16,185,129,0.25)",
+            boxShadow: "0 2px 8px rgba(45, 212, 191,0.25)",
           }}
         >
           Voir comment

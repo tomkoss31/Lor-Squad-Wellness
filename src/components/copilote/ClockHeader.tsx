@@ -314,8 +314,8 @@ export function ClockHeader({
                 width: 5,
                 height: 5,
                 borderRadius: 999,
-                background: "#10b981",
-                boxShadow: "0 0 6px rgba(16,185,129,0.8)",
+                background: "#2DD4BF",
+                boxShadow: "0 0 6px rgba(45, 212, 191,0.8)",
                 animation: "ls-glow-pulse 2s ease-in-out infinite",
               }}
             />
