@@ -300,8 +300,11 @@ export function SelectableProductCard({
             aria-pressed={selected}
             style={{
               flexShrink: 0,
-              minHeight: 38,
-              padding: "8px 14px",
+              // 44 px = le minimum tactile d'Apple. Ce bouton était à 38 px, et
+              // il apparaît 7 fois sur l'étape « Le programme proposé » — celle
+              // qui décide du panier. (audit mobile 2026-08-10)
+              minHeight: 44,
+              padding: "10px 14px",
               borderRadius: 999,
               border: "none",
               cursor: "pointer",
