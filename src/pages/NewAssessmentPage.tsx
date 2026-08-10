@@ -2009,7 +2009,7 @@ export function NewAssessmentPage() {
                         client ni de relance possible.
                       </p>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-2 md:col-span-1">
                       <AssessmentFieldV2
                         label="Invité par / recommandé par"
                         icon="🤝"
@@ -2017,7 +2017,7 @@ export function NewAssessmentPage() {
                         onChange={(v) => update("referredByName", v)}
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-2 md:col-span-1">
                       <AssessmentFieldV2
                         label="Date et heure du bilan"
                         icon="📅"
@@ -2027,7 +2027,7 @@ export function NewAssessmentPage() {
                       />
                     </div>
                     {currentUser?.role === "admin" ? (
-                      <div className="col-span-2" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div className="col-span-2 md:col-span-1" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
                           <label
@@ -2080,7 +2080,7 @@ export function NewAssessmentPage() {
                     {/* Ligne entière : un champ date fait 133 px en demi-colonne,
                         et sur iOS le « jj/mm/aaaa » plus l'icône calendrier n'y
                         tiennent qu'à la limite. */}
-                    <div className="col-span-2">
+                    <div className="col-span-2 md:col-span-1">
                       <AssessmentFieldV2
                         label="Date de naissance"
                         icon="🎂"

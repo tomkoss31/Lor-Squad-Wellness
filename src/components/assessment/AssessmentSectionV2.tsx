@@ -71,6 +71,17 @@ export function AssessmentSectionV2({
           .ls-section-v2 .ls-section-v2__tete { margin-bottom: 15px !important; }
           .ls-section-v2 .ls-section-v2__corps { gap: 15px !important; }
         }
+        /* Plafond de largeur sur grand écran. Mesuré à 1440 px : le panneau
+           fait 1111 px, et un champ qui occupe toute une rangée s'étirait à
+           1003 px — un mètre de saisie pour taper un prénom. L'œil perd la
+           ligne, et la case de coche d'un formulaire ne se lit plus. On
+           s'aligne à gauche avec une mesure tenable ; la zone de texte a
+           droit à plus, on y écrit des phrases. */
+        @media (min-width: 768px) {
+          .ls-section-v2 input:not([type="range"]),
+          .ls-section-v2 select { max-width: 520px; }
+          .ls-section-v2 textarea { max-width: 720px; }
+        }
       `}</style>
     <section
       data-tour-id={dataTourId}
