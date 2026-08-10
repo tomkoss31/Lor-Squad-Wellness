@@ -91,6 +91,14 @@ export interface RdvEmailParams {
    * "club" pour rester dans le crème/orange que la personne vient de quitter.
    */
   theme?: RdvEmailTheme;
+  /**
+   * Le destinataire a-t-il un espace client ? Défaut `true` : les mails aux
+   * CLIENTS (rdv-confirm-client, client-rdv-reminder) gardent leur bouton.
+   * Les tunnels publics passent `false` — un prospect qui réserve son 1er RDV
+   * n'a pas de compte, le bouton l'enverrait sur une connexion impossible
+   * (retour Thomas 2026-08-09, d'abord côté club puis sur le funnel /rdv).
+   */
+  hasAccount?: boolean;
 }
 
 export function rdvEmailHtml(p: RdvEmailParams): string {
@@ -116,14 +124,15 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
     `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:15px 18px;background:${bg};color:${fg};border-radius:13px;text-decoration:none;font-size:15px;font-weight:700;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">${label}</a>`;
 
   // Le bouton « mon espace » n'a de sens que pour un CLIENT, qui en a un. Un
-  // prospect du club vient de réserver son tout premier RDV : il n'a pas encore
-  // de compte, l'envoyer sur une page de connexion serait une impasse (retour
-  // Thomas 2026-08-09). Il ne reçoit donc que son lien de gestion, ou rien.
+  // prospect vient de réserver son tout premier rendez-vous : il n'a pas encore
+  // de compte, l'envoyer sur une page de connexion serait une impasse.
+  // La condition porte donc sur `hasAccount`, la vraie raison — et non sur le
+  // thème, qui ne dit rien de qui reçoit le mail.
   const cta = p.manageUrl
     ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", t.accent, t.accentInk)
-    : (p.theme ?? "app") === "club"
-      ? ""
-      : btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk);
+    : (p.hasAccount ?? true)
+      ? btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk)
+      : "";
 
   // En-tête. Côté club, le logo SEUL : il porte déjà « by La Base », répéter
   // « by La Base · Verdun » en dessous faisait doublon (retour Thomas

@@ -293,6 +293,10 @@ serve(async (req: Request) => {
         dateLabel: parisDateLabel(slotStart.toISOString()),
         hour: parisHourLabel(slotStart.toISOString()),
         location: whereLine,
+        // Tunnel public : la personne réserve son 1er rendez-vous, elle n'a pas
+        // de compte. Pas de bouton « mon espace », il ne mènerait qu'à un écran
+        // de connexion (retour Thomas 2026-08-09).
+        hasAccount: false,
       });
       confirmEmailSent = await sendViaResend(contact, "✅ Ton rendez-vous est bien noté", html);
       if (confirmEmailSent) {

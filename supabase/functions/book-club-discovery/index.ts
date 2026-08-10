@@ -217,6 +217,8 @@ serve(async (req: Request) => {
         // La personne vient de parcourir un site crème et orange : son mail de
         // confirmation reste dans la même identité, pas en dark premium.
         theme: "club",
+        // Prospect du club : aucun compte, donc pas de bouton « mon espace ».
+        hasAccount: false,
       });
       confirmEmailSent = await sendViaResend(contact, "✅ Ton RDV découverte est réservé", html);
       if (confirmEmailSent) {
