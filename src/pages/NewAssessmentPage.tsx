@@ -1215,12 +1215,12 @@ export function NewAssessmentPage() {
       // Multi : "prise de masse + énergie" plutôt qu'un seul mot.
       summary: startsImmediately
         ? `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
-        : `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
+        : `Premier bilan orienté ${objectiveFocusLabel.toLowerCase()} sans démarrage immédiat, relance à prévoir.`,
       notes:
         form.comment.trim() ||
         (startsImmediately
           ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà pose."
-          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance déjà prevue."),
+          : "Le client repart avec un bilan clair, sans démarrage immédiat, et une relance déjà prévue."),
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -1283,7 +1283,7 @@ export function NewAssessmentPage() {
           form.comment.trim() ||
           (startedEffective
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
-            : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
+            : "Bilan enregistré sans démarrage. Une relance est à prévoir."),
         afterAssessmentAction: form.afterAssessmentAction,
         freeFollowUp: isFreeFollowUp
       });
@@ -1594,9 +1594,27 @@ export function NewAssessmentPage() {
         </div>
       )}
 
-      <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
+      {/* Le conteneur est collant : sans fond opaque, le formulaire défilerait
+          au travers du filet de progression sur téléphone. */}
+      <div
+        ref={stepRailRef}
+        className="step-rail-wrapper"
+        style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}
+      >
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
+      <style>{`
+        @media (max-width: 767px) {
+          .step-rail-wrapper {
+            padding-top: 6px !important;
+            padding-bottom: 7px !important;
+            background: color-mix(in srgb, var(--ls-bg) 88%, transparent);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 0.5px solid color-mix(in srgb, var(--ls-teal) 16%, transparent);
+          }
+        }
+      `}</style>
 
       <style>{`
         /* Refonte transitions bilan (2026-11-04) :
@@ -1852,7 +1870,13 @@ export function NewAssessmentPage() {
                   description="Les bases administratives et le contexte du client. Tout ce qu'il faut pour ouvrir un dossier propre."
                   accent="gold"
                 >
-                  <div className="grid gap-4 md:grid-cols-2">
+                  {/* Deux colonnes DÈS le téléphone (audit mobile 2026-08-10).
+                      La tablette le faisait déjà — 1,58 champ par rangée contre
+                      1 sur iPhone — ce qui expliquait à lui seul 1700 px d'écart
+                      de défilement sur cette étape. Les champs qui ont besoin de
+                      largeur (date+heure, liste déroulante, libellés longs)
+                      gardent toute la ligne via `col-span-2`. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     {/* autoComplete + enterKeyHint : sur iPhone, iOS propose le
                         contact et la touche entrée enchaîne au champ suivant au
                         lieu d'afficher « retour ». (audit mobile 2026-08-10) */}
@@ -1896,21 +1920,25 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("email", v)}
                       prefilled={prefilledFields.email}
                     />
-                    <AssessmentFieldV2
-                      label="Invité par / recommandé par"
-                      icon="🤝"
-                      value={form.referredByName}
-                      onChange={(v) => update("referredByName", v)}
-                    />
-                    <AssessmentFieldV2
-                      label="Date et heure du bilan"
-                      icon="📅"
-                      type="datetime-local"
-                      value={form.assessmentDate}
-                      onChange={(v) => update("assessmentDate", v)}
-                    />
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Invité par / recommandé par"
+                        icon="🤝"
+                        value={form.referredByName}
+                        onChange={(v) => update("referredByName", v)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Date et heure du bilan"
+                        icon="📅"
+                        type="datetime-local"
+                        value={form.assessmentDate}
+                        onChange={(v) => update("assessmentDate", v)}
+                      />
+                    </div>
                     {currentUser?.role === "admin" ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div className="col-span-2" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
                           <label
@@ -1951,29 +1979,36 @@ export function NewAssessmentPage() {
                         ) : null}
                       </div>
                     ) : null}
-                    <ChoiceGroup
-                      label="Sexe"
-                      value={form.sex}
-                      options={["female", "male"]}
-                      onChange={(v) => update("sex", v as BiologicalSex)}
-                      formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
-                    />
-                    <AssessmentFieldV2
-                      label="Date de naissance"
-                      icon="🎂"
-                      type="date"
-                      value={form.birthDate ?? ""}
-                      onChange={(v) => {
-                        update("birthDate", v);
-                        const computed = calculateAge(v);
-                        if (computed !== null) update("age", computed);
-                      }}
-                      helper={
-                        form.birthDate && form.age > 0
-                          ? `Âge calculé : ${form.age} ans`
-                          : undefined
-                      }
-                    />
+                    <div className="col-span-2">
+                      <ChoiceGroup
+                        label="Sexe"
+                        value={form.sex}
+                        options={["female", "male"]}
+                        onChange={(v) => update("sex", v as BiologicalSex)}
+                        formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
+                      />
+                    </div>
+                    {/* Ligne entière : un champ date fait 133 px en demi-colonne,
+                        et sur iOS le « jj/mm/aaaa » plus l'icône calendrier n'y
+                        tiennent qu'à la limite. */}
+                    <div className="col-span-2">
+                      <AssessmentFieldV2
+                        label="Date de naissance"
+                        icon="🎂"
+                        type="date"
+                        value={form.birthDate ?? ""}
+                        onChange={(v) => {
+                          update("birthDate", v);
+                          const computed = calculateAge(v);
+                          if (computed !== null) update("age", computed);
+                        }}
+                        helper={
+                          form.birthDate && form.age > 0
+                            ? `Âge calculé : ${form.age} ans`
+                            : undefined
+                        }
+                      />
+                    </div>
                     {/* `|| ""` : sans ça le champ s'ouvre pré-rempli d'un « 0 »
                         qu'il faut sélectionner et effacer avant de taper. */}
                     <AssessmentFieldV2
@@ -2077,7 +2112,9 @@ export function NewAssessmentPage() {
                       helper="en kg — où le client veut aller"
                     />
                   )}
-                  <div className="grid gap-4 md:grid-cols-2">
+                  {/* Les deux tailles de vêtement tiennent côte à côte dès le
+                      téléphone : ce sont deux listes déroulantes courtes. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <ClothingSizeSelect
                       label="Taille vêtement actuelle"
                       value={form.currentClothingSize}
@@ -2387,7 +2424,7 @@ export function NewAssessmentPage() {
             return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
                 <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--ls-text)', margin: '0 0 8px' }}>{cfg.title}</h2>
                 <p style={{ fontSize: 13, color: 'var(--ls-text-muted)', lineHeight: 1.7, margin: 0, maxWidth: 520 }}>Construisons une assiette simple que tu peux reproduire tous les jours, sans te peser, sans calculer.</p>
               </div>
@@ -2405,7 +2442,7 @@ export function NewAssessmentPage() {
               </div>
 
               <div style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
                 {[
                   { color: '#0D9488', bg: 'rgba(13,148,136,0.08)', label: 'Légumes · la moitié', items: ['Salade verte', 'Courgettes', 'Brocolis', 'Tomates', 'Carottes', 'Poivrons', 'Concombre'] },
                   { color: '#0D9488', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
@@ -3209,11 +3246,11 @@ export function NewAssessmentPage() {
                     <section className="space-y-3">
                       <BilanSectionDivider
                         number={1}
-                        eyebrow="Tes besoins detectes"
+                        eyebrow="Tes besoins détectés"
                         title="Ce que ton corps demande"
                         description={form.objective === "sport"
-                          ? "Hydratation, proteines et profil sportif personnalise."
-                          : "Hydratation et proteines calculees sur ton poids actuel."}
+                          ? "Hydratation, protéines et profil sportif personnalisé."
+                          : "Hydratation et protéines calculées sur ton poids actuel."}
                         color="teal"
                       />
 
@@ -3251,7 +3288,7 @@ export function NewAssessmentPage() {
                           </div>
                           <div>
                             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
-                              🥩 Proteines cible
+                              🥩 Protéines cible
                             </div>
                             <div
                               style={{
@@ -3286,7 +3323,7 @@ export function NewAssessmentPage() {
                           )}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 12, fontFamily: "DM Sans, sans-serif" }}>
-                          Calcule sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
+                          Calculé sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
                         </div>
                       </div>
                     </section>
@@ -3298,7 +3335,7 @@ export function NewAssessmentPage() {
                   <section className="space-y-3">
                     <BilanSectionDivider
                       number={2}
-                      eyebrow="Le programme coeur"
+                      eyebrow="Le programme cœur"
                       title={chosenProgram ? `Programme : ${chosenProgram.title}` : "Choisis le programme adapte"}
                       description="La base nutritionnelle qui structure ta journee. 4 niveaux pour s&apos;adapter a ton mode de vie."
                       color="gold"
@@ -3336,7 +3373,7 @@ export function NewAssessmentPage() {
 
                   {/* ═══════════════════════════════════════════════════════
                       § 3 · POUR ALLER PLUS LOIN (coral)
-                      Boosters sport + besoins detectes + upsells.
+                      Boosters sport + besoins détectés + upsells.
                       Affichee meme en perte de poids (pour besoins + upsells).
                       ═══════════════════════════════════════════════════════ */}
                   {(form.objective === "sport" ||
@@ -3347,7 +3384,7 @@ export function NewAssessmentPage() {
                         number={3}
                         eyebrow="Pour aller plus loin"
                         title="Ce qu&apos;on peut ajouter au programme"
-                        description="Boosters, besoins detectes par le bilan, options. Tout est optionnel."
+                        description="Boosters, besoins détectés par le bilan, options. Tout est optionnel."
                         color="coral"
                       />
 
@@ -3470,7 +3507,7 @@ export function NewAssessmentPage() {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
-                              Besoins detectes
+                              Besoins détectés
                             </div>
                             <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                               Ce que le bilan fait ressortir en priorite
@@ -3593,7 +3630,7 @@ export function NewAssessmentPage() {
                       number={4}
                       eyebrow="Suite apres le bilan"
                       title="La personne demarre maintenant ou revient plus tard ?"
-                      description="Choix du jour : demarrage immediat ou bilan sans demarrage (a relancer plus tard)."
+                      description="Choix du jour : démarrage immédiat ou bilan sans démarrage (à relancer plus tard)."
                       color="purple"
                       rightSlot={
                         <StatusBadge
@@ -3626,7 +3663,7 @@ export function NewAssessmentPage() {
                       <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
                         {[
                           { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
-                          { value: "pending" as const, label: "A relancer plus tard", subtitle: "Bilan sans demarrage immediat", emoji: "⏳", color: "#A78BFA" },
+                          { value: "pending" as const, label: "À relancer plus tard", subtitle: "Bilan sans démarrage immédiat", emoji: "⏳", color: "#A78BFA" },
                         ].map((opt) => {
                           const isActive = form.afterAssessmentAction === opt.value;
                           return (
@@ -3949,32 +3986,55 @@ export function NewAssessmentPage() {
               continuait dessous, et au body scan un champ tapable se trouvait
               dans cette bande, sous une barre qui signale « fin de page ».
               (`lg:bottom-3` était mort : le bloc est `md:hidden`.) */}
-          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
-            <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ls-text-hint)' }}>
-                Étape {currentStep + 1} / {steps.length}
-              </p>
-              <p className="text-xs" style={{ color: 'var(--ls-text-muted)' }}>{steps[currentStep]}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-center"
-                onClick={goToPreviousStep}
-                disabled={currentStep === 0}
-              >
-                Précédente
-              </Button>
-              <Button
-                className="w-full justify-center"
-                onClick={goToNextStep}
-                disabled={currentStep === steps.length - 1}
-              >
-                Suivante
-              </Button>
-            </div>
-            <Button variant="secondary" className="mt-2 w-full justify-center" onClick={() => void handleSaveAssessment()}>
-              Enregistrer le bilan
+          {/* « Enregistrer le bilan » quitte la barre permanente pour la fin du
+              formulaire : on enregistre quand on a fini de saisir, pas à chaque
+              écran. Ça rend 46 px à chaque écran du bilan. */}
+          <Button
+            variant="secondary"
+            className="mt-4 w-full justify-center md:hidden"
+            onClick={() => void handleSaveAssessment()}
+          >
+            Enregistrer le bilan
+          </Button>
+
+          <div
+            className="sticky bottom-0 z-20 -mx-4 mt-3 flex items-center gap-2 px-4 md:hidden"
+            style={{
+              height: 56,
+              background: 'color-mix(in srgb, var(--ls-bg) 92%, transparent)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderTop: '0.5px solid color-mix(in srgb, var(--ls-teal) 18%, var(--ls-border))',
+              color: 'var(--ls-text)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0}
+              aria-label="Étape précédente"
+              style={{
+                width: 44,
+                height: 44,
+                flex: 'none',
+                borderRadius: 12,
+                border: '0.5px solid var(--ls-border)',
+                background: 'var(--ls-surface)',
+                color: currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)',
+                fontSize: 18,
+                lineHeight: 1,
+                cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+                opacity: currentStep === 0 ? 0.45 : 1,
+              }}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <Button
+              className="h-11 min-h-[44px] flex-1 justify-center"
+              onClick={goToNextStep}
+              disabled={currentStep === steps.length - 1}
+            >
+              Suivante
             </Button>
           </div>
           {saveError ? (

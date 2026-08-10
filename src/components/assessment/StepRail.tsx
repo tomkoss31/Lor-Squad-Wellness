@@ -77,8 +77,68 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
         }
       `}</style>
 
-      {/* ═══ MOBILE — version condensée premium ═══ */}
-      <div className="lg:hidden">
+      {/* ═══ TÉLÉPHONE (< 768px) — filet de progression ═══
+          Audit mobile 2026-08-10 : sur iPhone, la version condensée ci-dessous
+          pesait 146 px et répétait « Étape 1 / 13 », déjà affiché par la barre
+          du bas. Avec l'en-tête et cette barre, 363 px — 45 % de l'écran —
+          étaient occupés en permanence, ne laissant que 449 px de lecture.
+          Ici on garde les trois informations utiles (avancement, nom de
+          l'étape, rang) sur une seule ligne. La tablette et le bureau, qui ont
+          la place, gardent leurs versions riches. */}
+      <div className="md:hidden">
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          <div
+            style={{
+              position: "relative",
+              height: 3,
+              background: "var(--ls-surface2)",
+              borderRadius: 999,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${progress}%`,
+                background: `linear-gradient(90deg, var(--ls-teal) 0%, ${phase.color} 100%)`,
+                borderRadius: 999,
+                transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: 10,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12.5,
+                fontWeight: 650,
+                color: "var(--ls-text)",
+                letterSpacing: "-0.01em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                minWidth: 0,
+              }}
+            >
+              <span aria-hidden="true" style={{ marginRight: 5 }}>{phase.emoji}</span>
+              {steps[currentStep]}
+            </span>
+            <span style={{ fontSize: 11, color: "var(--ls-text-hint)", flex: "none" }}>
+              {currentStep + 1} / {steps.length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ TABLETTE (768 → 1024px) — version condensée premium ═══ */}
+      <div className="hidden md:block lg:hidden">
         <div
           style={{
             position: "relative",
@@ -388,7 +448,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                   </div>
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 11,
                       lineHeight: 1.25,
                       textAlign: "center",
                       maxWidth: 72,
