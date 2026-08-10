@@ -214,6 +214,9 @@ serve(async (req: Request) => {
         hour: parisHourLabel(slotStart.toISOString()),
         location,
         manageUrl,
+        // La personne vient de parcourir un site crème et orange : son mail de
+        // confirmation reste dans la même identité, pas en dark premium.
+        theme: "club",
       });
       confirmEmailSent = await sendViaResend(contact, "✅ Ton RDV découverte est réservé", html);
       if (confirmEmailSent) {

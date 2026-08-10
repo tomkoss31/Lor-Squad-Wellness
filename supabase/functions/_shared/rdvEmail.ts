@@ -1,24 +1,65 @@
 // =============================================================================
-// _shared/rdvEmail.ts — template UNIQUE des mails de RDV (La Base 360).
-// Utilisé par book-rdv (confirm prospect), rdv-confirm-client (confirm client)
-// et client-rdv-reminder (rappel J-1 client + prospect). Un seul design partout.
+// _shared/rdvEmail.ts — template UNIQUE des mails de RDV.
+// Utilisé par book-rdv (confirm prospect), rdv-confirm-client (confirm client),
+// client-rdv-reminder (rappel J-1) et book-club-discovery (RDV du club).
 //
-// HTML email-safe : styles inline, couleurs solides (pas de gradient/color-mix),
-// largeur max 480, dark premium La Base 360.
+// HTML email-safe : styles inline, couleurs solides (pas de gradient/color-mix,
+// Outlook ne les rend pas), largeur max 480.
+//
+// ─── DEUX HABILLAGES, UNE SEULE STRUCTURE ────────────────────────────────────
+// L'identité de La Base 360 compte trois systèmes visuels qui ne se mélangent
+// JAMAIS. Un mail envoyé par le site public du Breakfast Club ne peut donc pas
+// arriver en dark premium : la personne vient de parcourir une page crème et
+// orange. `theme` choisit l'habillage — la mise en page, elle, ne change pas.
+//   • "app"  (défaut) — dark premium La Base 360. Les 3 appelants historiques
+//                       ne passent rien : leur mail est strictement inchangé.
+//   • "club"          — crème + orange du site public (tokens --bc-*).
 // =============================================================================
 
 const APP_URL = "https://www.labase360.fr";
+const CLUB_URL = "https://www.labase-nutrition.com";
 const CONTEST_URL = "https://commande.labase-nutrition.com/jeu";
 
-// Palette
-const INK = "#0B0D11";
-const SURFACE = "#13161C";
-const TEAL = "#2DD4BF";
-const GOLD = "#C9A84C";
-const CREAM = "#F0EDE8";
-const MUTED = "#C3CCC0";
-const HINT = "#7A8099";
-const FAINT = "#4A5068";
+export type RdvEmailTheme = "app" | "club";
+
+interface Palette {
+  bg: string; surface: string; border: string;
+  heading: string; text: string; hint: string; faint: string;
+  /** Couleur des boutons principaux + de l'eyebrow. */
+  accent: string; accentInk: string;
+  /** Met en valeur la date du rendez-vous. */
+  highlight: string;
+  eyebrow: string; tagline: string;
+  contestBg: string; contestBorder: string; contestBtnBg: string; contestBtnInk: string;
+  siteUrl: string; siteLabel: string;
+}
+
+const THEMES: Record<RdvEmailTheme, Palette> = {
+  // Dark premium La Base 360 — inchangé, c'est ce que reçoivent déjà les clients.
+  app: {
+    bg: "#0B0D11", surface: "#13161C", border: "rgba(255,255,255,.08)",
+    heading: "#F0EDE8", text: "#C3CCC0", hint: "#7A8099", faint: "#4A5068",
+    accent: "#2DD4BF", accentInk: "#04231A",
+    highlight: "#C9A84C",
+    eyebrow: "La Base 360", tagline: "The wellness nutrition club",
+    contestBg: "#101A18", contestBorder: "rgba(45,212,191,.22)",
+    contestBtnBg: "#C9A84C", contestBtnInk: "#1A1407",
+    siteUrl: APP_URL, siteLabel: "labase360.fr",
+  },
+  // Crème + orange du site public. Valeurs reprises telles quelles de
+  // ClubLandingPage.css : cream-alt en fond, carte blanche, orange plein (pas
+  // le dégradé du site — un email ne sait pas le rendre partout).
+  club: {
+    bg: "#F0E7D7", surface: "#FFFFFF", border: "#E7E1D6",
+    heading: "#17201C", text: "#55605A", hint: "#8A938D", faint: "#8A938D",
+    accent: "#FF6A2B", accentInk: "#FFFFFF",
+    highlight: "#E0532A",
+    eyebrow: "☕ The Breakfast Club", tagline: "by La Base · Verdun",
+    contestBg: "#FCF8F1", contestBorder: "#E7E1D6",
+    contestBtnBg: "#1E3330", contestBtnInk: "#F4EFE4",
+    siteUrl: CLUB_URL, siteLabel: "labase-nutrition.com",
+  },
+};
 
 function esc(s: string): string {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
@@ -37,17 +78,24 @@ export interface RdvEmailParams {
    * appelants (book-rdv, rdv-confirm-client, client-rdv-reminder) sont inchangés.
    */
   manageUrl?: string;
+  /**
+   * Habillage du mail. Absent = "app" (dark premium) : les appelants
+   * historiques restent strictement identiques. Le site public du club passe
+   * "club" pour rester dans le crème/orange que la personne vient de quitter.
+   */
+  theme?: RdvEmailTheme;
 }
 
 export function rdvEmailHtml(p: RdvEmailParams): string {
+  const t = THEMES[p.theme ?? "app"];
   const first = esc(p.firstName || "");
   const coach = esc(p.coachName || "ton coach");
   const isConfirm = p.kind === "confirm";
 
   const heading = isConfirm ? `C'est noté, ${first} ✅` : `À demain, ${first} 🌿`;
   const intro = isConfirm
-    ? `Ton rendez-vous avec <b style="color:${CREAM};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
-    : `Petit rappel : ton rendez-vous avec <b style="color:${CREAM};">${coach}</b>, c'est demain.`;
+    ? `Ton rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
+    : `Petit rappel : ton rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
   // Avec un lien de gestion, on invite à se servir tout seul plutôt qu'à écrire.
   const closing = p.manageUrl
     ? (isConfirm
@@ -60,40 +108,44 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
   const btn = (href: string, label: string, bg: string, fg: string) =>
     `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:15px 18px;background:${bg};color:${fg};border-radius:13px;text-decoration:none;font-size:15px;font-weight:700;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">${label}</a>`;
 
+  // Le bouton « mon espace » n'a de sens que pour un CLIENT, qui en a un. Un
+  // prospect du club vient de réserver son tout premier RDV : il n'a pas encore
+  // de compte, l'envoyer sur une page de connexion serait une impasse (retour
+  // Thomas 2026-08-09). Il ne reçoit donc que son lien de gestion, ou rien.
+  const cta = p.manageUrl
+    ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", t.accent, t.accentInk)
+    : (p.theme ?? "app") === "club"
+      ? ""
+      : btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk);
+
   return `
 <!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:${INK};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${CREAM};">
+<body style="margin:0;background:${t.bg};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${t.heading};">
   <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
 
-    <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${TEAL};font-weight:700;">La Base 360</div>
-    <div style="font-size:11px;color:${FAINT};letter-spacing:.04em;margin-top:2px;">The wellness nutrition club</div>
+    <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
+    <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:2px;">${t.tagline}</div>
 
-    <h1 style="font-size:24px;margin:18px 0 4px;color:${CREAM};">${heading}</h1>
-    <p style="font-size:15px;line-height:1.55;color:${MUTED};margin:8px 0 20px;">${intro}</p>
+    <h1 style="font-size:24px;margin:18px 0 4px;color:${t.heading};">${heading}</h1>
+    <p style="font-size:15px;line-height:1.55;color:${t.text};margin:8px 0 20px;">${intro}</p>
 
-    <div style="background:${SURFACE};border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 20px;">
-      <div style="font-size:13px;color:${HINT};text-transform:uppercase;letter-spacing:.08em;">Quand</div>
-      <div style="font-size:18px;font-weight:700;color:${GOLD};margin:2px 0 14px;">${esc(p.dateLabel)} · ${esc(p.hour)}</div>
-      <div style="font-size:13px;color:${HINT};text-transform:uppercase;letter-spacing:.08em;">Où</div>
-      <div style="font-size:16px;font-weight:600;color:${CREAM};margin-top:2px;">${esc(p.location)}</div>
+    <div style="background:${t.surface};border:1px solid ${t.border};border-radius:16px;padding:18px 20px;">
+      <div style="font-size:13px;color:${t.hint};text-transform:uppercase;letter-spacing:.08em;">Quand</div>
+      <div style="font-size:18px;font-weight:700;color:${t.highlight};margin:2px 0 14px;">${esc(p.dateLabel)} · ${esc(p.hour)}</div>
+      <div style="font-size:13px;color:${t.hint};text-transform:uppercase;letter-spacing:.08em;">Où</div>
+      <div style="font-size:16px;font-weight:600;color:${t.heading};margin-top:2px;">${esc(p.location)}</div>
     </div>
 
-    <p style="font-size:14px;line-height:1.55;color:${MUTED};margin:18px 0 18px;">${closing}</p>
-
-    ${p.manageUrl
-      ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", TEAL, "#04231A")
-      : btn(APP_URL, "Accéder à mon espace →", TEAL, "#04231A")}
-
-    <div style="height:18px;"></div>
-
-    <div style="background:#101A18;border:1px solid rgba(45,212,191,.22);border-radius:16px;padding:18px 20px;">
-      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${TEAL};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
-      <div style="font-size:17px;font-weight:700;color:${CREAM};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${MUTED};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
-      ${btn(CONTEST_URL, "Je tente ma chance →", GOLD, "#1A1407")}
+    <p style="font-size:14px;line-height:1.55;color:${t.text};margin:18px 0 18px;">${closing}</p>
+${cta ? `\n    ${cta}\n\n    <div style="height:18px;"></div>\n` : `\n    <div style="height:4px;"></div>\n`}
+    <div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
+      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
+      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
+      ${btn(CONTEST_URL, "Je tente ma chance →", t.contestBtnBg, t.contestBtnInk)}
     </div>
 
-    <p style="font-size:12px;color:${FAINT};margin:24px 0 0;">La Base 360 · The wellness nutrition club · <a href="${APP_URL}" style="color:${HINT};text-decoration:none;">labase360.fr</a></p>
+    <p style="font-size:12px;color:${t.faint};margin:24px 0 0;">${t.eyebrow.replace("☕ ", "")} · ${t.tagline} · <a href="${t.siteUrl}" style="color:${t.hint};text-decoration:none;">${t.siteLabel}</a></p>
   </div>
 </body></html>`.trim();
 }
