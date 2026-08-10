@@ -8,8 +8,10 @@
 // du club ». Masqué s'il n'y a rien à venir ou si l'utilisateur n'est pas admin.
 // =============================================================================
 
+import { useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { Card } from "../ui/Card";
+import { MoveClubBookingDialog } from "./MoveClubBookingDialog";
 import { useActiveClubId } from "../../hooks/useActiveClubId";
 import {
   useClubDiscoveryBookings,
@@ -46,7 +48,9 @@ export function ClubDiscoveryWidget() {
   const { currentUser } = useAppContext();
   const isAdmin = currentUser?.role === "admin";
   const clubId = useActiveClubId();
-  const { bookings, loading, setStatus } = useClubDiscoveryBookings(isAdmin ? clubId : null);
+  const { bookings, loading, setStatus, reload } = useClubDiscoveryBookings(isAdmin ? clubId : null);
+  // RDV en cours de déplacement — null = personne.
+  const [moving, setMoving] = useState<ClubDiscoveryBooking | null>(null);
 
   if (!isAdmin || loading || bookings.length === 0) return null;
 
@@ -133,6 +137,20 @@ export function ClubDiscoveryWidget() {
                     Confirmer
                   </button>
                 )}
+                {/* Déplacer — demandé par Mélanie : sans ça, changer une heure
+                    imposait d'annuler puis de rappeler. */}
+                <button
+                  type="button"
+                  onClick={() => setMoving(b)}
+                  style={{
+                    padding: "7px 11px", borderRadius: 9,
+                    background: "var(--ls-surface)", border: "0.5px solid var(--ls-border)",
+                    color: "var(--ls-text)", fontSize: 12, fontWeight: 600,
+                    cursor: "pointer", whiteSpace: "nowrap", fontFamily: "DM Sans, sans-serif",
+                  }}
+                >
+                  🕘 Déplacer
+                </button>
                 <button
                   type="button"
                   onClick={() => void setStatus(b.id, "canceled")}
@@ -151,6 +169,15 @@ export function ClubDiscoveryWidget() {
           );
         })}
       </div>
+
+      {moving ? (
+        <MoveClubBookingDialog
+          booking={moving}
+          clubSlug="verdun"
+          onClose={() => setMoving(null)}
+          onMoved={() => void reload()}
+        />
+      ) : null}
     </Card>
   );
 }
