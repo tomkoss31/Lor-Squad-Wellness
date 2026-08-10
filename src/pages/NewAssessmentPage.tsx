@@ -1715,7 +1715,16 @@ export function NewAssessmentPage() {
                     gap: 16,
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* ⚠️ `minWidth: 0` + `flex: 1` (donc flex-basis 0) faisait que ce
+                      bloc ne déclenchait JAMAIS le retour à la ligne de la rangée :
+                      sa largeur de référence valant 0, il se contentait de rétrécir.
+                      Sur iPhone (rangée de 265 px), la pastille « Parcours
+                      accompagnement » est en white-space:nowrap et prend 211 px →
+                      il restait 38 px au texte, qui s'affichait à un ou deux mots
+                      par ligne sur 272 px de haut. Mesuré, pas supposé.
+                      `flexBasis: 240px` force la pastille à passer à la ligne dès
+                      qu'il reste moins de 240 px. Aucun effet en desktop (large). */}
+                  <div style={{ flex: '1 1 240px', minWidth: 0 }}>
                     <p
                       className="ls-hero-eyebrow"
                       style={{
