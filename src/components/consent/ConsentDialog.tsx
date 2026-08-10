@@ -86,6 +86,15 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
 
   if (!open) return null;
 
+  // Sur un NOUVEAU bilan, le client n'existe pas encore : NewAssessmentPage
+  // envoie « ton client·e » comme prénom tant que le formulaire est vide. La
+  // phrase de la case donnait alors « que mon client·e ton client·e a été
+  // informé·e » — un doublon. On calcule donc un libellé unique : le vrai nom
+  // dès qu'il est saisi, « mon client·e » sinon.
+  const nomSaisi = `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim();
+  const clientLabel =
+    !nomSaisi || nomSaisi.toLowerCase().startsWith("ton client") ? "mon client·e" : nomSaisi;
+
   const handleSubmit = async () => {
     if (!checked) {
       setShowError(true);
@@ -254,7 +263,14 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
             </div>
           </div>
 
-          {/* BODY scrollable */}
+          {/* BODY scrollable.
+              ⚠️ Sur iPhone (812 px), la case à cocher se retrouvait à y=1034 —
+              soit 222 px SOUS le pli, invisible à l'ouverture, avec 474 px de
+              texte légal au-dessus. Le coach voyait un mur de texte, un bouton
+              qui semblait éteint, et rien à faire. En RDV devant un client,
+              l'écran passait pour cassé. La case est donc remontée AVANT le
+              texte (bloc « ls-consent-gate » ci-dessous) et le juridique est
+              replié par défaut. */}
           <div style={{ overflow: "auto", padding: "20px 24px", flex: 1 }}>
             {/* Encart Note coach (teal) */}
             <div
@@ -295,6 +311,113 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               </p>
             </div>
 
+            {/* Case a cocher (audit a11y 2026-04-30 : role checkbox + keyboard) */}
+            <div
+              ref={checkboxRef}
+              role="checkbox"
+              aria-checked={checked}
+              tabIndex={0}
+              className={showError ? "ls-consent-shake" : ""}
+              onClick={() => {
+                setChecked((v) => !v);
+                setShowError(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  setChecked((v) => !v);
+                  setShowError(false);
+                }
+              }}
+              style={{
+                padding: "14px 16px",
+                background: showError
+                  ? "color-mix(in srgb, var(--ls-coral) 10%, transparent)"
+                  : checked
+                    ? "color-mix(in srgb, var(--ls-teal) 10%, transparent)"
+                    : "var(--ls-surface2)",
+                border: showError
+                  ? "1.5px solid var(--ls-coral)"
+                  : checked
+                    ? "1.5px solid var(--ls-teal)"
+                    : "0.5px solid var(--ls-border)",
+                borderRadius: 12,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                gap: 12,
+                alignItems: "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  minWidth: 22,
+                  borderRadius: 6,
+                  border: `2px solid ${checked ? "var(--ls-teal)" : "var(--ls-text-hint)"}`,
+                  background: checked ? "var(--ls-teal)" : "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s ease",
+                  flexShrink: 0,
+                  marginTop: 1,
+                }}
+              >
+                {checked && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+              <div style={{ flex: 1, fontSize: 13.5, color: "var(--ls-text)", lineHeight: 1.5 }}>
+                <strong>Je certifie</strong> que <strong>{clientLabel}</strong> a été informé·e du
+                traitement de ses données de santé conformément au texte ci-dessus, et qu'il/elle{" "}
+                <strong>y consent expressément</strong>.
+              </div>
+            </div>
+
+            {showError && (
+              <p
+                style={{
+                  margin: "10px 0 0 0",
+                  fontSize: 12.5,
+                  color: "var(--ls-coral)",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span aria-hidden>⚠️</span> Merci de cocher la case pour continuer.
+              </p>
+            )}
+          </div>
+            {/* Le juridique est REPLIÉ par défaut : le coach le lit à voix haute
+                au 1er bilan, pas à chaque fois. Ouvert = tout le texte, à
+                l'identique, rien n'est retiré. */}
+            <details style={{ marginBottom: 16 }}>
+              <summary
+                style={{
+                  cursor: "pointer",
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "var(--ls-surface2)",
+                  border: "0.5px solid var(--ls-border)",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  color: "var(--ls-text)",
+                  fontFamily: "DM Sans, sans-serif",
+                  listStyle: "none",
+                }}
+              >
+                📄 Lire le texte à mon client·e
+                <span style={{ display: "block", fontSize: 11.5, fontWeight: 400, color: "var(--ls-text-muted)", marginTop: 3 }}>
+                  Information RGPD sur le traitement des données de santé
+                </span>
+              </summary>
+              <div style={{ paddingTop: 14 }}>
             {/* Texte legal client */}
             <h3
               style={{
@@ -371,92 +494,9 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               ⚠️ La Base 360 n'est pas un service médical. Les conseils prodigués par ton coach Herbalife indépendant ne remplacent pas un avis professionnel de santé.
             </p>
 
-            {/* Case a cocher (audit a11y 2026-04-30 : role checkbox + keyboard) */}
-            <div
-              ref={checkboxRef}
-              role="checkbox"
-              aria-checked={checked}
-              tabIndex={0}
-              className={showError ? "ls-consent-shake" : ""}
-              onClick={() => {
-                setChecked((v) => !v);
-                setShowError(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === " " || e.key === "Enter") {
-                  e.preventDefault();
-                  setChecked((v) => !v);
-                  setShowError(false);
-                }
-              }}
-              style={{
-                padding: "14px 16px",
-                background: showError
-                  ? "color-mix(in srgb, var(--ls-coral) 10%, transparent)"
-                  : checked
-                    ? "color-mix(in srgb, var(--ls-teal) 10%, transparent)"
-                    : "var(--ls-surface2)",
-                border: showError
-                  ? "1.5px solid var(--ls-coral)"
-                  : checked
-                    ? "1.5px solid var(--ls-teal)"
-                    : "0.5px solid var(--ls-border)",
-                borderRadius: 12,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                display: "flex",
-                gap: 12,
-                alignItems: "flex-start",
-              }}
-            >
-              <div
-                style={{
-                  width: 22,
-                  height: 22,
-                  minWidth: 22,
-                  borderRadius: 6,
-                  border: `2px solid ${checked ? "var(--ls-teal)" : "var(--ls-text-hint)"}`,
-                  background: checked ? "var(--ls-teal)" : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.15s ease",
-                  flexShrink: 0,
-                  marginTop: 1,
-                }}
-              >
-                {checked && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
               </div>
-              <div style={{ flex: 1, fontSize: 13.5, color: "var(--ls-text)", lineHeight: 1.5 }}>
-                <strong>Je certifie</strong> que mon client·e{" "}
-                <strong>
-                  {client.firstName} {client.lastName}
-                </strong>{" "}
-                a été informé·e du traitement de ses données de santé conformément au texte ci-dessus, et qu'il/elle{" "}
-                <strong>y consent expressément</strong>.
-              </div>
-            </div>
+            </details>
 
-            {showError && (
-              <p
-                style={{
-                  margin: "10px 0 0 0",
-                  fontSize: 12.5,
-                  color: "var(--ls-coral)",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <span aria-hidden>⚠️</span> Merci de cocher la case pour continuer.
-              </p>
-            )}
-          </div>
 
           {/* FOOTER actions */}
           <div
@@ -504,6 +544,12 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               type="button"
               onClick={() => void handleSubmit()}
               disabled={submitting}
+              /* Volontairement PAS `disabled` quand la case n'est pas cochée :
+                 un bouton désactivé n'est pas cliquable, donc il ne peut pas
+                 EXPLIQUER pourquoi. Ici le clic déclenche le message « coche la
+                 case » et fait sursauter la case. `aria-disabled` transmet
+                 quand même l'état aux lecteurs d'écran. */
+              aria-disabled={!checked}
               style={{
                 padding: "11px 22px",
                 borderRadius: 999,
