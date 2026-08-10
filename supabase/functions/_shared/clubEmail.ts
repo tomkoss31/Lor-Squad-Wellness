@@ -44,7 +44,10 @@ export function frenchDate(d: Date): string {
   // carte achetée après 23h porte la date de la veille.
   const p = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "numeric", year: "numeric" }).formatToParts(d);
   const get = (t: string) => p.find((x) => x.type === t)?.value ?? "";
-  return `${get("day")} ${M[Number(get("month")) - 1]} ${get("year")}`;
+  // `day: "numeric"` en fr-FR rend quand même « 08 » : la locale française
+  // écrit les dates chiffrées sur deux positions. En toutes lettres, non —
+  // on dit « 8 novembre », jamais « 08 novembre ». D'où le Number().
+  return `${Number(get("day"))} ${M[Number(get("month")) - 1]} ${get("year")}`;
 }
 
 export interface ClubCardEmailParams {
@@ -140,11 +143,35 @@ export function clubCardEmailHtml(p: ClubCardEmailParams): string {
 /**
  * Mail interne (boîte partagée du club) : qui a payé quoi, et quoi faire.
  *
- * Volontairement sec et actionnable — il finit par la SEULE action à faire,
+ * Volontairement sec et actionnable — il finit par LA seule action à faire,
  * parce que le paiement en ligne ne crée pas la carte tout seul : c'est un
  * coach qui l'attribue dans BBC, à la personne, une fois sa fiche créée.
+ *
+ * L'action dépend de la réponse « tu es déjà venu(e) au club ? » — c'est tout
+ * l'intérêt d'avoir posé la question au moment de l'achat :
+ *   déjà membre  → la fiche existe, on attribue la carte, terminé ;
+ *   jamais venu  → il n'y a pas de fiche à qui attribuer quoi que ce soit.
+ *                  On appelle, on cale le body scan, la fiche naît là.
  */
-export function clubCardLeadEmailHtml(p: ClubCardEmailParams & { email: string }): string {
+export function clubCardLeadEmailHtml(
+  p: ClubCardEmailParams & { lastName: string; phone: string; email: string; isMember: boolean },
+): string {
+  const fullName = `${p.firstName} ${p.lastName}`.trim();
+  const action = p.isMember
+    ? `<strong style="color:${C.heading};">À faire — c'est un membre connu :</strong> attribuer la carte dans l'app.<br>
+       <em>BBC → Club → ${esc(fullName)} → Attribuer une carte ${esc(String(p.cardType))}</em>.<br>
+       L'argent est encaissé, mais le compteur de visites ne démarre qu'une fois la carte attribuée.`
+    : `<strong style="color:${C.heading};">À faire — cette personne n'est jamais venue :</strong> l'appeler pour caler
+       son body scan (offert, 45 min). Sa fiche client sera créée à ce moment-là, et
+       c'est seulement ensuite qu'on pourra lui attribuer sa carte ${esc(String(p.cardType))} visites.<br>
+       Elle a payé sans avoir vu le club — un coup de fil rapide vaut mieux qu'un mail.`;
+
+  const line = (k: string, v: string) => `
+    <tr>
+      <td style="padding:7px 0;font-size:13.5px;color:${C.hint};white-space:nowrap;padding-right:14px;">${esc(k)}</td>
+      <td style="padding:7px 0;font-size:14.5px;color:${C.heading};font-weight:600;">${v}</td>
+    </tr>`;
+
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${C.bg};">
@@ -153,14 +180,19 @@ export function clubCardLeadEmailHtml(p: ClubCardEmailParams & { email: string }
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:${C.surface};border:1px solid ${C.border};border-radius:18px;padding:26px;">
         <tr><td>
           <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${C.highlight};font-weight:800;">Carte payée en ligne</p>
-          <h1 style="margin:8px 0 14px 0;font-size:23px;line-height:1.3;color:${C.heading};">${esc(p.firstName)} — carte ${esc(String(p.cardType))} visites</h1>
-          <p style="margin:0 0 4px 0;font-size:15px;color:${C.text};"><strong style="color:${C.heading};">${p.amountEur} €</strong> encaissés · valable ${esc(String(p.validityDays))} jours (jusqu'au ${esc(p.expiresLabel)})</p>
-          <p style="margin:0 0 18px 0;font-size:15px;color:${C.text};">Contact : <a href="mailto:${esc(p.email)}" style="color:${C.highlight};">${esc(p.email)}</a></p>
+          <h1 style="margin:8px 0 4px 0;font-size:23px;line-height:1.3;color:${C.heading};">${esc(fullName)}</h1>
+          <p style="margin:0 0 16px 0;font-size:15px;color:${C.text};">
+            Carte <strong style="color:${C.heading};">${esc(String(p.cardType))} visites</strong> ·
+            <strong style="color:${C.heading};">${p.amountEur} €</strong> encaissés ·
+            ${p.isMember ? "déjà membre" : "<strong style=\"color:" + C.highlight + "\">jamais venue au club</strong>"}
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.border};border-bottom:1px solid ${C.border};margin-bottom:18px;">
+            ${line("Téléphone", `<a href="tel:${esc(p.phone.replace(/\s/g, ""))}" style="color:${C.highlight};text-decoration:none;">${esc(p.phone)}</a>`)}
+            ${line("Email", `<a href="mailto:${esc(p.email)}" style="color:${C.highlight};text-decoration:none;">${esc(p.email)}</a>`)}
+            ${line("Validité", `${esc(String(p.validityDays))} jours — jusqu'au ${esc(p.expiresLabel)}`)}
+          </table>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.softBg};border:1px solid ${C.border};border-radius:14px;">
-            <tr><td style="padding:16px;font-size:14.5px;line-height:1.7;color:${C.text};">
-              <strong style="color:${C.heading};">À faire :</strong> attribuer la carte dans l'app — <em>BBC → Club → le membre → Attribuer une carte ${esc(String(p.cardType))}</em>.<br>
-              L'argent est déjà encaissé, mais le compteur de visites ne démarre qu'une fois la carte attribuée.
-            </td></tr>
+            <tr><td style="padding:16px;font-size:14.5px;line-height:1.7;color:${C.text};">${action}</td></tr>
           </table>
         </td></tr>
       </table>

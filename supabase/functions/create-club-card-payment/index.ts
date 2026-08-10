@@ -25,6 +25,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { frenchDate } from "../_shared/clubEmail.ts";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -69,23 +72,71 @@ serve(async (req: Request) => {
 
   try {
     const body = (await req.json().catch(() => ({}))) as {
+      mode?: string;
+      order_id?: string;
       club_slug?: string;
       card_type?: number | string;
       first_name?: string;
+      last_name?: string;
+      phone?: string;
       email?: string;
+      is_member?: boolean;
       redirect_url?: string;
     };
+
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // ── mode "status" : l'écran de retour de paiement ─────────────────────
+    // La personne revient de chez Square. On ne lui affiche PAS « paiement
+    // reçu » sur sa seule parole : on relit la commande côté serveur.
+    // Le webhook peut n'avoir pas encore basculé la ligne à `paid` quelques
+    // secondes après le retour — d'où `pending`, que l'écran sait afficher
+    // autrement plutôt que de mentir dans un sens ou dans l'autre.
+    if (body.mode === "status") {
+      const orderId = String(body.order_id ?? "").trim();
+      if (!UUID_RE.test(orderId)) return fail("commande_inconnue");
+      const { data: o } = await sb
+        .from("bilan_orders")
+        .select("status, prospect_first_name, program_id, amount_cents, buyer_email, paid_at, coach_user_id")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (!o || !String(o.program_id ?? "").startsWith("club-card-")) {
+        return fail("commande_inconnue");
+      }
+      const type = Number(String(o.program_id).replace("club-card-", ""));
+      // Validité relue à la même source que BBC, jamais recalculée de tête.
+      const { data: club } = await sb
+        .from("clubs").select("settings").eq("owner_user_id", o.coach_user_id).maybeSingle();
+      const conf = (club?.settings as Record<string, unknown> | null)?.cards as
+        | Record<string, { days?: number }> | undefined;
+      const days = Number(conf?.[String(type)]?.days) || (type === 10 ? 30 : 90);
+      const from = o.paid_at ? new Date(o.paid_at) : new Date();
+      return json({
+        status: o.status,
+        first_name: o.prospect_first_name ?? "",
+        email: o.buyer_email ?? "",
+        card_type: type,
+        amount_eur: Math.round(Number(o.amount_cents) / 100),
+        validity_days: days,
+        expires_label: frenchDate(new Date(from.getTime() + days * 86_400_000)),
+      });
+    }
 
     const slug = String(body.club_slug ?? "verdun").trim().toLowerCase();
     const cardType = Number(body.card_type);
     const firstName = String(body.first_name ?? "").trim().slice(0, 60);
+    const lastName = String(body.last_name ?? "").trim().slice(0, 60);
+    const phone = String(body.phone ?? "").trim().slice(0, 30);
     const email = String(body.email ?? "").trim().toLowerCase().slice(0, 160);
+    const isMember = body.is_member === true;
 
     if (cardType !== 10 && cardType !== 30) return fail("card_type_invalide");
     if (firstName.length < 2) return fail("prenom_requis");
+    if (lastName.length < 2) return fail("nom_requis");
+    // 8 chiffres au minimum : attrape le champ vide ou à moitié tapé sans
+    // prétendre valider un format international.
+    if ((phone.match(/\d/g) ?? []).length < 8) return fail("telephone_requis");
     if (!EMAIL_RE.test(email)) return fail("email_invalide");
-
-    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // 1. Le club.
     const { data: club } = await sb
@@ -131,15 +182,26 @@ serve(async (req: Request) => {
       .maybeSingle();
     if (!settings?.active) return fail("encaissement_inactif");
 
-    const note = `${programName} · ${firstName} (${email})`.slice(0, 500);
+    const note = `${programName} · ${firstName} ${lastName} (${phone})`.slice(0, 500);
+
+    // L'id est tiré ICI, avant d'appeler le fournisseur, parce qu'il doit
+    // entrer dans l'URL de retour : sans lui, la personne qui revient de chez
+    // Square arrive sur une page qui ignore ce qu'elle vient d'acheter.
+    const orderId = crypto.randomUUID();
+    const base = (body.redirect_url || CLUB_FALLBACK_RETURN).split("?")[0];
+    const returnUrl = `${base}?carte=${orderId}`;
 
     // Commande tracée AVANT le lien : c'est elle que le webhook retrouvera.
     // (On la complète juste après avec l'id fournisseur.)
     const orderRow = {
+      id: orderId,
       online_bilan_id: null as string | null,
       coach_user_id: club.owner_user_id,
       prospect_first_name: firstName,
+      buyer_last_name: lastName,
+      buyer_phone: phone,
       buyer_email: email,
+      buyer_is_member: isMember,
       program_id: programId,
       program_name: programName,
       amount_cents: amountCents,
@@ -171,7 +233,7 @@ serve(async (req: Request) => {
             price_money: { amount: amountCents, currency: "EUR" },
             location_id: settings.square_location_id,
           },
-          checkout_options: body.redirect_url ? { redirect_url: body.redirect_url } : undefined,
+          checkout_options: { redirect_url: returnUrl },
           payment_note: note,
         }),
       });
@@ -206,12 +268,12 @@ serve(async (req: Request) => {
       const secret = String(settings.stripe_secret_key ?? "").trim();
       if (!secret.startsWith("sk_")) return fail("encaissement_incomplet");
 
-      const base = body.redirect_url || CLUB_FALLBACK_RETURN;
-      const sep = base.includes("?") ? "&" : "?";
       const form = new URLSearchParams();
       form.set("mode", "payment");
-      form.set("success_url", `${base}${sep}session_id={CHECKOUT_SESSION_ID}`);
-      form.set("cancel_url", base.replace(/[?&]paid=1/, ""));
+      // session_id est requis par confirm-stripe-payment ; `carte` est déjà
+      // dans returnUrl et porte notre propre id de commande.
+      form.set("success_url", `${returnUrl}&session_id={CHECKOUT_SESSION_ID}`);
+      form.set("cancel_url", base);
       form.set("customer_email", email);
       form.set("line_items[0][quantity]", "1");
       form.set("line_items[0][price_data][currency]", "eur");

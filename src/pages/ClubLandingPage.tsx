@@ -4,10 +4,12 @@
 // Photos = slots encadrés « 📷 » à remplir. CTA → tunnel /reserver.
 // =============================================================================
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ClubShell, Slot, PhotoBand, R, objUrl, TEL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
 import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
+import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
+import { ClubOfferPopup } from "./club/ClubOfferPopup";
 
 // Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
 // avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
@@ -72,9 +74,25 @@ const FAQ = [
 
 export function ClubLandingPage() {
   const [offer, setOffer] = useState<CardOffer | null>(null);
+  // Retour de paiement : l'edge a mis l'identifiant de commande dans l'URL.
+  const [orderId, setOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const carte = new URLSearchParams(window.location.search).get("carte");
+    if (!carte) return;
+    setOrderId(carte);
+    // On nettoie l'URL tout de suite : un rechargement, un partage du lien ou
+    // un retour en arrière ne doivent pas ré-afficher « paiement reçu ».
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
   return (
     <ClubShell>
       {offer ? <ClubCardCheckout offer={offer} onClose={() => setOffer(null)} /> : null}
+      {orderId ? <ClubPaymentReturn orderId={orderId} onClose={() => setOrderId(null)} /> : null}
+      {/* Jamais en même temps qu'un autre panneau : quelqu'un qui achète ou qui
+          revient de payer n'a pas besoin qu'on lui propose de réserver. */}
+      {!offer && !orderId ? <ClubOfferPopup /> : null}
       {/* HERO */}
       <div id="top" className="cl-band cl-rel">
         <div className="cl-blob" aria-hidden="true" style={{ width: 400, height: 400, background: "var(--yellow)", opacity: .34, top: -150, left: -120 }} />

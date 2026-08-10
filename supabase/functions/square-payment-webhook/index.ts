@@ -110,7 +110,7 @@ serve(async (req: Request) => {
     // Commande correspondante (créée par create-payment-link).
     const { data: order } = await sb
       .from("bilan_orders")
-      .select("id, status, prospect_first_name, program_id, program_name, amount_cents, coach_user_id, buyer_email")
+      .select("id, status, prospect_first_name, program_id, program_name, amount_cents, coach_user_id, buyer_email, buyer_last_name, buyer_phone, buyer_is_member")
       .eq("provider_order_id", payment.order_id)
       .maybeSingle();
     if (!order) return new Response("no matching order", { status: 200 });
@@ -201,10 +201,21 @@ serve(async (req: Request) => {
             replyTo: CLUB_INBOX,
           });
         }
+        const nom = `${parts.firstName} ${order.buyer_last_name ?? ""}`.trim();
         await sendResend({
           to: CLUB_INBOX,
-          subject: `💶 ${parts.firstName} a payé sa carte ${cardType} visites (${parts.amountEur} €)`,
-          html: clubCardLeadEmailHtml({ ...parts, email: order.buyer_email ?? "—" }),
+          // Le « à rappeler » dans l'objet : c'est visible depuis la liste des
+          // mails, sans ouvrir — les deux cas n'appellent pas le même geste.
+          subject: order.buyer_is_member === false
+            ? `📞 À rappeler — ${nom} a payé sa carte ${cardType} visites (${parts.amountEur} €)`
+            : `💶 ${nom} a payé sa carte ${cardType} visites (${parts.amountEur} €)`,
+          html: clubCardLeadEmailHtml({
+            ...parts,
+            lastName: order.buyer_last_name ?? "",
+            phone: order.buyer_phone ?? "—",
+            email: order.buyer_email ?? "—",
+            isMember: order.buyer_is_member !== false,
+          }),
           from: MAIL_FROM,
           replyTo: order.buyer_email || MAIL_REPLY_TO,
         });
