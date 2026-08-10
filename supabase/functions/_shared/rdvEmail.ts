@@ -20,6 +20,13 @@ const APP_URL = "https://www.labase360.fr";
 const CLUB_URL = "https://www.labase-nutrition.com";
 const CONTEST_URL = "https://commande.labase-nutrition.com/jeu";
 
+// Coordonnées du club — reprises telles quelles du pied de page du site
+// (ClubShell.tsx), pour qu'un changement d'horaire ne crée pas deux vérités.
+const CLUB_ADDRESS = "11 rue Saint Pierre · 55100 Verdun";
+const CLUB_HOURS = "Lun–Ven 7h–11h · Sam 8h–11h · Dimanche fermé";
+const CLUB_PHONE = "06 79 44 87 59";
+const CLUB_PHONE_HREF = "+33679448759";
+
 export type RdvEmailTheme = "app" | "club";
 
 interface Palette {
@@ -118,13 +125,56 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
       ? ""
       : btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk);
 
+  // En-tête. Côté club, le vrai logo plutôt qu'un simple libellé — la personne
+  // reconnaît la marque qu'elle vient de quitter. La ligne de texte est GARDÉE
+  // sous l'image : beaucoup de messageries bloquent les images distantes par
+  // défaut, l'expéditeur doit rester lisible même sans elle.
+  const brand = (p.theme ?? "app") === "club"
+    ? `<img src="${CLUB_URL}/brand/breakfast-club/logo-heart.png" alt="The Breakfast Club by La Base" width="190" style="width:190px;max-width:72%;height:auto;display:block;border:0;margin:0 0 10px;">
+    <div style="font-size:11px;color:${t.faint};letter-spacing:.14em;text-transform:uppercase;">${t.tagline}</div>`
+    : `<div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
+    <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:2px;">${t.tagline}</div>`;
+
+  // Bloc du bas — il ne raconte pas la même chose selon le destinataire.
+  //
+  // Côté CLUB, le jeu « tente de gagner ta boisson » posait deux problèmes
+  // (retour Thomas 2026-08-09) : il mélangeait le Breakfast Club et le bar,
+  // qui sont deux ambiances du MÊME lieu, et surtout il promettait une boisson
+  // à quelqu'un qui vient le MATIN — alors que le bar n'ouvre qu'à 11h. On
+  // remplace donc par une simple information, exacte et sans promesse : la
+  // même adresse, l'après-midi. Aucun bouton : rien d'utile à faire tout de
+  // suite, la personne a déjà son rendez-vous.
+  const bottom = (p.theme ?? "app") === "club"
+    ? `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
+      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Le même lieu, l'après-midi</div>
+      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0;">Ton rendez-vous est le matin, à l'heure du Breakfast Club. À partir de 11h, la même adresse devient un bar healthy : smoothies, shakes et boissons saines à emporter, jusqu'à 17h30.</p>
+    </div>`
+    : `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
+      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
+      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
+      ${btn(CONTEST_URL, "Je tente ma chance →", t.contestBtnBg, t.contestBtnInk)}
+    </div>`;
+
+  // Pied de page. Côté club : les coordonnées complètes, pour que la personne
+  // n'ait pas à retourner chercher l'adresse ou le numéro le matin du RDV.
+  // Le téléphone est un lien tel: — sur mobile, un seul appui pour appeler.
+  const footer = (p.theme ?? "app") === "club"
+    ? `<div style="margin:26px 0 0;padding-top:18px;border-top:1px solid ${t.border};font-size:12.5px;line-height:1.75;color:${t.text};">
+      <div style="font-weight:700;color:${t.heading};">The Breakfast Club by La Base</div>
+      <div>${esc(CLUB_ADDRESS)}</div>
+      <div>${esc(CLUB_HOURS)}</div>
+      <div><a href="tel:${CLUB_PHONE_HREF}" style="color:${t.highlight};text-decoration:none;font-weight:600;">${esc(CLUB_PHONE)}</a> · <a href="${t.siteUrl}" style="color:${t.hint};text-decoration:none;">${t.siteLabel}</a></div>
+    </div>`
+    : `<p style="font-size:12px;color:${t.faint};margin:24px 0 0;">${t.eyebrow} · ${t.tagline} · <a href="${t.siteUrl}" style="color:${t.hint};text-decoration:none;">${t.siteLabel}</a></p>`;
+
   return `
 <!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:${t.bg};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${t.heading};">
   <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
 
-    <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
-    <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:2px;">${t.tagline}</div>
+    ${brand}
 
     <h1 style="font-size:24px;margin:18px 0 4px;color:${t.heading};">${heading}</h1>
     <p style="font-size:15px;line-height:1.55;color:${t.text};margin:8px 0 20px;">${intro}</p>
@@ -138,14 +188,9 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
 
     <p style="font-size:14px;line-height:1.55;color:${t.text};margin:18px 0 18px;">${closing}</p>
 ${cta ? `\n    ${cta}\n\n    <div style="height:18px;"></div>\n` : `\n    <div style="height:4px;"></div>\n`}
-    <div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
-      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
-      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
-      ${btn(CONTEST_URL, "Je tente ma chance →", t.contestBtnBg, t.contestBtnInk)}
-    </div>
+    ${bottom}
 
-    <p style="font-size:12px;color:${t.faint};margin:24px 0 0;">${t.eyebrow.replace("☕ ", "")} · ${t.tagline} · <a href="${t.siteUrl}" style="color:${t.hint};text-decoration:none;">${t.siteLabel}</a></p>
+    ${footer}
   </div>
 </body></html>`.trim();
 }
