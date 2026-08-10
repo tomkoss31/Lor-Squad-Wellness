@@ -4,8 +4,8 @@
   "description": "Mon espace bien-être personnalisé · The wellness nutrition club",
   "start_url": "/client/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#10B981",
+  "background_color": "#162624",
+  "theme_color": "#162624",
   "orientation": "portrait",
   "icons": [
     {
