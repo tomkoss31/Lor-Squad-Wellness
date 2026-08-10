@@ -17,15 +17,13 @@
 // =============================================================================
 
 const APP_URL = "https://www.labase360.fr";
-const CLUB_URL = "https://www.labase-nutrition.com";
 const CONTEST_URL = "https://commande.labase-nutrition.com/jeu";
 
-// Coordonnées du club — reprises telles quelles du pied de page du site
-// (ClubShell.tsx), pour qu'un changement d'horaire ne crée pas deux vérités.
-const CLUB_ADDRESS = "11 rue Saint Pierre · 55100 Verdun";
-const CLUB_HOURS = "Lun–Ven 7h–11h · Sam 8h–11h · Dimanche fermé";
-const CLUB_PHONE = "06 79 44 87 59";
-const CLUB_PHONE_HREF = "+33679448759";
+// Coordonnées du club — la source unique est `clubEmail.ts`, pour qu'un
+// changement d'horaire n'ait qu'un seul endroit où être fait. (Ce fichier les
+// hébergeait ; le mail d'achat de carte en avait besoin aussi, et deux copies
+// d'une adresse finissent toujours par diverger.)
+import { CLUB_URL, CLUB_ADDRESS, CLUB_HOURS, CLUB_PHONE, CLUB_PHONE_HREF } from "./clubEmail.ts";
 
 export type RdvEmailTheme = "app" | "club";
 

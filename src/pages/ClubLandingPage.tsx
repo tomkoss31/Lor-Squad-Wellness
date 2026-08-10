@@ -4,9 +4,19 @@
 // Photos = slots encadrés « 📷 » à remplir. CTA → tunnel /reserver.
 // =============================================================================
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ClubShell, Slot, PhotoBand, R, objUrl, TEL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
+import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
+
+// Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
+// avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
+// confirme à la personne ce qu'elle achète, jamais pour fixer le montant.
+// Elles doivent rester alignées sur les cartes ci-dessous et sur la base.
+const CARD_OFFERS: Record<10 | 30, CardOffer> = {
+  10: { type: 10, priceEur: 80, validityDays: 30 },
+  30: { type: 30, priceEur: 185, validityDays: 90 },
+};
 
 // Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
 const WORDMARK = "/brand/breakfast-club/logo-heart.png";
@@ -61,8 +71,10 @@ const FAQ = [
 ];
 
 export function ClubLandingPage() {
+  const [offer, setOffer] = useState<CardOffer | null>(null);
   return (
     <ClubShell>
+      {offer ? <ClubCardCheckout offer={offer} onClose={() => setOffer(null)} /> : null}
       {/* HERO */}
       <div id="top" className="cl-band cl-rel">
         <div className="cl-blob" aria-hidden="true" style={{ width: 400, height: 400, background: "var(--yellow)", opacity: .34, top: -150, left: -120 }} />
@@ -83,8 +95,15 @@ export function ClubLandingPage() {
                 <b style={{ color: "var(--ink)" }}>4,9/5</b>
                 <span style={{ color: "var(--muted2)" }}>sur Google · 0 € · sans engagement</span>
               </div>
+              {/* « 7h–11h » occupait cette place, mais l'horaire est déjà répété
+                  juste en dessous dans la barre d'infos ET dans le pied de page.
+                  Le hero n'avait alors aucune PREUVE, seulement du pratique — or
+                  c'est la première question qu'on se pose devant un club neuf.
+                  Le chiffre est attribué à La Base et pas au club (qui n'a pas
+                  encore ouvert) : c'est la même formulation que la section
+                  Communauté, « depuis quatre ans à Verdun ». */}
               <div className="cl-stats">
-                <div className="cl-stat"><div className="v">7h–11h</div><div className="l">à l'ouverture</div></div>
+                <div className="cl-stat"><div className="v">200+</div><div className="l">personnes accompagnées</div></div>
                 <div className="cl-stat"><div className="v">Sans RDV</div><div className="l">tu passes quand tu veux</div></div>
                 <div className="cl-stat"><div className="v">Offert</div><div className="l">ton body scan</div></div>
               </div>
@@ -303,7 +322,7 @@ export function ClubLandingPage() {
                 <li>L'accès au groupe du club</li>
                 <li>Le bilan mesures à la 10ᵉ visite</li>
               </ul>
-              <a className="cl-cta" style={{ marginTop: "auto" }} href={R}>Je commence</a>
+              <button type="button" className="cl-cta" style={{ marginTop: "auto", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[10])}>Je commence</button>
             </div>
             <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
@@ -325,7 +344,7 @@ export function ClubLandingPage() {
                 <li>Le <b>meilleur tarif par visite</b> du club</li>
                 <li>Fait pour t'installer dans la durée</li>
               </ul>
-              <a className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none" }} href={R}>Je commence</a>
+              <button type="button" className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[30])}>Je commence</button>
             </div>
           </div>
           {/* La validité et le non-remboursement sont des conditions de vente :

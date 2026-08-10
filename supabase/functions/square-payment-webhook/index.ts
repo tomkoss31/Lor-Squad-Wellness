@@ -20,6 +20,13 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { clubCardEmailHtml, clubCardLeadEmailHtml, frenchDate } from "../_shared/clubEmail.ts";
+import { MAIL_FROM, MAIL_REPLY_TO, sendResend } from "../_shared/email.ts";
+
+// Boîte partagée du club — même destinataire que le mail de lead d'un RDV
+// découverte (décision Thomas : un seul email collectif, le push reste le
+// canal individuel).
+const CLUB_INBOX = "labaseverdun@gmail.com";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -103,7 +110,7 @@ serve(async (req: Request) => {
     // Commande correspondante (créée par create-payment-link).
     const { data: order } = await sb
       .from("bilan_orders")
-      .select("id, status, prospect_first_name, program_name, amount_cents, coach_user_id")
+      .select("id, status, prospect_first_name, program_id, program_name, amount_cents, coach_user_id, buyer_email")
       .eq("provider_order_id", payment.order_id)
       .maybeSingle();
     if (!order) return new Response("no matching order", { status: 200 });
@@ -150,6 +157,60 @@ serve(async (req: Request) => {
       }
     } catch (e) {
       console.warn("[square-webhook] push:", e instanceof Error ? e.message : e);
+    }
+
+    // ── Cartes du club : deux mails ────────────────────────────────────────
+    // Réservé aux commandes venues du site du club (`club-card-*`). Le flow
+    // Résultat Bilan ne passe pas ici : son prospect a déjà un parcours mail à
+    // lui, et lui en ajouter un ne ferait que doubler.
+    //
+    // Best-effort comme le push : un Resend en panne ne doit jamais empêcher le
+    // 200 vers Square — sinon Square retente, et on ré-encaisserait la logique
+    // de notification en boucle sur un paiement déjà enregistré.
+    const cardType = Number(String(order.program_id ?? "").replace("club-card-", ""));
+    if (order.program_id?.startsWith("club-card-") && (cardType === 10 || cardType === 30)) {
+      try {
+        // Validité lue au moment du paiement, sur la MÊME source que BBC
+        // (clubs.settings.cards) : le mail annonce donc exactement la date que
+        // l'app appliquera en attribuant la carte.
+        const { data: club } = await sb
+          .from("clubs")
+          .select("settings")
+          .eq("owner_user_id", order.coach_user_id)
+          .maybeSingle();
+        const conf = (club?.settings as Record<string, unknown> | null)?.cards as
+          | Record<string, { days?: number }>
+          | undefined;
+        const validityDays = Number(conf?.[String(cardType)]?.days) || (cardType === 10 ? 30 : 90);
+
+        const expires = new Date(Date.now() + validityDays * 86_400_000);
+        const parts = {
+          firstName: order.prospect_first_name || "toi",
+          cardType,
+          amountEur: Math.round(order.amount_cents / 100),
+          validityDays,
+          expiresLabel: frenchDate(expires),
+        };
+
+        if (order.buyer_email) {
+          await sendResend({
+            to: order.buyer_email,
+            subject: `Ta carte ${cardType} visites est validée — The Breakfast Club`,
+            html: clubCardEmailHtml(parts),
+            from: "The Breakfast Club <rdv@labase360.fr>",
+            replyTo: CLUB_INBOX,
+          });
+        }
+        await sendResend({
+          to: CLUB_INBOX,
+          subject: `💶 ${parts.firstName} a payé sa carte ${cardType} visites (${parts.amountEur} €)`,
+          html: clubCardLeadEmailHtml({ ...parts, email: order.buyer_email ?? "—" }),
+          from: MAIL_FROM,
+          replyTo: order.buyer_email || MAIL_REPLY_TO,
+        });
+      } catch (e) {
+        console.warn("[square-webhook] mails carte club:", e instanceof Error ? e.message : e);
+      }
     }
 
     return new Response("ok", { status: 200 });
