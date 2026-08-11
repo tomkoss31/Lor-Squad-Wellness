@@ -1,9 +1,14 @@
 // Résultats — page interne « Ce qu'ils en disent, et ce qu'on ne promet pas ». v7 fidèle.
 import { ClubShell, InnerHero, R } from "./ClubShell";
+import { CLUB_RESULTATS } from "../../data/clubResultats";
 
+// ⚠ Ces trois textes disaient « les photos arrivent » — c'était vrai quand la
+// grille au-dessus était vide. Elle ne l'est plus : les photos sont là, ce sont
+// les MOTS qui manquent encore. Reformulé pour rester exact, et toujours aucune
+// citation inventée en attendant les vraies.
 const TEMOINS = [
   { txt: "Le premier témoignage s'affichera ici dès qu'un membre nous y autorise. On ne met que du vrai — pas de citations inventées.", nom: "Membre", meta: "Bientôt", top: "var(--orange)" },
-  { txt: "Photos et mots des membres arrivent avec les premières cartes terminées. On préfère attendre du réel plutôt que remplir avec du faux.", nom: "Membre", meta: "Bientôt", top: "var(--pink)" },
+  { txt: "Les photos ci-dessus sont réelles et publiées avec l'accord des personnes. Leurs mots arrivent — on préfère attendre du vrai plutôt que remplir avec du faux.", nom: "Membre", meta: "Bientôt", top: "var(--pink)" },
   { txt: "En attendant, la note Google de La Base (4,9/5) parle déjà de la façon dont on accompagne les gens à Verdun.", nom: "La Base", meta: "Avis Google", top: "var(--sage)" },
 ];
 
@@ -24,13 +29,36 @@ export function ClubResultatsPage() {
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0 }}>
         <span className="cl-pill o">Avant / après</span>
         <h2 style={{ marginTop: 20, fontSize: "clamp(30px,4.6vw,56px)" }}>Les photos, quand les membres <span className="cl-a-pink">nous autorisent.</span></h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16, marginTop: 30 }}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <div key={i} className="cl-slot" style={{ aspectRatio: "3/4", boxShadow: "none", border: i >= 4 ? "1px dashed rgba(30,51,48,.25)" : undefined }}>
-              <span>📷 {i < 4 ? "avant / après" : "à venir"}</span>
-            </div>
+        {/* Pas d'`aspectRatio` ici, volontairement : ce sont des diptyques
+            (avant | après côte à côte) aux formats différents. Les enfermer
+            dans un cadre commun rognerait une des deux moitiés — donc la
+            comparaison même qu'on vient montrer. Chacun garde son format. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 16, marginTop: 30 }}>
+          {CLUB_RESULTATS.map((r) => (
+            <figure key={r.slug} style={{ margin: 0 }}>
+              <img
+                src={`/brand/breakfast-club/resultats/${r.slug}.jpg`}
+                alt={r.nom ? `${r.nom}, avant et après son accompagnement.` : "Avant et après l'accompagnement d'un membre du club."}
+                loading="lazy"
+                decoding="async"
+                style={{ width: "100%", height: "auto", borderRadius: 14, display: "block", background: "var(--slot)" }}
+              />
+              {r.nom || r.duree ? (
+                <figcaption style={{ marginTop: 9, fontSize: 14.5, color: "var(--muted)" }}>
+                  {r.nom ? <b style={{ color: "var(--ink)" }}>{r.nom}</b> : null}
+                  {r.nom && r.duree ? " · " : null}
+                  {r.duree}
+                </figcaption>
+              ) : null}
+              {r.mots ? (
+                <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.55, color: "var(--muted2)", fontStyle: "italic" }}>« {r.mots} »</p>
+              ) : null}
+            </figure>
           ))}
         </div>
+        <p style={{ marginTop: 22, fontSize: 14.5, lineHeight: 1.6, color: "var(--muted2)", maxWidth: "72ch" }}>
+          Photos publiées avec l'accord des personnes concernées. <b style={{ color: "var(--ink)" }}>Résultats individuels</b> — ils dépendent du point de départ, de la régularité et des habitudes de chacun, et ne constituent pas une promesse.
+        </p>
       </div></div>
 
       <div className="cl-band dark"><div className="cl-wrap cl-sec cl-rv">
