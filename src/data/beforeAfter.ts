@@ -120,9 +120,12 @@ export const BEFORE_AFTER: BeforeAfterEntry[] = [
     fav: "La nouvelle gamme",
   },
   {
+    // ⚠️ « 5 jours » et non 21 : le visuel porte « Jour 1 / Jour 3 / Jour 5 »
+    // incrusté. Afficher 21 jours à côté créerait une contradiction visible.
+    // Visuel recadré pour retirer l'en-tête Instagram (@freefitdad, Toulouse).
     slug: "guillaume",
     name: "Guillaume",
-    when: "21 jours",
+    when: "5 jours",
     concern: "Routine masculine",
     fav: "La nouvelle gamme",
   },
