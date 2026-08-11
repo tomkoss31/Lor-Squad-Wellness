@@ -153,49 +153,48 @@ serve(async (req: Request) => {
   // « ce créneau est libre » : l'affichage et l'écriture partagent la même
   // règle et ne peuvent plus diverger. Un prospect resté sur une page ouverte
   // ne peut donc plus réserver par-dessus un rendez-vous existant.
-  const { data: slotFree, error: clashErr } = await sb.rpc("is_coach_slot_free", {
+  // 3. Vérification ET écriture dans la MÊME transaction, sous verrou.
+  //
+  //    Avant le 2026-08-11, `is_coach_slot_free` était appelée ici puis l'INSERT
+  //    suivait séparément. Entre les deux, une autre demande pouvait passer le
+  //    même contrôle : les deux le réussissaient, les deux écrivaient, et deux
+  //    personnes se présentaient au même rendez-vous. La fenêtre est courte mais
+  //    réelle — deux prospects sur la même page qui tapent « Confirmer » à la
+  //    même seconde.
+  //
+  //    `book_coach_rdv` prend un verrou sur (coach, créneau), recontrôle SOUS le
+  //    verrou avec la même fonction que l'affichage, puis insère. Elle renvoie
+  //    NULL si le créneau vient d'être pris — c'est le 409.
+  //    (Même mécanique que `book_club_discovery` côté Breakfast Club.)
+  const metadataRecrut = isRecrut
+    ? {
+        last_name: lastName || null,
+        phone: phone || null,
+        city: city || null,
+        looking: looking || null,
+        timing: timing || null,
+        note: note || null,
+      }
+    : null;
+
+  const { data: nouvelId, error: insErr } = await sb.rpc("book_coach_rdv", {
     p_coach_user_id: coachUserId,
-    p_start: slotStart.toISOString(),
-    p_end: slotEnd.toISOString(),
+    p_slot_start: slotStart.toISOString(),
+    p_slot_end: slotEnd.toISOString(),
+    p_first_name: firstName,
+    p_contact: contact,
+    p_mode: mode,
+    p_coach_slug: coachSlug || null,
+    p_online_bilan_id: body.onlineBilanId ?? null,
+    p_booking_type: isRecrut ? "recrutement" : "bilan",
+    p_metadata: metadataRecrut,
   });
-  if (clashErr) {
-    return jsonResponse({ success: false, error: "check_failed" }, 500);
-  }
-  if (slotFree !== true) {
+
+  if (!insErr && !nouvelId) {
+    // Le créneau a été pris pendant qu'on regardait.
     return jsonResponse({ success: false, error: "creneau_pris" }, 409);
   }
-
-  // 3. Insert. Le chemin bilan reste STRICTEMENT identique (aucune colonne
-  //    booking_type / metadata écrite) → l'edge continue de tourner même si la
-  //    migration recrutement n'est pas encore appliquée. Seul le recrutement
-  //    écrit ces colonnes, il dépend donc de la migration 20261209100000.
-  const insertRow: Record<string, unknown> = {
-    coach_user_id: coachUserId,
-    coach_slug: coachSlug || null,
-    first_name: firstName,
-    contact,
-    mode,
-    slot_start: slotStart.toISOString(),
-    slot_end: slotEnd.toISOString(),
-    status: "requested",
-    online_bilan_id: body.onlineBilanId ?? null,
-  };
-  if (isRecrut) {
-    insertRow.booking_type = "recrutement";
-    insertRow.metadata = {
-      last_name: lastName || null,
-      phone: phone || null,
-      city: city || null,
-      looking: looking || null,
-      timing: timing || null,
-      note: note || null,
-    };
-  }
-  const { data: inserted, error: insErr } = await sb
-    .from("rdv_bookings")
-    .insert(insertRow)
-    .select("id")
-    .single();
+  const inserted = nouvelId ? { id: nouvelId as string } : null;
   if (insErr) {
     return jsonResponse({ success: false, error: "insert_failed", detail: insErr.message }, 500);
   }
