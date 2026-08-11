@@ -354,8 +354,15 @@ export function LoginPage() {
           <h1 className="lp-wordmark">
             La Base<br /><span>360</span>
           </h1>
+          {/* Cette page sert AUSSI aux clients : il n'existe pas d'écran de
+              connexion séparé pour la PWA. `signInWithPassword` cherche un
+              profil coach, et à défaut le jeton client, puis redirige vers
+              /client/:token. Or la phrase promettait « ton cockpit coach, tes
+              clients » — un client lisait donc, en se connectant à son propre
+              suivi, la promesse faite à son coach (audit 2026-08-11).
+              La nouvelle phrase parle aux deux sans mentir à personne. */}
           <p className="lp-tagline">
-            Le club performance nutrition. Ton cockpit coach, tes clients, ton plan — au même endroit.
+            Le club performance nutrition. Ton suivi, tes résultats, ton coach — au même endroit.
           </p>
         </div>
       </div>
