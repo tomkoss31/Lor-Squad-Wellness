@@ -29,9 +29,21 @@ const FROM = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// L'adresse du club, coupée en deux lignes pour la carte « Où ».
+// Adresse de secours : celle du club, si le coach n'a pas rempli son lieu de
+// rendez-vous. Coupée en deux lignes pour la carte « Où ».
 const ADRESSE_1 = "11 rue Saint Pierre";
 const ADRESSE_2 = "55100 Verdun";
+
+/** Coupe une adresse d'une ligne en deux, sur la dernière virgule ou juste
+ *  avant le code postal. Les coachs la saisissent d'un bloc dans leur fiche. */
+function couperAdresse(brut: string): [string, string] {
+  const t = brut.replace(/\s+/g, " ").trim();
+  const virgule = t.lastIndexOf(",");
+  if (virgule > 0) return [t.slice(0, virgule).trim(), t.slice(virgule + 1).trim()];
+  const cp = t.match(/\b\d{5}\b/);
+  if (cp && cp.index && cp.index > 0) return [t.slice(0, cp.index).trim(), t.slice(cp.index).trim()];
+  return [t, ""];
+}
 
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -90,7 +102,7 @@ serve(async (req) => {
 
   const { data: booking, error } = await sb
     .from("rdv_bookings")
-    .select("id, first_name, contact, status, slot_start, slot_end, club_id, coach_user_id, coach_slug, metadata")
+    .select("id, first_name, contact, status, slot_start, slot_end, club_id, coach_user_id, coach_slug, mode, metadata")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -109,13 +121,15 @@ serve(async (req) => {
   // Le nom du coach, tel que la personne le connaît. On tente l'id, puis le
   // slug ; à défaut on reste vague plutôt que d'écrire un nom faux.
   let coachName = "ton coach";
+  let lieuCoach = "";
   if (booking.coach_user_id) {
     const { data: u } = await sb
       .from("users")
-      .select("name")
+      .select("name, rdv_location, city")
       .eq("id", booking.coach_user_id)
       .maybeSingle();
     if (u?.name) coachName = String(u.name).split(" ")[0];
+    lieuCoach = String(u?.rdv_location ?? u?.city ?? "").trim();
   } else if (booking.coach_slug) {
     coachName = String(booking.coach_slug).charAt(0).toUpperCase() + String(booking.coach_slug).slice(1);
   }
@@ -129,13 +143,28 @@ serve(async (req) => {
     ? Math.max(15, Math.round((new Date(String(booking.slot_end)).getTime() - new Date(debut).getTime()) / 60000))
     : 45;
 
+  // Le « Où » de la carte et de l'invitation calendrier.
+  //
+  // Ce mail annonçait « 11 rue Saint Pierre, 55100 Verdun » à TOUT LE MONDE,
+  // y compris à quelqu'un qui avait explicitement choisi la visio : il recevait
+  // une adresse à laquelle se rendre, et un événement d'agenda posé au club
+  // (audit 2026-08-11). Et l'adresse était figée dans le code, donc fausse pour
+  // tout coach qui ne reçoit pas au club de Verdun.
+  const enVisio = String(booking.mode ?? "").trim() === "visio";
+  const [adr1, adr2] = enVisio
+    ? ["En visio", "Le lien t'arrive avant le rendez-vous"]
+    : (lieuCoach ? couperAdresse(lieuCoach) : [ADRESSE_1, ADRESSE_2]);
+  const lieuIcs = enVisio
+    ? "Visioconférence — lien envoyé par email"
+    : [adr1, adr2].filter(Boolean).join(", ");
+
   const html = rdvAccepteEmailHtml({
     firstName: String(booking.first_name ?? "").trim(),
     coachName,
     dateLabel: parisDateLabel(debut),
     hour: parisHourLabel(debut),
-    addressLine1: ADRESSE_1,
-    addressLine2: ADRESSE_2,
+    addressLine1: adr1,
+    addressLine2: adr2,
     durationMin: dureeMin,
     theme,
   });
@@ -155,7 +184,7 @@ serve(async (req) => {
     description:
       `On prend le temps de parler de toi, on mesure où tu en es, et on pose un cap. ` +
       `Rien à décider sur place. Prévois ${dureeMin} minutes.`,
-    location: `${ADRESSE_1}, ${ADRESSE_2}`,
+    location: lieuIcs,
     attendee: contact,
     attendeeName: prenom || "Invité",
     organizerName: booking.club_id ? "The Breakfast Club" : "La Base 360",
