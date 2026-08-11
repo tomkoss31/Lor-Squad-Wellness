@@ -9,11 +9,16 @@
 // la nuit) MAIS reste dans la famille de la couleur identitaire.
 //
 // Usage :
-//   const g = getHeroGradient("gold");  // ou "teal" / "purple" / "neutre"
+//   const g = getHeroGradient("teal");  // ou "purple" / "neutral"
 //   <div style={{ background: g.glow }} />
 // =============================================================================
 
-export type HeroIdentity = "gold" | "teal" | "purple" | "neutral";
+/** « gold » (la palette orange #EF9F27) a été RETIRÉE le 2026-08-11. Elle
+ *  n'était plus demandée nulle part, mais elle restait le défaut du paramètre
+ *  de `getHeroGradient` — une seule ligne suffisait à ramener l'arlequin. La
+ *  supprimer rend le retour impossible : le compilateur refuse désormais
+ *  `identity="gold"`. */
+export type HeroIdentity = "teal" | "purple" | "neutral";
 
 export interface HeroGradient {
   /** Couleur primaire (chaude, contrastee) pour titres / badges. */
@@ -31,7 +36,10 @@ export interface HeroGradient {
  * identitaire de la page.
  */
 export function getHeroGradient(
-  identity: HeroIdentity = "gold",
+  // Le défaut était "gold" — la palette orange. Plus aucun appel ne se passe
+  // d'argument aujourd'hui, mais un futur `getHeroGradient()` aurait ramené
+  // l'orange sans prévenir. Le défaut suit maintenant celui de PremiumHero.
+  identity: HeroIdentity = "teal",
   date: Date = new Date(),
 ): HeroGradient {
   const hour = date.getHours();
@@ -52,19 +60,15 @@ export function getHeroGradient(
 
   // Palettes par identite + phase
   const palettes: Record<HeroIdentity, Record<typeof phase, HeroGradient>> = {
-    gold: {
-      dawn:      { primary: "#FFB088", secondary: "#FF8866", tertiary: "#EF9F27", glow: "rgba(255,176,136,0.30)" },
-      morning:   { primary: "#FFD56B", secondary: "#EF9F27", tertiary: "#BA7517", glow: "rgba(239,159,39,0.28)" },
-      noon:      { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#0D9488", glow: "rgba(13,148,136,0.22)" },
-      afternoon: { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#5C3A05", glow: "rgba(186,117,23,0.28)" },
-      dusk:      { primary: "#FF6B6B", secondary: "#BA7517", tertiary: "#7C3AED", glow: "rgba(255,107,107,0.25)" },
-      evening:   { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#BA7517", glow: "rgba(192,132,252,0.25)" },
-      night:     { primary: "#A5B4FC", secondary: "#818CF8", tertiary: "#7C3AED", glow: "rgba(165,180,252,0.25)" },
-    },
     teal: {
       dawn:      { primary: "#5EEAD4", secondary: "#2DD4BF", tertiary: "#0D9488", glow: "rgba(94,234,212,0.30)" },
       morning:   { primary: "#2DD4BF", secondary: "#0D9488", tertiary: "#0F766E", glow: "rgba(45,212,191,0.28)" },
-      noon:      { primary: "#0D9488", secondary: "#0F766E", tertiary: "#EF9F27", glow: "rgba(13,148,136,0.30)" },
+      // `tertiary` était #EF9F27 — l'orange purgé de toute l'app par le
+      // chantier « fin de l'arlequin » (380 usages). Il survivait ICI, dans la
+      // palette TEAL, donc à l'écran du Co-pilote tous les jours entre 11 h et
+      // 14 h (audit 2026-08-11). Remplacé par le vert profond de la charte,
+      // qui joue le même rôle de point d'appui sombre dans le dégradé.
+      noon:      { primary: "#0D9488", secondary: "#0F766E", tertiary: "#134E4A", glow: "rgba(13,148,136,0.30)" },
       afternoon: { primary: "#0D9488", secondary: "#0F766E", tertiary: "#134E4A", glow: "rgba(15,118,110,0.30)" },
       dusk:      { primary: "#0D9488", secondary: "#7C3AED", tertiary: "#0F766E", glow: "rgba(13,148,136,0.28)" },
       evening:   { primary: "#67E8F9", secondary: "#0D9488", tertiary: "#7C3AED", glow: "rgba(103,232,249,0.28)" },
