@@ -37,7 +37,13 @@ export type CrmSource =
   | "simulateur"
   | "business"
   | "welcome"
-  | "colis";
+  | "colis"
+  /** Tunnel « Réserver au club » (/reserver). 4 leads en base au 2026-08-11,
+   *  tous affichés « Site web » faute d'exister ici. */
+  | "site-club"
+  /** Filet : une source qu'on ne connaît pas s'affiche telle quelle plutôt que
+   *  de se déguiser en autre chose. Cf. `sourceRaw`. */
+  | "inconnue";
 
 export interface CrmLead {
   key: string;
@@ -86,6 +92,26 @@ export interface CrmLead {
   notes: string | null;
   /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
    *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
+  /** La valeur brute de `prospect_leads.source`, pour l'afficher telle quelle
+   *  quand on ne la reconnaît pas. */
+  sourceRaw?: string | null;
+  /** Ce que la personne a écrit dans le tunnel « Réserver au club » et qui
+   *  n'était affiché NULLE PART — alors que le mail de réservation, lui, le
+   *  contient (audit 2026-08-11). */
+  lastName?: string | null;
+  objectif?: string | null;
+  peopleCount?: number | null;
+  partnerName?: string | null;
+  partnerObjectif?: string | null;
+  coachSlug?: string | null;
+  /** `false` = la personne n'a coché aucune case de recontact. À savoir AVANT
+   *  de décrocher son téléphone. */
+  consentRecontact?: boolean | null;
+  /** Un lead du tunnel club qui n'est jamais allé jusqu'au créneau. C'est le
+   *  signal le plus fort du CRM : il a laissé son numéro puis il est parti. */
+  abandonAvantCreneau?: boolean;
+  /** Le créneau réservé, s'il en a un. */
+  rdvLabel?: string | null;
   funnelAnswers?: Record<string, string> | null;
   /** Réponses du funnel colis (question → réponse, déjà en libellés). */
   colisAnswers?: Record<string, string> | null;
@@ -121,6 +147,8 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   business: { label: "Business", emoji: "💼" },
   welcome: { label: "Site web", emoji: "🌐" },
   colis: { label: "Colis", emoji: "🎁" },
+  "site-club": { label: "Réserver au club", emoji: "🏠" },
+  inconnue: { label: "Source inconnue", emoji: "❓" },
 };
 
 // Re-catégorisation manuelle (A, 2026-06-16) : sources éditables pour un lead
@@ -134,6 +162,25 @@ const CRM_SOURCE_TO_DB: Partial<Record<CrmSource, string>> = {
   simulateur: "simulateur",
   "reco-client": "reco-client",
 };
+
+/** Les objectifs du tunnel « Réserver au club ». Mêmes libellés que le mail de
+ *  réservation (book-club-discovery), pour qu'un coach lise la même chose dans
+ *  sa boîte et dans le CRM. Un code inconnu s'affiche tel quel. */
+const OBJECTIF_LABELS: Record<string, string> = {
+  poids: "⚖️ Perdre du poids",
+  muscle: "💪 Reprendre du muscle",
+  energie: "⚡ Retrouver de l'énergie",
+};
+export function objectifLabel(code: string | null | undefined): string {
+  const c = (code ?? "").trim();
+  if (!c) return "—";
+  return OBJECTIF_LABELS[c] ?? c;
+}
+/** Version courte pour la ligne de liste : le libellé sans son emoji. */
+export function objectifCourt(code: string | null | undefined): string {
+  const l = objectifLabel(code);
+  return l === "—" ? l : l.replace(/^\S+\s/u, "");
+}
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
   family: "famille",
@@ -159,7 +206,15 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   if (s === "simulateur") return "simulateur";
   if (s.startsWith("business")) return "business";
   if (s === "colis") return "colis";
-  return "welcome";
+  if (s === "site-club") return "site-club";
+  // Les valeurs historiques du site vitrine, listées explicitement.
+  if (s === "welcome" || s === "welcome_page" || s === "site" || s === "") return "welcome";
+  // Tout le reste : on le DIT. Le défaut d'avant renvoyait « welcome », donc
+  // une source jamais déclarée s'affichait « 🌐 Site web » — c'est ce qui a
+  // masqué `site-club` pendant 4 leads, après avoir déjà masqué
+  // « rejoindre-funnel » en juillet. Un défaut muet ne protège de rien : il
+  // fabrique une information fausse (audit 2026-08-11).
+  return "inconnue";
 }
 
 /** online_bilans.lead_status (6 valeurs) → statut CRM normalisé. */
@@ -317,7 +372,11 @@ export function useCrmLeads() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
 
-      const [bilansRes, prospectsRes, referralsRes, intentionsRes] = await Promise.all([
+      // Les réservations du club, pour savoir si un lead du tunnel /reserver
+      // est allé jusqu'au créneau. Sans ça, impossible de distinguer celui qui
+      // a réservé de celui qui a abandonné à l'écran 1 — or c'est justement
+      // celui-là qu'il faut rappeler (audit 2026-08-11).
+      const [bilansRes, prospectsRes, referralsRes, reservationsRes, intentionsRes] = await Promise.all([
         sb
           .from("online_bilans")
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
@@ -330,13 +389,19 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("client_referrals")
           .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
+          .limit(500),
+        sb
+          .from("rdv_bookings")
+          .select("first_name, contact, slot_start, status")
+          .neq("status", "canceled")
+          .order("slot_start", { ascending: true })
           .limit(500),
         // Intentions de parrainage — requête débranchée le 2026-07-29.
         //
@@ -441,6 +506,23 @@ export function useCrmLeads() {
         });
       }
 
+      // Deux clés d'appariement : l'email/téléphone d'abord (fiable), le prénom
+      // ensuite (le tunnel club demande les deux, mais rien ne garantit la même
+      // saisie aux deux écrans). On ne relie que pour DIRE « a réservé » — aucune
+      // écriture ne dépend de cet appariement.
+      const parContact = new Map<string, string>();
+      const parPrenom = new Map<string, string>();
+      for (const b of (reservationsRes.data ?? []) as Array<Record<string, unknown>>) {
+        const quand = new Intl.DateTimeFormat("fr-FR", {
+          timeZone: "Europe/Paris", weekday: "short", day: "2-digit", month: "short",
+          hour: "2-digit", minute: "2-digit",
+        }).format(new Date(String(b.slot_start)));
+        const c = String(b.contact ?? "").trim().toLowerCase();
+        const p = String(b.first_name ?? "").trim().toLowerCase();
+        if (c && !parContact.has(c)) parContact.set(c, quand);
+        if (p && !parPrenom.has(p)) parPrenom.set(p, quand);
+      }
+
       for (const row of prospectsRes.data ?? []) {
         const meta = (row.metadata ?? {}) as Record<string, unknown>;
         const viaName =
@@ -470,6 +552,13 @@ export function useCrmLeads() {
               : colisNextAction === "email_only"
                 ? "⚪ A laissé son email"
                 : null;
+        const cleContact = String(row.email ?? row.phone ?? "").trim().toLowerCase();
+        const clePrenom = String(row.first_name ?? "").trim().toLowerCase();
+        const rdvTrouve =
+          (cleContact && parContact.get(cleContact)) ||
+          (clePrenom && parPrenom.get(clePrenom)) ||
+          null;
+
         all.push({
           key: `prospect_leads:${row.id}`,
           table: "prospect_leads",
@@ -494,6 +583,21 @@ export function useCrmLeads() {
           createdAt: row.created_at as string,
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
+          sourceRaw: (row.source as string | null) ?? null,
+          lastName: typeof meta.nom === "string" && meta.nom.trim() ? (meta.nom as string).trim() : null,
+          objectif: typeof meta.objectif === "string" ? (meta.objectif as string) : null,
+          peopleCount: typeof meta.people_count === "number" ? (meta.people_count as number) : null,
+          partnerName: [meta.partner_first_name, meta.partner_last_name]
+            .filter((v): v is string => typeof v === "string" && !!v.trim())
+            .join(" ") || null,
+          partnerObjectif: typeof meta.partner_objectif === "string" ? (meta.partner_objectif as string) : null,
+          coachSlug: (row.coach_slug as string | null) ?? null,
+          consentRecontact: typeof row.consent_recontact === "boolean" ? (row.consent_recontact as boolean) : null,
+          rdvLabel: rdvTrouve,
+          // Le signal du chantier : parti avant de choisir son créneau. On ne
+          // le lève que pour le tunnel club — ailleurs, ne pas avoir de RDV est
+          // l'état normal.
+          abandonAvantCreneau: source === "site-club" && !rdvTrouve,
           funnelAnswers,
           colisAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,

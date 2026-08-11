@@ -11,8 +11,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendPushToUser } from "../_shared/push.ts";
+import { notifInterneHtml } from "../_shared/rdvEmail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const TEAM_NOTIFY_EMAIL = "labaseverdun@gmail.com";
+const OBJECTIF_LABELS: Record<string, string> = {
+  poids: "Perdre du poids",
+  muscle: "Reprendre du muscle",
+  energie: "Retrouver de l'énergie",
+};
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
@@ -212,6 +220,62 @@ serve(async (req) => {
       }
     } catch (notifErr) {
       console.error("[submit-prospect-lead] Notif non critique:", notifErr);
+    }
+
+    // ── Mail à l'équipe pour le tunnel « Réserver au club » (2026-08-11) ──
+    //
+    // Ce tunnel a DEUX écrans : on laisse ses coordonnées, puis on choisit son
+    // créneau. Seul le 2e envoyait un mail (book-club-discovery). Donc celui qui
+    // s'arrête entre les deux — le plus chaud de tous, il a donné son numéro et
+    // il est parti — n'alertait PERSONNE. Cas réel : Laure, le 2026-08-11 à
+    // 19 h 58, apparue dans le CRM sans un mot.
+    //
+    // On n'envoie que pour ce tunnel : le colis a déjà son mail de bienvenue,
+    // et /rejoindre passe par book-rdv. Best-effort, jamais bloquant.
+    if (source === "site-club" && RESEND_API_KEY) {
+      try {
+        const m = (metadata ?? {}) as Record<string, unknown>;
+        const nom = String(m.nom ?? "").trim();
+        const objectif = String(m.objectif ?? "").trim();
+        const aDeux = Number(m.people_count ?? 1) === 2;
+        const binome = [m.partner_first_name, m.partner_last_name]
+          .filter((v): v is string => typeof v === "string" && !!v.trim())
+          .join(" ");
+
+        const html = notifInterneHtml({
+          theme: "club",
+          eyebrow: "🏠 Réserver au club · Coordonnées laissées",
+          titre: `${firstName}${nom ? " " + nom : ""} n'a pas encore choisi de créneau`,
+          phrase:
+            "Elle/il a rempli le premier écran de <b>/reserver</b> puis s'est arrêté" +
+            " avant de prendre son heure. C'est le moment de rappeler — les" +
+            " coordonnées sont fraîches.",
+          lignes: [
+            ["Prénom / Nom", `${firstName}${nom ? " " + nom : ""}`],
+            ["Téléphone", phone || "—"],
+            ["Email", email || "—"],
+            ["Ville", city || "—"],
+            ["Objectif", objectif ? (OBJECTIF_LABELS[objectif] ?? objectif) : "—"],
+            ["Vient à", aDeux ? `deux${binome ? " — avec " + binome : ""}` : "un"],
+          ],
+          pied: "Si un créneau est pris plus tard, un second mail partira à la réservation.",
+        });
+
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "La Base 360 <rdv@labase360.fr>",
+            to: [TEAM_NOTIFY_EMAIL],
+            subject: `🏠 ${firstName}${nom ? " " + nom : ""} — coordonnées laissées, sans créneau`,
+            reply_to: email || undefined,
+            html,
+          }),
+        });
+        if (!res.ok) console.warn("[submit-prospect-lead] mail équipe:", res.status);
+      } catch (mailErr) {
+        console.error("[submit-prospect-lead] Mail non critique:", mailErr);
+      }
     }
 
     return json({ success: true, id: (inserted as { id: string }).id });
