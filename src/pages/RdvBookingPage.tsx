@@ -254,7 +254,10 @@ export function RdvBookingPage() {
             <div style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 13, fontWeight: 600, color: "var(--cream-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
               Choisis un jour
             </div>
-            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 24, WebkitOverflowScrolling: "touch" }}>
+            {/* `ps-scroll-x` : la barre de défilement native s'affichait en gros
+                trait noir sous les jours en thème clair (Windows). Le style est
+                dans public-shell.css, commun aux deux thèmes. */}
+            <div className="ps-scroll-x" style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 24, WebkitOverflowScrolling: "touch" }}>
               {groups.map((g) => {
                 const { dow, num, mon } = parisDayParts(g.sample);
                 const active = selectedKey === g.key;
@@ -312,7 +315,7 @@ export function RdvBookingPage() {
         )}
 
         {bookingError && (
-          <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(251,113,133,0.12)", color: PUBLIC_TOKENS.coral, fontSize: 13, border: "1px solid rgba(251,113,133,0.4)" }}>
+          <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(251,113,133,0.12)", color: "var(--coral-text)", fontSize: 13, border: "1px solid rgba(251,113,133,0.4)" }}>
             {bookingError}
           </div>
         )}
