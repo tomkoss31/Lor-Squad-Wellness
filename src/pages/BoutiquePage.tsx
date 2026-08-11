@@ -18,6 +18,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
+import { BoutiqueBeforeAfter } from "../components/boutique/BoutiqueBeforeAfter";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueBundles } from "../components/boutique/BoutiqueBundles";
 import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
@@ -396,6 +397,9 @@ export function BoutiquePage() {
                 <a href="#bk-ingredient" onClick={(e) => (e.preventDefault(), scrollTo("bk-ingredient"))}>
                   Ingrédients
                 </a>
+                <a href="#bk-resultats" onClick={(e) => (e.preventDefault(), scrollTo("bk-resultats"))}>
+                  Résultats
+                </a>
                 <a href="#bk-affil" onClick={(e) => (e.preventDefault(), scrollTo("bk-affil"))}>
                   Affiliation
                 </a>
@@ -731,6 +735,9 @@ export function BoutiquePage() {
               </div>
             </div>
           </section>
+
+          {/* Preuve visuelle : avant/après réels — respiration avant les avis */}
+          <BoutiqueBeforeAfter />
 
           {/* Avis clients réels (catégorie skin) + formulaire */}
           <BoutiqueReviews coachSlug={coachSlug} coachUserId={boutique?.user_id} />
