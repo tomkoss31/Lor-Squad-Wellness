@@ -230,46 +230,81 @@ serve(async (req: Request) => {
     // push best-effort — la résa est déjà enregistrée
   }
 
-  // 4b. Recrutement : notif email à l'équipe (le push ne suffit pas — pas
-  //     toujours activé). Reply-to = le candidat, pour répondre en un clic.
-  if (isRecrut) {
-    try {
-      const dateLabel = parisDateLabel(slotStart.toISOString());
-      const hour = parisHourLabel(slotStart.toISOString());
-      const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
-      const row = (k: string, v: string) =>
-        `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
-      const internalHtml = `
+  // 4b. Notif email à l'équipe, sur TOUTE demande de RDV.
+  //
+  //     Avant le 2026-08-11 cet email ne partait QUE pour le recrutement
+  //     (`if (isRecrut)`). Un bilan pris depuis le tunnel colis ou la fiche
+  //     coach ne laissait donc qu'un push — et le push n'est pas toujours
+  //     activé, ni lu. Demande Thomas : toute demande de RDV atterrit sur
+  //     labaseverdun@gmail.com.
+  //
+  //     Reply-to = le prospect, pour lui répondre en un clic.
+  try {
+    const dateLabel = parisDateLabel(slotStart.toISOString());
+    const hour = parisHourLabel(slotStart.toISOString());
+    const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+    const modeLabel = mode === "visio" ? "visio" : "présentiel";
+    const row = (k: string, v: string) =>
+      `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
+
+    // Deux histoires différentes : un candidat qui veut ouvrir un club, ou
+    // quelqu'un qui vient faire son bilan. Même gabarit, contenu distinct.
+    const entete = isRecrut
+      ? {
+          eyebrow: "🤝 Breakfast Club · Recrutement",
+          titre: "Nouveau candidat — ouvrir un club",
+          phrase: `${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
+          pied: "Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).",
+        }
+      : {
+          eyebrow: "🗓️ La Base 360 · Nouveau RDV",
+          titre: "Une demande de rendez-vous",
+          phrase: `${esc(fullName || "Quelqu'un")} a réservé un bilan${coachSlug ? ` avec <b>${esc(coachSlug)}</b>` : ""}, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🗓️ Nouveau RDV — ${fullName || "prospect"} · ${dateLabel} ${hour}`,
+          pied: "Le RDV est en attente : il faut l'accepter dans le CRM (RDV demandés). Réponds à cet email pour joindre directement la personne.",
+        };
+
+    const lignes = isRecrut
+      ? [
+          row("Prénom / Nom", esc(fullName)),
+          row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking))),
+          row("Se projette", esc(lbl(TIMING_LABELS, timing))),
+          row("Email", contact ? esc(contact) : "—"),
+          row("Téléphone", phone ? esc(phone) : "—"),
+          row("Ville", city ? esc(city) : "—"),
+          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
+          note ? row("Son mot", esc(note)) : "",
+        ]
+      : [
+          row("Prénom / Nom", esc(fullName) || "—"),
+          row("Contact", contact ? esc(contact) : "—"),
+          row("Téléphone", phone ? esc(phone) : "—"),
+          row("Coach demandé", coachSlug ? esc(coachSlug) : "—"),
+          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
+          row("Format", modeLabel),
+          note ? row("Son mot", esc(note)) : "",
+        ];
+
+    const internalHtml = `
 <!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
 <body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
   <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
-    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">🤝 Breakfast Club · Recrutement</div>
-    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau candidat — ouvrir un club</h1>
-    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${mode === "visio" ? "visio" : "présentiel"}).</p>
+    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">${entete.eyebrow}</div>
+    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">${entete.titre}</h1>
+    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${entete.phrase}</p>
     <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
       <table style="border-collapse:collapse;width:100%;">
-        ${row("Prénom / Nom", esc(fullName))}
-        ${row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking)))}
-        ${row("Se projette", esc(lbl(TIMING_LABELS, timing)))}
-        ${row("Email", contact ? esc(contact) : "—")}
-        ${row("Téléphone", phone ? esc(phone) : "—")}
-        ${row("Ville", city ? esc(city) : "—")}
-        ${row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`)}
-        ${note ? row("Son mot", esc(note)) : ""}
+        ${lignes.join("\n        ")}
       </table>
     </div>
-    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).</p>
+    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">${entete.pied}</p>
   </div>
 </body></html>`.trim();
-      await sendViaResend(
-        TEAM_NOTIFY_EMAIL,
-        `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
-        internalHtml,
-        contact || undefined,
-      );
-    } catch (_e) {
-      // notif interne best-effort — la résa est déjà enregistrée
-    }
+
+    await sendViaResend(TEAM_NOTIFY_EMAIL, entete.sujet, internalHtml, contact || undefined);
+  } catch (_e) {
+    // notif interne best-effort — la résa est déjà enregistrée
   }
 
   // 5. Email de confirmation au prospect (non bloquant) — seulement si le
