@@ -10,6 +10,7 @@ import { CountUp } from "./club/CountUp";
 import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
 import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
 import { ClubOfferPopup } from "./club/ClubOfferPopup";
+import { PrelaunchCounter } from "./club/PrelaunchCounter";
 
 // Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
 // avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
@@ -59,7 +60,7 @@ const INCLUS = [
   { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
-  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — tarif d'ouverture réservé aux 20 premiers membres, ensuite 210 €. Les cartes ne sont pas remboursables. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €. Les cartes ne sont pas remboursables. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   // ⚠ Cette réponse disait « tu l'utilises à ton rythme » — ça contredisait
   // frontalement la validité de 30 / 90 jours. Reformulée : engagement (il n'y
   // en a pas) et validité (il y en a une) sont deux choses différentes, et le
@@ -68,7 +69,10 @@ const FAQ = [
   { q: "Et si je n'utilise pas toutes mes visites ?", a: "Les cartes ne sont pas remboursables et les visites non utilisées à la fin de la validité sont perdues. On préfère te le dire avant plutôt qu'après. Si un imprévu sérieux t'empêche de venir — hospitalisation, déménagement — parle-nous-en : on trouve une solution au cas par cas. Et si tu hésites entre les deux cartes, commence par la 10 visites." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
   { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
-  { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
+  // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
+  // supprimée parce que redondante. Elle, non : elle enlève la peur numéro un
+  // de quelqu'un qui n'est pas en forme, et rien d'autre ne le disait ici.
+  { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport : aucune performance à prouver, aucun regard sur ce que tu soulèves. C'est un petit-déjeuner et un suivi. On part d'où tu en es, à ton rythme." },
   { q: "Au bout de combien de temps je vois quelque chose ?", a: "On fait le point à la 10ᵉ visite : nouvelles mesures, nouvelles photos si tu veux. C'est là qu'on regarde ensemble le chemin parcouru." },
 ];
 
@@ -348,12 +352,11 @@ export function ClubLandingPage() {
                 <div className="cl-price" style={{ color: "var(--grad-a)" }}><CountUp end={185} duration={1600} /> €</div>
                 <div className="cl-price" style={{ fontSize: 30, color: "var(--on-dark-3)", textDecoration: "line-through", opacity: .8 }}>210 €</div>
               </div>
-              {/* Un seul pourcentage sur la carte. Le « −12 % » du barré (210→185)
-                  cohabitait avec le « 23 % » (prix par visite vs carte 10) : deux
-                  comparaisons justes mais différentes à 5 mm l'une de l'autre, ça
-                  se lit comme une erreur. On garde celle qui parle de ce que le
-                  client achète — le prix d'un matin. */}
-              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Tarif d'ouverture · 20 premiers membres</div>
+              {/* Le badge « −12 % » a sauté (il contredisait le « 23 % » juste
+                  en dessous), mais le 210 € reste : c'est le tarif prévu APRÈS
+                  le pré-lancement, et il donne sa mesure à l'offre. */}
+              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--yellow)" }}><span aria-hidden="true">🎉</span> Offre de pré-lancement · 20 premiers membres</div>
+              <PrelaunchCounter />
               <p style={{ margin: "10px 0 0", color: "var(--yellow)" }}>30 visites · <b>soit 6,17 € la visite</b></p>
               <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--on-dark-3)" }}>23 % moins cher que la carte 10 · valable 90 jours</p>
               <ul className="cl-feats">
@@ -368,7 +371,7 @@ export function ClubLandingPage() {
           {/* La validité et le non-remboursement sont des conditions de vente :
               elles doivent être lisibles AVANT l'achat, pas seulement dans la FAQ.
               « Pas de durée minimum » a été retiré — ça contredisait la validité. */}
-          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat, et ne sont pas remboursables. <b style={{ color: "var(--ink)" }}>Carte 30 visites à 185 € réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
+          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat, et ne sont pas remboursables. <b style={{ color: "var(--ink)" }}>La carte 30 visites à 185 € est une offre de pré-lancement, réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
         </div>
       </div>
 

@@ -12,10 +12,13 @@ import { useClubHead } from "./useClubHead";
 import { ClubNewsletter } from "./ClubNewsletter";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
-const WORDMARK = "/brand/breakfast-club/logo-wordmark-dark.png";
-// Wordmark AVEC le cœur rouge — pour les fonds clairs (le footer inverse en blanc,
-// où le cœur rouge ne survivrait pas à l'inversion → il garde WORDMARK).
+// Wordmark AVEC le cœur rouge — pour les fonds clairs.
 const WORDMARK_HEART = "/brand/breakfast-club/logo-heart.png";
+// Version crème du wordmark, dessinée pour les fonds sombres. À utiliser TELLE
+// QUELLE : le pied de page prenait la version foncée et la forçait en blanc au
+// filtre (`brightness(0) invert(1)`), ce qui écrasait le cœur rouge avec le
+// reste. Le logo officiel a un cœur — il le retrouve via <ClubWordmarkDark>.
+const WORDMARK_CREAM = "/brand/breakfast-club/logo-wordmark.png";
 export const R = "/reserver?utm_source=site";
 export const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
 export const TEL = "tel:+33679448759";
@@ -70,6 +73,35 @@ export function Slot({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Le wordmark complet sur fond sombre — texte crème ET cœur rouge.
+ *
+ * Il n'existe pas d'image crème AVEC le cœur : `logo-wordmark.png` est crème
+ * mais sans cœur, `logo-heart.png` a le cœur mais en noir. On superpose donc
+ * le cœur sur la version crème, aux coordonnées RELEVÉES DANS L'IMAGE
+ * OFFICIELLE plutôt que placées à l'œil — cœur rouge trouvé à x=721 y=65,
+ * 60×38 px dans un cadre de 1180×756, soit 61,1 % / 8,6 % et 5,1 % de large.
+ * Les trois fichiers partagent ce cadrage exact (vérifié), donc le repère
+ * reste juste quelle que soit la taille d'affichage.
+ */
+export function ClubWordmarkDark({ width = 210 }: { width?: number }) {
+  return (
+    <span style={{ position: "relative", display: "inline-block", width, lineHeight: 0 }}>
+      <img src={WORDMARK_CREAM} alt="The Breakfast Club by La Base" style={{ width: "100%", display: "block" }} />
+      <svg
+        viewBox="0 0 32 32"
+        aria-hidden="true"
+        style={{ position: "absolute", left: "61.1%", top: "8.6%", width: "5.1%", height: "auto" }}
+      >
+        <path
+          d="M16 26.5C7.4 21 4.8 15.6 8.3 12.3c2.3-2.1 5.3-1 6.7 1.4l1 1.6 1-1.6c1.4-2.4 4.4-3.5 6.7-1.4 3.5 3.3.9 8.7-7.7 14.2z"
+          fill="#E5352B"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -167,7 +199,7 @@ export function ClubShell({ children }: { children: ReactNode }) {
         <div className="cl-wrap" style={{ paddingTop: "clamp(48px,6vw,80px)", paddingBottom: 28 }}>
           <div className="cl-footgrid">
             <div>
-              <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: 210, filter: "brightness(0) invert(1)" }} />
+              <ClubWordmarkDark width={210} />
               <p style={{ color: "var(--on-dark-3)", fontSize: 16, marginTop: 16, maxWidth: "34ch" }}>Le club de petit-déjeuner de Verdun. Nutrition, énergie, communauté.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 18 }}>
                 <a className="cl-social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>

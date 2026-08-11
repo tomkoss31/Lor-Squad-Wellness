@@ -1,12 +1,16 @@
 // Le club — page interne « Un club de petit-déjeuner, pas un bar ni une salle ». v7 fidèle.
 import { ClubShell, InnerHero, Slot, R } from "./ClubShell";
 
-const PAS = [
-  "Pas un bar : on ne vient pas juste consommer, on vient pour un rituel et un suivi.",
-  "Pas une salle de sport : aucune performance à prouver, aucun regard sur ce que tu soulèves.",
-  "Pas un régime : on n'interdit rien, on ajoute un bon premier repas et de la régularité.",
-  "Pas un abonnement piège : tu prends des visites, tu les utilises, point.",
-];
+// La section « Ce que ce n'est pas » vivait ici. Retirée le 2026-08-10 : trois
+// de ses quatre lignes étaient déjà dites ailleurs (« pas un régime » dans la
+// philosophie, « pas un abonnement piège » dans la FAQ et sous les tarifs,
+// « pas une salle de sport » dans la FAQ), et la quatrième — « pas un bar » —
+// est le sous-titre de CETTE page, lu trente secondes plus tôt. Un bandeau
+// vert pleine largeur avec quatre croix orange pour dire quatre fois non, sur
+// une page qui doit donner envie de venir.
+// Sa seule phrase irremplaçable — « aucune performance à prouver, aucun regard
+// sur ce que tu soulèves » — a été remontée dans la FAQ « Je ne suis pas
+// sportif », où elle répond à quelqu'un qui se pose vraiment la question.
 const MATINEE = [
   { h: "0 min", t: "Tu passes la porte", d: "On te connaît, ton aloe est déjà prêt. Pas de file, pas d'attente." },
   { h: "5 min", t: "Ton rituel", d: "Les trois boissons dans l'ordre, à ton rythme, assis ou à emporter." },
@@ -17,7 +21,7 @@ const MATINEE = [
 export function ClubLeClubPage() {
   return (
     <ClubShell>
-      <InnerHero pill="Le club" pillClass="p" title="Un club de petit-déjeuner." accent="Pas un bar, pas une salle de sport." intro="Un lieu simple, ouvert tous les matins, où l'on prend soin de toi sans en faire tout un cinéma. Voilà ce que c'est — et ce que ce n'est pas." />
+      <InnerHero pill="Le club" pillClass="p" title="Un club de petit-déjeuner." accent="Pas un bar, pas une salle de sport." intro="Un lieu simple, ouvert tous les matins, où l'on prend soin de toi sans en faire tout un cinéma." />
 
       <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>
         <Slot
@@ -41,18 +45,6 @@ export function ClubLeClubPage() {
             <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Parce que seul, on lâche. Au club, il y a une heure, un lieu, des têtes connues et quelqu'un qui note que tu es venu. Ce petit rendez-vous social, c'est exactement ce qui manque quand on essaie « tout seul, à la maison ».</p>
           </div>
         </div>
-      </div></div>
-
-      <div className="cl-band dark"><div className="cl-wrap cl-sec cl-rv">
-        <span className="cl-pill p">À dire clairement</span>
-        <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,58px)", color: "#fff" }}>Ce que ce <span className="cl-a-yellow">n'est pas.</span></h2>
-        <ul style={{ listStyle: "none", padding: 0, margin: "26px 0 0" }}>
-          {PAS.map((p, i) => (
-            <li key={i} style={{ display: "grid", gridTemplateColumns: "30px 1fr", gap: 12, padding: "22px 0", borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 17, color: "var(--on-dark-2)" }}>
-              <span aria-hidden="true" style={{ color: "var(--orange)", fontWeight: 800, fontSize: 20 }}>✕</span>{p}
-            </li>
-          ))}
-        </ul>
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv">
