@@ -590,8 +590,32 @@ export function BilanOnlinePage() {
         zIndex: 60,
         paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
       }}>
+        {/* L'envoi appelle Noaly côté serveur : une dizaine de secondes pendant
+            lesquelles « Envoi… » tout seul laissait croire à un plantage. On dit
+            ce qui se passe et combien de temps ça prend (2026-08-11). */}
+        {submitting && (
+          <div
+            role="status" aria-live="polite"
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: 10, padding: "10px 12px",
+              borderRadius: 12,
+              background: "var(--accent-teal-bg)",
+              border: `1px solid ${PUBLIC_TOKENS.teal}40`,
+              fontSize: 12.5, lineHeight: 1.45,
+              color: "var(--cream)",
+              fontFamily: PUBLIC_FONTS.body,
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: 18, flexShrink: 0 }}>✨</span>
+            <span>
+              <strong style={{ color: PUBLIC_TOKENS.teal }}>Noaly lit tes réponses</strong>
+              {" "}et prépare ton analyse. Compte quelques secondes — ne ferme pas la page.
+            </span>
+          </div>
+        )}
         <PublicCtaPrimary onClick={next} disabled={submitting}>
-          {submitting ? "Envoi…" : isLast ? "Envoyer mon bilan ✓" : "Suivant →"}
+          {submitting ? "Analyse en cours…" : isLast ? "Envoyer mon bilan ✓" : "Suivant →"}
         </PublicCtaPrimary>
       </div>
     </PublicShell>
