@@ -43,7 +43,13 @@ export const PUBLIC_TOKENS = {
   violet: "#A78BFA",
   violetDark: "#7C3AED",
   coral: "#F2775F",
-  gold: "var(--ls-teal)",
+  // Anciennement doré. Le chantier « fin de l'arlequin » l'a repointé sur
+  // `--ls-teal` — mais c'est une variable de l'APP interne, lue depuis une page
+  // PUBLIQUE. Elle existe globalement, donc ça marchait, mais elle ignore le
+  // thème clair public : les étoiles des témoignages tombaient à 1,9 de
+  // contraste sur crème. `--teal-text` est du même système et s'inverse
+  // (2026-08-11). Les 5 emplois sont tous du TEXTE (étoiles, libellé de score).
+  gold: "var(--teal-text)",
   goldSoft: "#E5C97D",
   emerald: "#34D399",
   // Identité v2 « premium performance » (2026-07) : lime signature, teal = confiance.

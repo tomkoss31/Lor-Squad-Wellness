@@ -377,7 +377,7 @@ export function CoachPublicProfilePage() {
               style={{
                 background: "none",
                 border: "none",
-                color: PUBLIC_TOKENS.teal,
+                color: "var(--teal-text)",
                 cursor: "pointer",
                 textDecoration: "underline",
                 font: "inherit",

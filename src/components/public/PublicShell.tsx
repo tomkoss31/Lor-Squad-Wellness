@@ -109,10 +109,14 @@ export function PublicCtaPrimary({
         display: "block",
         width: "100%",
         padding: "16px 24px",
-        background: disabled
-          ? "rgba(251, 247, 240, 0.12)"
-          : PUBLIC_TOKENS.lime,
-        color: disabled ? PUBLIC_TOKENS.textOnDarkHint : PUBLIC_TOKENS.ink,
+        // Désactivé : par variables, jamais en dur. C'était du crème à 12 % et
+        // du crème à 32 % — pensés pour le fond noir. En thème clair, ça faisait
+        // du crème sur crème : le bouton « Confirmer mon rendez-vous » était
+        // littéralement invisible tant qu'un créneau n'était pas choisi
+        // (audit 2026-08-11). `--hair-strong` et `--cream-hint` s'inversent
+        // avec le thème, eux.
+        background: disabled ? "var(--hair-strong)" : PUBLIC_TOKENS.lime,
+        color: disabled ? "var(--cream-hint)" : PUBLIC_TOKENS.ink,
         border: "none",
         borderRadius: 14,
         fontFamily: PUBLIC_FONTS.display,

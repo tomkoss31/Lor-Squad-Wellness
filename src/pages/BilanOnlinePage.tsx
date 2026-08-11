@@ -518,7 +518,7 @@ export function BilanOnlinePage() {
           </button>
           <span>Étape {step}/{TOTAL_STEPS}</span>
           <span style={{
-            color: PUBLIC_TOKENS.teal,
+            color: "var(--teal-text)",
             fontWeight: 600,
             opacity: savedFlash ? 1 : 0,
             transition: "opacity 0.4s",
@@ -569,7 +569,7 @@ export function BilanOnlinePage() {
           <div ref={bandeauErreurRef} role="alert" style={{
             marginTop: 16, padding: "10px 14px", borderRadius: 10,
             background: "rgba(251, 113, 133, 0.12)",
-            color: PUBLIC_TOKENS.coral, fontSize: 13,
+            color: "var(--coral-text)", fontSize: 13,
             border: "1px solid rgba(251, 113, 133, 0.40)",
           }}>
             {errorMsg}
@@ -609,7 +609,7 @@ export function BilanOnlinePage() {
           >
             <span aria-hidden="true" style={{ fontSize: 18, flexShrink: 0 }}>✨</span>
             <span>
-              <strong style={{ color: PUBLIC_TOKENS.teal }}>Noaly lit tes réponses</strong>
+              <strong style={{ color: "var(--teal-text)" }}>Noaly lit tes réponses</strong>
               {" "}et prépare ton analyse. Compte quelques secondes — ne ferme pas la page.
             </span>
           </div>
@@ -709,7 +709,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
         marginBottom: 8,
       }}>
         {label}
-        {required && <span style={{ color: PUBLIC_TOKENS.coral }}> *</span>}
+        {required && <span style={{ color: "var(--coral-text)" }}> *</span>}
       </label>
       {champ}
     </div>
@@ -945,7 +945,7 @@ const sousTitreStyle: CSSProperties = {
   display: "block",
   fontFamily: PUBLIC_FONTS.display,
   fontSize: 12, fontWeight: 600, marginBottom: 8,
-  color: PUBLIC_TOKENS.teal,
+  color: "var(--teal-text)",
   letterSpacing: "0.08em", textTransform: "uppercase",
 };
 

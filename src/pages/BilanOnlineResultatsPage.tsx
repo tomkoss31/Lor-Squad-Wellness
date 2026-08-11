@@ -327,7 +327,7 @@ export function BilanOnlineResultatsPage() {
               {ACCOMPAGNEMENT_TOTAL} €
             </span>
             <span aria-hidden="true" style={{ color: "var(--cream-hint)", fontSize: 14 }}>→</span>
-            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 18, fontWeight: 800, color: PUBLIC_TOKENS.teal }}>
+            <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 18, fontWeight: 800, color: "var(--teal-text)" }}>
               0 €
             </span>
             <span style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 14, fontWeight: 600, color: "var(--cream)" }}>
@@ -547,9 +547,9 @@ function DimensionLegend({ dimensions }: { dimensions: DimensionScore[] }) {
 
 function scoreTone(score: number): { color: string; label: string } {
   if (score >= 75) return { color: PUBLIC_TOKENS.emerald, label: "Top" };
-  if (score >= 55) return { color: PUBLIC_TOKENS.teal, label: "Bien" };
+  if (score >= 55) return { color: "var(--teal-text)", label: "Bien" };
   if (score >= 35) return { color: PUBLIC_TOKENS.gold, label: "À renforcer" };
-  return { color: PUBLIC_TOKENS.coral, label: "Priorité" };
+  return { color: "var(--coral-text)", label: "Priorité" };
 }
 
 // ── Priorités cards ─────────────────────────────────────────────────────────
@@ -606,7 +606,7 @@ function PriorityCard({
           fontSize: 13.5, lineHeight: 1.5,
           color: "var(--cream-soft)",
         }}>
-          <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>→ </strong>
+          <strong style={{ color: "var(--teal-text)", fontWeight: 600 }}>→ </strong>
           {priority.advice}
         </p>
       </div>

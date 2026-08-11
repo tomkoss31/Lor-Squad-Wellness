@@ -288,7 +288,7 @@ function WelcomeCarousel({
         marginTop: 14,
         fontFamily: PUBLIC_FONTS.display,
         fontSize: 13, fontWeight: 600,
-        color: PUBLIC_TOKENS.teal,
+        color: "var(--teal-text)",
       }}>
         — {formatAuthor(t)}
       </div>
@@ -346,7 +346,7 @@ function BusinessGrid({ items }: { items: TestimonialPublic[] }) {
           </blockquote>
           <div style={{
             marginTop: 12, fontFamily: PUBLIC_FONTS.display,
-            fontSize: 12, fontWeight: 600, color: PUBLIC_TOKENS.teal,
+            fontSize: 12, fontWeight: 600, color: "var(--teal-text)",
           }}>
             — {formatAuthor(t)}
           </div>
@@ -379,7 +379,7 @@ function NewsletterStrip({ items }: { items: TestimonialPublic[] }) {
           </div>
           <div style={{
             fontFamily: PUBLIC_FONTS.display, fontSize: 11,
-            color: PUBLIC_TOKENS.teal, fontWeight: 600,
+            color: "var(--teal-text)", fontWeight: 600,
           }}>
             — {formatAuthor(t)} · {t.rating}/5
           </div>
