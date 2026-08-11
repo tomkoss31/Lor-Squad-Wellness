@@ -18,7 +18,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
-import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
+import { rdvEmailHtml, notifInterneHtml } from "../_shared/rdvEmail.ts";
 
 const SLOT_MIN = 30;
 
@@ -153,49 +153,48 @@ serve(async (req: Request) => {
   // « ce créneau est libre » : l'affichage et l'écriture partagent la même
   // règle et ne peuvent plus diverger. Un prospect resté sur une page ouverte
   // ne peut donc plus réserver par-dessus un rendez-vous existant.
-  const { data: slotFree, error: clashErr } = await sb.rpc("is_coach_slot_free", {
+  // 3. Vérification ET écriture dans la MÊME transaction, sous verrou.
+  //
+  //    Avant le 2026-08-11, `is_coach_slot_free` était appelée ici puis l'INSERT
+  //    suivait séparément. Entre les deux, une autre demande pouvait passer le
+  //    même contrôle : les deux le réussissaient, les deux écrivaient, et deux
+  //    personnes se présentaient au même rendez-vous. La fenêtre est courte mais
+  //    réelle — deux prospects sur la même page qui tapent « Confirmer » à la
+  //    même seconde.
+  //
+  //    `book_coach_rdv` prend un verrou sur (coach, créneau), recontrôle SOUS le
+  //    verrou avec la même fonction que l'affichage, puis insère. Elle renvoie
+  //    NULL si le créneau vient d'être pris — c'est le 409.
+  //    (Même mécanique que `book_club_discovery` côté Breakfast Club.)
+  const metadataRecrut = isRecrut
+    ? {
+        last_name: lastName || null,
+        phone: phone || null,
+        city: city || null,
+        looking: looking || null,
+        timing: timing || null,
+        note: note || null,
+      }
+    : null;
+
+  const { data: nouvelId, error: insErr } = await sb.rpc("book_coach_rdv", {
     p_coach_user_id: coachUserId,
-    p_start: slotStart.toISOString(),
-    p_end: slotEnd.toISOString(),
+    p_slot_start: slotStart.toISOString(),
+    p_slot_end: slotEnd.toISOString(),
+    p_first_name: firstName,
+    p_contact: contact,
+    p_mode: mode,
+    p_coach_slug: coachSlug || null,
+    p_online_bilan_id: body.onlineBilanId ?? null,
+    p_booking_type: isRecrut ? "recrutement" : "bilan",
+    p_metadata: metadataRecrut,
   });
-  if (clashErr) {
-    return jsonResponse({ success: false, error: "check_failed" }, 500);
-  }
-  if (slotFree !== true) {
+
+  if (!insErr && !nouvelId) {
+    // Le créneau a été pris pendant qu'on regardait.
     return jsonResponse({ success: false, error: "creneau_pris" }, 409);
   }
-
-  // 3. Insert. Le chemin bilan reste STRICTEMENT identique (aucune colonne
-  //    booking_type / metadata écrite) → l'edge continue de tourner même si la
-  //    migration recrutement n'est pas encore appliquée. Seul le recrutement
-  //    écrit ces colonnes, il dépend donc de la migration 20261209100000.
-  const insertRow: Record<string, unknown> = {
-    coach_user_id: coachUserId,
-    coach_slug: coachSlug || null,
-    first_name: firstName,
-    contact,
-    mode,
-    slot_start: slotStart.toISOString(),
-    slot_end: slotEnd.toISOString(),
-    status: "requested",
-    online_bilan_id: body.onlineBilanId ?? null,
-  };
-  if (isRecrut) {
-    insertRow.booking_type = "recrutement";
-    insertRow.metadata = {
-      last_name: lastName || null,
-      phone: phone || null,
-      city: city || null,
-      looking: looking || null,
-      timing: timing || null,
-      note: note || null,
-    };
-  }
-  const { data: inserted, error: insErr } = await sb
-    .from("rdv_bookings")
-    .insert(insertRow)
-    .select("id")
-    .single();
+  const inserted = nouvelId ? { id: nouvelId as string } : null;
   if (insErr) {
     return jsonResponse({ success: false, error: "insert_failed", detail: insErr.message }, 500);
   }
@@ -230,46 +229,76 @@ serve(async (req: Request) => {
     // push best-effort — la résa est déjà enregistrée
   }
 
-  // 4b. Recrutement : notif email à l'équipe (le push ne suffit pas — pas
-  //     toujours activé). Reply-to = le candidat, pour répondre en un clic.
-  if (isRecrut) {
-    try {
-      const dateLabel = parisDateLabel(slotStart.toISOString());
-      const hour = parisHourLabel(slotStart.toISOString());
-      const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
-      const row = (k: string, v: string) =>
-        `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
-      const internalHtml = `
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
-<body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-  <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
-    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">🤝 Breakfast Club · Recrutement</div>
-    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">Nouveau candidat — ouvrir un club</h1>
-    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${mode === "visio" ? "visio" : "présentiel"}).</p>
-    <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
-      <table style="border-collapse:collapse;width:100%;">
-        ${row("Prénom / Nom", esc(fullName))}
-        ${row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking)))}
-        ${row("Se projette", esc(lbl(TIMING_LABELS, timing)))}
-        ${row("Email", contact ? esc(contact) : "—")}
-        ${row("Téléphone", phone ? esc(phone) : "—")}
-        ${row("Ville", city ? esc(city) : "—")}
-        ${row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`)}
-        ${note ? row("Son mot", esc(note)) : ""}
-      </table>
-    </div>
-    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).</p>
-  </div>
-</body></html>`.trim();
-      await sendViaResend(
-        TEAM_NOTIFY_EMAIL,
-        `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
-        internalHtml,
-        contact || undefined,
-      );
-    } catch (_e) {
-      // notif interne best-effort — la résa est déjà enregistrée
-    }
+  // 4b. Notif email à l'équipe, sur TOUTE demande de RDV.
+  //
+  //     Avant le 2026-08-11 cet email ne partait QUE pour le recrutement
+  //     (`if (isRecrut)`). Un bilan pris depuis le tunnel colis ou la fiche
+  //     coach ne laissait donc qu'un push — et le push n'est pas toujours
+  //     activé, ni lu. Demande Thomas : toute demande de RDV atterrit sur
+  //     labaseverdun@gmail.com.
+  //
+  //     Reply-to = le prospect, pour lui répondre en un clic.
+  try {
+    const dateLabel = parisDateLabel(slotStart.toISOString());
+    const hour = parisHourLabel(slotStart.toISOString());
+    const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+    const modeLabel = mode === "visio" ? "visio" : "présentiel";
+
+    // Deux histoires différentes : un candidat qui veut ouvrir un club, ou
+    // quelqu'un qui vient faire son bilan. Deux MARQUES différentes aussi —
+    // d'où deux thèmes. Avant le 2026-08-11 les deux partaient en crème +
+    // orange Breakfast Club, y compris pour annoncer un RDV La Base 360.
+    const entete = isRecrut
+      ? {
+          theme: "club" as const,
+          eyebrow: "🤝 Breakfast Club · Recrutement",
+          titre: "Nouveau candidat — ouvrir un club",
+          phrase: `${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
+          pied: "Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).",
+        }
+      : {
+          theme: "app" as const,
+          eyebrow: "🗓️ La Base 360 · Nouveau RDV",
+          titre: "Une demande de rendez-vous",
+          phrase: `${esc(fullName || "Quelqu'un")} a réservé un bilan${coachSlug ? ` avec <b>${esc(coachSlug)}</b>` : ""}, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🗓️ Nouveau RDV — ${fullName || "prospect"} · ${dateLabel} ${hour}`,
+          pied: "Le RDV est en attente : il faut l'accepter dans le CRM (RDV demandés). Réponds à cet email pour joindre directement la personne.",
+        };
+
+    const lignes: Array<[string, string]> = isRecrut
+      ? [
+          ["Prénom / Nom", esc(fullName)],
+          ["Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking))],
+          ["Se projette", esc(lbl(TIMING_LABELS, timing))],
+          ["Email", contact ? esc(contact) : "—"],
+          ["Téléphone", phone ? esc(phone) : "—"],
+          ["Ville", city ? esc(city) : "—"],
+          ["Créneau", `${esc(dateLabel)} · ${esc(hour)}`],
+          ["Son mot", note ? esc(note) : "—"],
+        ]
+      : [
+          ["Prénom / Nom", esc(fullName) || "—"],
+          ["Contact", contact ? esc(contact) : "—"],
+          ["Téléphone", phone ? esc(phone) : "—"],
+          ["Coach demandé", coachSlug ? esc(coachSlug) : "—"],
+          ["Créneau", `${esc(dateLabel)} · ${esc(hour)}`],
+          ["Format", modeLabel],
+          ["Son mot", note ? esc(note) : "—"],
+        ];
+
+    const internalHtml = notifInterneHtml({
+      theme: entete.theme,
+      eyebrow: entete.eyebrow,
+      titre: entete.titre,
+      phrase: entete.phrase,
+      lignes,
+      pied: entete.pied,
+    });
+
+    await sendViaResend(TEAM_NOTIFY_EMAIL, entete.sujet, internalHtml, contact || undefined);
+  } catch (_e) {
+    // notif interne best-effort — la résa est déjà enregistrée
   }
 
   // 5. Email de confirmation au prospect (non bloquant) — seulement si le
@@ -287,7 +316,7 @@ serve(async (req: Request) => {
         ? "En visio — le lien te sera envoyé avant le RDV"
         : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "ton club La Base");
       const html = rdvEmailHtml({
-        kind: "confirm",
+        kind: "requested",
         firstName,
         coachName,
         dateLabel: parisDateLabel(slotStart.toISOString()),
@@ -298,7 +327,10 @@ serve(async (req: Request) => {
         // de connexion (retour Thomas 2026-08-09).
         hasAccount: false,
       });
-      confirmEmailSent = await sendViaResend(contact, "✅ Ton rendez-vous est bien noté", html);
+      // Le RDV est créé en `requested` : ce mail accuse réception d'une
+      // DEMANDE, il ne confirme rien. Le « c'est confirmé » part quand le
+      // coach accepte dans le CRM (edge rdv-accepted-notify, 2026-08-11).
+      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html);
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")

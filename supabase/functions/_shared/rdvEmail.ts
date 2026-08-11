@@ -40,15 +40,24 @@ interface Palette {
 }
 
 const THEMES: Record<RdvEmailTheme, Palette> = {
-  // Dark premium La Base 360 — inchangé, c'est ce que reçoivent déjà les clients.
+  // La Base 360 — remis à la charte le 2026-08-11. Ce mail avait deux
+  // décalages que personne n'avait vus, parce qu'on ne relit pas un email :
+  //   • le fond était #0B0D11, le bleu nuit abandonné (la charte, c'est le
+  //     vert profond #162624) ;
+  //   • la date du rendez-vous et le bouton étaient peints en #C9A84C, le doré
+  //     purgé de toute l'app — le dernier endroit où il survivait, et le
+  //     premier écran que voit un prospect.
+  // Valeurs reprises telles quelles du design system (tokens/colors.css).
   app: {
-    bg: "#0B0D11", surface: "#13161C", border: "rgba(255,255,255,.08)",
-    heading: "#F0EDE8", text: "#C3CCC0", hint: "#7A8099", faint: "#4A5068",
-    accent: "#2DD4BF", accentInk: "#04231A",
-    highlight: "#C9A84C",
+    bg: "#162624", surface: "#1E3330", border: "rgba(255,255,255,.09)",
+    heading: "#F4EFE4", text: "#9BAAA3", hint: "#74847C", faint: "#5A6B64",
+    accent: "#2DD4BF", accentInk: "#0A1F1C",
+    // Le teal est la couleur de structure. Le lime reste réservé aux
+    // victoires — un rendez-vous confirmé n'en est pas encore une.
+    highlight: "#2DD4BF",
     eyebrow: "La Base 360", tagline: "The wellness nutrition club",
-    contestBg: "#101A18", contestBorder: "rgba(45,212,191,.22)",
-    contestBtnBg: "#C9A84C", contestBtnInk: "#1A1407",
+    contestBg: "#1E3330", contestBorder: "rgba(45,212,191,.22)",
+    contestBtnBg: "#2DD4BF", contestBtnInk: "#0A1F1C",
     siteUrl: APP_URL, siteLabel: "labase360.fr",
   },
   // Crème + orange du site public. Valeurs reprises telles quelles de
@@ -71,7 +80,18 @@ function esc(s: string): string {
 }
 
 export interface RdvEmailParams {
-  kind: "confirm" | "reminder";
+  /**
+   * `requested` — la demande vient d'être posée, personne ne l'a encore
+   *   acceptée. C'est l'état réel d'un RDV pris sur /rdv (book-rdv crée en
+   *   `status: "requested"`). Avant le 2026-08-11 ce cas empruntait `confirm`
+   *   et annonçait « c'est bien calé » — un rendez-vous que le coach n'avait
+   *   pas encore vu. Le vrai « c'est confirmé » part maintenant à
+   *   l'acceptation (cf. rdvAccepteEmailHtml).
+   * `confirm`  — le rendez-vous EST calé. Réservé aux clients de suivi
+   *   (rdv-confirm-client), dont le RDV est confirmé dès sa création.
+   * `reminder` — le rappel de la veille.
+   */
+  kind: "confirm" | "reminder" | "requested";
   firstName: string;
   coachName: string;
   dateLabel: string; // ex « mardi 1 juillet »
@@ -103,20 +123,33 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
   const t = THEMES[p.theme ?? "app"];
   const first = esc(p.firstName || "");
   const coach = esc(p.coachName || "ton coach");
-  const isConfirm = p.kind === "confirm";
+  const isDemande = p.kind === "requested";
+  // `requested` partage toute la mise en page de `confirm` — seuls le titre et
+  // l'accroche changent, parce que la promesse n'est pas la même.
+  const isConfirm = p.kind === "confirm" || isDemande;
 
-  const heading = isConfirm ? `C'est noté, ${first} ✅` : `À demain, ${first} 🌿`;
-  const intro = isConfirm
-    ? `Ton rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
-    : `Petit rappel : ton rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
+  const heading = isDemande
+    ? `On a bien reçu ta demande, ${first}`
+    : isConfirm
+      ? `C'est noté, ${first} ✅`
+      : `À demain, ${first} 🌿`;
+  const intro = isDemande
+    ? `Ta demande de rendez-vous avec <b style="color:${t.heading};">${coach}</b> est arrivée. On te confirme le créneau très vite, par email.`
+    : isConfirm
+      ? `Ton rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
+      : `Petit rappel : ton rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
   // Avec un lien de gestion, on invite à se servir tout seul plutôt qu'à écrire.
-  const closing = p.manageUrl
-    ? (isConfirm
-        ? `Un rappel t'arrivera la veille. Un empêchement ? Tu peux déplacer ou annuler toi-même, en deux clics 👇`
-        : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Déplace ou annule toi-même 👇`)
-    : (isConfirm
-        ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
-        : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`);
+  const closing = isDemande
+    ? (p.manageUrl
+        ? `Tu recevras la confirmation dès qu'on aura validé le créneau. Besoin de le changer d'ici là ? Tu peux le faire toi-même 👇`
+        : `Tu recevras la confirmation dès qu'on aura validé le créneau. Une question d'ici là ? Réponds simplement à cet email 💬`)
+    : p.manageUrl
+      ? (isConfirm
+          ? `Un rappel t'arrivera la veille. Un empêchement ? Tu peux déplacer ou annuler toi-même, en deux clics 👇`
+          : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Déplace ou annule toi-même 👇`)
+      : (isConfirm
+          ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
+          : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`);
 
   const btn = (href: string, label: string, bg: string, fg: string) =>
     `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:15px 18px;background:${bg};color:${fg};border-radius:13px;text-decoration:none;font-size:15px;font-weight:700;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">${label}</a>`;
@@ -197,6 +230,185 @@ ${cta ? `\n    ${cta}\n\n    <div style="height:18px;"></div>\n` : `\n    <div s
     ${bottom}
 
     ${footer}
+  </div>
+</body></html>`.trim();
+}
+
+// =============================================================================
+// rdvAccepteEmailHtml — « C'est confirmé » (2026-08-11, maquette validée Thomas)
+//
+// Le mail que reçoit le prospect quand le coach ACCEPTE sa demande dans le CRM.
+// Jusqu'ici il ne recevait rien : les trois endroits qui changent le statut
+// faisaient un `update({ status })` nu. Une personne réservait, lisait « on a
+// bien reçu ta demande », et n'apprenait jamais que c'était validé.
+//
+// Fonction séparée plutôt qu'un 4e `kind` dans rdvEmailHtml : la mise en page
+// diffère (les trois temps du rendez-vous), et empiler une condition de plus
+// dans l'autre fonction l'aurait rendue illisible.
+//
+// Décisions Thomas :
+//   • aucun bouton d'annulation — c'est confirmé, on n'ouvre pas la sortie ;
+//   • pas de bloc jeu concours — ce mail parle du rendez-vous, point ;
+//   • signé « L'équipe La Base » ;
+//   • deux ambiances, un seul gabarit : le mail doit ressembler à la porte que
+//     la personne vient de franchir (app pour un lead colis, club pour un lead
+//     Breakfast Club).
+// =============================================================================
+
+export interface RdvAccepteParams {
+  firstName: string;
+  coachName: string;
+  dateLabel: string;
+  hour: string;
+  /** Adresse sur deux lignes : rue, puis code postal + ville. */
+  addressLine1: string;
+  addressLine2: string;
+  durationMin?: number;
+  theme?: RdvEmailTheme;
+}
+
+export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
+  const t = THEMES[p.theme ?? "app"];
+  const club = (p.theme ?? "app") === "club";
+  const first = esc(p.firstName || "");
+  const coach = esc(p.coachName || "ton coach");
+  const duree = p.durationMin ?? 45;
+  const mono = "ui-monospace,Menlo,Consolas,monospace";
+
+  // Le logo, en PNG : ni Gmail ni Outlook n'affichent un SVG.
+  const marque = club
+    ? `<img src="${CLUB_URL}/brand/breakfast-club/logo-heart.png" alt="The Breakfast Club by La Base" width="190" style="width:190px;max-width:72%;height:auto;display:block;border:0;">`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding-right:11px;vertical-align:middle;">
+          <img src="${APP_URL}/brand/labase360/logo-email.png" alt="" width="42" height="42" style="display:block;border:0;width:42px;height:42px;">
+        </td>
+        <td style="vertical-align:middle;">
+          <div style="font-family:${mono};font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
+          <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:3px;">${t.tagline}</div>
+        </td></tr></table>`;
+
+  // Les trois temps du rendez-vous. Ce qui fait peur à quelqu'un qui n'est
+  // jamais venu, ce n'est pas l'heure — c'est de ne pas savoir ce qui l'attend.
+  const etape = (n: string, titre: string, texte: string) => `
+    <tr>
+      <td style="padding:0 12px 0 0;vertical-align:top;width:26px;">
+        <div style="font-family:${mono};font-size:13px;font-weight:700;color:${t.accent};line-height:1.5;">${n}</div>
+      </td>
+      <td style="padding:0 0 14px;vertical-align:top;">
+        <div style="font-size:14.5px;font-weight:700;color:${t.heading};margin-bottom:2px;">${titre}</div>
+        <div style="font-size:13.5px;line-height:1.55;color:${t.text};">${texte}</div>
+      </td>
+    </tr>`;
+
+  const pied = club
+    ? `<div style="margin:26px 0 0;padding-top:18px;border-top:1px solid ${t.border};font-size:12.5px;line-height:1.75;color:${t.text};">
+        <div style="font-weight:700;color:${t.heading};">The Breakfast Club by La Base</div>
+        <div>${esc(CLUB_ADDRESS)}</div>
+        <div>${esc(CLUB_HOURS)}</div>
+        <div><a href="tel:${CLUB_PHONE_HREF}" style="color:${t.highlight};text-decoration:none;font-weight:600;">${esc(CLUB_PHONE)}</a></div>
+      </div>`
+    : `<p style="font-family:${mono};font-size:11.5px;color:${t.faint};margin:26px 0 0;padding-top:18px;border-top:1px solid ${t.border};">${t.eyebrow} · ${t.tagline} · ${t.siteLabel}</p>`;
+
+  return `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:${t.bg};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${t.heading};">
+  <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
+
+    ${marque}
+
+    <h1 style="font-size:26px;line-height:1.15;margin:22px 0 6px;color:${t.heading};letter-spacing:-.02em;">C'est confirmé, ${first}</h1>
+    <p style="font-size:15px;line-height:1.6;color:${t.text};margin:8px 0 22px;">
+      <b style="color:${t.heading};">${coach}</b> vient de bloquer ce créneau dans son agenda. On a hâte de te rencontrer et de comprendre ce que tu veux changer.
+    </p>
+
+    <div style="background:${t.surface};border:1px solid ${t.border};border-radius:16px;padding:18px 20px;">
+      <div style="font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.14em;">Quand</div>
+      <div style="font-size:19px;font-weight:700;color:${t.highlight};margin:4px 0 16px;letter-spacing:-.01em;">${esc(p.dateLabel)} · ${esc(p.hour)}</div>
+      <div style="font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.14em;">Où</div>
+      <div style="font-size:16px;font-weight:600;color:${t.heading};margin-top:4px;">${esc(p.addressLine1)}<br>${esc(p.addressLine2)}</div>
+    </div>
+
+    <div style="height:26px;"></div>
+
+    <div style="font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.14em;margin-bottom:14px;">Ce qu'on va faire ensemble</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+      ${etape("1", "On parle de toi", "Ton quotidien, ton énergie, ce qui coince depuis un moment. C'est le plus long, et le plus utile.")}
+      ${etape("2", "On mesure où tu en es", "Un point de départ, simplement. Pas de jugement &mdash; juste des chiffres pour savoir d'où on part.")}
+      ${etape("3", "On pose un cap", "Tu repars avec quelque chose de clair. Rien à décider sur place.")}
+    </table>
+
+    <div style="background:${t.surface};border:1px solid ${t.border};border-radius:14px;padding:15px 18px;margin-top:4px;">
+      <p style="font-size:14px;line-height:1.6;color:${t.text};margin:0;">
+        Prévois <b style="color:${t.heading};">${duree} minutes</b>, et viens comme tu es. Un rappel t'arrivera la veille.
+      </p>
+    </div>
+
+    <p style="font-size:14.5px;line-height:1.6;color:${t.text};margin:24px 0 0;">
+      À très vite,<br>
+      <b style="color:${t.heading};">L'équipe La Base</b>
+    </p>
+
+    ${pied}
+  </div>
+</body></html>`.trim();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification INTERNE (labaseverdun@gmail.com) — 2026-08-11.
+//
+// Elle était écrite en dur dans book-rdv, en crème + orange Breakfast Club,
+// y compris pour annoncer un RDV **La Base 360**. Deux chartes mélangées dans
+// le même mail : c'est le défaut qu'on traque partout ailleurs dans l'app, et
+// personne ne l'avait vu parce qu'on ne relit pas un email interne.
+//
+// Même table THEMES que les mails prospects — donc une seule source pour les
+// deux marques. `theme: "app"` pour un bilan, `theme: "club"` pour une
+// candidature Breakfast Club : chacune garde SA charte, aucune ne déborde.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface NotifInterneParams {
+  theme?: RdvEmailTheme;
+  /** Petit label mono au-dessus du titre. Ex. « 🗓️ Nouveau RDV ». */
+  eyebrow: string;
+  titre: string;
+  /** Une phrase de contexte. Peut contenir du HTML déjà échappé (<b>). */
+  phrase: string;
+  /** Les faits, en paires clé → valeur. Valeur déjà échappée. */
+  lignes: Array<[string, string]>;
+  /** Ce qu'il reste à faire, en bas. */
+  pied: string;
+}
+
+export function notifInterneHtml(p: NotifInterneParams): string {
+  const t = THEMES[p.theme ?? "app"];
+  const mono = "ui-monospace,Menlo,Consolas,monospace";
+
+  const lignes = p.lignes
+    .filter(([, v]) => v && v !== "—")
+    .map(([k, v]) => `
+      <tr>
+        <td style="padding:7px 16px 7px 0;font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;vertical-align:top;">${esc(k)}</td>
+        <td style="padding:7px 0;font-size:14.5px;font-weight:600;color:${t.heading};line-height:1.45;">${v}</td>
+      </tr>`)
+    .join("");
+
+  return `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:${t.bg};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${t.heading};">
+  <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
+
+    <div style="font-family:${mono};font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:${t.accent};font-weight:700;">${esc(p.eyebrow)}</div>
+    <h1 style="font-size:23px;line-height:1.2;margin:10px 0 4px;color:${t.heading};letter-spacing:-.02em;">${esc(p.titre)}</h1>
+    <p style="font-size:14.5px;line-height:1.6;color:${t.text};margin:6px 0 20px;">${p.phrase}</p>
+
+    <div style="background:${t.surface};border:1px solid ${t.border};border-radius:16px;padding:14px 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+        ${lignes}
+      </table>
+    </div>
+
+    <p style="font-size:13px;line-height:1.6;color:${t.hint};margin:18px 0 0;">${esc(p.pied)}</p>
+    <p style="font-family:${mono};font-size:11.5px;color:${t.faint};margin:24px 0 0;padding-top:16px;border-top:1px solid ${t.border};">${t.eyebrow} · ${t.tagline} · ${t.siteLabel}</p>
   </div>
 </body></html>`.trim();
 }

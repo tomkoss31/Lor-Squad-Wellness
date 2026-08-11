@@ -366,7 +366,7 @@ export function BilanOnlineWelcomePage() {
                 type="button"
                 onClick={() => setShowFreeBilan(true)}
                 style={{
-                  color: PUBLIC_TOKENS.teal,
+                  color: "var(--teal-text)",
                   textDecoration: "underline",
                   cursor: "pointer",
                   fontWeight: 500,

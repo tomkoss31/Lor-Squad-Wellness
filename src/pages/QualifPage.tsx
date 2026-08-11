@@ -127,7 +127,7 @@ export function QualifPage() {
           On ne trouve pas encore de paiement confirmé pour ce bilan. Si tu viens de payer,
           patiente quelques secondes et recharge la page.{" "}
           {token ? (
-            <a href={`/resultat-bilan/${token}`} style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>
+            <a href={`/resultat-bilan/${token}`} style={{ color: "var(--teal-text)", fontWeight: 600 }}>
               Retour à ta page résultat →
             </a>
           ) : null}
@@ -364,7 +364,7 @@ function QualifIdentityConsentForm({
           fontWeight: 700,
           letterSpacing: 2.5,
           textTransform: "uppercase",
-          color: PUBLIC_TOKENS.teal,
+          color: "var(--teal-text)",
           marginBottom: 12,
         }}
       >

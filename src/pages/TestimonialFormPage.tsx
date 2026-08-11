@@ -322,7 +322,7 @@ export function TestimonialFormPage() {
           {/* Identité */}
           <div>
             <div style={fieldLabelStyle}>
-              Tu es ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+              Tu es ?<span style={{ color: "var(--coral-text)" }}> *</span>
             </div>
             <input
               type="text"
@@ -338,7 +338,7 @@ export function TestimonialFormPage() {
           {/* Rating étoiles */}
           <div>
             <div style={fieldLabelStyle}>
-              Comment notes-tu ton expérience ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+              Comment notes-tu ton expérience ?<span style={{ color: "var(--coral-text)" }}> *</span>
             </div>
             <div
               style={{ display: "flex", gap: 8, justifyContent: "center" }}
@@ -379,7 +379,7 @@ export function TestimonialFormPage() {
           {/* Content textarea */}
           <div>
             <div style={fieldLabelStyle}>
-              Ton ressenti, ton vécu, tes résultats<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+              Ton ressenti, ton vécu, tes résultats<span style={{ color: "var(--coral-text)" }}> *</span>
             </div>
             <textarea
               value={content}
@@ -444,7 +444,7 @@ export function TestimonialFormPage() {
                 borderRadius: 10,
                 background: "rgba(251,113,133,0.10)",
                 border: "1px solid rgba(251,113,133,0.40)",
-                color: PUBLIC_TOKENS.coral,
+                color: "var(--coral-text)",
                 fontSize: 13,
                 textAlign: "center",
               }}

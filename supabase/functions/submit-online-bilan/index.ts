@@ -25,12 +25,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendPushToUser } from "../_shared/push.ts";
+import { brandedEmail, escapeHtml, sendResend } from "../_shared/email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // Noaly (ONLINE-A 2026-06-10) : analyse IA du bilan. Même secret modèle que
 // l'edge noaly. Sans ANTHROPIC_API_KEY → analyse non générée (non bloquant).
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+// Boîte de l'équipe : elle reçoit chaque nouveau bilan en ligne, comme elle
+// reçoit déjà chaque demande de RDV (book-rdv).
+const TEAM_NOTIFY_EMAIL = "labaseverdun@gmail.com";
+const SITE_URL = "https://labase360.fr";
 const NOALY_MODEL =
   Deno.env.get("NOALY_MODEL") ?? Deno.env.get("LORSQUAD_AI_MODEL") ?? "claude-opus-4-8";
 
@@ -263,6 +268,9 @@ serve(async (req) => {
   // tous les leads finissaient avec coach_user_id=NULL → leak RLS.
   // Si plusieurs match → on prend le premier (V1, edge case rare).
   let coachUserId: string | null = null;
+  // Le prénom du coach, pour l'écrire dans les mails plutôt qu'un « ton coach »
+  // impersonnel (2026-08-11).
+  let coachName: string | null = null;
   if (coachSlug) {
     const { data: candidates, error: lookupErr } = await sb
       .from("users")
@@ -280,7 +288,10 @@ serve(async (req) => {
           const firstWord = u.name.split(/\s+/)[0] ?? "";
           return normalizeSlug(firstWord) === coachSlug;
         });
-      if (match) coachUserId = match.id;
+      if (match) {
+        coachUserId = match.id;
+        coachName = (match.name ?? "").split(/\s+/)[0] || null;
+      }
     }
   }
 
@@ -291,13 +302,17 @@ serve(async (req) => {
   if (!coachUserId) {
     const { data: admin } = await sb
       .from("users")
-      .select("id")
+      .select("id, name")
       .eq("role", "admin")
       .eq("active", true)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
-    if (admin) coachUserId = (admin as { id: string }).id;
+    if (admin) {
+      const a = admin as { id: string; name: string | null };
+      coachUserId = a.id;
+      coachName = coachName ?? ((a.name ?? "").split(/\s+/)[0] || null);
+    }
   }
 
   // ── ONLINE-B : capture « Curieux » (draft étape 1, bilan non terminé) ──────
@@ -361,7 +376,7 @@ serve(async (req) => {
       last_step: typeof body.last_step === "number" ? body.last_step : null,
     };
 
-    let inserted: { id: string };
+    let inserted: { id: string; result_token: string | null };
     const draftId = typeof body.draft_id === "string" && body.draft_id ? body.draft_id : null;
     if (draftId) {
       const { data: upd, error: updErr } = await sb
@@ -369,22 +384,22 @@ serve(async (req) => {
         .update(fullRow)
         .eq("id", draftId)
         .is("completed_at", null) // ne complète qu'un draft pas déjà terminé
-        .select("id")
+        .select("id, result_token")
         .maybeSingle();
       if (updErr) throw updErr;
       if (upd) {
-        inserted = upd as { id: string };
+        inserted = upd as { id: string; result_token: string | null };
       } else {
         const { data: ins, error: insErr } = await sb
-          .from("online_bilans").insert(fullRow).select("id").single();
+          .from("online_bilans").insert(fullRow).select("id, result_token").single();
         if (insErr) throw insErr;
-        inserted = ins as { id: string };
+        inserted = ins as { id: string; result_token: string | null };
       }
     } else {
       const { data: ins, error: insErr } = await sb
-        .from("online_bilans").insert(fullRow).select("id").single();
+        .from("online_bilans").insert(fullRow).select("id, result_token").single();
       if (insErr) throw insErr;
-      inserted = ins as { id: string };
+      inserted = ins as { id: string; result_token: string | null };
     }
 
     // Notif push (best-effort, non bloquant). Cible :
@@ -458,16 +473,98 @@ serve(async (req) => {
         await sb
           .from("online_bilans")
           .update({ ai_analysis: aiAnalysis, ai_analysis_at: new Date().toISOString() })
-          .eq("id", (inserted as { id: string }).id)
+          .eq("id", inserted.id)
           .then(({ error }) => {
             if (error) console.warn("[submit-online-bilan] update ai_analysis:", error.message);
           });
       }
     }
 
+    // ── Mails (2026-08-11) ────────────────────────────────────────────────
+    // La page de remerciement promettait « tu recevras un mail sous 48 h max »
+    // alors que RIEN n'en envoyait : seule une notif push partait au coach.
+    // La promesse ne tenait qu'à la mémoire de la personne qui ouvrait le CRM.
+    // Deux envois, tous deux best-effort (jamais bloquants) :
+    //   1. au prospect  — son analyse, gardée par écrit, + le lien pour poser
+    //                     son rendez-vous ;
+    //   2. à l'équipe   — même boîte que les demandes de RDV (book-rdv), pour
+    //                     que rien ne dépende d'une notif push qu'on rate.
+    try {
+      const enParagraphes = (t: string) =>
+        escapeHtml(t)
+          .split(/\n{2,}/)
+          .map((b) => b.trim())
+          .filter(Boolean)
+          .map((b) => `<span style="display:block;margin:0 0 12px 0;">${b.replace(/\n/g, "<br />")}</span>`)
+          .join("");
+
+      const lienRdv = `${SITE_URL}/rdv/${encodeURIComponent(coachSlug || "melanie")}` +
+        `?firstName=${encodeURIComponent(firstName)}`;
+      const objLabels = objectives.map((o) => objectiveLabel(o)).join(" · ");
+
+      const envois: Array<Promise<unknown>> = [];
+
+      if (email) {
+        const intro = aiAnalysis
+          ? `${enParagraphes(aiAnalysis)}` +
+            `<span style="display:block;margin:14px 0 0 0;">On revient vers toi sous 48 h. ` +
+            `Si tu veux gagner du temps, choisis dès maintenant ton créneau :</span>`
+          : `Ton bilan est bien arrivé chez ${escapeHtml(coachName || "ton coach")}. ` +
+            `On le lit et on revient vers toi sous 48 h max.<br /><br />` +
+            `Si tu veux gagner du temps, choisis dès maintenant ton créneau :`;
+        envois.push(sendResend({
+          to: email,
+          subject: `${firstName}, ton bilan est arrivé 🌱`,
+          html: brandedEmail({
+            badge: "🌱",
+            eyebrow: "Ton bilan bien-être",
+            heading: `Merci ${firstName}, on a tout reçu`,
+            intro,
+            ctaLabel: "Choisir mon créneau",
+            ctaUrl: lienRdv,
+            outro: "Tu peux répondre directement à ce mail — il arrive dans notre boîte.",
+          }),
+        }));
+      }
+
+      const lignesEquipe = [
+        `<strong style="color:#F1EFE8;">${escapeHtml(firstName)}</strong>` +
+          (city ? ` · ${escapeHtml(city)}` : "") + (age ? ` · ${age} ans` : ""),
+        objLabels ? `Objectif : ${escapeHtml(objLabels)}` : "",
+        typeof motivation === "number" ? `Motivation : ${motivation}/10` : "",
+        email ? `Email : ${escapeHtml(email)}` : "",
+        phone ? `Téléphone : ${escapeHtml(phone)}` : "",
+        `Coach : ${escapeHtml(coachName || coachSlug || "non résolu")}`,
+      ].filter(Boolean).map((l) => `<span style="display:block;margin:0 0 6px 0;">${l}</span>`).join("");
+
+      envois.push(sendResend({
+        to: TEAM_NOTIFY_EMAIL,
+        subject: `🌱 Nouveau bilan en ligne — ${firstName}${city ? ` (${city})` : ""}`,
+        html: brandedEmail({
+          badge: "🌱",
+          eyebrow: "Nouveau lead",
+          heading: `${firstName} vient de finir son bilan`,
+          intro: lignesEquipe,
+          ctaLabel: "Ouvrir le CRM",
+          ctaUrl: `${SITE_URL}/crm`,
+          outro: email ? `${firstName} a reçu son analyse par mail. Le relancer sous 48 h.` : undefined,
+        }),
+        replyTo: email ?? undefined,
+      }));
+
+      const resultats = await Promise.allSettled(envois);
+      resultats.forEach((r) => {
+        if (r.status === "fulfilled" && r.value && (r.value as { ok: boolean }).ok === false) {
+          console.warn("[submit-online-bilan] mail:", (r.value as { error: string }).error);
+        }
+      });
+    } catch (mailErr) {
+      console.error("[submit-online-bilan] Mail non critique:", mailErr);
+    }
+
     return json({
       success: true,
-      id: (inserted as { id: string }).id,
+      id: inserted.id,
       coach_resolved: !!coachUserId,
       ai_analysis: aiAnalysis,
     });

@@ -63,7 +63,7 @@ const eyebrow: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: 2.5,
   textTransform: "uppercase",
-  color: PUBLIC_TOKENS.teal,
+  color: "var(--teal-text)",
   marginBottom: 12,
 };
 const heading: React.CSSProperties = {
