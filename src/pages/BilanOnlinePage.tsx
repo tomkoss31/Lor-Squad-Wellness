@@ -19,8 +19,8 @@
 // Route : /bilan-online/:coachSlug?/formulaire
 // =============================================================================
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Children, cloneElement, isValidElement, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import {
@@ -143,6 +143,7 @@ const PHONE_RE = /^\+?[\d\s.\-()]{6,20}$/;
 export function BilanOnlinePage() {
   const navigate = useNavigate();
   const { coachSlug } = useParams<{ coachSlug?: string }>();
+  const [searchParams] = useSearchParams();
   const slug = coachSlug?.trim() || "";
   // Bump v2 pour invalider les drafts V1 (shape FormState change).
   const storageKey = useMemo(() => `ls-bilan-online-v2-${slug || "none"}`, [slug]);
@@ -153,8 +154,15 @@ export function BilanOnlinePage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  // Le bandeau d'erreur vit en bas du contenu, sous un CTA fixe : sur une étape
+  // de 2 écrans, on tapait « Suivant », rien ne bougeait, et le message était
+  // 1,5 écran plus bas — invisible (audit 2026-08-11). Le compteur force le
+  // recentrage même quand le message ne change pas (2 taps de suite).
+  const bandeauErreurRef = useRef<HTMLDivElement | null>(null);
+  const [erreurTick, setErreurTick] = useState(0);
 
   useEffect(() => {
+    let prenomDejaConnu: string | null = null;
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
@@ -163,10 +171,23 @@ export function BilanOnlinePage() {
         if (parsed._step && parsed._step >= 1 && parsed._step <= TOTAL_STEPS) {
           setStep(parsed._step);
         }
+        prenomDejaConnu = (parsed.first_name ?? "").trim() || null;
       }
     } catch { /* ignore */ }
+
+    // Le prénom donné en chemin (?firstName=…) — le tunnel colis le passe
+    // depuis 2026-07-08, mais cette page ne l'avait jamais lu : la personne
+    // venait de le saisir et on le lui redemandait (audit 2026-08-11).
+    // Un brouillon déjà commencé reste prioritaire : il porte ce que la
+    // personne a écrit elle-même.
+    if (!prenomDejaConnu) {
+      const duLien = (searchParams.get("firstName") ?? "").trim();
+      if (duLien.length >= 2) {
+        setForm((prev) => ({ ...prev, first_name: duLien.slice(0, 50) }));
+      }
+    }
     setHydrated(true);
-  }, [storageKey]);
+  }, [storageKey, searchParams]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -208,55 +229,55 @@ export function BilanOnlinePage() {
 
   function validateStep(s: number): string | null {
     if (s === 1) {
-      if (form.first_name.trim().length < 2) return "Ton prénom (au moins 2 lettres).";
+      if (form.first_name.trim().length < 2) return "Écris ton prénom (au moins 2 lettres).";
       const age = Number(form.age);
-      if (!form.age || !Number.isFinite(age) || age < 16 || age > 99) return "Âge entre 16 et 99.";
+      if (!form.age || !Number.isFinite(age) || age < 16 || age > 99) return "Indique ton âge — entre 16 et 99 ans.";
       const h = Number(form.height_cm);
-      if (!form.height_cm || !Number.isFinite(h) || h < 100 || h > 220) return "Taille entre 100 et 220 cm.";
-      if (form.city.trim().length < 2) return "Ta ville.";
+      if (!form.height_cm || !Number.isFinite(h) || h < 100 || h > 220) return "Indique ta taille en centimètres — entre 100 et 220.";
+      if (form.city.trim().length < 2) return "Dis-nous dans quelle ville tu habites.";
       const hasPhone = form.phone.trim().length > 0;
       const hasEmail = form.email.trim().length > 0;
-      if (!hasPhone && !hasEmail) return "Un moyen de te recontacter (tél ou email).";
-      if (hasEmail && !EMAIL_RE.test(form.email.trim())) return "Email invalide.";
-      if (hasPhone && !PHONE_RE.test(form.phone.trim())) return "Téléphone invalide.";
+      if (!hasPhone && !hasEmail) return "Laisse-nous un téléphone ou un email pour te recontacter.";
+      if (hasEmail && !EMAIL_RE.test(form.email.trim())) return "Cet email a l’air incomplet — vérifie-le.";
+      if (hasPhone && !PHONE_RE.test(form.phone.trim())) return "Ce numéro a l’air incomplet — vérifie-le.";
     }
     if (s === 2) {
       if (form.objectives.length === 0) return "Choisis au moins un objectif.";
       if (form.objectives.includes("weight_loss")) {
         const kg = Number(form.weight_loss_target_kg);
-        if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) return "Combien de kilos viser ?";
+        if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) return "Dis-nous combien de kilos tu vises (entre 1 et 50).";
       }
       // Poids actuel optionnel : on valide la plage seulement s'il est saisi.
       if (form.current_weight_kg.trim()) {
         const w = Number(form.current_weight_kg.replace(",", "."));
-        if (!Number.isFinite(w) || w < 20 || w > 400) return "Poids actuel invalide (20-400 kg).";
+        if (!Number.isFinite(w) || w < 20 || w > 400) return "Ce poids semble hors plage — entre 20 et 400 kg.";
       }
     }
     if (s === 3) {
       if (form.current_actions.length === 0) return "Coche au moins une option (ou « Rien encore »).";
     }
     if (s === 4) {
-      if (!form.meals_balanced) return "Ton ressenti sur tes repas.";
-      if (!form.water_per_day) return "Ton hydratation eau.";
-      if (!form.coffee_per_day) return "Ta conso café.";
-      if (!form.soda_per_day) return "Ta conso sodas / jus.";
-      if (!form.alcohol_per_week) return "Ta conso alcool.";
+      if (!form.meals_balanced) return "Dis-nous si tes repas te semblent équilibrés.";
+      if (!form.water_per_day) return "Choisis combien de verres d’eau tu bois par jour.";
+      if (!form.coffee_per_day) return "Choisis combien de cafés tu bois par jour.";
+      if (!form.soda_per_day) return "Choisis combien de sodas ou jus sucrés tu bois par jour.";
+      if (!form.alcohol_per_week) return "Choisis combien de verres d’alcool tu bois par semaine.";
     }
     if (s === 5) {
-      if (!form.sleep_quality) return "Qualité de ton sommeil.";
-      if (!form.sleep_hours) return "Heures de sommeil par nuit.";
-      if (!form.mental_load) return "Ta charge mentale.";
+      if (!form.sleep_quality) return "Dis-nous comment tu dors en ce moment.";
+      if (!form.sleep_hours) return "Choisis combien d’heures tu dors par nuit.";
+      if (!form.mental_load) return "Dis-nous où tu en es côté charge mentale.";
     }
     if (s === 6) {
-      if (!form.job_feeling) return "Ton ressenti au boulot.";
-      if (!form.social_circle) return "Ton entourage.";
+      if (!form.job_feeling) return "Dis-nous comment tu te sens au travail.";
+      if (!form.social_circle) return "Dis-nous avec qui tu vis au quotidien.";
     }
     if (s === 7) {
-      if (!form.active_daily) return "Es-tu actif au quotidien ?";
-      if (!form.sport_frequency) return "Ta fréquence de sport.";
-      if (!form.daily_food_budget) return "Ton budget alimentaire.";
-      if (!form.contact_pref) return "Comment ton coach te recontacte.";
-      if (!form.consent) return "Le consentement RGPD est obligatoire.";
+      if (!form.active_daily) return "Dis-nous si tu bouges au quotidien.";
+      if (!form.sport_frequency) return "Choisis ta fréquence de sport par semaine.";
+      if (!form.daily_food_budget) return "Choisis le budget que tu consacres à ton alimentation.";
+      if (!form.contact_pref) return "Choisis comment ton coach doit te recontacter.";
+      if (!form.consent) return "Coche la case d’accord pour qu’on puisse te répondre.";
     }
     return null;
   }
@@ -288,9 +309,21 @@ export function BilanOnlinePage() {
     } catch { /* non bloquant — le bilan continue */ }
   }
 
+  useEffect(() => {
+    if (!erreurTick) return;
+    // Défilement instantané : `behavior: "smooth"` ne fait rien quand la valeur
+    // est posée dans le même tour que le rendu du bandeau.
+    bandeauErreurRef.current?.scrollIntoView({ block: "center" });
+  }, [erreurTick]);
+
+  function bloquer(message: string) {
+    setErrorMsg(message);
+    setErreurTick((t) => t + 1);
+  }
+
   function next() {
     const err = validateStep(step);
-    if (err) { setErrorMsg(err); return; }
+    if (err) { bloquer(err); return; }
     setErrorMsg("");
     if (step === 1) void saveDraftIfNeeded();
     if (step < TOTAL_STEPS) {
@@ -308,7 +341,7 @@ export function BilanOnlinePage() {
 
   async function submit() {
     const err = validateStep(TOTAL_STEPS);
-    if (err) { setErrorMsg(err); return; }
+    if (err) { bloquer(err); return; }
     setErrorMsg("");
     setSubmitting(true);
     try {
@@ -442,7 +475,7 @@ export function BilanOnlinePage() {
       const params = new URLSearchParams({ firstName: form.first_name.trim() });
       navigate(`/bilan-online${slug ? `/${slug}` : ""}/resultats?${params.toString()}`);
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Erreur inconnue.");
+      bloquer(e instanceof Error ? e.message : "Erreur inconnue.");
       setSubmitting(false);
     }
   }
@@ -533,7 +566,7 @@ export function BilanOnlinePage() {
         {step === 7 && <StepFinalize form={form} update={update} />}
 
         {errorMsg && (
-          <div style={{
+          <div ref={bandeauErreurRef} role="alert" style={{
             marginTop: 16, padding: "10px 14px", borderRadius: 10,
             background: "rgba(251, 113, 133, 0.12)",
             color: PUBLIC_TOKENS.coral, fontSize: 13,
@@ -628,10 +661,22 @@ function StepHero({ iconPath, title, gradWord, subtitle }: {
   );
 }
 
+/**
+ * Un champ du bilan en ligne.
+ *
+ * Le libellé était un `<label>` sans `htmlFor` (audit 2026-08-11) : les 6
+ * champs du premier écran étaient muets pour VoiceOver, et taper sur le
+ * libellé ne mettait pas le focus. On appareille ici plutôt qu'aux dizaines
+ * d'appels du formulaire.
+ */
 function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+  const id = useId();
+  const champ = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ id?: string }>, { id })
+    : children;
   return (
     <div style={{ marginBottom: 18 }}>
-      <label style={{
+      <label htmlFor={id} style={{
         display: "block",
         fontFamily: PUBLIC_FONTS.display,
         fontSize: 11, fontWeight: 600,
@@ -642,7 +687,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
         {label}
         {required && <span style={{ color: PUBLIC_TOKENS.coral }}> *</span>}
       </label>
-      {children}
+      {champ}
     </div>
   );
 }
@@ -653,9 +698,14 @@ function PsInput(p: {
   maxLength?: number; min?: number; max?: number;
   placeholder?: string;
   autoComplete?: string;
+  /** Posé par `Field` via cloneElement — c'est ce qui relie le libellé au champ.
+   *  Sans cette prop, l'id s'arrêtait sur le composant et n'atteignait jamais
+   *  l'`<input>` : le libellé restait muet (audit 2026-08-11). */
+  id?: string;
 }) {
   return (
     <input
+      id={p.id}
       type={p.type ?? "text"} inputMode={p.inputMode}
       value={p.value}
       onChange={(e) => p.onChange(e.target.value)}
@@ -709,6 +759,10 @@ function ChoiceCard({
     <div
       onClick={onClick}
       role="button"
+      // Sans ça, un lecteur d'écran annonce « Oui, plutôt, bouton » sans jamais
+      // dire si la carte est retenue : la sélection n'existait qu'en couleur
+      // (audit 2026-08-11).
+      aria-pressed={selected}
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className={`ps-choice-card${selected ? " is-selected" : ""}`}
@@ -755,7 +809,7 @@ function RadioCard({
   return (
     <div
       onClick={onClick}
-      role="button" tabIndex={0}
+      role="button" aria-pressed={selected} tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className={`ps-radio-card${selected ? " is-selected" : ""}`}
       style={{
@@ -781,15 +835,25 @@ function RadioCard({
 }
 
 function SliderWrap({
-  value, min, max, valueLabel, onChange,
+  label, value, min, max, valueLabel, onChange, labelStyle,
 }: {
+  /** Rendu ICI, avec `htmlFor` — un libellé posé par l'appelant restait muet
+   *  faute d'`id` sur le curseur (audit 2026-08-11). */
+  label: string;
   value: number; min: number; max: number; valueLabel: string;
   onChange: (v: number) => void;
+  labelStyle?: CSSProperties;
 }) {
+  const id = useId();
   const scaleStart = `${min}`;
-  const scaleMid = `${Math.round((min + max) / 2)}`;
-  const scaleEnd = `${max}${max >= 7 ? "+" : ""}`;
+  const scaleMid = `${Math.floor((min + max) / 2)}`;
+  // Pas de « + » : le curseur s'arrête à `max`. La règle d'avant
+  // (`max >= 7 ? "+" : ""`) affichait « 10+ » juste sous un libellé qui
+  // annonce « 10 = à bout » — la légende contredisait la question.
+  const scaleEnd = `${max}`;
   return (
+    <>
+    <label htmlFor={id} style={{ ...sectionLabel, ...labelStyle }}>{label}</label>
     <div style={{
       background: "var(--glass)",
       border: "1px solid var(--hair)",
@@ -812,6 +876,7 @@ function SliderWrap({
         {valueLabel}
       </div>
       <input
+        id={id}
         type="range" min={min} max={max} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
@@ -848,11 +913,39 @@ function SliderWrap({
         <span>{scaleStart}</span><span>{scaleMid}</span><span>{scaleEnd}</span>
       </div>
     </div>
+    </>
   );
 }
 
-function SubField({ visible, children }: { visible: boolean; children: ReactNode }) {
+const sousTitreStyle: CSSProperties = {
+  display: "block",
+  fontFamily: PUBLIC_FONTS.display,
+  fontSize: 12, fontWeight: 600, marginBottom: 8,
+  color: PUBLIC_TOKENS.teal,
+  letterSpacing: "0.08em", textTransform: "uppercase",
+};
+
+function SubField({ visible, titre, children }: {
+  visible: boolean;
+  /** Rendu en `<label htmlFor>` et relié au premier champ des `children`.
+   *  C'était un `<div>` décoratif dans les 4 emplois : le champ qui
+   *  apparaissait après une case cochée n'avait aucun libellé pour un
+   *  lecteur d'écran (audit 2026-08-11). */
+  titre: ReactNode;
+  children: ReactNode;
+}) {
+  const id = useId();
   if (!visible) return null;
+  // On relie le premier champ rencontré ; les enfants suivants (mention
+  // « confidentiel », etc.) passent tels quels.
+  let dejaRelie = false;
+  const enfants = Children.map(children, (enfant) => {
+    if (dejaRelie || !isValidElement(enfant)) return enfant;
+    const t = enfant.type;
+    if (t !== PsInput && t !== "input" && t !== "textarea" && t !== "select") return enfant;
+    dejaRelie = true;
+    return cloneElement(enfant as ReactElement<{ id?: string }>, { id });
+  });
   return (
     <div className="ps-fade-in" style={{
       marginTop: 12, padding: 14,
@@ -860,7 +953,8 @@ function SubField({ visible, children }: { visible: boolean; children: ReactNode
       borderRadius: 12,
       borderLeft: `3px solid ${PUBLIC_TOKENS.teal}`,
     }}>
-      {children}
+      <label htmlFor={id} style={sousTitreStyle}>{titre}</label>
+      {enfants}
     </div>
   );
 }
@@ -936,15 +1030,7 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
           />
         ))}
       </div>
-      <SubField visible={form.objectives.includes("weight_loss")}>
-        <div style={{
-          fontFamily: PUBLIC_FONTS.display,
-          fontSize: 12, fontWeight: 600, marginBottom: 8,
-          color: PUBLIC_TOKENS.teal,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>
-          Combien de kilos vises-tu ?
-        </div>
+      <SubField titre="Combien de kilos vises-tu ?" visible={form.objectives.includes("weight_loss")}>
         <PsInput
           value={form.weight_loss_target_kg}
           onChange={(v) => update("weight_loss_target_kg", v)}
@@ -956,17 +1042,12 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
       {/* Poids actuel — question douce optionnelle (chantier poids 2026-06-03).
           Visible seulement pour perte de poids / prise de masse. Copy adaptée :
           rassurante si perte de poids, perf si prise de masse. Jamais bloquant. */}
-      <SubField visible={form.objectives.includes("weight_loss") || form.objectives.includes("mass_gain")}>
-        <div style={{
-          fontFamily: PUBLIC_FONTS.display,
-          fontSize: 12, fontWeight: 600, marginBottom: 8,
-          color: PUBLIC_TOKENS.teal,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>
-          {form.objectives.includes("weight_loss")
-            ? "Si tu te sens à l'aise : ton poids actuel"
-            : "Ton poids actuel"}
-        </div>
+      <SubField
+        titre={form.objectives.includes("weight_loss")
+          ? "Si tu te sens à l'aise : ton poids actuel"
+          : "Ton poids actuel"}
+        visible={form.objectives.includes("weight_loss") || form.objectives.includes("mass_gain")}
+      >
         <PsInput
           value={form.current_weight_kg}
           onChange={(v) => update("current_weight_kg", v)}
@@ -985,17 +1066,9 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
       </SubField>
 
       <div style={{ marginTop: 24 }}>
-        <label style={{
-          display: "block",
-          fontFamily: PUBLIC_FONTS.display,
-          fontSize: 11, fontWeight: 600,
-          color: "var(--cream-muted)",
-          textTransform: "uppercase", letterSpacing: "0.12em",
-          marginBottom: 8,
-        }}>
-          Ta motivation, tu la situes à combien sur 10 ?
-        </label>
         <SliderWrap
+          label="Ta motivation, tu la situes à combien sur 10 ?"
+          labelStyle={{ margin: "0 0 8px" }}
           value={form.motivation_score} min={1} max={10}
           valueLabel={MOTIV_LABELS[form.motivation_score] || ""}
           onChange={(v) => update("motivation_score", v)}
@@ -1029,15 +1102,7 @@ function StepPresent({ form, update, toggle }: StepProps & { toggle: (o: Current
           />
         ))}
       </div>
-      <SubField visible={hasRealAction}>
-        <div style={{
-          fontFamily: PUBLIC_FONTS.display,
-          fontSize: 12, fontWeight: 600, marginBottom: 8,
-          color: PUBLIC_TOKENS.teal,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>
-          Ce qui marche ou pas pour toi ? (optionnel)
-        </div>
+      <SubField titre="Ce qui marche ou pas pour toi ? (optionnel)" visible={hasRealAction}>
         <textarea
           value={form.current_actions_detail}
           onChange={(e) => update("current_actions_detail", e.target.value)}
@@ -1195,8 +1260,8 @@ function StepSleepMind({ form, update }: StepProps) {
         ))}
       </div>
 
-      <label style={sectionLabel}>Niveau de stress (1 = zen, 10 = à bout)</label>
       <SliderWrap
+        label="Niveau de stress (1 = zen, 10 = à bout)"
         value={form.stress_level} min={1} max={10}
         valueLabel={STRESS_LABELS[form.stress_level] || ""}
         onChange={(v) => update("stress_level", v)}
@@ -1312,15 +1377,7 @@ function StepFinalize({ form, update }: StepProps) {
           onClick={() => update("active_daily", "no")}
         />
       </div>
-      <SubField visible={form.active_daily === "yes"}>
-        <div style={{
-          fontFamily: PUBLIC_FONTS.display,
-          fontSize: 12, fontWeight: 600, marginBottom: 8,
-          color: PUBLIC_TOKENS.teal,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>
-          Quoi exactement ? (optionnel)
-        </div>
+      <SubField titre="Quoi exactement ? (optionnel)" visible={form.active_daily === "yes"}>
         <PsInput
           value={form.active_daily_detail}
           onChange={(v) => update("active_daily_detail", v)}
@@ -1378,9 +1435,11 @@ function StepFinalize({ form, update }: StepProps) {
           type="checkbox" checked={form.consent}
           onChange={(e) => update("consent", e.target.checked)}
           style={{
-            marginTop: 2, flexShrink: 0,
+            marginTop: 1, flexShrink: 0,
             accentColor: PUBLIC_TOKENS.teal,
-            width: 18, height: 18,
+            // 18 px : on voyait mal, sur un écran de téléphone, si la case
+            // était vraiment cochée. Aligné sur le tunnel colis (2026-08-11).
+            width: 22, height: 22,
           }}
         />
         <span>
