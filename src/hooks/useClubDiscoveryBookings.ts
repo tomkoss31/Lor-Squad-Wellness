@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 
 export interface ClubDiscoveryBooking {
   id: string;
@@ -75,9 +76,8 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
 
   const setStatus = useCallback(
     async (id: string, status: ClubDiscoveryBooking["status"]): Promise<boolean> => {
-      const sb = await getSupabaseClient();
-      if (!sb) return false;
-      const { error } = await sb.from("rdv_bookings").update({ status }).eq("id", id);
+      // Chemin unique — il porte l'email d'acceptation.
+      const { error } = await setRdvBookingStatus(id, status);
       if (error) return false;
       setBookings((prev) =>
         status === "canceled"

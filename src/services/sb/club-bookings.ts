@@ -15,6 +15,7 @@
 // =============================================================================
 
 import { requireSupabase } from "./_shared";
+import { setRdvBookingStatus } from "./rdvBookingStatus";
 
 /** Créneaux d'ouverture du club, par jour ISO (1 = lundi … 7 = dimanche). */
 export interface ClubDiscoverySettings {
@@ -180,7 +181,7 @@ export async function setClubBookingStatus(
   bookingId: string,
   status: "confirmed" | "canceled",
 ): Promise<void> {
-  const supabase = await requireSupabase();
-  const { error } = await supabase.from("rdv_bookings").update({ status }).eq("id", bookingId);
+  // Chemin unique — il porte l'email d'acceptation.
+  const { error } = await setRdvBookingStatus(bookingId, status);
   if (error) throw error;
 }

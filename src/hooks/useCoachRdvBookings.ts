@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 
 export interface RdvBooking {
   id: string;
@@ -64,9 +65,9 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
 
   const setStatus = useCallback(
     async (id: string, status: RdvBooking["status"]) => {
-      const sb = await getSupabaseClient();
-      if (!sb) return;
-      const { error } = await sb.from("rdv_bookings").update({ status }).eq("id", id);
+      // Passe par le chemin unique : c'est lui qui envoie le « c'est
+      // confirmé » à la personne quand on accepte sa demande.
+      const { error } = await setRdvBookingStatus(id, status);
       if (!error) {
         // Annulé → retiré de la liste ; confirmé → maj statut local.
         setBookings((prev) =>
