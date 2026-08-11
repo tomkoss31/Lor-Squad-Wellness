@@ -1,11 +1,42 @@
 // Nous — page interne « Mélanie, Thomas, et un local rue Saint Pierre ». v7 fidèle.
+import { Link } from "react-router-dom";
 import { ClubShell, InnerHero, Slot, R, TEL } from "./ClubShell";
 
-const EQUIPE = [
-  { nom: "Mélanie", role: "Coach · co-fondatrice" },
-  { nom: "Thomas", role: "Coach · co-fondateur" },
-  { nom: "L'équipe", role: "Bientôt" },
-  { nom: "Rejoins-nous", role: "On recrute" },
+/**
+ * Les visages du matin.
+ *
+ * `src` absent = l'emplacement attend encore sa photo (repère « 📷 »).
+ * `cadrage` = `object-position` : les visages ne sont pas à la même hauteur
+ * d'une photo à l'autre, c'est ce réglage qui les aligne dans la grille — pas
+ * un recadrage de l'image, qu'on ne peut pas faire ici.
+ * `force` = intensité du duotone, à monter quand un décor reste trop bavard.
+ */
+const EQUIPE: Array<{ nom: string; role: string; src?: string; alt?: string; cadrage?: string; force?: number }> = [
+  // Les `cadrage` sont CALCULÉS, pas réglés à l'œil. Les deux portraits font
+  // 720×1280 (ratio .5625) dans un cadre 4/5 (.8) : la source est plus étroite
+  // que le cadre, donc `cover` remplit la largeur et rogne EN HAUTEUR — seul
+  // le second nombre agit. Fenêtre visible = 70,3 % de la hauteur source.
+  //   Mélanie : visage à ~18 % de la photo → même à 0 % il tombe à 26 % du
+  //             cadre, ce qui est déjà la bonne place. D'où 0 %.
+  //   Thomas  : visage à ~44 % → 58 % le pose à 38 % du cadre.
+  {
+    nom: "Mélanie", role: "Coach · co-fondatrice",
+    src: "/brand/breakfast-club/photos/coach-melanie.jpg",
+    alt: "Mélanie, coach et co-fondatrice du club.",
+    cadrage: "50% 0%",
+  },
+  {
+    nom: "Thomas", role: "Coach · co-fondateur",
+    src: "/brand/breakfast-club/photos/coach-thomas.jpg",
+    alt: "Thomas, coach et co-fondateur du club.",
+    cadrage: "50% 58%",
+  },
+  {
+    nom: "L'équipe", role: "Au club",
+    src: "/brand/breakfast-club/photos/club-equipe-table.jpg",
+    alt: "Des membres attablés au club un matin, autour de leurs boissons.",
+    cadrage: "50% 25%",
+  },
 ];
 const PRATIQUE = [
   ["Adresse", "11 rue Saint Pierre, 55100 Verdun"],
@@ -41,12 +72,47 @@ export function ClubNousPage() {
         <span className="cl-pill y">L'équipe</span>
         <h2 style={{ marginTop: 24, fontSize: "clamp(30px,4.6vw,56px)", color: "#fff" }}>Les visages <span className="cl-a-yellow">du matin.</span></h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 18, marginTop: 30 }}>
-          {EQUIPE.map((p, i) => (
+          {EQUIPE.map((p) => (
             <figure key={p.nom} style={{ margin: 0 }}>
-              <div className="cl-slot" style={{ aspectRatio: "4/5", boxShadow: "none", border: i >= 2 ? "1px dashed rgba(244,239,228,.28)" : undefined, background: "#26403B", color: "var(--on-dark-3)" }}><span>📷 {p.nom}</span></div>
+              {p.src ? (
+                <div className="cl-duo" style={{ aspectRatio: "4/5", ...(p.force ? { ["--duo-force" as string]: String(p.force) } : {}) }}>
+                  <img src={p.src} alt={p.alt ?? p.nom} loading="lazy" decoding="async" style={{ objectPosition: p.cadrage ?? "50% 30%" }} />
+                </div>
+              ) : (
+                <div className="cl-slot" style={{ aspectRatio: "4/5", boxShadow: "none", background: "#26403B", color: "var(--on-dark-3)" }}><span>📷 {p.nom}</span></div>
+              )}
               <figcaption style={{ marginTop: 12 }}><div style={{ fontFamily: "Anton", fontSize: 24, color: "#fff" }}>{p.nom}</div><div style={{ fontSize: 15, color: "var(--on-dark-3)" }}>{p.role}</div></figcaption>
             </figure>
           ))}
+
+          {/* « Rejoins-nous » n'est PAS un visage — c'était un emplacement photo
+              pour une personne qui n'existe pas encore. Un montage n'y changerait
+              rien : la case demandait une photo à un poste vacant. Elle devient
+              donc ce qu'elle est vraiment, une porte — et elle mène quelque part. */}
+          <Link to="/club/rejoindre" style={{ textDecoration: "none", display: "block" }}>
+            <div style={{
+              aspectRatio: "4/5", borderRadius: 16, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 14, textAlign: "center",
+              padding: 20, border: "1.5px dashed rgba(241,226,126,.45)",
+              background: "linear-gradient(160deg, rgba(241,226,126,.10), rgba(241,226,126,.02))",
+            }}>
+              <span aria-hidden="true" style={{
+                width: 54, height: 54, borderRadius: "50%", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                border: "1.5px solid rgba(241,226,126,.5)", color: "var(--yellow)", fontSize: 30, lineHeight: 1,
+              }}>+</span>
+              <span style={{ fontFamily: "Anton", fontSize: 21, color: "var(--yellow)", lineHeight: 1.15, textTransform: "uppercase" }}>
+                Ta place<br />est libre
+              </span>
+              <span style={{ fontSize: 14, color: "var(--on-dark-2)", lineHeight: 1.5 }}>
+                On cherche quelqu'un du matin.
+              </span>
+            </div>
+            <figcaption style={{ marginTop: 12 }}>
+              <div style={{ fontFamily: "Anton", fontSize: 24, color: "#fff" }}>Rejoins-nous</div>
+              <div style={{ fontSize: 15, color: "var(--yellow)" }}>On recrute →</div>
+            </figcaption>
+          </Link>
         </div>
       </div></div>
 

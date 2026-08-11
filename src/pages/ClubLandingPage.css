@@ -196,6 +196,29 @@
   background-image:radial-gradient(currentColor 1.5px,transparent 1.6px);background-size:22px 22px}
 .cl-band.dark .cl-dots{color:rgba(244,239,228,.10)}
 
+/* ── PORTRAIT DUOTONE — deux photos prises n'importe où, une seule série ───
+   Le problème : les portraits de l'équipe viennent d'une piscine et d'une fête
+   foraine. On ne peut pas détourer un fond en CSS — mais on peut cesser de le
+   regarder. Le duotone désature l'image puis la reteint sur deux couleurs de la
+   charte : les ombres tombent dans le vert profond, les lumières dans le crème.
+   Le décor devient une matière, le visage reste le sujet.
+
+   Mécanique : deux couches qui se fondent DANS l'image (le mélange est
+   contenu par `isolation:isolate`, sinon il déborderait sur la carte).
+     · `lighten` avec le vert → aucun pixel ne descend sous le vert (ombres) ;
+     · `multiply` avec le crème → aucun ne monte au-dessus (lumières).
+   `--duo-force` règle l'intensité d'un seul nombre, par photo si besoin. */
+.cl-duo{position:relative;overflow:hidden;border-radius:16px;background:var(--card-dark);
+  isolation:isolate;--duo-force:.92}
+.cl-duo img{width:100%;height:100%;object-fit:cover;display:block;
+  filter:grayscale(1) contrast(1.12) brightness(1.04)}
+.cl-duo::after,.cl-duo::before{content:"";position:absolute;inset:0;pointer-events:none;
+  opacity:var(--duo-force)}
+.cl-duo::after{background:var(--dark);mix-blend-mode:lighten;z-index:1}
+.cl-duo::before{background:var(--on-dark);mix-blend-mode:multiply;z-index:2}
+/* Un fond qui reste trop présent se calme en montant SA valeur à lui, sans
+   toucher aux autres portraits : style={{ ["--duo-force"]: .97 }}. */
+
 /* ── BANDE PHOTO — séparateur pleine largeur entre deux sections ───────────
    Bord à bord, sans gouttière : c'est la bande elle-même qui fait la coupure ;
    une gouttière la transformerait en galerie. Hauteur fixée (et non un
