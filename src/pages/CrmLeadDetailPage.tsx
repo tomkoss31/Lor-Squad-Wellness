@@ -306,7 +306,7 @@ export function CrmLeadDetailPage() {
   const statusMeta = CRM_STATUS_META[lead.status];
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
-  const { score, temperature } = computeLeadScore(lead);
+  const { score, temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
   const stagnant = isStagnant(lead);
 
@@ -320,8 +320,11 @@ export function CrmLeadDetailPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h1 style={nameStyle}>{lead.firstName}</h1>
           <span style={sourceBadge(statusMeta.color)}>{src.emoji} {src.label}</span>
-          <span title={`${temp.label} · score ${score}/10`} style={sourceBadge(temp.color)}>
-            {temp.emoji} {temp.label} · {score}/10
+          {/* Le nombre sur 10 ne disait pas quoi faire : « Froid · 3/10 » sur
+              quelqu'un qui vient de laisser son numéro. On affiche la RAISON ;
+              le score reste en infobulle, il sert surtout au tri. */}
+          <span title={`Score ${score}/10`} style={sourceBadge(temp.color)}>
+            {temp.emoji} {temp.label} · {raison}
           </span>
           {stagnant ? (
             <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={sourceBadge("var(--ls-text-muted)")}>

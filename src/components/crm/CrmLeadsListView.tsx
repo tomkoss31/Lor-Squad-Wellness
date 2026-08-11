@@ -200,7 +200,7 @@ function CrmLeadListRow({
   const { message, messageLabel, aiMessage, setAiMessage, aiLoading, generateAi, lastTouch, recordTouch } =
     useLeadQuickActions(lead, msgCtx);
   // Score/température unifiés + badge de stagnation (Phase 3).
-  const { temperature } = computeLeadScore(lead);
+  const { temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
   const stagnant = isStagnant(lead);
 
@@ -274,7 +274,10 @@ function CrmLeadListRow({
             </div>
           </div>
           <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
-            <span title={temp.label} aria-hidden="true">{temp.emoji}</span>
+            <span title={`${temp.label} — ${raison}`}>
+              <span aria-hidden="true">{temp.emoji}</span>
+              <span className="ls-sr-only">{temp.label} — {raison}</span>
+            </span>
             {src.emoji} {lead.source === "inconnue" && lead.sourceRaw ? lead.sourceRaw : src.label}
           </div>
           <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
