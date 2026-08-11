@@ -5,10 +5,18 @@
 // navigation interne, à la place du chrome classic. Monté par AppLayout quand
 // le coach est en BBC (club_model='bbc' ou aperçu admin).
 //
-// Lot 1 = la charpente fidèle au design (sidebar + topbar + Cockpit) avec des
-// données d'exemple (front-only, pas encore branché aux vraies données). Les
-// autres vues (Cobayes, Cœurs, Scripts, Formation, Mes clubs…) arrivent aux
-// lots suivants — ici elles affichent un écran « à venir » clairement balisé.
+// ÉTAT AU 2026-08-11 (cartographie faite par le code, pas par les fiches) :
+// les 14 vues sont codées ET alimentées — par un hook Supabase ou par des props
+// venues d'ici. Plus aucun écran « à venir », plus aucune donnée d'exemple.
+//
+// Le commentaire précédent annonçait l'inverse (« Lot 1 = charpente avec des
+// données d'exemple, les autres vues arrivent aux lots suivants »). Il datait
+// du cadrage et n'avait jamais été corrigé à la livraison — trois semaines à
+// faire croire qu'il restait la moitié du travail.
+//
+// Ce qui manque au BBC n'est pas du code, ce sont des DONNÉES : 0 rituel,
+// 0 créneau configuré, 1 carte membre en base. Cf.
+// docs/audits/CARTOGRAPHIE_BBC_2026-08-11.md
 // =============================================================================
 
 import "../../styles/bbc-tokens.css";
