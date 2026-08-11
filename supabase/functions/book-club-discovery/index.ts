@@ -28,6 +28,7 @@ import {
 } from "../_shared/push.ts";
 import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 import { createCalendarEvent } from "../_shared/googleCalendar.ts";
+import { buildIcs } from "../_shared/icsInvite.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
@@ -89,46 +90,9 @@ async function sendViaResend(
   }
 }
 
-/**
- * Invitation iCalendar du rendez-vous, jointe au mail de lead pour qu'il
- * atterrisse dans l'agenda Google de la boîte de l'équipe.
- *
- * METHOD:REQUEST + ORGANIZER + ATTENDEE = une VRAIE invitation : Gmail la
- * reconnaît comme telle et la pose sur l'agenda, au lieu d'un simple fichier
- * joint qu'il faudrait ouvrir à la main. Le bouton « Ajouter à Google Agenda »
- * du corps du mail reste le filet de sécurité : lui marche toujours, en un clic.
- *
- * Repliement des lignes à 75 octets non géré : les nôtres restent courtes.
- */
-function buildIcs(opts: {
-  uid: string; start: Date; end: Date;
-  summary: string; description: string; location: string; attendee: string;
-}): string {
-  const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  // Dans un .ics ces caractères sont structurants : il faut les échapper.
-  const t = (s: string) =>
-    s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//La Base 360//Breakfast Club//FR",
-    "CALSCALE:GREGORIAN",
-    "METHOD:REQUEST",
-    "BEGIN:VEVENT",
-    `UID:${opts.uid}`,
-    `DTSTAMP:${stamp(new Date())}`,
-    `DTSTART:${stamp(opts.start)}`,
-    `DTEND:${stamp(opts.end)}`,
-    `SUMMARY:${t(opts.summary)}`,
-    `DESCRIPTION:${t(opts.description)}`,
-    `LOCATION:${t(opts.location)}`,
-    "ORGANIZER;CN=The Breakfast Club:mailto:rdv@labase360.fr",
-    `ATTENDEE;CN=La Base Verdun;RSVP=FALSE;PARTSTAT=ACCEPTED:mailto:${opts.attendee}`,
-    "STATUS:CONFIRMED",
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
-}
+// buildIcs vit désormais dans _shared/icsInvite.ts : le tunnel /rdv en a
+// besoin aussi, et deux copies d'un format aussi pointilleux qu'iCalendar
+// finissent toujours par diverger. (convergence, 2026-08-11)
 
 /** Lien « Ajouter à Google Agenda » — pré-rempli, un seul clic. */
 function googleCalUrl(opts: {
