@@ -36,6 +36,14 @@ function parisDayParts(d: Date): { dow: string; num: string; mon: string } {
   const mon = new Intl.DateTimeFormat("fr-FR", { month: "short", timeZone: "Europe/Paris" }).format(d).replace(".", "");
   return { dow: capitalize(dow), num, mon };
 }
+/** Étiquette du jour dans la bande. On ouvre maintenant le jour même : dire
+ *  « Auj. » plutôt que « Mar » rend cette ouverture visible d'un coup d'œil. */
+function libelleJour(d: Date, aujourdhui: string, demain: string): string {
+  const k = parisDayKey(d);
+  if (k === aujourdhui) return "Auj.";
+  if (k === demain) return "Demain";
+  return parisDayParts(d).dow;
+}
 function parisTime(d: Date): string {
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(d);
 }
@@ -73,6 +81,15 @@ export function RdvBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  /** Prénom EXACT, lieu et durée, lus en base. Avant, la page se contentait du
+   *  slug capitalisé — elle écrivait « Melanie t'attend » sans accent — et
+   *  n'affichait aucune adresse : on choisissait « Présentiel » à l'aveugle. */
+  const [contexte, setContexte] = useState<{
+    first_name: string | null;
+    rdv_location: string | null;
+    city: string | null;
+    slot_minutes: number | null;
+  } | null>(null);
 
   const loadSlots = useMemo(
     () => async () => {
@@ -108,6 +125,27 @@ export function RdvBookingPage() {
 
   useEffect(() => { void loadSlots(); }, [loadSlots]);
 
+  useEffect(() => {
+    let vivant = true;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb || !slug) return;
+      const { data } = await sb.rpc("get_coach_rdv_context_by_slug", { p_slug: slug });
+      if (vivant && data) setContexte(data as typeof contexte);
+    })();
+    return () => { vivant = false; };
+  }, [slug]);
+
+  // Le prénom de la base d'abord (accentué), le slug seulement en secours.
+  const nomCoach = (contexte?.first_name ?? "").trim() || coachName;
+  const dureeMin = contexte?.slot_minutes ?? SLOT_MINUTES;
+  const lieuPresentiel = (contexte?.rdv_location ?? "").trim()
+    || (contexte?.city ?? "").trim()
+    || "";
+
+  const cleAujourdhui = parisDayKey(new Date());
+  const cleDemain = parisDayKey(new Date(Date.now() + 86_400_000));
+
   const selectedGroup = groups.find((g) => g.key === selectedKey) ?? null;
   const emailValid = EMAIL_RE.test(email.trim());
   const canConfirm = selectedSlot !== null && emailValid && firstName.trim().length >= 2 && !submitting;
@@ -121,13 +159,17 @@ export function RdvBookingPage() {
     if (!selectedSlot || !slotEnd) return "#";
     const modeLabel = mode === "visio" ? "Visioconférence" : "En présentiel";
     return googleCalUrl({
-      title: `RDV bilan La Base 360${coachName ? ` — ${coachName}` : ""}`,
+      title: `RDV bilan La Base 360${nomCoach ? ` — ${nomCoach}` : ""}`,
       start: selectedSlot,
       end: slotEnd,
       details: `Rendez-vous bilan bien-être${firstName ? ` avec ${firstName}` : ""} (${modeLabel}). Pris via La Base 360.`,
-      location: mode === "visio" ? "Visioconférence (lien envoyé par ton coach)" : "La Base 360",
+      // Le lieu portait « La Base 360 » — un nom de marque, pas une adresse :
+      // ouvrir l'événement dans Maps ne menait nulle part (2026-08-11).
+      location: mode === "visio"
+        ? "Visioconférence (lien envoyé par ton coach)"
+        : (lieuPresentiel || "La Base 360"),
     });
-  }, [selectedSlot, slotEnd, mode, coachName, firstName]);
+  }, [selectedSlot, slotEnd, mode, nomCoach, firstName, lieuPresentiel]);
 
   async function handleConfirm() {
     if (!selectedSlot) return;
@@ -173,8 +215,13 @@ export function RdvBookingPage() {
           <p style={{ fontSize: 15, color: "var(--cream-muted)", lineHeight: 1.6, maxWidth: 420, margin: "0 auto 8px" }}>
             {prettyWhen} · {mode === "visio" ? "en visio" : "en présentiel"}.
           </p>
+          {mode === "presentiel" && lieuPresentiel && (
+            <p style={{ fontSize: 14, color: "var(--cream-soft)", lineHeight: 1.55, maxWidth: 420, margin: "0 auto 8px" }}>
+              📍 {lieuPresentiel}
+            </p>
+          )}
           <p style={{ fontSize: 13.5, color: "var(--cream-hint)", lineHeight: 1.6, maxWidth: 420, margin: "0 auto 28px" }}>
-            Ton coach{coachName ? ` ${coachName}` : ""} a été prévenu et un email de confirmation vient de partir vers {email.trim() || "ta boîte mail"}. Ajoute le créneau à ton agenda pour ne pas l'oublier.
+            Ton coach{nomCoach ? ` ${nomCoach}` : ""} a été prévenu et un email de confirmation vient de partir vers {email.trim() || "ta boîte mail"}. Ajoute le créneau à ton agenda pour ne pas l'oublier.
           </p>
           <a
             href={gcalHref}
@@ -206,12 +253,15 @@ export function RdvBookingPage() {
             Réserve ton <span style={publicGradText}>rendez-vous</span>
           </h1>
           <p style={{ fontSize: 15, color: "var(--cream-muted)", lineHeight: 1.55, maxWidth: 420, margin: "0 auto 28px" }}>
-            {firstName ? `${firstName}, ` : ""}choisis le format et le moment qui t'arrangent.{coachName ? ` ${coachName} t'attend.` : ""}
+            {firstName ? `${firstName}, ` : ""}choisis le format et le moment qui t'arrangent.{nomCoach ? ` ${nomCoach} t'attend.` : ""}
           </p>
         </div>
 
         {/* Toggle Présentiel / Visio */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 26 }}>
+        <div
+          role="group" aria-label="Format du rendez-vous"
+          style={{ display: "flex", gap: 10, marginBottom: 12 }}
+        >
           {([
             { id: "visio" as const, emoji: "💻", label: "Visio" },
             { id: "presentiel" as const, emoji: "🤝", label: "Présentiel" },
@@ -222,6 +272,7 @@ export function RdvBookingPage() {
                 key={opt.id}
                 type="button"
                 onClick={() => setMode(opt.id)}
+                aria-pressed={active}
                 style={{
                   flex: 1, padding: "14px 12px", borderRadius: 14,
                   background: active ? "color-mix(in srgb, var(--teal) 14%, transparent)" : "var(--glass)",
@@ -237,6 +288,48 @@ export function RdvBookingPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Ce que le format veut dire concrètement. Le choix ne changeait ni les
+            jours ni les créneaux — c'est voulu, le temps du coach est le même —
+            mais rien ne disait au prospect ni où venir, ni comment se connecter
+            (audit 2026-08-11). L'adresse vient de la fiche du coach. */}
+        <div
+          aria-live="polite"
+          style={{
+            display: "flex", gap: 10, alignItems: "flex-start",
+            padding: "12px 14px", marginBottom: 26,
+            background: "var(--glass)",
+            border: "1px solid var(--hair)",
+            borderLeft: `3px solid ${PUBLIC_TOKENS.teal}`,
+            borderRadius: 12,
+            fontSize: 13, lineHeight: 1.5, color: "var(--cream-muted)",
+            fontFamily: PUBLIC_FONTS.body,
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>
+            {mode === "visio" ? "🔗" : "📍"}
+          </span>
+          <span>
+            {mode === "visio" ? (
+              <>
+                Un lien de visio t'arrive <strong style={{ color: "var(--cream)" }}>par mail</strong> avant
+                le rendez-vous. Rien à installer, ça s'ouvre dans ton navigateur.
+              </>
+            ) : lieuPresentiel ? (
+              <>
+                On se voit ici : <strong style={{ color: "var(--cream)" }}>{lieuPresentiel}</strong>.
+                {" "}Viens comme tu es, il n'y a rien à préparer.
+              </>
+            ) : (
+              <>
+                On se voit au club{contexte?.city ? ` de ${contexte.city}` : ""}.
+                {" "}L'adresse exacte t'arrive par mail avec la confirmation.
+              </>
+            )}
+            {" · "}
+            <span style={{ whiteSpace: "nowrap" }}>Compte {dureeMin} min.</span>
+          </span>
         </div>
 
         {loading ? (
@@ -259,13 +352,15 @@ export function RdvBookingPage() {
                 dans public-shell.css, commun aux deux thèmes. */}
             <div className="ps-scroll-x" style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 24, WebkitOverflowScrolling: "touch" }}>
               {groups.map((g) => {
-                const { dow, num, mon } = parisDayParts(g.sample);
+                const { num, mon } = parisDayParts(g.sample);
+                const dow = libelleJour(g.sample, cleAujourdhui, cleDemain);
                 const active = selectedKey === g.key;
                 return (
                   <button
                     key={g.key}
                     type="button"
                     onClick={() => { setSelectedKey(g.key); setSelectedSlot(null); setBookingError(null); }}
+                    aria-pressed={active}
                     style={{
                       flex: "0 0 auto", width: 64, padding: "10px 0", borderRadius: 14,
                       background: active ? "color-mix(in srgb, var(--teal) 16%, transparent)" : "var(--glass)",
