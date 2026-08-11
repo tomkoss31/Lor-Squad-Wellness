@@ -27,6 +27,27 @@ const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Recrutement (« ouvrir un club », tunnel /club/rejoindre/rdv) : on prévient
+// l'équipe par email en plus du push — elle ne consulte pas toujours le CRM.
+const TEAM_NOTIFY_EMAIL = "labaseverdun@gmail.com";
+const LOOKING_LABELS: Record<string, string> = {
+  reconversion: "🔄 Une reconversion",
+  complement: "💶 Un complément de revenu",
+  curieux: "👀 Juste curieux·se",
+};
+const TIMING_LABELS: Record<string, string> = {
+  asap: "Dès que possible",
+  "few-months": "Dans quelques mois",
+  info: "Se renseigne d'abord",
+};
+function lbl(map: Record<string, string>, code: string | null | undefined): string {
+  const c = (code ?? "").trim();
+  return c ? (map[c] ?? c) : "—";
+}
+function esc(s: string): string {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+}
+
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris",
@@ -39,13 +60,13 @@ function parisHourLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
     });
     return res.ok;
   } catch {
@@ -64,6 +85,14 @@ serve(async (req: Request) => {
     firstName?: string;
     contact?: string;
     onlineBilanId?: string;
+    // Recrutement « ouvrir un club » (tunnel /club/rejoindre/rdv)
+    bookingType?: string;
+    lastName?: string;
+    phone?: string;
+    city?: string;
+    looking?: string;
+    timing?: string;
+    note?: string;
   };
   try {
     body = await req.json();
@@ -75,6 +104,16 @@ serve(async (req: Request) => {
   const mode = (body.mode ?? "").trim();
   const firstName = (body.firstName ?? "").trim();
   const contact = (body.contact ?? "").trim() || null;
+
+  // Type de RDV : 'recrutement' = candidat « ouvrir un club ». Défaut 'bilan'
+  // → le comportement historique du funnel /rdv reste strictement inchangé.
+  const isRecrut = (body.bookingType ?? "").trim() === "recrutement";
+  const lastName = (body.lastName ?? "").trim();
+  const phone = (body.phone ?? "").trim();
+  const city = (body.city ?? "").trim();
+  const looking = (body.looking ?? "").trim();
+  const timing = (body.timing ?? "").trim();
+  const note = (body.note ?? "").trim();
 
   if (mode !== "presentiel" && mode !== "visio") {
     return jsonResponse({ success: false, error: "mode_invalide" }, 400);
@@ -114,59 +153,157 @@ serve(async (req: Request) => {
   // « ce créneau est libre » : l'affichage et l'écriture partagent la même
   // règle et ne peuvent plus diverger. Un prospect resté sur une page ouverte
   // ne peut donc plus réserver par-dessus un rendez-vous existant.
-  const { data: slotFree, error: clashErr } = await sb.rpc("is_coach_slot_free", {
+  // 3. Vérification ET écriture dans la MÊME transaction, sous verrou.
+  //
+  //    Avant le 2026-08-11, `is_coach_slot_free` était appelée ici puis l'INSERT
+  //    suivait séparément. Entre les deux, une autre demande pouvait passer le
+  //    même contrôle : les deux le réussissaient, les deux écrivaient, et deux
+  //    personnes se présentaient au même rendez-vous. La fenêtre est courte mais
+  //    réelle — deux prospects sur la même page qui tapent « Confirmer » à la
+  //    même seconde.
+  //
+  //    `book_coach_rdv` prend un verrou sur (coach, créneau), recontrôle SOUS le
+  //    verrou avec la même fonction que l'affichage, puis insère. Elle renvoie
+  //    NULL si le créneau vient d'être pris — c'est le 409.
+  //    (Même mécanique que `book_club_discovery` côté Breakfast Club.)
+  const metadataRecrut = isRecrut
+    ? {
+        last_name: lastName || null,
+        phone: phone || null,
+        city: city || null,
+        looking: looking || null,
+        timing: timing || null,
+        note: note || null,
+      }
+    : null;
+
+  const { data: nouvelId, error: insErr } = await sb.rpc("book_coach_rdv", {
     p_coach_user_id: coachUserId,
-    p_start: slotStart.toISOString(),
-    p_end: slotEnd.toISOString(),
+    p_slot_start: slotStart.toISOString(),
+    p_slot_end: slotEnd.toISOString(),
+    p_first_name: firstName,
+    p_contact: contact,
+    p_mode: mode,
+    p_coach_slug: coachSlug || null,
+    p_online_bilan_id: body.onlineBilanId ?? null,
+    p_booking_type: isRecrut ? "recrutement" : "bilan",
+    p_metadata: metadataRecrut,
   });
-  if (clashErr) {
-    return jsonResponse({ success: false, error: "check_failed" }, 500);
-  }
-  if (slotFree !== true) {
+
+  if (!insErr && !nouvelId) {
+    // Le créneau a été pris pendant qu'on regardait.
     return jsonResponse({ success: false, error: "creneau_pris" }, 409);
   }
-
-  // 3. Insert
-  const { data: inserted, error: insErr } = await sb
-    .from("rdv_bookings")
-    .insert({
-      coach_user_id: coachUserId,
-      coach_slug: coachSlug || null,
-      first_name: firstName,
-      contact,
-      mode,
-      slot_start: slotStart.toISOString(),
-      slot_end: slotEnd.toISOString(),
-      status: "requested",
-      online_bilan_id: body.onlineBilanId ?? null,
-    })
-    .select("id")
-    .single();
+  const inserted = nouvelId ? { id: nouvelId as string } : null;
   if (insErr) {
     return jsonResponse({ success: false, error: "insert_failed", detail: insErr.message }, 500);
   }
 
   // 4. Notif coach (non bloquant)
+  const whenParis = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  }).format(slotStart);
   try {
-    const whenParis = new Intl.DateTimeFormat("fr-FR", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Paris",
-    }).format(slotStart);
     await sendPushToUser(sb, {
       userId: coachUserId,
-      payload: {
-        title: "🗓️ Nouveau RDV demandé",
-        body: `${firstName} — ${whenParis} (${mode === "visio" ? "visio" : "présentiel"})`,
-        url: "/crm",
-        type: "rdv_booking",
-      },
+      payload: isRecrut
+        ? {
+            title: "🤝 Nouveau candidat équipe",
+            body: `${firstName}${lastName ? " " + lastName : ""} — ${whenParis}${looking ? ` · ${lbl(LOOKING_LABELS, looking)}` : ""}`,
+            url: "/crm",
+            type: "rdv_recrutement",
+          }
+        : {
+            title: "🗓️ Nouveau RDV demandé",
+            body: `${firstName} — ${whenParis} (${mode === "visio" ? "visio" : "présentiel"})`,
+            url: "/crm",
+            type: "rdv_booking",
+          },
     });
   } catch (_e) {
     // push best-effort — la résa est déjà enregistrée
+  }
+
+  // 4b. Notif email à l'équipe, sur TOUTE demande de RDV.
+  //
+  //     Avant le 2026-08-11 cet email ne partait QUE pour le recrutement
+  //     (`if (isRecrut)`). Un bilan pris depuis le tunnel colis ou la fiche
+  //     coach ne laissait donc qu'un push — et le push n'est pas toujours
+  //     activé, ni lu. Demande Thomas : toute demande de RDV atterrit sur
+  //     labaseverdun@gmail.com.
+  //
+  //     Reply-to = le prospect, pour lui répondre en un clic.
+  try {
+    const dateLabel = parisDateLabel(slotStart.toISOString());
+    const hour = parisHourLabel(slotStart.toISOString());
+    const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
+    const modeLabel = mode === "visio" ? "visio" : "présentiel";
+    const row = (k: string, v: string) =>
+      `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
+
+    // Deux histoires différentes : un candidat qui veut ouvrir un club, ou
+    // quelqu'un qui vient faire son bilan. Même gabarit, contenu distinct.
+    const entete = isRecrut
+      ? {
+          eyebrow: "🤝 Breakfast Club · Recrutement",
+          titre: "Nouveau candidat — ouvrir un club",
+          phrase: `${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🤝 Candidat équipe — ${fullName} · ${dateLabel} ${hour}`,
+          pied: "Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).",
+        }
+      : {
+          eyebrow: "🗓️ La Base 360 · Nouveau RDV",
+          titre: "Une demande de rendez-vous",
+          phrase: `${esc(fullName || "Quelqu'un")} a réservé un bilan${coachSlug ? ` avec <b>${esc(coachSlug)}</b>` : ""}, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
+          sujet: `🗓️ Nouveau RDV — ${fullName || "prospect"} · ${dateLabel} ${hour}`,
+          pied: "Le RDV est en attente : il faut l'accepter dans le CRM (RDV demandés). Réponds à cet email pour joindre directement la personne.",
+        };
+
+    const lignes = isRecrut
+      ? [
+          row("Prénom / Nom", esc(fullName)),
+          row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking))),
+          row("Se projette", esc(lbl(TIMING_LABELS, timing))),
+          row("Email", contact ? esc(contact) : "—"),
+          row("Téléphone", phone ? esc(phone) : "—"),
+          row("Ville", city ? esc(city) : "—"),
+          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
+          note ? row("Son mot", esc(note)) : "",
+        ]
+      : [
+          row("Prénom / Nom", esc(fullName) || "—"),
+          row("Contact", contact ? esc(contact) : "—"),
+          row("Téléphone", phone ? esc(phone) : "—"),
+          row("Coach demandé", coachSlug ? esc(coachSlug) : "—"),
+          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
+          row("Format", modeLabel),
+          note ? row("Son mot", esc(note)) : "",
+        ];
+
+    const internalHtml = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
+    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">${entete.eyebrow}</div>
+    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">${entete.titre}</h1>
+    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${entete.phrase}</p>
+    <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
+      <table style="border-collapse:collapse;width:100%;">
+        ${lignes.join("\n        ")}
+      </table>
+    </div>
+    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">${entete.pied}</p>
+  </div>
+</body></html>`.trim();
+
+    await sendViaResend(TEAM_NOTIFY_EMAIL, entete.sujet, internalHtml, contact || undefined);
+  } catch (_e) {
+    // notif interne best-effort — la résa est déjà enregistrée
   }
 
   // 5. Email de confirmation au prospect (non bloquant) — seulement si le
@@ -184,14 +321,21 @@ serve(async (req: Request) => {
         ? "En visio — le lien te sera envoyé avant le RDV"
         : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "ton club La Base");
       const html = rdvEmailHtml({
-        kind: "confirm",
+        kind: "requested",
         firstName,
         coachName,
         dateLabel: parisDateLabel(slotStart.toISOString()),
         hour: parisHourLabel(slotStart.toISOString()),
         location: whereLine,
+        // Tunnel public : la personne réserve son 1er rendez-vous, elle n'a pas
+        // de compte. Pas de bouton « mon espace », il ne mènerait qu'à un écran
+        // de connexion (retour Thomas 2026-08-09).
+        hasAccount: false,
       });
-      confirmEmailSent = await sendViaResend(contact, "✅ Ton rendez-vous est bien noté", html);
+      // Le RDV est créé en `requested` : ce mail accuse réception d'une
+      // DEMANDE, il ne confirme rien. Le « c'est confirmé » part quand le
+      // coach accepte dans le CRM (edge rdv-accepted-notify, 2026-08-11).
+      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html);
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")
