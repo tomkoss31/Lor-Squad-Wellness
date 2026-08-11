@@ -322,7 +322,7 @@ serve(async (req: Request) => {
         ? "En visio — le lien te sera envoyé avant le RDV"
         : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "ton club La Base");
       const html = rdvEmailHtml({
-        kind: "confirm",
+        kind: "requested",
         firstName,
         coachName,
         dateLabel: parisDateLabel(slotStart.toISOString()),
@@ -333,7 +333,10 @@ serve(async (req: Request) => {
         // de connexion (retour Thomas 2026-08-09).
         hasAccount: false,
       });
-      confirmEmailSent = await sendViaResend(contact, "✅ Ton rendez-vous est bien noté", html);
+      // Le RDV est créé en `requested` : ce mail accuse réception d'une
+      // DEMANDE, il ne confirme rien. Le « c'est confirmé » part quand le
+      // coach accepte dans le CRM (edge rdv-accepted-notify, 2026-08-11).
+      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html);
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")
