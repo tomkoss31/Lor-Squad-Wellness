@@ -207,7 +207,13 @@ export function BoutiquePage() {
     const root = rootRef.current;
     if (!root) return;
     const els = Array.from(root.querySelectorAll<HTMLElement>(".bk-reveal"));
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // ⚠️ Filet de sécurité : les CARTES dépendent désormais de .bk-in sur leur
+    // section (cascade au scroll). Si l'observateur manque, tout le contenu
+    // resterait invisible — on révèle donc immédiatement dans ce cas.
+    if (
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       els.forEach((el) => el.classList.add("bk-in"));
       return;
     }
@@ -224,6 +230,28 @@ export function BoutiquePage() {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [loading, products.length]);
+
+  // ── Header compacté au scroll ─────────────────────────────────────────────
+  // Sans ça la barre restait identique du haut jusqu'en bas : rien ne signalait
+  // qu'on avait quitté le hero (audit visuel 2026-08-11).
+  useEffect(() => {
+    const bar = rootRef.current?.querySelector(".bk-bar");
+    if (!bar) return;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return; // 1 mesure par frame max
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        bar.classList.toggle("bk-stuck", window.scrollY > 28);
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [loading]);
 
   // ── Canvas « dewy » ambiant du hero ───────────────────────────────────────
   useEffect(() => {
@@ -559,6 +587,11 @@ export function BoutiquePage() {
             </section>
           )}
 
+          {/* Preuve visuelle AVANT la gamme (audit 2026-08-11) : elle était à
+              l'écran 9,9 sur 16,4, soit 7 écrans après le 1er bouton « Ajouter ».
+              La visiteuse décidait — ou partait — avant d'avoir vu la preuve. */}
+          <BoutiqueBeforeAfter />
+
           {/* Gamme */}
           <section id="bk-gamme" className="bk-wrap bk-sec bk-reveal">
             <div className="bk-sec-head">
@@ -736,11 +769,14 @@ export function BoutiquePage() {
             </div>
           </section>
 
-          {/* Preuve visuelle : avant/après réels — respiration avant les avis */}
-          <BoutiqueBeforeAfter />
-
-          {/* Avis clients réels (catégorie skin) + formulaire */}
-          <BoutiqueReviews coachSlug={coachSlug} coachUserId={boutique?.user_id} />
+          {/* Avis clients réels (catégorie skin) + formulaire.
+              hideWhenEmpty : l'état vide juste après 11 avant/après annonçait que
+              personne n'avait jamais rien dit — il annulait la preuve. */}
+          <BoutiqueReviews
+            coachSlug={coachSlug}
+            coachUserId={boutique?.user_id}
+            hideWhenEmpty
+          />
 
           {/* Affiliation (teaser) */}
           <section id="bk-affil" className="bk-wrap bk-sec bk-reveal">

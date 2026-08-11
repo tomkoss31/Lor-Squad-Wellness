@@ -30,6 +30,7 @@ export function BoutiqueReviews({
   ctaLabel = "✍️ Laisser mon avis",
   emptyText = "Sois la première à partager ton avis sur la routine ✨",
   reviewedLabel = "Cliente · achat vérifié",
+  hideWhenEmpty = false,
 }: {
   coachSlug?: string;
   coachUserId?: string | null;
@@ -40,9 +41,20 @@ export function BoutiqueReviews({
   ctaLabel?: string;
   emptyText?: string;
   reviewedLabel?: string;
+  /**
+   * Masque toute la section tant qu'aucun avis n'est approuvé. Sur la vitrine,
+   * un bloc « Sois la première à partager ton avis » juste sous 11 avant/après
+   * dit au visiteur que personne n'a jamais rien dit — ça détruit la preuve
+   * qu'on vient d'installer. Exception : si l'URL porte #bk-avis (le lien du
+   * mail de demande d'avis), on affiche quand même, sinon ce mail ne mène nulle
+   * part. Audit visuel 2026-08-11.
+   */
+  hideWhenEmpty?: boolean;
 }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [open, setOpen] = useState(false);
+  const invitedToReview =
+    typeof window !== "undefined" && window.location.hash === "#bk-avis";
 
   useEffect(() => {
     if (!coachUserId) return;
@@ -73,8 +85,11 @@ export function BoutiqueReviews({
 
   const stars = (n: number) => "★".repeat(Math.max(1, Math.min(5, n)));
 
+  // Rien à montrer et on ne veut pas d'état vide → la section disparaît.
+  if (hideWhenEmpty && reviews.length === 0 && !invitedToReview) return null;
+
   return (
-    <section className="bk-wrap bk-sec bk-reveal">
+    <section id="bk-avis" className="bk-wrap bk-sec bk-reveal">
       <div className="bk-sec-head">
         <div>
           <div className="bk-eyebrow" style={{ marginBottom: 12 }}>

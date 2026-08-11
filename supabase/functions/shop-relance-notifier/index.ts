@@ -253,7 +253,10 @@ serve(async (req: Request) => {
       if (!o.customer_email) continue;
       const name = await shopName(o.boutique_slug);
       const hi = o.customer_first_name ? `Coucou ${esc(o.customer_first_name)},` : "Coucou,";
-      const url = `${SITE_URL}/boutique/${o.boutique_slug ?? ""}#bk-affil`;
+      // #bk-avis et NON #bk-affil : le CTA « Laisser mon avis » envoyait vers le
+      // bloc affiliation. Ce hash force aussi l'affichage de la section quand
+      // aucun avis n'est encore approuvé (cf. hideWhenEmpty dans BoutiqueReviews).
+      const url = `${SITE_URL}/boutique/${o.boutique_slug ?? ""}#bk-avis`;
       const html = shell(
         "Ton avis compte",
         `<div style="font-size:20px;">${hi}</div>
