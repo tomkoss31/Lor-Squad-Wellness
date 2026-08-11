@@ -34,7 +34,7 @@ const EQUIPE: Array<{ nom: string; role: string; src?: string; alt?: string; cad
   {
     nom: "L'équipe", role: "Au club",
     src: "/brand/breakfast-club/photos/club-equipe-table.jpg",
-    alt: "Des membres attablés au club un matin, autour de leurs boissons.",
+    alt: "L'équipe du club attablée un matin, autour des boissons du rituel.",
     cadrage: "50% 25%",
   },
 ];
