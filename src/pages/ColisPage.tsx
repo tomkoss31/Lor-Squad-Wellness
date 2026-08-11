@@ -16,7 +16,7 @@
 // on résout et on passe directement referrer_user_id).
 // =============================================================================
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useMemo, useState, type FormEvent, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 
@@ -260,11 +260,20 @@ export function ColisPage() {
             <h1 style={h1Style}>ON GARDE TES<br />2 CADEAUX<br /><span style={accentStyle}>AU CHAUD</span></h1>
             <p style={leadStyle}>Dis-nous juste où t'envoyer ton pass. <b>C'est instantané.</b></p>
             <form onSubmit={handleCapture} style={{ display: "flex", flexDirection: "column" }}>
-              <Field label="PRÉNOM"><input style={inputStyle} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ton prénom" /></Field>
-              <Field label="TÉLÉPHONE"><input style={inputStyle} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 ..." /></Field>
-              <Field label="EMAIL"><input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="toi@exemple.fr" /></Field>
+              {/* `autoComplete` : sans lui, iOS ne propose ni le prénom, ni le
+                  téléphone, ni l'email. Trois champs à taper à la main alors
+                  que le téléphone les connaît — du frottement gratuit sur
+                  l'écran qui convertit. */}
+              <Field label="PRÉNOM"><input style={inputStyle} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ton prénom" autoComplete="given-name" enterKeyHint="next" /></Field>
+              <Field label="TÉLÉPHONE"><input style={inputStyle} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 ..." autoComplete="tel" inputMode="tel" enterKeyHint="next" /></Field>
+              <Field label="EMAIL"><input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="toi@exemple.fr" autoComplete="email" inputMode="email" enterKeyHint="done" /></Field>
+              {/* La case du consentement faisait 16 px — presque trois fois
+                  moins que le minimum tactile d'Apple, pour la case qui
+                  débloque tout le tunnel ET qui porte un consentement légal.
+                  Elle passe à 24 px, et le libellé qui l'enveloppe offre une
+                  zone de frappe de 44 px de haut. */}
               <label style={consentStyle}>
-                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 3, accentColor: "var(--colis-teal)", width: 16, height: 16, flexShrink: 0 }} />
+                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 1, accentColor: "var(--colis-teal)", width: 24, height: 24, flexShrink: 0 }} />
                 <span>J'accepte d'être recontacté·e par La Base 360 pour mon bilan. Aucune donnée revendue.</span>
               </label>
               {error ? <div style={errorStyle}>{error}</div> : null}
@@ -361,11 +370,27 @@ function GiftRow({ n, title, sub, value, was }: { n: string; title: string; sub?
   );
 }
 
+/**
+ * Un champ de l'écran de capture.
+ *
+ * Le libellé était un `<label>` sans `htmlFor`, et l'input n'avait qu'un
+ * `placeholder` (audit 2026-08-11). Deux conséquences sur l'écran qui convertit :
+ * VoiceOver annonçait « champ de texte » sans nom, et le placeholder disparaît
+ * dès qu'on tape — quelqu'un qui remplit à moitié ne sait plus quel champ est
+ * lequel.
+ *
+ * On appareille ici plutôt qu'aux trois appels : un quatrième champ ajouté
+ * demain hérite automatiquement de son libellé.
+ */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
+  const champ = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ id?: string }>, { id })
+    : children;
   return (
     <div style={{ marginTop: 16 }}>
-      <label style={fieldLabelStyle}>{label}</label>
-      {children}
+      <label htmlFor={id} style={fieldLabelStyle}>{label}</label>
+      {champ}
     </div>
   );
 }
@@ -407,7 +432,10 @@ const inputStyle: React.CSSProperties = {
   width: "100%", marginTop: 7, background: "var(--colis-card)", border: "1.5px solid var(--colis-line)",
   borderRadius: 12, padding: "15px 16px", color: "var(--colis-ink)", fontSize: 16, fontFamily: "'Archivo', sans-serif", outline: "none",
 };
-const consentStyle: React.CSSProperties = { display: "flex", gap: 10, alignItems: "flex-start", marginTop: 18, color: "var(--colis-muted)", fontSize: 12, lineHeight: 1.5 };
+// 13px et non 12 : c'est un texte de consentement, il doit se lire.
+// `minHeight` 44 + padding : le libellé enveloppe la case, donc toute la rangée
+// est tapable — on coche sans viser.
+const consentStyle: React.CSSProperties = { display: "flex", gap: 10, alignItems: "flex-start", marginTop: 18, padding: "10px 0", minHeight: 44, cursor: "pointer", color: "var(--colis-muted)", fontSize: 13, lineHeight: 1.55 };
 const errorStyle: React.CSSProperties = { marginTop: 12, color: "#ff8a80", fontSize: 12.5 };
 const badgeStyle: React.CSSProperties = { width: 76, height: 76, borderRadius: "50%", background: "var(--colis-teal)", display: "flex", alignItems: "center", justifyContent: "center", margin: "6px 0 20px" };
 const codeBoxStyle: React.CSSProperties = { background: "var(--colis-card)", border: "1.5px dashed var(--colis-teal)", borderRadius: 14, padding: "16px 18px", marginTop: 14, textAlign: "center" };
