@@ -52,6 +52,7 @@ export function BoutiqueMobileMenu({
     { id: "bk-gamme", href: `${base}#bk-gamme`, label: "Tous les produits", icon: "🧴" },
     { id: "bk-kits", href: `${base}#bk-kits`, label: "Les kits", icon: "🎁" },
     { id: "bk-ingredient", href: `${base}#bk-ingredient`, label: "Les actifs", icon: "🔬" },
+    { id: "bk-resultats", href: `${base}#bk-resultats`, label: "Les résultats", icon: "✨" },
   ];
   const pages: Entry[] = [
     { href: `${base}/affiliation`, label: "Devenir affiliée", icon: "💫" },
