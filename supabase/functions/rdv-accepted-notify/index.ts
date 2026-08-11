@@ -22,7 +22,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getServiceClient, corsHeaders, jsonResponse } from "../_shared/push.ts";
 import { rdvAccepteEmailHtml } from "../_shared/rdvEmail.ts";
-import { buildIcs, icsEnPieceJointe } from "../_shared/icsInvite.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM = "La Base 360 <rdv@labase360.fr>";
@@ -50,22 +49,13 @@ function parisHourLabel(iso: string): string {
   });
 }
 
-async function sendViaResend(
-  to: string,
-  subject: string,
-  html: string,
-  attachments?: Array<{ filename: string; content: string }>,
-): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
-    const payload: Record<string, unknown> = {
-      from: FROM, to: [to], subject, reply_to: REPLY_TO, html,
-    };
-    if (attachments?.length) payload.attachments = attachments;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ from: FROM, to: [to], subject, reply_to: REPLY_TO, html }),
     });
     return res.ok;
   } catch {
@@ -141,31 +131,10 @@ serve(async (req) => {
   });
 
   const prenom = String(booking.first_name ?? "").trim();
-
-  // L'invitation calendrier. C'est ICI qu'elle a sa place et nulle part
-  // ailleurs : à la réservation le rendez-vous n'est encore qu'une demande,
-  // poser un événement sur l'agenda de quelqu'un pour un créneau non validé
-  // serait faux. Gmail reconnaît le METHOD:REQUEST et le pose tout seul.
-  const fin = booking.slot_end ? new Date(String(booking.slot_end)) : new Date(new Date(debut).getTime() + dureeMin * 60000);
-  const ics = buildIcs({
-    uid: String(booking.id),
-    start: new Date(debut),
-    end: fin,
-    summary: `Bilan bien-être avec ${coachName} — La Base 360`,
-    description:
-      `On prend le temps de parler de toi, on mesure où tu en es, et on pose un cap. ` +
-      `Rien à décider sur place. Prévois ${dureeMin} minutes.`,
-    location: `${ADRESSE_1}, ${ADRESSE_2}`,
-    attendee: contact,
-    attendeeName: prenom || "Invité",
-    organizerName: booking.club_id ? "The Breakfast Club" : "La Base 360",
-  });
-
   const envoye = await sendViaResend(
     contact,
     `C'est confirmé${prenom ? `, ${prenom}` : ""} — ${parisDateLabel(debut)} à ${parisHourLabel(debut)}`,
     html,
-    [icsEnPieceJointe(ics, "rendez-vous-la-base.ics")],
   );
 
   if (envoye) {
