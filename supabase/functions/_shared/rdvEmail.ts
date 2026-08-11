@@ -352,3 +352,63 @@ export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
   </div>
 </body></html>`.trim();
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification INTERNE (labaseverdun@gmail.com) — 2026-08-11.
+//
+// Elle était écrite en dur dans book-rdv, en crème + orange Breakfast Club,
+// y compris pour annoncer un RDV **La Base 360**. Deux chartes mélangées dans
+// le même mail : c'est le défaut qu'on traque partout ailleurs dans l'app, et
+// personne ne l'avait vu parce qu'on ne relit pas un email interne.
+//
+// Même table THEMES que les mails prospects — donc une seule source pour les
+// deux marques. `theme: "app"` pour un bilan, `theme: "club"` pour une
+// candidature Breakfast Club : chacune garde SA charte, aucune ne déborde.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface NotifInterneParams {
+  theme?: RdvEmailTheme;
+  /** Petit label mono au-dessus du titre. Ex. « 🗓️ Nouveau RDV ». */
+  eyebrow: string;
+  titre: string;
+  /** Une phrase de contexte. Peut contenir du HTML déjà échappé (<b>). */
+  phrase: string;
+  /** Les faits, en paires clé → valeur. Valeur déjà échappée. */
+  lignes: Array<[string, string]>;
+  /** Ce qu'il reste à faire, en bas. */
+  pied: string;
+}
+
+export function notifInterneHtml(p: NotifInterneParams): string {
+  const t = THEMES[p.theme ?? "app"];
+  const mono = "ui-monospace,Menlo,Consolas,monospace";
+
+  const lignes = p.lignes
+    .filter(([, v]) => v && v !== "—")
+    .map(([k, v]) => `
+      <tr>
+        <td style="padding:7px 16px 7px 0;font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;vertical-align:top;">${esc(k)}</td>
+        <td style="padding:7px 0;font-size:14.5px;font-weight:600;color:${t.heading};line-height:1.45;">${v}</td>
+      </tr>`)
+    .join("");
+
+  return `
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:${t.bg};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${t.heading};">
+  <div style="max-width:480px;margin:0 auto;padding:28px 22px;">
+
+    <div style="font-family:${mono};font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:${t.accent};font-weight:700;">${esc(p.eyebrow)}</div>
+    <h1 style="font-size:23px;line-height:1.2;margin:10px 0 4px;color:${t.heading};letter-spacing:-.02em;">${esc(p.titre)}</h1>
+    <p style="font-size:14.5px;line-height:1.6;color:${t.text};margin:6px 0 20px;">${p.phrase}</p>
+
+    <div style="background:${t.surface};border:1px solid ${t.border};border-radius:16px;padding:14px 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+        ${lignes}
+      </table>
+    </div>
+
+    <p style="font-size:13px;line-height:1.6;color:${t.hint};margin:18px 0 0;">${esc(p.pied)}</p>
+    <p style="font-family:${mono};font-size:11.5px;color:${t.faint};margin:24px 0 0;padding-top:16px;border-top:1px solid ${t.border};">${t.eyebrow} · ${t.tagline} · ${t.siteLabel}</p>
+  </div>
+</body></html>`.trim();
+}

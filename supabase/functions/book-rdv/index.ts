@@ -18,7 +18,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
-import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
+import { rdvEmailHtml, notifInterneHtml } from "../_shared/rdvEmail.ts";
 
 const SLOT_MIN = 30;
 
@@ -243,13 +243,14 @@ serve(async (req: Request) => {
     const hour = parisHourLabel(slotStart.toISOString());
     const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
     const modeLabel = mode === "visio" ? "visio" : "présentiel";
-    const row = (k: string, v: string) =>
-      `<tr><td style="padding:6px 14px 6px 0;color:#7A8099;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:6px 0;color:#17201C;font-size:14px;font-weight:600;">${v}</td></tr>`;
 
     // Deux histoires différentes : un candidat qui veut ouvrir un club, ou
-    // quelqu'un qui vient faire son bilan. Même gabarit, contenu distinct.
+    // quelqu'un qui vient faire son bilan. Deux MARQUES différentes aussi —
+    // d'où deux thèmes. Avant le 2026-08-11 les deux partaient en crème +
+    // orange Breakfast Club, y compris pour annoncer un RDV La Base 360.
     const entete = isRecrut
       ? {
+          theme: "club" as const,
           eyebrow: "🤝 Breakfast Club · Recrutement",
           titre: "Nouveau candidat — ouvrir un club",
           phrase: `${esc(fullName)} veut en parler avec l'équipe, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
@@ -257,6 +258,7 @@ serve(async (req: Request) => {
           pied: "Réponds à cet email pour joindre directement le candidat. Retrouve-le aussi dans le CRM (RDV demandés).",
         }
       : {
+          theme: "app" as const,
           eyebrow: "🗓️ La Base 360 · Nouveau RDV",
           titre: "Une demande de rendez-vous",
           phrase: `${esc(fullName || "Quelqu'un")} a réservé un bilan${coachSlug ? ` avec <b>${esc(coachSlug)}</b>` : ""}, le <b>${esc(dateLabel)} · ${esc(hour)}</b> (${modeLabel}).`,
@@ -264,42 +266,35 @@ serve(async (req: Request) => {
           pied: "Le RDV est en attente : il faut l'accepter dans le CRM (RDV demandés). Réponds à cet email pour joindre directement la personne.",
         };
 
-    const lignes = isRecrut
+    const lignes: Array<[string, string]> = isRecrut
       ? [
-          row("Prénom / Nom", esc(fullName)),
-          row("Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking))),
-          row("Se projette", esc(lbl(TIMING_LABELS, timing))),
-          row("Email", contact ? esc(contact) : "—"),
-          row("Téléphone", phone ? esc(phone) : "—"),
-          row("Ville", city ? esc(city) : "—"),
-          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
-          note ? row("Son mot", esc(note)) : "",
+          ["Prénom / Nom", esc(fullName)],
+          ["Ce qu'il/elle cherche", esc(lbl(LOOKING_LABELS, looking))],
+          ["Se projette", esc(lbl(TIMING_LABELS, timing))],
+          ["Email", contact ? esc(contact) : "—"],
+          ["Téléphone", phone ? esc(phone) : "—"],
+          ["Ville", city ? esc(city) : "—"],
+          ["Créneau", `${esc(dateLabel)} · ${esc(hour)}`],
+          ["Son mot", note ? esc(note) : "—"],
         ]
       : [
-          row("Prénom / Nom", esc(fullName) || "—"),
-          row("Contact", contact ? esc(contact) : "—"),
-          row("Téléphone", phone ? esc(phone) : "—"),
-          row("Coach demandé", coachSlug ? esc(coachSlug) : "—"),
-          row("Créneau", `${esc(dateLabel)} · ${esc(hour)}`),
-          row("Format", modeLabel),
-          note ? row("Son mot", esc(note)) : "",
+          ["Prénom / Nom", esc(fullName) || "—"],
+          ["Contact", contact ? esc(contact) : "—"],
+          ["Téléphone", phone ? esc(phone) : "—"],
+          ["Coach demandé", coachSlug ? esc(coachSlug) : "—"],
+          ["Créneau", `${esc(dateLabel)} · ${esc(hour)}`],
+          ["Format", modeLabel],
+          ["Son mot", note ? esc(note) : "—"],
         ];
 
-    const internalHtml = `
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
-<body style="margin:0;background:#F7F1E6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-  <div style="max-width:520px;margin:0 auto;padding:26px 22px;">
-    <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#E0532A;font-weight:700;">${entete.eyebrow}</div>
-    <h1 style="font-size:22px;margin:8px 0 2px;color:#17201C;">${entete.titre}</h1>
-    <p style="font-size:14px;color:#5F7154;margin:6px 0 18px;">${entete.phrase}</p>
-    <div style="background:#fff;border:1px solid #E7E1D6;border-radius:14px;padding:16px 20px;">
-      <table style="border-collapse:collapse;width:100%;">
-        ${lignes.join("\n        ")}
-      </table>
-    </div>
-    <p style="font-size:12px;color:#8A8578;margin:16px 0 0;">${entete.pied}</p>
-  </div>
-</body></html>`.trim();
+    const internalHtml = notifInterneHtml({
+      theme: entete.theme,
+      eyebrow: entete.eyebrow,
+      titre: entete.titre,
+      phrase: entete.phrase,
+      lignes,
+      pied: entete.pied,
+    });
 
     await sendViaResend(TEAM_NOTIFY_EMAIL, entete.sujet, internalHtml, contact || undefined);
   } catch (_e) {
