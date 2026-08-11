@@ -17,16 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import {
-  CRM_SOURCE_META,
-  CRM_STATUS_META,
-  parseCrmLeadKey,
-  statusOptionsFor,
-  tableHasNotes,
-  useCrmLeads,
-  type CrmLead,
-  type CrmStatus,
-} from "../hooks/useCrmLeads";
+import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -383,6 +374,44 @@ export function CrmLeadDetailPage() {
           })}
           {lead.viaName && !isIntentionSource ? ` · via ${lead.viaName}` : ""}
         </p>
+        {/* Ce qu'on sait de lui — tout était déjà en base, et déjà dans le mail
+            de réservation, mais nulle part à l'écran (audit 2026-08-11). Le
+            bloc ne s'affiche que s'il a quelque chose à dire. */}
+        {(lead.abandonAvantCreneau || lead.rdvLabel || lead.lastName || lead.objectif
+          || lead.peopleCount === 2) ? (
+          <div style={{
+            marginTop: 12, padding: "12px 14px", borderRadius: 12,
+            background: "var(--ls-surface2)",
+            border: `1px solid ${lead.abandonAvantCreneau ? "var(--ls-coral)" : "var(--ls-border)"}`,
+            fontSize: 13, lineHeight: 1.6, color: "var(--ls-text-muted)",
+          }}>
+            {lead.abandonAvantCreneau ? (
+              <div style={{ color: "var(--ls-coral)", fontWeight: 700, marginBottom: 8 }}>
+                ⛔ A laissé ses coordonnées, puis n'a jamais choisi de créneau.
+              </div>
+            ) : null}
+            {lead.rdvLabel ? (
+              <div style={{ color: "var(--ls-teal)", fontWeight: 700, marginBottom: 8 }}>
+                🗓 Créneau réservé : {lead.rdvLabel}
+              </div>
+            ) : null}
+            {lead.lastName ? <div><strong style={{ color: "var(--ls-text)" }}>Nom</strong> · {lead.lastName}</div> : null}
+            {lead.objectif ? <div><strong style={{ color: "var(--ls-text)" }}>Objectif</strong> · {objectifLabel(lead.objectif)}</div> : null}
+            {lead.peopleCount === 2 ? (
+              <div>
+                <strong style={{ color: "var(--ls-text)" }}>Vient à deux</strong>
+                {lead.partnerName ? ` · avec ${lead.partnerName}` : ""}
+                {lead.partnerObjectif ? ` (${objectifLabel(lead.partnerObjectif)})` : ""}
+              </div>
+            ) : null}
+            {lead.coachSlug ? <div><strong style={{ color: "var(--ls-text)" }}>Club visé</strong> · {lead.coachSlug}</div> : null}
+            {/* Le consentement n'est PAS montré ici. La colonne existe, mais
+                seuls le colis, Business et la boutique la remplissent :
+                /reserver ne pose jamais la question, donc `false` y veut dire
+                « jamais demandé », pas « a refusé ». L'afficher fabriquerait
+                une information fausse (audit 2026-08-11). */}
+          </div>
+        ) : null}
         {(lead.contact || (isIntentionSource && lead.parrainPhone)) && (
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             {lead.contact && lead.contactIsPhone ? (

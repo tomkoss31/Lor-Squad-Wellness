@@ -14,15 +14,7 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  CRM_EDITABLE_SOURCES,
-  CRM_SOURCE_META,
-  CRM_STATUS_META,
-  statusOptionsFor,
-  type CrmLead,
-  type CrmSource,
-  type CrmStatus,
-} from "../../hooks/useCrmLeads";
+import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmSmsLink, buildCrmWhatsAppLink, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
@@ -249,6 +241,21 @@ function CrmLeadListRow({
                   ⏳ {stagnationDays(lead)}j
                 </span>
               ) : null}
+              {lead.abandonAvantCreneau ? (
+                <span
+                  title="A laissé ses coordonnées sur /reserver puis n'a jamais choisi de créneau. C'est le moment de rappeler."
+                  style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ls-coral)", whiteSpace: "nowrap" }}
+                >
+                  ⛔ Sans créneau
+                </span>
+              ) : lead.rdvLabel ? (
+                <span
+                  title={`Créneau réservé : ${lead.rdvLabel}`}
+                  style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-teal)", whiteSpace: "nowrap" }}
+                >
+                  🗓 {lead.rdvLabel}
+                </span>
+              ) : null}
               {!lead.ownerUserId && tableSupportsAssignment(lead.table) ? (
                 <span title="Non attribué — ouvre la fiche pour assigner" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
                   👤 Non attribué
@@ -256,12 +263,19 @@ function CrmLeadListRow({
               ) : null}
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {lead.viaName ? `via ${lead.viaName}` : lead.city ?? "—"}
+              {/* Nom de famille et objectif : ils étaient en base et dans le
+                  mail de réservation, jamais à l'écran (audit 2026-08-11). */}
+              {[
+                lead.lastName,
+                lead.viaName ? `via ${lead.viaName}` : lead.city,
+                lead.objectif ? objectifCourt(lead.objectif) : null,
+                lead.peopleCount === 2 ? "à deux" : null,
+              ].filter(Boolean).join(" · ") || "—"}
             </div>
           </div>
           <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
             <span title={temp.label} aria-hidden="true">{temp.emoji}</span>
-            {src.emoji} {src.label}
+            {src.emoji} {lead.source === "inconnue" && lead.sourceRaw ? lead.sourceRaw : src.label}
           </div>
           <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {lead.contact ?? (isIntentionSource ? "à demander au parrain" : "—")}
