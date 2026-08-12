@@ -22,11 +22,19 @@
 import { useAppContext } from "../../../context/AppContext";
 import { lienWhatsApp, numeroPourWhatsApp } from "../../../lib/utils/lienWhatsApp";
 
-export function MonParrain() {
+/**
+ * @param demo  Parrain imposé, pour la démonstration de `/salle-ops`.
+ *   Sans lui, le bloc lit le vrai parrain du coach connecté. Il existe parce
+ *   qu'un admin n'a PAS de parrain : sans ce paramètre, Thomas ne pourrait
+ *   jamais voir ce bloc, ni pour le recetter ni pour le montrer à son équipe.
+ */
+export function MonParrain({ demo }: { demo?: { nom: string; telephone?: string } } = {}) {
   const { currentUser, users } = useAppContext();
-  const parrain = currentUser?.sponsorId
-    ? users.find((u) => u.id === currentUser.sponsorId)
-    : undefined;
+  const parrain = demo
+    ? { id: "demo", name: demo.nom, phone: demo.telephone }
+    : currentUser?.sponsorId
+      ? users.find((u) => u.id === currentUser.sponsorId)
+      : undefined;
 
   // Pas de parrain (admin, ou lien non posé) → on n'affiche rien plutôt qu'un
   // bloc vide : un débutant n'a pas besoin d'une case qui ne mène nulle part.
