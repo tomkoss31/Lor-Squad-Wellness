@@ -35,6 +35,10 @@ interface CrmLeadsListViewProps {
   onCopy: (text: string) => void;
   onAgenda: (lead: CrmLead) => void;
   dupeFlagFor: (lead: CrmLead) => { kind: "client" | "dupe"; label: string } | null;
+  /** Les fiches repliées derrière celle-ci : même email ou même téléphone,
+   *  saisis plusieurs fois. Rien n'est supprimé — c'est un regroupement
+   *  d'affichage (2026-08-12). */
+  doublonsDe?: Map<string, CrmLead[]>;
   onDormant: (lead: CrmLead) => void;
   onWake: (lead: CrmLead) => void;
   onDelete?: (lead: CrmLead) => void;
@@ -50,6 +54,7 @@ export function CrmLeadsListView({
   onCopy,
   onAgenda,
   dupeFlagFor,
+  doublonsDe,
   onDormant,
   onWake,
   onDelete,
@@ -150,6 +155,7 @@ export function CrmLeadsListView({
               onCopy={onCopy}
               onAgenda={() => onAgenda(lead)}
               dupeFlag={dupeFlagFor(lead)}
+              doublons={doublonsDe?.get(lead.key) ?? null}
               onDormant={!archived ? () => onDormant(lead) : undefined}
               onWake={archived ? () => onWake(lead) : undefined}
               onDelete={onDelete ? () => onDelete(lead) : undefined}
@@ -175,6 +181,7 @@ function CrmLeadListRow({
   onCopy,
   onAgenda,
   dupeFlag,
+  doublons,
   onDormant,
   onWake,
   onDelete,
@@ -190,6 +197,7 @@ function CrmLeadListRow({
   onCopy: (text: string) => void;
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
+  doublons: CrmLead[] | null;
   onDormant?: () => void;
   onWake?: () => void;
   onDelete?: () => void;
@@ -232,7 +240,31 @@ function CrmLeadListRow({
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
               {lead.callbackRequestedAt ? <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span> : null}
               {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
-              {dupeFlag ? <span title={dupeFlag.label} aria-hidden="true">⚠️</span> : null}
+              {/* Le ⚠️ reste pour « déjà client » — une info différente. Le
+                  regroupement, lui, se dit en clair : combien de fois cette
+                  personne s'est inscrite, et quand. */}
+              {dupeFlag && dupeFlag.kind === "client" ? (
+                <span title={dupeFlag.label} aria-hidden="true">⚠️</span>
+              ) : null}
+              {doublons && doublons.length > 0 ? (
+                <span
+                  title={`S'est inscrit(e) ${doublons.length + 1} fois — ${
+                    [lead, ...doublons]
+                      .map((d) => new Date(d.createdAt).toLocaleString("fr-FR", {
+                        day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                      }))
+                      .join(" · ")
+                  }. La fiche la plus récente porte le fil.`}
+                  style={{
+                    fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap",
+                    color: "var(--ls-text-hint)",
+                    border: "1px solid var(--ls-border)",
+                    borderRadius: 8, padding: "1px 6px",
+                  }}
+                >
+                  {doublons.length + 1} fiches
+                </span>
+              ) : null}
               {stagnant ? (
                 <span
                   title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`}
