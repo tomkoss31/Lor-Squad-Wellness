@@ -30,6 +30,7 @@ import type {
 import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import { getRecommendableProductById } from "../lib/assessmentRecommendations";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
+import { viderTout } from "../lib/cacheFraicheur";
 
 type UserRow = {
   id: string;
@@ -685,6 +686,10 @@ export async function loginWithSupabaseCredentials(payload: {
 export async function logoutFromSupabase() {
   const client = await requireSupabase();
   await client.auth.signOut();
+  // Le cache de fraîcheur garde des données jusqu'à une semaine, et le
+  // localStorage survit à la déconnexion : sans ce vidage, le coach suivant
+  // qui se connecte sur le même navigateur verrait les chiffres du précédent.
+  viderTout();
 }
 
 export async function fetchSupabaseUsers() {

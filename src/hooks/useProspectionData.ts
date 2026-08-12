@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { lireMonProfil, oublierMonProfil } from "../services/monProfil";
 
 export interface ProspectionMarket {
   code: string;
@@ -496,15 +497,10 @@ export async function fetchProspectionStats(coachId: string): Promise<Prospectio
 // ============================================================================
 
 export async function fetchProspectionOnboardedAt(userId: string): Promise<string | null> {
-  const sb = await getSupabaseClient();
-  if (!sb) return null;
-  const { data, error } = await sb
-    .from("users")
-    .select("prospection_onboarded_at")
-    .eq("id", userId)
-    .maybeSingle();
-  if (error || !data) return null;
-  return (data as { prospection_onboarded_at: string | null }).prospection_onboarded_at;
+  // Ligne mutualisée : six autres endroits lisaient la même au démarrage,
+  // chacun pour une colonne différente (audit 2026-08-12).
+  const profil = await lireMonProfil(userId);
+  return profil?.prospection_onboarded_at ?? null;
 }
 
 export async function markProspectionOnboarded(userId: string): Promise<boolean> {
@@ -514,6 +510,8 @@ export async function markProspectionOnboarded(userId: string): Promise<boolean>
     .from("users")
     .update({ prospection_onboarded_at: new Date().toISOString() })
     .eq("id", userId);
+  // Sans cet oubli, la page relirait « pas encore onboardé » pendant une minute.
+  if (!error) oublierMonProfil(userId);
   return !error;
 }
 
