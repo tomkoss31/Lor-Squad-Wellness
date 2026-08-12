@@ -30,10 +30,13 @@ export function SalleOpsQuotidien({
   view,
   onEscape,
   fullscreen,
+  demoParrain,
 }: {
   view: SalleOpsView;
   onEscape?: () => void;
   fullscreen?: boolean;
+  /** Parrain imposé — uniquement pour la démonstration de /salle-ops. */
+  demoParrain?: { nom: string; telephone?: string };
 }) {
   const navigate = useNavigate();
   // Étape consultée : null = on suit l'étape en cours ; sinon on revoit une
@@ -342,7 +345,7 @@ export function SalleOpsQuotidien({
           </div>
 
           {/* Progression — inline mobile, masqué desktop (→ rail) */}
-          <MonParrain />
+          <MonParrain demo={demoParrain} />
 
           <div className="ls-ops-hide-desktop">
             <SectionLabel>Ton parcours · {view.totalSteps} étapes</SectionLabel>
@@ -373,7 +376,7 @@ export function SalleOpsQuotidien({
           </button>
           {/* Le fil de sécurité ci-dessus nomme le parrain depuis toujours —
               sans jamais donner le moyen de le joindre (12/08/2026). */}
-          <MonParrain />
+          <MonParrain demo={demoParrain} />
           {/* La porte « apprendre » des coachs (LOT 4, 2026-07-27) : formation
               Herbalife, scripts et glossaire, rapatriés ici depuis le hub
               « Mon développement » qui devient l'espace de Thomas. */}
@@ -739,14 +742,21 @@ const voletTete: React.CSSProperties = {
   color: "var(--ls-ops-ink)",
 };
 
-/** Étape proposée, jamais imposée — trait discontinu : rien n'est dû ici. */
+/**
+ * Étape proposée, jamais imposée — trait discontinu : rien n'est dû ici.
+ *
+ * ⚠️ Le trait était `var(--ls-ops-border)` : mesuré à l'écran, rgb(42,65,60)
+ * sur un fond rgb(30,51,48). TROIS points d'écart — la carte ne se distinguait
+ * pas d'une carte ordinaire, et le signal « c'est optionnel » était perdu.
+ * Teinté à l'accent : le pointillé se voit, sans crier.
+ */
 const proposeeCard: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 12,
   width: "100%",
-  background: "var(--ls-ops-surface)",
-  border: "1px dashed var(--ls-ops-border)",
+  background: "transparent",
+  border: "1.5px dashed color-mix(in srgb, var(--ls-ops-accent) 34%, transparent)",
   borderRadius: 14,
   padding: "12px 14px",
   cursor: "pointer",

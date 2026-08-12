@@ -82,7 +82,12 @@ export function SalleOpsPreview() {
         })}
       </div>
       {screen === "jour0" && <SalleDesOperations />}
-      {screen === "quotidien" && <SalleOpsQuotidien view={DEMO_VIEW} />}
+      {screen === "quotidien" && <SalleOpsQuotidien
+              view={DEMO_VIEW}
+              /* Un admin n'a pas de parrain : sans ce parrain de
+                 démonstration, le bloc resterait invisible à Thomas. */
+              demoParrain={{ nom: "Victoria Cavalec", telephone: "0676298049" }}
+            />}
       {screen === "live" && <SalleOpsQuotidien view={ops} />}
     </div>
   );
