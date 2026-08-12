@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Co-pilote — 3 directions · La Base 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+/* ─── Tokens La Base 360 — repris tels quels de tokens/colors.css ─────────── */
+:root{
+  --bg:#162624; --surface:#1E3330; --surface2:#26403B;
+  --border:rgba(244,239,228,.10); --border2:rgba(244,239,228,.17);
+  --text:#F4EFE4; --muted:#9BAAA3; --hint:#74847C;
+  --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+  --wa:#25D366;
+  --title:'Anton',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --edito:'Syne',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:#0E1A18;color:var(--text);font-family:var(--body);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+
+/* ─── Chrome de la maquette (n'existe pas dans l'app) ─────────────────────── */
+.chrome{position:sticky;top:0;z-index:50;background:rgba(14,26,24,.94);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 12px 0}
+.chrome h1{margin:0 0 2px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--hint);font-weight:500}
+.chrome p{margin:0 0 10px;font-size:12px;color:var(--muted)}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:10px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:8px 13px;border-radius:999px;font-size:12.5px;font-weight:600;
+  color:var(--muted);background:var(--surface);border:1px solid var(--border);white-space:nowrap;
+  transition:.16s}
+.tab[aria-selected="true"]{color:#08201C;background:var(--teal);border-color:var(--teal)}
+
+.stage{display:flex;justify-content:center;padding:18px 12px 60px}
+@media(max-width:430px){.stage{padding:0 0 40px}}
+.phone{width:390px;max-width:100%;min-height:760px;background:var(--bg);
+  border-radius:26px;overflow:hidden;position:relative;
+  border:1px solid var(--border);box-shadow:0 40px 90px rgba(0,0,0,.55)}
+@media(max-width:430px){.phone{border-radius:0;border:none;box-shadow:none;min-height:calc(100vh - 120px)}}
+.screen{display:none;padding:0 0 90px}
+.screen.on{display:block}
+
+/* ─── Éléments communs ────────────────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.logo{width:30px;height:30px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--teal),var(--lime));
+  display:grid;place-items:center;color:#08201C;font-family:var(--title);font-size:15px}
+.topname{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--hint);text-transform:uppercase}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--hint)}
+.h1{font-family:var(--title);font-weight:400;text-transform:uppercase;letter-spacing:.01em;line-height:1.04;margin:0}
+.pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.navbar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;
+  padding:9px 6px calc(9px + env(safe-area-inset-bottom));background:rgba(22,38,36,.93);
+  backdrop-filter:blur(14px);border-top:1px solid var(--border)}
+.navbar b{display:block;font-size:9.5px;font-weight:500;color:var(--hint);margin-top:2px;font-family:var(--mono);letter-spacing:.04em}
+.navbar span{font-size:17px;line-height:1}
+.navbar div{text-align:center;padding:2px 6px;border-radius:10px}
+.navbar div.act b{color:var(--teal)}
+
+/* ═══ A — UN SEUL ═════════════════════════════════════════════════════════ */
+#a .stack{padding:20px 18px 0}
+#a .prog{display:flex;gap:5px;margin:20px 0 26px}
+#a .prog i{flex:1;height:3px;border-radius:2px;background:var(--border2)}
+#a .prog i.done{background:var(--teal)}
+#a .prog i.now{background:var(--lime)}
+#a .card{animation:slidein .32s cubic-bezier(.2,.8,.3,1)}
+@keyframes slidein{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+#a .why{font-size:10px;font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--coral);margin-bottom:12px;display:block}
+#a .who{font-family:var(--title);font-size:52px;line-height:.98;text-transform:uppercase;margin:0 0 16px}
+#a .ctx{font-size:16.5px;line-height:1.55;color:var(--text);margin:0 0 6px}
+#a .since{font-family:var(--mono);font-size:12.5px;color:var(--amber);letter-spacing:.02em}
+#a .quote{margin:24px 0 0;padding:15px 16px;border-radius:14px;background:var(--surface);
+  border:1px solid var(--border);font-size:14px;color:var(--muted);line-height:1.6}
+#a .quote b{color:var(--teal);font-weight:600;display:block;font-size:11px;font-family:var(--mono);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+#a .acts{position:absolute;left:18px;right:18px;bottom:78px}
+#a .primary{width:100%;padding:17px;border-radius:15px;background:var(--wa);color:#06230F;
+  font-size:16.5px;font-weight:700;box-shadow:0 12px 30px rgba(37,211,102,.28)}
+#a .row2{display:flex;gap:9px;margin-top:9px}
+#a .ghost{flex:1;padding:13px;border-radius:13px;border:1px solid var(--border2);
+  color:var(--muted);font-size:13.5px;font-weight:500}
+#a .fin{text-align:center;padding:70px 26px 0;animation:slidein .4s}
+#a .fin .big{font-family:var(--title);font-size:42px;text-transform:uppercase;line-height:1;margin:0 0 14px;color:var(--lime)}
+#a .fin p{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 30px}
+#a .fin .num{font-family:var(--edito);font-weight:800;font-size:34px;color:var(--text)}
+#a .fin .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--hint);text-transform:uppercase}
+#a .replay{margin-top:34px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--hint);text-decoration:underline;text-underline-offset:4px}
+
+/* ═══ B — TA JOURNÉE ══════════════════════════════════════════════════════ */
+#b .head{padding:20px 18px 0}
+#b .now{margin:16px 18px 0;padding:18px;border-radius:18px;
+  background:linear-gradient(150deg,#1E3330,#182B28);border:1px solid var(--border)}
+#b .now .h1{font-size:29px}
+#b .now p{margin:9px 0 0;color:var(--muted);font-size:14.5px;line-height:1.55}
+#b .thread{position:relative;margin:22px 0 0;padding:0 18px 0 46px}
+#b .thread::before{content:"";position:absolute;left:26px;top:6px;bottom:14px;width:1px;
+  background:linear-gradient(180deg,var(--teal),var(--border2) 40%,transparent)}
+#b .ev{position:relative;padding-bottom:22px}
+#b .ev::before{content:"";position:absolute;left:-24px;top:5px;width:9px;height:9px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--hint)}
+#b .ev.hot::before{background:var(--coral);border-color:var(--coral);box-shadow:0 0 0 4px rgba(242,119,95,.16)}
+#b .ev.next::before{background:var(--teal);border-color:var(--teal);box-shadow:0 0 0 4px rgba(45,212,191,.16)}
+#b .ev .t{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--hint)}
+#b .ev .n{font-size:16.5px;font-weight:700;margin:3px 0 2px}
+#b .ev .s{font-size:13.5px;color:var(--muted);line-height:1.5}
+#b .slot{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
+#b .slot button{padding:9px 13px;border-radius:11px;border:1px dashed var(--border2);
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+#b .slot button.pick{border-style:solid;border-color:var(--teal);color:#08201C;background:var(--teal);font-weight:600}
+#b .empty{margin:0 18px;padding:20px;border-radius:16px;border:1px dashed var(--border2);text-align:center}
+#b .empty p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+#b .foot{margin:26px 18px 0;padding-top:16px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center}
+#b .foot .l{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint)}
+#b .foot .v{font-family:var(--edito);font-weight:700;font-size:17px}
+
+/* ═══ C — TES GENS ════════════════════════════════════════════════════════ */
+#c .bandeau{display:flex;gap:0;margin:16px 18px 0;border-radius:14px;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border)}
+/* `>` obligatoire : en descendant, la règle frappait aussi les .v / .l
+   internes, qui héritaient du padding et du filet — chiffres deux fois trop
+   hauts et traits verticaux parasites. */
+#c .bandeau>div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--border)}
+#c .bandeau>div:last-child{border-right:none}
+#c .bandeau .v{font-family:var(--edito);font-weight:800;font-size:19px;line-height:1;white-space:nowrap}
+#c .bandeau .l{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--hint);margin-top:4px;white-space:nowrap}
+#c .grp{margin:24px 18px 0}
+#c .grp>.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+#c .grp>.eyebrow em{font-style:normal;color:var(--coral);font-weight:600}
+#c .p{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+#c .p:last-child{border-bottom:none}
+#c .av{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;
+  font-family:var(--edito);font-weight:800;font-size:16px;color:#08201C;position:relative}
+/* Le nom et sa raison sont deux lignes : sans `display:block` ils se collaient
+   en un seul paragraphe (« Matheo Manapany Suivi en retard · 44 jours »). */
+#c .p .n{display:block;font-size:15px;font-weight:600;line-height:1.25}
+#c .p .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+#c .p .go{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  border:1px solid var(--border2);color:var(--muted);font-size:15px}
+#c .p .go.wa{background:var(--wa);color:#06230F;border-color:var(--wa)}
+#c .more{margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--hint);text-decoration:underline;text-underline-offset:4px}
+
+/* ─── Note de bas de page ─────────────────────────────────────────────────── */
+.note{max-width:390px;margin:22px auto 0;padding:0 14px;color:var(--hint);font-size:12px;line-height:1.6}
+.note b{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <h1>Co-pilote · refonte</h1>
+  <p>Trois partis pris, tes vraies données du 12 août. Tape dedans.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-go="a">A · Un seul</button>
+    <button class="tab" role="tab" aria-selected="false" data-go="b">B · Ta journée</button>
+    <button class="tab" role="tab" aria-selected="false" data-go="c">C · Tes gens</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="phone">
+
+  <!-- ════════ A — UN SEUL ════════ -->
+  <section class="screen on" id="a">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Ce qui t'attend</span></div>
+    <div class="stack">
+      <div class="prog" id="a-prog"></div>
+      <div id="a-body"></div>
+    </div>
+    <div class="acts" id="a-acts">
+      <button class="primary" id="a-go">Lui écrire</button>
+      <div class="row2">
+        <button class="ghost" data-skip>Plus tard</button>
+        <button class="ghost" data-skip>Rien à faire</button>
+      </div>
+    </div>
+    <nav class="navbar">
+      <div class="act"><span>◎</span><b>Aujourd'hui</b></div>
+      <div><span>👥</span><b>Clients</b></div>
+      <div><span>＋</span><b>Bilan</b></div>
+      <div><span>📅</span><b>Agenda</b></div>
+      <div><span>☰</span><b>Plus</b></div>
+    </nav>
+  </section>
+
+  <!-- ════════ B — TA JOURNÉE ════════ -->
+  <section class="screen" id="b">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Mercredi 12 août · 20 h</span></div>
+    <div class="now">
+      <span class="eyebrow">Maintenant</span>
+      <h2 class="h1" style="margin-top:8px">Ta journée<br>est finie</h2>
+      <p>Aucun rendez-vous aujourd'hui. <b style="color:var(--text)">5 personnes</b> attendent une réponse — cale-les, ou envoie un mot ce soir.</p>
+    </div>
+
+    <div class="thread">
+      <div class="ev hot">
+        <div class="t">En retard · 44 jours</div>
+        <div class="n">Matheo Manapany</div>
+        <div class="s">Un point que tu avais calé, jamais fait.</div>
+        <div class="slot">
+          <button data-slot>Demain 9 h</button>
+          <button data-slot>Jeudi 14 h</button>
+          <button data-slot>Vendredi</button>
+        </div>
+      </div>
+
+      <div class="ev hot">
+        <div class="t">Sans réponse · 4 jours</div>
+        <div class="n">Florian</div>
+        <div class="s">A laissé son numéro sur le tunnel colis.</div>
+        <div class="slot">
+          <button data-slot>Ce soir</button>
+          <button data-slot>Demain matin</button>
+        </div>
+      </div>
+
+      <div class="ev next">
+        <div class="t">Jeudi 14 · 09:00</div>
+        <div class="n">Rendez-vous client</div>
+        <div class="s">Ton seul RDV calé cette semaine.</div>
+      </div>
+
+      <div class="ev">
+        <div class="t">Quand tu veux</div>
+        <div class="n">Clément · Gerald</div>
+        <div class="s">Plus de commande depuis 111 et 87 jours. Ils n'attendent rien — c'est toi qui décides.</div>
+      </div>
+    </div>
+
+    <div class="empty" style="margin-top:6px">
+      <p><b style="color:var(--coral)">7 personnes</b> venues du site du club<br>n'ont été rappelées par personne.<br>
+      <button style="margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);text-decoration:underline;text-underline-offset:4px">Voir chez qui</button></p>
+    </div>
+
+    <div class="foot">
+      <span class="l">Ce mois</span>
+      <span class="v">627 € · 3 bilans</span>
+    </div>
+
+    <nav class="navbar">
+      <div class="act"><span>◎</span><b>Aujourd'hui</b></div>
+      <div><span>👥</span><b>Clients</b></div>
+      <div><span>＋</span><b>Bilan</b></div>
+      <div><span>📅</span><b>Agenda</b></div>
+      <div><span>☰</span><b>Plus</b></div>
+    </nav>
+  </section>
+
+  <!-- ════════ C — TES GENS ════════ -->
+  <section class="screen" id="c">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Tes gens · mercredi 12 août</span></div>
+
+    <div class="bandeau">
+      <div><div class="v">17</div><div class="l">actifs</div></div>
+      <div><div class="v">3</div><div class="l">bilans</div></div>
+      <div><div class="v" style="color:var(--lime)">627 €</div><div class="l">ce mois</div></div>
+    </div>
+
+    <div class="grp">
+      <div class="eyebrow">Ils attendent une réponse <em>· 5</em></div>
+      <div id="c-wait"></div>
+    </div>
+
+    <div class="grp">
+      <div class="eyebrow">Personne ne s'en occupe <em>· 7</em></div>
+      <div id="c-team"></div>
+      <button class="more">Tout voir dans le CRM</button>
+    </div>
+
+    <div class="grp">
+      <div class="eyebrow">Ton prochain rendez-vous</div>
+      <div class="p">
+        <span class="av" style="background:var(--teal)">14</span>
+        <span style="flex:1;min-width:0">
+          <span class="n">Jeudi 14 août · 09:00</span>
+          <span class="s">Ton seul RDV calé cette semaine.</span>
+        </span>
+        <span class="go">›</span>
+      </div>
+    </div>
+
+    <nav class="navbar">
+      <div class="act"><span>◎</span><b>Mes gens</b></div>
+      <div><span>👥</span><b>Clients</b></div>
+      <div><span>＋</span><b>Bilan</b></div>
+      <div><span>📅</span><b>Agenda</b></div>
+      <div><span>☰</span><b>Plus</b></div>
+    </nav>
+  </section>
+
+</div>
+</div>
+
+<p class="note">Maquette — rien n'est branché, mais <b>les noms, les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026). Testée à 390 px.</p>
+
+<script>
+/* ─── Données réelles du 12/08/2026, compte de Thomas ─────────────────────── */
+const FILE = [
+  { qui:"Matheo", nom:"Matheo Manapany", pourquoi:"Suivi en retard",
+    ctx:"Un point que tu avais calé ensemble, et qui n'a jamais eu lieu.",
+    depuis:"Ça fait 44 jours.", teinte:"var(--coral)",
+    mot:"Salut Matheo 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?",
+    cta:"Lui écrire" },
+  { qui:"Florian", nom:"Florian", pourquoi:"Jamais rappelé",
+    ctx:"Il a laissé son numéro sur le tunnel colis. Personne ne l'a rappelé.",
+    depuis:"Ça fait 4 jours.", teinte:"var(--coral)",
+    mot:"Bonjour Florian 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?",
+    cta:"Lui écrire" },
+  { qui:"Clément", nom:"Clément Clotte", pourquoi:"Plus de commande",
+    ctx:"Il prenait le Thé 51 g. Plus rien depuis longtemps — il ne demande rien, mais il est encore là.",
+    depuis:"111 jours sans commande.", teinte:"var(--amber)",
+    mot:"Salut Clément 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?",
+    cta:"Prendre de ses nouvelles" },
+  { qui:"Gerald", nom:"Delfraissy Gerald", pourquoi:"Plus de commande",
+    ctx:"Formula 1. Il s'est éteint doucement, sans rien dire.",
+    depuis:"87 jours sans commande.", teinte:"var(--amber)",
+    mot:"Salut Gerald 👋 Ça fait un moment ! Comment tu vas en ce moment ?",
+    cta:"Prendre de ses nouvelles" },
+  { qui:"Le club", nom:"7 personnes", pourquoi:"Chez ton équipe",
+    ctx:"Laure, Manon, Fatiha, Armonie et 3 autres sont venues par le site du club. Personne ne les a rappelées.",
+    depuis:"La plus ancienne attend depuis 5 jours.", teinte:"var(--coral)",
+    mot:"", cta:"Voir chez qui c'est" },
+];
+
+const GENS = [
+  { i:"M", n:"Matheo Manapany", s:"Suivi en retard · 44 jours", c:"var(--coral)", wa:1 },
+  { i:"F", n:"Florian",         s:"Jamais rappelé · 4 jours",   c:"var(--coral)", wa:1 },
+  { i:"C", n:"Clément Clotte",  s:"111 j sans commande",        c:"var(--amber)", wa:1 },
+  { i:"G", n:"Delfraissy Gerald", s:"87 j sans commande",       c:"var(--amber)", wa:1 },
+  { i:"T", n:"Ton lead colis",  s:"Jamais rappelé · 25 jours",  c:"var(--coral)", wa:1 },
+];
+const EQUIPE = [
+  { i:"L", n:"Laure",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"M", n:"Manon",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"F", n:"Fatiha",  s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"C", n:"Cavalec", s:"Bilan en ligne · 5 jours",   r:"Victoria", c:"var(--coral)" },
+];
+
+/* ─── Onglets ─────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===t.dataset.go));
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* ─── A — une personne à la fois ─────────────────────────────────────────── */
+let idx = 0;
+function peindreA(){
+  const prog = document.getElementById('a-prog');
+  prog.innerHTML = FILE.map((_,k)=>
+    `<i class="${k<idx?'done':k===idx?'now':''}"></i>`).join('');
+
+  const body = document.getElementById('a-body');
+  const acts = document.getElementById('a-acts');
+
+  if(idx >= FILE.length){
+    acts.style.display='none';
+    body.innerHTML = `
+      <div class="fin">
+        <div class="big">C'est fait</div>
+        <p>Tu as répondu à tout le monde.<br>Personne n'attend plus.</p>
+        <div class="num">627 €</div>
+        <div class="lbl">de marge ce mois · 3 bilans</div>
+        <br><button class="replay" id="a-replay">Recommencer la démo</button>
+      </div>`;
+    document.getElementById('a-replay').onclick=()=>{idx=0;peindreA();};
+    return;
+  }
+
+  acts.style.display='block';
+  const p = FILE[idx];
+  body.innerHTML = `
+    <div class="card">
+      <span class="why" style="color:${p.teinte}">${p.pourquoi}</span>
+      <h2 class="who">${p.qui}</h2>
+      <p class="ctx">${p.ctx}</p>
+      <div class="since">${p.depuis}</div>
+      ${p.mot ? `<div class="quote"><b>Message prêt</b>${p.mot}</div>` : ''}
+    </div>`;
+  document.getElementById('a-go').textContent = p.cta;
+}
+document.getElementById('a-go').addEventListener('click',()=>{idx++;peindreA();});
+document.querySelectorAll('#a [data-skip]').forEach(b=>
+  b.addEventListener('click',()=>{idx++;peindreA();}));
+peindreA();
+
+/* ─── B — choisir un créneau ─────────────────────────────────────────────── */
+document.querySelectorAll('#b [data-slot]').forEach(b=>b.addEventListener('click',()=>{
+  const deja = b.classList.contains('pick');
+  b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('pick'));
+  if(!deja) b.classList.add('pick');
+}));
+
+/* ─── C — les gens ───────────────────────────────────────────────────────── */
+const ligne = (g, droite) => `
+  <div class="p">
+    <span class="av" style="background:${g.c}">${g.i}</span>
+    <span style="flex:1;min-width:0">
+      <span class="n">${g.n}</span>
+      <span class="s">${g.s}</span>
+    </span>
+    ${droite}
+  </div>`;
+/* Pas de glyphe téléphone : « ✆ » tombe sur un caractère de remplacement
+   (rond barré) sur la plupart des systèmes. Un chevron ne ment pas. */
+document.getElementById('c-wait').innerHTML =
+  GENS.map(g=>ligne(g, `<span class="go wa">›</span>`)).join('');
+document.getElementById('c-team').innerHTML =
+  EQUIPE.map(g=>ligne(g,
+    `<span style="font-family:var(--mono);font-size:10.5px;color:var(--hint);white-space:nowrap">→ ${g.r}</span>`)).join('');
+</script>
+</body>
+</html>
