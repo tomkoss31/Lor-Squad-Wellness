@@ -15,7 +15,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../../context/AppContext";
-import { getSupabaseClient } from "../../../services/supabaseClient";
+import { lireMonProfil } from "../../../services/monProfil";
 
 export function OnboardingReturnPill() {
   const { currentUser } = useAppContext();
@@ -30,14 +30,10 @@ export function OnboardingReturnPill() {
     let cancelled = false;
     void (async () => {
       try {
-        const sb = await getSupabaseClient();
-        if (!sb) return;
-        const { data } = await sb
-          .from("users")
-          .select("activated_at")
-          .eq("id", currentUser.id)
-          .single();
-        if (!cancelled) setActivatedAt((data?.activated_at as string | null) ?? null);
+        // Ligne mutualisée : useStarterPlan lit déjà exactement cette colonne
+        // sur cette même ligne, au même instant (audit 2026-08-12).
+        const profil = await lireMonProfil(currentUser.id);
+        if (!cancelled) setActivatedAt(profil?.activated_at ?? null);
       } catch {
         // En cas d'échec on NE montre PAS la pastille (défaut sûr : ne pas
         // coller un « retour » permanent à un coach déjà activé).

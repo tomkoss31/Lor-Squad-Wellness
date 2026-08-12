@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { useStreak } from "../../features/gamification/hooks/useStreak";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { FRAICHEUR, cleDuJour, lireAvecFraicheur } from "../../lib/cacheFraicheur";
 
 interface XpData {
   total_xp: number;
@@ -30,12 +31,26 @@ export function SidebarStreakBadge() {
     let cancelled = false;
     (async () => {
       try {
-        const sb = await getSupabaseClient();
-        if (!sb) return;
-        const { data } = await sb.rpc("get_user_xp", { p_user_id: currentUser.id });
-        if (!cancelled && Array.isArray(data) && data[0]) {
-          setXp({ total_xp: data[0].total_xp, level: data[0].level });
-        }
+        // Une lecture par jour (décision Thomas, 2026-08-12). Ce badge est
+        // affiché en permanence dans la barre latérale : il partait donc à
+        // chaque ouverture de l'app, pour un chiffre décoratif.
+        //
+        // Nuance assumée : le XP est calculé côté serveur, le navigateur ne
+        // sait pas quand il bouge. Un gain gagné aujourd'hui n'apparaît ICI que
+        // demain. La carte XP dédiée, elle, reste en lecture directe — c'est
+        // celle qu'on ouvre justement pour voir son score bouger.
+        const ligne = await lireAvecFraicheur<XpData | null>(
+          cleDuJour(`xp:${currentUser.id}`),
+          FRAICHEUR.JOUR,
+          async () => {
+            const sb = await getSupabaseClient();
+            if (!sb) return null;
+            const { data } = await sb.rpc("get_user_xp", { p_user_id: currentUser.id });
+            if (!Array.isArray(data) || !data[0]) return null;
+            return { total_xp: data[0].total_xp, level: data[0].level };
+          },
+        );
+        if (!cancelled && ligne) setXp(ligne);
       } catch (err) {
         console.warn("[SidebarStreakBadge] xp fetch failed:", err);
       }

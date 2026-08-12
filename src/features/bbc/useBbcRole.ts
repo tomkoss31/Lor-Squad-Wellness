@@ -31,6 +31,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import type { ClubSettings } from "../../types/domain";
 import { isHeart } from "./useBbcHearts";
+import { lireMonProfil } from "../../services/monProfil";
 
 export type BbcRole = "membre" | "stagiaire" | "junior" | "proprietaire" | "rollout";
 
@@ -152,17 +153,19 @@ export function useBbcRole(userId?: string | null, isAdmin?: boolean): UseBbcRol
       setUid(me);
       if (!me) return;
 
-      // 1. Ma ligne users. L'override est lu à part : si la migration n'est pas
-      //    poussée, une colonne inconnue ferait échouer TOUT le select, donc
-      //    aussi la lecture du rôle admin — et on perdrait le fail-open.
-      const { data: u } = await sb.from("users").select("role").eq("id", me).maybeSingle();
-      const roleTxt = (u as { role?: string } | null)?.role;
+      // 1. Ma ligne users, via la lecture mutualisée (audit 2026-08-12).
+      //    Elle remplace DEUX requêtes qui lisaient cette même ligne à quelques
+      //    millisecondes d'écart, séparées uniquement parce qu'une colonne
+      //    inconnue aurait fait échouer tout le select. Ce risque disparaît :
+      //    `select("*")` ne peut pas échouer sur une colonne absente — elle
+      //    revient simplement `undefined`, et le fail-open est préservé.
+      const u = await lireMonProfil(me);
+      const roleTxt = u?.role;
       if (roleTxt) {
         f.isAdmin = isAdmin ?? roleTxt === "admin";
         f.lu = true;
       }
-      const { data: ov } = await sb.from("users").select("bbc_role_override").eq("id", me).maybeSingle();
-      const ovTxt = (ov as { bbc_role_override?: string | null } | null)?.bbc_role_override;
+      const ovTxt = u?.bbc_role_override;
       if (estUneMarche(ovTxt)) f.override = ovTxt;
 
       // 2. Les faits, en parallèle. Chacun peut échouer sans emporter les autres

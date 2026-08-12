@@ -13,11 +13,45 @@
 //   - Logs explicites en cas d'erreur RLS / fetch
 //   - Verification que la session inseree existe avant heartbeat
 
+// V4 (2026-08-12) — sorti du chemin de démarrage.
+//
+// Le traceur partait à la milliseconde où l'app s'ouvrait, en même temps que
+// la quarantaine d'autres requêtes du Co-pilote. Sur la t4g.nano (0,5 Go), ces
+// requêtes ne sont pas lentes : elles s'étranglent mutuellement. Le traceur
+// n'affiche rien à l'écran — il n'avait aucune raison de faire la course.
+//
+// Il attend donc que le navigateur ait fini d'afficher la page. Le seul effet
+// mesurable est un `started_at` décalé de quelques secondes, et la durée étant
+// calculée à partir de ce même `started_at`, les statistiques restent justes.
+//
+// Le nettoyage des sessions fantômes, lui, tournait à CHAQUE ouverture. Il
+// efface les sessions sans fin vieilles de plus de 30 minutes : le faire une
+// fois par heure suffit très largement, et le cache persistant fait que dix
+// rechargements de page ne le déclenchent plus dix fois.
+
 import { useEffect, useRef } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { getSupabaseClient } from "../../../services/supabaseClient";
+import { FRAICHEUR, lireAvecFraicheur } from "../../../lib/cacheFraicheur";
 
 const MIN_NEW_SESSION_GAP_MS = 5_000; // 5s anti-spam (V2 reduit de 30s)
+/** De quoi laisser la page s'afficher avant d'aller écrire en base. */
+const DELAI_HORS_DEMARRAGE_MS = 3_000;
+
+/** Exécute `f` quand le navigateur souffle, sans jamais dépasser `plafondMs`. */
+function quandCEstCalme(f: () => void, plafondMs: number): () => void {
+  type AvecIdle = {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  const w = window as unknown as AvecIdle;
+  if (typeof w.requestIdleCallback === "function") {
+    const id = w.requestIdleCallback(f, { timeout: plafondMs });
+    return () => w.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(f, plafondMs); // Safari < 16.4
+  return () => window.clearTimeout(id);
+}
 // Hotfix I/O budget Supabase (2026-04-30 soir) : passe de 1 min a 5 min
 // pour reduire 5x les ecritures sur user_sessions. Le user voit ses
 // stats update toutes les 5 min au lieu de 1 min — impact UX nul.
@@ -64,8 +98,12 @@ export function useSessionTracker() {
         // Cleanup auto des sessions stale du user (audit 2026-04-30) :
         // ferme les sessions sans ended_at vieilles de > 30 min pour
         // eviter l inflation des stats "today_seconds" (cap 4h par session).
+        // Une fois par heure suffit (V4) : il ne rattrape que du > 30 min.
         try {
-          await sb.rpc("cleanup_stale_sessions", { p_user_id: userId });
+          await lireAvecFraicheur(`menage-sessions:${userId}`, FRAICHEUR.HEURE, async () => {
+            await sb.rpc("cleanup_stale_sessions", { p_user_id: userId });
+            return true;
+          });
         } catch (err) {
           console.warn("[useSessionTracker] cleanup_stale_sessions skipped:", err);
         }
@@ -161,7 +199,10 @@ export function useSessionTracker() {
       }
     }
 
-    void startSession();
+    // V4 : on ne démarre PAS pendant que la page se charge (cf. en-tête).
+    const annulerAttente = quandCEstCalme(() => {
+      if (!cancelled) void startSession();
+    }, DELAI_HORS_DEMARRAGE_MS);
 
     // Heartbeat toutes les minutes pour que les stats temps reel soient a jour
     heartbeatTimer = window.setInterval(() => {
@@ -187,6 +228,7 @@ export function useSessionTracker() {
 
     return () => {
       cancelled = true;
+      annulerAttente();
       if (heartbeatTimer !== null) window.clearInterval(heartbeatTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("beforeunload", handleBeforeUnload);
