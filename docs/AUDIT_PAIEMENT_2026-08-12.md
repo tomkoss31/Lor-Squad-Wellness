@@ -7,6 +7,35 @@
 
 ---
 
+## ⚠️ CORRECTION — lire ceci avant le reste (12/08, même soir)
+
+**Réponse de Thomas : « c'est à chaque mois qu'est fait le test pour le
+moment, mais tout fonctionne. »**
+
+Ce qui invalide ma conclusion du §2. J'avais déduit « le webhook ne tourne
+jamais » d'une **absence** de lignes `paid` — or une absence ne prouve rien :
+
+- Si le test mensuel consiste à **générer un lien et vérifier qu'il s'ouvre**,
+  sans jamais le régler, alors ces 10 lignes restent `pending` pour une raison
+  parfaitement saine.
+- Laurence a pu **payer au comptoir** le jour où sa fiche a été créée, pendant
+  que son lien dormait. Un lien fabriqué puis non utilisé, c'est banal quand on
+  a une caisse physique.
+
+**Ce qui reste vrai malgré tout** (indépendant du webhook) : le trou de
+notification du §4, les doublons du §3, et l'absence d'envoi automatique du
+lien. Les points **C, E, F** du §5 tiennent. Les points **A, B, D** tombent
+si le webhook fonctionne.
+
+**Le seul test qui trancherait vraiment**, le jour où un vrai paiement passe
+par un lien : *est-ce que le push « 💶 X a payé son pack » arrive ?* Si oui,
+la chaîne est bonne de bout en bout, et il n'y a rien à réparer.
+
+*Le reste du document est conservé tel qu'écrit, y compris le raisonnement
+erroné — pour ne pas refaire la même déduction dans six mois.*
+
+---
+
 ## 1. Le constat brut
 
 **10 liens de paiement générés. Zéro `paid`. Zéro `paid_at`.**
