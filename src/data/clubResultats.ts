@@ -114,6 +114,14 @@ export const CLUB_RESULTATS: ClubResultat[] = [
   // ne peut pas revendiquer, et une légende parle avec la voix du club, pas
   // avec la sienne. S'il y tient, sa place est dans un témoignage signé.
   { slug: "tom", w: 1280, h: 1112, nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
+  // Mélanie, co-fondatrice : même pastille que Thomas, même raison.
+  // « Plus d'énergie, surtout le soir » n'est PAS dans la légende, pour la
+  // raison qui a écarté son sommeil à lui : une légende parle avec la voix du
+  // club, et attribuer un regain d'énergie à une alimentation est une
+  // allégation de santé. Dans un témoignage signé d'elle, ce serait son propos
+  // et non celui du club — c'est là que ça a sa place.
+  { slug: "melanie", w: 708, h: 708, nom: "Mélanie", coach: true, resultat: "−4 kg de masse grasse en 21 jours, et les kilos de grossesse partis" },
+  { slug: "melanie-2", w: 747, h: 708, resultat: "Mélanie, sous un autre angle" },
   // Sans chiffre : Thomas ne les a pas, et on n'en invente pas. La photo parle
   // seule, le prénom suffit.
   { slug: "heleane", w: 1125, h: 1112, nom: "Héléane" },
