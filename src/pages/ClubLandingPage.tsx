@@ -250,8 +250,14 @@ export function ClubLandingPage() {
                 label="Mélanie & Thomas"
                 sub="l'équipe au club"
                 frame="peach"
-                src="/brand/breakfast-club/photos/equipe-portrait.jpg"
-                alt="Mélanie et Thomas, les coachs du club, devant le mur végétal et l'enseigne La Base."
+                // Le selfie devant le néon a remplacé le portrait posé : plus
+                // vrai, et il montre le lieu en même temps que les visages.
+                // Format 9:16 dans un cadre 4:5 → il faut dire QUOI garder :
+                // « 50% 22% » remonte la fenêtre pour conserver l'enseigne et
+                // les deux visages, là où un centrage coupait le néon.
+                src="/brand/breakfast-club/photos/equipe-selfie.jpg"
+                position="50% 22%"
+                alt="Mélanie et Thomas, les coachs du club, souriants devant le mur végétal et l'enseigne lumineuse La Base."
               />
             </div>
             <div style={{ order: 1 }}>

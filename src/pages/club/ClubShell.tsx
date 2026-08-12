@@ -43,7 +43,7 @@ const NAV: Array<{ to: string; label: string }> = [
  * chargées paresseusement, elles sont toutes sous la ligne de flottaison.
  */
 export function Slot({
-  ratio, label, sub, frame, src, alt, priority,
+  ratio, label, sub, frame, src, alt, priority, position,
 }: {
   ratio: string;
   label: string;
@@ -53,6 +53,13 @@ export function Slot({
   /** Décrit la photo pour qui ne la voit pas. Obligatoire dès qu'il y a `src`. */
   alt?: string;
   priority?: boolean;
+  /**
+   * Quelle partie de la photo garder quand son format ne correspond pas à
+   * celui du cadre (`object-position`). Défaut « centre », ce qui coupe autant
+   * en haut qu'en bas — rarement le bon choix pour un portrait, où le sujet
+   * n'est presque jamais au milieu.
+   */
+  position?: string;
 }) {
   return (
     <div className={`cl-frame${frame ? " " + frame : ""}`}>
@@ -66,7 +73,7 @@ export function Slot({
             loading={priority ? "eager" : "lazy"}
             decoding="async"
             fetchPriority={priority ? "high" : undefined}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: position ?? "50% 50%" }}
           />
         ) : (
           <span>📷 {label}{sub ? <small>{sub}</small> : null}</span>
