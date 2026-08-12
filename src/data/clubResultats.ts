@@ -109,7 +109,6 @@ export const CLUB_RESULTATS: ClubResultat[] = [
   { photos: [{ slug: "margaux", w: 1280, h: 1280 }, { slug: "margaux-2", w: 1280, h: 1280 }], nom: "Margaux", resultat: "−16 kg en un an" },
   { photos: [{ slug: "jean", w: 1280, h: 945 }], nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
   { photos: [{ slug: "fanny", w: 828, h: 816 }], nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
-  { photos: [{ slug: "lucas", w: 1280, h: 1280 }], nom: "Lucas", resultat: "De la masse musculaire en plus" },
   // Fayhaz, 23 ans. Ne sont retenus que les CHIFFRES de composition corporelle
   // et la performance. Volontairement écartés de la légende :
   //   « meilleure énergie » et « meilleur sommeil » — allégations de santé,
