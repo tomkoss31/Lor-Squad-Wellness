@@ -98,28 +98,72 @@ TOTAL                        2 169 Ko
 Dans les 1 527 Ko de clients+bilans, **la colonne `questionnaire` pèse 586 Ko
 à elle seule** — 35 % du poids total des bilans, la suivante fait 55 Ko.
 
-**Sans elle, le chargement tombe à 989 Ko : −35 %.**
+**✅ FAIT le 12/08 — chemin critique : 1 527 Ko → 989 Ko (−35,2 %).**
 
-**Pourquoi ce n'est pas fait** : `questionnaire` est lu par 12 fichiers, dont
-5 pages — `NewFollowUpPage` (15 usages), `ClientDetailPage` (14),
-`EditInitialAssessmentPage` (6), `PanierPage`, `DistributorPortfolioPage`.
-La retirer du démarrage oblige chacune à la charger elle-même. **C'est le
-cœur métier — ça se fait avec une recette, pas en autonomie.**
+`questionnaire` est lu par 5 pages (fiche client, nouveau suivi, édition de
+bilan, panier, portefeuille). Deux façons de le sortir du démarrage :
 
-*Piste* : charger `questionnaire` à l'ouverture d'une fiche client, pas au
-démarrage. Le reste des bilans (date, poids, objectif, résumé) suffit
-largement aux listes et au Co-pilote.
+- **à la demande** dans chaque page → chacune gère son attente, et une page
+  oubliée affiche un bilan VIDE sans prévenir. Sur le cœur métier, un écran
+  qui ment en silence est pire qu'un écran lent. **Écarté.**
+- **en seconde passe** → l'app démarre sans les 586 Ko, puis les reçoit ~1 s
+  plus tard et complète l'état par id de bilan. **Aucune des 5 pages n'est
+  modifiée.** C'est ce qui a été retenu.
+
+Effet secondaire recherché : les 26 widgets du Co-pilote attendent la fin du
+chargement central pour se monter. Il finit plus tôt, donc ils partent plus
+tôt — c'est là que se joue le gain ressenti, pas seulement dans les kilo-octets.
+
+⚠️ Les colonnes des bilans sont désormais listées explicitement dans
+`COLONNES_BILAN_SANS_QUESTIONNAIRE` (supabaseService). **Une nouvelle colonne
+sur `assessments` doit y être ajoutée**, sinon elle ne sera pas chargée au
+démarrage. Sens volontairement le plus sûr : on oublie de charger, on ne
+casse pas.
 
 ### B. Les doublons restants
 
 | Table | Appels au démarrage | D'où |
 |---|---|---|
-| `users` | **6** | `supabaseService` ×4, `useStreak` ×3, `useBbcRole` ×3, `useStarterPlan`, `useTeamStarterProgress`, `OnboardingReturnPill`… — filtres différents, à traiter un par un |
+| `users` | **6 → 5** | `useStreak` lisait la même ligne DEUX fois (streak, puis `lifetime_login_count` juste avant l'écriture) — fusionné le 12/08, ce qui supprime aussi une course entre deux onglets. Restent : `supabaseService` ×4, `useBbcRole` ×3, `useStarterPlan`, `useTeamStarterProgress`, `OnboardingReturnPill`… — filtres différents, à traiter un par un |
 | `online_bilans` | **4** | 2 du badge CRM (déjà mutualisées) + 2 ailleurs |
 | `get_my_client_app_token` | **2** | appelée deux fois à la connexion |
 | `consumption_orders`, `clubs`, `client_referrals`, `prospect_leads` | **2** chacune | |
 
-### C. La machine
+### C. Le Realtime — 1 h 19 de calcul pour 3 messages
+
+**Mesuré le 12/08**, sur la même fenêtre de 13,5 jours :
+
+| | |
+|---|---|
+| Appels de la requête WAL | **704 166** — soit **36 par minute**, en continu |
+| Temps CPU cumulé | **4 716 s = 1 h 19** |
+| Part du temps total de la base | **36 %** |
+| Messages réellement insérés | **3** |
+
+Environ **26 minutes de CPU par message**. Le walrus de Supabase interroge le
+WAL en permanence dès qu'un abonnement est ouvert — et il l'est en
+permanence : `useRealtimeMessages` est monté dans `AppLayout`, donc pour
+chaque coach connecté, toute la journée.
+
+**Ce qu'il apporte réellement** : quand l'app est DÉJÀ OUVERTE, il ajoute le
+message à l'état global (évite un rafraîchissement) et affiche un toast
+« 💬 Nouveau message de X ».
+
+**Ce qui existe déjà par ailleurs** : le trigger Postgres
+`new-message-notifier` (migration `20260421082000`) envoie une **notification
+push** à chaque message client. Le coach est donc **déjà prévenu**, app
+ouverte ou fermée.
+
+**Décision à prendre (Thomas)** — on paie 36 % de la base pour un toast que
+la push double déjà. L'alternative coûte presque rien : rafraîchir la
+messagerie au retour d'onglet, exactement ce que fait déjà `useCrmBadge`
+(`visibilitychange` + débounce 60 s). On perdrait l'apparition
+*instantanée* du message dans une app restée ouverte ; on garderait la push.
+
+⚠️ Ce n'est pas une décision technique : ça change ce que vit un coach. Non
+tranché seul.
+
+### D. La machine
 
 `pg_stat_statements` sur 13,5 jours, requête n°1 **à 35,9 % du temps total de
 la base** : `SELECT wal->>… ` — le polling du WAL par Supabase Realtime.
@@ -173,3 +217,15 @@ performance.getEntriesByType('resource')
 28 ms au repos affiche 1 038 ms de moyenne parce que la machine est saturée —
 optimiser son SQL ne donnerait rien. Toujours croiser `explain (analyze)` à
 froid avec la moyenne.
+
+---
+
+## Deux tables sans aucun lecteur (audit du 12/08)
+
+`client_mood_log` et `client_xp_events` : **zéro référence**, ni dans `src/`,
+ni dans `supabase/functions/`. RLS activé sans policy, donc inaccessibles
+autrement qu'en `service_role` — et personne ne les appelle.
+
+**Non supprimées** : effacer une table est irréversible, et le coût de les
+laisser est nul (elles ne sont dans aucun chemin de démarrage). À trancher
+avec Thomas, avec une sauvegarde préalable.
