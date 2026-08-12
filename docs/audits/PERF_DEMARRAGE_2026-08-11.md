@@ -80,6 +80,41 @@ pas** — aucun appelant à modifier, et un futur écran en profite sans rien fa
 
 ---
 
+## Mesuré après les correctifs (12/08, même page, même session)
+
+| | Avant (11/08) | Après (12/08) |
+|---|---|---|
+| Requêtes REST au démarrage | **47** | **26** |
+| Page prête | **14,1 s** | **11,5 s** |
+| Pire requête | **9,5 s** | **6,7 s** |
+| Dernière requête lancée | ~16,6 s | **5,0 s** |
+| Médiane | — | 618 ms |
+
+**La vague de 26 requêtes simultanées à la seconde 7 a disparu** : plus rien ne
+part après 5 s. C'était l'objet du « chantier 4 » (étaler les départs) — il n'a
+plus lieu d'être, le chantier sur le poids l'a réglé en amont.
+
+⚠️ *Un point de mesure, pas une moyenne.* La machine est partagée et sa charge
+varie ; refaire la mesure plusieurs fois avant d'en tirer une tendance.
+
+### Ce qui reste visible : `users`, 8 appels
+
+Dont **5 partis entre 4 660 et 4 686 ms** — même motif, en plus petit — et le
+dernier (le profil du coach lui-même) qui met **6 secondes**.
+
+Ils viennent de hooks distincts qui lisent chacun une colonne différente de la
+MÊME ligne : `useStreak`, `useBbcRole`, `useStarterPlan`,
+`useTeamStarterProgress`, `OnboardingReturnPill`…
+
+**Remède connu, déjà éprouvé deux fois** (`useCrmBadge`, `useAnnouncements`) :
+un cache partagé au niveau du module + requête en vol partagée. Ici, charger la
+ligne complète une seule fois (la table `users` fait 42 Ko pour 22 lignes — une
+ligne ≈ 2 Ko, le surcoût est nul) et laisser chaque hook y piocher.
+
+**Pas fait le 12/08** : cela touche cinq hooks du chemin de démarrage. Le gain
+restant (~4 requêtes sur 26) ne justifiait pas de le faire sans pouvoir ouvrir
+chaque écran.
+
 ## Ce qui reste, par ordre de gain
 
 ### A. Le poids du chargement central — 2,17 Mo de JSON
