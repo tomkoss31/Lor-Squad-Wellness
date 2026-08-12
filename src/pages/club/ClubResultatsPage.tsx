@@ -85,17 +85,36 @@ export function ClubResultatsPage() {
             comparaison même qu'on vient montrer. Chacun garde son format. */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 16, marginTop: 30 }}>
           {CLUB_RESULTATS.map((r) => (
-            <figure key={r.slug} style={{ margin: 0 }}>
-              <div className="cl-resultat">
-                <img
-                  src={`/brand/breakfast-club/resultats/${r.slug}.jpg`}
-                  alt={r.nom ? `${r.nom}, avant et après son accompagnement.` : "Avant et après l'accompagnement d'un membre du club."}
-                  width={r.w}
-                  height={r.h}
-                  loading="lazy"
-                  decoding="async"
-                />
+            <figure key={r.photos[0].slug} style={{ margin: 0 }}>
+              {/* Plusieurs photos = on glisse dans la carte. Défilement natif
+                  avec accroche : au doigt sur téléphone, à la molette ou au
+                  clavier sur ordinateur, sans une ligne de JavaScript — donc
+                  rien à charger et rien qui puisse casser. */}
+              <div className={`cl-resultat${r.photos.length > 1 ? " multi" : ""}`}>
+                {r.photos.map((p, k) => (
+                  <img
+                    key={p.slug}
+                    src={`/brand/breakfast-club/resultats/${p.slug}.jpg`}
+                    alt={
+                      r.nom
+                        ? `${r.nom}, avant et après son accompagnement${r.photos.length > 1 ? ` (vue ${k + 1} sur ${r.photos.length})` : ""}.`
+                        : "Avant et après l'accompagnement d'un membre du club."
+                    }
+                    width={p.w}
+                    height={p.h}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ))}
               </div>
+              {r.photos.length > 1 ? (
+                <p style={{ margin: "7px 0 0", fontSize: 12.5, color: "var(--muted2)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                  {r.photos.length} vues — fais glisser
+                </p>
+              ) : null}
               {r.nom || r.resultat ? (
                 <figcaption style={{ marginTop: 10, fontSize: 14.5, color: "var(--muted)" }}>
                   {r.nom ? <b style={{ color: "var(--ink)", fontSize: 16 }}>{r.nom}</b> : null}

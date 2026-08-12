@@ -20,21 +20,25 @@
 // transformation n'est pas une promesse, et la page le dit déjà en titre.
 // =============================================================================
 
+/**
+ * Une photo. Les dimensions RÉELLES sont obligatoires, pour deux raisons :
+ *  · sans elles, le navigateur ne réserve aucune place et la page saute au fur
+ *    et à mesure des chargements ;
+ *  · surtout, les cartes font alors zéro pixel de haut au montage, donc toutes
+ *    empilées dans l'écran — et l'observateur qui déclenche la mise en couleur
+ *    les voyait TOUTES d'un coup. L'effet était joué avant qu'on arrive à la
+ *    section. Bug mesuré le 2026-08-11.
+ */
+export type ClubPhoto = { slug: string; w: number; h: number };
+
 export type ClubResultat = {
-  /** Nom du fichier dans public/brand/breakfast-club/resultats/ (sans .jpg). */
-  slug: string;
   /**
-   * Dimensions RÉELLES du fichier. Deux raisons, pas une :
-   *  · sans elles, le navigateur ne réserve aucune place et la page saute au
-   *    fur et à mesure des chargements ;
-   *  · surtout, les cartes font alors zéro pixel de haut au montage, donc
-   *    toutes empilées dans l'écran — et l'observateur qui déclenche la mise en
-   *    couleur les voyait TOUTES d'un coup. L'effet était joué avant qu'on
-   *    arrive à la section. Bug mesuré le 2026-08-11.
-   * À relever avec les vraies valeurs pour toute nouvelle photo.
+   * Une ou plusieurs photos de LA MÊME personne. Plusieurs = un petit
+   * carrousel dans une seule carte, plutôt que deux cartes côte à côte : deux
+   * vues de la même transformation présentées comme deux résultats gonflent
+   * le nombre et se lisent comme un doublon.
    */
-  w: number;
-  h: number;
+  photos: ClubPhoto[];
   /** Prénom, si on l'a. Vide = la photo s'affiche sans légende. */
   nom?: string;
   /**
@@ -99,31 +103,25 @@ export const CLUB_TEMOIGNAGES_PUBLIES: string[] = [
 ];
 
 export const CLUB_RESULTATS: ClubResultat[] = [
-  { slug: "joel", w: 1125, h: 1107, nom: "Joël", resultat: "−20 kg en 6 mois" },
-  { slug: "marie", w: 1224, h: 1171, nom: "Marie", resultat: "−17 kg et −60 cm en 18 mois" },
-  { slug: "margaux", w: 1280, h: 1280, nom: "Margaux", resultat: "−16 kg en un an" },
-  { slug: "jean", w: 1280, h: 945, nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
-  { slug: "fanny", w: 828, h: 816, nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
-  { slug: "lucas", w: 1280, h: 1280, nom: "Lucas", resultat: "De la masse musculaire en plus" },
-  // Même personne que ci-dessus, sous un autre angle (confirmé par Thomas) —
-  // donc même résultat, et pas de prénom répété : deux cartes « Margaux » avec
-  // le même chiffre se liraient comme un doublon plutôt que comme deux vues.
-  { slug: "margaux-2", w: 1280, h: 1280, resultat: "Margaux, sous un autre angle" },
-  // « Tom », c'est Thomas — d'où la mention coach. Le sommeil n'est PAS dans
-  // la légende : améliorer le sommeil est une allégation de santé qu'un aliment
-  // ne peut pas revendiquer, et une légende parle avec la voix du club, pas
-  // avec la sienne. S'il y tient, sa place est dans un témoignage signé.
-  { slug: "tom", w: 1280, h: 1112, nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
-  // Mélanie, co-fondatrice : même pastille que Thomas, même raison.
-  // « Plus d'énergie, surtout le soir » n'est PAS dans la légende, pour la
-  // raison qui a écarté son sommeil à lui : une légende parle avec la voix du
-  // club, et attribuer un regain d'énergie à une alimentation est une
-  // allégation de santé. Dans un témoignage signé d'elle, ce serait son propos
-  // et non celui du club — c'est là que ça a sa place.
-  { slug: "melanie", w: 708, h: 708, nom: "Mélanie", coach: true, resultat: "−4 kg de masse grasse en 21 jours, et les kilos de grossesse partis" },
-  { slug: "melanie-2", w: 747, h: 708, resultat: "Mélanie, sous un autre angle" },
-  // Sans chiffre : Thomas ne les a pas, et on n'en invente pas. La photo parle
-  // seule, le prénom suffit.
-  { slug: "heleane", w: 1125, h: 1112, nom: "Héléane" },
-  { slug: "julie", w: 1312, h: 1288, nom: "Julie" },
+  { photos: [{ slug: "joel", w: 1125, h: 1107 }], nom: "Joël", resultat: "−20 kg en 6 mois" },
+  { photos: [{ slug: "marie", w: 1224, h: 1171 }], nom: "Marie", resultat: "−17 kg et −60 cm en 18 mois" },
+  // Deux vues de la MÊME transformation : une seule carte, un carrousel.
+  { photos: [{ slug: "margaux", w: 1280, h: 1280 }, { slug: "margaux-2", w: 1280, h: 1280 }], nom: "Margaux", resultat: "−16 kg en un an" },
+  { photos: [{ slug: "jean", w: 1280, h: 945 }], nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
+  { photos: [{ slug: "fanny", w: 828, h: 816 }], nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
+  { photos: [{ slug: "lucas", w: 1280, h: 1280 }], nom: "Lucas", resultat: "De la masse musculaire en plus" },
+  // Fayhaz, 23 ans. Ne sont retenus que les CHIFFRES de composition corporelle
+  // et la performance. Volontairement écartés de la légende :
+  //   « meilleure énergie » et « meilleur sommeil » — allégations de santé,
+  //     comme pour Thomas et Mélanie ;
+  //   « tchao les douleurs articulaires » — le plus sérieux des trois : faire
+  //     disparaître une douleur articulaire, c'est une propriété THÉRAPEUTIQUE.
+  //     Aucun aliment ne peut la revendiquer, et pas davantage dans un
+  //     témoignage repris par le club à son compte.
+  { photos: [{ slug: "fayhaz", w: 1280, h: 1280 }, { slug: "fayhaz-2", w: 1179, h: 1179 }], nom: "Fayhaz", resultat: "+10 kg de masse musculaire et −10 % de masse grasse en un an" },
+  { photos: [{ slug: "tom", w: 1280, h: 1112 }], nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
+  { photos: [{ slug: "melanie", w: 708, h: 708 }, { slug: "melanie-2", w: 747, h: 708 }], nom: "Mélanie", coach: true, resultat: "−4 kg de masse grasse en 21 jours, et les kilos de grossesse partis" },
+  // Sans chiffre : Thomas ne les a pas, et on n'en invente pas.
+  { photos: [{ slug: "heleane", w: 1125, h: 1112 }], nom: "Héléane" },
+  { photos: [{ slug: "julie", w: 1312, h: 1288 }], nom: "Julie" },
 ];

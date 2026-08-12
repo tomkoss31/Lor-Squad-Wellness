@@ -208,6 +208,16 @@
    affichent simplement la photo, nette et en couleurs — jamais dégradée. */
 .cl-resultat{overflow:hidden;border-radius:14px;background:var(--slot);line-height:0}
 .cl-resultat img{width:100%;height:auto;display:block}
+/* Plusieurs vues de la même personne : on glisse dans la carte plutôt que
+   d'occuper deux cases de la grille. Défilement natif avec accroche — au doigt
+   sur téléphone, à la molette ou au clavier ailleurs. Aucun JavaScript : rien
+   à charger, rien qui puisse tomber en panne.
+   `flex:0 0 100%` sur chaque photo, sinon flex les comprime pour les faire
+   toutes tenir et on verrait deux moitiés au lieu d'une vue. */
+.cl-resultat.multi{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cl-resultat.multi::-webkit-scrollbar{display:none}
+.cl-resultat.multi img{flex:0 0 100%;scroll-snap-align:center}
 /* Au survol, on regarde de plus près — souris seulement : sur un écran
    tactile, `:hover` reste collé après le doigt et la photo garderait le zoom. */
 /* Le survol force aussi la couleur : quelqu'un qui pointe une photo encore en
