@@ -13,26 +13,34 @@ import { useSalleOps, type SalleOpsView } from "./useSalleOps";
 import { ACADEMY_LESSONS } from "./academyLessons";
 import "./salle-ops.css";
 
-// Vue synthétique pour l'onglet démo (référence design, sans données réelles).
+// Vue de démonstration — calquée sur le cas RÉEL le plus fréquent (12/08/2026).
+//
+// Elle montrait un profil imaginaire : étapes 1 et 2 faites, on vise la story.
+// Personne n'a jamais ressemblé à ça. Le vrai cas, c'est Maria — 41 bilans,
+// aucune porte déclarative cochée, et l'app qui lui disait « Étape 1 :
+// S'équiper ». Depuis le chantier du 12/08 elle vise son 1er pack, et les
+// trois étapes déclaratives lui sont PROPOSÉES sans la retenir.
+//
+// La démo montre donc ce que les gens voient vraiment, pas une vitrine.
 const DEMO_VIEW: SalleOpsView = {
   loading: false,
   activated: false,
   steps: [
-    { n: 1, label: "S'équiper", state: "done", lesson: ACADEMY_LESSONS.commande_250pv, gateKey: "commande_250pv" , bloquante: false },
-    { n: 2, label: "Trouver", state: "done", lesson: ACADEMY_LESSONS.liste_50, gateKey: "liste_50" , bloquante: false },
-    { n: 3, label: "Inviter", state: "active", lesson: ACADEMY_LESSONS.premiere_story, gateKey: "premiere_story" , bloquante: false },
-    { n: 4, label: "Présenter", state: "todo", lesson: ACADEMY_LESSONS.premier_bilan, gateKey: "premier_bilan" , bloquante: true },
-    { n: 5, label: "Relancer", state: "todo", lesson: ACADEMY_LESSONS.relancer, gateKey: null , bloquante: true },
-    { n: 6, label: "Démarrer ta recrue", state: "locked", lesson: null, gateKey: null , bloquante: false },
-    { n: 7, label: "Dupliquer", state: "locked", lesson: null, gateKey: null , bloquante: false },
+    { n: 1, label: "S'équiper", state: "todo", lesson: ACADEMY_LESSONS.commande_250pv, gateKey: "commande_250pv", bloquante: false },
+    { n: 2, label: "Trouver", state: "todo", lesson: ACADEMY_LESSONS.liste_50, gateKey: "liste_50", bloquante: false },
+    { n: 3, label: "Inviter", state: "todo", lesson: ACADEMY_LESSONS.premiere_story, gateKey: "premiere_story", bloquante: false },
+    { n: 4, label: "Présenter", state: "active", lesson: ACADEMY_LESSONS.premier_pv_pack, gateKey: "premier_pv_pack", bloquante: true },
+    { n: 5, label: "Relancer", state: "todo", lesson: ACADEMY_LESSONS.relancer, gateKey: "relances_3", bloquante: true },
+    { n: 6, label: "Démarrer ta recrue", state: "todo", lesson: ACADEMY_LESSONS.demarrer_recrue, gateKey: null, bloquante: false },
+    { n: 7, label: "Dupliquer", state: "todo", lesson: ACADEMY_LESSONS.dupliquer, gateKey: null, bloquante: false },
   ],
   totalSteps: 7,
-  activeStepNumber: 3,
-  currentLesson: ACADEMY_LESSONS.premiere_story,
-  currentGateKey: "premiere_story",
-  phase: "allumage",
-  phaseIndex: 0,
-  dayNumber: 2,
+  activeStepNumber: 4,
+  currentLesson: ACADEMY_LESSONS.premier_pv_pack,
+  currentGateKey: "premier_pv_pack",
+  phase: "acceleration",
+  phaseIndex: 1,
+  dayNumber: 84,
   jalonPlanMarketing: false,
   toggle: async () => {},
   counts: {},
