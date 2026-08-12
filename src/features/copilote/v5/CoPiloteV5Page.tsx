@@ -29,7 +29,7 @@ import { useTheme } from "../../../hooks/useTheme";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
-import { PlanDuJour } from "./components/PlanDuJour";
+import { EcranDuJourBranche } from "./components/EcranDuJourBranche";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
 
@@ -328,7 +328,12 @@ export function CoPiloteV5Page() {
           leaderboard → Mon équipe ch.4), ReferrerStatsCard (« Tes leads » =
           doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
-      <PlanDuJour data={data} />
+      {/* Refonte 2026-08-12 : l'ecran du jour remplace le Plan du jour.
+          Un seul ecran qui descend — une seule personne en haut (jamais deux,
+          cf. ceQuiCompte), puis ta journee, tes clients, ton equipe.
+          `ops` est passe en PROP : remonter useSalleOps ici declencherait un
+          fetch `distributor_starter_progress` de plus, non cache. */}
+      <EcranDuJourBranche data={data} ops={ops} />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.

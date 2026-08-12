@@ -75,15 +75,29 @@ export interface Attente {
   responsable?: string;
 }
 
+/** Un encaissement reçu — la seule victoire que l'app ait à annoncer. */
+export interface PaiementRecu {
+  id: string;
+  nom: string;
+  montantEur: number;
+  payeLe: string;
+  telephone: string | null;
+}
+
 interface Resultat {
   /** Ce qui m'est attribué. */
   mesAttentes: Attente[];
   /** Admin seulement : ce qui attend chez quelqu'un d'autre. */
   attentesEquipe: Attente[];
+  /** Encaissements récents, à saluer. */
+  paiements: PaiementRecu[];
   chargement: boolean;
   /** Force une relecture — après avoir traité quelqu'un, par exemple. */
   relire: () => void;
 }
+
+/** Au-delà, ce n'est plus « viens de payer » — on ne remercie pas la veille. */
+const FENETRE_PAIEMENT_JOURS = 2;
 
 const JOUR_MS = 86_400_000;
 
@@ -109,35 +123,44 @@ interface LigneBrute {
   proprietaire: string | null;
 }
 
+interface Lecture {
+  lignes: LigneBrute[];
+  paiements: PaiementRecu[];
+}
+
 export function useFileDuJour(
   coachId: string | null | undefined,
   options?: { estAdmin?: boolean; nomParId?: Record<string, string> },
 ): Resultat {
   const estAdmin = options?.estAdmin ?? false;
   const nomParId = options?.nomParId;
-  const [lignes, setLignes] = useState<LigneBrute[]>([]);
+  const [lecture, setLecture] = useState<Lecture>({ lignes: [], paiements: [] });
   const [chargement, setChargement] = useState(true);
+  const lignes = lecture.lignes;
 
   const charger = useCallback(
     async (forcer = false) => {
       if (!coachId) {
-        setLignes([]);
+        setLecture({ lignes: [], paiements: [] });
         setChargement(false);
         return;
       }
       setChargement(true);
       try {
-        const brut = await lireAvecFraicheur<LigneBrute[]>(
-          "file-du-jour",
+        const brut = await lireAvecFraicheur<Lecture>(
+          `file-du-jour:${coachId}`,
           FRAICHEUR.MINUTE,
           async () => {
             const sb = await getSupabaseClient();
-            if (!sb) return [];
+            if (!sb) return { lignes: [], paiements: [] };
 
-            // Les deux seules lectures dont la file a besoin. Pas de filtre sur
-            // le propriétaire : le RLS décide déjà de ce que ce coach peut voir,
-            // et on partitionne ensuite « à moi » / « à l'équipe ».
-            const [leads, bilans] = await Promise.all([
+            const depuis = new Date(Date.now() - FENETRE_PAIEMENT_JOURS * JOUR_MS).toISOString();
+
+            // TROIS selects, UN SEUL aller-retour. On ne rajoute pas de cascade
+            // au démarrage : c'est exactement ce qu'on a passé la matinée à
+            // retirer. Pas de filtre propriétaire sur les deux premiers — le
+            // RLS décide, et on partitionne ensuite « à moi » / « à l'équipe ».
+            const [leads, bilans, encaissements] = await Promise.all([
               sb
                 .from("prospect_leads")
                 .select("id, first_name, phone, created_at, source, assigned_to_user_id")
@@ -150,6 +173,17 @@ export function useFileDuJour(
                 .not("completed_at", "is", null)
                 .is("converted_to_client_id", null)
                 .eq("lead_status", "new"),
+              // ⚠️ `.eq(coach_user_id)` OBLIGATOIRE : la policy bilan_orders a
+              // une branche admin, sans quoi Thomas et Mélanie verraient les
+              // encaissements de toute l'équipe comme les leurs.
+              sb
+                .from("bilan_orders")
+                .select("id, prospect_first_name, amount_cents, paid_at, buyer_phone")
+                .eq("coach_user_id", coachId)
+                .eq("status", "paid")
+                .gte("paid_at", depuis)
+                .order("paid_at", { ascending: false })
+                .limit(5),
             ]);
 
             const sortie: LigneBrute[] = [];
@@ -199,16 +233,32 @@ export function useFileDuJour(
               });
             }
 
-            return sortie;
+            // ⚠️ `amount_cents` est en CENTIMES. Les edges existantes formatent
+            // en `.toFixed(0)` et perdent les centimes — on ne recopie pas.
+            const paiements: PaiementRecu[] = (encaissements.data ?? []).map((brute) => {
+              const r = brute as {
+                id: string; prospect_first_name: string | null;
+                amount_cents: number | null; paid_at: string; buyer_phone: string | null;
+              };
+              return {
+                id: r.id,
+                nom: prenom(r.prospect_first_name),
+                montantEur: (r.amount_cents ?? 0) / 100,
+                payeLe: r.paid_at,
+                telephone: r.buyer_phone,
+              };
+            });
+
+            return { lignes: sortie, paiements };
           },
           { forcer },
         );
-        setLignes(brut);
+        setLecture(brut);
       } catch (e) {
         // La file est un confort : si elle échoue, le Plan du jour garde ses
         // relances. On ne casse pas l'écran d'accueil pour ça.
         console.warn("[useFileDuJour] lecture impossible :", e);
-        setLignes([]);
+        setLecture({ lignes: [], paiements: [] });
       } finally {
         setChargement(false);
       }
@@ -221,9 +271,9 @@ export function useFileDuJour(
   }, [charger]);
 
   const relire = useCallback(() => {
-    oublier("file-du-jour");
+    if (coachId) oublier(`file-du-jour:${coachId}`);
     void charger(true);
-  }, [charger]);
+  }, [charger, coachId]);
 
   const { mesAttentes, attentesEquipe } = useMemo(() => {
     const miennes: Attente[] = [];
@@ -247,7 +297,7 @@ export function useFileDuJour(
     };
   }, [lignes, coachId, estAdmin, nomParId]);
 
-  return { mesAttentes, attentesEquipe, chargement, relire };
+  return { mesAttentes, attentesEquipe, paiements: lecture.paiements, chargement, relire };
 }
 
 function parRangPuisAnciennete(a: Attente, b: Attente): number {

@@ -46,7 +46,7 @@ const MESSAGE = {
   texte: "Coucou ! J'ai fini ma boîte de Formula 1, je reprends quoi ?",
   recuLe: ilYa(6), enAttente: true,
 };
-const PAIEMENT = { id: "o1", nom: "Manon", montantEur: 135.15, payeLe: ilYa(3) };
+const PAIEMENT = { id: "o1", nom: "Manon", montantEur: 135.15, payeLe: ilYa(3), telephone: "0612345678" };
 
 describe("l'ordre de priorité", () => {
   it("un RDV dans 20 min passe devant Matheo qui attend depuis 44 jours", () => {

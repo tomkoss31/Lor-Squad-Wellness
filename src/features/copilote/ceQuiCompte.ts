@@ -65,6 +65,8 @@ export interface PaiementRecu {
   nom: string;
   montantEur: number;
   payeLe: string;
+  /** Sans lui, « La remercier » ouvrirait un WhatsApp vide. */
+  telephone: string | null;
 }
 
 export interface Demarrage {
@@ -77,7 +79,7 @@ export interface Demarrage {
 export type CeQuiCompte =
   | { quoi: "rdv"; heure: Date; dansMinutes: number; clientId: string; nom: string; type: string }
   | { quoi: "message"; messageId: string; clientId: string; nom: string; extrait: string; ilYaMinutes: number }
-  | { quoi: "paiement"; commandeId: string; nom: string; montantEur: number; ilYaMinutes: number }
+  | { quoi: "paiement"; commandeId: string; nom: string; montantEur: number; ilYaMinutes: number; telephone: string | null }
   | { quoi: "personne"; attente: Attente; reste: number }
   | { quoi: "demarrage"; etape: number; total: number; titre: string }
   | { quoi: "rien"; resteEquipe: number };
@@ -163,6 +165,7 @@ export function ceQuiCompte(m: Matiere): CeQuiCompte {
       nom: paiement.nom,
       montantEur: paiement.montantEur,
       ilYaMinutes: minutesEntre(new Date(paiement.payeLe), maintenant),
+      telephone: paiement.telephone ?? null,
     };
   }
 
