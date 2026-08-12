@@ -208,20 +208,28 @@
    affichent simplement la photo, nette et en couleurs — jamais dégradée. */
 .cl-resultat{overflow:hidden;border-radius:14px;background:var(--slot);line-height:0}
 .cl-resultat img{width:100%;height:auto;display:block;
-  transition:transform .45s cubic-bezier(.22,.61,.36,1),filter .45s ease}
+  transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .5s ease}
 /* Au survol, on regarde de plus près — souris seulement : sur un écran
    tactile, `:hover` reste collé après le doigt et la photo garderait le zoom. */
 @media (hover:hover) and (pointer:fine){
-  .cl-resultat:hover img{transform:scale(1.045);filter:saturate(1.06)}
+  .cl-resultat:hover img{transform:scale(1.07);filter:saturate(1.12) contrast(1.04)}
 }
+/* La photo ARRIVE EN NOIR ET BLANC et prend ses couleurs en montant.
+   Première version : saturation 92 % → 100 %. Invisible — mesuré à l'écran,
+   personne ne voyait rien. Sur un avant/après, l'effet doit être franc, sinon
+   il ne raconte rien : le noir et blanc, c'est « avant », la couleur qui
+   revient, c'est le résultat. Le geste devient le sujet. */
 @keyframes clReveal{
-  from{transform:scale(1.06);filter:saturate(.92) contrast(.98)}
+  from{transform:scale(1.09);filter:grayscale(1) contrast(1.05)}
+  60%{filter:grayscale(.35) contrast(1.01)}
   to{transform:scale(1);filter:none}
 }
 @media (prefers-reduced-motion:no-preference){
   @supports (animation-timeline:view()){
+    /* Plage LONGUE (jusqu'à 70 % de traversée) : à 38 %, l'animation se
+       terminait avant que l'œil ait le temps de la suivre. */
     .cl-resultat img{animation:clReveal both;animation-timeline:view();
-      animation-range:entry 5% cover 38%}
+      animation-range:entry 8% cover 70%}
   }
 }
 

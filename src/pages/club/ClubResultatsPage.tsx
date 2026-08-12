@@ -56,6 +56,11 @@ export function ClubResultatsPage() {
               {r.nom || r.resultat ? (
                 <figcaption style={{ marginTop: 10, fontSize: 14.5, color: "var(--muted)" }}>
                   {r.nom ? <b style={{ color: "var(--ink)", fontSize: 16 }}>{r.nom}</b> : null}
+                  {/* La mention n'est pas un détail : sans elle, le résultat
+                      d'un coach se lit comme celui d'un client. */}
+                  {r.coach ? (
+                    <span style={{ marginLeft: 8, fontSize: 11.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--sage-d)", background: "color-mix(in srgb, var(--sage) 26%, transparent)", borderRadius: 6, padding: "3px 8px", verticalAlign: "middle" }}>Coach</span>
+                  ) : null}
                   {r.resultat ? (
                     <span style={{ display: "block", marginTop: 2, color: "var(--link)", fontWeight: 700 }}>{r.resultat}</span>
                   ) : null}
@@ -103,7 +108,13 @@ export function ClubResultatsPage() {
                 </figure>
               ))}
         </div>
-        <a href="https://www.labase360.fr/temoignages" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 26, color: "var(--yellow)", fontWeight: 700 }}>Les témoignages de La Base →</a>
+        {/* Le lien « Les témoignages de La Base → » pointait vers
+            labase360.fr/temoignages. Cette route N'EXISTE PAS : le serveur
+            répond 200 parce que toute URL sert l'application, et le visiteur
+            atterrissait sur le Co-pilote — l'app coach, derrière une connexion.
+            Retiré plutôt que redirigé : la page porte désormais six vrais
+            témoignages, et les avis Google sont déjà en haut de cette page. Un
+            « voir plus » de plus n'ajoutait rien qu'une sortie de route. */}
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ textAlign: "center", maxWidth: 720 }}>

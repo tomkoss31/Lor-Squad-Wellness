@@ -33,6 +33,14 @@ export type ClubResultat = {
   resultat?: string;
   /** Ses mots, si elle/il nous les a donnés. */
   mots?: string;
+  /**
+   * Vrai pour un coach du club. Une transformation de coach est une bonne
+   * preuve — il pratique ce qu'il propose — mais elle doit se VOIR : glissée
+   * sans mention parmi des résultats de membres, elle se lit comme celle d'un
+   * client, et c'est trompeur. Même règle que pour les témoignages, où celui
+   * de la co-fondatrice a été écarté pour cette raison exacte.
+   */
+  coach?: boolean;
 };
 
 /**
@@ -89,9 +97,13 @@ export const CLUB_RESULTATS: ClubResultat[] = [
   // donc même résultat, et pas de prénom répété : deux cartes « Margaux » avec
   // le même chiffre se liraient comme un doublon plutôt que comme deux vues.
   { slug: "margaux-2", resultat: "Margaux, sous un autre angle" },
+  // « Tom », c'est Thomas — d'où la mention coach. Le sommeil n'est PAS dans
+  // la légende : améliorer le sommeil est une allégation de santé qu'un aliment
+  // ne peut pas revendiquer, et une légende parle avec la voix du club, pas
+  // avec la sienne. S'il y tient, sa place est dans un témoignage signé.
+  { slug: "tom", nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
   // Sans chiffre : Thomas ne les a pas, et on n'en invente pas. La photo parle
   // seule, le prénom suffit.
-  { slug: "tom", nom: "Tom" },
   { slug: "heleane", nom: "Héléane" },
   { slug: "julie", nom: "Julie" },
 ];
