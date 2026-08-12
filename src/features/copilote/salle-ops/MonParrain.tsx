@@ -20,6 +20,7 @@
 // =============================================================================
 
 import { useAppContext } from "../../../context/AppContext";
+import { lienWhatsApp, numeroPourWhatsApp } from "../../../lib/utils/lienWhatsApp";
 
 export function MonParrain() {
   const { currentUser, users } = useAppContext();
@@ -32,18 +33,16 @@ export function MonParrain() {
   if (!parrain) return null;
 
   const prenom = (parrain.name ?? "").trim().split(/\s+/)[0] || parrain.name;
-  const tel = (parrain.phone ?? "").replace(/\D/g, "");
+  // ⚠️ wa.me refuse le zéro initial : « 0679448759 » n'ouvre AUCUNE
+  // conversation. Mon premier jet faisait exactement cette erreur.
+  const tel = numeroPourWhatsApp(parrain.phone);
   const monPrenom = (currentUser?.name ?? "").trim().split(/\s+/)[0] || "";
 
   function ecrire() {
     const message =
       `Salut ${prenom} ! C'est ${monPrenom}. ` +
       `J'ai une question sur mon démarrage, tu as 2 minutes ? 🙂`;
-    window.open(
-      `https://wa.me/${tel}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    window.open(lienWhatsApp(parrain?.phone, message), "_blank", "noopener,noreferrer");
   }
 
   return (
