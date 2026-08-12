@@ -1,6 +1,7 @@
 // Résultats — page interne « Ce qu'ils en disent, et ce qu'on ne promet pas ». v7 fidèle.
 import { ClubShell, InnerHero, R } from "./ClubShell";
 import { CLUB_RESULTATS } from "../../data/clubResultats";
+import { useClubTemoignages } from "./useClubTemoignages";
 
 // ⚠ Ces trois textes disaient « les photos arrivent » — c'était vrai quand la
 // grille au-dessus était vide. Elle ne l'est plus : les photos sont là, ce sont
@@ -12,7 +13,15 @@ const TEMOINS = [
   { txt: "En attendant, la note Google de La Base (4,9/5) parle déjà de la façon dont on accompagne les gens à Verdun.", nom: "La Base", meta: "Avis Google", top: "var(--sage)" },
 ];
 
+/** Les trois accents du club, en rotation sur les cartes. */
+const ACCENTS = ["var(--orange)", "var(--pink)", "var(--sage)"];
+
 export function ClubResultatsPage() {
+  // Sans `coachId` : les 7 témoignages approuvés appartiennent tous au
+  // propriétaire du club. Filtrer dessus obligerait la page publique à
+  // connaître son identifiant, pour un résultat identique.
+  const temoignages = useClubTemoignages();
+
   return (
     <ClubShell>
       <InnerHero pill="Résultats" pillClass="peach" title="Ce qu'ils en disent," accent="et ce qu'on ne promet pas." intro="On ne promet pas de miracle en une semaine. On montre du vrai : des membres réels, leurs mots, leurs photos — dès qu'ils nous y autorisent." />
@@ -36,18 +45,20 @@ export function ClubResultatsPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 16, marginTop: 30 }}>
           {CLUB_RESULTATS.map((r) => (
             <figure key={r.slug} style={{ margin: 0 }}>
-              <img
-                src={`/brand/breakfast-club/resultats/${r.slug}.jpg`}
-                alt={r.nom ? `${r.nom}, avant et après son accompagnement.` : "Avant et après l'accompagnement d'un membre du club."}
-                loading="lazy"
-                decoding="async"
-                style={{ width: "100%", height: "auto", borderRadius: 14, display: "block", background: "var(--slot)" }}
-              />
-              {r.nom || r.duree ? (
-                <figcaption style={{ marginTop: 9, fontSize: 14.5, color: "var(--muted)" }}>
-                  {r.nom ? <b style={{ color: "var(--ink)" }}>{r.nom}</b> : null}
-                  {r.nom && r.duree ? " · " : null}
-                  {r.duree}
+              <div className="cl-resultat">
+                <img
+                  src={`/brand/breakfast-club/resultats/${r.slug}.jpg`}
+                  alt={r.nom ? `${r.nom}, avant et après son accompagnement.` : "Avant et après l'accompagnement d'un membre du club."}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              {r.nom || r.resultat ? (
+                <figcaption style={{ marginTop: 10, fontSize: 14.5, color: "var(--muted)" }}>
+                  {r.nom ? <b style={{ color: "var(--ink)", fontSize: 16 }}>{r.nom}</b> : null}
+                  {r.resultat ? (
+                    <span style={{ display: "block", marginTop: 2, color: "var(--link)", fontWeight: 700 }}>{r.resultat}</span>
+                  ) : null}
                 </figcaption>
               ) : null}
               {r.mots ? (
@@ -64,16 +75,33 @@ export function ClubResultatsPage() {
       <div className="cl-band dark"><div className="cl-wrap cl-sec cl-rv">
         <span className="cl-pill p">Dans leurs mots</span>
         <h2 style={{ marginTop: 24, fontSize: "clamp(30px,4.6vw,58px)", color: "#fff" }}>Ce qu'ils <span className="cl-a-yellow">en retiennent.</span></h2>
+        {/* Les vrais témoignages s'ils sont chargés, le texte d'attente sinon.
+            Pas de squelette : une page vitrine qui clignote coûte plus qu'elle
+            ne rassure, et le texte d'attente est déjà une réponse honnête. */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 18, marginTop: 30 }}>
-          {TEMOINS.map((t, i) => (
-            <figure key={i} className="cl-card" style={{ background: "#fff", margin: 0, padding: "30px 28px", borderLeft: `5px solid ${t.top}` }}>
-              <blockquote style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: "var(--muted)", fontStyle: "italic" }}>« {t.txt} »</blockquote>
-              <figcaption style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
-                <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: "50%", background: t.top, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Anton" }}>•</span>
-                <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{t.nom} · <span style={{ color: "var(--muted2)" }}>{t.meta}</span></span>
-              </figcaption>
-            </figure>
-          ))}
+          {temoignages && temoignages.length > 0
+            ? temoignages.map((t, i) => (
+                <figure key={t.id} className="cl-card" style={{ background: "#fff", margin: 0, padding: "30px 28px", borderLeft: `5px solid ${ACCENTS[i % ACCENTS.length]}` }}>
+                  <blockquote style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: "var(--muted)", fontStyle: "italic" }}>« {t.texte} »</blockquote>
+                  <figcaption style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                    <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: "50%", background: ACCENTS[i % ACCENTS.length], color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Anton", fontSize: 19 }}>
+                      {t.auteur.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>
+                      {t.auteur}{t.ville ? <span style={{ color: "var(--muted2)" }}> · {t.ville}</span> : null}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))
+            : TEMOINS.map((t, i) => (
+                <figure key={i} className="cl-card" style={{ background: "#fff", margin: 0, padding: "30px 28px", borderLeft: `5px solid ${t.top}` }}>
+                  <blockquote style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: "var(--muted)", fontStyle: "italic" }}>« {t.txt} »</blockquote>
+                  <figcaption style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                    <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: "50%", background: t.top, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Anton" }}>•</span>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{t.nom} · <span style={{ color: "var(--muted2)" }}>{t.meta}</span></span>
+                  </figcaption>
+                </figure>
+              ))}
         </div>
         <a href="https://www.labase360.fr/temoignages" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 26, color: "var(--yellow)", fontWeight: 700 }}>Les témoignages de La Base →</a>
       </div></div>

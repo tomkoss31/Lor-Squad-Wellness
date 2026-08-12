@@ -196,6 +196,35 @@
   background-image:radial-gradient(currentColor 1.5px,transparent 1.6px);background-size:22px 22px}
 .cl-band.dark .cl-dots{color:rgba(244,239,228,.10)}
 
+/* ── AVANT / APRÈS — la photo prend ses couleurs en entrant dans l'écran ───
+   Le geste dit la chose : une transformation arrive éteinte et s'anime. La
+   photo monte de 92 % de saturation à 100 %, et de 1,06 d'échelle à 1 — assez
+   pour qu'on le sente, trop peu pour qu'on le remarque. Un avant/après qui
+   clignote décrédibiliserait ce qu'il montre.
+
+   `animation-timeline: view()` est le même mécanisme que celui déjà utilisé
+   par `.cl-slot img` sur ce site : l'animation suit le DÉFILEMENT, pas une
+   horloge. Sous `@supports`, donc les navigateurs qui ne le connaissent pas
+   affichent simplement la photo, nette et en couleurs — jamais dégradée. */
+.cl-resultat{overflow:hidden;border-radius:14px;background:var(--slot);line-height:0}
+.cl-resultat img{width:100%;height:auto;display:block;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1),filter .45s ease}
+/* Au survol, on regarde de plus près — souris seulement : sur un écran
+   tactile, `:hover` reste collé après le doigt et la photo garderait le zoom. */
+@media (hover:hover) and (pointer:fine){
+  .cl-resultat:hover img{transform:scale(1.045);filter:saturate(1.06)}
+}
+@keyframes clReveal{
+  from{transform:scale(1.06);filter:saturate(.92) contrast(.98)}
+  to{transform:scale(1);filter:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    .cl-resultat img{animation:clReveal both;animation-timeline:view();
+      animation-range:entry 5% cover 38%}
+  }
+}
+
 /* ── PORTRAIT DUOTONE — deux photos prises n'importe où, une seule série ───
    Le problème : les portraits de l'équipe viennent d'une piscine et d'une fête
    foraine. On ne peut pas détourer un fond en CSS — mais on peut cesser de le
