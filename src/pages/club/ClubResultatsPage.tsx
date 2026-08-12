@@ -1,4 +1,5 @@
 // Résultats — page interne « Ce qu'ils en disent, et ce qu'on ne promet pas ». v7 fidèle.
+import { useEffect } from "react";
 import { ClubShell, InnerHero, R } from "./ClubShell";
 import { CLUB_RESULTATS } from "../../data/clubResultats";
 import { useClubTemoignages } from "./useClubTemoignages";
@@ -16,11 +17,51 @@ const TEMOINS = [
 /** Les trois accents du club, en rotation sur les cartes. */
 const ACCENTS = ["var(--orange)", "var(--pink)", "var(--sage)"];
 
+/**
+ * Colore chaque avant/après quand il a été vu — une fois, puis on l'oublie.
+ *
+ * Un léger décalage par photo (90 ms) : dix qui se colorent à la même
+ * milliseconde font un clignotement de vitrine, dix qui se colorent l'une
+ * après l'autre font une vague. Le retard vient de l'ORDRE DANS LA GRILLE et
+ * non de l'ordre d'apparition, sinon la vague repartirait à l'envers quand on
+ * remonte la page.
+ */
+function useRevelationPhotos(nombre: number) {
+  useEffect(() => {
+    const cartes = Array.from(document.querySelectorAll<HTMLElement>(".cl-resultat"));
+    if (cartes.length === 0) return;
+    if (!("IntersectionObserver" in window)) {
+      cartes.forEach((c) => c.classList.add("est-vu"));
+      return;
+    }
+    const minuteries: number[] = [];
+    const io = new IntersectionObserver(
+      (entrees) => {
+        entrees.forEach((e) => {
+          if (!e.isIntersecting) return;
+          io.unobserve(e.target);
+          const rang = cartes.indexOf(e.target as HTMLElement);
+          minuteries.push(
+            window.setTimeout(() => e.target.classList.add("est-vu"), Math.max(0, rang % 4) * 90),
+          );
+        });
+      },
+      { threshold: 0.35 },
+    );
+    cartes.forEach((c) => io.observe(c));
+    return () => {
+      io.disconnect();
+      minuteries.forEach(window.clearTimeout);
+    };
+  }, [nombre]);
+}
+
 export function ClubResultatsPage() {
   // Sans `coachId` : les 7 témoignages approuvés appartiennent tous au
   // propriétaire du club. Filtrer dessus obligerait la page publique à
   // connaître son identifiant, pour un résultat identique.
   const temoignages = useClubTemoignages();
+  useRevelationPhotos(CLUB_RESULTATS.length);
 
   return (
     <ClubShell>
@@ -49,6 +90,8 @@ export function ClubResultatsPage() {
                 <img
                   src={`/brand/breakfast-club/resultats/${r.slug}.jpg`}
                   alt={r.nom ? `${r.nom}, avant et après son accompagnement.` : "Avant et après l'accompagnement d'un membre du club."}
+                  width={r.w}
+                  height={r.h}
                   loading="lazy"
                   decoding="async"
                 />

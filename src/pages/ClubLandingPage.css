@@ -207,30 +207,36 @@
    horloge. Sous `@supports`, donc les navigateurs qui ne le connaissent pas
    affichent simplement la photo, nette et en couleurs — jamais dégradée. */
 .cl-resultat{overflow:hidden;border-radius:14px;background:var(--slot);line-height:0}
-.cl-resultat img{width:100%;height:auto;display:block;
-  transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .5s ease}
+.cl-resultat img{width:100%;height:auto;display:block}
 /* Au survol, on regarde de plus près — souris seulement : sur un écran
    tactile, `:hover` reste collé après le doigt et la photo garderait le zoom. */
+/* Le survol force aussi la couleur : quelqu'un qui pointe une photo encore en
+   noir et blanc veut la voir, il n'a pas à attendre son tour. */
 @media (hover:hover) and (pointer:fine){
-  .cl-resultat:hover img{transform:scale(1.07);filter:saturate(1.12) contrast(1.04)}
+  .cl-resultat:hover img{transform:scale(1.07);filter:saturate(1.1) contrast(1.04)}
 }
-/* La photo ARRIVE EN NOIR ET BLANC et prend ses couleurs en montant.
-   Première version : saturation 92 % → 100 %. Invisible — mesuré à l'écran,
-   personne ne voyait rien. Sur un avant/après, l'effet doit être franc, sinon
-   il ne raconte rien : le noir et blanc, c'est « avant », la couleur qui
-   revient, c'est le résultat. Le geste devient le sujet. */
-@keyframes clReveal{
-  from{transform:scale(1.09);filter:grayscale(1) contrast(1.05)}
-  60%{filter:grayscale(.35) contrast(1.01)}
-  to{transform:scale(1);filter:none}
-}
-@media (prefers-reduced-motion:no-preference){
-  @supports (animation-timeline:view()){
-    /* Plage LONGUE (jusqu'à 70 % de traversée) : à 38 %, l'animation se
-       terminait avant que l'œil ait le temps de la suivre. */
-    .cl-resultat img{animation:clReveal both;animation-timeline:view();
-      animation-range:entry 8% cover 70%}
-  }
+/* La photo ARRIVE EN NOIR ET BLANC, puis prend ses couleurs. Sur un avant /
+   après, le geste raconte la chose : le noir et blanc c'est « avant », la
+   couleur qui revient c'est le résultat.
+
+   DEUX TENTATIVES AVANT CELLE-CI, et pourquoi elles ont échoué :
+     1. saturation 92 % → 100 % en scroll-driven : invisible à l'œil.
+     2. noir et blanc en scroll-driven, plage allongée : ça MARCHAIT (mesuré,
+        grayscale 0,21 en cours de course) mais l'effet se joue PENDANT que la
+        photo entre. Dans une grille de dix, quand on arrive à la section elles
+        ont toutes fini leur course — on ne le voit que par hasard.
+   D'où le passage à un déclenchement ponctuel : la photo attend d'avoir été
+   vue, puis se colore lentement, une seule fois. C'est la vue qui déclenche,
+   pas la position — donc ça ne dépend plus de la vitesse du défilement.
+   Bonus : `animation-timeline` n'existe pas sur Safari ; un IntersectionObserver
+   et une transition, si. */
+.cl-resultat img{filter:grayscale(1) contrast(1.05)}
+.cl-resultat.est-vu img{filter:none}
+.cl-resultat img{transition:transform .5s cubic-bezier(.22,.61,.36,1),filter .95s ease-out}
+/* Mouvement réduit : on donne la photo en couleurs, tout de suite. Le noir et
+   blanc n'est pas décoratif — le laisser figé priverait de l'information. */
+@media (prefers-reduced-motion:reduce){
+  .cl-resultat img{filter:none;transition:none}
 }
 
 /* ── PORTRAIT DUOTONE — deux photos prises n'importe où, une seule série ───

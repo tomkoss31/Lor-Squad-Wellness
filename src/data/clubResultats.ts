@@ -23,6 +23,18 @@
 export type ClubResultat = {
   /** Nom du fichier dans public/brand/breakfast-club/resultats/ (sans .jpg). */
   slug: string;
+  /**
+   * Dimensions RÉELLES du fichier. Deux raisons, pas une :
+   *  · sans elles, le navigateur ne réserve aucune place et la page saute au
+   *    fur et à mesure des chargements ;
+   *  · surtout, les cartes font alors zéro pixel de haut au montage, donc
+   *    toutes empilées dans l'écran — et l'observateur qui déclenche la mise en
+   *    couleur les voyait TOUTES d'un coup. L'effet était joué avant qu'on
+   *    arrive à la section. Bug mesuré le 2026-08-11.
+   * À relever avec les vraies valeurs pour toute nouvelle photo.
+   */
+  w: number;
+  h: number;
   /** Prénom, si on l'a. Vide = la photo s'affiche sans légende. */
   nom?: string;
   /**
@@ -87,23 +99,23 @@ export const CLUB_TEMOIGNAGES_PUBLIES: string[] = [
 ];
 
 export const CLUB_RESULTATS: ClubResultat[] = [
-  { slug: "joel", nom: "Joël", resultat: "−20 kg en 6 mois" },
-  { slug: "marie", nom: "Marie", resultat: "−17 kg et −60 cm en 18 mois" },
-  { slug: "margaux", nom: "Margaux", resultat: "−16 kg en un an" },
-  { slug: "jean", nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
-  { slug: "fanny", nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
-  { slug: "lucas", nom: "Lucas", resultat: "De la masse musculaire en plus" },
+  { slug: "joel", w: 1125, h: 1107, nom: "Joël", resultat: "−20 kg en 6 mois" },
+  { slug: "marie", w: 1224, h: 1171, nom: "Marie", resultat: "−17 kg et −60 cm en 18 mois" },
+  { slug: "margaux", w: 1280, h: 1280, nom: "Margaux", resultat: "−16 kg en un an" },
+  { slug: "jean", w: 1280, h: 945, nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
+  { slug: "fanny", w: 828, h: 816, nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
+  { slug: "lucas", w: 1280, h: 1280, nom: "Lucas", resultat: "De la masse musculaire en plus" },
   // Même personne que ci-dessus, sous un autre angle (confirmé par Thomas) —
   // donc même résultat, et pas de prénom répété : deux cartes « Margaux » avec
   // le même chiffre se liraient comme un doublon plutôt que comme deux vues.
-  { slug: "margaux-2", resultat: "Margaux, sous un autre angle" },
+  { slug: "margaux-2", w: 1280, h: 1280, resultat: "Margaux, sous un autre angle" },
   // « Tom », c'est Thomas — d'où la mention coach. Le sommeil n'est PAS dans
   // la légende : améliorer le sommeil est une allégation de santé qu'un aliment
   // ne peut pas revendiquer, et une légende parle avec la voix du club, pas
   // avec la sienne. S'il y tient, sa place est dans un témoignage signé.
-  { slug: "tom", nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
+  { slug: "tom", w: 1280, h: 1112, nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
   // Sans chiffre : Thomas ne les a pas, et on n'en invente pas. La photo parle
   // seule, le prénom suffit.
-  { slug: "heleane", nom: "Héléane" },
-  { slug: "julie", nom: "Julie" },
+  { slug: "heleane", w: 1125, h: 1112, nom: "Héléane" },
+  { slug: "julie", w: 1312, h: 1288, nom: "Julie" },
 ];
