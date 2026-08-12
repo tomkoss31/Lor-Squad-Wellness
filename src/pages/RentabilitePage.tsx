@@ -318,17 +318,10 @@ export function RentabilitePage() {
             </span>
           </div>
 
-          {/* B6 (2026-06-13) : clarifie Rentabilité vs FLEX. Mini-lien croisé. */}
+          {/* Le renvoi vers FLEX est tombé avec lui (ménage du 12/08/2026). */}
           <div className="lr-fadeup">
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "var(--ls-rentab-ink-3)" }}>
-              Rentabilité = ta <strong style={{ color: "var(--ls-rentab-ink)" }}>marge réelle</strong> : vente directe + overrides.{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/flex")}
-                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--ls-rentab-teal)", fontWeight: 600, textDecoration: "underline" }}
-              >
-                Voir tes paliers FLEX →
-              </button>
+              Rentabilité = ta <strong style={{ color: "var(--ls-rentab-ink)" }}>marge réelle</strong> : vente directe + overrides.
             </p>
           </div>
 

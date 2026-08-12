@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { lireMonProfil } from "../services/monProfil";
 import {
   STARTER_TASKS,
   STARTER_ACTIVATION_KEYS,
@@ -69,12 +70,13 @@ export function useStarterPlan(): UseStarterPlanResult {
         setLoading(false);
         return;
       }
-      const [progressRes, userRes] = await Promise.all([
+      const [progressRes, profil] = await Promise.all([
         sb
           .from("distributor_starter_progress")
           .select("task_key, status, meta")
           .eq("user_id", currentUser.id),
-        sb.from("users").select("activated_at, starter_started_at").eq("id", currentUser.id).single(),
+        // Ligne mutualisée : la pastille de retour lisait la même (2026-08-12).
+        lireMonProfil(currentUser.id),
       ]);
 
       if (!progressRes.error) {
@@ -84,10 +86,9 @@ export function useStarterPlan(): UseStarterPlanResult {
         }
         setStatuses(next);
       }
-      if (!userRes.error && userRes.data) {
-        const u = userRes.data as { activated_at: string | null; starter_started_at: string | null };
-        setActivatedAt(u.activated_at ?? null);
-        setStarterStartedAt(u.starter_started_at ?? null);
+      if (profil) {
+        setActivatedAt(profil.activated_at ?? null);
+        setStarterStartedAt(profil.starter_started_at ?? null);
       }
     } catch {
       // Silent fail (migration peut ne pas être appliquée)

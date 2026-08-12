@@ -20,7 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
-import { ClientRelanceButton } from "../reminders/ClientRelanceButton";
 import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction, type PriorityAction } from "../../hooks/useClientPriorityAction";
@@ -857,7 +856,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           onEditRdv={onEditRdv}
         />
         <MessageTemplatesButton client={client} variant="tile" />
-        <ClientRelanceButton client={client} variant="tile" />
       </div>
 
       {/* Protocole de suivi J+1 -> J+14 (composant reel : envoi + log DB). Ancre

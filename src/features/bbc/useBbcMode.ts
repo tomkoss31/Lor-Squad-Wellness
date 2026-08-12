@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import type { Club } from "../../types/domain";
+import { lireMonProfil } from "../../services/monProfil";
 
 const PREVIEW_KEY = "ls-bbc-preview"; // 'bbc' | 'classic' (admins uniquement)
 
@@ -69,12 +70,9 @@ export function useBbcMode(
           setLoading(false);
           return;
         }
-        const { data: u } = await sb
-          .from("users")
-          .select("club_model")
-          .eq("id", userId)
-          .maybeSingle();
-        const cm = (u as { club_model?: string } | null)?.club_model;
+        // Ligne mutualisee : sept endroits lisaient la meme (audit 2026-08-12).
+        const u = await lireMonProfil(userId);
+        const cm = u?.club_model;
         if (!cancelled && (cm === "bbc" || cm === "classic")) setClubModel(cm);
 
         const { data: rows } = await sb

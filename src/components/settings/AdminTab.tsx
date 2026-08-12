@@ -16,6 +16,8 @@ import { StatistiquesTab } from "./StatistiquesTab";
 import { DebugTab } from "./DebugTab";
 import { AdminPaymentStatusTab } from "./AdminPaymentStatusTab";
 import { GhostFicheCleanupTab } from "./GhostFicheCleanupTab";
+import { useAppLevel } from "../../hooks/useAppLevel";
+import type { FeatureKey } from "../../config/appVisibility";
 
 export type AdminSection = "transferts" | "stats" | "encaissement" | "menage" | "debug";
 
@@ -30,7 +32,7 @@ const SECTIONS: Array<{ key: AdminSection; label: string; icon: string }> = [
 // Pages admin pleines (routes dédiées guardées RoleRoute admin). Rapatriées ici
 // depuis le hub « Mon développement » (B5 2026-06-13) : leur seule porte d'entrée
 // vit désormais dans Paramètres > Admin, pas dans le hub pédago.
-const ADMIN_PAGES: Array<{ icon: string; title: string; desc: string; path: string }> = [
+const ADMIN_PAGES: Array<{ icon: string; title: string; desc: string; path: string; feature?: FeatureKey }> = [
   {
     icon: "🛠",
     title: "Admin Prospection",
@@ -42,24 +44,30 @@ const ADMIN_PAGES: Array<{ icon: string; title: string; desc: string; path: stri
     title: "Newsletters",
     desc: "Crée, édite et envoie les éditions La Base 360 News.",
     path: "/admin/newsletters",
+    // Ménage du 12/08/2026 : 2 lettres, ZÉRO abonné. La page reste ouverte.
+    feature: "admin.newsletters",
   },
   {
     icon: "📣",
     title: "Campagnes",
     desc: "Relances et annonces email : import de contacts, envoi, ouvertures et clics suivis.",
     path: "/admin/campagnes",
+    // Ménage du 12/08/2026 : 2 campagnes depuis la mise en service.
+    feature: "admin.campagnes",
   },
 ];
 
 export function AdminTab({ initialSection = "transferts" }: { initialSection?: AdminSection }) {
   const [section, setSection] = useState<AdminSection>(initialSection);
   const navigate = useNavigate();
+  const { can } = useAppLevel();
+  const pagesVisibles = ADMIN_PAGES.filter((p) => !p.feature || can(p.feature));
 
   return (
     <div className="space-y-5">
       {/* Pages admin (navigations vers des routes dédiées) */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
-        {ADMIN_PAGES.map((p) => (
+        {pagesVisibles.map((p) => (
           <button
             key={p.path}
             type="button"

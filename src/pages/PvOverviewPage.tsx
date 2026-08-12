@@ -61,7 +61,9 @@ export function PvOverviewPage() {
     }
   }
   // Plan PV (utile a la fois pour l'encart en haut + pour categoriser le kanban)
-  const planQuery = usePvActionPlan(currentUser?.id ?? null);
+  // Onglet DÉDIÉ : on relit pour de vrai à chaque ouverture, contrairement au
+  // Co-pilote qui se contente d'une lecture par jour (décision Thomas 2026-08-12).
+  const planQuery = usePvActionPlan(currentUser?.id ?? null, { fraisALOuverture: true });
 
   // Tracker "verifie PV" (2026-04-29) : marque chaque ouverture de fiche
   // pour afficher un badge "vu" sur la liste + kanban.

@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { FRAICHEUR, cleDuJour, lireAvecFraicheur } from "../lib/cacheFraicheur";
 
 export type PvStatus = "delayed" | "on_track" | "ahead";
 
@@ -60,27 +61,47 @@ interface UsePvActionPlanResult {
   reload: () => Promise<void>;
 }
 
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 min
-
-export function usePvActionPlan(userId: string | null | undefined): UsePvActionPlanResult {
+/**
+ * @param options.fraisALOuverture  à poser sur la PAGE PV DÉDIÉE uniquement.
+ *   Ailleurs (Co-pilote), le plan est relu une fois par jour : Thomas l'a
+ *   tranché le 2026-08-12 — « PV du mois, clients dormants, c'est une fois par
+ *   jour ou à l'ouverture de l'onglet dédié ».
+ */
+export function usePvActionPlan(
+  userId: string | null | undefined,
+  options?: { fraisALOuverture?: boolean },
+): UsePvActionPlanResult {
   const [data, setData] = useState<PvActionPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const frais = options?.fraisALOuverture ?? false;
 
-  const fetchPlan = useCallback(async () => {
+  const fetchPlan = useCallback(async (forcer = false) => {
     if (!userId) {
       setLoading(false);
       return;
     }
     setError(null);
     try {
-      const sb = await getSupabaseClient();
-      if (!sb) throw new Error("Supabase indisponible");
-      const { data: result, error: rpcError } = await sb.rpc("get_pv_action_plan", {
-        p_user_id: userId,
-      });
-      if (rpcError) throw rpcError;
-      setData(result as PvActionPlan);
+      // Deux composants du Co-pilote appellent cette RPC en même temps
+      // (l'alerte et la carte) : le cache partagé n'en laisse partir qu'une.
+      // La clé est DATÉE — un cache de 24 h glissantes chargé le 31 à 23 h
+      // afficherait encore le PV du mois écoulé le 1er au matin.
+      const result = await lireAvecFraicheur<PvActionPlan>(
+        cleDuJour(`plan-pv:${userId}`),
+        FRAICHEUR.JOUR,
+        async () => {
+          const sb = await getSupabaseClient();
+          if (!sb) throw new Error("Supabase indisponible");
+          const { data: r, error: rpcError } = await sb.rpc("get_pv_action_plan", {
+            p_user_id: userId,
+          });
+          if (rpcError) throw rpcError;
+          return r as PvActionPlan;
+        },
+        { forcer: forcer || frais },
+      );
+      setData(result);
     } catch (err) {
       // Extraction d erreur robuste — PostgrestError n est PAS une instance
       // d Error donc err.message etait toujours undefined → "Erreur inconnue"
@@ -97,14 +118,19 @@ export function usePvActionPlan(userId: string | null | undefined): UsePvActionP
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, frais]);
 
   useEffect(() => {
     void fetchPlan();
-    if (!userId) return;
-    const id = window.setInterval(fetchPlan, REFRESH_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [fetchPlan, userId]);
+  }, [fetchPlan]);
 
-  return { data, loading, error, reload: fetchPlan };
+  // Le rechargement automatique toutes les 5 minutes est RETIRÉ (2026-08-12).
+  // Le PV du mois ne bouge que lorsque le coach saisit une commande — et dans
+  // ce cas c'est lui qui recharge. Douze requêtes par heure et par onglet
+  // ouvert, sur une base qui a déjà gelé une fois faute de mémoire, pour une
+  // donnée dont Thomas dit qu'une lecture par jour suffit.
+
+  const reload = useCallback(() => fetchPlan(true), [fetchPlan]);
+
+  return { data, loading, error, reload };
 }

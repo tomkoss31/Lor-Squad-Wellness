@@ -30,6 +30,7 @@ import type {
 import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import { getRecommendableProductById } from "../lib/assessmentRecommendations";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
+import { viderTout } from "../lib/cacheFraicheur";
 
 type UserRow = {
   id: string;
@@ -57,6 +58,7 @@ type UserRow = {
   /** Agenda V2 (2026-07-27) : duree par defaut d'un RDV, en minutes. */
   default_rdv_minutes?: number | null;
   city?: string | null;
+  phone?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
   frozen_at?: string | null;
@@ -356,6 +358,10 @@ function mapUser(row: UserRow): User {
     defaultRdvMinutes:
       typeof row.default_rdv_minutes === "number" ? row.default_rdv_minutes : undefined,
     city: row.city ?? null,
+    // ⚠️ Sans cette ligne, `currentUser.phone` restait toujours vide : le champ
+    // Téléphone des Paramètres serait parti à blanc et aurait EFFACÉ le numéro
+    // existant à la première sauvegarde (repéré avant livraison, 12/08/2026).
+    phone: row.phone ?? undefined,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,
     frozenAt: row.frozen_at ?? null,
@@ -685,6 +691,10 @@ export async function loginWithSupabaseCredentials(payload: {
 export async function logoutFromSupabase() {
   const client = await requireSupabase();
   await client.auth.signOut();
+  // Le cache de fraîcheur garde des données jusqu'à une semaine, et le
+  // localStorage survit à la déconnexion : sans ce vidage, le coach suivant
+  // qui se connecte sur le même navigateur verrait les chiffres du précédent.
+  viderTout();
 }
 
 export async function fetchSupabaseUsers() {

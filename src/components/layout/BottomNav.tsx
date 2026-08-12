@@ -28,7 +28,6 @@ export function BottomNav() {
   if (
     p.includes("/assessments/new") ||
     /^\/clients\/[^/]+/.test(p) ||
-    p.startsWith("/flex") ||
     p.startsWith("/rentabilite") ||
     p.startsWith("/pv") ||
     p.startsWith("/panier")

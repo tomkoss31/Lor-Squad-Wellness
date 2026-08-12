@@ -1,13 +1,21 @@
 import { NavLink } from "react-router-dom";
 import type { User } from "../../types/domain";
+import { useAppLevel } from "../../hooks/useAppLevel";
+import type { FeatureKey } from "../../config/appVisibility";
 
-const tabs = [
+const tabs: Array<{ label: string; path: string; adminOnly: boolean; feature?: FeatureKey }> = [
   { label: "Vue globale", path: "/pv", adminOnly: false },
-  { label: "Vue équipe", path: "/pv/team", adminOnly: true }
+  // Ménage du 12/08/2026 : la vue équipe lit la même saisie manuelle que la
+  // Rentabilité — dernière écriture il y a 49 jours. L'onglet quitte la barre ;
+  // la route /pv/team reste ouverte pour qui a le lien.
+  { label: "Vue équipe", path: "/pv/team", adminOnly: true, feature: "business.pv-equipe" },
 ];
 
 export function PvModuleTabs({ currentUser }: { currentUser: User }) {
-  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || currentUser.role === "admin");
+  const { can } = useAppLevel();
+  const visibleTabs = tabs.filter(
+    (tab) => (!tab.adminOnly || currentUser.role === "admin") && (!tab.feature || can(tab.feature)),
+  );
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>

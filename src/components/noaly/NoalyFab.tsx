@@ -47,7 +47,6 @@ interface UiMessage {
 
 const ALLOWED_ROUTES = new Set([
   "/co-pilote",
-  "/flex",
   "/agenda",
   "/messages",
   "/clients",
@@ -55,7 +54,6 @@ const ALLOWED_ROUTES = new Set([
   "/pv",
   "/outils-prospection",
   "/developpement",
-  "/routine-du-jour",
   "/cahier-de-bord",
   "/parametres",
 ]);
@@ -75,9 +73,6 @@ function suggestionsForRoute(path: string): string[] {
   }
   if (path.startsWith("/clients")) {
     return ["Quels clients sont inactifs depuis 30 jours ?", "Ouvre la fiche de…"];
-  }
-  if (path.startsWith("/flex")) {
-    return ["Explique-moi la formule 5-3-1", "Je suis en retard sur mes cibles, je fais quoi ?"];
   }
   return [
     "Quels clients je devrais relancer ?",
