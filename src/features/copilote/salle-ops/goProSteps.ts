@@ -68,6 +68,58 @@ export const ACTIVATION_GATES = [
   "premier_pv_pack",
 ] as const;
 
+// =============================================================================
+// LE CHOIX DE L'ÉTAPE EN COURS (2026-08-12)
+//
+// Règle : une étape ne retient le fil que si l'app peut CONSTATER sa preuve.
+// Ce qu'elle ne sait pas mesurer, elle le propose — elle ne le bloque pas.
+//
+// Avant, l'étape en cours était « la première non cochée ». Résultat mesuré :
+// dix coachs sur onze figés à l'étape 1 (« commande 250 PV », un lien vers
+// myHerbalife que l'app ne peut pas vérifier), Maria comprise avec ses
+// 41 bilans. Le parcours ne guidait pas : il mentait.
+//
+// Fonctions PURES, sans React ni base : c'est ce qui les rend testables, et
+// les tests portent les vrais profils des coachs (cf. __tests__).
+// =============================================================================
+
+/**
+ * L'étape porte-t-elle une preuve constatable qui manque encore ?
+ *
+ * ⚠️ `estMesurable` reçoit AUSSI la `lessonKey` de l'étape. Sans ça, « Relancer »
+ * passerait pour non mesurable : sa porte s'appelle `relances_3` alors que sa
+ * leçon — celle qui porte le compteur de 3 gestes — s'appelle `relancer`.
+ * Le piège a été rencontré et corrigé le 12/08/2026 ; un test le garde.
+ */
+export function retientLeFil(
+  step: GoProStepDef,
+  estFaite: (gate: string) => boolean,
+  estMesurable: (gate: string, lessonKey?: string) => boolean,
+): boolean {
+  if (step.locked) return false;
+  const mesurables = step.gates.filter((gate) => estMesurable(gate, step.lessonKey));
+  if (mesurables.length === 0) return false; // que du déclaratif → on propose
+  return !mesurables.every(estFaite);
+}
+
+/**
+ * Index (0-based) de l'étape à mettre en avant.
+ *
+ * 1. La première qui retient vraiment le fil.
+ * 2. Sinon, la première SANS porte — « Démarrer ta recrue », puis
+ *    « Dupliquer » : les compétences continues, jamais terminées.
+ * 3. Sinon, la dernière.
+ */
+export function choisirEtapeActive(
+  estFaite: (gate: string) => boolean,
+  estMesurable: (gate: string, lessonKey?: string) => boolean,
+): number {
+  const bloquante = GO_PRO_STEPS.findIndex((g) => retientLeFil(g, estFaite, estMesurable));
+  if (bloquante !== -1) return bloquante;
+  const sansPorte = GO_PRO_STEPS.findIndex((g) => !g.locked && g.gates.length === 0);
+  return sansPorte !== -1 ? sansPorte : GO_PRO_STEPS.length - 1;
+}
+
 /** Phases du parcours, dérivées du numéro d'étape. */
 export type OpsPhase = "allumage" | "acceleration" | "profondeur" | "levier";
 
