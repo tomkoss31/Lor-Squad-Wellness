@@ -116,12 +116,13 @@ export function SalleOpsQuotidien({
 
           <div style={hair} />
 
+          {/* Maquette validée du 12/08/2026 — LE BUT PREND LA VEDETTE.
+              « Aujourd'hui » occupait tout le haut de l'écran sans rien dire :
+              on lisait le nom de la page, puis l'étape, puis seulement le titre
+              de la leçon en plus petit. Le vrai sujet arrivait en troisième.
+              Il passe devant ; « Aujourd'hui » redevient une mention. */}
           <div style={{ ...MONO, fontSize: 11, letterSpacing: ".2em", color: "var(--ls-ops-muted)", textTransform: "uppercase", marginBottom: 4 }}>
-            La Base Académie
-          </div>
-          <h1 className="ls-ops-display" style={title}>Aujourd'hui</h1>
-          <div style={{ ...MONO, fontSize: 11, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ls-ops-faint)", marginTop: 6 }}>
-            Coach en formation {view.activated ? "· lancé·e 🚀" : `· étape ${view.activeStepNumber}/${view.totalSteps}`}
+            La Base Académie · Aujourd'hui
           </div>
 
           {/* Jalon J30-45 : prêt pour le plan marketing. */}
@@ -148,14 +149,16 @@ export function SalleOpsQuotidien({
           {/* LEÇON : Apprendre → Faire → Preuve */}
           {lesson ? (
             <div style={{ marginTop: 24 }}>
-              <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 4 }}>
-                {/* `goProStep` est un index (0 = S'équiper) alors que l'en-tête
-                    affiche « Étape N sur 7 » en comptant à partir de 1 : on
-                    lisait « Étape 4 · Relancer » sous « Étape 5 sur 7 ».
-                    Deux numéros pour la même étape (repéré 2026-08-04). */}
-                Étape {lesson.goProStep + 1} · {lesson.goProLabel}
+              <div style={butEyebrow}>
+                {/* `goProStep` est un index (0 = S'équiper) alors que le compteur
+                    dit « Étape N sur 7 » à partir de 1 : on lisait « Étape 4 ·
+                    Relancer » sous « Étape 5 sur 7 » (repéré 2026-08-04). */}
+                {isActiveShown ? "Ton but · " : ""}étape {lesson.goProStep + 1} · {lesson.goProLabel}
               </div>
-              <h2 className="ls-ops-display" style={lessonTitle}>{lesson.title}</h2>
+              <h1 className="ls-ops-display" style={butTitre}>{lesson.title}</h1>
+              {/* APPRENDRE sort de sa carte : c'est le « pourquoi » du but, il
+                  se lit d'un trait, pas dans un tiroir étiqueté « 1 · 30 sec ». */}
+              <p style={butApprendre}>{lesson.apprendre}</p>
 
               {!isActiveShown ? (
                 <div style={reviewBanner}>
@@ -168,14 +171,11 @@ export function SalleOpsQuotidien({
                 </div>
               ) : null}
 
-              <div style={{ ...softCard, marginTop: 14 }}>
-                <div style={stepTag}>1 · Apprendre · 30 sec</div>
-                <p style={lessonText}>{lesson.apprendre}</p>
-              </div>
-
+              {/* L'ACTION reste toujours visible : c'est le geste du jour, il ne
+                  se replie pas. Le reste (preuve, réponses) passe en volets. */}
               <div style={limeCard}>
                 <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-on-accent2)", marginBottom: 8 }}>
-                  2 · Faire · maintenant
+                  Ce que tu fais maintenant
                 </div>
                 <p style={{ fontSize: 14.5, lineHeight: 1.5, color: "var(--ls-ops-on-accent)", margin: 0, fontWeight: 500 }}>
                   {lesson.faire.instruction}
@@ -187,8 +187,7 @@ export function SalleOpsQuotidien({
                 ) : null}
               </div>
 
-              <div style={{ ...softCard, marginTop: 12 }}>
-                <div style={stepTag}>3 · Preuve · c'est gagné quand…</div>
+              <Volet titre="C'est gagné quand…" defaut>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
@@ -265,20 +264,18 @@ export function SalleOpsQuotidien({
                     là pour t'accompagner.
                   </div>
                 )}
-              </div>
+              </Volet>
 
-              {/* Réponses prêtes (« comment répondre ») */}
+              {/* Réponses prêtes — repliées : on les ouvre au moment où on se
+                  fait objecter, pas avant. */}
               {lesson.repondre && lesson.repondre.length > 0 ? (
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", margin: "8px 0 10px" }}>
-                    Réponses prêtes · comment répondre
-                  </div>
+                <Volet titre={`Si on te dit… (${lesson.repondre.length})`}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {lesson.repondre.map((r) => (
                       <Repondre key={r.situation} situation={r.situation} reponse={r.reponse} />
                     ))}
                   </div>
-                </div>
+                </Volet>
               ) : null}
             </div>
           ) : null}
@@ -393,6 +390,53 @@ export function SalleOpsQuotidien({
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
+
+/**
+ * Volet repliable — maquette validée du 12/08/2026.
+ *
+ * Avant, la leçon s'étalait en trois cartes toujours ouvertes : APPRENDRE,
+ * FAIRE, PREUVE, plus les réponses aux objections. Un écran de haut, à faire
+ * défiler avant d'atteindre le bouton. Le débutant lisait tout, ou rien.
+ *
+ * Désormais : le but et l'action restent à découvert — c'est ce qu'on fait
+ * aujourd'hui. La preuve et les réponses attendent qu'on en ait besoin.
+ */
+function Volet({
+  titre,
+  defaut,
+  children,
+}: {
+  titre: string;
+  /** Ouvert au premier rendu (la preuve : on aime savoir où on va). */
+  defaut?: boolean;
+  children: React.ReactNode;
+}) {
+  const [ouvert, setOuvert] = useState(Boolean(defaut));
+  return (
+    <div style={{ ...softCard, marginTop: 10, padding: 0, overflow: "hidden" }}>
+      <button
+        type="button"
+        onClick={() => setOuvert((v) => !v)}
+        aria-expanded={ouvert}
+        style={voletTete}
+      >
+        <span style={{ flex: 1, textAlign: "left" }}>{titre}</span>
+        <span
+          aria-hidden="true"
+          style={{
+            color: "var(--ls-ops-accent-text)",
+            fontWeight: 700,
+            transform: ouvert ? "rotate(90deg)" : "none",
+            transition: "transform .18s",
+          }}
+        >
+          ›
+        </span>
+      </button>
+      {ouvert ? <div style={{ padding: "0 16px 16px" }}>{children}</div> : null}
+    </div>
+  );
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -640,27 +684,59 @@ const hair: React.CSSProperties = {
   margin: "14px 0 18px",
 };
 
-const title: React.CSSProperties = {
-  fontSize: "clamp(40px, 12vw, 56px)",
-  lineHeight: 0.9,
-  letterSpacing: ".01em",
-  color: "var(--ls-ops-ink)",
-  margin: 0,
-};
 
-const lessonTitle: React.CSSProperties = {
-  fontSize: "clamp(30px, 9vw, 40px)",
-  lineHeight: 0.94,
-  letterSpacing: ".01em",
-  color: "var(--ls-ops-ink)",
-  margin: 0,
-};
 
 const softCard: React.CSSProperties = {
   background: "var(--ls-ops-surface)",
   border: "1px solid var(--ls-ops-border)",
   borderRadius: 16,
   padding: 16,
+};
+
+// ─── Le but (maquette validée 12/08/2026) ───────────────────────────────────
+
+/** L'étape et la phase, au-dessus du but — petit, pour laisser la place. */
+const butEyebrow: React.CSSProperties = {
+  fontFamily: "var(--ls-ops-font-mono)",
+  fontSize: 11,
+  letterSpacing: ".14em",
+  textTransform: "uppercase",
+  color: "var(--ls-ops-accent-text)",
+  fontWeight: 600,
+  marginBottom: 6,
+};
+
+/** LE but. Même échelle que l'ancien « Aujourd'hui » — il la mérite mieux. */
+const butTitre: React.CSSProperties = {
+  fontSize: "clamp(34px, 9.5vw, 48px)",
+  lineHeight: 0.94,
+  letterSpacing: ".01em",
+  margin: 0,
+  color: "var(--ls-ops-ink)",
+};
+
+/** Le « pourquoi », d'un trait, sans étiquette ni carte. */
+const butApprendre: React.CSSProperties = {
+  fontSize: 14.5,
+  lineHeight: 1.6,
+  color: "var(--ls-ops-text3)",
+  margin: "14px 0 4px",
+  maxWidth: "58ch",
+};
+
+const voletTete: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  padding: "14px 16px",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: 14,
+  fontWeight: 600,
+  color: "var(--ls-ops-ink)",
 };
 
 /** Étape proposée, jamais imposée — trait discontinu : rien n'est dû ici. */
@@ -677,14 +753,6 @@ const proposeeCard: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const stepTag: React.CSSProperties = {
-  fontFamily: "var(--ls-ops-font-mono)",
-  fontSize: 11,
-  letterSpacing: ".14em",
-  textTransform: "uppercase",
-  color: "var(--ls-ops-accent-text)",
-  marginBottom: 8,
-};
 
 const lessonText: React.CSSProperties = {
   fontSize: 14,
