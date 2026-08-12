@@ -104,8 +104,8 @@ export const STARTER_TASKS: StarterTask[] = [
     emoji: "💬",
     title: "Tiens 5 conversations par jour",
     why: "La loi des moyennes : plus tu exposes, plus tu recrutes.",
-    linkPath: "/flex",
-    linkLabel: "Suivre mes cibles FLEX",
+    // Le lien menait a FLEX, retire au menage du 12/08/2026. L'etape reste :
+    // c'est une habitude a prendre, pas un ecran a ouvrir.
   },
   {
     key: "premier_hom",
@@ -118,15 +118,6 @@ export const STARTER_TASKS: StarterTask[] = [
     // 2 personnes sur 19 l'avaient cochée, et ça bloquait l'activation de tout
     // le monde. L'étape reste au programme, elle ne verrouille plus rien.
     // ⚠ Miroir du serveur — cf. ACTIVATION_GATES dans salle-ops/goProSteps.ts.
-  },
-  {
-    key: "flex_plan",
-    week: 2,
-    emoji: "⚡",
-    title: "Pose ton plan FLEX",
-    why: "Tes cibles du jour : invitations, RDV, closings. Ton GPS.",
-    linkPath: "/flex",
-    linkLabel: "Configurer mon FLEX",
   },
 
   // ─── Semaine 3 — Premiers bilans ──────────────────────────────────────────

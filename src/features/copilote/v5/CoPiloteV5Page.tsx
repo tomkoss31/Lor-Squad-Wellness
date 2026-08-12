@@ -38,7 +38,6 @@ import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 // Liste privée « à relancer » (in-app, sans email/push) — 2026-06-30.
-import { CoachRemindersWidget } from "../../../components/reminders/CoachRemindersWidget";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
 import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
 import { useSalleOps } from "../salle-ops/useSalleOps";
@@ -318,8 +317,9 @@ export function CoPiloteV5Page() {
           si aucun event. Bouton WhatsApp avec message pre-rempli. */}
       <CelebrationCard />
 
-      {/* Liste privée « à relancer » (in-app only, jamais d'email/push au client). */}
-      <CoachRemindersWidget />
+      {/* Liste privee « a relancer » retiree au menage du 12/08/2026 :
+          2 rappels crees en 90 jours, dernier il y a 38 jours — pour un cron
+          qui tournait 48 fois par jour. */}
 
       {/* ═══ PLAN DU JOUR (refonte chantier 1, design Claude Design validé) ═══
           Le nouveau héros : file d'actions priorisée (RDV + relances propres +

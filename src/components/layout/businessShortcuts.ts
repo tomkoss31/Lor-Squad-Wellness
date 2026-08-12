@@ -10,7 +10,9 @@
 //   - Encaissement AJOUTÉ et remonté en tête : c'est l'outil qui fait rentrer
 //     l'argent, il était absent du menu (seulement une carte perdue en 3e
 //     section de /outils). Ordre = vendre/encaisser → partager → mesurer.
-//   - FLEX passe en niveau « complet » (0 check-in en base depuis le lancement)
+//
+// Ménage du 12/08/2026 : FLEX retiré (0 check-in depuis le lancement,
+// fonction supprimée) et « Prospecter » passé en niveau complet.
 // =============================================================================
 
 import type { FeatureKey } from "../../config/appVisibility";
@@ -37,7 +39,6 @@ export const BUSINESS_SHORTCUTS: BusinessShortcut[] = [
   { label: "Rentabilité", path: "/rentabilite", emoji: "💎", feature: "business.rentabilite" },
   { label: "Suivi PV", path: "/pv", emoji: "💰", feature: "business.pv" },
   { label: "Plan Marketing", path: "/plan-marketing", emoji: "🪜", feature: "business.plan-marketing" },
-  { label: "FLEX", path: "/flex", emoji: "⚡", feature: "business.flex" },
 ];
 
 // Vrai si la route courante appartient au hub « Mon business » (pour auto-ouvrir
