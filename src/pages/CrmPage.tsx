@@ -202,6 +202,51 @@ export function CrmPage() {
     [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids],
   );
 
+  // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
+  //
+  // Fatiha a rempli le tunnel /reserver deux fois, à 10 h 12 puis à 11 h 44 :
+  // deux fiches dans le CRM pour une seule personne. Le repère ⚠️ existait
+  // déjà, mais il SIGNALAIT sans regrouper — et seulement sur le téléphone.
+  //
+  // On regroupe sur l'email OU le téléphone normalisé. La fiche la plus
+  // RÉCENTE devient la ligne visible ; les autres sont repliées derrière un
+  // badge « n fiches ». Rien n'est supprimé en base : c'est un regroupement
+  // d'affichage, réversible en retirant ces lignes.
+  //
+  // Le regroupement se fait APRÈS le filtrage : filtrer sur « Colis » ne doit
+  // pas faire disparaître une fiche colis parce qu'elle serait absorbée par
+  // une fiche d'une autre source.
+  const { regroupes, doublonsDe } = useMemo(() => {
+    const cle = (l: CrmLead): string | null => {
+      const c = (l.contact ?? "").trim().toLowerCase();
+      if (!c) return null;
+      if (c.includes("@")) return "e:" + c;
+      const tel = c.replace(/\D/g, "").replace(/^0+/, "").replace(/^33/, "");
+      return tel.length >= 8 ? "t:" + tel.slice(-9) : null;
+    };
+    const paquets = new Map<string, CrmLead[]>();
+    const seuls: CrmLead[] = [];
+    for (const l of filtered) {
+      const k = cle(l);
+      if (!k) { seuls.push(l); continue; }
+      const p = paquets.get(k);
+      if (p) p.push(l); else paquets.set(k, [l]);
+    }
+    const principaux: CrmLead[] = [...seuls];
+    const doublons = new Map<string, CrmLead[]>();
+    for (const groupe of paquets.values()) {
+      // Le plus récent porte le fil : c'est celui qui reflète l'intention
+      // actuelle de la personne.
+      const tries = [...groupe].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      principaux.push(tries[0]);
+      if (tries.length > 1) doublons.set(tries[0].key, tries.slice(1));
+    }
+    principaux.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return { regroupes: principaux, doublonsDe: doublons };
+  }, [filtered]);
+
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
     const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
@@ -574,7 +619,8 @@ export function CrmPage() {
         <div style={hint}>Chargement de tes leads…</div>
       ) : viewMode === "list" ? (
         <CrmLeadsListView
-          leads={filtered}
+          leads={regroupes}
+          doublonsDe={doublonsDe}
           msgCtx={msgCtx}
           archived={view === "archived"}
           onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
@@ -595,7 +641,7 @@ export function CrmPage() {
               : "Aucun lead ne correspond aux filtres."
           }
         />
-      ) : filtered.length === 0 ? (
+      ) : regroupes.length === 0 ? (
         <div style={emptyState}>
           {view === "archived"
             ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
@@ -607,7 +653,7 @@ export function CrmPage() {
         </div>
       ) : view === "archived" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 560 }}>
-          {filtered.map((lead) => (
+          {regroupes.map((lead) => (
             <LeadCard
               key={lead.key}
               lead={lead}
@@ -629,7 +675,7 @@ export function CrmPage() {
             ? (["converted", "lost"] as CrmStatus[])
             : (["new", "contacted", "qualified"] as CrmStatus[])
           ).map((status) => {
-            const col = filtered.filter((l) => l.status === status);
+            const col = regroupes.filter((l) => l.status === status);
             const isDragOver = dragOverStatus === status;
             return (
               <div

@@ -701,11 +701,27 @@ export async function fetchSupabaseUsers() {
   return data.map((row) => mapUser(row as UserRow));
 }
 
+/** Les colonnes des bilans SAUF `questionnaire`.
+ *
+ *  MESURÉ le 2026-08-12 : le démarrage transférait 2,17 Mo de JSON, dont
+ *  1,53 Mo pour « tous les clients avec tous leurs bilans ». À elle seule, la
+ *  colonne `questionnaire` en pèse 586 Ko — 35 % du total, la suivante fait
+ *  55 Ko. Or elle n'est lue que par cinq PAGES (fiche client, suivi, édition
+ *  de bilan, panier, portefeuille) : personne n'en a besoin pour afficher une
+ *  liste ou le Co-pilote.
+ *
+ *  ⚠️ Une nouvelle colonne ajoutée à `assessments` doit être ajoutée ICI,
+ *  sinon elle ne sera pas chargée au démarrage. C'est volontairement le sens
+ *  le plus sûr : on oublie de charger, on ne casse pas.
+ */
+const COLONNES_BILAN_SANS_QUESTIONNAIRE =
+  "id, client_id, date, type, objective, program_id, program_title, summary, notes, next_follow_up, body_scan, pedagogical_focus, created_at, decision_client, type_de_suite, message_a_laisser, coach_notes_draft, coach_notes_initial, water_target_l, protein_target_g, sport_frequency, sport_types, sport_sub_objective, current_intake";
+
 export async function fetchSupabaseClients() {
   const client = await requireSupabase();
   const { data, error } = await client
     .from("clients")
-    .select("*, assessments(*)")
+    .select(`*, assessments(${COLONNES_BILAN_SANS_QUESTIONNAIRE})`)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -729,6 +745,36 @@ export async function fetchSupabaseClients() {
   if (!data) return [] as Client[];
 
   return (data as ClientRow[]).map(mapClient);
+}
+
+/** Les `questionnaire` seuls, chargés en SECOND — voir le commentaire de
+ *  `COLONNES_BILAN_SANS_QUESTIONNAIRE`.
+ *
+ *  Pourquoi une seconde passe plutôt qu'un chargement à la demande dans les
+ *  cinq pages qui en ont besoin : à la demande, chacune devrait gérer son
+ *  attente, et une page oubliée afficherait un bilan VIDE sans prévenir. Ici,
+ *  l'app démarre sans les 586 Ko, puis les reçoit une seconde plus tard —
+ *  bien avant que quiconque ait eu le temps d'ouvrir une fiche client. Aucune
+ *  page à modifier, aucun écran qui peut mentir.
+ */
+export async function fetchAssessmentQuestionnaires(): Promise<Map<string, unknown>> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("assessments")
+    .select("id, questionnaire")
+    .not("questionnaire", "is", null);
+
+  if (error) {
+    // Non bloquant : l'app fonctionne sans, seules les 5 pages qui lisent le
+    // questionnaire seraient incomplètes. On le dit fort dans la console.
+    console.error("[fetchAssessmentQuestionnaires] échec — les fiches bilan seront incomplètes", error);
+    return new Map();
+  }
+  const par = new Map<string, unknown>();
+  for (const r of (data ?? []) as Array<{ id: string; questionnaire: unknown }>) {
+    par.set(r.id, r.questionnaire);
+  }
+  return par;
 }
 
 export async function fetchSupabaseFollowUps() {
