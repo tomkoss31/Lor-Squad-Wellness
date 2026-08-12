@@ -41,32 +41,41 @@ export type ClubResultat = {
  * ⚠️ LISTE EXPLICITE, ET SURTOUT PAS UN TIRAGE AUTOMATIQUE de tout ce qui est
  * « approuvé ». La modération de l'app valide qu'un témoignage est authentique ;
  * elle ne dit rien de ce qu'on a le droit d'écrire sur une vitrine de nutrition.
- * Sur les sept approuvés, la relecture du 2026-08-11 en a écarté cinq :
+ * Sans cette liste, le prochain témoignage validé partirait en ligne sans
+ * qu'aucun œil ne le relise.
  *
- *   Maria     ✕ finit par « je rejoins l'équipe pour accompagner d'autres
- *               personnes » — un message de recrutement dans un témoignage
- *               produit. C'est précisément le mélange que les règles de conduite
- *               Herbalife interdisent, et il transforme la page en annonce.
- *   Mélanie   ✕ c'est la CO-FONDATRICE. Publier son texte parmi des avis de
- *               membres le fait passer pour celui d'une cliente indépendante.
- *               C'est le point le plus grave des sept.
- *   Virginie  ✕ cite « herbalife », « le thé aloès », « mon shake », et
- *               « moins essoufflé ». Marque + produits nommés + symptôme.
- *   Romane    ✕ cite « les produits Herbalife ». Le site du club ne nomme la
- *               marque nulle part — ce texte la ferait entrer par la bande.
- *   Marjorie  ✕ « moins ballonnée » : décrire l'amélioration d'un symptôme
- *               digestif, c'est une allégation de santé. Un aliment ne peut pas
- *               revendiquer d'agir sur un trouble.
+ * RELECTURE DU 2026-08-11 — cinq des sept posaient un problème. Quatre ont été
+ * CORRIGÉS EN RETIRANT la phrase fautive, jamais en réécrivant leurs mots, et
+ * la version publiable vit dans `public_excerpt` : le `content` d'origine, ce
+ * que la personne a réellement écrit, n'est pas touché.
  *
- * Restent les deux qui ne parlent que de ressenti et d'accompagnement, sans
- * marque, sans produit nommé, sans symptôme, sans chiffre : Sabrina et Judith.
+ *   Maria     retiré « je rejoins l'équipe pour accompagner d'autres
+ *             personnes » — du recrutement dans un témoignage produit, le
+ *             mélange que les règles de conduite interdisent. Et « essoufflée »,
+ *             qui est un symptôme.
+ *   Romane    retiré « les produits Herbalife » : le site du club ne nomme la
+ *             marque nulle part, ce texte la faisait entrer par la bande.
+ *   Marjorie  retiré « moins ballonnée » : améliorer un trouble digestif est
+ *             une allégation de santé, qu'un aliment ne peut pas revendiquer.
+ *   Virginie  retiré la marque, « le thé aloès », « mon shake » et « moins
+ *             essoufflé ». Orthographe remise d'aplomb, propos inchangé.
  *
- * Pour en ajouter un : le relire avec cette grille, puis coller son id ici.
+ *   Mélanie   ✕ NON PUBLIÉE, et aucune coupe n'y changerait rien : c'est la
+ *             CO-FONDATRICE. Le problème n'est pas ce qu'elle écrit, c'est
+ *             qu'un avis de la patronne au milieu d'avis de membres se lit
+ *             comme celui d'une cliente indépendante.
+ *
+ * Pour en ajouter un : le relire avec cette grille — marque, produit nommé,
+ * symptôme, promesse de soigner, recrutement — puis coller son id ici.
  * Liste vide = la page garde son texte d'attente, qui reste vrai.
  */
 export const CLUB_TEMOIGNAGES_PUBLIES: string[] = [
-  "93384eb5-dd5a-4897-adb9-fd39d67c7075", // Sabrina
-  "4fff49ff-5e55-4145-a9d3-ef0a3713c291", // Judith
+  "93384eb5-dd5a-4897-adb9-fd39d67c7075", // Sabrina — propre d'origine
+  "4fff49ff-5e55-4145-a9d3-ef0a3713c291", // Judith  — propre d'origine
+  "e66704f5-4a2f-471f-8888-ce23e927f825", // Maria    — corrigée
+  "57853580-71b0-48ce-98ee-8c82d33dc3dc", // Romane   — corrigée
+  "38339b70-6154-4914-a163-836abd3c7913", // Marjorie — corrigée
+  "c27018ec-84ca-4e09-9c0f-17f6b7ee7928", // Virginie — corrigée
 ];
 
 export const CLUB_RESULTATS: ClubResultat[] = [
@@ -76,17 +85,13 @@ export const CLUB_RESULTATS: ClubResultat[] = [
   { slug: "jean", nom: "Jean", resultat: "−12 kg, et l'énergie revenue" },
   { slug: "fanny", nom: "Fanny", resultat: "−6 kg de masse grasse en 9 mois" },
   { slug: "lucas", nom: "Lucas", resultat: "De la masse musculaire en plus" },
-  // ⚠️ EN ATTENTE — ne pas remplir au jugé :
-  // · tom       Thomas a écrit « + 4 kg de masse grasse ». Pris au mot, ça
-  //             annonce une prise de GRAISSE comme une réussite. C'est
-  //             sûrement « +4 kg de masse musculaire » ou « −4 kg de masse
-  //             grasse » — deux choses opposées, à trancher par lui.
-  // · margaux-2 Deux photos portent le prénom Margaux. Le « −16 kg en un an »
-  //             s'applique-t-il aux deux (même personne, deux angles) ou
-  //             s'agit-il d'une autre personne ?
-  // · heleane, julie  Aucun chiffre communiqué.
+  // Même personne que ci-dessus, sous un autre angle (confirmé par Thomas) —
+  // donc même résultat, et pas de prénom répété : deux cartes « Margaux » avec
+  // le même chiffre se liraient comme un doublon plutôt que comme deux vues.
+  { slug: "margaux-2", resultat: "Margaux, sous un autre angle" },
+  // Sans chiffre : Thomas ne les a pas, et on n'en invente pas. La photo parle
+  // seule, le prénom suffit.
   { slug: "tom", nom: "Tom" },
-  { slug: "margaux-2", nom: "Margaux" },
   { slug: "heleane", nom: "Héléane" },
   { slug: "julie", nom: "Julie" },
 ];
