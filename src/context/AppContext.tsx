@@ -18,6 +18,7 @@ import {
 } from "../services/appDataService";
 import { isSupabaseUnavailable, getSupabaseClient } from "../services/supabaseClient";
 import {
+  fetchAssessmentQuestionnaires,
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
   createSupabaseActivityLog,
@@ -314,6 +315,27 @@ export function AppProvider({ children }: PropsWithChildren) {
       ]);
 
       setClients(nextClients);
+
+      // ── Les questionnaires, en seconde passe (2026-08-12) ─────────────────
+      //
+      // 586 Ko retirés du chemin critique : l'app s'affiche sans eux, ils
+      // arrivent une seconde plus tard. On ne bloque PAS `refreshRemoteData`
+      // dessus — c'est tout l'intérêt.
+      //
+      // Fusion par id de bilan. Si l'appel échoue, les bilans restent sans
+      // questionnaire et les 5 pages qui le lisent sont incomplètes : c'est
+      // signalé en console par la fonction elle-même, jamais en silence.
+      void fetchAssessmentQuestionnaires().then((parId) => {
+        if (parId.size === 0) return;
+        setClients((prev) =>
+          prev.map((c) => ({
+            ...c,
+            assessments: (c.assessments ?? []).map((a) =>
+              parId.has(a.id) ? { ...a, questionnaire: parId.get(a.id) as typeof a.questionnaire } : a,
+            ),
+          })),
+        );
+      });
       setFollowUps(nextFollowUps);
       setUsers(nextUsers);
       setPvTransactions(nextPvTransactions);
