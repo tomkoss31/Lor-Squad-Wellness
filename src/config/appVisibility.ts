@@ -49,15 +49,17 @@ export type FeatureKey =
   | "business.boutique"
   | "business.prospecter"
   | "business.plan-marketing"
-  | "business.flex"
   | "business.liste-100"
+  | "business.pv-equipe"
+  // ── Pages d'administration ─────────────────────────────────────────────
+  | "admin.newsletters"
+  | "admin.campagnes"
   // ── Pédagogie / perso ──────────────────────────────────────────────────
   | "dev.hub"
   | "dev.formation"
   | "dev.academy"
   | "dev.cahier-de-bord"
-  | "dev.simulateur-ebe"
-  | "dev.routine-du-jour";
+  | "dev.simulateur-ebe";
 
 /**
  * Niveau minimum requis pour qu'une feature apparaisse dans les menus.
@@ -80,27 +82,40 @@ export const FEATURE_LEVEL: Record<FeatureKey, AppLevel> = {
   // « demander l'accès » permet de le réclamer — cf. LOT 4.
   "nav.developpement": "complet",
 
-  // ── Mon business : Thomas a choisi de tout garder visible… ──────────────
+  // ── Mon business ───────────────────────────────────────────────────────
   "business.encaissement": "essentiel", // remonté en tête (LOT 3)
   "business.panier": "essentiel",
   "business.ventes-comptoir": "essentiel",
   "business.mes-liens": "essentiel",
-  "business.rentabilite": "essentiel",
+  "business.rentabilite": "essentiel", // gardée : refonte dédiée à venir (Thomas 12/08)
   "business.pv": "essentiel",
   "business.boutique": "essentiel",
-  "business.prospecter": "essentiel",
-  "business.plan-marketing": "essentiel",
-  // ── … sauf ces deux-là, retirés explicitement ──────────────────────────
-  "business.flex": "complet", // 0 check-in en base depuis le lancement
+  "business.plan-marketing": "essentiel", // gardée : « utile, c'est juste du visuel »
+  // ── … sauf celles-ci, retirées des menus ───────────────────────────────
   "business.liste-100": "complet", // 13 contacts, 100 % Thomas
+  // Ménage du 12/08 : 87 jours sans une tentative, 2 en tout depuis le
+  // lancement — pour 4 profils × 6 marchés × 10 sections. Cette clé couvre
+  // « Prospecter » (/outils-prospection) ET la prospection froide (/prospection),
+  // qui n'est atteignable que par là.
+  "business.prospecter": "complet",
+  // Vue équipe du Suivi PV : même source que la Rentabilité, dernière saisie
+  // il y a 49 jours. La vue globale (/pv) reste, elle.
+  "business.pv-equipe": "complet",
+
+  // ── Administration ─────────────────────────────────────────────────────
+  // Ménage du 12/08 : 2 lettres et ZÉRO abonné · 2 campagnes.
+  "admin.newsletters": "complet",
+  "admin.campagnes": "complet",
 
   // ── Pédagogie ──────────────────────────────────────────────────────────
   "dev.hub": "complet",
-  "dev.academy": "essentiel", // tuto de l'app : 5 personnes l'ont finie
+  // Ménage du 12/08 : doublon avec la Formation, qui fait la même chose en
+  // mieux (47 progressions + 83 questions, vivante) quand l'Academy stagne
+  // depuis 35 jours. Une seule porte pour apprendre.
+  "dev.academy": "complet",
   "dev.formation": "essentiel", // rattachée au cockpit Académie (LOT 4)
   "dev.cahier-de-bord": "complet",
   "dev.simulateur-ebe": "complet",
-  "dev.routine-du-jour": "complet", // 9 cochages en tout ; reste joignable via la notif 20h
 };
 
 /** Vrai si la feature doit apparaître dans les menus pour ce niveau. */

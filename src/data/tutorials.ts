@@ -26,11 +26,6 @@ export const TUTORIALS: Record<string, TutorialVideo> = {
     description: "Ta page d'accueil : RDV, suivis, jauge PV, météo.",
     youtubeUrl: "",
   },
-  flex: {
-    title: "Comprendre FLEX",
-    description: "Tes cibles, ta marge, comment lire le tableau de bord.",
-    youtubeUrl: "",
-  },
   bilan: {
     title: "Faire un bilan client",
     description: "De la prise de mesures au programme proposé.",

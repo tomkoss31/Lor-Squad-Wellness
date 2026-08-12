@@ -175,7 +175,6 @@ export function AppLayout() {
   const pageTitle = (() => {
     const p = location.pathname;
     if (p === "/dashboard" || p === "/co-pilote") return "Co-pilote";
-    if (p === "/flex") return "FLEX";
     if (p === "/agenda") return "Agenda";
     if (p === "/messages") return "Messagerie";
     if (p === "/clients") return "Clients";
@@ -187,7 +186,6 @@ export function AppLayout() {
     if (p.startsWith("/pv")) return "Suivi PV";
     if (p === "/rentabilite") return "Rentabilité";
     if (p === "/outils") return "Mon business";
-    if (p === "/routine-du-jour") return "Routine";
     if (p === "/cahier-de-bord") return "Cahier de bord";
     if (p === "/developpement") return "Développement";
     if (p.startsWith("/developpement/")) return "Développement";
@@ -340,8 +338,7 @@ export function AppLayout() {
                   location.pathname.startsWith("/guide") ||
                   location.pathname.startsWith("/academy") ||
                   location.pathname.startsWith("/cahier-de-bord") ||
-                  location.pathname.startsWith("/simulateur-ebe") ||
-                  location.pathname.startsWith("/routine-du-jour")
+                  location.pathname.startsWith("/simulateur-ebe")
                 ));
 
               // Bouton "+ Nouveau bilan" : ancré au PREMIER item de la section

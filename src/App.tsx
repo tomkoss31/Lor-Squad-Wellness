@@ -514,21 +514,6 @@ const FormationCertificatePage = lazy(() =>
   }))
 );
 // Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
-const FlexOnboardingPage = lazy(() =>
-  import("./pages/FlexOnboardingPage").then((module) => ({
-    default: module.FlexOnboardingPage,
-  })),
-);
-const FlexDashboardPage = lazy(() =>
-  import("./pages/FlexDashboardPage").then((module) => ({
-    default: module.FlexDashboardPage,
-  })),
-);
-const FlexTeamPage = lazy(() =>
-  import("./pages/FlexTeamPage").then((module) => ({
-    default: module.FlexTeamPage,
-  })),
-);
 const CharterPage = lazy(() =>
   import("./pages/CharterPage").then((module) => ({
     default: module.CharterPage,
@@ -563,11 +548,6 @@ const DeveloppementHubPage = lazy(() =>
   })),
 );
 // FLEX expliqué (2026-05-04) — tuto pédagogique 5-3-1.
-const FlexExpliquePage = lazy(() =>
-  import("./pages/FlexExpliquePage").then((module) => ({
-    default: module.FlexExpliquePage,
-  })),
-);
 // Prospection expliquée (2026-05-19) — tuto kit V4.
 const ProspectionExpliquePage = lazy(() =>
   import("./pages/ProspectionExpliquePage").then((module) => ({
@@ -575,17 +555,7 @@ const ProspectionExpliquePage = lazy(() =>
   })),
 );
 // Check-list expliquée (2026-05-20) — tuto routine 5 actions/jour.
-const CheckListExpliquePage = lazy(() =>
-  import("./pages/CheckListExpliquePage").then((module) => ({
-    default: module.CheckListExpliquePage,
-  })),
-);
 // Routine du jour (chantier #2 V2, 2026-05-20) — page dédiée check-list.
-const RoutineDuJourPage = lazy(() =>
-  import("./pages/RoutineDuJourPage").then((module) => ({
-    default: module.RoutineDuJourPage,
-  })),
-);
 // Suivis du jour (2026-06-03) — page dédiée destination du digest matinal.
 const SuivisDuJourPage = lazy(() =>
   import("./pages/SuivisDuJourPage").then((module) => ({
@@ -831,12 +801,9 @@ export default function App() {
               {/* Preview provisoire Salle des Opérations (slice 1, recette look). */}
               <Route path="salle-ops" element={<SalleDesOperationsPage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
-                  quotidien du distri. /flex = dashboard, /flex/onboarding =
-                  wizard 5 questions. */}
-              <Route path="flex" element={<FlexDashboardPage />} />
-              <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
-              <Route path="flex/equipe" element={<FlexTeamPage />} />
+              {/* FLEX retiré au ménage du 12/08/2026 : zéro check-in en base
+                  depuis son lancement, et ses 6 notifications étaient déjà
+                  coupées. Récupérable dans l'historique git. */}
               {/* Charte du Distributeur (2026-05-03) — refonte premium
                   art déco. /charte = perso distri (signable). Ancienne
                   route /formation/charte redirige ici. */}
@@ -852,13 +819,12 @@ export default function App() {
               {/* Simulateur EBE (2026-05-04) — entraînement scripté. */}
               <Route path="simulateur-ebe" element={<SimulateurEbePage />} />
               {/* Hub Développement (2026-05-04) — regroupe academy/formation/
-                  cahier/simulateur/flex-explique/nouveautés. Sidebar Option B. */}
+                  cahier/simulateur/nouveautés. Sidebar Option B. */}
               <Route path="developpement" element={<DeveloppementHubPage />} />
-              <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
-              <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
-              <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
+              {/* Routine du jour retiree au menage du 12/08/2026 :
+                  9 cochages en tout, dernier il y a 51 jours. */}
               {/* Ancien « Mon démarrage 30 jours » retiré (remplacé par la Salle
                   des Opérations sur /co-pilote). Redirige les vieux liens. */}
               <Route path="demarrage" element={<Navigate to="/co-pilote" replace />} />
