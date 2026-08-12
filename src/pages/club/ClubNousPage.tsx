@@ -51,21 +51,31 @@ export function ClubNousPage() {
     <ClubShell>
       <InnerHero pill="Nous" pillClass="s" title="Mélanie, Thomas," accent="et un local rue Saint Pierre." intro="Pas une franchise anonyme. Deux personnes de Verdun qui accompagnent des gens depuis quatre ans, et un lieu bien réel où l'on t'attend le matin." />
 
-      <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>
-        <Slot
-          ratio="16/9"
-          label="Mélanie & Thomas au club"
-          sub="portrait de l'équipe"
-          frame="peach"
-          src="/brand/breakfast-club/photos/equipe-paysage.jpg"
-          alt="Mélanie et Thomas au club, devant le mur végétal et l'enseigne lumineuse La Base."
-        />
-      </div></div>
-
-      <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0, maxWidth: 760 }}>
-        <p style={{ fontSize: 20, lineHeight: 1.8, color: "var(--muted)" }}>On a commencé simplement : aider des proches à reprendre de bonnes habitudes le matin. Puis d'autres sont venus, et une évidence s'est imposée — ce qui manque à la plupart des gens, ce n'est pas la connaissance, c'est un cadre et quelqu'un qui suit.</p>
-        <p style={{ fontSize: 20, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Le club, c'est ça mis en lieu et en heure. Un local, un rituel, une équipe qui te connaît par ton prénom. Rien de sophistiqué — juste tenu, tous les matins.</p>
-        <p style={{ fontFamily: "Anton", fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.08, marginTop: 26 }}>On ne t'accueille pas comme un client. <span className="cl-a-sage">On t'attend comme un habitué.</span></p>
+      {/* La photo passe À CÔTÉ du texte au lieu d'occuper un bandeau seule :
+          la page était « une grande image, puis un pavé de texte », les deux
+          se lisent mieux appariés.
+          MAIS elle reste la photo PAYSAGE, et pas le selfie de l'accueil :
+          celui-ci serait alors sur deux pages, et un visiteur qui passe de
+          l'une à l'autre verrait deux fois la même image. Celle-ci est aussi
+          la meilleure photographie des deux — le tableau « Poids / Masse
+          musculaire / Masse grasse » derrière eux raconte le suivi sans un
+          mot. Son 16/9 natif tient sans aucun recadrage dans une colonne. */}
+      <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: "clamp(20px,3vw,36px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: "clamp(30px,5vw,60px)", alignItems: "center" }}>
+          <Slot
+            ratio="16/9"
+            label="Mélanie & Thomas au club"
+            sub="portrait de l'équipe"
+            frame="peach"
+            src="/brand/breakfast-club/photos/equipe-paysage.jpg"
+            alt="Mélanie et Thomas au club, devant le mur végétal et l'enseigne lumineuse La Base."
+          />
+          <div>
+            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)" }}>On a commencé simplement : aider des proches à reprendre de bonnes habitudes le matin. Puis d'autres sont venus, et une évidence s'est imposée — ce qui manque à la plupart des gens, ce n'est pas la connaissance, c'est un cadre et quelqu'un qui suit.</p>
+            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Le club, c'est ça mis en lieu et en heure. Un local, un rituel, une équipe qui te connaît par ton prénom. Rien de sophistiqué — juste tenu, tous les matins.</p>
+            <p style={{ fontFamily: "Anton", fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.08, marginTop: 26 }}>On ne t'accueille pas comme un client. <span className="cl-a-sage">On t'attend comme un habitué.</span></p>
+          </div>
+        </div>
       </div></div>
 
       <div className="cl-band dark"><div className="cl-wrap cl-sec cl-rv">
