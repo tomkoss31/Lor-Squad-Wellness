@@ -250,14 +250,14 @@ export function ClubLandingPage() {
                 label="Mélanie & Thomas"
                 sub="l'équipe au club"
                 frame="peach"
-                // Le selfie devant le néon a remplacé le portrait posé : plus
-                // vrai, et il montre le lieu en même temps que les visages.
-                // Format 9:16 dans un cadre 4:5 → il faut dire QUOI garder :
-                // « 50% 22% » remonte la fenêtre pour conserver l'enseigne et
-                // les deux visages, là où un centrage coupait le néon.
-                src="/brand/breakfast-club/photos/equipe-selfie.jpg"
-                position="50% 22%"
-                alt="Mélanie et Thomas, les coachs du club, souriants devant le mur végétal et l'enseigne lumineuse La Base."
+                // La section s'appelle « Tu n'es jamais seul » : elle parle du
+                // GROUPE. Une photo de la tablée y dit ce que deux visages,
+                // même souriants, ne peuvent pas dire — le selfie est parti sur
+                // la page « Nous », qui parle d'eux (arbitrage Thomas, juste).
+                // Source en 3:4 dans un cadre 4:5 : presque aucun recadrage.
+                src="/brand/breakfast-club/photos/club-equipe-table.jpg"
+                position="50% 38%"
+                alt="Des membres et l'équipe attablés au club un matin, autour des boissons du rituel."
               />
             </div>
             <div style={{ order: 1 }}>

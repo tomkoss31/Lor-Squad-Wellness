@@ -51,24 +51,24 @@ export function ClubNousPage() {
     <ClubShell>
       <InnerHero pill="Nous" pillClass="s" title="Mélanie, Thomas," accent="et un local rue Saint Pierre." intro="Pas une franchise anonyme. Deux personnes de Verdun qui accompagnent des gens depuis quatre ans, et un lieu bien réel où l'on t'attend le matin." />
 
-      {/* La photo passe À CÔTÉ du texte au lieu d'occuper un bandeau seule :
-          la page était « une grande image, puis un pavé de texte », les deux
-          se lisent mieux appariés.
-          MAIS elle reste la photo PAYSAGE, et pas le selfie de l'accueil :
-          celui-ci serait alors sur deux pages, et un visiteur qui passe de
-          l'une à l'autre verrait deux fois la même image. Celle-ci est aussi
-          la meilleure photographie des deux — le tableau « Poids / Masse
-          musculaire / Masse grasse » derrière eux raconte le suivi sans un
-          mot. Son 16/9 natif tient sans aucun recadrage dans une colonne. */}
+      {/* Répartition décidée par Thomas, et elle est juste : le SELFIE ici,
+          parce que cette page parle d'EUX ; la photo de groupe sur l'accueil,
+          parce que la section « Tu n'es jamais seul » parle du groupe. Chaque
+          image va là où elle raconte quelque chose.
+          La photo passe aussi à CÔTÉ du texte : la page était « une grande
+          image, puis un pavé », et un portrait 9:16 en pleine largeur ferait
+          deux mètres de haut sur un écran d'ordinateur. En colonne, son format
+          vertical devient un atout. */}
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: "clamp(20px,3vw,36px)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: "clamp(30px,5vw,60px)", alignItems: "center" }}>
           <Slot
-            ratio="16/9"
-            label="Mélanie & Thomas au club"
+            ratio="4/5"
+            label="Mélanie & Thomas"
             sub="portrait de l'équipe"
             frame="peach"
-            src="/brand/breakfast-club/photos/equipe-paysage.jpg"
-            alt="Mélanie et Thomas au club, devant le mur végétal et l'enseigne lumineuse La Base."
+            src="/brand/breakfast-club/photos/equipe-selfie.jpg"
+            position="50% 22%"
+            alt="Mélanie et Thomas, souriants devant le mur végétal et l'enseigne lumineuse La Base."
           />
           <div>
             <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)" }}>On a commencé simplement : aider des proches à reprendre de bonnes habitudes le matin. Puis d'autres sont venus, et une évidence s'est imposée — ce qui manque à la plupart des gens, ce n'est pas la connaissance, c'est un cadre et quelqu'un qui suit.</p>
