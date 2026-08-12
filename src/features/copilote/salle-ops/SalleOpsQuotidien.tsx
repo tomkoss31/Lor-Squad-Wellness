@@ -15,6 +15,7 @@ import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
 import { InviteDistributorModal } from "../../../components/users/InviteDistributorModal";
 import { AllerPlusLoin } from "./AllerPlusLoin";
+import { MonParrain } from "./MonParrain";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
@@ -59,6 +60,16 @@ export function SalleOpsQuotidien({
   const phaseIndex = Math.max(0, view.phaseIndex);
   const phaseLabel = OPS_PHASES[phaseIndex]?.label ?? "Allumage";
   const activeLabel = view.steps.find((s) => s.state === "active")?.label ?? "";
+
+  /**
+   * Les étapes DÉPASSÉES sans être faites — celles dont l'app ne peut pas
+   * constater la preuve (250 PV sur myHerbalife, Liste 100, 1ʳᵉ story, HOM).
+   * Elles sont proposées, jamais imposées : c'est la contrepartie du fait
+   * qu'elles ne bloquent plus le parcours depuis le 12/08/2026.
+   */
+  const proposees = view.steps.filter(
+    (s) => s.n < activeN && s.state !== "done" && s.state !== "locked" && !s.bloquante && s.lesson,
+  );
 
   /** Clic sur une étape du parcours → on la revoit (sauf verrouillée). */
   function pickStep(n: number) {
@@ -272,6 +283,43 @@ export function SalleOpsQuotidien({
             </div>
           ) : null}
 
+          {/* ── PAS ENCORE FAIT ? ────────────────────────────────────────────
+              Depuis le 12/08/2026, une étape que l'app ne sait pas CONSTATER
+              ne retient plus le fil (cf. goProSteps). Conséquence : les 250 PV,
+              la Liste 100 et la 1ʳᵉ story sont désormais dépassées en silence.
+              Sans ce bloc, leurs leçons ne seraient plus atteignables qu'en
+              tapant un petit repère du parcours — autant dire jamais.
+              Elles sont donc PROPOSÉES ici, jamais imposées. */}
+          {proposees.length > 0 ? (
+            <div style={{ marginTop: 22 }}>
+              <SectionLabel>Pas encore fait ? Quand tu veux</SectionLabel>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {proposees.map((s) => (
+                  <button
+                    key={s.n}
+                    type="button"
+                    onClick={() => pickStep(s.n)}
+                    style={proposeeCard}
+                  >
+                    <span style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                      <span style={{ display: "block", ...MONO, fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>
+                        Étape {s.n} · {s.label}
+                      </span>
+                      <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: "var(--ls-ops-ink)", marginTop: 2 }}>
+                        {s.lesson?.title}
+                      </span>
+                    </span>
+                    <span aria-hidden="true" style={{ color: "var(--ls-ops-accent-text)", fontWeight: 700, flex: "none" }}>→</span>
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-ops-faint)", margin: "10px 0 0" }}>
+                Ces étapes comptent, mais l'app ne peut pas les vérifier à ta
+                place — elles ne bloquent donc plus ta progression.
+              </p>
+            </div>
+          ) : null}
+
           {/* Qui inviter (données réelles) */}
           <QuiInviterLive />
 
@@ -297,6 +345,8 @@ export function SalleOpsQuotidien({
           </div>
 
           {/* Progression — inline mobile, masqué desktop (→ rail) */}
+          <MonParrain />
+
           <div className="ls-ops-hide-desktop">
             <SectionLabel>Ton parcours · {view.totalSteps} étapes</SectionLabel>
             <Progression view={view} activeLabel={activeLabel} shownN={shownN} onPick={pickStep} />
@@ -324,6 +374,9 @@ export function SalleOpsQuotidien({
           <button type="button" onClick={() => askNoaly(lesson?.noalyPrompt)} style={railNoalyBtn}>
             Demander à Noaly →
           </button>
+          {/* Le fil de sécurité ci-dessus nomme le parrain depuis toujours —
+              sans jamais donner le moyen de le joindre (12/08/2026). */}
+          <MonParrain />
           {/* La porte « apprendre » des coachs (LOT 4, 2026-07-27) : formation
               Herbalife, scripts et glossaire, rapatriés ici depuis le hub
               « Mon développement » qui devient l'espace de Thomas. */}
@@ -608,6 +661,20 @@ const softCard: React.CSSProperties = {
   border: "1px solid var(--ls-ops-border)",
   borderRadius: 16,
   padding: 16,
+};
+
+/** Étape proposée, jamais imposée — trait discontinu : rien n'est dû ici. */
+const proposeeCard: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  background: "var(--ls-ops-surface)",
+  border: "1px dashed var(--ls-ops-border)",
+  borderRadius: 14,
+  padding: "12px 14px",
+  cursor: "pointer",
+  fontFamily: "inherit",
 };
 
 const stepTag: React.CSSProperties = {
