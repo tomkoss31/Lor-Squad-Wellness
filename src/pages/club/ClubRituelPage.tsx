@@ -35,7 +35,10 @@ const SUIVI = [
 
 export function ClubRituelPage() {
   return (
-    <ClubShell>
+    <ClubShell
+      title="Le rituel du matin — Breakfast Club Verdun"
+      description="Aloe vera, thé aux plantes, smoothie nutritionnel : ce qu'il y a dans ton verre chaque matin au club de Verdun, et pourquoi dans cet ordre."
+    >
       <InnerHero dark pill="Le rituel" pillClass="p" title="Ce qu'il y a dans ton verre," accent="et pourquoi dans cet ordre." intro="Trois boissons, un ordre, une raison pour chacune. Rien à décider en arrivant : c'est prêt, servi, et ajusté avec toi." />
 
       {ETAPES.map((s, i) => (

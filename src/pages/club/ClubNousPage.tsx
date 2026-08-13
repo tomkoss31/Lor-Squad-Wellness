@@ -48,7 +48,10 @@ const PRATIQUE = [
 
 export function ClubNousPage() {
   return (
-    <ClubShell>
+    <ClubShell
+      title="Mélanie & Thomas — Breakfast Club Verdun"
+      description="Qui sont les deux coachs du Breakfast Club de Verdun, pourquoi ils ont ouvert ce club, et comment ils accompagnent leurs membres chaque matin."
+    >
       <InnerHero pill="Nous" pillClass="s" title="Mélanie, Thomas," accent="et un local rue Saint Pierre." intro="Pas une franchise anonyme. Deux personnes de Verdun qui accompagnent des gens depuis quatre ans, et un lieu bien réel où l'on t'attend le matin." />
 
       {/* Répartition décidée par Thomas, et elle est juste : le SELFIE ici,

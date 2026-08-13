@@ -21,7 +21,10 @@ const QA = [
 
 export function ClubParcoursPage() {
   return (
-    <ClubShell>
+    <ClubShell
+      title="Comment ça se passe — Breakfast Club Verdun"
+      description="De ton premier body scan offert au point des 10 visites : le déroulé complet, les tarifs, et les réponses aux questions qu'on nous pose avant de venir."
+    >
       <InnerHero pill="Comment ça se passe" pillClass="o" title="De ta première visite" accent="à tes premiers résultats." intro="Pas de parcours compliqué. Un body scan offert, une habitude qui se pose, un suivi quotidien, et un vrai point à la 10ᵉ visite." />
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0 }}>

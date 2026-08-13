@@ -15,7 +15,10 @@ const COMMENT = [
 
 export function ClubRejoindrePage() {
   return (
-    <ClubShell>
+    <ClubShell
+      title="Rejoindre l'équipe — Breakfast Club Verdun"
+      description="Devenir coach au Breakfast Club de Verdun : ce que c'est vraiment, ce que ça demande, et comment en parler avec nous sans engagement."
+    >
       <InnerHero pill="Rejoindre l'équipe" pillClass="o" title="Et si le club," accent="c'était toi qui l'ouvrais ?" intro="Le concept est simple, dupliquable, et il manque partout. Si tu cherches un projet du matin, humain et concret à Verdun ou ailleurs — on devrait se parler." />
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0 }}>

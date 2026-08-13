@@ -64,7 +64,10 @@ export function ClubResultatsPage() {
   useRevelationPhotos(CLUB_RESULTATS.length);
 
   return (
-    <ClubShell>
+    <ClubShell
+      title="Les résultats des membres — Breakfast Club Verdun"
+      description="Les transformations de membres du club de Verdun, avec leurs mots et leurs chiffres. Des habitants de Verdun, pas des mannequins."
+    >
       <InnerHero pill="Résultats" pillClass="peach" title="Ce qu'ils en disent," accent="et ce qu'on ne promet pas." intro="On ne promet pas de miracle en une semaine. On montre du vrai : des membres réels, leurs mots, leurs photos — dès qu'ils nous y autorisent." />
 
       <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>

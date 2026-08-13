@@ -1,6 +1,6 @@
 // =============================================================================
 // ClubLandingPage — accueil du site public Breakfast Club (Verdun).
-// Reproduction fidèle de la v7. Header/footer/nav = <ClubShell>. Copy v7.
+// Reproduction fidèle de la v7. Header/footer/nav = ClubShell. Copy v7.
 // Photos = slots encadrés « 📷 » à remplir. CTA → tunnel /reserver.
 // =============================================================================
 
@@ -91,7 +91,10 @@ export function ClubLandingPage() {
   }, []);
 
   return (
-    <ClubShell>
+    <ClubShell
+      title="The Breakfast Club · petit-déjeuner et coaching à Verdun"
+      description="Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert."
+    >
       {offer ? <ClubCardCheckout offer={offer} onClose={() => setOffer(null)} /> : null}
       {orderId ? <ClubPaymentReturn orderId={orderId} onClose={() => setOrderId(null)} /> : null}
       {/* Jamais en même temps qu'un autre panneau : quelqu'un qui achète ou qui

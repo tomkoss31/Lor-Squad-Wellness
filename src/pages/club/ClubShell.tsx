@@ -156,13 +156,22 @@ export function PhotoBand({ srcs, hauteur }: { srcs: Array<string | BandPhoto>; 
   );
 }
 
-export function ClubShell({ children }: { children: ReactNode }) {
+// Titre et description propres à chaque page. Sans eux, les 8 pages du club
+// partageaient un seul et même titre : un moteur de recherche y voit 8 fois la
+// même page et n'en retient qu'une. Les valeurs par défaut restent celles de
+// l'accueil, donc une page qui ne dit rien ne casse pas pour autant.
+export function ClubShell({
+  children,
+  title = "The Breakfast Club · Verdun",
+  description = "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
+}: {
+  children: ReactNode;
+  title?: string;
+  description?: string;
+}) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  useClubHead(
-    "The Breakfast Club · Verdun",
-    "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
-  );
+  useClubHead(title, description);
 
   // Reset du scroll au changement de page interne (React Router ne le fait pas).
   // Garde sur le hash : préserve les ancres type « Voir le rituel » (#rituel).
