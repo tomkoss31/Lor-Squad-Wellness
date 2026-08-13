@@ -21,7 +21,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
-import type { CleReponse } from "../features/crm/qualification";
+import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
+import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
 export type CrmTable =
@@ -736,6 +737,53 @@ export function useCrmLeads() {
     void fetchAll();
   }, [fetchAll]);
 
+  /**
+   * « Et alors ? » — la seule façon de sortir quelqu'un du flou. Un tap, et la
+   * date de retour est calculée depuis le geste ; personne ne saisit jamais
+   * une date à la main.
+   *
+   * Le CRM ET le Co-pilote passent par le même service d'écriture : les deux
+   * tables ne parlent pas le même vocabulaire de statut, et une traduction
+   * oubliée fait rejeter tout l'update en silence.
+   */
+  const qualifier = useCallback(
+    async (lead: CrmLead, reponse: Reponse): Promise<string | null> => {
+      const table = lead.table;
+      if (!estQualifiable(table)) {
+        return "Cette fiche ne porte pas d'échéance de relance.";
+      }
+      const maintenant = new Date();
+      const err = await ecrireQualification(table, lead.id, reponse, maintenant);
+      if (err) return err;
+
+      const ecrit = ecritureFor(reponse, maintenant);
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.key === lead.key
+            ? {
+                ...l,
+                // On rejoue EXACTEMENT ce que la base vient d'enregistrer :
+                // traduction dans le vocabulaire de la table, puis le mapping
+                // du chargement. Sinon un « RDV calé » s'afficherait
+                // « Qualifié » sur un prospect_lead (qui ne connaît pas ce
+                // statut et a stocké « contacted ») et clignoterait au refetch.
+                status:
+                  table === "online_bilans"
+                    ? mapBilanStatus(statutPour(table, ecrit.status), null)
+                    : mapSimpleStatus(statutPour(table, ecrit.status)),
+                derniereReponse: ecrit.derniere_reponse,
+                contactedAt: ecrit.contacted_at,
+                relanceDueAt: ecrit.relance_due_at,
+                relanceDue: false, // une échéance fraîche est toujours future
+              }
+            : l,
+        ),
+      );
+      return null;
+    },
+    [],
+  );
+
   const updateStatus = useCallback(
     async (lead: CrmLead, next: CrmStatus): Promise<string | null> => {
       const sb = await getSupabaseClient();
@@ -935,6 +983,7 @@ export function useCrmLeads() {
     error,
     counts,
     refetch: fetchAll,
+    qualifier,
     updateStatus,
     updateSource,
     updateNotes,

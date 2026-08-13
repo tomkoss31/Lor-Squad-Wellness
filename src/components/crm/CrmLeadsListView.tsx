@@ -16,6 +16,9 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
 import { grouperParEcheance, pilule, pourquoi, teinteDe, type CleGroupe } from "../../features/crm/echeances";
+import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
+import { estQualifiable } from "../../features/crm/ecrireQualification";
+import type { Reponse } from "../../features/crm/qualification";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmSmsLink, buildCrmWhatsAppLink, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
@@ -46,6 +49,8 @@ interface CrmLeadsListViewProps {
   onDormant: (lead: CrmLead) => void;
   onWake: (lead: CrmLead) => void;
   onDelete?: (lead: CrmLead) => void;
+  /** « Et alors ? » — pose la suite depuis la liste, sans changer d'écran. */
+  onQualifier: (lead: CrmLead, reponse: Reponse) => void;
   emptyMessage: string;
 }
 
@@ -62,6 +67,7 @@ export function CrmLeadsListView({
   onDormant,
   onWake,
   onDelete,
+  onQualifier,
   emptyMessage,
 }: CrmLeadsListViewProps) {
   // Les endormis sont une étagère, pas une file : les ranger par « quand »
@@ -110,6 +116,7 @@ export function CrmLeadsListView({
       onDormant={!archived ? () => onDormant(lead) : undefined}
       onWake={archived ? () => onWake(lead) : undefined}
       onDelete={onDelete ? () => onDelete(lead) : undefined}
+      onQualifier={(r) => onQualifier(lead, r)}
     />
   );
 
@@ -236,6 +243,7 @@ function CrmLeadListRow({
   onDormant,
   onWake,
   onDelete,
+  onQualifier,
 }: {
   lead: CrmLead;
   msgCtx: CrmMessageContext;
@@ -255,6 +263,7 @@ function CrmLeadListRow({
   onDormant?: () => void;
   onWake?: () => void;
   onDelete?: () => void;
+  onQualifier: (reponse: Reponse) => void;
 }) {
   const src = CRM_SOURCE_META[lead.source];
   const statusMeta = CRM_STATUS_META[lead.status];
@@ -262,6 +271,7 @@ function CrmLeadListRow({
   const { message, messageLabel, aiMessage, setAiMessage, aiLoading, generateAi, lastTouch, recordTouch } =
     useLeadQuickActions(lead, msgCtx);
   // Score/température unifiés + badge de stagnation (Phase 3).
+  const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const { temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
   const stagnant = isStagnant(lead);
@@ -460,6 +470,31 @@ function CrmLeadListRow({
         >
           {lastTouch ? (
             <div style={{ fontSize: 11.5, color: "var(--ls-teal)" }}>📨 contacté {relativeLeadDays(lastTouch)}</div>
+          ) : null}
+
+          {/* « Et alors ? » — le geste qui manquait. Jusqu'ici on pouvait
+              écrire à quelqu'un depuis cette ligne, mais jamais dire ce qui
+              s'était passé : la personne restait dans le même état pour
+              toujours. Un tap ici, et sa date de retour est calée. */}
+          {estQualifiable(lead.table) && !archived ? (
+            feuilleOuverte ? (
+              <FeuilleQualification
+                prenom={lead.firstName}
+                onChoisir={(r) => {
+                  setFeuilleOuverte(false);
+                  onQualifier(r);
+                }}
+                onIgnorer={() => setFeuilleOuverte(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setFeuilleOuverte(true)}
+                style={{ ...actionBtn("var(--ls-teal)"), alignSelf: "flex-start", minHeight: 40 }}
+              >
+                🎯 Et alors ? — dire ce qui s'est passé
+              </button>
+            )
           ) : null}
 
           {/* Statut + source éditables */}
