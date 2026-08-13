@@ -61,7 +61,11 @@ export type EntityType =
   | "prospect_meeting"
   | "client_message"
   | "morning_digest"
-  | "coach_tip";
+  | "coach_tip"
+  /** Quelqu'un vient d'ouvrir un lien de paiement — le signal le plus chaud
+   *  de l'app. Dédupé sur l'id du BILAN, pas de la commande : deux clics font
+   *  deux commandes, mais ne doivent faire qu'une notification. */
+  | "payment_intent";
 
 export interface SendPushOptions {
   userId: string;
