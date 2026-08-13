@@ -188,8 +188,14 @@ export function ClubCardCheckout({ offer, onClose }: { offer: CardOffer; onClose
         <h2 id="cl-checkout-title" style={{ margin: "8px 0 0", fontSize: 26, lineHeight: 1.2 }}>
           {offer.priceEur} € — soit {perVisit} € la visite
         </h2>
+        {/* Disait « non remboursable » tout court. Pour un service vendu à
+            distance à un particulier, la loi ouvre 14 jours de rétractation :
+            l'annoncer non remboursable dès la caisse était faux, et une clause
+            fausse au moment de payer est le pire endroit pour se tromper. */}
         <p style={{ margin: "10px 0 18px", fontSize: 14.5, lineHeight: 1.6, color: "var(--muted2)" }}>
-          Valable {offer.validityDays} jours à partir de l'achat, non remboursable. On t'envoie ta preuve d'achat par email — c'est elle qui fait foi au comptoir.
+          Valable {offer.validityDays} jours à partir de l'achat. Tu as 14 jours pour changer
+          d'avis — les visites déjà prises sont déduites, le reste est remboursé. On t'envoie ta
+          preuve d'achat par email : c'est elle qui fait foi au comptoir.
         </p>
 
         <form onSubmit={onSubmit} noValidate>
@@ -243,12 +249,20 @@ export function ClubCardCheckout({ offer, onClose }: { offer: CardOffer; onClose
               hérite de la zone cliquable de la case, les deux se déclenchent. */}
           <label style={{ display: "flex", gap: 9, alignItems: "flex-start", margin: "16px 0 0", fontSize: 13, lineHeight: 1.5, color: "var(--muted)" }}>
             <input type="checkbox" name="consent" required style={{ marginTop: 3, flex: "none", accentColor: "var(--orange, #FF6A2B)" }} />
-            <span>J'accepte que le club conserve ces informations pour gérer ma carte et me contacter.</span>
+            <span>J'accepte les conditions de vente, et que le club conserve ces informations pour gérer ma carte et me contacter.</span>
           </label>
-          <a href="/legal/confidentialite" target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", minHeight: 44, marginLeft: 27, fontSize: 13 }}>
-            Politique de confidentialité
-          </a>
+          {/* Mêmes règles que ci-dessus : les liens restent HORS du label, sinon
+              les taper coche la case en même temps qu'ils ouvrent la page. */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginLeft: 27 }}>
+            <a href="/legal/cgv" target="_blank" rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 13 }}>
+              Conditions de vente
+            </a>
+            <a href="/legal/confidentialite" target="_blank" rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 13 }}>
+              Politique de confidentialité
+            </a>
+          </div>
 
           {error ? (
             <p role="alert" style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.55, color: "#B3261E" }}>{error}</p>

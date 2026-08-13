@@ -392,6 +392,7 @@ const SharePage = lazy(() =>
 );
 const LegalNoticePage = lazy(() => import("./pages/LegalNoticePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const TermsOfSalePage = lazy(() => import("./pages/TermsOfSalePage"));
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -812,6 +813,7 @@ export default function App() {
           {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
           <Route path="/legal/mentions" element={<LegalNoticePage />} />
           <Route path="/legal/confidentialite" element={<PrivacyPolicyPage />} />
+          <Route path="/legal/cgv" element={<TermsOfSalePage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>

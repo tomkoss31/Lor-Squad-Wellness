@@ -273,6 +273,10 @@ export function ClubShell({
             <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 20px", marginBottom: 10 }}>
               <Link to="/legal/mentions" style={{ color: "var(--on-dark-2)", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Mentions légales</Link>
               <Link to="/legal/confidentialite" style={{ color: "var(--on-dark-2)", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Politique de confidentialité</Link>
+              {/* Le club encaisse depuis l'accueil : les conditions de vente
+                  doivent être joignables de n'importe quelle page, pas
+                  seulement depuis la caisse. */}
+              <Link to="/legal/cgv" style={{ color: "var(--on-dark-2)", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Conditions de vente</Link>
             </div>
             <p style={{ margin: "0 0 14px", maxWidth: "82ch", lineHeight: 1.6 }}>Les informations de ce site ne constituent pas un avis médical et les produits présentés ne sont pas des médicaments. Pour toute question de santé, consultez un professionnel de santé. Une alimentation variée et équilibrée et un mode de vie sain sont recommandés.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center" }}>

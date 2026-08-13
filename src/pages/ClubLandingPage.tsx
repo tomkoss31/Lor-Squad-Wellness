@@ -60,13 +60,16 @@ const INCLUS = [
   { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
-  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €. Les cartes ne sont pas remboursables. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   // ⚠ Cette réponse disait « tu l'utilises à ton rythme » — ça contredisait
   // frontalement la validité de 30 / 90 jours. Reformulée : engagement (il n'y
   // en a pas) et validité (il y en a une) sont deux choses différentes, et le
   // client doit lire les deux au même endroit.
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois, et c'est tout. En revanche une carte a une durée de validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30 visites, à partir du jour de l'achat. C'est ce qui garde le rythme : une carte 10 visites, c'est deux à trois matins par semaine pendant un mois." },
-  { q: "Et si je n'utilise pas toutes mes visites ?", a: "Les cartes ne sont pas remboursables et les visites non utilisées à la fin de la validité sont perdues. On préfère te le dire avant plutôt qu'après. Si un imprévu sérieux t'empêche de venir — hospitalisation, déménagement — parle-nous-en : on trouve une solution au cas par cas. Et si tu hésites entre les deux cartes, commence par la 10 visites." },
+  // ⚠ Disait « les cartes ne sont pas remboursables », point. Faux : une vente
+  // de service à distance ouvre 14 jours de rétractation. La règle exacte est
+  // dans les CGV (/legal/cgv) — les deux textes doivent rester d'accord.
+  { q: "Et si je n'utilise pas toutes mes visites ?", a: "Tu as 14 jours après l'achat pour changer d'avis : on déduit les visites déjà prises et on te rembourse le reste. Passé ce délai, la carte n'est plus remboursable, et les visites non utilisées à la fin de la validité sont perdues. On préfère te le dire avant plutôt qu'après. Si un imprévu sérieux t'empêche de venir — hospitalisation, déménagement — parle-nous-en : on trouve une solution au cas par cas. Et si tu hésites entre les deux cartes, commence par la 10 visites." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
   { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
   // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
@@ -390,7 +393,7 @@ export function ClubLandingPage() {
           {/* La validité et le non-remboursement sont des conditions de vente :
               elles doivent être lisibles AVANT l'achat, pas seulement dans la FAQ.
               « Pas de durée minimum » a été retiré — ça contredisait la validité. */}
-          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat, et ne sont pas remboursables. <b style={{ color: "var(--ink)" }}>La carte 30 visites à 185 € est une offre de pré-lancement, réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
+          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat. Tu as 14 jours pour changer d'avis, visites déjà prises déduites — le détail est dans les <a href="/legal/cgv" style={{ color: "var(--link)", textDecoration: "underline" }}>conditions de vente</a>. <b style={{ color: "var(--ink)" }}>La carte 30 visites à 185 € est une offre de pré-lancement, réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
         </div>
       </div>
 
