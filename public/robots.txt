@@ -1,0 +1,21 @@
+# La Base 360 — https://www.labase360.fr
+#
+# ⚠ NE PAS ajouter de "Disallow" sur les pages internes (marketing-plan*,
+# opportunite-claude, *-preview, /mockups/, /demo/). Elles sont désindexées
+# via l'en-tête X-Robots-Tag: noindex (cf. vercel.json > headers).
+# Un Disallow ici EMPÊCHERAIT Google de les crawler, donc de VOIR le noindex :
+# elles resteraient dans l'index. Bloquer et désindexer sont deux choses
+# opposées — on laisse crawler pour pouvoir désindexer.
+
+User-agent: *
+Allow: /
+
+# Espaces privés / techniques : aucun intérêt pour la recherche.
+Disallow: /api/
+Disallow: /client/
+Disallow: /partage/
+Disallow: /auto-login
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Host: https://www.labase360.fr

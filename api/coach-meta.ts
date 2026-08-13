@@ -18,6 +18,12 @@
 const FALLBACK_IMAGE =
   "https://www.labase360.fr/brand/labase360/og-image-1200x630.png";
 
+// Domaine officiel unique. Le canonical/og:url NE DOIT PAS recopier le Host
+// entrant : sinon un domaine parasite (alias, preview, ancien nom) se déclare
+// lui-même canonique et Google indexe la fiche coach sous la mauvaise marque.
+// Un canonical, par définition, pointe toujours vers LA version de référence.
+const CANONICAL_ORIGIN = "https://www.labase360.fr";
+
 function esc(input: unknown): string {
   return String(input ?? "")
     .replace(/&/g, "&amp;")
@@ -40,9 +46,12 @@ export default async function handler(req: any, res: any) {
   const rawSlug = String(req.query?.slug ?? "").trim();
   const slug = normalizeSlug(rawSlug);
 
+  // pageUrl (canonical + og:url) toujours sur le domaine officiel.
+  const pageUrl = `${CANONICAL_ORIGIN}/coach/${encodeURIComponent(slug)}`;
+  // Le host réel ne sert qu'à construire l'URL de l'image OG, pour rester sur
+  // le même déploiement (évite un cold start cross-domaine sur les previews).
   const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "www.labase360.fr");
   const proto = String(req.headers["x-forwarded-proto"] ?? "https");
-  const pageUrl = `${proto}://${host}/coach/${encodeURIComponent(slug)}`;
 
   // Valeurs par défaut (coach inconnu / RPC indispo) → OG générique brandé.
   let title = "Coach bien-être · La Base 360";
