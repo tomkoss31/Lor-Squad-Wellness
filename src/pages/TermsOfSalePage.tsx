@@ -100,12 +100,30 @@ export default function TermsOfSalePage() {
           </p>
         </Section>
 
+        {/* ⚠ LA DISTINCTION QUI ÉVITE DE SE CONTREDIRE AVEC LA CHARTE DU CLUB
+            Le club a ses propres conditions, remises au comptoir, et elles ne
+            prévoient aucun délai de rétractation. Elles ont raison : le délai
+            de 14 jours ne vaut que pour les contrats conclus À DISTANCE ou hors
+            établissement (art. L221-18). Une carte achetée en face à face au
+            club n'en ouvre aucun.
+            Ce n'est donc pas la charte qui était fausse — c'est le site qui a
+            ouvert un second canal de vente, soumis à d'autres règles. D'où ce
+            paragraphe : ces CGV ne parlent que du canal EN LIGNE, et le disent,
+            pour que les deux documents cessent de sembler se contredire. */}
         <Section title="2. Ce que couvrent ces conditions">
           <p>
-            Elles s'appliquent à toute vente de <strong>carte de visites</strong> du Breakfast
-            Club conclue sur ce site. En validant ton paiement, tu déclares en avoir pris
-            connaissance et les accepter. Elles peuvent évoluer : la version qui s'applique à ton
-            achat est celle affichée le jour de l'achat.
+            Elles s'appliquent aux <strong>cartes de visites achetées en ligne, sur ce site</strong>.
+            En validant ton paiement, tu déclares en avoir pris connaissance et les accepter.
+          </p>
+          <p style={{ marginTop: 10 }}>
+            Une carte prise <strong>sur place au club</strong>, au comptoir, relève des conditions
+            qui te sont remises là-bas : ce n'est pas le même mode d'achat, et les règles ne sont
+            pas les mêmes — en particulier le délai de rétractation prévu à l'article 6, qui est
+            propre à l'achat en ligne.
+          </p>
+          <p style={{ marginTop: 10 }}>
+            Ces conditions peuvent évoluer : celle qui s'applique à ton achat est la version
+            affichée le jour où tu l'as fait.
           </p>
         </Section>
 
@@ -154,10 +172,12 @@ export default function TermsOfSalePage() {
           </p>
         </Section>
 
-        <Section title="6. Changer d'avis : 14 jours">
+        <Section title="6. Changer d'avis : 14 jours (achat en ligne)">
           <p>
-            Tu disposes de <strong>14 jours à compter de ton achat</strong> pour te rétracter,
-            sans avoir à te justifier ni à payer de pénalité.
+            Parce que tu as acheté <strong>à distance</strong>, tu disposes de{" "}
+            <strong>14 jours à compter de ton achat</strong> pour te rétracter, sans avoir à te
+            justifier ni à payer de pénalité. Ce délai est propre à l'achat en ligne : une carte
+            prise au comptoir n'en ouvre pas.
           </p>
           <p style={{ marginTop: 10 }}>
             Si tu as déjà utilisé des visites pendant ce délai, elles te sont décomptées au prix
