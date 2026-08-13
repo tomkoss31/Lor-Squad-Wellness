@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qualifier les gens — CRM · La Base 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+:root{
+  --bg:#162624; --surface:#1E3330; --surface2:#26403B;
+  --border:rgba(244,239,228,.10); --border2:rgba(244,239,228,.17);
+  --text:#F4EFE4; --muted:#9BAAA3; --hint:#7E8E86;
+  --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+  --wa:#25D366;
+  --title:'Anton',system-ui,sans-serif; --body:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --edito:'Syne',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:#0E1A18;color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+
+.chrome{position:sticky;top:0;z-index:60;background:rgba(14,26,24,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:10px 12px}
+.chrome h1{margin:0 0 3px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--hint);font-weight:500}
+.chrome p{margin:0 0 9px;font-size:12px;color:var(--muted)}
+.chrome p b{color:var(--teal);font-weight:600}
+.onglets{display:flex;gap:5px}
+.onglets button{flex:1;padding:8px 4px;border-radius:9px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--hint);background:var(--surface);
+  border:1px solid var(--border);line-height:1.35;transition:.16s}
+.onglets button[aria-current="true"]{color:#06241F;background:var(--teal);border-color:var(--teal);font-weight:700}
+
+.stage{display:flex;justify-content:center;padding:18px 12px 50px}
+@media(max-width:430px){.stage{padding:0 0 34px}}
+.phone{width:390px;max-width:100%;background:var(--bg);border-radius:26px;position:relative;
+  border:1px solid var(--border);box-shadow:0 40px 90px rgba(0,0,0,.55);padding-bottom:30px}
+@media(max-width:430px){.phone{border-radius:0;border:none;box-shadow:none}}
+.ecran{display:none;animation:entre .28s cubic-bezier(.2,.8,.3,1)}
+.ecran.on{display:block}
+@keyframes entre{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.topbar{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.logo{width:30px;height:30px;border-radius:9px;flex:none;background:linear-gradient(135deg,var(--teal),var(--lime));
+  display:grid;place-items:center;color:#06241F;font-family:var(--title);font-size:15px}
+.topname{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--hint);text-transform:uppercase}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--hint)}
+.h1{font-family:var(--title);font-weight:400;text-transform:uppercase;letter-spacing:.01em;line-height:1.02;margin:0}
+
+/* ═══ 1 — LA FEUILLE : « et alors ? » ═══════════════════════════════════ */
+#a .zone1{margin:16px 18px 0;padding:20px 19px 19px;border-radius:20px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#1E3330,#182B28);border:1px solid var(--border)}
+#a .zone1::after{content:"";position:absolute;right:-70px;top:-70px;width:210px;height:210px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,119,95,.18),transparent 70%);pointer-events:none}
+#a .why{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--coral);display:block;margin-bottom:11px;position:relative}
+#a .who{font-family:var(--title);font-size:44px;line-height:.98;text-transform:uppercase;margin:0 0 13px;position:relative}
+#a .ctx{font-size:15.5px;line-height:1.55;color:var(--muted);margin:0 0 5px;position:relative}
+#a .prim{display:block;width:100%;margin-top:16px;padding:15px;border-radius:14px;background:var(--wa);
+  color:#06230F;font-size:15.5px;font-weight:700;position:relative;box-shadow:0 10px 26px rgba(37,211,102,.24)}
+
+.feuille{margin:14px 18px 0;padding:18px 17px;border-radius:20px;background:var(--surface);
+  border:1px solid var(--border2)}
+.feuille .q{font-family:var(--title);font-size:26px;text-transform:uppercase;margin:0 0 4px;line-height:1.05}
+.feuille .s{font-size:13.5px;color:var(--muted);margin:0 0 15px}
+.choix{display:flex;flex-direction:column;gap:8px}
+.choix button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:10px 14px;
+  border-radius:14px;text-align:left;background:var(--surface2);border:1px solid var(--border);transition:.14s}
+.choix button:hover{border-color:var(--teal)}
+.choix .pt{width:9px;height:9px;border-radius:50%;flex:none}
+.choix .txt{flex:1;min-width:0}
+.choix .t{display:block;font-size:14.5px;font-weight:700}
+.choix .quand{display:block;font-family:var(--mono);font-size:11px;color:var(--hint);margin-top:2px}
+.choix .fleche{flex:none;color:var(--hint);font-size:16px}
+
+.confirme{margin:14px 18px 0;padding:20px 18px;border-radius:20px;text-align:center;
+  background:color-mix(in srgb,var(--lime) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--lime) 30%,transparent)}
+.confirme .rond{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--lime),var(--teal));color:#06231F;font-size:26px;font-weight:800}
+.confirme .t{font-family:var(--title);font-size:24px;text-transform:uppercase;margin:0 0 8px;color:var(--lime)}
+.confirme p{margin:0 0 16px;font-size:14.5px;color:var(--muted);line-height:1.55}
+.confirme .suivant{display:inline-flex;padding:12px 20px;border-radius:13px;background:var(--teal);
+  color:#06241F;font-weight:700;font-size:14.5px}
+.confirme .rejouer{display:block;margin:14px auto 0;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--hint);text-decoration:underline;text-underline-offset:4px}
+
+/* ═══ 2 — LA LISTE : le « quand » de chacun ═════════════════════════════ */
+.sect{margin:26px 18px 0}
+.sect>.eyebrow{display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.sect>.eyebrow em{font-style:normal;font-weight:700}
+.p{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);width:100%;text-align:left}
+.p:last-child{border-bottom:none}
+.av{width:41px;height:41px;border-radius:14px;flex:none;display:grid;place-items:center;
+  font-family:var(--edito);font-weight:800;font-size:15.5px;color:var(--text)}
+.p .n{display:block;font-size:14.5px;font-weight:600;line-height:1.25}
+.p .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.quandPill{flex:none;font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:5px 9px;
+  border-radius:8px;white-space:nowrap;text-align:center;line-height:1.3}
+
+/* ═══ 3 — LA RELANCE REMONTE ═══════════════════════════════════════════ */
+#c .zone1{margin:16px 18px 0;padding:20px 19px 19px;border-radius:20px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#1E3330,#182B28);border:1px solid var(--border)}
+#c .zone1::after{content:"";position:absolute;right:-70px;top:-70px;width:210px;height:210px;border-radius:50%;
+  background:radial-gradient(circle,rgba(45,212,191,.20),transparent 70%);pointer-events:none}
+#c .mot{margin:17px 0 0;padding:13px 14px;border-radius:13px;background:rgba(0,0,0,.22);
+  border:1px solid var(--border);font-size:13.5px;color:var(--muted);line-height:1.55;position:relative}
+#c .mot b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:6px;font-weight:600}
+#c .acts{display:flex;gap:8px;margin-top:15px;position:relative}
+#c .acts .a1{flex:1;padding:15px;border-radius:14px;background:var(--wa);color:#06230F;font-size:15.5px;font-weight:700}
+#c .acts .a2{flex:none;padding:15px;border-radius:14px;border:1px solid var(--border2);color:var(--muted);font-size:14px}
+#c .histo{margin:14px 18px 0;padding:14px 16px;border-radius:16px;background:var(--surface);border:1px solid var(--border)}
+#c .histo .l{display:flex;gap:10px;padding:7px 0;font-size:13px;color:var(--muted);align-items:baseline}
+#c .histo .d{font-family:var(--mono);font-size:10.5px;color:var(--hint);flex:none;width:52px}
+
+.note{max-width:390px;margin:20px auto 0;padding:0 14px;color:var(--hint);font-size:12px;line-height:1.6}
+.note b{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <h1>CRM · qualifier les gens</h1>
+  <p><b>La date devient la conséquence du geste</b>, pas un champ à remplir.</p>
+  <div class="onglets">
+    <button data-go="a" aria-current="true">1 · Et alors ?</button>
+    <button data-go="b" aria-current="false">2 · Le « quand »<br>de chacun</button>
+    <button data-go="c" aria-current="false">3 · Elle<br>remonte</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="phone">
+
+  <!-- ═══ 1 ═══ -->
+  <section class="ecran on" id="a">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Jeudi 13 août · 9 h 10</span></div>
+
+    <section class="zone1">
+      <span class="why">Jamais rappelée · site du club</span>
+      <h2 class="who">Laure</h2>
+      <p class="ctx">A laissé son numéro sur le site du club. Ça fait 2 jours.</p>
+      <button class="prim" id="ecrire">Lui écrire</button>
+    </section>
+
+    <div id="suite"></div>
+  </section>
+
+  <!-- ═══ 2 ═══ -->
+  <section class="ecran" id="b">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Ton CRM · jeudi 13 août</span></div>
+
+    <div class="sect">
+      <div class="eyebrow">Aujourd'hui <em style="color:var(--coral)" id="n-aujourdhui"></em></div>
+      <div id="aujourdhui"></div>
+    </div>
+
+    <div class="sect">
+      <div class="eyebrow">Cette semaine <em style="color:var(--amber)" id="n-semaine"></em></div>
+      <div id="semaine"></div>
+    </div>
+
+    <div class="sect">
+      <div class="eyebrow">Plus tard <em style="color:var(--hint)" id="n-plusTard"></em></div>
+      <div id="plusTard"></div>
+    </div>
+
+    <div class="sect">
+      <div class="eyebrow">Refermés <em style="color:var(--hint)" id="n-fermes"></em></div>
+      <div id="fermes"></div>
+    </div>
+  </section>
+
+  <!-- ═══ 3 ═══ -->
+  <section class="ecran" id="c">
+    <div class="topbar"><span class="logo">B</span><span class="topname">Vendredi 14 août · 9 h 02</span></div>
+
+    <section class="zone1">
+      <span class="why" style="color:var(--teal)">Tu avais dit de la rappeler</span>
+      <h2 class="who">Laure</h2>
+      <p class="ctx">Tu l'as appelée hier à 9 h 10, elle n'a pas répondu. C'était il y a 24 heures.</p>
+      <div class="mot"><b>Message prêt · 2<sup>e</sup> tentative</b>Bonjour Laure 👋 C'est Thomas de La Base 360, je vous ai appelée hier sans réussir à vous joindre. Je réessaie — dites-moi quel moment vous arrange 🙂</div>
+      <div class="acts">
+        <button class="a1">Lui écrire</button>
+        <button class="a2">Plus tard</button>
+      </div>
+    </section>
+
+    <div class="histo">
+      <div class="eyebrow" style="margin-bottom:8px">Ce qui s'est passé</div>
+      <div class="l"><span class="d">11/08</span><span>Elle laisse son numéro sur le site du club.</span></div>
+      <div class="l"><span class="d">13/08</span><span>Appel — pas de réponse. Rappel programmé à 24 h.</span></div>
+      <div class="l"><span class="d">14/08</span><span style="color:var(--teal)">Elle remonte ici, toute seule.</span></div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<p class="note">Maquette — rien n'est branché. <b>Les prénoms, les sources et les délais sont réels</b> (lus en base le 13/08/2026). Testée à 390 px.</p>
+
+<script>
+/* ─── Les six réponses possibles ─────────────────────────────────────────
+   Le principe : on ne coche pas un ÉTAT (« Contacté »), on répond à « et
+   ensuite ? ». La date de retour est la CONSÉQUENCE du geste — un tap, et
+   c'est déjà programmé. Personne ne remplit de champ date. */
+const REPONSES = [
+  { cle:"pas_de_reponse", t:"Pas de réponse",        quand:"Elle revient demain",           jours:1,  couleur:"var(--coral)" },
+  { cle:"rappellera",     t:"Elle rappellera",       quand:"Filet de sécurité dans 3 jours", jours:3,  couleur:"var(--amber)" },
+  { cle:"ne_sait_pas",    t:"Répondu, ne sait pas",  quand:"On revoit dans 7 jours",        jours:7,  couleur:"var(--amber)" },
+  { cle:"pas_maintenant", t:"Pas maintenant",        quand:"On revoit dans 1 mois",         jours:30, couleur:"var(--purple)" },
+  { cle:"plus_interesse", t:"Plus intéressée",       quand:"Elle sort de la file",          jours:null, couleur:"var(--hint)" },
+  { cle:"rdv",            t:"RDV calé",              quand:"Elle passe dans l'agenda",      jours:0,  couleur:"var(--lime)" },
+];
+
+/* Les vraies personnes en attente, lues en base le 13/08. */
+const GENS = [
+  { n:"Laure",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"L", pourquoi:"Appelée hier, pas de réponse" },
+  { n:"Manon",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"M", pourquoi:"Jamais rappelée" },
+  { n:"Fatiha",    src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"F", pourquoi:"Jamais rappelée" },
+  { n:"Benedicte", src:"Site du club · hier",            q:"Lundi",        ton:"var(--amber)", ini:"B", pourquoi:"Elle rappellera" },
+  { n:"Armonie",   src:"Site du club · hier",            q:"Mardi",        ton:"var(--amber)", ini:"A", pourquoi:"Répondu, ne sait pas" },
+  { n:"Florian",   src:"Tunnel colis · il y a 6 jours",  q:"12 sept.",     ton:"var(--purple)", ini:"F", pourquoi:"Pas maintenant" },
+  { n:"Djamal",    src:"Paiement ouvert · 234 €",        q:"Demain",       ton:"var(--coral)", ini:"D", pourquoi:"Lien jamais réglé" },
+  { n:"Cavalec",   src:"Bilan en ligne · il y a 6 jours", q:"Refermé",     ton:"var(--hint)",  ini:"C", pourquoi:"Plus intéressée" },
+];
+
+document.querySelectorAll('.onglets button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.onglets button').forEach(x=>x.setAttribute('aria-current', String(x===b)));
+  document.querySelectorAll('.ecran').forEach(s=>s.classList.toggle('on', s.id===b.dataset.go));
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* ─── Écran 1 : la feuille apparaît AU RETOUR du message ──────────────── */
+const suite = document.getElementById('suite');
+
+function feuille(){
+  suite.innerHTML = `
+    <div class="feuille">
+      <h3 class="q">Et alors ?</h3>
+      <p class="s">Un tap, et la suite est déjà calée. Tu n'as aucune date à saisir.</p>
+      <div class="choix">
+        ${REPONSES.map(r=>`
+          <button data-rep="${r.cle}">
+            <span class="pt" style="background:${r.couleur}"></span>
+            <span class="txt">
+              <span class="t">${r.t}</span>
+              <span class="quand">${r.quand}</span>
+            </span>
+            <span class="fleche">›</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  suite.querySelectorAll('[data-rep]').forEach(b=>b.addEventListener('click',()=>{
+    confirme(REPONSES.find(r=>r.cle===b.dataset.rep));
+  }));
+}
+
+function confirme(r){
+  const quand = r.jours === null
+    ? "Laure ne reviendra plus dans ta file. Rien n'est perdu : elle reste dans le CRM, refermée proprement."
+    : r.jours === 0
+      ? "Laure quitte le CRM et rejoint ton agenda. Elle n'a plus rien à faire ici."
+      : `Laure remontera <strong style="color:var(--text)">dans ta zone 1</strong> ${r.jours === 1 ? "demain matin" : `dans ${r.jours} jours`}, avec un message de 2<sup>e</sup> tentative déjà écrit.`;
+  suite.innerHTML = `
+    <div class="confirme">
+      <div class="rond">✓</div>
+      <h3 class="t">${r.t}</h3>
+      <p>${quand}</p>
+      <span class="suivant">Au suivant · 6 restants</span>
+      <button class="rejouer" id="rejouer">Recommencer</button>
+    </div>`;
+  document.getElementById('rejouer').onclick = () => { suite.innerHTML = ''; };
+}
+
+document.getElementById('ecrire').addEventListener('click', feuille);
+
+/* ─── Écran 2 : chacun avec son « quand » ─────────────────────────────── */
+const ligne = (g) => `
+  <div class="p">
+    <span class="av" style="background:color-mix(in srgb, ${g.ton} 18%, transparent);border:1px solid color-mix(in srgb, ${g.ton} 45%, transparent)">${g.ini}</span>
+    <span style="flex:1;min-width:0">
+      <span class="n">${g.n}</span>
+      <span class="s">${g.pourquoi} · ${g.src}</span>
+    </span>
+    <span class="quandPill" style="color:${g.ton};background:color-mix(in srgb, ${g.ton} 12%, transparent);border:1px solid color-mix(in srgb, ${g.ton} 30%, transparent)">${g.q}</span>
+  </div>`;
+
+// Les compteurs sont CALCULÉS, jamais écrits à la main : une maquette qui
+// annonce « 3 » au-dessus de 4 lignes décrédibilise tout le reste.
+function remplir(idListe, idCompteur, filtre) {
+  const gens = GENS.filter(filtre);
+  document.getElementById(idListe).innerHTML = gens.map(ligne).join('');
+  document.getElementById(idCompteur).textContent = `· ${gens.length}`;
+}
+remplir('aujourdhui', 'n-aujourdhui', g => g.q === "Aujourd'hui" || g.q === "Demain");
+remplir('semaine',    'n-semaine',    g => g.q === "Lundi" || g.q === "Mardi");
+remplir('plusTard',   'n-plusTard',   g => g.q === "12 sept.");
+remplir('fermes',     'n-fermes',     g => g.q === "Refermé");
+</script>
+</body>
+</html>

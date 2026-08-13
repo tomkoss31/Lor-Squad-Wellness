@@ -52,6 +52,7 @@ import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { tableSupportsAssignment } from "../lib/leadRouting";
+import { dateDeRetour, quandRevient, type Reponse } from "../features/crm/qualification";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -67,7 +68,7 @@ function normalizeSlug(input: string): string {
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
-  const { leads, loading, error, refetch, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
   // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
@@ -279,6 +280,25 @@ export function CrmPage() {
     if (err) {
       pushToast({ tone: "warning", title: "Statut non enregistré", message: err });
     }
+  }
+
+  // « Et alors ? » depuis la liste. La confirmation NOMME la date de retour :
+  // c'est ce qui rend le geste sûr — on voit tout de suite ce qu'on vient de
+  // caler, sans avoir à rouvrir la fiche.
+  async function handleQualifier(lead: CrmLead, reponse: Reponse) {
+    const err = await qualifier(lead, reponse);
+    if (err) {
+      pushToast({ tone: "warning", title: "Qualification non enregistrée", message: err });
+      return;
+    }
+    const due = dateDeRetour(reponse, new Date());
+    pushToast({
+      tone: "success",
+      title: `${lead.firstName} · ${reponse.titre}`,
+      message: due
+        ? `Revient ${quandRevient(due, new Date())} — tu n'as rien à noter.`
+        : reponse.quand,
+    });
   }
 
   async function handleSourceChange(lead: CrmLead, next: CrmSource) {
@@ -631,6 +651,7 @@ export function CrmPage() {
           onDormant={(lead) => void handleDormant(lead, true)}
           onWake={(lead) => void handleDormant(lead, false)}
           onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
+          onQualifier={(lead, r) => void handleQualifier(lead, r)}
           emptyMessage={
             view === "archived"
               ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."

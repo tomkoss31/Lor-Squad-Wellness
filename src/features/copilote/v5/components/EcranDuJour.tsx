@@ -27,6 +27,7 @@
 
 import type { CeQuiCompte } from "../../ceQuiCompte";
 import type { Attente } from "../../../../hooks/useFileDuJour";
+import type { Reponse } from "../../../crm/qualification";
 import { ZoneUne } from "./ZoneUne";
 
 export interface EvenementJournee {
@@ -69,11 +70,13 @@ export interface EcranDuJourProps {
   onPasser: () => void;
   onRouvrir: (cle: string) => void;
   chargement?: boolean;
+  /** Ce qui s'est passé au contact — pose la date de retour. */
+  onQualifier?: (reponse: Reponse) => void;
 }
 
 export function EcranDuJour({
   quoi, monPrenom, journee, attentes, traitees, equipe, equipeTotal,
-  ligneDuMois, onOuvrir, onFait, onPasser, onRouvrir, chargement,
+  ligneDuMois, onOuvrir, onFait, onPasser, onRouvrir, chargement, onQualifier,
 }: EcranDuJourProps) {
   // Une débutante n'a ni clients ni équipe : on retire, on n'affiche pas vide.
   const montreClients = attentes.length > 0 || traitees.size > 0;
@@ -85,7 +88,7 @@ export function EcranDuJour({
     // le padding de tout `.copilote-v5 > div` en !important sous 1280 px.
     // L'ancien PlanDuJour n'y échappait que parce qu'il était déjà un <section>.
     <section aria-label="Ton écran du jour" style={{ display: "flex", flexDirection: "column", gap: 30 }}>
-      <ZoneUne quoi={quoi} monPrenom={monPrenom} onOuvrir={onOuvrir} onFait={onFait} onPasser={onPasser} chargement={chargement} />
+      <ZoneUne quoi={quoi} monPrenom={monPrenom} onOuvrir={onOuvrir} onFait={onFait} onPasser={onPasser} chargement={chargement} onQualifier={onQualifier} />
 
       {journee.length > 0 ? (
         <section aria-label="Ta journée">

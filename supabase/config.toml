@@ -59,3 +59,111 @@ verify_jwt = true
 
 [functions.create-manual-payment-link]
 verify_jwt = true
+
+# =============================================================================
+# COMPLÉMENT DU 13/08 — les 36 fonctions publiques qui manquaient
+#
+# Le fichier ne couvrait que les 11 fonctions du chantier club. Les 59 autres
+# n'étaient pas déclarées, donc soumises au défaut (jeton exigé) au prochain
+# déploiement CLI. Or 36 d'entre elles tournent en production SANS jeton :
+# `supabase functions deploy` sur l'une d'elles l'aurait cassée sur-le-champ,
+# en silence — dont `client-app-data` (toute la PWA client), `send-push`
+# (toutes les notifications) et `auth-email-hook` (tous les mails de connexion).
+#
+# Les valeurs ci-dessous sont RELEVÉES sur le projet Supabase, pas décidées :
+# on enregistre l'existant pour qu'un déploiement cesse de pouvoir le modifier
+# à notre insu. Aucun réglage n'a été changé. Vérifié : les 11 déclarations
+# ci-dessus concordaient déjà avec le réel.
+#
+# Les fonctions à `true` ne sont pas listées : c'est le défaut, et la règle du
+# haut de fichier dit de ne rien écrire dans ce cas.
+# =============================================================================
+
+# ── PWA client : elle n'a aucune session Supabase ───────────────────────────
+# L'auth se fait DANS la fonction, par le jeton d'URL (client_app_accounts).
+[functions.client-app-data]
+verify_jwt = false
+[functions.client-app-confirm-calendar]
+verify_jwt = false
+[functions.client-app-mark-onboarded]
+verify_jwt = false
+[functions.client-app-set-baseline]
+verify_jwt = false
+[functions.client-app-save-measurement]
+verify_jwt = false
+[functions.client-app-level-up-notify]
+verify_jwt = false
+
+# ── Formulaires et pages publiques : le visiteur n'a pas de compte ──────────
+[functions.submit-online-bilan]
+verify_jwt = false
+[functions.submit-prospect-lead]
+verify_jwt = false
+[functions.submit-testimonial]
+verify_jwt = false
+[functions.get-testimonial-context]
+verify_jwt = false
+[functions.request-testimonial]
+verify_jwt = false
+[functions.get-online-bilan-results]
+verify_jwt = false
+[functions.qualif-bootstrap]
+verify_jwt = false
+[functions.qualif-update]
+verify_jwt = false
+[functions.request-callback]
+verify_jwt = false
+[functions.submit-newsletter]
+verify_jwt = false
+[functions.campaign-unsubscribe]
+verify_jwt = false  # lien de désinscription dans un email : exiger un compte serait illégal
+[functions.track-newsletter-view]
+verify_jwt = false
+
+# ── Boutique publique ───────────────────────────────────────────────────────
+[functions.create-shop-checkout]
+verify_jwt = false
+[functions.confirm-shop-payment]
+verify_jwt = false
+[functions.shop-welcome-lead]
+verify_jwt = false
+
+# ── Authentification : par définition appelées SANS session ────────────────
+[functions.send-password-reset]
+verify_jwt = false  # on la demande justement parce qu'on ne peut pas se connecter
+[functions.auth-email-hook]
+verify_jwt = false  # l'auth EST la signature standardwebhooks, vérifiée dedans
+[functions.consume-distributor-invite-token]
+verify_jwt = false  # création du compte : il n'existe pas encore
+
+# ── Webhook d'un tiers : l'auth est la signature, vérifiée dedans ──────────
+[functions.resend-webhook]
+verify_jwt = false
+
+# ── Crons et déclencheurs Postgres (pg_net) ────────────────────────────────
+# ⚠ Relevé tel quel. pg_net porte la clé de service, donc `true` conviendrait
+# techniquement — mais le passage de false à true est un changement de
+# comportement en production, pas un rangement. À traiter séparément si on veut,
+# jamais au détour d'un déploiement.
+[functions.send-push]
+verify_jwt = false
+[functions.client-anniversary-check]
+verify_jwt = false
+[functions.pv-month-end-reminder]
+verify_jwt = false
+[functions.rank-threshold-notifier]
+verify_jwt = false
+[functions.crm-relance-notifier]
+verify_jwt = false
+[functions.shop-relance-notifier]
+verify_jwt = false
+[functions.send-newsletter-email]
+verify_jwt = false
+[functions.lead-relaunch-send]
+verify_jwt = false
+[functions.campaign-send]
+verify_jwt = false
+[functions.update-colis-lead-action]
+verify_jwt = false
+[functions.stripe-manual-reconcile]
+verify_jwt = false

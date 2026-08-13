@@ -66,6 +66,12 @@ const EncaissementPage = lazy(() =>
     default: module.EncaissementPage
   }))
 );
+// Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
+const GererRdvClubPage = lazy(() =>
+  import("./pages/GererRdvClubPage").then((module) => ({
+    default: module.GererRdvClubPage
+  }))
+);
 // Cockpit config boutique HL SKIN (chantier 2026-07-10).
 const BoutiqueAdminPage = lazy(() =>
   import("./pages/BoutiqueAdminPage").then((module) => ({
@@ -193,6 +199,12 @@ const AdminNewslettersPage = lazy(() =>
     default: module.AdminNewslettersPage,
   })),
 );
+// Chantier Audience (2026-08-13) : « qui vient, et où on les perd ».
+const AdminAudiencePage = lazy(() =>
+  import("./pages/AdminAudiencePage").then((module) => ({
+    default: module.AdminAudiencePage,
+  })),
+);
 // Chantier Campagnes (2026-08) — outreach email admin (généralise newsletter).
 const AdminCampagnesPage = lazy(() =>
   import("./pages/AdminCampagnesPage").then((module) => ({
@@ -289,12 +301,18 @@ const ReserverClubPage = lazy(() =>
     default: module.ReserverClubPage,
   })),
 );
-// Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
-const GererRdvClubPage = lazy(() =>
-  import("./pages/GererRdvClubPage").then((module) => ({
-    default: module.GererRdvClubPage,
+const ClubLandingPage = lazy(() =>
+  import("./pages/ClubLandingPage").then((module) => ({
+    default: module.ClubLandingPage,
   })),
 );
+const ClubLeClubPage = lazy(() => import("./pages/club/ClubLeClubPage").then((m) => ({ default: m.ClubLeClubPage })));
+const ClubRituelPage = lazy(() => import("./pages/club/ClubRituelPage").then((m) => ({ default: m.ClubRituelPage })));
+const ClubParcoursPage = lazy(() => import("./pages/club/ClubParcoursPage").then((m) => ({ default: m.ClubParcoursPage })));
+const ClubResultatsPage = lazy(() => import("./pages/club/ClubResultatsPage").then((m) => ({ default: m.ClubResultatsPage })));
+const ClubNousPage = lazy(() => import("./pages/club/ClubNousPage").then((m) => ({ default: m.ClubNousPage })));
+const ClubRejoindrePage = lazy(() => import("./pages/club/ClubRejoindrePage").then((m) => ({ default: m.ClubRejoindrePage })));
+const ClubRejoindreRdvPage = lazy(() => import("./pages/club/ClubRejoindreRdvPage").then((m) => ({ default: m.ClubRejoindreRdvPage })));
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -380,6 +398,7 @@ const SharePage = lazy(() =>
 );
 const LegalNoticePage = lazy(() => import("./pages/LegalNoticePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const TermsOfSalePage = lazy(() => import("./pages/TermsOfSalePage"));
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -677,6 +696,7 @@ import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
+import { AudienceTracker } from './components/AudienceTracker'
 import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
 import { LogoMark } from "./components/brand/LogoMark";
 
@@ -696,6 +716,11 @@ export default function App() {
       {/* Relais SW → React Router (2026-05-05) : route en interne quand
           on clique une push notif, sans full reload. */}
       <ServiceWorkerNavigator />
+      {/* Mesure d'audience des pages PUBLIQUES uniquement (chantier Audience,
+          2026-08-13). Ici plutôt que dans chaque page : les pages du club ne
+          passent pas par PublicShell, et une page ajoutée demain doit être
+          comptée sans qu'on y pense. */}
+      <AudienceTracker />
       {/* Toast 'Mise a jour disponible' : detecte les nouveaux SW + propose
           activation 1-click + force re-subscribe notifs apres update.
           Chantier rebrand polish 2026-05-06. */}
@@ -732,17 +757,32 @@ export default function App() {
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
           <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
-          {/* Tunnel de réservation "séance découverte" du Breakfast Club (site
+          {/* Tunnel de réservation "RDV découverte" du Breakfast Club (site
               public www.labase-nutrition.com/reserver). Identité crème propre au
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />
           <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
-          {/* Page publique « Modifier / annuler mon rendez-vous » : la cible du
-              lien envoyé dans l'email de confirmation du club. Authentifiée par
-              le jeton de l'URL (rdv_bookings.manage_token), donc hors AppLayout
-              — la personne n'a pas de compte. 3 segments, aucun conflit avec
-              /rdv/:coachSlug juste au-dessus qui n'en a que 2. */}
+          {/* « Modifier / annuler mon rendez-vous » — cible du lien envoyé dans
+              l'email de confirmation (jeton rdv_bookings.manage_token). Placée
+              après /rdv/:coachSlug : 3 segments, aucun conflit de résolution. */}
           <Route path="/rdv/gerer/:token" element={<GererRdvClubPage />} />
+          {/* Vitrine publique du club (étape 2). À terme = racine de
+              labase-nutrition.com (bascule host-based après ajout des photos). */}
+          <Route path="/club" element={<ClubLandingPage />} />
+          <Route path="/club/le-club" element={<ClubLeClubPage />} />
+          <Route path="/club/le-rituel" element={<ClubRituelPage />} />
+          <Route path="/club/comment-ca-se-passe" element={<ClubParcoursPage />} />
+          <Route path="/club/resultats" element={<ClubResultatsPage />} />
+          <Route path="/club/nous" element={<ClubNousPage />} />
+          <Route path="/club/rejoindre" element={<ClubRejoindrePage />} />
+          {/* Tunnel « En parler avec l'équipe » (recrutement « ouvrir un club »).
+              Jumeau visuel de /reserver, mais back-end book-rdv → agenda RÉEL du
+              coach + rdv_bookings (bookingType='recrutement'). Défaut coach =
+              thomas ; :coachSlug pour router ailleurs. Alias joli demandé par
+              Thomas : /rdv-rejoindre-l-equipe. */}
+          <Route path="/club/rejoindre/rdv" element={<ClubRejoindreRdvPage />} />
+          <Route path="/club/rejoindre/rdv/:coachSlug" element={<ClubRejoindreRdvPage />} />
+          <Route path="/rdv-rejoindre-l-equipe" element={<ClubRejoindreRdvPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
@@ -785,6 +825,7 @@ export default function App() {
           {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
           <Route path="/legal/mentions" element={<LegalNoticePage />} />
           <Route path="/legal/confidentialite" element={<PrivacyPolicyPage />} />
+          <Route path="/legal/cgv" element={<TermsOfSalePage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
@@ -913,6 +954,8 @@ export default function App() {
                 <Route path="admin/campagnes" element={<AdminCampagnesPage />} />
                 <Route path="admin/campagnes/:id" element={<AdminCampagneEditPage />} />
                 <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
+                {/* Chantier Audience (2026-08-13) : trafic des pages publiques. */}
+                <Route path="admin/audience" element={<AdminAudiencePage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}

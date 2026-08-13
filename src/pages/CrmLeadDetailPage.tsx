@@ -33,6 +33,9 @@ import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import { LeadConvertModal } from "../components/leads/LeadConvertModal";
 import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { FeuilleQualification } from "../features/crm/FeuilleQualification";
+import { estQualifiable } from "../features/crm/ecrireQualification";
+import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 
 // Dupliqué à l'identique depuis CrmPage.tsx (fonction pure de 6 lignes) —
 // pas assez de surface pour justifier une extraction dédiée.
@@ -58,6 +61,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   city: null,
   source: "welcome",
   status: "new",
+  relanceDueAt: null,
+  derniereReponse: null,
   viaName: null,
   parrainPhone: null,
   parrainClientId: null,
@@ -78,7 +83,7 @@ export function CrmLeadDetailPage() {
   const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
 
-  const { leads, loading, error, refetch, updateStatus, updateNotes, assignOwner, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, qualifier, updateStatus, updateNotes, assignOwner, setDormant, deleteLead } = useCrmLeads();
   const onlineBilans = useOnlineBilans();
 
   const lead = useMemo(() => leads.find((l) => l.key === leadId) ?? null, [leads, leadId]);
@@ -130,6 +135,7 @@ export function CrmLeadDetailPage() {
     }
   }, [lead, notesHydratedKey]);
 
+  const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -180,6 +186,28 @@ export function CrmLeadDetailPage() {
     } finally {
       setSavingStatus(false);
     }
+  }
+
+  // « Et alors ? » sur la fiche : c'est ici qu'on atterrit après avoir appelé
+  // quelqu'un, donc c'est ici que la question doit être posée. Le menu
+  // « Statut » juste en dessous reste pour les corrections à la main — mais il
+  // ne cale aucune date, et c'est bien pour ça qu'il ne suffisait pas.
+  async function handleQualifier(reponse: Reponse) {
+    if (!lead) return;
+    setFeuilleOuverte(false);
+    const err = await qualifier(lead, reponse);
+    if (err) {
+      pushToast({ tone: "error", title: "Qualification non enregistrée", message: err });
+      return;
+    }
+    const due = dateDeRetour(reponse, new Date());
+    pushToast({
+      tone: "success",
+      title: `${lead.firstName} · ${reponse.titre}`,
+      message: due
+        ? `Revient ${quandRevient(due, new Date())} — tu n'as rien à noter.`
+        : reponse.quand,
+    });
   }
 
   async function handleNotesBlur() {
@@ -547,6 +575,33 @@ export function CrmLeadDetailPage() {
                   </option>
                 ))}
               </select>
+            </div>
+          ) : null}
+
+          {estQualifiable(lead.table) ? (
+            <div style={actionBlock}>
+              <label style={label}>Après ton appel</label>
+              {feuilleOuverte ? (
+                <FeuilleQualification
+                  prenom={lead.firstName}
+                  onChoisir={(r) => void handleQualifier(r)}
+                  onIgnorer={() => setFeuilleOuverte(false)}
+                />
+              ) : (
+                <>
+                  <button type="button" onClick={() => setFeuilleOuverte(true)} style={primaryBtn}>
+                    🎯 Et alors ? — dire ce qui s'est passé
+                  </button>
+                  {lead.derniereReponse ? (
+                    <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ls-text-muted)" }}>
+                      Dernière fois : {REPONSE_PAR_CLE[lead.derniereReponse].resume}
+                      {lead.relanceDueAt
+                        ? ` · revient ${quandRevient(lead.relanceDueAt, new Date())}`
+                        : ""}
+                    </p>
+                  ) : null}
+                </>
+              )}
             </div>
           ) : null}
 
