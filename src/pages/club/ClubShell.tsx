@@ -9,6 +9,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
 import { useClubHead } from "./useClubHead";
+import { useRevelationAuScroll } from "./useRevelationAuScroll";
 import { ClubNewsletter } from "./ClubNewsletter";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
@@ -168,6 +169,10 @@ export function ClubShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Posé ici, donc valable pour les 9 pages du club d'un coup. Ne fait rien
+  // quand le navigateur sait animer au défilement tout seul.
+  useRevelationAuScroll();
 
   return (
     <div className="cl">

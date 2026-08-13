@@ -322,3 +322,28 @@
     .cl-blob.b{animation-name:clFloatB}
   }
 }
+
+/* ── REPLI POUR LES NAVIGATEURS SANS animation-timeline ────────────────────
+   Le bloc ci-dessus est tout ou rien : un navigateur qui ignore
+   `animation-timeline` n'en joue pas une version dégradée, il le saute
+   entièrement — la page devient alors parfaitement immobile. Selon les
+   versions de Safari, c'est le cas sur iPhone.
+
+   `html.cl-repli-js` est posée par useRevelationAuScroll.ts, et par lui seul.
+   Sans JavaScript, aucune de ces règles ne s'applique : rien n'est caché, la
+   page reste lisible. C'est la précaution qui évite la page blanche
+   définitive quand un rideau se lève au script.
+
+   Durées volontairement longues (0,75 s / 1,1 s) : ici l'animation se joue
+   seule à l'entrée au lieu de suivre le doigt, elle doit donc être lente
+   pour ne pas claquer. */
+@supports not (animation-timeline:view()){
+  @media (prefers-reduced-motion:no-preference){
+    html.cl-repli-js .cl-rv{opacity:0;transform:translateY(34px);
+      transition:opacity .75s cubic-bezier(.22,.61,.36,1),transform .75s cubic-bezier(.22,.61,.36,1)}
+    html.cl-repli-js .cl-rv.est-vu{opacity:1;transform:none}
+    html.cl-repli-js .cl-slot img{transform:scale(1.16);
+      transition:transform 1.1s cubic-bezier(.22,.61,.36,1)}
+    html.cl-repli-js .cl-slot img.est-vu{transform:none}
+  }
+}
