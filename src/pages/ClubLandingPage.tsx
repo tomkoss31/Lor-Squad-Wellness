@@ -5,7 +5,7 @@
 // =============================================================================
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ClubShell, Slot, PhotoBand, R, objUrl, TEL } from "./club/ClubShell";
+import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
 import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
 import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
@@ -203,32 +203,22 @@ export function ClubLandingPage() {
         </div>
       </div>
 
-      {/* BANDE PHOTO — coupure entre « le rituel raconté » et « ce qui est inclus ».
-          Ordre volontaire : les trois boissons d'abord, dans l'ordre où on les
-          sert, parce que ce sont les trois qui survivent au recadrage mobile
-          (cf. .cl-photoband) — la bande continue donc de raconter le rituel
-          même quand il n'en reste que trois. */}
-      <PhotoBand
-        srcs={[
-          // Aloé puis thé puis smoothie : les trois premières cases sont les
-          // trois boissons DANS L'ORDRE OÙ ON LES SERT, et ce n'est pas
-          // décoratif — sous 560 px la bande ne garde que ces trois-là. Toute
-          // autre photo mise ici efface une étape du rituel sur téléphone.
-          //
-          // Les deux premières sont en 16:9 : la fenêtre d'une case fait 1,8:1,
-          // donc un carré y perd 45 % de sa hauteur (mesuré : 55 % visible)
-          // quand une 16:9 n'en perd que 3 %. Même visuel de marque, cadré pour
-          // cette place. Les carrés restent sur /club/le-rituel, dont les
-          // emplacements sont en 1:1.
-          "/brand/breakfast-club/photos/rituel-aloe-16x9.jpg",
-          "/brand/breakfast-club/photos/rituel-the-16x9.jpg",
-          // Reste en carré faute de 16:9 du smoothie — la seule case de la
-          // bande encore rognée à 55 %.
-          "/brand/breakfast-club/photos/rituel-smoothie.jpg",
-          "/brand/breakfast-club/photos/equipe-paysage.jpg",
-          "/brand/breakfast-club/photos/club-facade.jpg",
-        ]}
-      />
+      {/* PAS DE BANDE PHOTO ICI — décision Thomas, 13/08, après comparatif.
+          Il y en avait une de 5 vignettes. Mesuré à 390 px : chaque case
+          faisait 78 px de large et ne montrait que 37 % de sa photo. Cinq
+          images dont on ne lisait aucune, et de trois provenances
+          différentes (catalogue de marque + vraies photos du club), donc sans
+          lumière ni cadrage communs.
+
+          La cause est un manque de matière, pas un défaut de réglage : le site
+          ne dispose que de 9 vraies photos du club, dont 2 portraits de coachs
+          et 3 déjà employées ailleurs — et presque toutes VERTICALES (0,56 à
+          0,80), quand une bande a besoin de paysage. Aucune combinaison ne
+          tenait. On préfère donc rien à un patchwork.
+
+          À rétablir quand il y aura une vraie série : format PAYSAGE, 1600 px
+          de large minimum. `PhotoBand` reste en place, la page Parcours s'en
+          sert toujours. */}
 
       {/* CE QUI EST INCLUS */}
       <div id="inclus" className="cl-band dark cl-rel">
