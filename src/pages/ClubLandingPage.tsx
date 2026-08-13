@@ -255,14 +255,19 @@ export function ClubLandingPage() {
                 label="Mélanie & Thomas"
                 sub="l'équipe au club"
                 frame="peach"
-                // La section s'appelle « Tu n'es jamais seul » : elle parle du
-                // GROUPE. Photo professionnelle de la salle, avec l'enseigne,
-                // le mur de résultats et le carnet de coaching dans le cadre —
-                // elle dit le lieu ET la communauté d'un seul coup.
-                // 1024×1280, soit EXACTEMENT le 4:5 du cadre : aucun recadrage,
-                // donc pas de `position` à régler.
-                src="/brand/breakfast-club/photos/club-ambiance.jpg"
-                alt="Des membres attablés au club un matin, sous l'enseigne The Breakfast Club, devant le mur des résultats."
+                // Mélanie et Thomas, comme le dit le libellé de l'emplacement
+                // et comme le dit le texte à côté. C'était la photo de la
+                // salle — le MÊME fichier que le hero (club-ambiance.jpg et
+                // club-salle.jpg ont une empreinte identique) : la page
+                // montrait donc deux fois la même image à deux écrans
+                // d'intervalle. Le hero garde la salle, cette place revient aux
+                // deux personnes dont parle le paragraphe.
+                // 1280×720 dans un cadre 4:5 : on ne garde que 45 % de la
+                // largeur, mais le couple occupe 23 à 78 % et son milieu tombe
+                // à 49 % — un cadrage centré les tient tous les deux. La
+                // hauteur, elle, est conservée en entier.
+                src="/brand/breakfast-club/photos/equipe-paysage.jpg"
+                alt="Mélanie et Thomas au club, devant le mur végétal et l'enseigne lumineuse La Base."
               />
             </div>
             <div style={{ order: 1 }}>
