@@ -61,6 +61,13 @@ export interface CopiloteData {
   // Agenda / suivis (max 3 préservés, reste comptabilisé dans moreCount)
   todayAgenda: CopiloteAgendaItem[];
   todayAgendaMoreCount: number;
+  /** L'agenda du jour ENTIER, non tronqué.
+   *  ⚠️ `todayAgenda` s'arrête à 3 : avec 5 RDV (8h, 9h, 10h, 14h, 18h), celui
+   *  de 14 h n'existe déjà plus en sortie du hook. La zone 1 du Co-pilote se
+   *  serait tue à 13 h 50, à dix minutes du rendez-vous — alors que sa règle
+   *  n°1 est « rien ne passe devant un RDV ». Toute logique de priorité doit
+   *  lire CE champ, jamais le tronqué. */
+  todayAgendaAll: CopiloteAgendaItem[];
   pendingFollowups: CopiloteFollowupItem[];
   pendingFollowupsMoreCount: number;
 
@@ -325,6 +332,7 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
       todayFollowupsCount: pendingFollowupsRaw.length,
       nextAction,
       todayAgenda,
+      todayAgendaAll: todayAgendaRaw,
       todayAgendaMoreCount,
       pendingFollowups,
       pendingFollowupsMoreCount,
@@ -375,6 +383,7 @@ function emptyData(now: Date): CopiloteData {
     todayFollowupsCount: 0,
     nextAction: null,
     todayAgenda: [],
+    todayAgendaAll: [],
     todayAgendaMoreCount: 0,
     pendingFollowups: [],
     pendingFollowupsMoreCount: 0,

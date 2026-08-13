@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le Co-pilote — un seul écran · La Base 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300..700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+/* ─── Tokens La Base 360 — repris tels quels de tokens/colors.css ─────────── */
+:root{
+  --bg:#162624; --surface:#1E3330; --surface2:#26403B;
+  --border:rgba(244,239,228,.10); --border2:rgba(244,239,228,.17);
+  --text:#F4EFE4; --muted:#9BAAA3; --hint:#74847C;
+  --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A;
+  --wa:#25D366;
+  --title:'Anton',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --edito:'Syne',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:#0E1A18;color:var(--text);font-family:var(--body);font-size:15px;
+  line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+
+/* ─── Bandeau de la maquette (n'existe pas dans l'app) ────────────────────── */
+.chrome{position:sticky;top:0;z-index:60;background:rgba(14,26,24,.95);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 12px}
+.chrome h1{margin:0 0 3px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--hint);font-weight:500}
+.chrome p{margin:0 0 9px;font-size:12px;color:var(--muted)}
+.chrome p b{color:var(--teal);font-weight:600}
+.moments{display:flex;gap:5px}
+.moments button{flex:1;padding:7px 3px;border-radius:9px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--hint);background:var(--surface);
+  border:1px solid var(--border);transition:.16s;line-height:1.3}
+.moments button[aria-current="true"]{color:#08201C;background:var(--teal);border-color:var(--teal);font-weight:600}
+
+.stage{display:flex;justify-content:center;padding:18px 12px 50px}
+@media(max-width:430px){.stage{padding:0 0 34px}}
+.phone{width:390px;max-width:100%;background:var(--bg);border-radius:26px;position:relative;
+  border:1px solid var(--border);box-shadow:0 40px 90px rgba(0,0,0,.55);padding-bottom:96px}
+@media(max-width:430px){.phone{border-radius:0;border:none;box-shadow:none}}
+
+.topbar{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.logo{width:30px;height:30px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--teal),var(--lime));display:grid;place-items:center;
+  color:#08201C;font-family:var(--title);font-size:15px}
+.topname{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--hint);text-transform:uppercase}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--hint)}
+.h1{font-family:var(--title);font-weight:400;text-transform:uppercase;letter-spacing:.01em;
+  line-height:1.04;margin:0}
+
+/* ═══ ZONE 1 — MAINTENANT · une seule personne, une seule chose ═══════════ */
+.zone1{margin:16px 18px 0;padding:20px 19px 19px;border-radius:20px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#1E3330,#182B28);border:1px solid var(--border)}
+.zone1::after{content:"";position:absolute;right:-70px;top:-70px;width:210px;height:210px;
+  border-radius:50%;background:radial-gradient(circle,var(--glow,rgba(242,119,95,.18)),transparent 70%);
+  pointer-events:none}
+.zone1 .why{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  display:block;margin-bottom:11px;position:relative}
+.zone1 .who{font-family:var(--title);font-size:44px;line-height:.98;text-transform:uppercase;
+  margin:0 0 13px;position:relative}
+.zone1 .ctx{font-size:15.5px;line-height:1.55;margin:0 0 5px;position:relative;color:var(--text)}
+.zone1 .since{font-family:var(--mono);font-size:12.5px;position:relative}
+.zone1 .mot{margin:17px 0 0;padding:13px 14px;border-radius:13px;background:rgba(0,0,0,.22);
+  border:1px solid var(--border);font-size:13.5px;color:var(--muted);line-height:1.55;position:relative}
+.zone1 .mot b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:6px;font-weight:600}
+/* La boite a outils, DANS la zone 1 : on ne quitte pas l'ecran pour changer
+   de ton. Trois angles, un tap, le message se reecrit sous les yeux. */
+.zone1 .tons{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;position:relative}
+.zone1 .tons button{padding:7px 11px;border-radius:10px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.06em;color:var(--muted);background:rgba(0,0,0,.2);border:1px solid var(--border2);
+  transition:.15s}
+.zone1 .tons button[aria-pressed="true"]{color:#08201C;background:var(--teal);border-color:var(--teal);font-weight:600}
+.zone1 .acts{display:flex;gap:8px;margin-top:15px;position:relative}
+.zone1 .prim{flex:1;padding:15px;border-radius:14px;background:var(--wa);color:#06230F;
+  font-size:15.5px;font-weight:700;box-shadow:0 10px 26px rgba(37,211,102,.24)}
+.zone1 .prim.teal{background:linear-gradient(135deg,var(--teal),#1EB8A6);color:#06231F;
+  box-shadow:0 10px 26px rgba(45,212,191,.24)}
+.zone1 .sec{flex:none;padding:15px 15px;border-radius:14px;border:1px solid var(--border2);
+  color:var(--muted);font-size:14px}
+.zone1 .reste{margin:13px 0 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--hint);position:relative;display:flex;align-items:center;gap:7px}
+.zone1 .reste i{flex:1;height:2px;border-radius:2px;background:var(--border2)}
+
+/* ═══ ZONE 2 — TA JOURNÉE ═════════════════════════════════════════════════ */
+.sect{margin:30px 18px 0}
+.sect>.eyebrow{display:flex;align-items:center;gap:7px;margin-bottom:13px}
+.sect>.eyebrow em{font-style:normal;color:var(--coral);font-weight:700}
+.thread{position:relative;padding-left:26px}
+.thread::before{content:"";position:absolute;left:4px;top:6px;bottom:12px;width:1px;
+  background:linear-gradient(180deg,var(--teal),var(--border2) 45%,transparent)}
+.ev{position:relative;padding-bottom:19px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-26px;top:4px;width:9px;height:9px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--hint)}
+.ev.now::before{background:var(--lime);border-color:var(--lime);box-shadow:0 0 0 4px rgba(197,248,42,.16)}
+.ev.next::before{background:var(--teal);border-color:var(--teal);box-shadow:0 0 0 4px rgba(45,212,191,.16)}
+.ev .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--hint)}
+.ev .n{font-size:15.5px;font-weight:700;margin:3px 0 2px}
+.ev .s{font-size:13px;color:var(--muted);line-height:1.45}
+
+/* ═══ ZONE 3 — TES GENS ═══════════════════════════════════════════════════ */
+.p{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);
+  width:100%;text-align:left}
+.p:last-of-type{border-bottom:none}
+.av{width:41px;height:41px;border-radius:14px;flex:none;display:grid;place-items:center;
+  font-family:var(--edito);font-weight:800;font-size:15.5px;color:#08201C}
+.p .n{display:block;font-size:14.5px;font-weight:600;line-height:1.25}
+.p .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.p .go{flex:none;font-size:17px;color:var(--hint)}
+.p .qui{flex:none;font-family:var(--mono);font-size:10px;color:var(--hint);white-space:nowrap}
+.p.fait .av{background:var(--surface2)!important;color:var(--hint)}
+.p.fait .n{text-decoration:line-through;color:var(--muted)}
+
+.equipe{margin-top:12px;padding:14px 15px;border-radius:15px;border:1px dashed var(--border2)}
+.equipe p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.55}
+.equipe b{color:var(--coral);font-weight:700}
+/* `.lien` doit vivre hors de `.equipe` : « Voir toute l'équipe » est posé plus
+   bas et perdait tout son style en restant enferme dans ce selecteur. */
+.lien{margin-top:9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--teal);text-decoration:underline;text-underline-offset:4px}
+
+/* ═══ ZONE 4 — ton équipe, avec l'outil posé sur la personne ══════════════ */
+.d{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.d:last-of-type{border-bottom:none}
+.d .av{margin-top:1px}
+.d .n{display:block;font-size:14.5px;font-weight:600;line-height:1.25}
+.d .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+/* L'outil n'est pas dans une bibliotheque a aller chercher : il est POSE sur
+   la personne qui en a besoin, avec le geste deja nomme. */
+.d .outil{margin-top:9px;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
+  border-radius:11px;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.3);
+  color:var(--teal);font-size:12.5px;font-weight:600}
+.d .outil span{font-size:13px}
+
+.mois{margin:28px 18px 0;padding-top:15px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mois .l{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint)}
+.mois .v{font-family:var(--edito);font-weight:700;font-size:16.5px;white-space:nowrap}
+
+.navbar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;
+  padding:9px 6px calc(9px + env(safe-area-inset-bottom));background:rgba(22,38,36,.93);
+  backdrop-filter:blur(14px);border-top:1px solid var(--border);border-radius:0 0 25px 25px}
+@media(max-width:430px){.navbar{border-radius:0}}
+.navbar div{text-align:center;padding:2px 6px}
+.navbar span{font-size:17px;line-height:1;display:block}
+.navbar b{display:block;font-size:9.5px;font-weight:500;color:var(--hint);margin-top:2px;
+  font-family:var(--mono);letter-spacing:.04em}
+.navbar div.act b{color:var(--teal)}
+
+.note{max-width:390px;margin:20px auto 0;padding:0 14px;color:var(--hint);font-size:12px;line-height:1.6}
+.note b{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <h1>Le Co-pilote · refonte</h1>
+  <p><b>Un seul écran qui descend.</b> Une personne · ta journée · tes gens. Change le moment ↓</p>
+  <div class="moments">
+    <button data-m="0" aria-current="true">Ce soir<br>20 h</button>
+    <button data-m="1" aria-current="false">RDV dans<br>20 min</button>
+    <button data-m="2" aria-current="false">Tout est<br>traité</button>
+    <button data-m="3" aria-current="false">Manuela<br>écrit</button>
+    <button data-m="4" aria-current="false">Manon<br>a payé</button>
+    <button data-m="5" aria-current="false">Vu par<br>Charlène</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="phone">
+
+  <div class="topbar"><span class="logo">B</span><span class="topname" id="quand">Mercredi 12 août · 20 h</span></div>
+
+  <!-- ═══ ZONE 1 — la seule chose qui compte maintenant ═══ -->
+  <section class="zone1" id="z1"></section>
+
+  <!-- ═══ ZONE 2 — ta journée ═══ -->
+  <section class="sect">
+    <div class="eyebrow">Ta journée</div>
+    <div class="thread" id="journee"></div>
+  </section>
+
+  <!-- ═══ ZONE 3 — tes clients ═══ -->
+  <section class="sect" id="sect-clients">
+    <div class="eyebrow" id="titre-gens"></div>
+    <div id="gens"></div>
+    <div class="equipe" id="bloc-club">
+      <p><b>7 personnes</b> venues du site du club n'ont été rappelées par personne — Laure, Manon, Fatiha, Armonie et 3 autres.</p>
+      <button class="lien">Voir chez qui c'est</button>
+    </div>
+  </section>
+
+  <!-- ═══ ZONE 4 — ton equipe · chaque distri avec SON outil ═══
+       « les gens = distributeur » (Thomas). C'est ici que la boite a outils
+       se branche : pas une bibliotheque a aller chercher, un bouton pose sur
+       la personne qui en a besoin. ═══ -->
+  <section class="sect" id="sect-equipe">
+    <div class="eyebrow" id="titre-equipe"></div>
+    <div id="equipe"></div>
+    <button class="lien" style="margin-top:14px;display:block">Voir toute l'équipe · 12</button>
+  </section>
+
+  <div class="mois">
+    <span class="l">Ce mois</span>
+    <span class="v" id="mois">627 € · 3 bilans · 17 actifs</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="act"><span>◎</span><b>Aujourd'hui</b></div>
+    <div><span>👥</span><b>Clients</b></div>
+    <div><span>＋</span><b>Bilan</b></div>
+    <div><span>📅</span><b>Agenda</b></div>
+    <div><span>☰</span><b>Plus</b></div>
+  </nav>
+
+</div>
+</div>
+
+<p class="note">Maquette — rien n'est branché, mais <b>les noms, les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026). Testée à 390 px.<br>
+Les trois versions concurrentes de tout à l'heure restent sur <b>co-pilote-3-directions.html</b>.</p>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Données réelles du 12/08/2026, compte de Thomas.
+
+   LA REGLE DE LA ZONE 1 : elle ne montre JAMAIS deux choses. Ce qu'elle
+   montre change selon le moment de la journee — c'est tout l'interet, sinon
+   autant garder une liste. L'ordre de priorite :
+     1. un RDV qui approche          (rien ne passe devant, c'est cale)
+     2. sinon, la personne qui attend depuis le plus longtemps
+     3. sinon, plus personne n'attend : on le dit, et on s'arrete la
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const GENS = [
+  { court:"Matheo", nom:"Matheo Manapany", ini:"M", quoi:"Suivi en retard",
+    ligne:"Suivi en retard · 44 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
+    ctx:"Un point que tu avais calé ensemble, et qui n'a jamais eu lieu.",
+    depuis:"Ça fait 44 jours.", cta:"Lui écrire",
+    mot:"Salut Matheo 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?" },
+  { court:"Ton lead", nom:"Ton lead colis", ini:"T", quoi:"Jamais rappelé",
+    ligne:"Jamais rappelé · 25 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
+    ctx:"Un contact du tunnel colis, resté sans réponse depuis presque un mois.",
+    depuis:"Ça fait 25 jours.", cta:"Lui écrire",
+    mot:"Bonjour 👋 C'est Thomas de La Base 360 — tu avais laissé tes coordonnées, je reviens vers toi. Toujours d'actualité ?" },
+  { court:"Florian", nom:"Florian", ini:"F", quoi:"Jamais rappelé",
+    ligne:"Jamais rappelé · 4 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
+    ctx:"Il a laissé son numéro sur le tunnel colis. Personne ne l'a rappelé.",
+    depuis:"Ça fait 4 jours.", cta:"Lui écrire",
+    mot:"Bonjour Florian 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?" },
+  /* Trouve en base le 12/08 : 5 liens de paiement generes, ZERO paye. Djamal
+     a recu deux fois un lien a 234 €. Quelqu'un qui a failli acheter et ne
+     l'a pas fait n'apparait aujourd'hui sur AUCUN ecran de l'app. */
+  { court:"Djamal", nom:"Djamal", ini:"D", quoi:"Paiement jamais réglé",
+    ligne:"Lien à 234 € envoyé, jamais payé", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
+    ctx:"Programme Premium à 234 €. Le lien lui a été envoyé deux fois — il n'a jamais réglé.",
+    depuis:"Il a failli acheter.", cta:"Lui reparler",
+    mot:"Salut Djamal 👋 Je vois que le paiement n'est pas passé — souci technique, ou tu préfères qu'on en reparle avant ? Dis-moi 🙂" },
+  { court:"Clément", nom:"Clément Clotte", ini:"C", quoi:"Plus de commande",
+    ligne:"111 j sans commande", teinte:"var(--amber)", glow:"rgba(232,169,58,.16)",
+    ctx:"Il prenait le Thé 51 g. Plus rien depuis longtemps — il ne demande rien, mais il est encore là.",
+    depuis:"111 jours sans commande.", cta:"Prendre de ses nouvelles",
+    mot:"Salut Clément 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?" },
+  { court:"Gerald", nom:"Delfraissy Gerald", ini:"G", quoi:"Plus de commande",
+    ligne:"87 j sans commande", teinte:"var(--amber)", glow:"rgba(232,169,58,.16)",
+    ctx:"Formula 1. Il s'est éteint doucement, sans rien dire.",
+    depuis:"87 jours sans commande.", cta:"Prendre de ses nouvelles",
+    mot:"Salut Gerald 👋 Ça fait un moment ! Comment tu vas en ce moment ?" },
+];
+
+/* ─── L'EQUIPE, lue en base le 12/08/2026 ────────────────────────────────
+   Chaque ligne porte UN signal et UN outil. Pas un tableau de bord de 12
+   lignes : les trois ou quatre chez qui quelque chose est coince. */
+const EQUIPE = [
+  { ini:"C", nom:"Charlène Soyer", teinte:"var(--coral)",
+    quoi:"Inscrite, zéro client, aucun bilan. Elle n'a jamais commencé.",
+    outil:"🚀 Lui faire faire son 1er bilan" },
+  { ini:"V", nom:"Vivien Thumelin", teinte:"var(--coral)",
+    quoi:"Même chose : jamais démarré depuis son inscription.",
+    outil:"🚀 Lui faire faire son 1er bilan" },
+  { ini:"M", nom:"Mandy", teinte:"var(--amber)",
+    quoi:"10 clients, mais plus aucun bilan depuis 53 jours.",
+    outil:"💬 Prendre de ses nouvelles" },
+  { ini:"M", nom:"Mélanie", teinte:"var(--amber)",
+    quoi:"5 personnes du site du club, aucune rappelée.",
+    outil:"📞 Lui envoyer sa liste" },
+];
+
+/* ─── AMELIORATION 3 — la boite a outils DANS la zone 1 ───────────────────
+   Le « message pret » etait fige. Trois angles, un tap, sans quitter l'ecran.
+   Le premier est celui que l'app propose d'elle-meme ; les deux autres
+   existent parce qu'on n'ecrit pas pareil selon a qui on parle. */
+function variantes(p){
+  const prenom = p.court;
+  if(p.quoi === "Plus de commande") return [
+    { t:"Doux",     m:p.mot },
+    { t:"Direct",   m:`Salut ${prenom} 👋 Tu n'as rien repris depuis un moment — c'est un choix, ou juste la vie qui passe ? Dis-moi franchement, je m'adapte 🙂` },
+    { t:"Une reco", m:`Salut ${prenom} 👋 Je pensais à toi : il y a une nouveauté qui collerait bien à ce que tu faisais. Je t'en dis deux mots ?` },
+  ];
+  if(p.quoi === "Paiement jamais réglé") return [
+    { t:"Doux",       m:p.mot },
+    { t:"Technique",  m:`Salut ${prenom} 👋 Le lien de paiement a peut-être expiré de son côté — je t'en renvoie un neuf tout de suite si tu veux ?` },
+    { t:"Autrement",  m:`Salut ${prenom} 👋 Si le montant d'un coup te bloque, on peut aussi partir sur un programme plus court pour commencer. Ça t'irait mieux ?` },
+  ];
+  if(p.quoi === "Suivi en retard") return [
+    { t:"Doux",       m:p.mot },
+    { t:"Je m'excuse", m:`Salut ${prenom} 👋 Je te dois un point depuis un bon moment et je ne l'ai pas fait — c'est ma faute. Tu es dispo cette semaine ?` },
+    { t:"Un créneau",  m:`Salut ${prenom} 👋 Je te propose jeudi 18 h pour notre point, ou vendredi midi si tu préfères. Lequel t'arrange ?` },
+  ];
+  return [
+    { t:"Doux",       m:p.mot },
+    { t:"Court",      m:`Bonjour ${prenom} 👋 Thomas, La Base 360. Tu avais laissé tes coordonnées — toujours partant ?` },
+    { t:"Un créneau", m:`Bonjour ${prenom} 👋 Thomas de La Base 360. Je te propose un bilan offert jeudi 18 h ou samedi matin — ça te va ?` },
+  ];
+}
+
+/* Les moments — mêmes données, écran différent. */
+const MOMENTS = [
+  { quand:"Mercredi 12 août · 20 h", type:"personne", debut:0, faits:[],
+    journee:[
+      {c:"now",  t:"Maintenant · 20 h", n:"Ta journée est finie", s:"Aucun rendez-vous aujourd'hui."},
+      {c:"next", t:"Jeudi 14 · 09:00",  n:"Rendez-vous client",  s:"Ton seul RDV calé cette semaine."},
+      {c:"",     t:"Quand tu veux",     n:"Clément · Gerald",    s:"Ils n'attendent rien — c'est toi qui décides."},
+    ] },
+
+  { quand:"Jeudi 14 août · 08 h 40", type:"rdv", debut:0, faits:[],
+    journee:[
+      {c:"now",  t:"Dans 20 minutes", n:"Rendez-vous client · 09:00", s:"Bilan de suivi. Son dernier point date du 3 juillet."},
+      {c:"",     t:"Ensuite",         n:"3 personnes attendent",      s:"Matheo, ton lead colis, Florian."},
+      {c:"",     t:"Quand tu veux",   n:"Clément · Gerald",           s:"Ils n'attendent rien — c'est toi qui décides."},
+    ] },
+
+  { quand:"Vendredi 15 août · 11 h", type:"vide", debut:99, faits:[0,1,2,3,4,5],
+    journee:[
+      {c:"now",  t:"Maintenant",    n:"Rien de calé aujourd'hui", s:"Ta liste est vide, tout le monde a eu sa réponse."},
+      {c:"next", t:"Lundi 18 · 10:00", n:"Bilan initial",         s:"Ta première du lundi."},
+    ] },
+
+  /* AMELIORATION 2 — un client qui ecrit. Aujourd'hui c'est un compteur dans
+     l'inbox. Quelqu'un qui ecrit ATTEND, maintenant : il passe devant toute
+     la file, et derriere un seul truc — un RDV deja cale. */
+  { quand:"Mercredi 12 août · 20 h", type:"message", debut:0, faits:[],
+    journee:[
+      {c:"now",  t:"Il y a 6 minutes", n:"Manuela t'a écrit",   s:"Elle attend une réponse, là, maintenant."},
+      {c:"next", t:"Jeudi 14 · 09:00", n:"Rendez-vous client",  s:"Ton seul RDV calé cette semaine."},
+      {c:"",     t:"Ensuite",          n:"5 personnes attendent", s:"Matheo, ton lead colis, Florian, Clément, Gerald."},
+    ] },
+
+  /* AMELIORATION 1 — l'argent qui rentre. C'est la SEULE chose qui merite
+     vraiment le lime (regle de la charte : lime = victoires uniquement).
+     ⚠️ Constat du 12/08 : 5 liens de paiement generes, ZERO paye. Le meme
+     ecran doit donc aussi savoir dire « envoye, jamais paye » — voir la
+     ligne Djamal ajoutee dans « tes clients ». */
+  { quand:"Jeudi 14 août · 11 h 20", type:"paiement", debut:0, faits:[],
+    journee:[
+      {c:"now",  t:"Il y a 3 minutes",  n:"Manon a payé · 135,15 €", s:"Formula 1, Aloe Vera, Thé Classique."},
+      {c:"",     t:"En attente",        n:"Djamal · 234 €",          s:"Lien envoyé deux fois, jamais réglé."},
+      {c:"",     t:"Ensuite",           n:"5 personnes attendent",   s:"Rien d'urgent, mais elles sont là."},
+    ] },
+
+  /* Le meme ecran, vu par quelqu'un qui n'a jamais commence. Charlene :
+     inscrite, zero client, aucun bilan. Elle n'a ni file, ni journee, ni
+     equipe — donc le demarrage PREND la zone 1. Il n'est pas un lien en
+     haut qu'on ignore depuis des mois : il EST l'ecran, tant qu'il compte. */
+  { quand:"Mercredi 12 août · 20 h", type:"demarrage", debut:0, faits:[], soloDistri:true,
+    journee:[
+      {c:"now",  t:"Maintenant",   n:"Tu n'as encore rien de calé", s:"C'est normal — personne ne commence avec un agenda plein."},
+      {c:"next", t:"Ton objectif", n:"Un premier bilan",            s:"Une personne, une fois. Le reste vient tout seul après."},
+    ] },
+];
+
+let m = 0;
+
+function zone1(mo){
+  const z = document.getElementById('z1');
+
+  if(mo.type === "rdv"){
+    z.style.setProperty('--glow','rgba(45,212,191,.20)');
+    z.innerHTML = `
+      <span class="why" style="color:var(--teal)">Dans 20 minutes</span>
+      <h2 class="who">09:00</h2>
+      <p class="ctx">Bilan de suivi. Son dernier point date du 3 juillet — elle avait perdu 2,4 kg.</p>
+      <div class="since" style="color:var(--teal)">Elle arrive au club.</div>
+      <div class="mot"><b>À relire avant</b>Objectif perte de poids · Formula 1 + Thé · elle bloque sur les collations de l'après-midi.</div>
+      <div class="acts">
+        <button class="prim teal">Ouvrir sa fiche</button>
+        <button class="sec">Reporter</button>
+      </div>
+      <div class="reste">Après ça <i></i> 3 personnes attendent</div>`;
+    return;
+  }
+
+  if(mo.type === "message"){
+    z.style.setProperty('--glow','rgba(45,212,191,.20)');
+    z.innerHTML = `
+      <span class="why" style="color:var(--teal)">Elle t'écrit · il y a 6 minutes</span>
+      <h2 class="who">Manuela</h2>
+      <div class="mot" style="margin-top:0">
+        <b>Son message</b>« Coucou ! J'ai fini ma boîte de Formula 1, je reprends quoi ?
+        Et j'ai perdu 1,8 kg depuis le dernier point 🙂 »</div>
+      <div class="acts">
+        <button class="prim teal">Lui répondre</button>
+        <button class="sec">Sa fiche</button>
+      </div>
+      <div class="reste">Après ça <i></i> 5 personnes attendent</div>`;
+    return;
+  }
+
+  if(mo.type === "paiement"){
+    z.style.setProperty('--glow','rgba(197,248,42,.20)');
+    z.innerHTML = `
+      <span class="why" style="color:var(--lime)">Paiement reçu · il y a 3 minutes</span>
+      <h2 class="who" style="color:var(--lime)">135,15 €</h2>
+      <p class="ctx">Manon vient de régler son programme — Formula 1, Aloe Vera, Thé Classique.</p>
+      <div class="since" style="color:var(--lime)">Elle peut venir chercher sa commande.</div>
+      <div class="mot"><b>Message prêt</b>Merci Manon ! 🙌 C'est bien reçu — ta commande t'attend au club quand tu veux. On se voit vite !</div>
+      <div class="acts">
+        <button class="prim">La remercier</button>
+        <button class="sec">La commande</button>
+      </div>
+      <div class="reste">En attente <i></i> Djamal · 234 €, jamais réglé</div>`;
+    return;
+  }
+
+  if(mo.type === "demarrage"){
+    z.style.setProperty('--glow','rgba(45,212,191,.20)');
+    z.innerHTML = `
+      <span class="why" style="color:var(--teal)">Ton démarrage · étape 1 sur 7</span>
+      <h2 class="who">Ton 1er<br>bilan</h2>
+      <p class="ctx">Une seule personne, une seule fois. Quelqu'un que tu connais déjà — c'est toujours comme ça que ça commence.</p>
+      <div class="since" style="color:var(--teal)">Compte 30 minutes.</div>
+      <div class="mot"><b>Si tu bloques</b>Thomas est ton parrain. Il a fait son premier il y a quatre ans, et il répond.</div>
+      <div class="acts">
+        <button class="prim teal">Commencer un bilan</button>
+        <button class="sec">Lui écrire</button>
+      </div>
+      <div class="reste">Après ça <i></i> 6 étapes, une par semaine</div>`;
+    return;
+  }
+
+  if(mo.type === "vide" || mo.debut >= GENS.length){
+    z.style.setProperty('--glow','rgba(197,248,42,.16)');
+    z.innerHTML = `
+      <span class="why" style="color:var(--lime)">Personne n'attend</span>
+      <h2 class="who">C'est<br>à jour</h2>
+      <p class="ctx">Tout le monde a eu sa réponse. Rien ne traîne, personne n'est resté en plan.</p>
+      <div class="since" style="color:var(--lime)">Profites-en.</div>
+      <div class="acts">
+        <button class="prim teal">Préparer lundi</button>
+        <button class="sec">Inviter</button>
+      </div>
+      <div class="reste">Reste <i></i> 7 contacts du club, chez ton équipe</div>`;
+    return;
+  }
+
+  const p = GENS[mo.debut];
+  const reste = GENS.length - mo.debut - 1;
+  const tons = variantes(p);
+  z.style.setProperty('--glow', p.glow);
+  z.innerHTML = `
+    <span class="why" style="color:${p.teinte}">${p.quoi}</span>
+    <h2 class="who">${p.court}</h2>
+    <p class="ctx">${p.ctx}</p>
+    <div class="since" style="color:var(--amber)">${p.depuis}</div>
+    <div class="mot"><b>Message prêt</b><span id="texte-mot">${tons[0].m}</span></div>
+    <div class="tons">${tons.map((t,i)=>
+      `<button data-ton="${i}" aria-pressed="${i===0}">${t.t}</button>`).join('')}</div>
+    <div class="acts">
+      <button class="prim" id="agir">${p.cta}</button>
+      <button class="sec" id="passer">Plus tard</button>
+    </div>
+    <div class="reste">${reste > 0
+      ? `Ensuite <i></i> ${reste} autre${reste>1?"s":""}`
+      : `Dernière <i></i> tu y es presque`}</div>`;
+
+  z.querySelectorAll('[data-ton]').forEach(b=>b.addEventListener('click',()=>{
+    z.querySelectorAll('[data-ton]').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
+    document.getElementById('texte-mot').textContent = tons[Number(b.dataset.ton)].m;
+  }));
+
+  /* Agir fait descendre la file d'un cran : la zone 1 montre la suivante, et
+     la personne traitee est barree dans la zone 3. C'est le meme ecran. */
+  const suite = () => { mo.faits = [...mo.faits, mo.debut]; mo.debut++; peindre(); };
+  document.getElementById('agir').onclick = suite;
+  document.getElementById('passer').onclick = suite;
+}
+
+function peindre(){
+  const mo = MOMENTS[m];
+  document.getElementById('quand').textContent = mo.quand;
+
+  zone1(mo);
+
+  document.getElementById('journee').innerHTML = mo.journee.map(e=>`
+    <div class="ev ${e.c}">
+      <div class="t">${e.t}</div>
+      <div class="n">${e.n}</div>
+      <div class="s">${e.s}</div>
+    </div>`).join('');
+
+  /* Une débutante n'a ni clients, ni équipe : on ne lui montre pas des
+     sections vides, on les retire. L'écran doit être court quand la vie
+     l'est. */
+  const solo = Boolean(mo.soloDistri);
+  document.getElementById('sect-clients').style.display = solo ? 'none' : '';
+  document.getElementById('sect-equipe').style.display  = solo ? 'none' : '';
+  document.getElementById('mois').textContent = solo
+    ? '0 € · 0 bilan · à toi de jouer'
+    : '627 € · 3 bilans · 17 actifs';
+  if(solo) return;
+
+  const restants = GENS.length - mo.faits.length;
+  document.getElementById('titre-gens').innerHTML = restants > 0
+    ? `Tes clients <em>· ${restants} en attente</em>`
+    : `Tes clients <em style="color:var(--lime)">· tout est traité</em>`;
+
+  /* « les gens = distributeur » : l'équipe est une zone A PART, avec pour
+     chacun UN signal et UN outil — pas une bibliothèque à aller chercher. */
+  document.getElementById('titre-equipe').innerHTML =
+    `Ton équipe <em>· ${EQUIPE.length} ont besoin de toi</em>`;
+  document.getElementById('equipe').innerHTML = EQUIPE.map(d=>`
+    <div class="d">
+      <span class="av" style="background:${d.teinte}">${d.ini}</span>
+      <span style="flex:1;min-width:0">
+        <span class="n">${d.nom}</span>
+        <span class="s">${d.quoi}</span>
+        <button class="outil">${d.outil}</button>
+      </span>
+    </div>`).join('');
+
+  document.getElementById('gens').innerHTML = GENS.map((g,k)=>{
+    const fait = mo.faits.includes(k);
+    return `<button class="p ${fait?'fait':''}">
+      <span class="av" style="background:${g.teinte}">${fait?'✓':g.ini}</span>
+      <span style="flex:1;min-width:0">
+        <span class="n">${g.nom}</span>
+        <span class="s">${fait ? 'Répondu' : g.ligne}</span>
+      </span>
+      <span class="go">${fait?'':'›'}</span>
+    </button>`;
+  }).join('');
+}
+
+document.querySelectorAll('.moments button').forEach(b=>b.addEventListener('click',()=>{
+  m = Number(b.dataset.m);
+  /* On repart de l'etat initial du moment choisi, sinon la demo se souvient
+     des clics precedents et ne montre plus ce qu'elle promet. */
+  MOMENTS[m].debut = m === 2 ? GENS.length : 0;
+  MOMENTS[m].faits = m === 2 ? GENS.map((_, i) => i) : [];
+  document.querySelectorAll('.moments button').forEach(x=>x.setAttribute('aria-current', String(x===b)));
+  peindre();
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+peindre();
+</script>
+</body>
+</html>

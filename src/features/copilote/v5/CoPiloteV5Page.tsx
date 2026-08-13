@@ -29,7 +29,8 @@ import { useTheme } from "../../../hooks/useTheme";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
-import { PlanDuJour } from "./components/PlanDuJour";
+import { EcranDuJourBranche } from "./components/EcranDuJourBranche";
+import { BandeauDemarrage } from "./components/BandeauDemarrage";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
 
@@ -80,7 +81,12 @@ export function CoPiloteV5Page() {
   const [opsForceOpen, setOpsForceOpen] = useState(false);
   // Bande « démarrage » du coach déjà lancé (LOT 4) : elle doit dire où il en
   // est et ce qui vient, pas seulement « revoir le parcours ».
-  const opsDone = ops.steps.length > 0 && ops.steps.every((s) => s.state === "done");
+  //
+  // ⚠️ `opsDone = steps.every(state === "done")` a été RETIRÉ (2026-08-13) : il
+  // ne se déclenchait JAMAIS. `stepDone` exige `gates.length > 0`, or les
+  // étapes 6 et 7 n'ont aucune porte — la branche « Démarrage terminé 🎉 »
+  // était donc du code mort depuis le début. Le seul signal fiable de fin est
+  // `ops.activated` (users.activated_at, décidé serveur).
   const opsNextLabel =
     ops.steps.find((s) => s.state === "active")?.label ??
     ops.steps.find((s) => s.state !== "done")?.label ??
@@ -187,122 +193,30 @@ export function CoPiloteV5Page() {
         </div>
       </div>
 
-      {/* Accès cockpit « La Base Académie » (fix 2026-07-08) : entrée CLAIRE et
-          TOUJOURS dispo pour (r)ouvrir le démarrage guidé — que le membre soit en
-          pause du jour (« Plus tard »), déjà activé (revoir), ou admin (Thomas qui
-          veut vérifier ce que voient ses distris). Force l'ouverture du cockpit
-          LIVE (setOpsForceOpen) — pas la maquette statique /salle-ops. */}
+      {/* Accès au démarrage — réduit à une BARRE (2026-08-13).
+          Mesuré avant : 187 px posés au-dessus de la zone 1, soit près d'un
+          quart d'un écran d'iPhone consommé avant d'arriver à ce qui compte.
+          La jauge est devenue le liseré du bas ; un tap déroule les deux
+          portes. Replié par défaut À CHAQUE FOIS, volontairement : un bloc
+          qu'on rouvre chaque matin redevient un meuble permanent qu'on cesse
+          de voir — dix coachs sur onze étaient gelés à l'étape 1 alors qu'il
+          s'affichait tous les jours EN ENTIER. Ce n'était pas la taille le
+          problème, c'était la permanence. */}
       {currentUser.role === "distributor" || currentUser.role === "admin" ? (
-        <div
-          style={{
-            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
-            borderRadius: 16,
-            padding: "14px 16px",
+        <BandeauDemarrage
+          etape={ops.activeStepNumber}
+          total={ops.totalSteps}
+          etats={ops.steps.map((s) => s.state)}
+          activated={ops.activated}
+          prochaineEtape={opsNextLabel}
+          onOuvrirParcours={() => {
+            window.localStorage.removeItem("ls-ops-escape");
+            setOpsEscaped(false);
+            setOpsForceOpen(true);
+            window.scrollTo({ top: 0 });
           }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              window.localStorage.removeItem("ls-ops-escape");
-              setOpsEscaped(false);
-              setOpsForceOpen(true);
-              window.scrollTo({ top: 0 });
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              {/* LOT 4 (2026-08-04) — le cockpit devient une BANDE une fois le
-                  coach lancé, au lieu de disparaître. Elle dit où il en est et
-                  ce qui vient : sans ça, la bande ne racontait rien (« Revoir
-                  mon démarrage guidé ») et le fil se perdait à l'activation. */}
-              <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-                {opsDone
-                  ? "Démarrage terminé 🎉"
-                  : ops.activated
-                    ? `Ton démarrage · ${ops.activeStepNumber} / ${ops.totalSteps}`
-                    : "Reprendre mon démarrage"}
-              </span>
-              <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                {opsDone
-                  ? "Les 7 étapes sont faites. Tu peux les revoir quand tu veux."
-                  : ops.activated
-                    ? `Prochaine étape : ${opsNextLabel}`
-                    : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
-              </span>
-              {/* Jauge — le même fil unique que dans le cockpit. */}
-              {!opsDone ? (
-                <span style={{ display: "flex", gap: 4, marginTop: 8 }} aria-hidden="true">
-                  {ops.steps.map((s) => (
-                    <span
-                      key={s.n}
-                      style={{
-                        flex: 1,
-                        height: 4,
-                        borderRadius: 999,
-                        background:
-                          s.state === "done"
-                            ? "var(--ls-teal)"
-                            : s.state === "active"
-                              ? "var(--ls-lime)"
-                              : "var(--ls-border)",
-                      }}
-                    />
-                  ))}
-                </span>
-              ) : null}
-            </span>
-            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-          </button>
-
-          {/* Accès direct à la formation (LOT 4, 2026-07-27) : sans ça, un coach
-              déjà activé devait passer par le cockpit pour la trouver — soit
-              plus loin qu'avant, alors que l'objectif est de la rendre PLUS
-              accessible (8 personnes l'avaient ouverte).
-              2026-08-04 : pointe vers le nouveau parcours Duolingo
-              /formation/apprendre (la porte d'entrée débutant), pas l'ancien
-              catalogue. L'ancienne formation reste en référence via le hub. */}
-          <button
-            type="button"
-            onClick={() => navigate("/formation/apprendre")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 12,
-              paddingTop: 11,
-              width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              borderTop: "1px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              color: "var(--ls-text)",
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 17 }}>🎓</span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600 }}>
-              Ma formation Herbalife
-            </span>
-            <span style={{ fontSize: 12, color: "var(--ls-text-muted)", flexShrink: 0 }}>
-              Apprendre en avançant
-            </span>
-            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-          </button>
-        </div>
+          onOuvrirFormation={() => navigate("/formation/apprendre")}
+        />
       ) : null}
 
       {/* Simplification 2026-07-27 (LOT 1) : la check-list d'accueil J0→J7
@@ -328,7 +242,12 @@ export function CoPiloteV5Page() {
           leaderboard → Mon équipe ch.4), ReferrerStatsCard (« Tes leads » =
           doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
-      <PlanDuJour data={data} />
+      {/* Refonte 2026-08-12 : l'ecran du jour remplace le Plan du jour.
+          Un seul ecran qui descend — une seule personne en haut (jamais deux,
+          cf. ceQuiCompte), puis ta journee, tes clients, ton equipe.
+          `ops` est passe en PROP : remonter useSalleOps ici declencherait un
+          fetch `distributor_starter_progress` de plus, non cache. */}
+      <EcranDuJourBranche data={data} ops={ops} />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.

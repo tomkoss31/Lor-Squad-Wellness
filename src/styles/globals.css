@@ -110,7 +110,9 @@
   --ls-border2: rgba(244,239,228,0.17);
   --ls-text: #F4EFE4;
   --ls-text-muted: #9BAAA3;
-  --ls-text-hint: #74847C;
+  /* 3,99:1 sur le fond sombre — sous le seuil, comme son jumeau clair
+     (audit du 13/08). Éclairci au minimum : 4,56. */
+  --ls-text-hint: #7E8E86;
   /* ⚠️ LE DORÉ EST ABANDONNÉ (décision Thomas 2026-08-05). Les 1134 usages de
      var(--ls-gold*) ont été basculés sur le teal dans tout le code. Le token
      reste défini — pointant sur le TEAL — comme filet de sécurité : si un usage
@@ -206,6 +208,28 @@
    du site) qui séparent, pas des traits gris. Accents assombris pour tenir sur
    du clair (le lime devient olive, sinon illisible sur blanc). */
 html.theme-light {
+  /* ── CONTRASTE (audit du 13/08/2026) ─────────────────────────────────────
+     Mesuré dans le navigateur : CINQ tokens du thème clair étaient sous le
+     seuil lisible (4,5:1 pour du petit texte), y compris quand ils servent de
+     TEXTE — ce qu'ils font partout dans l'app.
+
+         teal   3,50   lime 3,63   coral 3,69   amber 3,40   hint 2,96
+
+     Ce n'était pas un défaut d'un écran : le thème clair avait ce problème
+     depuis toujours. Assombrissement MINIMAL qui passe, teinte conservée :
+
+         teal   #0D9488 → #0F766E   5,12  (et 5,47 en blanc dessus)
+         lime   #6D8C0B → #5E7A09   4,60
+         coral  #D9553C → #BC432C   4,93
+         amber  #B7791F → #9A631A   4,70
+         hint   #8A938D → #68716C   4,71
+
+     `#0F766E` n'est pas une couleur nouvelle : elle existait déjà dans la
+     charte sous `--ls-teal-dark` du bloc sombre. Sage (4,94) et purple (6,64)
+     passaient déjà — non touchés.
+
+     ⚠️ Les triplets `*-rgb` et les `*-bg` DOIVENT suivre : ils sont dérivés à
+     la main, rien ne les recalcule. */
   --ls-bg: #FAF7F0;
   --ls-surface: #FFFFFF;
   --ls-surface2: #F5F1EB;
@@ -213,28 +237,28 @@ html.theme-light {
   --ls-border2: rgba(30,51,48,0.13);
   --ls-text: #17201C;
   --ls-text-muted: #55605A;
-  --ls-text-hint: #8A938D;
+  --ls-text-hint: #68716C;
   /* Doré abandonné → alias teal (cf. commentaire du bloc sombre). */
-  --ls-gold: #0D9488;
-  --ls-teal: #0D9488;
-  --ls-lime: #6D8C0B;
-  --ls-coral: #D9553C;
+  --ls-gold: #0F766E;
+  --ls-teal: #0F766E;
+  --ls-lime: #5E7A09;
+  --ls-coral: #BC432C;
   --ls-sage: #5F7154;
-  --ls-amber: #B7791F;
+  --ls-amber: #9A631A;
   --ls-purple: #6D28D9;
   --ls-gold-bg: rgba(184,146,42,0.1);
-  --ls-teal-bg: rgba(13,148,136,0.1);
-  --ls-coral-bg: rgba(217,85,60,0.09);
+  --ls-teal-bg: rgba(15,118,110,0.1);
+  --ls-coral-bg: rgba(188,67,44,0.09);
   --ls-sage-bg: rgba(95,113,84,0.10);
   --ls-purple-bg: rgba(109,40,217,0.1);
   --ls-input-bg: #F5F1EB;
   --ls-sidebar-bg: #FFFFFF;
   /* Tokens fantômes réparés (cf. bloc :root) — variantes claires. */
-  --ls-teal-dark: #0D9488;
+  --ls-teal-dark: #0F766E;
   /* UX Polish global (2026-04-20) : overrides light mode */
   --ls-gold-rgb: 184, 146, 42;
-  --ls-teal-rgb: 13, 148, 136;
-  --ls-coral-rgb: 217, 85, 60;
+  --ls-teal-rgb: 15, 118, 110;
+  --ls-coral-rgb: 188, 67, 44;
   --ls-sage-rgb: 95, 113, 84;
   --ls-purple-rgb: 109, 40, 217;
   --ls-gold-contrast: #FFFFFF;
@@ -258,8 +282,11 @@ html.theme-light {
   --ls-ops-ink: #17201C;
   --ls-ops-text2: #495143;
   --ls-ops-text3: #5b6450;
-  --ls-ops-muted: #8a917e;
-  --ls-ops-faint: #9aa28e;
+  /* Contraste (13/08) : muted 3,05 → 5,12 · faint 2,47 → 4,63. Les `accent`
+     lime restent VIFS : ce sont des remplissages, jamais du texte — le texte
+     lime a déjà son token dédié (`--ls-ops-accent-text`, 4,86). */
+  --ls-ops-muted: #646c59;
+  --ls-ops-faint: #6b735e;
   --ls-ops-disabled: #cdd3c0;
   --ls-ops-accent: #c5f82a;
   --ls-ops-accent2: #a6d40a;

@@ -18,6 +18,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { getServiceClient, sendPushToUser } from "../_shared/push.ts";
+import { brandedEmail, escapeHtml, sendResend } from "../_shared/email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -33,6 +35,90 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
+}
+
+
+// ─── Le coach est prévenu qu'on vient d'ouvrir le paiement ──────────────────
+//
+// LE TROU, mesuré le 12/08 : entre « il sort sa carte » et « il a paie »,
+// l'app etait MUETTE. Un bilan en ligne rempli declenche push + email ; une
+// reservation du club aussi ; ouvrir un paiement, rien. C'est pourtant le
+// signal le plus chaud que l'application puisse produire.
+//
+// Trois regles :
+//   1. BEST EFFORT. Une notification qui echoue ne doit JAMAIS empecher un
+//      paiement. Tout est encapsule, rien ne remonte.
+//   2. DEDUP SUR LE BILAN, pas sur la commande. Un prospect qui clique deux
+//      fois cree deux commandes (vu en base : Djamal en a deux a trois
+//      minutes d'ecart) — le coach ne doit etre derange qu'une fois par heure.
+//   3. On ne notifie PAS `create-manual-payment-link` : la, c'est le coach
+//      lui-meme qui fabrique le lien. Il le sait deja.
+async function previensLeCoach(params: {
+  coachUserId: string;
+  bilanId: string;
+  prenom: string;
+  programme: string;
+  montantCents: number;
+}): Promise<void> {
+  try {
+    const sb = getServiceClient();
+    const montant = (params.montantCents / 100).toLocaleString("fr-FR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const qui = params.prenom.trim() || "Quelqu'un";
+
+    await sendPushToUser(sb, {
+      userId: params.coachUserId,
+      payload: {
+        title: "💳 Paiement ouvert",
+        body: `${qui} vient d'ouvrir le paiement · ${montant} €`,
+        url: "/crm",
+        type: "payment_intent",
+      },
+      dedupe: {
+        entityId: params.bilanId,
+        entityType: "payment_intent",
+        windowMinutes: 60,
+      },
+    });
+
+    // L'email double la push : la push peut ne jamais arriver (pas d'abonnement,
+    // jeton Apple revoque). Les reservations du club font exactement pareil.
+    const { data: coach } = await sb
+      .from("users")
+      .select("email, name")
+      .eq("id", params.coachUserId)
+      .maybeSingle();
+
+    const email = String((coach as { email?: string } | null)?.email ?? "").trim();
+    if (!email) return;
+
+    await sendResend({
+      to: email,
+      subject: `💳 ${qui} vient d'ouvrir le paiement — ${montant} €`,
+      html: brandedEmail({
+        badge: "💳",
+        eyebrow: "Paiement ouvert",
+        heading: `${qui} a sorti sa carte`,
+        // ⚠️ `qui` et `programme` viennent d'un FORMULAIRE PUBLIC. `intro` est
+        // injecté tel quel dans le HTML de l'email (cf. BrandedEmailParts :
+        // « peut contenir du HTML léger DÉJÀ ÉCHAPPÉ »). Sans escapeHtml, un
+        // prénom malveillant passe dans la boîte mail du coach.
+        intro:
+          `<strong>${escapeHtml(qui)}</strong> vient d'ouvrir le lien de paiement pour ` +
+          `<strong>${escapeHtml(params.programme)}</strong> — ${montant} €.<br><br>` +
+          `Ce n'est pas encore encaisse : la personne est sur la page de paiement. ` +
+          `Si rien n'arrive dans l'heure, un mot suffit souvent a debloquer.`,
+        ctaLabel: "Ouvrir le CRM",
+        ctaUrl: "https://labase360.fr/crm",
+        outro: "Tu recevras une seconde notification quand le paiement sera confirme.",
+      }),
+    });
+  } catch (e) {
+    // Best effort, vraiment : on log et on continue.
+    console.warn("[create-payment-link] notif coach echouee:", String(e));
+  }
 }
 
 serve(async (req: Request) => {
@@ -156,6 +242,14 @@ serve(async (req: Request) => {
         return json({ fallback: true, reason: "order_trace_failed" });
       }
 
+      await previensLeCoach({
+        coachUserId: bilan.coach_user_id,
+        bilanId: bilan.id,
+        prenom: bilan.first_name ?? "",
+        programme: program.name,
+        montantCents: amountCents,
+      });
+
       return json({ url: link.url, provider: "square" });
     }
 
@@ -228,6 +322,14 @@ serve(async (req: Request) => {
         console.warn("[create-payment-link] order insert (fatal):", insErr.message);
         return json({ fallback: true, reason: "order_trace_failed" });
       }
+
+      await previensLeCoach({
+        coachUserId: bilan.coach_user_id,
+        bilanId: bilan.id,
+        prenom: bilan.first_name ?? "",
+        programme: program.name,
+        montantCents: amountCents,
+      });
 
       return json({ url: stData.url, provider: "stripe" });
     }

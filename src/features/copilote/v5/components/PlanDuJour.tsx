@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../../../context/AppContext";
 import { useDormantClients, URGENCY_META, type DormantUrgency } from "../../../../hooks/useDormantClients";
 import { useRentabilitySummary } from "../../../../hooks/useRentabilitySummary";
+import { useFileDuJour, suivisEnRetardVersAttentes, ordonner, type Attente } from "../../../../hooks/useFileDuJour";
 import type { CopiloteData } from "../../../../hooks/useCopiloteData";
 import { PinAWTCinematic } from "./PinAWTCinematic";
 
@@ -43,6 +44,21 @@ function prioColor(p: Prio): string {
 }
 function prioOf(u: DormantUrgency): Prio {
   return u === "never" || u === "high" ? "urgent" : u === "medium" ? "todo" : "ok";
+}
+
+// Quelqu'un qui a levé la main devient urgent VITE : au-delà de 48 h sans
+// réponse, un prospect chaud est déjà refroidi. Un suivi qu'on s'était promis
+// tient une semaine avant de virer au rouge.
+function prioAttente(a: Attente): Prio {
+  if (a.motif === "suivi-en-retard") return a.jours > 7 ? "urgent" : "todo";
+  return a.jours > 2 ? "urgent" : "todo";
+}
+
+/** « il y a 5 jours » — le chiffre qui fait agir, écrit comme on le dirait. */
+function depuisQuand(jours: number): string {
+  if (jours <= 0) return "aujourd'hui";
+  if (jours === 1) return "depuis hier";
+  return `depuis ${jours} jours`;
 }
 
 function useIsMobile(): boolean {
@@ -85,11 +101,55 @@ html.theme-light{
 `;
 
 export function PlanDuJour({ data }: { data: CopiloteData }) {
-  const { currentUser, unreadMessageCount } = useAppContext();
+  const { currentUser, unreadMessageCount, visibleFollowUps, users, clients } = useAppContext();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { clients: dormants } = useDormantClients(currentUser?.id ?? null);
   const { totalMargin, projection } = useRentabilitySummary(currentUser?.id ?? null);
+
+  // Nom des coachs, pour dire QUI doit s'occuper d'un contact laissé de côté.
+  const nomParId = useMemo(
+    () => Object.fromEntries(users.map((u) => [u.id, firstNameOf(u.name)])),
+    [users],
+  );
+  const { mesAttentes, attentesEquipe } = useFileDuJour(currentUser?.id ?? null, {
+    estAdmin: currentUser?.role === "admin",
+    nomParId,
+  });
+
+  // Les suivis en retard sont DÉJÀ en mémoire (AppContext) — les redemander au
+  // serveur serait exactement la dépense qu'on vient de retirer du démarrage.
+  //
+  // ⚠️ `visibleFollowUps` est un droit de LECTURE, pas une liste de tâches :
+  // pour un admin il renvoie toute l'équipe. Vu à l'écran le 12/08 — deux
+  // clientes de Mélanie s'affichaient chez Thomas sous « un point que TU avais
+  // calé ». On repasse donc par le propriétaire réel du client.
+  const proprietaireDuClient = useMemo(
+    () => Object.fromEntries(clients.map((c) => [c.id, c.distributorId])),
+    [clients],
+  );
+  const { attentes, suivisDesAutres } = useMemo(() => {
+    const maintenant = Date.now();
+    const enRetard = visibleFollowUps.filter(
+      (f) => f.status === "pending" && new Date(f.dueDate).getTime() < maintenant,
+    );
+    const brut = (l: typeof enRetard) =>
+      l.map((f) => ({ id: f.id, clientId: f.clientId, clientName: f.clientName, dueDate: f.dueDate }));
+    const miens = enRetard.filter((f) => proprietaireDuClient[f.clientId] === currentUser?.id);
+    const autres = enRetard.filter((f) => proprietaireDuClient[f.clientId] !== currentUser?.id);
+    return {
+      attentes: ordonner([...mesAttentes, ...suivisEnRetardVersAttentes(brut(miens))]),
+      suivisDesAutres: suivisEnRetardVersAttentes(brut(autres)).map((a, i) => ({
+        ...a,
+        responsable: nomParId[proprietaireDuClient[autres[i].clientId] ?? ""] ?? "un coach",
+      })),
+    };
+  }, [mesAttentes, visibleFollowUps, proprietaireDuClient, currentUser?.id, nomParId]);
+
+  const fileEquipe = useMemo(
+    () => (currentUser?.role === "admin" ? ordonner([...attentesEquipe, ...suivisDesAutres]) : []),
+    [attentesEquipe, suivisDesAutres, currentUser?.role],
+  );
 
   // Persistance par jour (fix 2026-06-15) : les actions traitées/reportées
   // restaient en mémoire locale uniquement → tout revenait « à faire » au
@@ -146,18 +206,28 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
 
   const inboxCount = (unreadMessageCount ?? 0) + data.pendingFollowups.length;
   const allTasks = useMemo(() => {
+    // 1. Ceux qui ont levé la main, puis ce qu'on s'était engagé à faire.
+    //    Ils passent AVANT les dormants : voir l'en-tête de useFileDuJour.
+    const enAttente = attentes.map((a) => ({
+      id: a.cle, kind: "attente" as const, phone: a.telephone,
+      urgency: "recent" as DormantUrgency, tag: a.motifCourt, name: a.qui,
+      prio: prioAttente(a), sub: `${a.pourquoi} · ${depuisQuand(a.jours)}`,
+      to: a.chemin, motif: a.motif, jours: a.jours,
+    }));
+    // 2. Puis ceux qui se sont éteints doucement.
     const relances = dormants.map((c) => ({
       id: c.client_id, kind: "relance" as const, phone: c.client_phone, urgency: c.urgency,
       tag: URGENCY_META[c.urgency].label, name: c.client_name, prio: prioOf(c.urgency),
       sub: c.last_order_date == null
         ? `Jamais commandé · ~${c.pv_potential} PV potentiels`
         : `${c.days_since_last_order} j sans commande · ~${c.pv_potential} PV${c.last_program_name ? ` · ${c.last_program_name}` : ""}`,
+      to: `/clients/${c.client_id}?tab=actions`, motif: null, jours: c.days_since_last_order ?? 0,
     }));
     const inbox = inboxCount > 0
-      ? [{ id: "inbox", kind: "inbox" as const, phone: null, urgency: "recent" as DormantUrgency, tag: "Inbox", name: `${inboxCount} à traiter`, prio: "ok" as Prio, sub: "Messages & suivis en attente" }]
+      ? [{ id: "inbox", kind: "inbox" as const, phone: null, urgency: "recent" as DormantUrgency, tag: "Inbox", name: `${inboxCount} à traiter`, prio: "ok" as Prio, sub: "Messages & suivis en attente", to: "/messages", motif: null, jours: 0 }]
       : [];
-    return [...relances, ...inbox];
-  }, [dormants, inboxCount]);
+    return [...enAttente, ...relances, ...inbox];
+  }, [attentes, dormants, inboxCount]);
 
   const status = (id: string): Status => statuses[id] ?? "active";
   const active = allTasks.filter((t) => { const s = status(t.id); return s === "active" || s === "completing"; });
@@ -166,18 +236,41 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
   const treated = total - active.length;
   const isCalme = rdvs.length === 0 && total === 0;
 
+  // La phrase de Noaly nomme la personne qui attend depuis le plus longtemps
+  // parmi celles qui ont levé la main — c'est elle qu'on risque de perdre,
+  // pas le dormant de 111 jours qui, lui, ne demande rien.
+  const premiereAttente = attentes[0];
   const noalyText = isCalme
     ? "Journée libre devant toi — aucun RDV, ta liste est à jour. Le moment idéal pour prospecter ou préparer demain."
-    : rdvs.length > 0
-      ? `${rdvs.length} RDV aujourd'hui${active.length > 0 ? ` et ${active.length} relance${active.length > 1 ? "s" : ""} prioritaire${active.length > 1 ? "s" : ""}${active[0] ? `, ${firstNameOf(active[0].name)} en tête` : ""}` : ""}.`
-      : `Pas de RDV aujourd'hui — concentre-toi sur ${active.length} relance${active.length > 1 ? "s" : ""} prioritaire${active.length > 1 ? "s" : ""}${active[0] ? `, ${firstNameOf(active[0].name)} en tête` : ""}.`;
+    : premiereAttente
+      ? `${premiereAttente.qui} attend une réponse ${depuisQuand(premiereAttente.jours)}${
+          attentes.length > 1 ? `, et ${attentes.length - 1} autre${attentes.length > 2 ? "s" : ""} derrière` : ""
+        }${rdvs.length > 0 ? ` · ${rdvs.length} RDV aujourd'hui` : ""}.`
+      : rdvs.length > 0
+        ? `${rdvs.length} RDV aujourd'hui${active.length > 0 ? ` et ${active.length} relance${active.length > 1 ? "s" : ""} prioritaire${active.length > 1 ? "s" : ""}${active[0] ? `, ${firstNameOf(active[0].name)} en tête` : ""}` : ""}.`
+        : `Pas de RDV aujourd'hui — concentre-toi sur ${active.length} relance${active.length > 1 ? "s" : ""} prioritaire${active.length > 1 ? "s" : ""}${active[0] ? `, ${firstNameOf(active[0].name)} en tête` : ""}.`;
 
-  function relanceWA(t: { id: string; name: string; phone: string | null; urgency: DormantUrgency }) {
+  function relanceWA(t: {
+    id: string; name: string; phone: string | null;
+    urgency: DormantUrgency; motif?: string | null;
+  }) {
     const prenom = firstNameOf(t.name);
-    const msg = t.urgency === "never"
-      ? `Salut ${prenom} 👋 On n'a pas encore démarré ensemble — ça te dirait qu'on cale un petit point pour te lancer ? 🌿`
-      : `Salut ${prenom} 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ? Si tu veux on refait un point cette semaine 🙂`;
-    const phone = (t.phone ?? "").replace(/\D/g, "");
+    // On n'écrit pas à un inconnu comme à un client qui s'essouffle : le
+    // premier ne sait pas encore qui on est, le second nous connaît déjà.
+    const msg =
+      t.motif === "lead"
+        ? `Bonjour ${prenom} 👋 C'est ${firstNameOf(currentUser?.name ?? "")} de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine pour qu'on en parle ? 🌿`
+        : t.motif === "bilan-en-ligne"
+          ? `Bonjour ${prenom} 👋 C'est ${firstNameOf(currentUser?.name ?? "")} de La Base 360. J'ai bien reçu ton bilan, j'ai regardé tes réponses — je te fais un retour quand tu veux 🙂`
+          : t.motif === "suivi-en-retard"
+            ? `Salut ${prenom} 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?`
+            : t.urgency === "never"
+              ? `Salut ${prenom} 👋 On n'a pas encore démarré ensemble — ça te dirait qu'on cale un petit point pour te lancer ? 🌿`
+              : `Salut ${prenom} 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ? Si tu veux on refait un point cette semaine 🙂`;
+    // ⚠️ wa.me refuse le zéro initial : « 0679448759 » n'ouvre aucune
+    // conversation. On repasse en format international.
+    const brut = (t.phone ?? "").replace(/\D/g, "");
+    const phone = brut.startsWith("0") && brut.length === 10 ? `33${brut.slice(1)}` : brut;
     window.open(`${phone ? `https://wa.me/${phone}` : "https://wa.me/"}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
     complete(t.id);
   }
@@ -271,7 +364,9 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                 </>
               ) : null}
 
-              <SectionLabel>Relances &amp; inbox · par priorité</SectionLabel>
+              <SectionLabel>
+                {attentes.length > 0 ? "Ces personnes attendent une réponse" : "Relances & inbox · par priorité"}
+              </SectionLabel>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {active.map((t, i) => {
                   const c = prioColor(t.prio);
@@ -289,11 +384,11 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                             ) : null}
                           </div>
                           <div
-                            onClick={() => t.kind === "relance" ? navigate(`/clients/${t.id}?tab=actions`) : navigate("/messages")}
+                            onClick={() => navigate(t.to)}
                             role="button"
                             tabIndex={0}
-                            onKeyDown={(e) => { if (e.key === "Enter") { t.kind === "relance" ? navigate(`/clients/${t.id}?tab=actions`) : navigate("/messages"); } }}
-                            title={t.kind === "relance" ? "Ouvrir la fiche client" : "Ouvrir la messagerie"}
+                            onKeyDown={(e) => { if (e.key === "Enter") navigate(t.to); }}
+                            title={t.kind === "relance" ? "Ouvrir la fiche client" : t.kind === "attente" ? "Ouvrir sa fiche" : "Ouvrir la messagerie"}
                             style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--pdj-text-strong)", marginTop: 5, cursor: "pointer", textDecoration: "underline", textDecorationColor: "transparent", textUnderlineOffset: 3, transition: "text-decoration-color .15s" }}
                             onMouseEnter={(e) => { e.currentTarget.style.textDecorationColor = "currentColor"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
@@ -303,16 +398,24 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                           <div style={{ fontSize: 13, color: "var(--pdj-text-sec)", marginTop: 2 }}>{t.sub}</div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto", flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end", paddingLeft: isMobile ? 18 : 0 }}>
+                      {/* ⚠️ 390 px : mesuré le 12/08, la ligne faisait 239 px de
+                          contenu pour 239 px de boutons — elle basculait sur un
+                          arrondi et le rond « fait » retombait SEUL à la ligne,
+                          cercle vide sans libellé. On retire l'indentation de
+                          18 px : ça rend la marge, et la rangée tient. */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto", flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
                         {!completing ? (
                           <>
-                            {t.kind === "relance" ? (
+                            {t.kind !== "inbox" && t.phone ? (
                               <>
                                 <button type="button" onClick={() => relanceWA(t)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#25D366,#1FA855)", border: "none", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 14px", borderRadius: 10, cursor: "pointer", boxShadow: "0 6px 16px rgba(37,211,102,0.26)" }}>✨ WhatsApp</button>
                                 <button type="button" onClick={() => setStatus(t.id, "later")} style={{ background: "transparent", border: "1px solid var(--pdj-ghost-border)", color: "var(--pdj-text-sec)", fontFamily: "'DM Sans', sans-serif", fontSize: 13, padding: "9px 12px", borderRadius: 10, cursor: "pointer" }}>Plus tard</button>
                               </>
                             ) : (
-                              <button type="button" onClick={() => navigate("/messages")} style={{ background: "rgba(45,212,191,0.14)", border: "1px solid rgba(45,212,191,0.34)", color: "#059669", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
+                              // Sans numéro (un suivi, l'inbox), le bouton vert
+                              // ouvrirait un WhatsApp vide : on envoie là où le
+                              // geste est réellement possible.
+                              <button type="button" onClick={() => navigate(t.to)} style={{ background: "rgba(45,212,191,0.14)", border: "1px solid rgba(45,212,191,0.34)", color: "#059669", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 10, cursor: "pointer" }}>Ouvrir</button>
                             )}
                             <div onClick={() => complete(t.id)} title="Marquer comme fait" role="button" tabIndex={0} style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid var(--pdj-checkbox-border)", cursor: "pointer", flex: "0 0 auto" }} />
                           </>
@@ -333,6 +436,50 @@ export function PlanDuJour({ data }: { data: CopiloteData }) {
                   <div style={{ textAlign: "center", padding: 30, border: "1px solid var(--pdj-calm-border)", borderRadius: 14, background: "linear-gradient(110deg, var(--pdj-calm-bg), var(--pdj-calm-bg)), linear-gradient(110deg, rgba(45,212,191,0) 30%, rgba(45, 212, 191,0.18) 50%, rgba(197,248,42,0) 70%)", backgroundSize: "100% 100%, 200% 100%", animation: "pdj-sheen 3.5s linear infinite", color: "#2DD4BF", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15 }}>Liste à jour ✓ — tout est traité, belle journée</div>
                 ) : null}
               </div>
+
+              {/* Admin : ce qui attend chez quelqu'un d'autre. Ce n'est PAS son
+                  travail — d'où le bloc à part, sans case à cocher ni bouton
+                  d'action. C'est une information : le club produit des contacts
+                  que personne ne rappelle. Mesuré le 12/08 : cinq personnes
+                  venues du site en 48 h, zéro appel. */}
+              {fileEquipe.length > 0 ? (
+                <div style={{ marginTop: 26 }}>
+                  <SectionLabel>Chez ton équipe · personne n'a encore répondu</SectionLabel>
+                  <div style={{ border: "1px solid var(--pdj-card-border)", borderRadius: 14, background: "var(--pdj-card-bg)", boxShadow: "var(--pdj-card-shadow)", overflow: "hidden" }}>
+                    {fileEquipe.slice(0, 6).map((a, i) => (
+                      <div
+                        key={a.cle}
+                        onClick={() => navigate(a.chemin)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === "Enter") navigate(a.chemin); }}
+                        style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", cursor: "pointer", borderTop: i === 0 ? "none" : "1px solid var(--pdj-divider)" }}
+                      >
+                        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", flex: "0 0 auto", background: a.jours > 2 ? "#F2775F" : "#2DD4BF" }} />
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: "block", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14.5, color: "var(--pdj-text-strong)" }}>
+                            {a.qui}
+                          </span>
+                          <span style={{ display: "block", fontSize: 12.5, color: "var(--pdj-text-sec)", marginTop: 1 }}>
+                            {a.pourquoi} · {depuisQuand(a.jours)}
+                          </span>
+                        </span>
+                        <span style={{ flex: "0 0 auto", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--pdj-text-faint)", whiteSpace: "nowrap" }}>
+                          → {a.responsable}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {fileEquipe.length > 6 ? (
+                    <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--pdj-text-faint)" }}>
+                      et {fileEquipe.length - 6} autre{fileEquipe.length - 6 > 1 ? "s" : ""} —{" "}
+                      <button type="button" onClick={() => navigate("/crm")} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "var(--pdj-text-sec)", textDecoration: "underline", cursor: "pointer" }}>
+                        tout voir dans le CRM
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {done.length > 0 ? (
                 <div style={{ marginTop: 22 }}>
