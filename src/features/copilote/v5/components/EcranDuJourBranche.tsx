@@ -43,6 +43,9 @@ import type { CopiloteData } from "../../../../hooks/useCopiloteData";
 import type { SalleOpsView } from "../../salle-ops/useSalleOps";
 import { ceQuiCompte, type MessageRecu, type RdvEnVue } from "../../ceQuiCompte";
 import { EcranDuJour, type EvenementJournee, type LigneEquipe } from "./EcranDuJour";
+import { ecritureFor, type Reponse } from "../../../crm/qualification";
+import { getSupabaseClient } from "../../../../services/supabaseClient";
+import { oublier } from "../../../../lib/cacheFraicheur";
 
 const JOUR_MS = 86_400_000;
 
@@ -333,18 +336,7 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
     [CLE_SALUES, CLE_TRAITEES],
   );
 
-  const onFait = useCallback(() => {
-    if (quoi.quoi === "personne") marquer(quoi.attente.cle);
-    else if (quoi.quoi === "paiement") marquer("", quoi.commandeId);
-    else if (quoi.quoi === "message") marquer(`message:${quoi.messageId}`);
-  }, [quoi, marquer]);
-
-  // « Plus tard » ne ment pas : ça sort de la zone 1 pour aujourd'hui, mais la
-  // personne reste dans la liste en dessous, non barrée.
   const [reportees, setReportees] = useState<Set<string>>(new Set());
-  const onPasser = useCallback(() => {
-    if (quoi.quoi === "personne") setReportees((s) => new Set(s).add(quoi.attente.cle));
-  }, [quoi]);
 
   const attentesVisibles = useMemo(
     () => restantes.filter((a) => !reportees.has(a.cle)),
@@ -366,6 +358,62 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
     [quoi, reportees.size, rdvs, messages, paiements, attentesVisibles, demarrage, salues, attentesEquipe.length],
   );
 
+  // ─── Les gestes agissent sur ce qui est RÉELLEMENT affiché ──────────────
+  //
+  // ⚠️ Ils étaient définis AVANT `quoiFinal` et lisaient `quoi` — la version
+  // d'avant le report. Dès qu'on appuyait sur « Plus tard » une fois, la carte
+  // affichée devenait `quoiFinal` mais « Lui écrire » marquait encore la
+  // PRÉCÉDENTE. On marquait la mauvaise personne. Tout est donc calculé après.
+  const onFait = useCallback(() => {
+    if (quoiFinal.quoi === "personne") marquer(quoiFinal.attente.cle);
+    else if (quoiFinal.quoi === "paiement") marquer("", quoiFinal.commandeId);
+    else if (quoiFinal.quoi === "message") marquer(`message:${quoiFinal.messageId}`);
+  }, [quoiFinal, marquer]);
+
+  // « Plus tard » ne ment pas : ça sort de la zone 1 pour aujourd'hui, mais la
+  // personne reste dans la liste en dessous, non barrée.
+  const onPasser = useCallback(() => {
+    if (quoiFinal.quoi === "personne") {
+      const cle = quoiFinal.attente.cle;
+      setReportees((s) => new Set(s).add(cle));
+    }
+  }, [quoiFinal]);
+
+  // ─── Qualifier : « et alors ? » écrit la suite en base ───────────────────
+  //
+  // La clé de l'attente porte sa table (`lead:<id>` / `bilan:<id>`), donc on
+  // sait où écrire sans rien deviner. Un dormant ou un suivi n'a rien à
+  // qualifier : ils vivent ailleurs, on se contente de les marquer traités.
+  const onQualifier = useCallback(
+    async (reponse: Reponse) => {
+      if (quoiFinal.quoi !== "personne") return;
+      const cle = quoiFinal.attente.cle;
+      marquer(cle);
+
+      const [table, id] =
+        cle.startsWith("lead:") ? ["prospect_leads", cle.slice(5)]
+        : cle.startsWith("bilan:") ? ["online_bilans", cle.slice(6)]
+        : [null, null];
+      if (!table || !id) return;
+
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { error } = await sb.from(table).update(ecritureFor(reponse, new Date())).eq("id", id);
+        if (error) {
+          console.warn("[qualification] écriture impossible :", error.message);
+          return;
+        }
+        // La file est cachée une minute : sans oubli explicite, la personne
+        // qu'on vient de qualifier resterait affichée jusqu'à expiration.
+        if (moi) oublier(`file-du-jour:${moi}`);
+      } catch (e) {
+        console.warn("[qualification] écriture impossible :", e);
+      }
+    },
+    [quoiFinal, marquer, moi],
+  );
+
   const ligneDuMois = useMemo(() => {
     const marge = `${Math.round(totalMargin).toLocaleString("fr-FR")} €`;
     return `${marge} · ${data.activeClientsCount} actif${data.activeClientsCount > 1 ? "s" : ""}`;
@@ -382,6 +430,7 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
       equipeTotal={users.filter((u) => u.active).length}
       ligneDuMois={ligneDuMois}
       chargement={chargement}
+      onQualifier={(r) => { void onQualifier(r); }}
       onOuvrir={(c) => navigate(c)}
       onFait={onFait}
       onPasser={onPasser}
