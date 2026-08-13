@@ -124,12 +124,8 @@ referrer_user_id` — la file s'en écartait. Alignée.
 
 ## Ce qui reste à trancher — pour toi
 
-**Le bloc « Ton démarrage · 6/7 » est toujours en haut de la page.** C'est un
-composant séparé, hors du périmètre de ces cinq lots. Mais il contredit ce que
-je t'ai argumenté : un lien permanent finit par ne plus rien vouloir dire (dix
-coachs sur onze gelés à l'étape 1 alors qu'il s'affichait tous les jours).
-Maintenant que la zone 1 sait afficher le démarrage quand il compte vraiment, ce
-bloc fait doublon. **Je ne l'ai pas retiré sans toi.**
+~~**Le bloc « Ton démarrage · 6/7 » est toujours en haut de la page.**~~
+✅ **Réglé le 13/08** — voir ci-dessous.
 
 **Deux contrastes plafonnent sous le seuil, et la cause est dans la charte.**
 Le libellé corail est à 3,95:1 et la puce de ton active à 3,74:1 — cette
@@ -141,6 +137,32 @@ modifier la charte, et ça t'appartient.
 **`PlanDuJour.tsx` n'est plus référencé** que dans des commentaires. Je l'ai
 laissé en place : c'est le filet si tu veux revenir en arrière. À supprimer
 quand tu auras validé.
+
+---
+
+## Le démarrage réduit à une barre (13/08)
+
+Thomas : *« ça nous prend de la place surtout sur mobile iOS ? juste une barre
+simple avec un déroulant si on clique dessus ? »*
+
+**Mesuré avant : 187 px**, posés au-dessus de la zone 1 — près d'un quart d'un
+écran d'iPhone consommé avant d'arriver à ce qui compte.
+
+**Après : 44 px de barre, 57 px avec la jauge.** 130 px rendus à l'écran. La
+jauge n'est plus un bloc : elle EST le liseré du bas de la barre, donc
+l'avancement reste lisible d'un coup d'œil sans coûter une ligne. Un tap déroule
+les deux vraies portes — *Mon parcours* et *Ma formation Herbalife*.
+
+**Replié par défaut à chaque ouverture, volontairement.** On ne mémorise pas
+l'état ouvert : un bloc qu'on rouvre chaque matin redeviendrait ce qu'il était,
+un meuble permanent qu'on cesse de voir. Dix coachs sur onze étaient gelés à
+l'étape 1 alors qu'il s'affichait tous les jours *en entier* — ce n'était pas la
+taille le problème, c'était la permanence.
+
+Retiré au passage : **`opsDone`**, le booléen qui pilotait la branche
+« Démarrage terminé 🎉 ». Il ne se déclenchait **jamais** (`stepDone` exige
+`gates.length > 0`, or les étapes 6 et 7 n'ont aucune porte) — du code mort
+depuis le début.
 
 ---
 
