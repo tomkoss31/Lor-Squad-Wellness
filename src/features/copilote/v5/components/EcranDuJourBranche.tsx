@@ -43,8 +43,8 @@ import type { CopiloteData } from "../../../../hooks/useCopiloteData";
 import type { SalleOpsView } from "../../salle-ops/useSalleOps";
 import { ceQuiCompte, type MessageRecu, type RdvEnVue } from "../../ceQuiCompte";
 import { EcranDuJour, type EvenementJournee, type LigneEquipe } from "./EcranDuJour";
-import { ecritureFor, type Reponse } from "../../../crm/qualification";
-import { getSupabaseClient } from "../../../../services/supabaseClient";
+import { type Reponse } from "../../../crm/qualification";
+import { ecrireQualification, type TableQualifiable } from "../../../crm/ecrireQualification";
 import { oublier } from "../../../../lib/cacheFraicheur";
 
 const JOUR_MS = 86_400_000;
@@ -390,26 +390,24 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
       const cle = quoiFinal.attente.cle;
       marquer(cle);
 
-      const [table, id] =
+      const [table, id]: [TableQualifiable | null, string | null] =
         cle.startsWith("lead:") ? ["prospect_leads", cle.slice(5)]
         : cle.startsWith("bilan:") ? ["online_bilans", cle.slice(6)]
         : [null, null];
       if (!table || !id) return;
 
-      try {
-        const sb = await getSupabaseClient();
-        if (!sb) return;
-        const { error } = await sb.from(table).update(ecritureFor(reponse, new Date())).eq("id", id);
-        if (error) {
-          console.warn("[qualification] écriture impossible :", error.message);
-          return;
-        }
-        // La file est cachée une minute : sans oubli explicite, la personne
-        // qu'on vient de qualifier resterait affichée jusqu'à expiration.
-        if (moi) oublier(`file-du-jour:${moi}`);
-      } catch (e) {
-        console.warn("[qualification] écriture impossible :", e);
+      // ⚠️ Passe OBLIGATOIREMENT par ce service : il traduit le statut vers le
+      // vocabulaire de chaque table. Écrire `{status: …}` en direct sur
+      // `online_bilans` (qui n'a pas cette colonne) faisait rejeter tout
+      // l'update — donc la date de relance avec, sans rien à l'écran.
+      const err = await ecrireQualification(table, id, reponse);
+      if (err) {
+        console.warn("[qualification] écriture impossible :", err);
+        return;
       }
+      // La file est cachée une minute : sans oubli explicite, la personne
+      // qu'on vient de qualifier resterait affichée jusqu'à expiration.
+      if (moi) oublier(`file-du-jour:${moi}`);
     },
     [quoiFinal, marquer, moi],
   );
