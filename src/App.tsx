@@ -199,6 +199,12 @@ const AdminNewslettersPage = lazy(() =>
     default: module.AdminNewslettersPage,
   })),
 );
+// Chantier Audience (2026-08-13) : « qui vient, et où on les perd ».
+const AdminAudiencePage = lazy(() =>
+  import("./pages/AdminAudiencePage").then((module) => ({
+    default: module.AdminAudiencePage,
+  })),
+);
 // Chantier Campagnes (2026-08) — outreach email admin (généralise newsletter).
 const AdminCampagnesPage = lazy(() =>
   import("./pages/AdminCampagnesPage").then((module) => ({
@@ -948,6 +954,8 @@ export default function App() {
                 <Route path="admin/campagnes" element={<AdminCampagnesPage />} />
                 <Route path="admin/campagnes/:id" element={<AdminCampagneEditPage />} />
                 <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
+                {/* Chantier Audience (2026-08-13) : trafic des pages publiques. */}
+                <Route path="admin/audience" element={<AdminAudiencePage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
