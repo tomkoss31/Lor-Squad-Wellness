@@ -46,11 +46,12 @@ const MAIN_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: b
 ];
 
 // Items du menu « ⋯ Plus » (regroupés pour désencombrer la barre).
-type MoreItem = { key: TabKey | "newsletters"; label: string; icon: string; adminOnly?: boolean };
+type MoreItem = { key: TabKey | "newsletters" | "audience"; label: string; icon: string; adminOnly?: boolean };
 const MORE_ITEMS: MoreItem[] = [
   { key: "notifs", label: "Notifications", icon: "🔔" },
   { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "newsletters", label: "Newsletters", icon: "📰", adminOnly: true },
+  { key: "audience", label: "Audience du site", icon: "📊", adminOnly: true },
 ];
 
 // Mapping rétro-compat : anciens slugs techniques → onglet Admin + sous-onglet.
@@ -249,6 +250,8 @@ export function ParametresPage() {
                         setMoreOpen(false);
                         if (it.key === "newsletters") {
                           navigate("/admin/newsletters");
+                        } else if (it.key === "audience") {
+                          navigate("/admin/audience");
                         } else {
                           setTab(it.key as TabKey);
                         }

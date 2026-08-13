@@ -199,6 +199,12 @@ const AdminNewslettersPage = lazy(() =>
     default: module.AdminNewslettersPage,
   })),
 );
+// Chantier Audience (2026-08-13) : « qui vient, et où on les perd ».
+const AdminAudiencePage = lazy(() =>
+  import("./pages/AdminAudiencePage").then((module) => ({
+    default: module.AdminAudiencePage,
+  })),
+);
 // Chantier Campagnes (2026-08) — outreach email admin (généralise newsletter).
 const AdminCampagnesPage = lazy(() =>
   import("./pages/AdminCampagnesPage").then((module) => ({
@@ -690,6 +696,7 @@ import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
+import { AudienceTracker } from './components/AudienceTracker'
 import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
 import { LogoMark } from "./components/brand/LogoMark";
 
@@ -709,6 +716,11 @@ export default function App() {
       {/* Relais SW → React Router (2026-05-05) : route en interne quand
           on clique une push notif, sans full reload. */}
       <ServiceWorkerNavigator />
+      {/* Mesure d'audience des pages PUBLIQUES uniquement (chantier Audience,
+          2026-08-13). Ici plutôt que dans chaque page : les pages du club ne
+          passent pas par PublicShell, et une page ajoutée demain doit être
+          comptée sans qu'on y pense. */}
+      <AudienceTracker />
       {/* Toast 'Mise a jour disponible' : detecte les nouveaux SW + propose
           activation 1-click + force re-subscribe notifs apres update.
           Chantier rebrand polish 2026-05-06. */}
@@ -942,6 +954,8 @@ export default function App() {
                 <Route path="admin/campagnes" element={<AdminCampagnesPage />} />
                 <Route path="admin/campagnes/:id" element={<AdminCampagneEditPage />} />
                 <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
+                {/* Chantier Audience (2026-08-13) : trafic des pages publiques. */}
+                <Route path="admin/audience" element={<AdminAudiencePage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
