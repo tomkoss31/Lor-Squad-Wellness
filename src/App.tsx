@@ -690,6 +690,7 @@ import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
+import { AudienceTracker } from './components/AudienceTracker'
 import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
 import { LogoMark } from "./components/brand/LogoMark";
 
@@ -709,6 +710,11 @@ export default function App() {
       {/* Relais SW → React Router (2026-05-05) : route en interne quand
           on clique une push notif, sans full reload. */}
       <ServiceWorkerNavigator />
+      {/* Mesure d'audience des pages PUBLIQUES uniquement (chantier Audience,
+          2026-08-13). Ici plutôt que dans chaque page : les pages du club ne
+          passent pas par PublicShell, et une page ajoutée demain doit être
+          comptée sans qu'on y pense. */}
+      <AudienceTracker />
       {/* Toast 'Mise a jour disponible' : detecte les nouveaux SW + propose
           activation 1-click + force re-subscribe notifs apres update.
           Chantier rebrand polish 2026-05-06. */}

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Audience du site · La Base 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1A17; --surface:#16221E; --surface2:#1B2A25;
+  --border:#243731; --border2:#2E4640;
+  --text:#EAF2EE; --muted:#9DB3AC; --hint:#6E8A82;
+  --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:430px;margin:0 auto;padding:0 14px 90px}
+
+/* ── Bandeau maquette ─────────────────────────────────────────────── */
+.avert{background:color-mix(in srgb,var(--amber) 14%,transparent);border-bottom:1px solid color-mix(in srgb,var(--amber) 34%,transparent);
+  padding:9px 14px;font-size:11.5px;color:var(--amber);text-align:center;line-height:1.45}
+.avert b{color:#F6D08A}
+
+.top{display:flex;align-items:center;gap:9px;padding:16px 0 6px}
+.logo{width:28px;height:28px;border-radius:9px;background:var(--teal);color:#06110E;display:grid;place-items:center;font-family:Anton;font-size:15px}
+.topname{font-size:12.5px;color:var(--muted)}
+
+h1{font-family:Anton;font-weight:400;text-transform:uppercase;letter-spacing:.01em;font-size:32px;line-height:1.02;margin:8px 0 4px}
+.sub{margin:0 0 16px;font-size:13.5px;color:var(--muted);line-height:1.5}
+
+/* ── Sélecteurs ───────────────────────────────────────────────────── */
+.segs{display:flex;gap:6px;margin-bottom:10px}
+.segs button{flex:1;min-height:44px;border-radius:11px;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.segs button[aria-current="true"]{background:color-mix(in srgb,var(--teal) 14%,var(--surface));border-color:color-mix(in srgb,var(--teal) 45%,transparent);color:var(--teal)}
+.scope{display:flex;gap:6px;margin-bottom:18px}
+/* 44 px : c'est un choix qu'on fait au pouce, comme tout le reste. */
+.scope button{flex:1;min-height:44px;border-radius:999px;border:1px solid var(--border);background:transparent;
+  color:var(--hint);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.scope button[aria-current="true"]{color:var(--text);border-color:var(--border2);background:var(--surface)}
+
+/* ── Chiffres clés ────────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:13px 14px}
+.kpi .lab{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--hint);margin-bottom:6px}
+.kpi .val{font-family:Anton;font-weight:400;font-size:29px;line-height:1;letter-spacing:.01em}
+.kpi .dlt{font-family:'JetBrains Mono',monospace;font-size:10.5px;margin-top:5px}
+.up{color:var(--lime)} .down{color:var(--coral)} .flat{color:var(--hint)}
+
+h2{font-family:Anton;font-weight:400;text-transform:uppercase;font-size:19px;letter-spacing:.02em;margin:0 0 3px}
+.h2sub{margin:0 0 12px;font-size:12.5px;color:var(--hint);line-height:1.5}
+section{margin-bottom:30px}
+
+/* ── L'entonnoir ──────────────────────────────────────────────────── */
+.tunnel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px 14px;margin-bottom:11px}
+.tunnel h3{margin:0 0 2px;font-size:14.5px;font-weight:700}
+.tunnel .meta{margin:0 0 13px;font-size:11.5px;color:var(--hint)}
+.step{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.step .nom{width:104px;flex:none;font-size:11.5px;color:var(--muted);line-height:1.25}
+.bar{flex:1;height:26px;border-radius:7px;background:var(--surface2);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;border-radius:7px;background:color-mix(in srgb,var(--teal) 42%,transparent)}
+.bar b{position:absolute;top:0;right:8px;height:26px;display:flex;align-items:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text)}
+.chute{width:52px;flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--hint)}
+.step.rouge .bar i{background:color-mix(in srgb,var(--coral) 45%,transparent)}
+.step.rouge .chute{color:var(--coral);font-weight:600}
+.verdict{margin-top:12px;padding:11px 12px;border-radius:12px;
+  background:color-mix(in srgb,var(--coral) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--coral) 30%,transparent);font-size:12.5px;line-height:1.5}
+.verdict b{color:var(--coral)}
+
+/* ── Tableaux ─────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.thead,.trow{display:flex;align-items:center;gap:9px;padding:10px 14px}
+.thead{background:var(--surface2);border-bottom:1px solid var(--border)}
+.thead div{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);font-weight:500}
+.trow{border-bottom:1px solid var(--border)}
+.trow:last-child{border-bottom:none}
+.c1{flex:1;min-width:0}
+.c1 .p{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c1 .s{font-size:10.5px;color:var(--hint);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.c2{width:52px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.c3{width:40px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+.c4{width:44px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+
+/* ── Clics ────────────────────────────────────────────────────────── */
+.clic{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.clic:last-child{border-bottom:none}
+.clic .n{flex:1;min-width:0;font-size:12.5px}
+.clic .n em{display:block;font-style:normal;font-size:10.5px;color:var(--hint);margin-top:2px}
+.pill{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{color:var(--lime);border:1px solid color-mix(in srgb,var(--lime) 38%,transparent)}
+.pill.mort{color:var(--coral);border:1px solid color-mix(in srgb,var(--coral) 38%,transparent)}
+
+.note{margin-top:10px;font-size:11.5px;color:var(--hint);line-height:1.55}
+.note b{color:var(--muted)}
+footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-size:11.5px;color:var(--hint);line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="avert">
+  <b>MAQUETTE</b> — rien n'est branché. Tous les chiffres sont <b>inventés</b>
+  pour juger la mise en page, pas pour être lus.
+</div>
+
+<div class="wrap">
+  <div class="top"><span class="logo">B</span><span class="topname">Paramètres · Audience du site</span></div>
+
+  <h1>Qui vient, et où<br>on les perd</h1>
+  <p class="sub">Tes pages publiques : le club, le bilan en ligne, la boutique,
+    le recrutement. Aucune donnée personnelle, aucun cookie.</p>
+
+  <div class="segs" role="group" aria-label="Période">
+    <button data-p="jour">Jour</button>
+    <button data-p="semaine" aria-current="true">Semaine</button>
+    <button data-p="mois">Mois</button>
+    <button data-p="total">Total</button>
+  </div>
+  <div class="scope" role="group" aria-label="Périmètre">
+    <button aria-current="true">Tout le site</button>
+    <button>Mes liens à moi</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <h2>Où ça décroche</h2>
+    <p class="h2sub">C'est la seule partie qui dit quoi corriger. Chaque barre
+      est une étape ; le rouge est l'endroit où le plus de monde s'arrête.</p>
+    <div id="tunnels"></div>
+  </section>
+
+  <section>
+    <h2>Les pages</h2>
+    <p class="h2sub">Combien de fois vue, combien de temps on y reste, et le
+      pourcentage qui quitte le site depuis cette page.</p>
+    <div class="card">
+      <div class="thead">
+        <div class="c1">Page</div><div class="c2">Vues</div>
+        <div class="c3">Durée</div><div class="c4">Sortie</div>
+      </div>
+      <div id="pages"></div>
+    </div>
+    <p class="note"><b>Durée</b> = moyenne, mais chaque vue est plafonnée à
+      10 minutes : l'onglet laissé ouvert toute la nuit compte pour 10 min et
+      ne déforme pas le chiffre.</p>
+  </section>
+
+  <section>
+    <h2>Les boutons</h2>
+    <p class="h2sub">Ce sur quoi on clique — et ce sur quoi personne ne clique
+      jamais, qui est souvent l'information la plus utile.</p>
+    <div class="card" id="clics"></div>
+  </section>
+
+  <footer>
+    Mesure d'audience anonyme : pas de cookie, pas d'adresse IP conservée,
+    aucun profil. Un identifiant de session éphémère sert seulement à ne pas
+    compter deux fois la même visite ; il disparaît à la fermeture de l'onglet.
+  </footer>
+</div>
+
+<script>
+/* Données d'EXEMPLE. Ordres de grandeur plausibles pour un petit site —
+   surtout pas à lire comme des mesures. */
+const JEUX = {
+  jour:    {visites:34, visiteurs:29, temps:"1 min 12", bout:9,  d:[+12,+8,-4,+2]},
+  semaine: {visites:218,visiteurs:171,temps:"1 min 26", bout:11, d:[+23,+19,+6,-3]},
+  mois:    {visites:894,visiteurs:702,temps:"1 min 19", bout:10, d:[+8,+11,-2,+1]},
+  total:   {visites:3140,visiteurs:2418,temps:"1 min 21",bout:10, d:[null,null,null,null]},
+};
+
+const TUNNELS = [
+  {nom:"Bilan en ligne", meta:"/bilan-online — 5 étapes",
+   etapes:[["Page d'accueil",164],["Formulaire ouvert",121],["Mensurations",44],["Coordonnées",31],["Envoyé",27]],
+   mot:"Les mensurations vident le tunnel : <b>64 % partent là</b>. C'est l'étape qui demande de se peser."},
+  {nom:"Réserver au club", meta:"/reserver — 4 étapes",
+   etapes:[["Page club",96],["Formulaire",58],["Choix du créneau",22],["Confirmé",19]],
+   mot:"Le choix du créneau perd <b>62 %</b> — et ces gens-là ont déjà laissé leur numéro."},
+  {nom:"Rejoindre l'équipe", meta:"/rejoindre — 3 étapes",
+   etapes:[["Page",71],["Questionnaire",34],["Envoyé",28]],
+   mot:"Ouvrir le questionnaire coûte <b>52 %</b> des visiteurs."},
+];
+
+const PAGES = [
+  ["/club","Site du club",312,"2:04",38],
+  ["/bilan-online","Bilan en ligne",164,"0:51",26],
+  ["/reserver","Réserver au club",96,"1:38",31],
+  ["/club/le-rituel","Le rituel",88,"2:47",54],
+  ["/rejoindre","Opportunité",71,"1:12",44],
+  ["/coach/thomas","Ma fiche publique",52,"1:03",61],
+  ["/boutique/thomas","Boutique",41,"0:44",58],
+];
+
+const CLICS = [
+  ["« Réserver ma place »","/club — bouton principal",84],
+  ["« Faire mon bilan »","/club — bouton principal",63],
+  ["« Voir le rituel »","/club — lien secondaire",29],
+  ["« Rejoindre l'équipe »","/club — bas de page",6],
+  ["« Nos résultats »","/club — menu",0],
+];
+
+/* Les compteurs sont TOUJOURS calculés : une maquette qui annonce un chiffre
+   faux au-dessus de sa propre liste décrédibilise tout le reste. */
+function kpis(p){
+  const j = JEUX[p];
+  const cases = [
+    ["Visites", j.visites.toLocaleString('fr-FR'), j.d[0]],
+    ["Personnes", j.visiteurs.toLocaleString('fr-FR'), j.d[1]],
+    ["Temps moyen", j.temps, j.d[2]],
+    ["Vont au bout", j.bout+" %", j.d[3]],
+  ];
+  document.getElementById('kpis').innerHTML = cases.map(([l,v,d])=>`
+    <div class="kpi">
+      <div class="lab">${l}</div>
+      <div class="val">${v}</div>
+      <div class="dlt ${d===null?'flat':d>0?'up':d<0?'down':'flat'}">${
+        d===null ? "depuis le début" : (d>0?"▲ +":"▼ ")+d+" % vs période d'avant"
+      }</div>
+    </div>`).join('');
+}
+
+function tunnels(){
+  document.getElementById('tunnels').innerHTML = TUNNELS.map(t=>{
+    const haut = t.etapes[0][1];
+    // La pire chute est CALCULÉE, jamais désignée à la main — et en TAUX, pas
+    // en nombre. Perdre 38 personnes sur 96 (−40 %) fait moins mal que perdre
+    // 36 personnes sur 58 (−62 %) : c'est le second endroit qu'il faut réparer.
+    let pire = -1, pireI = -1;
+    t.etapes.forEach((e,i)=>{ if(i===0) return;
+      const taux = (t.etapes[i-1][1] - e[1]) / t.etapes[i-1][1];
+      if(taux > pire){ pire = taux; pireI = i; } });
+    const lignes = t.etapes.map(([nom,n],i)=>{
+      const pc = Math.round(n/haut*100);
+      const chute = i===0 ? "" : "−"+Math.round((t.etapes[i-1][1]-n)/t.etapes[i-1][1]*100)+" %";
+      return `<div class="step ${i===pireI?'rouge':''}">
+        <span class="nom">${nom}</span>
+        <span class="bar"><i style="width:${pc}%"></i><b>${n}</b></span>
+        <span class="chute">${chute}</span></div>`;
+    }).join('');
+    const fin = t.etapes[t.etapes.length-1][1];
+    return `<div class="tunnel">
+      <h3>${t.nom}</h3>
+      <p class="meta">${t.meta} · ${haut} entrent → ${fin} au bout, soit ${Math.round(fin/haut*100)} %</p>
+      ${lignes}
+      <div class="verdict">${t.mot}</div>
+    </div>`;
+  }).join('');
+}
+
+function pages(){
+  document.getElementById('pages').innerHTML = PAGES.map(([u,n,v,t,s])=>`
+    <div class="trow">
+      <div class="c1"><div class="p">${n}</div><div class="s">${u}</div></div>
+      <div class="c2">${v}</div><div class="c3">${t}</div>
+      <div class="c4" style="color:${s>=55?'var(--coral)':'var(--muted)'}">${s} %</div>
+    </div>`).join('');
+}
+
+function clics(){
+  document.getElementById('clics').innerHTML = CLICS.map(([n,o,c])=>`
+    <div class="clic">
+      <div class="n">${n}<em>${o}</em></div>
+      <span class="pill ${c===0?'mort':'ok'}">${c===0?'jamais cliqué':c+' clics'}</span>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.segs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.segs button').forEach(x=>x.setAttribute('aria-current',String(x===b)));
+  kpis(b.dataset.p);
+}));
+document.querySelectorAll('.scope button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.scope button').forEach(x=>x.setAttribute('aria-current',String(x===b)));
+}));
+
+kpis('semaine'); tunnels(); pages(); clics();
+</script>
+</body>
+</html>
