@@ -23,7 +23,7 @@ import type { CeQuiCompte } from "../../ceQuiCompte";
 import { anglesPour, merciPaiement, reponseAuMessage, type Angle } from "../../messagesPrets";
 import { lienWhatsApp } from "../../../../lib/utils/lienWhatsApp";
 import { FeuilleQualification } from "../../../crm/FeuilleQualification";
-import type { Reponse } from "../../../crm/qualification";
+import type { CleReponse, Reponse } from "../../../crm/qualification";
 
 export interface ZoneUneProps {
   quoi: CeQuiCompte;
@@ -49,7 +49,12 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargemen
   // n'écrivait à personne.)
   const angles = useMemo<Angle[]>(() => {
     if (quoi.quoi === "personne") {
-      return anglesPour({ prenom: premier(quoi.attente.qui), moi: monPrenom, motif: motifPourMessage(quoi.attente.motif) });
+      return anglesPour({
+        prenom: premier(quoi.attente.qui),
+        moi: monPrenom,
+        motif: motifPourMessage(quoi.attente.motif),
+        derniereReponse: (quoi.attente.derniereReponse ?? null) as CleReponse | null,
+      });
     }
     if (quoi.quoi === "paiement") return merciPaiement(premier(quoi.nom));
     if (quoi.quoi === "message") return reponseAuMessage(premier(quoi.nom));
@@ -351,6 +356,7 @@ function depuisQuand(jours: number): string {
 /** Un dormant vient de la file avec le motif « suivi-en-retard » ou autre ;
  *  ici on choisit le REGISTRE du message, qui n'est pas toujours le motif. */
 function motifPourMessage(m: string) {
+  if (m === "relance") return "relance" as const;
   if (m === "lead") return "lead" as const;
   if (m === "bilan-en-ligne") return "bilan-en-ligne" as const;
   if (m === "paiement-en-attente") return "paiement-en-attente" as const;

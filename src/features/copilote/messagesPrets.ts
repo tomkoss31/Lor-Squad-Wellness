@@ -17,6 +17,7 @@
 // =============================================================================
 
 import type { MotifAttente } from "../../hooks/useFileDuJour";
+import { messageDeRelance, type CleReponse } from "../crm/qualification";
 
 export interface Angle {
   /** Le libellé du bouton — deux mots maximum, il vit dans une puce. */
@@ -32,6 +33,8 @@ interface Contexte {
   motif: MotifAttente | "dormant" | "paiement-en-attente";
   /** Sert au ton : on ne s'excuse pas pareil après 3 jours et après 3 mois. */
   jours?: number;
+  /** Pour une relance : ce qui s'était passé au contact précédent. */
+  derniereReponse?: CleReponse | null;
 }
 
 const salut = (p: string) => `Salut ${p} 👋`;
@@ -111,6 +114,23 @@ export function anglesPour(c: Contexte): Angle[] {
         {
           cle: "Une idée",
           texte: `${salut(prenom)} Il y a une nouveauté qui collerait bien à ce que tu faisais. Je t'en dis deux mots ?`,
+        },
+      ];
+
+    // Une personne qu'on a DÉJÀ appelée et qui revient à l'échéance qu'on
+    // s'était fixée. Le premier angle nomme ce qui s'était passé — réécrire
+    // « vous avez laissé vos coordonnées » à quelqu'un qu'on a eu au téléphone
+    // sonne faux, et c'est ce qui fait qu'un message ne ressemble à rien.
+    case "relance":
+      return [
+        { cle: "La suite", texte: messageDeRelance(c.derniereReponse ?? null, prenom, moi) },
+        {
+          cle: "Court",
+          texte: `${salut(prenom)} C'est ${moi} — je reviens vers toi comme promis. Ça te dit qu'on en reparle ?`,
+        },
+        {
+          cle: "Un créneau",
+          texte: `${salut(prenom)} C'est ${moi}. Je te propose jeudi 18 h ou samedi matin — lequel t'arrange ?`,
         },
       ];
 

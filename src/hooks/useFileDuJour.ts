@@ -54,7 +54,7 @@ import { FRAICHEUR, lireAvecFraicheur, oublier } from "../lib/cacheFraicheur";
 /** Ce qu'un rang vaut dans l'ordre — plus petit passe devant. */
 export const RANG = { mainLevee: 0, engagement: 1, dormant: 2 } as const;
 
-export type MotifAttente = "lead" | "bilan-en-ligne" | "suivi-en-retard";
+export type MotifAttente = "lead" | "bilan-en-ligne" | "suivi-en-retard" | "relance";
 
 export interface Attente {
   cle: string;
@@ -73,6 +73,8 @@ export interface Attente {
   chemin: string;
   /** Renseigné seulement pour le bloc « personne ne s'en occupe » (admin). */
   responsable?: string;
+  /** Ce qui s'est passé au dernier contact — choisit le message de 2e tentative. */
+  derniereReponse?: string | null;
 }
 
 /** Un encaissement reçu — la seule victoire que l'app ait à annoncer. */
@@ -118,6 +120,16 @@ const SOURCE_LISIBLE: Record<string, string> = {
   welcome: "la page d'accueil",
 };
 
+/** Ce qu'on lit sous le nom quand la personne revient : ce qui s'était passé.
+ *  Volontairement dupliqué depuis `features/crm/qualification` — ce hook est
+ *  bas niveau et ne doit pas dépendre d'un module d'écran. */
+const RESUME_REPONSE: Record<string, string> = {
+  pas_de_reponse: "Appelé·e, pas de réponse",
+  rappellera: "Devait rappeler",
+  ne_sait_pas: "Hésitait encore",
+  pas_maintenant: "Ce n'était pas le moment",
+};
+
 interface LigneBrute {
   attente: Attente;
   proprietaire: string | null;
@@ -155,24 +167,28 @@ export function useFileDuJour(
             if (!sb) return { lignes: [], paiements: [] };
 
             const depuis = new Date(Date.now() - FENETRE_PAIEMENT_JOURS * JOUR_MS).toISOString();
+            const nowIso = new Date().toISOString();
 
             // TROIS selects, UN SEUL aller-retour. On ne rajoute pas de cascade
             // au démarrage : c'est exactement ce qu'on a passé la matinée à
             // retirer. Pas de filtre propriétaire sur les deux premiers — le
             // RLS décide, et on partitionne ensuite « à moi » / « à l'équipe ».
             const [leads, bilans, encaissements] = await Promise.all([
+              // Deux populations, une seule requête chacune :
+              //   · jamais contactés  (status = new)
+              //   · relance DUE       (une échéance posée par la qualification)
+              // Sans la seconde, tout ce qu'on qualifie « rappeler demain » ne
+              // remonterait jamais — c'est précisément le trou d'origine.
               sb
                 .from("prospect_leads")
-                .select("id, first_name, phone, created_at, source, assigned_to_user_id, referrer_user_id")
-                .is("contacted_at", null)
-                .eq("status", "new"),
+                .select("id, first_name, phone, created_at, source, assigned_to_user_id, referrer_user_id, relance_due_at, relance_done_at, derniere_reponse, status")
+                .or(`and(contacted_at.is.null,status.eq.new),and(relance_due_at.lte.${nowIso},relance_done_at.is.null)`),
               sb
                 .from("online_bilans")
-                .select("id, first_name, phone, completed_at, result_token, assigned_to_user_id")
-                .is("contacted_at", null)
+                .select("id, first_name, phone, completed_at, result_token, assigned_to_user_id, relance_due_at, relance_done_at, derniere_reponse, lead_status")
                 .not("completed_at", "is", null)
                 .is("converted_to_client_id", null)
-                .eq("lead_status", "new"),
+                .or(`and(contacted_at.is.null,lead_status.eq.new),and(relance_due_at.lte.${nowIso},relance_done_at.is.null)`),
               // ⚠️ `.eq(coach_user_id)` OBLIGATOIRE : la policy bilan_orders a
               // une branche admin, sans quoi Thomas et Mélanie verraient les
               // encaissements de toute l'équipe comme les leurs.
@@ -193,8 +209,14 @@ export function useFileDuJour(
                 id: string; first_name: string | null; phone: string | null;
                 created_at: string; source: string | null;
                 assigned_to_user_id: string | null; referrer_user_id: string | null;
+                relance_due_at: string | null; relance_done_at: string | null;
+                derniere_reponse: string | null;
               };
               const via = r.source ? SOURCE_LISIBLE[r.source] ?? r.source : null;
+              // Une échéance ouverte et arrivée à terme = c'est une RELANCE :
+              // on a déjà parlé à cette personne, le message et le libellé
+              // doivent le dire.
+              const estRelance = Boolean(r.relance_due_at) && !r.relance_done_at;
               sortie.push({
                 // ⚠️ `submit-prospect-lead` n'écrit JAMAIS `assigned_to_user_id` :
                 // seulement `referrer_user_id`. Un lead venu d'un tunnel public
@@ -206,12 +228,20 @@ export function useFileDuJour(
                 attente: {
                   cle: `lead:${r.id}`,
                   qui: prenom(r.first_name),
-                  motifCourt: "Jamais rappelé",
-                  pourquoi: via
-                    ? `A laissé son numéro sur ${via}`
-                    : "A laissé son numéro",
+                  motifCourt: estRelance ? "À rappeler" : "Jamais rappelé",
+                  pourquoi: estRelance
+                    ? `${RESUME_REPONSE[r.derniere_reponse ?? ""] ?? "Tu avais dit de le/la rappeler"} — c'est aujourd'hui`
+                    : via
+                      ? `A laissé son numéro sur ${via}`
+                      : "A laissé son numéro",
+                  // ⚠️ L'ancienneté se compte depuis que LA PERSONNE est
+                  // arrivée, jamais depuis l'échéance qu'on s'est fixée. Sinon
+                  // une relance due ce matin vaut « 0 jour » et passe derrière
+                  // tout le monde — donc elle ne remonte jamais, ce qui vide
+                  // le mécanisme de son sens (vu à l'écran le 13/08).
                   jours: joursDepuis(r.created_at),
-                  motif: "lead",
+                  motif: estRelance ? "relance" : "lead",
+                  derniereReponse: r.derniere_reponse ?? null,
                   rang: RANG.mainLevee,
                   telephone: r.phone,
                   chemin: "/crm",
@@ -223,16 +253,22 @@ export function useFileDuJour(
               const r = brute as {
                 id: string; first_name: string | null; phone: string | null;
                 completed_at: string; assigned_to_user_id: string | null;
+                relance_due_at: string | null; relance_done_at: string | null;
+                derniere_reponse: string | null;
               };
+              const estRelance = Boolean(r.relance_due_at) && !r.relance_done_at;
               sortie.push({
                 proprietaire: r.assigned_to_user_id,
                 attente: {
                   cle: `bilan:${r.id}`,
                   qui: prenom(r.first_name),
-                  motifCourt: "Bilan en ligne",
-                  pourquoi: "A rempli son bilan en entier, sans réponse",
+                  motifCourt: estRelance ? "À rappeler" : "Bilan en ligne",
+                  pourquoi: estRelance
+                    ? `${RESUME_REPONSE[r.derniere_reponse ?? ""] ?? "Tu avais dit de le/la rappeler"} — c'est aujourd'hui`
+                    : "A rempli son bilan en entier, sans réponse",
                   jours: joursDepuis(r.completed_at),
-                  motif: "bilan-en-ligne",
+                  motif: estRelance ? "relance" : "bilan-en-ligne",
+                  derniereReponse: r.derniere_reponse ?? null,
                   rang: RANG.mainLevee,
                   telephone: r.phone,
                   chemin: `/crm/leads/${r.id}`,
