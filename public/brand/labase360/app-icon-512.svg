@@ -1,18 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="vitalFusion" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10B981"/>
-      <stop offset="50%" stop-color="#06B6D4"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
-    </linearGradient>
-    <linearGradient id="topShineIcon" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.30)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#vitalFusion)"/>
-  <rect x="40" y="40" width="432" height="200" rx="100" fill="url(#topShineIcon)"/>
-  <text x="256" y="350" font-family="Sora, sans-serif" font-weight="700" font-size="300"
-        fill="#FFFFFF" text-anchor="middle" letter-spacing="-15">B</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="La Base 360"><rect width="512" height="512" rx="112.64" ry="112.64" fill="#162624"/><g transform="translate(97.28 97.28) scale(1.58720)"><path d="M 176.3 71.6 A 80 80 0 1 1 128.3 23.6" fill="none" stroke="#2DD4BF" stroke-width="13" stroke-linecap="round"/><rect x="-24" y="-6.5" width="48" height="13" rx="6.5" fill="#C5F82A" transform="translate(159 41) rotate(-45)"/><path fill-rule="evenodd" fill="#FFFFFF" d="M 66 52 L 111 52 C 131 52 144 63.5 144 77 C 144 88 137 95.5 127 99.5 C 139.5 103 149 112.5 149 126 C 149 140.5 135 151 113 151 L 66 151 Z M 87 70 L 87 91 L 109 91 C 118.5 91 124 86.5 124 80.5 C 124 74.5 118.5 70 109 70 Z M 87 110 L 87 133 L 112 133 C 122 133 128 128 128 121.5 C 128 115 122 110 112 110 Z"/></g></svg>
