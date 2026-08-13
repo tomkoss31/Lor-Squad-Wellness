@@ -97,12 +97,21 @@ describe("dateDeRetour", () => {
 });
 
 describe("ce qu'on écrit en base", () => {
-  it("referme la relance précédente en posant la nouvelle", () => {
-    // Sans ça, quelqu'un qualifié deux fois resterait dû sur son ANCIENNE
-    // échéance en plus de la nouvelle — et remonterait deux fois.
+  it("une nouvelle échéance naît OUVERTE, sinon elle ne sonne jamais", () => {
+    // `crm-relance-notifier` lit « encore due » comme
+    // `relance_due_at <= now AND relance_done_at IS NULL`. Poser une échéance
+    // ET la marquer faite du même geste, c'est créer un rappel muet.
     const e = ecritureFor(REPONSE_PAR_CLE.rappellera, T0);
-    expect(e.relance_done_at).toBe(T0.toISOString());
     expect(e.relance_due_at).not.toBeNull();
+    expect(e.relance_done_at).toBeNull();
+  });
+
+  it("referme au contraire quand personne ne revient", () => {
+    for (const cle of ["plus_interesse", "rdv"] as const) {
+      const e = ecritureFor(REPONSE_PAR_CLE[cle], T0);
+      expect(e.relance_due_at).toBeNull();
+      expect(e.relance_done_at).toBe(T0.toISOString());
+    }
   });
 
   it("marque toujours le contact — c'est ce qui sort la personne des « jamais rappelés »", () => {

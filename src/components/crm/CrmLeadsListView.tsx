@@ -15,6 +15,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
+import { grouperParEcheance, pilule, pourquoi, teinteDe, type CleGroupe } from "../../features/crm/echeances";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmSmsLink, buildCrmWhatsAppLink, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
@@ -23,7 +24,10 @@ import { isStagnant, stagnationDays } from "../../lib/leadActivity";
 import { tableSupportsAssignment } from "../../lib/leadRouting";
 import { EmptyState } from "../ui/EmptyState";
 
-type SortKey = "recent" | "oldest" | "name";
+// « Par échéance » est le défaut : c'est le seul tri qui répond à « qu'est-ce
+// que je fais maintenant ». Les trois autres restent — trier par arrivée sert
+// encore quand on cherche quelqu'un de précis.
+type SortKey = "echeance" | "recent" | "oldest" | "name";
 
 interface CrmLeadsListViewProps {
   leads: CrmLead[];
@@ -60,8 +64,19 @@ export function CrmLeadsListView({
   onDelete,
   emptyMessage,
 }: CrmLeadsListViewProps) {
-  const [sortKey, setSortKey] = useState<SortKey>("recent");
+  // Les endormis sont une étagère, pas une file : les ranger par « quand »
+  // afficherait « Aujourd'hui » au-dessus de gens qu'on a mis de côté exprès.
+  const [sortKey, setSortKey] = useState<SortKey>(archived ? "recent" : "echeance");
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  // Une seule lecture de l'horloge pour tout le rendu : sans ça, deux lignes
+  // calculées à cheval sur minuit ne racontent pas la même journée.
+  const maintenant = useMemo(() => new Date(), [leads]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const groupes = useMemo(
+    () => (sortKey === "echeance" ? grouperParEcheance(leads, maintenant) : null),
+    [leads, sortKey, maintenant],
+  );
 
   const sorted = useMemo(() => {
     const arr = [...leads];
@@ -74,6 +89,29 @@ export function CrmLeadsListView({
     }
     return arr;
   }, [leads, sortKey]);
+
+  const renderRow = (lead: CrmLead, groupe: CleGroupe | null, isLast: boolean) => (
+    <CrmLeadListRow
+      key={lead.key}
+      lead={lead}
+      msgCtx={msgCtx}
+      archived={archived}
+      isLast={isLast}
+      groupe={groupe}
+      maintenant={maintenant}
+      expanded={expandedKey === lead.key}
+      onToggle={() => setExpandedKey((k) => (k === lead.key ? null : lead.key))}
+      onStatusChange={(s) => onStatusChange(lead, s)}
+      onSourceChange={lead.table === "prospect_leads" ? (s: CrmSource) => onSourceChange(lead, s) : undefined}
+      onCopy={onCopy}
+      onAgenda={() => onAgenda(lead)}
+      dupeFlag={dupeFlagFor(lead)}
+      doublons={doublonsDe?.get(lead.key) ?? null}
+      onDormant={!archived ? () => onDormant(lead) : undefined}
+      onWake={archived ? () => onWake(lead) : undefined}
+      onDelete={onDelete ? () => onDelete(lead) : undefined}
+    />
+  );
 
   if (leads.length === 0) {
     return (
@@ -106,6 +144,7 @@ export function CrmLeadsListView({
             cursor: "pointer",
           }}
         >
+          <option value="echeance">Par échéance</option>
           <option value="recent">Plus récents</option>
           <option value="oldest">Plus anciens</option>
           <option value="name">Nom A→Z</option>
@@ -141,26 +180,36 @@ export function CrmLeadsListView({
             <div style={{ ...headCell, width: 20 }} />
           </div>
 
-          {sorted.map((lead, i) => (
-            <CrmLeadListRow
-              key={lead.key}
-              lead={lead}
-              msgCtx={msgCtx}
-              archived={archived}
-              isLast={i === sorted.length - 1}
-              expanded={expandedKey === lead.key}
-              onToggle={() => setExpandedKey((k) => (k === lead.key ? null : lead.key))}
-              onStatusChange={(s) => onStatusChange(lead, s)}
-              onSourceChange={lead.table === "prospect_leads" ? (s: CrmSource) => onSourceChange(lead, s) : undefined}
-              onCopy={onCopy}
-              onAgenda={() => onAgenda(lead)}
-              dupeFlag={dupeFlagFor(lead)}
-              doublons={doublonsDe?.get(lead.key) ?? null}
-              onDormant={!archived ? () => onDormant(lead) : undefined}
-              onWake={archived ? () => onWake(lead) : undefined}
-              onDelete={onDelete ? () => onDelete(lead) : undefined}
-            />
-          ))}
+          {groupes
+            ? groupes
+                // Un groupe vide ne dit rien — on ne montre pas quatre titres
+                // pour trois personnes.
+                .filter((g) => g.leads.length > 0)
+                .map((g, gi, visibles) => (
+                  <div key={g.cle}>
+                    <div style={groupHeader(g.teinte)}>
+                      {/* La couleur passe par la pastille, pas par le texte :
+                          coral et violet sur un fond teinté tombaient à 3,6:1,
+                          sous le seuil lisible (mesuré, pas lu dans le CSS). */}
+                      <span aria-hidden="true" style={pastille(g.teinte)} />
+                      <span style={{ color: "var(--ls-text)", fontWeight: 700 }}>{g.titre}</span>
+                      {/* Combien de personnes m'attendent : c'est une donnée,
+                          pas une décoration. Elle se distingue du titre par le
+                          poids, pas par un gris qui tombe à 4:1. */}
+                      <span style={{ color: "var(--ls-text)", fontWeight: 500 }}>
+                        · {g.leads.length}
+                      </span>
+                    </div>
+                    {g.leads.map((lead, i) =>
+                      renderRow(
+                        lead,
+                        g.cle,
+                        gi === visibles.length - 1 && i === g.leads.length - 1,
+                      ),
+                    )}
+                  </div>
+                ))
+            : sorted.map((lead, i) => renderRow(lead, null, i === sorted.length - 1))}
         </div>
       </div>
     </div>
@@ -174,6 +223,8 @@ function CrmLeadListRow({
   msgCtx,
   archived,
   isLast,
+  groupe,
+  maintenant,
   expanded,
   onToggle,
   onStatusChange,
@@ -190,6 +241,9 @@ function CrmLeadListRow({
   msgCtx: CrmMessageContext;
   archived: boolean;
   isLast: boolean;
+  /** Le groupe d'échéance qui porte cette ligne — `null` en tri à plat. */
+  groupe: CleGroupe | null;
+  maintenant: Date;
   expanded: boolean;
   onToggle: () => void;
   onStatusChange: (s: CrmStatus) => void;
@@ -211,6 +265,12 @@ function CrmLeadListRow({
   const { temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
   const stagnant = isStagnant(lead);
+  // Le « quand » et le « pourquoi » n'existent qu'en rangement par échéance :
+  // dans un tri à plat, une pilule « demain » sans groupe au-dessus ne veut
+  // rien dire.
+  const quand = groupe ? pilule(lead, groupe, maintenant) : null;
+  const motif = groupe ? pourquoi(lead) : null;
+  const teinteMotif = groupe ? teinteDe(lead, groupe) : "var(--ls-text-hint)";
 
   return (
     <div>
@@ -238,8 +298,30 @@ function CrmLeadListRow({
           <div style={{ flex: 2, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
+              {quand ? (
+                <span
+                  style={{
+                    flexShrink: 0,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    color: teinteMotif,
+                    // Pas de fond teinté : à 12 % il coûtait 1,4 point de
+                    // contraste et faisait passer la pilule sous le seuil
+                    // lisible dans les DEUX thèmes. La bordure suffit à en
+                    // faire une pilule.
+                    background: "transparent",
+                    border: `1px solid color-mix(in srgb, ${teinteMotif} 38%, transparent)`,
+                  }}
+                >
+                  {quand}
+                </span>
+              ) : null}
               {lead.callbackRequestedAt ? <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span> : null}
-              {lead.relanceDue ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
+              {/* En rangement par échéance, le 🔔 répéterait le titre du groupe. */}
+              {lead.relanceDue && !groupe ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
               {/* Le ⚠️ reste pour « déjà client » — une info différente. Le
                   regroupement, lui, se dit en clair : combien de fois cette
                   personne s'est inscrite, et quand. */}
@@ -295,14 +377,23 @@ function CrmLeadListRow({
               ) : null}
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {/* Nom de famille et objectif : ils étaient en base et dans le
-                  mail de réservation, jamais à l'écran (audit 2026-08-11). */}
-              {[
-                lead.lastName,
-                lead.viaName ? `via ${lead.viaName}` : lead.city,
-                lead.objectif ? objectifCourt(lead.objectif) : null,
-                lead.peopleCount === 2 ? "à deux" : null,
-              ].filter(Boolean).join(" · ") || "—"}
+              {/* Ce qui s'est passé la dernière fois, en tête et en couleur :
+                  c'est la seule ligne qui dise pourquoi cette personne est
+                  encore là. Le reste (nom, ville, objectif) suit. */}
+              {motif ? <span style={{ color: teinteMotif, fontWeight: 600 }}>{motif}</span> : null}
+              {(() => {
+                const reste = [
+                  lead.lastName,
+                  lead.viaName ? `via ${lead.viaName}` : lead.city,
+                  lead.objectif ? objectifCourt(lead.objectif) : null,
+                  lead.peopleCount === 2 ? "à deux" : null,
+                ].filter(Boolean).join(" · ");
+                // Le séparateur ne s'affiche que s'il sépare vraiment quelque
+                // chose, et le tiret ne comble le vide que s'il n'y a rien du
+                // tout — sinon on lirait « Jamais rappelé·e · — ».
+                if (!reste) return motif ? null : "—";
+                return motif ? ` · ${reste}` : reste;
+              })()}
             </div>
           </div>
           <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
@@ -539,6 +630,31 @@ function CrmLeadListRow({
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
+
+/** L'en-tête d'un groupe d'échéance — sticky pour qu'on sache toujours dans
+ *  quelle journée on est en train de scroller. */
+function pastille(teinte: string): React.CSSProperties {
+  return { width: 7, height: 7, borderRadius: "50%", background: teinte, flex: "none" };
+}
+
+function groupHeader(teinte: string): React.CSSProperties {
+  return {
+    position: "sticky",
+    top: 0,
+    zIndex: 1,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "9px 14px",
+    fontSize: 11,
+    letterSpacing: ".06em",
+    textTransform: "uppercase",
+    fontFamily: "DM Sans, sans-serif",
+    background: `color-mix(in srgb, ${teinte} 9%, var(--ls-surface2))`,
+    borderTop: "1px solid var(--ls-border)",
+    borderBottom: `1px solid color-mix(in srgb, ${teinte} 25%, var(--ls-border))`,
+  };
+}
 
 const headCell: React.CSSProperties = {
   fontSize: 9,

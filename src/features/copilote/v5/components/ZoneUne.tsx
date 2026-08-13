@@ -22,6 +22,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { CeQuiCompte } from "../../ceQuiCompte";
 import { anglesPour, merciPaiement, reponseAuMessage, type Angle } from "../../messagesPrets";
 import { lienWhatsApp } from "../../../../lib/utils/lienWhatsApp";
+import { FeuilleQualification } from "../../../crm/FeuilleQualification";
+import type { CleReponse, Reponse } from "../../../crm/qualification";
 
 export interface ZoneUneProps {
   quoi: CeQuiCompte;
@@ -35,16 +37,24 @@ export interface ZoneUneProps {
   onPasser: () => void;
   /** La file n'est pas encore revenue du serveur. */
   chargement?: boolean;
+  /** Ce qui s'est passé au contact — pose la date de retour. Absent = on garde
+   *  l'ancien comportement (marquer traité et passer). */
+  onQualifier?: (reponse: Reponse) => void;
 }
 
-export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargement }: ZoneUneProps) {
+export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargement, onQualifier }: ZoneUneProps) {
   // Les angles vivent ICI, pas dans <Angles> : le bouton principal doit envoyer
   // EXACTEMENT le ton affiché. (Vu à l'écran le 12/08 : l'état était enfermé
   // dans l'enfant, et « Lui écrire » ne faisait que marquer traité — il
   // n'écrivait à personne.)
   const angles = useMemo<Angle[]>(() => {
     if (quoi.quoi === "personne") {
-      return anglesPour({ prenom: premier(quoi.attente.qui), moi: monPrenom, motif: motifPourMessage(quoi.attente.motif) });
+      return anglesPour({
+        prenom: premier(quoi.attente.qui),
+        moi: monPrenom,
+        motif: motifPourMessage(quoi.attente.motif),
+        derniereReponse: (quoi.attente.derniereReponse ?? null) as CleReponse | null,
+      });
     }
     if (quoi.quoi === "paiement") return merciPaiement(premier(quoi.nom));
     if (quoi.quoi === "message") return reponseAuMessage(premier(quoi.nom));
@@ -58,10 +68,17 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargemen
   useEffect(() => { setChoisi(0); }, [identite]);
   const texteChoisi = angles[Math.min(choisi, angles.length - 1)]?.texte ?? "";
 
-  /** Ouvre WhatsApp avec le ton affiché, puis fait avancer la file. */
-  const ecrireA = (telephone: string | null | undefined) => {
+  // Après avoir écrit, on demande CE QUI S'EST PASSÉ — c'est la seule façon de
+  // ne pas perdre quelqu'un. Avant, « Lui écrire » marquait traité et passait
+  // au suivant : la personne sortait de tous les radars.
+  const [qualifie, setQualifie] = useState(false);
+  useEffect(() => { setQualifie(false); }, [identite]);
+
+  /** Ouvre WhatsApp avec le ton affiché, puis demande « et alors ? ». */
+  const ecrireA = (telephone: string | null | undefined, demanderApres = false) => {
     window.open(lienWhatsApp(telephone ?? "", texteChoisi), "_blank", "noopener,noreferrer");
-    onFait();
+    if (demanderApres && onQualifier) setQualifie(true);
+    else onFait();
   };
 
   // ⚠️ Pendant le chargement, `attentes` est vide et le moteur conclut « rien ».
@@ -140,15 +157,30 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargemen
           <Actions
             principale={
               a.telephone
-                ? { libelle: "Lui écrire", ton: "wa", faire: () => ecrireA(a.telephone) }
-                : { libelle: "Ouvrir sa fiche", ton: "teal", faire: () => { onOuvrir(a.chemin); onFait(); } }
+                ? { libelle: "Lui écrire", ton: "wa", faire: () => ecrireA(a.telephone, true) }
+                : {
+                    libelle: "Ouvrir sa fiche",
+                    ton: "teal",
+                    faire: () => {
+                      onOuvrir(a.chemin);
+                      if (onQualifier) setQualifie(true); else onFait();
+                    },
+                  }
             }
             secondaire={{ libelle: "Plus tard", faire: onPasser }}
           />
-          <Reste
-            texte={quoi.reste > 0 ? `Ensuite` : `Dernière`}
-            valeur={quoi.reste > 0 ? `${quoi.reste} autre${quoi.reste > 1 ? "s" : ""}` : "tu y es presque"}
-          />
+          {qualifie && onQualifier ? (
+            <FeuilleQualification
+              prenom={premier(a.qui)}
+              onChoisir={(r) => { setQualifie(false); onQualifier(r); }}
+              onIgnorer={() => setQualifie(false)}
+            />
+          ) : (
+            <Reste
+              texte={quoi.reste > 0 ? `Ensuite` : `Dernière`}
+              valeur={quoi.reste > 0 ? `${quoi.reste} autre${quoi.reste > 1 ? "s" : ""}` : "tu y es presque"}
+            />
+          )}
         </Carte>
       );
     }
@@ -324,6 +356,7 @@ function depuisQuand(jours: number): string {
 /** Un dormant vient de la file avec le motif « suivi-en-retard » ou autre ;
  *  ici on choisit le REGISTRE du message, qui n'est pas toujours le motif. */
 function motifPourMessage(m: string) {
+  if (m === "relance") return "relance" as const;
   if (m === "lead") return "lead" as const;
   if (m === "bilan-en-ligne") return "bilan-en-ligne" as const;
   if (m === "paiement-en-attente") return "paiement-en-attente" as const;

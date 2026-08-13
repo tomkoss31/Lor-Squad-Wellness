@@ -136,14 +136,19 @@ export interface EcritureQualification {
 }
 
 export function ecritureFor(reponse: Reponse, maintenant: Date): EcritureQualification {
+  const due = dateDeRetour(reponse, maintenant);
   return {
     status: reponse.statut,
     derniere_reponse: reponse.cle,
     contacted_at: maintenant.toISOString(),
-    relance_due_at: dateDeRetour(reponse, maintenant),
-    // On referme la relance précédente : sans ça, une personne qualifiée deux
-    // fois de suite resterait due sur son ancienne échéance ET la nouvelle.
-    relance_done_at: maintenant.toISOString(),
+    relance_due_at: due,
+    // ⚠️ SÉMANTIQUE IMPOSÉE PAR L'EXISTANT — `crm-relance-notifier` lit
+    // « encore due » comme `relance_due_at <= now AND relance_done_at IS NULL`.
+    // Donc poser une NOUVELLE échéance veut dire remettre `relance_done_at` à
+    // null : sinon la relance naît déjà marquée faite et ne sonne jamais.
+    // (Premier jet inverse — il aurait tout cassé en silence.)
+    // Quand personne ne revient (perdu / RDV calé), on referme au contraire.
+    relance_done_at: due === null ? maintenant.toISOString() : null,
   };
 }
 
