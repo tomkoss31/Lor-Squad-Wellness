@@ -146,10 +146,16 @@ export default function TermsOfSalePage() {
 
         <Section title="4. Prix et paiement">
           <p>
-            Les prix sont indiqués en euros toutes taxes comprises, sur la page d'achat, avant
-            toute validation. Le tarif applicable est celui affiché au moment de l'achat ; une
-            offre de pré-lancement, limitée en nombre, peut faire varier le prix de la carte 30
-            visites.
+            Les prix sont indiqués en euros, sur la page d'achat, avant toute validation. Le tarif
+            applicable est celui affiché au moment de l'achat ; une offre de pré-lancement,
+            limitée en nombre, peut faire varier le prix de la carte 30 visites.
+          </p>
+          {/* La SAS est en franchise en base de TVA (confirmé par Thomas le
+              13/08). La mention de l'article 293 B est alors OBLIGATOIRE sur
+              les documents de vente — son absence est une irrégularité. */}
+          <p style={{ marginTop: 10 }}>
+            <strong>TVA non applicable, article 293 B du Code général des impôts.</strong> Les
+            montants affichés sont donc les montants définitifs : aucune taxe ne s'y ajoute.
           </p>
           <p style={{ marginTop: 10 }}>
             Le paiement se fait en ligne par carte bancaire, via un prestataire de paiement

@@ -26,8 +26,13 @@ export function ClubNewsletter() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const honeypot = (form.elements.namedItem("site") as HTMLInputElement | null)?.value ?? "";
-    // Honeypot rempli = bot → on affiche « succès » sans rien envoyer.
+    // ⚠ Le champ s'appelait « site » : c'est une catégorie que le remplissage
+    // automatique des navigateurs reconnaît et remplit tout seul. Le piège se
+    // déclenchait donc sur des humains — et ici il affiche un FAUX SUCCÈS :
+    // la personne croyait s'être inscrite et ne recevait jamais rien, sans que
+    // personne puisse s'en apercevoir. Même défaut trouvé le 13/08 sur la
+    // caisse du club, où il empêchait purement et simplement de payer.
+    const honeypot = (form.elements.namedItem("bc_hp") as HTMLInputElement | null)?.value ?? "";
     if (honeypot) {
       setState("success");
       return;
@@ -64,10 +69,12 @@ export function ClubNewsletter() {
           <p style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.6, margin: "0 0 12px" }}>
             Un message par mois. Aucun spam, désinscription en un clic.
           </p>
-          {/* Honeypot anti-spam — invisible pour l'humain, ignoré du lecteur d'écran. */}
+          {/* Piège à robots — invisible pour l'humain, ignoré du lecteur d'écran.
+              Nom volontairement dénué de sens : « site », « email », « tel »…
+              sont des catégories que le remplissage automatique reconnaît. */}
           <input
             type="text"
-            name="site"
+            name="bc_hp"
             tabIndex={-1}
             autoComplete="off"
             aria-hidden="true"
