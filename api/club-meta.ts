@@ -104,25 +104,30 @@ function metaFor(path: string, sub: string): { title: string; description: strin
 }
 
 /**
- * Un MOTEUR DE RECHERCHE, par opposition à un robot de réseau social.
+ * ⚠ AUCUNE REDIRECTION DANS CETTE PAGE, ET C'EST DÉLIBÉRÉ.
  *
- * ⚠ LA DISTINCTION EST VITALE ICI, et son absence a coûté l'indexation.
- * Cette page se terminait par `<meta http-equiv="refresh">` vers SA PROPRE
- * URL. Un robot Facebook s'en moque : il lit les balises Open Graph et
- * s'arrête. Google, lui, suit les redirections — il voyait donc /club rediriger
- * vers /club, une boucle sur elle-même, et refusait d'indexer. C'est l'erreur
- * d'indexation constatée par Thomas le 13/08.
+ * Elle se terminait par `<meta http-equiv="refresh">` vers SA PROPRE URL, plus
+ * un `window.location.replace` vers la même. Un robot Facebook s'en moque : il
+ * lit les balises Open Graph et s'arrête. Google, lui, SUIT les redirections —
+ * il voyait donc /club rediriger vers /club, une boucle sur elle-même. Une page
+ * qui boucle ne s'indexe pas.
  *
- * À un moteur, on sert donc la même tête (titre, description, canonique) mais
- * SANS redirection, et avec un corps réellement lisible : de quoi indexer la
- * page et découvrir les autres. À un robot social, on garde la redirection,
- * qui sert de filet si un humain atterrit ici.
+ * J'ai d'abord traité les deux familles de robots différemment : redirection
+ * pour les réseaux sociaux, contenu lisible pour les moteurs. Mesuré ensuite :
+ * la réponse est mise en cache 10 min côté CDN (`s-maxage=600`) SANS
+ * `Vary: User-Agent`. Le premier robot arrivé décidait donc de ce que tous
+ * recevaient pendant dix minutes — Facebook recevait la version moteur, et
+ * Google aurait pu recevoir la version avec redirection. Le correctif serait
+ * redevenu inopérant par intermittence, ce qui est pire qu'un bug franc.
+ *
+ * Ajouter `Vary: User-Agent` aurait marché mais fragmente le cache par
+ * navigateur. La vraie simplification : personne n'a besoin de cette
+ * redirection. Les robots sociaux lisent la tête et s'arrêtent ; un humain
+ * n'atterrit jamais ici, la réécriture ne se déclenche que sur un robot. Une
+ * seule réponse pour tous, cacheable, sans boucle possible.
  */
-function estMoteurDeRecherche(ua: string): boolean {
-  return /googlebot|google-inspectiontool|bingbot|duckduckbot|applebot|yandex|baiduspider|slurp/i.test(ua);
-}
 
-/** Les pages publiques du club, pour que le moteur les découvre d'ici. */
+/** Les pages publiques du club, pour qu'un moteur les découvre d'ici. */
 const LIENS_CLUB: Array<{ href: string; texte: string }> = [
   { href: "/club", texte: "Le club de petit-déjeuner de Verdun" },
   { href: "/club/le-club", texte: "Le club" },
@@ -138,7 +143,6 @@ export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const path = (url.searchParams.get("path") ?? "club").trim();
   const sub = (url.searchParams.get("sub") ?? "").trim().replace(/[^a-z-]/g, "");
-  const moteur = estMoteurDeRecherche(req.headers.get("user-agent") ?? "");
 
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.labase-nutrition.com";
   const proto = req.headers.get("x-forwarded-proto") ?? "https";
@@ -173,28 +177,16 @@ export default async function handler(req: Request): Promise<Response> {
      défaut : Google affichait donc le « B » bleu de La Base 360 à côté du
      résultat du Breakfast Club (constaté par Thomas le 13/08). -->
 <link rel="icon" type="image/svg+xml" href="/brand/breakfast-club/favicon.svg" />
-${moteur ? "" : `<meta http-equiv="refresh" content="0; url=${esc(pageUrl)}" />`}
+
 </head>
 <body>
-${
-  moteur
-    ? // À UN MOTEUR : aucune redirection, et un contenu réellement lisible.
-      // La redirection vers cette même URL faisait voir à Google une boucle sur
-      // elle-même — il refusait d'indexer. Les liens servent aussi à lui faire
-      // découvrir les autres pages du club depuis n'importe laquelle.
-      `<h1>${esc(title)}</h1>
+<h1>${esc(title)}</h1>
 <p>${esc(description)}</p>
 <nav aria-label="Les pages du club">
 <ul>
 ${LIENS_CLUB.map((l) => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join("\n")}
 </ul>
-</nav>`
-    : // À UN ROBOT SOCIAL : il lit les balises ci-dessus et s'arrête. La
-      // redirection ne lui sert à rien, elle est le filet pour l'humain qui
-      // atterrirait ici par accident.
-      `<p>Redirection vers <a href="${esc(pageUrl)}">${esc(title)}</a>…</p>
-<script>window.location.replace(${JSON.stringify(pageUrl)});</script>`
-}
+</nav>
 </body>
 </html>`;
 
