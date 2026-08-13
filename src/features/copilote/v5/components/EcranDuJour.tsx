@@ -68,11 +68,12 @@ export interface EcranDuJourProps {
   onFait: () => void;
   onPasser: () => void;
   onRouvrir: (cle: string) => void;
+  chargement?: boolean;
 }
 
 export function EcranDuJour({
   quoi, monPrenom, journee, attentes, traitees, equipe, equipeTotal,
-  ligneDuMois, onOuvrir, onFait, onPasser, onRouvrir,
+  ligneDuMois, onOuvrir, onFait, onPasser, onRouvrir, chargement,
 }: EcranDuJourProps) {
   // Une débutante n'a ni clients ni équipe : on retire, on n'affiche pas vide.
   const montreClients = attentes.length > 0 || traitees.size > 0;
@@ -84,7 +85,7 @@ export function EcranDuJour({
     // le padding de tout `.copilote-v5 > div` en !important sous 1280 px.
     // L'ancien PlanDuJour n'y échappait que parce qu'il était déjà un <section>.
     <section aria-label="Ton écran du jour" style={{ display: "flex", flexDirection: "column", gap: 30 }}>
-      <ZoneUne quoi={quoi} monPrenom={monPrenom} onOuvrir={onOuvrir} onFait={onFait} onPasser={onPasser} />
+      <ZoneUne quoi={quoi} monPrenom={monPrenom} onOuvrir={onOuvrir} onFait={onFait} onPasser={onPasser} chargement={chargement} />
 
       {journee.length > 0 ? (
         <section aria-label="Ta journée">
@@ -123,7 +124,7 @@ export function EcranDuJour({
                 >
                   <span
                     aria-hidden="true"
-                    style={{ ...pastilleNom, background: fait ? "var(--ls-surface2)" : a.motif === "suivi-en-retard" ? "var(--ls-amber)" : "var(--ls-coral)", color: fait ? "var(--ls-text-hint)" : "var(--ls-bg)" }}
+                    style={{ ...pastilleNom, ...pastilleTeinte(fait ? null : a.motif === "suivi-en-retard" ? "var(--ls-amber)" : "var(--ls-coral)") }}
                   >
                     {fait ? "✓" : (a.qui[0] ?? "?").toUpperCase()}
                   </span>
@@ -149,7 +150,7 @@ export function EcranDuJour({
           <div>
             {equipe.map((d) => (
               <div key={d.id} style={ligneEquipe}>
-                <span aria-hidden="true" style={{ ...pastilleNom, background: d.teinte, color: "var(--ls-bg)", marginTop: 1 }}>
+                <span aria-hidden="true" style={{ ...pastilleNom, ...pastilleTeinte(d.teinte), marginTop: 1 }}>
                   {d.initiale}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
@@ -189,6 +190,24 @@ function Titre({ children, compte, vert }: { children: React.ReactNode; compte?:
       ) : null}
     </div>
   );
+}
+
+/** La pastille est TEINTÉE, pas pleine.
+ *
+ *  Une initiale crème posée sur un aplat corail tombe à 3,6:1 en thème clair —
+ *  sous le seuil lisible. Aucun token d'encre n'existe pour corail/ambre (seul
+ *  `--ls-teal-contrast` est théma-aware), et écrire un hex en dur est interdit
+ *  par la charte du projet. Un fond à 18 % avec l'encre du thème et un liseré
+ *  de la couleur garde le signal ET la lisibilité, dans les deux thèmes. */
+function pastilleTeinte(couleur: string | null): React.CSSProperties {
+  if (!couleur) {
+    return { background: "var(--ls-surface2)", color: "var(--ls-text-hint)", border: "1px solid var(--ls-border)" };
+  }
+  return {
+    background: `color-mix(in srgb, ${couleur} 18%, transparent)`,
+    color: "var(--ls-text)",
+    border: `1px solid color-mix(in srgb, ${couleur} 45%, transparent)`,
+  };
 }
 
 function pastilleTon(t: EvenementJournee["ton"]): React.CSSProperties {

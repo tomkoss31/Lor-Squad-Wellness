@@ -33,9 +33,11 @@ export interface ZoneUneProps {
   onFait: () => void;
   /** « Plus tard » → on passe sans marquer fait. */
   onPasser: () => void;
+  /** La file n'est pas encore revenue du serveur. */
+  chargement?: boolean;
 }
 
-export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser }: ZoneUneProps) {
+export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser, chargement }: ZoneUneProps) {
   // Les angles vivent ICI, pas dans <Angles> : le bouton principal doit envoyer
   // EXACTEMENT le ton affiché. (Vu à l'écran le 12/08 : l'état était enfermé
   // dans l'enfant, et « Lui écrire » ne faisait que marquer traité — il
@@ -62,6 +64,17 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser }: ZoneUne
     onFait();
   };
 
+  // ⚠️ Pendant le chargement, `attentes` est vide et le moteur conclut « rien ».
+  // Annoncer « C'est à jour » à quelqu'un qui a cinq personnes en attente est
+  // le pire mensonge que cet écran puisse dire. On attend.
+  if (chargement && quoi.quoi === "rien") {
+    return (
+      <Carte teinte="var(--ls-teal)" eyebrow="Un instant" titre="On regarde">
+        <p style={ctx}>Je rassemble ce qui t'attend aujourd'hui.</p>
+      </Carte>
+    );
+  }
+
   switch (quoi.quoi) {
     case "rdv":
       return (
@@ -72,9 +85,18 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser }: ZoneUne
           <div style={{ ...depuis, color: "var(--ls-teal)" }}>
             {quoi.dansMinutes >= 0 ? "Prépare-toi." : "C'est en cours."}
           </div>
+          {/* Deux corrections ici. (1) Un prospect n'a PAS de fiche client :
+              `clientId` est son id de prospect, et /clients/<id> afficherait
+              « Client introuvable ». (2) Le bouton secondaire n'est plus
+              « Plus tard » : il ne faisait RIEN sur un RDV (rien à reporter,
+              l'heure est l'heure), et un bouton inerte est pire qu'absent. */}
           <Actions
-            principale={{ libelle: "Ouvrir sa fiche", ton: "teal", faire: () => onOuvrir(`/clients/${quoi.clientId}`) }}
-            secondaire={{ libelle: "Plus tard", faire: onPasser }}
+            principale={
+              quoi.estProspect
+                ? { libelle: "Voir dans l'agenda", ton: "teal", faire: () => onOuvrir("/agenda") }
+                : { libelle: "Ouvrir sa fiche", ton: "teal", faire: () => onOuvrir(`/clients/${quoi.clientId}`) }
+            }
+            secondaire={{ libelle: "L'agenda", faire: () => onOuvrir("/agenda") }}
           />
         </Carte>
       );
@@ -143,7 +165,11 @@ export function ZoneUne({ quoi, monPrenom, onOuvrir, onFait, onPasser }: ZoneUne
             principale={{ libelle: "Commencer un bilan", ton: "teal", faire: () => onOuvrir("/nouveau-bilan") }}
             secondaire={{ libelle: "Mon parcours", faire: () => onOuvrir("/salle-ops") }}
           />
-          <Reste texte="Après ça" valeur={`${quoi.total - quoi.etape} étapes`} />
+          {quoi.total - quoi.etape > 0 ? (
+            <Reste texte="Après ça" valeur={`${quoi.total - quoi.etape} étape${quoi.total - quoi.etape > 1 ? "s" : ""}`} />
+          ) : (
+            <Reste texte="Dernière étape" valeur="tu y es presque" />
+          )}
         </Carte>
       );
 
@@ -347,7 +373,7 @@ const ton: React.CSSProperties = {
 };
 
 const tonActif: React.CSSProperties = {
-  color: "var(--ls-bg)", background: "var(--ls-teal)", borderColor: "var(--ls-teal)", fontWeight: 600,
+  color: "var(--ls-teal-contrast)", background: "var(--ls-teal)", borderColor: "var(--ls-teal)", fontWeight: 600,
 };
 
 
@@ -361,7 +387,9 @@ const primWa: React.CSSProperties = {
 };
 
 const primTeal: React.CSSProperties = {
-  background: "var(--ls-teal)", color: "var(--ls-bg)",
+  // `--ls-teal-contrast` (#06241F sombre / #FFFFFF clair) et NON `--ls-bg` :
+  // en thème clair, crème sur teal foncé tombait à 3,5:1.
+  background: "var(--ls-teal)", color: "var(--ls-teal-contrast)",
   boxShadow: "0 10px 26px color-mix(in srgb, var(--ls-teal) 24%, transparent)",
 };
 

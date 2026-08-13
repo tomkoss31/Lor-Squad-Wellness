@@ -86,7 +86,7 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
     () => Object.fromEntries(users.map((u) => [u.id, premier(u.name)])),
     [users],
   );
-  const { mesAttentes, attentesEquipe, paiements } = useFileDuJour(moi, { estAdmin, nomParId });
+  const { mesAttentes, attentesEquipe, paiements, chargement } = useFileDuJour(moi, { estAdmin, nomParId });
 
   // ─── Ce qui a été traité aujourd'hui ─────────────────────────────────────
   const CLE_TRAITEES = cleDuJourLocale("ecran-jour-traitees");
@@ -121,7 +121,10 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
         c.last_order_date == null
           ? `Jamais commandé · ~${c.pv_potential} PV potentiels`
           : `${c.days_since_last_order} j sans commande${c.last_program_name ? ` · ${c.last_program_name}` : ""}`,
-      jours: c.days_since_last_order ?? 0,
+      // ⚠️ `get_dormant_clients` renvoie `coalesce(days_since, 9999)` : un
+      // client qui n'a JAMAIS commandé affichait « Ça fait 9999 jours. ».
+      // Sans date de commande, il n'y a pas d'ancienneté à annoncer.
+      jours: c.last_order_date == null ? 0 : (c.days_since_last_order ?? 0),
       motif: "suivi-en-retard",
       rang: RANG.dormant,
       telephone: c.client_phone,
@@ -133,12 +136,16 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
   const restantes = useMemo(() => attentes.filter((a) => !traitees.has(a.cle)), [attentes, traitees]);
 
   // ─── Les RDV à venir aujourd'hui ─────────────────────────────────────────
+  // ⚠️ `todayAgendaAll`, PAS `todayAgenda` : ce dernier est tronqué à 3. Avec
+  // 5 rendez-vous, celui de 14 h disparaissait du hook, et la zone 1 se taisait
+  // à dix minutes de l'heure. Vérifié par la revue adverse du 12/08.
   const rdvs: RdvEnVue[] = useMemo(
     () =>
-      data.todayAgenda.map((r) => ({
+      data.todayAgendaAll.map((r) => ({
         id: r.id, clientId: r.clientId, nom: r.name, type: r.type, heure: r.time,
+        estProspect: r.kind === "rdv-prospect",
       })),
-    [data.todayAgenda],
+    [data.todayAgendaAll],
   );
 
   // ─── Le dernier message VRAIMENT en attente ──────────────────────────────
@@ -183,6 +190,9 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
     [ops.loading, ops.activeStepNumber, ops.totalSteps, ops.currentLesson, ops.activated],
   );
 
+  // ⚠️ Tant que la file n'est pas revenue, `attentes` est vide — et l'écran
+  // annoncerait « Personne n'attend · C'est à jour » à quelqu'un qui a cinq
+  // personnes en attente. On ne félicite pas dans le vide : on patiente.
   const quoi = useMemo(
     () =>
       ceQuiCompte({
@@ -204,6 +214,11 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
     const prochain = [...rdvs].filter((r) => r.heure.getTime() >= Date.now() - 15 * 60_000)
       .sort((a, b) => a.heure.getTime() - b.heure.getTime())[0];
 
+    // ⚠️ « Tout le monde a eu sa réponse » est FAUX pour une débutante : elle
+    // n'a répondu à personne, elle n'a encore personne. Charlène (0 client,
+    // aucun bilan) est précisément la personne pour qui cet écran est fait —
+    // lui féliciter une liste vide serait creux.
+    const debutante = clients.filter((c) => c.distributorId === moi).length === 0;
     out.push({
       cle: "maintenant",
       quand: `Maintenant · ${new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(new Date())}`,
@@ -211,12 +226,16 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
         ? `${rdvs.length} rendez-vous aujourd'hui`
         : restantes.length > 0
           ? `${restantes.length} personne${restantes.length > 1 ? "s" : ""} en attente`
-          : "Rien de calé aujourd'hui",
+          : debutante
+            ? "Tu n'as encore personne"
+            : "Rien de calé aujourd'hui",
       detail: prochain
         ? "Le prochain t'attend ci-dessous."
         : restantes.length > 0
           ? "Aucun rendez-vous — la journée est à toi."
-          : "Ta liste est vide, tout le monde a eu sa réponse.",
+          : debutante
+            ? "C'est normal — tout commence par un premier bilan."
+            : "Ta liste est vide, tout le monde a eu sa réponse.",
       ton: "now",
     });
 
@@ -362,6 +381,7 @@ export function EcranDuJourBranche({ data, ops }: { data: CopiloteData; ops: Sal
       equipe={equipe}
       equipeTotal={users.filter((u) => u.active).length}
       ligneDuMois={ligneDuMois}
+      chargement={chargement}
       onOuvrir={(c) => navigate(c)}
       onFait={onFait}
       onPasser={onPasser}

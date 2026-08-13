@@ -163,7 +163,7 @@ export function useFileDuJour(
             const [leads, bilans, encaissements] = await Promise.all([
               sb
                 .from("prospect_leads")
-                .select("id, first_name, phone, created_at, source, assigned_to_user_id")
+                .select("id, first_name, phone, created_at, source, assigned_to_user_id, referrer_user_id")
                 .is("contacted_at", null)
                 .eq("status", "new"),
               sb
@@ -191,11 +191,18 @@ export function useFileDuJour(
             for (const brute of leads.data ?? []) {
               const r = brute as {
                 id: string; first_name: string | null; phone: string | null;
-                created_at: string; source: string | null; assigned_to_user_id: string | null;
+                created_at: string; source: string | null;
+                assigned_to_user_id: string | null; referrer_user_id: string | null;
               };
               const via = r.source ? SOURCE_LISIBLE[r.source] ?? r.source : null;
               sortie.push({
-                proprietaire: r.assigned_to_user_id,
+                // ⚠️ `submit-prospect-lead` n'écrit JAMAIS `assigned_to_user_id` :
+                // seulement `referrer_user_id`. Un lead venu d'un tunnel public
+                // serait donc orphelin — invisible chez son coach, et rangé
+                // « chez ton équipe · responsable : personne » chez l'admin.
+                // Le CRM (useCrmLeads:578) et le cron de relance résolvent tous
+                // deux par ce repli ; la file s'en écartait.
+                proprietaire: r.assigned_to_user_id ?? r.referrer_user_id,
                 attente: {
                   cle: `lead:${r.id}`,
                   qui: prenom(r.first_name),

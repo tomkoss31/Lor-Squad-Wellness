@@ -48,6 +48,9 @@ export interface RdvEnVue {
   nom: string;
   type: string;
   heure: Date;
+  /** Un prospect n'a PAS de fiche client : `clientId` est son id de prospect.
+   *  Envoyer vers /clients/<id> afficherait « Client introuvable ». */
+  estProspect?: boolean;
 }
 
 export interface MessageRecu {
@@ -77,7 +80,7 @@ export interface Demarrage {
 }
 
 export type CeQuiCompte =
-  | { quoi: "rdv"; heure: Date; dansMinutes: number; clientId: string; nom: string; type: string }
+  | { quoi: "rdv"; heure: Date; dansMinutes: number; clientId: string; nom: string; type: string; estProspect: boolean }
   | { quoi: "message"; messageId: string; clientId: string; nom: string; extrait: string; ilYaMinutes: number }
   | { quoi: "paiement"; commandeId: string; nom: string; montantEur: number; ilYaMinutes: number; telephone: string | null }
   | { quoi: "personne"; attente: Attente; reste: number }
@@ -130,6 +133,7 @@ export function ceQuiCompte(m: Matiere): CeQuiCompte {
       clientId: rdv.clientId,
       nom: rdv.nom,
       type: rdv.type,
+      estProspect: rdv.estProspect ?? false,
     };
   }
 
