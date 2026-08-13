@@ -101,7 +101,10 @@ export function ClubLandingPage() {
       <div id="top" className="cl-band cl-rel">
         <div className="cl-blob" aria-hidden="true" style={{ width: 400, height: 400, background: "var(--yellow)", opacity: .34, top: -150, left: -120 }} />
         <div className="cl-dots" aria-hidden="true" style={{ width: 260, height: 320, top: 70, right: 0 }} />
-        <div className="cl-wrap" style={{ paddingTop: "clamp(64px,12vw,120px)", paddingBottom: "clamp(56px,8vw,96px)" }}>
+        {/* Bas du hero resserré : il y avait 163 px de vide entre les chiffres
+            et « Choisis ton objectif », pour rien — c'est du défilement gagné
+            sur la seule chose qui compte en haut de page, arriver au choix. */}
+        <div className="cl-wrap" style={{ paddingTop: "clamp(56px,10vw,104px)", paddingBottom: "clamp(28px,3.6vw,48px)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "clamp(36px,5vw,72px)", alignItems: "center" }}>
             <div>
               <span className="cl-pill y">Ouverture prochaine · Verdun</span>
@@ -144,7 +147,7 @@ export function ClubLandingPage() {
 
       {/* OBJECTIF STRIP */}
       <div className="cl-band">
-        <div className="cl-wrap" style={{ maxWidth: 1000, paddingTop: "clamp(20px,3vw,30px)", paddingBottom: "clamp(48px,6vw,72px)", textAlign: "center" }}>
+        <div className="cl-wrap" style={{ maxWidth: 1000, paddingTop: "clamp(8px,1.4vw,18px)", paddingBottom: "clamp(40px,5vw,60px)", textAlign: "center" }}>
           <p style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".28em", textTransform: "uppercase", color: "var(--muted2)", margin: "0 0 16px" }}>Choisis ton objectif</p>
           <div className="cl-obj">
             <a href={objUrl("poids")}><Ico name="weight" size={19} />Perdre du poids</a>
