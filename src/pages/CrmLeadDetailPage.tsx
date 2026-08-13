@@ -58,6 +58,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   city: null,
   source: "welcome",
   status: "new",
+  relanceDueAt: null,
+  derniereReponse: null,
   viaName: null,
   parrainPhone: null,
   parrainClientId: null,

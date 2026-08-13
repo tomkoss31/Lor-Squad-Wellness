@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import type { CleReponse } from "../features/crm/qualification";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
 export type CrmTable =
@@ -69,8 +70,16 @@ export interface CrmLead {
       online_bilans.coach_user_id · prospect_leads.referrer_user_id ·
       referrals/intentions → distributeur du client parrain. Null = non attribué. */
   ownerUserId: string | null;
-  /** Relance J+3 due (online_bilans uniquement). */
+  /** Relance échue et pas encore faite — le 🔔 de la liste. */
   relanceDue: boolean;
+  /** Quand cette personne doit revenir dans la file. Posé par la feuille
+   *  « Et alors ? » (src/features/crm/qualification.ts), jamais saisi à la
+   *  main. `null` = aucune suite prévue — ce qui veut dire « à traiter
+   *  aujourd'hui », pas « plus tard » (cf. echeances.ts). */
+  relanceDueAt: string | null;
+  /** Ce qui s'est passé au dernier appel — c'est ce qu'on lit sous son nom,
+   *  et ce qui choisit l'angle du message de 2e tentative. */
+  derniereReponse: CleReponse | null;
   /** Lead « endormi » (archivé) — sorti du flux actif, zéro relance. */
   dormant?: boolean;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
@@ -234,9 +243,36 @@ function mapBilanStatus(leadStatus: string | null, convertedClientId: string | n
   }
 }
 
+/**
+ * Les trois champs de relance, lus pareil sur les deux tables qui les portent.
+ *
+ * ⚠️ `relance_done_at IS NULL` = échéance encore ouverte. C'est la sémantique
+ * de `crm-relance-notifier`, pas un choix libre : l'inverser ferait naître
+ * chaque rappel déjà marqué fait, donc muet (cf. qualification.ts).
+ */
+function relanceFields(
+  row: Record<string, unknown>,
+  now: number,
+): Pick<CrmLead, "relanceDue" | "relanceDueAt" | "derniereReponse"> {
+  const due = (row.relance_due_at as string | null) ?? null;
+  const ouverte = Boolean(due && !row.relance_done_at);
+  return {
+    relanceDue: ouverte && new Date(due as string).getTime() <= now,
+    // On n'expose l'échéance que si elle est OUVERTE : une relance déjà faite
+    // rangerait la personne dans « Plus tard » alors qu'il n'y a plus rien de
+    // prévu — exactement la disparition que ce chantier corrige.
+    relanceDueAt: ouverte ? due : null,
+    derniereReponse: (row.derniere_reponse as CleReponse | null) ?? null,
+  };
+}
+
 function mapSimpleStatus(status: string | null): CrmStatus {
   switch (status) {
     case "contacted":
+    // Posé par la feuille « Et alors ? ». Sans ce cas, une personne qu'on
+    // vient d'appeler retomberait en « Nouveau » — donc traitée comme jamais
+    // contactée, et le message repartirait sur « tu as laissé tes coordonnées ».
+    case "to_recontact":
       return "contacted";
     case "qualified":
       return "qualified";
@@ -382,14 +418,14 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, derniere_reponse, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -492,11 +528,7 @@ export function useCrmLeads() {
           bilanMotivation: (row.motivation_score as number | null) ?? null,
           bilanAge: (row.age as number | null) ?? null,
           bilanCoachSlug: (row.coach_slug as string | null) ?? null,
-          relanceDue: Boolean(
-            row.relance_due_at &&
-              !row.relance_done_at &&
-              new Date(row.relance_due_at as string).getTime() <= now,
-          ),
+          ...relanceFields(row, now),
           resultToken: (row.result_token as string | null) ?? null,
           callbackRequestedAt: (row.callback_requested_at as string | null) ?? null,
           engagement: (row.engagement as { score: number; tier: string; signals: string[] } | null) ?? null,
@@ -576,7 +608,7 @@ export function useCrmLeads() {
           extra: colisExtra,
           // Cf. commentaire online_bilans — même correction (assigned_to_user_id prioritaire).
           ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.referrer_user_id as string | null) ?? null,
-          relanceDue: false,
+          ...relanceFields(row, now),
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
@@ -624,7 +656,11 @@ export function useCrmLeads() {
           ownerUserId: row.from_client_id
             ? clientDistributor.get(row.from_client_id as string) ?? null
             : null,
+          // Ni relance ni qualification sur cette table : la personne se range
+          // dans « Aujourd'hui » tant qu'on ne l'a pas appelée.
           relanceDue: false,
+          relanceDueAt: null,
+          derniereReponse: null,
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
@@ -656,7 +692,11 @@ export function useCrmLeads() {
           ownerUserId: row.referrer_client_id
             ? clientDistributor.get(row.referrer_client_id) ?? null
             : null,
+          // Ni relance ni qualification sur cette table : la personne se range
+          // dans « Aujourd'hui » tant qu'on ne l'a pas appelée.
           relanceDue: false,
+          relanceDueAt: null,
+          derniereReponse: null,
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
@@ -676,7 +716,10 @@ export function useCrmLeads() {
       for (const l of all) {
         if (archSet.has(`${l.table}:${l.id}`)) {
           l.dormant = true;
-          l.relanceDue = false; // un endormi ne déclenche aucune relance
+          // Un endormi ne déclenche aucune relance — ni le 🔔, ni le rangement
+          // par échéance (il est mis de côté exprès, il n'attend rien).
+          l.relanceDue = false;
+          l.relanceDueAt = null;
         }
       }
 
@@ -699,17 +742,32 @@ export function useCrmLeads() {
       if (!sb) return "Service indisponible.";
 
       let err: string | null = null;
+      // Sortir quelqu'un de la file doit AUSSI refermer son échéance. Sans ça,
+      // `crm-relance-notifier` continue de pousser « relance Laure » le
+      // lendemain du jour où on l'a passée en Perdu — le cron ne lit que
+      // `relance_due_at <= now AND relance_done_at IS NULL`, pas le statut.
+      const sortDeLaFile = next === "lost" || next === "converted" || next === "qualified";
+      const refermeEcheance = (patch: Record<string, unknown>) => {
+        if (sortDeLaFile) {
+          patch.relance_due_at = null;
+          patch.relance_done_at = new Date().toISOString();
+        }
+        return patch;
+      };
+
       if (lead.table === "online_bilans") {
         // Traduction vers les valeurs natives du kanban Leads.
         const native =
           next === "contacted" ? "contact" : next === "qualified" ? "qualified" : next;
         const patch: Record<string, unknown> = { lead_status: native };
         if (next === "contacted") patch.contacted_at = new Date().toISOString();
+        refermeEcheance(patch);
         const { error: e } = await sb.from("online_bilans").update(patch).eq("id", lead.id);
         err = e?.message ?? null;
       } else if (lead.table === "prospect_leads") {
         const patch: Record<string, unknown> = { status: next === "qualified" ? "contacted" : next };
         if (next === "contacted") patch.contacted_at = new Date().toISOString();
+        refermeEcheance(patch);
         const { error: e } = await sb.from("prospect_leads").update(patch).eq("id", lead.id);
         err = e?.message ?? null;
       } else if (lead.table === "client_referral_intentions") {
@@ -733,7 +791,16 @@ export function useCrmLeads() {
 
       if (!err) {
         setLeads((prev) =>
-          prev.map((l) => (l.key === lead.key ? { ...l, status: next, relanceDue: false } : l)),
+          prev.map((l) =>
+            l.key === lead.key
+              ? {
+                  ...l,
+                  status: next,
+                  relanceDue: false,
+                  relanceDueAt: sortDeLaFile ? null : l.relanceDueAt,
+                }
+              : l,
+          ),
         );
         // Wagon 2 chantier 5 : conversion d'une reco/intention → push de
         // gratification au client parrain (« 🎉 Ta reco a porté ses fruits »).
@@ -791,7 +858,14 @@ export function useCrmLeads() {
     }
     setLeads((prev) =>
       prev.map((l) =>
-        l.key === lead.key ? { ...l, dormant: value, relanceDue: value ? false : l.relanceDue } : l,
+        l.key === lead.key
+          ? {
+              ...l,
+              dormant: value,
+              relanceDue: value ? false : l.relanceDue,
+              relanceDueAt: value ? null : l.relanceDueAt,
+            }
+          : l,
       ),
     );
     return null;
