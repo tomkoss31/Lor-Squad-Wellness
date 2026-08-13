@@ -10,6 +10,7 @@ import { Link, useLocation } from "react-router-dom";
 import "../ClubLandingPage.css";
 import { useClubHead } from "./useClubHead";
 import { useRevelationAuScroll } from "./useRevelationAuScroll";
+import { useEffetsAuScroll } from "./useEffetsAuScroll";
 import { ClubNewsletter } from "./ClubNewsletter";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
@@ -182,6 +183,10 @@ export function ClubShell({
   // Posé ici, donc valable pour les 9 pages du club d'un coup. Ne fait rien
   // quand le navigateur sait animer au défilement tout seul.
   useRevelationAuScroll();
+
+  // Cartes en cascade, bande photo en profondeur, en-tete qui se tasse, fil de
+  // lecture. Maquette validee le 13/08. Vaut pour les 9 pages du club.
+  useEffetsAuScroll();
 
   return (
     <div className="cl">

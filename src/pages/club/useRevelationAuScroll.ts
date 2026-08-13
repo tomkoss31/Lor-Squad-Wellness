@@ -45,7 +45,16 @@ export function useRevelationAuScroll() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!("IntersectionObserver" in window)) return;
 
-    const cibles = Array.from(document.querySelectorAll<HTMLElement>(CIBLES));
+    // Les sections QUI CONTIENNENT DES CARTES sont exclues : depuis le 13/08,
+    // useEffetsAuScroll y anime les cartes une par une. Les reprendre ici
+    // superposerait deux animations sur le même contenu.
+    // Le filtrage se fait en JavaScript et non avec `:has()` dans le sélecteur :
+    // un navigateur qui ne connaît pas `:has()` fait échouer tout le
+    // querySelectorAll — or ce fichier existe précisément pour les navigateurs
+    // en retard.
+    const cibles = Array.from(document.querySelectorAll<HTMLElement>(CIBLES)).filter(
+      (el) => !(el.classList.contains("cl-rv") && el.querySelector(".cl-card")),
+    );
     if (cibles.length === 0) return;
 
     document.documentElement.classList.add(CLASSE_ARMEE);

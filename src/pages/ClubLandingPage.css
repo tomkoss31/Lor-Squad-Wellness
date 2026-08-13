@@ -323,6 +323,41 @@
   }
 }
 
+/* ── EFFETS AU DÉFILEMENT (maquette validée par Thomas le 13/08) ──────────
+   Tout est conditionné à `html.cl-anim-js`, posée par useEffetsAuScroll.ts et
+   par lui seul : sans script, rien n'est caché et la page reste lisible.
+   C'est la précaution qui évite la page blanche définitive quand un rideau se
+   lève au JavaScript. */
+
+/* 1. Les cartes arrivent l'une après l'autre.
+   Là où il y a des cartes, c'est la CARTE qui s'anime et plus le bloc : quatre
+   cartes qui apparaissent d'un coup ne se lisent pas comme du mouvement. On
+   neutralise donc la montée du bloc pour éviter deux animations superposées. */
+html.cl-anim-js .cl-rv:has(.cl-card){animation:none;opacity:1;transform:none}
+html.cl-anim-js .cl-card{opacity:0;transform:translateY(26px);
+  transition:opacity .62s cubic-bezier(.22,.61,.36,1),transform .62s cubic-bezier(.22,.61,.36,1)}
+html.cl-anim-js .cl-card.est-vu{opacity:1;transform:none}
+
+/* 2. La bande photo respire — le décalage par photo est posé par le script. */
+html.cl-anim-js .cl-photoband img{will-change:transform}
+
+/* 3. L'en-tête se tasse dès qu'on descend. Il est déjà collant ; il prend
+   simplement moins de place, sans jamais disparaître. */
+.cl-header .bar{transition:padding .28s ease}
+.cl-header.est-tasse .bar{padding:6px 0}
+
+/* 4. Le fil de lecture. Au-dessus de l'en-tête (z-index 40), et transparent
+   aux clics pour ne jamais voler un tap. */
+.cl-progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--orange);
+  z-index:60;transition:width .1s linear;pointer-events:none}
+
+@media (prefers-reduced-motion:reduce){
+  html.cl-anim-js .cl-card{opacity:1!important;transform:none!important;transition:none}
+  html.cl-anim-js .cl-photoband img{transform:none!important}
+  .cl-header .bar{transition:none}
+  .cl-progress{display:none}
+}
+
 /* ── REPLI POUR LES NAVIGATEURS SANS animation-timeline ────────────────────
    Le bloc ci-dessus est tout ou rien : un navigateur qui ignore
    `animation-timeline` n'en joue pas une version dégradée, il le saute
