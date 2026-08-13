@@ -210,18 +210,20 @@ export function ClubLandingPage() {
           même quand il n'en reste que trois. */}
       <PhotoBand
         srcs={[
-          // `rituel-aloe` occupait cette place — image de banque (verre stylisé,
-          // coupelle de mangue, fond studio), écartée par Thomas. La tablée du
-          // club prend le relais : c'est le club, avec ses gens. Le reste de la
-          // bande est déjà du vrai ; cette case était la seule à mentir.
-          // 3:4 dans une fenêtre large : on remonte pour garder les visages.
-          { src: "/brand/breakfast-club/photos/club-equipe-table.jpg", position: "50% 34%" },
-          // Version 16:9 de la photo de thé, à la place du carré. La fenêtre de
-          // la bande fait 2,2:1 : un carré y perd 55 % de sa hauteur, une 16:9
-          // n'en perd que 20 %. Même image de marque, mais cadrée pour cette
-          // place au lieu d'y être écrasée. Le carré reste sur /le-rituel, dont
-          // les emplacements sont en 1:1.
+          // Aloé puis thé puis smoothie : les trois premières cases sont les
+          // trois boissons DANS L'ORDRE OÙ ON LES SERT, et ce n'est pas
+          // décoratif — sous 560 px la bande ne garde que ces trois-là. Toute
+          // autre photo mise ici efface une étape du rituel sur téléphone.
+          //
+          // Les deux premières sont en 16:9 : la fenêtre d'une case fait 1,8:1,
+          // donc un carré y perd 45 % de sa hauteur (mesuré : 55 % visible)
+          // quand une 16:9 n'en perd que 3 %. Même visuel de marque, cadré pour
+          // cette place. Les carrés restent sur /club/le-rituel, dont les
+          // emplacements sont en 1:1.
+          "/brand/breakfast-club/photos/rituel-aloe-16x9.jpg",
           "/brand/breakfast-club/photos/rituel-the-16x9.jpg",
+          // Reste en carré faute de 16:9 du smoothie — la seule case de la
+          // bande encore rognée à 55 %.
           "/brand/breakfast-club/photos/rituel-smoothie.jpg",
           "/brand/breakfast-club/photos/equipe-paysage.jpg",
           "/brand/breakfast-club/photos/club-facade.jpg",
