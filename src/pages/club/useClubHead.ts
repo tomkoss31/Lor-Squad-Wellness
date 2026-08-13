@@ -22,15 +22,22 @@ const FAVICON = "/brand/breakfast-club/favicon.svg";
 // l'objectif est de sortir sur « Verdun ». Aucune marque tierce : on ne se
 // positionne pas sur un nom qu'on ne possède pas.
 //
-// Rien n'est inventé ici : pas de coordonnées GPS ni de `sameAs` réseaux
-// sociaux, faute de les connaître avec certitude. Une donnée structurée fausse
-// vaut moins qu'une donnée absente.
+// `sameAs` : les comptes officiels du club, donnés par Thomas le 13/08. C'est
+// ce qui permet à Google de relier le site, la fiche établissement et les
+// réseaux comme une seule et même entreprise — utile pour sortir sur la ville.
+//
+// Toujours pas de coordonnées GPS en revanche : je ne les connais pas avec
+// certitude, et une donnée structurée fausse vaut moins qu'une donnée absente.
 const LOCAL_BUSINESS_LD = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
   name: "Breakfast Club by La Base",
   url: "https://www.labase-nutrition.com/club",
   image: "https://www.labase-nutrition.com/api/og/club?path=club",
+  sameAs: [
+    "https://www.instagram.com/thebreakfastclub.verdun/",
+    "https://www.facebook.com/profile.php?id=61592788492152",
+  ],
   description:
     "Club de nutrition et de petit-déjeuner à Verdun : un rituel du matin, un suivi quotidien et une communauté. Accompagnement perte de poids, remise en forme et énergie. Body scan offert.",
   telephone: "+33679448759",
