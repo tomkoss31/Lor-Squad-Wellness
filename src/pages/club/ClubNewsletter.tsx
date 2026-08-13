@@ -26,13 +26,18 @@ export function ClubNewsletter() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    // ⚠ Le champ s'appelait « site » : c'est une catégorie que le remplissage
-    // automatique des navigateurs reconnaît et remplit tout seul. Le piège se
-    // déclenchait donc sur des humains — et ici il affiche un FAUX SUCCÈS :
-    // la personne croyait s'être inscrite et ne recevait jamais rien, sans que
-    // personne puisse s'en apercevoir. Même défaut trouvé le 13/08 sur la
-    // caisse du club, où il empêchait purement et simplement de payer.
-    const honeypot = (form.elements.namedItem("bc_hp") as HTMLInputElement | null)?.value ?? "";
+    // Piège à robots en CASE À COCHER, et non en champ texte.
+    //
+    // Le 13/08, le même piège en champ texte a bloqué Thomas sur la caisse du
+    // club pendant trois jours : son gestionnaire de mots de passe remplissait
+    // tout le formulaire, champ caché compris. Le renommer n'y change rien —
+    // un gestionnaire ne trie pas par nom, il remplit tous les champs texte.
+    // Une case, en revanche, aucun ne la coche.
+    //
+    // Ici le faux positif est particulièrement traître : il affiche un FAUX
+    // SUCCÈS. La personne se croyait inscrite, ne recevait jamais rien, et
+    // personne ne pouvait s'en apercevoir.
+    const honeypot = (form.elements.namedItem("bc_hp") as HTMLInputElement | null)?.checked ?? false;
     if (honeypot) {
       setState("success");
       return;
@@ -70,10 +75,12 @@ export function ClubNewsletter() {
             Un message par mois. Aucun spam, désinscription en un clic.
           </p>
           {/* Piège à robots — invisible pour l'humain, ignoré du lecteur d'écran.
-              Nom volontairement dénué de sens : « site », « email », « tel »…
-              sont des catégories que le remplissage automatique reconnaît. */}
+              CASE À COCHER et non champ texte : un gestionnaire de mots de
+              passe remplit tous les champs texte d'un formulaire, y compris
+              cachés (constaté le 13/08, cf. le commentaire dans onSubmit),
+              mais il ne coche jamais une case. */}
           <input
-            type="text"
+            type="checkbox"
             name="bc_hp"
             tabIndex={-1}
             autoComplete="off"

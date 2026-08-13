@@ -104,27 +104,24 @@ export function ClubCardCheckout({ offer, onClose }: { offer: CardOffer; onClose
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    // Piège à robots : ce champ est invisible, un humain ne le remplit jamais.
+    // PLUS DE PIÈGE À ROBOTS ICI — retiré le 13/08 après avoir bloqué le seul
+    // acheteur du club pendant trois jours.
     //
-    // ⚠ DEUX DÉFAUTS CORRIGÉS LE 13/08, APRÈS UN VRAI BLOCAGE
-    // Thomas ne pouvait plus payer : « je clique et ça me ressort direct ».
-    // Aucune trace côté serveur — l'appel n'était jamais parti.
+    // Il y avait un champ caché : rempli ⇒ robot. Thomas ne pouvait plus payer
+    // (« ça m'éjecte »), et aucune trace ne remontait côté serveur. Sa capture
+    // a montré le formulaire ENTIER surligné en bleu : son gestionnaire de mots
+    // de passe remplissait tous les champs du formulaire, y compris le champ
+    // caché. Le renommer n'a rien changé — un gestionnaire ne trie pas par nom,
+    // il remplit tout.
     //
-    // 1. Le champ s'appelait « site ». C'est une CATÉGORIE de remplissage
-    //    automatique (l'adresse du site) : Chrome et les gestionnaires de mots
-    //    de passe la remplissent d'eux-mêmes, `autocomplete="off"` étant
-    //    largement ignoré. Le piège se déclenchait donc sur un humain. Nom
-    //    neutre désormais, qu'aucune heuristique ne reconnaît.
-    // 2. Il FERMAIT la modale, sans un mot. Faire le mort est la bonne réponse
-    //    face à un robot, mais quand l'heuristique se trompe ça devient
-    //    indébogable : rien à l'écran, rien dans les journaux, et l'acheteur
-    //    croit que le site est cassé. On affiche maintenant un message. Un
-    //    robot n'ira pas plus loin pour autant — aucun lien de paiement n'est
-    //    créé — et un humain sait au moins quoi nous dire.
-    if ((form.elements.namedItem("bc_hp") as HTMLInputElement | null)?.value) {
-      setError("On n'arrive pas à valider ce formulaire. Écris-nous ou appelle le club, on t'inscrit à la main.");
-      return;
-    }
+    // Et surtout, ce piège ne protégeait rien : il ne vit que dans le
+    // navigateur. Un vrai robot n'ouvre pas la page, il appelle l'edge
+    // directement et passe à côté. Il ne gênait donc QUE les vrais acheteurs,
+    // sur le seul écran de l'app où une erreur coûte une vente.
+    //
+    // Ce qui reste comme garde-fou, et qui est le vrai : l'edge relit le prix
+    // et la validité en base, ne fait confiance à aucune valeur envoyée, et
+    // créer un lien de paiement n'encaisse rien tant que personne ne paie.
     const val = (n: string) => ((form.elements.namedItem(n) as HTMLInputElement).value || "").trim();
     const firstName = val("first_name");
     const lastName = val("last_name");
@@ -215,11 +212,6 @@ export function ClubCardCheckout({ offer, onClose }: { offer: CardOffer; onClose
         </p>
 
         <form onSubmit={onSubmit} noValidate>
-          {/* Nom volontairement dénué de sens : « site », « email », « tel »…
-              sont des catégories que le remplissage automatique reconnaît et
-              remplit. Un nom qu'il ne reconnaît pas reste vide. */}
-          <input type="text" name="bc_hp" tabIndex={-1} autoComplete="off" aria-hidden="true"
-            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             <div>
