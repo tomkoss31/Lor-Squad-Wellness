@@ -1,0 +1,33 @@
+# Ce fichier est servi par les DEUX domaines du même déploiement :
+#   www.labase360.fr        — l'application coach
+#   www.labase-nutrition.com — le site public du Breakfast Club
+# Il ne doit donc rien contenir qui privilégie l'un au détriment de l'autre.
+# (Pas de directive « Host: » pour cette raison : elle désignerait un seul
+#  domaine comme le bon, alors que les deux sont légitimes.)
+
+User-agent: *
+Allow: /
+
+# ⚠ NE PAS ajouter de « Disallow » sur les pages internes (marketing-plan*,
+# opportunite-claude, *-preview, /mockups/, /demo/). Elles sont désindexées par
+# l'en-tête X-Robots-Tag: noindex, déclaré dans vercel.json.
+# Un Disallow ici EMPÊCHERAIT Google de les explorer, donc de VOIR le noindex :
+# elles resteraient dans l'index. Bloquer et désindexer sont deux gestes
+# opposés — on laisse explorer, précisément pour pouvoir désindexer.
+
+# Espaces privés ou techniques : aucun intérêt pour la recherche.
+Disallow: /client/
+Disallow: /partage/
+Disallow: /auto-login
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /qualif/
+Disallow: /resultat-bilan/
+
+# Les fonctions, SAUF les images d'aperçu : /api/og/* fabrique les bannières
+# de partage. Les bloquer priverait les résultats de recherche et les partages
+# de leur image.
+Disallow: /api/
+Allow: /api/og/
+
+Sitemap: https://www.labase-nutrition.com/sitemap.xml

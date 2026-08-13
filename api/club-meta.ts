@@ -82,6 +82,11 @@ export default async function handler(req: Request): Promise<Response> {
 <meta name="twitter:description" content="${esc(description)}" />
 <meta name="twitter:image" content="${esc(image)}" />
 <link rel="canonical" href="${esc(pageUrl)}" />
+<!-- L'icône du CLUB, et pas celle de l'app. Sans cette ligne, le robot
+     n'en trouve aucune ici et retombe sur celle du document servi par
+     défaut : Google affichait donc le « B » bleu de La Base 360 à côté du
+     résultat du Breakfast Club (constaté par Thomas le 13/08). -->
+<link rel="icon" type="image/svg+xml" href="/brand/breakfast-club/favicon.svg" />
 <meta http-equiv="refresh" content="0; url=${esc(pageUrl)}" />
 </head>
 <body>

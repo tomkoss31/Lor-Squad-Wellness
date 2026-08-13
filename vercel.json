@@ -108,5 +108,25 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(marketing-plan|marketing-plan-prospect|marketing-plan-slides|opportunite-claude|copilote-v6-preview|copilote-v7-preview|pwa-client-preview|pwa-client-sanctuary-preview)(.html)?",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(mockups|demo)/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
   ]
 }
