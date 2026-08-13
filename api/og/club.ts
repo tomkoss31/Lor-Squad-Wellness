@@ -15,6 +15,30 @@ import { createElement as h } from "react";
 
 export const config = { runtime: "edge" };
 
+// ⚠ RECOPIÉ DEPUIS src/data/clubOuverture.ts — les fonctions Vercel ne peuvent
+// pas importer le front (même contrainte que le catalogue PV, cf. CLAUDE.md).
+// Si la date change là-bas, la changer ici aussi : c'est écrit des deux côtés.
+//
+// Rappel utile le jour J : cette bannière est une IMAGE, et Facebook comme
+// WhatsApp la gardent en cache longtemps. Un lien partagé avant le 7 septembre
+// continuera d'afficher « ouverture le 7 septembre » après l'ouverture, jusqu'à
+// ce que la plateforme la relise.
+const CLUB_OUVERTURE = "2026-09-07";
+
+function mentionOuverture(maintenant: Date = new Date()): string {
+  const aujourdhui = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(maintenant);
+  if (aujourdhui >= CLUB_OUVERTURE) return "ouvert dès 7h";
+  const [a, m, j] = CLUB_OUVERTURE.split("-").map(Number);
+  const libelle = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" })
+    .format(new Date(Date.UTC(a, m - 1, j)));
+  return `ouverture le ${libelle}`;
+}
+
 const HEART =
   "data:image/svg+xml," +
   encodeURIComponent(
@@ -83,7 +107,7 @@ export default async function handler(req: Request): Promise<Response> {
           marginBottom: 20,
         },
       },
-      "Verdun · Ouverture prochaine",
+      `Verdun · ${mentionOuverture()}`,
     ),
     // « The ♥ »
     h(

@@ -11,6 +11,7 @@ import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
 import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
 import { ClubOfferPopup } from "./club/ClubOfferPopup";
 import { PrelaunchCounter } from "./club/PrelaunchCounter";
+import { mentionOuverture } from "../data/clubOuverture";
 
 // Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
 // avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
@@ -113,7 +114,10 @@ export function ClubLandingPage() {
         <div className="cl-wrap" style={{ paddingTop: "clamp(56px,10vw,104px)", paddingBottom: "clamp(28px,3.6vw,48px)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "clamp(36px,5vw,72px)", alignItems: "center" }}>
             <div>
-              <span className="cl-pill y">Ouverture prochaine · Verdun</span>
+              {/* La date décide, pas un texte écrit en dur : le 7 septembre au
+                  matin, cette étiquette passera seule de « ouverture le 7
+                  septembre » à « ouvert dès 7h », sans redéploiement. */}
+              <span className="cl-pill y">{mentionOuverture()} · Verdun</span>
               <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: "min(460px,84%)", marginTop: "clamp(22px,3vw,32px)" }} />
               <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>Reprends ta forme,<br /><span className="cl-a-sage">un matin à la fois.</span></h1>
               <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>Le club de petit-déjeuner et de coaching nutrition de Verdun. On t'accompagne chaque matin pour atteindre ton objectif. C'est quoi, le tien ?</p>
