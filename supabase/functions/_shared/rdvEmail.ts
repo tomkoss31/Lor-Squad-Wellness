@@ -151,6 +151,25 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
           ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
           : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`);
 
+  /**
+   * Le délai de prévenance. Demandé par Mélanie à 24 h, ramené à 12 h par
+   * Thomas — « 24 h me semble lourd ». Le choix se tient : le rappel partant
+   * la veille au soir, 12 h laissent encore à la personne le temps de se
+   * décider après l'avoir lu, ce que 24 h ne permettaient pas.
+   *
+   * UNIQUEMENT sur les mails de PRISE de rendez-vous, jamais sur le rappel :
+   * celui-ci part la veille, donc annoncer « au moins 12 h à l'avance » à
+   * quelqu'un qui n'a plus 24 h, c'est lui reprocher un retard qu'on vient de
+   * créer. Sur les confirmations, en revanche, il tombe au bon moment — la
+   * personne prend note de son rendez-vous ET de la règle en même temps.
+   *
+   * Posé juste sous le bouton de gestion : la phrase parle de modifier ou
+   * annuler, elle doit être là où l'on modifie et annule.
+   */
+  const prevenance = isConfirm
+    ? `<p style="margin:12px 0 0 0;font-size:13px;line-height:1.55;color:${t.hint};">Toute modification ou annulation de rendez-vous doit idéalement être effectuée au minimum 12&nbsp;h à l'avance.</p>`
+    : "";
+
   const btn = (href: string, label: string, bg: string, fg: string) =>
     `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:15px 18px;background:${bg};color:${fg};border-radius:13px;text-decoration:none;font-size:15px;font-weight:700;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">${label}</a>`;
 
@@ -226,7 +245,7 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
     </div>
 
     <p style="font-size:14px;line-height:1.55;color:${t.text};margin:18px 0 18px;">${closing}</p>
-${cta ? `\n    ${cta}\n\n    <div style="height:18px;"></div>\n` : `\n    <div style="height:4px;"></div>\n`}
+${cta ? `\n    ${cta}\n${prevenance ? `    ${prevenance}\n` : ""}\n    <div style="height:18px;"></div>\n` : `${prevenance ? `\n    ${prevenance}\n` : ""}\n    <div style="height:4px;"></div>\n`}
     ${bottom}
 
     ${footer}
@@ -340,6 +359,14 @@ export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
     <div style="background:${t.surface};border:1px solid ${t.border};border-radius:14px;padding:15px 18px;margin-top:4px;">
       <p style="font-size:14px;line-height:1.6;color:${t.text};margin:0;">
         Prévois <b style="color:${t.heading};">${duree} minutes</b>, et viens comme tu es. Un rappel t'arrivera la veille.
+      </p>
+      <!-- Délai de prévenance (Mélanie, ramené de 24 h à 12 h par Thomas). Ce mail-ci
+           n'ouvre volontairement aucune porte de sortie (décision Thomas :
+           « c'est confirmé, on n'ouvre pas la sortie »), donc la phrase reste
+           une INFORMATION posée à sa place — dans l'encadré pratique, avec la
+           durée et le rappel — et non un bouton d'annulation déguisé. -->
+      <p style="font-size:13px;line-height:1.55;color:${t.hint};margin:10px 0 0;">
+        Toute modification ou annulation de rendez-vous doit idéalement être effectuée au minimum 12&nbsp;h à l'avance.
       </p>
     </div>
 
