@@ -1,5 +1,5 @@
 // Comment ça se passe — page interne « De ta première visite à tes premiers résultats ». v7 fidèle.
-import { ClubShell, InnerHero, R } from "./ClubShell";
+import { ClubShell, InnerHero, R, PhotoBand } from "./ClubShell";
 
 const STEPS = [
   { n: "01", t: "Le body scan — 45 min, offert", top: "cl-top-o", d: "On mesure ta composition corporelle (masse, eau, muscle), on parle vraiment de ton objectif, et tu repars avec un point de départ clair et un plan à toi. Ce que tu dois prévoir : environ 45 minutes, une tenue normale, rien d'autre.", note: "C'est offert et ça n'engage à rien." },
@@ -38,6 +38,19 @@ export function ClubParcoursPage() {
           ))}
         </div>
       </div></div>
+
+      {/* Bande de séparation entre le parcours raconté et la FAQ. Ces deux
+          photos-là et pas d'autres : elles montrent le SUIVI en train de se
+          faire — la balance, le carnet, le mètre ruban — donc exactement ce
+          que les quatre étapes viennent de décrire. Une bande décorative
+          n'aurait fait que couper la page ; celle-ci la prolonge. */}
+      <PhotoBand
+        srcs={[
+          "/brand/breakfast-club/photos/club-suivi-duo.jpg",
+          "/brand/breakfast-club/photos/club-suivi-mesures.jpg",
+          "/brand/breakfast-club/photos/club-salle.jpg",
+        ]}
+      />
 
       <div className="cl-band dark"><div className="cl-wrap cl-sec cl-rv">
         <span className="cl-pill y">Avant de venir</span>
