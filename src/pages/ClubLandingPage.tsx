@@ -216,7 +216,12 @@ export function ClubLandingPage() {
           // bande est déjà du vrai ; cette case était la seule à mentir.
           // 3:4 dans une fenêtre large : on remonte pour garder les visages.
           { src: "/brand/breakfast-club/photos/club-equipe-table.jpg", position: "50% 34%" },
-          "/brand/breakfast-club/photos/rituel-the.jpg",
+          // Version 16:9 de la photo de thé, à la place du carré. La fenêtre de
+          // la bande fait 2,2:1 : un carré y perd 55 % de sa hauteur, une 16:9
+          // n'en perd que 20 %. Même image de marque, mais cadrée pour cette
+          // place au lieu d'y être écrasée. Le carré reste sur /le-rituel, dont
+          // les emplacements sont en 1:1.
+          "/brand/breakfast-club/photos/rituel-the-16x9.jpg",
           "/brand/breakfast-club/photos/rituel-smoothie.jpg",
           "/brand/breakfast-club/photos/equipe-paysage.jpg",
           "/brand/breakfast-club/photos/club-facade.jpg",
