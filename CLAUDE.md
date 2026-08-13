@@ -311,6 +311,47 @@ ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d
 
 ---
 
+## 🌐 Les trois domaines — `labase-nutrition.com` n'est PAS un vieux domaine
+
+| Domaine | Sert | Racine |
+|---|---|---|
+| `www.labase360.fr` | l'app coaching (prod) | l'app, derrière login |
+| `www.labase-nutrition.com` | **le site du Breakfast Club** | → `/club` (302, `vercel.json`) |
+| `commande.labase-nutrition.com` | le Shake Bar | (hors app — cf. `CONTEST_URL`) |
+
+Les trois pointent aujourd'hui vers **le même déploiement Vercel**. C'est
+`vercel.json` qui aiguille par `host`, et `api/club-meta.ts` qui sert déjà les
+bonnes méta Open Graph des pages `/club*` et `/reserver*` (rewrite bot-only,
+même motif que `coach-meta`).
+
+### Les deux pièges de la redirection racine (2026-08-13)
+
+1. **Ne pas la supprimer** en croyant « libérer » le domaine. La route `/` est
+   derrière `ProtectedRoute` et renvoie vers `/co-pilote` : sans redirection,
+   un visiteur du site club atterrit sur **l'écran de connexion de l'app
+   coach**. Elle doit pointer vers `/club`, pas disparaître.
+   *(Elle visait `/reserver` jusqu'au 2026-08-13 — vestige de l'époque où la
+   vitrine n'existait pas et où le domaine servait de raccourci vers le tunnel
+   de réservation.)*
+
+2. **Ne jamais la passer en 301 vers `labase360.fr`.** Une branche l'a proposé
+   en traitant ce domaine comme un ancien à faire mourir. Un 301 est mis en
+   cache **durablement par les navigateurs** : le site club resterait
+   inaccessible pour tous ceux qui l'ont visité, même après correction. Le 302
+   se retire, le 301 non.
+
+⚠️ **`vercel.json` n'accepte aucune clé hors schéma** — pas de `_comment`, pas
+de commentaire JS. Une propriété inconnue dans un `redirect` fait échouer le
+déploiement. Toute explication va ici, pas dans le fichier.
+
+Reste à faire quand le site club aura son domaine : `index.html` porte **un
+seul jeu de méta** (titre, favicon, image de partage, manifeste PWA), codé en
+dur sur La Base 360. Les assets Breakfast existent (`public/brand/breakfast-club/`)
+mais ne sont pas câblés par domaine — seules les pages `/club*` ont leurs méta
+via `club-meta`.
+
+---
+
 ## ⚠️ Configs racine : la source est le `.ts` (2026-07-27)
 
 `tailwind.config.ts` et `vite.config.ts` sont les **seules** sources.
