@@ -27,6 +27,12 @@ const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "contact@labase360.fr";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Adresse du LOCAL, pas le siège social (= domicile du dirigeant, réservé aux
+// mentions légales). Source de vérité : src/lib/branding.ts (CLUB_*) — non
+// importable ici, le front et les edge functions ne partagent pas de bundle,
+// donc à répercuter à la main si elle change.
+const CLUB_ADDRESS_LINE = "11 RUE SAINT-PIERRE, 55100 VERDUN";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -102,7 +108,7 @@ function buildHtml(opts: {
 
     <div style="margin-top:30px;padding-top:18px;border-top:1px solid #1f2a28;text-align:center;">
       <p style="font-family:'Courier New',monospace;font-size:9.5px;letter-spacing:0.08em;color:#586562;line-height:1.8;">
-        LA BASE 360 — CLUB NUTRITION<br>11 RUE SAINT-PIERRE, 55100 VERDUN
+        LA BASE 360 — CLUB NUTRITION<br>${CLUB_ADDRESS_LINE}
       </p>
     </div>
   </div>

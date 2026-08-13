@@ -59,19 +59,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Syne:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Caveat:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cinzel:wght@500;600;700&family=Dancing+Script:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=JetBrains+Mono:wght@400;500;600&family=Anton&family=Archivo:wght@400;600;700;800;900&family=Archivo+Black&display=swap" rel="stylesheet">
 
-    <!-- ─── JSON-LD Organization ─────────────────────────────────── -->
+    <!-- ─── JSON-LD ──────────────────────────────────────────────────
+         Adresse = celle du LOCAL (11 rue Saint-Pierre), jamais le siège
+         social, qui est le domicile du dirigeant et reste cantonné aux
+         mentions légales. Elle doit rester identique au caractère près à la
+         fiche Google Business : une adresse qui diverge casse le recoupement
+         et pénalise le référencement local — c'est pire que pas d'adresse.
+         Source de vérité : src/lib/branding.ts (CLUB_*).                -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Organization",
+        "@type": "HealthAndBeautyBusiness",
+        "@id": "https://www.labase360.fr/#club",
         "name": "La Base 360",
+        "alternateName": "La Base Verdun",
         "url": "https://www.labase360.fr",
         "logo": "https://www.labase360.fr/brand/labase360/logo-primary.svg",
-        "description": "The wellness nutrition club. Né d'un vrai club nutrition à Verdun depuis 2022.",
+        "image": "https://www.labase360.fr/brand/labase360/og-image-1200x630.png",
+        "description": "The wellness nutrition club. Né d'un vrai club nutrition à Verdun depuis 2022. Bilan bien-être offert, suivi personnalisé et coaching nutrition.",
+        "slogan": "The wellness nutrition club",
+        "foundingDate": "2022",
+        "email": "labaseverdun@gmail.com",
         "address": {
           "@type": "PostalAddress",
+          "streetAddress": "11 rue Saint-Pierre",
+          "postalCode": "55100",
           "addressLocality": "Verdun",
+          "addressRegion": "Meuse",
           "addressCountry": "FR"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Verdun"
         }
       }
     </script>
