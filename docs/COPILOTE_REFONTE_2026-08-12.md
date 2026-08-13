@@ -83,6 +83,45 @@ ne re-remplit pas le seau vidé le matin même.
 
 ---
 
+---
+
+## La revue adverse, et ce qu'elle a rattrapé
+
+Cinq relecteurs en parallèle, chacun sur un angle (logique · périmètre de
+données · 390 px · thème clair · états limites). Chaque défaut allégué est
+ensuite passé devant **deux sceptiques indépendants** chargés de le démolir —
+il ne survit que si les deux échouent. Neuf ont survécu. Tous corrigés.
+
+### Les deux bloquants
+
+**L'agenda était tronqué à 3.** `useCopiloteData` fait `slice(0, 3)`. Avec cinq
+rendez-vous (8 h, 9 h, 10 h, 14 h, 18 h), celui de 14 h n'existait déjà plus en
+sortie du hook — la zone 1 se serait **tue à 13 h 50**, à dix minutes du
+rendez-vous, alors que sa règle n°1 est « rien ne passe devant un RDV ». Et le
+compteur annonçait « 3 rendez-vous » quand il y en avait 5. Le hook expose
+désormais `todayAgendaAll`, non tronqué.
+
+**Les leads publics étaient orphelins.** `submit-prospect-lead` n'écrit
+**jamais** `assigned_to_user_id` — seulement `referrer_user_id`. Ma file ne
+lisait que le premier : un lead venu d'un tunnel public serait invisible chez
+son coach, et rangé « chez ton équipe · responsable : personne » chez l'admin.
+Le CRM et le cron de relance résolvent tous deux par `assigned_to_user_id ??
+referrer_user_id` — la file s'en écartait. Alignée.
+
+### Les sept autres
+
+| Défaut | Ce qu'on voyait |
+|---|---|
+| **« Ça fait 9999 jours »** | La RPC dormants renvoie `coalesce(days_since, 9999)`. Un client qui n'a jamais commandé affichait 9999. |
+| **RDV prospect → « Client introuvable »** | Un prospect n'a pas de fiche client ; `clientId` est son id de prospect. Envoie vers l'agenda. |
+| **« C'est à jour » pendant le chargement** | La file n'était pas revenue, donc vide, donc l'écran félicitait quelqu'un qui a cinq personnes en attente. Le pire mensonge que cet écran puisse dire. |
+| **« Plus tard » inerte sur un RDV** | Le bouton ne faisait rien. Un bouton mort est pire qu'absent — remplacé par « L'agenda ». |
+| **Initiales à 3,4:1** | Crème sur corail en thème clair. Pastilles désormais teintées : **15,6:1**. |
+| **Encre des boutons teal** | `--ls-bg` au lieu de `--ls-teal-contrast` (le token théma-aware). |
+| **« Après ça — 0 étapes »** | À la dernière étape du démarrage. |
+
+---
+
 ## Ce qui reste à trancher — pour toi
 
 **Le bloc « Ton démarrage · 6/7 » est toujours en haut de la page.** C'est un
@@ -92,10 +131,12 @@ coachs sur onze gelés à l'étape 1 alors qu'il s'affichait tous les jours).
 Maintenant que la zone 1 sait afficher le démarrage quand il compte vraiment, ce
 bloc fait doublon. **Je ne l'ai pas retiré sans toi.**
 
-**Le libellé coloré en thème clair plafonne à 3,95:1**, sous le seuil
-d'accessibilité (4,5:1). C'est le token `--ls-l-coral` de la charte, utilisé
-ailleurs dans l'app — le corriger est une décision de design system, pas une
-retouche locale.
+**Deux contrastes plafonnent sous le seuil, et la cause est dans la charte.**
+Le libellé corail est à 3,95:1 et la puce de ton active à 3,74:1 — cette
+dernière vient de `--ls-teal-contrast` (blanc sur teal foncé), le token
+théma-aware du design system, utilisé partout ailleurs dans l'app. J'ai gagné
+ce que je pouvais en utilisant les bons tokens ; aller plus loin, c'est
+modifier la charte, et ça t'appartient.
 
 **`PlanDuJour.tsx` n'est plus référencé** que dans des commentaires. Je l'ai
 laissé en place : c'est le filet si tu veux revenir en arrière. À supprimer
