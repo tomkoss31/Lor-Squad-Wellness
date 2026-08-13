@@ -113,6 +113,15 @@ export function ClubWordmarkDark({ width = 210 }: { width?: number }) {
 }
 
 /**
+ * Une vignette de bande. `position` (object-position) dit QUELLE PART de la
+ * photo garder : une bande est très large, une photo verticale n'y entre que
+ * pour un quart de sa hauteur, et le centrage par défaut coupe alors les têtes.
+ * Réglage à faire à partir d'une MESURE, jamais à l'œil — cf. les commentaires
+ * là où ces valeurs sont posées.
+ */
+export type BandPhoto = { src: string; position?: string };
+
+/**
  * Bande photo pleine largeur qui sépare deux sections.
  *
  * Purement décorative : chaque vignette porte `alt=""` et la bande est
@@ -122,12 +131,26 @@ export function ClubWordmarkDark({ width = 210 }: { width?: number }) {
  * apprendre. Si un jour une vignette porte une info propre, elle sort de la
  * bande et devient un <Slot> légendé.
  */
-export function PhotoBand({ srcs }: { srcs: string[] }) {
+export function PhotoBand({ srcs, hauteur }: { srcs: Array<string | BandPhoto>; hauteur?: string }) {
   return (
-    <div className="cl-photoband" aria-hidden="true">
-      {srcs.map((s) => (
-        <img key={s} src={s} alt="" loading="lazy" decoding="async" />
-      ))}
+    <div
+      className="cl-photoband"
+      aria-hidden="true"
+      style={hauteur ? ({ ["--band-h" as string]: hauteur }) : undefined}
+    >
+      {srcs.map((s) => {
+        const p: BandPhoto = typeof s === "string" ? { src: s } : s;
+        return (
+          <img
+            key={p.src}
+            src={p.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={p.position ? { objectPosition: p.position } : undefined}
+          />
+        );
+      })}
     </div>
   );
 }

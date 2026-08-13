@@ -44,11 +44,23 @@ export function ClubParcoursPage() {
           faire — la balance, le carnet, le mètre ruban — donc exactement ce
           que les quatre étapes viennent de décrire. Une bande décorative
           n'aurait fait que couper la page ; celle-ci la prolonge. */}
+      {/* Bande PLUS HAUTE que celle de l'accueil, et cadrages calculés.
+          Mesuré : à 210 px de haut, la fenêtre fait 2,21:1 alors que ces
+          photos sont verticales — on n'en voyait que 25 % de la hauteur, d'où
+          les têtes coupées. Celle de l'accueil garde sa hauteur : ses photos
+          sont des gros plans de boissons, qui supportent la coupe.
+          Les `position` viennent de la position réelle des sujets dans chaque
+          fichier, pas d'un réglage à l'œil. */}
       <PhotoBand
+        hauteur="clamp(190px,26vw,330px)"
         srcs={[
-          "/brand/breakfast-club/photos/club-suivi-duo.jpg",
-          "/brand/breakfast-club/photos/club-suivi-mesures.jpg",
-          "/brand/breakfast-club/photos/club-salle.jpg",
+          // 720×1280, très verticale : visages vers 27-39 %, la balance et
+          // l'ordinateur vers 48-59 %. On remonte pour tenir les deux.
+          { src: "/brand/breakfast-club/photos/club-suivi-duo.jpg", position: "50% 38%" },
+          // 1280×1199, presque carrée : visages vers 20-30 %, la pancarte
+          // jusqu'à 75 %. C'est elle qu'il faut garder en entier.
+          { src: "/brand/breakfast-club/photos/club-suivi-mesures.jpg", position: "50% 55%" },
+          { src: "/brand/breakfast-club/photos/club-salle.jpg", position: "50% 42%" },
         ]}
       />
 

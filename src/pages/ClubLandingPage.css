@@ -279,8 +279,9 @@
    que soit le nombre de vignettes affichées.
    On RETIRE des vignettes en descendant, on ne les rétrécit pas : à 5 sur un
    téléphone, chacune ferait ~75 px de large et on n'y verrait plus rien. */
-.cl-photoband{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;line-height:0;overflow:hidden}
-.cl-photoband img{width:100%;height:clamp(118px,15vw,210px);object-fit:cover;display:block}
+.cl-photoband{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;line-height:0;overflow:hidden;
+  --band-h:clamp(118px,15vw,210px)}
+.cl-photoband img{width:100%;height:var(--band-h);object-fit:cover;display:block}
 @media (max-width:860px){.cl-photoband>:nth-child(n+5){display:none}}
 @media (max-width:560px){.cl-photoband>:nth-child(n+4){display:none}}
 
