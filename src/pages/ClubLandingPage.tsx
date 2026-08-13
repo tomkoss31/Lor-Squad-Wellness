@@ -210,7 +210,12 @@ export function ClubLandingPage() {
           même quand il n'en reste que trois. */}
       <PhotoBand
         srcs={[
-          "/brand/breakfast-club/photos/rituel-aloe.jpg",
+          // `rituel-aloe` occupait cette place — image de banque (verre stylisé,
+          // coupelle de mangue, fond studio), écartée par Thomas. La tablée du
+          // club prend le relais : c'est le club, avec ses gens. Le reste de la
+          // bande est déjà du vrai ; cette case était la seule à mentir.
+          // 3:4 dans une fenêtre large : on remonte pour garder les visages.
+          { src: "/brand/breakfast-club/photos/club-equipe-table.jpg", position: "50% 34%" },
           "/brand/breakfast-club/photos/rituel-the.jpg",
           "/brand/breakfast-club/photos/rituel-smoothie.jpg",
           "/brand/breakfast-club/photos/equipe-paysage.jpg",
@@ -254,13 +259,13 @@ export function ClubLandingPage() {
                 sub="l'équipe au club"
                 frame="peach"
                 // La section s'appelle « Tu n'es jamais seul » : elle parle du
-                // GROUPE. Une photo de la tablée y dit ce que deux visages,
-                // même souriants, ne peuvent pas dire — le selfie est parti sur
-                // la page « Nous », qui parle d'eux (arbitrage Thomas, juste).
-                // Source en 3:4 dans un cadre 4:5 : presque aucun recadrage.
-                src="/brand/breakfast-club/photos/club-equipe-table.jpg"
-                position="50% 38%"
-                alt="Des membres et l'équipe attablés au club un matin, autour des boissons du rituel."
+                // GROUPE. Photo professionnelle de la salle, avec l'enseigne,
+                // le mur de résultats et le carnet de coaching dans le cadre —
+                // elle dit le lieu ET la communauté d'un seul coup.
+                // 1024×1280, soit EXACTEMENT le 4:5 du cadre : aucun recadrage,
+                // donc pas de `position` à régler.
+                src="/brand/breakfast-club/photos/club-ambiance.jpg"
+                alt="Des membres attablés au club un matin, sous l'enseigne The Breakfast Club, devant le mur des résultats."
               />
             </div>
             <div style={{ order: 1 }}>
