@@ -30,23 +30,77 @@ function esc(input: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-// Titre + description selon la page partagée.
+/**
+ * Titre + description PAR PAGE.
+ *
+ * ⚠ C'est ce fichier que Google lit, pas les titres posés en JavaScript par
+ * ClubShell : un robot reçoit cette réponse-là et s'arrête. Jusqu'au 13/08 les
+ * sept pages du club renvoyaient ici UN SEUL titre — un moteur y voyait sept
+ * fois la même page et n'en gardait qu'une.
+ *
+ * Chaque entrée vise une recherche différente, et TOUTES portent « Verdun » :
+ * l'objectif est de sortir sur la ville. Les mots ciblés sont ceux que les gens
+ * tapent — nutrition, petit-déjeuner, perte de poids, remise en forme,
+ * communauté — répartis pour que les pages ne se concurrencent pas entre elles.
+ *
+ * Aucune marque tierce ici : on ne se positionne pas sur un nom qu'on ne
+ * possède pas, et l'écrire exposerait le club pour rien.
+ *
+ * Longueurs : titre sous ~60 caractères, description entre 140 et 160.
+ * Au-delà, Google tronque et la fin ne sert plus à rien.
+ */
+const META_PAGES: Record<string, { title: string; description: string }> = {
+  "": {
+    title: "Club nutrition et petit-déjeuner à Verdun · Breakfast Club",
+    description:
+      "Perte de poids, remise en forme, énergie : un petit-déjeuner complet et un suivi chaque matin, dans une vraie communauté à Verdun. Body scan offert.",
+  },
+  "le-club": {
+    title: "Le club de petit-déjeuner de Verdun · Breakfast Club",
+    description:
+      "Un lieu ouvert dès 7h à Verdun : nutrition, coaching et une communauté qui t'attend chaque matin. Sans rendez-vous, sans engagement, body scan offert.",
+  },
+  "le-rituel": {
+    title: "Le rituel du matin : nutrition complète · Verdun",
+    description:
+      "Trois boissons et un smoothie qui couvre près de 40 % de tes apports, puis un point avec ton coach. Ce qu'on boit chaque matin au club de Verdun, et pourquoi.",
+  },
+  "comment-ca-se-passe": {
+    title: "Comment ça se passe — tarifs et déroulé · Verdun",
+    description:
+      "Du body scan offert au point des 10 visites : le déroulé, les tarifs, la validité des cartes, et les réponses aux questions qu'on nous pose à Verdun.",
+  },
+  resultats: {
+    title: "Perte de poids et remise en forme à Verdun — résultats",
+    description:
+      "Les transformations des membres du club de Verdun : perte de poids, remise en forme, énergie retrouvée. Des habitants de Verdun, avec leurs chiffres.",
+  },
+  nous: {
+    title: "Mélanie & Thomas, coachs nutrition à Verdun",
+    description:
+      "Les deux coachs du Breakfast Club de Verdun : pourquoi ils ont ouvert ce club de petit-déjeuner, et comment ils accompagnent leur communauté chaque matin.",
+  },
+  rejoindre: {
+    title: "Devenir coach nutrition à Verdun — rejoindre l'équipe",
+    description:
+      "Rejoindre l'équipe du Breakfast Club de Verdun : ce que c'est vraiment, ce que ça demande au quotidien, et comment en parler avec nous. Sans engagement.",
+  },
+};
+
 function metaFor(path: string, sub: string): { title: string; description: string; realPath: string } {
   if (path === "reserver") {
     return {
-      title: "Réserve ta séance découverte offerte · The Breakfast Club Verdun",
+      title: "Body scan offert à Verdun · The Breakfast Club",
       description:
-        "Body scan + bilan bien-être offerts, sans engagement. Choisis ton créneau au club de petit-déjeuner de Verdun.",
+        "Body scan et bilan bien-être offerts, sans engagement. Choisis ton créneau au club de nutrition et de petit-déjeuner de Verdun, ouvert dès 7h.",
       realPath: "/reserver",
     };
   }
   const realPath = sub ? `/club/${sub}` : "/club";
-  return {
-    title: "The Breakfast Club · Verdun — le club où l'on t'attend, tous les matins",
-    description:
-      "Le club de petit-déjeuner de Verdun. Un rituel du matin, un suivi, une communauté. Ton body scan de découverte est offert.",
-    realPath,
-  };
+  // Une sous-page inconnue retombe sur l'accueil : mieux vaut le bon titre du
+  // club qu'un titre vide, et ça ne crée pas de doublon puisque l'URL diffère.
+  const m = META_PAGES[sub] ?? META_PAGES[""];
+  return { title: m.title, description: m.description, realPath };
 }
 
 export default async function handler(req: Request): Promise<Response> {

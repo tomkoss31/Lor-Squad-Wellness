@@ -127,6 +127,15 @@
           "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/boutique/(.*)/infos",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ]
 }

@@ -10,15 +10,29 @@ import { useEffect } from "react";
 // sortie (un visiteur public ne navigue pas vers l'app coach, mais on reste propre).
 const FAVICON = "/brand/breakfast-club/favicon.svg";
 
-// Données structurées LocalBusiness (SEO local, améliore le référencement Google).
-// `url` volontairement omis tant que le domaine public définitif n'est pas fixé —
-// JSON-LD reste valide sans. Injecté une seule fois par le hook.
+// Données structurées LocalBusiness — c'est ce qui alimente le panneau local de
+// Google (la fiche à droite des résultats) et le rattachement à la ville.
+//
+// `url` était omis « tant que le domaine public définitif n'est pas fixé ». Il
+// l'est depuis le 13/08 : www.labase-nutrition.com. Sans cette clé, rien ne
+// reliait ces données structurées au site.
+//
+// La description reprend les termes que les gens tapent réellement — nutrition,
+// petit-déjeuner, perte de poids, remise en forme, communauté — parce que
+// l'objectif est de sortir sur « Verdun ». Aucune marque tierce : on ne se
+// positionne pas sur un nom qu'on ne possède pas.
+//
+// Rien n'est inventé ici : pas de coordonnées GPS ni de `sameAs` réseaux
+// sociaux, faute de les connaître avec certitude. Une donnée structurée fausse
+// vaut moins qu'une donnée absente.
 const LOCAL_BUSINESS_LD = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
   name: "Breakfast Club by La Base",
+  url: "https://www.labase-nutrition.com/club",
+  image: "https://www.labase-nutrition.com/api/og/club?path=club",
   description:
-    "Club de petit-déjeuner à Verdun : aloe vera, thé aux plantes, smoothie nutritionnel et suivi quotidien.",
+    "Club de nutrition et de petit-déjeuner à Verdun : un rituel du matin, un suivi quotidien et une communauté. Accompagnement perte de poids, remise en forme et énergie. Body scan offert.",
   telephone: "+33679448759",
   priceRange: "€€",
   address: {
