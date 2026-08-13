@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+// Import `?raw` et non `node:fs` : les types de Node sont absents du tsconfig
+// du front, donc `readFileSync` compile sous vitest mais casse `npm run build`.
+// Même motif que src/lib/__tests__/audience.test.ts, qui lit une edge function.
+import ogSource from "../../../api/og/club.ts?raw";
 import { CLUB_OUVERTURE, clubEstOuvert, mentionOuverture } from "../clubOuverture";
 
 describe("date d'ouverture du club", () => {
@@ -9,8 +11,7 @@ describe("date d'ouverture du club", () => {
   // vigilance finit toujours par diverger — c'est exactement ce qui est arrivé
   // au catalogue PV. Ce test la surveille à notre place.
   it("est la même dans la bannière de partage (api/og/club.ts)", () => {
-    const source = readFileSync(resolve(__dirname, "../../../api/og/club.ts"), "utf8");
-    const trouve = source.match(/CLUB_OUVERTURE\s*=\s*"([\d-]+)"/);
+    const trouve = ogSource.match(/CLUB_OUVERTURE\s*=\s*"([\d-]+)"/);
     expect(trouve, "CLUB_OUVERTURE introuvable dans api/og/club.ts").not.toBeNull();
     expect(trouve?.[1]).toBe(CLUB_OUVERTURE);
   });
