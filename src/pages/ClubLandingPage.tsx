@@ -47,30 +47,26 @@ function Ico({ name, size = 30 }: { name: string; size?: number }) {
 }
 
 const RITUEL = [
-  { n: "01", t: "L'aloe vera", d: "De l'eau et un concentré de pulpe d'aloe vera. Après une nuit sans boire, la première chose dont ton corps a besoin, c'est de l'eau — pas un café.", top: "cl-top-o" },
-  { n: "02", t: "Le thé aux plantes", d: "Thé vert, hibiscus, extraits de plantes. Chaud ou glacé, un peu de caféine. C'est le verre qu'on prend assis, celui pendant lequel on discute.", top: "cl-top-p" },
+  { n: "01", t: "L'aloe vera", d: "De l'eau et un concentré d'aloe vera. Après une nuit sans boire, la première chose dont ton corps a besoin, c'est de l'eau — pas un café.", top: "cl-top-o" },
+  { n: "02", t: "La boisson thermo", d: "Thé vert, hibiscus, extraits de plantes. Chaud ou glacé, un peu de caféine. C'est le verre qu'on prend assis, celui pendant lequel on discute.", top: "cl-top-p" },
   { n: "03", t: "Le smoothie", d: "Le vrai petit-déjeuner complet : protéines végétales, 26 vitamines et minéraux, fibres — sans lactose ni gluten. Dosage ajusté à ton objectif, parfum au choix.", top: "cl-top-s" },
   { n: "04", t: "Le suivi", d: "Avant de repartir : la pesée, deux lignes dans ton carnet, une phrase avec ton coach. La partie qu'on sous-estime, et celle qui fait la différence.", top: "cl-top-a" },
 ];
 const INCLUS = [
-  { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, le thé et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
+  { n: "01", ic: "drink", t: "Les trois boissons", d: "L'aloe, la boisson thermo et le smoothie. Le rituel complet, servi dans l'ordre, tous les matins.", top: "cl-top-o" },
   { n: "02", ic: "pulse", t: "La pesée", d: "Dix secondes chaque matin. On mesure pour ajuster ton plan, jamais pour te juger.", top: "cl-top-p" },
   { n: "03", ic: "book", t: "Le carnet de bord", d: "Quatre valeurs seulement — protéines, hydratation, activité, énergie. Tenable tous les jours.", top: "cl-top-s" },
   { n: "04", ic: "chat", t: "Le groupe du club", d: "L'équipe et les autres membres, dans un seul groupe. Pour les matins où la motivation n'y est pas.", top: "cl-top-a" },
   { n: "05", ic: "camera", t: "Le point des 10 visites", d: "Nouvelles mesures, tes photos avant/après, et on décide ensemble de la suite.", top: "cl-top-o" },
-  { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Mélanie et Thomas, présents chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
+  { n: "06", ic: "heart", t: "Un vrai accompagnement", d: "Une équipe de coachs, présente chaque matin. Tu n'avances jamais seul.", top: "cl-top-p" },
 ];
 const FAQ = [
-  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ton thé aux plantes, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, une visite revient à 8 € — et une visite, ce n'est pas juste un petit-déj : c'est ta boisson d'hydratation, ta boisson thermo, un smoothie qui couvre près de 40 % de tes apports de la journée, ta pesée et ton point avec le coach. Deux cartes au choix : 10 visites à 80 € (8 € la visite, valable 30 jours), ou 30 visites à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €. Le prix de ta carte, c'est tout ce que tu paies pour venir.", open: true },
   // ⚠ Cette réponse disait « tu l'utilises à ton rythme » — ça contredisait
   // frontalement la validité de 30 / 90 jours. Reformulée : engagement (il n'y
   // en a pas) et validité (il y en a une) sont deux choses différentes, et le
   // client doit lire les deux au même endroit.
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois, et c'est tout. En revanche une carte a une durée de validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30 visites, à partir du jour de l'achat. C'est ce qui garde le rythme : une carte 10 visites, c'est deux à trois matins par semaine pendant un mois." },
-  // ⚠ Disait « les cartes ne sont pas remboursables », point. Faux : une vente
-  // de service à distance ouvre 14 jours de rétractation. La règle exacte est
-  // dans les CGV (/legal/cgv) — les deux textes doivent rester d'accord.
-  { q: "Et si je n'utilise pas toutes mes visites ?", a: "Tu as 14 jours après l'achat pour changer d'avis : on déduit les visites déjà prises et on te rembourse le reste. Passé ce délai, la carte n'est plus remboursable, et les visites non utilisées à la fin de la validité sont perdues. On préfère te le dire avant plutôt qu'après. Si un imprévu sérieux t'empêche de venir — hospitalisation, déménagement — parle-nous-en : on trouve une solution au cas par cas. Et si tu hésites entre les deux cartes, commence par la 10 visites." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
   { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
   // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
@@ -97,7 +93,7 @@ export function ClubLandingPage() {
   return (
     <ClubShell
       title="The Breakfast Club · petit-déjeuner et coaching à Verdun"
-      description="Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert."
+      description="Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, boisson thermo, smoothie complet et suivi quotidien. Ton premier body scan est offert."
     >
       {offer ? <ClubCardCheckout offer={offer} onClose={() => setOffer(null)} /> : null}
       {orderId ? <ClubPaymentReturn orderId={orderId} onClose={() => setOrderId(null)} /> : null}
@@ -139,7 +135,8 @@ export function ClubLandingPage() {
                   Communauté, « depuis quatre ans à Verdun ». */}
               <div className="cl-stats">
                 <div className="cl-stat"><div className="v">200+</div><div className="l">personnes accompagnées</div></div>
-                <div className="cl-stat"><div className="v">Sans RDV</div><div className="l">tu passes quand tu veux</div></div>
+                <div className="cl-stat"><div className="v">7h–11h</div><div className="l">tu passes quand tu veux</div></div>
+                <div className="cl-stat"><div className="v">80 €</div><div className="l">les 10 visites</div></div>
                 <div className="cl-stat"><div className="v">Offert</div><div className="l">ton body scan</div></div>
               </div>
             </div>
@@ -185,7 +182,7 @@ export function ClubLandingPage() {
               <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>Du concret,<br /><span className="cl-a-sage">pas des promesses.</span></h2>
             </div>
             <div>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de régime express, pas de poudre magique. Ce qui marche, c'est la régularité : un bon petit-déjeuner pris chaque matin au même endroit, avec quelqu'un qui suit tes chiffres — c'est ça qui finit par tout changer. Ici, tu trouves tout au même endroit : de quoi bien manger, un coach qui te suit, et un groupe qui t'attend, dès 7h.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de régime express, pas de produit magique. Ce qui marche, c'est la régularité : un bon petit-déjeuner pris chaque matin au même endroit, avec quelqu'un qui suit tes chiffres et ton ressenti — c'est ça qui finit par tout changer. Ici, tu trouves tout au même endroit : de quoi bien manger, un coach qui te suit, et un groupe qui t'attend, dès 7h.</p>
               <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>On t'aide à installer des habitudes qui tiennent et à comprendre ce dont ton corps a besoin — pas à suivre un plan que tu lâcheras dans deux semaines. Au bout du compte : plus d'énergie dès le réveil, un corps qui bouge dans le bon sens, et la fierté de t'y être tenu.</p>
               <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.05, marginTop: 26 }}>Ce n'est pas la volonté qui te manque. <span className="cl-a-pink">C'est un rendez-vous.</span></p>
             </div>
@@ -365,7 +362,7 @@ export function ClubLandingPage() {
               <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--muted3)" }}>Tout compris · valable 30 jours</p>
               <ul className="cl-feats">
                 <li>10 matins <b>complets</b> au club</li>
-                <li>Aloé + thé aux plantes + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
+                <li>Aloé + boisson thermo + <b>smoothie nutritionnel</b> (≈ 40 % de tes apports du jour)</li>
                 <li>Ta <b>pesée et ton point coach</b> chaque matin</li>
                 <li>L'accès au groupe du club</li>
                 <li>Le bilan mesures à la 10ᵉ visite</li>
@@ -397,7 +394,7 @@ export function ClubLandingPage() {
           {/* La validité et le non-remboursement sont des conditions de vente :
               elles doivent être lisibles AVANT l'achat, pas seulement dans la FAQ.
               « Pas de durée minimum » a été retiré — ça contredisait la validité. */}
-          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat. Tu as 14 jours pour changer d'avis, visites déjà prises déduites — le détail est dans les <a href="/legal/cgv" style={{ color: "var(--link)", textDecoration: "underline" }}>conditions de vente</a>. <b style={{ color: "var(--ink)" }}>La carte 30 visites à 185 € est une offre de pré-lancement, réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
+          <p style={{ textAlign: "center", maxWidth: 660, margin: "26px auto 0", fontSize: 16, color: "var(--muted2)" }}>Le body scan est offert et n'engage à rien. Pas d'abonnement, pas de prélèvement automatique. Les cartes sont <b style={{ color: "var(--ink)" }}>valables 30 jours (10 visites) et 90 jours (30 visites)</b> à partir de l'achat. Le détail est dans les <a href="/legal/cgv" style={{ color: "var(--link)", textDecoration: "underline" }}>conditions de vente</a>. <b style={{ color: "var(--ink)" }}>La carte 30 visites à 185 € est une offre de pré-lancement, réservée aux 20 premiers membres</b> — ensuite 210 €.</p>
         </div>
       </div>
 

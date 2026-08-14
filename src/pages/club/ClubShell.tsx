@@ -164,7 +164,7 @@ export function PhotoBand({ srcs, hauteur }: { srcs: Array<string | BandPhoto>; 
 export function ClubShell({
   children,
   title = "The Breakfast Club · Verdun",
-  description = "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, thé aux plantes, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
+  description = "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, boisson thermo, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
 }: {
   children: ReactNode;
   title?: string;

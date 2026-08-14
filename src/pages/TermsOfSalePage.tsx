@@ -133,7 +133,7 @@ export default function TermsOfSalePage() {
             d'ouverture, sans rendez-vous. Une visite comprend :
           </p>
           <ul style={ulStyle}>
-            <li>les trois boissons du rituel (aloe vera, thé aux plantes, smoothie nutritionnel) ;</li>
+            <li>les trois boissons du rituel (aloe vera, boisson thermo, smoothie nutritionnel) ;</li>
             <li>la pesée et le report de tes valeurs ;</li>
             <li>le point avec ton coach.</li>
           </ul>

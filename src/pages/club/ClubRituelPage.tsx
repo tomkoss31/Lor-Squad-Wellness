@@ -11,10 +11,10 @@ const ETAPES = [
     no: "Ce que ce n'est pas : un détox, un brûle-graisse, ni un médicament. C'est une boisson d'hydratation.",
   },
   {
-    e: "Étape 2 · le temps de t'asseoir", t: "Le thé aux plantes", frame: "pink", acc: "cl-a-pink",
+    e: "Étape 2 · le temps de t'asseoir", t: "La boisson thermo", frame: "pink", acc: "cl-a-pink",
     img: "/brand/breakfast-club/photos/rituel-the.jpg",
-    alt: "Une femme souriante porte à ses lèvres un verre de thé aux plantes ambré, dehors, ciel bleu derrière elle.",
-    p1: "Ensuite, un thé aux plantes. Un coup de fouet doux qui accompagne le début de matinée sans t'agiter.",
+    alt: "Une femme souriante porte à ses lèvres un verre de boisson thermo ambrée, dehors, ciel bleu derrière elle.",
+    p1: "Ensuite, la boisson thermo. Un coup de fouet doux qui accompagne le début de matinée sans t'agiter.",
     p2: "C'est le moment où on souffle deux minutes avant le vrai repas.",
     no: "Ce que ce n'est pas : un coupe-faim. S'il te tient jusqu'à midi, c'est que ton smoothie était bien dosé.",
   },
@@ -37,7 +37,7 @@ export function ClubRituelPage() {
   return (
     <ClubShell
       title="Le rituel du matin — Breakfast Club Verdun"
-      description="Aloe vera, thé aux plantes, smoothie nutritionnel : ce qu'il y a dans ton verre chaque matin au club de Verdun, et pourquoi dans cet ordre."
+      description="Aloe vera, boisson thermo, smoothie nutritionnel : ce qu'il y a dans ton verre chaque matin au club de Verdun, et pourquoi dans cet ordre."
     >
       <InnerHero dark pill="Le rituel" pillClass="p" title="Ce qu'il y a dans ton verre," accent="et pourquoi dans cet ordre." intro="Trois boissons, un ordre, une raison pour chacune. Rien à décider en arrivant : c'est prêt, servi, et ajusté avec toi." />
 
