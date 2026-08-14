@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useBbcMembers, type BbcMember } from "../useBbcMembers";
 import { visitLevel } from "../useBbcVisits";
+import { BbcNewMemberButton } from "../BbcNewMemberButton";
 
 function objLabel(o?: string) {
   const map: Record<string, string> = {
@@ -50,9 +51,11 @@ function visitLabel(m: BbcMember) {
 
 interface BbcCrmProps {
   userId?: string;
+  /** Ouvre la feuille « Évaluation bien-être » (montée par BbcApp). */
+  onNouveauMembre?: () => void;
 }
 
-export function BbcCrm({ userId }: BbcCrmProps) {
+export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
   const { members, loading } = useBbcMembers(userId);
   const [open, setOpen] = useState<string | null>(null);
 
@@ -78,6 +81,22 @@ export function BbcCrm({ userId }: BbcCrmProps) {
         ))}
       </div>
 
+      {/* Le point d'entrée de la saisie papier. Il vit en tête de la liste que
+          le coach ouvre déjà tous les matins — pas dans une 6e section de menu
+          (la nav BBC tient à 5, cf. la règle anti-dérive navigation). */}
+      {onNouveauMembre ? (
+        <BbcNewMemberButton
+          onClick={onNouveauMembre}
+          aide={
+            <>
+              La fiche papier se saisit ici, dans l'ordre où elle est remplie.
+              <br />
+              Le même bouton est repris sur « Ce matin ».
+            </>
+          }
+        />
+      ) : null}
+
       <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "18px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
           <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />mes membres BBC
@@ -86,8 +105,12 @@ export function BbcCrm({ userId }: BbcCrmProps) {
         {loading ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0" }}>chargement…</div>
         ) : members.length === 0 ? (
+          // Ce vide renvoyait vers « la fiche client → Actions », un écran qui
+          // n'existe PAS en mode BBC : AppLayout n'y monte que BbcApp, il n'y a
+          // ni route /clients/:id ni onglet Actions atteignable. On expulsait le
+          // coach de son propre mode pour créer son premier membre.
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0", lineHeight: 1.5 }}>
-            Aucun membre BBC pour l'instant. Passe un client en membre BBC depuis sa fiche (Actions → « Passer en membre BBC »).
+            Aucun membre BBC pour l'instant. Saisis ta première fiche papier avec « ＋ Nouvelle évaluation », juste au-dessus.
           </div>
         ) : (
           members.map((m) => (

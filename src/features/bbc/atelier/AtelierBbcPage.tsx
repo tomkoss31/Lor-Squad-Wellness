@@ -37,7 +37,9 @@ import { useEffect, useMemo, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { BbcApp } from "../BbcApp";
+import { BbcBilan10Scan, type ScanValues } from "../BbcBilan10Scan";
 import { BbcClientApp } from "../BbcClientApp";
+import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
 import { BbcClub100 } from "../views/BbcClub100";
@@ -57,6 +59,9 @@ import {
   ATELIER_CLUBS,
   ATELIER_COACH_NAME,
   ATELIER_MEMBERS,
+  ATELIER_SCAN_AUJOURDHUI,
+  ATELIER_SCAN_DEPART,
+  ATELIER_SCAN_DEPART_DATE,
   ATELIER_USER_ID,
 } from "./bbcAtelierFixtures";
 
@@ -75,7 +80,9 @@ type ScreenKey =
   | "rentabilite"
   | "clubs"
   | "reglages"
-  | "membre";
+  | "membre"
+  | "saisie"
+  | "bilan10";
 
 /**
  * `source` dit d'où l'écran tire ses données. C'est la mention la plus utile de
@@ -113,7 +120,25 @@ const SCREENS: Screen[] = [
   { k: "clubs", label: "Mes clubs", source: "props", note: "Les 3 clubs sont passés en prop → écran complet, y compris la carte « dupliquer un club »." },
   { k: "reglages", label: "Réglages", source: "props", note: "Formulaire alimenté par le club en fixture → écran complet. L'enregistrement échouera (pas de session) : c'est normal, on ne regarde que le rendu." },
   { k: "membre", label: "App MEMBRE", source: "props", note: "`BbcClientApp` prend TOUTES ses données en props : le seul écran BBC entièrement remplissable. Choisis un stade de carte ci-dessous." },
+  {
+    k: "saisie",
+    label: "Saisie EBE",
+    source: "mixte",
+    note: "La feuille de recopie d'une fiche papier (chantier saisie EBE). Formulaire, chips, steppers et body scan s'affichent en entier — c'est du local. La VALIDATION échouera faute de session : c'est attendu, on regarde la saisie, pas l'écriture. ⚠️ La feuille écrit un brouillon en localStorage : si elle se rouvre pré-remplie, c'est une saisie précédente, pas un défaut.",
+  },
+  {
+    k: "bilan10",
+    label: "Bilan des 10 · comparatif",
+    source: "props",
+    note: "`BbcBilan10Scan` prend tout en props → écran complet, avec les valeurs EXACTES de la maquette validée (74,5 → 70,3 kg). C'est ici qu'on vérifie l'inverseur « % | kg » : en kg le muscle est stable (+0,1), en pourcentage il monte (+3,7 points). Le sélecteur d'objectif recolore les écarts. Bascule « départ seul » pour voir l'écran AVANT toute saisie.",
+  },
 ];
+
+/** Les deux états du bilan des 10 : avant la pesée, et une fois remplie. */
+const ETATS_BILAN10 = [
+  { k: "rempli", label: "2e pesée saisie" },
+  { k: "vide", label: "départ seul (avant pesée)" },
+] as const;
 
 const WIDTHS: Array<{ k: string; label: string; px: number | null }> = [
   { k: "390", label: "390 px · mobile", px: 390 },
@@ -129,6 +154,7 @@ export function AtelierBbcPage() {
   const screen = (params.get("screen") as ScreenKey | null) ?? "shell";
   const theme = params.get("theme") === "light" ? "light" : "dark";
   const persona = params.get("persona") ?? ATELIER_MEMBERS[0].key;
+  const etatB10 = params.get("b10") ?? ETATS_BILAN10[0].k;
   const width = params.get("w") ?? "390";
 
   // Le thème clair BBC se déclare `.bbc-mode.bbc-light` : les DEUX classes sur
@@ -165,7 +191,7 @@ export function AtelierBbcPage() {
   }, [embed, theme]);
 
   if (embed) {
-    return <AtelierScene screen={screen} personaKey={persona} />;
+    return <AtelierScene screen={screen} personaKey={persona} etatB10={etatB10} />;
   }
 
   const set = (patch: Record<string, string>) => {
@@ -176,7 +202,7 @@ export function AtelierBbcPage() {
 
   const courant = SCREENS.find((s) => s.k === screen) ?? SCREENS[0];
   const largeur = WIDTHS.find((w) => w.k === width) ?? WIDTHS[0];
-  const src = `/atelier-bbc?embed=1&screen=${screen}&theme=${theme}&persona=${persona}`;
+  const src = `/atelier-bbc?embed=1&screen=${screen}&theme=${theme}&persona=${persona}&b10=${etatB10}`;
 
   return (
     <div className="bbc-mode atelier-shell">
@@ -247,6 +273,23 @@ export function AtelierBbcPage() {
           ))}
         </div>
 
+        {screen === "bilan10" ? (
+          <div className="atelier-groupe">
+            <span className="atelier-legende">état</span>
+            {ETATS_BILAN10.map((e) => (
+              <button
+                key={e.k}
+                type="button"
+                className="atelier-chip"
+                aria-pressed={e.k === etatB10}
+                onClick={() => set({ b10: e.k })}
+              >
+                {e.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {screen === "membre" ? (
           <div className="atelier-groupe">
             <span className="atelier-legende">stade de carte</span>
@@ -288,11 +331,55 @@ export function AtelierBbcPage() {
 // rien : on préfère un écran vide honnête à une belle démo mensongère.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AtelierScene({ screen, personaKey }: { screen: ScreenKey; personaKey: string }) {
+function AtelierScene({
+  screen,
+  personaKey,
+  etatB10,
+}: {
+  screen: ScreenKey;
+  personaKey: string;
+  etatB10: string;
+}) {
   const persona = useMemo(
     () => ATELIER_MEMBERS.find((m) => m.key === personaKey) ?? ATELIER_MEMBERS[0],
     [personaKey],
   );
+
+  // La feuille de saisie est en `position: fixed` : elle pose sa propre pleine
+  // page, exactement comme dans `BbcApp`. On la monte donc sans cadre.
+  if (screen === "saisie") {
+    return (
+      <BbcNewMemberSheet
+        userId={ATELIER_USER_ID}
+        coachName={ATELIER_COACH_NAME}
+        club={ATELIER_CLUB}
+        onClose={() => undefined}
+      />
+    );
+  }
+
+  if (screen === "bilan10") {
+    const rempli = etatB10 !== "vide";
+    return (
+      <VuePleinePage>
+        <BbcBilan10Scan
+          depart={ATELIER_SCAN_DEPART as ScanValues}
+          departDate={ATELIER_SCAN_DEPART_DATE}
+          dejaEnregistre={rempli ? (ATELIER_SCAN_AUJOURDHUI as ScanValues) : null}
+          objectifInitial="weight-loss"
+          fait={rempli}
+          onBasculer={() => undefined}
+          enCoursEnregistrement={false}
+          enregistreLe={null}
+          erreur={null}
+          onEnregistrer={() => undefined}
+          numero={1}
+          titre="Refaire le scan corporel"
+          sousTitre="on compare avec le point de départ"
+        />
+      </VuePleinePage>
+    );
+  }
 
   // La coquille et l'app membre gèrent leur propre pleine page.
   if (screen === "shell") {

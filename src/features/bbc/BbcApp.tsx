@@ -38,6 +38,8 @@ import { BbcLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
+import { BbcNewMemberSheet } from "./BbcNewMemberSheet";
+import { BbcNewMemberButton } from "./BbcNewMemberButton";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
 import { useBbcHearts, nextPalier } from "./useBbcHearts";
@@ -165,6 +167,15 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
   const [section, setSection] = useState<SectionKey>("club");
   const [view, setViewState] = useState<BbcView>("cockpit");
   const [sheet, setSheet] = useState(false);
+  // La feuille « Évaluation bien-être » vit ICI et pas dans une vue : elle
+  // s'ouvre depuis « Mes membres » ET depuis « Ce matin », qui ne sont pas
+  // montés en même temps. Une seule instance, un seul état.
+  const [nouveauMembre, setNouveauMembre] = useState(false);
+  // Chaque vue monte sa PROPRE instance de useBbcMembers (il n'y a pas de
+  // cache partagé, et AppContext est sacré). Après une création, on bouge donc
+  // cette clé : la vue affichée se remonte et refait sa lecture. Sans ça, le
+  // membre qu'on vient de créer n'apparaît qu'au prochain changement d'onglet.
+  const [rafraichir, setRafraichir] = useState(0);
   const cob = useBbcCobayes(userId);
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
@@ -229,7 +240,10 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
                   padding: "13px 12px",
                   borderRadius: 12,
                   background: active ? "var(--ls-bbc-s2)" : "transparent",
-                  color: active ? "var(--ls-bbc-lime)" : "var(--ls-bbc-muted)",
+                  // lime-text et pas lime : en thème clair l'aplat tombe à
+                  // 3,9:1 sur blanc, l'encre à 5,1:1. En sombre les deux jetons
+                  // valent le même #C5F82A — le change ne se voit que sur clair.
+                  color: active ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)",
                   fontFamily: "var(--ls-bbc-font-body)",
                   fontSize: 14,
                   fontWeight: 600,
@@ -343,9 +357,11 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
 
         {view === "cockpit" && (
           <Cockpit
+            key={rafraichir}
             cobayes={cob.count}
             target={cob.target}
             onSend={() => setSheet(true)}
+            onNouveauMembre={() => setNouveauMembre(true)}
             userId={userId}
             club={club ?? null}
             onGo={setView}
@@ -363,7 +379,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
-        {view === "crm" && <BbcCrm userId={userId} />}
+        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} onNouveauMembre={() => setNouveauMembre(true)} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
@@ -391,7 +407,9 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
                 alignItems: "center",
                 gap: 3,
                 padding: "4px 2px",
-                color: active ? "var(--ls-bbc-lime)" : "var(--ls-bbc-hint)",
+                // Idem : 10 px, c'est le texte le plus petit de l'app — il a
+                // besoin de l'encre, pas de l'aplat. Sans effet en sombre.
+                color: active ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)",
                 fontFamily: "var(--ls-bbc-font-body)",
                 fontSize: 10,
                 fontWeight: 600,
@@ -412,12 +430,22 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
           onSent={(templateKey, contactLabel) => void cob.logCobaye(templateKey, contactLabel)}
         />
       ) : null}
+
+      {nouveauMembre ? (
+        <BbcNewMemberSheet
+          userId={userId}
+          coachName={coachName}
+          club={club ?? null}
+          onClose={() => setNouveauMembre(false)}
+          onCreated={() => setRafraichir((n) => n + 1)}
+        />
+      ) : null}
     </div>
   );
 }
 
 // ── Cockpit (fidèle au design, données d'exemple front-only) ──────────────
-function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: number; target: number; onSend: () => void; userId?: string; club: Club | null; onGo: (v: BbcView) => void }) {
+function Cockpit({ cobayes, target, onSend, onNouveauMembre, userId, club, onGo }: { cobayes: number; target: number; onSend: () => void; onNouveauMembre: () => void; userId?: string; club: Club | null; onGo: (v: BbcView) => void }) {
   const ringOffset = Math.max(0, Math.round(578 * (1 - Math.min(cobayes / target, 1))));
   const left = Math.max(0, target - cobayes);
   const { members, loading } = useBbcMembers(userId);
@@ -548,12 +576,23 @@ function Cockpit({ cobayes, target, onSend, userId, club, onGo }: { cobayes: num
         </div>
       </div>
 
+      {/* ＋ Nouvelle évaluation — le second point d'entrée de la feuille EBE.
+          Il est ici, sous le hero, parce que la fiche papier se saisit le
+          matin, au comptoir, juste après la pesée. Même bouton que sur
+          « Mes membres » : une seule feuille, deux portes. */}
+      <BbcNewMemberButton
+        onClick={onNouveauMembre}
+        aide="La fiche papier se saisit ici, dans l'ordre où elle est remplie."
+      />
+
       {/* ☕ le club ce matin — réel */}
       <SectionCard eye="☕ le club ce matin" right={members.length ? `${pointes.length} / ${members.length} pointés` : ""}>
         {loading ? (
           <Empty>chargement…</Empty>
         ) : members.length === 0 ? (
-          <Empty>Aucun membre BBC. Passe un client en membre depuis sa fiche (Actions).</Empty>
+          // Même correction que dans BbcCrm : « sa fiche → Actions » n'est pas
+          // atteignable en mode BBC. Le chemin réel est la feuille ci-dessus.
+          <Empty>Aucun membre BBC. Saisis ta première fiche papier avec « ＋ Nouvelle évaluation ».</Empty>
         ) : (
           <>
             {members.slice(0, 4).map((m) => {

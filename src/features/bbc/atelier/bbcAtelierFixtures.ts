@@ -279,3 +279,44 @@ export const ATELIER_MEMBERS: AtelierMemberPersona[] = [
     },
   },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Le bilan des 10 visites — chantier saisie EBE (2026-08-14).
+//
+// `BbcBilan10Scan` prend TOUT en props : c'est donc, comme l'app membre, un
+// écran entièrement remplissable dans l'atelier. Les valeurs ci-dessous sont
+// EXACTEMENT celles de la maquette validée par Thomas, pour que l'atelier et la
+// maquette soient comparables ligne à ligne.
+//
+// Le cas est choisi : la membre perd du poids et du gras en gardant ses kilos
+// de muscle. En kg son muscle est stable (+0,1), en pourcentage il monte
+// (+3,7 points). C'est la démonstration de l'inverseur « % | kg » — un écran
+// qui l'illustre mal ne prouve rien.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Le body scan du premier bilan : le point de départ du membre. */
+export const ATELIER_SCAN_DEPART: Record<string, number | null> = {
+  weight: 74.5,
+  bodyFat: 34.2,
+  muscleMass: 44.1,
+  hydration: 47.8,
+  visceralFat: 8,
+  metabolicAge: 46,
+  bmr: 1420,
+  boneMass: 2.4,
+};
+
+/** La date de ce point de départ, telle qu'elle est dite au coach. */
+export const ATELIER_SCAN_DEPART_DATE = "2026-07-08";
+
+/** La 2e pesée déjà saisie — sert à regarder l'écran DANS son état rempli. */
+export const ATELIER_SCAN_AUJOURDHUI: Record<string, number | null> = {
+  weight: 70.3,
+  bodyFat: 31.1,
+  muscleMass: 44.2,
+  hydration: 50.1,
+  visceralFat: 7,
+  metabolicAge: 43,
+  bmr: 1395,
+  boneMass: 2.5,
+};

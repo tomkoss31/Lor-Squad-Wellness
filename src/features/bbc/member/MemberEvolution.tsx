@@ -2,7 +2,30 @@
 // MemberEvolution — onglet Évolution de l'app membre BBC (port du design).
 // Poids + courbe · 3 jauges (masse grasse / muscle / hydratation) ·
 // mensurations. Données réelles (bilans + client_measurements). Empty states.
+//
+// ── LE BUG D'UNITÉ CORRIGÉ LE 2026-08-14 ─────────────────────────────────────
+// Les trois jauges étaient traitées à l'identique : valeur ÷ 100 pour remplir
+// l'anneau, « % » collé derrière le nombre, écart libellé « pts ». Or la masse
+// musculaire est stockée en KILOS (la balance Tanita la rend comme ça, et
+// `NewAssessmentPage` la saisit en kg). Une membre à 44,1 kg de muscle lisait
+// donc « 44 % », avec un anneau rempli à 44 % de rien du tout — deux fois faux,
+// et invisible parce que le nombre reste plausible en pourcentage.
+//
+// Ce qui change ici, et RIEN d'autre :
+//   • masse grasse et hydratation restent des pourcentages (÷ 100 correct) ;
+//   • le muscle s'affiche en kg, avec son unité, et son écart en kg ;
+//   • l'anneau du muscle se remplit sur la part de muscle DANS LE POIDS
+//     (muscle ÷ poids du même relevé) : un anneau est une part d'un tout, il
+//     lui faut un dénominateur, et le seul juste est le poids de ce relevé-là ;
+//   • le départ d'une mesure est le premier relevé qui la porte VRAIMENT.
+//     `ClientAppPage` remplace les valeurs absentes par 0 : prendre
+//     `metrics[0]` en aveugle faisait passer un vrai écart pour « stable ».
+//
+// Toute l'arithmétique vient de `lib/bodyMetricUnits`, la même que le coach
+// utilise dans le bilan des 10 : les deux écrans ne peuvent pas diverger.
 // =============================================================================
+
+import { computeMetricDelta, muscleMassKgToPercent, type DisplayUnit } from "../../../lib/bodyMetricUnits";
 
 interface Metric {
   date?: string;
@@ -23,6 +46,27 @@ interface MemberEvolutionProps {
   metrics: Metric[];
   measurements: Measurement[];
 }
+
+type MesureJauge = "bodyFat" | "muscleMass" | "hydration";
+
+/**
+ * Les trois jauges. `unite` dit dans quelle unité la valeur s'AFFICHE : c'est
+ * toujours son unité NATIVE, celle qui est en base — on ne convertit rien pour
+ * l'écran du membre, on arrête simplement de mentir dessus.
+ * `aplat` = le trait de l'anneau, `encre` = la couleur du texte : le lime ne se
+ * lit pas sur clair (2,18:1), c'est --ls-bbc-lime-text qui sert d'encre.
+ */
+const GAUGES: Array<{
+  key: MesureJauge;
+  label: string;
+  aplat: string;
+  encre: string;
+  unite: DisplayUnit;
+}> = [
+  { key: "bodyFat", label: "masse grasse", aplat: "var(--ls-bbc-lime)", encre: "var(--ls-bbc-lime-text)", unite: "percent" },
+  { key: "muscleMass", label: "muscle (kg)", aplat: "var(--ls-bbc-teal)", encre: "var(--ls-bbc-teal)", unite: "kg" },
+  { key: "hydration", label: "hydratation", aplat: "var(--ls-bbc-violet)", encre: "var(--ls-bbc-violet)", unite: "percent" },
+];
 
 function num(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null;
@@ -49,23 +93,66 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
   const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
   const area = pts.length ? `${line} L ${pts[pts.length - 1][0].toFixed(1)} ${H - pad} L ${pad} ${H - pad} Z` : "";
 
-  const latest = metrics[metrics.length - 1] ?? {};
-  const first = metrics[0] ?? {};
-  const gaugeDefs: Array<{ key: keyof Metric; label: string; color: string }> = [
-    { key: "bodyFat", label: "masse grasse", color: "var(--ls-bbc-lime)" },
-    { key: "muscleMass", label: "muscle", color: "var(--ls-bbc-teal)" },
-    { key: "hydration", label: "hydratation", color: "var(--ls-bbc-violet, #a78bfa)" },
-  ];
-  const gauges = gaugeDefs
+  const dernier = metrics[metrics.length - 1] ?? {};
+
+  /** Le premier relevé qui porte VRAIMENT cette mesure (0 = non mesurée). */
+  function premierAvec(key: MesureJauge): Metric | null {
+    for (const m of metrics) {
+      if (num(m[key]) != null) return m;
+    }
+    return null;
+  }
+
+  const gauges = GAUGES
     .map((g) => {
-      const v = num(latest[g.key]);
+      const v = num(dernier[g.key]);
       if (v == null) return null;
-      const f = num(first[g.key]);
-      const d = f != null ? Math.round((v - f) * 10) / 10 : null;
-      const off = (163 * (1 - Math.min(Math.max(v / 100, 0), 1))).toFixed(1);
-      return { label: g.label, color: g.color, val: `${Math.round(v)}%`, off, delta: d == null ? "stable" : `${d > 0 ? "+" : ""}${fr(d, 0)} pts` };
+
+      const depart = premierAvec(g.key);
+      const ecart = computeMetricDelta(
+        g.key,
+        g.unite,
+        { value: depart ? num(depart[g.key]) : null, weight: depart ? num(depart.weight) : null },
+        { value: v, weight: num(dernier.weight) },
+      );
+
+      // La part de muscle dans le poids : c'est elle qui remplit l'anneau, et
+      // c'est aussi le chiffre qui monte quand le poids baisse à muscle égal.
+      const partMuscle =
+        g.unite === "kg" ? muscleMassKgToPercent(num(dernier.weight), v) : null;
+      const ratio = g.unite === "percent" ? v / 100 : partMuscle == null ? null : partMuscle / 100;
+      // Sans dénominateur, l'anneau reste vide : mieux qu'un remplissage inventé.
+      const off = ratio == null ? "163.0" : (163 * (1 - Math.min(Math.max(ratio, 0), 1))).toFixed(1);
+
+      const suffixe = ecart.unit === "kg" ? " kg" : " pts";
+      const delta =
+        depart === dernier
+          ? "point de départ"
+          : ecart.value == null
+            ? "—"
+            : ecart.state === "stable"
+              ? "stable"
+              : `${ecart.value > 0 ? "+" : "−"}${fr(Math.abs(ecart.value), ecart.decimals)}${suffixe}`;
+
+      return {
+        label: g.label,
+        aplat: g.aplat,
+        encre: g.encre,
+        val: g.unite === "percent" ? `${Math.round(v)}%` : fr(v, 1),
+        off,
+        delta,
+        sous: partMuscle == null ? null : `${fr(partMuscle, 0)} % du poids`,
+      };
     })
-    .filter(Boolean) as Array<{ label: string; color: string; val: string; off: string; delta: string }>;
+    .filter(Boolean) as Array<{
+    label: string;
+    aplat: string;
+    encre: string;
+    val: string;
+    off: string;
+    delta: string;
+    sous: string | null;
+  }>;
 
   const lastM = measurements[measurements.length - 1];
   const firstM = measurements[0];
@@ -95,7 +182,8 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
             <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />ton poids
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginTop: 12 }}>
-            <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 44, lineHeight: 0.85, color: "var(--ls-bbc-lime)" }}>{delta != null && delta > 0 ? "+" : ""}{delta != null ? fr(delta) : "—"}</span>
+            {/* Encre lime, pas l'aplat : --ls-bbc-lime ne se lit pas sur clair. */}
+            <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 44, lineHeight: 0.85, color: "var(--ls-bbc-lime-text)" }}>{delta != null && delta > 0 ? "+" : ""}{delta != null ? fr(delta) : "—"}</span>
             <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 600, fontSize: 18, color: "var(--ls-bbc-muted)", paddingBottom: 4 }}>kg</span>
           </div>
           <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 4 }}>{fr(firstW)} → {fr(lastW)} kg</div>
@@ -121,12 +209,13 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
               <div style={{ position: "relative", width: 64, height: 64, margin: "0 auto" }}>
                 <svg width="64" height="64" viewBox="0 0 64 64">
                   <circle cx="32" cy="32" r="26" fill="none" stroke="var(--ls-bbc-s2)" strokeWidth="6" />
-                  <circle cx="32" cy="32" r="26" fill="none" stroke={g.color} strokeWidth="6" strokeLinecap="round" strokeDasharray="163" strokeDashoffset={g.off} transform="rotate(-90 32 32)" />
+                  <circle cx="32" cy="32" r="26" fill="none" stroke={g.aplat} strokeWidth="6" strokeLinecap="round" strokeDasharray="163" strokeDashoffset={g.off} transform="rotate(-90 32 32)" />
                 </svg>
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 700, fontSize: 15, color: g.color }}>{g.val}</div>
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 700, fontSize: 15, color: g.encre }}>{g.val}</div>
               </div>
               <div style={{ fontSize: 11, fontWeight: 600, marginTop: 8 }}>{g.label}</div>
               <div style={{ fontSize: 10, color: "var(--ls-bbc-muted)" }}>{g.delta}</div>
+              {g.sous ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{g.sous}</div> : null}
             </div>
           ))}
         </div>

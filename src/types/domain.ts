@@ -418,6 +418,25 @@ export interface AssessmentQuestionnaire {
    * Helper : getQty(id) = selectedProductQuantities[id] ?? 1.
    */
   selectedProductQuantities?: QuantityMap;
+  /**
+   * Chantier BBC — saisie « Évaluation Bien-Être » (2026-08-14).
+   *
+   * Deux questions de la fiche PAPIER du club n'avaient aucun champ dans ce
+   * modèle. Le questionnaire étant stocké en `jsonb`, deux clés OPTIONNELLES
+   * suffisent : aucune migration, et les 679 bilans déjà écrits restent
+   * valides (les clés sont simplement absentes chez eux).
+   *
+   * ⚠️ Ne pas confondre avec `energyLevel`, qui dit COMBIEN d'énergie la
+   * personne ressent. Ici on note QUAND elle en manque — « Réveil »,
+   * « Matinée », « Après déjeuner », « Fin de journée ».
+   */
+  lowEnergyMoment?: string;
+  /**
+   * Dépense alimentaire quotidienne déclarée, en euros. Sert l'argument du
+   * club (« ton petit-déjeuner coûte moins cher que ce que tu dépenses
+   * déjà »). Distinct de `snacksFastFoodPerWeek`, qui compte des occasions.
+   */
+  dailyFoodSpendEur?: number | null;
 }
 
 /**
