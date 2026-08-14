@@ -592,6 +592,7 @@ export function ClientDetailPage() {
       {activeTab !== 3 && (
         <NextAppointmentBanner
           nextAppointmentDate={activeFollowUp?.dueDate ?? null}
+          clientEmail={client.email}
           onPlan={() => setActiveTab(3)}
           onViewDetails={() => setActiveTab(3)}
         />
