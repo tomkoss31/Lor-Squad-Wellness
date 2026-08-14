@@ -3,28 +3,23 @@
     {
       "source": "/(marketing-plan|marketing-plan-prospect|marketing-plan-slides|opportunite-claude|copilote-v6-preview|copilote-v7-preview|pwa-client-preview|pwa-client-sanctuary-preview).html",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
       ]
     },
     {
       "source": "/(mockups|demo)/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
       ]
     }
   ],
   "redirects": [
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "(www\\.)?labase-nutrition\\.com"
-        }
-      ],
-      "destination": "https://www.labase360.fr/$1",
-      "permanent": true
-    },
     {
       "source": "/opportunite",
       "destination": "/business",
