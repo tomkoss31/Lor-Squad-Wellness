@@ -4,10 +4,13 @@
 // Rend la maquette validée par Thomas le 2026-08-13
 // (public/mockups/audience-site.html), branchée sur les compteurs du lot 1.
 //
-// ⚠️ Les sections « boutons » et « où ça décroche » n'ont pas encore de source :
-// personne n'appelle `noterClic` / `noterEtape` (c'est le lot 3). Elles
-// affichent donc un état vide qui DIT pourquoi — un tableau vide sans
-// explication se lit comme une panne.
+// Les quatre tunnels et les clics sont instrumentés depuis le lot 3. Quand
+// ces sections sont vides, c'est que PERSONNE N'EST ENCORE PASSÉ — et elles le
+// disent. Un tableau vide sans explication se lit comme une panne.
+//
+// ⚠️ Ces textes d'état vide décrivent l'état du produit : les relire quand il
+// change. Ils ont annoncé « c'est le prochain lot » pendant quelques heures
+// APRÈS la livraison dudit lot (repéré en auditant la prod le 2026-08-14).
 // =============================================================================
 
 import { useMemo, useState } from "react";
@@ -128,9 +131,10 @@ export function AdminAudiencePage() {
             {tunnels.length === 0 ? (
               <div style={carte}>
                 <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: "var(--ls-text-muted)" }}>
-                  Les étapes de tes tunnels ne sont pas encore posées — c'est le
-                  prochain lot. Tant qu'elles ne le sont pas, cette section reste
-                  vide : elle ne peut rien inventer.
+                  Personne n'a encore traversé un tunnel depuis la mise en
+                  place de la mesure. Les quatre sont pourtant écoutés : bilan
+                  en ligne, réserver au club, colis, rejoindre l'équipe. Dès
+                  qu'un visiteur en commence un, l'entonnoir apparaît ici.
                 </p>
               </div>
             ) : (
@@ -219,8 +223,9 @@ export function AdminAudiencePage() {
             {data.clics.length === 0 ? (
               <div style={carte}>
                 <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: "var(--ls-text-muted)" }}>
-                  Aucun bouton n'est encore nommé sur le site — c'est le prochain
-                  lot. Un bouton non nommé ne peut pas être compté.
+                  Aucun clic vers une autre page publique n'a encore été
+                  enregistré. Ils le sont automatiquement, sans rien à marquer
+                  sur les boutons — il faut juste que quelqu'un clique.
                 </p>
               </div>
             ) : (
