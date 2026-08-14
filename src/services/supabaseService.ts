@@ -1603,7 +1603,59 @@ export async function addSupabasePvTransaction(transaction: PvClientTransaction)
   return mapPvTransaction(data);
 }
 
-export async function updateSupabaseAssessment(clientId: string, assessment: AssessmentRecord) {
+/**
+ * Le bilan tel qu'il est EN BASE, relu entier.
+ *
+ * À utiliser avant tout `updateSupabaseAssessment` qui ne veut changer qu'un
+ * champ : l'API réécrit TOUTES les colonnes du bilan, donc ce qu'on ne lui
+ * redonne pas est effacé (body scan, produits retenus…).
+ *
+ * Et relire ici n'est pas un excès de prudence : `fetchSupabaseClients` charge
+ * les bilans SANS leur `questionnaire` (cf. `COLONNES_BILAN_SANS_QUESTIONNAIRE`),
+ * hydraté une seconde plus tard par une 2ᵉ passe. Un appelant qui partirait de
+ * `client.assessments` en mémoire pourrait donc renvoyer un questionnaire vide.
+ *
+ * Le filtre porte sur les DEUX clés : un id de bilan qui n'appartient pas à ce
+ * client renvoie `null`, jamais le bilan d'un autre.
+ */
+export async function fetchSupabaseAssessment(
+  clientId: string,
+  assessmentId: string
+): Promise<AssessmentRecord | null> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("assessments")
+    .select(`${COLONNES_BILAN_SANS_QUESTIONNAIRE}, questionnaire`)
+    .eq("id", assessmentId)
+    .eq("client_id", clientId)
+    .maybeSingle<AssessmentRow>();
+
+  if (error) {
+    throw new Error(`Lecture du bilan impossible : ${error.message}`);
+  }
+
+  return data ? mapAssessment(data) : null;
+}
+
+/**
+ * Modifie un bilan — le SEUL chemin possible. `assessments` n'a aucune policy
+ * UPDATE (schema.sql : select / insert / delete uniquement), donc un `update`
+ * depuis le navigateur ne remonte pas d'erreur : il ne touche simplement aucune
+ * ligne, en silence. L'écriture passe par `/api/update-assessment`
+ * (service_role, avec contrôle de session et de propriété côté serveur).
+ *
+ * ⚠️ L'API réécrit toutes les colonnes du bilan : lui redonner le bilan ENTIER,
+ * relu via `fetchSupabaseAssessment`, jamais un payload partiel.
+ *
+ * `syncClientFromInitial: false` pour un changement qui ne re-déclare pas le
+ * programme (cf. le commentaire côté API) : sans ça, éditer un détail d'un bilan
+ * initial ferait régresser le programme et le statut de la fiche client.
+ */
+export async function updateSupabaseAssessment(
+  clientId: string,
+  assessment: AssessmentRecord,
+  options?: { syncClientFromInitial?: boolean }
+) {
   const client = await requireSupabase();
   const {
     data: { session }
@@ -1619,7 +1671,11 @@ export async function updateSupabaseAssessment(clientId: string, assessment: Ass
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ clientId, assessment })
+    body: JSON.stringify({
+      clientId,
+      assessment,
+      syncClientFromInitial: options?.syncClientFromInitial !== false
+    })
   });
 
   const result = await readApiResult<{ ok: boolean; error?: string }>(response);
