@@ -98,6 +98,9 @@ serve(async (req) => {
     let sent = 0;
     let emails = 0;
     let skipped = 0;
+    // Rappels ecartes parce que DEJA envoyes pour ce RDV. Sans ce compteur,
+    // un blocage total est indiscernable d'une journee sans RDV.
+    let dejaFait = 0;
 
     // ── Bloc 1 : rappels aux CLIENTS PWA (source follow_ups) ─────────────────
     if (rows.length > 0) {
@@ -136,16 +139,25 @@ serve(async (req) => {
     }
     const distFor = (clientId: string) => coachByClient.get(clientId) ?? null;
 
+    // ⚠️ La DATE DU RDV fait partie de la clé. Sans elle (jusqu'au 2026-08-14),
+    // un suivi replanifié gardait son marqueur : le client ne recevait plus
+    // jamais de rappel, à vie. Christophe avait RDV le 14/08 et son marqueur
+    // datait du 16/07 — rien n'est parti, et rien ne le disait.
     const { data: markers } = await sb
       .from("client_rdv_reminders_sent")
-      .select("follow_up_id, kind")
+      .select("follow_up_id, kind, rdv_date")
       .in("follow_up_id", rows.map((f) => f.id as string));
-    const sentSet = new Set((markers ?? []).map((m) => `${m.follow_up_id}:${m.kind}`));
+    const sentSet = new Set(
+      (markers ?? []).map((m) => `${m.follow_up_id}:${m.kind}:${m.rdv_date}`),
+    );
 
-    const mark = async (fid: string, kind: string) =>
+    /** La clé d'un rappel : un suivi, un type, ET le jour visé. */
+    const cle = (fid: string, kind: string, rdvDate: string) => `${fid}:${kind}:${rdvDate}`;
+
+    const mark = async (fid: string, kind: string, rdvDate: string) =>
       sb.from("client_rdv_reminders_sent").upsert(
-        { follow_up_id: fid, kind },
-        { onConflict: "follow_up_id,kind", ignoreDuplicates: true },
+        { follow_up_id: fid, kind, rdv_date: rdvDate },
+        { onConflict: "follow_up_id,kind,rdv_date", ignoreDuplicates: true },
       );
 
     for (const fu of rows) {
@@ -156,9 +168,12 @@ serve(async (req) => {
       const dist = distFor(clientId);
       const coachP = (dist && coachFirst.get(dist)) || "ton coach";
       const hour = parisHourLabel(fu.due_date as string);
+      const jourRdv = parisDateStr(due);
 
       // ─── Rappel « 2h avant » (push) ─────────────────────────────────────
-      if (minsUntil >= 105 && minsUntil <= 150 && !sentSet.has(`${fid}:imminent2h`)) {
+      const imminent = minsUntil >= 105 && minsUntil <= 150;
+      if (imminent && sentSet.has(cle(fid, "imminent2h", jourRdv))) dejaFait += 1;
+      if (imminent && !sentSet.has(cle(fid, "imminent2h", jourRdv))) {
         const r = await sendPushToClient(sb, clientId, {
           title: "⏰ Ton RDV dans 2h",
           body: `Avec ${coachP} à ${hour}. À tout à l'heure 🌿`,
@@ -166,14 +181,15 @@ serve(async (req) => {
           type: "rdv_reminder",
         });
         if (r.sent) {
-          await mark(fid, "imminent2h");
+          await mark(fid, "imminent2h", jourRdv);
           sent += 1;
         } else skipped += 1;
       }
 
       // ─── Rappel « la veille à 18h » (push + email) ──────────────────────
       const isEve = hourParis === 18 && parisDateStr(due) === tomorrowParis;
-      if (isEve && !sentSet.has(`${fid}:eve`)) {
+      if (isEve && sentSet.has(cle(fid, "eve", jourRdv))) dejaFait += 1;
+      if (isEve && !sentSet.has(cle(fid, "eve", jourRdv))) {
         const r = await sendPushToClient(sb, clientId, {
           title: `📅 RDV demain avec ${coachP}`,
           body: `Demain à ${hour}. Pense à bien t'hydrater d'ici là 💧`,
@@ -181,11 +197,12 @@ serve(async (req) => {
           type: "rdv_reminder",
         });
         if (r.sent) {
-          await mark(fid, "eve");
+          await mark(fid, "eve", jourRdv);
           sent += 1;
         } else skipped += 1;
       }
-      if (isEve && !sentSet.has(`${fid}:eve_email`)) {
+      if (isEve && sentSet.has(cle(fid, "eve_email", jourRdv))) dejaFait += 1;
+      if (isEve && !sentSet.has(cle(fid, "eve_email", jourRdv))) {
         const to = clientEmail.get(clientId);
         if (to) {
           const html = rdvEmailHtml({
@@ -198,7 +215,7 @@ serve(async (req) => {
           });
           const ok = await sendViaResend(to, "📅 Ton rendez-vous, c'est demain", html);
           if (ok) {
-            await mark(fid, "eve_email");
+            await mark(fid, "eve_email", jourRdv);
             emails += 1;
           } else skipped += 1;
         }
@@ -312,7 +329,7 @@ serve(async (req) => {
       }
     }
 
-    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, prospectEmails, manualProspectEmails, skipped });
+    return jsonResponse({ ok: true, found: rows.length, hourParis, tomorrowParis, sent, emails, prospectEmails, manualProspectEmails, skipped, dejaFait });
   } catch (err) {
     return jsonResponse({ error: err instanceof Error ? err.message : "unknown" }, 500);
   }
