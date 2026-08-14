@@ -119,7 +119,12 @@ export const CLUB_RESULTATS: ClubResultat[] = [
   //     témoignage repris par le club à son compte.
   { photos: [{ slug: "fayhaz", w: 1280, h: 1280 }, { slug: "fayhaz-2", w: 1179, h: 1179 }], nom: "Fayhaz", resultat: "+10 kg de masse musculaire et −10 % de masse grasse en un an" },
   { photos: [{ slug: "tom", w: 1280, h: 1112 }], nom: "Thomas", coach: true, resultat: "+4 kg de masse musculaire, et des performances sportives en nette progression" },
-  { photos: [{ slug: "melanie", w: 708, h: 708 }, { slug: "melanie-2", w: 747, h: 708 }], nom: "Mélanie", coach: true, resultat: "−4 kg de masse grasse en 21 jours, et les kilos de grossesse partis" },
+  // « et plus d'énergie » : demandé par Mélanie le 13/08, sur sa propre fiche.
+  // J'avais écarté cette mention en juillet par prudence — un gain d'énergie
+  // attribué à un aliment est une allégation de santé encadrée. Ici la nuance
+  // tient : c'est une personne qui décrit son propre ressenti, pas le club qui
+  // prête un effet à ce qu'il sert. Aucune autre fiche ne la reprend.
+  { photos: [{ slug: "melanie", w: 708, h: 708 }, { slug: "melanie-2", w: 747, h: 708 }], nom: "Mélanie", coach: true, resultat: "−4 kg de masse grasse en 21 jours, et plus d'énergie" },
   // Sans chiffre : Thomas ne les a pas, et on n'en invente pas.
   { photos: [{ slug: "heleane", w: 1125, h: 1112 }], nom: "Héléane" },
   { photos: [{ slug: "julie", w: 1312, h: 1288 }], nom: "Julie" },
