@@ -19,6 +19,7 @@ import {
 import { isSupabaseUnavailable, getSupabaseClient } from "../services/supabaseClient";
 import {
   fetchAssessmentQuestionnaires,
+  fetchSupabaseAssessment,
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
   createSupabaseActivityLog,
@@ -228,6 +229,13 @@ interface AppContextValue {
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
   ) => Promise<void>;
   updateAssessment: (clientId: string, assessment: AssessmentRecord) => Promise<void>;
+  /** Exclut (ou réintègre) un bilan du calcul d'évolution de la fiche client.
+   *  Écrit en base ET en mémoire. Lève si l'écriture échoue. */
+  setAssessmentEvolutionExcluded: (
+    clientId: string,
+    assessmentId: string,
+    excluded: boolean
+  ) => Promise<void>;
   updateClientSchedule: (
     clientId: string,
     payload: {
@@ -781,6 +789,67 @@ export function AppProvider({ children }: PropsWithChildren) {
     });
   }
 
+  /**
+   * Exclut (ou réintègre) un bilan du calcul d'évolution — la case à cocher de
+   * l'historique sur la fiche client.
+   *
+   * Passe par l'API service_role comme TOUTE modification de bilan : `assessments`
+   * n'a aucune policy UPDATE, donc un `update` depuis le navigateur ne remonte pas
+   * d'erreur, il ne touche simplement aucune ligne — en silence. C'était le bug :
+   * la case revenait à son état d'avant au rechargement, sans un mot.
+   *
+   * Deux précautions, parce que ce chemin d'écriture a des effets de bord :
+   *  • le bilan est relu ENTIER avant d'être renvoyé — l'API réécrit toutes ses
+   *    colonnes, un payload partiel effacerait body scan et produits retenus ;
+   *  • `syncClientFromInitial: false` — cocher une case ne re-déclare pas le
+   *    programme du client, alors que la resynchronisation par défaut ferait
+   *    régresser sa fiche vers le programme et le statut du tout premier bilan.
+   *
+   * L'état est aussi appliqué en mémoire : les bilans ne sont rechargés qu'au
+   * démarrage de l'app, sans ça la case reviendrait en arrière dès qu'on quitte
+   * puis rouvre la fiche.
+   */
+  async function setAssessmentEvolutionExcluded(
+    clientId: string,
+    assessmentId: string,
+    excluded: boolean
+  ) {
+    const stored = await fetchSupabaseAssessment(clientId, assessmentId);
+    if (!stored) {
+      throw new Error("Ce bilan est introuvable — il a peut-être été supprimé.");
+    }
+
+    await updateSupabaseAssessment(
+      clientId,
+      {
+        ...stored,
+        questionnaire: { ...stored.questionnaire, excludeFromEvolution: excluded }
+      },
+      { syncClientFromInitial: false }
+    );
+
+    setClients((prev) =>
+      prev.map((client) =>
+        client.id === clientId
+          ? {
+              ...client,
+              assessments: (client.assessments ?? []).map((assessment) =>
+                assessment.id === assessmentId
+                  ? {
+                      ...assessment,
+                      questionnaire: {
+                        ...assessment.questionnaire,
+                        excludeFromEvolution: excluded
+                      }
+                    }
+                  : assessment
+              )
+            }
+          : client
+      )
+    );
+  }
+
   async function updateClientSchedule(
     clientId: string,
     payload: {
@@ -1239,6 +1308,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       deleteClient,
       addFollowUpAssessment,
       updateAssessment,
+      setAssessmentEvolutionExcluded,
       updateClientSchedule,
       reassignClientOwner,
       addPvTransaction,

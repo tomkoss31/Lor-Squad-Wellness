@@ -385,6 +385,15 @@ export default async function handler(req: any, res: any) {
     const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
     const clientId = String(req.body?.clientId ?? "").trim();
     const assessment = req.body?.assessment ?? null;
+    // Un bilan INITIAL modifie resynchronise la fiche client plus bas (programme,
+    // date de depart, statut, routine PV). C'est ce que veut "Modifier la fiche de
+    // depart" : le coach y RE-DECLARE le programme. Mais un appelant qui ne touche
+    // qu'un detail du bilan (une case a cocher) ne re-declare rien — et cette
+    // resynchronisation ferait REGRESSER la fiche vers le programme et le statut
+    // du tout premier bilan, alors qu'un suivi les a deja fait evoluer
+    // (addSupabaseFollowUpAssessment ecrit current_program + status "follow-up").
+    // Defaut true : tous les appelants historiques gardent leur comportement.
+    const syncClientFromInitial = req.body?.syncClientFromInitial !== false;
 
     if (!supabaseUrl || !serviceRoleKey) {
       res.status(500).json({
@@ -494,7 +503,7 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    if (assessment.type === "initial") {
+    if (assessment.type === "initial" && syncClientFromInitial) {
       // Fix 2026-07-16 (audit programmes) — BUG DE PERTE DE DONNEES.
       // Avant : hasStartedProgram = Boolean(assessment.programId && programTitle).
       // Or EditInitialAssessmentPage n'ecrit JAMAIS programId (il ne gere que le

@@ -51,6 +51,7 @@ export function ClientDetailPage() {
     followUps,
     reloadClients,
     pvClientProducts,
+    setAssessmentEvolutionExcluded,
   } = useAppContext();
   const { push: pushToast } = useToast();
 
@@ -234,6 +235,11 @@ export function ClientDetailPage() {
     : getLatestAssessment(client);
   const evolutionBaselineId = includedEvolutionAssessments.length ? evolutionFirst.id : null;
 
+  // L'écriture vit dans AppContext (`setAssessmentEvolutionExcluded`) : elle passe
+  // par l'API service_role, seul chemin d'édition d'un bilan. Un `update` direct
+  // depuis le navigateur ne touchait AUCUNE ligne — `assessments` n'a pas de
+  // policy UPDATE — et ne remontait pas d'erreur : la case semblait cochée jusqu'au
+  // rechargement de la page (corrigé 2026-08-14).
   async function handleToggleEvolution(assessmentId: string, include: boolean) {
     if (!client) return;
     const target = client.assessments.find((a) => a.id === assessmentId);
@@ -241,21 +247,18 @@ export function ClientDetailPage() {
     const exclude = !include;
     setExcludeOverride((prev) => ({ ...prev, [assessmentId]: exclude }));
     try {
-      const sb = await getSupabaseClient();
-      if (sb) {
-        const nextQuestionnaire = { ...(target.questionnaire ?? {}), excludeFromEvolution: exclude };
-        const { error } = await sb
-          .from("assessments")
-          .update({ questionnaire: nextQuestionnaire })
-          .eq("id", assessmentId);
-        if (error) throw error;
-      }
+      await setAssessmentEvolutionExcluded(client.id, assessmentId, exclude);
     } catch (err) {
-      // Revert vers la vérité DB en cas d'échec.
-      setExcludeOverride((prev) => ({
-        ...prev,
-        [assessmentId]: target.questionnaire?.excludeFromEvolution === true,
-      }));
+      // Revert : on RETIRE l'override plutôt que d'y écrire une valeur. L'écriture
+      // a échoué, donc la base n'a pas bougé — la case doit retomber sur ce que dit
+      // le bilan, y compris s'il est rechargé plus tard. (Y forcer
+      // `questionnaire?.excludeFromEvolution === true` figeait un `false` quand le
+      // questionnaire n'était pas encore hydraté : il arrive en seconde passe.)
+      setExcludeOverride((prev) => {
+        const next = { ...prev };
+        delete next[assessmentId];
+        return next;
+      });
       pushToast(buildSupabaseErrorToast(err, "Impossible de mettre à jour l'évolution"));
     }
   }
