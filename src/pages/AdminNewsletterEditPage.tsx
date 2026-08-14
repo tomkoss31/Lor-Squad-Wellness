@@ -24,7 +24,7 @@ import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 import { OgImageTemplate } from "../components/newsletter/OgImageTemplate";
 
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
-type NewsletterAudience = "clients" | "distri" | "all" | "leads_colis";
+type NewsletterAudience = "clients" | "distri" | "all" | "leads_colis" | "subscribers_club";
 
 type PaywallMode = "none" | "teaser";
 
@@ -102,6 +102,11 @@ function audienceLabel(a: NewsletterAudience): string {
       return "tous les clients + tous les distri actifs";
     case "leads_colis":
       return "les leads du funnel colis ayant laissé un email (jamais inclus dans « tous »)";
+    case "subscribers_club":
+      // Jamais dans « tous » : ces gens se sont abonnés à la newsletter du
+      // club, pas à recevoir les messages coach. Les mélanger, c'est la
+      // première cause de plainte pour spam.
+      return "les inscrits du site Breakfast Club (jamais inclus dans « tous »)";
   }
 }
 

@@ -15,10 +15,16 @@
 // Deploy : supabase functions deploy dispatch-newsletter
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { lienDesinscription, normaliserEmail } from "../_shared/unsubToken.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { compileNewsletterHtml, type NewsletterSection } from "../_shared/newsletter-html.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+
+// Marqueur laissé dans le HTML commun, remplacé par le lien signé de CHAQUE
+// destinataire au moment de l'envoi. Une chaîne qui ne peut pas apparaître
+// dans une newsletter écrite à la main.
+const MARQUEUR_UNSUB = "%%DESABO%%";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 
@@ -148,12 +154,25 @@ async function sendBatch(
 
   for (let i = 0; i < recipients.length; i += BATCH_MAX) {
     const chunk = recipients.slice(i, i + BATCH_MAX);
-    const payload = chunk.map((r) => ({
-      from: FROM,
-      to: [r.email],
-      subject,
-      html,
-      reply_to: REPLY_TO,
+    // Le lien de désabonnement est PROPRE À CHAQUE destinataire : il porte son
+    // adresse signée. Le HTML commun contient un marqueur, remplacé ici.
+    const payload = await Promise.all(chunk.map(async (r) => {
+      const lien = await lienDesinscription(r.email, SUPABASE_URL);
+      return {
+        from: FROM,
+        to: [r.email],
+        subject,
+        html: html.split(MARQUEUR_UNSUB).join(lien),
+        reply_to: REPLY_TO,
+        // L'en-tête que Gmail et Outlook transforment en bouton « Se
+        // désabonner » AU-DESSUS du message. C'est lui qui évite le clic
+        // « spam » — le seul qui abîme durablement la réputation du domaine,
+        // e-mails de rendez-vous compris.
+        headers: {
+          "List-Unsubscribe": `<${lien}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      };
     }));
     const chunkIndex = Math.floor(i / BATCH_MAX);
     const batch = await sendBatchChunk(payload, `${newsletterId}-${chunkIndex}`);
@@ -267,6 +286,10 @@ serve(async (req) => {
     businessUrl: "https://labase360.fr/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423&utm_source=newsletter&utm_medium=email&utm_campaign=" + nl.slug,
     sentAt: nl.sent_at,
     templateKey: nl.template_key,
+    // Le gabarit savait déjà afficher ce lien ; personne ne le lui donnait,
+    // donc le pied de page n'a jamais eu de « Se désabonner ». On y met un
+    // marqueur, remplacé par le lien signé de chaque destinataire à l'envoi.
+    unsubUrl: MARQUEUR_UNSUB,
   });
   const subject = nl.subtitle ? `${nl.title} — ${nl.subtitle}` : nl.title;
 
@@ -349,6 +372,24 @@ serve(async (req) => {
     }
   }
 
+  // Inscrits du site du Breakfast Club (formulaire en pied de page).
+  // Comme les leads colis : JAMAIS inclus dans « tous ». Ils se sont abonnés à
+  // la newsletter du club, pas à recevoir les messages coach — les mélanger
+  // serait une promesse trahie, et la première cause de plainte pour spam.
+  if (nl.audience === "subscribers_club") {
+    const { data: subs, error: subErr } = await sb
+      .from("newsletter_subscribers")
+      .select("id, email")
+      .is("unsubscribed_at", null)
+      .eq("consent", true);
+    if (subErr) return json({ success: false, error: `subscribers_fetch: ${subErr.message}` }, 500);
+    for (const x of subs ?? []) {
+      if (x.email && /.+@.+\..+/.test(x.email)) {
+        recipients.push({ id: String(x.id), email: x.email, recipient_type: "lead" });
+      }
+    }
+  }
+
   if (recipients.length === 0) {
     return json({ success: false, error: "no_recipients" }, 400);
   }
@@ -369,12 +410,25 @@ serve(async (req) => {
     }
   }
 
+  // Liste de suppression COMMUNE (désabonnements newsletter ET campagnes).
+  // Elle n'était pas consultée : un désabonné aurait continué de recevoir la
+  // newsletter, ce qui vide de son sens le lien qu'on vient d'ajouter.
+  const desabonnes = new Set<string>();
+  {
+    const { data: sup } = await sb.from("email_suppressions").select("email");
+    for (const x of sup ?? []) {
+      if (x?.email) desabonnes.add(String(x.email).toLowerCase());
+    }
+  }
+
   // Déduplication par email + suppression des bouncés.
   const seen = new Set<string>();
   const dedup: Recipient[] = [];
   let suppressedBounced = 0;
+  let suppressedUnsub = 0;
   for (const r of recipients) {
     const k = r.email.toLowerCase();
+    if (desabonnes.has(k)) { suppressedUnsub++; continue; }   // s'est désabonné → skip
     if (bouncedEmails.has(k)) { suppressedBounced++; continue; } // adresse morte → skip
     if (!seen.has(k)) {
       seen.add(k);
@@ -383,7 +437,7 @@ serve(async (req) => {
   }
 
   if (dedup.length === 0) {
-    return json({ success: false, error: "no_valid_recipients", suppressed_bounced: suppressedBounced }, 400);
+    return json({ success: false, error: "no_valid_recipients", suppressed_bounced: suppressedBounced, suppressed_unsub: suppressedUnsub }, 400);
   }
 
   // 5. Envoi batch + insert newsletter_recipients
@@ -433,6 +487,7 @@ serve(async (req) => {
     success: true,
     mode,
     suppressed_bounced: suppressedBounced,
+    suppressed_unsub: suppressedUnsub,
     sent_count: successCount,
     failed_count: failures.length,
     total: dedup.length,

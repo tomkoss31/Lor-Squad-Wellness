@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Newsletter du site club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1A17; --surface:#16221E; --surface2:#1B2A25;
+  --border:#243731; --border2:#2E4640;
+  --text:#EAF2EE; --muted:#9DB3AC; --hint:#7C948C;
+  --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:430px;margin:0 auto;padding:0 14px 80px}
+.avert{background:color-mix(in srgb,var(--amber) 14%,transparent);border-bottom:1px solid color-mix(in srgb,var(--amber) 34%,transparent);
+  padding:9px 14px;font-size:11.5px;color:var(--amber);text-align:center;line-height:1.45}
+.avert b{color:#F6D08A}
+
+.onglets{display:flex;gap:6px;padding:14px 0 4px;flex-wrap:wrap}
+.onglets button{flex:1 1 96px;min-height:44px;border-radius:11px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.onglets button[aria-current="true"]{background:color-mix(in srgb,var(--teal) 14%,var(--surface));
+  border-color:color-mix(in srgb,var(--teal) 45%,transparent);color:var(--teal)}
+
+.ecran{display:none} .ecran.on{display:block}
+h1{font-family:Anton;font-weight:400;text-transform:uppercase;letter-spacing:.01em;font-size:29px;line-height:1.04;margin:14px 0 5px}
+.sub{margin:0 0 18px;font-size:13.5px;color:var(--muted);line-height:1.55}
+h2{font-family:Anton;font-weight:400;text-transform:uppercase;font-size:17px;letter-spacing:.02em;margin:24px 0 3px}
+.h2s{margin:0 0 11px;font-size:12.5px;color:var(--hint);line-height:1.5}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:6px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:13px 14px}
+.kpi .l{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.kpi .v{font-family:Anton;font-weight:400;font-size:27px;line-height:1}
+.kpi .d{font-family:'JetBrains Mono',monospace;font-size:10.5px;margin-top:5px;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.thead{display:flex;gap:9px;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.thead div{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.row{display:flex;gap:9px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.c1{flex:1;min-width:0}
+.mail{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{font-size:10.5px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.pill{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;flex:none}
+.ok{color:var(--teal);border:1px solid color-mix(in srgb,var(--teal) 38%,transparent)}
+.off{color:var(--coral);border:1px solid color-mix(in srgb,var(--coral) 38%,transparent)}
+
+.choix{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border:1px solid var(--border);
+  border-radius:13px;background:var(--surface);margin-bottom:8px;cursor:pointer}
+.choix[aria-checked="true"]{border-color:color-mix(in srgb,var(--teal) 50%,transparent);
+  background:color-mix(in srgb,var(--teal) 8%,var(--surface))}
+.radio{width:17px;height:17px;border-radius:50%;border:2px solid var(--border2);flex:none;margin-top:2px}
+.choix[aria-checked="true"] .radio{border-color:var(--teal);box-shadow:inset 0 0 0 3.5px var(--teal)}
+.choix .t{font-size:13.5px;font-weight:700}
+.choix .s{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.neuf{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
+  border:1px solid color-mix(in srgb,var(--lime) 40%,transparent);border-radius:6px;padding:1px 6px;margin-left:7px}
+
+.mail-preview{background:#0B0D11;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.mail-corps{padding:20px 18px;color:#FBF7F0;font-size:13px;line-height:1.6}
+.mail-pied{padding:18px;text-align:center;border-top:1px solid rgba(251,247,240,.10)}
+.mail-pied .t{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--teal);text-transform:uppercase}
+.mail-pied .p{font-size:11px;color:rgba(251,247,240,.55);margin-top:10px;line-height:1.6}
+.mail-pied a{color:#E5C97D;text-decoration:underline}
+
+.note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.55}
+.note b{color:var(--text)}
+.alerte{margin:14px 0;padding:12px 13px;border-radius:12px;font-size:12.5px;line-height:1.55;
+  background:color-mix(in srgb,var(--coral) 5%,transparent);
+  border:1px solid color-mix(in srgb,var(--coral) 30%,transparent)}
+.alerte b{color:var(--coral)}
+
+.page-desab{text-align:center;padding:34px 18px;background:var(--surface);border:1px solid var(--border);border-radius:16px}
+.page-desab .big{font-family:Anton;font-size:26px;text-transform:uppercase;margin:14px 0 8px;line-height:1.1}
+.btn{display:inline-block;margin-top:16px;padding:12px 18px;border-radius:11px;min-height:44px;
+  border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="avert"><b>MAQUETTE</b> — rien n'est branché. Les adresses sont <b>inventées</b>.</div>
+
+<div class="wrap">
+  <div class="onglets" role="tablist">
+    <button data-go="a" aria-current="true">1 · Les inscrits</button>
+    <button data-go="b">2 · À qui j'envoie</button>
+    <button data-go="c">3 · Le pied du mail</button>
+    <button data-go="d">4 · Se désabonner</button>
+  </div>
+
+  <!-- ═══ 1 ═══ -->
+  <section class="ecran on" id="a">
+    <h1>Les inscrits<br>du site club</h1>
+    <p class="sub">Ceux qui ont laissé leur adresse en bas du site
+      <b style="color:var(--text)">labase-nutrition.com</b>. Ils ne sont ni clients ni distributeurs :
+      c'est une liste à part.</p>
+
+    <div class="kpis">
+      <div class="kpi"><div class="l">Inscrits</div><div class="v" id="n-actifs"></div><div class="d">reçoivent la newsletter</div></div>
+      <div class="kpi"><div class="l">Désabonnés</div><div class="v" id="n-off"></div><div class="d">ne reçoivent plus rien</div></div>
+    </div>
+    <p class="note" style="margin-bottom:18px">Aujourd'hui la table est <b>vide</b> — le site vient d'ouvrir.
+      Ce que tu vois ici est un exemple.</p>
+
+    <div class="card">
+      <div class="thead"><div class="c1">Adresse</div><div style="width:96px;text-align:right">État</div></div>
+      <div id="liste"></div>
+    </div>
+    <p class="note">Rien d'autre n'est stocké : <b>ni nom, ni téléphone</b>. Juste l'adresse, la date et
+      la case cochée — c'est ce qui prouve le consentement en cas de contrôle.</p>
+  </section>
+
+  <!-- ═══ 2 ═══ -->
+  <section class="ecran" id="b">
+    <h1>À qui j'envoie</h1>
+    <p class="sub">Le choix existe déjà dans l'éditeur de newsletter. Il y gagne une ligne.</p>
+
+    <div class="choix" aria-checked="false"><span class="radio"></span><span>
+      <span class="t">Tous les clients</span>
+      <span class="s">Les fiches clients qui ont un e-mail.</span></span></div>
+
+    <div class="choix" aria-checked="false"><span class="radio"></span><span>
+      <span class="t">Tous les distributeurs</span>
+      <span class="s">L'équipe active.</span></span></div>
+
+    <div class="choix" aria-checked="false"><span class="radio"></span><span>
+      <span class="t">Clients + distributeurs</span>
+      <span class="s">Les deux d'un coup.</span></span></div>
+
+    <div class="choix" aria-checked="false"><span class="radio"></span><span>
+      <span class="t">Leads du tunnel colis</span>
+      <span class="s">Jamais inclus dans « tous ».</span></span></div>
+
+    <div class="choix" aria-checked="true"><span class="radio"></span><span>
+      <span class="t">Inscrits du site club<span class="neuf">nouveau</span></span>
+      <span class="s">Ceux de l'écran 1. Eux non plus ne sont jamais inclus dans « tous » :
+        ils se sont inscrits pour la newsletter du club, pas pour recevoir tes messages coach.</span></span></div>
+
+    <div class="alerte">Aujourd'hui, quelqu'un qui s'inscrit sur le site club <b>ne reçoit jamais rien</b> :
+      son adresse est bien enregistrée, mais l'envoi ne regarde pas cette liste. C'est ça qu'on branche.</div>
+  </section>
+
+  <!-- ═══ 3 ═══ -->
+  <section class="ecran" id="c">
+    <h1>Le pied du mail</h1>
+    <p class="sub">Ce que voit la personne, tout en bas de chaque newsletter.</p>
+
+    <div class="mail-preview">
+      <div class="mail-corps" style="color:rgba(251,247,240,.55);font-size:12px">…fin de la newsletter…</div>
+      <div class="mail-pied">
+        <div class="t">La Base 360 · News</div>
+        <div class="p">
+          Tu reçois cet e-mail parce que tu t'es inscrit·e sur le site du Breakfast Club.<br>
+          <a href="#">Se désabonner</a> &nbsp;·&nbsp; <a href="#">Mentions légales</a>
+        </div>
+      </div>
+    </div>
+
+    <p class="note"><b>Le lien manque aujourd'hui</b> alors que ton formulaire promet
+      « désinscription en un clic ». Le gabarit du mail sait déjà l'afficher — personne ne lui
+      donne l'adresse.</p>
+
+    <div class="alerte">Ce n'est pas qu'une question de loi. Sans porte de sortie, les gens cliquent
+      « spam » au lieu de se désabonner — et <b>Gmail se met à traiter tout le domaine comme du spam</b>,
+      y compris tes e-mails de rendez-vous, qui partent du même endroit.</div>
+    <p class="note">On ajoute aussi l'en-tête <b>List-Unsubscribe</b> : c'est le bouton
+      « Se désabonner » que Gmail affiche lui-même en haut du message. Le mécanisme existe déjà
+      pour les Campagnes — on le réutilise tel quel.</p>
+  </section>
+
+  <!-- ═══ 4 ═══ -->
+  <section class="ecran" id="d">
+    <h1>Se désabonner</h1>
+    <p class="sub">La page qui s'ouvre au clic. Un clic, c'est fini — aucune confirmation à donner,
+      aucun compte à créer.</p>
+
+    <div class="page-desab">
+      <div style="font-size:34px">✓</div>
+      <div class="big">C'est fait</div>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:0">
+        Tu ne recevras plus la newsletter du Breakfast&nbsp;Club.<br>
+        Ça prend effet tout de suite.
+      </p>
+      <button class="btn">Je me suis trompé·e, me réinscrire</button>
+    </div>
+
+    <p class="note">L'adresse rejoint la <b>liste de suppression commune</b> — celle qui sert déjà
+      aux Campagnes. Se désabonner une fois vaut donc pour tout : newsletter comme campagnes,
+      sans qu'on ait à y penser à chaque envoi.</p>
+    <p class="note">⚠️ Les e-mails de <b>rendez-vous</b> ne sont pas concernés : ce n'est pas de la
+      publicité, c'est le service. Un client désabonné de la newsletter continue d'être prévenu
+      de son RDV.</p>
+  </section>
+</div>
+
+<script>
+/* Exemples — clairement faux, juste pour juger la mise en page. */
+const GENS = [
+  { m:"marie.dupont@gmail.com",     d:"14/08", off:false },
+  { m:"j.bertrand@orange.fr",       d:"13/08", off:false },
+  { m:"sophie.l@outlook.fr",        d:"13/08", off:false },
+  { m:"contact@salle-verdun.fr",    d:"12/08", off:false },
+  { m:"karim.b@free.fr",            d:"11/08", off:true  },
+];
+
+document.getElementById('liste').innerHTML = GENS.map(g => `
+  <div class="row">
+    <div class="c1">
+      <div class="mail">${g.m}</div>
+      <div class="meta">inscrit le ${g.d}</div>
+    </div>
+    <span class="pill ${g.off ? 'off' : 'ok'}">${g.off ? 'désabonné' : 'inscrit'}</span>
+  </div>`).join('');
+
+/* Les compteurs sont CALCULÉS : une maquette qui annonce un chiffre faux
+   au-dessus de sa propre liste décrédibilise tout le reste. */
+document.getElementById('n-actifs').textContent = GENS.filter(g => !g.off).length;
+document.getElementById('n-off').textContent    = GENS.filter(g =>  g.off).length;
+
+document.querySelectorAll('.onglets button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.onglets button').forEach(x => x.setAttribute('aria-current', String(x === b)));
+  document.querySelectorAll('.ecran').forEach(s => s.classList.toggle('on', s.id === b.dataset.go));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+</script>
+</body>
+</html>

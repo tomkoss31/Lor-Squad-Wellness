@@ -20,9 +20,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { useToast } from "../context/ToastContext";
+import { InscritsSiteClub } from "../components/newsletter/InscritsSiteClub";
 
 type NewsletterStatus = "draft" | "scheduled" | "sent" | "archived";
-type NewsletterAudience = "clients" | "distri" | "all";
+type NewsletterAudience = "clients" | "distri" | "all" | "leads_colis" | "subscribers_club";
 
 interface NewsletterBrief {
   key: string;
@@ -281,6 +282,10 @@ export function AdminNewslettersPage() {
           ➕ Nouvelle newsletter
         </button>
       </div>
+
+      {/* Qui s'est abonné depuis le site club — une liste qui n'apparaissait
+          nulle part, alors qu'elle décide de l'audience « Site club ». */}
+      <InscritsSiteClub />
 
       {/* ─── Filtres ────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
@@ -762,6 +767,10 @@ const AUDIENCE_BADGES: Record<NewsletterAudience, { label: string; bg: string; f
   all: { label: "TOUS", bg: "rgba(167,139,250,0.16)", fg: "var(--ls-purple)" },
   clients: { label: "CLIENTS", bg: "rgba(45,212,191,0.16)", fg: "var(--ls-teal)" },
   distri: { label: "DISTRI", bg: "rgba(201,168,76,0.16)", fg: "var(--ls-teal)" },
+  // Les deux audiences opt-in, jamais incluses dans « tous ». Corail : ce sont
+  // des gens qui ne sont ni clients ni distri — un envoi vers eux se décide.
+  leads_colis: { label: "LEADS COLIS", bg: "color-mix(in srgb, var(--ls-coral) 16%, transparent)", fg: "var(--ls-coral)" },
+  subscribers_club: { label: "SITE CLUB", bg: "color-mix(in srgb, var(--ls-coral) 16%, transparent)", fg: "var(--ls-coral)" },
 };
 
 const labelStyle: React.CSSProperties = {
