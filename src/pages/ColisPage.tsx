@@ -20,6 +20,7 @@ import { cloneElement, isValidElement, useEffect, useId, useMemo, useState, type
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 
+import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 /** Slug du compte par défaut pour cette campagne (décision Thomas 2026-07-08).
  *  Si le slug réel de Mélanie diffère (homonyme, pseudo), changer cette seule
  *  constante suffit — rien d'autre n'en dépend en dur. */
@@ -60,6 +61,8 @@ const TOTAL_STEPS = 6;
 export function ColisPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  // Clé courte et stable par étape — un libellé se réécrit, une clé non.
+  useEtapeTunnel("colis", `etape ${step + 1}`, step);
   const [energie, setEnergie] = useState<Energie | null>(null);
   const [sommeil, setSommeil] = useState<Sommeil | null>(null);
   const [objectif, setObjectif] = useState<Objectif | null>(null);

@@ -29,6 +29,19 @@ describe("les deux listes de chemins", () => {
   });
 });
 
+describe("les tunnels connus de l'edge", () => {
+  it("sont exactement ceux que les pages instrumentent", () => {
+    // Une page qui pose un tunnel absent de cette liste serait jetee EN
+    // SILENCE par l'edge : l'entonnoir resterait vide sans explication.
+    const bloc = edgeSource.match(/const TUNNELS = \[([^\]]*)\]/);
+    expect(bloc, "bloc TUNNELS introuvable dans l'edge").toBeTruthy();
+    const tunnelsEdge = [...bloc![1].matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort();
+    expect(tunnelsEdge).toEqual(
+      ["bilan-en-ligne", "colis", "rejoindre-equipe", "reserver-club"],
+    );
+  });
+});
+
 describe("motifDe", () => {
   it("range une page publique sous son motif", () => {
     expect(motifDe("/club/le-rituel")).toBe("/club/le-rituel");

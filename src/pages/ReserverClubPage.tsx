@@ -18,6 +18,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { useClubHead } from "./club/useClubHead";
 import "./ReserverClubPage.css";
 
+import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 type Screen = "capture" | "dispo" | "confirm";
 type Objectif = "poids" | "muscle" | "energie";
 
@@ -54,6 +55,13 @@ export function ReserverClubPage() {
   useClubHead("Réserver mon RDV découverte · The Breakfast Club");
 
   const [screen, setScreen] = useState<Screen>("capture");
+  // Les trois écrans du tunnel, dans l'ordre : c'est ici qu'on saura enfin
+  // combien de gens laissent leurs coordonnées puis renoncent au créneau.
+  useEtapeTunnel(
+    "reserver-club",
+    screen === "capture" ? "coordonnees" : screen === "dispo" ? "choix du creneau" : "confirme",
+    screen === "capture" ? 0 : screen === "dispo" ? 1 : 2,
+  );
 
   // Lead
   const [objectif, setObjectif] = useState<Objectif | "">("");

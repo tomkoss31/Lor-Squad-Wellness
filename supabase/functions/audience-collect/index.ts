@@ -55,6 +55,21 @@ export const CHEMINS = [
 ] as const;
 
 /** Le chemin rangé sous son motif, ou « /autre ». Jamais l'URL brute. */
+/**
+ * Les tunnels qui existent. Une liste blanche, pour la MÊME raison que celle
+ * des chemins : sans elle, n'importe qui peut inventer des noms de tunnel et
+ * faire grossir `audience_funnel_daily` sans limite. Le nombre de lignes
+ * possibles doit être borné par le code, jamais par la bonne volonté de
+ * l'appelant.
+ *
+ * ⚠️ Ajouter un tunnel ici ET dans la page qui l'instrumente.
+ */
+const TUNNELS = ["bilan-en-ligne", "reserver-club", "colis", "rejoindre-equipe"];
+
+/** Nombre d'étapes distinctes tolérées par tunnel et par jour. Le plus long
+ *  (le questionnaire de recrutement) en compte une quinzaine. */
+const MAX_ETAPES = 40;
+
 export function normaliser(chemin: string): string {
   const propre = (chemin || "/").split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
   const parts = propre.split("/").filter(Boolean);
@@ -66,11 +81,20 @@ export function normaliser(chemin: string): string {
   return "/autre";
 }
 
-/** Un nom de bouton : borné, sans surprise, jamais du texte libre d'un tiers. */
+/**
+ * Un nom d'étape ou de tunnel : borné, sans surprise, jamais du texte libre.
+ *
+ * ⚠️ Les ESPACES et les ACCENTS sont autorisés — ils étaient rejetés, ce qui
+ * jetait « choix du creneau » et « etape 1 » EN SILENCE : l'étape n'arrivait
+ * jamais en base et l'entonnoir restait vide sans que rien ne l'explique
+ * (constaté au premier test réel, 2026-08-14). Les espaces sont normalisés
+ * pour qu'« etape  1 » et « etape 1 » soient la même clé.
+ */
 function nettoyerCle(v: unknown): string | null {
   if (typeof v !== "string") return null;
-  const s = v.trim().slice(0, 60);
-  return /^[a-z0-9_.:-]+$/i.test(s) ? s : null;
+  const s = v.trim().replace(/\s+/g, " ").slice(0, 60);
+  if (!s) return null;
+  return /^[\p{L}\p{N} _.:>/-]+$/u.test(s) ? s : null;
 }
 
 function entier(v: unknown, max: number): number {
@@ -116,6 +140,9 @@ Deno.serve(async (req) => {
         const tunnel = nettoyerCle(e.tunnel);
         const etape = nettoyerCle(e.etape);
         if (!tunnel || !etape) continue;
+        // Tunnel inconnu = jeté. C'est ce qui borne la table.
+        if (!TUNNELS.includes(tunnel)) continue;
+        if (entier(e.rang, 999) >= MAX_ETAPES) continue;
         events.push({
           tunnel, etape, rang: entier(e.rang, 30), coach_user_id: coachId,
           n: entier(e.n, 1) || 1,
@@ -123,9 +150,19 @@ Deno.serve(async (req) => {
         continue;
       }
       if (e?.type === "clic") {
-        const cle = nettoyerCle(e.cle);
-        if (!cle) continue;
-        events.push({ type: "clic", cle, coach_user_id: coachId, vues: entier(e.n, 20) || 1 });
+        // Un clic est « depuis > vers », et les DEUX moitiés doivent être des
+        // motifs connus. Sinon un bot fabriquerait des clés à l'infini et
+        // ferait gonfler la table — le risque déjà écarté pour les chemins.
+        const brutCle = typeof e.cle === "string" ? e.cle.slice(0, 120) : "";
+        const [depuis, vers] = brutCle.split(">");
+        if (!depuis || !vers) continue;
+        const a = normaliser(depuis);
+        const b = normaliser(vers);
+        if (a === "/autre" || b === "/autre" || a === b) continue;
+        events.push({
+          type: "clic", cle: `${a}>${b}`, coach_user_id: coachId,
+          vues: entier(e.n, 20) || 1,
+        });
         continue;
       }
       if (e?.type === "page" && typeof e.cle === "string") {

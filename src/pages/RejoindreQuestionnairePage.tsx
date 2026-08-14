@@ -21,6 +21,7 @@ import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import { scoreOpportunityLead, type OpportunityScore } from "../lib/opportunityLeadScore";
 import { buildPreEvaluation } from "../lib/opportunityPreEval";
 
+import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 const C = {
   emerald: "#2DD4BF",
   cyan: "#2DD4BF",
@@ -339,6 +340,16 @@ export function RejoindreQuestionnairePage() {
   const total = visibleSteps.length;
   const step = visibleSteps[Math.min(idx, total - 1)];
   const progress = Math.round(((idx + 1) / total) * 100);
+
+  // ⚠️ Le rang vient de STEPS (la liste COMPLÈTE), pas de visibleSteps : ce
+  // questionnaire a des branches, donc la position d'une même question change
+  // d'un parcours à l'autre. Un rang variable ferait sauter les barres de
+  // l'entonnoir d'un jour sur l'autre.
+  const etapeAudience = phase === "done" ? "envoye" : step?.id ?? null;
+  const rangAudience = phase === "done"
+    ? STEPS.length
+    : Math.max(0, STEPS.findIndex((x) => x.id === step?.id));
+  useEtapeTunnel("rejoindre-equipe", etapeAudience, rangAudience);
 
   const firstName = answers.firstName?.trim() || "";
 

@@ -74,6 +74,7 @@ type Evenement =
   | { tunnel: string; etape: string; rang: number; n: number };
 
 const CLE_SESSION = "ls-audience-session";
+const CLE_ETAPES = "ls-audience-etapes";
 const DELAI_ENVOI = 15_000;
 
 let file: Evenement[] = [];
@@ -172,17 +173,49 @@ export function noterPage(chemin: string): void {
   programmer();
 }
 
-/** Un bouton nommé. Le nom doit être stable dans le temps — c'est une clé,
- *  pas un libellé : le renommer casse l'historique. */
-export function noterClic(nom: string): void {
+/**
+ * Un clic vers une autre page publique, noté « d'où > vers où ».
+ *
+ * Pourquoi pas un nom de bouton posé à la main sur chaque CTA : il faudrait y
+ * penser à chaque nouveau bouton, et un libellé réécrit casserait
+ * l'historique. Ici la clé se déduit des deux pages, qui sont déjà des motifs
+ * stables de la liste blanche.
+ *
+ * ⚠️ Les DEUX moitiés doivent être des motifs connus. Sans ça, un bot
+ * fabriquerait des clés à l'infini — exactement le risque déjà écarté pour
+ * les chemins. Le serveur revérifie de son côté.
+ */
+export function noterClic(depuis: string, vers: string): void {
   if (!estActif()) return;
-  file.push({ type: "clic", cle: nom, n: 1 });
+  const a = motifDe(depuis);
+  const b = motifDe(vers);
+  if (!a || !b || a === b) return;
+  file.push({ type: "clic", cle: `${a}>${b}`, n: 1 });
   programmer();
 }
 
-/** Une étape de tunnel atteinte — la matière du « où ça décroche ». */
+/**
+ * Une étape de tunnel atteinte — la matière du « où ça décroche ».
+ *
+ * ⚠️ DÉDUPLIQUÉ PAR SESSION, et ce n'est pas un détail : quelqu'un qui revient
+ * en arrière puis repart en avant repasserait deux fois par la même étape.
+ * Sans garde, l'étape 2 finirait avec PLUS de passages que l'étape 1 — et
+ * l'entonnoir afficherait une remontée au lieu d'une chute. On compte des
+ * PERSONNES qui sont arrivées jusque-là, pas des passages.
+ */
 export function noterEtape(tunnel: string, etape: string, rang: number): void {
   if (!estActif()) return;
+  const k = `${tunnel}:${etape}`;
+  try {
+    const brut = sessionStorage.getItem(CLE_ETAPES);
+    const vues: string[] = brut ? JSON.parse(brut) : [];
+    if (vues.includes(k)) return;
+    vues.push(k);
+    sessionStorage.setItem(CLE_ETAPES, JSON.stringify(vues.slice(-60)));
+  } catch {
+    // sessionStorage indisponible : on compte quand même. Un chiffre un peu
+    // haut vaut mieux qu'un tunnel invisible.
+  }
   file.push({ tunnel, etape, rang, n: 1 });
   programmer();
 }

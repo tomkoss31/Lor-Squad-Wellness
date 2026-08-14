@@ -31,6 +31,7 @@ import {
   publicGradText,
 } from "../components/public/PublicShell";
 
+import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 // ── Types ───────────────────────────────────────────────────────────────────
 
 type ObjectiveKey =
@@ -114,6 +115,13 @@ const INITIAL: FormState = {
 };
 
 const TOTAL_STEPS = 7;
+
+// Étapes d'audience : des clés COURTES et STABLES, pas les titres affichés.
+// Un titre se réécrit au fil des versions ; une clé qui change casse
+// l'historique de l'entonnoir. Le rang est figé.
+const ETAPES_AUDIENCE = [
+  "identite", "objectifs", "habitudes", "assiette", "sommeil", "quotidien", "fin",
+];
 // Titre court par étape (polish 2026-06-14) : oriente le visiteur, parcours plus
 // rassurant/premium qu'un simple « Étape X/7 ». Index = step - 1.
 const STEP_TITLES = [
@@ -149,6 +157,9 @@ export function BilanOnlinePage() {
   const storageKey = useMemo(() => `ls-bilan-online-v2-${slug || "none"}`, [slug]);
 
   const [step, setStep] = useState(1);
+  // « Où ça décroche » : chaque étape atteinte est comptée une fois par
+  // session (revenir en arrière ne recompte pas).
+  useEtapeTunnel("bilan-en-ligne", ETAPES_AUDIENCE[step - 1] ?? null, step - 1);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
