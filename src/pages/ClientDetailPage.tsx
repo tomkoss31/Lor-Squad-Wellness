@@ -7,11 +7,6 @@ import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBloc
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
 import { MeasurementsPanel } from "../features/measurements/MeasurementsPanel";
-import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
-import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
-import { MetabolicAgeInsightCard } from "../components/body-scan/MetabolicAgeInsightCard";
-import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -21,12 +16,13 @@ import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { KebabMenu } from "../components/ui/KebabMenu";
+import { BodyScanTab } from "../components/client-detail/BodyScanTab";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { ClientVipPitchTab } from "../components/client-detail/ClientVipPitchTab";
 import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
-import { getEffectiveAge } from "../lib/age";
+import { ClientMomentToolbar } from "../components/toolkit/ClientMomentToolbar";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -101,6 +97,8 @@ export function ClientDetailPage() {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("openAccessModal") === "true";
   });
+  // Onglet Mesures V2 : le panneau mensurations est replié par défaut.
+  const [measurementsOpen, setMeasurementsOpen] = useState(false);
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.
@@ -179,7 +177,7 @@ export function ClientDetailPage() {
               type="button"
               onClick={() => { retriedRef.current = false; void reloadClients(); }}
               style={{
-                background: "var(--ls-gold)",
+                background: "var(--ls-teal)",
                 color: "var(--ls-ink)",
                 padding: "8px 14px",
                 borderRadius: 10,
@@ -319,16 +317,16 @@ export function ClientDetailPage() {
           padding: 24px 26px;
           border-radius: 24px;
           background: var(--ls-surface);
-          border: 0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border));
-          box-shadow: 0 1px 0 0 rgba(201,168,76,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
+          border: 0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border));
+          box-shadow: 0 1px 0 0 rgba(45,212,191,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
         }
         .ls-cli-mesh {
           position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
           animation: ls-cli-mesh-shift 24s ease-in-out infinite alternate;
           background:
-            radial-gradient(circle at 0% 0%, rgba(239,159,39,0.18) 0%, transparent 45%),
+            radial-gradient(circle at 0% 0%, rgba(45,212,191,0.18) 0%, transparent 45%),
             radial-gradient(circle at 100% 100%, rgba(13,148,136,0.10) 0%, transparent 50%),
-            radial-gradient(circle at 100% 0%, rgba(186,117,23,0.14) 0%, transparent 60%);
+            radial-gradient(circle at 100% 0%, rgba(15,118,110,0.14) 0%, transparent 60%);
         }
         .ls-cli-shine {
           position: absolute; top: 0; height: 100%; width: 50%; left: 0;
@@ -348,12 +346,12 @@ export function ClientDetailPage() {
           <div className="flex items-center gap-4">
             <div style={{
               width: 64, height: 64, borderRadius: 18, flexShrink: 0,
-              background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+              background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
               color: 'white',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Syne, serif', fontSize: 22, fontWeight: 800,
               letterSpacing: '-0.02em',
-              boxShadow: '0 6px 20px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+              boxShadow: '0 6px 20px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
             }}>
               {(client.firstName?.[0] ?? "?")}{(client.lastName?.[0] ?? "")}
             </div>
@@ -364,7 +362,7 @@ export function ClientDetailPage() {
                   letterSpacing: 1.6,
                   textTransform: 'uppercase',
                   fontWeight: 700,
-                  color: 'var(--ls-gold)',
+                  color: 'var(--ls-teal)',
                   marginBottom: 4,
                   display: 'flex',
                   alignItems: 'center',
@@ -374,7 +372,7 @@ export function ClientDetailPage() {
                 <span
                   style={{
                     display: 'inline-block', width: 6, height: 6, borderRadius: 999,
-                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                    background: 'var(--ls-teal)', boxShadow: '0 0 8px rgba(45,212,191,0.50)',
                   }}
                 />
                 Fiche client · {(() => {
@@ -389,7 +387,7 @@ export function ClientDetailPage() {
                 }}>
                   <span
                     style={{
-                      background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
+                      background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -410,7 +408,7 @@ export function ClientDetailPage() {
                 />
               </div>
               <p className="text-sm text-[var(--ls-text-muted)]" style={{ margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
-                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-semibold text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
+                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-semibold text-[var(--ls-teal)] transition hover:brightness-110">{client.distributorName}</Link>
                 {' · '}{client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
@@ -427,8 +425,8 @@ export function ClientDetailPage() {
               data-tour-id="client-send-access"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
               style={{
-                background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
-                boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
+                boxShadow: '0 2px 6px rgba(45,212,191,0.25)',
                 fontFamily: 'DM Sans, sans-serif',
               }}
             >
@@ -448,7 +446,7 @@ export function ClientDetailPage() {
                 2026-06-12). Il reste dans la sidebar pour démarrer un prospect. */}
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-teal)] bg-[var(--ls-teal-bg)] px-4 py-2 text-sm font-bold text-[var(--ls-teal)] transition hover:brightness-110"
             >
               📋 Nouveau suivi
             </Link>
@@ -504,7 +502,7 @@ export function ClientDetailPage() {
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
           <div className="mt-4 flex items-center gap-3 rounded-[14px] border border-[var(--ls-border)] bg-white/[0.02] px-4 py-3">
-            <span style={{ fontSize: 11, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
+            <span style={{ fontSize: 11, color: 'var(--ls-teal)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
             <StatusBadge
               label={recommendationsContacted ? `${recommendationCount} contactées` : `${recommendationCount} à contacter`}
               tone={recommendationsContacted ? "green" : "amber"}
@@ -512,7 +510,7 @@ export function ClientDetailPage() {
             {retainedProducts.length > 0 && (
               <div className="flex flex-wrap gap-1 ml-2">
                 {retainedProducts.slice(0, 3).map((p, idx) => (
-                  <span key={idx} className="rounded-full bg-[rgba(201,168,76,0.08)] px-2.5 py-0.5 text-[10px] text-[#C9A84C]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
+                  <span key={idx} className="rounded-full bg-[rgba(45,212,191,0.08)] px-2.5 py-0.5 text-[10px] text-[var(--ls-teal)]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
                 ))}
                 {retainedProducts.length > 3 && <span className="text-[10px] text-[var(--ls-text-hint)]">+{retainedProducts.length - 3}</span>}
               </div>
@@ -521,15 +519,19 @@ export function ClientDetailPage() {
         )}
       </div>
 
+      {/* Boîte à outils « au bon moment » — 1 tap vers le bon script, avec le
+          contexte de ce client (chantier Boîte à outils 2026-08-06). */}
+      <ClientMomentToolbar clientId={client.id} lifecycleStatus={client.lifecycleStatus} />
+
       {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="client-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {([
-          { label: 'Vue', emoji: '🏠', color: 'var(--ls-gold)' },
+          { label: 'Vue', emoji: '🏠', color: 'var(--ls-teal)' },
           { label: 'Mesures', emoji: '📐', color: 'var(--ls-teal)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
+          { label: 'Produits', emoji: '💊', color: 'var(--ls-teal)', count: retainedProducts.length },
           { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
-          { label: 'Club VIP', emoji: '👑', color: 'var(--ls-gold)' },
+          { label: 'Club VIP', emoji: '👑', color: 'var(--ls-teal)' },
         ]).map((tab, i) => {
           const isActive = activeTab === i;
           return (
@@ -581,12 +583,20 @@ export function ClientDetailPage() {
         {/* Rapport déplacé dans le menu ⋮ du header (désengorgement 2026-06-12). */}
       </div>
 
-      {/* Bandeau Prochain RDV (V3) */}
-      <NextAppointmentBanner
-        nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(3)}
-        onViewDetails={() => setActiveTab(3)}
-      />
+      {/* Bandeau Prochain RDV (V3).
+          Masqué sur l'onglet Actions (2026-08-03) : celui-ci ouvre déjà sur la
+          grande carte « Prochain RDV » avec la même date — on affichait donc
+          deux fois la même information à 200 px d'écart. Le bandeau garde tout
+          son sens sur les autres onglets, où le RDV n'est visible nulle part.
+          Il sert aussi de raccourci VERS cet onglet : inutile une fois dedans. */}
+      {activeTab !== 3 && (
+        <NextAppointmentBanner
+          nextAppointmentDate={activeFollowUp?.dueDate ?? null}
+          clientEmail={client.email}
+          onPlan={() => setActiveTab(3)}
+          onViewDetails={() => setActiveTab(3)}
+        />
+      )}
       </div>
 
       {reportUrl && (
@@ -655,193 +665,50 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 1: Mesures — B1 (2026-06-13) : Body Scan + Mensurations fusionnés
-          (fiche 7→5 onglets). Body Scan en premier, Mensurations dessous (chaque
-          bloc porte son propre sous-titre). */}
+      {/* Tab 1: Mesures — V2 (2026-08-03). Le contenu est passé dans
+          BodyScanTab : l'onglet faisait 13 écrans parce qu'il empilait les 4
+          cartes de lecture en même temps. Une métrique à la fois désormais ;
+          radar et tableau repliés. Aucun calcul modifié, rien supprimé. */}
       {activeTab === 1 && (
-        <Card className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="eyebrow-label">Body Scan</p>
-              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                Évolution corporelle
-              </h2>
-            </div>
-            <Link
-              to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
-            >
-              + Nouveau scan
-            </Link>
-          </div>
-
-          {/* Dernier scan en grand */}
-          {latestBodyScan && (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { label: 'Poids', value: latestBodyScan.weight ? `${latestBodyScan.weight} kg` : '—', color: '#C9A84C' },
-                  { label: 'Masse grasse', value: latestBodyScan.bodyFat ? `${latestBodyScan.bodyFat}%` : '—', color: '#FB7185' },
-                  { label: 'Masse musc.', value: latestBodyScan.muscleMass ? `${latestBodyScan.muscleMass} kg` : '—', color: '#2DD4BF' },
-                  { label: 'Hydratation', value: latestBodyScan.hydration ? `${latestBodyScan.hydration}%` : '—', color: '#A78BFA' },
-                ].map(m => (
-                  <div key={m.label} className="rounded-[16px] bg-[var(--ls-surface2)] p-4 text-center" style={{ borderTop: `2px solid ${m.color}` }}>
-                    <div style={{ fontSize: 28, fontFamily: 'Syne, sans-serif', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.value}</div>
-                    <div className="mt-2 text-[11px] text-[var(--ls-text-hint)]">{m.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Métabolisme + viscéral */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[
-                  { label: 'Graisse viscérale', value: latestBodyScan.visceralFat ?? '—', color: '#C9A84C' },
-                  { label: 'Âge métabolique', value: latestBodyScan.metabolicAge ? `${latestBodyScan.metabolicAge} ans` : '—', color: '#A78BFA' },
-                  { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#F0C96A' },
-                ].map(m => (
-                  <div key={m.label} className="rounded-[14px] bg-[var(--ls-surface2)] p-3 text-center">
-                    <div style={{ fontSize: 20, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: m.color as string }}>{m.value}</div>
-                    <div className="mt-1 text-[10px] text-[var(--ls-text-hint)]">{m.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Radar 5 branches */}
-              <div className="flex items-center justify-center rounded-[16px] bg-[var(--ls-surface2)] p-6">
-                <BodyScanRadar
-                  size={220}
-                  metrics={[
-                    { label: 'Poids', value: latestBodyScan.weight ?? 0, max: 120, color: '#C9A84C' },
-                    { label: 'M. grasse', value: latestBodyScan.bodyFat ?? 0, max: 50, color: '#FB7185' },
-                    { label: 'Muscle', value: latestBodyScan.muscleMass ?? 0, max: 80, color: '#2DD4BF' },
-                    { label: 'Hydrat.', value: latestBodyScan.hydration ?? 0, max: 100, color: '#A78BFA' },
-                    { label: 'Viscéral', value: latestBodyScan.visceralFat ?? 0, max: 20, color: '#C9A84C' },
-                  ]}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Lectures détaillées — insights corporels */}
-          {latestBodyScan && (
-            <>
-              <BodyFatInsightCard
-                current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
-                objective={client.objective}
-                sex={client.sex}
-                age={getEffectiveAge(client)}
-                previous={
-                  previousAssessment
-                    ? {
-                        weight: previousAssessment.bodyScan?.weight ?? 0,
-                        percent: previousAssessment.bodyScan?.bodyFat ?? 0
-                      }
-                    : null
-                }
-                initial={{
-                  weight: firstAssessment.bodyScan?.weight ?? 0,
-                  percent: firstAssessment.bodyScan?.bodyFat ?? 0
-                }}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  percent: assessment.bodyScan?.bodyFat ?? 0
-                }))}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: latestBodyScan.weight, muscleMass: latestBodyScan.muscleMass }}
-                previous={
-                  previousAssessment
-                    ? {
-                        weight: previousAssessment.bodyScan?.weight ?? 0,
-                        muscleMass: previousAssessment.bodyScan?.muscleMass ?? 0
-                      }
-                    : null
-                }
-                initial={{
-                  weight: firstAssessment.bodyScan?.weight ?? 0,
-                  muscleMass: firstAssessment.bodyScan?.muscleMass ?? 0
-                }}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  muscleMass: assessment.bodyScan?.muscleMass ?? 0
-                }))}
-              />
-
-              <HydrationVisceralInsightCard
-                weight={latestBodyScan.weight}
-                hydrationPercent={latestBodyScan.hydration}
-                sex={client.sex}
-                visceralFat={latestBodyScan.visceralFat}
-                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                  date: assessment.date,
-                  weight: assessment.bodyScan?.weight ?? 0,
-                  hydrationPercent: assessment.bodyScan?.hydration ?? 0,
-                  visceralFat: assessment.bodyScan?.visceralFat ?? 0
-                }))}
-              />
-
-              {(latestBodyScan.metabolicAge ?? 0) > 0 && (
-                <MetabolicAgeInsightCard
-                  current={latestBodyScan.metabolicAge}
-                  realAge={getEffectiveAge(client)}
-                  history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                    date: assessment.date,
-                    metabolicAge: assessment.bodyScan?.metabolicAge ?? 0
-                  }))}
-                />
-              )}
-            </>
-          )}
-
-          {/* Historique scans tableau */}
-          {client.assessments.length > 1 && (
-            <div>
-              <p className="eyebrow-label mb-3">Historique des mesures</p>
-              <div className="rounded-[14px] border border-[var(--ls-border)] overflow-hidden">
-                {client.assessments.filter(a => a.bodyScan?.weight).map((a, i) => {
-                  const scan = a.bodyScan;
-                  return (
-                    <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.08)' }}>
-                      <span className="text-sm text-[var(--ls-text-muted)]">{formatDate(a.date)}</span>
-                      {scan?.weight && <span className="text-sm font-semibold text-[#C9A84C]">{scan.weight} kg</span>}
-                      {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
-                      {scan?.muscleMass && <span className="text-sm text-[#2DD4BF]">MM {scan.muscleMass} kg</span>}
-                      {scan?.hydration && <span className="text-sm text-[#A78BFA]">{scan.hydration}%</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {!latestBodyScan && (
-            <div className="rounded-[20px] bg-[var(--ls-surface2)] px-6 py-10 text-center">
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⚖️</div>
-              <p className="text-sm text-[var(--ls-text-muted)]">Aucun body scan enregistré</p>
-              <Link
-                to={`/clients/${client.id}/follow-up/new`}
-                className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
-              >
-                Démarrer un body scan
-              </Link>
-            </div>
-          )}
-        </Card>
+        <BodyScanTab
+          client={client}
+          latestBodyScan={latestBodyScan}
+          previousAssessment={previousAssessment}
+          firstAssessment={firstAssessment}
+        />
       )}
 
       {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté
-          sous l'onglet « Mesures » (activeTab === 1), juste après le Body Scan. */}
+          sous l'onglet « Mesures ». V2 (2026-08-03) : replié par défaut — on ne
+          sort le mètre ruban que certains jours, et le panneau pèse à lui seul
+          5 sous-sections. Un clic pour l'ouvrir, rien n'est retiré. */}
       {activeTab === 1 && (
-        <MeasurementsPanel
-          clientId={client.id}
-          gender={client.sex}
-          authorType="coach"
-          authorUserId={currentUser?.id ?? null}
-          otherAuthorLabel="le client"
-        />
+        <Card>
+          <button
+            type="button"
+            className="bs-fold"
+            aria-expanded={measurementsOpen}
+            onClick={() => setMeasurementsOpen((open) => !open)}
+          >
+            <span className="bs-fold-ico" aria-hidden="true">📏</span>
+            <span>
+              Mensurations au ruban
+              <span className="bs-fold-sub">Tour de taille, hanches, cuisses…</span>
+            </span>
+            <span className="bs-fold-chev" aria-hidden="true">{measurementsOpen ? "▾" : "▸"}</span>
+          </button>
+          {measurementsOpen && (
+            <div className="mt-3">
+              <MeasurementsPanel
+                clientId={client.id}
+                gender={client.sex}
+                authorType="coach"
+                authorUserId={currentUser?.id ?? null}
+                otherAuthorLabel="le client"
+              />
+            </div>
+          )}
+        </Card>
       )}
 
       {/* Historique bilans — B1 (2026-06-13) : rapatrié en bas de l'onglet Vue
@@ -851,22 +718,27 @@ export function ClientDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="eyebrow-label">Historique</p>
-              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="mt-2 text-xl font-bold text-[var(--ls-text)]" style={{ fontFamily: 'Syne, sans-serif' }}>
                 Bilans & suivis
               </h2>
             </div>
+            {/* PIÈGE CORRIGÉ (2026-08-03) : ce bouton pointait vers
+                /assessments/new, c'est-à-dire la création d'un NOUVEAU CLIENT —
+                depuis l'historique de CE client. Même bug que celui déjà retiré
+                du header (cf. commentaire plus haut). Il mène désormais au
+                suivi de ce client, comme les 4 autres CTA de la page. */}
             <Link
-              to="/assessments/new"
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+              to={`/clients/${client.id}/follow-up/new`}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[var(--ls-teal)] px-4 py-2 text-sm font-bold text-[var(--ls-teal-contrast)]"
             >
-              + Nouveau bilan
+              + Nouveau suivi
             </Link>
           </div>
 
           <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
             Décoche un bilan pour l'exclure du calcul d'évolution (Vue) — utile si
             le client reprend de zéro après une pause. Il reste visible ici. Le
-            <span className="text-[#C9A84C] font-semibold"> point de départ</span> devient
+            <span className="text-[var(--ls-teal)] font-semibold"> point de départ</span> devient
             automatiquement le plus ancien bilan coché.
           </p>
 
@@ -1047,7 +919,7 @@ export function ClientDetailPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))';
                 e.currentTarget.style.color = 'var(--ls-text)';
               }}
               onMouseLeave={(e) => {
@@ -1101,11 +973,11 @@ export function ClientDetailPage() {
                     textAlign: 'right',
                     padding: '8px 14px',
                     borderRadius: 12,
-                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)',
                   }}
                 >
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ls-gold)', fontFamily: 'Syne, serif', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ls-teal)', fontFamily: 'Syne, serif', letterSpacing: '-0.02em' }}>
                     {totalPv.toFixed(1)}<span style={{ fontSize: 11, marginLeft: 2, opacity: 0.75 }}>PV</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
@@ -1163,9 +1035,9 @@ export function ClientDetailPage() {
                           style={{
                             fontSize: 10.5, fontWeight: 700,
                             padding: '2px 8px', borderRadius: 999,
-                            background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
-                            color: 'var(--ls-gold)',
-                            border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                            background: 'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
+                            color: 'var(--ls-teal)',
+                            border: '0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)',
                           }}
                         >
                           {product.pricePublic.toFixed(2)}€
@@ -1251,8 +1123,8 @@ export function ClientDetailPage() {
                 padding: '18px 20px',
                 borderRadius: 18,
                 background: 'var(--ls-surface)',
-                border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))',
-                borderLeft: '3px solid var(--ls-gold)',
+                border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))',
+                borderLeft: '3px solid var(--ls-teal)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -1260,8 +1132,8 @@ export function ClientDetailPage() {
                   style={{
                     width: 44, height: 44, flexShrink: 0,
                     borderRadius: 12,
-                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 22,
                   }}
@@ -1269,7 +1141,7 @@ export function ClientDetailPage() {
                   ✨
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'DM Sans, sans-serif' }}>
+                  <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-teal)', fontFamily: 'DM Sans, sans-serif' }}>
                     Recommandations
                   </div>
                   <div style={{ fontFamily: 'Syne, serif', fontSize: 17, fontWeight: 700, color: 'var(--ls-text)', marginTop: 2, letterSpacing: '-0.01em' }}>
@@ -1283,9 +1155,9 @@ export function ClientDetailPage() {
                   style={{
                     fontSize: 11, fontWeight: 800, fontFamily: 'Syne, serif',
                     padding: '3px 10px', borderRadius: 999,
-                    background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
-                    color: 'var(--ls-gold)',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
+                    color: 'var(--ls-teal)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
                   }}
                 >
                   {upsells.length}
@@ -1302,13 +1174,13 @@ export function ClientDetailPage() {
                       gap: 12,
                       padding: '12px 14px',
                       borderRadius: 14,
-                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
-                      border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)',
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
+                      border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)',
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(239,159,39,0.25)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(45,212,191,0.25)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'none';
@@ -1319,10 +1191,10 @@ export function ClientDetailPage() {
                       style={{
                         width: 44, height: 44, flexShrink: 0,
                         borderRadius: 12,
-                        background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                        background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 22,
-                        boxShadow: '0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+                        boxShadow: '0 4px 10px -3px rgba(15,118,110,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
                       }}
                     >
                       {getEmoji(r.name)}
@@ -1353,7 +1225,7 @@ export function ClientDetailPage() {
           AppContext existants. */}
       {activeTab === 3 && (
         <ErrorBoundary name="ClientDetailPage/ActionsTab" fallback={(
-          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Actions.</p></Card>
+          <Card><p className="text-sm text-[var(--ls-text)]">Impossible d'afficher l'onglet Actions.</p></Card>
         )}>
           <ActionsTab
             client={client}
@@ -1369,7 +1241,7 @@ export function ClientDetailPage() {
       {/* Onglet Club VIP (VIP-2 2026-06-10 ; B1 : index 6→4) : remises + invitation. */}
       {activeTab === 4 && (
         <ErrorBoundary name="ClientDetailPage/ClientVipPitchTab" fallback={(
-          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Club VIP.</p></Card>
+          <Card><p className="text-sm text-[var(--ls-text)]">Impossible d'afficher l'onglet Club VIP.</p></Card>
         )}>
           <ClientVipPitchTab client={client} onManage={() => setActiveTab(3)} />
         </ErrorBoundary>
@@ -1479,7 +1351,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        style={{ width: '100%', padding: '12px', borderRadius: 10, border: '2px dashed var(--ls-border2)', background: 'transparent', color: 'var(--ls-gold)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        style={{ width: '100%', padding: '12px', borderRadius: 10, border: '2px dashed var(--ls-border2)', background: 'transparent', color: 'var(--ls-teal)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Ajouter un produit (upsell)
       </button>
@@ -1506,7 +1378,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)' }}>{product.name}</div>
               <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>{product.category} · {product.pv} PV</div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ls-gold)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
+            <div style={{ fontSize: 11, color: 'var(--ls-teal)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
           </button>
         ))}
         {available.length === 0 && <div style={{ fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center', padding: 12 }}>Tous les produits ont été ajoutés</div>}
@@ -1522,7 +1394,7 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
 // ─── Lifecycle UI (Chantier 2) ─────────────────────────────────────────
 const LIFECYCLE_TONE_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg: string; text: string }> = {
   teal:  { bg: "rgba(13,148,136,0.12)",  text: "var(--ls-teal)" },
-  gold:  { bg: "rgba(184,146,42,0.12)",  text: "var(--ls-gold)" },
+  gold:  { bg: "rgba(184,146,42,0.12)",  text: "var(--ls-teal)" },
   muted: { bg: "var(--ls-surface2)",     text: "var(--ls-text-muted)" },
   coral: { bg: "rgba(220,38,38,0.1)",    text: "var(--ls-coral)" },
 };
@@ -1583,8 +1455,8 @@ function FreeFollowUpBadge() {
         borderRadius: 12,
         fontSize: 11,
         fontWeight: 600,
-        background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-        color: "var(--ls-gold)",
+        background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+        color: "var(--ls-teal)",
         fontFamily: "DM Sans, sans-serif",
       }}
     >

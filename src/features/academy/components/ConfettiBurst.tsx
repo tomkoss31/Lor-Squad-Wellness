@@ -3,7 +3,7 @@
 // particules avec animations CSS keyframes (fall + rotate). Auto-cleanup
 // apres durationMs via callback onComplete.
 //
-// Couleurs La Base 360 : gold #B8922A / teal #1D9E75 / coral #D85A30 /
+// Couleurs La Base 360 : gold #0D9488 / teal #1D9E75 / coral #D85A30 /
 // purple #7F77DD / blanc creme #FAF6E8.
 
 import { useEffect, useMemo, useState } from "react";
@@ -20,11 +20,11 @@ export interface ConfettiBurstProps {
 }
 
 const PALETTE = [
-  "#B8922A", // gold
+  "#0D9488", // gold
   "#1D9E75", // teal
   "#D85A30", // coral
   "#7F77DD", // purple
-  "#EF9F27", // gold light
+  "#2DD4BF", // gold light
   "#FFFFFF", // blanc
 ];
 

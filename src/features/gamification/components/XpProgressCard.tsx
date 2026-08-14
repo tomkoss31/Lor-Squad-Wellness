@@ -220,12 +220,12 @@ export function XpProgressCard() {
   const percentInLevel = Math.min(100, Math.max(0, Math.round((xpInLevel / xpRange) * 100)));
 
   const sources = [
-    { label: "Academy", emoji: "🎓", value: data.academyXp, color: "var(--ls-gold)" },
+    { label: "Academy", emoji: "🎓", value: data.academyXp, color: "var(--ls-teal)" },
     { label: "Formation", emoji: "📚", value: data.formationXp, color: "var(--ls-teal)" },
     { label: "Bilans créés", emoji: "📋", value: data.bilansXp, color: "var(--ls-teal)" },
     { label: "RDV", emoji: "📅", value: data.rdvXp, color: "var(--ls-purple)" },
     { label: "Messages", emoji: "💬", value: data.messagesXp, color: "var(--ls-coral)" },
-    { label: "Connexions", emoji: "🔥", value: data.dailyXp, color: "var(--ls-gold)" },
+    { label: "Connexions", emoji: "🔥", value: data.dailyXp, color: "var(--ls-teal)" },
   ];
 
   return (
@@ -273,14 +273,14 @@ export function XpProgressCard() {
         </div>
         <div
           style={{
-            background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+            background: "linear-gradient(135deg, #2DD4BF, #0F766E)",
             color: "white",
             padding: "8px 16px",
             borderRadius: 10,
             fontFamily: "Syne, sans-serif",
             fontSize: 22,
             fontWeight: 700,
-            boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            boxShadow: "0 4px 12px rgba(15,118,110,0.30)",
           }}
         >
           {data.totalXp.toLocaleString("fr-FR")} XP
@@ -320,9 +320,9 @@ export function XpProgressCard() {
             style={{
               width: `${percentInLevel}%`,
               height: "100%",
-              background: "linear-gradient(90deg, #B8922A, #EF9F27)",
+              background: "linear-gradient(90deg, #0D9488, #2DD4BF)",
               transition: "width 800ms cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 0 8px rgba(239,159,39,0.45)",
+              boxShadow: "0 0 8px rgba(45,212,191,0.45)",
             }}
           />
         </div>
@@ -487,7 +487,7 @@ export function XpProgressCard() {
                         fontFamily: "Syne, sans-serif",
                         fontSize: 14,
                         fontWeight: 700,
-                        color: "var(--ls-gold)",
+                        color: "var(--ls-teal)",
                         flexShrink: 0,
                       }}
                     >
@@ -544,10 +544,10 @@ export function XpProgressCard() {
                         gap: 10,
                         padding: "6px 10px",
                         background: isCurrent
-                          ? "color-mix(in srgb, var(--ls-gold) 14%, transparent)"
+                          ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)"
                           : "var(--ls-surface2)",
                         border: isCurrent
-                          ? "0.5px solid var(--ls-gold)"
+                          ? "0.5px solid var(--ls-teal)"
                           : "0.5px solid var(--ls-border)",
                         borderRadius: 8,
                         opacity: isReached ? 1 : 0.55,
@@ -558,7 +558,7 @@ export function XpProgressCard() {
                           fontFamily: "Syne, sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
-                          color: isCurrent ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                          color: isCurrent ? "var(--ls-teal)" : "var(--ls-text-muted)",
                           width: 24,
                           flexShrink: 0,
                         }}
@@ -583,7 +583,7 @@ export function XpProgressCard() {
                                 letterSpacing: 0.4,
                                 padding: "1px 6px",
                                 borderRadius: 4,
-                                background: "var(--ls-gold)",
+                                background: "var(--ls-teal)",
                                 color: "var(--ls-bg)",
                               }}
                             >

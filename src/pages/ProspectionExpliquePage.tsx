@@ -33,7 +33,7 @@ const SECTIONS: Section[] = [
       "Plus tu es détendu, plus tu attires — la pression repousse, le détachement attire",
       "Le silence n'est pas un rejet personnel : 80 % des M1 n'auront pas de réponse, et c'est OK",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
   {
     emoji: "📚",
@@ -90,7 +90,7 @@ const SECTIONS: Section[] = [
       "5 min : répondre aux conversations en cours (§4 arbres M2/M3)",
       "Résultat 1 mois : 400-600 M1, 60-100 conversations, 10-20 RDV, 2-5 clients",
     ],
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
   },
   {
     emoji: "⚠️",
@@ -183,7 +183,7 @@ export function ProspectionExpliquePage() {
           position: absolute;
           left: 4px;
           top: 0;
-          color: var(--ls-gold);
+          color: var(--ls-teal);
           font-size: 12px;
         }
       `}</style>
@@ -212,8 +212,8 @@ const backBtn: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   borderRadius: 18,
   padding: "24px 20px",
 };
@@ -224,7 +224,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -311,7 +311,7 @@ const btnPrimary: React.CSSProperties = {
   padding: "12px 22px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "Syne, sans-serif",
   fontSize: 14,

@@ -54,6 +54,6 @@ export const PROFILE_LABEL: Record<LeadProfile, string> = {
 
 export const TEMPERATURE_META: Record<LeadTemperature, { label: string; emoji: string; color: string }> = {
   hot: { label: "Chaud", emoji: "🔥", color: "#E2484A" },
-  warm: { label: "Tiède", emoji: "🟡", color: "#BA7517" },
+  warm: { label: "Tiède", emoji: "🟡", color: "#0F766E" },
   cold: { label: "Froid", emoji: "❄️", color: "#3F6DB0" },
 };

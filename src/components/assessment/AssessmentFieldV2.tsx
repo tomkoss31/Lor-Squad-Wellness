@@ -18,7 +18,7 @@
 // onChange, type, prefilled). Nouveaux : icon, helper, accentLabel.
 // =============================================================================
 
-import { useState, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties, type InputHTMLAttributes } from "react";
 
 export interface AssessmentFieldV2Props {
   label: string;
@@ -38,7 +38,24 @@ export interface AssessmentFieldV2Props {
   required?: boolean;
   /** Si true, le label est plus prominent (font-weight 600). */
   prominent?: boolean;
+  /** Clavier iOS. Déduit du `type` si absent (cf. KEYBOARD_BY_TYPE). */
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  /** Remplissage automatique iOS ("given-name", "tel", "email", "address-level2"…). */
+  autoComplete?: string;
+  /** Libellé de la touche entrée du clavier iOS ("next", "done"…). */
+  enterKeyHint?: InputHTMLAttributes<HTMLInputElement>["enterKeyHint"];
+  /** Nom du champ — utile au remplissage automatique et aux gestionnaires de mots de passe. */
+  name?: string;
 }
+
+// Clavier iOS par défaut selon le type. Sans ça, un `type="number"` ouvre un
+// clavier avec de la ponctuation au lieu du pavé numérique.
+const KEYBOARD_BY_TYPE: Record<string, InputHTMLAttributes<HTMLInputElement>["inputMode"]> = {
+  number: "decimal",
+  tel: "tel",
+  email: "email",
+  url: "url",
+};
 
 export function AssessmentFieldV2({
   label,
@@ -53,8 +70,18 @@ export function AssessmentFieldV2({
   placeholder,
   required = false,
   prominent = false,
+  inputMode,
+  autoComplete,
+  enterKeyHint,
+  name,
 }: AssessmentFieldV2Props) {
   const [focused, setFocused] = useState(false);
+  // Audit mobile 2026-08-10 : le <label> n'avait pas de htmlFor et l'<input>
+  // pas d'id. Résultat sur iPhone — VoiceOver annonçait « champ de texte » sans
+  // nom (18 fois sur la seule étape 1 du bilan), et taper le libellé ne mettait
+  // pas le focus : une cible de toute la largeur de l'écran, perdue.
+  const inputId = useId();
+  const helperId = `${inputId}-aide`;
 
   // Style input : combine .ls-input default + variantes (prefilled / focus boost)
   const inputStyle: CSSProperties = prefilled
@@ -98,6 +125,7 @@ export function AssessmentFieldV2({
           </span>
         ) : null}
         <label
+          htmlFor={inputId}
           style={{
             fontFamily: "DM Sans, sans-serif",
             fontSize: 13,
@@ -109,7 +137,7 @@ export function AssessmentFieldV2({
         >
           {label}
           {required ? (
-            <span style={{ color: "var(--ls-gold)", marginLeft: 4 }} aria-hidden="true">
+            <span style={{ color: "var(--ls-teal)", marginLeft: 4 }} aria-hidden="true">
               *
             </span>
           ) : null}
@@ -117,7 +145,7 @@ export function AssessmentFieldV2({
         {prefilled ? (
           <span
             style={{
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
@@ -133,13 +161,23 @@ export function AssessmentFieldV2({
         ) : null}
       </div>
 
-      {/* Input — utilise .ls-input default (focus halo gere par globals.css) */}
+      {/* Input — utilise .ls-input default (focus halo gere par globals.css).
+          Pas de `required` sur l'input : l'astérisque du libellé est purement
+          décorative, seuls prénom/nom/objectif sont réellement exigés par
+          goToNextStep. Le poser ici mettrait le champ en `:invalid` pour une
+          contrainte que l'app n'applique pas. À trancher au lot « copie ». */}
       <input
+        id={inputId}
+        name={name}
         type={type}
         step={step}
         value={value}
         disabled={disabled}
         placeholder={placeholder}
+        inputMode={inputMode ?? KEYBOARD_BY_TYPE[type]}
+        autoComplete={autoComplete}
+        enterKeyHint={enterKeyHint}
+        aria-describedby={helper ? helperId : undefined}
         onChange={(event) => onChange(event.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -149,6 +187,7 @@ export function AssessmentFieldV2({
       {/* Helper text */}
       {helper ? (
         <p
+          id={helperId}
           style={{
             fontFamily: "DM Sans, sans-serif",
             fontSize: 11.5,

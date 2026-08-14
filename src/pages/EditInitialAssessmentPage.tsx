@@ -566,7 +566,7 @@ export function EditInitialAssessmentPage() {
                   maxLength={50}
                 />
                 {clientFirstName.trim() !== (targetClient.firstName ?? "") ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.firstName}
                   </p>
                 ) : null}
@@ -580,7 +580,7 @@ export function EditInitialAssessmentPage() {
                   maxLength={50}
                 />
                 {clientLastName.trim() !== (targetClient.lastName ?? "") ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.lastName}
                   </p>
                 ) : null}
@@ -595,7 +595,7 @@ export function EditInitialAssessmentPage() {
                   <option value="male">Homme</option>
                 </select>
                 {clientSex !== targetClient.sex ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.sex === "female" ? "Femme" : "Homme"}
                   </p>
                 ) : null}
@@ -614,7 +614,7 @@ export function EditInitialAssessmentPage() {
                   </p>
                 ) : null}
                 {clientBirthDate !== (targetClient.birthDate ?? "") ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.birthDate ? formatBirthDate(targetClient.birthDate) : "non renseignée"}
                   </p>
                 ) : null}
@@ -637,7 +637,7 @@ export function EditInitialAssessmentPage() {
                     Calculé depuis la date de naissance.
                   </p>
                 ) : clientAge !== (targetClient.age ?? 0) ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.age ?? 0}
                   </p>
                 ) : null}
@@ -653,7 +653,7 @@ export function EditInitialAssessmentPage() {
                   onChange={(e) => setClientHeight(Number(e.target.value))}
                 />
                 {clientHeight !== (targetClient.height ?? 0) ? (
-                  <p className="text-[11px] text-[var(--ls-gold)]">
+                  <p className="text-[11px] text-[var(--ls-teal)]">
                     Modifié · était {targetClient.height ?? 0} cm · IMC recalculé en live
                   </p>
                 ) : null}
@@ -745,7 +745,7 @@ export function EditInitialAssessmentPage() {
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <TextField label="Legumes chaque jour" value={questionnaire.vegetablesDaily} onChange={(value) => updateQuestionnaire("vegetablesDaily", value)} />
-              <TextField label="Proteines a chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
+              <TextField label="Protéines à chaque repas" value={questionnaire.proteinEachMeal} onChange={(value) => updateQuestionnaire("proteinEachMeal", value)} />
               <TextField label="Produits sucres" value={questionnaire.sugaryProducts} onChange={(value) => updateQuestionnaire("sugaryProducts", value)} />
               <TextField label="Frequence du grignotage" value={questionnaire.snackingFrequency} onChange={(value) => updateQuestionnaire("snackingFrequency", value)} />
               {/* Multi depuis 2026-07-16 : édités ici en liste séparée par des

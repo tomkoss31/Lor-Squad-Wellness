@@ -201,7 +201,7 @@ export function ClientVipSandbox({
                 fontSize: 10,
                 letterSpacing: 2,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
               }}
             >
@@ -288,7 +288,7 @@ export function ClientVipSandbox({
                 width: "100%",
                 marginTop: 16,
                 padding: "14px 18px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 12,
@@ -296,7 +296,7 @@ export function ClientVipSandbox({
                 fontWeight: 700,
                 fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
-                boxShadow: "0 6px 18px rgba(186,117,23,0.40)",
+                boxShadow: "0 6px 18px rgba(15,118,110,0.40)",
               }}
             >
               Lister mes futurs filleuls →
@@ -386,7 +386,7 @@ export function ClientVipSandbox({
                   background:
                     submitting || prospects.every((p) => !p.firstName.trim())
                       ? "rgba(184,146,42,0.30)"
-                      : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                      : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   color: "white",
                   border: "none",
                   borderRadius: 10,
@@ -461,7 +461,7 @@ export function ClientVipSandbox({
               onClick={onClose}
               style={{
                 padding: "12px 24px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 12,
@@ -469,7 +469,7 @@ export function ClientVipSandbox({
                 fontWeight: 700,
                 fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+                boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
               }}
             >
               Fermer
@@ -516,7 +516,7 @@ function SliderRow({
             fontFamily: "Syne, sans-serif",
             fontSize: 18,
             fontWeight: 700,
-            color: "#B8922A",
+            color: "#0D9488",
           }}
         >
           {value} <span style={{ fontSize: 11, color: "#888" }}>{suffix}</span>
@@ -531,7 +531,7 @@ function SliderRow({
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
           width: "100%",
-          accentColor: "#B8922A",
+          accentColor: "#0D9488",
           cursor: "pointer",
         }}
       />
@@ -715,7 +715,7 @@ function ProspectInput({
             height: 26,
             borderRadius: "50%",
             background: "rgba(184,146,42,0.15)",
-            color: "#B8922A",
+            color: "#0D9488",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",

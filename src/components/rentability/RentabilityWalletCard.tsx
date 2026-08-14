@@ -178,7 +178,7 @@ export function RentabilityWalletCard({
                 position: "absolute",
                 inset: -40,
                 background:
-                  "conic-gradient(from 0deg, #0d9488, #5b21b6, #ef4444, #b8922a, #0d9488)",
+                  "conic-gradient(from 0deg, #0d9488, #5b21b6, #ef4444, #0d9488, #0d9488)",
                 opacity: 0.32,
                 filter: "blur(60px)",
                 animation: "lr-wc-spin 14s linear infinite",
@@ -244,7 +244,7 @@ export function RentabilityWalletCard({
                       gap: 6,
                     }}
                   >
-                    <span aria-hidden="true" style={{ color: "#C9A84C" }}>◆</span>
+                    <span aria-hidden="true" style={{ color: "var(--ls-teal)" }}>◆</span>
                     La Base 360 · Rentabilité
                   </div>
                   <div
@@ -399,9 +399,9 @@ export function RentabilityWalletCard({
                       height: 26,
                       padding: "0 10px",
                       borderRadius: 999,
-                      background: "rgba(201,168,76,.14)",
+                      background: "rgba(var(--ls-teal-rgb),.14)",
                       color: "#e2c878",
-                      border: "1px solid rgba(201,168,76,.3)",
+                      border: "1px solid rgba(var(--ls-teal-rgb),.3)",
                       fontFamily: "DM Sans, sans-serif",
                       fontSize: 12,
                       fontWeight: 600,

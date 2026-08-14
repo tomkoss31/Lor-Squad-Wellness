@@ -18,8 +18,12 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro, formatEuroCompact } from "../lib/format";
 import { ProductQuickView } from "../components/boutique/ProductQuickView";
 import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
+import { BoutiqueBeforeAfter } from "../components/boutique/BoutiqueBeforeAfter";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import { BoutiqueBundles } from "../components/boutique/BoutiqueBundles";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { setMetaDescription } from "../components/boutique/seo";
+import { scrollToSection } from "../components/boutique/nav";
 import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { WelcomePopup } from "../components/boutique/WelcomePopup";
@@ -191,14 +195,25 @@ export function BoutiquePage() {
   const distriFirstName = boutique?.first_name ?? null;
   useEffect(() => {
     document.title = `${shopName} · Skincare coréen`;
-  }, [shopName]);
+    // Sans ça, Google et les partages reprennent la description de La Base 360
+    // (« club nutrition à Verdun ») au lieu de celle de la boutique.
+    setMetaDescription(
+      `${shopName} — la routine skincare coréenne HL Skin${distriFirstName ? ` de ${distriFirstName}` : ""} : sérum niacinamide, soins visage, corps et cheveux. Livraison offerte dès 90 €.`,
+    );
+  }, [shopName, distriFirstName]);
 
   // ── Reveal on scroll ──────────────────────────────────────────────────────
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const els = Array.from(root.querySelectorAll<HTMLElement>(".bk-reveal"));
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // ⚠️ Filet de sécurité : les CARTES dépendent désormais de .bk-in sur leur
+    // section (cascade au scroll). Si l'observateur manque, tout le contenu
+    // resterait invisible — on révèle donc immédiatement dans ce cas.
+    if (
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       els.forEach((el) => el.classList.add("bk-in"));
       return;
     }
@@ -215,6 +230,28 @@ export function BoutiquePage() {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [loading, products.length]);
+
+  // ── Header compacté au scroll ─────────────────────────────────────────────
+  // Sans ça la barre restait identique du haut jusqu'en bas : rien ne signalait
+  // qu'on avait quitté le hero (audit visuel 2026-08-11).
+  useEffect(() => {
+    const bar = rootRef.current?.querySelector(".bk-bar");
+    if (!bar) return;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return; // 1 mesure par frame max
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        bar.classList.toggle("bk-stuck", window.scrollY > 28);
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [loading]);
 
   // ── Canvas « dewy » ambiant du hero ───────────────────────────────────────
   useEffect(() => {
@@ -338,8 +375,9 @@ export function BoutiquePage() {
     return { youtube: false, url: u };
   }, [boutique?.hero_video_url]);
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  // scrollIntoView passait le titre sous l'en-tête collant (et restait sans
+  // effet dans certains navigateurs) → helper avec décalage d'en-tête.
+  const scrollTo = (id: string) => scrollToSection(id);
 
   const addToCart = (id: string) => {
     add(id);
@@ -387,6 +425,9 @@ export function BoutiquePage() {
                 <a href="#bk-ingredient" onClick={(e) => (e.preventDefault(), scrollTo("bk-ingredient"))}>
                   Ingrédients
                 </a>
+                <a href="#bk-resultats" onClick={(e) => (e.preventDefault(), scrollTo("bk-resultats"))}>
+                  Résultats
+                </a>
                 <a href="#bk-affil" onClick={(e) => (e.preventDefault(), scrollTo("bk-affil"))}>
                   Affiliation
                 </a>
@@ -407,6 +448,13 @@ export function BoutiquePage() {
                   <span className="bk-cartlbl">Panier</span>
                   {count > 0 && <span className="bk-count">{count}</span>}
                 </button>
+                <BoutiqueMobileMenu
+                  coachSlug={coachSlug}
+                  shopName={shopName}
+                  aiScanUrl={boutique?.ai_scan_url}
+                  cartCount={count}
+                  onOpenCart={() => setCartOpen(true)}
+                />
               </div>
             </div>
           </header>
@@ -539,6 +587,11 @@ export function BoutiquePage() {
             </section>
           )}
 
+          {/* Preuve visuelle AVANT la gamme (audit 2026-08-11) : elle était à
+              l'écran 9,9 sur 16,4, soit 7 écrans après le 1er bouton « Ajouter ».
+              La visiteuse décidait — ou partait — avant d'avoir vu la preuve. */}
+          <BoutiqueBeforeAfter />
+
           {/* Gamme */}
           <section id="bk-gamme" className="bk-wrap bk-sec bk-reveal">
             <div className="bk-sec-head">
@@ -546,9 +599,12 @@ export function BoutiquePage() {
                 <div className="bk-eyebrow" style={{ marginBottom: 12 }}>
                   Les plus aimés
                 </div>
-                <h2>Six essentiels, zéro superflu.</h2>
+                <h2>L'essentiel, zéro superflu.</h2>
               </div>
-              <p>La sélection resserrée qui compose l'essentiel des routines HL Skin.</p>
+              <p>
+                {catalog.length} soins sélectionnés — visage, corps et cheveux — pour composer ta
+                routine sans te perdre.
+              </p>
             </div>
 
             {availableConcerns.length > 0 && (
@@ -713,8 +769,14 @@ export function BoutiquePage() {
             </div>
           </section>
 
-          {/* Avis clients réels (catégorie skin) + formulaire */}
-          <BoutiqueReviews coachSlug={coachSlug} coachUserId={boutique?.user_id} />
+          {/* Avis clients réels (catégorie skin) + formulaire.
+              hideWhenEmpty : l'état vide juste après 11 avant/après annonçait que
+              personne n'avait jamais rien dit — il annulait la preuve. */}
+          <BoutiqueReviews
+            coachSlug={coachSlug}
+            coachUserId={boutique?.user_id}
+            hideWhenEmpty
+          />
 
           {/* Affiliation (teaser) */}
           <section id="bk-affil" className="bk-wrap bk-sec bk-reveal">

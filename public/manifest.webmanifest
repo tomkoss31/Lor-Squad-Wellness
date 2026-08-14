@@ -5,8 +5,8 @@
   "start_url": "/login",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#10B981",
+  "background_color": "#162624",
+  "theme_color": "#162624",
   "icons": [
     {
       "src": "/brand/labase360/pwa-192.png",

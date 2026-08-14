@@ -122,7 +122,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
             value={`${view.daysStuckOnCurrent} jours`}
             background="#FAEEDA"
             border="#EFD9A1"
-            accentColor="#854F0B"
+            accentColor="#0F766E"
           />
         ) : view.isCompleted ? (
           <StatCard
@@ -137,7 +137,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
         ) : !view.hasStarted ? (
           <StatCard label="Statut" value="Pas commencé" accentColor="#888780" />
         ) : (
-          <StatCard label="En cours" value={view.currentSection.shortLabel} accentColor="#B8922A" />
+          <StatCard label="En cours" value={view.currentSection.shortLabel} accentColor="#0D9488" />
         )}
       </div>
 
@@ -154,7 +154,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
                   background: "#FAEEDA",
                   padding: 14,
                   borderRadius: 10,
-                  border: "1.5px solid #BA7517",
+                  border: "1.5px solid #0F766E",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -163,7 +163,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#2C2C2A" }}>
                       {section.title}
                     </p>
-                    <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "#854F0B" }}>
+                    <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "#0F766E" }}>
                       En cours
                     </p>
                   </div>
@@ -182,12 +182,12 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
-                    fill="#BA7517"
+                    fill="#0F766E"
                     style={{ flexShrink: 0, marginTop: 1 }}
                   >
                     <path d="M9 21h6v-1H9v1zm3-19a7 7 0 0 0-4 12.74V18h8v-3.26A7 7 0 0 0 12 2zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
                   </svg>
-                  <p style={{ margin: 0, fontSize: 12, color: "#5C3A05", lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: "#0B3B36", lineHeight: 1.5 }}>
                     {firstName} semble bloqué·e ici depuis {view.daysStuckOnCurrent} jours.
                     C&apos;est peut-être le moment d&apos;un message ou d&apos;un appel.
                   </p>
@@ -230,7 +230,7 @@ function StatCard({
       <p
         style={{
           fontSize: 11,
-          color: accentColor === "#854F0B" ? "#854F0B" : "#6B6B62",
+          color: accentColor === "#0F766E" ? "#0F766E" : "#6B6B62",
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           margin: 0,
@@ -330,7 +330,7 @@ function SectionBadge({ state, index }: { state: "done" | "current" | "todo"; in
           width: 28,
           height: 28,
           borderRadius: "50%",
-          background: "#BA7517",
+          background: "#0F766E",
           color: "white",
           display: "flex",
           alignItems: "center",

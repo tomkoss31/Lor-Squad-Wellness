@@ -1,76 +1,20 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
-import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
-import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
-import { ClientChatTab } from '../components/client-app/ClientChatTab'
-import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
-import { ClientXpToast } from '../features/client-xp/ClientXpToast'
-import { recordClientXp } from '../features/client-xp/useClientXp'
-import { ClientFaqChatbot } from '../components/client-app/ClientFaqChatbot'
 import { ClientOnboardingTour } from '../components/client-app/ClientOnboardingTour'
 import { ClientBaselineStep } from '../components/client-app/ClientBaselineStep'
-import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
-import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
-import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
-import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
-import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
-import { ClientConseilsTab } from '../components/client-app/ClientConseilsTab'
-import { ClubVipPresentation } from '../components/client-app/ClubVipPresentation'
-import { ClientAppEvolutionHero } from '../components/client-app/ClientAppEvolutionHero'
 import { calculateAge } from '../lib/age'
-import { ClientAppKeyMetricsGrid } from '../components/client-app/ClientAppKeyMetricsGrid'
-import { ClientAppWeightChart } from '../components/client-app/ClientAppWeightChart'
-import { ClientAppMotivationMessage } from '../components/client-app/ClientAppMotivationMessage'
-import { ClientAppMeasurementsBlock } from '../components/client-app/ClientAppMeasurementsBlock'
-import { getDaysUntilRdv, type Assessment, type Measurement } from '../lib/clientAppData'
-import type { BreakfastAnalysis } from '../types/domain'
-import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
-import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
-// Refonte identité PWA v2 (chantier 2026-07) — montée derrière le flag `?v2=1`.
+// Identité PWA v2 (chantier 2026-07) — seule UI client depuis le ménage 2026-08-05.
 import { PwaClientApp } from '../features/client-pwa/PwaClientApp'
 import { BbcClientApp } from '../features/bbc/BbcClientApp'
 import '../styles/pwa2.css'
 
-// Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
-// alourdir le bundle initial de ClientAppPage.
-const OnboardingTutorial = lazy(() =>
-  import('../features/onboarding/OnboardingTutorial').then((m) => ({
-    default: m.OnboardingTutorial,
-  })),
-)
 
 // GOOGLE_MAPS_LA_BASE conservé en const pour future reuse si besoin
 void 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z';
 
-// Hotfix client-login (2026-04-24) : salutation dynamique — distincte de
-// celle de /co-pilote côté coach car le public et le ton diffèrent.
-function clientGreeting(d: Date): string {
-  const h = d.getHours()
-  if (h >= 5 && h < 12) return 'Bonjour'
-  if (h >= 12 && h < 18) return 'Bon après-midi'
-  if (h >= 18 && h < 23) return 'Bonsoir'
-  return 'Bonsoir'
-}
 
-// Refonte Produits (2026-04-25) : catégories gérées dans ClientProductsTab.
-
-// ─── Descriptions détaillées par référence produit ─────────────────────────
-const PRODUCT_DETAILS: Record<string, string> = {
-  '4466': "Le Formula 1 Vanille est la base de ton programme nutritionnel. Il remplace un repas avec 21 vitamines et minéraux essentiels, 17g de protéines et moins de 220 kcal. À prendre le matin ou à midi avec 250ml de lait écrémé ou boisson végétale.",
-  '178K': "Le Thé Concentré Herbalife est une boisson à base d'extraits de thé et de plantes. Il apporte une énergie douce et durable, favorise la thermogenèse et s'utilise chaud ou froid. 1 cuillère pour 240ml d'eau.",
-  '0006': "L'Aloe Vera Herbalife soutient la digestion et améliore l'absorption des nutriments. À prendre chaque matin, il prépare le système digestif à recevoir les autres compléments.",
-  '488K': 'La Créatine+ améliore les performances musculaires, la force et la récupération. Bénéfique pour tous, homme ou femme, avec ou sans activité sportive intensive.',
-  '0020': 'Xtra-Cal apporte calcium et magnésium essentiels pour la solidité osseuse. Particulièrement recommandé pour les femmes à tous les âges.',
-  '236K': "Phyto Complete est un complexe d'extraits de plantes qui soutient le bien-être général et aide à réduire la graisse viscérale. Riche en antioxydants naturels.",
-  '0267': "Beta Heart contient des bêta-glucanes d'avoine qui contribuent à maintenir un taux de cholestérol normal. Recommandé en cas de masse grasse élevée.",
-  '173K': 'Microbiotic Max soutient l\'équilibre de la flore intestinale avec des probiotiques et prébiotiques. Idéal pour améliorer le transit et la digestion.',
-  '282K': 'Night Mode favorise une meilleure qualité de sommeil. Un bon sommeil est essentiel pour la gestion du poids et la récupération musculaire.',
-  '1433': "H24 Hydrate est une boisson aux électrolytes qui optimise l'hydratation avant, pendant et après l'effort physique.",
-  '402K': "Les Gels Prolong apportent 30g de glucides à libération progressive pour maintenir l'énergie pendant les efforts d'endurance.",
-  '1466': "CR7 Drive est la boisson sportive officielle de Cristiano Ronaldo. Elle hydrate et fournit l'énergie nécessaire pendant l'effort.",
-}
 
 interface ClientAppData {
   client_id: string
@@ -129,29 +73,6 @@ export function ClientAppPage() {
     const id = window.setTimeout(() => setShowWelcome(false), 4500)
     return () => window.clearTimeout(id)
   }, [showWelcome])
-  // Chantier Tuto interactif client (2026-04-24) : state + auto-launch.
-  const [tutorialOpen, setTutorialOpen] = useState(false)
-  const onboardingState = useOnboardingState({
-    token: token ?? null,
-    clientId: data?.client_id ?? '',
-  })
-  // Auto-launch désactivé (chantier C V2 2026-05-20) : ClientOnboardingTour
-  // (chantier C 2026-11-04) s'affiche déjà au 1er login avec 4 slides.
-  // L'OnboardingTutorial 9 étapes interactif (Tier B 2026-04-28) reste
-  // accessible à la demande via le FAQ chatbot (bouton "🎓 Faire le tour").
-  // Évite les 13 popups consécutifs au 1er login.
-  // Chantier Messagerie bidirectionnelle (2026-04-22) : nouveau tab 'messages'
-  // (conversation chat coach ↔ client). Ouverture auto si ?tab=messages dans
-  // l'URL (notif push coach_message y redirige).
-  const initialTab = (() => {
-    if (typeof window === 'undefined') return 'home' as const
-    const t = new URLSearchParams(window.location.search).get('tab')
-    if (t === 'messages' || t === 'evolution' || t === 'products' || t === 'coaching' || t === 'refer') {
-      return t as 'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'
-    }
-    return 'home' as const
-  })()
-  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'>(initialTab)
   // Chantier C — Onboarding client PWA (2026-11-04) : tour d accueil
   // 4 slides au 1er login. NULL = jamais fait → on affiche. Set au
   // "Terminer" / "Skip" via edge function client-app-mark-onboarded.
@@ -160,27 +81,12 @@ export function ClientAppPage() {
   // encore résolu, null = à demander, string = posé/skippé, 'error' = lecture
   // KO → on n'affiche pas (fail-open, jamais de client enfermé dehors).
   const [baselineAt, setBaselineAt] = useState<string | null | undefined>(undefined)
-  // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
-  // au coach depuis l'app — question produit OU demande de reco générique.
-  const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
-  const [recoAskOpen, setRecoAskOpen] = useState(false)
-  const openProductAskModal = (product: HerbalifeProduct) => setProductAskModal(product)
-  const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
-  const [referName, setReferName] = useState('')
-  const [referContact, setReferContact] = useState('')
-  const [referSent, setReferSent] = useState(false)
-  const [rdvMessage, setRdvMessage] = useState('')
-  const [rdvSent, setRdvSent] = useState(false)
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
-  const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
-  const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
 
   // Chantier Migration RLS → Edge Function (2026-04-26).
   // Fetch des données live (programme / RDV / produits) via
   // client-app-data. Priorité : liveData > snapshot. Refresh on focus
   // debounced 5s. Si l'edge function fail, on garde le snapshot.
-  const { liveData, dataSource, loading: liveLoading, refetch: refetchLive } = useClientLiveData(token)
-  const [refreshFlash, setRefreshFlash] = useState<'idle' | 'success'>('idle')
+  const { liveData, dataSource } = useClientLiveData(token)
 
   // Bouton refresh manuel (FAB en bas a droite). Visible en permanence
   // pour l'utilisateur — fix retour Thomas 2026-05-08 (clients voyaient
@@ -188,11 +94,6 @@ export function ClientAppPage() {
   // une actualisation). Combine au cache:no-store + auto-poll 60s,
   // ce bouton donne au user une porte de sortie immediate quand il a
   // un doute.
-  const handleManualRefresh = async () => {
-    await refetchLive()
-    setRefreshFlash('success')
-    window.setTimeout(() => setRefreshFlash('idle'), 1800)
-  }
 
   // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
   // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
@@ -259,8 +160,11 @@ export function ClientAppPage() {
         start_url: `/client/${token}`,
         scope: '/client/',
         display: 'standalone',
-        background_color: '#FFFFFF',
-        theme_color: '#10B981',
+        // Passe de chaleur (2026-08-05) : l'écran d'installation et la barre
+        // d'état affichaient encore l'ancienne identité (émeraude sur blanc)
+        // alors que l'app s'ouvre en vert profond → rupture à chaque install.
+        background_color: '#162624',
+        theme_color: '#162624',
         orientation: 'portrait',
         icons: [
           { src: '/brand/labase360/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
@@ -283,7 +187,7 @@ export function ClientAppPage() {
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
-      meta.content = '#10B981'
+      meta.content = '#162624'
       document.head.appendChild(meta)
 
       const appleMeta = document.createElement('meta')
@@ -319,56 +223,6 @@ export function ClientAppPage() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  // Détection iOS / Android pour proposer l'installation PWA
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
-    const ua = navigator.userAgent
-    const isIOS = /iphone|ipad|ipod/i.test(ua)
-    const isAndroid = /android/i.test(ua)
-    const isInStandaloneMode = window.matchMedia?.('(display-mode: standalone)').matches
-      || (navigator as unknown as { standalone?: boolean }).standalone === true
-    const alreadyDismissed = window.localStorage?.getItem('lor-install-dismissed')
-
-    if (isInStandaloneMode || alreadyDismissed) return
-
-    // iOS Safari : pas d'event natif, on affiche les instructions manuelles
-    if (isIOS) {
-      setInstallPlatform('ios')
-      const timer = setTimeout(() => setShowInstallPrompt(true), 2000)
-      return () => clearTimeout(timer)
-    }
-
-    // Android Chrome : écouter beforeinstallprompt pour déclencher l'install native
-    if (isAndroid) {
-      setInstallPlatform('android')
-      const handler = (e: Event) => {
-        e.preventDefault()
-        setDeferredInstallEvent(e as unknown as { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> })
-        setShowInstallPrompt(true)
-      }
-      window.addEventListener('beforeinstallprompt', handler)
-      // Fallback : si l'event n'arrive pas dans les 3 sec, affiche quand même la popup manuelle
-      const timer = setTimeout(() => setShowInstallPrompt(true), 3000)
-      return () => {
-        window.removeEventListener('beforeinstallprompt', handler)
-        clearTimeout(timer)
-      }
-    }
-  }, [])
-
-  async function triggerNativeInstall() {
-    if (!deferredInstallEvent) return
-    try {
-      await deferredInstallEvent.prompt()
-      const { outcome } = await deferredInstallEvent.userChoice
-      if (outcome === 'accepted' || outcome === 'dismissed') {
-        setShowInstallPrompt(false)
-        try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-      }
-    } catch {
-      // silencieux
-    }
-  }
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
     // Cleanup post-audit (2026-04-23) : Record<string, unknown> au lieu de
@@ -428,26 +282,11 @@ export function ClientAppPage() {
     }
   }
 
-  async function loadCoachingData(sb: NonNullable<Awaited<ReturnType<typeof getSupabaseClient>>>, tok: string) {
-    try {
-      const { data: rows } = await sb.rpc('get_client_assessment_by_token', { p_token: tok })
-      const row = Array.isArray(rows) ? rows[0] : rows
-      const q = (row as Record<string, unknown> | null)?.questionnaire as Record<string, unknown> | undefined
-      const analysis = q?.breakfastAnalysis as BreakfastAnalysis | undefined
-      const content = typeof q?.breakfastContent === 'string' ? q.breakfastContent : ''
-      if (analysis) {
-        setCoachingData({ breakfastAnalysis: { ...DEFAULT_BREAKFAST_ANALYSIS, ...analysis }, breakfastContent: content })
-      }
-    } catch { /* silencieux — onglet Coaching affichera l'état vide */ }
-  }
-
   async function loadClientData() {
     try {
       const sb = await getSupabaseClient()
       if (!sb || !token) { setLoading(false); return }
 
-      // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
-      void loadCoachingData(sb, token)
 
       // ⚠️ Ces trois lectures étaient des `.from(...).select('*').eq('token', …)`
       // directs jusqu'au 2026-07-30. Elles marchaient grâce aux policies
@@ -527,97 +366,16 @@ export function ClientAppPage() {
     finally { setLoading(false) }
   }
 
-  async function sendReferral() {
-    if (!referName || !referContact || !data) return
-    try {
-      const sb = await getSupabaseClient()
-      if (!sb) return
-      const fromClientName = `${data.client_first_name} ${data.client_last_name}`
-      // VIP-4 (2026-06-10) : pipeline unique — la reco passe par l'edge
-      // submit-prospect-lead (→ prospect_leads source 'reco-client' + push
-      // notif admins). L'edge exige un téléphone valide ; si le contact est
-      // un email/handle, fallback sur l'insert legacy client_referrals (le
-      // CRM lit les deux tables).
-      const isPhone = referContact.replace(/\D/g, '').length >= 6 && !referContact.includes('@')
-      let routed = false
-      if (isPhone) {
-        try {
-          const { error: fnErr } = await sb.functions.invoke('submit-prospect-lead', {
-            body: {
-              first_name: referName.trim(),
-              phone: referContact.trim(),
-              source: 'reco-client',
-              referrer_user_id: data.coach_id ?? undefined,
-              metadata: {
-                from_client_id: data.client_id,
-                from_client_name: fromClientName,
-                source_page: 'pwa-recommander',
-              },
-            },
-          })
-          routed = !fnErr
-        } catch { /* edge indispo → fallback legacy ci-dessous */ }
-      }
-      if (!routed) {
-        await sb.from('client_referrals').insert({
-          from_client_id: data.client_id,
-          from_client_name: fromClientName,
-          coach_id: data.coach_id ?? '',
-          referred_name: referName,
-          referred_contact: referContact,
-        })
-      }
-      setReferSent(true); setReferName(''); setReferContact('')
-    } catch { /* silencieux */ }
-  }
 
-  async function sendRdvChangeRequest() {
-    if (!rdvMessage || !data) return
-    try {
-      const sb = await getSupabaseClient()
-      if (!sb) return
 
-      // Chantier Messagerie client ↔ coach (2026-04-21) : dual-write.
-      // 1. rdv_change_requests (legacy, pour l'existant côté coach).
-      // 2. client_messages avec message_type='rdv_request' → le trigger
-      //    Postgres notify_new_client_message push une notif au coach
-      //    + le message apparaît dans la messagerie.
-      await Promise.all([
-        sb.from('rdv_change_requests').insert({
-          client_id: data.client_id,
-          coach_id: data.coach_id ?? '',
-          client_name: `${data.client_first_name} ${data.client_last_name}`,
-          current_rdv: data.next_follow_up,
-          message: rdvMessage,
-        }),
-        sb.from('client_messages').insert({
-          client_id: data.client_id,
-          client_name: `${data.client_first_name} ${data.client_last_name}`,
-          distributor_id: data.coach_id ?? '',
-          message_type: 'rdv_request',
-          message: rdvMessage,
-          sender: 'client',
-        }),
-      ])
-      setRdvSent(true); setRdvMessage('')
-    } catch { /* silencieux */ }
-  }
-
-  function getGoogleCalendarUrl() {
-    if (!data?.next_follow_up) return '#'
-    const start = new Date(data.next_follow_up)
-    const end = new Date(start.getTime() + 3600000)
-    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-      `RDV La Base 360 — ${data.client_first_name}`
-    )}&dates=${fmt(start)}/${fmt(end)}&location=${encodeURIComponent('La Base Shakes & Drinks, Verdun')}`
-  }
 
   if (loading)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#94A3B8' }}>Chargement...</div>
+    // Passe de chaleur : ces 2 écrans sont rendus AVANT l'app — ils affichaient
+    // un gris clair hors charte alors que la PWA s'ouvre en vert profond.
+    return <div style={{ minHeight: '100vh', background: '#162624', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#A4B2AA' }}>Chargement...</div>
 
   if (!data)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
+    return <div style={{ minHeight: '100vh', background: '#162624', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#F2775F' }}>Lien introuvable ou expiré.</div>
 
   // ─── Calculs métriques ─────────────────────────────────────────────────
   const metrics = data.metrics_history ?? []
@@ -715,27 +473,16 @@ export function ClientAppPage() {
     )
   }
 
-  // ─── Produits recommandés ──────────────────────────────────────────────
-  const recoList = data.recommendations ?? []
-  const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
-    recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
-  )
-
   // Refonte v2 (2026-04-25) : metricCards inline retiré au profit de
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
-  // ── Refonte identité PWA v2 (chantier 2026-07) ─────────────────────────
-  // La nouvelle identité (lime/noir/Anton) est désormais le DÉFAUT. L'ancienne
-  // UI reste accessible via `?v1=1` comme filet de sécurité tant que quelques
-  // flux périphériques ne sont pas portés en v2 (opt-in push, bannière
-  // install PWA, submit parrainage réel, modales message). À supprimer avec
-  // ce garde-fou une fois le portage terminé + recette Thomas OK.
+  // ── Identité PWA v2 (chantier 2026-07) ────────────────────────────────────
+  // La nouvelle identité (lime/noir/Anton) est LA seule UI client. L'ancienne
+  // interface et son garde-fou `?v1=1` ont été supprimés (ménage 2026-08-05) :
+  // v2 est le défaut en prod depuis 2026-07 et les flux périphériques (opt-in
+  // push, bannière install, parrainage, modales) sont portés dans client-pwa/.
   // (L'aiguillage BBC est plus haut : il doit précéder onboarding et pesée.)
-
-  const useLegacyUi =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('v1') === '1'
-  if (!useLegacyUi) {
+  {
     const firstW = typeof first?.weight === 'number' ? first.weight : null
     const lastW = typeof latest?.weight === 'number' ? latest.weight : null
     const weightDeltaKg =
@@ -792,810 +539,4 @@ export function ClientAppPage() {
       />
     )
   }
-
-  return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
-      {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
-          en arrière-plan pour cohérence avec Welcome/Login. Plus discret
-          que les pages publiques (app quotidienne, pas d'effet "wouah"
-          trop marqué qui fatiguerait à l'usage). */}
-      <style>{`
-        .clientapp-blob-a {
-          position: fixed;
-          top: -10%;
-          right: -15%;
-          width: 420px;
-          height: 420px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(239,159,39,0.18) 0%, transparent 70%);
-          filter: blur(70px);
-          pointer-events: none;
-          z-index: 0;
-          will-change: transform;
-          animation: clientapp-float-a 40s ease-in-out infinite alternate;
-        }
-        .clientapp-blob-b {
-          position: fixed;
-          bottom: -12%;
-          left: -12%;
-          width: 380px;
-          height: 380px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
-          filter: blur(70px);
-          pointer-events: none;
-          z-index: 0;
-          will-change: transform;
-          animation: clientapp-float-b 44s ease-in-out infinite alternate;
-        }
-        @keyframes clientapp-float-a {
-          0%   { transform: translate(0, 0); }
-          100% { transform: translate(-40px, 30px); }
-        }
-        @keyframes clientapp-float-b {
-          0%   { transform: translate(0, 0); }
-          100% { transform: translate(50px, -20px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .clientapp-blob-a, .clientapp-blob-b { animation: none !important; }
-        }
-      `}</style>
-      <div aria-hidden="true" className="clientapp-blob-a" />
-      <div aria-hidden="true" className="clientapp-blob-b" />
-      {/* Chantier invitation client app (2026-04-21) : toast de bienvenue
-          quand on arrive depuis /bienvenue via ?welcome=1. */}
-      {showWelcome ? (
-        <div
-          role="status"
-          style={{
-            position: 'fixed',
-            top: 16,
-            left: 16,
-            right: 16,
-            zIndex: 9999,
-            padding: '14px 18px',
-            borderRadius: 14,
-            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
-            color: '#fff',
-            fontFamily: 'Sora, system-ui, sans-serif',
-            fontWeight: 700,
-            fontSize: 15,
-            textAlign: 'center',
-            boxShadow: '0 12px 30px rgba(186,117,23,0.4), 0 2px 6px rgba(239,159,39,0.2)',
-            animation: 'clientapp-toast-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        >
-          <style>{`
-            @keyframes clientapp-toast-in {
-              from { opacity: 0; transform: translateY(-12px); }
-              to   { opacity: 1; transform: translateY(0); }
-            }
-          `}</style>
-          Bienvenue dans ton espace La Base 360 🎉
-        </div>
-      ) : null}
-
-      {/* Chantier Messagerie client ↔ coach (2026-04-21) : modale "Parler à
-          mon coach" sur fiche produit + modale "Demander une reco" sur home. */}
-      <ClientMessageModal
-        open={productAskModal !== null}
-        onClose={() => setProductAskModal(null)}
-        clientId={data.client_id}
-        clientFirstName={data.client_first_name}
-        clientLastName={data.client_last_name}
-        distributorId={data.coach_id ?? ''}
-        title="Parler à mon coach"
-        intro={
-          productAskModal
-            ? `Pose ta question sur ${productAskModal.shortName} à ${data.coach_name}.`
-            : ''
-        }
-        messageType="product_request"
-        productName={productAskModal?.shortName}
-        defaultMessage={
-          productAskModal
-            ? `Bonjour ${data.coach_name}, j'ai une question sur ${productAskModal.shortName} : `
-            : ''
-        }
-      />
-      <ClientMessageModal
-        open={recoAskOpen}
-        onClose={() => setRecoAskOpen(false)}
-        clientId={data.client_id}
-        clientFirstName={data.client_first_name}
-        clientLastName={data.client_last_name}
-        distributorId={data.coach_id ?? ''}
-        title="Demander une recommandation"
-        intro={`Dis à ${data.coach_name} ce dont tu as besoin. Elle te répondra avec un conseil personnalisé.`}
-        messageType="recommendation"
-        defaultMessage={`Bonjour ${data.coach_name}, j'aurais besoin d'une recommandation sur `}
-      />
-
-      {/* Hotfix client-login (2026-04-24) : bannière install PWA si pas
-          déjà installée + non dismissée. Self-hides sinon. */}
-      <InstallPwaBanner />
-
-      {/* HERO — rebrand La Base 360 G3 (2026-05-06) */}
-      <div style={{
-        background:
-          'radial-gradient(ellipse at 20% 20%, rgba(16,185,129,0.10) 0%, transparent 55%), ' +
-          'radial-gradient(ellipse at 80% 30%, rgba(6,182,212,0.10) 0%, transparent 55%), ' +
-          'radial-gradient(ellipse at 50% 80%, rgba(139,92,246,0.08) 0%, transparent 55%), ' +
-          '#FFFFFF',
-        padding: '20px 16px 16px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
-              src="/brand/labase360/app-icon-512.svg"
-              alt="La Base 360"
-              style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0 }}
-            />
-            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#0F172A', letterSpacing: '-0.01em' }}>
-              La Base{' '}
-              <span style={{
-                fontStyle: 'italic',
-                fontWeight: 400,
-                background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>360</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#06B6D4' }} />
-              <span style={{ fontSize: 10, color: '#06B6D4', fontWeight: 500 }}>Coach {data.coach_name}</span>
-            </div>
-            {/* Chantier Tuto interactif client (2026-04-24) : bouton ? pour
-                relancer le tutoriel à tout moment. */}
-            <button
-              type="button"
-              onClick={() => setTutorialOpen(true)}
-              aria-label="Revoir le tutoriel"
-              title="Revoir le tutoriel"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: 'rgba(16,185,129,0.12)',
-                color: '#10B981',
-                border: '1px solid rgba(16,185,129,0.2)',
-                fontFamily: 'Sora, system-ui, sans-serif',
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              ?
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#10B981', flexShrink: 0 }}>
-            {data.client_first_name?.[0]}{data.client_last_name?.[0]}
-          </div>
-          <div>
-            {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
-                l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
-                18-23h Bonsoir / sinon Bonne nuit. */}
-            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 500, fontSize: 22, color: '#0F172A' }}>
-              {clientGreeting(new Date())} {data.client_first_name} !
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
-              {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Chantier Messagerie bidirectionnelle (2026-04-22) : CTA opt-in push
-          juste sous le HERO. S'affiche uniquement si Notification.permission
-          === 'default' et support natif. Self-hiding après accept/deny. */}
-      {token ? (
-        <ClientPushOptIn
-          token={token}
-          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
-        />
-      ) : null}
-
-      {/* Chantier observabilité (2026-04-25) : bandeau orange visible
-          UNIQUEMENT si l'edge function client-app-data a échoué et que
-          l'app affiche le snapshot figé. Permet au client de comprendre
-          que ses données ne sont pas fraîches et au coach de remonter le
-          bug (vu côté UI = bug visible, plus de fail silencieux). */}
-      {dataSource === 'snapshot' && (
-        <ClientAppFallbackBanner onContact={() => setActiveTab('messages')} />
-      )}
-
-      <div style={{ padding: '12px 14px' }}>
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET ACCUEIL                                                  */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'home' && (
-          <ClientHomeTab
-            data={data}
-            latest={latest}
-            first={first}
-            metrics={metrics as unknown as Array<{ date: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
-            recommendedProducts={recommendedProducts}
-            rdvSent={rdvSent}
-            rdvMessage={rdvMessage}
-            setRdvMessage={setRdvMessage}
-            sendRdvChangeRequest={sendRdvChangeRequest}
-            getGoogleCalendarUrl={getGoogleCalendarUrl}
-            setRecoAskOpen={setRecoAskOpen}
-            openProductAskModal={openProductAskModal}
-            totalCmLost={0}
-            onSeeEvolution={() => setActiveTab('evolution')}
-            measurements={liveData?.measurements ?? []}
-            clientToken={token}
-            nextFollowUpId={liveData?.next_follow_up?.id ?? null}
-            nextFollowUpAddedToCalendarAt={liveData?.next_follow_up?.added_to_calendar_at ?? null}
-            onCalendarConfirmed={() => { void refetchLive() }}
-          />
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET ÉVOLUTION                                                */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'evolution' && (() => {
-          // Chantier MEGA v2 (2026-04-25) : map metrics flat → Assessment[]
-          // (nested bodyScan) attendu par les nouveaux composants.
-          const assessments: Assessment[] = metrics.map((m) => ({
-            date: m.date,
-            type: 'follow-up' as const,
-            bodyScan: {
-              weight: typeof m.weight === 'number' ? m.weight : undefined,
-              bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : undefined,
-              muscleMass: typeof m.muscleMass === 'number' ? m.muscleMass : undefined,
-              hydration: typeof m.hydration === 'number' ? m.hydration : undefined,
-              visceralFat: typeof m.visceralFat === 'number' ? m.visceralFat : undefined,
-              metabolicAge: typeof m.metabolicAge === 'number' ? m.metabolicAge : undefined,
-              bmr: typeof m.bmr === 'number' ? m.bmr : undefined,
-            },
-          }))
-          const measurementsLive: Measurement[] = liveData?.measurements ?? []
-          const daysUntilRdv = data.next_follow_up ? getDaysUntilRdv(data.next_follow_up) : null
-
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* RGPD Phase 1 (2026-04-30) : bandeau rassurance donnees sante */}
-              <div
-                style={{
-                  padding: '10px 14px',
-                  background: 'color-mix(in srgb, #10B981 8%, var(--ls-surface))',
-                  border: '0.5px solid rgba(16,185,129,0.25)',
-                  borderLeft: '3px solid #10B981',
-                  borderRadius: 12,
-                  fontSize: 12,
-                  color: '#059669',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <span aria-hidden style={{ fontSize: 14 }}>🛡️</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  Tes données de santé sont protégées et hébergées en Europe.
-                </span>
-                <a
-                  href="/legal/confidentialite"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: '#059669',
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                    fontSize: 11.5,
-                    flexShrink: 0,
-                  }}
-                >
-                  En savoir plus →
-                </a>
-              </div>
-              {/* Âge auto-calculé depuis la date de naissance (toujours à jour,
-                  jamais figé) — chantier PWA 2026-06-12. */}
-              {(() => {
-                const age = calculateAge(liveData?.client?.birth_date)
-                return age != null ? (
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      alignSelf: 'flex-start',
-                      padding: '5px 12px',
-                      borderRadius: 999,
-                      background: 'var(--ls-surface2, #F1F5F9)',
-                      border: '0.5px solid var(--ls-border, #E2E8F0)',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                      fontSize: 12,
-                      color: 'var(--ls-text, #0F172A)',
-                    }}
-                  >
-                    <span aria-hidden>👤</span>
-                    <strong>{age} ans</strong>
-                  </div>
-                ) : null
-              })()}
-              <ClientAppEvolutionHero assessments={assessments} measurements={measurementsLive} />
-              <ClientAppKeyMetricsGrid assessments={assessments} />
-              <ClientAppWeightChart assessments={assessments} />
-              <ClientAppMeasurementsBlock
-                measurements={measurementsLive}
-                onAddFirst={() => {
-                  // Scroll vers la section saisie (ClientMeasurementsSection)
-                  // qui reste affichée sous le block pour la silhouette interactive.
-                  if (typeof document !== 'undefined') {
-                    const el = document.getElementById('client-measurements-section')
-                    if (el && typeof el.scrollIntoView === 'function') {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }
-                  }
-                }}
-              />
-              <div id="client-measurements-section" style={{ marginTop: 8 }}>
-                <ClientMeasurementsSection
-                  clientId={data.client_id}
-                  coachFirstName={data.coach_name?.split(' ')[0]}
-                  clientToken={token}
-                />
-              </div>
-              <ClientAppMotivationMessage daysUntilRdv={daysUntilRdv} />
-            </div>
-          )
-        })()}
-
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET PRODUITS — refonte 2026-04-25 (ClientProductsTab)       */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'products' && (
-          <div data-tuto="program">
-            <ClientProductsTab
-              clientId={data.client_id}
-              coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
-              coachWhatsapp={data.coach_whatsapp}
-              recommendedProducts={recommendedProducts}
-              latestScanDate={latest?.date ?? null}
-              productDetails={PRODUCT_DETAILS}
-              onAskCoach={openProductAskModal}
-              liveProducts={liveData?.current_products ?? null}
-              liveRecommendationsNotTaken={
-                (liveData as unknown as { recommendations_not_taken?: Array<{ productId: string; name: string; price?: number; reason?: string }> } | null)
-                  ?.recommendations_not_taken ?? null
-              }
-            />
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET CONSEILS (Chantier Conseils client 2026-04-24)           */}
-        {/* Rename de "Coaching" + contenu riche remplaçant le placeholder  */}
-        {/* petit-déj. Story petit-déj conservée sous la Conseils content.  */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'coaching' && (
-          <div className="ls-coaching-tab">
-            <ClientConseilsTab
-              liveData={liveData}
-              clientAppAccount={{
-                client_first_name: data.client_first_name,
-                coach_name: data.coach_name,
-                program_title: data.program_title,
-              }}
-            />
-            {coachingData ? (
-              <div style={{ marginTop: 18 }}>
-                <BreakfastStorySlider
-                  breakfastContent={coachingData.breakfastContent}
-                  analysis={coachingData.breakfastAnalysis}
-                  onAnalysisChange={() => { /* readOnly — no-op */ }}
-                  readOnly
-                />
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET MESSAGES (chantier messagerie bidirectionnelle 2026-04-22) */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'messages' && token ? (
-          <ClientChatTab
-            token={token}
-            clientFirstName={data.client_first_name}
-            coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
-          />
-        ) : null}
-
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET RECOMMANDER                                              */}
-        {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'refer' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Présentation Club VIP & Recommandations (chantier VIP 2026-06-09) */}
-            <ClubVipPresentation
-              currentPv={(liveData?.current_products ?? []).reduce(
-                (s: number, p: { pv_per_unit?: number | null }) => s + (p.pv_per_unit ?? 0),
-                0,
-              )}
-              coachName={data.coach_name}
-              onShareContact={() => {
-                document.getElementById('refer-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
-            />
-            <div id="refer-form" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
-              <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
-                Recommander un ami
-              </div>
-              <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.7, marginBottom: 14 }}>
-                Tu connais quelqu'un qui aimerait améliorer sa forme ? Envoie ses coordonnées à {data.coach_name} directement.
-              </div>
-
-              {referSent ? (
-                <div style={{ padding: 16, background: 'rgba(13,148,136,0.08)', borderRadius: 12, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 15, color: '#06B6D4', marginBottom: 4 }}>Merci !</div>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
-                </div>
-              ) : (
-                <>
-                  <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom de la personne"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 8 }} />
-                  <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Son numéro ou email"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 12 }} />
-                  <button onClick={() => void sendReferral()} disabled={!referName || !referContact}
-                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
-                    Envoyer à {data.coach_name}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* POPUP INSTALL PWA iOS */}
-      {showInstallPrompt && (
-        <div style={{
-          position: 'fixed', bottom: 90, left: 12, right: 12,
-          background: '#0F172A', borderRadius: 16, padding: 18,
-          zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, background: '#10B981', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>La Base 360</div>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setShowInstallPrompt(false)
-                try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-              }}
-              style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
-              aria-label="Fermer"
-            >×</button>
-          </div>
-
-          <div style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.7, marginBottom: 14 }}>
-            Ajoute cette app sur ton écran d'accueil pour y accéder rapidement, même sans internet.
-          </div>
-
-          {/* ─── Android avec prompt natif disponible ─── */}
-          {installPlatform === 'android' && deferredInstallEvent ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(16,185,129,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                  Un simple clic pour l'installer sur ton téléphone.
-                </div>
-              </div>
-              <button
-                onClick={() => void triggerNativeInstall()}
-                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Installer l'app
-              </button>
-              <button
-                onClick={() => {
-                  setShowInstallPrompt(false)
-                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-                }}
-                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}
-              >
-                Plus tard
-              </button>
-            </>
-          ) : installPlatform === 'android' ? (
-            /* ─── Android sans prompt natif (ex: Firefox, Samsung Internet) ─── */
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Ouvre le menu
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> ⋮ </span>
-                    en haut à droite
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Choisis
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer l'application" </span>
-                    ou
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Valide avec
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer" </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowInstallPrompt(false)
-                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-                }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                J'ai compris !
-              </button>
-            </>
-          ) : (
-            /* ─── iOS Safari ─── */
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Appuie sur le bouton
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> Partager </span>
-                    (carré avec flèche ↑) en bas de Safari
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Sélectionne
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
-                    dans le menu
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
-                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                    Appuie sur
-                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter" </span>
-                    en haut à droite
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowInstallPrompt(false)
-                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-                }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                J'ai compris !
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Chantier Tuto interactif client (2026-04-24). Lazy-loaded,
-          ne charge le code que si le tuto est ouvert. */}
-      {tutorialOpen ? (
-        <Suspense fallback={null}>
-          <OnboardingTutorial
-            firstName={data.client_first_name || 'toi'}
-            coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
-            sex="female"
-            bodyFat={(() => {
-              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
-              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
-              return typeof last?.bodyFat === 'number' ? last.bodyFat : null
-            })()}
-            hydration={(() => {
-              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
-              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
-              return typeof last?.hydration === 'number' ? last.hydration : null
-            })()}
-            selectors={{
-              nextRdv: '[data-tuto="next-rdv"]',
-              program: '[data-tuto="program"]',
-              messaging: '[data-tuto="messaging"]',
-              tabEvolution: '[data-tuto="tab-evolution"]',
-              tabConseils: '[data-tuto="tab-conseils"]',
-              tabProduits: '[data-tuto="tab-produits"]',
-            }}
-            sandboxHref={token ? `/client/${token}/sandbox` : undefined}
-            onClose={(reason) => {
-              setTutorialOpen(false)
-              if (reason === 'completed') {
-                onboardingState.markCompleted()
-                // Etape 2 chantier client XP (2026-05-08) : tutorial_completed
-                // XP +30 lifetime declenche quand le user finit le tour PWA
-                // (pas si skippe). Cap lifetime cote SQL → idempotent.
-                if (token) void recordClientXp(token, 'tutorial_completed')
-              } else if (reason === 'skipped') {
-                onboardingState.markSkipped()
-              }
-            }}
-          />
-        </Suspense>
-      ) : null}
-
-      {/* BOTTOM NAV — La Base 360 G3 */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-        {([
-          { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
-          { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
-          { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
-          { key: 'coaching' as const, label: 'Conseils', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
-          { key: 'messages' as const, label: 'Messages', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>) },
-          { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
-        ]).map(({ key, label, icon }) => {
-          const isActive = activeTab === key
-          // Tier B (2026-04-28) : data-tuto pour spotlights tuto.
-          const tutoAttr =
-            key === 'evolution'
-              ? 'tab-evolution'
-              : key === 'coaching'
-                ? 'tab-conseils'
-                : key === 'products'
-                  ? 'tab-produits'
-                  : undefined
-          // Premium Client XP (Tier B 2026-04-28) : map tab key → action XP key.
-          const xpKey: import('../features/client-xp/actions').ClientXpActionKey | null =
-            key === 'evolution' ? 'tab_evolution'
-            : key === 'coaching' ? 'tab_conseils'
-            : key === 'products' ? 'tab_pv'
-            : null
-          return (
-            <button
-              key={key}
-              onClick={() => {
-                setActiveTab(key)
-                // Trigger XP +5 sur clic onglet (cap 1×/jour cote SQL).
-                if (xpKey && token) {
-                  void recordClientXp(token, xpKey)
-                }
-              }}
-              data-tuto={tutoAttr}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#10B981' : '#94A3B8', fontSize: 9, cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: isActive ? 600 : 500 }}>
-              {icon}
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Premium Client XP (Tier B 2026-04-28) : toast slide-in apres gain XP. */}
-      <ClientXpToast />
-
-      {/* Premium Client FAQ Chatbot (Tier B Module 3, 2026-04-28) :
-          FAB en bas a droite + popup avec 6 questions frequentes +
-          routage messagerie. */}
-      {token ? (
-        <ClientFaqChatbot
-          token={token}
-          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Coach'}
-          onLaunchTutorial={() => setTutorialOpen(true)}
-        />
-      ) : null}
-
-      {/* Footer RGPD legal (Phase 1 — 2026-04-30) — permanent en bas */}
-      <footer
-        style={{
-          padding: '14px 16px 90px', // bottom margin pour ne pas chevaucher la bottom nav
-          borderTop: '1px solid #E2E8F0',
-          textAlign: 'center',
-          fontSize: 11,
-          color: '#94A3B8',
-          fontFamily: 'Inter, system-ui, sans-serif',
-        }}
-      >
-        <div style={{ marginBottom: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <span aria-hidden>🛡️</span> Tes données sont hébergées en Europe (Irlande)
-        </div>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="/legal/mentions"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
-          >
-            Mentions légales
-          </a>
-          <span aria-hidden style={{ opacity: 0.4 }}>·</span>
-          <a
-            href="/legal/confidentialite"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
-          >
-            Confidentialité
-          </a>
-        </div>
-      </footer>
-
-      {/* FAB Actualiser — fix retour Thomas 2026-05-08.
-          Bouton flottant accessible en permanence pour forcer le refetch
-          des donnees live (RDV / programme / bilans / produits). Resout
-          le cas Android PWA ou les donnees pouvaient prendre 5-10 min a
-          se rafraichir apres une modif coach, sans recours utilisateur.
-          Position : bottom-right, au-dessus de la bottom-nav (84px). */}
-      <button
-        type="button"
-        onClick={handleManualRefresh}
-        disabled={liveLoading}
-        aria-label="Actualiser mes donnees"
-        style={{
-          position: 'fixed',
-          right: 14,
-          bottom: 84,
-          zIndex: 50,
-          width: 52,
-          height: 52,
-          borderRadius: '50%',
-          border: 'none',
-          background: refreshFlash === 'success'
-            ? 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)'
-            : 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
-          color: '#FFFFFF',
-          fontSize: 22,
-          cursor: liveLoading ? 'wait' : 'pointer',
-          boxShadow: '0 8px 24px rgba(16,185,129,0.32), 0 2px 6px rgba(15,23,42,0.10)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-          opacity: liveLoading ? 0.75 : 1,
-        }}
-        onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.95)' }}
-        onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            display: 'inline-block',
-            animation: liveLoading ? 'ls-fab-spin 0.9s linear infinite' : undefined,
-          }}
-        >
-          {refreshFlash === 'success' ? '✓' : '↻'}
-        </span>
-      </button>
-      <style>{`
-        @keyframes ls-fab-spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  )
 }

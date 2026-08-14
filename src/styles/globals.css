@@ -11,30 +11,30 @@
  * conserves pour ne pas casser les pages non-encore-rebrand.
  * ============================================================================= */
 :root {
-  --lb360-emerald:   #10B981;
-  --lb360-cyan:      #06B6D4;
-  --lb360-violet:    #8B5CF6;
-  --lb360-gold:      #B8922A;
+  --lb360-emerald:   #2DD4BF;
+  --lb360-cyan:      #2DD4BF;
+  --lb360-violet:    #A78BFA;
+  --lb360-gold:      #0D9488;  /* doré abandonné 2026-08-05 → alias teal */
   --lb360-coral:     #D4537E;
-  --lb360-gradient:  linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+  --lb360-gradient:  linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%);
   --lb360-gradient-soft: linear-gradient(135deg, #F0FDF4 0%, #ECFEFF 50%, #F5F3FF 100%);
 
   /* Co-pilote V7 (chantier 2026-05-08) — gradients de cards tintees G3.
      Utilises pour la card rentabilite, les stats row pastels, etc.
      Suivent var(--ls-surface) automatiquement → bascule light/dark OK. */
   --lb360-card-emerald: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 9%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-cyan: linear-gradient(135deg,
-    color-mix(in srgb, #06B6D4 6%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 6%, var(--ls-surface)) 0%,
     var(--ls-surface) 70%);
   --lb360-card-violet: linear-gradient(135deg,
-    color-mix(in srgb, #8B5CF6 9%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #A78BFA 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 100%);
   --lb360-card-rentab: linear-gradient(135deg,
-    color-mix(in srgb, #10B981 7%, var(--ls-surface)) 0%,
-    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 50%,
-    color-mix(in srgb, #8B5CF6 7%, var(--ls-surface)) 100%);
+    color-mix(in srgb, #2DD4BF 7%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #2DD4BF 5%, var(--ls-surface)) 50%,
+    color-mix(in srgb, #A78BFA 7%, var(--ls-surface)) 100%);
 
   --lb360-white:     #FFFFFF;
   --lb360-mist:      #F8FAFC;
@@ -42,10 +42,10 @@
   --lb360-ink-soft:  #475569;
   --lb360-border:    #E2E8F0;
 
-  --lb360-success:   #10B981;
+  --lb360-success:   #2DD4BF;
   --lb360-warning:   #F59E0B;
   --lb360-danger:    #EF4444;
-  --lb360-info:      #06B6D4;
+  --lb360-info:      #2DD4BF;
 
   /* Typography stack — chantier Co-pilote V7 (2026-05-08).
      - --lb360-display       : titres UI / nombres (Sora 800)
@@ -54,9 +54,9 @@
        differencie La Base 360 d un dashboard SaaS generique
      - --lb360-mono          : data tabulaire, horloges, valeurs precises
      - --lb360-body          : UI courante (Inter) */
-  --lb360-display:        "Sora", system-ui, -apple-system, sans-serif;
-  --lb360-display-serif:  "Fraunces", "Cormorant Garamond", Georgia, serif;
-  --lb360-body:           "Inter", system-ui, -apple-system, sans-serif;
+  --lb360-display:        "Syne", system-ui, -apple-system, sans-serif;
+  --lb360-display-serif:  "Syne", system-ui, sans-serif;
+  --lb360-body:           "DM Sans", system-ui, -apple-system, sans-serif;
   --lb360-mono:           "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -95,60 +95,98 @@
  * bug pour le theme system.
  * ============================================================================= */
 
+/* ── PASSE DE CHALEUR (2026-08-05, validée Thomas) ────────────────────────────
+   Le fond passe du noir bleuté (#0B0D11) au VERT PROFOND du club
+   (#162624 / #1E3330 / #26403B, relevés sur thebreakfast-club.com) : plus doux
+   à l'œil, et l'app devient visuellement la cousine du site du club.
+   Le coral s'adoucit (#F2775F rose criard → #F2775F), on gagne le SAGE pour les
+   états calmes. Teal, lime et violet ne bougent pas.
+   ⚠️ On ne change QUE des valeurs : aucune mise en page, aucun composant. */
 :root {
-  --ls-bg: #0B0D11;
-  --ls-surface: #13161C;
-  --ls-surface2: #1A1E27;
-  --ls-border: rgba(255,255,255,0.07);
-  --ls-border2: rgba(255,255,255,0.12);
-  --ls-text: #F0EDE8;
-  --ls-text-muted: #7A8099;
-  --ls-text-hint: #4A5068;
-  --ls-gold: #C9A84C;
+  --ls-bg: #162624;
+  --ls-surface: #1E3330;
+  --ls-surface2: #26403B;
+  --ls-border: rgba(244,239,228,0.10);
+  --ls-border2: rgba(244,239,228,0.17);
+  --ls-text: #F4EFE4;
+  --ls-text-muted: #9BAAA3;
+  /* 3,99:1 sur le fond sombre — sous le seuil, comme son jumeau clair
+     (audit du 13/08). Éclairci au minimum : 4,56. */
+  --ls-text-hint: #7E8E86;
+  /* ⚠️ LE DORÉ EST ABANDONNÉ (décision Thomas 2026-08-05). Les 1134 usages de
+     var(--ls-gold*) ont été basculés sur le teal dans tout le code. Le token
+     reste défini — pointant sur le TEAL — comme filet de sécurité : si un usage
+     avait été manqué (style construit dynamiquement, etc.), il rend teal et non
+     doré. Ne pas lui redonner une valeur dorée. */
+  --ls-gold: #2DD4BF;
   --ls-teal: #2DD4BF;
   --ls-lime: #c5f82a;
-  --ls-coral: #FB7185;
+  --ls-coral: #F2775F;
+  --ls-sage: #93A67E;
+  --ls-amber: #E8A93A;
   --ls-purple: #A78BFA;
   --ls-gold-bg: rgba(201,168,76,0.1);
   --ls-teal-bg: rgba(45,212,191,0.1);
-  --ls-coral-bg: rgba(251,113,133,0.1);
+  --ls-coral-bg: rgba(242,119,95,0.1);
+  --ls-sage-bg: rgba(147,166,126,0.12);
   --ls-purple-bg: rgba(167,139,250,0.1);
-  --ls-input-bg: #1A1E27;
-  --ls-sidebar-bg: #13161C;
-  --ls-icon: #7A8099;
-  --ls-icon-active: #F0EDE8;
+  --ls-input-bg: #26403B;
+  --ls-sidebar-bg: #1E3330;
+  --ls-icon: #9BAAA3;
+  --ls-icon-active: #F4EFE4;
   /* UX Polish global (2026-04-20) : tokens étendus */
   --ls-gold-rgb: 201, 168, 76;
   --ls-teal-rgb: 45, 212, 191;
-  --ls-coral-rgb: 251, 113, 133;
+  --ls-coral-rgb: 242, 119, 95;
+  --ls-sage-rgb: 147, 166, 126;
   --ls-purple-rgb: 167, 139, 250;
   /* Gold reste volontairement sombre/dark-on-gold dans les 2 thèmes — gold clair
-     suffit pour un contraste AA avec un texte #0B0D11 */
-  --ls-gold-contrast: #0B0D11;
-  --ls-teal-contrast: #0B0D11;
+     suffit pour un contraste AA avec un texte foncé */
+  --ls-gold-contrast: #17201C;
+  --ls-teal-contrast: #06241F;
   --ls-radius: 8px;
   --ls-radius-lg: 16px;
   --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
   --ls-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
 
+  /* ── TOKENS FANTÔMES — réparés le 2026-08-09 ────────────────────────────────
+     Ces variables étaient APPELÉES dans le code mais DÉFINIES NULLE PART. Le
+     repli de `var(--x, repli)` s'appliquait donc TOUJOURS — et ces replis ne
+     respectaient pas la charte. Le pire : 28 endroits (surtout l'Academy)
+     s'affichaient en system-ui / Georgia / monospace au lieu de DM Sans / Syne /
+     JetBrains Mono. Invisible en relisant le code, trouvé en comparant les
+     tokens utilisés aux tokens réellement déclarés.
+     ⚠️ Avant d'écrire var(--nouveau-token, …), vérifier qu'il existe ici. */
+  --ls-font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --ls-font-serif: "Syne", system-ui, sans-serif;   /* l'éditorial de la charte, pas Georgia */
+  --ls-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ls-cream: #FAF7F0;             /* le crème exact de la charte (le repli disait #FBF7F0) */
+  --ls-teal-dark: #0F766E;
+  --ls-charcoal: var(--ls-text);   /* toujours appelé comme une couleur de TEXTE */
+  --ls-actions-bg: var(--ls-surface);
+  --ls-surface-elevated: var(--ls-surface);
+  --ls-ops-coral: var(--ls-coral); /* le repli #E24B4A n'était pas le corail de la charte */
+
   /* ── Salle des Opérations (war-room onboarding distri) — namespace dédié, DARK.
      Palette de la maquette Claude Design validée (2026-06-29). Isolé du reste de
      l'app (comme --biz-* pour BusinessPage) → ne recolore rien d'autre.
      Polices : Anton (titres CAPS) + JetBrains Mono (labels terminal). */
-  --ls-ops-bg: #0a0c0a;
-  --ls-ops-surface: #141813;
-  --ls-ops-surface2: #101510;
-  --ls-ops-rail: #0c0f0c;
-  --ls-ops-border: #20261e;
-  --ls-ops-border-soft: #1c211b;
-  --ls-ops-border-active: #2a3326;
-  --ls-ops-hair: #23291f;
-  --ls-ops-ink: #f6f6f1;
-  --ls-ops-text2: #c3ccc0;
-  --ls-ops-text3: #aeb8ac;
-  --ls-ops-muted: #8a948a;
-  --ls-ops-faint: #5f6a5d;
-  --ls-ops-disabled: #353d31;
+  /* Passe de chaleur (2026-08-05) : mêmes verts profonds que le reste de l'app,
+     l'accent lime de la maquette validée ne bouge pas. */
+  --ls-ops-bg: #162624;
+  --ls-ops-surface: #1E3330;
+  --ls-ops-surface2: #1A2C29;
+  --ls-ops-rail: #132321;
+  --ls-ops-border: #2A413C;
+  --ls-ops-border-soft: #243935;
+  --ls-ops-border-active: #35514A;
+  --ls-ops-hair: #2A413C;
+  --ls-ops-ink: #F4EFE4;
+  --ls-ops-text2: #C7D2CB;
+  --ls-ops-text3: #B0BDB6;
+  --ls-ops-muted: #8FA097;
+  --ls-ops-faint: #66776F;
+  --ls-ops-disabled: #3A4E48;
   --ls-ops-accent: #c5f82a;
   --ls-ops-accent2: #a6d40a;
   --ls-ops-accent-text: #c5f82a;   /* texte lime — lisible sur fond sombre */
@@ -163,53 +201,92 @@
   --ls-ops-font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+/* ── PASSE DE CHALEUR — thème CLAIR (2026-08-05) ──────────────────────────────
+   Le clair n'est plus une inversion du sombre : on reprend le geste du site du
+   club. Page CRÈME (#FAF7F0) au lieu du gris, encre VERT-NOIR (#17201C) au lieu
+   du noir bleuté, bordures presque invisibles — ce sont les OMBRES DOUCES (celles
+   du site) qui séparent, pas des traits gris. Accents assombris pour tenir sur
+   du clair (le lime devient olive, sinon illisible sur blanc). */
 html.theme-light {
-  --ls-bg: #F4F2EE;
+  /* ── CONTRASTE (audit du 13/08/2026) ─────────────────────────────────────
+     Mesuré dans le navigateur : CINQ tokens du thème clair étaient sous le
+     seuil lisible (4,5:1 pour du petit texte), y compris quand ils servent de
+     TEXTE — ce qu'ils font partout dans l'app.
+
+         teal   3,50   lime 3,63   coral 3,69   amber 3,40   hint 2,96
+
+     Ce n'était pas un défaut d'un écran : le thème clair avait ce problème
+     depuis toujours. Assombrissement MINIMAL qui passe, teinte conservée :
+
+         teal   #0D9488 → #0F766E   5,12  (et 5,47 en blanc dessus)
+         lime   #6D8C0B → #5E7A09   4,60
+         coral  #D9553C → #BC432C   4,93
+         amber  #B7791F → #9A631A   4,70
+         hint   #8A938D → #68716C   4,71
+
+     `#0F766E` n'est pas une couleur nouvelle : elle existait déjà dans la
+     charte sous `--ls-teal-dark` du bloc sombre. Sage (4,94) et purple (6,64)
+     passaient déjà — non touchés.
+
+     ⚠️ Les triplets `*-rgb` et les `*-bg` DOIVENT suivre : ils sont dérivés à
+     la main, rien ne les recalcule. */
+  --ls-bg: #FAF7F0;
   --ls-surface: #FFFFFF;
-  --ls-surface2: #F0EDE8;
-  --ls-border: rgba(0,0,0,0.08);
-  --ls-border2: rgba(0,0,0,0.14);
-  --ls-text: #111827;
-  --ls-text-muted: #6B7280;
-  --ls-text-hint: #9CA3AF;
-  --ls-gold: #B8922A;
-  --ls-teal: #0D9488;
-  --ls-lime: #6f9e0a;
-  --ls-coral: #DC2626;
-  --ls-purple: #7C3AED;
+  --ls-surface2: #F5F1EB;
+  --ls-border: rgba(30,51,48,0.07);
+  --ls-border2: rgba(30,51,48,0.13);
+  --ls-text: #17201C;
+  --ls-text-muted: #55605A;
+  --ls-text-hint: #68716C;
+  /* Doré abandonné → alias teal (cf. commentaire du bloc sombre). */
+  --ls-gold: #0F766E;
+  --ls-teal: #0F766E;
+  --ls-lime: #5E7A09;
+  --ls-coral: #BC432C;
+  --ls-sage: #5F7154;
+  --ls-amber: #9A631A;
+  --ls-purple: #6D28D9;
   --ls-gold-bg: rgba(184,146,42,0.1);
-  --ls-teal-bg: rgba(13,148,136,0.1);
-  --ls-coral-bg: rgba(220,38,38,0.08);
-  --ls-purple-bg: rgba(124,58,237,0.1);
-  --ls-input-bg: #F0EDE8;
+  --ls-teal-bg: rgba(15,118,110,0.1);
+  --ls-coral-bg: rgba(188,67,44,0.09);
+  --ls-sage-bg: rgba(95,113,84,0.10);
+  --ls-purple-bg: rgba(109,40,217,0.1);
+  --ls-input-bg: #F5F1EB;
   --ls-sidebar-bg: #FFFFFF;
+  /* Tokens fantômes réparés (cf. bloc :root) — variantes claires. */
+  --ls-teal-dark: #0F766E;
   /* UX Polish global (2026-04-20) : overrides light mode */
   --ls-gold-rgb: 184, 146, 42;
-  --ls-teal-rgb: 13, 148, 136;
-  --ls-coral-rgb: 220, 38, 38;
-  --ls-purple-rgb: 124, 58, 237;
+  --ls-teal-rgb: 15, 118, 110;
+  --ls-coral-rgb: 188, 67, 44;
+  --ls-sage-rgb: 95, 113, 84;
+  --ls-purple-rgb: 109, 40, 217;
   --ls-gold-contrast: #FFFFFF;
   --ls-teal-contrast: #FFFFFF;
-  --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
-  --ls-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
-  --ls-icon: #6B7280;
-  --ls-icon-active: #111827;
+  /* Les ombres du site du club : larges, douces, teintées vert (jamais du noir) */
+  --ls-shadow-sm: 0 8px 20px -16px rgba(30,51,48,0.30);
+  --ls-shadow-md: 0 20px 44px -32px rgba(30,51,48,0.34);
+  --ls-icon: #55605A;
+  --ls-icon-active: #17201C;
 
   /* ── Salle des Opérations — CLAIR (theme-aware). Le fill lime reste vif, mais
      le TEXTE lime fonce (#56770a) pour rester lisible sur fond clair. */
-  --ls-ops-bg: #eef1e8;
+  --ls-ops-bg: #FAF7F0;
   --ls-ops-surface: #ffffff;
-  --ls-ops-surface2: #f6f8f0;
-  --ls-ops-rail: #e7ebdd;
-  --ls-ops-border: #e3e7db;
-  --ls-ops-border-soft: #dde1d4;
+  --ls-ops-surface2: #F5F1EB;
+  --ls-ops-rail: #F0ECE3;
+  --ls-ops-border: rgba(30,51,48,0.07);
+  --ls-ops-border-soft: rgba(30,51,48,0.05);
   --ls-ops-border-active: #9fc62e;
-  --ls-ops-hair: #d3d9c6;
-  --ls-ops-ink: #15180f;
+  --ls-ops-hair: rgba(30,51,48,0.10);
+  --ls-ops-ink: #17201C;
   --ls-ops-text2: #495143;
   --ls-ops-text3: #5b6450;
-  --ls-ops-muted: #8a917e;
-  --ls-ops-faint: #9aa28e;
+  /* Contraste (13/08) : muted 3,05 → 5,12 · faint 2,47 → 4,63. Les `accent`
+     lime restent VIFS : ce sont des remplissages, jamais du texte — le texte
+     lime a déjà son token dédié (`--ls-ops-accent-text`, 4,86). */
+  --ls-ops-muted: #646c59;
+  --ls-ops-faint: #6b735e;
   --ls-ops-disabled: #cdd3c0;
   --ls-ops-accent: #c5f82a;
   --ls-ops-accent2: #a6d40a;
@@ -372,10 +449,8 @@ html.theme-light .border-gray-700 {
 /* Couleurs hardcodées texte accents → variables sémantiques */
 html.theme-light [style*="color: #2DD4BF"],
 html.theme-light [style*="color:#2DD4BF"] { color: var(--ls-teal) !important; }
-html.theme-light [style*="color: #FB7185"],
-html.theme-light [style*="color:#FB7185"] { color: var(--ls-coral) !important; }
-html.theme-light [style*="color: #C9A84C"],
-html.theme-light [style*="color:#C9A84C"] { color: var(--ls-gold) !important; }
+html.theme-light [style*="color: #F2775F"],
+html.theme-light [style*="color:#F2775F"] { color: var(--ls-coral) !important; }
 html.theme-light [style*="color: #A78BFA"],
 html.theme-light [style*="color:#A78BFA"] { color: var(--ls-purple) !important; }
 
@@ -410,16 +485,12 @@ html.theme-light button:not([disabled]):hover {
 }
 
 /* ── TOUCHES PREMIUM MODE CLAIR ── */
-html.theme-light .logo-mark,
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 9px"],
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 12px"] {
-  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+html.theme-light .logo-mark {
+  box-shadow: 0 2px 8px rgba(45,212,191,0.28);
 }
 
-html.theme-light .btn-new,
-html.theme-light [style*="background: #B8922A"],
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 10px"] {
-  box-shadow: 0 2px 10px rgba(184,146,42,0.2);
+html.theme-light .btn-new {
+  box-shadow: 0 2px 10px rgba(45,212,191,0.20);
 }
 
 html.theme-light .ls-sidebar,
@@ -497,17 +568,11 @@ html.theme-light .qr-container img {
 }
 
 /* ═══ 5. DÉTAILS PREMIUM ═══ */
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 9px"],
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 12px"],
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 14px"] {
-  box-shadow: 0 2px 10px rgba(201,168,76,0.35) !important;
-}
-
-html.theme-light button[style*="background: #C9A84C"],
-html.theme-light a[style*="background: #C9A84C"] {
-  box-shadow: 0 2px 12px rgba(184,146,42,0.3) !important;
-}
-
+/* Douze règles retirées le 2026-08-11. Elles réécrivaient le doré #C9A84C /
+   #B8922A posé EN LIGNE dans les composants, pour le thème clair. Le chantier
+   « fin de l'arlequin » a purgé ce doré du code : ces sélecteurs ne visaient
+   plus RIEN (mesuré : 12 règles, 0 cible dans src/). Une rustine qui ne colle
+   plus rien coûte à chaque rendu et fait croire que le problème existe encore. */
 html.theme-light [style*="border-radius: 12px"][style*="border: 1px"],
 html.theme-light [style*="border-radius: 14px"][style*="border: 1px"] {
   box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
@@ -529,7 +594,7 @@ html.theme-light nav {
 
 /* ═══ 7. BADGES URGENCE BIEN VISIBLES ═══ */
 html.theme-light [style*="color: #DC2626"][style*="border-radius: 10px"],
-html.theme-light [style*="color: #FB7185"][style*="border-radius: 10px"] {
+html.theme-light [style*="color: #F2775F"][style*="border-radius: 10px"] {
   background: rgba(220,38,38,0.1) !important;
   font-weight: 600 !important;
 }
@@ -570,11 +635,6 @@ html.theme-light .glass-panel {
   background: var(--ls-surface) !important;
   border-color: var(--ls-border) !important;
   backdrop-filter: none !important;
-}
-
-/* ── LOGO GOLD OMBRE ── */
-html.theme-light [style*="background: #C9A84C"][style*="border-radius: 9px"] {
-  box-shadow: 0 2px 10px rgba(201,168,76,0.3) !important;
 }
 
 /* ── HOVER CARDS ── */
@@ -636,13 +696,14 @@ html.theme-light [class*="text-red-100/"] {
   color: var(--ls-coral) !important;
 }
 
-/* Amber / jaune → gold foncé */
+/* Amber / jaune → l'AMBRE du club (et non plus le doré : celui-ci est abandonné).
+   L'ambre reste légitime — c'est une couleur d'attention, pas de prestige. */
 html.theme-light .text-amber-50,
 html.theme-light .text-amber-100,
 html.theme-light .text-amber-200,
 html.theme-light [class*="text-amber-100/"],
 html.theme-light [class*="text-amber-50/"] {
-  color: #B8922A !important;
+  color: var(--ls-amber) !important;
 }
 
 /* Emerald / vert → teal foncé */
@@ -691,8 +752,8 @@ html.theme-light .eyebrow-label {
 /* ── SIDEBAR icônes/items actifs ── */
 html.theme-light .app-sidebar [aria-current="page"] svg,
 html.theme-light .app-sidebar [aria-current="page"] span svg {
-  color: var(--ls-gold) !important;
-  stroke: var(--ls-gold) !important;
+  color: var(--ls-teal) !important;
+  stroke: var(--ls-teal) !important;
 }
 html.theme-light .app-sidebar svg {
   opacity: 1 !important;
@@ -1011,16 +1072,16 @@ main, .main-content {
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 20px; height: 20px;
-    border-radius: 50%; background: var(--ls-gold); cursor: pointer;
+    border-radius: 50%; background: var(--ls-teal); cursor: pointer;
     border: 2px solid var(--ls-bg);
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--ls-gold) 35%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--ls-teal) 35%, transparent);
     transition:
       transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
       box-shadow 180ms ease-out;
   }
   input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--ls-gold) 55%, transparent);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--ls-teal) 55%, transparent);
   }
   input[type="range"]::-webkit-slider-thumb:active {
     transform: scale(1.05);
@@ -1029,7 +1090,7 @@ main, .main-content {
   input[type="checkbox"] {
     width: 18px; height: 18px; border-radius: 4px;
     border: 1px solid var(--ls-border);
-    background: var(--ls-surface); accent-color: var(--ls-gold); cursor: pointer;
+    background: var(--ls-surface); accent-color: var(--ls-teal); cursor: pointer;
   }
 }
 
@@ -1398,7 +1459,7 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-portfolio-header-row__back:hover {
   background: var(--ls-surface2);
-  border-color: var(--ls-gold);
+  border-color: var(--ls-teal);
 }
 .ls-portfolio-header-row__eyebrow {
   font-family: "DM Sans", sans-serif;
@@ -1482,7 +1543,7 @@ button, a, [role="button"] { min-height: 44px; }
   color: var(--ls-text-muted);
   margin-top: 6px;
 }
-.ls-stat-inline[data-tone="gold"]  .ls-stat-inline__value { color: var(--ls-gold); }
+.ls-stat-inline[data-tone="gold"]  .ls-stat-inline__value { color: var(--ls-teal); }
 .ls-stat-inline[data-tone="teal"]  .ls-stat-inline__value { color: var(--ls-teal); }
 .ls-stat-inline[data-tone="coral"] .ls-stat-inline__value { color: var(--ls-coral); }
 
@@ -1503,7 +1564,7 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-portfolio-hero__cta:hover {
   background: var(--ls-surface2);
-  border-color: var(--ls-gold);
+  border-color: var(--ls-teal);
 }
 
 .ls-portfolio-filters {
@@ -1529,7 +1590,7 @@ button, a, [role="button"] { min-height: 44px; }
   min-height: 36px;
 }
 .ls-filter-pill:hover {
-  border-color: var(--ls-gold);
+  border-color: var(--ls-teal);
 }
 .ls-filter-pill__count {
   font-size: 11px;
@@ -1541,8 +1602,8 @@ button, a, [role="button"] { min-height: 44px; }
   text-align: center;
 }
 .ls-filter-pill[data-active="true"] {
-  background: var(--ls-gold);
-  border-color: var(--ls-gold);
+  background: var(--ls-teal);
+  border-color: var(--ls-teal);
   color: var(--ls-bg);
 }
 .ls-filter-pill[data-active="true"] .ls-filter-pill__count {
@@ -1551,7 +1612,7 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-filter-pill[data-tone="teal"][data-active="false"]  .ls-filter-pill__count { color: var(--ls-teal); }
 .ls-filter-pill[data-tone="coral"][data-active="false"] .ls-filter-pill__count { color: var(--ls-coral); }
-.ls-filter-pill[data-tone="gold-soft"][data-active="false"] .ls-filter-pill__count { color: var(--ls-gold); }
+.ls-filter-pill[data-tone="gold-soft"][data-active="false"] .ls-filter-pill__count { color: var(--ls-teal); }
 
 .ls-portfolio-search {
   flex: 1;
@@ -1629,10 +1690,10 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-client-row:hover {
   background: var(--ls-surface2);
-  border-color: var(--ls-gold);
+  border-color: var(--ls-teal);
 }
 .ls-client-row[data-status="active"]    { border-left: 3px solid var(--ls-teal); }
-.ls-client-row[data-status="pending"]   { border-left: 3px solid var(--ls-gold); }
+.ls-client-row[data-status="pending"]   { border-left: 3px solid var(--ls-teal); }
 .ls-client-row[data-status="follow-up"] { border-left: 3px solid var(--ls-coral); }
 
 .ls-client-row__main {
@@ -1664,7 +1725,7 @@ button, a, [role="button"] { min-height: 44px; }
   font-weight: 500;
 }
 .ls-client-row[data-status="active"]    .ls-client-row__status { color: var(--ls-teal); }
-.ls-client-row[data-status="pending"]   .ls-client-row__status { color: var(--ls-gold); }
+.ls-client-row[data-status="pending"]   .ls-client-row__status { color: var(--ls-teal); }
 .ls-client-row[data-status="follow-up"] .ls-client-row__status { color: var(--ls-coral); }
 .ls-client-row__date {
   font-size: 12px;
@@ -1866,7 +1927,7 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-chapter-dot[data-active="true"] {
   width: 24px;
-  background: var(--ls-gold);
+  background: var(--ls-teal);
 }
 
 /* Chapter container */
@@ -1885,7 +1946,7 @@ button, a, [role="button"] { min-height: 44px; }
   to { opacity: 1; transform: translateY(0); }
 }
 .ls-chapter--diagnostic {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%);
 }
 .ls-chapter--awareness {
   background: linear-gradient(180deg, color-mix(in srgb, var(--ls-coral) 5%, var(--ls-surface)) 0%, var(--ls-surface) 100%);
@@ -1903,8 +1964,8 @@ button, a, [role="button"] { min-height: 44px; }
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--ls-gold) 10%, transparent);
-  color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-teal) 10%, transparent);
+  color: var(--ls-teal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1941,8 +2002,8 @@ button, a, [role="button"] { min-height: 44px; }
   font-style: italic;
   color: var(--ls-text-muted);
   padding: 12px 14px;
-  border-left: 3px solid var(--ls-gold);
-  background: color-mix(in srgb, var(--ls-gold) 5%, transparent);
+  border-left: 3px solid var(--ls-teal);
+  background: color-mix(in srgb, var(--ls-teal) 5%, transparent);
   border-radius: 0 10px 10px 0;
   line-height: 1.5;
 }
@@ -1976,8 +2037,8 @@ button, a, [role="button"] { min-height: 44px; }
   line-height: 1.3;
 }
 .ls-preset-btn:hover {
-  border-color: var(--ls-gold);
-  background: color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2));
+  border-color: var(--ls-teal);
+  background: color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2));
 }
 .ls-preset-btn:active {
   transform: scale(0.98);
@@ -2054,7 +2115,7 @@ button, a, [role="button"] { min-height: 44px; }
   height: 22px;
   border-radius: 50%;
   background: var(--ls-surface);
-  border: 2px solid var(--ls-gold);
+  border: 2px solid var(--ls-teal);
   cursor: grab;
 }
 .ls-gauge__input::-moz-range-thumb {
@@ -2062,7 +2123,7 @@ button, a, [role="button"] { min-height: 44px; }
   height: 22px;
   border-radius: 50%;
   background: var(--ls-surface);
-  border: 2px solid var(--ls-gold);
+  border: 2px solid var(--ls-teal);
   cursor: grab;
 }
 .ls-gauge__track:focus-within .ls-gauge__input,
@@ -2158,8 +2219,8 @@ button, a, [role="button"] { min-height: 44px; }
   cursor: not-allowed;
 }
 .ls-chapter-nav__btn--primary {
-  background: var(--ls-gold);
-  border-color: var(--ls-gold);
+  background: var(--ls-teal);
+  border-color: var(--ls-teal);
   color: var(--ls-bg);
   font-weight: 600;
 }
@@ -2203,7 +2264,7 @@ button, a, [role="button"] { min-height: 44px; }
   justify-content: center;
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--ls-gold);
+  background: var(--ls-teal);
   color: var(--ls-bg);
   font-family: "DM Sans", sans-serif;
   font-size: 13px;
@@ -2282,11 +2343,11 @@ button, a, [role="button"] { min-height: 44px; }
   will-change: transform;
 }
 .ls-pill:hover:not(.ls-pill--selected):not(:disabled) {
-  border-color: var(--ls-gold);
-  background: color-mix(in srgb, var(--ls-gold) 10%, transparent);
+  border-color: var(--ls-teal);
+  background: color-mix(in srgb, var(--ls-teal) 10%, transparent);
   color: var(--ls-text);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-gold) 14%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-teal) 14%, transparent);
 }
 .ls-pill:active:not(:disabled) {
   transform: scale(0.97);
@@ -2294,25 +2355,25 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-pill:focus-visible {
   outline: none;
-  border-color: var(--ls-gold);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-gold) 22%, transparent);
+  border-color: var(--ls-teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-teal) 22%, transparent);
 }
 .ls-pill--selected {
   border-color: transparent;
-  background: linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 80%, var(--ls-teal)) 100%);
+  background: linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 72%, #000) 100%);
   color: var(--ls-bg);
   font-weight: 600;
   letter-spacing: -0.005em;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.08),
-    0 4px 14px color-mix(in srgb, var(--ls-gold) 30%, transparent);
+    0 4px 14px color-mix(in srgb, var(--ls-teal) 30%, transparent);
   transform: scale(1.03);
 }
 .ls-pill--selected:hover:not(:disabled) {
   transform: scale(1.04) translateY(-1px);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.08),
-    0 6px 18px color-mix(in srgb, var(--ls-gold) 38%, transparent);
+    0 6px 18px color-mix(in srgb, var(--ls-teal) 38%, transparent);
 }
 .ls-pill__check {
   display: inline-flex;
@@ -2485,8 +2546,8 @@ button, a, [role="button"] { min-height: 44px; }
   line-height: 1.2;
 }
 .ls-badge[data-tone="gold"] {
-  background: rgba(var(--ls-gold-rgb), 0.12);
-  color: var(--ls-gold);
+  background: rgba(var(--ls-teal-rgb), 0.12);
+  color: var(--ls-teal);
 }
 .ls-badge[data-tone="teal"] {
   background: rgba(var(--ls-teal-rgb), 0.12);
@@ -2546,7 +2607,7 @@ button, a, [role="button"] { min-height: 44px; }
    ============================================================================= */
 
 /* Boutons gold : hover lift + glow doux. S'applique aux btn avec
-   class ls-btn-gold OU style background var(--ls-gold). Animation discrete
+   class ls-btn-gold OU style background var(--ls-teal). Animation discrete
    pour ne pas distraire. */
 .ls-btn-gold,
 button.ls-btn-gold {
@@ -2556,7 +2617,7 @@ button.ls-btn-gold {
 .ls-btn-gold:hover:not(:disabled),
 button.ls-btn-gold:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--ls-gold) 26%, transparent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ls-teal) 26%, transparent);
   filter: brightness(1.04);
 }
 .ls-btn-gold:active:not(:disabled) {
@@ -2668,7 +2729,7 @@ html.theme-sunset {
   --ls-text-muted: #B89888;
   --ls-text-hint: #8B6F5A;
   --ls-gold: #F97316;
-  --ls-teal: #FB7185;
+  --ls-teal: #F2775F;
   --ls-coral: #DC2626;
   --ls-purple: #C084FC;
   --ls-input-bg: #3D2419;
@@ -2764,7 +2825,7 @@ body.ls-stealth-active [data-stealth]:focus-within {
 }
 .lb-logo-mark {
   width: 32px; height: 32px; border-radius: 9px;
-  background: linear-gradient(140deg, var(--ls-gold) 0%, #8a6f24 100%);
+  background: linear-gradient(140deg, var(--ls-teal) 0%, #8a6f24 100%);
   display: grid; place-items: center;
   font-family: var(--sora); font-weight: 800;
   color: #1a1408; font-size: 14px; letter-spacing: -0.5px;
@@ -2787,8 +2848,8 @@ body.ls-stealth-active [data-stealth]:focus-within {
 .lb-crumb {
   display: inline-flex; align-items: center; gap: 6px;
   height: 18px; padding: 0 7px; border-radius: 999px;
-  background: color-mix(in srgb, var(--ls-gold) 14%, transparent);
-  color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  color: var(--ls-teal);
   font-family: var(--dms); font-weight: 600; font-size: 10px;
   letter-spacing: 0.4px; text-transform: uppercase;
   width: fit-content;
@@ -2965,8 +3026,8 @@ body.ls-stealth-active [data-stealth]:focus-within {
 .lb-tab.active { color: var(--ls-text); }
 .lb-tab.active::after {
   content: ''; position: absolute; left: -2px; right: -2px; bottom: -1px;
-  height: 2.5px; border-radius: 2px; background: var(--ls-gold);
-  box-shadow: 0 0 8px var(--ls-gold);
+  height: 2.5px; border-radius: 2px; background: var(--ls-teal);
+  box-shadow: 0 0 8px var(--ls-teal);
 }
 
 .lb-search {
@@ -2983,10 +3044,10 @@ body.ls-stealth-active [data-stealth]:focus-within {
 .lb-search .filt-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 10px; border-radius: 999px;
-  background: color-mix(in srgb, var(--ls-gold) 14%, transparent);
-  color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  color: var(--ls-teal);
   font-family: var(--dms); font-weight: 600; font-size: 12px;
-  border: 1px solid color-mix(in srgb, var(--ls-gold) 32%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ls-teal) 32%, transparent);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
@@ -2994,7 +3055,7 @@ body.ls-stealth-active [data-stealth]:focus-within {
 .lb-search .filt-btn .filt-count {
   font-family: var(--syne); font-weight: 800; font-size: 11px;
   padding: 0 6px; border-radius: 999px;
-  background: var(--ls-gold); color: #1a1408;
+  background: var(--ls-teal); color: #1a1408;
 }
 
 .lb-mini-stats {
@@ -3144,9 +3205,9 @@ body.ls-stealth-active [data-stealth]:focus-within {
   -webkit-tap-highlight-color: transparent;
 }
 .lb-fp.on {
-  background: color-mix(in srgb, var(--ls-gold) 14%, transparent);
-  border-color: color-mix(in srgb, var(--ls-gold) 32%, transparent);
-  color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ls-teal) 32%, transparent);
+  color: var(--ls-teal);
   font-weight: 700;
 }
 .lb-fp .x {
@@ -3159,16 +3220,16 @@ body.ls-stealth-active [data-stealth]:focus-within {
 }
 .lb-sheet-apply {
   width: 100%; min-height: 48px;
-  background: var(--ls-gold); color: #1a1408;
+  background: var(--ls-teal); color: #1a1408;
   border: none; border-radius: 14px;
   font-family: var(--dms); font-weight: 700; font-size: 14.5px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--ls-gold) 25%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ls-teal) 25%, transparent);
 }
 .lb-sheet-apply:active {
   transform: translateY(1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-gold) 18%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-teal) 18%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3378,15 +3439,31 @@ html.accent-hybrid {
   --ls-gold-line: color-mix(in srgb, var(--ls-teal) 32%, transparent);
 }
 
-/* Éléments tagués .gold-keep ignorent le swap et restent gold (identité) :
-   logo, streak flame, VIP chip, rank pin. */
+/* .gold-keep — dernier réduit du doré (flamme de série, logo). Le doré étant
+   abandonné (2026-08-05), ces éléments passent sur le LIME : ce sont des
+   VICTOIRES (une série, c'est un win), et le lime est précisément la couleur
+   réservée aux victoires dans l'identité. Le logo est une image, ses couleurs
+   propres ne dépendent pas de ce token. */
 html.accent-hybrid .gold-keep {
-  --ls-gold: #C9A84C;
-  --ls-gold-soft: color-mix(in srgb, #C9A84C 14%, transparent);
-  --ls-gold-line: color-mix(in srgb, #C9A84C 32%, transparent);
+  --ls-gold: var(--ls-lime);
+  --ls-gold-soft: color-mix(in srgb, var(--ls-lime) 14%, transparent);
+  --ls-gold-line: color-mix(in srgb, var(--ls-lime) 32%, transparent);
 }
 html.theme-light.accent-hybrid .gold-keep {
-  --ls-gold: #B8922A;
-  --ls-gold-soft: color-mix(in srgb, #B8922A 10%, transparent);
-  --ls-gold-line: color-mix(in srgb, #B8922A 28%, transparent);
+  --ls-gold: var(--ls-lime);
+  --ls-gold-soft: color-mix(in srgb, var(--ls-lime) 12%, transparent);
+  --ls-gold-line: color-mix(in srgb, var(--ls-lime) 30%, transparent);
+}
+
+/* Lu par les lecteurs d'écran, invisible à l'œil. Sert aux puces où
+   l'information tient dans un emoji + une infobulle — une infobulle ne
+   s'entend pas (2026-08-11). */
+.ls-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

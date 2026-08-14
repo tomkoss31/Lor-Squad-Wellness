@@ -64,12 +64,17 @@ export function BbcModeSwitch({ value, onChange, compact }: BbcModeSwitchProps) 
             style={{
               border: 0,
               cursor: "pointer",
-              minHeight: compact ? 26 : 30,
+              // `compact` réduit la LARGEUR, jamais la hauteur : la variante
+              // compacte vit dans le tiroir mobile, donc sous le pouce. À 26 px
+              // la cible était deux fois trop petite (13/08). 40 px + le padding
+              // du groupe donne un pavé de 46 px, aligné sur les autres entrées
+              // du menu.
+              minHeight: 40,
               fontFamily: "var(--ls-bbc-font-body)",
-              fontSize: compact ? 10.5 : 11,
+              fontSize: compact ? 11.5 : 11,
               fontWeight: 700,
               letterSpacing: "0.01em",
-              padding: compact ? "4px 11px" : "5px 13px",
+              padding: compact ? "4px 16px" : "5px 13px",
               borderRadius: 999,
               // Classic actif = surface claire du thème (pas d'or : l'or reste
               // le marqueur du mode classic lui-même). BBC actif = lime.

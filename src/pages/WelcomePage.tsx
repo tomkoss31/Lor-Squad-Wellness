@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { ProfileCard } from "../components/welcome/ProfileCard";
 import { ClientModal } from "../components/welcome/ClientModal";
 import { ProspectFormModal } from "../components/welcome/ProspectFormModal";
+import { LogoMark } from "../components/brand/LogoMark";
 
 export function WelcomePage() {
   const navigate = useNavigate();
@@ -337,11 +338,7 @@ export function WelcomePage() {
         {/* Logo orbe + heritage badge */}
         <div className="welcome-logo-wrap">
           <div className="welcome-logo-ring" aria-hidden="true">
-            <img
-              src="/brand/labase360/app-icon-512.svg"
-              alt="La Base 360"
-              className="welcome-logo"
-            />
+            <LogoMark size={96} className="welcome-logo" />
           </div>
           <span className="welcome-heritage">★ Since 2022 ★</span>
         </div>
@@ -382,15 +379,18 @@ export function WelcomePage() {
             accent="gold"
           />
           <ProfileCard
-            icon="✨"
-            title="Je veux rejoindre l'aventure"
-            subtitle="Découvrir le business La Base 360"
-            // Page d'accueil publique → tunnel recrutement /rejoindre avec
-            // attribution au coach par défaut (Thomas, owner). Le ?ref est
-            // préservé jusqu'au questionnaire (cf. RejoindreOpportunitePage).
-            onClick={() => navigate("/rejoindre?ref=656dcf35-4859-4a70-9d20-990104813423")}
+            icon="✦"
+            title="Découvrir le club"
+            subtitle="Qui on est, ce qu'on fait, comment nous rejoindre"
+            // Refonte 2026-07-31 : au lieu d'envoyer direct sur /rejoindre (qui
+            // verrouille le contenu derrière un questionnaire → 0 conversion),
+            // on ouvre la page découverte /decouvrir qui EXPLIQUE d'abord, puis
+            // propose deux chemins (bilan offert / opportunité). Maquette validée.
+            onClick={() => navigate("/decouvrir")}
             delayMs={1000}
             accent="magenta"
+            featured
+            badge="Nouveau"
           />
         </div>
 

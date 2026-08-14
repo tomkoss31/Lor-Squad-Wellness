@@ -13,7 +13,7 @@ const TONES = {
   blue:   { bg: "rgba(var(--ls-teal-rgb), 0.12)",   fg: "var(--ls-teal)" },
   green:  { bg: "rgba(var(--ls-teal-rgb), 0.12)",   fg: "var(--ls-teal)" },
   red:    { bg: "rgba(var(--ls-coral-rgb), 0.12)",  fg: "var(--ls-coral)" },
-  amber:  { bg: "rgba(var(--ls-gold-rgb), 0.12)",   fg: "var(--ls-gold)" },
+  amber:  { bg: "rgba(var(--ls-teal-rgb), 0.12)",   fg: "var(--ls-teal)" },
   purple: { bg: "rgba(var(--ls-purple-rgb), 0.12)", fg: "var(--ls-purple)" },
   gray:   { bg: "var(--ls-surface2)",               fg: "var(--ls-text-muted)" },
 } as const

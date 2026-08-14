@@ -59,7 +59,7 @@ export function SignatureCanvasModal({ open, title, onClose, onSave }: Props) {
       <div
         style={{
           background: "#FBF7E9",
-          border: "1px solid #B8922A",
+          border: "1px solid #0D9488",
           borderRadius: 12,
           padding: 24,
           maxWidth: 560,
@@ -111,7 +111,7 @@ export function SignatureCanvasModal({ open, title, onClose, onSave }: Props) {
         <div
           style={{
             background: "#FFFCF0",
-            border: "1px dashed #B8922A",
+            border: "1px dashed #0D9488",
             borderRadius: 4,
             padding: 4,
           }}
@@ -174,7 +174,7 @@ export function SignatureCanvasModal({ open, title, onClose, onSave }: Props) {
               border: "none",
               background: saving
                 ? "#888"
-                : "linear-gradient(135deg, #B8922A, #8B6F1F)",
+                : "linear-gradient(135deg, #0D9488, #8B6F1F)",
               color: "#FFF8E0",
               fontFamily: "'Cinzel', serif",
               fontSize: 12,
@@ -196,7 +196,7 @@ export function SignatureCanvasModal({ open, title, onClose, onSave }: Props) {
 const btnGhost: React.CSSProperties = {
   padding: "12px 18px",
   borderRadius: 8,
-  border: "1px solid #B8922A",
+  border: "1px solid #0D9488",
   background: "transparent",
   color: "#8B6F1F",
   fontFamily: "'Cinzel', serif",

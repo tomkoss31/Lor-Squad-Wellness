@@ -45,12 +45,14 @@ import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
+import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { tableSupportsAssignment } from "../lib/leadRouting";
+import { dateDeRetour, quandRevient, type Reponse } from "../features/crm/qualification";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -66,7 +68,7 @@ function normalizeSlug(input: string): string {
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
-  const { leads, loading, error, refetch, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
   // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
@@ -201,6 +203,51 @@ export function CrmPage() {
     [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids],
   );
 
+  // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
+  //
+  // Fatiha a rempli le tunnel /reserver deux fois, à 10 h 12 puis à 11 h 44 :
+  // deux fiches dans le CRM pour une seule personne. Le repère ⚠️ existait
+  // déjà, mais il SIGNALAIT sans regrouper — et seulement sur le téléphone.
+  //
+  // On regroupe sur l'email OU le téléphone normalisé. La fiche la plus
+  // RÉCENTE devient la ligne visible ; les autres sont repliées derrière un
+  // badge « n fiches ». Rien n'est supprimé en base : c'est un regroupement
+  // d'affichage, réversible en retirant ces lignes.
+  //
+  // Le regroupement se fait APRÈS le filtrage : filtrer sur « Colis » ne doit
+  // pas faire disparaître une fiche colis parce qu'elle serait absorbée par
+  // une fiche d'une autre source.
+  const { regroupes, doublonsDe } = useMemo(() => {
+    const cle = (l: CrmLead): string | null => {
+      const c = (l.contact ?? "").trim().toLowerCase();
+      if (!c) return null;
+      if (c.includes("@")) return "e:" + c;
+      const tel = c.replace(/\D/g, "").replace(/^0+/, "").replace(/^33/, "");
+      return tel.length >= 8 ? "t:" + tel.slice(-9) : null;
+    };
+    const paquets = new Map<string, CrmLead[]>();
+    const seuls: CrmLead[] = [];
+    for (const l of filtered) {
+      const k = cle(l);
+      if (!k) { seuls.push(l); continue; }
+      const p = paquets.get(k);
+      if (p) p.push(l); else paquets.set(k, [l]);
+    }
+    const principaux: CrmLead[] = [...seuls];
+    const doublons = new Map<string, CrmLead[]>();
+    for (const groupe of paquets.values()) {
+      // Le plus récent porte le fil : c'est celui qui reflète l'intention
+      // actuelle de la personne.
+      const tries = [...groupe].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      principaux.push(tries[0]);
+      if (tries.length > 1) doublons.set(tries[0].key, tries.slice(1));
+    }
+    principaux.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return { regroupes: principaux, doublonsDe: doublons };
+  }, [filtered]);
+
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
     const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
@@ -233,6 +280,25 @@ export function CrmPage() {
     if (err) {
       pushToast({ tone: "warning", title: "Statut non enregistré", message: err });
     }
+  }
+
+  // « Et alors ? » depuis la liste. La confirmation NOMME la date de retour :
+  // c'est ce qui rend le geste sûr — on voit tout de suite ce qu'on vient de
+  // caler, sans avoir à rouvrir la fiche.
+  async function handleQualifier(lead: CrmLead, reponse: Reponse) {
+    const err = await qualifier(lead, reponse);
+    if (err) {
+      pushToast({ tone: "warning", title: "Qualification non enregistrée", message: err });
+      return;
+    }
+    const due = dateDeRetour(reponse, new Date());
+    pushToast({
+      tone: "success",
+      title: `${lead.firstName} · ${reponse.titre}`,
+      message: due
+        ? `Revient ${quandRevient(due, new Date())} — tu n'as rien à noter.`
+        : reponse.quand,
+    });
   }
 
   async function handleSourceChange(lead: CrmLead, next: CrmSource) {
@@ -315,6 +381,10 @@ export function CrmPage() {
           masqué s'il n'y en a pas. */}
       <RdvBookingsWidget />
 
+      {/* RDV découverte réservés via le site du club (/reserver) — visible
+          pour les admins, masqué s'il n'y en a pas (chantier 1d, 2026-07-31). */}
+      <ClubDiscoveryWidget />
+
       {error ? (
         <div style={errorBanner}>
           ⚠️ Une source n'a pas pu charger : {error}
@@ -328,7 +398,7 @@ export function CrmPage() {
       {canFilterTeam && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "12px 0 0" }}>
           <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
-          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-gold)")}>👤 Moi</button>
+          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>👤 Moi</button>
           {line1Ids.size > 0 && (
             <button type="button" onClick={() => setScope("l1")} style={sourceChip(scope === "l1", "var(--ls-teal)")}>
               Ligne 1 ({line1Ids.size})
@@ -508,7 +578,7 @@ export function CrmPage() {
                           📱 Relancer
                         </a>
                       ) : (
-                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-gold)")}>
+                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-teal)")}>
                           📋 Message
                         </button>
                       )}
@@ -569,7 +639,8 @@ export function CrmPage() {
         <div style={hint}>Chargement de tes leads…</div>
       ) : viewMode === "list" ? (
         <CrmLeadsListView
-          leads={filtered}
+          leads={regroupes}
+          doublonsDe={doublonsDe}
           msgCtx={msgCtx}
           archived={view === "archived"}
           onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
@@ -580,6 +651,7 @@ export function CrmPage() {
           onDormant={(lead) => void handleDormant(lead, true)}
           onWake={(lead) => void handleDormant(lead, false)}
           onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
+          onQualifier={(lead, r) => void handleQualifier(lead, r)}
           emptyMessage={
             view === "archived"
               ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
@@ -590,7 +662,7 @@ export function CrmPage() {
               : "Aucun lead ne correspond aux filtres."
           }
         />
-      ) : filtered.length === 0 ? (
+      ) : regroupes.length === 0 ? (
         <div style={emptyState}>
           {view === "archived"
             ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
@@ -602,7 +674,7 @@ export function CrmPage() {
         </div>
       ) : view === "archived" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 560 }}>
-          {filtered.map((lead) => (
+          {regroupes.map((lead) => (
             <LeadCard
               key={lead.key}
               lead={lead}
@@ -624,7 +696,7 @@ export function CrmPage() {
             ? (["converted", "lost"] as CrmStatus[])
             : (["new", "contacted", "qualified"] as CrmStatus[])
           ).map((status) => {
-            const col = filtered.filter((l) => l.status === status);
+            const col = regroupes.filter((l) => l.status === status);
             const isDragOver = dragOverStatus === status;
             return (
               <div
@@ -1050,7 +1122,7 @@ function LeadCard({
                 📱 Au parrain
               </a>
             ) : null}
-            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-gold)")}>
+            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-teal)")}>
               📋 Copier
             </button>
             <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>
@@ -1126,7 +1198,7 @@ const pageWrap: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)))",
   border: "0.5px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
   borderRadius: 18,
   padding: "22px 20px",
@@ -1339,17 +1411,17 @@ const stagnantBadge: React.CSSProperties = {
 
 const dupeBadge: React.CSSProperties = {
   ...clientBadge,
-  background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
-  color: "var(--ls-gold)",
+  background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
+  color: "var(--ls-teal)",
 };
 
 const curiousPanel: React.CSSProperties = {
   marginBottom: 16,
   padding: "12px 16px",
   borderRadius: 14,
-  background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-  border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 40%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+  border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
 };
 
 const curiousHeader: React.CSSProperties = {
@@ -1419,7 +1491,7 @@ const statsBarTrack: React.CSSProperties = {
 const statsBarFill: React.CSSProperties = {
   height: "100%",
   borderRadius: 100,
-  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-gold))",
+  background: "linear-gradient(90deg, var(--ls-teal), var(--ls-teal))",
 };
 
 const actionBtn = (accent: string): React.CSSProperties => ({

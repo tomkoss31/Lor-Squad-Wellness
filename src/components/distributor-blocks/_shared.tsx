@@ -141,7 +141,7 @@ export function PvTierRow({
             padding: 0,
             width: 22,
             opacity: vipFlag ? 1 : 0.4,
-            color: vipFlag ? "var(--ls-gold)" : "var(--ls-text-muted)",
+            color: vipFlag ? "var(--ls-teal)" : "var(--ls-text-muted)",
           }}
         >
           {vipFlag ? "⭐" : "☆"}
@@ -228,7 +228,7 @@ export function PrimaryActionButton({
         background:
           busy || disabled
             ? "var(--ls-surface2)"
-            : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+            : "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
         color: busy || disabled ? "var(--ls-text-muted)" : "#FFFFFF",
         fontSize: 12,
         fontWeight: 700,

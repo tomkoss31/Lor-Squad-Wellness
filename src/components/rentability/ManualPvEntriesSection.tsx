@@ -327,7 +327,7 @@ function ManualEntryRow({
         <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
           {entry.name}
           {vipMarkers.length > 0 ? (
-            <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-gold)", fontWeight: 600 }}>
+            <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-teal)", fontWeight: 600 }}>
               {vipMarkers.join(" + ")}
             </span>
           ) : null}
@@ -521,7 +521,7 @@ function PvTierInput({
             padding: 0,
             width: 24,
             opacity: vipFlag ? 1 : 0.35,
-            color: vipFlag ? "var(--ls-gold)" : "var(--ls-text-muted)",
+            color: vipFlag ? "var(--ls-teal)" : "var(--ls-text-muted)",
           }}
         >
           {vipFlag ? "⭐" : "☆"}
@@ -604,8 +604,8 @@ const monthPickerHintStyle: React.CSSProperties = {
   margin: "0 0 16px",
   padding: "9px 12px",
   borderRadius: 10,
-  background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
+  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 28%, transparent)",
   color: "var(--ls-text-muted)",
   fontSize: 12,
   lineHeight: 1.5,
@@ -746,7 +746,7 @@ const primaryBtnStyle: React.CSSProperties = {
   padding: "9px 16px",
   borderRadius: 10,
   border: "none",
-  background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+  background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
   color: "#FFFFFF",
   fontFamily: "Sora, system-ui, sans-serif",
   fontSize: 12,

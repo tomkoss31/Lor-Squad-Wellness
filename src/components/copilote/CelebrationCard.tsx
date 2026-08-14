@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { CelebrationDialog } from "./CelebrationDialog";
+import { FRAICHEUR, cleDuJour, lireAvecFraicheur } from "../../lib/cacheFraicheur";
 
 export type CelebrationKind = "birthday" | "program_1m" | "program_3m" | "program_6m";
 
@@ -83,19 +84,24 @@ export function CelebrationCard() {
     let cancelled = false;
     void (async () => {
       try {
-        const sb = await getSupabaseClient();
-        if (!sb) return;
-        // Pas besoin de passer p_coach_user_id : le RPC utilise
-        // auth.uid() par defaut si omis.
-        const { data, error } = await sb.rpc("get_today_celebrations");
+        // Une lecture par jour (décision Thomas, 2026-08-12) : la liste des
+        // anniversaires du jour est, par définition, figée jusqu'à minuit. La
+        // clé étant datée, elle bascule d'elle-même au changement de date.
+        const liste = await lireAvecFraicheur<Celebration[]>(
+          cleDuJour(`anniversaires:${currentUser.id}`),
+          FRAICHEUR.JOUR,
+          async () => {
+            const sb = await getSupabaseClient();
+            if (!sb) throw new Error("Supabase indisponible");
+            // Pas besoin de passer p_coach_user_id : le RPC utilise
+            // auth.uid() par defaut si omis.
+            const { data, error } = await sb.rpc("get_today_celebrations");
+            if (error) throw new Error(error.message);
+            return ((data ?? {}) as { celebrations?: Celebration[] }).celebrations ?? [];
+          },
+        );
         if (cancelled) return;
-        if (error) {
-          console.warn("[CelebrationCard] rpc error:", error.message);
-          setCelebrations([]);
-          return;
-        }
-        const payload = (data ?? {}) as { celebrations?: Celebration[] };
-        setCelebrations(payload.celebrations ?? []);
+        setCelebrations(liste);
       } catch (err) {
         console.warn("[CelebrationCard] fetch failed:", err);
         if (!cancelled) setCelebrations([]);
@@ -191,8 +197,8 @@ const cardStyle: React.CSSProperties = {
   isolation: "isolate",
   overflow: "hidden",
   background:
-    "linear-gradient(135deg, color-mix(in srgb, #B8922A 8%, var(--ls-surface)) 0%, color-mix(in srgb, #D4537E 6%, var(--ls-surface)) 100%)",
-  border: "1px solid color-mix(in srgb, #B8922A 22%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, #0D9488 8%, var(--ls-surface)) 0%, color-mix(in srgb, #D4537E 6%, var(--ls-surface)) 100%)",
+  border: "1px solid color-mix(in srgb, #0D9488 22%, var(--ls-border))",
   borderRadius: 18,
   padding: "18px 22px",
   marginBottom: 14,
@@ -207,7 +213,7 @@ const haloStyle: React.CSSProperties = {
   width: 240,
   height: 240,
   background:
-    "radial-gradient(circle, color-mix(in srgb, #B8922A 26%, transparent), transparent 65%)",
+    "radial-gradient(circle, color-mix(in srgb, #0D9488 26%, transparent), transparent 65%)",
   pointerEvents: "none",
   zIndex: 0,
   filter: "blur(8px)",
@@ -230,7 +236,7 @@ const eyebrowStyle: React.CSSProperties = {
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   fontWeight: 600,
-  color: "color-mix(in srgb, #B8922A 75%, var(--ls-text))",
+  color: "color-mix(in srgb, #0D9488 75%, var(--ls-text))",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
@@ -240,8 +246,8 @@ const liveDotStyle: React.CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: "50%",
-  background: "#B8922A",
-  boxShadow: "0 0 0 4px color-mix(in srgb, #B8922A 22%, transparent)",
+  background: "#0D9488",
+  boxShadow: "0 0 0 4px color-mix(in srgb, #0D9488 22%, transparent)",
   display: "inline-block",
 };
 
@@ -249,9 +255,9 @@ const countBadgeStyle: React.CSSProperties = {
   fontSize: 11,
   padding: "3px 10px",
   borderRadius: 999,
-  background: "color-mix(in srgb, #B8922A 14%, transparent)",
-  color: "color-mix(in srgb, #B8922A 85%, var(--ls-text))",
-  border: "1px solid color-mix(in srgb, #B8922A 28%, transparent)",
+  background: "color-mix(in srgb, #0D9488 14%, transparent)",
+  color: "color-mix(in srgb, #0D9488 85%, var(--ls-text))",
+  border: "1px solid color-mix(in srgb, #0D9488 28%, transparent)",
   fontWeight: 700,
   fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
   letterSpacing: "0.04em",
@@ -273,14 +279,14 @@ const rowStyle: React.CSSProperties = {
   padding: "10px 14px",
   borderRadius: 12,
   background: "color-mix(in srgb, var(--ls-surface) 80%, transparent)",
-  border: "1px solid color-mix(in srgb, #B8922A 14%, var(--ls-border))",
+  border: "1px solid color-mix(in srgb, #0D9488 14%, var(--ls-border))",
 };
 
 const emojiBubbleStyle: React.CSSProperties = {
   width: 40,
   height: 40,
   borderRadius: 12,
-  background: "color-mix(in srgb, #B8922A 16%, var(--ls-surface))",
+  background: "color-mix(in srgb, #0D9488 16%, var(--ls-surface))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -318,7 +324,7 @@ const actionsStyle: React.CSSProperties = {
 
 const btnPrimaryStyle: React.CSSProperties = {
   background:
-    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+    "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%))",
   color: "white",
   border: "none",
   padding: "8px 14px",
@@ -328,7 +334,7 @@ const btnPrimaryStyle: React.CSSProperties = {
   cursor: "pointer",
   fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   letterSpacing: "0.01em",
-  boxShadow: "0 4px 12px -4px color-mix(in srgb, #10B981 50%, transparent)",
+  boxShadow: "0 4px 12px -4px color-mix(in srgb, #2DD4BF 50%, transparent)",
   transition: "transform 0.18s ease, filter 0.18s ease",
 };
 

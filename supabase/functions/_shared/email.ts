@@ -10,7 +10,7 @@
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
 export const MAIL_FROM = "La Base 360 <no-reply@labase360.fr>";
-export const MAIL_REPLY_TO = "support@labase360.fr";
+export const MAIL_REPLY_TO = "labaseverdun@gmail.com";
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));

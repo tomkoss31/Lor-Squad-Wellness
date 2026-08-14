@@ -455,7 +455,7 @@ function Header() {
       padding: "36px 22px 28px",
       textAlign: "center",
       background: `
-        radial-gradient(circle at 20% 20%, rgba(201,168,76,0.18), transparent 50%),
+        radial-gradient(circle at 20% 20%, rgba(var(--ls-teal-rgb),0.18), transparent 50%),
         radial-gradient(circle at 80% 30%, rgba(45,212,191,0.14), transparent 50%),
         linear-gradient(180deg, #FAEEDA 0%, var(--ls-cream, #FBF7F0) 100%)
       `,
@@ -466,7 +466,7 @@ function Header() {
       <div style={{
         fontFamily: "'Syne', serif", fontSize: 13, fontWeight: 700,
         letterSpacing: "0.18em", textTransform: "uppercase",
-        color: "var(--ls-gold, #C9A84C)",
+        color: "var(--ls-teal, #2DD4BF)",
         marginBottom: 14,
       }}>
         La Base 360
@@ -509,7 +509,7 @@ function StatsBanner({ stats }: { stats: ProspectionStats }) {
   return (
     <div style={{
       padding: "10px 20px",
-      background: "linear-gradient(90deg, rgba(45,212,191,0.10), rgba(201,168,76,0.06))",
+      background: "linear-gradient(90deg, rgba(45,212,191,0.10), rgba(var(--ls-teal-rgb),0.06))",
       borderBottom: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
       display: "flex", alignItems: "center", justifyContent: "center",
       gap: 18,
@@ -551,7 +551,7 @@ function Stepper({ step }: { step: Step }) {
             transition: "all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
             background:
               n === step
-                ? "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)"
+                ? "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #E5C97D)"
                 : n < step
                   ? "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #5EEAD4)"
                   : "var(--ls-surface2, #F7F3EC)",
@@ -563,7 +563,7 @@ function Stepper({ step }: { step: Step }) {
                   : "var(--ls-text-hint, #9CA3AF)",
             transform: n === step ? "scale(1.15)" : "none",
             boxShadow: n === step
-              ? "0 4px 14px rgba(201,168,76,0.45), 0 0 0 4px rgba(201,168,76,0.18)"
+              ? "0 4px 14px rgba(var(--ls-teal-rgb),0.45), 0 0 0 4px rgba(var(--ls-teal-rgb),0.18)"
               : n < step
                 ? "0 2px 8px rgba(45,212,191,0.30)"
                 : "none",
@@ -664,16 +664,16 @@ function ChoiceCard({
       onClick={onClick}
       style={{
         background: selected
-          ? "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(45,212,191,0.08))"
+          ? "linear-gradient(135deg, rgba(var(--ls-teal-rgb),0.15), rgba(45,212,191,0.08))"
           : "var(--ls-surface, white)",
-        border: `2px solid ${selected ? "var(--ls-gold, #C9A84C)" : "var(--ls-border, rgba(11,13,17,0.10))"}`,
+        border: `2px solid ${selected ? "var(--ls-teal, #2DD4BF)" : "var(--ls-border, rgba(11,13,17,0.10))"}`,
         borderRadius: 14,
         padding: "18px 12px",
         textAlign: "center",
         cursor: "pointer",
         transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
         boxShadow: selected
-          ? "0 8px 24px rgba(201,168,76,0.28), 0 0 0 4px rgba(201,168,76,0.10)"
+          ? "0 8px 24px rgba(var(--ls-teal-rgb),0.28), 0 0 0 4px rgba(var(--ls-teal-rgb),0.10)"
           : "0 2px 8px rgba(11,13,17,0.04)",
         fontFamily: "inherit",
         color: "inherit",
@@ -684,7 +684,7 @@ function ChoiceCard({
         if (!selected) {
           e.currentTarget.style.transform = "translateY(-3px)";
           e.currentTarget.style.boxShadow = "0 6px 18px rgba(11,13,17,0.10)";
-          e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
+          e.currentTarget.style.borderColor = "rgba(var(--ls-teal-rgb),0.5)";
         }
       }}
       onMouseLeave={(e) => {
@@ -760,12 +760,12 @@ function BriefMethodSection({
                 <span style={{
                   flexShrink: 0,
                   width: 36, height: 36, borderRadius: "50%",
-                  background: "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)",
+                  background: "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #E5C97D)",
                   color: "var(--ls-charcoal, #0B0D11)",
                   fontFamily: "'Syne', serif",
                   fontWeight: 700, fontSize: 16,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 10px rgba(201,168,76,0.30)",
+                  boxShadow: "0 4px 10px rgba(var(--ls-teal-rgb),0.30)",
                 }}>
                   {i + 1}
                 </span>
@@ -811,8 +811,8 @@ function BriefMethodSection({
               <div key={i} style={{
                 display: "flex", gap: 12,
                 padding: "12px 14px",
-                background: "rgba(251,113,133,0.06)",
-                border: "1px solid rgba(251,113,133,0.25)",
+                background: "rgba(242,119,95,0.06)",
+                border: "1px solid rgba(242,119,95,0.25)",
                 borderRadius: 10,
               }}>
                 <span style={{
@@ -871,9 +871,9 @@ function HashtagChip({ value }: { value: string }) {
       }}
       onMouseEnter={(e) => {
         if (!copied) {
-          e.currentTarget.style.background = "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)";
+          e.currentTarget.style.background = "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #E5C97D)";
           e.currentTarget.style.color = "var(--ls-charcoal, #0B0D11)";
-          e.currentTarget.style.borderColor = "var(--ls-gold, #C9A84C)";
+          e.currentTarget.style.borderColor = "var(--ls-teal, #2DD4BF)";
           e.currentTarget.style.transform = "translateY(-1px)";
         }
       }}
@@ -929,8 +929,8 @@ function MarketTimingBanner({
       borderRadius: 14,
       padding: "16px 18px",
       marginBottom: 18,
-      border: "1px solid rgba(201,168,76,0.30)",
-      boxShadow: "0 4px 14px rgba(201,168,76,0.10)",
+      border: "1px solid rgba(var(--ls-teal-rgb),0.30)",
+      boxShadow: "0 4px 14px rgba(var(--ls-teal-rgb),0.10)",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 8,
@@ -976,7 +976,7 @@ function MarketTimingBanner({
 const KIND_BADGES: Record<string, { label: string; bg: string; color: string }> = {
   j3_followup: { label: "Relance J+3",    bg: "linear-gradient(135deg, #F59E0B, #FBBF24)", color: "white" },
   referral:    { label: "Après reco",     bg: "linear-gradient(135deg, #2DD4BF, #5EEAD4)", color: "white" },
-  pitch:       { label: "Pitch business", bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)", color: "white" },
+  pitch:       { label: "Pitch business", bg: "linear-gradient(135deg, #A78BFA, #6D28D9)", color: "white" },
   direct:      { label: "Contact direct", bg: "rgba(45,212,191,0.15)", color: "#0F766E" },
   first_contact: { label: "", bg: "", color: "" },
 };
@@ -1230,7 +1230,7 @@ function highlightVariables(body: string): string {
   return escapeHtml(body).replace(
     /\[([^\]]+)\]/g,
     (_, inner) =>
-      `<strong style="background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(229,201,125,0.18)); padding: 2px 6px; border-radius: 5px; color: #633806; font-weight: 600; box-shadow: 0 1px 2px rgba(201,168,76,0.15);">[${inner}]</strong>`,
+      `<strong style="background: linear-gradient(135deg, rgba(var(--ls-teal-rgb),0.25), rgba(229,201,125,0.18)); padding: 2px 6px; border-radius: 5px; color: #633806; font-weight: 600; box-shadow: 0 1px 2px rgba(var(--ls-teal-rgb),0.15);">[${inner}]</strong>`,
   );
 }
 
@@ -1324,7 +1324,7 @@ function StatsGrid({ stats }: { stats: ProspectionStats }) {
     : 0;
 
   const tiles = [
-    { label: "Envois 7 derniers jours", value: stats.total_7d, color: "var(--ls-gold, #C9A84C)" },
+    { label: "Envois 7 derniers jours", value: stats.total_7d, color: "var(--ls-teal, #2DD4BF)" },
     { label: "Envois 30 derniers jours", value: stats.total_30d, color: "var(--ls-teal, #2DD4BF)" },
     { label: "Taux de réponse 7j", value: `${responseRate}%`, color: "#F59E0B" },
     { label: "Conversions Lead 7j", value: `${conversionRate}%`, color: "#16A34A" },
@@ -1376,7 +1376,7 @@ function BilanLinkBox({ link }: { link: string }) {
     <div style={{
       marginTop: 24,
       padding: 18,
-      background: "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(201,168,76,0.08))",
+      background: "linear-gradient(135deg, rgba(45,212,191,0.12), rgba(var(--ls-teal-rgb),0.08))",
       border: "1.5px solid var(--ls-teal, #2DD4BF)",
       borderRadius: 16,
       position: "relative",
@@ -1438,7 +1438,7 @@ function BilanLinkBox({ link }: { link: string }) {
           style={{
             background: copied
               ? "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #5EEAD4)"
-              : "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)",
+              : "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #E5C97D)",
             color: copied ? "white" : "var(--ls-charcoal, #0B0D11)",
             border: "none",
             padding: "10px 16px",
@@ -1450,7 +1450,7 @@ function BilanLinkBox({ link }: { link: string }) {
             whiteSpace: "nowrap",
             boxShadow: copied
               ? "0 4px 12px rgba(45,212,191,0.35)"
-              : "0 4px 12px rgba(201,168,76,0.30)",
+              : "0 4px 12px rgba(var(--ls-teal-rgb),0.30)",
             transition: "all 0.2s",
           }}
         >
@@ -1472,8 +1472,8 @@ function TipBanner({
     <div style={{
       marginTop: 6,
       padding: "14px 16px",
-      background: "linear-gradient(135deg, rgba(201,168,76,0.10), rgba(201,168,76,0.04))",
-      border: "1px solid rgba(201,168,76,0.30)",
+      background: "linear-gradient(135deg, rgba(var(--ls-teal-rgb),0.10), rgba(var(--ls-teal-rgb),0.04))",
+      border: "1px solid rgba(var(--ls-teal-rgb),0.30)",
       borderRadius: 12,
       fontSize: 13.5,
       lineHeight: 1.55,
@@ -1538,7 +1538,7 @@ function NavRow({
           onClick={onNext}
           style={{
             flex: 1,
-            background: "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)",
+            background: "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #E5C97D)",
             color: "var(--ls-charcoal, #0B0D11)",
             border: "none",
             padding: "13px 20px",
@@ -1547,17 +1547,17 @@ function NavRow({
             fontSize: 15,
             fontWeight: 700,
             cursor: "pointer",
-            boxShadow: "0 6px 18px rgba(201,168,76,0.35)",
+            boxShadow: "0 6px 18px rgba(var(--ls-teal-rgb),0.35)",
             transition: "all 0.2s",
             letterSpacing: "0.01em",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(201,168,76,0.45)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(var(--ls-teal-rgb),0.45)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 6px 18px rgba(201,168,76,0.35)";
+            e.currentTarget.style.boxShadow = "0 6px 18px rgba(var(--ls-teal-rgb),0.35)";
           }}
         >
           {nextLabel}
@@ -1579,7 +1579,7 @@ function Footer({ onBack }: { onBack: () => void }) {
     }}>
       <p style={{ margin: 0, marginBottom: 12, lineHeight: 1.55 }}>
         💡 La meilleure prospection :<br />
-        <strong style={{ color: "var(--ls-gold, #C9A84C)", fontSize: 13 }}>
+        <strong style={{ color: "var(--ls-teal, #2DD4BF)", fontSize: 13 }}>
           1 message authentique &gt; 100 copier-coller.
         </strong>
       </p>
@@ -1623,10 +1623,10 @@ function ErrorBanner({ children }: { children: ReactNode }) {
   return (
     <div style={{
       padding: 20, margin: 20,
-      background: "rgba(251,113,133,0.10)",
-      border: "1px solid var(--ls-coral, #FB7185)",
+      background: "rgba(242,119,95,0.10)",
+      border: "1px solid var(--ls-coral, #F2775F)",
       borderRadius: 12,
-      color: "var(--ls-coral, #FB7185)",
+      color: "var(--ls-coral, #F2775F)",
       fontSize: 14,
     }}>
       ⚠️ {children}

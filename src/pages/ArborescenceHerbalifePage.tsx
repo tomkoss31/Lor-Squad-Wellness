@@ -679,7 +679,7 @@ export function ArborescenceHerbalifePage() {
               <Avatar initials={initialsOf(currentUser.name)} hue={avatarHue(currentUser.name)} size={44} />
               <div>
                 <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-text)" }}>
-                  {currentUser.name} <span style={{ color: "var(--ls-gold)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
+                  {currentUser.name} <span style={{ color: "var(--ls-teal)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
                   {RANK_LABELS[currentUser.currentRank ?? "distributor_25"] ?? "—"}
@@ -948,7 +948,7 @@ function ProgressionMiniBar({ currentRank, personalPv }: { currentRank: string; 
             width: `${progression.pct}%`,
             height: "100%",
             background: progression.pct >= 80
-              ? "linear-gradient(90deg, var(--ls-gold), var(--ls-coral))"
+              ? "linear-gradient(90deg, var(--ls-teal), var(--ls-coral))"
               : "linear-gradient(90deg, var(--ls-teal), var(--ls-purple))",
             borderRadius: 999,
             transition: "width 600ms ease",
@@ -973,9 +973,9 @@ function SortChip({ active, onClick, children }: { active: boolean; onClick: () 
         height: 28,
         padding: "0 12px",
         borderRadius: 999,
-        border: active ? "0.5px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
-        background: active ? "color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface2))" : "var(--ls-surface)",
-        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        border: active ? "0.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+        background: active ? "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface2))" : "var(--ls-surface)",
+        color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
         fontFamily: "DM Sans, sans-serif",
         fontSize: 12,
         fontWeight: 600,
@@ -1364,7 +1364,7 @@ const backBtnStyle: React.CSSProperties = {
 };
 
 const headerStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 100%)",
+  background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 22,
   padding: 24,
@@ -1454,9 +1454,9 @@ const retroBannerStyle: React.CSSProperties = {
   marginTop: 12,
   padding: "10px 14px",
   borderRadius: 12,
-  background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
-  color: "var(--ls-gold)",
+  background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+  color: "var(--ls-teal)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 12.5,
   display: "inline-flex",
@@ -1469,7 +1469,7 @@ const addBtnStyle: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: 999,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 12.5,
@@ -1515,7 +1515,7 @@ const btnPrimaryStyle: React.CSSProperties = {
   padding: "10px 16px",
   borderRadius: 10,
   border: "none",
-  background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+  background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
   color: "var(--ls-bg)",
   fontFamily: "DM Sans, sans-serif",
   fontSize: 13,
@@ -1541,10 +1541,10 @@ const treeWrapStyle: React.CSSProperties = {
 function externalCardStyle(editing: boolean): React.CSSProperties {
   return {
     background: editing
-      ? "color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface2))"
+      ? "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2))"
       : "var(--ls-surface2)",
     border: editing
-      ? "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)"
+      ? "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)"
       : "0.5px solid var(--ls-border)",
     borderRadius: 12,
     padding: 12,

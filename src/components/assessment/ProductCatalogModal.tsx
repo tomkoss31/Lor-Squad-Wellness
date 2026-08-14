@@ -122,7 +122,7 @@ export function ProductCatalogModal({
         id: "petit-dejeuner",
         label: "Petit-déjeuner & Repas",
         emoji: "🥛",
-        color: "var(--ls-gold)",
+        color: "var(--ls-teal)",
         matches: [/shake/i, /repas/i, /proteine/i, /protéine/i, /fibre/i],
       },
       {
@@ -153,7 +153,7 @@ export function ProductCatalogModal({
         id: "vitalite",
         label: "Vitalité & Compléments",
         emoji: "🛡️",
-        color: "var(--ls-gold)",
+        color: "var(--ls-teal)",
         matches: [
           /calcium/i, /immunit/i, /gelule/i, /digest/i, /sommeil/i, /visceral/i,
           /complement/i, /vitamine/i, /omega/i, /mineral/i, /vasculaire/i,
@@ -294,11 +294,11 @@ export function ProductCatalogModal({
             display: "flex",
             flexDirection: "column",
             background: "var(--ls-surface)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 24,
             overflow: "hidden",
             boxShadow:
-              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)",
+              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(45,212,191,0.20)",
           }}
         >
           {/* HEADER */}
@@ -307,7 +307,7 @@ export function ProductCatalogModal({
               position: "relative",
               overflow: "hidden",
               padding: "18px 22px",
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
               color: "#FFFFFF",
               flexShrink: 0,
             }}
@@ -432,8 +432,8 @@ export function ProductCatalogModal({
                   transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 50%, transparent)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-gold) 15%, transparent)";
+                  e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 50%, transparent)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-teal) 15%, transparent)";
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = "var(--ls-border)";
@@ -461,12 +461,12 @@ export function ProductCatalogModal({
                   padding: "7px 13px",
                   borderRadius: 999,
                   border: activeCategory === "all"
-                    ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                    ? "0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)"
                     : "0.5px solid var(--ls-border)",
                   background: activeCategory === "all"
-                    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
                     : "var(--ls-surface)",
-                  color: activeCategory === "all" ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                  color: activeCategory === "all" ? "var(--ls-teal)" : "var(--ls-text-muted)",
                   fontSize: 12,
                   fontWeight: activeCategory === "all" ? 700 : 500,
                   fontFamily: "DM Sans, sans-serif",
@@ -476,7 +476,7 @@ export function ProductCatalogModal({
                   alignItems: "center",
                   gap: 6,
                   flexShrink: 0,
-                  boxShadow: activeCategory === "all" ? "0 2px 8px -3px rgba(239,159,39,0.30)" : "none",
+                  boxShadow: activeCategory === "all" ? "0 2px 8px -3px rgba(45,212,191,0.30)" : "none",
                 }}
               >
                 ✨ Tout
@@ -485,8 +485,8 @@ export function ProductCatalogModal({
                     fontSize: 10, fontWeight: 800, fontFamily: "Syne, sans-serif",
                     padding: "1px 6px", borderRadius: 999,
                     background: activeCategory === "all" ? "var(--ls-bg)" : "var(--ls-surface2)",
-                    color: activeCategory === "all" ? "var(--ls-gold)" : "var(--ls-text-hint)",
-                    border: activeCategory === "all" ? "0.5px solid var(--ls-gold)" : "0.5px solid transparent",
+                    color: activeCategory === "all" ? "var(--ls-teal)" : "var(--ls-text-hint)",
+                    border: activeCategory === "all" ? "0.5px solid var(--ls-teal)" : "0.5px solid transparent",
                   }}
                 >
                   {activeProducts.length}
@@ -685,7 +685,7 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
         e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.boxShadow = "0 6px 18px -8px rgba(0,0,0,0.18)";
         if (!isInCart) {
-          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))";
         }
       }}
       onMouseLeave={(e) => {
@@ -703,7 +703,7 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
           borderRadius: 12,
           background: isInCart
             ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
-            : "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+            : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 22,
           boxShadow: isInCart
@@ -760,9 +760,9 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
               fontFamily: "DM Sans, sans-serif",
               background: isInCart
                 ? "color-mix(in srgb, var(--ls-teal) 15%, var(--ls-surface))"
-                : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                : "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
               color: isInCart ? "var(--ls-teal)" : "#FFFFFF",
-              boxShadow: isInCart ? "none" : "0 3px 8px -2px rgba(186,117,23,0.40)",
+              boxShadow: isInCart ? "none" : "0 3px 8px -2px rgba(15,118,110,0.40)",
               transition: "transform 0.15s ease, filter 0.15s ease",
               flexShrink: 0,
               whiteSpace: "nowrap",
@@ -804,10 +804,10 @@ function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
             style={{
               fontSize: 10.5, fontWeight: 700,
               padding: "2px 8px", borderRadius: 999,
-              background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-              color: "var(--ls-gold)",
+              background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+              color: "var(--ls-teal)",
               fontFamily: "DM Sans, sans-serif",
-              border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
             }}
           >
             {formatPrice(product.pricePublic)}

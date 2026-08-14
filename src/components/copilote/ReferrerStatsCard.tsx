@@ -74,7 +74,7 @@ export function ReferrerStatsCard() {
           padding: 18,
           borderRadius: 18,
           background: "var(--ls-surface)",
-          border: "0.5px dashed color-mix(in srgb, #10B981 35%, var(--ls-border))",
+          border: "0.5px dashed color-mix(in srgb, #2DD4BF 35%, var(--ls-border))",
           display: "flex",
           alignItems: "center",
           gap: 12,
@@ -110,13 +110,13 @@ export function ReferrerStatsCard() {
           style={{
             padding: "8px 14px",
             borderRadius: 10,
-            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             color: "white",
             fontSize: 12,
             fontWeight: 700,
             fontFamily: "Sora, sans-serif",
             textDecoration: "none",
-            boxShadow: "0 4px 12px rgba(16,185,129,0.32)",
+            boxShadow: "0 4px 12px rgba(45, 212, 191,0.32)",
             whiteSpace: "nowrap",
           }}
         >
@@ -141,13 +141,13 @@ export function ReferrerStatsCard() {
         padding: 18,
         borderRadius: 18,
         background:
-          "linear-gradient(135deg, color-mix(in srgb, #10B981 8%, var(--ls-surface)) 0%, color-mix(in srgb, #06B6D4 6%, var(--ls-surface)) 50%, color-mix(in srgb, #8B5CF6 6%, var(--ls-surface)) 100%)",
-        border: "0.5px solid color-mix(in srgb, #10B981 30%, var(--ls-border))",
+          "linear-gradient(135deg, color-mix(in srgb, #2DD4BF 8%, var(--ls-surface)) 0%, color-mix(in srgb, #2DD4BF 6%, var(--ls-surface)) 50%, color-mix(in srgb, #A78BFA 6%, var(--ls-surface)) 100%)",
+        border: "0.5px solid color-mix(in srgb, #2DD4BF 30%, var(--ls-border))",
       }}
     >
       <style>{`
         .rsc-statcell-link { transition: border-color .15s, box-shadow .15s, transform .1s; }
-        .rsc-statcell-link:hover { border-color: color-mix(in srgb, #10B981 55%, var(--ls-border)); box-shadow: 0 4px 12px rgba(16,185,129,0.18); transform: translateY(-1px); }
+        .rsc-statcell-link:hover { border-color: color-mix(in srgb, #2DD4BF 55%, var(--ls-border)); box-shadow: 0 4px 12px rgba(45, 212, 191,0.18); transform: translateY(-1px); }
         .rsc-statcell-link:active { transform: translateY(0); }
       `}</style>
       <div
@@ -193,13 +193,13 @@ export function ReferrerStatsCard() {
             style={{
               padding: "6px 12px",
               borderRadius: 999,
-              background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
               color: "white",
               fontSize: 11,
               fontWeight: 700,
               fontFamily: "Sora, sans-serif",
               textDecoration: "none",
-              boxShadow: "0 2px 8px rgba(16,185,129,0.32)",
+              boxShadow: "0 2px 8px rgba(45, 212, 191,0.32)",
               flexShrink: 0,
             }}
           >
@@ -217,9 +217,9 @@ export function ReferrerStatsCard() {
         }}
       >
         <StatCell label="Total" value={stats.leads_total} color="#0F172A" big to={leadsHref()} />
-        <StatCell label="Nouveaux" value={stats.leads_new} color="#10B981" to={leadsHref("new")} />
-        <StatCell label="Contactés" value={stats.leads_contacted} color="#06B6D4" to={leadsHref("contacted")} />
-        <StatCell label="Convertis" value={stats.leads_converted} color="#8B5CF6" to={leadsHref("converted")} />
+        <StatCell label="Nouveaux" value={stats.leads_new} color="#2DD4BF" to={leadsHref("new")} />
+        <StatCell label="Contactés" value={stats.leads_contacted} color="#2DD4BF" to={leadsHref("contacted")} />
+        <StatCell label="Convertis" value={stats.leads_converted} color="#A78BFA" to={leadsHref("converted")} />
       </div>
 
       <div

@@ -17,6 +17,8 @@ import { RankSelectorModal } from "../rank/RankSelectorModal";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { MobileHeader } from "./MobileHeader";
+import { OnboardingReturnPill } from "../../features/copilote/salle-ops/OnboardingReturnPill";
+import { MonSuiviPill } from "./MonSuiviPill";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
@@ -27,6 +29,7 @@ import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
+import { LogoMark } from "../brand/LogoMark";
 // Chargé à la demande : un coach classique ne télécharge pas tout le module BBC.
 const BbcApp = lazy(() => import("../../features/bbc/BbcApp").then((m) => ({ default: m.BbcApp })));
 
@@ -48,7 +51,7 @@ export function AppLayout() {
   const { count: crmBadgeCount } = useCrmBadge(currentUser?.id ?? null, currentUser?.isPassiveSupervisor !== true, currentUser?.role === "admin");
   // Niveau de visibilité (chantier Simplification 2026-07-27) — filtre les
   // menus, jamais les routes. Cf. src/config/appVisibility.ts.
-  const { can } = useAppLevel();
+  const { can, isLocked, lockReason } = useAppLevel();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
@@ -137,7 +140,19 @@ export function AppLayout() {
   //     est admin ET en essentiel : elle garde « Mon équipe », pas le reste.
   // Un item sans `feature` est toujours visible (vue superviseur passif).
   // Rappel : ça masque le MENU, la route reste ouverte pour tout le monde.
-  const navigation = allNavigation.filter((item) => !item.feature || can(item.feature));
+  //
+  // 2026-08-04 — chantier « l'app d'un débutant » : une entrée bloquée par le
+  // PALIER de démarrage n'est pas retirée, elle reste VISIBLE en grisé avec sa
+  // condition (« quand tu auras fait ton 1er bilan »). Un débutant doit savoir
+  // que ça existe et ce qui l'ouvre — sinon il ne sait pas où il en est.
+  // Une entrée masquée par le NIVEAU (essentiel/complet) disparaît, elle.
+  const navigation = allNavigation
+    .filter((item) => !item.feature || can(item.feature) || isLocked(item.feature))
+    .map((item) => ({
+      ...item,
+      locked: Boolean(item.feature && isLocked(item.feature)),
+      lockWhen: item.feature ? lockReason(item.feature) : "",
+    }));
 
   // Ancrage du CTA « + Nouveau bilan » : le 1er item de la section « Mon
   // espace » s'il existe, sinon le dernier item visible. Jamais un chemin en
@@ -160,7 +175,6 @@ export function AppLayout() {
   const pageTitle = (() => {
     const p = location.pathname;
     if (p === "/dashboard" || p === "/co-pilote") return "Co-pilote";
-    if (p === "/flex") return "FLEX";
     if (p === "/agenda") return "Agenda";
     if (p === "/messages") return "Messagerie";
     if (p === "/clients") return "Clients";
@@ -172,7 +186,6 @@ export function AppLayout() {
     if (p.startsWith("/pv")) return "Suivi PV";
     if (p === "/rentabilite") return "Rentabilité";
     if (p === "/outils") return "Mon business";
-    if (p === "/routine-du-jour") return "Routine";
     if (p === "/cahier-de-bord") return "Cahier de bord";
     if (p === "/developpement") return "Développement";
     if (p.startsWith("/developpement/")) return "Développement";
@@ -271,14 +284,10 @@ export function AppLayout() {
           {/* ZONE 1 — Logo La Base 360 (rebrand 2026-05-05) */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img
-                src="/brand/labase360/app-icon-512.svg"
-                alt="La Base 360"
-                style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }}
-              />
+              <LogoMark size={34} />
               <div style={{ minWidth: 0, overflow: 'visible' }}>
                 <div style={{
-                  fontFamily: 'Sora, sans-serif',
+                  fontFamily: 'Syne, sans-serif',
                   fontWeight: 700,
                   fontSize: 14,
                   color: '#F0EDE8',
@@ -291,7 +300,7 @@ export function AppLayout() {
                   <span style={{
                     fontStyle: 'italic',
                     fontWeight: 400,
-                    background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                    background: 'linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -329,8 +338,7 @@ export function AppLayout() {
                   location.pathname.startsWith("/guide") ||
                   location.pathname.startsWith("/academy") ||
                   location.pathname.startsWith("/cahier-de-bord") ||
-                  location.pathname.startsWith("/simulateur-ebe") ||
-                  location.pathname.startsWith("/routine-du-jour")
+                  location.pathname.startsWith("/simulateur-ebe")
                 ));
 
               // Bouton "+ Nouveau bilan" : ancré au PREMIER item de la section
@@ -342,6 +350,47 @@ export function AppLayout() {
               const insertNewBilanBefore = item.path === newBilanAnchorPath;
               const showSection = !!item.section && item.section !== navigation[idx - 1]?.section;
               const isOutils = item.path === "/outils";
+
+              // ENTRÉE VERROUILLÉE PAR LE PALIER (2026-08-04) : visible mais
+              // inactive, avec la condition qui l'ouvre. On ne cache pas —
+              // sinon le débutant ne sait pas que ça existe. La route, elle,
+              // reste accessible (règle n°1 de appVisibility).
+              if (item.locked) {
+                return (
+                  <div key={item.path} style={{ display: "contents" }}>
+                    {showSection ? (
+                      <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', padding: '0 12px', marginTop: idx === 0 ? 8 : 16, marginBottom: 6 }}>
+                        {item.section}
+                      </div>
+                    ) : null}
+                    <div
+                      aria-disabled="true"
+                      title={`Bientôt — ${item.lockWhen}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 12px 10px 14px",
+                        marginLeft: -2,
+                        borderLeft: "2px solid transparent",
+                        color: "var(--ls-text-hint)",
+                        fontSize: 13,
+                        fontFamily: "'Inter', system-ui, sans-serif",
+                        cursor: "default",
+                        opacity: 0.72,
+                      }}
+                    >
+                      <span aria-hidden="true" style={{ fontSize: 15, width: 20, textAlign: "center" }}>🔒</span>
+                      <span style={{ minWidth: 0 }}>
+                        {item.label}
+                        <span style={{ display: "block", fontSize: 10.5, lineHeight: 1.35, marginTop: 1 }}>
+                          {item.lockWhen}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
 
               return (
                 <div key={item.path} style={{ display: 'contents' }}>
@@ -408,7 +457,7 @@ export function AppLayout() {
                           borderLeft: '2px solid transparent',
                           border: 'none',
                           background: onOutilsRoute
-                            ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                            ? 'linear-gradient(135deg, color-mix(in srgb, #2DD4BF 14%, transparent) 0%, color-mix(in srgb, #2DD4BF 12%, transparent) 50%, color-mix(in srgb, #c5f82a 14%, transparent) 100%)'
                             : 'transparent',
                           color: onOutilsRoute ? 'var(--ls-text)' : 'var(--ls-text-muted)',
                           fontWeight: onOutilsRoute ? 600 : 500,
@@ -422,7 +471,7 @@ export function AppLayout() {
                         onMouseLeave={e => { if (!onOutilsRoute) e.currentTarget.style.background = 'transparent' }}
                       >
                         {onOutilsRoute ? (
-                          <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 6, bottom: 6, width: 3, borderRadius: 999, background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)', boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)' }} />
+                          <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 6, bottom: 6, width: 3, borderRadius: 999, background: 'linear-gradient(180deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)', boxShadow: '0 0 12px color-mix(in srgb, #2DD4BF 50%, transparent)' }} />
                         ) : null}
                         <span aria-hidden="true" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, fontSize: 16, lineHeight: 1, opacity: onOutilsRoute ? 1 : 0.78 }}>
                           {item.emoji}
@@ -439,7 +488,7 @@ export function AppLayout() {
                               <div key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', fontSize: 12.5, color: 'var(--ls-text-hint)', fontFamily: "'Inter', system-ui, sans-serif", cursor: 'default' }}>
                                 <span aria-hidden="true" style={{ fontSize: 14, opacity: 0.6 }}>{sub.emoji}</span>
                                 <span style={{ flex: 1 }}>{sub.label}</span>
-                                <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))', background: 'color-mix(in srgb, #8B5CF6 14%, transparent)', padding: '2px 6px', borderRadius: 20 }}>Bientôt</span>
+                                <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'color-mix(in srgb, #c5f82a 80%, var(--ls-text))', background: 'color-mix(in srgb, #c5f82a 14%, transparent)', padding: '2px 6px', borderRadius: 20 }}>Bientôt</span>
                               </div>
                             ) : (
                               <NavLink
@@ -487,7 +536,7 @@ export function AppLayout() {
                       marginLeft: -2,
                       borderLeft: '2px solid transparent',
                       background: isActive
-                        ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                        ? 'linear-gradient(135deg, color-mix(in srgb, #2DD4BF 14%, transparent) 0%, color-mix(in srgb, #2DD4BF 12%, transparent) 50%, color-mix(in srgb, #c5f82a 14%, transparent) 100%)'
                         : 'transparent',
                       color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
                       fontWeight: isActive ? 600 : 500,
@@ -514,8 +563,8 @@ export function AppLayout() {
                           bottom: 6,
                           width: 3,
                           borderRadius: 999,
-                          background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
-                          boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)',
+                          background: 'linear-gradient(180deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
+                          boxShadow: '0 0 12px color-mix(in srgb, #2DD4BF 50%, transparent)',
                         }}
                       />
                     ) : null}
@@ -544,9 +593,9 @@ export function AppLayout() {
                         fontSize: 9,
                         padding: '2px 7px',
                         borderRadius: 999,
-                        background: 'color-mix(in srgb, #8B5CF6 16%, transparent)',
-                        color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))',
-                        border: '1px solid color-mix(in srgb, #8B5CF6 30%, transparent)',
+                        background: 'color-mix(in srgb, #c5f82a 16%, transparent)',
+                        color: 'color-mix(in srgb, #c5f82a 80%, var(--ls-text))',
+                        border: '1px solid color-mix(in srgb, #c5f82a 30%, transparent)',
                         fontWeight: 700,
                         marginLeft: 'auto',
                         letterSpacing: '0.08em',
@@ -562,13 +611,13 @@ export function AppLayout() {
                         borderRadius: 999,
                         background: item.urgent
                           ? 'color-mix(in srgb, #D4537E 18%, transparent)'
-                          : 'color-mix(in srgb, #06B6D4 16%, transparent)',
+                          : 'color-mix(in srgb, #2DD4BF 16%, transparent)',
                         color: item.urgent
                           ? 'color-mix(in srgb, #D4537E 80%, var(--ls-text))'
-                          : 'color-mix(in srgb, #06B6D4 80%, var(--ls-text))',
+                          : 'color-mix(in srgb, #2DD4BF 80%, var(--ls-text))',
                         border: item.urgent
                           ? '1px solid color-mix(in srgb, #D4537E 35%, transparent)'
-                          : '1px solid color-mix(in srgb, #06B6D4 30%, transparent)',
+                          : '1px solid color-mix(in srgb, #2DD4BF 30%, transparent)',
                         fontWeight: 700,
                         marginLeft: 'auto',
                         fontFamily: "'JetBrains Mono', monospace",
@@ -617,7 +666,7 @@ export function AppLayout() {
                 width: 36, height: 36, borderRadius: '50%',
                 background: currentUser.avatarUrl
                   ? `url(${currentUser.avatarUrl}) center/cover`
-                  : 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                  : 'linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800, color: '#FFFFFF',
                 fontFamily: "'Sora', sans-serif", flexShrink: 0,
@@ -689,6 +738,11 @@ export function AppLayout() {
               </button>
             </div>
 
+            {/* Bascule double casquette (2026-08-05) : mon suivi perso si fiche liée */}
+            <div style={{ marginTop: 10 }}>
+              <MonSuiviPill variant="drawer" />
+            </div>
+
             {/* V7 sidebar refresh (2026-05-08, passe 2) : theme toggle
                 + cloche notifs CONDITIONNELS — caches uniquement sur
                 /co-pilote (ou ils existent deja dans la TopBar). Sur
@@ -751,6 +805,11 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {/* Pastille « retour à mon parcours » : ramène au cockpit d'onboarding
+          depuis n'importe quelle page tant que le coach n'est pas activé
+          (retour Thomas 2026-08-04 : les actions du cockpit partaient sans
+          retour). Se cache toute seule dès l'activation / sur /co-pilote. */}
+      <OnboardingReturnPill />
       {/* Migration prod 2026-04-28 : rappel Academy admin only. */}
       {academyTrigger.isOpen && currentUser?.role === "admin" ? (
         <AcademyReminderDialog onClose={academyTrigger.close} />

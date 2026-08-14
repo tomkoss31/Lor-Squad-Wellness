@@ -59,7 +59,7 @@ export function EmptyState({
           gap: 14,
           borderRadius: variant === "default" ? 16 : 0,
           background: variant === "default"
-            ? "radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
+            ? "radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)"
             : "transparent",
           border: variant === "default" ? "0.5px dashed var(--ls-border)" : "none",
         }}
@@ -76,7 +76,7 @@ export function EmptyState({
               width: compact ? 80 : 120,
               height: compact ? 80 : 120,
               borderRadius: "50%",
-              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 14%, transparent) 0%, transparent 70%)",
+              background: "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 14%, transparent) 0%, transparent 70%)",
               pointerEvents: "none",
               filter: "blur(4px)",
             }}
@@ -135,13 +135,13 @@ export function EmptyState({
                   gap: 6,
                   padding: "10px 20px",
                   borderRadius: 999,
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   color: "white",
                   fontSize: 13,
                   fontWeight: 700,
                   textDecoration: "none",
                   fontFamily: "DM Sans, sans-serif",
-                  boxShadow: "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                  boxShadow: "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
                   transition: "transform 0.15s ease, filter 0.15s ease",
                   letterSpacing: "-0.005em",
                 }}
@@ -167,14 +167,14 @@ export function EmptyState({
                   gap: 6,
                   padding: "10px 20px",
                   borderRadius: 999,
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   color: "white",
                   border: "none",
                   fontSize: 13,
                   fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: "DM Sans, sans-serif",
-                  boxShadow: "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                  boxShadow: "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
                   transition: "transform 0.15s ease, filter 0.15s ease",
                   letterSpacing: "-0.005em",
                 }}

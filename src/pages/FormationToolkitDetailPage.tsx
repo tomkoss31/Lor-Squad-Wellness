@@ -22,7 +22,7 @@ import {
 import { MarkdownRenderer } from "../components/formation/MarkdownRenderer";
 
 const CATEGORY_ACCENT: Record<FormationToolkitItem["category"], string> = {
-  prospection: "var(--ls-gold)",
+  prospection: "var(--ls-teal)",
   bilan: "var(--ls-teal)",
   suivi: "var(--ls-purple)",
   business: "var(--ls-coral)",
@@ -53,7 +53,7 @@ export function FormationToolkitDetailPage() {
           onClick={() => navigate("/formation/boite-a-outils")}
           style={{
             padding: "10px 18px",
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             color: "var(--ls-bg)",
             border: "none",
             borderRadius: 10,

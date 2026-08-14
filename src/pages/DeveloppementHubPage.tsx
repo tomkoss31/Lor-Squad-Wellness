@@ -73,7 +73,7 @@ const CARDS: HubCard[] = [
     path: "/academy",
     accent: "var(--ls-purple)",
     section: "apprendre",
-    tag: { label: "Commence ici", color: "var(--ls-gold)" },
+    tag: { label: "Commence ici", color: "var(--ls-teal)" },
   },
   {
     id: "formation",
@@ -83,7 +83,17 @@ const CARDS: HubCard[] = [
       "La méthode complète en 3 niveaux : Démarrer, Construire, Dupliquer.",
     cta: "Démarrer la formation",
     path: "/formation",
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
+    section: "apprendre",
+  },
+  {
+    id: "guide-nouveau-coach",
+    emoji: "📲",
+    title: "Installer l'app pour un nouveau coach",
+    description: "Le mode d'emploi duplicable : de zéro à opérationnel en 5 étapes + un message prêt à envoyer.",
+    cta: "Ouvrir le guide",
+    path: "/guide-nouveau-coach",
+    accent: "var(--ls-teal)",
     section: "apprendre",
   },
   {
@@ -138,17 +148,10 @@ const CARDS: HubCard[] = [
     requireAcademyPercent: 100,
     infoTerm: "ebe",
   },
-  {
-    id: "routine-du-jour",
-    emoji: "☀️",
-    title: "Ma routine du jour",
-    description: "Tes 5 actions de discipline du jour. Score X/5, jamais bloquante.",
-    cta: "Ouvrir ma routine",
-    path: "/routine-du-jour",
-    accent: "var(--ls-gold)",
-    section: "quotidien",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
+  // Card « Ma routine du jour » retirée 2026-08-04 (retour Thomas : « pas du
+  // tout utilisée, ça surcharge »). La page /routine-du-jour + sa notif 20h +
+  // la table coach_daily_actions existent ENCORE — hard-delete possible sur
+  // demande explicite (touche un cron + une table = prod).
   // Cartes "Comment marche ma routine" et "Comment marche FLEX" retirées
   // 2026-06-10 (remaniement) : les fiches restent accessibles via le bouton
   // 📖 directement sur /routine-du-jour et /flex — doublon de navigation
@@ -168,7 +171,7 @@ const CARDS: HubCard[] = [
     description: "Le workflow en 5 étapes : pitcher, inviter, activer, récolter les recos, convertir.",
     cta: "Lire la fiche",
     path: "/developpement/club-vip-explique",
-    accent: "var(--ls-gold)",
+    accent: "var(--ls-teal)",
     // B5 (2026-06-13) : c'est un « mode d'emploi » → pédago, donc section Apprendre.
     section: "apprendre",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
@@ -253,7 +256,7 @@ export function DeveloppementHubPage() {
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, lineHeight: 1.65, color: "var(--ls-text-muted)" }}>
           <li><strong>Tu débutes ?</strong> Academy → Formation niveau 1 → Cahier de bord J0.</li>
-          <li><strong>Au quotidien :</strong> Ma routine du jour (5 min) + cahier à jour après chaque prospection.</li>
+          <li><strong>Au quotidien :</strong> ton cahier de bord à jour après chaque prospection.</li>
           <li><strong>Une question sur un outil ?</strong> Le bouton 📖 est sur chaque page.</li>
         </ul>
       </div>
@@ -364,8 +367,8 @@ const pageWrap: React.CSSProperties = {
 
 const heroBox: React.CSSProperties = {
   background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-purple) 10%, var(--ls-surface)))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
   borderRadius: 20,
   padding: "26px 22px",
   marginBottom: 22,
@@ -377,7 +380,7 @@ const heroEyebrow: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: 1.4,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 8,
 };
 
@@ -540,7 +543,7 @@ const academyBannerBarTrack: React.CSSProperties = {
 
 const academyBannerBarFill: React.CSSProperties = {
   height: "100%",
-  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-gold))",
+  background: "linear-gradient(90deg, var(--ls-purple), var(--ls-teal))",
   borderRadius: 100,
   transition: "width 0.4s ease",
 };

@@ -267,7 +267,7 @@ export function CartDrawer({
               <span className="bk-pay">G&nbsp;Pay</span>
             </div>
             <div className="bk-cosec">
-              <span>🔒 Stripe</span>
+              <span>🔒 Sécurisé</span>
               <span>↩︎ Retours 14 j</span>
               <span>🚚 Expédié en 48 h</span>
             </div>

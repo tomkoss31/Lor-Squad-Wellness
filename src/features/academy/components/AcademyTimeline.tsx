@@ -92,7 +92,7 @@ export function AcademyTimeline({
             left: `calc(16px + 18px)`,
             width: `calc((100% - 32px - 36px) * ${fillPercent / 100})`,
             height: 3,
-            background: "linear-gradient(90deg, #B8922A, #EF9F27)",
+            background: "linear-gradient(90deg, #0D9488, #2DD4BF)",
             borderRadius: 2,
             zIndex: 1,
             transition: "width 800ms cubic-bezier(0.4, 0, 0.2, 1)",
@@ -102,8 +102,8 @@ export function AcademyTimeline({
         {ACADEMY_SECTIONS.map((section, idx) => {
           const isDone = idx < completedCount;
           const isCurrent = !isCompleted && idx === currentSectionIndex;
-          const stateColor = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-gold)" : "var(--ls-text-hint)";
-          const dotBg = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-gold)" : "var(--ls-surface)";
+          const stateColor = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-teal)" : "var(--ls-text-hint)";
+          const dotBg = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-teal)" : "var(--ls-surface)";
           const dotColor = isDone || isCurrent ? "white" : "var(--ls-text-hint)";
           const dotBorder = isDone
             ? "none"

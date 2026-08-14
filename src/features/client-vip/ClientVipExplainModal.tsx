@@ -92,7 +92,7 @@ export function ClientVipExplainModal({
               fontSize: 9,
               letterSpacing: 2,
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 700,
               marginBottom: 4,
             }}
@@ -111,7 +111,7 @@ export function ClientVipExplainModal({
           >
             Tes courses Herbalife,
             <br />
-            jusqu&apos;à <span style={{ color: "#B8922A" }}>-42 % à vie</span> 🎁
+            jusqu&apos;à <span style={{ color: "#0D9488" }}>-42 % à vie</span> 🎁
           </h2>
           <p
             style={{
@@ -220,7 +220,7 @@ export function ClientVipExplainModal({
               background:
                 "linear-gradient(135deg, rgba(255,254,245,0.8) 0%, rgba(252,229,193,0.4) 100%)",
               border: "0.5px solid rgba(184,146,42,0.30)",
-              borderLeft: "3px solid #B8922A",
+              borderLeft: "3px solid #0D9488",
               borderRadius: 12,
               fontSize: 13,
               color: "#5C4A0F",
@@ -232,7 +232,7 @@ export function ClientVipExplainModal({
                 fontSize: 10,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 700,
                 marginBottom: 6,
               }}
@@ -301,7 +301,7 @@ export function ClientVipExplainModal({
               style={{
                 width: "100%",
                 padding: "14px 18px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 12,
@@ -309,7 +309,7 @@ export function ClientVipExplainModal({
                 fontWeight: 700,
                 fontFamily: "Syne, sans-serif",
                 cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+                boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
               }}
             >
               🎮 Calcule ta remise potentielle
@@ -367,7 +367,7 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
           width: 28,
           height: 28,
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
           color: "white",
           display: "inline-flex",
           alignItems: "center",
@@ -376,7 +376,7 @@ function Step({ n, title, text }: { n: string; title: string; text: string }) {
           fontWeight: 700,
           fontSize: 13,
           flexShrink: 0,
-          boxShadow: "0 2px 8px rgba(186,117,23,0.25)",
+          boxShadow: "0 2px 8px rgba(15,118,110,0.25)",
         }}
       >
         {n}

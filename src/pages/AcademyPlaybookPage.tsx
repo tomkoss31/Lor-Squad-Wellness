@@ -151,14 +151,14 @@ export function AcademyPlaybookPage() {
           disabled={downloading}
           style={{
             padding: "12px 22px",
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "white",
             border: "none",
             borderRadius: 10,
             fontSize: 13,
             fontWeight: 700,
             cursor: downloading ? "wait" : "pointer",
-            boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            boxShadow: "0 4px 12px rgba(15,118,110,0.30)",
             opacity: downloading ? 0.7 : 1,
           }}
         >
@@ -273,7 +273,7 @@ const PlaybookCoverPage = forwardRef<HTMLDivElement, CoverProps>(
               fontSize: 11,
               letterSpacing: "0.3em",
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 600,
               marginBottom: 4,
             }}
@@ -420,7 +420,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
                 fontSize: 9,
                 letterSpacing: "0.25em",
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#0D9488",
                 fontWeight: 600,
                 marginBottom: 4,
               }}
@@ -546,7 +546,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
                 fontFamily: "Syne, sans-serif",
                 fontSize: 28,
                 fontWeight: 700,
-                color: "#B8922A",
+                color: "#0D9488",
                 lineHeight: 1,
               }}
             >
@@ -570,7 +570,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
             marginTop: 18,
             padding: "14px 16px",
             background: "linear-gradient(135deg, #FCF5E1, #FAEEDA)",
-            borderLeft: "3px solid #B8922A",
+            borderLeft: "3px solid #0D9488",
             borderRadius: 8,
             fontFamily: "Syne, sans-serif",
             fontSize: 13,

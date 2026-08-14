@@ -21,7 +21,7 @@ export interface AppAnnouncement {
 }
 
 export const ACCENT_TO_TOKEN: Record<AnnouncementAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   coral: "var(--ls-coral)",
   purple: "var(--ls-purple)",

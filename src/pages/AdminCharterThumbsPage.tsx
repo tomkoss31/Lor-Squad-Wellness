@@ -106,7 +106,7 @@ export function AdminCharterThumbsPage() {
       </button>
 
       <div>
-        <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700, marginBottom: 6 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 700, marginBottom: 6 }}>
           Outil admin
         </div>
         <h1 style={{ fontFamily: "Anton, sans-serif", textTransform: "uppercase", fontSize: 24, margin: 0, color: "var(--ls-text)" }}>
@@ -150,7 +150,7 @@ export function AdminCharterThumbsPage() {
               disabled={downloading !== null}
               style={{
                 padding: "10px 18px",
-                background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)))",
+                background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)))",
                 color: "var(--ls-bg)",
                 border: "none",
                 borderRadius: 10,

@@ -73,13 +73,13 @@ const DEMO_EVENTS: DemoEvent[] = [
 
 const ENTITY_DOTS: Record<Entity, string | null> = {
   all: null,
-  clients: "var(--ls-gold)",
+  clients: "var(--ls-teal)",
   prospects: "var(--ls-purple)",
   followups: "var(--ls-teal)",
 };
 
 const TYPE_LABELS: Record<DemoEvent["type"], { label: string; color: string }> = {
-  client: { label: "Client", color: "var(--ls-gold)" },
+  client: { label: "Client", color: "var(--ls-teal)" },
   prospect: { label: "Prospect", color: "var(--ls-purple)" },
   followup: { label: "Suivi", color: "var(--ls-teal)" },
 };
@@ -146,7 +146,7 @@ export function DemoAgenda() {
           type="button"
           data-tour-id="agenda-new-rdv"
           style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "white",
             border: "none",
             padding: "10px 18px",
@@ -155,7 +155,7 @@ export function DemoAgenda() {
             fontWeight: 600,
             cursor: "pointer",
             fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+            boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
           }}
         >
           + Nouveau RDV
@@ -254,7 +254,7 @@ function FilterPill({
         gap: 8,
         padding: "8px 14px",
         borderRadius: 999,
-        border: active ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+        border: active ? "1.5px solid var(--ls-teal)" : "1px solid var(--ls-border)",
         background: active ? "rgba(201,168,76,0.08)" : "var(--ls-surface)",
         color: active ? "var(--ls-text)" : "var(--ls-text-muted)",
         fontSize: 13,
@@ -278,7 +278,7 @@ function FilterPill({
       <span
         style={{
           fontSize: 11,
-          color: active ? "#B8922A" : "var(--ls-text-hint)",
+          color: active ? "#0D9488" : "var(--ls-text-hint)",
           fontWeight: 600,
         }}
       >
@@ -355,7 +355,7 @@ function EventCard({ event }: { event: DemoEvent }) {
         >
           {dateLabel}
         </p>
-        <p style={{ fontSize: 12, color: "#B8922A", margin: 0, fontWeight: 500 }}>{timeLabel}</p>
+        <p style={{ fontSize: 12, color: "#0D9488", margin: 0, fontWeight: 500 }}>{timeLabel}</p>
       </div>
     </div>
   );

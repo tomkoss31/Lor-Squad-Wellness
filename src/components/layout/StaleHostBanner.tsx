@@ -12,6 +12,15 @@ import { useEffect, useState } from "react";
 
 const CANONICAL_HOSTS = ["labase360.app", "labase360.fr", "labase360.com"];
 const STALE_PATTERN = /^lor[-_]squad/i;
+// L'alias de branche de dev/thomas-test commence AUSSI par « lor-squad » : sans
+// cette exception, l'aperçu dev affichait un bandeau invitant à le quitter pour
+// « avoir toutes les mises à jour » — alors que c'est le seul endroit où elles
+// sont. Suivre le conseil menait sur labase360.fr, où le site du club n'est pas
+// déployé : on y voyait donc, littéralement, aucun changement.
+// Un alias de branche sert toujours le dernier build de sa branche : il ne peut
+// pas être figé, contrairement aux URL de déploiement (lor-squad-<hash>-…) que
+// ce bandeau vise vraiment.
+const LIVE_PREVIEW_PATTERN = /-git-dev-thomas-test-/i;
 
 export function StaleHostBanner() {
   const [stale, setStale] = useState(false);
@@ -22,6 +31,7 @@ export function StaleHostBanner() {
     if (CANONICAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return;
     // localhost / domaine de dev → on ignore
     if (host === "localhost" || host === "127.0.0.1") return;
+    if (LIVE_PREVIEW_PATTERN.test(host)) return;
     if (STALE_PATTERN.test(host)) {
       setStale(true);
     }

@@ -221,7 +221,7 @@ export function WeeklyRecapCard() {
           width: "100%",
           margin: "0 auto",
           background: "linear-gradient(135deg, #FAF6E8 0%, #F0E5C8 100%)",
-          border: "1.5px solid #B8922A",
+          border: "1.5px solid #0D9488",
           borderRadius: 18,
           padding: "32px 28px",
           display: "flex",
@@ -254,7 +254,7 @@ export function WeeklyRecapCard() {
               fontFamily: "system-ui, sans-serif",
               fontSize: 9,
               letterSpacing: "0.4em",
-              color: "#B8922A",
+              color: "#0D9488",
               fontWeight: 600,
             }}
           >
@@ -297,7 +297,7 @@ export function WeeklyRecapCard() {
         >
           <div style={{ background: "white", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
             <div style={{ fontSize: 22 }}>📋</div>
-            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#B8922A", lineHeight: 1.1, marginTop: 2 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#0D9488", lineHeight: 1.1, marginTop: 2 }}>
               {data.totalBilans}
             </div>
             <div style={{ fontSize: 9, color: "#888780", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
@@ -353,7 +353,7 @@ export function WeeklyRecapCard() {
                     <span style={{ flex: 1, fontSize: 12, color: "#2C2C2A", fontWeight: 500, fontFamily: "system-ui, sans-serif" }}>
                       {r.name}
                     </span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#B8922A", fontFamily: "Syne, sans-serif" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#0D9488", fontFamily: "Syne, sans-serif" }}>
                       {r.count}
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export function WeeklyRecapCard() {
             textAlign: "center",
             fontSize: 9,
             letterSpacing: "0.3em",
-            color: "#B8922A",
+            color: "#0D9488",
             fontWeight: 600,
             fontFamily: "system-ui, sans-serif",
           }}
@@ -429,7 +429,7 @@ export function WeeklyRecapCard() {
           onClick={handleDownloadImage}
           disabled={downloading}
           style={{
-            background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+            background: "linear-gradient(135deg, #2DD4BF, #0F766E)",
             color: "white",
             border: "none",
             padding: "10px 16px",
@@ -441,7 +441,7 @@ export function WeeklyRecapCard() {
             display: "flex",
             alignItems: "center",
             gap: 6,
-            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+            boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
             opacity: downloading ? 0.6 : 1,
           }}
         >

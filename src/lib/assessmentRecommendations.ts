@@ -449,7 +449,7 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
         source.proteinEachMeal === "Non" ? 8 : musclePercent > 0 ? 7 : 6,
       reasonLabel:
         source.proteinEachMeal === "Non"
-          ? "Les apports proteines ne sont pas encore reguliers."
+          ? "Les apports en protéines ne sont pas encore réguliers."
           : "La masse musculaire merite un meilleur soutien."
     });
   }
@@ -478,7 +478,7 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
         ? "Graisse viscérale critique — Phyto Complete fortement recommandé."
         : source.visceralFat >= 9
         ? "Graisse viscérale élevée — accompagnement ciblé nécessaire."
-        : "La graisse viscerale ressort comme priorite du moment."
+        : "La graisse viscérale ressort comme priorité du moment."
     });
   }
 
@@ -563,7 +563,7 @@ function getReasonForProduct(needId: AssessmentNeedId, productName: string) {
     case "digestive_support":
       return `${productName} soutient un confort digestif plus regulier.`;
     case "visceral_fat":
-      return `${productName} accompagne la priorite du moment sans surcharger la routine.`;
+      return `${productName} accompagne la priorité du moment sans surcharger la routine.`;
     case "bone_support":
       return `${productName} ajoute un soutien simple autour de la base osseuse.`;
     case "snacking_control":
@@ -617,7 +617,7 @@ function getRecommendedProgramId(
 
 function getProgramReason(programId: string, needs: DetectedNeed[]) {
   if (programId === "p-booster1") {
-    return "La priorite du moment melange base routine et soutien digestif / viscerale.";
+    return "La priorité du moment mélange base routine et soutien digestif / viscéral.";
   }
 
   if (programId === "p-booster2") {

@@ -94,7 +94,7 @@ export function CahierDeBordPage() {
           padding: "26px 24px",
           borderRadius: 18,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2)) 100%)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2)) 100%)",
           border: "1px solid color-mix(in srgb, var(--ls-purple) 30%, transparent)",
         }}
       >
@@ -232,8 +232,8 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
       <div
         style={{
           padding: "14px 18px",
-          background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 35%, transparent)",
           borderRadius: 12,
           fontSize: 13,
           color: "var(--ls-text-muted)",
@@ -241,7 +241,7 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        💡 <strong style={{ color: "var(--ls-gold)" }}>Le rituel :</strong> chaque soir, tu cliques le jour pour noter ton ressenti (énergie 0-10, sommeil 0-10, poids optionnel) + 1-2 lignes libres. À J21 tu auras ton vrai matériau de témoignage.
+        💡 <strong style={{ color: "var(--ls-teal)" }}>Le rituel :</strong> chaque soir, tu cliques le jour pour noter ton ressenti (énergie 0-10, sommeil 0-10, poids optionnel) + 1-2 lignes libres. À J21 tu auras ton vrai matériau de témoignage.
       </div>
 
       {/* Grille jours */}
@@ -269,7 +269,7 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
                 border: filled
                   ? "1px solid var(--ls-teal)"
                   : isMilestone
-                    ? "1px dashed var(--ls-gold)"
+                    ? "1px dashed var(--ls-teal)"
                     : "0.5px solid var(--ls-border)",
                 borderRadius: 10,
                 textAlign: "center",
@@ -283,7 +283,7 @@ function CobayeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> 
                   fontFamily: "Syne, sans-serif",
                   fontSize: 18,
                   fontWeight: 800,
-                  color: filled ? "var(--ls-teal)" : isMilestone ? "var(--ls-gold)" : "var(--ls-text)",
+                  color: filled ? "var(--ls-teal)" : isMilestone ? "var(--ls-teal)" : "var(--ls-text)",
                   lineHeight: 1,
                 }}
               >
@@ -520,7 +520,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
         <StatCard label="Total" value={cahier.contacts.length} target={100} accent="var(--ls-purple)" />
         <StatCard label="🔥 Chauds" value={statsByTemp.chaud} accent="var(--ls-coral)" />
-        <StatCard label="🌤 Tièdes" value={statsByTemp.tiede} accent="var(--ls-gold)" />
+        <StatCard label="🌤 Tièdes" value={statsByTemp.tiede} accent="var(--ls-teal)" />
         <StatCard label="❄️ Froids" value={statsByTemp.froid} accent="var(--ls-teal)" />
       </div>
 
@@ -949,7 +949,7 @@ function EbeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }) 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10 }}>
         <StatCard label="EBE faits" value={cahier.ebeEntries.length} accent="var(--ls-purple)" />
         <StatCard label="✅ Closings" value={totalSigned} accent="var(--ls-teal)" />
-        <StatCard label="🌟 Recos" value={totalRecos} accent="var(--ls-gold)" />
+        <StatCard label="🌟 Recos" value={totalRecos} accent="var(--ls-teal)" />
       </div>
 
       <button type="button" onClick={() => setShowForm(true)} style={btnPrimary("var(--ls-purple)")}>
@@ -1066,7 +1066,7 @@ function EbeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }) 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {cahier.ebeEntries.map((e) => {
             const outcomeColor =
-              e.outcome === "signed" ? "var(--ls-teal)" : e.outcome === "refused" ? "var(--ls-coral)" : "var(--ls-gold)";
+              e.outcome === "signed" ? "var(--ls-teal)" : e.outcome === "refused" ? "var(--ls-coral)" : "var(--ls-teal)";
             return (
               <div
                 key={e.id}

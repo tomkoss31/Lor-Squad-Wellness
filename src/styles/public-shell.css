@@ -34,12 +34,21 @@
   --teal-dark: #0F766E;
   --violet: #A78BFA;
   --violet-dark: #7C3AED;
-  --coral: #FB7185;
-  --gold: #C9A84C;
+  --coral: #F2775F;
+
+  /* Les trois accents en TEXTE. En sombre ils sont lumineux et lisibles ;
+     posés tels quels sur le crème du thème clair, ils tombent à 1,7 de
+     contraste — « Melanie » en teal sur la page merci était illisible
+     (audit 2026-08-11). Les bordures et les fonds gardent --teal / --violet
+     / --coral : c'est seulement le texte qui doit foncer. */
+  --teal-text: #2DD4BF;
+  --violet-text: #A78BFA;
+  --coral-text: #F2775F;
+  --gold: #2DD4BF;
   --gold-soft: #E5C97D;
   --emerald: #34D399;
 
-  --grad-headline: linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #FB7185 100%);
+  --grad-headline: linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #F2775F 100%);
   --grad-cta: linear-gradient(135deg, #2DD4BF 0%, #7C3AED 100%);
   --grad-cta-hover: linear-gradient(135deg, #34D399 0%, #A78BFA 100%);
   --grad-progress: linear-gradient(90deg, #2DD4BF 0%, #A78BFA 100%);
@@ -80,6 +89,11 @@
   --cream-hint: rgba(11, 13, 17, 0.38);
   --hair: rgba(11, 13, 17, 0.10);
   --hair-strong: rgba(11, 13, 17, 0.18);
+
+  /* Accents en texte, version foncée (cf. commentaire plus haut). */
+  --teal-text: #0B6B62;
+  --violet-text: #6D3FD1;
+  --coral-text: #C4472F;
 
   /* Glass surfaces inversees pour mode light */
   --glass: rgba(255, 255, 255, 0.70);
@@ -149,8 +163,40 @@
   background:
     radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.18), transparent 38%),
     radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.16), transparent 38%),
-    radial-gradient(circle at 50% 105%, rgba(251, 113, 133, 0.12), transparent 45%),
+    radial-gradient(circle at 50% 105%, rgba(242, 119, 95, 0.12), transparent 45%),
     linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+}
+
+/* Le même mesh, posé sur du crème au lieu du noir, devenait un lavis rose :
+   les trois halos gardaient l'opacité pensée pour un fond sombre. Sur clair
+   ils s'additionnent à la lumière au lieu de s'y fondre — la moitié basse de
+   la page virait au pêche (audit 2026-08-11). Mêmes teintes, deux fois moins
+   présentes, et le corail remonté pour ne plus s'étaler sur tout le bas. */
+.public-shell[data-public-theme="light"] .ps-bg-mesh {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.10), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.08), transparent 34%),
+    radial-gradient(circle at 50% 112%, rgba(242, 119, 95, 0.05), transparent 38%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+}
+
+/* Bande qui défile à l'horizontale (les jours de /rdv). La barre native de
+   Windows s'affichait en trait noir épais sur fond crème. On la garde — elle
+   dit qu'il y a d'autres jours à droite — mais fine et à la couleur du texte
+   secondaire, donc lisible dans les deux thèmes (2026-08-11). */
+.public-shell .ps-scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hair-strong) transparent;
+}
+.public-shell .ps-scroll-x::-webkit-scrollbar {
+  height: 4px;
+}
+.public-shell .ps-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+.public-shell .ps-scroll-x::-webkit-scrollbar-thumb {
+  background: var(--hair-strong);
+  border-radius: 999px;
 }
 
 /* Theme toggle bouton rond fixed top-right */

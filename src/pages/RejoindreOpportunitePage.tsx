@@ -20,9 +20,9 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 // ─── Palette G3 business (cf. CLAUDE.md : BusinessPage --biz-* / ProspectFormModal) ──
 const C = {
-  emerald: "#10B981",
-  cyan: "#06B6D4",
-  violet: "#8B5CF6",
+  emerald: "#2DD4BF",
+  cyan: "#2DD4BF",
+  violet: "#A78BFA",
   ink: "#0B0D11",
   cream: "#F0EDE8",
   creamMuted: "rgba(240,237,232,0.62)",
@@ -177,9 +177,9 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     background:
-      "radial-gradient(ellipse at top, rgba(16,185,129,0.12) 0%, transparent 55%)," +
-      "radial-gradient(ellipse at bottom right, rgba(139,92,246,0.10) 0%, transparent 55%)," +
-      "radial-gradient(ellipse at bottom left, rgba(6,182,212,0.08) 0%, transparent 55%)," +
+      "radial-gradient(ellipse at top, rgba(45, 212, 191,0.12) 0%, transparent 55%)," +
+      "radial-gradient(ellipse at bottom right, rgba(167, 139, 250,0.10) 0%, transparent 55%)," +
+      "radial-gradient(ellipse at bottom left, rgba(45, 212, 191,0.08) 0%, transparent 55%)," +
       C.ink,
     color: C.cream,
     fontFamily: "Inter, system-ui, sans-serif",
@@ -192,7 +192,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: -80,
     width: 320,
     height: 320,
-    background: "radial-gradient(circle, rgba(16,185,129,0.18), transparent 65%)",
+    background: "radial-gradient(circle, rgba(45, 212, 191,0.18), transparent 65%)",
     pointerEvents: "none",
     filter: "blur(8px)",
   },
@@ -202,7 +202,7 @@ const styles: Record<string, React.CSSProperties> = {
     left: -80,
     width: 300,
     height: 300,
-    background: "radial-gradient(circle, rgba(139,92,246,0.14), transparent 65%)",
+    background: "radial-gradient(circle, rgba(167, 139, 250,0.14), transparent 65%)",
     pointerEvents: "none",
     filter: "blur(8px)",
   },
@@ -219,7 +219,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 22,
     borderRadius: 7,
     background: `linear-gradient(135deg, ${C.emerald}, ${C.cyan} 55%, ${C.violet})`,
-    boxShadow: "0 0 16px rgba(16,185,129,0.4)",
+    boxShadow: "0 0 16px rgba(45, 212, 191,0.4)",
   },
   brandText: { fontFamily: "Sora, sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: "-0.02em", color: C.cream },
   brand360: {
@@ -245,8 +245,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     padding: "6px 12px",
     borderRadius: 999,
-    background: "color-mix(in srgb, #10B981 12%, transparent)",
-    border: "0.5px solid color-mix(in srgb, #10B981 24%, transparent)",
+    background: "color-mix(in srgb, #2DD4BF 12%, transparent)",
+    border: "0.5px solid color-mix(in srgb, #2DD4BF 24%, transparent)",
     marginBottom: 16,
   },
   eyebrowDot: {
@@ -254,7 +254,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 6,
     borderRadius: "50%",
     background: C.emerald,
-    boxShadow: "0 0 0 4px color-mix(in srgb, #10B981 22%, transparent)",
+    boxShadow: "0 0 0 4px color-mix(in srgb, #2DD4BF 22%, transparent)",
   },
   h1: {
     fontFamily: "Sora, sans-serif",
@@ -352,7 +352,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     fontSize: 24,
     marginBottom: 12,
-    boxShadow: "0 8px 24px rgba(16,185,129,0.3)",
+    boxShadow: "0 8px 24px rgba(45, 212, 191,0.3)",
   },
   lockTitle: { fontFamily: "Sora, sans-serif", fontWeight: 800, fontSize: 18, color: C.cream, marginBottom: 6 },
   lockText: { fontSize: 13.5, color: C.creamMuted, lineHeight: 1.55, maxWidth: 340 },
@@ -367,7 +367,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     fontSize: 16,
     cursor: "pointer",
-    boxShadow: "0 10px 28px rgba(16,185,129,0.32)",
+    boxShadow: "0 10px 28px rgba(45, 212, 191,0.32)",
     animation: "rj-cta-pulse 2.6s ease-in-out infinite",
   },
   trust: { marginTop: 16, fontSize: 12.5, color: C.creamHint, textAlign: "center", letterSpacing: "0.01em" },
@@ -376,8 +376,8 @@ const styles: Record<string, React.CSSProperties> = {
 
 const KEYFRAMES = `
 @keyframes rj-cta-pulse {
-  0%, 100% { box-shadow: 0 10px 28px rgba(16,185,129,0.32); }
-  50% { box-shadow: 0 12px 34px rgba(16,185,129,0.5); }
+  0%, 100% { box-shadow: 0 10px 28px rgba(45, 212, 191,0.32); }
+  50% { box-shadow: 0 12px 34px rgba(45, 212, 191,0.5); }
 }
 @media (prefers-reduced-motion: reduce) {
   [style*="rj-cta-pulse"] { animation: none !important; }

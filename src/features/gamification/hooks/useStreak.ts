@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { getSupabaseClient } from "../../../services/supabaseClient";
+import { lireMonProfil, oublierMonProfil } from "../../../services/monProfil";
 
 export interface StreakData {
   loaded: boolean;
@@ -58,18 +59,14 @@ export function useStreak(): StreakData {
         if (!sb) return;
 
         // 1. Lire l etat actuel
-        const { data: row, error } = await sb
-          .from("users")
-          .select("streak_count, streak_last_active")
-          .eq("id", userId)
-          .maybeSingle();
-        if (error) {
-          console.warn("[useStreak] read failed:", error.message);
-          return;
-        }
+        // On lit `lifetime_login_count` ICI plutôt que dans une seconde
+        // requête juste avant l'écriture : c'est la MÊME ligne, lue deux fois
+        // à quelques millisecondes d'intervalle (audit démarrage 2026-08-12).
+        // Ligne mutualisée avec les six autres lecteurs (audit 2026-08-12).
+        const row = await lireMonProfil(userId);
         const today = new Date();
-        const lastActiveStr = (row as { streak_last_active?: string | null } | null)?.streak_last_active ?? null;
-        const currentCount = (row as { streak_count?: number } | null)?.streak_count ?? 0;
+        const lastActiveStr = row?.streak_last_active ?? null;
+        const currentCount = row?.streak_count ?? 0;
 
         let newCount = currentCount;
         let shouldUpdate = false;
@@ -97,13 +94,7 @@ export function useStreak(): StreakData {
         // V2 (2026-04-29) : on incremente aussi lifetime_login_count pour
         // calculer le XP daily_login (+5 XP par jour, never resets).
         if (shouldUpdate) {
-          // Lire lifetime current pour increment atomic
-          const { data: liveRow } = await sb
-            .from("users")
-            .select("lifetime_login_count")
-            .eq("id", userId)
-            .maybeSingle();
-          const currentLifetime = (liveRow as { lifetime_login_count?: number } | null)?.lifetime_login_count ?? 0;
+          const currentLifetime = row?.lifetime_login_count ?? 0;
 
           const { error: upErr } = await sb
             .from("users")
@@ -115,6 +106,10 @@ export function useStreak(): StreakData {
             .eq("id", userId);
           if (upErr) {
             console.warn("[useStreak] update failed:", upErr.message);
+          } else {
+            // On vient d'écrire sur sa propre ligne : sans ça, le cache
+            // resservirait l'ancien compteur pendant une minute.
+            oublierMonProfil(userId);
           }
         }
 

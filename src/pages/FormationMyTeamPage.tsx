@@ -109,9 +109,9 @@ export function FormationMyTeamPage() {
             alignItems: "center",
             gap: 12,
             padding: "12px 16px",
-            background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
-            borderLeft: "3px solid var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
+            borderLeft: "3px solid var(--ls-teal)",
             borderRadius: 14,
             textDecoration: "none",
             color: "var(--ls-text)",
@@ -127,7 +127,7 @@ export function FormationMyTeamPage() {
               Va dans la messagerie · onglet Formation pour valider
             </div>
           </div>
-          <span style={{ color: "var(--ls-gold)", fontSize: 18 }}>→</span>
+          <span style={{ color: "var(--ls-teal)", fontSize: 18 }}>→</span>
         </Link>
       ) : null}
 

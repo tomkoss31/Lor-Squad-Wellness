@@ -20,7 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
-import { ClientRelanceButton } from "../reminders/ClientRelanceButton";
 import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction, type PriorityAction } from "../../hooks/useClientPriorityAction";
@@ -85,7 +84,7 @@ const TILE_TINTS: Record<string, { bg: string; col: string }> = {
   teal: { bg: "var(--ls-teal-bg)", col: "var(--ls-teal)" },
   lime: { bg: "color-mix(in srgb, var(--ls-lime) 16%, transparent)", col: "var(--ls-lime)" },
   coral: { bg: "var(--ls-coral-bg)", col: "var(--ls-coral)" },
-  gold: { bg: "color-mix(in srgb, var(--ls-gold) 16%, transparent)", col: "var(--ls-gold)" },
+  gold: { bg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)", col: "var(--ls-teal)" },
 };
 
 /** Tuiles du lanceur. `vip` n'ouvre pas de panneau : raccourci vers l'onglet Club VIP. */
@@ -141,8 +140,8 @@ function RdvHeroTile({
 }) {
   const heroBase: CSSProperties = {
     background:
-      "linear-gradient(150deg,color-mix(in srgb,var(--ls-gold) 26%,var(--ls-surface)),var(--ls-surface) 78%)",
-    border: "1px solid color-mix(in srgb,var(--ls-gold) 45%,transparent)",
+      "linear-gradient(150deg,color-mix(in srgb,var(--ls-teal) 26%,var(--ls-surface)),var(--ls-surface) 78%)",
+    border: "1px solid color-mix(in srgb,var(--ls-teal) 45%,transparent)",
   };
   const goldBtn: CSSProperties = {
     position: "relative",
@@ -153,13 +152,13 @@ function RdvHeroTile({
     borderRadius: 11,
     border: "none",
     cursor: "pointer",
-    background: "linear-gradient(135deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 65%,#000))",
-    color: "var(--ls-gold-contrast)",
+    background: "linear-gradient(135deg,var(--ls-teal),color-mix(in srgb,var(--ls-teal) 65%,#000))",
+    color: "var(--ls-teal-contrast)",
     fontFamily: AT_MONO,
     fontSize: 12,
     fontWeight: 700,
     letterSpacing: "0.08em",
-    boxShadow: "0 4px 16px color-mix(in srgb,var(--ls-gold) 30%,transparent)",
+    boxShadow: "0 4px 16px color-mix(in srgb,var(--ls-teal) 30%,transparent)",
   };
   const eyebrow: CSSProperties = {
     fontFamily: AT_MONO,
@@ -179,7 +178,7 @@ function RdvHeroTile({
         height: 220,
         borderRadius: "50%",
         background:
-          "radial-gradient(circle,color-mix(in srgb,var(--ls-gold) 22%,transparent),transparent 68%)",
+          "radial-gradient(circle,color-mix(in srgb,var(--ls-teal) 22%,transparent),transparent 68%)",
         pointerEvents: "none",
       }}
     />
@@ -191,11 +190,11 @@ function RdvHeroTile({
         width: 40,
         height: 40,
         borderRadius: 12,
-        background: "linear-gradient(135deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 60%,#000))",
+        background: "linear-gradient(135deg,var(--ls-teal),color-mix(in srgb,var(--ls-teal) 60%,#000))",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--ls-gold-contrast)",
+        color: "var(--ls-teal-contrast)",
         flexShrink: 0,
       }}
     >
@@ -257,12 +256,12 @@ function RdvHeroTile({
         <div style={{ position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             {goldChip}
-            <span style={{ ...eyebrow, color: "var(--ls-gold)" }}>Prochain RDV</span>
+            <span style={{ ...eyebrow, color: "var(--ls-teal)" }}>Prochain RDV</span>
           </div>
           <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 26, lineHeight: 1, textTransform: "uppercase", color: "var(--ls-text)" }}>
             {dateLabel}
             <br />
-            <span style={{ color: "var(--ls-gold)" }}>{timeLabel}</span>
+            <span style={{ color: "var(--ls-teal)" }}>{timeLabel}</span>
           </div>
           <div style={{ fontSize: 12.5, color: "var(--ls-teal)", marginTop: 10, fontFamily: AT_MONO, fontWeight: 600 }}>{countdown}</div>
         </div>
@@ -286,7 +285,7 @@ function RdvHeroTile({
         <div style={{ position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
             {goldChip}
-            <span style={{ ...eyebrow, color: "var(--ls-gold)" }}>À faire maintenant</span>
+            <span style={{ ...eyebrow, color: "var(--ls-teal)" }}>À faire maintenant</span>
           </div>
           <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 30, lineHeight: 0.98, textTransform: "uppercase", color: "var(--ls-text)" }}>
             Planifier
@@ -648,43 +647,31 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       }}
     >
       <style>{`
-        /* Fix dark (2026-07-03) : l'app est DARK par défaut (:root) et LIGHT via
-           html.theme-light — PAS data-theme. L'ancien code inversait + utilisait
-           le mauvais sélecteur → override dark jamais appliqué → carte blanche
-           en mode sombre. Corrigé. */
-        :root {
-          --ls-actions-bg: #1A1916;
-          --ls-actions-card: #252421;
-          --ls-actions-soft: #1A1916;
-          --ls-actions-border: rgba(68,68,65,0.5);
-          --ls-actions-border-soft: rgba(68,68,65,0.3);
-          --ls-actions-text: #F1EFE8;
-          --ls-actions-text-muted: #B4B2A9;
-          --ls-actions-text-tertiary: #D3D1C7;
-          --ls-actions-gold-bg: rgba(239,159,39,0.15);
-          --ls-actions-gold-text: #EF9F27;
-          --ls-actions-teal-bg: rgba(29,158,117,0.2);
-          --ls-actions-teal-text: #5DCAA5;
-          --ls-actions-red-bg: rgba(224,75,75,0.15);
-          --ls-actions-red-text: #F09595;
-          --ls-actions-red-text-dark: #F09595;
-        }
-        html.theme-light {
-          --ls-actions-bg: #FBF9F4;
-          --ls-actions-card: #FFFFFF;
-          --ls-actions-soft: #FBF9F4;
-          --ls-actions-border: rgba(211,209,199,0.6);
-          --ls-actions-border-soft: rgba(211,209,199,0.4);
-          --ls-actions-text: #2C2C2A;
-          --ls-actions-text-muted: #888780;
-          --ls-actions-text-tertiary: #5F5E5A;
-          --ls-actions-gold-bg: #FAEEDA;
-          --ls-actions-gold-text: #854F0B;
-          --ls-actions-teal-bg: #E1F5EE;
-          --ls-actions-teal-text: #085041;
-          --ls-actions-red-bg: #FCEBEB;
-          --ls-actions-red-text: #A32D2D;
-          --ls-actions-red-text-dark: #791F1F;
+        /* 2026-08-03 — fin du design system parallèle.
+           Ce bloc définissait 34 couleurs EN DUR sur :root (fond brun #1A1916
+           contre le noir #0B0D11 de l'app) : c'était la raison pour laquelle
+           l'onglet Actions ne ressemblait pas au reste de la fiche, et ça
+           fuyait sur tout le document tant que l'onglet était monté.
+           Les noms --ls-actions-* sont conservés (une quarantaine de règles
+           .at-* les consomment) mais ne sont plus que des ALIAS vers les vrais
+           tokens, qui gèrent déjà clair/sombre — d'où la disparition du bloc
+           html.theme-light. Portée limitée à .client-actions-tab. */
+        .client-actions-tab {
+          --ls-actions-bg: var(--ls-bg);
+          --ls-actions-card: var(--ls-surface);
+          --ls-actions-soft: var(--ls-surface2);
+          --ls-actions-border: var(--ls-border);
+          --ls-actions-border-soft: color-mix(in srgb, var(--ls-border) 60%, transparent);
+          --ls-actions-text: var(--ls-text);
+          --ls-actions-text-muted: var(--ls-text-muted);
+          --ls-actions-text-tertiary: var(--ls-text-muted);
+          --ls-actions-gold-bg: var(--ls-teal-bg);
+          --ls-actions-gold-text: var(--ls-teal);
+          --ls-actions-teal-bg: var(--ls-teal-bg);
+          --ls-actions-teal-text: var(--ls-teal);
+          --ls-actions-red-bg: var(--ls-coral-bg);
+          --ls-actions-red-text: var(--ls-coral);
+          --ls-actions-red-text-dark: var(--ls-coral);
         }
         .client-actions-tab {
           background: var(--ls-actions-bg);
@@ -869,7 +856,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           onEditRdv={onEditRdv}
         />
         <MessageTemplatesButton client={client} variant="tile" />
-        <ClientRelanceButton client={client} variant="tile" />
       </div>
 
       {/* Protocole de suivi J+1 -> J+14 (composant reel : envoi + log DB). Ancre
@@ -974,8 +960,8 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
                 et usure produits (relances réassort) partent de cette date, pas
                 du bilan. Aucune formule PV/rentabilité touchée — sorti de l'onglet
                 Modifier pour être une action unique et visible (ex-« Activator »). */}
-            <div style={{ padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-gold)", background: "var(--ls-gold-bg)" }}>
-              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-gold)", marginBottom: 6 }}>📦 Date de réception du colis</div>
+            <div style={{ padding: 16, borderRadius: 12, borderLeft: "3px solid var(--ls-teal)", background: "var(--ls-teal-bg)" }}>
+              <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-teal)", marginBottom: 6 }}>📦 Date de réception du colis</div>
               <p style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.5, color: "var(--ls-text-muted)" }}>
                 {client.startDate ? `Reçu le ${new Date(client.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}. ` : ""}
                 Marque le jour où le client a reçu son colis — le compteur J+1 / J+7 / J+14 et l&apos;usure des produits (relances réassort) partent de cette date.
@@ -983,11 +969,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               {activatorOpen ? (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <input type="date" value={activatorDate} onChange={(e) => setActivatorDate(e.target.value)} style={{ minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface)", color: "var(--ls-text)", fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 13 }} />
-                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer la réception"}</button>
+                  <button type="button" onClick={() => void handleActivateProgram()} disabled={activatorSaving} style={{ background: "linear-gradient(180deg,var(--ls-teal),color-mix(in srgb,var(--ls-teal) 70%,#000))", color: "var(--ls-teal-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: activatorSaving ? "wait" : "pointer", minHeight: 44 }}>{activatorSaving ? "…" : "Confirmer la réception"}</button>
                   <button type="button" onClick={() => setActivatorOpen(false)} style={{ background: "transparent", border: "1px solid var(--ls-border)", color: "var(--ls-text-muted)", padding: "11px 16px", borderRadius: 10, fontSize: 13, cursor: "pointer", minHeight: 44 }}>Annuler</button>
                 </div>
               ) : (
-                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-gold),color-mix(in srgb,var(--ls-gold) 70%,#000))", color: "var(--ls-gold-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de réception" : "Marquer la réception du colis"}</button>
+                <button type="button" onClick={() => setActivatorOpen(true)} style={{ background: "linear-gradient(180deg,var(--ls-teal),color-mix(in srgb,var(--ls-teal) 70%,#000))", color: "var(--ls-teal-contrast)", border: "none", padding: "11px 18px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", minHeight: 44 }}>{client.startDate ? "Modifier la date de réception" : "Marquer la réception du colis"}</button>
               )}
             </div>
           </>

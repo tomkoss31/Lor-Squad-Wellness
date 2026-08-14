@@ -89,13 +89,13 @@ const BUCKET_COLOR: Record<string, string> = {
   Protéines: "var(--ls-purple)",
   Hydratation: "var(--ls-teal)",
   Sport: "var(--ls-teal)",
-  Boosters: "var(--ls-gold)",
+  Boosters: "var(--ls-teal)",
   Gélules: "var(--ls-purple)",
   Digestion: "var(--ls-teal)",
   Snacks: "var(--ls-coral)",
   Sommeil: "var(--ls-purple)",
-  Compléments: "var(--ls-gold)",
-  Routine: "var(--ls-gold)",
+  Compléments: "var(--ls-teal)",
+  Routine: "var(--ls-teal)",
   Soins: "var(--ls-coral)",
   Autres: "var(--ls-text-muted)",
 };
@@ -687,7 +687,7 @@ export function PanierPage() {
 
                   {/* Droite : prix + stepper / ajouter */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, flex: "none" }}>
-                    <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-gold)" }}>{euro(p.price)}</span>
+                    <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-teal)" }}>{euro(p.price)}</span>
                     {!active ? (
                       <button
                         type="button"
@@ -758,7 +758,7 @@ export function PanierPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {attribMode === "existing" && selectedClient ? (
-                              <>{isVipClient(selectedClient) ? <span style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}</>
+                              <>{isVipClient(selectedClient) ? <span style={{ color: "var(--ls-teal)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}</>
                             ) : clientName.trim()}
                           </div>
                           <div style={{ fontSize: 11, color: "var(--ls-text-hint)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -798,7 +798,7 @@ export function PanierPage() {
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                  {isVipClient(selectedClient) ? <span title="Client VIP" style={{ color: "var(--ls-gold)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}
+                                  {isVipClient(selectedClient) ? <span title="Client VIP" style={{ color: "var(--ls-teal)" }}>⭐ </span> : null}{selectedClient.firstName} {selectedClient.lastName}
                                 </div>
                                 <div style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>
                                   {(() => {
@@ -854,13 +854,13 @@ export function PanierPage() {
                               {([["commande", "💳 Sur son compte"], ["reprise-sur-place", "🏪 Sur place"]] as Array<["commande" | "reprise-sur-place", string]>).map(([v, l]) => {
                                 const on = saleType === v;
                                 return (
-                                  <button key={v} type="button" onClick={() => setSaleType(v)} style={{ flex: 1, padding: "7px 8px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-gold)" : "var(--ls-surface)", color: on ? "#1a1407" : "var(--ls-text-muted)" }}>{l}</button>
+                                  <button key={v} type="button" onClick={() => setSaleType(v)} style={{ flex: 1, padding: "7px 8px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "DM Sans, sans-serif", border: on ? "1px solid transparent" : "1px solid var(--ls-border)", background: on ? "var(--ls-teal)" : "var(--ls-surface)", color: on ? "#1a1407" : "var(--ls-text-muted)" }}>{l}</button>
                                 );
                               })}
                             </div>
 
                             {selectedClientCoach && saleType === "commande" ? (
-                              <div style={{ marginBottom: 12, padding: "9px 11px", borderRadius: 10, background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)" }}>
+                              <div style={{ marginBottom: 12, padding: "9px 11px", borderRadius: 10, background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)" }}>
                                 <div style={{ fontSize: 11.5, color: "var(--ls-text)", fontWeight: 700 }}>👩‍💼 {selectedClient?.firstName} est aussi distributrice</div>
                                 <div style={{ fontSize: 10.5, color: "var(--ls-text-muted)", lineHeight: 1.4, marginTop: 3 }}>
                                   Ses commandes comptent normalement sur SON volume distri (sa qualif), pas comme vente cliente. Tu peux quand même valider ici.
@@ -985,7 +985,7 @@ export function PanierPage() {
                       {selectedVip ? <span style={{ color: selectedVip.color, fontWeight: 700 }}>· {selectedVip.badge} VIP {selectedVip.label}</span> : null}
                     </span>
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: disc > 0 ? "var(--ls-gold)" : "var(--ls-text-hint)" }}>{disc > 0 ? `−${disc} %` : "Aucune"}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: disc > 0 ? "var(--ls-teal)" : "var(--ls-text-hint)" }}>{disc > 0 ? `−${disc} %` : "Aucune"}</span>
                       <span aria-hidden="true" style={{ color: "var(--ls-text-hint)", fontSize: 11, transform: remiseOpen ? "rotate(180deg)" : "none", transition: "transform .2s ease" }}>▼</span>
                     </span>
                   </button>
@@ -1038,17 +1038,17 @@ export function PanierPage() {
                   overflow: "hidden",
                   marginTop: 18,
                   background: "radial-gradient(130% 150% at 100% 0%, color-mix(in srgb, var(--ls-teal) 13%, transparent), transparent 60%), color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
-                  border: "1px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--ls-teal) 28%, transparent)",
                   borderRadius: 18,
                   padding: "16px 18px",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--ls-text-muted)" }}>Prix client</span>
                     {disc > 0 ? (
-                      <span style={{ padding: "3px 9px", borderRadius: 999, background: "var(--ls-gold)", color: "#1a1407", fontSize: 11.5, fontWeight: 700 }}>−{disc} %</span>
+                      <span style={{ padding: "3px 9px", borderRadius: 999, background: "var(--ls-teal)", color: "#1a1407", fontSize: 11.5, fontWeight: 700 }}>−{disc} %</span>
                     ) : null}
                   </div>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 34, lineHeight: 1, color: "var(--ls-gold)", marginTop: 7 }}>{euro(clientPrice)}</div>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 34, lineHeight: 1, color: "var(--ls-teal)", marginTop: 7 }}>{euro(clientPrice)}</div>
                   {savings > 0.005 ? (
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 11, padding: "5px 11px", borderRadius: 999, background: "color-mix(in srgb, #34D399 14%, transparent)", color: "#34D399", fontWeight: 700, fontSize: 12.5 }}>
                       <span style={{ fontSize: 14 }}>↓</span>Tu économises {euro(savings)}
@@ -1184,7 +1184,7 @@ export function PanierPage() {
             {disc > 0 ? (
               <span style={{ fontSize: 12, color: "var(--ls-text-hint)", textDecoration: "line-through" }}>{euro(totalPrice)}</span>
             ) : null}
-            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 18, color: "var(--ls-gold)" }}>{euro(clientPrice)}</span>
+            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 18, color: "var(--ls-teal)" }}>{euro(clientPrice)}</span>
             <span aria-hidden="true" style={{ fontSize: 15, color: "var(--ls-teal)" }}>↓</span>
           </span>
         </button>
@@ -1245,7 +1245,7 @@ export function PanierPage() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ls-text)", display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                        {isVipClient(c) ? <span title="Client VIP" style={{ color: "var(--ls-gold)", flex: "0 0 auto" }}>⭐</span> : null}
+                        {isVipClient(c) ? <span title="Client VIP" style={{ color: "var(--ls-teal)", flex: "0 0 auto" }}>⭐</span> : null}
                         <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.firstName} {c.lastName}</span>
                         {coachOf(c) ? <span title="Aussi distributrice" style={{ flex: "0 0 auto" }}>👩‍💼</span> : null}
                       </div>

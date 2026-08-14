@@ -23,6 +23,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { useHaptic } from "../../hooks/useHaptic";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { MobileDrawer } from "./MobileDrawer";
+import { LogoMark } from "../brand/LogoMark";
 
 interface MobileHeaderProps {
   crumb: string;
@@ -90,13 +91,7 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
           style={{ textDecoration: "none", color: "inherit" }}
           onClick={() => haptic("tap")}
         >
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt="La Base 360"
-            className="lb-logo-img gold-keep"
-            width={32}
-            height={32}
-          />
+          <LogoMark size={32} />
           <div style={{ display: "flex", flexDirection: "column", minWidth: 0, gap: 1 }}>
             <span className="lb-logo-text">La Base 360</span>
             {crumb ? <span className="lb-crumb">{crumb}</span> : null}

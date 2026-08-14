@@ -52,8 +52,8 @@ function getSlides(firstName: string, coachName: string): Slide[] {
         "💬 On reste connecté·e·s entre les RDV",
       ],
       bgGradient:
-        "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-bg)) 100%)",
-      accent: "var(--ls-gold)",
+        "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-bg)) 100%)",
+      accent: "var(--ls-teal)",
     },
     {
       emoji: "📈",
@@ -82,7 +82,7 @@ function getSlides(firstName: string, coachName: string): Slide[] {
         "☀️ Ta routine quotidienne détaillée heure par heure",
       ],
       bgGradient:
-        "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-bg)) 100%)",
+        "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-bg)) 100%)",
       accent: "var(--ls-purple)",
     },
     {
@@ -96,7 +96,7 @@ function getSlides(firstName: string, coachName: string): Slide[] {
         "🤝 Pas de jugement, juste de l'accompagnement",
       ],
       bgGradient:
-        "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-bg)) 100%)",
+        "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 16%, var(--ls-bg)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-bg)) 100%)",
       accent: "var(--ls-coral)",
     },
   ];

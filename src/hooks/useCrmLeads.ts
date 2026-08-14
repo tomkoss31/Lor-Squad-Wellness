@@ -21,6 +21,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
+import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
 export type CrmTable =
@@ -37,7 +39,13 @@ export type CrmSource =
   | "simulateur"
   | "business"
   | "welcome"
-  | "colis";
+  | "colis"
+  /** Tunnel « Réserver au club » (/reserver). 4 leads en base au 2026-08-11,
+   *  tous affichés « Site web » faute d'exister ici. */
+  | "site-club"
+  /** Filet : une source qu'on ne connaît pas s'affiche telle quelle plutôt que
+   *  de se déguiser en autre chose. Cf. `sourceRaw`. */
+  | "inconnue";
 
 export interface CrmLead {
   key: string;
@@ -63,8 +71,16 @@ export interface CrmLead {
       online_bilans.coach_user_id · prospect_leads.referrer_user_id ·
       referrals/intentions → distributeur du client parrain. Null = non attribué. */
   ownerUserId: string | null;
-  /** Relance J+3 due (online_bilans uniquement). */
+  /** Relance échue et pas encore faite — le 🔔 de la liste. */
   relanceDue: boolean;
+  /** Quand cette personne doit revenir dans la file. Posé par la feuille
+   *  « Et alors ? » (src/features/crm/qualification.ts), jamais saisi à la
+   *  main. `null` = aucune suite prévue — ce qui veut dire « à traiter
+   *  aujourd'hui », pas « plus tard » (cf. echeances.ts). */
+  relanceDueAt: string | null;
+  /** Ce qui s'est passé au dernier appel — c'est ce qu'on lit sous son nom,
+   *  et ce qui choisit l'angle du message de 2e tentative. */
+  derniereReponse: CleReponse | null;
   /** Lead « endormi » (archivé) — sorti du flux actif, zéro relance. */
   dormant?: boolean;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
@@ -86,6 +102,26 @@ export interface CrmLead {
   notes: string | null;
   /** Réponses du questionnaire funnel Opportunité (prospect_leads.metadata.answers)
    *  → affichées dans la carte CRM. Null si le lead n'a pas de funnel. */
+  /** La valeur brute de `prospect_leads.source`, pour l'afficher telle quelle
+   *  quand on ne la reconnaît pas. */
+  sourceRaw?: string | null;
+  /** Ce que la personne a écrit dans le tunnel « Réserver au club » et qui
+   *  n'était affiché NULLE PART — alors que le mail de réservation, lui, le
+   *  contient (audit 2026-08-11). */
+  lastName?: string | null;
+  objectif?: string | null;
+  peopleCount?: number | null;
+  partnerName?: string | null;
+  partnerObjectif?: string | null;
+  coachSlug?: string | null;
+  /** `false` = la personne n'a coché aucune case de recontact. À savoir AVANT
+   *  de décrocher son téléphone. */
+  consentRecontact?: boolean | null;
+  /** Un lead du tunnel club qui n'est jamais allé jusqu'au créneau. C'est le
+   *  signal le plus fort du CRM : il a laissé son numéro puis il est parti. */
+  abandonAvantCreneau?: boolean;
+  /** Le créneau réservé, s'il en a un. */
+  rdvLabel?: string | null;
   funnelAnswers?: Record<string, string> | null;
   /** Réponses du funnel colis (question → réponse, déjà en libellés). */
   colisAnswers?: Record<string, string> | null;
@@ -105,7 +141,7 @@ export interface CrmLead {
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
   new: { label: "Nouveaux", emoji: "🆕", color: "var(--ls-teal)" },
-  contacted: { label: "Contactés", emoji: "💬", color: "var(--ls-gold)" },
+  contacted: { label: "Contactés", emoji: "💬", color: "var(--ls-teal)" },
   qualified: { label: "Qualifiés / RDV", emoji: "📅", color: "var(--ls-purple)" },
   converted: { label: "Convertis", emoji: "✅", color: "var(--ls-teal)" },
   lost: { label: "Perdus", emoji: "🌙", color: "var(--ls-text-muted)" },
@@ -121,6 +157,8 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   business: { label: "Business", emoji: "💼" },
   welcome: { label: "Site web", emoji: "🌐" },
   colis: { label: "Colis", emoji: "🎁" },
+  "site-club": { label: "Réserver au club", emoji: "🏠" },
+  inconnue: { label: "Source inconnue", emoji: "❓" },
 };
 
 // Re-catégorisation manuelle (A, 2026-06-16) : sources éditables pour un lead
@@ -134,6 +172,25 @@ const CRM_SOURCE_TO_DB: Partial<Record<CrmSource, string>> = {
   simulateur: "simulateur",
   "reco-client": "reco-client",
 };
+
+/** Les objectifs du tunnel « Réserver au club ». Mêmes libellés que le mail de
+ *  réservation (book-club-discovery), pour qu'un coach lise la même chose dans
+ *  sa boîte et dans le CRM. Un code inconnu s'affiche tel quel. */
+const OBJECTIF_LABELS: Record<string, string> = {
+  poids: "⚖️ Perdre du poids",
+  muscle: "💪 Reprendre du muscle",
+  energie: "⚡ Retrouver de l'énergie",
+};
+export function objectifLabel(code: string | null | undefined): string {
+  const c = (code ?? "").trim();
+  if (!c) return "—";
+  return OBJECTIF_LABELS[c] ?? c;
+}
+/** Version courte pour la ligne de liste : le libellé sans son emoji. */
+export function objectifCourt(code: string | null | undefined): string {
+  const l = objectifLabel(code);
+  return l === "—" ? l : l.replace(/^\S+\s/u, "");
+}
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
   family: "famille",
@@ -159,7 +216,15 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   if (s === "simulateur") return "simulateur";
   if (s.startsWith("business")) return "business";
   if (s === "colis") return "colis";
-  return "welcome";
+  if (s === "site-club") return "site-club";
+  // Les valeurs historiques du site vitrine, listées explicitement.
+  if (s === "welcome" || s === "welcome_page" || s === "site" || s === "") return "welcome";
+  // Tout le reste : on le DIT. Le défaut d'avant renvoyait « welcome », donc
+  // une source jamais déclarée s'affichait « 🌐 Site web » — c'est ce qui a
+  // masqué `site-club` pendant 4 leads, après avoir déjà masqué
+  // « rejoindre-funnel » en juillet. Un défaut muet ne protège de rien : il
+  // fabrique une information fausse (audit 2026-08-11).
+  return "inconnue";
 }
 
 /** online_bilans.lead_status (6 valeurs) → statut CRM normalisé. */
@@ -179,9 +244,36 @@ function mapBilanStatus(leadStatus: string | null, convertedClientId: string | n
   }
 }
 
+/**
+ * Les trois champs de relance, lus pareil sur les deux tables qui les portent.
+ *
+ * ⚠️ `relance_done_at IS NULL` = échéance encore ouverte. C'est la sémantique
+ * de `crm-relance-notifier`, pas un choix libre : l'inverser ferait naître
+ * chaque rappel déjà marqué fait, donc muet (cf. qualification.ts).
+ */
+function relanceFields(
+  row: Record<string, unknown>,
+  now: number,
+): Pick<CrmLead, "relanceDue" | "relanceDueAt" | "derniereReponse"> {
+  const due = (row.relance_due_at as string | null) ?? null;
+  const ouverte = Boolean(due && !row.relance_done_at);
+  return {
+    relanceDue: ouverte && new Date(due as string).getTime() <= now,
+    // On n'expose l'échéance que si elle est OUVERTE : une relance déjà faite
+    // rangerait la personne dans « Plus tard » alors qu'il n'y a plus rien de
+    // prévu — exactement la disparition que ce chantier corrige.
+    relanceDueAt: ouverte ? due : null,
+    derniereReponse: (row.derniere_reponse as CleReponse | null) ?? null,
+  };
+}
+
 function mapSimpleStatus(status: string | null): CrmStatus {
   switch (status) {
     case "contacted":
+    // Posé par la feuille « Et alors ? ». Sans ce cas, une personne qu'on
+    // vient d'appeler retomberait en « Nouveau » — donc traitée comme jamais
+    // contactée, et le message repartirait sur « tu as laissé tes coordonnées ».
+    case "to_recontact":
       return "contacted";
     case "qualified":
       return "qualified";
@@ -317,26 +409,36 @@ export function useCrmLeads() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
 
-      const [bilansRes, prospectsRes, referralsRes, intentionsRes] = await Promise.all([
+      // Les réservations du club, pour savoir si un lead du tunnel /reserver
+      // est allé jusqu'au créneau. Sans ça, impossible de distinguer celui qui
+      // a réservé de celui qui a abandonné à l'écran 1 — or c'est justement
+      // celui-là qu'il faut rappeler (audit 2026-08-11).
+      const [bilansRes, prospectsRes, referralsRes, reservationsRes, intentionsRes] = await Promise.all([
         sb
           .from("online_bilans")
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, derniere_reponse, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
           .from("client_referrals")
           .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
           .order("created_at", { ascending: false })
+          .limit(500),
+        sb
+          .from("rdv_bookings")
+          .select("first_name, contact, slot_start, status")
+          .neq("status", "canceled")
+          .order("slot_start", { ascending: true })
           .limit(500),
         // Intentions de parrainage — requête débranchée le 2026-07-29.
         //
@@ -427,11 +529,7 @@ export function useCrmLeads() {
           bilanMotivation: (row.motivation_score as number | null) ?? null,
           bilanAge: (row.age as number | null) ?? null,
           bilanCoachSlug: (row.coach_slug as string | null) ?? null,
-          relanceDue: Boolean(
-            row.relance_due_at &&
-              !row.relance_done_at &&
-              new Date(row.relance_due_at as string).getTime() <= now,
-          ),
+          ...relanceFields(row, now),
           resultToken: (row.result_token as string | null) ?? null,
           callbackRequestedAt: (row.callback_requested_at as string | null) ?? null,
           engagement: (row.engagement as { score: number; tier: string; signals: string[] } | null) ?? null,
@@ -439,6 +537,23 @@ export function useCrmLeads() {
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
         });
+      }
+
+      // Deux clés d'appariement : l'email/téléphone d'abord (fiable), le prénom
+      // ensuite (le tunnel club demande les deux, mais rien ne garantit la même
+      // saisie aux deux écrans). On ne relie que pour DIRE « a réservé » — aucune
+      // écriture ne dépend de cet appariement.
+      const parContact = new Map<string, string>();
+      const parPrenom = new Map<string, string>();
+      for (const b of (reservationsRes.data ?? []) as Array<Record<string, unknown>>) {
+        const quand = new Intl.DateTimeFormat("fr-FR", {
+          timeZone: "Europe/Paris", weekday: "short", day: "2-digit", month: "short",
+          hour: "2-digit", minute: "2-digit",
+        }).format(new Date(String(b.slot_start)));
+        const c = String(b.contact ?? "").trim().toLowerCase();
+        const p = String(b.first_name ?? "").trim().toLowerCase();
+        if (c && !parContact.has(c)) parContact.set(c, quand);
+        if (p && !parPrenom.has(p)) parPrenom.set(p, quand);
       }
 
       for (const row of prospectsRes.data ?? []) {
@@ -470,6 +585,13 @@ export function useCrmLeads() {
               : colisNextAction === "email_only"
                 ? "⚪ A laissé son email"
                 : null;
+        const cleContact = String(row.email ?? row.phone ?? "").trim().toLowerCase();
+        const clePrenom = String(row.first_name ?? "").trim().toLowerCase();
+        const rdvTrouve =
+          (cleContact && parContact.get(cleContact)) ||
+          (clePrenom && parPrenom.get(clePrenom)) ||
+          null;
+
         all.push({
           key: `prospect_leads:${row.id}`,
           table: "prospect_leads",
@@ -487,13 +609,28 @@ export function useCrmLeads() {
           extra: colisExtra,
           // Cf. commentaire online_bilans — même correction (assigned_to_user_id prioritaire).
           ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.referrer_user_id as string | null) ?? null,
-          relanceDue: false,
+          ...relanceFields(row, now),
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
           createdAt: row.created_at as string,
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
+          sourceRaw: (row.source as string | null) ?? null,
+          lastName: typeof meta.nom === "string" && meta.nom.trim() ? (meta.nom as string).trim() : null,
+          objectif: typeof meta.objectif === "string" ? (meta.objectif as string) : null,
+          peopleCount: typeof meta.people_count === "number" ? (meta.people_count as number) : null,
+          partnerName: [meta.partner_first_name, meta.partner_last_name]
+            .filter((v): v is string => typeof v === "string" && !!v.trim())
+            .join(" ") || null,
+          partnerObjectif: typeof meta.partner_objectif === "string" ? (meta.partner_objectif as string) : null,
+          coachSlug: (row.coach_slug as string | null) ?? null,
+          consentRecontact: typeof row.consent_recontact === "boolean" ? (row.consent_recontact as boolean) : null,
+          rdvLabel: rdvTrouve,
+          // Le signal du chantier : parti avant de choisir son créneau. On ne
+          // le lève que pour le tunnel club — ailleurs, ne pas avoir de RDV est
+          // l'état normal.
+          abandonAvantCreneau: source === "site-club" && !rdvTrouve,
           funnelAnswers,
           colisAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
@@ -520,7 +657,11 @@ export function useCrmLeads() {
           ownerUserId: row.from_client_id
             ? clientDistributor.get(row.from_client_id as string) ?? null
             : null,
+          // Ni relance ni qualification sur cette table : la personne se range
+          // dans « Aujourd'hui » tant qu'on ne l'a pas appelée.
           relanceDue: false,
+          relanceDueAt: null,
+          derniereReponse: null,
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
@@ -552,7 +693,11 @@ export function useCrmLeads() {
           ownerUserId: row.referrer_client_id
             ? clientDistributor.get(row.referrer_client_id) ?? null
             : null,
+          // Ni relance ni qualification sur cette table : la personne se range
+          // dans « Aujourd'hui » tant qu'on ne l'a pas appelée.
           relanceDue: false,
+          relanceDueAt: null,
+          derniereReponse: null,
           resultToken: null,
           callbackRequestedAt: null,
           engagement: null,
@@ -572,7 +717,10 @@ export function useCrmLeads() {
       for (const l of all) {
         if (archSet.has(`${l.table}:${l.id}`)) {
           l.dormant = true;
-          l.relanceDue = false; // un endormi ne déclenche aucune relance
+          // Un endormi ne déclenche aucune relance — ni le 🔔, ni le rangement
+          // par échéance (il est mis de côté exprès, il n'attend rien).
+          l.relanceDue = false;
+          l.relanceDueAt = null;
         }
       }
 
@@ -589,23 +737,85 @@ export function useCrmLeads() {
     void fetchAll();
   }, [fetchAll]);
 
+  /**
+   * « Et alors ? » — la seule façon de sortir quelqu'un du flou. Un tap, et la
+   * date de retour est calculée depuis le geste ; personne ne saisit jamais
+   * une date à la main.
+   *
+   * Le CRM ET le Co-pilote passent par le même service d'écriture : les deux
+   * tables ne parlent pas le même vocabulaire de statut, et une traduction
+   * oubliée fait rejeter tout l'update en silence.
+   */
+  const qualifier = useCallback(
+    async (lead: CrmLead, reponse: Reponse): Promise<string | null> => {
+      const table = lead.table;
+      if (!estQualifiable(table)) {
+        return "Cette fiche ne porte pas d'échéance de relance.";
+      }
+      const maintenant = new Date();
+      const err = await ecrireQualification(table, lead.id, reponse, maintenant);
+      if (err) return err;
+
+      const ecrit = ecritureFor(reponse, maintenant);
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.key === lead.key
+            ? {
+                ...l,
+                // On rejoue EXACTEMENT ce que la base vient d'enregistrer :
+                // traduction dans le vocabulaire de la table, puis le mapping
+                // du chargement. Sinon un « RDV calé » s'afficherait
+                // « Qualifié » sur un prospect_lead (qui ne connaît pas ce
+                // statut et a stocké « contacted ») et clignoterait au refetch.
+                status:
+                  table === "online_bilans"
+                    ? mapBilanStatus(statutPour(table, ecrit.status), null)
+                    : mapSimpleStatus(statutPour(table, ecrit.status)),
+                derniereReponse: ecrit.derniere_reponse,
+                contactedAt: ecrit.contacted_at,
+                relanceDueAt: ecrit.relance_due_at,
+                relanceDue: false, // une échéance fraîche est toujours future
+              }
+            : l,
+        ),
+      );
+      return null;
+    },
+    [],
+  );
+
   const updateStatus = useCallback(
     async (lead: CrmLead, next: CrmStatus): Promise<string | null> => {
       const sb = await getSupabaseClient();
       if (!sb) return "Service indisponible.";
 
       let err: string | null = null;
+      // Sortir quelqu'un de la file doit AUSSI refermer son échéance. Sans ça,
+      // `crm-relance-notifier` continue de pousser « relance Laure » le
+      // lendemain du jour où on l'a passée en Perdu — le cron ne lit que
+      // `relance_due_at <= now AND relance_done_at IS NULL`, pas le statut.
+      const sortDeLaFile = next === "lost" || next === "converted" || next === "qualified";
+      const refermeEcheance = (patch: Record<string, unknown>) => {
+        if (sortDeLaFile) {
+          patch.relance_due_at = null;
+          patch.relance_done_at = new Date().toISOString();
+        }
+        return patch;
+      };
+
       if (lead.table === "online_bilans") {
         // Traduction vers les valeurs natives du kanban Leads.
         const native =
           next === "contacted" ? "contact" : next === "qualified" ? "qualified" : next;
         const patch: Record<string, unknown> = { lead_status: native };
         if (next === "contacted") patch.contacted_at = new Date().toISOString();
+        refermeEcheance(patch);
         const { error: e } = await sb.from("online_bilans").update(patch).eq("id", lead.id);
         err = e?.message ?? null;
       } else if (lead.table === "prospect_leads") {
         const patch: Record<string, unknown> = { status: next === "qualified" ? "contacted" : next };
         if (next === "contacted") patch.contacted_at = new Date().toISOString();
+        refermeEcheance(patch);
         const { error: e } = await sb.from("prospect_leads").update(patch).eq("id", lead.id);
         err = e?.message ?? null;
       } else if (lead.table === "client_referral_intentions") {
@@ -629,7 +839,16 @@ export function useCrmLeads() {
 
       if (!err) {
         setLeads((prev) =>
-          prev.map((l) => (l.key === lead.key ? { ...l, status: next, relanceDue: false } : l)),
+          prev.map((l) =>
+            l.key === lead.key
+              ? {
+                  ...l,
+                  status: next,
+                  relanceDue: false,
+                  relanceDueAt: sortDeLaFile ? null : l.relanceDueAt,
+                }
+              : l,
+          ),
         );
         // Wagon 2 chantier 5 : conversion d'une reco/intention → push de
         // gratification au client parrain (« 🎉 Ta reco a porté ses fruits »).
@@ -687,7 +906,14 @@ export function useCrmLeads() {
     }
     setLeads((prev) =>
       prev.map((l) =>
-        l.key === lead.key ? { ...l, dormant: value, relanceDue: value ? false : l.relanceDue } : l,
+        l.key === lead.key
+          ? {
+              ...l,
+              dormant: value,
+              relanceDue: value ? false : l.relanceDue,
+              relanceDueAt: value ? null : l.relanceDueAt,
+            }
+          : l,
       ),
     );
     return null;
@@ -757,6 +983,7 @@ export function useCrmLeads() {
     error,
     counts,
     refetch: fetchAll,
+    qualifier,
     updateStatus,
     updateSource,
     updateNotes,

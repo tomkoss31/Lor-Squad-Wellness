@@ -414,7 +414,7 @@ function WelcomeStage({
           fontSize: 10,
           letterSpacing: 2,
           textTransform: "uppercase",
-          color: "#B8922A",
+          color: "#0D9488",
           fontWeight: 700,
           marginBottom: 4,
         }}
@@ -541,7 +541,7 @@ function WelcomeStage({
           style={{
             padding: "12px 24px",
             borderRadius: 12,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#FFFFFF",
             border: "none",
             fontFamily: "Syne, sans-serif",
@@ -549,7 +549,7 @@ function WelcomeStage({
             fontWeight: 700,
             cursor: "pointer",
             letterSpacing: 0.3,
-            boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+            boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
           }}
         >
           C&apos;est parti ✨
@@ -691,7 +691,7 @@ function FinalStage({
             fontSize: 10,
             letterSpacing: 1.4,
             textTransform: "uppercase",
-            color: "#B8922A",
+            color: "#0D9488",
             fontWeight: 700,
             marginBottom: 8,
           }}
@@ -764,7 +764,7 @@ function FinalStage({
           style={{
             padding: "12px 24px",
             borderRadius: 12,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#FFFFFF",
             border: "none",
             fontFamily: "Syne, sans-serif",
@@ -772,7 +772,7 @@ function FinalStage({
             fontWeight: 700,
             cursor: "pointer",
             letterSpacing: 0.3,
-            boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+            boxShadow: "0 4px 14px rgba(15,118,110,0.40)",
           }}
         >
           Explorer mon espace →
@@ -844,7 +844,7 @@ function MetricStage({
           marginBottom: 12,
         }}
       >
-        <span style={{ fontWeight: 600, color: "#B8922A" }}>
+        <span style={{ fontWeight: 600, color: "#0D9488" }}>
           {stepIndex + 1}/{TOTAL_VISIBLE_STEPS}
         </span>
         <button
@@ -938,7 +938,7 @@ function MetricStage({
           style={{
             padding: "10px 18px",
             borderRadius: 10,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#FFFFFF",
             border: "none",
             fontFamily: "Syne, sans-serif",

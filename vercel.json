@@ -1,6 +1,17 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "^(?:www\\.)?labase-nutrition\\.com$"
+        }
+      ],
+      "destination": "/club",
+      "permanent": false
+    },
+    {
       "source": "/opportunite",
       "destination": "/business",
       "permanent": true
@@ -50,8 +61,81 @@
       "destination": "/api/boutique-meta?slug=:slug"
     },
     {
+      "source": "/club/:sub",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=club&sub=:sub"
+    },
+    {
+      "source": "/club",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=club"
+    },
+    {
+      "source": "/reserver/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=reserver"
+    },
+    {
+      "source": "/reserver",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/club-meta?path=reserver"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(marketing-plan|marketing-plan-prospect|marketing-plan-slides|opportunite-claude|copilote-v6-preview|copilote-v7-preview|pwa-client-preview|pwa-client-sanctuary-preview)(.html)?",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(mockups|demo)/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/boutique/(.*)/infos",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ]
 }

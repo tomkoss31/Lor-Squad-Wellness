@@ -5,7 +5,7 @@
 //
 // Comportement strictement identique a la version inline d origine :
 //   - targetRect null  → overlay plein ecran sans decoupe
-//   - targetRect fourni → 4 bandes fixes autour + ring gold #EF9F27
+//   - targetRect fourni → 4 bandes fixes autour + ring gold #2DD4BF
 
 import type { CSSProperties } from "react";
 
@@ -96,13 +96,13 @@ export function SpotlightOverlay({
         @keyframes ls-spotlight-breathe {
           0%, 100% {
             box-shadow:
-              0 0 0 2px rgba(239,159,39,0.30),
-              0 0 18px 0 rgba(239,159,39,0.15);
+              0 0 0 2px rgba(45,212,191,0.30),
+              0 0 18px 0 rgba(45,212,191,0.15);
           }
           50% {
             box-shadow:
-              0 0 0 7px rgba(239,159,39,0.10),
-              0 0 28px 4px rgba(239,159,39,0.40);
+              0 0 0 7px rgba(45,212,191,0.10),
+              0 0 28px 4px rgba(45,212,191,0.40);
           }
         }
       `}</style>
@@ -113,7 +113,7 @@ export function SpotlightOverlay({
           left: targetRect.left - pad,
           width: targetRect.width + pad * 2,
           height: targetRect.height + pad * 2,
-          border: "2px solid #EF9F27",
+          border: "2px solid #2DD4BF",
           borderRadius: 12,
           zIndex,
           pointerEvents: "none",

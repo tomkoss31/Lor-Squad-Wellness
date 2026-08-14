@@ -311,6 +311,47 @@ ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -d
 
 ---
 
+## 🌐 Les trois domaines — `labase-nutrition.com` n'est PAS un vieux domaine
+
+| Domaine | Sert | Racine |
+|---|---|---|
+| `www.labase360.fr` | l'app coaching (prod) | l'app, derrière login |
+| `www.labase-nutrition.com` | **le site du Breakfast Club** | → `/club` (302, `vercel.json`) |
+| `commande.labase-nutrition.com` | le Shake Bar | (hors app — cf. `CONTEST_URL`) |
+
+Les trois pointent aujourd'hui vers **le même déploiement Vercel**. C'est
+`vercel.json` qui aiguille par `host`, et `api/club-meta.ts` qui sert déjà les
+bonnes méta Open Graph des pages `/club*` et `/reserver*` (rewrite bot-only,
+même motif que `coach-meta`).
+
+### Les deux pièges de la redirection racine (2026-08-13)
+
+1. **Ne pas la supprimer** en croyant « libérer » le domaine. La route `/` est
+   derrière `ProtectedRoute` et renvoie vers `/co-pilote` : sans redirection,
+   un visiteur du site club atterrit sur **l'écran de connexion de l'app
+   coach**. Elle doit pointer vers `/club`, pas disparaître.
+   *(Elle visait `/reserver` jusqu'au 2026-08-13 — vestige de l'époque où la
+   vitrine n'existait pas et où le domaine servait de raccourci vers le tunnel
+   de réservation.)*
+
+2. **Ne jamais la passer en 301 vers `labase360.fr`.** Une branche l'a proposé
+   en traitant ce domaine comme un ancien à faire mourir. Un 301 est mis en
+   cache **durablement par les navigateurs** : le site club resterait
+   inaccessible pour tous ceux qui l'ont visité, même après correction. Le 302
+   se retire, le 301 non.
+
+⚠️ **`vercel.json` n'accepte aucune clé hors schéma** — pas de `_comment`, pas
+de commentaire JS. Une propriété inconnue dans un `redirect` fait échouer le
+déploiement. Toute explication va ici, pas dans le fichier.
+
+Reste à faire quand le site club aura son domaine : `index.html` porte **un
+seul jeu de méta** (titre, favicon, image de partage, manifeste PWA), codé en
+dur sur La Base 360. Les assets Breakfast existent (`public/brand/breakfast-club/`)
+mais ne sont pas câblés par domaine — seules les pages `/club*` ont leurs méta
+via `club-meta`.
+
+---
+
 ## ⚠️ Configs racine : la source est le `.ts` (2026-07-27)
 
 `tailwind.config.ts` et `vite.config.ts` sont les **seules** sources.
@@ -1089,6 +1130,8 @@ avec `supabase functions deploy <name>`.
 | `bbc-call-reminder` | cron */10 | **Mode BBC** — séquence de rappels des rituels : midi le jour J / −30 min / −15 min → push MEMBRE ; +30 min après → push COACH (« patate chaude », suivi 10 min). Anti-doublon `club_call_reminders_sent` (registration_id + kind). Ne notifie pas le +30 si le suivi est déjà marqué fait. Les 3 push membre mènent à sa PWA, et le −15 min ouvre le lien Zoom réglé dans `clubs.settings.links`. |
 | `book-rdv` | fetch front (page publique /rdv) | Réservation RDV funnel : résout coach par slug, re-check anti-doublon, insert `rdv_bookings`, notif push coach (no-verify-jwt) |
 | `send-password-reset` | fetch front (/forgot-password) | Mot de passe oublié via Resend : `admin.generateLink(recovery)` + envoi Resend (contourne le mailer Supabase bridé « limite atteinte »). Anti-énumération + throttle IP/email. Template `_shared/email.ts`. (no-verify-jwt) |
+| `client-rdv-ics` | fetch front (PWA client) | Le prochain RDV du client en fichier `.ics` (Apple Calendrier, Outlook…). ⚠️ **Fonction serveur et pas `data:` URI** : iOS ignore l'attribut `download` sur data:/blob:, et c'est pire en PWA installée — une vraie URL en `text/calendar` est la seule chose qu'iOS, Android et le bureau traitent pareil. La date est **relue en base** via le jeton, donc un RDV déplacé donne le bon fichier. `METHOD:PUBLISH` (pas REQUEST : ce n'est pas une invitation à accepter) et UID stable (recliquer met à jour au lieu de créer un doublon). (no-verify-jwt) |
+| `audience-collect` | fetch front (site public, par paquets) | Compteurs d'audience : normalise le chemin contre une **liste blanche** (un chemin inconnu → `/autre`, sinon un bot créerait une ligne par URL inventée), résout le coach par slug, appelle la RPC `audience_bump`. Répond toujours 200 : une mesure ratée ne doit jamais gêner le visiteur. ⚠️ La liste `CHEMINS` est **dupliquée** dans `src/lib/audience.ts` — un test compare les deux fichiers. (no-verify-jwt) |
 | `auth-email-hook` | Supabase Send Email Hook | Route TOUS les mails auth (signup/invite/magiclink/recovery/email_change/reauthentication) vers Resend + template `_shared/email.ts`. Signature standardwebhooks (`SEND_EMAIL_HOOK_SECRET`). À activer côté dashboard (Auth → Hooks). (no-verify-jwt) |
 
 Toute nouvelle edge function = ajouter ici.

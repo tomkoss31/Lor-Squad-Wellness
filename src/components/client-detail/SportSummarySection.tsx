@@ -33,7 +33,7 @@ const SUB_TITLE_STYLE: React.CSSProperties = {
   fontFamily: "Syne, sans-serif",
   fontSize: 16,
   fontWeight: 700,
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   marginBottom: 10,
 };
 
@@ -127,7 +127,7 @@ export function SportSummarySection({ client }: Props) {
                   padding: "6px 12px",
                   borderRadius: 10,
                   border: "1px solid var(--ls-border)",
-                  background: trainingDay === d ? "var(--ls-gold)" : "var(--ls-surface2)",
+                  background: trainingDay === d ? "var(--ls-teal)" : "var(--ls-surface2)",
                   color: trainingDay === d ? "#fff" : "var(--ls-text)",
                   fontSize: 12,
                   cursor: "pointer",
@@ -156,13 +156,13 @@ export function SportSummarySection({ client }: Props) {
       <div style={CARD_STYLE}>
         <div style={SUB_TITLE_STYLE}>Ton programme</div>
         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 6 }}>
-          {program.title} · <span style={{ color: "var(--ls-gold)" }}>{program.price}€</span>
+          {program.title} · <span style={{ color: "var(--ls-teal)" }}>{program.price}€</span>
         </div>
         {recommendedBoosters.length > 0 && (
           <ul style={{ listStyle: "none", padding: 0, margin: "8px 0", display: "flex", flexDirection: "column", gap: 4 }}>
             {recommendedBoosters.map((b) => (
               <li key={b.id} style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
-                + {b.title} <span style={{ color: "var(--ls-gold)" }}>(+{b.price.toFixed(2)}€)</span>
+                + {b.title} <span style={{ color: "var(--ls-teal)" }}>(+{b.price.toFixed(2)}€)</span>
               </li>
             ))}
           </ul>
@@ -172,7 +172,7 @@ export function SportSummarySection({ client }: Props) {
             marginTop: 10,
             padding: "8px 12px",
             borderRadius: 10,
-            background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
             fontSize: 14,
             fontWeight: 700,
             color: "var(--ls-text)",

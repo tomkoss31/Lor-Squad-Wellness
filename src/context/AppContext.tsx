@@ -18,12 +18,12 @@ import {
 } from "../services/appDataService";
 import { isSupabaseUnavailable, getSupabaseClient } from "../services/supabaseClient";
 import {
+  fetchAssessmentQuestionnaires,
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
   createSupabaseActivityLog,
   createSupabaseUserAccess,
   deleteSupabaseClient,
-  fetchSupabaseActivityLogs,
   fetchSupabaseClients,
   fetchSupabaseFollowUps,
   fetchSupabasePvClientProducts,
@@ -278,43 +278,69 @@ export function AppProvider({ children }: PropsWithChildren) {
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
     try {
+      // DEUX REQUÊTES RETIRÉES LE 2026-08-11 — les tables n'existent plus.
+      //
+      //   select to_regclass('public.activity_logs')           → null
+      //   select to_regclass('public.follow_up_protocol_logs') → null
+      //
+      // L'app les interrogeait quand même à CHAQUE ouverture, pour tout le
+      // monde. Chaque appel partait au serveur, PostgREST répondait « table
+      // inconnue », le `catch` renvoyait [] et personne ne voyait rien. Deux
+      // allers-retours réseau par démarrage, et deux occasions pour PostgREST
+      // de recharger son cache de schéma (`pg_timezone_names`, 868 ms de
+      // moyenne, 513 appels en 13 jours).
+      //
+      // `activityLogs` n'est lu NULLE PART hors de ce fichier — l'état reste
+      // pour ne rien casser, il vaudra [] pour toujours.
+      // `followUpProtocolLogs` alimente FollowUpsDueWidget et
+      // FollowUpProtocolCard, qui recevaient déjà [] puisque la table est
+      // absente : leur comportement ne change pas d'un pixel.
       const [
         nextClients,
         nextFollowUps,
         nextUsers,
         nextPvTransactions,
         nextPvClientProducts,
-        nextActivityLogs,
-        nextProspects,
-        nextFollowUpProtocolLogs
+        nextProspects
       ] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
         nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[]),
         fetchSupabasePvTransactions(),
         fetchSupabasePvClientProducts(),
-        fetchSupabaseActivityLogs().catch((error) => {
-          console.error("Historique d'activité indisponible pour l'instant.", error);
-          return [] as ActivityLog[];
-        }),
         fetchSupabaseProspects().catch((error) => {
           console.error("Prospects indisponibles pour l'instant.", error);
           return [] as Prospect[];
-        }),
-        fetchAllSupabaseFollowUpProtocolLogs().catch((error) => {
-          console.error("Logs protocole suivi indisponibles pour l'instant.", error);
-          return [] as FollowUpProtocolLog[];
         })
       ]);
 
       setClients(nextClients);
+
+      // ── Les questionnaires, en seconde passe (2026-08-12) ─────────────────
+      //
+      // 586 Ko retirés du chemin critique : l'app s'affiche sans eux, ils
+      // arrivent une seconde plus tard. On ne bloque PAS `refreshRemoteData`
+      // dessus — c'est tout l'intérêt.
+      //
+      // Fusion par id de bilan. Si l'appel échoue, les bilans restent sans
+      // questionnaire et les 5 pages qui le lisent sont incomplètes : c'est
+      // signalé en console par la fonction elle-même, jamais en silence.
+      void fetchAssessmentQuestionnaires().then((parId) => {
+        if (parId.size === 0) return;
+        setClients((prev) =>
+          prev.map((c) => ({
+            ...c,
+            assessments: (c.assessments ?? []).map((a) =>
+              parId.has(a.id) ? { ...a, questionnaire: parId.get(a.id) as typeof a.questionnaire } : a,
+            ),
+          })),
+        );
+      });
       setFollowUps(nextFollowUps);
       setUsers(nextUsers);
       setPvTransactions(nextPvTransactions);
       setPvClientProducts(nextPvClientProducts);
-      setActivityLogs(nextActivityLogs);
       setProspects(nextProspects);
-      setFollowUpProtocolLogs(nextFollowUpProtocolLogs);
 
       // Fetch messages
       // 2026-05-20 — bump limit 50 → 1000 : l'inbox MessagesPage construit

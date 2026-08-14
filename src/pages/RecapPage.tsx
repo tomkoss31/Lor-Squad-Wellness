@@ -93,7 +93,7 @@ export function RecapPage() {
 
   if (loading) return (
     <div style={{ background: 'var(--ls-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 32, height: 32, border: '2px solid rgba(201,168,76,0.2)', borderTop: '2px solid #C9A84C', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: '2px solid rgba(var(--ls-teal-rgb),0.2)', borderTop: '2px solid #2DD4BF', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} *{box-sizing:border-box;margin:0;padding:0}`}</style>
     </div>
   )
@@ -101,7 +101,7 @@ export function RecapPage() {
   if (notFound) return (
     <div style={{ background: 'var(--ls-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'DM Sans, sans-serif', color: 'var(--ls-text)' }}>
       <div>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: 'var(--ls-gold-bg)', marginBottom: 16 }}>404</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: 'var(--ls-teal-bg)', marginBottom: 16 }}>404</div>
         <div style={{ fontSize: 16, marginBottom: 8 }}>Récap introuvable ou expiré</div>
         <div style={{ fontSize: 13, color: 'var(--ls-text-muted)' }}>Ce lien est valable 90 jours après le bilan.</div>
       </div>
@@ -122,24 +122,24 @@ export function RecapPage() {
 
         {/* Hero */}
         <div className="recap-hero" style={{ background: 'linear-gradient(135deg,var(--ls-surface) 0%,var(--ls-surface2) 100%)', padding: '28px 20px 24px', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(201,168,76,0.08)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(var(--ls-teal-rgb),0.08)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -30, left: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(45,212,191,0.06)', pointerEvents: 'none' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18, position: 'relative', zIndex: 1 }}>
-            <div style={{ width: 30, height: 30, background: '#C9A84C', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 30, height: 30, background: 'var(--ls-teal)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: 'var(--ls-text)' }}>Lor&apos;<span style={{ color: '#C9A84C' }}>Squad</span> Wellness</div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: 'var(--ls-text)' }}>Lor&apos;<span style={{ color: 'var(--ls-teal)' }}>Squad</span> Wellness</div>
           </div>
 
-          <a href={GOOGLE_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 20, padding: '8px 16px', marginBottom: 22, position: 'relative', zIndex: 1 }}>
+          <a href={GOOGLE_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(var(--ls-teal-rgb),0.1)', border: '1px solid rgba(var(--ls-teal-rgb),0.25)', borderRadius: 20, padding: '8px 16px', marginBottom: 22, position: 'relative', zIndex: 1 }}>
             <span style={{ color: '#F0C96A', fontSize: 13, letterSpacing: 1 }}>★★★★★</span>
-            <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 500 }}>Laisser un avis Google — La Base</span>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span style={{ fontSize: 12, color: 'var(--ls-teal)', fontWeight: 500 }}>Laisser un avis Google — La Base</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--ls-gold-bg)', color: '#C9A84C', border: '2px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, marginBottom: 10 }}>{initials}</div>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--ls-teal-bg)', color: 'var(--ls-teal)', border: '2px solid rgba(var(--ls-teal-rgb),0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, marginBottom: 10 }}>{initials}</div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', marginBottom: 3 }}>{recap.client_first_name} {recap.client_last_name}</div>
             <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginBottom: 12 }}>Bilan du {fDate} · Coach {recap.coach_name}</div>
             {recap.program_title && (
@@ -154,13 +154,13 @@ export function RecapPage() {
         <div style={{ padding: '20px 20px 48px' }}>
           {/* Métriques */}
           <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#C9A84C' }} />Ton bilan du jour
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--ls-teal)' }} />Ton bilan du jour
           </div>
           <div className="recap-metrics-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
             {[
-              { label: 'Poids', val: scan.weight ? `${scan.weight} kg` : '—', color: '#C9A84C', sub: 'Point de départ' },
+              { label: 'Poids', val: scan.weight ? `${scan.weight} kg` : '—', color: 'var(--ls-teal)', sub: 'Point de départ' },
               { label: 'Objectif', val: recap.objective || '—', color: '#2DD4BF', sub: 'Cap du programme' },
-              { label: 'Masse grasse', val: scan.bodyFat ? `${scan.bodyFat}%` : '—', color: '#FB7185', sub: scan.bodyFat && scan.weight ? `≈ ${((scan.bodyFat/100)*scan.weight).toFixed(1)} kg` : '' },
+              { label: 'Masse grasse', val: scan.bodyFat ? `${scan.bodyFat}%` : '—', color: '#F2775F', sub: scan.bodyFat && scan.weight ? `≈ ${((scan.bodyFat/100)*scan.weight).toFixed(1)} kg` : '' },
               { label: 'Âge métabo.', val: scan.metabolicAge ? `${scan.metabolicAge} ans` : '—', color: '#A78BFA', sub: '' },
             ].map(m => (
               <div key={m.label} style={{ background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', borderTop: `2px solid ${m.color}`, borderRadius: 10, padding: 12 }}>
@@ -177,7 +177,7 @@ export function RecapPage() {
               {[
                 { label: 'Masse musc.', v: scan.muscleMass, unit: 'kg', max: 80, c: '#2DD4BF' },
                 { label: 'Hydratation', v: scan.hydration, unit: '%', max: 100, c: '#A78BFA' },
-                { label: 'Graisse visc.', v: scan.visceralFat, unit: '', max: 30, c: (scan.visceralFat ?? 0) > 9 ? '#FB7185' : '#2DD4BF' },
+                { label: 'Graisse visc.', v: scan.visceralFat, unit: '', max: 30, c: (scan.visceralFat ?? 0) > 9 ? '#F2775F' : '#2DD4BF' },
               ].filter(m => m.v).map((m, i, arr) => (
                 <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
                   <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', width: 90, flexShrink: 0 }}>{m.label}</div>
@@ -198,8 +198,8 @@ export function RecapPage() {
               </div>
               {recap.recommendations.map((r, i) => (
                 <div key={i} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: i%2===0 ? 'rgba(45,212,191,0.1)' : 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={i%2===0?'#2DD4BF':'#C9A84C'} strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: i%2===0 ? 'rgba(45,212,191,0.1)' : 'rgba(var(--ls-teal-rgb),0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={i%2===0?'#2DD4BF':'var(--ls-teal)'} strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   </div>
                   <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 2 }}>{r.name}</div><div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5 }}>{r.shortBenefit}</div></div>
                 </div>
@@ -222,7 +222,7 @@ export function RecapPage() {
                 <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginBottom: 8 }}>Scanne ou partage pour retrouver tes résultats.</div>
                 <div role="button" tabIndex={0} onClick={copyLink} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyLink(); } }} style={{ fontSize: 10, background: 'var(--ls-surface2)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ flex: 1, color: 'var(--ls-text-hint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{recapUrl.replace('https://','')}</span>
-                  <span style={{ color: copied ? '#2DD4BF' : '#C9A84C', fontWeight: 600, flexShrink: 0 }}>{copied ? '✓ Copié' : 'Copier'}</span>
+                  <span style={{ color: copied ? '#2DD4BF' : 'var(--ls-teal)', fontWeight: 600, flexShrink: 0 }}>{copied ? '✓ Copié' : 'Copier'}</span>
                 </div>
               </div>
             </div>
@@ -239,9 +239,9 @@ export function RecapPage() {
 
           {/* Formulaire recommandations */}
           <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#C9A84C' }} />Tu connais quelqu&apos;un ?
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--ls-teal)' }} />Tu connais quelqu&apos;un ?
           </div>
-          <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: 16, marginBottom: 24 }}>
+          <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(var(--ls-teal-rgb),0.15)', borderRadius: 12, padding: 16, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'var(--ls-text)', marginBottom: 4 }}>Partage ce moment bien-être</div>
             <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginBottom: 16, lineHeight: 1.6 }}>Note un prénom et un contact — ton coach s&apos;occupe du reste.</div>
             {sent ? (
@@ -257,7 +257,7 @@ export function RecapPage() {
                     <input placeholder="Tél. ou @" value={ref.contact} onChange={e => setRefs(r => r.map((x,j) => j===i ? {...x, contact: e.target.value} : x))} style={{...inp, flex: 1.3}} />
                   </div>
                 ))}
-                <button onClick={sendRefs} disabled={sending} style={{ width: '100%', background: sending ? 'rgba(201,168,76,0.4)' : '#C9A84C', color: 'var(--ls-bg)', border: 'none', borderRadius: 9, padding: 13, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', marginTop: 4 }}>
+                <button onClick={sendRefs} disabled={sending} style={{ width: '100%', background: sending ? 'rgba(var(--ls-teal-rgb),0.4)' : 'var(--ls-teal)', color: 'var(--ls-bg)', border: 'none', borderRadius: 9, padding: 13, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', marginTop: 4 }}>
                   {sending ? 'Envoi...' : 'Envoyer mes recommandations ✦'}
                 </button>
               </>

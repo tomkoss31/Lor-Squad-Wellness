@@ -100,7 +100,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
         aria-label="Panier"
         style={{
           background: "var(--ls-surface)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
           borderRadius: 20,
           padding: 0,
           display: "flex",
@@ -109,7 +109,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           color: "var(--ls-text)",
           overflow: "hidden",
           boxShadow:
-            "0 1px 0 0 rgba(239,159,39,0.10), 0 12px 32px -16px rgba(186,117,23,0.30)",
+            "0 1px 0 0 rgba(45,212,191,0.10), 0 12px 32px -16px rgba(15,118,110,0.30)",
         }}
       >
         {/* HEADER GRADIENT GOLD */}
@@ -119,7 +119,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
             overflow: "hidden",
             padding: "16px 18px",
             background:
-              "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
             color: "#FFFFFF",
           }}
         >
@@ -206,10 +206,10 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           <div>
             <div
               style={{
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: 1.6,
                 textTransform: "uppercase",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 fontWeight: 700,
                 marginBottom: 6,
                 display: "flex",
@@ -217,7 +217,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 gap: 5,
               }}
             >
-              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 6px rgba(239,159,39,0.50)" }} />
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-teal)", boxShadow: "0 0 6px rgba(45,212,191,0.50)" }} />
               Programme
             </div>
             <div
@@ -228,9 +228,9 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 gap: 10,
                 padding: "10px 12px",
                 background:
-                  "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                  "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
                 borderRadius: 12,
-                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
               }}
             >
               <div
@@ -239,13 +239,13 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                   height: 36,
                   borderRadius: 10,
                   background:
-                    "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 18,
                   flexShrink: 0,
-                  boxShadow: "0 3px 8px -3px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                  boxShadow: "0 3px 8px -3px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
                 }}
               >
                 ⭐
@@ -280,7 +280,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                   fontFamily: "Syne, sans-serif",
                   fontWeight: 800,
                   fontSize: 16,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   letterSpacing: "-0.02em",
                   flexShrink: 0,
                 }}
@@ -294,7 +294,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
           <div>
             <div
               style={{
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: 1.6,
                 textTransform: "uppercase",
                 color: "var(--ls-teal)",
@@ -466,7 +466,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
             padding: "14px 18px 16px",
             borderTop: "0.5px dashed var(--ls-border)",
             background:
-              "linear-gradient(180deg, var(--ls-surface) 0%, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface)) 100%)",
+              "linear-gradient(180deg, var(--ls-surface) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)",
           }}
         >
           {/* Sub-totals */}
@@ -507,7 +507,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 letterSpacing: 1.8,
                 textTransform: "uppercase",
                 fontWeight: 800,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 fontFamily: "DM Sans, sans-serif",
               }}
             >
@@ -523,7 +523,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
               }}
             >
               {total.toFixed(2)}
-              <span style={{ color: "var(--ls-gold)", fontSize: 22, marginLeft: 1 }}>€</span>
+              <span style={{ color: "var(--ls-teal)", fontSize: 22, marginLeft: 1 }}>€</span>
             </div>
           </div>
 
@@ -552,9 +552,9 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 width: "100%",
                 padding: "11px 16px",
                 borderRadius: 12,
-                border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 50%, transparent)",
-                background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-                color: "var(--ls-gold)",
+                border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 50%, transparent)",
+                background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+                color: "var(--ls-teal)",
                 fontSize: 12.5,
                 fontWeight: 700,
                 fontFamily: "DM Sans, sans-serif",
@@ -568,14 +568,14 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))";
-                e.currentTarget.style.borderColor = "var(--ls-gold)";
-                e.currentTarget.style.boxShadow = "0 4px 12px -4px rgba(239,159,39,0.30)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))";
+                e.currentTarget.style.borderColor = "var(--ls-teal)";
+                e.currentTarget.style.boxShadow = "0 4px 12px -4px rgba(45,212,191,0.30)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "none";
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))";
-                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 50%, transparent)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))";
+                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 50%, transparent)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             >

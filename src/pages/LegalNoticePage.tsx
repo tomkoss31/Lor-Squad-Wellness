@@ -10,6 +10,11 @@ import {
   COMPANY_DIRECTOR,
   COMPANY_EMAIL,
   COMPANY_SIRET,
+  CLUB_ADDRESS,
+  SITE_HOST,
+  SITE_HOST_ADDRESS,
+  HOSTING_PROVIDER,
+  HOSTING_REGION,
 } from "../lib/branding";
 
 export default function LegalNoticePage() {
@@ -76,8 +81,17 @@ export default function LegalNoticePage() {
         </Section>
 
         <Section title="Hébergement">
+          {/* La LCEN (art. 6) demande l'hébergeur du SITE. On ne citait que
+              l'hébergeur des DONNÉES, en reléguant Vercel au rang de « CDN » :
+              c'est pourtant lui qui héberge les pages que vous lisez. Les deux
+              sont désormais nommés, chacun pour ce qu'il fait. */}
           <p>
-            Les données sont hébergées par <strong>Supabase Inc.</strong> (États-Unis) sur des serveurs situés en <strong>Irlande</strong> (Union européenne, région eu-west-1, Dublin). Les requêtes transitent via les CDN <strong>Cloudflare</strong> et <strong>Vercel</strong>.
+            Le site est hébergé par <strong>{SITE_HOST}</strong>, {SITE_HOST_ADDRESS}.
+          </p>
+          <p style={{ marginTop: 10 }}>
+            Les données (base et traitements) sont hébergées par <strong>{HOSTING_PROVIDER}</strong>{" "}
+            sur des serveurs situés en <strong>{HOSTING_REGION}</strong>. Les requêtes transitent
+            par le CDN <strong>Cloudflare</strong>.
           </p>
         </Section>
 
@@ -87,9 +101,41 @@ export default function LegalNoticePage() {
           </p>
         </Section>
 
+        {/* Ces mentions ne décrivaient que l'app coach (« destiné aux
+            distributeurs Herbalife »). Or le même pied de page est affiché par
+            le site du Breakfast Club, qui vend des cartes de visites à des
+            particuliers : la page ne couvrait pas la moitié de ce qu'elle
+            servait. Les deux activités sont désormais nommées. */}
+        <Section title="Activités couvertes">
+          <p>
+            Ces mentions valent pour l'ensemble des sites et applications édités par la{" "}
+            {COMPANY_NAME} :
+          </p>
+          <ul style={{ margin: "10px 0 0 0", paddingLeft: 20, display: "grid", gap: 4 }}>
+            <li>
+              <strong>{APP_NAME_FULL}</strong> — outil d'accompagnement destiné aux distributeurs
+              indépendants ;
+            </li>
+            <li>
+              <strong>The Breakfast Club</strong> — club de petit-déjeuner et de coaching
+              nutrition, {CLUB_ADDRESS}, qui propose à la vente des cartes de visites.
+            </li>
+          </ul>
+          <p style={{ marginTop: 10 }}>
+            Les ventes réalisées en ligne sont régies par les{" "}
+            <Link to="/legal/cgv" style={linkStyle}>
+              conditions générales de vente
+            </Link>
+            .
+          </p>
+        </Section>
+
         <Section title="Limitation de responsabilité">
           <p>
-            <strong>{APP_NAME_FULL}</strong> est un outil d'accompagnement bien-être destiné aux distributeurs Herbalife indépendants. Les recommandations produites par l'application n'ont pas de valeur médicale et ne remplacent pas un avis professionnel de santé.
+            Les recommandations produites par l'application, comme l'accompagnement proposé au
+            club, relèvent du <strong>bien-être et de la nutrition</strong>. Ils n'ont pas de
+            valeur médicale : ils ne soignent, ne préviennent ni ne guérissent aucune maladie et
+            ne remplacent pas l'avis d'un professionnel de santé.
           </p>
         </Section>
 
@@ -114,6 +160,10 @@ export default function LegalNoticePage() {
           Voir aussi :{" "}
           <Link to="/legal/confidentialite" style={linkStyle}>
             Politique de confidentialité
+          </Link>{" "}
+          ·{" "}
+          <Link to="/legal/cgv" style={linkStyle}>
+            Conditions générales de vente
           </Link>
         </div>
       </article>
@@ -122,7 +172,7 @@ export default function LegalNoticePage() {
 }
 
 const linkStyle: React.CSSProperties = {
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   textDecoration: "none",
   fontWeight: 600,
 };
@@ -139,7 +189,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
           letterSpacing: "-0.01em",
           margin: "0 0 12px 0",
           paddingBottom: 8,
-          borderBottom: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+          borderBottom: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
         }}
       >
         {title}

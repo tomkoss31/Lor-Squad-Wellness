@@ -40,7 +40,7 @@ export interface AssessmentSectionV2Props {
 }
 
 const ACCENT_COLORS: Record<SectionAccent, string> = {
-  gold: "var(--ls-gold)",
+  gold: "var(--ls-teal)",
   teal: "var(--ls-teal)",
   purple: "var(--ls-purple)",
   coral: "var(--ls-coral)",
@@ -59,6 +59,30 @@ export function AssessmentSectionV2({
   const accentColor = ACCENT_COLORS[accent];
 
   return (
+    <>
+      {/* Audit mobile 2026-08-10 : `padding: 26px 28px 28px` mangeait 56 px de
+          LARGEUR sur un écran de 375 — les champs n'avaient plus la place de
+          tenir à deux par rangée — et 54 px de hauteur par section, sur trois
+          sections par étape. Ici on rend la largeur aux champs et on resserre
+          les respirations. Au-delà de 767 px, rien ne bouge. */}
+      <style>{`
+        @media (max-width: 767px) {
+          .ls-section-v2 { padding: 18px 15px 20px !important; border-radius: 18px !important; }
+          .ls-section-v2 .ls-section-v2__tete { margin-bottom: 15px !important; }
+          .ls-section-v2 .ls-section-v2__corps { gap: 15px !important; }
+        }
+        /* Plafond de largeur sur grand écran. Mesuré à 1440 px : le panneau
+           fait 1111 px, et un champ qui occupe toute une rangée s'étirait à
+           1003 px — un mètre de saisie pour taper un prénom. L'œil perd la
+           ligne, et la case de coche d'un formulaire ne se lit plus. On
+           s'aligne à gauche avec une mesure tenable ; la zone de texte a
+           droit à plus, on y écrit des phrases. */
+        @media (min-width: 768px) {
+          .ls-section-v2 input:not([type="range"]),
+          .ls-section-v2 select { max-width: 520px; }
+          .ls-section-v2 textarea { max-width: 720px; }
+        }
+      `}</style>
     <section
       data-tour-id={dataTourId}
       className="ls-section-v2"
@@ -102,6 +126,7 @@ export function AssessmentSectionV2({
 
       {/* Header : eyebrow + titre + description */}
       <header
+        className="ls-section-v2__tete"
         style={{
           position: "relative",
           marginBottom: 22,
@@ -170,9 +195,10 @@ export function AssessmentSectionV2({
       </header>
 
       {/* Contenu */}
-      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="ls-section-v2__corps" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 20 }}>
         {children}
       </div>
     </section>
+    </>
   );
 }

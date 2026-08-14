@@ -121,7 +121,7 @@ serve(async (req: Request) => {
           headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: `${shopName} <boutique@labase360.fr>`,
-            reply_to: "contact@labase360.fr",
+            reply_to: "labaseverdun@gmail.com",
             to: [email],
             subject: `Ton −5 % de bienvenue chez ${shopName} 🌿`,
             html: welcomeEmailHtml({ firstName, shopName, code, shopUrl }),

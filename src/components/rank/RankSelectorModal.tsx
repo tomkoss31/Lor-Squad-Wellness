@@ -81,14 +81,14 @@ export function RankSelectorModal({
       <div
         style={{
           background: "var(--ls-surface)",
-          border: "1px solid var(--ls-gold)",
+          border: "1px solid var(--ls-teal)",
           borderRadius: 18,
           padding: 28,
           maxWidth: 540,
           width: "100%",
           maxHeight: "90vh",
           overflowY: "auto",
-          boxShadow: "0 24px 80px color-mix(in srgb, var(--ls-gold) 24%, transparent)",
+          boxShadow: "0 24px 80px color-mix(in srgb, var(--ls-teal) 24%, transparent)",
         }}
       >
         <div
@@ -97,7 +97,7 @@ export function RankSelectorModal({
             fontFamily: "DM Sans, sans-serif",
             textTransform: "uppercase",
             letterSpacing: 1.4,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             marginBottom: 6,
           }}
         >
@@ -142,10 +142,10 @@ export function RankSelectorModal({
                   padding: "14px 16px",
                   borderRadius: 12,
                   border: active
-                    ? "1.5px solid var(--ls-gold)"
+                    ? "1.5px solid var(--ls-teal)"
                     : "0.5px solid var(--ls-border)",
                   background: active
-                    ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface2))"
+                    ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface2))"
                     : "var(--ls-surface2)",
                   cursor: "pointer",
                   display: "flex",
@@ -164,7 +164,7 @@ export function RankSelectorModal({
                   style={{
                     fontFamily: "Syne, sans-serif",
                     fontSize: 14,
-                    color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                    color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
                     fontWeight: 700,
                   }}
                 >
@@ -199,7 +199,7 @@ export function RankSelectorModal({
             border: "none",
             background: saving
               ? "var(--ls-border)"
-              : "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 80%, var(--ls-coral)))",
+              : "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-coral)))",
             color: "var(--ls-bg)",
             fontFamily: "Syne, sans-serif",
             fontSize: 15,

@@ -1,0 +1,169 @@
+# =============================================================================
+# Réglages par fonction — la vérification du jeton, écrite dans le dépôt.
+#
+# POURQUOI CE FICHIER EXISTE (2026-08-10)
+# `verify_jwt` vivait uniquement dans le projet Supabase, invisible depuis le
+# code. En redéployant cinq fonctions avec un `--no-verify-jwt` appliqué au lot
+# sans vérifier leur réglage d'origine, j'ai ouvert trois endpoints qui
+# exigeaient un jeton — dont `notify-club-booking-moved`, qui répondait 401
+# quelques heures plus tôt. Rien dans le dépôt ne pouvait le signaler, et un
+# `deploy` sans drapeau ne restaure pas la valeur : il conserve l'existante.
+#
+# Déclaré ici, le réglage est relu à chaque déploiement. Une modification passe
+# donc par une relecture de diff, comme n'importe quel changement de sécurité.
+#
+# ⚠ Ce n'est PAS la sécurité elle-même : le contrôle d'accès réel reste RLS +
+# les vérifications faites dans chaque fonction. `verify_jwt` ne fait que
+# refuser à la porte ce qui n'a aucun jeton.
+#
+# RÈGLE : `false` uniquement si un appelant SANS jeton doit pouvoir entrer —
+# une page publique, un webhook d'un tiers. Sinon on ne met rien (défaut vrai).
+# =============================================================================
+
+# ── Ouvertes, et c'est voulu ────────────────────────────────────────────────
+# Pages publiques : le visiteur n'a aucun compte.
+[functions.book-rdv]
+verify_jwt = false
+
+[functions.book-club-discovery]
+verify_jwt = false
+
+[functions.manage-club-booking]
+verify_jwt = false  # le lead gère son RDV depuis son email — l'auth est le jeton de l'URL
+
+[functions.create-club-card-payment]
+verify_jwt = false  # achat d'une carte depuis le site du club
+
+# Webhook Square : l'authentification EST la signature HMAC, vérifiée dedans.
+[functions.square-payment-webhook]
+verify_jwt = false
+
+[functions.create-payment-link]
+verify_jwt = false
+
+[functions.confirm-stripe-payment]
+verify_jwt = false
+
+# ── Fermées : tous les appelants portent déjà un jeton ──────────────────────
+# Déclencheur Postgres (pg_net, clé de service).
+[functions.rdv-confirm-client]
+verify_jwt = true
+
+# Cron (pg_net, clé de service).
+[functions.client-rdv-reminder]
+verify_jwt = true
+
+# Front coach authentifié — JWT du coach, re-contrôlé dans la fonction.
+[functions.notify-club-booking-moved]
+verify_jwt = true
+
+[functions.create-manual-payment-link]
+verify_jwt = true
+
+# =============================================================================
+# COMPLÉMENT DU 13/08 — les 36 fonctions publiques qui manquaient
+#
+# Le fichier ne couvrait que les 11 fonctions du chantier club. Les 59 autres
+# n'étaient pas déclarées, donc soumises au défaut (jeton exigé) au prochain
+# déploiement CLI. Or 36 d'entre elles tournent en production SANS jeton :
+# `supabase functions deploy` sur l'une d'elles l'aurait cassée sur-le-champ,
+# en silence — dont `client-app-data` (toute la PWA client), `send-push`
+# (toutes les notifications) et `auth-email-hook` (tous les mails de connexion).
+#
+# Les valeurs ci-dessous sont RELEVÉES sur le projet Supabase, pas décidées :
+# on enregistre l'existant pour qu'un déploiement cesse de pouvoir le modifier
+# à notre insu. Aucun réglage n'a été changé. Vérifié : les 11 déclarations
+# ci-dessus concordaient déjà avec le réel.
+#
+# Les fonctions à `true` ne sont pas listées : c'est le défaut, et la règle du
+# haut de fichier dit de ne rien écrire dans ce cas.
+# =============================================================================
+
+# ── PWA client : elle n'a aucune session Supabase ───────────────────────────
+# L'auth se fait DANS la fonction, par le jeton d'URL (client_app_accounts).
+[functions.client-app-data]
+verify_jwt = false
+[functions.client-app-confirm-calendar]
+verify_jwt = false
+[functions.client-app-mark-onboarded]
+verify_jwt = false
+[functions.client-app-set-baseline]
+verify_jwt = false
+[functions.client-app-save-measurement]
+verify_jwt = false
+[functions.client-app-level-up-notify]
+verify_jwt = false
+
+# ── Formulaires et pages publiques : le visiteur n'a pas de compte ──────────
+[functions.submit-online-bilan]
+verify_jwt = false
+[functions.submit-prospect-lead]
+verify_jwt = false
+[functions.submit-testimonial]
+verify_jwt = false
+[functions.get-testimonial-context]
+verify_jwt = false
+[functions.request-testimonial]
+verify_jwt = false
+[functions.get-online-bilan-results]
+verify_jwt = false
+[functions.qualif-bootstrap]
+verify_jwt = false
+[functions.qualif-update]
+verify_jwt = false
+[functions.request-callback]
+verify_jwt = false
+[functions.submit-newsletter]
+verify_jwt = false
+[functions.campaign-unsubscribe]
+verify_jwt = false  # lien de désinscription dans un email : exiger un compte serait illégal
+[functions.track-newsletter-view]
+verify_jwt = false
+
+# ── Boutique publique ───────────────────────────────────────────────────────
+[functions.create-shop-checkout]
+verify_jwt = false
+[functions.confirm-shop-payment]
+verify_jwt = false
+[functions.shop-welcome-lead]
+verify_jwt = false
+
+# ── Authentification : par définition appelées SANS session ────────────────
+[functions.send-password-reset]
+verify_jwt = false  # on la demande justement parce qu'on ne peut pas se connecter
+[functions.auth-email-hook]
+verify_jwt = false  # l'auth EST la signature standardwebhooks, vérifiée dedans
+[functions.consume-distributor-invite-token]
+verify_jwt = false  # création du compte : il n'existe pas encore
+
+# ── Webhook d'un tiers : l'auth est la signature, vérifiée dedans ──────────
+[functions.resend-webhook]
+verify_jwt = false
+
+# ── Crons et déclencheurs Postgres (pg_net) ────────────────────────────────
+# ⚠ Relevé tel quel. pg_net porte la clé de service, donc `true` conviendrait
+# techniquement — mais le passage de false à true est un changement de
+# comportement en production, pas un rangement. À traiter séparément si on veut,
+# jamais au détour d'un déploiement.
+[functions.send-push]
+verify_jwt = false
+[functions.client-anniversary-check]
+verify_jwt = false
+[functions.pv-month-end-reminder]
+verify_jwt = false
+[functions.rank-threshold-notifier]
+verify_jwt = false
+[functions.crm-relance-notifier]
+verify_jwt = false
+[functions.shop-relance-notifier]
+verify_jwt = false
+[functions.send-newsletter-email]
+verify_jwt = false
+[functions.lead-relaunch-send]
+verify_jwt = false
+[functions.campaign-send]
+verify_jwt = false
+[functions.update-colis-lead-action]
+verify_jwt = false
+[functions.stripe-manual-reconcile]
+verify_jwt = false

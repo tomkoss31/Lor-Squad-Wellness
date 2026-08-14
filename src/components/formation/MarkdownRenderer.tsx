@@ -41,8 +41,8 @@ export function MarkdownRenderer({ content }: Props) {
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes ls-phrase-cle-shimmer {
-          0%, 100% { box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-gold) 12%, transparent); }
-          50% { box-shadow: 0 8px 24px color-mix(in srgb, var(--ls-gold) 22%, transparent); }
+          0%, 100% { box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-teal) 12%, transparent); }
+          50% { box-shadow: 0 8px 24px color-mix(in srgb, var(--ls-teal) 22%, transparent); }
         }
         .ls-callout-product, .ls-callout-gold, .ls-callout-teal, .ls-callout-phrase-cle {
           animation: ls-callout-fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
@@ -246,12 +246,12 @@ function renderInline(text: string): ReactNode[] {
             target={isInternal ? undefined : "_blank"}
             rel={isInternal ? undefined : "noopener noreferrer"}
             style={{
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontWeight: 600,
               textDecoration: "underline",
               textUnderlineOffset: 3,
               textDecorationThickness: 1,
-              textDecorationColor: "color-mix(in srgb, var(--ls-gold) 50%, transparent)",
+              textDecorationColor: "color-mix(in srgb, var(--ls-teal) 50%, transparent)",
             }}
           >
             {label}
@@ -344,8 +344,8 @@ function BlockRenderer({ block }: { block: Block }) {
           style={{
             margin: "12px 0",
             padding: "10px 16px",
-            borderLeft: "3px solid var(--ls-gold)",
-            background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))",
+            borderLeft: "3px solid var(--ls-teal)",
+            background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))",
             fontStyle: "italic",
             color: "var(--ls-text-muted)",
             borderRadius: "0 8px 8px 0",
@@ -414,9 +414,9 @@ function BlockRenderer({ block }: { block: Block }) {
                       padding: "8px 12px",
                       textAlign: "left",
                       fontWeight: 700,
-                      color: "var(--ls-gold)",
+                      color: "var(--ls-teal)",
                       borderBottom: "1px solid var(--ls-border)",
-                      background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
+                      background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
                     }}
                   >
                     {renderInline(h)}
@@ -466,9 +466,9 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
           margin: "18px 0",
           padding: "20px 24px",
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2)) 100%)",
-          border: "0.5px solid var(--ls-gold)",
-          borderLeft: "4px solid var(--ls-gold)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface2)) 100%)",
+          border: "0.5px solid var(--ls-teal)",
+          borderLeft: "4px solid var(--ls-teal)",
           borderRadius: 12,
           fontFamily: "Syne, sans-serif",
           fontSize: 17,
@@ -477,7 +477,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
           color: "var(--ls-text)",
           lineHeight: 1.6,
           textAlign: "center",
-          boxShadow: "0 4px 12px color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+          boxShadow: "0 4px 12px color-mix(in srgb, var(--ls-teal) 12%, transparent)",
         }}
       >
         <div
@@ -485,7 +485,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
             fontSize: 9,
             letterSpacing: 2,
             textTransform: "uppercase",
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 700,
             marginBottom: 10,
             fontFamily: "DM Sans, sans-serif",
@@ -531,10 +531,10 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
         margin: "14px 0",
         padding: "14px 16px",
         background: isGold
-          ? "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))"
+          ? "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))"
           : "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
-        border: `0.5px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
-        borderLeft: `3px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
+        border: `0.5px solid ${isGold ? "var(--ls-teal)" : "var(--ls-teal)"}`,
+        borderLeft: `3px solid ${isGold ? "var(--ls-teal)" : "var(--ls-teal)"}`,
         borderRadius: 10,
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
       }}

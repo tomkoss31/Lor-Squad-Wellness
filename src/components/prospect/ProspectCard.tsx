@@ -15,8 +15,8 @@ const SOURCE_COLORS: Record<string, { bg: string; fg: string }> = {
   "Instagram":         { bg: "rgba(251,113,133,0.12)", fg: "var(--ls-coral)" },
   "Facebook":          { bg: "rgba(45,212,191,0.12)", fg: "var(--ls-teal)" },
   "TikTok":            { bg: "rgba(45,212,191,0.12)", fg: "var(--ls-teal)" },
-  "Bouche à oreille":  { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-gold)" },
-  "Parrainage":        { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-gold)" },
+  "Bouche à oreille":  { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-teal)" },
+  "Parrainage":        { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-teal)" },
   "Événement":         { bg: "rgba(45,212,191,0.12)", fg: "var(--ls-teal)" },
   "Autre":             { bg: "var(--ls-surface2)",    fg: "var(--ls-text-muted)" },
 };
@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<Prospect["status"], { bg: string; fg: string }> = {
   lost:      { bg: "rgba(251,113,133,0.1)",  fg: "var(--ls-coral)" },
   no_show:   { bg: "rgba(251,113,133,0.1)",  fg: "var(--ls-coral)" },
   cancelled: { bg: "var(--ls-surface2)",     fg: "var(--ls-text-hint)" },
-  cold:      { bg: "color-mix(in srgb, var(--ls-gold) 15%, transparent)", fg: "var(--ls-gold)" },
+  cold:      { bg: "color-mix(in srgb, var(--ls-teal) 15%, transparent)", fg: "var(--ls-teal)" },
 };
 
 function formatTime(iso: string): string {
@@ -147,7 +147,7 @@ function ProspectCardImpl({ prospect, ownerName, showDate = false, onClick }: Pr
         type="button"
         onClick={() => onClick(prospect)}
         style={{ ...rowStyle, width: "100%", textAlign: "left", font: "inherit" }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-gold)"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-teal)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
       >
         {content}

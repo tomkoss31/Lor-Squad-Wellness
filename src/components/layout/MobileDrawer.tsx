@@ -16,7 +16,7 @@
 // Styles : classes lb-drawer, lb-scrim, lb-drawer-* dans globals.css
 // =============================================================================
 
-import { useEffect, useState  } from "react";
+import { useEffect, useRef, useState  } from "react";
 import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
@@ -24,6 +24,7 @@ import { useFormationStreak } from "../../hooks/useFormationStreak";
 import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { MonSuiviPill } from "./MonSuiviPill";
 import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { useAppLevel } from "../../hooks/useAppLevel";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
@@ -60,6 +61,20 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
+
+  // Sortir le tiroir fermé du parcours clavier et de VoiceOver.
+  // Audit mobile 2026-08-10 : fermé, il est en translateX(-100%) — hors écran —
+  // mais garde visibility:visible, et ses 15 éléments prennent effectivement le
+  // focus derrière un aria-hidden="true". C'est la combinaison explicitement
+  // interdite par WCAG : on tabule dans un menu invisible.
+  // `inert` est posé en impératif car React 18 ne connaît pas encore l'attribut.
+  const drawerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = drawerRef.current;
+    if (!el) return;
+    if (open) el.removeAttribute("inert");
+    else el.setAttribute("inert", "");
+  }, [open]);
 
   // Lock body scroll quand drawer ouvert
   useEffect(() => {
@@ -103,6 +118,7 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
     <>
       {open && <div className="lb-scrim" onClick={onClose} aria-hidden="true" />}
       <aside
+        ref={drawerRef}
         className="lb-drawer"
         role="dialog"
         aria-modal="true"
@@ -134,6 +150,11 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
             </svg>
           </button>
         </header>
+
+        {/* Bascule double casquette (2026-08-05) : mon suivi perso si fiche liée */}
+        <div style={{ padding: "8px 16px 0" }} onClick={onClose}>
+          <MonSuiviPill variant="drawer" />
+        </div>
 
         {/* Body : sections */}
         <div className="lb-drawer-body">

@@ -66,6 +66,12 @@ const EncaissementPage = lazy(() =>
     default: module.EncaissementPage
   }))
 );
+// Page publique « modifier / annuler mon rendez-vous » (lien de l'email).
+const GererRdvClubPage = lazy(() =>
+  import("./pages/GererRdvClubPage").then((module) => ({
+    default: module.GererRdvClubPage
+  }))
+);
 // Cockpit config boutique HL SKIN (chantier 2026-07-10).
 const BoutiqueAdminPage = lazy(() =>
   import("./pages/BoutiqueAdminPage").then((module) => ({
@@ -111,11 +117,6 @@ const EditClientSchedulePage = lazy(() =>
   import("./pages/EditClientSchedulePage").then((module) => ({
     default: module.EditClientSchedulePage
   }))
-);
-const BilanTermineePage = lazy(() =>
-  import("./pages/BilanTermineePage").then((module) => ({
-    default: module.BilanTermineePage,
-  })),
 );
 const NewAssessmentPage = lazy(() =>
   import("./pages/NewAssessmentPage").then((module) => ({
@@ -198,6 +199,23 @@ const AdminNewslettersPage = lazy(() =>
     default: module.AdminNewslettersPage,
   })),
 );
+// Chantier Audience (2026-08-13) : « qui vient, et où on les perd ».
+const AdminAudiencePage = lazy(() =>
+  import("./pages/AdminAudiencePage").then((module) => ({
+    default: module.AdminAudiencePage,
+  })),
+);
+// Chantier Campagnes (2026-08) — outreach email admin (généralise newsletter).
+const AdminCampagnesPage = lazy(() =>
+  import("./pages/AdminCampagnesPage").then((module) => ({
+    default: module.AdminCampagnesPage,
+  })),
+);
+const AdminCampagneEditPage = lazy(() =>
+  import("./pages/AdminCampagneEditPage").then((module) => ({
+    default: module.AdminCampagneEditPage,
+  })),
+);
 const AdminNewsletterEditPage = lazy(() =>
   import("./pages/AdminNewsletterEditPage").then((module) => ({
     default: module.AdminNewsletterEditPage,
@@ -217,6 +235,11 @@ const PublicNewsletterPage = lazy(() =>
 const RejoindreOpportunitePage = lazy(() =>
   import("./pages/RejoindreOpportunitePage").then((module) => ({
     default: module.RejoindreOpportunitePage,
+  })),
+);
+const DecouvrirPage = lazy(() =>
+  import("./pages/DecouvrirPage").then((module) => ({
+    default: module.DecouvrirPage,
   })),
 );
 const CoachPublicProfilePage = lazy(() =>
@@ -273,6 +296,23 @@ const RdvBookingPage = lazy(() =>
     default: module.RdvBookingPage,
   })),
 );
+const ReserverClubPage = lazy(() =>
+  import("./pages/ReserverClubPage").then((module) => ({
+    default: module.ReserverClubPage,
+  })),
+);
+const ClubLandingPage = lazy(() =>
+  import("./pages/ClubLandingPage").then((module) => ({
+    default: module.ClubLandingPage,
+  })),
+);
+const ClubLeClubPage = lazy(() => import("./pages/club/ClubLeClubPage").then((m) => ({ default: m.ClubLeClubPage })));
+const ClubRituelPage = lazy(() => import("./pages/club/ClubRituelPage").then((m) => ({ default: m.ClubRituelPage })));
+const ClubParcoursPage = lazy(() => import("./pages/club/ClubParcoursPage").then((m) => ({ default: m.ClubParcoursPage })));
+const ClubResultatsPage = lazy(() => import("./pages/club/ClubResultatsPage").then((m) => ({ default: m.ClubResultatsPage })));
+const ClubNousPage = lazy(() => import("./pages/club/ClubNousPage").then((m) => ({ default: m.ClubNousPage })));
+const ClubRejoindrePage = lazy(() => import("./pages/club/ClubRejoindrePage").then((m) => ({ default: m.ClubRejoindrePage })));
+const ClubRejoindreRdvPage = lazy(() => import("./pages/club/ClubRejoindreRdvPage").then((m) => ({ default: m.ClubRejoindreRdvPage })));
 const BilanOnlineResultatsPage = lazy(() =>
   import("./pages/BilanOnlineResultatsPage").then((module) => ({
     default: module.BilanOnlineResultatsPage,
@@ -358,6 +398,7 @@ const SharePage = lazy(() =>
 );
 const LegalNoticePage = lazy(() => import("./pages/LegalNoticePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const TermsOfSalePage = lazy(() => import("./pages/TermsOfSalePage"));
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -434,6 +475,30 @@ const FormationPage = lazy(() =>
     default: module.FormationPage
   }))
 );
+// Formation V2 — micro-leçons façon Duolingo (2026-08-04). Vit à côté de
+// l'ancienne le temps de la transition, ne la remplace pas.
+const FormationV2Page = lazy(() =>
+  import("./features/formation-v2/FormationV2Page").then((module) => ({
+    default: module.FormationV2Page
+  }))
+);
+// Guide « installer l'app pour un nouveau coach » (2026-08-04) — le mode d'emploi
+// duplicable du parrain pour onboarder une recrue de zéro.
+const GuideNouveauCoachPage = lazy(() =>
+  import("./pages/GuideNouveauCoachPage").then((module) => ({
+    default: module.GuideNouveauCoachPage
+  }))
+);
+// « Outils du moment » (chantier Boîte à outils, 2026-08-06) — le pare-objections
+// (2026-08-04) généralisé : tape la situation → le script mot-pour-mot. Un seul
+// écran (MomentToolScreen) piloté par momentTools.ts ; source de contenu unique =
+// les `scripts` de boite-a-outils-content.ts. Décliné sur inviter / relancer /
+// recos / réveiller. Route param /outils/moment/:tool + legacy /outils/pare-objections.
+const MomentToolPage = lazy(() =>
+  import("./pages/MomentToolPage").then((module) => ({
+    default: module.MomentToolPage
+  }))
+);
 // Phase 2 chantier formation (2026-04-30) : page module parcours guide
 // (placeholder en attendant le contenu Notion en Phase 3).
 const FormationModulePage = lazy(() =>
@@ -468,21 +533,6 @@ const FormationCertificatePage = lazy(() =>
   }))
 );
 // Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
-const FlexOnboardingPage = lazy(() =>
-  import("./pages/FlexOnboardingPage").then((module) => ({
-    default: module.FlexOnboardingPage,
-  })),
-);
-const FlexDashboardPage = lazy(() =>
-  import("./pages/FlexDashboardPage").then((module) => ({
-    default: module.FlexDashboardPage,
-  })),
-);
-const FlexTeamPage = lazy(() =>
-  import("./pages/FlexTeamPage").then((module) => ({
-    default: module.FlexTeamPage,
-  })),
-);
 const CharterPage = lazy(() =>
   import("./pages/CharterPage").then((module) => ({
     default: module.CharterPage,
@@ -517,11 +567,6 @@ const DeveloppementHubPage = lazy(() =>
   })),
 );
 // FLEX expliqué (2026-05-04) — tuto pédagogique 5-3-1.
-const FlexExpliquePage = lazy(() =>
-  import("./pages/FlexExpliquePage").then((module) => ({
-    default: module.FlexExpliquePage,
-  })),
-);
 // Prospection expliquée (2026-05-19) — tuto kit V4.
 const ProspectionExpliquePage = lazy(() =>
   import("./pages/ProspectionExpliquePage").then((module) => ({
@@ -529,17 +574,7 @@ const ProspectionExpliquePage = lazy(() =>
   })),
 );
 // Check-list expliquée (2026-05-20) — tuto routine 5 actions/jour.
-const CheckListExpliquePage = lazy(() =>
-  import("./pages/CheckListExpliquePage").then((module) => ({
-    default: module.CheckListExpliquePage,
-  })),
-);
 // Routine du jour (chantier #2 V2, 2026-05-20) — page dédiée check-list.
-const RoutineDuJourPage = lazy(() =>
-  import("./pages/RoutineDuJourPage").then((module) => ({
-    default: module.RoutineDuJourPage,
-  })),
-);
 // Suivis du jour (2026-06-03) — page dédiée destination du digest matinal.
 const SuivisDuJourPage = lazy(() =>
   import("./pages/SuivisDuJourPage").then((module) => ({
@@ -661,7 +696,9 @@ import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
+import { AudienceTracker } from './components/AudienceTracker'
 import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
+import { LogoMark } from "./components/brand/LogoMark";
 
 export default function App() {
   useTheme()
@@ -679,6 +716,11 @@ export default function App() {
       {/* Relais SW → React Router (2026-05-05) : route en interne quand
           on clique une push notif, sans full reload. */}
       <ServiceWorkerNavigator />
+      {/* Mesure d'audience des pages PUBLIQUES uniquement (chantier Audience,
+          2026-08-13). Ici plutôt que dans chaque page : les pages du club ne
+          passent pas par PublicShell, et une page ajoutée demain doit être
+          comptée sans qu'on y pense. */}
+      <AudienceTracker />
       {/* Toast 'Mise a jour disponible' : detecte les nouveaux SW + propose
           activation 1-click + force re-subscribe notifs apres update.
           Chantier rebrand polish 2026-05-06. */}
@@ -715,6 +757,32 @@ export default function App() {
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
           <Route path="/rdv/:coachSlug" element={<RdvBookingPage />} />
+          {/* Tunnel de réservation "RDV découverte" du Breakfast Club (site
+              public www.labase-nutrition.com/reserver). Identité crème propre au
+              club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
+          <Route path="/reserver" element={<ReserverClubPage />} />
+          <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
+          {/* « Modifier / annuler mon rendez-vous » — cible du lien envoyé dans
+              l'email de confirmation (jeton rdv_bookings.manage_token). Placée
+              après /rdv/:coachSlug : 3 segments, aucun conflit de résolution. */}
+          <Route path="/rdv/gerer/:token" element={<GererRdvClubPage />} />
+          {/* Vitrine publique du club (étape 2). À terme = racine de
+              labase-nutrition.com (bascule host-based après ajout des photos). */}
+          <Route path="/club" element={<ClubLandingPage />} />
+          <Route path="/club/le-club" element={<ClubLeClubPage />} />
+          <Route path="/club/le-rituel" element={<ClubRituelPage />} />
+          <Route path="/club/comment-ca-se-passe" element={<ClubParcoursPage />} />
+          <Route path="/club/resultats" element={<ClubResultatsPage />} />
+          <Route path="/club/nous" element={<ClubNousPage />} />
+          <Route path="/club/rejoindre" element={<ClubRejoindrePage />} />
+          {/* Tunnel « En parler avec l'équipe » (recrutement « ouvrir un club »).
+              Jumeau visuel de /reserver, mais back-end book-rdv → agenda RÉEL du
+              coach + rdv_bookings (bookingType='recrutement'). Défaut coach =
+              thomas ; :coachSlug pour router ailleurs. Alias joli demandé par
+              Thomas : /rdv-rejoindre-l-equipe. */}
+          <Route path="/club/rejoindre/rdv" element={<ClubRejoindreRdvPage />} />
+          <Route path="/club/rejoindre/rdv/:coachSlug" element={<ClubRejoindreRdvPage />} />
+          <Route path="/rdv-rejoindre-l-equipe" element={<ClubRejoindreRdvPage />} />
           {/* Chantier #8 étape 8.7 (2026-05-23) : page publique newsletter
               "La Base 360 News". Visible si status='sent' AND is_public=true. */}
           <Route path="/news/:slug" element={<PublicNewsletterPage />} />
@@ -734,6 +802,8 @@ export default function App() {
           <Route path="/boutique/:coachSlug/produit/:productSlug" element={<BoutiqueProductPage />} />
           <Route path="/boutique/:coachSlug/infos" element={<BoutiqueInfosPage />} />
           <Route path="/colis" element={<ColisPage />} />
+          {/* Page découverte publique (ouverte depuis la 3e carte de /welcome) */}
+          <Route path="/decouvrir" element={<DecouvrirPage />} />
           <Route path="/rejoindre" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug" element={<RejoindreOpportunitePage />} />
           <Route path="/rejoindre/:coachSlug/questionnaire" element={<RejoindreQuestionnairePage />} />
@@ -755,6 +825,7 @@ export default function App() {
           {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
           <Route path="/legal/mentions" element={<LegalNoticePage />} />
           <Route path="/legal/confidentialite" element={<PrivacyPolicyPage />} />
+          <Route path="/legal/cgv" element={<TermsOfSalePage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
@@ -771,12 +842,9 @@ export default function App() {
               {/* Preview provisoire Salle des Opérations (slice 1, recette look). */}
               <Route path="salle-ops" element={<SalleDesOperationsPage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
-                  quotidien du distri. /flex = dashboard, /flex/onboarding =
-                  wizard 5 questions. */}
-              <Route path="flex" element={<FlexDashboardPage />} />
-              <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
-              <Route path="flex/equipe" element={<FlexTeamPage />} />
+              {/* FLEX retiré au ménage du 12/08/2026 : zéro check-in en base
+                  depuis son lancement, et ses 6 notifications étaient déjà
+                  coupées. Récupérable dans l'historique git. */}
               {/* Charte du Distributeur (2026-05-03) — refonte premium
                   art déco. /charte = perso distri (signable). Ancienne
                   route /formation/charte redirige ici. */}
@@ -792,13 +860,12 @@ export default function App() {
               {/* Simulateur EBE (2026-05-04) — entraînement scripté. */}
               <Route path="simulateur-ebe" element={<SimulateurEbePage />} />
               {/* Hub Développement (2026-05-04) — regroupe academy/formation/
-                  cahier/simulateur/flex-explique/nouveautés. Sidebar Option B. */}
+                  cahier/simulateur/nouveautés. Sidebar Option B. */}
               <Route path="developpement" element={<DeveloppementHubPage />} />
-              <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
-              <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
-              <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
+              {/* Routine du jour retiree au menage du 12/08/2026 :
+                  9 cochages en tout, dernier il y a 51 jours. */}
               {/* Ancien « Mon démarrage 30 jours » retiré (remplacé par la Salle
                   des Opérations sur /co-pilote). Redirige les vieux liens. */}
               <Route path="demarrage" element={<Navigate to="/co-pilote" replace />} />
@@ -840,6 +907,10 @@ export default function App() {
                   /formation/admin reste gardé pour l'édition de contenu. */}
               <Route path="plan-marketing" element={<PlanMarketingPage />} />
               <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/apprendre" element={<FormationV2Page />} />
+              <Route path="guide-nouveau-coach" element={<GuideNouveauCoachPage />} />
+              <Route path="outils/pare-objections" element={<MomentToolPage toolKey="objections" />} />
+              <Route path="outils/moment/:tool" element={<MomentToolPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="formation/admin" element={<FormationAdminPage />} />
@@ -879,7 +950,12 @@ export default function App() {
                 {/* Chantier #8 (2026-05-23) : gestion newsletters La Base 360 News. */}
                 <Route path="admin/newsletters" element={<AdminNewslettersPage />} />
                 <Route path="admin/newsletters/:id/edit" element={<AdminNewsletterEditPage />} />
+                {/* Chantier Campagnes (2026-08) : outreach email admin. */}
+                <Route path="admin/campagnes" element={<AdminCampagnesPage />} />
+                <Route path="admin/campagnes/:id" element={<AdminCampagneEditPage />} />
                 <Route path="admin/newsletters/:id/stats" element={<AdminNewsletterStatsPage />} />
+                {/* Chantier Audience (2026-08-13) : trafic des pages publiques. */}
+                <Route path="admin/audience" element={<AdminAudiencePage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
@@ -902,11 +978,6 @@ export default function App() {
               />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
               <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
-              {/* Chantier Page remerciement post-bilan (2026-04-27) :
-                  page plein écran avec QR + partage + parrainage, affichée
-                  après "Enregistrer et terminer le bilan". Query params :
-                  ?token=<recap_token>&firstName=<prénom>. */}
-              <Route path="clients/:clientId/bilan-termine" element={<BilanTermineePage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>
@@ -1040,27 +1111,24 @@ function RouteLoadingScreen() {
               height: 80,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(6,182,212,0.20) 40%, transparent 70%)",
+                "radial-gradient(circle, rgba(45, 212, 191,0.35) 0%, rgba(45, 212, 191,0.20) 40%, transparent 70%)",
               transform: "translate(-50%, -50%)",
               filter: "blur(8px)",
               animation: "lb360-route-halo 1.4s ease-in-out infinite",
             }}
           />
           {/* Logo orbe pulsant */}
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt="Chargement…"
+          <LogoMark
+            size={56}
+            title="Chargement…"
             className="lb360-route-anim"
             style={{
               position: "relative",
-              width: 56,
-              height: 56,
-              borderRadius: 14,
               top: 12,
               left: 12,
               animation: "lb360-route-heartbeat 1.4s ease-in-out infinite",
               willChange: "transform, opacity",
-              filter: "drop-shadow(0 4px 12px rgba(16,185,129,0.30))",
+              filter: "drop-shadow(0 4px 12px rgba(45,212,191,0.30))",
             }}
           />
         </div>

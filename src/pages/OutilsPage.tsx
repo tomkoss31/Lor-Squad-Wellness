@@ -48,7 +48,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
       {
         id: "panier",
         icon: "🛒",
-        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
         name: "Panier",
         desc: "Calcule un panier produits : total €, total PV, remise client (5 → 35 %), récap copiable.",
         path: "/panier",
@@ -129,7 +129,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
       {
         id: "pv",
         icon: "💰",
-        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
         name: "Suivi PV",
         desc: "L'historique de tes points de volume, échéances et relances à faire.",
         path: "/pv",
@@ -139,21 +139,11 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
       {
         id: "plan-marketing",
         icon: "🪜",
-        iconBg: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+        iconBg: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
         name: "Plan Marketing",
         desc: "L'échelle des rangs Herbalife (Distributor → President's) : où tu en es, comment passer chaque palier, ce que ça rapporte.",
         path: "/plan-marketing",
         feature: "business.plan-marketing",
-      },
-      {
-        id: "flex",
-        icon: "⚡",
-        iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-        name: "FLEX",
-        desc: "Ta marge, tes paliers Herbalife et la projection du mois en un coup d'œil.",
-        path: "/flex",
-        infoTerm: "flex",
-        feature: "business.flex",
       },
     ],
   },
@@ -162,7 +152,7 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
 export function OutilsPage() {
   const navigate = useNavigate();
   // Niveau de visibilité (LOT 3) : une carte masquée ne l'est que dans le
-  // menu — /flex et /cahier-de-bord restent joignables par lien direct.
+  // menu — la route reste joignable par lien direct.
   const { can } = useAppLevel();
   const sections = TOOLS.map((grp) => ({
     ...grp,

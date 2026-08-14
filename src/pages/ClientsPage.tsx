@@ -463,7 +463,7 @@ export function ClientsPage() {
           .cp-tab:hover { color: var(--ls-text, #0F172A); }
           .cp-tab-active {
             background: var(--ls-surface, #fff);
-            color: var(--ls-gold, #C9A84C);
+            color: var(--ls-teal, #2DD4BF);
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
           }
         `}</style>
@@ -500,7 +500,7 @@ export function ClientsPage() {
           {visibleRelanceCount > 0 ? (
             <>
               <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--ls-border)" }} />
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#FB7185" }}>🔥 <strong>{visibleRelanceCount}</strong> <span style={{ fontWeight: 500 }}>à reprendre</span></span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#F2775F" }}>🔥 <strong>{visibleRelanceCount}</strong> <span style={{ fontWeight: 500 }}>à reprendre</span></span>
             </>
           ) : null}
         </span>
@@ -558,7 +558,7 @@ export function ClientsPage() {
           top: 8,
           zIndex: 20,
           background: "var(--ls-surface)",
-          border: "1.5px solid var(--ls-gold)",
+          border: "1.5px solid var(--ls-teal)",
           borderRadius: 12,
           padding: "12px 14px",
           display: "flex",
@@ -567,7 +567,7 @@ export function ClientsPage() {
           flexWrap: "wrap",
           boxShadow: "0 6px 20px rgba(184,146,42,0.15)",
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-gold)", fontFamily: "DM Sans, sans-serif" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-teal)", fontFamily: "DM Sans, sans-serif" }}>
             {selectedIds.size} sélectionné{selectedIds.size > 1 ? "s" : ""}
           </div>
           <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>→ changer le statut en</span>
@@ -599,7 +599,7 @@ export function ClientsPage() {
             style={{
               padding: "8px 16px",
               border: "none",
-              background: "var(--ls-gold)",
+              background: "var(--ls-teal)",
               color: "#fff",
               borderRadius: 9,
               fontSize: 12,
@@ -712,7 +712,7 @@ export function ClientsPage() {
               checked={filteredClients.length > 0 && filteredClients.every((c) => selectedIds.has(c.id))}
               onChange={() => toggleAllVisible(filteredClients.map((c) => c.id))}
               title="Tout sélectionner"
-              style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-gold)", flexShrink: 0 }}
+              style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-teal)", flexShrink: 0 }}
             />
             <div style={{ flex: 2, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Client</div>
             <div style={{ flex: 1.5, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Programme</div>
@@ -755,7 +755,7 @@ export function ClientsPage() {
                     toggleClient(client.id);
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-gold)", flexShrink: 0, marginRight: 8 }}
+                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-teal)", flexShrink: 0, marginRight: 8 }}
                 />
               <Link
                 to={`/clients/${client.id}`}
@@ -772,14 +772,14 @@ export function ClientsPage() {
                   borderLeft: `3px solid ${(() => {
                     const tone = LIFECYCLE_TONES[client.lifecycleStatus ?? "active"];
                     if (tone === "teal") return "var(--ls-teal)";
-                    if (tone === "gold") return "var(--ls-gold)";
+                    if (tone === "gold") return "var(--ls-teal)";
                     if (tone === "coral") return "var(--ls-coral)";
                     return "var(--ls-border)";
                   })()}`,
                   paddingLeft: 4,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "linear-gradient(90deg, color-mix(in srgb, var(--ls-gold) 8%, transparent) 0%, transparent 100%)";
+                  e.currentTarget.style.background = "linear-gradient(90deg, color-mix(in srgb, var(--ls-teal) 8%, transparent) 0%, transparent 100%)";
                   e.currentTarget.style.paddingLeft = "10px";
                 }}
                 onMouseLeave={(e) => {
@@ -804,8 +804,8 @@ export function ClientsPage() {
                           borderRadius: 8,
                           fontSize: 9,
                           fontWeight: 700,
-                          background: "rgba(239,159,39,0.14)",
-                          color: "#BA7517",
+                          background: "rgba(45,212,191,0.14)",
+                          color: "#0F766E",
                           flexShrink: 0,
                           letterSpacing: "0.04em",
                         }}

@@ -16,6 +16,8 @@ import { CartDrawer } from "../components/boutique/CartDrawer";
 import { CheckoutForm } from "../components/boutique/CheckoutForm";
 import { useCart } from "../components/boutique/useCart";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
+import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
+import { BoutiqueReviews } from "../components/boutique/BoutiqueReviews";
 import {
   CONCERN_LABELS,
   FREE_SHIPPING_THRESHOLD,
@@ -192,6 +194,13 @@ export function BoutiqueProductPage() {
               <span className="bk-cartlbl">Panier</span>
               {count > 0 && <span className="bk-count">{count}</span>}
             </button>
+            <BoutiqueMobileMenu
+              coachSlug={coachSlug}
+              shopName={shopName}
+              aiScanUrl={boutique?.ai_scan_url}
+              cartCount={count}
+              onOpenCart={() => setCartOpen(true)}
+            />
           </div>
         </div>
       </header>
@@ -232,6 +241,8 @@ export function BoutiqueProductPage() {
                     className="bk-th"
                     key={img.url}
                     onClick={() => setHeroIdx(i)}
+                    aria-label={`Voir la photo ${i + 1} de ${product.name}`}
+                    aria-current={heroIdx === i}
                     style={{
                       borderColor: heroIdx === i ? "var(--jade)" : undefined,
                       cursor: "pointer",
@@ -300,7 +311,7 @@ export function BoutiqueProductPage() {
             )}
             <div className="bk-pdp-sec">
               <h4>Réassurance</h4>
-              <p>🔒 Paiement Stripe sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
+              <p>🔒 Paiement 100 % sécurisé · ↩︎ Retours 14 j · 🚚 Expédié en 48 h</p>
             </div>
           </div>
         </div>
@@ -343,6 +354,15 @@ export function BoutiqueProductPage() {
           </div>
         )}
       </div>
+
+      {/* Avis clients réels (catégorie skin) + formulaire — même vivier que la vitrine */}
+      <BoutiqueReviews
+        coachSlug={coachSlug}
+        coachUserId={boutique?.user_id}
+        eyebrow="Elles ont testé"
+        title={`Ce qu'elles en pensent.`}
+        subtitle={`De vrais avis de clientes sur la routine ${shopName}. Tu as testé ce produit ? Partage ton expérience.`}
+      />
 
       <BoutiqueFooter
         coachSlug={coachSlug}

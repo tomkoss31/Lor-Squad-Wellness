@@ -17,16 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import {
-  CRM_SOURCE_META,
-  CRM_STATUS_META,
-  parseCrmLeadKey,
-  statusOptionsFor,
-  tableHasNotes,
-  useCrmLeads,
-  type CrmLead,
-  type CrmStatus,
-} from "../hooks/useCrmLeads";
+import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -42,6 +33,9 @@ import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import { LeadConvertModal } from "../components/leads/LeadConvertModal";
 import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { FeuilleQualification } from "../features/crm/FeuilleQualification";
+import { estQualifiable } from "../features/crm/ecrireQualification";
+import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 
 // Dupliqué à l'identique depuis CrmPage.tsx (fonction pure de 6 lignes) —
 // pas assez de surface pour justifier une extraction dédiée.
@@ -67,6 +61,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   city: null,
   source: "welcome",
   status: "new",
+  relanceDueAt: null,
+  derniereReponse: null,
   viaName: null,
   parrainPhone: null,
   parrainClientId: null,
@@ -87,7 +83,7 @@ export function CrmLeadDetailPage() {
   const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
 
-  const { leads, loading, error, refetch, updateStatus, updateNotes, assignOwner, setDormant, deleteLead } = useCrmLeads();
+  const { leads, loading, error, refetch, qualifier, updateStatus, updateNotes, assignOwner, setDormant, deleteLead } = useCrmLeads();
   const onlineBilans = useOnlineBilans();
 
   const lead = useMemo(() => leads.find((l) => l.key === leadId) ?? null, [leads, leadId]);
@@ -139,6 +135,7 @@ export function CrmLeadDetailPage() {
     }
   }, [lead, notesHydratedKey]);
 
+  const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -189,6 +186,28 @@ export function CrmLeadDetailPage() {
     } finally {
       setSavingStatus(false);
     }
+  }
+
+  // « Et alors ? » sur la fiche : c'est ici qu'on atterrit après avoir appelé
+  // quelqu'un, donc c'est ici que la question doit être posée. Le menu
+  // « Statut » juste en dessous reste pour les corrections à la main — mais il
+  // ne cale aucune date, et c'est bien pour ça qu'il ne suffisait pas.
+  async function handleQualifier(reponse: Reponse) {
+    if (!lead) return;
+    setFeuilleOuverte(false);
+    const err = await qualifier(lead, reponse);
+    if (err) {
+      pushToast({ tone: "error", title: "Qualification non enregistrée", message: err });
+      return;
+    }
+    const due = dateDeRetour(reponse, new Date());
+    pushToast({
+      tone: "success",
+      title: `${lead.firstName} · ${reponse.titre}`,
+      message: due
+        ? `Revient ${quandRevient(due, new Date())} — tu n'as rien à noter.`
+        : reponse.quand,
+    });
   }
 
   async function handleNotesBlur() {
@@ -315,7 +334,7 @@ export function CrmLeadDetailPage() {
   const statusMeta = CRM_STATUS_META[lead.status];
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
-  const { score, temperature } = computeLeadScore(lead);
+  const { score, temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
   const stagnant = isStagnant(lead);
 
@@ -329,8 +348,11 @@ export function CrmLeadDetailPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h1 style={nameStyle}>{lead.firstName}</h1>
           <span style={sourceBadge(statusMeta.color)}>{src.emoji} {src.label}</span>
-          <span title={`${temp.label} · score ${score}/10`} style={sourceBadge(temp.color)}>
-            {temp.emoji} {temp.label} · {score}/10
+          {/* Le nombre sur 10 ne disait pas quoi faire : « Froid · 3/10 » sur
+              quelqu'un qui vient de laisser son numéro. On affiche la RAISON ;
+              le score reste en infobulle, il sert surtout au tri. */}
+          <span title={`Score ${score}/10`} style={sourceBadge(temp.color)}>
+            {temp.emoji} {temp.label} · {raison}
           </span>
           {stagnant ? (
             <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={sourceBadge("var(--ls-text-muted)")}>
@@ -383,6 +405,44 @@ export function CrmLeadDetailPage() {
           })}
           {lead.viaName && !isIntentionSource ? ` · via ${lead.viaName}` : ""}
         </p>
+        {/* Ce qu'on sait de lui — tout était déjà en base, et déjà dans le mail
+            de réservation, mais nulle part à l'écran (audit 2026-08-11). Le
+            bloc ne s'affiche que s'il a quelque chose à dire. */}
+        {(lead.abandonAvantCreneau || lead.rdvLabel || lead.lastName || lead.objectif
+          || lead.peopleCount === 2) ? (
+          <div style={{
+            marginTop: 12, padding: "12px 14px", borderRadius: 12,
+            background: "var(--ls-surface2)",
+            border: `1px solid ${lead.abandonAvantCreneau ? "var(--ls-coral)" : "var(--ls-border)"}`,
+            fontSize: 13, lineHeight: 1.6, color: "var(--ls-text-muted)",
+          }}>
+            {lead.abandonAvantCreneau ? (
+              <div style={{ color: "var(--ls-coral)", fontWeight: 700, marginBottom: 8 }}>
+                ⛔ A laissé ses coordonnées, puis n'a jamais choisi de créneau.
+              </div>
+            ) : null}
+            {lead.rdvLabel ? (
+              <div style={{ color: "var(--ls-teal)", fontWeight: 700, marginBottom: 8 }}>
+                🗓 Créneau réservé : {lead.rdvLabel}
+              </div>
+            ) : null}
+            {lead.lastName ? <div><strong style={{ color: "var(--ls-text)" }}>Nom</strong> · {lead.lastName}</div> : null}
+            {lead.objectif ? <div><strong style={{ color: "var(--ls-text)" }}>Objectif</strong> · {objectifLabel(lead.objectif)}</div> : null}
+            {lead.peopleCount === 2 ? (
+              <div>
+                <strong style={{ color: "var(--ls-text)" }}>Vient à deux</strong>
+                {lead.partnerName ? ` · avec ${lead.partnerName}` : ""}
+                {lead.partnerObjectif ? ` (${objectifLabel(lead.partnerObjectif)})` : ""}
+              </div>
+            ) : null}
+            {lead.coachSlug ? <div><strong style={{ color: "var(--ls-text)" }}>Club visé</strong> · {lead.coachSlug}</div> : null}
+            {/* Le consentement n'est PAS montré ici. La colonne existe, mais
+                seuls le colis, Business et la boutique la remplissent :
+                /reserver ne pose jamais la question, donc `false` y veut dire
+                « jamais demandé », pas « a refusé ». L'afficher fabriquerait
+                une information fausse (audit 2026-08-11). */}
+          </div>
+        ) : null}
         {(lead.contact || (isIntentionSource && lead.parrainPhone)) && (
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             {lead.contact && lead.contactIsPhone ? (
@@ -497,7 +557,7 @@ export function CrmLeadDetailPage() {
                     💡 Suggestion : <strong style={{ color: "var(--ls-text)" }}>{ownerSuggestion.name}</strong>{" "}
                     ({ownerSuggestion.activeLeadCount} lead{ownerSuggestion.activeLeadCount > 1 ? "s" : ""} actif{ownerSuggestion.activeLeadCount > 1 ? "s" : ""})
                   </span>
-                  <button type="button" onClick={() => void handleAssign(ownerSuggestion.id)} style={actionBtn("var(--ls-gold)")}>
+                  <button type="button" onClick={() => void handleAssign(ownerSuggestion.id)} style={actionBtn("var(--ls-teal)")}>
                     Assigner
                   </button>
                 </div>
@@ -515,6 +575,33 @@ export function CrmLeadDetailPage() {
                   </option>
                 ))}
               </select>
+            </div>
+          ) : null}
+
+          {estQualifiable(lead.table) ? (
+            <div style={actionBlock}>
+              <label style={label}>Après ton appel</label>
+              {feuilleOuverte ? (
+                <FeuilleQualification
+                  prenom={lead.firstName}
+                  onChoisir={(r) => void handleQualifier(r)}
+                  onIgnorer={() => setFeuilleOuverte(false)}
+                />
+              ) : (
+                <>
+                  <button type="button" onClick={() => setFeuilleOuverte(true)} style={primaryBtn}>
+                    🎯 Et alors ? — dire ce qui s'est passé
+                  </button>
+                  {lead.derniereReponse ? (
+                    <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--ls-text-muted)" }}>
+                      Dernière fois : {REPONSE_PAR_CLE[lead.derniereReponse].resume}
+                      {lead.relanceDueAt
+                        ? ` · revient ${quandRevient(lead.relanceDueAt, new Date())}`
+                        : ""}
+                    </p>
+                  ) : null}
+                </>
+              )}
             </div>
           ) : null}
 
@@ -598,7 +685,7 @@ export function CrmLeadDetailPage() {
               <button
                 type="button"
                 onClick={() => { recordTouch(); copyMessage(message); }}
-                style={actionBtn("var(--ls-gold)")}
+                style={actionBtn("var(--ls-teal)")}
               >
                 📋 Copier {messageLabel.toLowerCase()}
               </button>
@@ -627,7 +714,7 @@ export function CrmLeadDetailPage() {
                       📱 WhatsApp
                     </a>
                   ) : null}
-                  <button type="button" onClick={() => copyMessage(aiMessage)} style={actionBtn("var(--ls-gold)")}>📋 Copier</button>
+                  <button type="button" onClick={() => copyMessage(aiMessage)} style={actionBtn("var(--ls-teal)")}>📋 Copier</button>
                   <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>✕ Fermer</button>
                 </div>
               </div>
@@ -648,10 +735,10 @@ export function CrmLeadDetailPage() {
                   const msg = `Coucou ${lead.firstName} 🌿 j'ai préparé ta page perso avec ton bilan complet et le programme qu'on a vu ensemble. Tout est ici (tu peux même démarrer directement) 👉 ${link}\n\nDis-moi si tu as la moindre question, je suis là 💛\n${msgCtx.coachFirstName}`;
                   return (
                     <>
-                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #8b5cf6)")}>
+                      <a href={link} target="_blank" rel="noopener noreferrer" style={actionBtn("var(--ls-purple, #A78BFA)")}>
                         👁️ Voir la page (vérif)
                       </a>
-                      <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-gold)")}>
+                      <button type="button" onClick={() => { recordTouch(); copyMessage(msg); }} style={actionBtn("var(--ls-teal)")}>
                         📋 Copier le message + lien
                       </button>
                       {lead.contactIsPhone ? (
@@ -886,7 +973,7 @@ const colTitle: React.CSSProperties = {
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.06em",
-  color: "var(--ls-gold)",
+  color: "var(--ls-teal)",
   margin: "0 0 14px",
 };
 
@@ -961,8 +1048,8 @@ const primaryBtn: React.CSSProperties = {
   padding: "12px 16px",
   border: "none",
   borderRadius: 11,
-  background: "var(--ls-gold)",
-  color: "var(--ls-gold-contrast, #0B0D11)",
+  background: "var(--ls-teal)",
+  color: "var(--ls-teal-contrast, #0B0D11)",
   fontFamily: "Syne, sans-serif",
   fontSize: 13.5,
   fontWeight: 700,

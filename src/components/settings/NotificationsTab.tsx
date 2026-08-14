@@ -215,13 +215,13 @@ export function NotificationsTab() {
             padding: "11px 22px",
             borderRadius: 999,
             border: "none",
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             color: "#FFFFFF",
             fontSize: 13,
             fontWeight: 700,
             cursor: saving ? "wait" : "pointer",
             fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+            boxShadow: "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
             opacity: saving ? 0.6 : 1,
           }}
         >
@@ -233,8 +233,8 @@ export function NotificationsTab() {
       <div
         style={{
           padding: "12px 14px",
-          background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-          border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           borderRadius: 12,
           fontSize: 11.5,
           color: "var(--ls-text-muted)",

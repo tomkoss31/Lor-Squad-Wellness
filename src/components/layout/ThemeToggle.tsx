@@ -65,7 +65,7 @@ export function ThemeToggle() {
             width: 44,
             height: 24,
             borderRadius: 999,
-            background: isDark ? "#BA7517" : "var(--ls-border)",
+            background: isDark ? "#0F766E" : "var(--ls-border)",
             position: "relative",
             transition: "background 0.2s ease",
             flexShrink: 0,

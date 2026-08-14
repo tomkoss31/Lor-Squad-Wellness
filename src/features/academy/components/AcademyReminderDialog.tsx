@@ -120,7 +120,7 @@ export function AcademyReminderDialog({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={handleStart}
             style={{
-              background: "#B8922A",
+              background: "#0D9488",
               color: "white",
               border: "none",
               padding: "12px 20px",
@@ -179,7 +179,7 @@ function ProgressRing({ percent }: { percent: number }) {
         cy="40"
         r={ringRadius}
         fill="none"
-        stroke="#B8922A"
+        stroke="#0D9488"
         strokeWidth="6"
         strokeLinecap="round"
         strokeDasharray={ringCircumference}

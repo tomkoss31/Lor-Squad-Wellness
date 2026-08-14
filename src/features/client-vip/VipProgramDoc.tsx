@@ -155,8 +155,8 @@ export function VipProgramDoc() {
         <div
           style={{
             padding: "14px 16px",
-            background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))",
-            borderLeft: "3px solid var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))",
+            borderLeft: "3px solid var(--ls-teal)",
             borderRadius: 10,
             fontSize: 13,
             color: "var(--ls-text)",
@@ -290,7 +290,7 @@ function Rule({ number, text }: { number: string; text: string }) {
           width: 24,
           height: 24,
           borderRadius: "50%",
-          background: "var(--ls-gold)",
+          background: "var(--ls-teal)",
           color: "white",
           display: "inline-flex",
           alignItems: "center",

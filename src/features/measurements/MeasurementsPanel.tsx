@@ -272,8 +272,8 @@ export function MeasurementsPanel({
                     gap: 10,
                     padding: "8px 10px",
                     borderRadius: 10,
-                    background: inDraft ? "rgba(239,159,39,0.12)" : "var(--ls-surface2)",
-                    border: `1px solid ${inDraft ? "#EF9F27" : "var(--ls-border)"}`,
+                    background: inDraft ? "rgba(45,212,191,0.12)" : "var(--ls-surface2)",
+                    border: `1px solid ${inDraft ? "#2DD4BF" : "var(--ls-border)"}`,
                     cursor: "pointer",
                     color: "var(--ls-text)",
                     fontFamily: "DM Sans, sans-serif",
@@ -285,7 +285,7 @@ export function MeasurementsPanel({
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      background: current != null ? "#1D9E75" : "#BA7517",
+                      background: current != null ? "#1D9E75" : "#0F766E",
                       flexShrink: 0,
                     }}
                   />
@@ -306,7 +306,7 @@ export function MeasurementsPanel({
                     <span
                       style={{
                         fontSize: 11,
-                        color: delta < 0 ? "#1D9E75" : delta > 0 ? "#BA7517" : "var(--ls-text-muted)",
+                        color: delta < 0 ? "#1D9E75" : delta > 0 ? "#0F766E" : "var(--ls-text-muted)",
                         minWidth: 42,
                         textAlign: "right",
                       }}
@@ -336,7 +336,7 @@ export function MeasurementsPanel({
       >
         <div>
           {sessions.length >= 2 && totalLost !== 0 ? (
-            <div style={{ fontSize: 13, color: totalLost > 0 ? "#1D9E75" : "#BA7517", fontWeight: 600 }}>
+            <div style={{ fontSize: 13, color: totalLost > 0 ? "#1D9E75" : "#0F766E", fontWeight: 600 }}>
               {totalLost > 0 ? `🎉 Total perdu : -${totalLost.toFixed(1)} cm` : `Total : +${Math.abs(totalLost).toFixed(1)} cm`}
               <span style={{ fontWeight: 400, color: "var(--ls-text-muted)", marginLeft: 6, fontSize: 11 }}>
                 depuis la 1ère session
@@ -370,7 +370,7 @@ export function MeasurementsPanel({
                 borderRadius: 10,
                 background: "transparent",
                 border: "1px solid var(--ls-border)",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 cursor: "pointer",
                 fontSize: 12,
                 fontWeight: 600,
@@ -476,8 +476,8 @@ export function MeasurementsPanel({
                       borderRadius: 999,
                       fontSize: 10,
                       fontWeight: 600,
-                      background: isSelf ? "rgba(29,158,117,0.15)" : "rgba(186,117,23,0.15)",
-                      color: isSelf ? "#1D9E75" : "#BA7517",
+                      background: isSelf ? "rgba(29,158,117,0.15)" : "rgba(15,118,110,0.15)",
+                      color: isSelf ? "#1D9E75" : "#0F766E",
                     }}
                   >
                     {isSelf

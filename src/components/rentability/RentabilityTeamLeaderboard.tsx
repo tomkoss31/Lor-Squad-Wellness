@@ -45,8 +45,8 @@ function MemberRowItem({
         alignItems: "center",
         gap: 10,
         padding: "8px 10px",
-        background: isLeader ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))" : "var(--ls-surface)",
-        border: isLeader ? "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "0.5px solid var(--ls-border)",
+        background: isLeader ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))" : "var(--ls-surface)",
+        border: isLeader ? "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)" : "0.5px solid var(--ls-border)",
         borderRadius: 10,
         cursor: "pointer",
         textAlign: "left",
@@ -55,7 +55,7 @@ function MemberRowItem({
         transition: "background .15s",
       }}
     >
-      <span style={{ width: 22, fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 12, color: isLeader ? "var(--ls-gold)" : "var(--ls-text-muted)" }}>
+      <span style={{ width: 22, fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 12, color: isLeader ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>
         #{rank}
       </span>
       <Avatar initials={initialsOf(name)} hue={avatarHue(name)} size={28} />
@@ -70,7 +70,7 @@ function MemberRowItem({
             fontStyle: "italic",
             fontWeight: 700,
             fontSize: 14,
-            color: isLeader ? "var(--ls-gold)" : "var(--ls-text)",
+            color: isLeader ? "var(--ls-teal)" : "var(--ls-text)",
           }}
         >
           {Math.round(total).toLocaleString("fr-FR")} €
@@ -81,7 +81,7 @@ function MemberRowItem({
               <div style={{
                 width: `${rankProgressionPct}%`,
                 height: "100%",
-                background: rankProgressionPct >= 80 ? "var(--ls-gold)" : "var(--ls-teal)",
+                background: rankProgressionPct >= 80 ? "var(--ls-teal)" : "var(--ls-teal)",
                 borderRadius: 999,
               }} />
             </div>
@@ -186,7 +186,7 @@ export function RentabilityTeamLeaderboard() {
       ))}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700 }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 700 }}>
             🏆 Leaderboard team
           </div>
           <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 600, fontSize: 16, color: "var(--ls-text)", marginTop: 2 }}>

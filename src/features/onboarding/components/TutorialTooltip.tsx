@@ -83,12 +83,12 @@ export function TutorialTooltip({
         }
         .ls-tutorial-next-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(186,117,23,0.35);
+          box-shadow: 0 6px 16px rgba(15,118,110,0.35);
           filter: brightness(1.05);
         }
         .ls-tutorial-next-btn:active {
           transform: translateY(0);
-          box-shadow: 0 2px 6px rgba(186,117,23,0.25);
+          box-shadow: 0 2px 6px rgba(15,118,110,0.25);
         }
         /* iOS/mobile fix (2026-06-15) : sur petit écran, la bulle est TOUJOURS
            un panneau bas pleine largeur, lisible, avec les boutons à l'écran —
@@ -137,7 +137,7 @@ export function TutorialTooltip({
         border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
         padding: 18,
-        boxShadow: "0 12px 40px rgba(0,0,0,0.40), 0 0 0 1px rgba(239,159,39,0.10)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.40), 0 0 0 1px rgba(45,212,191,0.10)",
         fontFamily: "DM Sans, sans-serif",
         animation: "ls-tooltip-fade-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
         willChange: "transform, opacity",
@@ -151,12 +151,12 @@ export function TutorialTooltip({
           style={{
             padding: "3px 8px",
             borderRadius: 6,
-            background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
-            color: "var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+            color: "var(--ls-teal)",
             fontSize: 10,
             fontWeight: 700,
             letterSpacing: "0.05em",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
           }}
         >
           {stepIndex + 1}/{totalSteps}
@@ -262,21 +262,21 @@ export function TutorialTooltip({
               onClick={() => onCrossRef?.(ref.sectionId, ref.stepId)}
               style={{
                 padding: "4px 10px",
-                background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+                background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
                 borderRadius: 999,
                 fontSize: 11,
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 600,
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 cursor: "pointer",
                 transition: "background 120ms ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 20%, transparent)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 20%, transparent)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 10%, transparent)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 10%, transparent)";
               }}
             >
               {ref.label} →
@@ -326,7 +326,7 @@ export function TutorialTooltip({
               style={{
                 padding: "8px 14px",
                 borderRadius: 8,
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "#FFFFFF",
                 border: "none",
                 fontSize: 12,
@@ -334,7 +334,7 @@ export function TutorialTooltip({
                 cursor: "pointer",
                 fontFamily: "DM Sans, sans-serif",
                 letterSpacing: 0.2,
-                boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+                boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
               }}
             >
               {nextLabel ?? (isLast ? "Terminer le tuto 🎉" : "Suivant →")}

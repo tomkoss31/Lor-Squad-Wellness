@@ -75,7 +75,7 @@ export function LegalTab() {
           emoji="📋"
           title="Mentions légales"
           subtitle={`Éditeur, hébergeur, propriété intellectuelle`}
-          color="var(--ls-gold)"
+          color="var(--ls-teal)"
         />
         <LinkCard
           to="/legal/confidentialite"
@@ -116,7 +116,7 @@ export function LegalTab() {
           value={
             <a
               href={`mailto:${COMPANY_EMAIL}`}
-              style={{ color: "var(--ls-gold)", textDecoration: "none", fontWeight: 600 }}
+              style={{ color: "var(--ls-teal)", textDecoration: "none", fontWeight: 600 }}
             >
               {COMPANY_EMAIL}
             </a>
@@ -129,9 +129,9 @@ export function LegalTab() {
       <div
         style={{
           padding: "16px 18px",
-          background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
-          borderLeft: "3px solid var(--ls-gold)",
+          background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+          borderLeft: "3px solid var(--ls-teal)",
           borderRadius: 16,
         }}
       >
@@ -141,7 +141,7 @@ export function LegalTab() {
             letterSpacing: 1.4,
             textTransform: "uppercase",
             fontWeight: 700,
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontFamily: "DM Sans, sans-serif",
             marginBottom: 10,
             display: "inline-flex",
@@ -188,7 +188,7 @@ export function LegalTab() {
           Pour exercer ces droits, contacte{" "}
           <a
             href={`mailto:${COMPANY_EMAIL}`}
-            style={{ color: "var(--ls-gold)", textDecoration: "none", fontWeight: 600 }}
+            style={{ color: "var(--ls-teal)", textDecoration: "none", fontWeight: 600 }}
           >
             {COMPANY_EMAIL}
           </a>

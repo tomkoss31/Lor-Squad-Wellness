@@ -276,7 +276,7 @@ export function DistriDrillDownModal({
                       style={{
                         fontSize: 10,
                         fontWeight: 600,
-                        color: isCurrent ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                        color: isCurrent ? "var(--ls-teal)" : "var(--ls-text-muted)",
                       }}
                     >
                       {m.total > 0 ? m.total.toLocaleString("fr-FR") : ""}
@@ -294,8 +294,8 @@ export function DistriDrillDownModal({
                           width: "100%",
                           height: `${Math.max(heightPct, 2)}%`,
                           background: isCurrent
-                            ? "linear-gradient(180deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)))"
-                            : "color-mix(in srgb, var(--ls-gold) 25%, var(--ls-surface))",
+                            ? "linear-gradient(180deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)))"
+                            : "color-mix(in srgb, var(--ls-teal) 25%, var(--ls-surface))",
                           borderRadius: "4px 4px 0 0",
                           transition: "height 400ms ease",
                         }}
@@ -364,7 +364,7 @@ export function DistriDrillDownModal({
                         width: 22,
                         height: 22,
                         borderRadius: "50%",
-                        background: idx === 0 ? "var(--ls-gold)" : "var(--ls-surface)",
+                        background: idx === 0 ? "var(--ls-teal)" : "var(--ls-surface)",
                         color: idx === 0 ? "var(--ls-bg)" : "var(--ls-text-muted)",
                         display: "flex",
                         alignItems: "center",
@@ -384,7 +384,7 @@ export function DistriDrillDownModal({
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: "var(--ls-gold)",
+                        color: "var(--ls-teal)",
                         fontFamily: "Syne, sans-serif",
                       }}
                     >
@@ -478,7 +478,7 @@ export function DistriDrillDownModal({
             onClick={onGoToClients}
             style={{
               padding: "8px 16px",
-              background: "linear-gradient(135deg, var(--ls-gold), color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)))",
+              background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 70%, var(--ls-coral)))",
               border: "none",
               borderRadius: 8,
               fontSize: 12,

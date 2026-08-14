@@ -20,7 +20,7 @@ interface StepRailProps {
 }
 
 const STEP_PHASES = [
-  { label: "Client",    emoji: "👤", steps: [0],            color: "#EF9F27" },
+  { label: "Client",    emoji: "👤", steps: [0],            color: "#2DD4BF" },
   { label: "Habitudes", emoji: "🍽️", steps: [1, 2, 3, 4],   color: "#2DD4BF" },
   { label: "Analyse",   emoji: "🧬", steps: [5, 6, 7, 8, 9], color: "#A78BFA" },
   { label: "Clôture",   emoji: "✨", steps: [10, 11, 12, 13, 14], color: "#F0C96A" },
@@ -30,7 +30,7 @@ function getPhaseColor(stepIndex: number): string {
   for (const phase of STEP_PHASES) {
     if (phase.steps.includes(stepIndex)) return phase.color;
   }
-  return "#C9A84C";
+  return "var(--ls-teal)";
 }
 
 function getPhaseForStep(stepIndex: number): { label: string; emoji: string; color: string } {
@@ -39,7 +39,7 @@ function getPhaseForStep(stepIndex: number): { label: string; emoji: string; col
       return { label: phase.label, emoji: phase.emoji, color: phase.color };
     }
   }
-  return { label: "Étape", emoji: "✦", color: "#C9A84C" };
+  return { label: "Étape", emoji: "✦", color: "var(--ls-teal)" };
 }
 
 export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
@@ -51,8 +51,8 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
     <>
       <style>{`
         @keyframes ls-rail-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 var(--rail-color, #EF9F27), 0 0 12px 0 var(--rail-color, #EF9F27); }
-          50%      { box-shadow: 0 0 0 6px transparent, 0 0 18px 4px var(--rail-color, #EF9F27); }
+          0%, 100% { box-shadow: 0 0 0 0 var(--rail-color, #2DD4BF), 0 0 12px 0 var(--rail-color, #2DD4BF); }
+          50%      { box-shadow: 0 0 0 6px transparent, 0 0 18px 4px var(--rail-color, #2DD4BF); }
         }
         @keyframes ls-rail-shine {
           0%, 100% { transform: translateX(-50%); opacity: 0; }
@@ -77,8 +77,68 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
         }
       `}</style>
 
-      {/* ═══ MOBILE — version condensée premium ═══ */}
-      <div className="lg:hidden">
+      {/* ═══ TÉLÉPHONE (< 768px) — filet de progression ═══
+          Audit mobile 2026-08-10 : sur iPhone, la version condensée ci-dessous
+          pesait 146 px et répétait « Étape 1 / 13 », déjà affiché par la barre
+          du bas. Avec l'en-tête et cette barre, 363 px — 45 % de l'écran —
+          étaient occupés en permanence, ne laissant que 449 px de lecture.
+          Ici on garde les trois informations utiles (avancement, nom de
+          l'étape, rang) sur une seule ligne. La tablette et le bureau, qui ont
+          la place, gardent leurs versions riches. */}
+      <div className="md:hidden">
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          <div
+            style={{
+              position: "relative",
+              height: 3,
+              background: "var(--ls-surface2)",
+              borderRadius: 999,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${progress}%`,
+                background: `linear-gradient(90deg, var(--ls-teal) 0%, ${phase.color} 100%)`,
+                borderRadius: 999,
+                transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: 10,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12.5,
+                fontWeight: 650,
+                color: "var(--ls-text)",
+                letterSpacing: "-0.01em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                minWidth: 0,
+              }}
+            >
+              <span aria-hidden="true" style={{ marginRight: 5 }}>{phase.emoji}</span>
+              {steps[currentStep]}
+            </span>
+            <span style={{ fontSize: 11, color: "var(--ls-text-hint)", flex: "none" }}>
+              {currentStep + 1} / {steps.length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ TABLETTE (768 → 1024px) — version condensée premium ═══ */}
+      <div className="hidden md:block lg:hidden">
         <div
           style={{
             position: "relative",
@@ -153,7 +213,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 position: "relative",
                 height: "100%",
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, #EF9F27 0%, ${phase.color} 100%)`,
+                background: `linear-gradient(90deg, #2DD4BF 0%, ${phase.color} 100%)`,
                 borderRadius: 999,
                 transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                 boxShadow: `0 0 8px ${phase.color}80`,
@@ -185,7 +245,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
             position: "relative",
             overflow: "hidden",
             background:
-              "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+              "linear-gradient(180deg, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
             border: `0.5px solid color-mix(in srgb, ${phase.color} 25%, var(--ls-border))`,
             borderRadius: 20,
             padding: "18px 22px",
@@ -285,7 +345,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 position: "relative",
                 height: "100%",
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, #EF9F27 0%, #BA7517 35%, ${phase.color} 100%)`,
+                background: `linear-gradient(90deg, #2DD4BF 0%, #0F766E 35%, ${phase.color} 100%)`,
                 borderRadius: 999,
                 transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
                 boxShadow: `0 0 12px ${phase.color}66, inset 0 1px 0 rgba(255,255,255,0.25)`,
@@ -388,7 +448,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                   </div>
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 11,
                       lineHeight: 1.25,
                       textAlign: "center",
                       maxWidth: 72,

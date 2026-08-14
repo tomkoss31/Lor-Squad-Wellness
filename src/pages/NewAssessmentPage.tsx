@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, type ReactNode } from "react";
+﻿import { useState, useMemo, useId, type ReactNode } from "react";
 // lazy retiré — Chantier nettoyage bilan (2026-04-20)
 // Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
 // supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
@@ -25,16 +25,16 @@ import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 // ProgramChoiceCard + RoutineMatinList + ProgrammeTicket.
 import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionToggle";
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
+import { ProgramChoiceList } from "../components/assessment/ProgramChoiceList";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { InlinePaymentButton } from "../components/payment/InlinePaymentButton";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { NoalyBilanPanel } from "../components/assessment/NoalyBilanPanel";
-import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoice, type ProgramChoiceId } from "../data/programs";
 import { normalizeMultiValue } from "../lib/multiChoice";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
-import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
 import {
   readCoachNotesDraft,
   writeCoachNotesDraft,
@@ -618,7 +618,6 @@ export function NewAssessmentPage() {
     purgeLegacyCoachNotesKey();
     return readCoachNotesDraft(prospectId);
   });
-  const [showValidationBanner, setShowValidationBanner] = useState(false);
   // Chantier Prise de masse (2026-04-24) : alertes sport style Apple Health.
   const [sportAlerts, setSportAlerts] = useState<SportAlert[]>([]);
   const [sportAlertsOpen, setSportAlertsOpen] = useState(false);
@@ -634,12 +633,6 @@ export function NewAssessmentPage() {
   const persistCoachNotesLocal = (value: string) => {
     writeCoachNotesDraft(prospectId, value);
   };
-
-  // L'étape 11 "Suite du suivi" est validée si le coach a choisi
-  // "suivi_libre" OU s'il a un RDV planifié (typeDeSuite + date).
-  const hasFollowUpPlanned =
-    form.typeDeSuite === "suivi_libre" ||
-    (!!form.typeDeSuite && form.nextFollowUp.trim().length > 0);
 
   // (notesVisible est calculé plus bas, après currentStepId)
 
@@ -686,11 +679,6 @@ export function NewAssessmentPage() {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
   };
 
-  const goToStepId = (id: StepId) => {
-    const idx = stepIds.indexOf(id);
-    if (idx >= 0) goToStep(idx);
-  };
-
   // Panneau notes visible sur étapes "amont" (avant body-scan) + final.
   const NOTES_VISIBLE_IDS = new Set<StepId>([
     'client-info', 'habits', 'food-quality', 'health-objective', 'meal-composition',
@@ -703,6 +691,40 @@ export function NewAssessmentPage() {
   };
 
   const [stepWarning, setStepWarning] = useState("");
+  const stepWarningRef = useRef<HTMLDivElement | null>(null);
+  // Ancres des champs qui peuvent bloquer l'étape 1. On amène l'écran SUR LE
+  // CHAMP fautif, pas sur le message : le coach doit atterrir là où il corrige.
+  const ancreIdentite = useRef<HTMLDivElement | null>(null);
+  const ancreContact = useRef<HTMLDivElement | null>(null);
+  const ancreObjectifs = useRef<HTMLDivElement | null>(null);
+  // Compteur de blocages. Sans lui, retaper « Suivante » sur le même blocage ne
+  // relancerait ni l'annonce VoiceOver ni le défilement : la valeur d'état n'a
+  // pas changé, donc l'effet ne se rejoue pas. Or retaper est EXACTEMENT ce que
+  // fait le coach quand rien ne se passe.
+  const [stepBlockTick, setStepBlockTick] = useState(0);
+  const cibleBlocage = useRef<React.RefObject<HTMLDivElement | null> | null>(null);
+  // Le détail du panier, déplié depuis la barre. Fermé par défaut : c'est le
+  // TOTAL qui doit être permanent, pas la liste.
+  const [panierOuvert, setPanierOuvert] = useState(false);
+
+  // Blocage : affiche le message ET amène l'écran sur le champ à corriger.
+  // Audit mobile 2026-08-10 : le message s'affichait 1259 px sous le bas de
+  // l'iPhone, sans role ni aria-live. Le coach tapait « Suivante » devant sa
+  // cliente et il ne se passait strictement rien.
+  const blockStep = (message: string, cible?: React.RefObject<HTMLDivElement | null>) => {
+    setStepWarning(message);
+    cibleBlocage.current = cible ?? null;
+    setStepBlockTick((n) => n + 1);
+  };
+
+  useEffect(() => {
+    if (!stepBlockTick) return;
+    // Défilement IMMÉDIAT, pas `smooth` : un blocage doit se voir tout de suite,
+    // et `smooth` est purement décoratif ici (il est même inopérant dans
+    // certains moteurs, ce qui reproduisait exactement le bug d'origine).
+    const cible = cibleBlocage.current?.current ?? stepWarningRef.current;
+    cible?.scrollIntoView({ block: "center" });
+  }, [stepBlockTick]);
 
   const goToNextStep = () => {
     setStepWarning("");
@@ -710,13 +732,23 @@ export function NewAssessmentPage() {
     // Validation étape 0 — infos client
     if (currentStep === 0) {
       if (!form.firstName.trim() || !form.lastName.trim()) {
-        setStepWarning("Prénom et nom du client sont obligatoires pour continuer.");
+        blockStep("Il manque le prénom ou le nom du client.", ancreIdentite);
+        return;
+      }
+      // Au moins un moyen de contact (décision Thomas, 2026-08-10).
+      // Sans téléphone NI email, on ne peut ni envoyer l'accès à l'espace
+      // client, ni relancer, ni encaisser : tout l'aval du bilan est mort.
+      // L'astérisque des deux champs promettait cette contrainte sans que rien
+      // ne l'applique — on l'honore, en exigeant l'un OU l'autre, pas les deux
+      // (des clientes n'ont pas d'email).
+      if (!form.phone.trim() && !form.email.trim()) {
+        blockStep("Il faut au moins un moyen de contact : téléphone ou email.", ancreContact);
         return;
       }
       // ⚠️ Multi depuis 2026-07-16 : `[]` est TRUTHY, un simple `!form.x`
       // laisserait passer un bilan sans aucun objectif coché.
       if (form.objectiveFocus.length === 0) {
-        setStepWarning("Choisis au moins un objectif pour le client.");
+        blockStep("Choisis au moins un objectif pour le client.", ancreObjectifs);
         return;
       }
     }
@@ -983,14 +1015,40 @@ export function NewAssessmentPage() {
     }));
   }
 
-  // Total du panier programme (= ProgrammeTicket : program.price + Σ addOns).
+  // Les programmes proposables : ceux de l'objectif retenu, plus « À l'unité ».
+  // ⚠️ On part de PROGRAM_CHOICES, jamais de PROGRAMS_LEGACY qui exclut `unit`
+  // (cf. CLAUDE.md — règle programmes / produits).
+  const programmesDisponibles = useMemo(
+    () => PROGRAM_CHOICES.filter((p) => p.category === form.objective || p.category === "unit"),
+    [form.objective],
+  );
+
+  // Un montant, écrit comme on l'écrit en français : virgule décimale et
+  // espace insécable avant l'euro. C'est le chiffre le plus regardé de l'étape
+  // programme — il est lu à voix haute devant la cliente.
+  const enEuros = (montant: number) =>
+    `${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+  // Ce que contient un programme, écrit en clair sous celui qu'on retient.
+  // La liste comparable n'affiche que le nom et le prix : le détail arrive au
+  // moment où il sert, c'est-à-dire une fois le choix fait.
+  const decrireProgramme = (programme: ProgramChoice): string | null => {
+    const noms = (programme.routineProductIds ?? [])
+      .map((id) => pvProductCatalog.find((p) => p.id === id)?.name)
+      .filter((n): n is string => !!n);
+    return noms.length ? `Contient : ${noms.join(" · ")}` : null;
+  };
+
+  // Le panier programme (= ProgrammeTicket : program.price + Σ addOns).
   // Sert à pré-remplir l'encaissement Stripe sur la page « Bilan terminé »
-  // (chantier Encaissement distri 2026-06-15) — même formule que le ticket.
-  const programmeTotalEuros = (() => {
+  // (chantier Encaissement distri 2026-06-15) — même formule que le ticket —
+  // et, depuis le 2026-08-10, à alimenter le total permanent de la barre de
+  // navigation sous 1280 px. Une seule source, pas deux formules qui dérivent.
+  const panierProgramme = (() => {
     const chosen = getProgramById(form.programChoice);
     const base = chosen?.price ?? 0;
     const boosterAddOns = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).map(
-      (b) => ({ id: b.id, price: b.price }),
+      (b) => ({ id: b.id, nom: b.title, price: b.price }),
     );
     const knownIds = new Set([
       ...addOnProducts.map((p) => p.id),
@@ -1000,15 +1058,30 @@ export function NewAssessmentPage() {
       .filter((id) => !knownIds.has(id))
       .map((id) => pvProductCatalog.find((p) => p.id === id))
       .filter((p): p is NonNullable<typeof p> => !!p)
-      .map((p) => ({ id: p.id, price: p.pricePublic }));
+      .map((p) => ({ id: p.id, nom: p.name, price: p.pricePublic }));
     const allAddOns = [
-      ...addOnProducts.map((p) => ({ id: p.id, price: p.prixPublic })),
+      ...addOnProducts.map((p) => ({ id: p.id, nom: p.name, price: p.prixPublic })),
       ...boosterAddOns,
       ...catalogExtra,
     ].filter((v, i, arr) => arr.findIndex((x) => x.id === v.id) === i);
     const addOnsTotal = allAddOns.reduce((s, a) => s + a.price * getQty(a.id), 0);
-    return Math.round((base + addOnsTotal) * 100) / 100;
+    return {
+      titreProgramme: chosen?.title ?? null,
+      prixProgramme: base,
+      // Les lignes du panier, pour que la barre affiche le détail sans
+      // ré-implémenter ProgrammeTicket : même source, deux rendus.
+      lignes: allAddOns.map((a) => ({
+        id: a.id,
+        nom: a.nom ?? a.id,
+        prix: a.price,
+        qte: getQty(a.id),
+      })),
+      nbAjouts: allAddOns.length,
+      total: Math.round((base + addOnsTotal) * 100) / 100,
+    };
   })();
+
+  const programmeTotalEuros = panierProgramme.total;
 
 
   /**
@@ -1159,13 +1232,6 @@ export function NewAssessmentPage() {
     // tableau y serait stocké n'importe comment).
     const objectiveFocusLabel = form.objectiveFocus.join(" + ");
 
-    // Chantier refonte bilan (2026-04-24) : impossible de valider sans
-    // avoir planifié de RDV suivi (sauf suivi libre explicite).
-    if (!hasFollowUpPlanned) {
-      setShowValidationBanner(true);
-      return;
-    }
-
     // Programme optionnel — pas de validation bloquante
 
     // Garde-fou agenda (chantier 2026-06-04) : UNIQUEMENT pour un RDV ferme
@@ -1212,12 +1278,12 @@ export function NewAssessmentPage() {
       // Multi : "prise de masse + énergie" plutôt qu'un seul mot.
       summary: startsImmediately
         ? `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
-        : `Premier bilan oriente ${objectiveFocusLabel.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
+        : `Premier bilan orienté ${objectiveFocusLabel.toLowerCase()} sans démarrage immédiat, relance à prévoir.`,
       notes:
         form.comment.trim() ||
         (startsImmediately
           ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà pose."
-          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance déjà prevue."),
+          : "Le client repart avec un bilan clair, sans démarrage immédiat, et une relance déjà prévue."),
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -1280,7 +1346,7 @@ export function NewAssessmentPage() {
           form.comment.trim() ||
           (startedEffective
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
-            : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
+            : "Bilan enregistré sans démarrage. Une relance est à prévoir."),
         afterAssessmentAction: form.afterAssessmentAction,
         freeFollowUp: isFreeFollowUp
       });
@@ -1341,36 +1407,6 @@ export function NewAssessmentPage() {
         }
       }
 
-      // Chantier Auto-notif RDV (2026-04-24) : message auto au client
-      // si un RDV de suivi est planifié (sauf suivi libre). Best-effort,
-      // non bloquant si échec.
-      if (hasFollowUpPlanned && form.typeDeSuite !== "suivi_libre" && form.nextFollowUp) {
-        try {
-          const sbMsg = await getSupabaseClient();
-          if (sbMsg && currentUser?.id) {
-            const d = new Date(form.nextFollowUp);
-            const dateLabel = d.toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "2-digit",
-              month: "long",
-            });
-            const hourLabel = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-            const msg = `Salut ${form.firstName.trim()} ! 🎉\n\nMerci pour ce super bilan. Notre prochain RDV est confirmé :\n📅 ${dateLabel}\n⏰ ${hourLabel}\n\nÀ très vite pour ton suivi ! 💪\n${currentUser.name ?? "Coach"}`;
-            await sbMsg.from("client_messages").insert({
-              client_id: clientId,
-              client_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
-              distributor_id: currentUser.id,
-              message_type: "coach_reply",
-              message: msg,
-              sender: "coach",
-              sender_id: currentUser.id,
-            });
-          }
-        } catch (msgErr) {
-          console.warn("[auto-notif RDV] échec non bloquant:", msgErr);
-        }
-      }
-
       // Créer récap Supabase pour QR code.
       // Site 2 du durcissement audit L1 (le plus critique) :
       //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
@@ -1415,57 +1451,6 @@ export function NewAssessmentPage() {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
 
-            // Chantier unification acces client (2026-05-05) : decision
-            // intelligente du token a generer :
-            //   - Si client a deja un client_app_accounts.auth_user_id NOT NULL
-            //     (= compte deja cree dans un bilan precedent), on REUTILISE
-            //     son caa.token. URL /client/<caa_token> = auto-login PWA
-            //     SANS password (le compte existe deja, pas de signup needed).
-            //   - Sinon (premier bilan = pas de compte) : on genere un
-            //     client_invitation_tokens. URL /bienvenue?token=... = signup
-            //     PWA avec creation password.
-            //
-            // Avant : on creait toujours un nouveau invitation token, meme
-            // pour les clients qui avaient deja un compte. Romane se faisait
-            // demander un password, le consume tentait createUser sur email
-            // existant -> 409 "Edge Function non-2xx" (Safari iOS extractor
-            // bug masquait le vrai message).
-            let magicToken: string | null = null;
-            let accessKindToUse: "magic" | "caa" = "magic";
-            try {
-              // 1. Check si compte deja cree
-              const { data: existingCaa } = await sb
-                .from("client_app_accounts")
-                .select("token, auth_user_id")
-                .eq("client_id", clientId)
-                .maybeSingle();
-
-              if (existingCaa?.auth_user_id && existingCaa?.token) {
-                magicToken = existingCaa.token;
-                accessKindToUse = "caa";
-              } else {
-                // 2. Generer un client_invitation_tokens (premier bilan)
-                const bytes = new Uint8Array(24);
-                crypto.getRandomValues(bytes);
-                const generatedToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-                const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-                const { error: tokenErr } = await sb.from("client_invitation_tokens").insert({
-                  client_id: clientId,
-                  token: generatedToken,
-                  created_by: currentUser?.id,
-                  expires_at: expiresAt,
-                });
-                if (!tokenErr) {
-                  magicToken = generatedToken;
-                  accessKindToUse = "magic";
-                } else {
-                  console.warn("[NewAssessment] client_invitation_tokens insert failed:", tokenErr);
-                }
-              }
-            } catch (magicErr) {
-              console.warn("[NewAssessment] magic link gen skip:", magicErr);
-            }
-
             // Chantier Auto-journal EBE post-bilan (2026-05-04) : à chaque
             // bilan validé, on pré-crée silencieusement une entrée dans
             // ebe_journal_entries avec assessment_id lié et prospect_name
@@ -1489,22 +1474,16 @@ export function NewAssessmentPage() {
               console.warn("Auto-journal EBE skip:", ebeJournalErr);
             }
 
-            // Chantier Page remerciement post-bilan (2026-04-27) :
-            // remplace l'ouverture de ClientAccessModal par une navigation
-            // vers la page plein écran /bilan-termine (dark premium, QR,
-            // partage, parrainage, avis). La modale reste accessible
-            // depuis la fiche coach pour les usages hors-bilan.
-            // On passe en priorite le magic/caa token (auto-login PWA),
-            // sinon fallback sur le recap token. La BilanTermineePage
-            // saura distinguer via le param ?accessKind=.
-            const useToken = magicToken ?? recapData.token;
-            const accessKind = magicToken ? accessKindToUse : "recap";
-            const tokenParam = encodeURIComponent(useToken);
-            const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
-            const amountParam = programmeTotalEuros > 0 ? `&amount=${programmeTotalEuros}` : "";
-            navigate(
-              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}&accessKind=${accessKind}${amountParam}`,
-            );
+            // Chantier simplification fin de bilan (2026-07-30, demande Thomas) :
+            // avant, on naviguait vers /bilan-termine (écran QR plein écran).
+            // Ça forçait à générer un token d'accès immédiatement + poussait le
+            // coach à "valider" un RDV par défaut pour passer l'étape → 2 emails
+            // envoyés au client pour un RDV pas vraiment posé. Le lien d'accès
+            // client (QR/WhatsApp/SMS) reste disponible à tout moment depuis la
+            // fiche client (onglet Actions > Accès client, ClientAccessModal),
+            // sans dépendre de ce moment précis. On atterrit directement sur la
+            // fiche client, où le "vrai" prochain RDV se pose (Actions > RDV).
+            navigate(`/clients/${clientId}`);
             return;
           }
         }
@@ -1572,8 +1551,8 @@ export function NewAssessmentPage() {
             transform: "translateX(-50%)",
             zIndex: 999,
             background: "linear-gradient(135deg, #FAEEDA, #F0DBB0)",
-            color: "#5C3A05",
-            border: "1px solid rgba(186,117,23,0.35)",
+            color: "#0B3B36",
+            border: "1px solid rgba(15,118,110,0.35)",
             padding: "8px 16px",
             borderRadius: 999,
             fontSize: 12,
@@ -1616,13 +1595,13 @@ export function NewAssessmentPage() {
             zIndex: 30,
             padding: "10px 14px",
             borderRadius: 999,
-            background: "#BA7517",
+            background: "#0F766E",
             color: "#FFFFFF",
             border: "none",
             fontSize: 13,
             fontFamily: "DM Sans, sans-serif",
             fontWeight: 600,
-            boxShadow: "0 4px 14px rgba(186,117,23,0.4)",
+            boxShadow: "0 4px 14px rgba(15,118,110,0.4)",
             cursor: "pointer",
           }}
         >
@@ -1678,9 +1657,27 @@ export function NewAssessmentPage() {
         </div>
       )}
 
-      <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
+      {/* Le conteneur est collant : sans fond opaque, le formulaire défilerait
+          au travers du filet de progression sur téléphone. */}
+      <div
+        ref={stepRailRef}
+        className="step-rail-wrapper"
+        style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}
+      >
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
+      <style>{`
+        @media (max-width: 767px) {
+          .step-rail-wrapper {
+            padding-top: 6px !important;
+            padding-bottom: 7px !important;
+            background: color-mix(in srgb, var(--ls-bg) 88%, transparent);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 0.5px solid color-mix(in srgb, var(--ls-teal) 16%, transparent);
+          }
+        }
+      `}</style>
 
       <style>{`
         /* Refonte transitions bilan (2026-11-04) :
@@ -1731,9 +1728,9 @@ export function NewAssessmentPage() {
                   borderRadius: 22,
                   overflow: 'hidden',
                   background:
-                    'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)',
+                    'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)',
                   border:
-                    '0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))',
+                    '0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))',
                 }}
               >
                 {/* Refonte StepHero v2 (etape 5/6 chantier visuel, 2026-11-04) :
@@ -1744,8 +1741,8 @@ export function NewAssessmentPage() {
                     50%      { transform: translate(-12px, 8px) scale(1.08); }
                   }
                   @keyframes ls-hero-dot-pulse {
-                    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(239,159,39,0.50); }
-                    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(239,159,39,0.80); }
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(45,212,191,0.50); }
+                    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(45,212,191,0.80); }
                   }
                   @keyframes ls-hero-fade-up {
                     0%   { opacity: 0; transform: translateY(6px); }
@@ -1786,7 +1783,7 @@ export function NewAssessmentPage() {
                     height: 180,
                     borderRadius: '50%',
                     background:
-                      'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
+                      'color-mix(in srgb, var(--ls-teal) 14%, transparent)',
                     filter: 'blur(48px)',
                     pointerEvents: 'none',
                     willChange: 'transform',
@@ -1822,7 +1819,16 @@ export function NewAssessmentPage() {
                     gap: 16,
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* ⚠️ `minWidth: 0` + `flex: 1` (donc flex-basis 0) faisait que ce
+                      bloc ne déclenchait JAMAIS le retour à la ligne de la rangée :
+                      sa largeur de référence valant 0, il se contentait de rétrécir.
+                      Sur iPhone (rangée de 265 px), la pastille « Parcours
+                      accompagnement » est en white-space:nowrap et prend 211 px →
+                      il restait 38 px au texte, qui s'affichait à un ou deux mots
+                      par ligne sur 272 px de haut. Mesuré, pas supposé.
+                      `flexBasis: 240px` force la pastille à passer à la ligne dès
+                      qu'il reste moins de 240 px. Aucun effet en desktop (large). */}
+                  <div style={{ flex: '1 1 240px', minWidth: 0 }}>
                     <p
                       className="ls-hero-eyebrow"
                       style={{
@@ -1831,7 +1837,7 @@ export function NewAssessmentPage() {
                         fontWeight: 700,
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
-                        color: 'var(--ls-gold)',
+                        color: 'var(--ls-teal)',
                         margin: 0,
                         marginBottom: 6,
                       }}
@@ -1852,7 +1858,7 @@ export function NewAssessmentPage() {
                       <span
                         style={{
                           background:
-                            'linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 60%, var(--ls-teal) 40%) 100%)',
+                            'linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 60%, var(--ls-teal) 40%) 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
@@ -1895,7 +1901,7 @@ export function NewAssessmentPage() {
                           width: 6,
                           height: 6,
                           borderRadius: 999,
-                          background: 'var(--ls-gold)',
+                          background: 'var(--ls-teal)',
                         }}
                       />
                       <span style={{ fontWeight: 600 }}>
@@ -1927,56 +1933,105 @@ export function NewAssessmentPage() {
                   description="Les bases administratives et le contexte du client. Tout ce qu'il faut pour ouvrir un dossier propre."
                   accent="gold"
                 >
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <AssessmentFieldV2
-                      label="Prénom"
-                      icon="✦"
-                      value={form.firstName}
-                      onChange={(v) => update("firstName", v)}
-                      prefilled={prefilledFields.firstName}
-                    />
+                  {/* Deux colonnes DÈS le téléphone (audit mobile 2026-08-10).
+                      La tablette le faisait déjà — 1,58 champ par rangée contre
+                      1 sur iPhone — ce qui expliquait à lui seul 1700 px d'écart
+                      de défilement sur cette étape. Les champs qui ont besoin de
+                      largeur (date+heure, liste déroulante, libellés longs)
+                      gardent toute la ligne via `col-span-2`. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    {/* autoComplete + enterKeyHint : sur iPhone, iOS propose le
+                        contact et la touche entrée enchaîne au champ suivant au
+                        lieu d'afficher « retour ». (audit mobile 2026-08-10) */}
+                    <div ref={ancreIdentite}>
+                      <AssessmentFieldV2
+                        label="Prénom"
+                        icon="✦"
+                        required
+                        autoComplete="given-name"
+                        enterKeyHint="next"
+                        value={form.firstName}
+                        onChange={(v) => update("firstName", v)}
+                        prefilled={prefilledFields.firstName}
+                      />
+                    </div>
                     <AssessmentFieldV2
                       label="Nom"
                       icon="✦"
+                      required
+                      autoComplete="family-name"
+                      enterKeyHint="next"
                       value={form.lastName}
                       onChange={(v) => update("lastName", v)}
                       prefilled={prefilledFields.lastName}
                     />
-                    <AssessmentFieldV2
-                      label="Téléphone"
-                      icon="📞"
-                      required
-                      value={form.phone}
-                      onChange={(v) => update("phone", v)}
-                      prefilled={prefilledFields.phone}
-                    />
-                    <AssessmentFieldV2
-                      label="Email"
-                      icon="✉️"
-                      required
-                      type="email"
-                      value={form.email}
-                      onChange={(v) => update("email", v)}
-                      prefilled={prefilledFields.email}
-                    />
-                    <AssessmentFieldV2
-                      label="Invité par / recommandé par"
-                      icon="🤝"
-                      value={form.referredByName}
-                      onChange={(v) => update("referredByName", v)}
-                    />
-                    <AssessmentFieldV2
-                      label="Date et heure du bilan"
-                      icon="📅"
-                      type="datetime-local"
-                      value={form.assessmentDate}
-                      onChange={(v) => update("assessmentDate", v)}
-                    />
+                    {/* L'astérisque de ces deux champs n'était que décorative.
+                        Depuis le 2026-08-10 elle est vraie : au moins l'un des
+                        deux est exigé (cf. goToNextStep). D'où le libellé de
+                        contrainte porté par le groupe, pas par chaque champ. */}
+                    <div ref={ancreContact} className="col-span-2">
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <AssessmentFieldV2
+                          label="Téléphone"
+                          icon="📞"
+                          type="tel"
+                          autoComplete="tel"
+                          enterKeyHint="next"
+                          value={form.phone}
+                          onChange={(v) => update("phone", v)}
+                          prefilled={prefilledFields.phone}
+                        />
+                        <AssessmentFieldV2
+                          label="Email"
+                          icon="✉️"
+                          type="email"
+                          autoComplete="email"
+                          enterKeyHint="next"
+                          value={form.email}
+                          onChange={(v) => update("email", v)}
+                          prefilled={prefilledFields.email}
+                        />
+                      </div>
+                      <p
+                        style={{
+                          fontFamily: "DM Sans, sans-serif",
+                          fontSize: 11.5,
+                          color:
+                            !form.phone.trim() && !form.email.trim()
+                              ? "var(--ls-coral)"
+                              : "var(--ls-text-hint)",
+                          margin: "8px 0 0",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span aria-hidden="true" style={{ color: "var(--ls-teal)" }}>*</span>{" "}
+                        Au moins l&apos;un des deux — sans ça, pas d&apos;accès à l&apos;espace
+                        client ni de relance possible.
+                      </p>
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <AssessmentFieldV2
+                        label="Invité par / recommandé par"
+                        icon="🤝"
+                        value={form.referredByName}
+                        onChange={(v) => update("referredByName", v)}
+                      />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <AssessmentFieldV2
+                        label="Date et heure du bilan"
+                        icon="📅"
+                        type="datetime-local"
+                        value={form.assessmentDate}
+                        onChange={(v) => update("assessmentDate", v)}
+                      />
+                    </div>
                     {currentUser?.role === "admin" ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div className="col-span-2 md:col-span-1" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
                           <label
+                            htmlFor="ls-responsable-dossier"
                             style={{
                               fontFamily: "DM Sans, sans-serif",
                               fontSize: 13,
@@ -1988,6 +2043,7 @@ export function NewAssessmentPage() {
                           </label>
                         </div>
                         <select
+                          id="ls-responsable-dossier"
                           value={assignedUserId}
                           onChange={(event) => setAssignedUserId(event.target.value)}
                         >
@@ -2012,34 +2068,44 @@ export function NewAssessmentPage() {
                         ) : null}
                       </div>
                     ) : null}
-                    <ChoiceGroup
-                      label="Sexe"
-                      value={form.sex}
-                      options={["female", "male"]}
-                      onChange={(v) => update("sex", v as BiologicalSex)}
-                      formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
-                    />
-                    <AssessmentFieldV2
-                      label="Date de naissance"
-                      icon="🎂"
-                      type="date"
-                      value={form.birthDate ?? ""}
-                      onChange={(v) => {
-                        update("birthDate", v);
-                        const computed = calculateAge(v);
-                        if (computed !== null) update("age", computed);
-                      }}
-                      helper={
-                        form.birthDate && form.age > 0
-                          ? `Âge calculé : ${form.age} ans`
-                          : undefined
-                      }
-                    />
+                    <div className="col-span-2">
+                      <ChoiceGroup
+                        label="Sexe"
+                        value={form.sex}
+                        options={["female", "male"]}
+                        onChange={(v) => update("sex", v as BiologicalSex)}
+                        formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
+                      />
+                    </div>
+                    {/* Ligne entière : un champ date fait 133 px en demi-colonne,
+                        et sur iOS le « jj/mm/aaaa » plus l'icône calendrier n'y
+                        tiennent qu'à la limite. */}
+                    <div className="col-span-2 md:col-span-1">
+                      <AssessmentFieldV2
+                        label="Date de naissance"
+                        icon="🎂"
+                        type="date"
+                        value={form.birthDate ?? ""}
+                        onChange={(v) => {
+                          update("birthDate", v);
+                          const computed = calculateAge(v);
+                          if (computed !== null) update("age", computed);
+                        }}
+                        helper={
+                          form.birthDate && form.age > 0
+                            ? `Âge calculé : ${form.age} ans`
+                            : undefined
+                        }
+                      />
+                    </div>
+                    {/* `|| ""` : sans ça le champ s'ouvre pré-rempli d'un « 0 »
+                        qu'il faut sélectionner et effacer avant de taper. */}
                     <AssessmentFieldV2
                       label="Âge"
                       icon="⌛"
                       type="number"
-                      value={form.age}
+                      inputMode="numeric"
+                      value={form.age || ""}
                       onChange={(v) => update("age", Number(v))}
                       helper="Saisie manuelle si pas de date de naissance"
                     />
@@ -2047,19 +2113,24 @@ export function NewAssessmentPage() {
                       label="Taille"
                       icon="📏"
                       type="number"
-                      value={form.height}
+                      inputMode="numeric"
+                      value={form.height || ""}
                       onChange={(v) => update("height", Number(v))}
                       helper="en cm"
                     />
                     <AssessmentFieldV2
                       label="Profession"
                       icon="💼"
+                      autoComplete="organization-title"
+                      enterKeyHint="next"
                       value={form.job}
                       onChange={(v) => update("job", v)}
                     />
                     <AssessmentFieldV2
                       label="Ville"
                       icon="📍"
+                      autoComplete="address-level2"
+                      enterKeyHint="next"
                       value={form.city ?? ""}
                       onChange={(v) => update("city", v)}
                     />
@@ -2085,12 +2156,14 @@ export function NewAssessmentPage() {
                         à la fois ("prise de masse ET énergie"). Cocher "Prise de
                         masse" bascule le bilan en parcours sport (cf.
                         updateObjectiveFocus). */}
-                    <MultiChoiceGroup
-                      label="Objectifs"
-                      values={normalizeMultiValue(form.objectiveFocus)}
-                      options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
-                      onToggle={updateObjectiveFocus}
-                    />
+                    <div ref={ancreObjectifs}>
+                      <MultiChoiceGroup
+                        label="Objectifs"
+                        values={normalizeMultiValue(form.objectiveFocus)}
+                        options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
+                        onToggle={updateObjectiveFocus}
+                      />
+                    </div>
                     <TimelineChoiceField
                       label="Délai souhaité"
                       value={form.desiredTimeline}
@@ -2124,12 +2197,15 @@ export function NewAssessmentPage() {
                       icon="⚖️"
                       type="number"
                       step="0.1"
-                      value={form.targetWeight}
+                      inputMode="decimal"
+                      value={form.targetWeight || ""}
                       onChange={(v) => update("targetWeight", Number(v))}
                       helper="en kg — où le client veut aller"
                     />
                   )}
-                  <div className="grid gap-4 md:grid-cols-2">
+                  {/* Les deux tailles de vêtement tiennent côte à côte dès le
+                      téléphone : ce sont deux listes déroulantes courtes. */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <ClothingSizeSelect
                       label="Taille vêtement actuelle"
                       value={form.currentClothingSize}
@@ -2152,8 +2228,8 @@ export function NewAssessmentPage() {
                       padding: "16px 18px",
                       borderRadius: 14,
                       background:
-                        "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
-                      border: "0.5px solid color-mix(in srgb, var(--ls-gold) 14%, var(--ls-border))",
+                        "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                      border: "0.5px solid color-mix(in srgb, var(--ls-teal) 14%, var(--ls-border))",
                     }}
                   >
                     <div
@@ -2167,6 +2243,7 @@ export function NewAssessmentPage() {
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span aria-hidden="true" style={{ fontSize: 14 }}>🔥</span>
                         <label
+                          htmlFor="ls-motivation"
                           style={{
                             fontFamily: "DM Sans, sans-serif",
                             fontSize: 13,
@@ -2183,7 +2260,7 @@ export function NewAssessmentPage() {
                           fontWeight: 800,
                           fontSize: 22,
                           letterSpacing: "-0.02em",
-                          color: "var(--ls-gold)",
+                          color: "var(--ls-teal)",
                         }}
                       >
                         {form.motivation}
@@ -2193,10 +2270,12 @@ export function NewAssessmentPage() {
                       </span>
                     </div>
                     <input
+                      id="ls-motivation"
                       type="range"
                       min={0}
                       max={10}
                       value={form.motivation}
+                      aria-valuetext={`${form.motivation} sur 10`}
                       onChange={(event) => update("motivation", Number(event.target.value))}
                     />
                   </div>
@@ -2228,7 +2307,7 @@ export function NewAssessmentPage() {
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
-                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: '#C9A84C', insuffisant: '#FB7185' }
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: 'var(--ls-teal)', insuffisant: '#F2775F' }
                   const color = qColors[quality]
                   return (
                     <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -2436,7 +2515,7 @@ export function NewAssessmentPage() {
             return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
                 <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--ls-text)', margin: '0 0 8px' }}>{cfg.title}</h2>
                 <p style={{ fontSize: 13, color: 'var(--ls-text-muted)', lineHeight: 1.7, margin: 0, maxWidth: 520 }}>Construisons une assiette simple que tu peux reproduire tous les jours, sans te peser, sans calculer.</p>
               </div>
@@ -2446,7 +2525,7 @@ export function NewAssessmentPage() {
                   <PlateChartSvg legumes={cfg.legumes} proteines={cfg.proteines} glucides={cfg.glucides} />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 180 }}>
                     <MacroCardItem color="#0D9488" bg="rgba(13,148,136,0.07)" border="rgba(13,148,136,0.15)" label="Légumes" pct={cfg.legumes} desc="Volume, satiété, fibres" fraction="½" />
-                    <MacroCardItem color="var(--ls-gold)" bg="rgba(184,146,42,0.07)" border="rgba(184,146,42,0.15)" label="Protéines" pct={cfg.proteines} desc="Muscles, satiété longue" fraction="¼" />
+                    <MacroCardItem color="var(--ls-teal)" bg="rgba(184,146,42,0.07)" border="rgba(184,146,42,0.15)" label="Protéines" pct={cfg.proteines} desc="Muscles, satiété longue" fraction="¼" />
                     <MacroCardItem color="#7C3AED" bg="rgba(124,58,237,0.06)" border="rgba(124,58,237,0.12)" label="Glucides" pct={cfg.glucides} desc="Énergie, récupération" fraction="¼" />
                   </div>
                 </div>
@@ -2454,10 +2533,10 @@ export function NewAssessmentPage() {
               </div>
 
               <div style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
+                <div style={{ fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
                 {[
                   { color: '#0D9488', bg: 'rgba(13,148,136,0.08)', label: 'Légumes · la moitié', items: ['Salade verte', 'Courgettes', 'Brocolis', 'Tomates', 'Carottes', 'Poivrons', 'Concombre'] },
-                  { color: '#B8922A', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
+                  { color: '#0D9488', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
                   { color: '#7C3AED', bg: 'rgba(124,58,237,0.07)', label: 'Glucides · un quart', items: ['Riz complet', 'Patate douce', 'Quinoa', 'Pain complet', 'Pâtes complètes', 'Lentilles'] },
                 ].map(({ color, bg, label, items }, i) => (
                   <div key={label} style={{ borderTop: i > 0 ? '1px solid var(--ls-border)' : 'none', paddingTop: i > 0 ? 14 : 0, marginTop: i > 0 ? 14 : 0 }}>
@@ -2475,14 +2554,14 @@ export function NewAssessmentPage() {
               </div>
 
               <div style={{ background: 'linear-gradient(135deg, rgba(184,146,42,0.08), rgba(184,146,42,0.04))', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 16, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{ width: 38, height: 38, background: 'var(--ls-gold)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(184,146,42,0.25)' }}>
+                <div style={{ width: 38, height: 38, background: 'var(--ls-teal)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(184,146,42,0.25)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <div>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--ls-text)', marginBottom: 6 }}>La règle des 3 doigts</div>
                   <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.75 }}>
                     Pas besoin de peser. Utilise ta main comme repère :<br/>
-                    <span style={{ color: 'var(--ls-gold)', fontWeight: 600 }}>Protéines</span> = 1 paume · <span style={{ color: '#7C3AED', fontWeight: 600 }}>Glucides</span> = 1 poing fermé · <span style={{ color: '#0D9488', fontWeight: 600 }}>Légumes</span> = 2 mains ouvertes
+                    <span style={{ color: 'var(--ls-teal)', fontWeight: 600 }}>Protéines</span> = 1 paume · <span style={{ color: '#7C3AED', fontWeight: 600 }}>Glucides</span> = 1 poing fermé · <span style={{ color: '#0D9488', fontWeight: 600 }}>Légumes</span> = 2 mains ouvertes
                   </div>
                 </div>
               </div>
@@ -2517,9 +2596,9 @@ export function NewAssessmentPage() {
                     alignItems: 'center',
                     gap: 14,
                     padding: '14px 18px',
-                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))',
-                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
-                    borderLeft: '3px solid var(--ls-gold)',
+                    background: 'color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
+                    borderLeft: '3px solid var(--ls-teal)',
                     borderRadius: 12,
                   }}
                 >
@@ -2529,16 +2608,16 @@ export function NewAssessmentPage() {
                   </span>
                   {form.age > 0 && (
                     <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                      Âge : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.age}</strong> ans
+                      Âge : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-teal)' }}>{form.age}</strong> ans
                     </span>
                   )}
                   {form.height > 0 && (
                     <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                      Taille : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.height}</strong> cm
+                      Taille : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-teal)' }}>{form.height}</strong> cm
                     </span>
                   )}
                   <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
-                    Sexe : <strong style={{ fontFamily: 'Syne, serif', fontSize: 15, color: 'var(--ls-gold)' }}>{form.sex === 'male' ? 'Homme' : 'Femme'}</strong>
+                    Sexe : <strong style={{ fontFamily: 'Syne, serif', fontSize: 15, color: 'var(--ls-teal)' }}>{form.sex === 'male' ? 'Homme' : 'Femme'}</strong>
                   </span>
                 </div>
               )}
@@ -2579,13 +2658,13 @@ export function NewAssessmentPage() {
                   range: MetricRange;
                   unit?: string;
                 }> = [
-                  { label: 'Poids', key: 'weight', icon: '⚖️', color: 'var(--ls-gold)', step: '0.1', range: weightRange, unit: 'kg' },
+                  { label: 'Poids', key: 'weight', icon: '⚖️', color: 'var(--ls-teal)', step: '0.1', range: weightRange, unit: 'kg' },
                   { label: 'Masse grasse', key: 'bodyFat', icon: '🔥', color: 'var(--ls-coral)', step: '0.1', range: bodyFatRange, unit: '%' },
                   { label: 'Masse musculaire', key: 'muscleMass', icon: '💪', color: 'var(--ls-teal)', step: '0.1', range: muscleRange, unit: 'kg' },
                   { label: 'Hydratation', key: 'hydration', icon: '💧', color: 'var(--ls-purple)', step: '0.1', range: hydrationRange, unit: '%' },
                   { label: 'Masse osseuse', key: 'boneMass', icon: '🦴', color: 'var(--ls-text-muted)', step: '0.1', range: boneRange, unit: 'kg' },
                   { label: 'Graisse viscérale', key: 'visceralFat', icon: '🫀', color: 'var(--ls-coral)', range: visceralRange },
-                  { label: 'BMR', key: 'bmr', icon: '⚡', color: 'var(--ls-gold)', range: bmrRange, unit: 'kcal' },
+                  { label: 'BMR', key: 'bmr', icon: '⚡', color: 'var(--ls-teal)', range: bmrRange, unit: 'kcal' },
                   { label: 'Âge métabolique', key: 'metabolicAge', icon: '🧬', color: 'var(--ls-purple)', range: ageMetaRange, unit: 'ans' },
                 ];
 
@@ -2630,7 +2709,7 @@ export function NewAssessmentPage() {
                       padding: '14px 18px',
                       borderRadius: 14,
                       background: isComplete
-                        ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 100%)'
+                        ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 100%)'
                         : 'var(--ls-surface)',
                       border: isComplete
                         ? '0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)'
@@ -2675,7 +2754,7 @@ export function NewAssessmentPage() {
                             letterSpacing: 1.4,
                             textTransform: 'uppercase',
                             fontWeight: 700,
-                            color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                            color: isComplete ? 'var(--ls-teal)' : 'var(--ls-teal)',
                             fontFamily: 'DM Sans, sans-serif',
                           }}
                         >
@@ -2702,7 +2781,7 @@ export function NewAssessmentPage() {
                           fontWeight: 800,
                           fontSize: 28,
                           letterSpacing: '-0.03em',
-                          color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                          color: isComplete ? 'var(--ls-teal)' : 'var(--ls-teal)',
                         }}
                       >
                         {filled}/{total}
@@ -2723,11 +2802,11 @@ export function NewAssessmentPage() {
                           height: '100%',
                           width: `${(filled / total) * 100}%`,
                           background: isComplete
-                            ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-gold))'
-                            : 'linear-gradient(90deg, var(--ls-gold), #BA7517)',
+                            ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-teal))'
+                            : 'linear-gradient(90deg, var(--ls-teal), #0F766E)',
                           borderRadius: 999,
                           transition: 'width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-                          boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(239,159,39,0.45)',
+                          boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(45,212,191,0.45)',
                         }}
                       />
                     </div>
@@ -2797,11 +2876,11 @@ export function NewAssessmentPage() {
                   <BodyScanRadar
                     size={280}
                     metrics={[
-                      { label: 'Poids', value: form.weight, max: 120, color: '#C9A84C' },
-                      { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
+                      { label: 'Poids', value: form.weight, max: 120, color: 'var(--ls-teal)' },
+                      { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#F2775F' },
                       { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
                       { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
-                      { label: 'Viscéral', value: form.visceralFat, max: 30, color: '#FB7185' },
+                      { label: 'Viscéral', value: form.visceralFat, max: 30, color: '#F2775F' },
                     ]}
                   />
                 </Card>
@@ -2901,7 +2980,7 @@ export function NewAssessmentPage() {
                     padding: "14px 18px",
                     borderRadius: 14,
                     background:
-                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-teal) 6%, transparent))",
                     border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
                   }}
                 >
@@ -2975,11 +3054,11 @@ export function NewAssessmentPage() {
                     padding: 12,
                     borderRadius: 22,
                     background:
-                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
                     border:
-                      "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+                      "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
                     boxShadow:
-                      "0 12px 40px -16px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                      "0 12px 40px -16px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
                     overflow: "hidden",
                   }}
                 >
@@ -2993,7 +3072,7 @@ export function NewAssessmentPage() {
                       width: 220,
                       height: 220,
                       borderRadius: "50%",
-                      background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+                      background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
                       filter: "blur(64px)",
                       pointerEvents: "none",
                     }}
@@ -3007,14 +3086,14 @@ export function NewAssessmentPage() {
                       zIndex: 2,
                       padding: "6px 12px",
                       borderRadius: 999,
-                      background: "color-mix(in srgb, var(--ls-gold) 90%, var(--ls-bg))",
+                      background: "color-mix(in srgb, var(--ls-teal) 90%, var(--ls-bg))",
                       color: "var(--ls-bg)",
                       fontFamily: "DM Sans, sans-serif",
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: "0.14em",
                       textTransform: "uppercase",
-                      boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+                      boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-teal) 35%, transparent)",
                     }}
                   >
                     ✦ Signature La Base 360
@@ -3058,7 +3137,7 @@ export function NewAssessmentPage() {
                   <span
                     style={{
                       background:
-                        "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+                        "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-lime) 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
@@ -3134,9 +3213,9 @@ export function NewAssessmentPage() {
                   overflow: 'hidden',
                   padding: '20px 24px',
                   borderRadius: 20,
-                  background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 50%, #5C3A05 100%)',
-                  border: '0.5px solid color-mix(in srgb, var(--ls-gold) 60%, transparent)',
-                  boxShadow: '0 12px 32px -8px rgba(186,117,23,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  background: 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 50%, #0B3B36 100%)',
+                  border: '0.5px solid color-mix(in srgb, var(--ls-teal) 60%, transparent)',
+                  boxShadow: '0 12px 32px -8px rgba(15,118,110,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
                   marginBottom: 4,
                 }}
               >
@@ -3258,11 +3337,11 @@ export function NewAssessmentPage() {
                     <section className="space-y-3">
                       <BilanSectionDivider
                         number={1}
-                        eyebrow="Tes besoins detectes"
+                        eyebrow="Tes besoins détectés"
                         title="Ce que ton corps demande"
                         description={form.objective === "sport"
-                          ? "Hydratation, proteines et profil sportif personnalise."
-                          : "Hydratation et proteines calculees sur ton poids actuel."}
+                          ? "Hydratation, protéines et profil sportif personnalisé."
+                          : "Hydratation et protéines calculées sur ton poids actuel."}
                         color="teal"
                       />
 
@@ -3300,7 +3379,7 @@ export function NewAssessmentPage() {
                           </div>
                           <div>
                             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
-                              🥩 Proteines cible
+                              🥩 Protéines cible
                             </div>
                             <div
                               style={{
@@ -3335,7 +3414,7 @@ export function NewAssessmentPage() {
                           )}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 12, fontFamily: "DM Sans, sans-serif" }}>
-                          Calcule sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
+                          Calculé sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
                         </div>
                       </div>
                     </section>
@@ -3347,26 +3426,40 @@ export function NewAssessmentPage() {
                   <section className="space-y-3">
                     <BilanSectionDivider
                       number={2}
-                      eyebrow="Le programme coeur"
+                      eyebrow="Le programme cœur"
                       title={chosenProgram ? `Programme : ${chosenProgram.title}` : "Choisis le programme adapte"}
                       description="La base nutritionnelle qui structure ta journee. 4 niveaux pour s&apos;adapter a ton mode de vie."
                       color="gold"
                     />
 
+                    {/* Sous 1280 px — liste comparable (maquette validée
+                        2026-08-10). Les cartes ne mettent jamais les cinq prix
+                        en regard : à 375 px elles s'empilent, à 479 px la 5e
+                        reste orpheline, à 768 px c'est 4 + 1. Or choisir un
+                        programme, c'est comparer quatre prix.
+                        Au-delà de 1280 px la mise en page bureau a la place de
+                        les aligner — elle garde les cartes, refonte à venir. */}
+                    <div className="xl:hidden">
+                      <ProgramChoiceList
+                        programs={programmesDisponibles}
+                        activeId={form.programChoice}
+                        onSelect={(id) => update("programChoice", id)}
+                        detailFor={decrireProgramme}
+                      />
+                    </div>
+
                     <div
-                      className="grid gap-3"
+                      className="hidden gap-3 xl:grid"
                       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
                     >
-                      {PROGRAM_CHOICES
-                        .filter((p) => p.category === form.objective || p.category === "unit")
-                        .map((p) => (
-                          <ProgramChoiceCard
-                            key={p.id}
-                            program={p}
-                            active={form.programChoice === p.id}
-                            onSelect={() => update("programChoice", p.id)}
-                          />
-                        ))}
+                      {programmesDisponibles.map((p) => (
+                        <ProgramChoiceCard
+                          key={p.id}
+                          program={p}
+                          active={form.programChoice === p.id}
+                          onSelect={() => update("programChoice", p.id)}
+                        />
+                      ))}
                     </div>
 
                     {/* Banner confirmation supprime (2026-04-29) — le hero
@@ -3385,7 +3478,7 @@ export function NewAssessmentPage() {
 
                   {/* ═══════════════════════════════════════════════════════
                       § 3 · POUR ALLER PLUS LOIN (coral)
-                      Boosters sport + besoins detectes + upsells.
+                      Boosters sport + besoins détectés + upsells.
                       Affichee meme en perte de poids (pour besoins + upsells).
                       ═══════════════════════════════════════════════════════ */}
                   {(form.objective === "sport" ||
@@ -3396,7 +3489,7 @@ export function NewAssessmentPage() {
                         number={3}
                         eyebrow="Pour aller plus loin"
                         title="Ce qu&apos;on peut ajouter au programme"
-                        description="Boosters, besoins detectes par le bilan, options. Tout est optionnel."
+                        description="Boosters, besoins détectés par le bilan, options. Tout est optionnel."
                         color="coral"
                       />
 
@@ -3421,7 +3514,7 @@ export function NewAssessmentPage() {
                               transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -3498,7 +3591,7 @@ export function NewAssessmentPage() {
                           transition: "box-shadow 0.2s ease",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.boxShadow = "none";
@@ -3519,10 +3612,10 @@ export function NewAssessmentPage() {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
-                              Besoins detectes
+                              Besoins détectés
                             </div>
                             <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
-                              Ce que le bilan fait ressortir en priorite
+                              Ce que le bilan fait ressortir en priorité
                             </div>
                           </div>
                           {recommendationPlan.needs.length > 0 && (
@@ -3555,7 +3648,7 @@ export function NewAssessmentPage() {
                           </div>
                         ) : (
                           <div className="rounded-[12px] bg-[var(--ls-surface2)] p-4 text-sm leading-7 text-[var(--ls-text-muted)]">
-                            Le bilan ne fait pas ressortir une priorite forte. On peut partir sur la base simple,
+                            Le bilan ne fait pas ressortir une priorité forte. On peut partir sur la base simple,
                             puis personnaliser au premier suivi.
                           </div>
                         )}
@@ -3574,7 +3667,7 @@ export function NewAssessmentPage() {
                             transition: "box-shadow 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(242,119,95,0.30)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.boxShadow = "none";
@@ -3640,13 +3733,13 @@ export function NewAssessmentPage() {
                   <section className="space-y-3">
                     <BilanSectionDivider
                       number={4}
-                      eyebrow="Suite apres le bilan"
-                      title="La personne demarre maintenant ou revient plus tard ?"
-                      description="Choix du jour : demarrage immediat ou bilan sans demarrage (a relancer plus tard)."
+                      eyebrow="Suite après le bilan"
+                      title="La personne démarre maintenant ou revient plus tard ?"
+                      description="Choix du jour : démarrage immédiat ou bilan sans démarrage (à relancer plus tard)."
                       color="purple"
                       rightSlot={
                         <StatusBadge
-                          label={startsImmediately ? "Demarrage maintenant" : "A relancer"}
+                          label={startsImmediately ? "Démarrage maintenant" : "À relancer"}
                           tone={startsImmediately ? "green" : "amber"}
                         />
                       }
@@ -3674,8 +3767,8 @@ export function NewAssessmentPage() {
                       </div>
                       <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
                         {[
-                          { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
-                          { value: "pending" as const, label: "A relancer plus tard", subtitle: "Bilan sans demarrage immediat", emoji: "⏳", color: "#A78BFA" },
+                          { value: "started" as const, label: "Démarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
+                          { value: "pending" as const, label: "À relancer plus tard", subtitle: "Bilan sans démarrage immédiat", emoji: "⏳", color: "#A78BFA" },
                         ].map((opt) => {
                           const isActive = form.afterAssessmentAction === opt.value;
                           return (
@@ -3786,8 +3879,17 @@ export function NewAssessmentPage() {
 
                 </div>
 
-                {/* ─── Colonne ticket sticky ──────────────────────────── */}
+                {/* ─── Colonne ticket sticky ────────────────────────────
+                    `xl:block` depuis le 2026-08-10 : cette colonne n'est
+                    réellement latérale qu'à partir de 1280 px (c'est le seuil
+                    du `xl:grid-cols` ci-dessus). En dessous, elle retombait en
+                    fin de flux — à 69 % de la page sur tablette, 82 % sur
+                    iPhone — et `position: sticky` ne la faisait jamais remonter :
+                    un bloc collant en fin de conteneur ne se fige qu'une fois
+                    qu'on est arrivé dessus. C'est la barre tactile qui porte le
+                    panier sous ce seuil. */}
                 <div
+                  className="hidden xl:block"
                   style={{
                     position: "sticky",
                     top: 16,
@@ -3849,40 +3951,38 @@ export function NewAssessmentPage() {
                   onComplete={() => setShowFelicitationsConfetti(false)}
                 />
               ) : null}
-              {showValidationBanner && !hasFollowUpPlanned ? (
-                <ValidationBlockedBanner
-                  onBack={() => {
-                    setShowValidationBanner(false);
-                    goToStepId('follow-up');
-                  }}
-                />
-              ) : null}
               <FelicitationsStep
                 clientFirstName={form.firstName}
                 coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
                 programChoice={form.programChoice}
-                onSave={() => {
-                  if (!hasFollowUpPlanned) {
-                    setShowValidationBanner(true);
-                    return;
-                  }
-                  void handleSaveAssessment();
-                }}
+                onSave={() => void handleSaveAssessment()}
                 saving={saving}
               />
             </>
           )}
 
-          {/* Avertissement validation */}
+          {/* Avertissement validation — BUREAU uniquement (`hidden md:block`).
+              Sur téléphone le message vit dans la barre de navigation, au ras du
+              pouce ; le laisser ici aussi le ferait annoncer DEUX FOIS par
+              VoiceOver. `display:none` le sort de l'arbre d'accessibilité, donc
+              un seul des deux parle selon la taille d'écran. */}
           {stepWarning && (
-            <div className="rounded-[14px] border border-[rgba(201,168,76,0.25)] bg-[rgba(201,168,76,0.08)] px-4 py-3 text-sm text-[#C9A84C]">
+            <div
+              ref={stepWarningRef}
+              role="alert"
+              aria-live="assertive"
+              className="hidden rounded-[14px] border border-[rgba(var(--ls-teal-rgb),0.25)] bg-[rgba(var(--ls-teal-rgb),0.08)] px-4 py-3 text-sm text-[var(--ls-teal)] md:block">
               {stepWarning}
             </div>
           )}
 
           {/* Footer navigation desktop — refonte premium V2 (2026-04-29) */}
+          {/* Navigation bureau — `xl` et non `md` depuis le 2026-08-10 : sous
+              1280 px c'est la barre tactile qui prend le relais, tablette
+              comprise. Deux navigations affichées en même temps sur iPad,
+              c'était le défaut à éviter. */}
           <div
-            className="hidden items-center justify-between gap-3 md:flex"
+            className="hidden items-center justify-between gap-3 xl:flex"
             style={{
               marginTop: 24,
               paddingTop: 18,
@@ -3912,7 +4012,7 @@ export function NewAssessmentPage() {
               onMouseEnter={(e) => {
                 if (currentStep > 0) {
                   e.currentTarget.style.transform = 'translateX(-2px)';
-                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))';
                   e.currentTarget.style.color = 'var(--ls-text)';
                 }
               }}
@@ -3968,7 +4068,7 @@ export function NewAssessmentPage() {
                   border: 'none',
                   background: currentStep === steps.length - 1
                     ? 'var(--ls-surface2)'
-                    : 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                    : 'linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)',
                   color: currentStep === steps.length - 1 ? 'var(--ls-text-hint)' : '#FFFFFF',
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -3980,7 +4080,7 @@ export function NewAssessmentPage() {
                   letterSpacing: '-0.005em',
                   boxShadow: currentStep === steps.length - 1
                     ? 'none'
-                    : '0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
+                    : '0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
                   transition: 'transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease',
                   opacity: currentStep === steps.length - 1 ? 0.55 : 1,
                 }}
@@ -4000,33 +4100,233 @@ export function NewAssessmentPage() {
               </button>
             </div>
           </div>
-          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
-            <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ls-text-hint)' }}>
-                Étape {currentStep + 1} / {steps.length}
+          {/* Barre de navigation tactile — téléphone ET tablette.
+              Le seuil est passé de `md` (768) à `xl` (1280) le 2026-08-10 : la
+              colonne panier de la mise en page bureau ne démarre qu'à `xl`, donc
+              sous ce seuil — iPhone, iPad, petit portable — le panier se
+              retrouve en fin de flux, à 69 % de la page sur tablette et 82 % sur
+              iPhone. Coller un bloc en fin de conteneur ne le fait jamais
+              remonter : il ne se fige qu'une fois qu'on est arrivé dessus.
+
+              `bottom-20` (80 px) réservait par ailleurs la place de la BottomNav,
+              que BottomNav.tsx:29 masque sur cette route depuis le 2026-07-01.
+              Ces 80 px n'étaient donc pas vides : le formulaire continuait
+              dessous, et au body scan un champ tapable s'y trouvait. */}
+          {/* « Enregistrer le bilan » quitte la barre permanente pour la fin du
+              formulaire : on enregistre quand on a fini de saisir, pas à chaque
+              écran. Ça rend 46 px à chaque écran du bilan. */}
+          <Button
+            variant="secondary"
+            className="mt-4 w-full justify-center xl:hidden"
+            onClick={() => void handleSaveAssessment()}
+          >
+            Enregistrer le bilan
+          </Button>
+
+          {/* La raison du blocage s'affiche ICI, collée au-dessus de « Suivante »,
+              là où le pouce vient de taper — et non 1259 px plus bas comme avant
+              (décision Thomas, 2026-08-10). L'écran, lui, part sur le champ à
+              corriger. Le bloc `role="alert"` du flux reste pour le bureau, où
+              cette barre n'existe pas. */}
+          <div
+            className="sticky bottom-0 z-20 -mx-4 mt-3 flex flex-col xl:hidden"
+            style={{
+              background: 'color-mix(in srgb, var(--ls-bg) 92%, transparent)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderTop: '0.5px solid color-mix(in srgb, var(--ls-teal) 18%, var(--ls-border))',
+              color: 'var(--ls-text)',
+            }}
+          >
+            {/* Le total du panier, en permanence, sur l'étape qui le construit.
+                Avant : il fallait défiler jusqu'à 82 % de la page pour découvrir
+                le montant qu'on venait de composer. (maquette validée
+                2026-08-10) — 44 px de plus sur CET écran seulement. */}
+            {currentStepId === 'program' ? (
+              <button
+                type="button"
+                onClick={() => setPanierOuvert((v) => !v)}
+                aria-expanded={panierOuvert}
+                aria-controls="ls-panier-detail"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  width: '100%',
+                  minHeight: 44,
+                  padding: '6px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-border) 70%, transparent)',
+                  color: 'var(--ls-text)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 15, flex: 'none' }}>🛒</span>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 12,
+                    color: 'var(--ls-text-muted)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {panierProgramme.titreProgramme ?? 'Aucun programme retenu'}
+                  {panierProgramme.nbAjouts
+                    ? ` + ${panierProgramme.nbAjouts} ajout${panierProgramme.nbAjouts > 1 ? 's' : ''}`
+                    : ''}
+                </span>
+                <span
+                  style={{
+                    flex: 'none',
+                    fontFamily: 'Syne, sans-serif',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: 16,
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ls-lime)',
+                  }}
+                >
+                  {enEuros(panierProgramme.total)}
+                </span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    flex: 'none',
+                    fontSize: 11,
+                    color: 'var(--ls-text-hint)',
+                    transform: panierOuvert ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 200ms ease',
+                  }}
+                >
+                  ⌃
+                </span>
+              </button>
+            ) : null}
+
+            {currentStepId === 'program' && panierOuvert ? (
+              <div
+                id="ls-panier-detail"
+                style={{
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                  padding: '9px 16px 11px',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-border) 70%, transparent)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 12,
+                }}
+              >
+                <p style={{ margin: '0 0 3px', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--ls-text-hint)' }}>
+                  Programme
+                </p>
+                {panierProgramme.titreProgramme && panierProgramme.prixProgramme ? (
+                  <p style={{ margin: 0, display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0' }}>
+                    <span>{panierProgramme.titreProgramme}</span>
+                    <span style={{ fontVariantNumeric: 'tabular-nums' }}>{enEuros(panierProgramme.prixProgramme)}</span>
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, padding: '4px 0', color: 'var(--ls-text-hint)' }}>
+                    À l&apos;unité — pas de programme cadre.
+                  </p>
+                )}
+
+                <p style={{ margin: '7px 0 3px', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--ls-text-hint)' }}>
+                  Ajouts
+                </p>
+                {panierProgramme.lignes.length ? (
+                  panierProgramme.lignes.map((l) => (
+                    <p key={l.id} style={{ margin: 0, display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0', borderBottom: '0.5px dashed color-mix(in srgb, var(--ls-border) 60%, transparent)' }}>
+                      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {l.nom}{l.qte > 1 ? ` × ${l.qte}` : ''}
+                      </span>
+                      <span style={{ fontVariantNumeric: 'tabular-nums', flex: 'none' }}>
+                        {enEuros(l.prix * l.qte)}
+                      </span>
+                    </p>
+                  ))
+                ) : (
+                  <p style={{ margin: 0, padding: '4px 0', color: 'var(--ls-text-hint)' }}>
+                    Aucun ajout retenu pour l&apos;instant.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogModal(true)}
+                  style={{
+                    marginTop: 9,
+                    minHeight: 44,
+                    width: '100%',
+                    borderRadius: 11,
+                    border: '0.5px solid var(--ls-border)',
+                    background: 'var(--ls-surface)',
+                    color: 'var(--ls-text-muted)',
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🛍️ Ajouter un produit du catalogue
+                </button>
+              </div>
+            ) : null}
+
+            {stepWarning ? (
+              <p
+                role="alert"
+                aria-live="assertive"
+                style={{
+                  margin: 0,
+                  padding: '9px 16px',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 12.5,
+                  lineHeight: 1.4,
+                  fontWeight: 550,
+                  color: 'var(--ls-coral)',
+                  background: 'color-mix(in srgb, var(--ls-coral) 10%, transparent)',
+                  borderBottom: '0.5px solid color-mix(in srgb, var(--ls-coral) 25%, transparent)',
+                }}
+              >
+                <span aria-hidden="true" style={{ marginRight: 6 }}>⚠️</span>
+                {stepWarning}
               </p>
-              <p className="text-xs" style={{ color: 'var(--ls-text-muted)' }}>{steps[currentStep]}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-center"
-                onClick={goToPreviousStep}
-                disabled={currentStep === 0}
-              >
-                Précédente
-              </Button>
-              <Button
-                className="w-full justify-center"
-                onClick={goToNextStep}
-                disabled={currentStep === steps.length - 1}
-              >
-                Suivante
-              </Button>
-            </div>
-            <Button variant="secondary" className="mt-2 w-full justify-center" onClick={() => void handleSaveAssessment()}>
-              Enregistrer le bilan
+            ) : null}
+            <div className="flex items-center gap-2 px-4" style={{ height: 56 }}>
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0}
+              aria-label="Étape précédente"
+              style={{
+                width: 44,
+                height: 44,
+                flex: 'none',
+                borderRadius: 12,
+                border: '0.5px solid var(--ls-border)',
+                background: 'var(--ls-surface)',
+                color: currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)',
+                fontSize: 18,
+                lineHeight: 1,
+                cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+                opacity: currentStep === 0 ? 0.45 : 1,
+              }}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <Button
+              className="h-11 min-h-[44px] flex-1 justify-center"
+              onClick={goToNextStep}
+              disabled={currentStep === steps.length - 1}
+            >
+              Suivante
             </Button>
+            </div>
           </div>
           {saveError ? (
             <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
@@ -4146,10 +4446,12 @@ function ClothingSizeSelect({
   const sizes =
     sex === "female" ? femaleSizes : sex === "male" ? maleSizes : Array.from(new Set([...femaleSizes, ...maleSizes])).sort((a, b) => a - b);
 
+  const selectId = useId();
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <label htmlFor={selectId} className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <select id={selectId} value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">— Choisir —</option>
         {sizes.map((size) => (
           <option key={size} value={size}>{size}</option>
@@ -4221,10 +4523,11 @@ function DecimalInput({
 }
 
 function AreaField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void; }) {
+  const areaId = useId();
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
+      <label htmlFor={areaId} className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <textarea id={areaId} rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }
@@ -4256,15 +4559,18 @@ function MultiChoiceGroup({
   hint?: string;
 }) {
   const selected = normalizeMultiValue(values);
+  // Même correctif que ChoiceGroup : role="group" + aria-labelledby, sinon la
+  // question n'est jamais annoncée. (audit mobile 2026-08-10)
+  const groupId = useId();
   return (
     <div className="space-y-2">
-      <label className="ls-field-label">
+      <span id={groupId} className="ls-field-label">
         {label}
         <span style={{ fontWeight: 400, color: "var(--ls-text-muted)", marginLeft: 6 }}>
           {hint ?? "· plusieurs possibles"}
         </span>
-      </label>
-      <div className="flex flex-wrap gap-2">
+      </span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = selected.includes(option);
           return (
@@ -4308,10 +4614,16 @@ function ChoiceGroup({
   onChange: (value: string) => void;
   formatOption?: (value: string) => string;
 }) {
+  // Un <label> ne peut pas nommer un groupe de boutons : il n'a pas de contrôle
+  // à désigner, donc VoiceOver ne l'annonce jamais et la question elle-même est
+  // perdue. `role="group"` + `aria-labelledby` est le seul motif qui la restitue.
+  // (.ls-field-label est en display:block, le passage en <span> ne change rien.)
+  const groupId = useId();
+
   return (
     <div className="space-y-2">
-      <label className="ls-field-label">{label}</label>
-      <div className="flex flex-wrap gap-2">
+      <span id={groupId} className="ls-field-label">{label}</span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = value === option;
           return (
@@ -4422,11 +4734,15 @@ function TimelineChoiceField({
   onChange: (value: string) => void;
 }) {
   const isCustom = Boolean(value && !options.includes(value));
+  // Même correctif d'accessibilité que ChoiceGroup, + un libellé propre sur la
+  // saisie libre qui suit les pastilles. (audit mobile 2026-08-10)
+  const groupId = useId();
+  const libreId = useId();
 
   return (
     <div className="space-y-3">
-      <label className="ls-field-label">{label}</label>
-      <div className="flex flex-wrap gap-2">
+      <span id={groupId} className="ls-field-label">{label}</span>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isActive = value === option;
           return (
@@ -4465,7 +4781,9 @@ function TimelineChoiceField({
           Choix libre
         </button>
       </div>
+      <label htmlFor={libreId} className="sr-only">{label} — saisie libre</label>
       <input
+        id={libreId}
         value={isCustom ? value : ""}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Ex : 2 mois, 4 mois, 5 mois"
@@ -4536,7 +4854,7 @@ function PlateChartSvg({ legumes, proteines, glucides }: { legumes: number; prot
     <svg width="180" height="180" viewBox="0 0 180 180" style={{ flexShrink: 0 }}>
       <circle cx={cx} cy={cy} r={R + 4} fill="var(--ls-surface2)" stroke="var(--ls-border)" strokeWidth="1"/>
       {slice(a1, legumes, '#0D9488')}
-      {slice(a2, proteines, '#B8922A')}
+      {slice(a2, proteines, '#0D9488')}
       {slice(a3, glucides, '#7C3AED')}
       <circle cx={cx} cy={cy} r={36} fill="var(--ls-surface)"/>
       <circle cx={cx} cy={cy} r={R + 4} fill="none" stroke="var(--ls-border)" strokeWidth="1.5"/>

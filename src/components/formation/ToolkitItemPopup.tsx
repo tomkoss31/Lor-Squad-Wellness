@@ -21,7 +21,7 @@ import { useAppContext } from "../../context/AppContext";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
 const CATEGORY_ACCENT: Record<FormationToolkitItem["category"], string> = {
-  prospection: "var(--ls-gold)",
+  prospection: "var(--ls-teal)",
   bilan: "var(--ls-teal)",
   suivi: "var(--ls-purple)",
   business: "var(--ls-coral)",

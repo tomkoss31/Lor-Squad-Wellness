@@ -32,7 +32,7 @@ function formatHoursPending(h: number): string {
 
 export function FormationReviewCard({ row, isAdminRelay = false, onActionDone }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const accentVar = isAdminRelay ? "var(--ls-purple)" : "var(--ls-gold)";
+  const accentVar = isAdminRelay ? "var(--ls-purple)" : "var(--ls-teal)";
 
   const hasSponsor = "sponsor_name" in row;
   const sponsorName = hasSponsor ? (row as FormationAdminRelayRow).sponsor_name : null;

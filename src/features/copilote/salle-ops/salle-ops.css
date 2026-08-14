@@ -62,3 +62,8 @@
   /* Sur desktop, ces sections vivent dans le rail → on masque leur version inline. */
   .ls-ops-hide-desktop { display: none !important; }
 }
+
+/* Cockpit plein écran : on masque la barre de nav du bas (mobile) — elle
+   flottait au-dessus de l'overlay (sorties accidentelles). La classe est posée
+   sur <body> par SalleOpsQuotidien tant que le cockpit plein écran est monté. */
+body.ls-ops-cockpit-open .bottom-nav { display: none !important; }

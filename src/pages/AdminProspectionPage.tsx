@@ -101,10 +101,10 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
       type="button"
       onClick={onClick}
       style={{
-        background: active ? "var(--ls-gold)" : "transparent",
+        background: active ? "var(--ls-teal)" : "transparent",
         color: active ? "var(--ls-charcoal)" : "var(--ls-text-muted)",
         border: "none",
-        borderBottom: active ? "3px solid var(--ls-gold)" : "3px solid transparent",
+        borderBottom: active ? "3px solid var(--ls-teal)" : "3px solid transparent",
         padding: "10px 18px",
         fontSize: 14,
         fontWeight: 700,
@@ -289,7 +289,7 @@ function KindPill({ kind }: { kind: ProspectionScriptKind }) {
     first_contact: { bg: "var(--ls-surface2)", color: "var(--ls-text-muted)", label: "1er contact" },
     j3_followup:   { bg: "#FEF3C7", color: "#92400E", label: "Relance J+3" },
     referral:      { bg: "rgba(45,212,191,0.15)", color: "#0F766E", label: "Après reco" },
-    pitch:         { bg: "rgba(139,92,246,0.15)", color: "#6D28D9", label: "Pitch" },
+    pitch:         { bg: "rgba(167, 139, 250,0.15)", color: "#6D28D9", label: "Pitch" },
     direct:        { bg: "rgba(45,212,191,0.10)", color: "#0F766E", label: "Direct" },
   };
   const c = colors[kind];
@@ -559,7 +559,7 @@ function BriefEditor({
                 type="button"
                 onClick={() => togglePlatform(p)}
                 style={{
-                  background: recommendedPlatforms.includes(p) ? "var(--ls-gold)" : "var(--ls-surface2)",
+                  background: recommendedPlatforms.includes(p) ? "var(--ls-teal)" : "var(--ls-surface2)",
                   color: recommendedPlatforms.includes(p) ? "var(--ls-charcoal)" : "var(--ls-text-muted)",
                   border: "1px solid var(--ls-border)",
                   padding: "6px 12px",
@@ -651,7 +651,7 @@ const selectStyle: React.CSSProperties = {
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--ls-gold), #E5C97D)",
+  background: "linear-gradient(135deg, var(--ls-teal), #E5C97D)",
   color: "var(--ls-charcoal)",
   border: "none",
   padding: "10px 16px",

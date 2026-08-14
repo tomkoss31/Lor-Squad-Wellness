@@ -3,6 +3,7 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { hasRequiredRole } from "../../lib/auth";
 import type { UserRole } from "../../types/domain";
+import { LogoSting } from "../brand/LogoSting";
 
 export function ProtectedRoute() {
   const { authReady, currentUser } = useAppContext();
@@ -162,11 +163,15 @@ function AuthBootSplash() {
       <div
         style={{
           minHeight: "100vh",
+          // Charte 2026-08 : vert profond du club + halos teal/lime. Avant,
+          // c'était #0B0D11 (le noir bleuté abandonné) avec des halos
+          // émeraude/violet/cyan de l'identité G3 — le premier écran de l'app
+          // était donc le dernier resté sur l'ancienne palette.
           background:
-            "radial-gradient(ellipse at top, rgba(16,185,129,0.10) 0%, transparent 55%), " +
-            "radial-gradient(ellipse at bottom right, rgba(139,92,246,0.08) 0%, transparent 55%), " +
-            "radial-gradient(ellipse at bottom left, rgba(6,182,212,0.06) 0%, transparent 55%), " +
-            "#0B0D11",
+            "radial-gradient(ellipse at top, rgba(45,212,191,0.12) 0%, transparent 55%), " +
+            "radial-gradient(ellipse at bottom right, rgba(197,248,42,0.07) 0%, transparent 55%), " +
+            "radial-gradient(ellipse at bottom left, rgba(45,212,191,0.06) 0%, transparent 55%), " +
+            "#162624",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -189,7 +194,7 @@ function AuthBootSplash() {
             maxWidth: "85vw",
             maxHeight: "85vw",
             background:
-              "radial-gradient(circle, rgba(16,185,129,0.20) 0%, rgba(6,182,212,0.15) 30%, rgba(139,92,246,0.10) 55%, transparent 75%)",
+              "radial-gradient(circle, rgba(45,212,191,0.20) 0%, rgba(45,212,191,0.13) 30%, rgba(197,248,42,0.08) 55%, transparent 75%)",
             transform: "translate(-50%, -50%)",
             pointerEvents: "none",
             animation: "lb360-glow-pulse 4.5s ease-in-out infinite",
@@ -232,7 +237,7 @@ function AuthBootSplash() {
                 inset: 0,
                 borderRadius: "50%",
                 background:
-                  "conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.0) 18%, #10B981 38%, #06B6D4 52%, #8B5CF6 66%, transparent 84%)",
+                  "conic-gradient(from 0deg, transparent 0%, rgba(45,212,191,0) 18%, #2DD4BF 38%, #2DD4BF 52%, #C5F82A 66%, transparent 84%)",
                 WebkitMask:
                   "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px))",
                 mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px))",
@@ -248,7 +253,7 @@ function AuthBootSplash() {
                 inset: 6,
                 borderRadius: "50%",
                 background:
-                  "conic-gradient(from 180deg, transparent 0%, rgba(139,92,246,0.5) 30%, rgba(6,182,212,0.35) 50%, transparent 70%)",
+                  "conic-gradient(from 180deg, transparent 0%, rgba(197,248,42,0.45) 30%, rgba(45,212,191,0.35) 50%, transparent 70%)",
                 WebkitMask:
                   "radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px))",
                 mask: "radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px))",
@@ -257,18 +262,16 @@ function AuthBootSplash() {
                 willChange: "transform",
               }}
             />
-            <img
-              src="/brand/labase360/app-icon-512.svg"
-              alt="La Base 360"
+            {/* Le logo se DESSINE pendant l'attente (sting validé Thomas, 2026-08-09) :
+                l'anneau se trace, la barre claque, le B se révèle par le bas. Le
+                temps de chargement devient un moment de marque au lieu d'un vide. */}
+            <LogoSting
+              size={116}
               className="lb360-anim"
               style={{
-                width: 116,
-                height: 116,
-                borderRadius: 26,
-                animation: "lb360-logo-breathe 4s ease-in-out infinite 600ms",
                 willChange: "transform, opacity",
                 filter:
-                  "drop-shadow(0 0 28px rgba(16,185,129,0.35)) drop-shadow(0 12px 32px rgba(6,182,212,0.25))",
+                  "drop-shadow(0 0 28px rgba(45,212,191,0.35)) drop-shadow(0 12px 32px rgba(197,248,42,0.18))",
               }}
             />
           </div>
@@ -280,8 +283,8 @@ function AuthBootSplash() {
             style={{
               padding: "5px 16px",
               borderRadius: 100,
-              background: "rgba(16,185,129,0.08)",
-              border: "0.5px solid rgba(16,185,129,0.28)",
+              background: "rgba(45,212,191,0.08)",
+              border: "0.5px solid rgba(45,212,191,0.28)",
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 9.5,
               fontWeight: 600,
@@ -329,7 +332,7 @@ function AuthBootSplash() {
                 fontStyle: "italic",
                 fontWeight: 400,
                 background:
-                  "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                  "linear-gradient(135deg, #F4EFE4 0%, #2DD4BF 55%, #C5F82A 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -394,9 +397,9 @@ function AuthBootSplash() {
                 height: "100%",
                 borderRadius: 99,
                 background:
-                  "linear-gradient(90deg, transparent, #10B981 25%, #06B6D4 55%, #8B5CF6 85%, transparent)",
+                  "linear-gradient(90deg, transparent, #2DD4BF 30%, #C5F82A 70%, transparent)",
                 animation: "lb360-bar-sweep 1.8s ease-in-out infinite",
-                boxShadow: "0 0 14px rgba(6,182,212,0.45)",
+                boxShadow: "0 0 14px rgba(45,212,191,0.45)",
                 willChange: "transform",
               }}
             />
@@ -452,19 +455,19 @@ function AuthBootSplash() {
                 fontSize: 13,
                 fontWeight: 500,
                 color: "rgba(240,237,232,0.8)",
-                background: "rgba(16,185,129,0.07)",
-                border: "0.5px solid rgba(16,185,129,0.3)",
+                background: "rgba(45,212,191,0.07)",
+                border: "0.5px solid rgba(45,212,191,0.3)",
                 padding: "10px 22px",
                 borderRadius: 100,
                 cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(16,185,129,0.14)";
+                e.currentTarget.style.background = "rgba(45,212,191,0.14)";
                 e.currentTarget.style.color = "#F0EDE8";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(16,185,129,0.07)";
+                e.currentTarget.style.background = "rgba(45,212,191,0.07)";
                 e.currentTarget.style.color = "rgba(240,237,232,0.8)";
               }}
             >

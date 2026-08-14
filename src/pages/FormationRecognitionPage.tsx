@@ -53,7 +53,7 @@ const DEFAULT_PALIERS: PalierTemplate[] = [
 
 const TIER_META: Record<PalierTemplate["tier"], { color: string; label: string }> = {
   starter: { color: "var(--ls-teal)", label: "Démarrage" },
-  mid: { color: "var(--ls-gold)", label: "Construction" },
+  mid: { color: "var(--ls-teal)", label: "Construction" },
   elite: { color: "var(--ls-purple)", label: "Élite" },
 };
 
@@ -143,7 +143,7 @@ export function FormationRecognitionPage() {
           padding: "20px 22px",
           borderRadius: 18,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 100%)",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
           border: "0.5px solid color-mix(in srgb, var(--ls-coral) 28%, var(--ls-border))",
           fontFamily: "DM Sans, sans-serif",
         }}
@@ -200,7 +200,7 @@ export function FormationRecognitionPage() {
             style={{
               width: `${progress}%`,
               height: "100%",
-              background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-gold) 50%, var(--ls-coral) 100%)",
+              background: "linear-gradient(90deg, var(--ls-teal) 0%, var(--ls-teal) 50%, var(--ls-coral) 100%)",
               borderRadius: 999,
               transition: "width 700ms cubic-bezier(0.4, 0, 0.2, 1)",
             }}

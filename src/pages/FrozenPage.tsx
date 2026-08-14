@@ -54,8 +54,8 @@ export function FrozenPage() {
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 50%), " +
-          "radial-gradient(ellipse at bottom right, rgba(139,92,246,0.05) 0%, transparent 50%), " +
+          "radial-gradient(ellipse at top left, rgba(45, 212, 191,0.06) 0%, transparent 50%), " +
+          "radial-gradient(ellipse at bottom right, rgba(167, 139, 250,0.05) 0%, transparent 50%), " +
           "#FFFFFF",
         display: "flex",
         flexDirection: "column",
@@ -106,8 +106,8 @@ export function FrozenPage() {
           style={{
             padding: "6px 18px",
             borderRadius: 100,
-            background: "rgba(16,185,129,0.06)",
-            border: "0.5px solid rgba(16,185,129,0.18)",
+            background: "rgba(45, 212, 191,0.06)",
+            border: "0.5px solid rgba(45, 212, 191,0.18)",
             fontSize: 10,
             fontWeight: 600,
             letterSpacing: "0.32em",
@@ -147,7 +147,7 @@ export function FrozenPage() {
             ton accès est temporairement{" "}
             <span
               style={{
-                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -181,8 +181,8 @@ export function FrozenPage() {
               width: "100%",
               padding: 20,
               borderRadius: 14,
-              background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.06))",
-              border: "1px solid rgba(16,185,129,0.25)",
+              background: "linear-gradient(135deg, rgba(45, 212, 191,0.08), rgba(45, 212, 191,0.06))",
+              border: "1px solid rgba(45, 212, 191,0.25)",
               animation: "frozen-fade-up 400ms ease-out both",
             }}
           >
@@ -228,7 +228,7 @@ export function FrozenPage() {
                 boxSizing: "border-box",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#10B981";
+                e.currentTarget.style.borderColor = "#2DD4BF";
                 e.currentTarget.style.background = "#FFFFFF";
               }}
               onBlur={(e) => {
@@ -249,23 +249,23 @@ export function FrozenPage() {
                 color: "#FFFFFF",
                 background: submitting
                   ? "#94A3B8"
-                  : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                  : "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
                 border: "none",
                 borderRadius: 14,
                 cursor: submitting ? "wait" : "pointer",
-                boxShadow: submitting ? "none" : "0 4px 16px rgba(16,185,129,0.30)",
+                boxShadow: submitting ? "none" : "0 4px 16px rgba(45, 212, 191,0.30)",
                 transition: "all 0.2s ease",
                 letterSpacing: 0.2,
               }}
               onMouseEnter={(e) => {
                 if (!submitting) {
-                  e.currentTarget.style.boxShadow = "0 6px 24px rgba(16,185,129,0.40)";
+                  e.currentTarget.style.boxShadow = "0 6px 24px rgba(45, 212, 191,0.40)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!submitting) {
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.30)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(45, 212, 191,0.30)";
                   e.currentTarget.style.transform = "translateY(0)";
                 }
               }}

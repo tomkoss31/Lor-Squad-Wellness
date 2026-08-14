@@ -283,7 +283,7 @@ function DueRow({
     ? "var(--ls-coral)"
     : upcoming
       ? "var(--ls-teal)"
-      : "var(--ls-gold)";
+      : "var(--ls-teal)";
 
   return (
     <div style={rowStyle}>
@@ -316,7 +316,7 @@ function DueRow({
 
 function CountBadge({ late, today }: { late: number; today: number }) {
   const total = late + today;
-  const color = late > 0 ? "var(--ls-coral)" : total > 0 ? "var(--ls-gold)" : "var(--ls-teal)";
+  const color = late > 0 ? "var(--ls-coral)" : total > 0 ? "var(--ls-teal)" : "var(--ls-teal)";
   return (
     <div
       style={{
@@ -514,8 +514,8 @@ const sendBtnStyle: React.CSSProperties = {
   padding: "8px 14px",
   borderRadius: 9,
   border: "none",
-  background: "var(--ls-gold)",
-  color: "var(--ls-gold-contrast, #0B0D11)",
+  background: "var(--ls-teal)",
+  color: "var(--ls-teal-contrast, #0B0D11)",
   fontSize: 12,
   fontWeight: 700,
   cursor: "pointer",

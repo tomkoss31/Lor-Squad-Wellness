@@ -12,12 +12,14 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { RANK_ORDER, RANK_LABELS } from "../types/domain";
 import type { HerbalifeRank } from "../types/domain";
 import { useTeamTree } from "../hooks/useTeamData";
 import { buildTreeFromRows, TreeLevel } from "./TeamPage";
+import { StrategyPlanCalculator } from "../components/marketing/StrategyPlanCalculator";
 
 // Critères clés (factuels, condensés) par rang — repère de progression.
 // Seuils alignés sur docs/HERBALIFE_PALIERS_REGLES.md (MAJ 2026-06-09).
@@ -151,6 +153,13 @@ export function PlanMarketingPage() {
   const [ladderZoom, setLadderZoom] = useState(1);
   const [treeZoom, setTreeZoom] = useState(1);
   const [openRank, setOpenRank] = useState<HerbalifeRank | null>(null);
+  // Onglet : « Ma progression » (l'échelle des rangs, existant) OU « Projection
+  // 12 mois » (le Strategy Plan calculator, sorti de l'oubli — demande Thomas).
+  // Deep-link `?tab=projection` (renvoi depuis la formation / boîte à outils).
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<"progression" | "projection">(
+    searchParams.get("tab") === "projection" ? "projection" : "progression",
+  );
 
   // Échelle affichée du plus haut (en haut) au plus bas (on grimpe).
   const ladder = useMemo(() => [...RANK_ORDER].reverse(), []);
@@ -174,7 +183,7 @@ export function PlanMarketingPage() {
           --ls-tree-line: color-mix(in srgb, var(--ls-teal) 34%, var(--ls-border));
           padding: 30px 18px 24px; border-radius: 18px;
           background:
-            radial-gradient(130% 70% at 50% -8%, color-mix(in srgb, var(--ls-gold) 7%, transparent), transparent 58%),
+            radial-gradient(130% 70% at 50% -8%, color-mix(in srgb, var(--ls-teal) 7%, transparent), transparent 58%),
             radial-gradient(70% 60% at 100% 112%, color-mix(in srgb, var(--ls-purple) 6%, transparent), transparent 60%),
             radial-gradient(70% 60% at 0% 112%, color-mix(in srgb, var(--ls-teal) 6%, transparent), transparent 60%);
         }
@@ -196,19 +205,50 @@ export function PlanMarketingPage() {
         La Base 360 · Herbalife
       </div>
       <h1 style={{ fontFamily: "Anton, sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: "clamp(28px, 5vw, 44px)", lineHeight: 1.02, letterSpacing: "-1.5px", margin: "6px 0 0", color: "var(--ls-text)" }}>
-        <span style={{ background: "linear-gradient(100deg, var(--ls-gold), var(--ls-teal))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>Plan Marketing</span>
+        <span style={{ background: "linear-gradient(100deg, var(--ls-teal), var(--ls-teal))", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>Plan Marketing</span>
       </h1>
       <p style={{ margin: "8px 0 24px", color: "var(--ls-text-muted)", fontSize: 15, maxWidth: 560, fontFamily: "DM Sans, sans-serif" }}>
         Le chemin des rangs Herbalife, du Distributor au President's Team. Repère où tu en es et le prochain palier à viser.
       </p>
 
+      {/* Onglets : progression (rangs) | projection (calculateur Strategy Plan) */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+        {([["progression", "🏔️ Ma progression"], ["projection", "🧮 Projection 12 mois"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            style={{
+              padding: "9px 16px", borderRadius: 999, cursor: "pointer", fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 700,
+              border: tab === id ? "1.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+              background: tab === id ? "color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface))" : "var(--ls-surface)",
+              color: tab === id ? "var(--ls-teal)" : "var(--ls-text-muted)",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "projection" ? (
+        <div>
+          <p style={{ fontSize: 13.5, color: "var(--ls-text-muted)", margin: "0 0 16px", maxWidth: 620, lineHeight: 1.5 }}>
+            Ton GPS chiffré : règle ta cadence (clients, récurrents, panier, coachs) et vois ta projection sur 12 mois — VP, revenus, et les rangs que tu débloques.{" "}
+            <b style={{ color: "var(--ls-text)" }}>Commence par « je veux gagner combien&nbsp;? »</b>, le reste se calcule.
+          </p>
+          <StrategyPlanCalculator />
+        </div>
+      ) : null}
+
+      {tab === "progression" ? (
+      <>
       {/* ── SECTION A : l'échelle ───────────────────────────────────────── */}
       <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 22, padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "var(--ls-text)" }}>🏔️ L'échelle des rangs</div>
             <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-              Tu es <b style={{ color: "var(--ls-gold)" }}>{RANK_LABELS[myRank]}</b>
+              Tu es <b style={{ color: "var(--ls-teal)" }}>{RANK_LABELS[myRank]}</b>
               {myIndex < RANK_ORDER.length - 1 ? <> · prochain : <b>{RANK_LABELS[RANK_ORDER[myIndex + 1]]}</b></> : " · sommet atteint 🏆"}
             </div>
           </div>
@@ -221,7 +261,7 @@ export function PlanMarketingPage() {
               const idx = RANK_ORDER.indexOf(rank);
               const isCurrent = idx === myIndex;
               const achieved = idx < myIndex;
-              const tone = isCurrent ? "var(--ls-gold)" : achieved ? "var(--ls-teal)" : "var(--ls-border)";
+              const tone = isCurrent ? "var(--ls-teal)" : achieved ? "var(--ls-teal)" : "var(--ls-border)";
               return (
                 <button
                   key={rank}
@@ -232,22 +272,22 @@ export function PlanMarketingPage() {
                     display: "flex", alignItems: "center", gap: 14, textAlign: "left", width: "100%", cursor: "pointer",
                     padding: "10px 14px", borderRadius: 16,
                     background: isCurrent
-                      ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))"
+                      ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))"
                       : achieved ? "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface))" : "var(--ls-surface2)",
-                    border: `1px solid ${isCurrent ? "color-mix(in srgb, var(--ls-gold) 55%, transparent)" : "var(--ls-border)"}`,
-                    boxShadow: isCurrent ? "0 10px 26px -10px color-mix(in srgb, var(--ls-gold) 55%, transparent)" : "none",
+                    border: `1px solid ${isCurrent ? "color-mix(in srgb, var(--ls-teal) 55%, transparent)" : "var(--ls-border)"}`,
+                    boxShadow: isCurrent ? "0 10px 26px -10px color-mix(in srgb, var(--ls-teal) 55%, transparent)" : "none",
                     opacity: achieved || isCurrent ? 1 : 0.72,
                     transition: "transform 140ms ease-out, box-shadow 140ms ease-out",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 20px -10px rgba(0,0,0,0.28)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = isCurrent ? "0 10px 26px -10px color-mix(in srgb, var(--ls-gold) 55%, transparent)" : "none"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = isCurrent ? "0 10px 26px -10px color-mix(in srgb, var(--ls-teal) 55%, transparent)" : "none"; }}
                 >
                   <RankPinBadge rank={rank} size={isCurrent ? "lg" : "md"} glow={isCurrent} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: isCurrent ? 17 : 14.5, color: "var(--ls-text)" }}>{RANK_LABELS[rank]}</span>
                       {isCurrent ? (
-                        <span style={{ fontSize: 11.5, fontWeight: 800, color: "#1a1407", background: "var(--ls-gold)", padding: "2px 10px", borderRadius: 999 }}>⬅ Tu es là</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 800, color: "#1a1407", background: "var(--ls-teal)", padding: "2px 10px", borderRadius: 999 }}>⬅ Tu es là</span>
                       ) : achieved ? (
                         <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-teal)" }}>✓ atteint</span>
                       ) : null}
@@ -289,6 +329,8 @@ export function PlanMarketingPage() {
           )}
         </div>
       ) : null}
+      </>
+      ) : null}
 
       {/* ── Pop-up éducatif d'un rang ───────────────────────────────────── */}
       {openRank ? (
@@ -300,16 +342,16 @@ export function PlanMarketingPage() {
           onClick={(e) => { if (e.target === e.currentTarget) setOpenRank(null); }}
           style={{ position: "fixed", inset: 0, zIndex: 9000, background: "color-mix(in srgb, var(--ls-bg) 72%, transparent)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 12px", fontFamily: "DM Sans, sans-serif" }}
         >
-          <div style={{ width: "100%", maxWidth: 480, maxHeight: "90dvh", overflowY: "auto", background: "var(--ls-surface)", border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))", borderRadius: 24, boxShadow: "0 28px 70px -20px rgba(0,0,0,0.55)" }}>
+          <div style={{ width: "100%", maxWidth: 480, maxHeight: "90dvh", overflowY: "auto", background: "var(--ls-surface)", border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))", borderRadius: 24, boxShadow: "0 28px 70px -20px rgba(0,0,0,0.55)" }}>
             {/* En-tête : gros pin + nom */}
-            <div style={{ position: "relative", textAlign: "center", padding: "26px 20px 20px", background: "radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--ls-gold) 16%, transparent), transparent 60%)", borderRadius: "24px 24px 0 0" }}>
+            <div style={{ position: "relative", textAlign: "center", padding: "26px 20px 20px", background: "radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--ls-teal) 16%, transparent), transparent 60%)", borderRadius: "24px 24px 0 0" }}>
               <button type="button" onClick={() => setOpenRank(null)} aria-label="Fermer" style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: 999, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 16 }}>✕</button>
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <RankPinBadge rank={openRank} size="xl" glow />
               </div>
               <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: "var(--ls-text)", marginTop: 12, letterSpacing: "-0.02em" }}>{RANK_LABELS[openRank]}</div>
               {openRank === myRank ? (
-                <span style={{ display: "inline-block", marginTop: 6, fontSize: 11.5, fontWeight: 800, color: "#1a1407", background: "var(--ls-gold)", padding: "3px 12px", borderRadius: 999 }}>⬅ Ton rang actuel</span>
+                <span style={{ display: "inline-block", marginTop: 6, fontSize: 11.5, fontWeight: 800, color: "#1a1407", background: "var(--ls-teal)", padding: "3px 12px", borderRadius: 999 }}>⬅ Ton rang actuel</span>
               ) : null}
             </div>
 

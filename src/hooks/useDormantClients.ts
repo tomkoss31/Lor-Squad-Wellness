@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { FRAICHEUR, cleDuJour, lireAvecFraicheur } from "../lib/cacheFraicheur";
 
 export type DormantUrgency = "never" | "high" | "medium" | "recent";
 
@@ -47,7 +48,7 @@ export const URGENCY_META: Record<DormantUrgency, { label: string; color: string
   },
   medium: {
     label: "Dormant",
-    color: "var(--ls-gold)",
+    color: "var(--ls-teal)",
     emoji: "🟡",
     subText: "90 à 149 jours",
   },
@@ -67,7 +68,7 @@ export function useDormantClients(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (forcer = false) => {
     if (!distributorId) {
       setClients([]);
       setLoading(false);
@@ -75,24 +76,37 @@ export function useDormantClients(
     }
     setLoading(true);
     setError(null);
-    const sb = await getSupabaseClient();
-    if (!sb) {
-      setError("Connexion Supabase indisponible");
-      setLoading(false);
-      return;
-    }
-    const { data, error: e } = await sb.rpc("get_dormant_clients", {
-      p_distributor_id: distributorId,
-      p_threshold_days: thresholdDays,
-    });
-    if (e) {
-      setError(e.message);
+    try {
+      // QUATRE composants appellent cette même RPC au démarrage du Co-pilote :
+      // le widget Dormants, « Qui inviter », le Plan du jour et la check-list.
+      // Le cache partagé n'en laisse partir qu'une (audit 2026-08-12).
+      //
+      // Rythme : une fois par jour (décision Thomas, 2026-08-12). Un client
+      // « dormant depuis 60 jours » ne cesse pas de l'être en cours de matinée.
+      // `refetch` force la relecture — c'est la porte de sortie quand le coach
+      // vient de relancer quelqu'un et veut le voir disparaître de la liste.
+      const rows = await lireAvecFraicheur<DormantClient[]>(
+        cleDuJour(`dormants:${distributorId}:${thresholdDays}`),
+        FRAICHEUR.JOUR,
+        async () => {
+          const sb = await getSupabaseClient();
+          if (!sb) throw new Error("Connexion Supabase indisponible");
+          const { data, error: e } = await sb.rpc("get_dormant_clients", {
+            p_distributor_id: distributorId,
+            p_threshold_days: thresholdDays,
+          });
+          if (e) throw new Error(e.message);
+          return (data ?? []) as DormantClient[];
+        },
+        { forcer },
+      );
+      setClients(rows);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Service indisponible");
       setClients([]);
+    } finally {
       setLoading(false);
-      return;
     }
-    setClients((data ?? []) as DormantClient[]);
-    setLoading(false);
   }, [distributorId, thresholdDays]);
 
   useEffect(() => {
@@ -101,5 +115,9 @@ export function useDormantClients(
 
   const totalPv = clients.reduce((sum, c) => sum + (c.pv_potential ?? 0), 0);
 
-  return { clients, totalPv, loading, error, refetch: fetch };
+  // `refetch` force : sans ça, un rappel juste après une relance rendrait la
+  // liste inchangée pendant vingt-quatre heures.
+  const refetch = useCallback(() => fetch(true), [fetch]);
+
+  return { clients, totalPv, loading, error, refetch };
 }

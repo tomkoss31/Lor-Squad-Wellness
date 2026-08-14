@@ -19,8 +19,16 @@ import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
-const REPLY_TO_DEFAULT = "contact@labase360.fr";
+const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Date Paris au format YYYY-MM-DD — doit rester IDENTIQUE à celle de
+ *  `client-rdv-reminder`, les deux écrivent la même clé. */
+function parisDateStr(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(iso));
+}
 
 function parisDateLabel(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -105,10 +113,18 @@ serve(async (req) => {
     });
     const ok = await sendViaResend(to, "✅ Ton prochain rendez-vous est confirmé", html);
     if (ok) {
-      await sb.from("client_rdv_reminders_sent").upsert(
-        { follow_up_id: followUpId, kind: "confirm_email" },
-        { onConflict: "follow_up_id,kind", ignoreDuplicates: true },
+      const { error: markErr } = await sb.from("client_rdv_reminders_sent").upsert(
+        {
+          follow_up_id: followUpId,
+          kind: "confirm_email",
+          rdv_date: parisDateStr(fu.due_date as string),
+        },
+        { onConflict: "follow_up_id,kind,rdv_date", ignoreDuplicates: true },
       );
+      // Le mail est DÉJÀ parti à ce stade : un marqueur non posé ne doit pas
+      // faire croire à un échec, mais il ne doit pas non plus rester muet —
+      // c'est ce silence-là qui a laissé vivre l'incident du 2026-08-14.
+      if (markErr) console.warn("[rdv-confirm-client] marqueur non posé :", markErr.message);
     }
     return jsonResponse({ ok: true, sent: ok });
   } catch (err) {

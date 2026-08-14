@@ -181,11 +181,11 @@ export function BilanOnlineMerciPage() {
         }}>
           {hasCoach ? (
             <>Ton bilan est arrivé chez{" "}
-              <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>{coachName}</strong>.
+              <strong style={{ color: "var(--teal-text)", fontWeight: 600 }}>{coachName}</strong>.
             </>
           ) : (
             <>Ton bilan est arrivé chez l'équipe{" "}
-              <strong style={{ color: PUBLIC_TOKENS.teal, fontWeight: 600 }}>La Base 360</strong>.
+              <strong style={{ color: "var(--teal-text)", fontWeight: 600 }}>La Base 360</strong>.
             </>
           )}
         </p>

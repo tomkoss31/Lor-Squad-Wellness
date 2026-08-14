@@ -19,6 +19,7 @@ import {
   buildCrmRelanceMessage,
   type CrmMessageContext,
 } from "../lib/crmMessages";
+import { messageDeRelance } from "../features/crm/qualification";
 import { CRM_SOURCE_META, type CrmLead } from "./useCrmLeads";
 
 export interface LeadQuickActions {
@@ -111,12 +112,18 @@ export function useLeadQuickActions(lead: CrmLead, msgCtx: CrmMessageContext): L
   const isIntention = lead.source === "intention";
   const message = isIntention
     ? buildAskContactMessage(lead, msgCtx)
-    : lead.status === "contacted"
-      ? buildCrmRelanceMessage(lead, msgCtx)
-      : buildCrmMessage(lead, msgCtx);
+    : // Quand on SAIT ce qui s'est passé au dernier appel, le message le dit.
+      // La relance générique (« mon précédent message a pu passer à la
+      // trappe ») sonne faux face à quelqu'un qui a promis de rappeler — et
+      // c'est exactement ce que la ligne affiche juste au-dessus du bouton.
+      lead.derniereReponse
+      ? messageDeRelance(lead.derniereReponse, lead.firstName, msgCtx.coachFirstName)
+      : lead.status === "contacted"
+        ? buildCrmRelanceMessage(lead, msgCtx)
+        : buildCrmMessage(lead, msgCtx);
   const messageLabel = isIntention
     ? "Demander le contact"
-    : lead.status === "contacted"
+    : lead.derniereReponse || lead.status === "contacted"
       ? "Relance douce"
       : "1er contact";
 

@@ -54,7 +54,7 @@ export function ConfirmDialog({
 
   const toneAccent =
     tone === "danger" ? "var(--ls-coral)" :
-    tone === "warning" ? "var(--ls-gold)" :
+    tone === "warning" ? "var(--ls-coral)" :
     "var(--ls-teal)";
   const toneEmoji = tone === "danger" ? "⚠️" : tone === "warning" ? "💡" : "✨";
 
@@ -192,7 +192,7 @@ export function ConfirmDialog({
               background: tone === "danger"
                 ? "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)"
                 : tone === "warning"
-                ? "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)"
+                ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
                 : "linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%)",
               color: "white",
               fontFamily: "Syne, sans-serif",
@@ -203,7 +203,7 @@ export function ConfirmDialog({
               boxShadow: tone === "danger"
                 ? "0 6px 16px -4px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
                 : tone === "warning"
-                ? "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
+                ? "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)"
                 : "0 6px 16px -4px rgba(13,148,136,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
               transition: "transform 0.15s, filter 0.15s",
             }}

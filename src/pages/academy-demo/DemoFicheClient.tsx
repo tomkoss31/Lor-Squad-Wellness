@@ -72,7 +72,7 @@ export function DemoFicheClient() {
               width: 56,
               height: 56,
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #B8922A, #BA7517)",
+              background: "linear-gradient(135deg, #0D9488, #0F766E)",
               color: "white",
               display: "flex",
               alignItems: "center",
@@ -108,8 +108,8 @@ export function DemoFicheClient() {
               data-tour-id="client-send-access"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
               style={{
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-                boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
+                boxShadow: "0 2px 6px rgba(15,118,110,0.25)",
                 fontFamily: "DM Sans, sans-serif",
                 border: "none",
                 cursor: "pointer",
@@ -163,7 +163,7 @@ export function DemoFicheClient() {
             label="Poids"
             value={`${DEMO_CLIENT.weight} kg`}
             delta={DEMO_CLIENT.weightDelta}
-            color="#B8922A"
+            color="#0D9488"
             icon="⚖️"
           />
           <MetricTile
@@ -245,7 +245,7 @@ export function DemoFicheClient() {
                 fontFamily: "Syne, sans-serif",
                 fontSize: 22,
                 fontWeight: 600,
-                color: "#B8922A",
+                color: "#0D9488",
                 margin: 0,
               }}
             >
@@ -286,7 +286,7 @@ export function DemoFicheClient() {
                     fontFamily: "Syne, sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "#B8922A",
+                    color: "#0D9488",
                     margin: 0,
                   }}
                 >
@@ -421,7 +421,7 @@ export function DemoFicheClient() {
             <p
               style={{
                 fontSize: 10,
-                color: "#B8922A",
+                color: "#0D9488",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 margin: 0,
@@ -705,13 +705,13 @@ function FakeAccessModal({
 
         <div
           style={{
-            background: "rgba(186,117,23,0.06)",
-            border: "1px dashed rgba(186,117,23,0.3)",
+            background: "rgba(15,118,110,0.06)",
+            border: "1px dashed rgba(15,118,110,0.3)",
             borderRadius: 10,
             padding: "10px 12px",
             marginBottom: 14,
             fontSize: 12,
-            color: "#5C3A05",
+            color: "#0B3B36",
           }}
         >
           🎓 Mode démo — aucun token réel n&apos;est généré.
@@ -810,7 +810,7 @@ function FakeAccessModal({
             width: "100%",
             padding: "11px 12px",
             borderRadius: 10,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             border: "none",
             color: "#FFFFFF",
             cursor: "pointer",

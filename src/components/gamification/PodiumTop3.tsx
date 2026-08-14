@@ -15,14 +15,14 @@ import { useEffect, useRef, useState } from "react";
 export type PodiumAccent = "gold" | "purple" | "teal" | "coral";
 
 const ACCENT_MAP: Record<PodiumAccent, { primary: string; secondary: string; cssVar: string }> = {
-  gold:   { primary: "#EF9F27", secondary: "#BA7517", cssVar: "var(--ls-gold)" },
+  gold:   { primary: "#2DD4BF", secondary: "#0F766E", cssVar: "var(--ls-teal)" },
   purple: { primary: "#A78BFA", secondary: "#7F77DD", cssVar: "var(--ls-purple)" },
   teal:   { primary: "#2DD4BF", secondary: "#0F6E56", cssVar: "var(--ls-teal)" },
-  coral:  { primary: "#FB7185", secondary: "#DC2626", cssVar: "var(--ls-coral)" },
+  coral:  { primary: "#F2775F", secondary: "#DC2626", cssVar: "var(--ls-coral)" },
 };
 
 const MEDAL_COLORS = {
-  1: { bg: "linear-gradient(135deg, #FFD89B 0%, #C9A84C 50%, #5C3A05 100%)", glow: "rgba(239,159,39,0.55)" },
+  1: { bg: "linear-gradient(135deg, #FFD89B 0%, #2DD4BF 50%, #0B3B36 100%)", glow: "rgba(45,212,191,0.55)" },
   2: { bg: "linear-gradient(135deg, #E5E7EB 0%, #9CA3AF 50%, #4B5563 100%)", glow: "rgba(156,163,175,0.45)" },
   3: { bg: "linear-gradient(135deg, #FCD9A1 0%, #B87333 50%, #5C2D02 100%)", glow: "rgba(184,115,51,0.45)" },
 };
@@ -172,7 +172,7 @@ export function PodiumTop3({ entries, accent, scoreSuffix = "", currentUserId }:
                     top: -22,
                     fontSize: 28,
                     animation: "ls-podium-crown-float 3s ease-in-out infinite",
-                    filter: "drop-shadow(0 2px 6px rgba(239,159,39,0.55))",
+                    filter: "drop-shadow(0 2px 6px rgba(45,212,191,0.55))",
                     zIndex: 5,
                   }}
                 >

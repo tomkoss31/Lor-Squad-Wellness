@@ -24,7 +24,7 @@ const SHAKE_BAR_APP_URL = Deno.env.get("SHAKE_BAR_APP_URL") ?? "";
 const DEFAULT_COACH_SLUG = "melanie";
 
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
-const REPLY_TO_DEFAULT = "contact@labase360.fr";
+const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const corsHeaders = {

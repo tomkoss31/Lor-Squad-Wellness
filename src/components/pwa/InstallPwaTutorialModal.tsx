@@ -107,7 +107,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
           className="ls-pwa-panel"
           style={{
             background: "var(--ls-surface)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
             borderRadius: 22,
             width: "100%",
             maxWidth: 460,
@@ -116,14 +116,14 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
             flexDirection: "column",
             overflow: "hidden",
             boxShadow:
-              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(239,159,39,0.20)",
+              "0 24px 64px -16px rgba(0,0,0,0.40), 0 1px 0 0 rgba(45,212,191,0.20)",
           }}
         >
           {/* HEADER GOLD */}
           <div
             style={{
               padding: "16px 20px",
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+              background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
               color: "#FFFFFF",
               display: "flex",
               alignItems: "center",
@@ -210,7 +210,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                 minHeight: 200,
                 padding: "16px 0",
                 background:
-                  "radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
+                  "radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
                 borderRadius: 14,
                 border: "0.5px dashed var(--ls-border)",
               }}
@@ -254,7 +254,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
             style={{
               padding: "14px 22px",
               borderTop: "0.5px solid var(--ls-border)",
-              background: "color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface))",
+              background: "color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface))",
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -276,9 +276,9 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                     border: "none",
                     background:
                       i === stage
-                        ? "linear-gradient(135deg, var(--ls-gold) 0%, #BA7517 100%)"
+                        ? "linear-gradient(135deg, var(--ls-teal) 0%, #0F766E 100%)"
                         : i < stage
-                          ? "color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                          ? "color-mix(in srgb, var(--ls-teal) 50%, transparent)"
                           : "var(--ls-border)",
                     cursor: "pointer",
                     transition: "all 0.25s ease",
@@ -330,7 +330,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                 padding: "10px 18px",
                 borderRadius: 999,
                 border: "none",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "#FFFFFF",
                 fontSize: 13,
                 fontWeight: 700,
@@ -340,7 +340,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
                 alignItems: "center",
                 gap: 6,
                 boxShadow:
-                  "0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                  "0 6px 16px -4px rgba(15,118,110,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
                 transition: "transform 0.15s ease, filter 0.15s ease",
                 letterSpacing: "-0.005em",
               }}
@@ -405,7 +405,7 @@ const IosStage1Svg = (
           width: "100%",
           height: "100%",
           background:
-            "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+            "linear-gradient(135deg, #2DD4BF 0%, #0F766E 60%, #0B3B36 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -484,9 +484,9 @@ const IosStage2Svg = (
             justifyContent: "center",
             width: 22,
             height: 22,
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             borderRadius: 6,
-            boxShadow: "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(186,117,23,0.45)",
+            boxShadow: "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
           }}
         >
           {/* Icone Partager (square + arrow up) */}
@@ -503,7 +503,7 @@ const IosStage2Svg = (
               left: "50%",
               transform: "translateX(-50%)",
               fontSize: 22,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
             }}
             className="ls-pwa-pulse"
           >
@@ -562,13 +562,13 @@ const IosStage3Svg = (
               alignItems: "center",
               gap: 6,
               background: item.highlight
-                ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                 : "transparent",
-              border: item.highlight ? "1px solid var(--ls-gold)" : "none",
+              border: item.highlight ? "1px solid var(--ls-teal)" : "none",
               borderRadius: item.highlight ? 6 : 0,
               margin: item.highlight ? "2px 6px" : 0,
               fontWeight: item.highlight ? 700 : 400,
-              color: item.highlight ? "var(--ls-gold)" : "var(--ls-text)",
+              color: item.highlight ? "var(--ls-teal)" : "var(--ls-text)",
             }}
           >
             <span>{item.icon}</span>
@@ -604,12 +604,12 @@ const IosStage4Svg = (
         <span
           className="ls-pwa-pulse"
           style={{
-            color: "var(--ls-gold)",
+            color: "var(--ls-teal)",
             fontWeight: 700,
             padding: "2px 6px",
             borderRadius: 4,
-            background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
-            border: "1px solid var(--ls-gold)",
+            background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
+            border: "1px solid var(--ls-teal)",
           }}
         >
           Ajouter
@@ -631,13 +631,13 @@ const IosStage4Svg = (
             height: 32,
             borderRadius: 8,
             background:
-              "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 16,
             color: "#FFFFFF",
-            boxShadow: "0 2px 6px rgba(186,117,23,0.45)",
+            boxShadow: "0 2px 6px rgba(15,118,110,0.45)",
           }}
         >
           ⭐
@@ -697,10 +697,10 @@ const AndroidStage2Svg = (
             flexDirection: "column",
             gap: 2,
             padding: 4,
-            background: "var(--ls-gold)",
+            background: "var(--ls-teal)",
             borderRadius: 6,
             boxShadow:
-              "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(186,117,23,0.45)",
+              "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
           }}
         >
           {[0, 1, 2].map((i) => (
@@ -722,7 +722,7 @@ const AndroidStage2Svg = (
               left: "50%",
               transform: "translateX(-50%)",
               fontSize: 22,
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
             }}
           >
             👆
@@ -771,12 +771,12 @@ const AndroidStage3Svg = (
               alignItems: "center",
               gap: 6,
               background: item.highlight
-                ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
                 : "transparent",
-              border: item.highlight ? "1px solid var(--ls-gold)" : "none",
+              border: item.highlight ? "1px solid var(--ls-teal)" : "none",
               borderRadius: item.highlight ? 4 : 0,
               fontWeight: item.highlight ? 700 : 400,
-              color: item.highlight ? "var(--ls-gold)" : "var(--ls-text)",
+              color: item.highlight ? "var(--ls-teal)" : "var(--ls-text)",
             }}
           >
             <span>{item.icon}</span>
@@ -806,13 +806,13 @@ const AndroidStage4Svg = (
         width: 60,
         height: 60,
         borderRadius: 16,
-        background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+        background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 28,
         color: "#FFFFFF",
-        boxShadow: "0 8px 20px -4px rgba(186,117,23,0.50)",
+        boxShadow: "0 8px 20px -4px rgba(15,118,110,0.50)",
       }}
       className="ls-pwa-bounce"
     >
@@ -845,7 +845,7 @@ const DesktopStage2Svg = (
     <div style={{ display: "flex", gap: 4 }}>
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444" }} />
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B" }} />
-      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2DD4BF" }} />
     </div>
     <span style={{ fontSize: 9, color: "var(--ls-text-hint)", flex: 1 }}>← →</span>
     <div
@@ -865,13 +865,13 @@ const DesktopStage2Svg = (
       style={{
         position: "relative",
         padding: "4px 8px",
-        background: "var(--ls-gold)",
+        background: "var(--ls-teal)",
         borderRadius: 6,
         fontSize: 11,
         fontWeight: 700,
         color: "#FFFFFF",
         boxShadow:
-          "0 0 0 3px color-mix(in srgb, var(--ls-gold) 30%, transparent), 0 4px 10px rgba(186,117,23,0.45)",
+          "0 0 0 3px color-mix(in srgb, var(--ls-teal) 30%, transparent), 0 4px 10px rgba(15,118,110,0.45)",
       }}
     >
       ⊕
@@ -883,7 +883,7 @@ const DesktopStage2Svg = (
           left: "50%",
           transform: "translateX(-50%)",
           fontSize: 18,
-          color: "var(--ls-gold)",
+          color: "var(--ls-teal)",
         }}
       >
         👆
@@ -913,7 +913,7 @@ const DesktopStage3Svg = (
           width: 32,
           height: 32,
           borderRadius: 8,
-          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -944,7 +944,7 @@ const DesktopStage3Svg = (
           padding: "4px 10px",
           fontSize: 9,
           color: "#FFFFFF",
-          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
           borderRadius: 4,
           fontWeight: 700,
         }}

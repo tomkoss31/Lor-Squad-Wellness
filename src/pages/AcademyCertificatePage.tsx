@@ -19,13 +19,13 @@ type CertFormat = "a4" | "story";
 // violet, papier ivoire, polices Fraunces (serif editoriale) + Sora (labels)
 // + Cormorant (corps) + Dancing Script (signatures) — toutes chargees dans
 // index.html.
-const BRAND_GRAD = "linear-gradient(100deg,#0E9E77 0%,#06B6D4 46%,#8B5CF6 100%)";
+const BRAND_GRAD = "linear-gradient(100deg,#2DD4BF 0%,#2DD4BF 46%,#C5F82A 100%)";
 const INK = "#16292C";
 const MUTED = "#6E7A72";
 const HINT = "#9AA49C";
 const SAND = "#C7B892";
 const GOLD = "#B78B3A";
-const TEAL = "#0E9E77"; // fallback solide du nom en gradient (html2canvas)
+const TEAL = "#2DD4BF"; // fallback solide du nom en gradient (html2canvas)
 const FONT_TITLE = "'Fraunces', Georgia, serif";
 const FONT_LABEL = "'Sora', system-ui, sans-serif";
 const FONT_BODY = "'Cormorant Garamond', Georgia, serif";
@@ -328,7 +328,7 @@ export function AcademyCertificatePage() {
           style={{
             background: "white",
             color: "#5C4A0F",
-            border: "1px solid #B8922A",
+            border: "1px solid #0D9488",
             padding: "12px 18px",
             borderRadius: 12,
             fontSize: 14,
@@ -347,7 +347,7 @@ export function AcademyCertificatePage() {
           style={{
             background: "white",
             color: "#5C4A0F",
-            border: "1px solid #B8922A",
+            border: "1px solid #0D9488",
             padding: "12px 18px",
             borderRadius: 12,
             fontSize: 14,
@@ -412,9 +412,9 @@ function OfficialSeal({ size = 118, gid = "seal" }: { size?: number; gid?: strin
     <svg width={size} height={size} viewBox="0 0 120 120">
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#10B981" />
-          <stop offset="0.5" stopColor="#06B6D4" />
-          <stop offset="1" stopColor="#8B5CF6" />
+          <stop offset="0" stopColor="#2DD4BF" />
+          <stop offset="0.5" stopColor="#2DD4BF" />
+          <stop offset="1" stopColor="#A78BFA" />
         </linearGradient>
       </defs>
       <circle cx="60" cy="60" r="55" fill="none" stroke={`url(#${gid})`} strokeWidth="2" />
@@ -552,9 +552,9 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       className="ls-cert-page"
       style={{
         background:
-          "radial-gradient(620px 420px at 12% 8%, rgba(16,185,129,.055), transparent 60%)," +
-          "radial-gradient(680px 520px at 92% 96%, rgba(139,92,246,.06), transparent 62%)," +
-          "radial-gradient(760px 600px at 88% 10%, rgba(6,182,212,.045), transparent 60%)," +
+          "radial-gradient(620px 420px at 12% 8%, rgba(45, 212, 191,.055), transparent 60%)," +
+          "radial-gradient(680px 520px at 92% 96%, rgba(167, 139, 250,.06), transparent 62%)," +
+          "radial-gradient(760px 600px at 88% 10%, rgba(45, 212, 191,.045), transparent 60%)," +
           "linear-gradient(160deg,#FCFAF2 0%, #FBF7EC 52%, #F5EFDF 100%)",
         border: `1.5px solid ${SAND}`,
         maxWidth: 800,
@@ -781,7 +781,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
             position: "absolute",
             inset: "-20px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(6,182,212,0.10), transparent 70%)",
+            background: "radial-gradient(circle, rgba(45, 212, 191,0.10), transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -833,9 +833,9 @@ function CertificateStory({ userName, completedDate }: CertProps) {
       className="ls-cert-page"
       style={{
         background:
-          "radial-gradient(320px 320px at 12% 6%, rgba(16,185,129,.06), transparent 60%)," +
-          "radial-gradient(340px 340px at 90% 96%, rgba(139,92,246,.07), transparent 62%)," +
-          "radial-gradient(360px 360px at 88% 12%, rgba(6,182,212,.05), transparent 60%)," +
+          "radial-gradient(320px 320px at 12% 6%, rgba(45, 212, 191,.06), transparent 60%)," +
+          "radial-gradient(340px 340px at 90% 96%, rgba(167, 139, 250,.07), transparent 62%)," +
+          "radial-gradient(360px 360px at 88% 12%, rgba(45, 212, 191,.05), transparent 60%)," +
           "linear-gradient(160deg,#FCFAF2 0%, #FBF7EC 52%, #F5EFDF 100%)",
         maxWidth: 380,
         aspectRatio: "9 / 16",

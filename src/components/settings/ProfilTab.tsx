@@ -81,6 +81,12 @@ export function ProfilTab() {
   const [bio, setBio] = useState(currentUser?.bio ?? "");
   // Ville (Chantier D météo 2026-05-05). Source pour la pill météo Co-pilote V5.
   const [city, setCity] = useState<string>(currentUser?.city ?? "");
+  // Téléphone (12/08/2026) : il n'était saisissable NULLE PART après
+  // l'inscription du distributeur. Conséquence mesurée : Thomas (4 filleuls),
+  // Mélanie et Mandy n'en avaient aucun — leurs filleuls ne pouvaient donc pas
+  // les joindre depuis le cockpit de démarrage. Les admins, eux, n'ont jamais
+  // fait le parcours d'inscription : leur numéro n'a jamais pu être saisi.
+  const [phone, setPhone] = useState<string>(currentUser?.phone ?? "");
   const [geoLoading, setGeoLoading] = useState(false);
   // Date début activité coaching Herbalife (chantier #10 V2 badges).
   // Format ISO "YYYY-MM-DD" pour l'input type="date". Null/vide = pas de
@@ -212,6 +218,9 @@ export function ProfilTab() {
           // Chantier D météo (2026-05-05) : ville pour Co-pilote V5
           // Aussi affichée sur la Welcome bilan (chantier #10 V2 badges).
           city: city.trim() || null,
+          // Ton numéro — c'est par là que tes filleuls te joignent depuis leur
+          // cockpit de démarrage (bloc « Ton parrain », 12/08/2026).
+          phone: phone.trim() || null,
           // Chantier #10 V2 badges (2026-05-17) : date début coaching
           // Herbalife → badge ancienneté Welcome bilan. Null si vide.
           coaching_since: coachingSince.trim() || null,
@@ -288,8 +297,8 @@ export function ProfilTab() {
           style={{
             padding: 18,
             background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
-            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -304,7 +313,7 @@ export function ProfilTab() {
                 fontSize: 10.5,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "var(--ls-gold)",
+                color: "var(--ls-teal)",
                 fontWeight: 700,
                 marginBottom: 3,
               }}
@@ -331,7 +340,7 @@ export function ProfilTab() {
               padding: "10px 16px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, var(--ls-gold), var(--ls-teal))",
+              background: "linear-gradient(135deg, var(--ls-teal), var(--ls-teal))",
               color: "#0B0D11",
               fontFamily: "DM Sans, sans-serif",
               fontSize: 13,
@@ -339,7 +348,7 @@ export function ProfilTab() {
               cursor: "pointer",
               textDecoration: "none",
               whiteSpace: "nowrap",
-              boxShadow: "0 6px 16px -8px color-mix(in srgb, var(--ls-gold) 60%, transparent)",
+              boxShadow: "0 6px 16px -8px color-mix(in srgb, var(--ls-teal) 60%, transparent)",
             }}
           >
             Ouvrir →
@@ -403,6 +412,24 @@ export function ProfilTab() {
             <div style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text-muted)", fontSize: 14 }}>
               {currentUser.email}
             </div>
+          </LabeledField>
+          <LabeledField label="Téléphone">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={saving}
+              type="tel"
+              inputMode="tel"
+              maxLength={20}
+              autoComplete="tel"
+              placeholder="06 12 34 56 78"
+              className="ls-input"
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)", fontSize: 14, fontFamily: "DM Sans, sans-serif", outline: "none" }}
+            />
+            <p style={{ margin: "6px 0 0", fontSize: 12, lineHeight: 1.45, color: "var(--ls-text-hint)" }}>
+              C'est par là que tes filleuls te joignent depuis leur écran de
+              démarrage. Sans lui, ils voient ton nom sans pouvoir t'écrire.
+            </p>
           </LabeledField>
         </div>
 
@@ -981,7 +1008,7 @@ export function ProfilTab() {
                   transform: "translateY(-50%)",
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "var(--ls-gold)",
+                  color: "var(--ls-teal)",
                   pointerEvents: "none",
                 }}
               >

@@ -978,7 +978,7 @@ export function BusinessPage() {
                         style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
                       />
                     ) : (
-                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, border: "3px solid #fff" }}>T</div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#2DD4BF,#C5F82A)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, border: "3px solid #fff" }}>T</div>
                     )}
                     {foundersAvatars.melanie_avatar_url ? (
                       <img
@@ -987,7 +987,7 @@ export function BusinessPage() {
                         style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", marginLeft: -16, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
                       />
                     ) : (
-                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#F2775F)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
                     )}
                   </div>
                   <div>
@@ -1034,7 +1034,7 @@ export function BusinessPage() {
                         {av ? (
                           <img src={av} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
-                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#10B981,#06B6D4)", color: "#fff", fontWeight: 700, fontSize: 22 }}>
+                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#2DD4BF,#C5F82A)", color: "#fff", fontWeight: 700, fontSize: 22 }}>
                             {s.name?.[0]?.toUpperCase() ?? "?"}
                           </div>
                         )}

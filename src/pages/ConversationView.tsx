@@ -235,7 +235,7 @@ export function ConversationView() {
             {isReallyMissing ? (
               <>
                 Message introuvable.{" "}
-                <Link to="/messages" style={{ color: "var(--ls-gold)" }}>
+                <Link to="/messages" style={{ color: "var(--ls-teal)" }}>
                   Retour à la messagerie
                 </Link>
               </>
@@ -300,7 +300,7 @@ export function ConversationView() {
             width: 40,
             height: 40,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, #C9A84C, #2DD4BF)",
+            background: "linear-gradient(135deg, #2DD4BF, #0D9488)",
             color: "#0B0D11",
             display: "flex",
             alignItems: "center",
@@ -386,7 +386,7 @@ export function ConversationView() {
             style={{
               padding: "8px 12px",
               borderRadius: 10,
-              background: "rgba(251,113,133,0.12)",
+              background: "rgba(242,119,95,0.12)",
               color: "#FBBFC8",
               fontSize: 12,
             }}
@@ -433,7 +433,7 @@ export function ConversationView() {
             display: "flex",
             justifyContent: "space-between",
             fontSize: 10,
-            color: remaining < 100 ? (remaining < 0 ? "#FB7185" : "#C9A84C") : "var(--ls-text-hint)",
+            color: remaining < 100 ? (remaining < 0 ? "#F2775F" : "var(--ls-teal)") : "var(--ls-text-hint)",
           }}
         >
           <span>
@@ -457,7 +457,7 @@ function Bubble({ msg }: { msg: ClientMessage }) {
           borderRadius: isCoach ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
           background: isCoach ? "#FAEEDA" : "var(--ls-surface)",
           color: isCoach ? "#633806" : "var(--ls-text)",
-          border: isCoach ? "1px solid rgba(201,168,76,0.3)" : "1px solid var(--ls-border)",
+          border: isCoach ? "1px solid rgba(var(--ls-teal-rgb),0.3)" : "1px solid var(--ls-border)",
           fontSize: 14,
           lineHeight: 1.5,
           whiteSpace: "pre-wrap",

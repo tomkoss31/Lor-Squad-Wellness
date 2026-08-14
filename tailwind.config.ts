@@ -5,7 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0B0D11",
+        // Fond du <body> (index.html : class="bg-ink"). Passé au vert profond
+        // de la charte le 2026-08-09 : il était resté sur le noir bleuté
+        // d'AVANT la passe de chaleur du 05/08, donc l'app entière reposait
+        // sur une couleur abandonnée. Cf. docs/IDENTITE-GRAPHIQUE.md.
+        ink: "#162624",
         panel: "#13161C",
         "panel-alt": "#1A1E27",
         line: "rgba(255, 255, 255, 0.07)",

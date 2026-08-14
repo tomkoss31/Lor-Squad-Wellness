@@ -577,7 +577,7 @@ export function AdminNewsletterEditPage() {
             ...btnPrimaryStyle,
             opacity: saving ? 0.6 : dirty ? 1 : 0.5,
             cursor: saving || !dirty ? "not-allowed" : "pointer",
-            background: dirty ? "var(--ls-gold)" : "var(--ls-surface)",
+            background: dirty ? "var(--ls-teal)" : "var(--ls-surface)",
             color: dirty ? "var(--ls-charcoal)" : "var(--ls-text-muted)",
           }}
         >
@@ -1367,7 +1367,7 @@ function SectionEditor({
 // Couleurs hardcodées car cet aperçu doit ressembler à l'email/page publique
 // (qui sont toujours light theme cream, indépendamment du thème admin).
 const PV = {
-  gold: "#C9A84C",
+  gold: "var(--ls-teal)",
   goldLight: "#E5C97D",
   teal: "#2DD4BF",
   tealDark: "#0F766E",
@@ -1401,7 +1401,6 @@ function NewsletterPreview({ data }: { data: NewsletterFull }) {
           // --ls-text du thème app (souvent sombre) = texte quasi invisible.
           "--ls-text": PV.text,
           "--ls-text-muted": PV.textMuted,
-          "--ls-gold": PV.gold,
           "--ls-teal": PV.teal,
           "--ls-surface": PV.surface,
           "--ls-surface2": PV.surface2,
@@ -1716,7 +1715,7 @@ function NewsletterPreviewSection({
             fontWeight: 700,
             letterSpacing: "0.08em",
             color: PV.gold,
-            background: "rgba(201,168,76,0.16)",
+            background: "rgba(var(--ls-teal-rgb),0.16)",
             padding: "3px 8px",
             borderRadius: 999,
           }}
@@ -1826,7 +1825,7 @@ function NewsletterPreviewSection({
             padding: "16px 18px",
             background: "linear-gradient(135deg, #FAEEDA 0%, #F4DFA8 100%)",
             borderRadius: 12,
-            border: "1px solid rgba(201,168,76,0.3)",
+            border: "1px solid rgba(var(--ls-teal-rgb),0.3)",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -1971,7 +1970,7 @@ const btnGhostStyle: React.CSSProperties = {
 };
 const btnPrimaryStyle: React.CSSProperties = {
   padding: "9px 18px",
-  background: "var(--ls-gold)",
+  background: "var(--ls-teal)",
   border: "none",
   borderRadius: 10,
   color: "var(--ls-charcoal)",

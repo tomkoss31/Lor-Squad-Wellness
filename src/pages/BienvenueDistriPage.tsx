@@ -1,46 +1,36 @@
-// Chantier Onboarding distributeur complet (2026-04-24, refonte FLEX 2026-11-05).
+// Accueil d'un nouveau distributeur (2026-04-24 · allégé au ménage du 12/08/2026).
 //
-// Route publique /bienvenue-distri?token=XYZ.
-// Wizard 5 étapes pour un nouveau distributeur invité par son parrain :
-//   0 — Welcome
-//   1 — Auth (email + password)
-//   2 — Profil (nom, prénom, tél, ville, herbalife_id, avatar)
-//   3 — Statut Herbalife (rang, marge retail) — FLEX V3 Option A
-//   4 — Ambitions (revenu mensuel + panier moyen + deadline) → crée le
-//       plan d'action FLEX automatiquement
+// Route publique /bienvenue-distri?token=XYZ. Cinq écrans :
+//   0 — Bienvenue
+//   1 — Compte (email + mot de passe)
+//   2 — Profil (nom, prénom, tél, ville, ID Herbalife, photo)
+//   3 — Statut Herbalife (le rang, donc la marge) → ENREGISTRE et enchaîne
+//   4 — Installation de l'app sur son téléphone
 //
-// Après step 4 : redirect /co-pilote avec rang posé + plan FLEX actif +
-// FlexTodayWidget en mode "cibles du jour" + checklist J0-J7 visible.
-// Le distri n'a plus besoin de naviguer vers /flex/onboarding ou de
-// confirmer son rang via la pop-up : tout est déjà fait.
+// Puis /co-pilote, avec le rang déjà posé : plus de pop-up « confirme ton
+// rang » à la première connexion.
+//
+// ⚠️ Il y avait un sixième écran, « mes ambitions », qui calculait des cibles
+// quotidiennes et créait un plan d'action FLEX. Les deux fonctions ont été
+// retirées le 12/08/2026 : FLEX n'avait jamais reçu un seul pointage, et le
+// plan d'action comptait 8 lignes, la dernière vieille de 33 jours. On faisait
+// donc remplir trois champs à chaque nouveau distributeur pour alimenter deux
+// écrans que personne n'ouvrait.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
-import {
-  RANK_LABELS,
-  RANK_MARGINS,
-  type HerbalifeRank,
-} from "../types/domain";
-import {
-  computeFlexTargets,
-  FLEX_DEFAULT_BASKET,
-} from "../lib/flexCalculations";
-import type { DistributorActionPlanInsert } from "../types/flex";
+import { RANK_MARGINS, type HerbalifeRank } from "../types/domain";
 import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
 
-// Étape 5 = installation PWA (ajoutée 2026-07) : le nouveau distri doit
+// Étape 4 = installation PWA (ajoutée 2026-07) : le nouveau distri doit
 // installer l'app sur son tél (iOS/Android) avant d'entrer dans son espace.
-type Step = 0 | 1 | 2 | 3 | 4 | 5;
-
-
-function ymdInDays(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+// L'ancienne étape « mes ambitions » (plan d'action FLEX) est tombée au
+// ménage du 12/08/2026 — le parcours passe de 6 à 5 écrans.
+type Step = 0 | 1 | 2 | 3 | 4;
 
 type ValidationState =
   | { status: "loading" }
@@ -78,27 +68,15 @@ export function BienvenueDistriPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  // FLEX V3 Option A — étapes 3 & 4
+  // Étape 3 — le rang Herbalife. L'étape « ambitions » qui suivait posait un
+  // plan d'action FLEX : retirée au ménage du 12/08/2026, la fonction n'ayant
+  // jamais servi (8 lignes en base, dernière il y a 33 jours).
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
   const [currentRank, setCurrentRank] = useState<HerbalifeRank>("distributor_25");
-  const [revenueTarget, setRevenueTarget] = useState<number>(1500);
-  const [averageBasket, setAverageBasket] = useState<number>(FLEX_DEFAULT_BASKET);
-  const [deadline, setDeadline] = useState<string>(ymdInDays(90));
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Calcul live des cibles pour la step 4 (préview avant insert)
-  const flexBreakdown = useMemo(
-    () =>
-      computeFlexTargets({
-        monthlyRevenueTarget: revenueTarget,
-        averageBasket,
-        rank: currentRank,
-        startingClients: 0,
-      }),
-    [revenueTarget, averageBasket, currentRank],
-  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -282,9 +260,9 @@ export function BienvenueDistriPage() {
   ]);
 
   /**
-   * Step 4 — finalisation : pose le rang Herbalife + crée le plan FLEX
-   * + redirige vers /co-pilote. Le user est déjà authentifié depuis la
-   * step 2 (setSession après consume-distributor-invite-token).
+   * Étape 3 — finalisation : pose le rang Herbalife, puis redirige vers
+   * /co-pilote (ou l'écran d'installation). Le user est déjà authentifié
+   * depuis l'étape 2 (setSession après consume-distributor-invite-token).
    */
   const handleFinishOnboarding = useCallback(async () => {
     setFormError("");
@@ -312,47 +290,19 @@ export function BienvenueDistriPage() {
         .eq("id", userId);
       if (userErr) throw new Error(userErr.message);
 
-      // 2. Insert distributor_action_plan
-      const planInsert: DistributorActionPlanInsert = {
-        user_id: userId,
-        monthly_revenue_target: revenueTarget,
-        daily_time_minutes: 60,
-        starting_clients_count: 0,
-        available_slots: [],
-        average_basket: averageBasket,
-        target_deadline_date: deadline,
-        daily_invitations_target: flexBreakdown.daily_invitations_target,
-        daily_conversations_target: flexBreakdown.daily_conversations_target,
-        weekly_bilans_target: flexBreakdown.weekly_bilans_target,
-        weekly_closings_target: flexBreakdown.weekly_closings_target,
-        monthly_active_clients_target: flexBreakdown.monthly_active_clients_target,
-      };
-      const { error: planErr } = await sb
-        .from("distributor_action_plan")
-        .insert(planInsert);
-      if (planErr) throw new Error(planErr.message);
-
       // Déjà en PWA installée → direct au Co-pilote. Sinon, étape « Installe
       // l'app » avant d'entrer (le distri doit l'avoir sur son tél).
       if (isStandalonePwa()) {
         navigate(`/co-pilote?welcome=distri`, { replace: true });
       } else {
-        setStep(5);
+        setStep(4);
       }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inattendue.");
     } finally {
       setSubmitting(false);
     }
-  }, [
-    averageBasket,
-    createdUserId,
-    currentRank,
-    deadline,
-    flexBreakdown,
-    navigate,
-    revenueTarget,
-  ]);
+  }, [createdUserId, currentRank, navigate]);
 
   // ─── Rendu ───────────────────────────────────────────────────────────────
   return (
@@ -552,30 +502,18 @@ export function BienvenueDistriPage() {
                 firstName={firstName}
                 rank={currentRank}
                 onChange={setCurrentRank}
-                onContinue={() => setStep(4)}
-              />
-            ) : null}
-
-            {step === 4 ? (
-              <AmbitionStep
-                rank={currentRank}
-                revenue={revenueTarget}
-                basket={averageBasket}
-                deadline={deadline}
-                breakdown={flexBreakdown}
-                onRevenueChange={setRevenueTarget}
-                onBasketChange={setAverageBasket}
-                onDeadlineChange={setDeadline}
-                onBack={() => setStep(3)}
                 submitting={submitting}
                 error={formError}
-                onSubmit={() => void handleFinishOnboarding()}
+                onContinue={() => void handleFinishOnboarding()}
               />
             ) : null}
 
-            {step === 5 ? (
+
+            {step === 4 ? (
               <InstallStep
                 onEnter={() => navigate(`/co-pilote?welcome=distri`, { replace: true })}
+                userId={createdUserId}
+                userName={firstName || "Coach"}
               />
             ) : null}
           </>
@@ -586,7 +524,15 @@ export function BienvenueDistriPage() {
 }
 
 // ─── Étape 5 : installe l'app (PWA) ────────────────────────────────────────
-function InstallStep({ onEnter }: { onEnter: () => void }) {
+function InstallStep({ onEnter, userId, userName }: { onEnter: () => void; userId: string | null; userName: string }) {
+  // Activation des notifications DÈS l'inscription (2026-08-03). Avant, la page
+  // les promettait en texte mais ne les demandait jamais : personne ne les avait.
+  const { supported, subscribed, subscribe, error } = usePushNotifications(
+    userId ?? undefined,
+    userName
+  );
+  const [asking, setAsking] = useState(false);
+
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: 22 }}>
@@ -603,13 +549,92 @@ function InstallStep({ onEnter }: { onEnter: () => void }) {
           Dernière étape
         </span>
         <p className="distri-title" style={{ fontSize: 30, marginTop: 14, marginBottom: 10 }}>
-          Installe l&apos;app 📲
+          Garde l&apos;app sous la main 📲
         </p>
         <p style={{ fontSize: 14.5, color: "var(--dw-muted)", lineHeight: 1.6 }}>
-          Ajoute La Base 360 à ton écran d&apos;accueil : tu l&apos;ouvres en 1 tap (comme
-          WhatsApp) et tu reçois tes notifs — RDV, rappels, plan du jour.
+          Deux minutes maintenant, et tu ne chercheras plus jamais comment revenir.
         </p>
       </div>
+
+      {/* ── L'ADRESSE — la chose la plus importante de tout le parcours ──
+          Le lien d'invitation expire en 7 jours ; l'adresse, jamais. Elle
+          n'était dite NULLE PART : c'est ce qui faisait qu'on perdait les gens
+          dès qu'ils fermaient l'onglet. */}
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 14,
+          background: "color-mix(in srgb, var(--dw-lime) 10%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--dw-lime) 40%, transparent)",
+          marginBottom: 14,
+          textAlign: "center",
+        }}
+      >
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--dw-lime)", margin: 0 }}>
+          Ton adresse, à retenir
+        </p>
+        <p style={{ fontSize: 22, fontWeight: 800, color: "var(--dw-text)", margin: "6px 0 4px", letterSpacing: ".3px" }}>
+          labase360.fr
+        </p>
+        <p style={{ fontSize: 12.5, color: "var(--dw-muted)", margin: 0, lineHeight: 1.55 }}>
+          C&apos;est ici que tu te connectes, toujours. Le lien qu&apos;on t&apos;a envoyé ne
+          servait qu&apos;une fois.
+        </p>
+      </div>
+
+      {/* ── Notifications ── */}
+      {supported ? (
+        <div
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            background: "var(--dw-card-2)",
+            border: "1px solid var(--dw-border)",
+            marginBottom: 14,
+          }}
+        >
+          <p style={{ fontSize: 14.5, fontWeight: 700, color: "var(--dw-text)", margin: "0 0 4px" }}>
+            {subscribed ? "🔔 Notifications activées" : "🔔 Active tes notifications"}
+          </p>
+          <p style={{ fontSize: 12.5, color: "var(--dw-muted)", margin: "0 0 12px", lineHeight: 1.55 }}>
+            {subscribed
+              ? "Tu recevras tes rappels de RDV et ton plan du jour."
+              : "Rappels de RDV, messages de tes clients, plan du jour. C'est ce qui te fera penser à revenir."}
+          </p>
+          {!subscribed ? (
+            <button
+              type="button"
+              onClick={async () => {
+                setAsking(true);
+                try {
+                  await subscribe();
+                } finally {
+                  setAsking(false);
+                }
+              }}
+              disabled={asking}
+              style={{
+                width: "100%",
+                minHeight: 46,
+                borderRadius: 12,
+                border: "1px solid var(--dw-lime)",
+                background: "color-mix(in srgb, var(--dw-lime) 14%, transparent)",
+                color: "var(--dw-lime)",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {asking ? "Un instant…" : "Activer les notifications"}
+            </button>
+          ) : null}
+          {error ? (
+            <p style={{ fontSize: 11.5, color: "var(--dw-muted)", margin: "8px 0 0" }}>
+              Tu pourras réessayer depuis tes Paramètres.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -642,7 +667,7 @@ function InstallStep({ onEnter }: { onEnter: () => void }) {
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24 }}>
-      {[0, 1, 2, 3, 4, 5].map((i) => {
+      {[0, 1, 2, 3, 4].map((i) => {
         const isActive = step === i;
         const isDone = step > i;
         return (
@@ -1211,18 +1236,23 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-// ─── FLEX V3 Option A — RankStep + AmbitionStep ─────────────────────────────
+// ─── Étape 3 — le rang Herbalife ────────────────────────────────────────────
 
 function RankStep({
   firstName,
   rank,
   onChange,
   onContinue,
+  submitting,
+  error,
 }: {
   firstName: string;
   rank: HerbalifeRank;
   onChange: (r: HerbalifeRank) => void;
   onContinue: () => void;
+  /** Cette étape enregistre désormais : elle a besoin de son état d'envoi. */
+  submitting: boolean;
+  error: string;
 }) {
   // Onboarding : on ne montre que les 4 paliers de MARGE (25/35/42/50 %) —
   // les 8 rangs « équipe » à 50 % (World Team, GET, etc.) sont du jargon
@@ -1331,204 +1361,16 @@ function RankStep({
         })}
       </div>
 
-      <div style={{ marginTop: 22 }}>
-        <PrimaryButton onClick={onContinue}>Suivant — mes ambitions →</PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
-function AmbitionStep({
-  rank,
-  revenue,
-  basket,
-  deadline,
-  breakdown,
-  onRevenueChange,
-  onBasketChange,
-  onDeadlineChange,
-  onBack,
-  submitting,
-  error,
-  onSubmit,
-}: {
-  rank: HerbalifeRank;
-  revenue: number;
-  basket: number;
-  deadline: string;
-  breakdown: ReturnType<typeof computeFlexTargets>;
-  onRevenueChange: (v: number) => void;
-  onBasketChange: (v: number) => void;
-  onDeadlineChange: (v: string) => void;
-  onBack: () => void;
-  submitting: boolean;
-  error: string;
-  onSubmit: () => void;
-}) {
-  return (
-    <div>
-      <div className="distri-eyebrow" style={{ color: "var(--dw-teal)", marginBottom: 10 }}>
-        Ton plan d&apos;action
-      </div>
-      <h2 className="distri-title" style={{ fontSize: 26, marginBottom: 10 }}>
-        On pose tes objectifs 🚀
-      </h2>
-      <p style={{ margin: "10px 0 20px 0", fontSize: 14, color: "var(--dw-muted)", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
-        Avec ton rang <strong>{RANK_LABELS[rank]}</strong>, tu gagnes{" "}
-        <strong style={{ color: "var(--dw-lime)" }}>{breakdown.net_per_client.toFixed(2)} € net</strong> par client.
-        Calibrons ensemble tes cibles quotidiennes.
-      </p>
-
-      {/* Revenu mensuel */}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
-            Objectif revenu mensuel
-          </span>
-        </div>
-        <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 32, fontWeight: 700, color: "var(--dw-lime)", textAlign: "center", marginBottom: 8 }}>
-          {revenue.toLocaleString("fr-FR")} €
-        </div>
-        <input
-          type="range"
-          min={100}
-          max={5000}
-          step={50}
-          value={revenue}
-          onChange={(e) => onRevenueChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "var(--dw-lime)" }}
-        />
-      </div>
-
-      {/* Panier moyen */}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
-            Panier moyen client (retail)
-          </span>
-        </div>
-        <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--dw-teal)", textAlign: "center", marginBottom: 8 }}>
-          {basket} €
-        </div>
-        <input
-          type="range"
-          min={50}
-          max={500}
-          step={5}
-          value={basket}
-          onChange={(e) => onBasketChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "var(--dw-teal)" }}
-        />
-      </div>
-
-      {/* Deadline */}
-      <div style={{ marginBottom: 18 }}>
-        <span style={{ fontSize: 12, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif", display: "block", marginBottom: 8 }}>
-          Date d'objectif
-        </span>
-        <input
-          type="date"
-          value={deadline}
-          min={ymdInDays(14)}
-          max={ymdInDays(365)}
-          onChange={(e) => onDeadlineChange(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: "1px solid var(--dw-border)",
-            background: "var(--dw-card-2)",
-            fontSize: 15,
-            fontFamily: "DM Sans, sans-serif",
-            color: "var(--dw-text)",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
-
-      {/* Summary cibles */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, color-mix(in srgb, var(--dw-lime) 10%, transparent), color-mix(in srgb, var(--dw-teal) 8%, transparent))",
-          border: "1px solid color-mix(in srgb, var(--dw-lime) 40%, var(--dw-border))",
-          borderRadius: 14,
-          padding: 16,
-          marginBottom: 18,
-        }}
-      >
-        <div style={{ fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--dw-lime)", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
-          Tes cibles quotidiennes calculées
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-          <Tile label="Invit / jour" value={breakdown.daily_invitations_target} />
-          <Tile label="Conv / jour" value={breakdown.daily_conversations_target} />
-          <Tile label="Bilans / sem" value={breakdown.weekly_bilans_target} />
-          <Tile label="Clos / sem" value={breakdown.weekly_closings_target} />
-        </div>
-        <p style={{ margin: "10px 0 0 0", fontSize: 11, color: "var(--dw-muted)", fontFamily: "DM Sans, sans-serif", textAlign: "center" }}>
-          ~{breakdown.needed_new_clients_per_month} nouveaux clients / mois
-        </p>
-      </div>
-
-      {error && (
-        <div style={{ color: "#FCA5A5", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
+      {error ? (
+        <p style={{ marginTop: 16, fontSize: 13, color: "var(--dw-coral, #ff7a68)", lineHeight: 1.5 }} role="alert">
           {error}
-        </div>
-      )}
+        </p>
+      ) : null}
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={submitting}
-          style={{
-            padding: "14px 18px",
-            borderRadius: 12,
-            border: "1px solid var(--dw-border)",
-            background: "transparent",
-            color: "var(--dw-muted)",
-            fontFamily: "DM Sans, sans-serif",
-            fontSize: 13,
-            cursor: submitting ? "wait" : "pointer",
-          }}
-        >
-          ← Retour
-        </button>
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={submitting}
-          style={{
-            flex: 1,
-            padding: "14px 20px",
-            borderRadius: 12,
-            border: "none",
-            background: submitting ? "rgba(197,248,42,0.22)" : "var(--dw-lime)",
-            color: submitting ? "var(--dw-dim)" : "#0a0c0a",
-            fontFamily: "'Anton', 'Syne', sans-serif",
-            fontSize: 15,
-            fontWeight: 700,
-            letterSpacing: "0.01em",
-            cursor: submitting ? "wait" : "pointer",
-            boxShadow: submitting ? "none" : "0 4px 16px rgba(197,248,42,0.28)",
-          }}
-        >
-          {submitting ? "Création de ton plan…" : "🚀 Lancer mon aventure"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Tile({ label, value }: { label: string; value: number }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: "'Anton', 'Syne', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--dw-text)" }}>
-        {value}
-      </div>
-      <div style={{ fontSize: 9, color: "var(--dw-muted)", textTransform: "uppercase", letterSpacing: 0.4, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
-        {label}
+      <div style={{ marginTop: 22 }}>
+        <PrimaryButton onClick={onContinue} disabled={submitting}>
+          {submitting ? "Un instant…" : "C'est parti →"}
+        </PrimaryButton>
       </div>
     </div>
   );

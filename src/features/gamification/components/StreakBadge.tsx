@@ -13,11 +13,11 @@ export function StreakBadge() {
   let color = "#5C4A0F";
   let emoji = "🔥";
   if (streak.count >= 30) {
-    bg = "linear-gradient(135deg, #D85A30, #B8922A)";
+    bg = "linear-gradient(135deg, #D85A30, #0D9488)";
     color = "white";
     emoji = "🔥🔥🔥";
   } else if (streak.count >= 7) {
-    bg = "linear-gradient(135deg, #EF9F27, #BA7517)";
+    bg = "linear-gradient(135deg, #2DD4BF, #0F766E)";
     color = "white";
     emoji = "🔥🔥";
   }
@@ -36,7 +36,7 @@ export function StreakBadge() {
         fontSize: 13,
         fontWeight: 600,
         fontFamily: "DM Sans, sans-serif",
-        boxShadow: streak.count >= 7 ? "0 2px 8px rgba(186,117,23,0.30)" : "none",
+        boxShadow: streak.count >= 7 ? "0 2px 8px rgba(15,118,110,0.30)" : "none",
         letterSpacing: "0.01em",
       }}
     >

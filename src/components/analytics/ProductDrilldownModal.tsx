@@ -159,7 +159,7 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
                               maxWidth: 28,
                               height: Math.max(h, 3),
                               borderRadius: 6,
-                              background: t.value > 0 ? "var(--ls-gold)" : "var(--ls-surface2)",
+                              background: t.value > 0 ? "var(--ls-teal)" : "var(--ls-surface2)",
                               transition: "height 400ms ease",
                             }}
                           />
@@ -191,7 +191,7 @@ export function ProductDrilldownModal({ productName, onClose }: Props) {
                       <div style={{ fontSize: 13, color: "var(--ls-text)" }}>
                         × {l.quantity}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, sans-serif" }}>
+                      <div style={{ fontSize: 12, color: "var(--ls-teal)", fontWeight: 600, fontFamily: "Syne, sans-serif" }}>
                         {l.pv_total} PV
                       </div>
                     </div>
@@ -217,7 +217,7 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
           fontSize: 22,
           fontWeight: 800,
           fontFamily: "Syne, sans-serif",
-          color: accent ? "var(--ls-gold)" : "var(--ls-text)",
+          color: accent ? "var(--ls-teal)" : "var(--ls-text)",
           marginTop: 4,
         }}
       >

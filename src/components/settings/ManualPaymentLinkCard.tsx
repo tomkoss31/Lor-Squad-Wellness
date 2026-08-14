@@ -129,7 +129,7 @@ export function ManualPaymentLinkCard() {
               padding: "9px 16px",
               borderRadius: 10,
               border: "none",
-              background: "var(--ls-gold)",
+              background: "var(--ls-teal)",
               color: "#1a1407",
               fontFamily: "Syne, sans-serif",
               fontWeight: 700,

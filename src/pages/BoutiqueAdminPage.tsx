@@ -40,7 +40,7 @@ const label: React.CSSProperties = {
 };
 const input: React.CSSProperties = {
   width: "100%",
-  background: "var(--ls-surface-2, var(--ls-bg))",
+  background: "var(--ls-surface2)",
   border: "0.5px solid var(--ls-border)",
   borderRadius: 10,
   padding: "11px 13px",
@@ -75,12 +75,18 @@ type PromoCode = {
   active: boolean;
   used_count: number;
 };
+type OrderItem = { product_name: string; quantity: number; line_total_cents: number };
 type Order = {
   id: string;
   customer_first_name: string | null;
+  customer_last_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  shipping_address: Record<string, string> | null;
   total_cents: number;
   status: string;
   created_at: string;
+  items: OrderItem[];
 };
 type ShopProductRow = { id: string; name: string; slug: string; images: { url: string }[] };
 
@@ -105,6 +111,7 @@ export function BoutiqueAdminPage() {
   // Données
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [visits, setVisits] = useState<{ total: number; today: number }>({ total: 0, today: 0 });
   const [products, setProducts] = useState<ShopProductRow[]>([]);
@@ -131,7 +138,9 @@ export function BoutiqueAdminPage() {
         sb.from("promo_codes").select("id, code, kind, value, active, used_count").eq("coach_user_id", uid).order("created_at"),
         sb
           .from("shop_orders")
-          .select("id, customer_first_name, total_cents, status, created_at")
+          .select(
+            "id, customer_first_name, customer_last_name, customer_email, customer_phone, shipping_address, total_cents, status, created_at",
+          )
           .eq("coach_user_id", uid)
           .order("created_at", { ascending: false })
           .limit(20),
@@ -148,7 +157,22 @@ export function BoutiqueAdminPage() {
         setAiScanUrl(u.data.boutique_ai_scan_url ?? "");
       }
       setPromos((pc.data as PromoCode[]) ?? []);
-      setOrders((ord.data as Order[]) ?? []);
+      const ordRows = (ord.data as Omit<Order, "items">[]) ?? [];
+      const orderIds = ordRows.map((o) => o.id);
+      let itemsByOrder = new Map<string, OrderItem[]>();
+      if (orderIds.length > 0) {
+        const { data: itemRows } = await sb
+          .from("shop_order_items")
+          .select("order_id, product_name, quantity, line_total_cents")
+          .in("order_id", orderIds);
+        itemsByOrder = new Map();
+        for (const it of (itemRows as (OrderItem & { order_id: string })[]) ?? []) {
+          const list = itemsByOrder.get(it.order_id) ?? [];
+          list.push({ product_name: it.product_name, quantity: it.quantity, line_total_cents: it.line_total_cents });
+          itemsByOrder.set(it.order_id, list);
+        }
+      }
+      setOrders(ordRows.map((o) => ({ ...o, items: itemsByOrder.get(o.id) ?? [] })));
       setLeadsCount(leads.count ?? 0);
       const visRows = (vis.data as { day: string; count: number }[]) ?? [];
       const todayIso = new Date().toISOString().slice(0, 10);
@@ -289,7 +313,7 @@ export function BoutiqueAdminPage() {
         🌿 Ma boutique HL Skin
       </h1>
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif", maxWidth: 560 }}>
-        Ta boutique de cosmétiques coréens, à ton nom. Configure-la, partage ton lien, encaisse sur ton Stripe.
+        Ta boutique de cosmétiques coréens, à ton nom. Configure-la, partage ton lien, encaisse sur ton compte (Square ou Stripe).
       </p>
 
       {/* Stats */}
@@ -375,7 +399,7 @@ export function BoutiqueAdminPage() {
             style={{ ...btnPrimary, background: "transparent", color: "var(--ls-text)", border: "0.5px solid var(--ls-border)" }}
             onClick={() => navigate("/encaissement")}
           >
-            Connecter Stripe →
+            Configurer l’encaissement →
           </button>
         </div>
       </div>
@@ -412,15 +436,73 @@ export function BoutiqueAdminPage() {
         {orders.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>Aucune commande pour l'instant.</div>
         ) : (
-          orders.map((o) => (
-            <div key={o.id} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "0.5px solid var(--ls-border)", fontSize: 13 }}>
-              <span style={{ color: "var(--ls-text)" }}>{o.customer_first_name || "Cliente"}</span>
-              <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <span style={{ color: o.status === "paid" ? "var(--ls-teal)" : "var(--ls-text-muted)", fontSize: 11, textTransform: "uppercase" }}>{o.status === "paid" ? "payé" : "en attente"}</span>
-                <span style={{ fontWeight: 700, color: "var(--ls-text)" }}>{formatEuro(o.total_cents / 100)}</span>
-              </span>
-            </div>
-          ))
+          orders.map((o) => {
+            const open = openOrderId === o.id;
+            const fullName = [o.customer_first_name, o.customer_last_name].filter(Boolean).join(" ") || "Cliente";
+            const a = o.shipping_address;
+            const addr = a
+              ? `${a.line1 ?? ""}${a.line2 ? ", " + a.line2 : ""}, ${a.postal_code ?? ""} ${a.city ?? ""} ${a.country ?? ""}`.trim()
+              : null;
+            return (
+              <div key={o.id} style={{ borderBottom: "0.5px solid var(--ls-border)" }}>
+                <button
+                  onClick={() => setOpenOrderId(open ? null : o.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "9px 0",
+                    fontSize: 13,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ color: "var(--ls-text)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ color: "var(--ls-text-muted)", fontSize: 10, transform: open ? "rotate(90deg)" : "none", display: "inline-block", transition: "transform .15s" }}>▶</span>
+                    {fullName}
+                  </span>
+                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <span style={{ color: o.status === "paid" ? "var(--ls-teal)" : "var(--ls-text-muted)", fontSize: 11, textTransform: "uppercase" }}>{o.status === "paid" ? "payé" : "en attente"}</span>
+                    <span style={{ fontWeight: 700, color: "var(--ls-text)" }}>{formatEuro(o.total_cents / 100)}</span>
+                  </span>
+                </button>
+                {open && (
+                  <div style={{ padding: "2px 0 14px 18px", fontSize: 12.5, color: "var(--ls-text-muted)", lineHeight: 1.7 }}>
+                    {o.customer_email && (
+                      <div>
+                        ✉️{" "}
+                        <a href={`mailto:${o.customer_email}`} style={{ color: "var(--ls-text)" }}>
+                          {o.customer_email}
+                        </a>
+                      </div>
+                    )}
+                    {o.customer_phone && (
+                      <div>
+                        📞{" "}
+                        <a href={`tel:${o.customer_phone}`} style={{ color: "var(--ls-text)" }}>
+                          {o.customer_phone}
+                        </a>
+                      </div>
+                    )}
+                    <div>📦 {addr ?? "Adresse non renseignée"}</div>
+                    {o.items.length > 0 && (
+                      <div style={{ marginTop: 6 }}>
+                        {o.items.map((it, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ color: "var(--ls-text)" }}>{it.product_name} × {it.quantity}</span>
+                            <span>{formatEuro(it.line_total_cents / 100)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 

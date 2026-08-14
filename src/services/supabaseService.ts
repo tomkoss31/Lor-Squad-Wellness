@@ -30,6 +30,7 @@ import type {
 import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import { getRecommendableProductById } from "../lib/assessmentRecommendations";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
+import { viderTout } from "../lib/cacheFraicheur";
 
 type UserRow = {
   id: string;
@@ -57,6 +58,7 @@ type UserRow = {
   /** Agenda V2 (2026-07-27) : duree par defaut d'un RDV, en minutes. */
   default_rdv_minutes?: number | null;
   city?: string | null;
+  phone?: string | null;
   coaching_since?: string | null;
   rdv_location?: string | null;
   frozen_at?: string | null;
@@ -356,6 +358,10 @@ function mapUser(row: UserRow): User {
     defaultRdvMinutes:
       typeof row.default_rdv_minutes === "number" ? row.default_rdv_minutes : undefined,
     city: row.city ?? null,
+    // ⚠️ Sans cette ligne, `currentUser.phone` restait toujours vide : le champ
+    // Téléphone des Paramètres serait parti à blanc et aurait EFFACÉ le numéro
+    // existant à la première sauvegarde (repéré avant livraison, 12/08/2026).
+    phone: row.phone ?? undefined,
     coachingSince: row.coaching_since ?? null,
     rdvLocation: row.rdv_location ?? null,
     frozenAt: row.frozen_at ?? null,
@@ -685,6 +691,10 @@ export async function loginWithSupabaseCredentials(payload: {
 export async function logoutFromSupabase() {
   const client = await requireSupabase();
   await client.auth.signOut();
+  // Le cache de fraîcheur garde des données jusqu'à une semaine, et le
+  // localStorage survit à la déconnexion : sans ce vidage, le coach suivant
+  // qui se connecte sur le même navigateur verrait les chiffres du précédent.
+  viderTout();
 }
 
 export async function fetchSupabaseUsers() {
@@ -701,11 +711,27 @@ export async function fetchSupabaseUsers() {
   return data.map((row) => mapUser(row as UserRow));
 }
 
+/** Les colonnes des bilans SAUF `questionnaire`.
+ *
+ *  MESURÉ le 2026-08-12 : le démarrage transférait 2,17 Mo de JSON, dont
+ *  1,53 Mo pour « tous les clients avec tous leurs bilans ». À elle seule, la
+ *  colonne `questionnaire` en pèse 586 Ko — 35 % du total, la suivante fait
+ *  55 Ko. Or elle n'est lue que par cinq PAGES (fiche client, suivi, édition
+ *  de bilan, panier, portefeuille) : personne n'en a besoin pour afficher une
+ *  liste ou le Co-pilote.
+ *
+ *  ⚠️ Une nouvelle colonne ajoutée à `assessments` doit être ajoutée ICI,
+ *  sinon elle ne sera pas chargée au démarrage. C'est volontairement le sens
+ *  le plus sûr : on oublie de charger, on ne casse pas.
+ */
+const COLONNES_BILAN_SANS_QUESTIONNAIRE =
+  "id, client_id, date, type, objective, program_id, program_title, summary, notes, next_follow_up, body_scan, pedagogical_focus, created_at, decision_client, type_de_suite, message_a_laisser, coach_notes_draft, coach_notes_initial, water_target_l, protein_target_g, sport_frequency, sport_types, sport_sub_objective, current_intake";
+
 export async function fetchSupabaseClients() {
   const client = await requireSupabase();
   const { data, error } = await client
     .from("clients")
-    .select("*, assessments(*)")
+    .select(`*, assessments(${COLONNES_BILAN_SANS_QUESTIONNAIRE})`)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -729,6 +755,36 @@ export async function fetchSupabaseClients() {
   if (!data) return [] as Client[];
 
   return (data as ClientRow[]).map(mapClient);
+}
+
+/** Les `questionnaire` seuls, chargés en SECOND — voir le commentaire de
+ *  `COLONNES_BILAN_SANS_QUESTIONNAIRE`.
+ *
+ *  Pourquoi une seconde passe plutôt qu'un chargement à la demande dans les
+ *  cinq pages qui en ont besoin : à la demande, chacune devrait gérer son
+ *  attente, et une page oubliée afficherait un bilan VIDE sans prévenir. Ici,
+ *  l'app démarre sans les 586 Ko, puis les reçoit une seconde plus tard —
+ *  bien avant que quiconque ait eu le temps d'ouvrir une fiche client. Aucune
+ *  page à modifier, aucun écran qui peut mentir.
+ */
+export async function fetchAssessmentQuestionnaires(): Promise<Map<string, unknown>> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("assessments")
+    .select("id, questionnaire")
+    .not("questionnaire", "is", null);
+
+  if (error) {
+    // Non bloquant : l'app fonctionne sans, seules les 5 pages qui lisent le
+    // questionnaire seraient incomplètes. On le dit fort dans la console.
+    console.error("[fetchAssessmentQuestionnaires] échec — les fiches bilan seront incomplètes", error);
+    return new Map();
+  }
+  const par = new Map<string, unknown>();
+  for (const r of (data ?? []) as Array<{ id: string; questionnaire: unknown }>) {
+    par.set(r.id, r.questionnaire);
+  }
+  return par;
 }
 
 export async function fetchSupabaseFollowUps() {
@@ -977,6 +1033,13 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   // actif mais hors agenda. Le coach pourra créer un RDV manuel plus tard
   // depuis la fiche (ce qui nécessitera de désactiver le suivi libre d'abord).
   if (!payload.freeFollowUp) {
+    // Chantier simplification fin de bilan (2026-07-30, demande Thomas) :
+    // au bilan initial, la date de RDV est encore un défaut auto-rempli, pas
+    // un vrai créneau confirmé avec le client — on crée donc ce follow_up en
+    // SILENCE (notify_client: false). Aucun email de confirmation ni de
+    // rappel J-1 ne part tant que le coach n'a pas confirmé le VRAI RDV
+    // depuis la fiche client (Actions > Modifier le rendez-vous), qui écrit
+    // alors notify_client explicitement (cf. EditScheduleModal).
     const { error: followUpError } = await client.from("follow_ups").insert({
       client_id: clientId,
       client_name: `${payload.client.firstName} ${payload.client.lastName}`,
@@ -984,7 +1047,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       type: payload.followUpType,
       status: payload.followUpStatus,
       program_title: payload.currentProgram || payload.assessment.programTitle,
-      last_assessment_date: payload.assessment.date
+      last_assessment_date: payload.assessment.date,
+      notify_client: false
     });
 
     if (followUpError) {
@@ -1864,6 +1928,76 @@ export async function repairSupabaseUserAccess(payload: {
   }
 
   return result;
+}
+
+// ─── Chantier « Promouvoir en distributeur » (2026-08-05) ───────────────────
+// Réutilise le compte auth d'un membre existant (client PWA / BBC) pour lui
+// ajouter la casquette distributeur, SANS créer de 2e compte. Fusionné dans
+// /api/admin-repair-user (admin only) via action:lookup|promote — pour rester
+// sous le plafond de 12 fonctions serverless du plan Vercel Hobby.
+
+export type PromoteLookupResult = {
+  ok: boolean;
+  error?: string;
+  hasAuth?: boolean;
+  isCoach?: boolean;
+  coachRole?: string | null;
+  suggestedName?: string;
+  fiche?: { clientId: string; name: string | null; currentOwnerId: string | null } | null;
+};
+
+export type PromoteResult = {
+  ok: boolean;
+  error?: string;
+  code?: "no_account" | "already_coach" | "slug_collision";
+  mode?: "promoted";
+  ficheReassigned?: boolean;
+  name?: string;
+};
+
+async function callPromoteMember<T extends { ok: boolean; error?: string }>(
+  body: Record<string, unknown>
+): Promise<T> {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      ok: false,
+      error: "La session admin est introuvable. Reconnecte-toi puis recommence."
+    } as T;
+  }
+
+  try {
+    const response = await fetch("/api/admin-repair-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify(body)
+    });
+    return await readApiResult<T>(response);
+  } catch {
+    return { ok: false, error: "Le serveur n'a pas répondu. Réessaie." } as T;
+  }
+}
+
+export function lookupPromotableMember(email: string) {
+  return callPromoteMember<PromoteLookupResult>({ action: "lookup", email });
+}
+
+export function promoteMemberToDistributor(payload: {
+  email?: string;
+  userId?: string;
+  sponsorId: string;
+  name?: string;
+  ficheOwner: "keep" | "sponsor";
+  herbalifeId?: string;
+}) {
+  return callPromoteMember<PromoteResult>({ action: "promote", ...payload });
 }
 
 export async function updateSupabaseUserStatus(userId: string, active: boolean) {

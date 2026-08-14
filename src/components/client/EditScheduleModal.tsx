@@ -135,7 +135,7 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
           display: "flex", justifyContent: "space-between", alignItems: "center"
         }}>
           <span style={{ fontSize: 11, color: "#4A5068", textTransform: "uppercase", letterSpacing: "1px" }}>Créneau actuel</span>
-          <span style={{ fontSize: 13, color: "#C9A84C", fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: "var(--ls-teal)", fontWeight: 500 }}>
             {formatDateTime(currentFollowUp?.dueDate ?? client.nextFollowUp)}
           </span>
         </div>
@@ -183,8 +183,8 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
 
         {error && (
           <div style={{
-            background: "rgba(251,113,133,0.08)", border: "1px solid rgba(251,113,133,0.2)",
-            borderRadius: 10, padding: "10px 14px", color: "#FB7185", fontSize: 13, marginTop: 16
+            background: "rgba(242,119,95,0.08)", border: "1px solid rgba(242,119,95,0.2)",
+            borderRadius: 10, padding: "10px 14px", color: "#F2775F", fontSize: 13, marginTop: 16
           }}>
             {error}
           </div>

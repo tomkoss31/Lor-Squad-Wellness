@@ -42,9 +42,9 @@ const TONE_COLORS: Record<string, { bg: string; text: string; border: string }> 
     border: "color-mix(in srgb, #94A3B8 30%, transparent)",
   },
   bronze: {
-    bg: "color-mix(in srgb, #B8922A 14%, transparent)",
+    bg: "color-mix(in srgb, #0D9488 14%, transparent)",
     text: "#A87132",
-    border: "color-mix(in srgb, #B8922A 32%, transparent)",
+    border: "color-mix(in srgb, #0D9488 32%, transparent)",
   },
   silver: {
     bg: "color-mix(in srgb, #94A3B8 14%, transparent)",
@@ -52,14 +52,14 @@ const TONE_COLORS: Record<string, { bg: string; text: string; border: string }> 
     border: "color-mix(in srgb, #94A3B8 32%, transparent)",
   },
   gold: {
-    bg: "color-mix(in srgb, #B8922A 16%, transparent)",
-    text: "#B8922A",
-    border: "color-mix(in srgb, #B8922A 36%, transparent)",
+    bg: "color-mix(in srgb, #0D9488 16%, transparent)",
+    text: "#0D9488",
+    border: "color-mix(in srgb, #0D9488 36%, transparent)",
   },
   diamond: {
-    bg: "color-mix(in srgb, #8B5CF6 14%, transparent)",
-    text: "#8B5CF6",
-    border: "color-mix(in srgb, #8B5CF6 32%, transparent)",
+    bg: "color-mix(in srgb, #A78BFA 14%, transparent)",
+    text: "#A78BFA",
+    border: "color-mix(in srgb, #A78BFA 32%, transparent)",
   },
 };
 
@@ -175,7 +175,7 @@ export function ClientXpStatsCard({ clientId }: Props) {
           width: 180,
           height: 180,
           background:
-            "radial-gradient(circle, color-mix(in srgb, #10B981 20%, transparent), transparent 65%)",
+            "radial-gradient(circle, color-mix(in srgb, #2DD4BF 20%, transparent), transparent 65%)",
           pointerEvents: "none",
           zIndex: 0,
           filter: "blur(6px)",
@@ -264,7 +264,7 @@ const cardStyle: React.CSSProperties = {
   isolation: "isolate",
   overflow: "hidden",
   background: "var(--lb360-card-emerald, var(--ls-surface))",
-  border: "1px solid color-mix(in srgb, #10B981 18%, var(--ls-border))",
+  border: "1px solid color-mix(in srgb, #2DD4BF 18%, var(--ls-border))",
   borderRadius: 16,
   padding: "18px 20px",
   boxShadow:
@@ -316,7 +316,7 @@ const totalXpValueStyle: React.CSSProperties = {
   letterSpacing: "-0.025em",
   lineHeight: 1,
   background:
-    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+    "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%))",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   WebkitTextFillColor: "transparent",
@@ -344,9 +344,9 @@ const progressBarWrap: React.CSSProperties = {
 const progressBarFill: React.CSSProperties = {
   height: "100%",
   background:
-    "var(--lb360-gradient, linear-gradient(90deg, #10B981, #06B6D4, #8B5CF6))",
+    "var(--lb360-gradient, linear-gradient(90deg, #2DD4BF, #2DD4BF, #C5F82A))",
   borderRadius: 999,
-  boxShadow: "0 1px 6px color-mix(in srgb, #06B6D4 50%, transparent)",
+  boxShadow: "0 1px 6px color-mix(in srgb, #2DD4BF 50%, transparent)",
   transition: "width 0.6s ease",
 };
 
@@ -375,9 +375,9 @@ const eventXpBadgeStyle: React.CSSProperties = {
   alignItems: "center",
   padding: "2px 8px",
   borderRadius: 999,
-  background: "color-mix(in srgb, #10B981 14%, transparent)",
-  color: "color-mix(in srgb, #10B981 75%, var(--ls-text))",
-  border: "1px solid color-mix(in srgb, #10B981 28%, transparent)",
+  background: "color-mix(in srgb, #2DD4BF 14%, transparent)",
+  color: "color-mix(in srgb, #2DD4BF 75%, var(--ls-text))",
+  border: "1px solid color-mix(in srgb, #2DD4BF 28%, transparent)",
   fontSize: 11,
   fontWeight: 700,
   fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",

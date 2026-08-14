@@ -6,7 +6,7 @@ import type { ProgramChoiceId } from "../../data/programs";
  *
  * Codes couleurs :
  *  - Corps bouteille : blanc avec contour doux
- *  - Label Herbalife : vert #0F6E56 (Découverte) / gold #BA7517 (Premium+)
+ *  - Label Herbalife : vert #0F6E56 (Découverte) / gold #0F766E (Premium+)
  *  - Fond selon programme : c-green-50 / c-amber-50 / coral-50 / amber-100
  */
 interface Props {
@@ -52,9 +52,9 @@ const PROGRAM_BG: Record<ProgramChoiceId, string> = {
 
 const PROGRAM_LABEL_COLOR: Record<ProgramChoiceId, string> = {
   discovery: "#0F6E56",
-  premium: "#BA7517",
+  premium: "#0F766E",
   booster1: "#C2414B",
-  booster2: "#B8922A",
+  booster2: "#0D9488",
   unit: "#6B6F7A",
   "sport-discovery": "#1565C0",
   "sport-premium": "#3949AB",
@@ -128,7 +128,7 @@ function renderBottles(program: ProgramChoiceId, labelColor: string) {
       return (
         <>
           <Bottle x={16} y={40} h={58} labelColor={labelColor} />
-          <Bottle x={50} y={40} h={58} labelColor="#B8922A" />
+          <Bottle x={50} y={40} h={58} labelColor="#0D9488" />
           <FlatBottle x={82} y={50} accent={labelColor} />
           <Jar x={108} y={62} accent={labelColor} />
         </>
@@ -138,7 +138,7 @@ function renderBottles(program: ProgramChoiceId, labelColor: string) {
       return (
         <>
           <Bottle x={10} y={40} h={58} labelColor="#0F6E56" />
-          <Bottle x={40} y={40} h={58} labelColor="#B8922A" />
+          <Bottle x={40} y={40} h={58} labelColor="#0D9488" />
           <FlatBottle x={70} y={50} accent="#0F6E56" />
           <Jar x={96} y={62} accent="#0F6E56" />
           <Jar x={78} y={22} fill="#FFFFFF" accent={labelColor} />
@@ -149,7 +149,7 @@ function renderBottles(program: ProgramChoiceId, labelColor: string) {
       return (
         <>
           <Bottle x={10} y={40} h={58} labelColor="#0F6E56" />
-          <Bottle x={40} y={40} h={58} labelColor="#B8922A" />
+          <Bottle x={40} y={40} h={58} labelColor="#0D9488" />
           <FlatBottle x={70} y={50} accent="#0F6E56" />
           <Jar x={96} y={62} accent="#0F6E56" />
           <Jar x={78} y={22} fill="#FFFFFF" accent={labelColor} />

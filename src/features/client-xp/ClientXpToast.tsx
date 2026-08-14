@@ -78,8 +78,8 @@ export function ClientXpToast() {
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes ls-xp-toast-pulse {
-          0%, 100% { box-shadow: 0 6px 20px rgba(186,117,23,0.40); }
-          50%      { box-shadow: 0 8px 28px rgba(239,159,39,0.65); }
+          0%, 100% { box-shadow: 0 6px 20px rgba(15,118,110,0.40); }
+          50%      { box-shadow: 0 8px 28px rgba(45,212,191,0.65); }
         }
       `}</style>
       {toasts.map((t) => (
@@ -100,7 +100,7 @@ export function ClientXpToast() {
             fontFamily: "Inter, system-ui, sans-serif",
             animation:
               "ls-xp-toast-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1), ls-xp-toast-pulse 1800ms ease-in-out 280ms infinite",
-            boxShadow: "0 6px 20px rgba(186,117,23,0.40)",
+            boxShadow: "0 6px 20px rgba(15,118,110,0.40)",
           }}
         >
           <span

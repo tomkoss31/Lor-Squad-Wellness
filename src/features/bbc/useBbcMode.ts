@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import type { Club } from "../../types/domain";
+import { lireMonProfil } from "../../services/monProfil";
 
 const PREVIEW_KEY = "ls-bbc-preview"; // 'bbc' | 'classic' (admins uniquement)
 
@@ -40,6 +41,30 @@ function readPreview(): "classic" | "bbc" | null {
   return v === "bbc" || v === "classic" ? v : null;
 }
 
+// ─── Les instances du hook doivent se parler ────────────────────────────────
+//
+// ⚠️ CORRECTIF 13/08/2026 — Thomas depuis son iPhone : « le passage en mode BBC
+// ne fonctionne pas du tout ».
+//
+// `useBbcMode` est monté DEUX FOIS : une fois par `AppLayout` (c'est lui qui
+// décide de monter la coquille BBC) et une fois par `MobileDrawer` (c'est lui
+// qui porte le bouton). `setPreview` n'écrivait que dans l'état React de
+// l'appelant — donc le tiroir basculait, et AppLayout n'en savait rien.
+//
+// Mesuré au navigateur : après le tap, `localStorage` valait bien `bbc`, mais
+// `.bbc-shell` restait absent. Un rechargement manuel, et tout marchait. Le
+// bouton n'était donc pas casse : il était SANS EFFET tant qu'on ne rechargeait
+// pas la page — ce que personne ne fait.
+//
+// Un mini bus d'abonnement suffit : pas de contexte a plumber, pas de
+// dependance nouvelle, et toutes les instances presentes se mettent d'accord.
+type Apercu = "classic" | "bbc" | null;
+const abonnes = new Set<(v: Apercu) => void>();
+
+function diffuserApercu(v: Apercu): void {
+  for (const notifier of abonnes) notifier(v);
+}
+
 export function useBbcMode(
   userId: string | null | undefined,
   isAdmin = false,
@@ -50,10 +75,28 @@ export function useBbcMode(
   const [preview, setPreviewState] = useState<"classic" | "bbc" | null>(readPreview);
 
   const setPreview = useCallback((v: "classic" | "bbc" | null) => {
-    setPreviewState(v);
-    if (typeof window === "undefined") return;
-    if (v) window.localStorage.setItem(PREVIEW_KEY, v);
-    else window.localStorage.removeItem(PREVIEW_KEY);
+    if (typeof window !== "undefined") {
+      if (v) window.localStorage.setItem(PREVIEW_KEY, v);
+      else window.localStorage.removeItem(PREVIEW_KEY);
+    }
+    // Prévient TOUTES les instances, celle-ci comprise — sinon le tiroir
+    // bascule et la coquille reste en place.
+    diffuserApercu(v);
+  }, []);
+
+  // Abonnement au bus + à l'onglet voisin (`storage` ne se déclenche que dans
+  // les AUTRES onglets, d'où les deux).
+  useEffect(() => {
+    const surBus = (v: Apercu) => setPreviewState(v);
+    abonnes.add(surBus);
+    const surStockage = (e: StorageEvent) => {
+      if (e.key === PREVIEW_KEY) setPreviewState(readPreview());
+    };
+    window.addEventListener("storage", surStockage);
+    return () => {
+      abonnes.delete(surBus);
+      window.removeEventListener("storage", surStockage);
+    };
   }, []);
 
   useEffect(() => {
@@ -69,12 +112,9 @@ export function useBbcMode(
           setLoading(false);
           return;
         }
-        const { data: u } = await sb
-          .from("users")
-          .select("club_model")
-          .eq("id", userId)
-          .maybeSingle();
-        const cm = (u as { club_model?: string } | null)?.club_model;
+        // Ligne mutualisee : sept endroits lisaient la meme (audit 2026-08-12).
+        const u = await lireMonProfil(userId);
+        const cm = u?.club_model;
         if (!cancelled && (cm === "bbc" || cm === "classic")) setClubModel(cm);
 
         const { data: rows } = await sb

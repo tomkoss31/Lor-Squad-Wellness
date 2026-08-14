@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<!--
+  Balises Open Graph du tunnel de réservation du Breakfast Club.
+
+  LE PROBLÈME (repéré par Thomas le 2026-08-10) : labase-nutrition.com et
+  labase360.fr servent le MÊME index.html. Le domaine du CLUB annonçait donc
+  l'identité de l'APP COACH — titre, description et image. useClubHead corrige
+  tout ça, mais APRÈS le JavaScript : or les robots (WhatsApp, Facebook,
+  Telegram, LinkedIn, Google…) ne l'exécutent pas. Quelqu'un qui partageait le
+  lien du flyer QR affichait l'app coach au lieu du club.
+
+  POURQUOI UN FICHIER STATIQUE ET PAS UNE FONCTION : le plan Vercel Hobby
+  plafonne à 12 fonctions serverless par déploiement, et le projet y est déjà.
+  Une 13e a fait échouer le déploiement (exceeded_serverless_functions_per_
+  deployment). Ce fichier fait le même travail, sans consommer de fonction et
+  sans latence — le contenu était de toute façon statique.
+
+  vercel.json n'y route QUE les robots (has user-agent) : les vrais visiteurs
+  gardent le SPA, zéro impact UX.
+-->
+<title>Réserver mon RDV découverte · The Breakfast Club by La Base</title>
+<meta name="description" content="Le club de petit-déjeuner et de coaching nutrition de Verdun. Body scan et bilan bien-être offerts, sans engagement. 11 rue Saint Pierre, du lundi au samedi." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="The Breakfast Club by La Base" />
+<meta property="og:title" content="Réserver mon RDV découverte · The Breakfast Club by La Base" />
+<meta property="og:description" content="Le club de petit-déjeuner et de coaching nutrition de Verdun. Body scan et bilan bien-être offerts, sans engagement. 11 rue Saint Pierre, du lundi au samedi." />
+<meta property="og:url" content="https://www.labase-nutrition.com/reserver" />
+<!-- La façade : elle montre le lieu ET porte « 1 lieu 2 ambiances · 7h-11h
+     Breakfast Club · 11h-17h30 Bar Healthy » — elle répond donc d'elle-même à
+     la confusion entre les trois marques (360 / Breakfast Club / Shakes&Drinks). -->
+<meta property="og:image" content="https://www.labase-nutrition.com/brand/breakfast-club/photos/club-facade.jpg" />
+<meta property="og:image:width" content="1280" />
+<meta property="og:image:height" content="720" />
+<meta property="og:locale" content="fr_FR" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Réserver mon RDV découverte · The Breakfast Club by La Base" />
+<meta name="twitter:description" content="Le club de petit-déjeuner et de coaching nutrition de Verdun. Body scan et bilan bien-être offerts, sans engagement." />
+<meta name="twitter:image" content="https://www.labase-nutrition.com/brand/breakfast-club/photos/club-facade.jpg" />
+<link rel="icon" type="image/svg+xml" href="/brand/breakfast-club/favicon.svg" />
+<link rel="canonical" href="https://www.labase-nutrition.com/reserver" />
+<meta http-equiv="refresh" content="0; url=/reserver" />
+</head>
+<body>
+<p>Redirection vers <a href="/reserver">la réservation du Breakfast Club</a>…</p>
+<script>window.location.replace("/reserver");</script>
+</body>
+</html>

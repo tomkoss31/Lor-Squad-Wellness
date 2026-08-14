@@ -9,12 +9,13 @@
 // rail latéral persistant (phases · parcours 6 étapes · fil de sécurité).
 // =============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OPS_PHASES, type SalleOpsView } from "./useSalleOps";
 import { QuiInviterLive } from "./QuiInviterLive";
 import { InviteDistributorModal } from "../../../components/users/InviteDistributorModal";
 import { AllerPlusLoin } from "./AllerPlusLoin";
+import { MonParrain } from "./MonParrain";
 import "./salle-ops.css";
 
 const MONO: React.CSSProperties = { fontFamily: "var(--ls-ops-font-mono)" };
@@ -29,16 +30,29 @@ export function SalleOpsQuotidien({
   view,
   onEscape,
   fullscreen,
+  demoParrain,
 }: {
   view: SalleOpsView;
   onEscape?: () => void;
   fullscreen?: boolean;
+  /** Parrain imposé — uniquement pour la démonstration de /salle-ops. */
+  demoParrain?: { nom: string; telephone?: string };
 }) {
   const navigate = useNavigate();
   // Étape consultée : null = on suit l'étape en cours ; sinon on revoit une
   // étape (avant/après) sans la valider.
   const [viewedN, setViewedN] = useState<number | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Cockpit plein écran → on masque la barre de nav du bas (mobile) : elle
+  // flottait AU-DESSUS de l'overlay et offrait des sorties accidentelles vers
+  // des pages profondes. Le débutant reste focus (retour Thomas 2026-08-04).
+  // Le « Retour à mon parcours » gère déjà le retour depuis une action.
+  useEffect(() => {
+    if (!fullscreen) return;
+    document.body.classList.add("ls-ops-cockpit-open");
+    return () => document.body.classList.remove("ls-ops-cockpit-open");
+  }, [fullscreen]);
   const activeN = view.activeStepNumber;
   const shownN = viewedN ?? activeN;
   const shownStep = view.steps.find((s) => s.n === shownN) ?? view.steps[0];
@@ -49,6 +63,16 @@ export function SalleOpsQuotidien({
   const phaseIndex = Math.max(0, view.phaseIndex);
   const phaseLabel = OPS_PHASES[phaseIndex]?.label ?? "Allumage";
   const activeLabel = view.steps.find((s) => s.state === "active")?.label ?? "";
+
+  /**
+   * Les étapes DÉPASSÉES sans être faites — celles dont l'app ne peut pas
+   * constater la preuve (250 PV sur myHerbalife, Liste 100, 1ʳᵉ story, HOM).
+   * Elles sont proposées, jamais imposées : c'est la contrepartie du fait
+   * qu'elles ne bloquent plus le parcours depuis le 12/08/2026.
+   */
+  const proposees = view.steps.filter(
+    (s) => s.n < activeN && s.state !== "done" && s.state !== "locked" && !s.bloquante && s.lesson,
+  );
 
   /** Clic sur une étape du parcours → on la revoit (sauf verrouillée). */
   function pickStep(n: number) {
@@ -63,8 +87,14 @@ export function SalleOpsQuotidien({
       setInviteOpen(true);
       return;
     }
-    if (lesson.faire.linkPath) navigate(lesson.faire.linkPath);
-    else if (shownGateKey) void view.toggle(shownGateKey);
+    const path = lesson.faire.linkPath;
+    if (path) {
+      // Lien EXTERNE (ex. myHerbalife) → nouvel onglet ; sinon route interne.
+      if (/^https?:\/\//.test(path)) window.open(path, "_blank", "noopener,noreferrer");
+      else navigate(path);
+    } else if (shownGateKey) {
+      void view.toggle(shownGateKey);
+    }
   }
 
   return (
@@ -89,12 +119,13 @@ export function SalleOpsQuotidien({
 
           <div style={hair} />
 
+          {/* Maquette validée du 12/08/2026 — LE BUT PREND LA VEDETTE.
+              « Aujourd'hui » occupait tout le haut de l'écran sans rien dire :
+              on lisait le nom de la page, puis l'étape, puis seulement le titre
+              de la leçon en plus petit. Le vrai sujet arrivait en troisième.
+              Il passe devant ; « Aujourd'hui » redevient une mention. */}
           <div style={{ ...MONO, fontSize: 11, letterSpacing: ".2em", color: "var(--ls-ops-muted)", textTransform: "uppercase", marginBottom: 4 }}>
-            La Base Académie
-          </div>
-          <h1 className="ls-ops-display" style={title}>Aujourd'hui</h1>
-          <div style={{ ...MONO, fontSize: 11, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ls-ops-faint)", marginTop: 6 }}>
-            Coach en formation {view.activated ? "· lancé·e 🚀" : `· étape ${view.activeStepNumber}/${view.totalSteps}`}
+            La Base Académie · Aujourd'hui
           </div>
 
           {/* Jalon J30-45 : prêt pour le plan marketing. */}
@@ -121,10 +152,16 @@ export function SalleOpsQuotidien({
           {/* LEÇON : Apprendre → Faire → Preuve */}
           {lesson ? (
             <div style={{ marginTop: 24 }}>
-              <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", marginBottom: 4 }}>
-                Étape {lesson.goProStep} · {lesson.goProLabel}
+              <div style={butEyebrow}>
+                {/* `goProStep` est un index (0 = S'équiper) alors que le compteur
+                    dit « Étape N sur 7 » à partir de 1 : on lisait « Étape 4 ·
+                    Relancer » sous « Étape 5 sur 7 » (repéré 2026-08-04). */}
+                {isActiveShown ? "Ton but · " : ""}étape {lesson.goProStep + 1} · {lesson.goProLabel}
               </div>
-              <h2 className="ls-ops-display" style={lessonTitle}>{lesson.title}</h2>
+              <h1 className="ls-ops-display" style={butTitre}>{lesson.title}</h1>
+              {/* APPRENDRE sort de sa carte : c'est le « pourquoi » du but, il
+                  se lit d'un trait, pas dans un tiroir étiqueté « 1 · 30 sec ». */}
+              <p style={butApprendre}>{lesson.apprendre}</p>
 
               {!isActiveShown ? (
                 <div style={reviewBanner}>
@@ -137,14 +174,11 @@ export function SalleOpsQuotidien({
                 </div>
               ) : null}
 
-              <div style={{ ...softCard, marginTop: 14 }}>
-                <div style={stepTag}>1 · Apprendre · 30 sec</div>
-                <p style={lessonText}>{lesson.apprendre}</p>
-              </div>
-
+              {/* L'ACTION reste toujours visible : c'est le geste du jour, il ne
+                  se replie pas. Le reste (preuve, réponses) passe en volets. */}
               <div style={limeCard}>
                 <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-on-accent2)", marginBottom: 8 }}>
-                  2 · Faire · maintenant
+                  Ce que tu fais maintenant
                 </div>
                 <p style={{ fontSize: 14.5, lineHeight: 1.5, color: "var(--ls-ops-on-accent)", margin: 0, fontWeight: 500 }}>
                   {lesson.faire.instruction}
@@ -156,8 +190,7 @@ export function SalleOpsQuotidien({
                 ) : null}
               </div>
 
-              <div style={{ ...softCard, marginTop: 12 }}>
-                <div style={stepTag}>3 · Preuve · c'est gagné quand…</div>
+              <Volet titre="C'est gagné quand…" defaut>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
                   <span style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid var(--ls-ops-accent)", flex: "none", marginTop: 1, boxSizing: "border-box" }} />
                   <p style={{ ...lessonText, margin: 0 }}>{lesson.preuve}</p>
@@ -176,26 +209,114 @@ export function SalleOpsQuotidien({
                   <div style={autoNote}>
                     ⏳ Pas besoin de cocher : cette étape se valide <strong style={{ color: "var(--ls-ops-accent-text)" }}>toute seule</strong> dès que l'acte réel est enregistré (anti-triche).
                   </div>
+                ) : lesson.proofCounter && shownGateKey ? (
+                  /* PREUVE CHIFFRÉE — on compte les gestes au lieu d'une case
+                     tout-ou-rien. C'est ce qui donne enfin une sortie à
+                     « Relancer », qui n'en avait aucune : le parcours s'y
+                     figeait et personne n'en sortait (2026-08-04). */
+                  (() => {
+                    const target = lesson.proofCounter.target;
+                    const count = Math.min(target, view.counts[shownGateKey] ?? 0);
+                    const reste = target - count;
+                    return (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+                          {Array.from({ length: target }, (_, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                flex: 1,
+                                height: 7,
+                                borderRadius: 999,
+                                background:
+                                  i < count ? "var(--ls-ops-accent)" : "var(--ls-ops-border)",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div style={{ ...MONO, fontSize: 11, color: "var(--ls-ops-muted)", marginBottom: 10 }}>
+                          {count} / {target} {lesson.proofCounter.unit}
+                          {reste > 0 ? ` · encore ${reste}` : " · étape terminée ✓"}
+                        </div>
+                        {reste > 0 ? (
+                          <button
+                            type="button"
+                            style={doneBtn}
+                            onClick={() =>
+                              shownGateKey && void view.bump(shownGateKey, target)
+                            }
+                          >
+                            {lesson.proofCounter.bumpLabel}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()
                 ) : shownGateKey ? (
                   <button type="button" style={doneBtn} onClick={() => shownGateKey && void view.toggle(shownGateKey)}>
                     ✓ C'est fait — passer à l'étape suivante
                   </button>
-                ) : null}
-              </div>
-
-              {/* Réponses prêtes (« comment répondre ») */}
-              {lesson.repondre && lesson.repondre.length > 0 ? (
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ ...MONO, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ls-ops-muted)", margin: "8px 0 10px" }}>
-                    Réponses prêtes · comment répondre
+                ) : (
+                  /* Étapes OUVERTES sans « porte » (Démarrer ta recrue,
+                     Dupliquer) : elles se vivent dans la durée, il n'y a pas
+                     d'acte unique à cocher. On affiche une note plutôt qu'un
+                     vide — le vide donnait un cul-de-sac (audit 2026-08-04). */
+                  <div style={autoNote}>
+                    🌱 Cette étape se vit dans la durée — pas de case à cocher.
+                    Reviens-y au fil de tes recrues ; Noaly et ton parrain sont
+                    là pour t'accompagner.
                   </div>
+                )}
+              </Volet>
+
+              {/* Réponses prêtes — repliées : on les ouvre au moment où on se
+                  fait objecter, pas avant. */}
+              {lesson.repondre && lesson.repondre.length > 0 ? (
+                <Volet titre={`Si on te dit… (${lesson.repondre.length})`}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {lesson.repondre.map((r) => (
                       <Repondre key={r.situation} situation={r.situation} reponse={r.reponse} />
                     ))}
                   </div>
-                </div>
+                </Volet>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* ── PAS ENCORE FAIT ? ────────────────────────────────────────────
+              Depuis le 12/08/2026, une étape que l'app ne sait pas CONSTATER
+              ne retient plus le fil (cf. goProSteps). Conséquence : les 250 PV,
+              la Liste 100 et la 1ʳᵉ story sont désormais dépassées en silence.
+              Sans ce bloc, leurs leçons ne seraient plus atteignables qu'en
+              tapant un petit repère du parcours — autant dire jamais.
+              Elles sont donc PROPOSÉES ici, jamais imposées. */}
+          {proposees.length > 0 ? (
+            <div style={{ marginTop: 22 }}>
+              <SectionLabel>Pas encore fait ? Quand tu veux</SectionLabel>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {proposees.map((s) => (
+                  <button
+                    key={s.n}
+                    type="button"
+                    onClick={() => pickStep(s.n)}
+                    style={proposeeCard}
+                  >
+                    <span style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                      <span style={{ display: "block", ...MONO, fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-ops-muted)" }}>
+                        Étape {s.n} · {s.label}
+                      </span>
+                      <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: "var(--ls-ops-ink)", marginTop: 2 }}>
+                        {s.lesson?.title}
+                      </span>
+                    </span>
+                    <span aria-hidden="true" style={{ color: "var(--ls-ops-accent-text)", fontWeight: 700, flex: "none" }}>→</span>
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-ops-faint)", margin: "10px 0 0" }}>
+                Ces étapes comptent, mais l'app ne peut pas les vérifier à ta
+                place — elles ne bloquent donc plus ta progression.
+              </p>
             </div>
           ) : null}
 
@@ -224,6 +345,8 @@ export function SalleOpsQuotidien({
           </div>
 
           {/* Progression — inline mobile, masqué desktop (→ rail) */}
+          <MonParrain demo={demoParrain} />
+
           <div className="ls-ops-hide-desktop">
             <SectionLabel>Ton parcours · {view.totalSteps} étapes</SectionLabel>
             <Progression view={view} activeLabel={activeLabel} shownN={shownN} onPick={pickStep} />
@@ -251,6 +374,9 @@ export function SalleOpsQuotidien({
           <button type="button" onClick={() => askNoaly(lesson?.noalyPrompt)} style={railNoalyBtn}>
             Demander à Noaly →
           </button>
+          {/* Le fil de sécurité ci-dessus nomme le parrain depuis toujours —
+              sans jamais donner le moyen de le joindre (12/08/2026). */}
+          <MonParrain demo={demoParrain} />
           {/* La porte « apprendre » des coachs (LOT 4, 2026-07-27) : formation
               Herbalife, scripts et glossaire, rapatriés ici depuis le hub
               « Mon développement » qui devient l'espace de Thomas. */}
@@ -267,6 +393,53 @@ export function SalleOpsQuotidien({
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
+
+/**
+ * Volet repliable — maquette validée du 12/08/2026.
+ *
+ * Avant, la leçon s'étalait en trois cartes toujours ouvertes : APPRENDRE,
+ * FAIRE, PREUVE, plus les réponses aux objections. Un écran de haut, à faire
+ * défiler avant d'atteindre le bouton. Le débutant lisait tout, ou rien.
+ *
+ * Désormais : le but et l'action restent à découvert — c'est ce qu'on fait
+ * aujourd'hui. La preuve et les réponses attendent qu'on en ait besoin.
+ */
+function Volet({
+  titre,
+  defaut,
+  children,
+}: {
+  titre: string;
+  /** Ouvert au premier rendu (la preuve : on aime savoir où on va). */
+  defaut?: boolean;
+  children: React.ReactNode;
+}) {
+  const [ouvert, setOuvert] = useState(Boolean(defaut));
+  return (
+    <div style={{ ...softCard, marginTop: 10, padding: 0, overflow: "hidden" }}>
+      <button
+        type="button"
+        onClick={() => setOuvert((v) => !v)}
+        aria-expanded={ouvert}
+        style={voletTete}
+      >
+        <span style={{ flex: 1, textAlign: "left" }}>{titre}</span>
+        <span
+          aria-hidden="true"
+          style={{
+            color: "var(--ls-ops-accent-text)",
+            fontWeight: 700,
+            transform: ouvert ? "rotate(90deg)" : "none",
+            transition: "transform .18s",
+          }}
+        >
+          ›
+        </span>
+      </button>
+      {ouvert ? <div style={{ padding: "0 16px 16px" }}>{children}</div> : null}
+    </div>
+  );
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -514,21 +687,7 @@ const hair: React.CSSProperties = {
   margin: "14px 0 18px",
 };
 
-const title: React.CSSProperties = {
-  fontSize: "clamp(40px, 12vw, 56px)",
-  lineHeight: 0.9,
-  letterSpacing: ".01em",
-  color: "var(--ls-ops-ink)",
-  margin: 0,
-};
 
-const lessonTitle: React.CSSProperties = {
-  fontSize: "clamp(30px, 9vw, 40px)",
-  lineHeight: 0.94,
-  letterSpacing: ".01em",
-  color: "var(--ls-ops-ink)",
-  margin: 0,
-};
 
 const softCard: React.CSSProperties = {
   background: "var(--ls-ops-surface)",
@@ -537,14 +696,73 @@ const softCard: React.CSSProperties = {
   padding: 16,
 };
 
-const stepTag: React.CSSProperties = {
+// ─── Le but (maquette validée 12/08/2026) ───────────────────────────────────
+
+/** L'étape et la phase, au-dessus du but — petit, pour laisser la place. */
+const butEyebrow: React.CSSProperties = {
   fontFamily: "var(--ls-ops-font-mono)",
   fontSize: 11,
   letterSpacing: ".14em",
   textTransform: "uppercase",
   color: "var(--ls-ops-accent-text)",
-  marginBottom: 8,
+  fontWeight: 600,
+  marginBottom: 6,
 };
+
+/** LE but. Même échelle que l'ancien « Aujourd'hui » — il la mérite mieux. */
+const butTitre: React.CSSProperties = {
+  fontSize: "clamp(34px, 9.5vw, 48px)",
+  lineHeight: 0.94,
+  letterSpacing: ".01em",
+  margin: 0,
+  color: "var(--ls-ops-ink)",
+};
+
+/** Le « pourquoi », d'un trait, sans étiquette ni carte. */
+const butApprendre: React.CSSProperties = {
+  fontSize: 14.5,
+  lineHeight: 1.6,
+  color: "var(--ls-ops-text3)",
+  margin: "14px 0 4px",
+  maxWidth: "58ch",
+};
+
+const voletTete: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  padding: "14px 16px",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: 14,
+  fontWeight: 600,
+  color: "var(--ls-ops-ink)",
+};
+
+/**
+ * Étape proposée, jamais imposée — trait discontinu : rien n'est dû ici.
+ *
+ * ⚠️ Le trait était `var(--ls-ops-border)` : mesuré à l'écran, rgb(42,65,60)
+ * sur un fond rgb(30,51,48). TROIS points d'écart — la carte ne se distinguait
+ * pas d'une carte ordinaire, et le signal « c'est optionnel » était perdu.
+ * Teinté à l'accent : le pointillé se voit, sans crier.
+ */
+const proposeeCard: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  background: "transparent",
+  border: "1.5px dashed color-mix(in srgb, var(--ls-ops-accent) 34%, transparent)",
+  borderRadius: 14,
+  padding: "12px 14px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
 
 const lessonText: React.CSSProperties = {
   fontSize: 14,

@@ -29,7 +29,8 @@ import { useTheme } from "../../../hooks/useTheme";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
-import { PlanDuJour } from "./components/PlanDuJour";
+import { EcranDuJourBranche } from "./components/EcranDuJourBranche";
+import { BandeauDemarrage } from "./components/BandeauDemarrage";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
 
@@ -38,7 +39,6 @@ import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 // Liste privée « à relancer » (in-app, sans email/push) — 2026-06-30.
-import { CoachRemindersWidget } from "../../../components/reminders/CoachRemindersWidget";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
 import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
 import { useSalleOps } from "../salle-ops/useSalleOps";
@@ -79,6 +79,18 @@ export function CoPiloteV5Page() {
   // DÉJÀ ACTIVÉ (ou un admin comme Thomas) de rouvrir / revoir la Salle des
   // Opérations à la demande — avant, l'entrée n'existait que pour les non-activés.
   const [opsForceOpen, setOpsForceOpen] = useState(false);
+  // Bande « démarrage » du coach déjà lancé (LOT 4) : elle doit dire où il en
+  // est et ce qui vient, pas seulement « revoir le parcours ».
+  //
+  // ⚠️ `opsDone = steps.every(state === "done")` a été RETIRÉ (2026-08-13) : il
+  // ne se déclenchait JAMAIS. `stepDone` exige `gates.length > 0`, or les
+  // étapes 6 et 7 n'ont aucune porte — la branche « Démarrage terminé 🎉 »
+  // était donc du code mort depuis le début. Le seul signal fiable de fin est
+  // `ops.activated` (users.activated_at, décidé serveur).
+  const opsNextLabel =
+    ops.steps.find((s) => s.state === "active")?.label ??
+    ops.steps.find((s) => s.state !== "done")?.label ??
+    "Dupliquer";
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -181,88 +193,30 @@ export function CoPiloteV5Page() {
         </div>
       </div>
 
-      {/* Accès cockpit « La Base Académie » (fix 2026-07-08) : entrée CLAIRE et
-          TOUJOURS dispo pour (r)ouvrir le démarrage guidé — que le membre soit en
-          pause du jour (« Plus tard »), déjà activé (revoir), ou admin (Thomas qui
-          veut vérifier ce que voient ses distris). Force l'ouverture du cockpit
-          LIVE (setOpsForceOpen) — pas la maquette statique /salle-ops. */}
+      {/* Accès au démarrage — réduit à une BARRE (2026-08-13).
+          Mesuré avant : 187 px posés au-dessus de la zone 1, soit près d'un
+          quart d'un écran d'iPhone consommé avant d'arriver à ce qui compte.
+          La jauge est devenue le liseré du bas ; un tap déroule les deux
+          portes. Replié par défaut À CHAQUE FOIS, volontairement : un bloc
+          qu'on rouvre chaque matin redevient un meuble permanent qu'on cesse
+          de voir — dix coachs sur onze étaient gelés à l'étape 1 alors qu'il
+          s'affichait tous les jours EN ENTIER. Ce n'était pas la taille le
+          problème, c'était la permanence. */}
       {currentUser.role === "distributor" || currentUser.role === "admin" ? (
-        <div
-          style={{
-            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))",
-            borderRadius: 16,
-            padding: "14px 16px",
+        <BandeauDemarrage
+          etape={ops.activeStepNumber}
+          total={ops.totalSteps}
+          etats={ops.steps.map((s) => s.state)}
+          activated={ops.activated}
+          prochaineEtape={opsNextLabel}
+          onOuvrirParcours={() => {
+            window.localStorage.removeItem("ls-ops-escape");
+            setOpsEscaped(false);
+            setOpsForceOpen(true);
+            window.scrollTo({ top: 0 });
           }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              window.localStorage.removeItem("ls-ops-escape");
-              setOpsEscaped(false);
-              setOpsForceOpen(true);
-              window.scrollTo({ top: 0 });
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 22 }}>🎓</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontWeight: 700, color: "var(--ls-text)", fontSize: 14.5 }}>
-                {ops.activated ? "Revoir mon démarrage guidé" : "Reprendre mon démarrage"}
-              </span>
-              <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                {ops.activated
-                  ? "Rouvre le cockpit La Base Académie (le parcours Go Pro pas à pas)."
-                  : "Tu as mis en pause avec « Plus tard ». Reprends ton parcours La Base Académie."}
-              </span>
-            </span>
-            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-          </button>
-
-          {/* Accès direct à la formation (LOT 4, 2026-07-27) : sans ça, un coach
-              déjà activé devait passer par le cockpit pour la trouver — soit
-              plus loin qu'avant, alors que l'objectif est de la rendre PLUS
-              accessible (8 personnes l'avaient ouverte). */}
-          <button
-            type="button"
-            onClick={() => navigate("/formation")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 12,
-              paddingTop: 11,
-              width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              borderTop: "1px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              color: "var(--ls-text)",
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 17 }}>📚</span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600 }}>
-              Ma formation Herbalife
-            </span>
-            <span style={{ fontSize: 12, color: "var(--ls-text-muted)", flexShrink: 0 }}>
-              Démarrer · Construire · Dupliquer
-            </span>
-            <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontWeight: 700, flexShrink: 0 }}>→</span>
-          </button>
-        </div>
+          onOuvrirFormation={() => navigate("/formation/apprendre")}
+        />
       ) : null}
 
       {/* Simplification 2026-07-27 (LOT 1) : la check-list d'accueil J0→J7
@@ -277,8 +231,9 @@ export function CoPiloteV5Page() {
           si aucun event. Bouton WhatsApp avec message pre-rempli. */}
       <CelebrationCard />
 
-      {/* Liste privée « à relancer » (in-app only, jamais d'email/push au client). */}
-      <CoachRemindersWidget />
+      {/* Liste privee « a relancer » retiree au menage du 12/08/2026 :
+          2 rappels crees en 90 jours, dernier il y a 38 jours — pour un cron
+          qui tournait 48 fois par jour. */}
 
       {/* ═══ PLAN DU JOUR (refonte chantier 1, design Claude Design validé) ═══
           Le nouveau héros : file d'actions priorisée (RDV + relances propres +
@@ -287,7 +242,12 @@ export function CoPiloteV5Page() {
           leaderboard → Mon équipe ch.4), ReferrerStatsCard (« Tes leads » =
           doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
           Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
-      <PlanDuJour data={data} />
+      {/* Refonte 2026-08-12 : l'ecran du jour remplace le Plan du jour.
+          Un seul ecran qui descend — une seule personne en haut (jamais deux,
+          cf. ceQuiCompte), puis ta journee, tes clients, ton equipe.
+          `ops` est passe en PROP : remonter useSalleOps ici declencherait un
+          fetch `distributor_starter_progress` de plus, non cache. */}
+      <EcranDuJourBranche data={data} ops={ops} />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.
@@ -372,7 +332,7 @@ const liveDotStyle: React.CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: "50%",
-  background: "var(--lb360-emerald, #10B981)",
+  background: "var(--lb360-emerald, #2DD4BF)",
   display: "inline-block",
   boxShadow: "0 0 0 4px color-mix(in srgb, var(--lb360-emerald) 22%, transparent)",
 };
@@ -388,9 +348,9 @@ const greetingStyle: React.CSSProperties = {
 };
 
 // Greeting accent V7 : gradient G3 (emerald → cyan → violet) au lieu du
-// gold/orange V5 (#EF9F27 → #BA7517) qui jurait avec la nouvelle identite.
+// gold/orange V5 (#2DD4BF → #0F766E) qui jurait avec la nouvelle identite.
 const greetingAccentStyle: React.CSSProperties = {
-  background: "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+  background: "var(--lb360-gradient, linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #c5f82a 100%))",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   WebkitTextFillColor: "transparent",
@@ -480,8 +440,8 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
           padding: "22px 24px",
           borderRadius: 20,
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))",
           position: "relative",
           overflow: "hidden",
         }}
@@ -496,7 +456,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
             height: 200,
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 30%, transparent) 0%, transparent 70%)",
+              "radial-gradient(circle, color-mix(in srgb, var(--ls-teal) 30%, transparent) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -506,7 +466,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
               fontSize: 10.5,
               letterSpacing: 1.4,
               textTransform: "uppercase",
-              color: "var(--ls-gold)",
+              color: "var(--ls-teal)",
               fontWeight: 700,
               marginBottom: 6,
             }}
@@ -589,7 +549,7 @@ function CoPilotePassiveView({ firstName }: { firstName: string }) {
         <button
           type="button"
           onClick={() => navigate("/parametres")}
-          style={passiveCardCtaStyle("var(--ls-gold)")}
+          style={passiveCardCtaStyle("var(--ls-teal)")}
         >
           <span style={{ fontSize: 22 }}>⚙️</span>
           <div style={{ textAlign: "left", flex: 1 }}>

@@ -20,6 +20,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { LogoMark } from "../brand/LogoMark";
 
 const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
 
@@ -174,8 +175,8 @@ export function SwUpdatePrompt({ userId, userName }: Props) {
           borderRadius: 16,
           padding: "14px 16px",
           boxShadow:
-            "0 10px 32px rgba(15,23,42,0.18), 0 4px 12px rgba(16,185,129,0.10)",
-          border: "1px solid rgba(16,185,129,0.30)",
+            "0 10px 32px rgba(15,23,42,0.18), 0 4px 12px rgba(45, 212, 191,0.10)",
+          border: "1px solid rgba(45, 212, 191,0.30)",
           display: "flex",
           alignItems: "center",
           gap: 12,
@@ -199,21 +200,12 @@ export function SwUpdatePrompt({ userId, userName }: Props) {
               inset: -4,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(16,185,129,0.30) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(45, 212, 191,0.30) 0%, transparent 70%)",
               animation: "lb360-update-pulse 1.6s ease-in-out infinite",
               filter: "blur(4px)",
             }}
           />
-          <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt=""
-            style={{
-              position: "relative",
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-            }}
-          />
+          <LogoMark size={40} title="" style={{ position: "relative" }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -249,14 +241,14 @@ export function SwUpdatePrompt({ userId, userName }: Props) {
             padding: "10px 16px",
             borderRadius: 10,
             background:
-              "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+              "linear-gradient(135deg, #2DD4BF 0%, #2DD4BF 50%, #C5F82A 100%)",
             border: "none",
             color: "#FFFFFF",
             fontFamily: "Sora, system-ui, sans-serif",
             fontWeight: 600,
             fontSize: 12,
             cursor: updating ? "wait" : "pointer",
-            boxShadow: "0 2px 8px rgba(16,185,129,0.25)",
+            boxShadow: "0 2px 8px rgba(45, 212, 191,0.25)",
             opacity: updating ? 0.7 : 1,
           }}
         >

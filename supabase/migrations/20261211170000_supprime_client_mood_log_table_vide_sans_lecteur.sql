@@ -1,0 +1,23 @@
+-- =============================================================================
+-- Chantier 8 — les deux tables sans lecteur (2026-08-12)
+--
+-- `client_mood_log` et `client_xp_events` : ZÉRO référence dans le code, ni
+-- dans `src/`, ni dans `supabase/functions/`. RLS activé sans policy, donc
+-- inaccessibles autrement qu'en `service_role` — et personne ne les appelle.
+--
+-- MAIS LES DEUX N'ONT PAS LE MÊME CONTENU, et ça change tout :
+--
+--   client_mood_log      0 ligne     → supprimée ici
+--   client_xp_events   331 lignes    → CONSERVÉE
+--
+-- `client_xp_events` porte l'historique XP de vrais clients. Plus personne ne
+-- le lit, mais l'effacer détruirait des données qu'on ne saurait pas
+-- reconstruire. Un « ok » général ne vaut pas autorisation d'effacer 331
+-- lignes de données clients : ça se décide en le sachant, et avec une
+-- sauvegarde. Elle reste — elle ne coûte rien, elle n'est sur aucun chemin
+-- de démarrage.
+--
+-- `client_mood_log` est vide : la supprimer ne peut rien détruire.
+-- =============================================================================
+
+drop table if exists public.client_mood_log;

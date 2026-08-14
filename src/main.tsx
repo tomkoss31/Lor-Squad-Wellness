@@ -7,6 +7,23 @@ import { InstallPromptProvider } from "./context/InstallPromptContext";
 import { ToastProvider } from "./context/ToastContext";
 import "./styles/globals.css";
 import "./styles/rentabilite.css";
+// ⚠️ CHARGÉ GLOBALEMENT, ET C'EST VOULU (correctif 13/08/2026).
+//
+// `bbc-tokens.css` n'était importé que par les composants du mode BBC
+// (`BbcApp`, `BbcClientApp`, `AtelierBbcPage`) — donc jamais en mode Classic.
+// Or la bascule Classic/BBC vit DANS le menu Classic : sidebar desktop et
+// tiroir mobile. Résultat mesuré au navigateur : `--ls-bbc-s1` et ses quatre
+// voisines VIDES, fond `rgba(0,0,0,0)`, bordure retombée sur la couleur du
+// texte. Le bouton existait, faisait bien 112 × 32, mais était invisible —
+// Thomas depuis son iPhone : « le bouton n'est pas visible, ne fonctionne pas ».
+//
+// Le composant portait pourtant `className="bbc-mode"` en croyant que ça
+// suffisait. Poser la classe ne sert à rien si la RÈGLE n'est pas chargée.
+//
+// Sans danger : tous les sélecteurs du fichier sont préfixés `.bbc-*`
+// (vérifié un par un) — rien ne touche `body`, `:root` ni un élément nu, donc
+// aucune règle ne s'applique hors d'un écran BBC.
+import "./styles/bbc-tokens.css";
 
 // Polyfill drapeaux Twemoji (2026-05-17) : Windows Chrome ne rend pas les
 // regional indicator emojis (les drapeaux pays apparaissent "FR/GB/MX/BR/TR/IN"

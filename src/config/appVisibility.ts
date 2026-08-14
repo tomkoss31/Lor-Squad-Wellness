@@ -49,15 +49,17 @@ export type FeatureKey =
   | "business.boutique"
   | "business.prospecter"
   | "business.plan-marketing"
-  | "business.flex"
   | "business.liste-100"
+  | "business.pv-equipe"
+  // ── Pages d'administration ─────────────────────────────────────────────
+  | "admin.newsletters"
+  | "admin.campagnes"
   // ── Pédagogie / perso ──────────────────────────────────────────────────
   | "dev.hub"
   | "dev.formation"
   | "dev.academy"
   | "dev.cahier-de-bord"
-  | "dev.simulateur-ebe"
-  | "dev.routine-du-jour";
+  | "dev.simulateur-ebe";
 
 /**
  * Niveau minimum requis pour qu'une feature apparaisse dans les menus.
@@ -80,33 +82,103 @@ export const FEATURE_LEVEL: Record<FeatureKey, AppLevel> = {
   // « demander l'accès » permet de le réclamer — cf. LOT 4.
   "nav.developpement": "complet",
 
-  // ── Mon business : Thomas a choisi de tout garder visible… ──────────────
+  // ── Mon business ───────────────────────────────────────────────────────
   "business.encaissement": "essentiel", // remonté en tête (LOT 3)
   "business.panier": "essentiel",
   "business.ventes-comptoir": "essentiel",
   "business.mes-liens": "essentiel",
-  "business.rentabilite": "essentiel",
+  "business.rentabilite": "essentiel", // gardée : refonte dédiée à venir (Thomas 12/08)
   "business.pv": "essentiel",
   "business.boutique": "essentiel",
-  "business.prospecter": "essentiel",
-  "business.plan-marketing": "essentiel",
-  // ── … sauf ces deux-là, retirés explicitement ──────────────────────────
-  "business.flex": "complet", // 0 check-in en base depuis le lancement
+  "business.plan-marketing": "essentiel", // gardée : « utile, c'est juste du visuel »
+  // ── … sauf celles-ci, retirées des menus ───────────────────────────────
   "business.liste-100": "complet", // 13 contacts, 100 % Thomas
+  // Ménage du 12/08 : 87 jours sans une tentative, 2 en tout depuis le
+  // lancement — pour 4 profils × 6 marchés × 10 sections. Cette clé couvre
+  // « Prospecter » (/outils-prospection) ET la prospection froide (/prospection),
+  // qui n'est atteignable que par là.
+  "business.prospecter": "complet",
+  // Vue équipe du Suivi PV : même source que la Rentabilité, dernière saisie
+  // il y a 49 jours. La vue globale (/pv) reste, elle.
+  "business.pv-equipe": "complet",
+
+  // ── Administration ─────────────────────────────────────────────────────
+  // Ménage du 12/08 : 2 lettres et ZÉRO abonné · 2 campagnes.
+  "admin.newsletters": "complet",
+  "admin.campagnes": "complet",
 
   // ── Pédagogie ──────────────────────────────────────────────────────────
   "dev.hub": "complet",
-  "dev.academy": "essentiel", // tuto de l'app : 5 personnes l'ont finie
+  // Ménage du 12/08 : doublon avec la Formation, qui fait la même chose en
+  // mieux (47 progressions + 83 questions, vivante) quand l'Academy stagne
+  // depuis 35 jours. Une seule porte pour apprendre.
+  "dev.academy": "complet",
   "dev.formation": "essentiel", // rattachée au cockpit Académie (LOT 4)
   "dev.cahier-de-bord": "complet",
   "dev.simulateur-ebe": "complet",
-  "dev.routine-du-jour": "complet", // 9 cochages en tout ; reste joignable via la notif 20h
 };
 
 /** Vrai si la feature doit apparaître dans les menus pour ce niveau. */
 export function isFeatureVisible(key: FeatureKey, level: AppLevel): boolean {
   if (level === "complet") return true;
   return FEATURE_LEVEL[key] === "essentiel";
+}
+
+// =============================================================================
+// PALIERS DE DÉMARRAGE — l'app grandit avec le coach (2026-08-04)
+//
+// Chantier « l'app d'un débutant ». Le niveau `essentiel` laissait quand même
+// 26 fonctions visibles dès la première minute, à quelqu'un qui ne connaît
+// rien. On ouvre donc progressivement, au rythme de ce qu'il fait.
+//
+// ⚠ MÊMES RÈGLES QUE CI-DESSUS : ça masque un MENU, jamais une route. Un lien
+// reçu par push ou une URL tapée continue de marcher. Et ça ne s'applique
+// QU'AVANT l'activation : dès qu'un coach est lancé, il a tout.
+// =============================================================================
+
+export type StarterStage =
+  /** Jour 1 — il ne connaît rien. Le strict minimum. */
+  | "demarrage"
+  /** Il a ses premiers contacts : on ouvre le CRM et l'agenda. */
+  | "premiers_pas"
+  /** Il a fait son 1er bilan : on ouvre les outils business. */
+  | "en_route"
+  /** Démarrage terminé — plus aucun verrou de palier. */
+  | "lance";
+
+const STAGE_ORDER: StarterStage[] = ["demarrage", "premiers_pas", "en_route", "lance"];
+
+/**
+ * Palier à partir duquel chaque entrée apparaît.
+ * Absent de cette carte = visible dès le premier jour.
+ */
+export const FEATURE_STAGE: Partial<Record<FeatureKey, StarterStage>> = {
+  // Jour 1 : parler à des gens et noter qui ils sont. Rien d'autre.
+  //   → nav.copilote, nav.clients, nav.messages, nav.parametres : dès le départ.
+  "nav.crm": "premiers_pas",
+  "nav.agenda": "premiers_pas",
+  "nav.business": "en_route",
+  "nav.developpement": "en_route",
+};
+
+/** Phrase affichée sur une entrée encore verrouillée — le « quand ». */
+export const STAGE_CONDITION: Record<StarterStage, string> = {
+  demarrage: "",
+  premiers_pas: "quand tu auras noté tes premiers contacts",
+  en_route: "quand tu auras fait ton 1er bilan",
+  lance: "quand ton démarrage sera terminé",
+};
+
+/** Vrai si le palier atteint débloque cette feature. */
+export function isFeatureUnlocked(key: FeatureKey, stage: StarterStage): boolean {
+  const required = FEATURE_STAGE[key];
+  if (!required) return true;
+  return STAGE_ORDER.indexOf(stage) >= STAGE_ORDER.indexOf(required);
+}
+
+/** Le palier requis pour cette feature (null = aucune condition). */
+export function featureStage(key: FeatureKey): StarterStage | null {
+  return FEATURE_STAGE[key] ?? null;
 }
 
 /** Liste des features masquées à ce niveau — sert l'écran de réglage admin. */
