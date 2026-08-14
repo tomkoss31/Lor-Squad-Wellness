@@ -766,25 +766,54 @@ export async function fetchSupabaseClients() {
  *  l'app démarre sans les 586 Ko, puis les reçoit une seconde plus tard —
  *  bien avant que quiconque ait eu le temps d'ouvrir une fiche client. Aucune
  *  page à modifier, aucun écran qui peut mentir.
+ *
+ *  ⚠️ PAGINÉ, et ça n'est pas une précaution de style (2026-08-14). PostgREST
+ *  plafonne toute requête à `db-max-rows` (1000 par défaut sur Supabase cloud)
+ *  et **tronque en SILENCE** : pas d'erreur, pas d'indice dans la réponse. Les
+ *  bilans au-delà du plafond resteraient donc sans questionnaire pour toute la
+ *  session — cette passe ne tourne qu'au démarrage.
+ *
+ *  Mesuré le 2026-08-14 : 679 bilans en base, soit sous le plafond ; la
+ *  troncature n'avait pas encore commencé. La table ne fait que grandir, et
+ *  ici on ne la verrait pas passer.
+ *
+ *  Le tri est **obligatoire** : sans `order`, Postgres ne garantit aucun ordre
+ *  stable entre deux requêtes, donc deux pages successives pourraient répéter
+ *  un bilan et en sauter un autre. `id` est la clé primaire — unique et stable.
  */
 export async function fetchAssessmentQuestionnaires(): Promise<Map<string, unknown>> {
   const client = await requireSupabase();
-  const { data, error } = await client
-    .from("assessments")
-    .select("id, questionnaire")
-    .not("questionnaire", "is", null);
-
-  if (error) {
-    // Non bloquant : l'app fonctionne sans, seules les 5 pages qui lisent le
-    // questionnaire seraient incomplètes. On le dit fort dans la console.
-    console.error("[fetchAssessmentQuestionnaires] échec — les fiches bilan seront incomplètes", error);
-    return new Map();
-  }
+  const TAILLE_PAGE = 1000;
   const par = new Map<string, unknown>();
-  for (const r of (data ?? []) as Array<{ id: string; questionnaire: unknown }>) {
-    par.set(r.id, r.questionnaire);
+
+  for (let debut = 0; ; debut += TAILLE_PAGE) {
+    const { data, error } = await client
+      .from("assessments")
+      .select("id, questionnaire")
+      .not("questionnaire", "is", null)
+      .order("id", { ascending: true })
+      .range(debut, debut + TAILLE_PAGE - 1);
+
+    if (error) {
+      // Non bloquant : l'app fonctionne sans, seules les 5 pages qui lisent le
+      // questionnaire seraient incomplètes. On le dit fort dans la console, et
+      // on rend les pages déjà obtenues — mieux vaut une partie que rien.
+      console.error(
+        `[fetchAssessmentQuestionnaires] échec à partir du bilan n°${debut} — ${par.size} questionnaires chargés, les fiches au-delà seront incomplètes`,
+        error,
+      );
+      return par;
+    }
+
+    const lignes = (data ?? []) as Array<{ id: string; questionnaire: unknown }>;
+    for (const ligne of lignes) {
+      par.set(ligne.id, ligne.questionnaire);
+    }
+
+    // Une page incomplète = la dernière. Une page pleine peut être la dernière
+    // aussi (total multiple de 1000) : le tour suivant revient vide et sort.
+    if (lignes.length < TAILLE_PAGE) return par;
   }
-  return par;
 }
 
 export async function fetchSupabaseFollowUps() {

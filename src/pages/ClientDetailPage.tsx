@@ -12,7 +12,7 @@ import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
-import { refreshClientRecap } from "../services/supabaseService";
+import { fetchSupabaseAssessment, refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { KebabMenu } from "../components/ui/KebabMenu";
@@ -1314,9 +1314,21 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
       const client = getClientById(clientId);
       if (!client || !client.assessments.length) { setError('Aucun bilan trouvé'); return; }
 
-      // Trouver le bilan initial (premier par date)
+      // Trouver le bilan initial (premier par date) — la mémoire suffit à
+      // DÉSIGNER lequel, sa date est chargée au démarrage.
       const sorted = [...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const initial = sorted[0];
+
+      // …mais pas à le RÉÉCRIRE. `/api/update-assessment` remplace toute la
+      // colonne `questionnaire`, donc ce qu'on ne lui redonne pas est effacé :
+      // recommandations, besoins détectés, poids cible, case « exclure du
+      // graphique ». Or le questionnaire n'est PAS chargé au démarrage — il
+      // arrive en seconde passe (cf. `COLONNES_BILAN_SANS_QUESTIONNAIRE`), et
+      // `updateAssessment` appelle `refreshRemoteData`, qui le remet à vide en
+      // attendant la passe suivante. Ajouter deux produits à la file effaçait
+      // donc le premier. On relit le bilan en base à chaque ajout (2026-08-14).
+      const initial = await fetchSupabaseAssessment(clientId, sorted[0].id);
+      if (!initial) { setError('Ce bilan est introuvable — il a peut-être été supprimé.'); return; }
+
       const currentIds = initial.questionnaire?.selectedProductIds ?? [];
 
       if (currentIds.includes(productId)) {
