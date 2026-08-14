@@ -48,7 +48,13 @@ function Ico({ name, size = 30 }: { name: string; size?: number }) {
 
 const RITUEL = [
   { n: "01", t: "L'aloe vera", d: "De l'eau et un concentré d'aloe vera. Après une nuit sans boire, la première chose dont ton corps a besoin, c'est de l'eau — pas un café.", top: "cl-top-o" },
-  { n: "02", t: "La boisson thermo", d: "Thé vert, hibiscus, extraits de plantes. Chaud ou glacé, un peu de caféine. C'est le verre qu'on prend assis, celui pendant lequel on discute.", top: "cl-top-p" },
+  // ⚠ ORDRE DES PHRASES VOULU (Thomas, 13/08). L'ancien texte ouvrait sur
+  // « Thé vert […] un peu de caféine » : les deux mots qui font reculer — qui
+  // n'aime pas le thé, qui évite la caféine — étaient à l'endroit le plus lu.
+  // On ne peut pas les taire : le thé vert est un ingrédient, la caféine y est,
+  // et la cacher serait malhonnête. Mais elle n'a pas à être l'IDENTITÉ de la
+  // boisson. Le moment d'abord, la composition ensuite.
+  { n: "02", t: "La boisson thermo", d: "C'est le verre qu'on prend assis, celui pendant lequel on discute. Chaud l'hiver, glacé l'été. Un mélange d'extraits de plantes — thé vert, hibiscus — avec un peu de caféine, comme dans un thé.", top: "cl-top-p" },
   { n: "03", t: "Le smoothie", d: "Le vrai petit-déjeuner complet : protéines végétales, 26 vitamines et minéraux, fibres — sans lactose ni gluten. Dosage ajusté à ton objectif, parfum au choix.", top: "cl-top-s" },
   { n: "04", t: "Le suivi", d: "Avant de repartir : la pesée, deux lignes dans ton carnet, une phrase avec ton coach. La partie qu'on sous-estime, et celle qui fait la différence.", top: "cl-top-a" },
 ];

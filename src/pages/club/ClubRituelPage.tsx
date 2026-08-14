@@ -14,8 +14,12 @@ const ETAPES = [
     e: "Étape 2 · le temps de t'asseoir", t: "La boisson thermo", frame: "pink", acc: "cl-a-pink",
     img: "/brand/breakfast-club/photos/rituel-the.jpg",
     alt: "Une femme souriante porte à ses lèvres un verre de boisson thermo ambrée, dehors, ciel bleu derrière elle.",
-    p1: "Ensuite, la boisson thermo. Un coup de fouet doux qui accompagne le début de matinée sans t'agiter.",
-    p2: "C'est le moment où on souffle deux minutes avant le vrai repas.",
+    // Même règle que sur l'accueil : le moment d'abord, la composition ensuite.
+    // « Thé vert » et « caféine » restent dits — ce sont des ingrédients, les
+    // taire serait malhonnête — mais ils ne sont plus la première chose qu'on
+    // lit, parce que ce sont les deux mots qui font reculer.
+    p1: "Ensuite, la boisson thermo. Un coup de fouet doux qui accompagne le début de matinée sans t'agiter — chaud l'hiver, glacé l'été.",
+    p2: "C'est le moment où on souffle deux minutes avant le vrai repas. Côté composition : un mélange d'extraits de plantes, dont du thé vert et de l'hibiscus, avec un peu de caféine — comme dans un thé.",
     no: "Ce que ce n'est pas : un coupe-faim. S'il te tient jusqu'à midi, c'est que ton smoothie était bien dosé.",
   },
   {
