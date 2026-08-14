@@ -31,6 +31,12 @@ const NAV: Array<{ to: string; label: string }> = [
   { to: "/club/le-rituel", label: "Le rituel" },
   { to: "/club/comment-ca-se-passe", label: "Comment ça se passe" },
   { to: "/club/resultats", label: "Résultats" },
+  // Demandé par Mélanie le 13/08. Le prix était atteignable seulement en
+  // descendant l'accueil jusqu'en bas — or c'est la première question qu'on se
+  // pose. Placé après « Résultats », comme sur l'exemple qu'elle a envoyé.
+  // Pointe vers la section existante `#formule` : pas de page de plus, donc
+  // pas un endroit de plus où maintenir les mêmes prix (règle B9).
+  { to: "/club#formule", label: "Tarifs" },
   { to: "/club/nous", label: "Nous" },
   { to: "/club/rejoindre", label: "Rejoindre l'équipe" },
 ];
@@ -170,7 +176,7 @@ export function ClubShell({
   title?: string;
   description?: string;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const [open, setOpen] = useState(false);
   useClubHead(title, description);
 
@@ -179,6 +185,49 @@ export function ClubShell({
   useEffect(() => {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
+
+  // DESCENDRE JUSQU'À L'ANCRE quand on arrive avec un « #… ».
+  //
+  // Sans ça, « Tarifs » depuis une autre page changeait bien d'URL mais laissait
+  // le visiteur EN HAUT de l'accueil : React Router ne défile pas, et le
+  // navigateur ne le fait que pour une ancre de la page déjà chargée. Le menu
+  // aurait eu l'air cassé.
+  //
+  // Le décalage de 76 px n'est pas décoratif : l'en-tête est collant, sans lui
+  // le titre de la section se glisse dessous et on croit avoir raté la cible.
+  //
+  // ⚠ ON ATTEND QUE L'ANCRE EXISTE, on ne la cherche pas une fois.
+  // Premier essai avec un simple délai de 80 ms : le défilement ne partait pas.
+  // Mesuré — arrivé depuis une autre page, l'accueil est un morceau chargé à la
+  // demande : au moment où l'effet s'exécute, `#formule` n'est pas encore dans
+  // la page. On réessaie donc à chaque image jusqu'à deux secondes, puis on
+  // abandonne sans rien casser (le visiteur reste en haut, comme avant).
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.slice(1);
+    let arrete = false;
+    let minuterie = 0;
+    const limite = Date.now() + 2000;
+    const chercher = () => {
+      if (arrete) return;
+      const cible = document.getElementById(id);
+      if (cible) {
+        const y = cible.getBoundingClientRect().top + window.scrollY - 76;
+        // Instantané, pas « smooth » : depuis une autre page le saut fait
+        // ~6 700 px. Animé, il fait défiler tout l'accueil sous les yeux
+        // pendant plusieurs secondes, et iOS interrompt l'animation au premier
+        // geste. Un lien de menu doit arriver, pas voyager.
+        window.scrollTo({ top: y, behavior: "auto" });
+        return;
+      }
+      // Minuterie et non `requestAnimationFrame` : celui-ci est suspendu dès que
+      // la page ne compose plus — onglet en arrière-plan, fenêtre masquée. La
+      // boucle ne repartait jamais et le défilement n'avait pas lieu.
+      if (Date.now() < limite) minuterie = window.setTimeout(chercher, 50);
+    };
+    chercher();
+    return () => { arrete = true; window.clearTimeout(minuterie); };
+  }, [pathname, hash]);
 
   // Posé ici, donc valable pour les 9 pages du club d'un coup. Ne fait rien
   // quand le navigateur sait animer au défilement tout seul.
@@ -214,7 +263,12 @@ export function ClubShell({
             </div>
           </div>
           <nav className="cl-nav" aria-label="Navigation">
-            {NAV.slice(0, 6).map((n) => (
+            {/* Filtré par DESTINATION, plus par `slice(0, 6)`. L'ancien découpage
+                comptait sur l'ordre : en insérant « Tarifs » en 6e position le
+                13/08, « Nous » est tombé hors de la tranche et a disparu du menu
+                de bureau sans que rien ne le signale. Un index en dur casse à la
+                première insertion ; nommer ce qu'on écarte, non. */}
+            {NAV.filter((n) => n.to !== "/club/rejoindre").map((n) => (
               <Link key={n.to} to={n.to} className={pathname === n.to ? "on" : undefined}>{n.label}</Link>
             ))}
           </nav>
