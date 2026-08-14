@@ -147,6 +147,18 @@ function buildRdvCalUrl(iso: string, coachName: string): string {
   return `https://calendar.google.com/calendar/render?${params.toString()}`
 }
 
+// Le même RDV en fichier .ics, pour Apple Calendrier, Outlook et les autres.
+//
+// ⚠️ Servi par une fonction serveur, PAS généré ici en `data:` URI : iOS
+// ignore l'attribut `download` sur les data:/blob:, et c'est pire encore quand
+// la PWA est installée sur l'écran d'accueil — or c'est le public principal.
+// Une vraie URL en `text/calendar` est la seule chose qu'iOS, Android et le
+// bureau traitent tous pareil. Le serveur relit aussi la date en base, donc un
+// RDV déplacé donne le bon fichier même si l'onglet est resté ouvert.
+function buildRdvIcsUrl(token: string): string {
+  return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/client-rdv-ics?token=${encodeURIComponent(token)}`
+}
+
 export function PwaClientApp({
   token,
   clientId,
@@ -484,7 +496,16 @@ export function PwaClientApp({
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-                    Ajouter à mon agenda
+                    Google Agenda
+                  </a>
+                ) : null}
+                {nextFollowUp ? (
+                  <a
+                    href={buildRdvIcsUrl(token)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, marginLeft: 14, fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                    Apple, Outlook…
                   </a>
                 ) : (
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{`Demande à ${coachName} un nouveau rendez-vous.`}</div>
