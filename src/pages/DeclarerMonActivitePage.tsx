@@ -288,32 +288,35 @@ const sectionBody: React.CSSProperties = {
   color: "var(--ls-text)",
 };
 
+// ⚠️ listStyleType explicite : le reset Tailwind pose `ol,ul,menu{list-style:none}`
+// globalement. Et surtout PAS de `display:flex` sur la liste — il supprime les
+// marqueurs. L'espacement passe donc par marginBottom sur les <li>.
+// Sans ça, un pas à pas s'affiche sans ses numéros (constaté en rendu réel).
 const bulletList: React.CSSProperties = {
   margin: 0,
-  paddingLeft: 18,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
+  paddingLeft: 20,
+  listStyleType: "disc",
 };
 
 const bulletItem: React.CSSProperties = {
   fontSize: 13.5,
   lineHeight: 1.6,
   color: "var(--ls-text-muted)",
+  marginBottom: 8,
 };
 
 const olList: React.CSSProperties = {
   margin: 0,
-  paddingLeft: 20,
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
+  paddingLeft: 22,
+  listStyleType: "decimal",
 };
 
 const olItem: React.CSSProperties = {
   fontSize: 13.5,
   lineHeight: 1.65,
   color: "var(--ls-text-muted)",
+  marginBottom: 12,
+  paddingLeft: 4,
 };
 
 const calloutBox: React.CSSProperties = {
