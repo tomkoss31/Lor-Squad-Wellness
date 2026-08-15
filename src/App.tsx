@@ -574,6 +574,11 @@ const ProspectionExpliquePage = lazy(() =>
   })),
 );
 // Check-list expliquée (2026-05-20) — tuto routine 5 actions/jour.
+const DeclarerMonActivitePage = lazy(() =>
+  import("./pages/DeclarerMonActivitePage").then((module) => ({
+    default: module.DeclarerMonActivitePage,
+  })),
+);
 // Routine du jour (chantier #2 V2, 2026-05-20) — page dédiée check-list.
 // Suivis du jour (2026-06-03) — page dédiée destination du digest matinal.
 const SuivisDuJourPage = lazy(() =>
@@ -863,6 +868,10 @@ export default function App() {
                   cahier/simulateur/nouveautés. Sidebar Option B. */}
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
+              {/* Tuto déclaration d'activité : à la RACINE et non sous
+                  /developpement, qui est en niveau "complet" donc invisible
+                  pour tous sauf Thomas. L'obligation concerne les 15 distris. */}
+              <Route path="declarer-mon-activite" element={<DeclarerMonActivitePage />} />
               <Route path="developpement/club-vip-explique" element={<ClubVipExpliquePage />} />
               {/* Routine du jour retiree au menage du 12/08/2026 :
                   9 cochages en tout, dernier il y a 51 jours. */}
