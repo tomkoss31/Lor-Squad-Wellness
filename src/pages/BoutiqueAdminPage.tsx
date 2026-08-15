@@ -13,6 +13,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { formatEuro } from "../lib/format";
+import { BoutiqueSiretGuide } from "../components/boutique/BoutiqueSiretGuide";
 
 function normalizeSlug(input: string): string {
   return input
@@ -385,6 +386,9 @@ export function BoutiqueAdminPage() {
       <p style={{ color: "var(--ls-text-muted)", fontSize: 14, marginBottom: 22, fontFamily: "DM Sans, sans-serif", maxWidth: 560 }}>
         Ta boutique de cosmétiques coréens, à ton nom. Configure-la, partage ton lien, encaisse sur ton compte (Square ou Stripe).
       </p>
+
+      {/* Déclaration d'activité : bloc rouge tant que le SIRET manque. */}
+      <BoutiqueSiretGuide siret={lgSiret} />
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 16 }}>
