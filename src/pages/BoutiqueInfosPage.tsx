@@ -192,10 +192,12 @@ export function BoutiqueInfosPage() {
           <h2>Conditions générales de vente</h2>
           <p>
             Les présentes CGV régissent les ventes réalisées sur cette boutique. Le vendeur est{" "}
-            {v(legal?.entity_name, "raison sociale du vendeur")}
+            {v(legal?.entity_name, "nom du vendeur")}
             {legal?.form ? ` (${legal.form})` : null}
-            {legal?.address ? `, ${legal.address}` : <> , {manque("adresse du siège")}</>}
-            {legal?.siret ? `, SIRET ${legal.siret}` : <> , {manque("SIRET")}</>}.{" "}
+            {legal?.address ? `, ${legal.address}` : <> , {manque("adresse")}</>}
+            {/* SIRET affiché seulement s'il existe : un VDI dispensé de RCS peut
+                ne pas encore l'avoir reçu — l'exiger ici bloquerait sa boutique. */}
+            {legal?.siret ? `, SIRET ${legal.siret}` : null}.{" "}
             Toute commande implique l'acceptation des présentes conditions. Les produits sont ceux de
             la gamme HL Skin (Herbalife). Les prix sont indiqués en euros TTC ; les frais de port sont
             précisés avant validation. La vente est conclue au paiement. Le droit de rétractation de
@@ -244,9 +246,27 @@ export function BoutiqueInfosPage() {
               {legal?.form ? ` — ${legal.form}` : null}
               {legal?.capital ? ` au capital de ${legal.capital}` : null}.
             </li>
-            <li>Siège : {v(legal?.address, "adresse du siège")}.</li>
-            <li>SIRET : {v(legal?.siret, "SIRET")}.</li>
+            <li>Adresse : {v(legal?.address, "adresse")}.</li>
+            <li>
+              Téléphone :{" "}
+              {legal?.phone ? (
+                <a href={`tel:${legal.phone.replace(/\s/g, "")}`}>{legal.phone}</a>
+              ) : (
+                manque("téléphone")
+              )}
+              .
+            </li>
+            {/* SIRET et RCS : affichés uniquement s'ils existent. Un VDI est
+                dispensé d'immatriculation au registre du commerce — la mention
+                de dispense remplace alors le numéro. */}
+            {legal?.siret ? <li>SIRET : {legal.siret}.</li> : null}
             {legal?.rcs ? <li>RCS : {legal.rcs}.</li> : null}
+            {legal?.status === "vdi" ? (
+              <li>
+                Vendeur à domicile indépendant (VDI), dispensé d'immatriculation au registre du
+                commerce et des sociétés conformément à l'article L135-1 du Code de commerce.
+              </li>
+            ) : null}
             {legal?.vat ? <li>TVA intracommunautaire : {legal.vat}.</li> : null}
             <li>Directeur de la publication : {v(legal?.director, "directeur de la publication")}.</li>
             <li>

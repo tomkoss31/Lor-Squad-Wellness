@@ -40,9 +40,16 @@ export type ShopProduct = {
 export type BoutiqueLegal = {
   entity_name: string | null;
   form: string | null;
+  /**
+   * vdi | auto | societe. Un VDI est dispensé d'immatriculation au RCS (pas du
+   * SIRET, qui lui est attribué au guichet unique) : sa mention légale diffère.
+   */
+  status: string | null;
   address: string | null;
+  /** Facultatif : un VDI peut ne pas l'avoir encore reçu. */
   siret: string | null;
   email: string | null;
+  phone: string | null;
   director: string | null;
   vat: string | null;
   rcs: string | null;
