@@ -90,19 +90,25 @@ serve(async (req: Request) => {
     });
   }
 
-  // Cache nom boutique par slug (évite N appels RPC).
-  const shopNameCache = new Map<string, string>();
-  async function shopName(slug: string | null): Promise<string> {
+  // Cache boutique par slug (évite N appels RPC) : nom + email du VENDEUR.
+  type BoutiqueCache = { name: string; vendeurEmail: string | null };
+  const shopCache = new Map<string, BoutiqueCache>();
+  async function shopInfo(slug: string | null): Promise<BoutiqueCache> {
     const key = slug ?? "";
-    if (shopNameCache.has(key)) return shopNameCache.get(key)!;
-    let name = "Beauté K Skin";
+    if (shopCache.has(key)) return shopCache.get(key)!;
+    let info: BoutiqueCache = { name: "Beauté K Skin", vendeurEmail: null };
     if (slug) {
       const { data } = await sb.rpc("get_boutique_by_slug", { p_slug: slug });
-      name = (data as { shop_name?: string } | null)?.shop_name ?? name;
+      const b = data as { shop_name?: string; legal?: { email?: string | null } | null } | null;
+      info = {
+        name: b?.shop_name ?? info.name,
+        vendeurEmail: b?.legal?.email?.trim() || null,
+      };
     }
-    shopNameCache.set(key, name);
-    return name;
+    shopCache.set(key, info);
+    return info;
   }
+  const shopName = async (slug: string | null) => (await shopInfo(slug)).name;
 
   // Cache email coach (adresse de connexion auth.users) par user_id.
   const coachEmailCache = new Map<string, string | null>();
@@ -152,7 +158,14 @@ serve(async (req: Request) => {
          </p>`,
         name,
       );
-      await sendEmail(name, o.customer_email, `Ton panier ${name} t'attend 🌿`, html);
+      // reply_to = la vendeuse, pas le club (correction juridique 2026-08-11).
+      await sendEmail(
+        name,
+        o.customer_email,
+        `Ton panier ${name} t'attend 🌿`,
+        html,
+        (await shopInfo(o.boutique_slug)).vendeurEmail ?? undefined,
+      );
       await sb.from("shop_orders").update({ relance_email_sent_at: nowIso }).eq("id", o.id);
       result.abandoned++;
     }
@@ -270,7 +283,13 @@ serve(async (req: Request) => {
          </p>`,
         name,
       );
-      await sendEmail(name, o.customer_email, `${o.customer_first_name || "Toi"}, comment va ta peau ? 🌿`, html);
+      await sendEmail(
+        name,
+        o.customer_email,
+        `${o.customer_first_name || "Toi"}, comment va ta peau ? 🌿`,
+        html,
+        (await shopInfo(o.boutique_slug)).vendeurEmail ?? undefined,
+      );
       await sb.from("shop_orders").update({ review_request_sent_at: nowIso }).eq("id", o.id);
       result.review++;
     }

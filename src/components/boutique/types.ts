@@ -28,6 +28,31 @@ export type ShopProduct = {
   bundle_items?: string[] | null;
 };
 
+/**
+ * Identité légale DU VENDEUR (le distributeur), renvoyée par get_boutique_by_slug.
+ *
+ * ⚠️ Ne JAMAIS remplacer un champ manquant par les constantes COMPANY_* de
+ * lib/branding.ts : celles-ci désignent SAS HTM FITLIFE, l'éditeur de la
+ * plateforme. Les afficher sur la boutique d'un tiers revient à déclarer que
+ * c'est SAS HTM FITLIFE qui vend — avec la responsabilité qui va avec.
+ * Champ absent ⇒ on l'annonce comme manquant, on n'invente pas.
+ */
+export type BoutiqueLegal = {
+  entity_name: string | null;
+  form: string | null;
+  address: string | null;
+  siret: string | null;
+  email: string | null;
+  director: string | null;
+  vat: string | null;
+  rcs: string | null;
+  capital: string | null;
+  mediator_name: string | null;
+  mediator_url: string | null;
+  /** Le noyau obligatoire est-il renseigné (cf. boutique_legal_complete) ? */
+  complete: boolean;
+};
+
 export type BoutiqueInfo = {
   user_id: string;
   first_name: string | null;
@@ -36,6 +61,7 @@ export type BoutiqueInfo = {
   hero_video_url?: string | null;
   contact_phone?: string | null;
   ai_scan_url?: string | null;
+  legal?: BoutiqueLegal | null;
 };
 
 // Code promo appliqué (validé serveur).

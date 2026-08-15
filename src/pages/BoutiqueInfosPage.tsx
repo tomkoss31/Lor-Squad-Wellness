@@ -2,10 +2,20 @@
 // BoutiqueInfosPage — Infos & conditions de la boutique (route publique
 // /boutique/:coachSlug/infos). Sections ancrées pointées depuis le footer.
 //
-// Le pratique (livraison, retours, paiement, contact) est rempli et exact.
-// Le légal (mentions, CGV, confidentialité) est un MODÈLE de base : le distri
-// doit compléter son identité (raison sociale, adresse, SIRET, email) — marqué
-// clairement « à compléter ».
+// ⚠️ CORRECTION JURIDIQUE 2026-08-11 — à lire avant toute modif de cette page.
+// Elle affichait les constantes COMPANY_* (SAS HTM FITLIFE, SIRET et adresse
+// personnelle de Thomas) sur la boutique de CHAQUE distributrice. Les CGV de
+// Victoria déclaraient donc SAS HTM FITLIFE comme vendeur de ses produits :
+// responsabilité contractuelle et réclamations rattachées à Thomas pour des
+// ventes qu'il ne réalise pas. 6 commandes réelles étaient déjà passées ainsi.
+//
+// LE MODÈLE CORRECT, désormais appliqué :
+//   • VENDEUR / éditeur de la boutique = LE DISTRIBUTEUR (boutique.legal.*)
+//   • Solution technique (plateforme)  = La Base 360 / SAS HTM FITLIFE
+//   • Hébergement                      = Supabase (Irlande) + Vercel
+//
+// RÈGLE ABSOLUE : un champ légal manquant s'affiche comme MANQUANT. On ne
+// retombe jamais sur COMPANY_* — ce serait rattribuer la vente à la plateforme.
 // =============================================================================
 
 import { useEffect, useState } from "react";
@@ -16,11 +26,8 @@ import type { BoutiqueInfo } from "../components/boutique/types";
 import { BoutiqueMobileMenu } from "../components/boutique/BoutiqueMobileMenu";
 import { BoutiqueFooter } from "../components/boutique/BoutiqueFooter";
 import {
+  APP_NAME,
   COMPANY_NAME,
-  COMPANY_ADDRESS,
-  COMPANY_DIRECTOR,
-  COMPANY_EMAIL,
-  COMPANY_SIRET,
   HOSTING_PROVIDER,
   HOSTING_REGION,
 } from "../lib/branding";
@@ -55,14 +62,23 @@ export function BoutiqueInfosPage() {
   const shopName = boutique?.shop_name ?? "Beauté K Skin";
   const distri = boutique?.first_name ?? "ta distributrice";
   const phone = boutique?.contact_phone?.trim();
+  const legal = boutique?.legal ?? null;
 
   useEffect(() => {
     document.title = `Infos & conditions · ${shopName}`;
   }, [shopName]);
 
-  const todo = (label: string) => (
+  // Champ légal manquant : on le DIT. Jamais de repli sur les données de la
+  // plateforme, qui reviendrait à désigner SAS HTM FITLIFE comme vendeur.
+  const manque = (label: string) => (
     <span className="bk-todo">à compléter par {distri} : {label}</span>
   );
+  /** Valeur du vendeur, ou mention « manquant » explicite. */
+  const v = (value: string | null | undefined, label: string) =>
+    value ? <b>{value}</b> : manque(label);
+
+  // Email de contact : celui du vendeur uniquement.
+  const contactEmail = legal?.email ?? null;
 
   return (
     <div className="bk-shop" data-bk-theme={theme}>
@@ -95,6 +111,17 @@ export function BoutiqueInfosPage() {
           Tout ce qu'il faut savoir avant et après ta commande chez {shopName}.
         </p>
 
+        {/* Le visiteur a le droit de savoir à qui il achète. Si le vendeur n'a
+            pas renseigné son identité, on le dit — plutôt que d'afficher celle
+            de la plateforme, ce qui serait faux. */}
+        {boutique && !legal?.complete ? (
+          <div className="bk-infos-warn" role="status">
+            <b>Identité du vendeur en cours de mise à jour.</b> {distri} finalise ses informations
+            légales. Pour toute question avant commande, contacte-la directement
+            {phone ? ` au ${phone}` : ""}.
+          </div>
+        ) : null}
+
         <section id="contact" className="bk-infos-sec">
           <h2>Nous contacter</h2>
           <p>
@@ -108,7 +135,14 @@ export function BoutiqueInfosPage() {
               </li>
             ) : null}
             <li>
-              Email : <a href={`mailto:${COMPANY_EMAIL}`}><b>{COMPANY_EMAIL}</b></a>
+              Email :{" "}
+              {contactEmail ? (
+                <a href={`mailto:${contactEmail}`}>
+                  <b>{contactEmail}</b>
+                </a>
+              ) : (
+                manque("email de contact")
+              )}
             </li>
             <li>Réponse sous 24–48 h ouvrées.</li>
           </ul>
@@ -157,31 +191,80 @@ export function BoutiqueInfosPage() {
         <section id="cgv" className="bk-infos-sec">
           <h2>Conditions générales de vente</h2>
           <p>
-            Les présentes CGV régissent les ventes réalisées sur cette boutique, éditée par{" "}
-            <b>{COMPANY_NAME}</b> ({COMPANY_ADDRESS}), SIRET {COMPANY_SIRET}. Toute commande implique
-            l'acceptation des présentes conditions. Les produits sont ceux de la gamme HL Skin
-            (Herbalife). Les prix sont indiqués en euros TTC ; les frais de port sont précisés avant
-            validation. La vente est conclue au paiement. Le droit de rétractation de 14 jours
-            s'applique (voir Retours). Réclamations :{" "}
-            <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.{" "}
-            {todo("médiateur de la consommation (obligatoire pour la vente en ligne aux particuliers)")}
+            Les présentes CGV régissent les ventes réalisées sur cette boutique. Le vendeur est{" "}
+            {v(legal?.entity_name, "raison sociale du vendeur")}
+            {legal?.form ? ` (${legal.form})` : null}
+            {legal?.address ? `, ${legal.address}` : <> , {manque("adresse du siège")}</>}
+            {legal?.siret ? `, SIRET ${legal.siret}` : <> , {manque("SIRET")}</>}.{" "}
+            Toute commande implique l'acceptation des présentes conditions. Les produits sont ceux de
+            la gamme HL Skin (Herbalife). Les prix sont indiqués en euros TTC ; les frais de port sont
+            précisés avant validation. La vente est conclue au paiement. Le droit de rétractation de
+            14 jours s'applique (voir Retours).
+          </p>
+          <p style={{ marginTop: 10 }}>
+            Réclamations :{" "}
+            {contactEmail ? (
+              <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+            ) : (
+              manque("email de réclamation")
+            )}
+            .
+          </p>
+          <p style={{ marginTop: 10 }}>
+            <b>Médiation de la consommation.</b> Après une réclamation écrite restée sans solution
+            sous 30 jours, tu peux saisir gratuitement un médiateur de la consommation :{" "}
+            {legal?.mediator_name ? (
+              <>
+                <b>{legal.mediator_name}</b>
+                {legal.mediator_url ? (
+                  <>
+                    {" — "}
+                    <a href={legal.mediator_url} target="_blank" rel="noreferrer">
+                      {legal.mediator_url}
+                    </a>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              manque("médiateur de la consommation (obligatoire pour la vente en ligne aux particuliers)")
+            )}
+            .
           </p>
         </section>
 
         <section id="mentions" className="bk-infos-sec">
           <h2>Mentions légales</h2>
+          <p style={{ marginBottom: 10 }}>
+            Cette boutique est éditée et exploitée par {distri}, distributeur·rice indépendant·e
+            Herbalife, seul·e vendeur·se des produits proposés ici.
+          </p>
           <ul>
-            <li>Boutique de {distri}, distributeur·rice indépendant·e Herbalife.</li>
             <li>
-              Éditeur : <b>{COMPANY_NAME}</b> — {COMPANY_ADDRESS}.
+              Éditeur & vendeur : {v(legal?.entity_name, "raison sociale")}
+              {legal?.form ? ` — ${legal.form}` : null}
+              {legal?.capital ? ` au capital de ${legal.capital}` : null}.
             </li>
-            <li>SIRET : {COMPANY_SIRET}.</li>
-            <li>Directeur de la publication : {COMPANY_DIRECTOR}.</li>
+            <li>Siège : {v(legal?.address, "adresse du siège")}.</li>
+            <li>SIRET : {v(legal?.siret, "SIRET")}.</li>
+            {legal?.rcs ? <li>RCS : {legal.rcs}.</li> : null}
+            {legal?.vat ? <li>TVA intracommunautaire : {legal.vat}.</li> : null}
+            <li>Directeur de la publication : {v(legal?.director, "directeur de la publication")}.</li>
             <li>
-              Contact : <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.
+              Contact :{" "}
+              {contactEmail ? (
+                <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+              ) : (
+                manque("email de contact")
+              )}
+              .
             </li>
             <li>
-              Hébergement : {HOSTING_PROVIDER} — {HOSTING_REGION} ; front Vercel.
+              Solution technique : la boutique fonctionne sur la plateforme <b>{APP_NAME}</b>, éditée
+              par {COMPANY_NAME}. {COMPANY_NAME} fournit l'outil et n'intervient ni dans la vente,
+              ni dans l'expédition, ni dans le service après-vente.
+            </li>
+            <li>
+              Hébergement : {HOSTING_PROVIDER} — {HOSTING_REGION} ; front Vercel Inc.
             </li>
             <li>Marque & produits : HL Skin / Herbalife International.</li>
           </ul>
@@ -191,7 +274,12 @@ export function BoutiqueInfosPage() {
           <h2>Politique de confidentialité</h2>
           <ul>
             <li>
-              Responsable de traitement : <b>{COMPANY_NAME}</b>.
+              Responsable de traitement : {v(legal?.entity_name, "raison sociale du vendeur")} — c'est{" "}
+              {distri} qui collecte tes données pour traiter ta commande.
+            </li>
+            <li>
+              Sous-traitant technique : {COMPANY_NAME} ({APP_NAME}), qui héberge la boutique pour son
+              compte et n'utilise pas tes données à ses propres fins.
             </li>
             <li>
               Données collectées : prénom, nom, email, adresse et téléphone — uniquement pour traiter
@@ -201,7 +289,13 @@ export function BoutiqueInfosPage() {
             <li>Hébergement des données en Union européenne ({HOSTING_REGION}).</li>
             <li>
               Tu peux demander l'accès, la rectification ou la suppression de tes données à tout
-              moment (RGPD) en écrivant à <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>.
+              moment (RGPD) en écrivant à{" "}
+              {contactEmail ? (
+                <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+              ) : (
+                manque("email de contact RGPD")
+              )}
+              .
             </li>
           </ul>
         </section>

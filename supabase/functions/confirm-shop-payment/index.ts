@@ -332,9 +332,28 @@ serve(async (req: Request) => {
     const { data: boutique } = await sb.rpc("get_boutique_by_slug", {
       p_slug: order.boutique_slug ?? "",
     });
-    const b = boutique as { shop_name?: string; first_name?: string; ai_scan_url?: string } | null;
+    const b = boutique as {
+      shop_name?: string;
+      first_name?: string;
+      ai_scan_url?: string;
+      legal?: { email?: string | null } | null;
+    } | null;
     const shopName = b?.shop_name ?? "Beauté K Skin";
     const aiScanUrl = b?.ai_scan_url?.trim() || null;
+    // ⚠️ La cliente répond À SA VENDEUSE, jamais au club (correction 2026-08-11).
+    // On ne met un repli qu'en dernier recours, quand la distri n'a pas encore
+    // renseigné son email — sinon ses réclamations arriveraient chez Thomas.
+    const vendeurEmail = b?.legal?.email?.trim() || null;
+
+    // Adresse de connexion de la coach — sert d'accusé de réception ET de repli
+    // au reply_to client tant qu'elle n'a pas renseigné son email de vendeuse.
+    let coachEmailFallback: string | null = null;
+    try {
+      const { data: authUser } = await sb.auth.admin.getUserById(order.coach_user_id);
+      coachEmailFallback = authUser?.user?.email ?? null;
+    } catch (e) {
+      console.warn("[confirm-shop-payment] coach email:", e instanceof Error ? e.message : e);
+    }
 
     // Lien bilan bien-être : ⚠️ le slug de /bilan-online se résout sur le 1er mot
     // de `users.name` (cf. submit-online-bilan), PAS sur boutique_slug — Mélanie
@@ -378,7 +397,7 @@ serve(async (req: Request) => {
           headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: `${shopName} <boutique@labase360.fr>`,
-            reply_to: "labaseverdun@gmail.com",
+            reply_to: vendeurEmail || coachEmailFallback || "labaseverdun@gmail.com",
             to: [order.customer_email],
             subject: `Ta commande ${shopName} est confirmée 🌿`,
             html,
@@ -394,8 +413,7 @@ serve(async (req: Request) => {
     // pour préparer l'envoi : coordonnées, adresse, produits, montant.
     try {
       if (RESEND_API_KEY) {
-        const { data: authUser } = await sb.auth.admin.getUserById(order.coach_user_id);
-        const coachEmail = authUser?.user?.email;
+        const coachEmail = coachEmailFallback;
         if (coachEmail) {
           const customerName =
             [order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ") || "Une cliente";

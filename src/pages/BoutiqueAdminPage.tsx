@@ -108,6 +108,22 @@ export function BoutiqueAdminPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [aiScanUrl, setAiScanUrl] = useState("");
 
+  // ⚠️ Identité LÉGALE du vendeur (correction 2026-08-11). Sans elle, les pages
+  // légales affichaient SAS HTM FITLIFE — donc la société de Thomas déclarée
+  // vendeuse des produits de chaque distributrice. Ces champs sont la seule
+  // source ; il n'y a plus aucun repli sur les données de la plateforme.
+  const [lgEntity, setLgEntity] = useState("");
+  const [lgForm, setLgForm] = useState("");
+  const [lgAddress, setLgAddress] = useState("");
+  const [lgSiret, setLgSiret] = useState("");
+  const [lgEmail, setLgEmail] = useState("");
+  const [lgDirector, setLgDirector] = useState("");
+  const [lgVat, setLgVat] = useState("");
+  const [lgRcs, setLgRcs] = useState("");
+  const [lgCapital, setLgCapital] = useState("");
+  const [lgMediatorName, setLgMediatorName] = useState("");
+  const [lgMediatorUrl, setLgMediatorUrl] = useState("");
+
   // Données
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -132,7 +148,9 @@ export function BoutiqueAdminPage() {
       const [u, pc, ord, leads, vis, prods] = await Promise.all([
         sb
           .from("users")
-          .select("shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url, boutique_ai_scan_url")
+          .select(
+            "shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url, boutique_ai_scan_url, legal_entity_name, legal_form, legal_address, legal_siret, legal_email, legal_director, legal_vat, legal_rcs, legal_capital, legal_mediator_name, legal_mediator_url",
+          )
           .eq("id", uid)
           .maybeSingle(),
         sb.from("promo_codes").select("id, code, kind, value, active, used_count").eq("coach_user_id", uid).order("created_at"),
@@ -155,6 +173,18 @@ export function BoutiqueAdminPage() {
         setPhone(u.data.shop_contact_phone ?? "");
         setVideoUrl(u.data.boutique_hero_video_url ?? "");
         setAiScanUrl(u.data.boutique_ai_scan_url ?? "");
+        const d = u.data as Record<string, string | null>;
+        setLgEntity(d.legal_entity_name ?? "");
+        setLgForm(d.legal_form ?? "");
+        setLgAddress(d.legal_address ?? "");
+        setLgSiret(d.legal_siret ?? "");
+        setLgEmail(d.legal_email ?? "");
+        setLgDirector(d.legal_director ?? "");
+        setLgVat(d.legal_vat ?? "");
+        setLgRcs(d.legal_rcs ?? "");
+        setLgCapital(d.legal_capital ?? "");
+        setLgMediatorName(d.legal_mediator_name ?? "");
+        setLgMediatorUrl(d.legal_mediator_url ?? "");
       }
       setPromos((pc.data as PromoCode[]) ?? []);
       const ordRows = (ord.data as Omit<Order, "items">[]) ?? [];
@@ -197,6 +227,17 @@ export function BoutiqueAdminPage() {
       pushToast({ tone: "error", title: "Slug trop court", message: "Choisis un lien d'au moins 2 caractères." });
       return;
     }
+    // ⚠️ Verrou légal : vendre en ligne à des particuliers sans identifier le
+    // vendeur est interdit. On refuse donc la mise en ligne tant que le noyau
+    // n'est pas renseigné (même règle que boutique_legal_complete côté SQL).
+    if (active && !legalComplete) {
+      pushToast({
+        tone: "error",
+        title: "Informations légales requises",
+        message: `Complète d'abord : ${legalMissing.join(", ")}.`,
+      });
+      return;
+    }
     setSaving(true);
     try {
       const sb = await getSupabaseClient();
@@ -210,6 +251,17 @@ export function BoutiqueAdminPage() {
           shop_contact_phone: phone.trim() || null,
           boutique_hero_video_url: videoUrl.trim() || null,
           boutique_ai_scan_url: aiScanUrl.trim() || null,
+          legal_entity_name: lgEntity.trim() || null,
+          legal_form: lgForm.trim() || null,
+          legal_address: lgAddress.trim() || null,
+          legal_siret: lgSiret.trim() || null,
+          legal_email: lgEmail.trim() || null,
+          legal_director: lgDirector.trim() || null,
+          legal_vat: lgVat.trim() || null,
+          legal_rcs: lgRcs.trim() || null,
+          legal_capital: lgCapital.trim() || null,
+          legal_mediator_name: lgMediatorName.trim() || null,
+          legal_mediator_url: lgMediatorUrl.trim() || null,
         })
         .eq("id", uid);
       if (error) {
@@ -283,6 +335,18 @@ export function BoutiqueAdminPage() {
     pushToast({ tone: "success", title: "Photo installée", message: product.name });
   }
 
+  // Miroir EXACT de boutique_legal_complete() en SQL — garder les deux alignés.
+  const legalMissing = useMemo(() => {
+    const m: string[] = [];
+    if (lgEntity.trim().length < 2) m.push("raison sociale");
+    if (lgAddress.trim().length < 6) m.push("adresse du siège");
+    if (lgSiret.replace(/\D/g, "").length !== 14) m.push("SIRET (14 chiffres)");
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(lgEmail.trim())) m.push("email de contact");
+    if (lgDirector.trim().length < 3) m.push("directeur de la publication");
+    return m;
+  }, [lgEntity, lgAddress, lgSiret, lgEmail, lgDirector]);
+  const legalComplete = legalMissing.length === 0;
+
   const paidRevenue = useMemo(
     () => orders.filter((o) => o.status === "paid").reduce((s, o) => s + o.total_cents, 0) / 100,
     [orders],
@@ -332,13 +396,192 @@ export function BoutiqueAdminPage() {
         ))}
       </div>
 
+      {/* ── Identité légale du vendeur ────────────────────────────────────────
+          C'est TOI le vendeur sur ta boutique : ces informations s'affichent
+          dans tes CGV et tes mentions légales. Sans elles, la boutique ne peut
+          pas être mise en ligne (vendre à des particuliers sans identifier le
+          vendeur est interdit). */}
+      <div
+        style={{
+          ...card,
+          borderColor: legalComplete ? "var(--ls-border)" : "rgba(244,63,94,.45)",
+        }}
+      >
+        <div style={cardTitle}>
+          {legalComplete ? "✅ " : "⚠️ "}Mon identité de vendeuse
+        </div>
+        <p style={{ fontSize: 13, color: "var(--ls-text-muted)", lineHeight: 1.6, marginBottom: 14 }}>
+          Sur ta boutique, <b>c'est toi qui vends</b> — pas La Base 360. La loi impose d'afficher
+          qui est le vendeur. Ces informations apparaissent dans tes mentions légales et tes CGV.
+          La Base 360 ne fournit que l'outil technique.
+        </p>
+
+        {!legalComplete && (
+          <div
+            style={{
+              background: "rgba(244,63,94,.1)",
+              border: "0.5px solid rgba(244,63,94,.35)",
+              borderRadius: 12,
+              padding: "12px 14px",
+              fontSize: 13,
+              color: "var(--ls-text)",
+              marginBottom: 16,
+              lineHeight: 1.6,
+            }}
+          >
+            Il manque : <b>{legalMissing.join(", ")}</b>.
+            <br />
+            Tant que ce n'est pas complet, tu ne peux pas mettre ta boutique en ligne.
+          </div>
+        )}
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Raison sociale ou nom complet *</label>
+          <input
+            style={input}
+            value={lgEntity}
+            onChange={(e) => setLgEntity(e.target.value)}
+            placeholder="Ex. Victoria Cavalec, ou MA SOCIÉTÉ SAS"
+          />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
+            En auto-entrepreneur, c'est ton prénom + nom.
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Forme juridique</label>
+          <input
+            style={input}
+            value={lgForm}
+            onChange={(e) => setLgForm(e.target.value)}
+            placeholder="Auto-entrepreneur, EI, SASU…"
+          />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Adresse du siège *</label>
+          <input
+            style={input}
+            value={lgAddress}
+            onChange={(e) => setLgAddress(e.target.value)}
+            placeholder="12 rue des Fleurs, 55100 Verdun, France"
+          />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>SIRET * (14 chiffres)</label>
+          <input
+            style={input}
+            value={lgSiret}
+            onChange={(e) => setLgSiret(e.target.value)}
+            placeholder="123 456 789 00012"
+            inputMode="numeric"
+          />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Email de contact & réclamations *</label>
+          <input
+            style={input}
+            type="email"
+            value={lgEmail}
+            onChange={(e) => setLgEmail(e.target.value)}
+            placeholder="moi@exemple.fr"
+          />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
+            C'est là que tes clientes t'écriront. Ton adresse, pas celle du club.
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Directeur de la publication *</label>
+          <input
+            style={input}
+            value={lgDirector}
+            onChange={(e) => setLgDirector(e.target.value)}
+            placeholder="Ton prénom et nom"
+          />
+        </div>
+
+        <details style={{ marginBottom: 14 }}>
+          <summary style={{ ...label, cursor: "pointer", marginBottom: 10 }}>
+            Si tu as une société (facultatif)
+          </summary>
+          <div style={{ marginBottom: 12 }}>
+            <label style={label}>TVA intracommunautaire</label>
+            <input style={input} value={lgVat} onChange={(e) => setLgVat(e.target.value)} placeholder="FR12345678901" />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={label}>RCS (ville d'immatriculation)</label>
+            <input style={input} value={lgRcs} onChange={(e) => setLgRcs(e.target.value)} placeholder="Bar-le-Duc" />
+          </div>
+          <div>
+            <label style={label}>Capital social</label>
+            <input style={input} value={lgCapital} onChange={(e) => setLgCapital(e.target.value)} placeholder="1 000 €" />
+          </div>
+        </details>
+
+        <div
+          style={{
+            borderTop: "0.5px solid var(--ls-border)",
+            paddingTop: 14,
+            marginTop: 4,
+          }}
+        >
+          <label style={label}>Médiateur de la consommation</label>
+          <p style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.6, marginBottom: 10 }}>
+            <b>Obligatoire</b> pour vendre en ligne à des particuliers. Il faut adhérer à un
+            médiateur agréé (CM2C, Medicys, SAS Médiation Solution… ~30 à 100 €/an), puis coller
+            son nom et son site ici.
+          </p>
+          <input
+            style={{ ...input, marginBottom: 10 }}
+            value={lgMediatorName}
+            onChange={(e) => setLgMediatorName(e.target.value)}
+            placeholder="Nom du médiateur"
+          />
+          <input
+            style={input}
+            value={lgMediatorUrl}
+            onChange={(e) => setLgMediatorUrl(e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+
+        <button style={{ ...btnPrimary, marginTop: 16 }} onClick={saveConfig} disabled={saving}>
+          {saving ? "Enregistrement…" : "Enregistrer mes informations"}
+        </button>
+      </div>
+
       {/* Config */}
       <div style={card}>
         <div style={cardTitle}>Ma vitrine</div>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, cursor: "pointer" }}>
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} style={{ width: 18, height: 18 }} />
-          <span style={{ fontSize: 14, color: "var(--ls-text)", fontWeight: 600 }}>Boutique en ligne (visible publiquement)</span>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 16,
+            cursor: legalComplete ? "pointer" : "not-allowed",
+            opacity: legalComplete ? 1 : 0.55,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={active}
+            disabled={!legalComplete}
+            onChange={(e) => setActive(e.target.checked)}
+            style={{ width: 18, height: 18 }}
+          />
+          <span style={{ fontSize: 14, color: "var(--ls-text)", fontWeight: 600 }}>
+            Boutique en ligne (visible publiquement)
+          </span>
         </label>
+        {!legalComplete && (
+          <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: -8, marginBottom: 16, lineHeight: 1.6 }}>
+            🔒 Complète d'abord « Mon identité de vendeuse » ci-dessus.
+          </div>
+        )}
 
         <div style={{ marginBottom: 14 }}>
           <label style={label}>Nom de ma boutique</label>

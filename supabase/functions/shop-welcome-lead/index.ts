@@ -82,7 +82,11 @@ serve(async (req: Request) => {
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: boutique } = await sb.rpc("get_boutique_by_slug", { p_slug: slug });
-    const b = boutique as { user_id?: string; shop_name?: string } | null;
+    const b = boutique as {
+      user_id?: string;
+      shop_name?: string;
+      legal?: { email?: string | null } | null;
+    } | null;
     if (!b?.user_id) return json({ error: "boutique_introuvable" }, 404);
     const shopName = b.shop_name ?? "Beauté K Skin";
 
@@ -121,7 +125,8 @@ serve(async (req: Request) => {
           headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: `${shopName} <boutique@labase360.fr>`,
-            reply_to: "labaseverdun@gmail.com",
+            // La prospect répond à SA vendeuse, pas au club (correction 2026-08-11).
+            reply_to: b.legal?.email?.trim() || "labaseverdun@gmail.com",
             to: [email],
             subject: `Ton −5 % de bienvenue chez ${shopName} 🌿`,
             html: welcomeEmailHtml({ firstName, shopName, code, shopUrl }),
