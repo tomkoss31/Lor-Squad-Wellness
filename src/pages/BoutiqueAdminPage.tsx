@@ -114,6 +114,7 @@ export function BoutiqueAdminPage() {
   // source ; il n'y a plus aucun repli sur les données de la plateforme.
   const [lgEntity, setLgEntity] = useState("");
   const [lgForm, setLgForm] = useState("");
+  const [lgStatus, setLgStatus] = useState("vdi");
   const [lgAddress, setLgAddress] = useState("");
   const [lgSiret, setLgSiret] = useState("");
   const [lgEmail, setLgEmail] = useState("");
@@ -149,7 +150,7 @@ export function BoutiqueAdminPage() {
         sb
           .from("users")
           .select(
-            "shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url, boutique_ai_scan_url, legal_entity_name, legal_form, legal_address, legal_siret, legal_email, legal_director, legal_vat, legal_rcs, legal_capital, legal_mediator_name, legal_mediator_url",
+            "shop_name, boutique_slug, boutique_active, shop_contact_phone, boutique_hero_video_url, boutique_ai_scan_url, legal_entity_name, legal_form, legal_status, legal_address, legal_siret, legal_email, legal_director, legal_vat, legal_rcs, legal_capital, legal_mediator_name, legal_mediator_url",
           )
           .eq("id", uid)
           .maybeSingle(),
@@ -176,6 +177,7 @@ export function BoutiqueAdminPage() {
         const d = u.data as Record<string, string | null>;
         setLgEntity(d.legal_entity_name ?? "");
         setLgForm(d.legal_form ?? "");
+        setLgStatus(d.legal_status ?? "vdi");
         setLgAddress(d.legal_address ?? "");
         setLgSiret(d.legal_siret ?? "");
         setLgEmail(d.legal_email ?? "");
@@ -253,6 +255,7 @@ export function BoutiqueAdminPage() {
           boutique_ai_scan_url: aiScanUrl.trim() || null,
           legal_entity_name: lgEntity.trim() || null,
           legal_form: lgForm.trim() || null,
+          legal_status: lgStatus || null,
           legal_address: lgAddress.trim() || null,
           legal_siret: lgSiret.trim() || null,
           legal_email: lgEmail.trim() || null,
@@ -336,15 +339,18 @@ export function BoutiqueAdminPage() {
   }
 
   // Miroir EXACT de boutique_legal_complete() en SQL — garder les deux alignés.
+  // ⚠️ Le SIRET n'est PAS dans le noyau : un VDI dispensé de RCS peut ne pas
+  // l'avoir encore reçu, l'exiger fermerait sa boutique. Le téléphone le
+  // remplace — un acheteur doit pouvoir joindre son vendeur.
   const legalMissing = useMemo(() => {
     const m: string[] = [];
-    if (lgEntity.trim().length < 2) m.push("raison sociale");
-    if (lgAddress.trim().length < 6) m.push("adresse du siège");
-    if (lgSiret.replace(/\D/g, "").length !== 14) m.push("SIRET (14 chiffres)");
-    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(lgEmail.trim())) m.push("email de contact");
-    if (lgDirector.trim().length < 3) m.push("directeur de la publication");
+    if (lgEntity.trim().length < 2) m.push("nom ou raison sociale");
+    if (lgAddress.trim().length < 6) m.push("adresse");
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(lgEmail.trim())) m.push("email");
+    if (phone.replace(/\D/g, "").length < 8) m.push("téléphone");
+    if (lgDirector.trim().length < 3) m.push("responsable de la publication");
     return m;
-  }, [lgEntity, lgAddress, lgSiret, lgEmail, lgDirector]);
+  }, [lgEntity, lgAddress, lgEmail, phone, lgDirector]);
   const legalComplete = legalMissing.length === 0;
 
   const paidRevenue = useMemo(
@@ -436,46 +442,38 @@ export function BoutiqueAdminPage() {
         )}
 
         <div style={{ marginBottom: 14 }}>
-          <label style={label}>Raison sociale ou nom complet *</label>
-          <input
-            style={input}
-            value={lgEntity}
-            onChange={(e) => setLgEntity(e.target.value)}
-            placeholder="Ex. Victoria Cavalec, ou MA SOCIÉTÉ SAS"
-          />
-          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
-            En auto-entrepreneur, c'est ton prénom + nom.
+          <label style={label}>Mon statut</label>
+          <select style={input} value={lgStatus} onChange={(e) => setLgStatus(e.target.value)}>
+            <option value="vdi">Vendeuse à domicile indépendante (VDI)</option>
+            <option value="auto">Auto-entrepreneur / entreprise individuelle</option>
+            <option value="societe">Société (SASU, SARL…)</option>
+          </select>
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5, lineHeight: 1.6 }}>
+            En VDI, tu es dispensée d'immatriculation au registre du commerce — la mention
+            correspondante s'affiche automatiquement sur ta boutique.
           </div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={label}>Forme juridique</label>
+          <label style={label}>Nom complet ou raison sociale *</label>
           <input
             style={input}
-            value={lgForm}
-            onChange={(e) => setLgForm(e.target.value)}
-            placeholder="Auto-entrepreneur, EI, SASU…"
+            value={lgEntity}
+            onChange={(e) => setLgEntity(e.target.value)}
+            placeholder="Ex. Victoria Cavalec"
           />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
+            En VDI ou en auto-entrepreneur, c'est simplement ton prénom + nom.
+          </div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={label}>Adresse du siège *</label>
+          <label style={label}>Adresse *</label>
           <input
             style={input}
             value={lgAddress}
             onChange={(e) => setLgAddress(e.target.value)}
             placeholder="12 rue des Fleurs, 55100 Verdun, France"
-          />
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <label style={label}>SIRET * (14 chiffres)</label>
-          <input
-            style={input}
-            value={lgSiret}
-            onChange={(e) => setLgSiret(e.target.value)}
-            placeholder="123 456 789 00012"
-            inputMode="numeric"
           />
         </div>
 
@@ -494,13 +492,42 @@ export function BoutiqueAdminPage() {
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={label}>Directeur de la publication *</label>
+          <label style={label}>Téléphone *</label>
+          <input
+            style={input}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="06 12 34 56 78"
+            inputMode="tel"
+          />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
+            Obligatoire : une acheteuse doit pouvoir te joindre.
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>Responsable de la publication *</label>
           <input
             style={input}
             value={lgDirector}
             onChange={(e) => setLgDirector(e.target.value)}
             placeholder="Ton prénom et nom"
           />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={label}>SIRET (si tu l'as)</label>
+          <input
+            style={input}
+            value={lgSiret}
+            onChange={(e) => setLgSiret(e.target.value)}
+            placeholder="123 456 789 00012"
+            inputMode="numeric"
+          />
+          <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5, lineHeight: 1.6 }}>
+            Pas bloquant. À savoir : même en VDI, déclarer son activité au guichet unique INPI
+            donne un SIRET — c'est l'inscription au registre du commerce qui n'est pas exigée.
+          </div>
         </div>
 
         <details style={{ marginBottom: 14 }}>
