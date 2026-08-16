@@ -48,6 +48,19 @@ function capitalize(s: string): string { return s ? s.charAt(0).toUpperCase() + 
 
 interface Slot { iso: string; time: string; remaining: number }
 
+/** Les quatre réponses possibles. Même vocabulaire que la RPC, qui refuse tout le reste. */
+type CanalProvenance = "flyer" | "parle" | "reseaux" | "autre";
+
+const CANAUX: Array<{ cle: CanalProvenance; emoji: string; libelle: string }> = [
+  { cle: "flyer", emoji: "📬", libelle: "Un flyer dans ma boîte aux lettres" },
+  { cle: "parle", emoji: "💬", libelle: "Quelqu'un m'en a parlé" },
+  { cle: "reseaux", emoji: "📱", libelle: "Instagram ou Facebook" },
+  { cle: "autre", emoji: "✨", libelle: "Autrement" },
+];
+
+/** Seuls le flyer et le bouche-à-oreille ont quelqu'un derrière. */
+const A_UN_AUTEUR = (c: CanalProvenance) => c === "flyer" || c === "parle";
+
 export function ReserverClubPage() {
   const { clubSlug } = useParams<{ clubSlug?: string }>();
   const slug = (clubSlug ?? "verdun").trim() || "verdun";
@@ -84,6 +97,38 @@ export function ReserverClubPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // L'identifiant du lead créé à l'écran 1. Il sert à deux choses :
+  //
+  //  1. NE PAS RECRÉER de fiche quand on revient sur ses pas. « ← Modifier mes
+  //     infos » ramenait à l'écran 1, et chaque validation refaisait un lead :
+  //     mesuré en base le 16/08, Claire avait TROIS fiches créées en quatre
+  //     minutes avec le même numéro.
+  //  2. Poser la provenance après la réservation (« comment tu as connu le
+  //     club ? »), qui a besoin de savoir sur quelle fiche écrire.
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [canal, setCanal] = useState<CanalProvenance | null>(null);
+  const [equipe, setEquipe] = useState<Array<{ id: string; prenom: string }>>([]);
+  const [provenanceFinie, setProvenanceFinie] = useState(false);
+  const [rapportePar, setRapportePar] = useState<string | null>(null);
+
+  // La liste des prénoms, chargée seulement quand la question va être posée —
+  // c'est-à-dire sur l'écran de confirmation. Inutile de la demander à quelqu'un
+  // qui n'ira jamais jusqu'au bout.
+  useEffect(() => {
+    if (screen !== "confirm" || equipe.length > 0) return;
+    let vivant = true;
+    void (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        const { data } = (await sb?.rpc("get_equipe_publique")) ?? { data: null };
+        if (vivant && Array.isArray(data)) {
+          setEquipe(data as Array<{ id: string; prenom: string }>);
+        }
+      } catch { /* sans la liste, on garde les quatre canaux — voir plus bas */ }
+    })();
+    return () => { vivant = false; };
+  }, [screen, equipe.length]);
 
   // Pré-sélection objectif via ?objectif=
   useEffect(() => {
@@ -136,10 +181,12 @@ export function ReserverClubPage() {
     setError(null);
     setSubmitting(true);
     const sb = await getSupabaseClient();
-    // Crée le lead CRM (non bloquant : un échec ne doit pas empêcher la résa)
+    // Crée le lead CRM (non bloquant : un échec ne doit pas empêcher la résa).
+    // `leadId` garde la trace de la fiche déjà créée : repasser par cet écran
+    // via « ← Modifier mes infos » ne doit plus en fabriquer une deuxième.
     try {
-      if (sb) {
-        await sb.functions.invoke("submit-prospect-lead", {
+      if (sb && !leadId) {
+        const { data: creation } = await sb.functions.invoke("submit-prospect-lead", {
           body: {
             first_name: prenom.trim(),
             phone: tel.trim(),
@@ -160,11 +207,35 @@ export function ReserverClubPage() {
             },
           },
         });
+        const id = (creation as { id?: string } | null)?.id;
+        if (id) setLeadId(id);
       }
     } catch { /* lead best-effort */ }
     setSubmitting(false);
     setScreen("dispo");
     void loadAvailability();
+  }
+
+  /**
+   * Enregistre la réponse à « comment tu as connu le club ? ».
+   *
+   * Best-effort de bout en bout : cette question arrive APRÈS la réservation,
+   * elle ne doit jamais donner l'impression que quelque chose a raté. Si la RPC
+   * échoue, on remercie quand même — le rendez-vous, lui, est bien pris.
+   */
+  async function noterProvenance(c: CanalProvenance, quiId: string | null, quiNom: string | null) {
+    setCanal(c);
+    setRapportePar(quiNom);
+    setProvenanceFinie(true);
+    if (!leadId) return;
+    try {
+      const sb = await getSupabaseClient();
+      await sb?.rpc("noter_provenance_lead", {
+        p_lead_id: leadId,
+        p_canal: c,
+        p_qui: quiId,
+      });
+    } catch { /* la réponse est un bonus, jamais un obstacle */ }
   }
 
   async function confirmBooking() {
@@ -514,7 +585,78 @@ export function ReserverClubPage() {
               <button type="button" className="rc-cta" style={{ marginTop: 22, minHeight: 54, width: "100%" }} onClick={addToCalendar}>
                 <span aria-hidden="true">📅</span> Ajouter à mon agenda
               </button>
-              <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--muted)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
+              <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--sub)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
+
+              {/* ── « Comment tu as connu le club ? » ───────────────────────
+                  Posée ICI, et pas à l'écran 1, pour une raison simple : le
+                  rendez-vous est déjà pris. Une question de plus avant le
+                  créneau, c'est une occasion d'abandonner ; ici, si personne ne
+                  répond, on ne perd rien.
+
+                  C'est le seul moyen de savoir qui a distribué un flyer : le QR
+                  imprimé est le MÊME sur tous les papiers, donc le serveur reçoit
+                  exactement la même chose pour tout le monde. Aucune technique ne
+                  peut le deviner — il faut demander. */}
+              {leadId ? (
+                <div style={{ marginTop: 26, paddingTop: 24, borderTop: "1px solid var(--line)" }}>
+                  {provenanceFinie ? (
+                    <p style={{ margin: 0, padding: "16px 18px", borderRadius: 16, background: "rgba(147,166,126,.14)", border: "1px solid rgba(147,166,126,.4)", fontSize: 15, lineHeight: 1.55, color: "#42513a" }}>
+                      {rapportePar
+                        ? <>Merci ! On note que tu viens par <strong>{rapportePar}</strong>. À bientôt 🌿</>
+                        : <>Merci, c'est noté. À bientôt 🌿</>}
+                    </p>
+                  ) : canal && A_UN_AUTEUR(canal) ? (
+                    <>
+                      <h3 style={{ margin: 0, fontFamily: "Anton, sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: 20, lineHeight: 1.1 }}>
+                        {canal === "flyer" ? "Tu sais qui l'a distribué ?" : "C'était qui ?"}
+                      </h3>
+                      <p style={{ margin: "7px 0 15px", fontSize: 14, lineHeight: 1.55, color: "var(--sub)" }}>
+                        {canal === "flyer" ? "Son prénom est peut-être écrit sur le flyer." : "Pour qu'on puisse la remercier."}
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                        {equipe.map((m) => (
+                          <button key={m.id} type="button" className="rc-choix" onClick={() => void noterProvenance(canal, m.id, m.prenom)}>
+                            <span aria-hidden="true">👤</span>{m.prenom}
+                          </button>
+                        ))}
+                      </div>
+                      <button type="button" className="rc-passer" onClick={() => void noterProvenance(canal, null, null)}>
+                        Je ne sais pas
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h3 style={{ margin: 0, fontFamily: "Anton, sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: 20, lineHeight: 1.1 }}>
+                        Dernière chose
+                      </h3>
+                      <p style={{ margin: "7px 0 15px", fontSize: 14, lineHeight: 1.55, color: "var(--sub)" }}>
+                        Comment tu as connu le club&nbsp;? Ça nous aide à savoir ce qui marche.
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                        {CANAUX.map((c) => (
+                          <button
+                            key={c.cle}
+                            type="button"
+                            className="rc-choix"
+                            onClick={() => {
+                              // Sans la liste des prénoms (RPC en échec), demander
+                              // « qui ? » afficherait un écran vide : on s'arrête
+                              // au canal, qui est déjà l'essentiel.
+                              if (A_UN_AUTEUR(c.cle) && equipe.length > 0) setCanal(c.cle);
+                              else void noterProvenance(c.cle, null, null);
+                            }}
+                          >
+                            <span aria-hidden="true">{c.emoji}</span>{c.libelle}
+                          </button>
+                        ))}
+                      </div>
+                      <button type="button" className="rc-passer" onClick={() => { setRapportePar(null); setProvenanceFinie(true); }}>
+                        Je préfère ne pas répondre
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </main>

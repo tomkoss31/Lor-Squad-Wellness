@@ -159,6 +159,42 @@ export interface CrmLead {
   /** Provenance bilan online : slug du coach dont le lien a été utilisé
    *  (null = lien public générique). Affiché « via <coach> » / « lien public ». */
   bilanCoachSlug?: string | null;
+  /**
+   * Ce que la personne a répondu à « comment tu as connu le club ? », sur
+   * l'écran de confirmation de sa réservation.
+   *
+   * ⚠️ C'est une MENTION, pas une attribution : `provenancePar` ne donne aucun
+   * droit et ne change pas `ownerUserId`. Le lead reste au club.
+   */
+  provenanceCanal?: "flyer" | "parle" | "reseaux" | "autre" | null;
+  provenancePar?: string | null;
+}
+
+/** Ce qu'on lit à l'écran pour chaque réponse. */
+export const PROVENANCE_META: Record<
+  NonNullable<CrmLead["provenanceCanal"]>,
+  { emoji: string; label: string }
+> = {
+  flyer: { emoji: "📬", label: "Flyer" },
+  parle: { emoji: "💬", label: "Bouche-à-oreille" },
+  reseaux: { emoji: "📱", label: "Réseaux" },
+  autre: { emoji: "✨", label: "Autrement" },
+};
+
+/** « 📬 Flyer de Mandy », ou `null` quand la personne n'a pas répondu. */
+export function provenanceTexte(
+  canal: CrmLead["provenanceCanal"],
+  parNom: string | null | undefined,
+): string | null {
+  if (!canal) return null;
+  const m = PROVENANCE_META[canal];
+  if (!m) return null;
+  // « de » n'a de sens que pour un flyer ou du bouche-à-oreille : personne ne
+  // distribue Instagram.
+  if (parNom && (canal === "flyer" || canal === "parle")) {
+    return `${m.emoji} ${m.label} de ${parNom}`;
+  }
+  return `${m.emoji} ${m.label}`;
 }
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
@@ -448,7 +484,7 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse")
+          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse, provenance_canal, provenance_user_id")
           .order("created_at", { ascending: false })
           .limit(500),
         sb
@@ -691,6 +727,8 @@ export function useCrmLeads() {
           consentRecontact: typeof row.consent_recontact === "boolean" ? (row.consent_recontact as boolean) : null,
           rdvLabel: rdvTrouve?.label ?? null,
           rdv: rdvTrouve,
+          provenanceCanal: (row.provenance_canal as CrmLead["provenanceCanal"]) ?? null,
+          provenancePar: (row.provenance_user_id as string | null) ?? null,
           // Le signal du chantier : parti avant de choisir son créneau. On ne
           // le lève que pour le tunnel club — ailleurs, ne pas avoir de RDV est
           // l'état normal — ET seulement si on a effectivement pu lire les
