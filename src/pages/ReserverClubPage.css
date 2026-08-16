@@ -97,7 +97,7 @@
 }
 @media (prefers-reduced-motion:reduce){.rc *{transition:none!important}}
 
-/* ── « Comment tu as connu le club ? » (écran de confirmation) ─────────────
+/* ── « Comment tu as connu le club ? » (bloc sous les créneaux) ────────────
    Boutons pleine largeur, 56 px de haut : la question se répond au pouce, sur
    un téléphone, debout devant sa boîte aux lettres. */
 .rc .rc-choix{
@@ -108,9 +108,29 @@
 }
 .rc .rc-choix span{font-size:20px;flex:none}
 .rc .rc-choix:hover{border-color:var(--orange)}
-.rc .rc-choix:active{box-shadow:0 10px 24px -16px rgba(224,83,42,.55)}
-.rc .rc-passer{
-  margin-top:14px;background:none;border:0;color:var(--sub);font-family:"Poppins",sans-serif;
-  font-size:13.5px;text-decoration:underline;cursor:pointer;padding:8px 0;min-height:44px;
+/* Choisi : même vocabulaire visuel que les objectifs de l'écran 1 (bordure
+   orange + carte blanche), pour qu'un choix se lise pareil partout. */
+.rc .rc-choix[aria-checked="true"]{
+  border-color:var(--orange);background:#fff;box-shadow:0 10px 24px -14px rgba(224,83,42,.55);
 }
+
+/* Le bloc lui-même : une carte à part, SOUS le calendrier et les créneaux, qui
+   porte la question ET le bouton de validation. Les deux vont ensemble — la
+   réponse part dans la foulée de la réservation, en un seul geste. */
+.rc-prov{margin-top:clamp(14px,1.8vw,20px);padding:clamp(22px,2.6vw,32px)}
+.rc-prov-titre{font-size:clamp(20px,2.2vw,26px)}
+.rc-prov-sub{margin:9px 0 0;font-size:15px;line-height:1.55;color:var(--sub);max-width:60ch}
+/* auto-fit : 4 colonnes sur un écran large, 1 seule sous 560 px — sans jamais
+   descendre sous la largeur disponible, donc aucun débordement à 390 px. */
+.rc-prov-choix{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));
+  gap:10px;margin-top:18px;
+}
+.rc-prov-qui{margin-top:18px;max-width:420px}
+.rc-prov-opt{font-weight:500;color:var(--muted)}
+.rc-prov-aide{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+/* Le bouton reste à taille de bouton, même dans une carte pleine largeur. */
+.rc-prov-valider{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.rc-prov-valider .rc-cta{max-width:420px;min-height:54px;font-size:16px}
+.rc-prov-manque{margin:0;text-align:center;font-size:13.5px;line-height:1.5;color:var(--sub)}
 @media (prefers-reduced-motion: reduce){ .rc .rc-choix{transition:none} }

@@ -59,7 +59,8 @@ import {
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
 import { calculateAge } from "../lib/age";
-import type { BiologicalSex, BreakfastAnalysis, Client, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, Client, CurrentIntake, DecisionClient, MessageALaisser, Objective, ProvenanceCanal, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import { PROVENANCE_CANAUX } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
@@ -73,6 +74,15 @@ import { pvProductCatalog } from "../data/pvCatalog";
 type AssessmentForm = {
   assessmentDate: string;
   referredByName: string;
+  /**
+   * « Comment tu nous as connus ? » (2026-08-16, demande Mélanie). `""` tant
+   * qu'on n'a pas répondu — la question est facultative et ne bloque rien.
+   * Même vocabulaire que `prospect_leads.provenance_canal`, cf. le commentaire
+   * de `ProvenanceCanal` dans `src/types/domain.ts`.
+   */
+  provenanceCanal: ProvenanceCanal | "";
+  /** Le prénom cité, facultatif. Distinct de `referredByName` (le parrain). */
+  provenanceQui: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -239,6 +249,8 @@ function normalizeRecommendations(
 const initialForm: AssessmentForm = {
   assessmentDate: getCurrentDateTimeValue(),
   referredByName: "",
+  provenanceCanal: "",
+  provenanceQui: "",
   firstName: "",
   lastName: "",
   phone: "",
@@ -1111,6 +1123,12 @@ export function NewAssessmentPage() {
   function buildQuestionnaire() {
     return {
       referredByName: form.referredByName.trim() || undefined,
+      // « Comment tu nous as connus ? » (2026-08-16). Même vocabulaire que
+      // `prospect_leads.provenance_canal`, pour que le bilan et le tunnel
+      // `/reserver` se comptent ensemble. Sans réponse, la clé est absente du
+      // jsonb — comme chez les bilans écrits avant ce chantier.
+      provenanceCanal: form.provenanceCanal || undefined,
+      provenanceQui: form.provenanceQui.trim() || undefined,
       currentClothingSize: form.currentClothingSize || undefined,
       targetClothingSize: form.targetClothingSize || undefined,
       detectedNeedIds: recommendationPlan.needs.map((need) => need.id),
@@ -2015,6 +2033,40 @@ export function NewAssessmentPage() {
                         icon="🤝"
                         value={form.referredByName}
                         onChange={(v) => update("referredByName", v)}
+                      />
+                    </div>
+                    {/* « Comment tu nous as connus ? » (2026-08-16, demande
+                        Mélanie). Posée ICI, juste sous « Invité par », parce que
+                        c'est le seul endroit du bilan qui parle déjà de
+                        provenance : deux endroits pour une même idée, c'est la
+                        dérive que la règle B9 interdit. Aucune étape n'est
+                        ajoutée — `ALL_STEPS` et la barre de progression sont
+                        intacts. Même vocabulaire que le tunnel `/reserver`, pour
+                        que les deux parcours se comptent ensemble. */}
+                    <div className="col-span-2" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      <ChoiceGroup
+                        label="Comment tu nous as connus ?"
+                        value={form.provenanceCanal}
+                        options={PROVENANCE_CANAUX.map((c) => c.valeur)}
+                        // `ChoiceGroup` ne dé-sélectionne pas de lui-même. Ici
+                        // on le fait dans le handler, sans toucher au composant
+                        // partagé (25 autres appels) : la question est
+                        // facultative, un tap de trop doit pouvoir se retirer —
+                        // et c'est déjà le geste des chips de la fiche BBC.
+                        onChange={(v) =>
+                          update("provenanceCanal", v === form.provenanceCanal ? "" : (v as ProvenanceCanal))
+                        }
+                        formatOption={(option) =>
+                          PROVENANCE_CANAUX.find((c) => c.valeur === option)?.label ?? option
+                        }
+                      />
+                      <AssessmentFieldV2
+                        label="Qui ? (facultatif)"
+                        icon="✍️"
+                        value={form.provenanceQui}
+                        onChange={(v) => update("provenanceQui", v)}
+                        placeholder="Un prénom suffit"
+                        helper="Une information, pas un cœur : personne n'est crédité ici. Un cœur ne compte que si la personne démarre."
                       />
                     </div>
                     <div className="col-span-2 md:col-span-1">

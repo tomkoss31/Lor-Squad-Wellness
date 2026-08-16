@@ -437,7 +437,112 @@ export interface AssessmentQuestionnaire {
    * déjà »). Distinct de `snacksFastFoodPerWeek`, qui compte des occasions.
    */
   dailyFoodSpendEur?: number | null;
+  /**
+   * Chantier « Comment tu nous as connus ? » (2026-08-16, demande Mélanie).
+   *
+   * Le tunnel `/reserver` pose la question à la personne qui réserve. Restait
+   * le cas dont Mélanie parle : le prospect venu d'une pub, à qui on demandera
+   * « au bilan ». Il n'existait aucune case pour l'écrire — ni dans le bilan
+   * classique, ni dans la fiche d'évaluation BBC : la question se posait à
+   * l'oral et se perdait.
+   *
+   * Deux clés OPTIONNELLES suffisent (le questionnaire est en `jsonb`) : aucune
+   * migration, et les bilans déjà écrits restent valides — les clés y sont
+   * simplement absentes. Cf. `lowEnergyMoment` / `dailyFoodSpendEur`.
+   *
+   * ⚠️ C'est une INFORMATION, pas un cœur. Rien n'est écrit dans
+   * `client_referrals` à partir d'ici : un cœur ne compte que si la personne
+   * DÉMARRE, et c'est le coach qui le pose, plus tard, comme aujourd'hui.
+   */
+  provenanceCanal?: ProvenanceCanal;
+  /**
+   * Le prénom cité, tel qu'il a été ÉCRIT — jamais un identifiant.
+   *
+   * ⚠️ À ne pas confondre avec `referredByName` (« Invité par / recommandé
+   * par »), qui existe depuis toujours, nomme le parrain du dossier et sert la
+   * recherche du portefeuille. Les deux peuvent porter le même prénom sans que
+   * ce soit une erreur : l'un dit qui a AMENÉ la personne, l'autre qui lui en a
+   * PARLÉ. Facultatif, y compris quand un canal est choisi.
+   *
+   * ⚠️ Ni `reseaux` ni `passage` ne désignent quelqu'un — un prénom posé avec
+   * l'un de ces deux canaux est une saisie du coach, pas une contradiction.
+   */
+  provenanceQui?: string;
 }
+
+/**
+ * Chantier « Comment tu nous as connus ? » (2026-08-16, demande Mélanie).
+ *
+ * MÊME VOCABULAIRE que la RPC `noter_provenance_lead` et que la colonne
+ * `prospect_leads.provenance_canal` (migration `20261215090000_provenance_lead`),
+ * pour qu'on puisse un jour COMPTER ENSEMBLE la réponse donnée au tunnel
+ * `/reserver` et celle donnée en rendez-vous. Si l'un des deux vocabulaires
+ * bouge sans l'autre, les deux comptages divergent en silence.
+ *
+ * ⚠️ UNE SEULE valeur en plus ici : `passage` — « en passant », le cas propre
+ * au présentiel (on ne passe pas devant un site web). La RPC la REFUSE
+ * (`canal_invalide`, cf. la garde du vocabulaire fermé). Donc : ne jamais
+ * envoyer `passage` à `noter_provenance_lead`, et la traiter comme « bilan
+ * seulement » dans tout recoupement.
+ *
+ * ⚠️ CE FICHIER EST LA SOURCE UNIQUE du vocabulaire. Les trois écrans qui
+ * posent la question (tunnel `/reserver`, fiche BBC, bilan classique) et le
+ * CRM qui la relit dérivent TOUS de ce type — aucun ne réécrit la liste des
+ * valeurs à la main. Les LIBELLÉS, eux, restent propres à chaque écran (le
+ * tunnel demande « Un flyer dans ma boîte aux lettres », le CRM affiche
+ * « 📬 Flyer ») : c'est la phrase qui change, jamais la valeur stockée.
+ */
+export type ProvenanceCanal = "flyer" | "parle" | "reseaux" | "passage" | "autre";
+
+/**
+ * Ce que la RPC `noter_provenance_lead` accepte : tout, sauf `passage`.
+ *
+ * Un type à part plutôt qu'un commentaire, pour que le compilateur refuse
+ * lui-même d'envoyer `passage` au tunnel. C'est le seul garde-fou qui survive
+ * à une relecture distraite.
+ */
+export type ProvenanceCanalTunnel = Exclude<ProvenanceCanal, "passage">;
+
+/**
+ * Les quatre valeurs du tunnel, dans l'ordre de la maquette validée
+ * (club-provenance.html / club-qui-ten-a-parle.html, écran 1).
+ *
+ * Doit rester rigoureusement identique au vocabulaire fermé de la RPC — un
+ * test lit le SQL de la migration et compare (`provenance.test.ts`).
+ */
+export const PROVENANCE_CANAUX_TUNNEL: readonly ProvenanceCanalTunnel[] = [
+  "flyer",
+  "parle",
+  "reseaux",
+  "autre",
+];
+
+/**
+ * Seuls le flyer et le bouche-à-oreille ont QUELQU'UN derrière.
+ *
+ * Règle partagée par le tunnel (faut-il demander « qui ? »), par le CRM
+ * (« 📬 Flyer de Mandy » ou juste « 📱 Réseaux ») et par la RPC, qui efface le
+ * prénom pour les deux autres canaux. Elle était recopiée aux trois endroits :
+ * « Réseaux de Mandy » laisserait croire que Mandy tient le compte Instagram.
+ */
+export function provenanceDesigneQuelquun(
+  canal: ProvenanceCanal | null | undefined,
+): boolean {
+  return canal === "flyer" || canal === "parle";
+}
+
+/**
+ * Les cinq réponses, dans l'ordre et avec les libellés de la maquette validée
+ * (scratchpad/club-qui-ten-a-parle.html, écran 3). Liste UNIQUE, partagée par
+ * les deux bilans : deux listes recopiées finiraient par diverger.
+ */
+export const PROVENANCE_CANAUX: Array<{ valeur: ProvenanceCanal; label: string }> = [
+  { valeur: "flyer", label: "📬 Flyer" },
+  { valeur: "parle", label: "💬 Quelqu'un" },
+  { valeur: "reseaux", label: "📱 Réseaux" },
+  { valeur: "passage", label: "🚶 En passant" },
+  { valeur: "autre", label: "✨ Autrement" },
+];
 
 /**
  * Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).

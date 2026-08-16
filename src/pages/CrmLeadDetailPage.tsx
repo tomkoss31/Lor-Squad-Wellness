@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, provenanceTexte, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
+import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, prenomProvenance, provenanceTexte, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -386,11 +386,17 @@ export function CrmLeadDetailPage() {
     },
     maintenant,
   );
-  // Le prénom de la personne qui a rapporté ce lead. On le résout ici, dans la
-  // liste des membres déjà chargée : la colonne ne porte qu'un identifiant.
+  // Le prénom cité par la personne. Deux saisies possibles, une seule chose à
+  // l'écran : les lignes du 16/08 portent un identifiant de compte (résolu ici
+  // dans la liste des membres déjà chargée), celles d'après portent le prénom
+  // tel qu'il a été tapé dans le tunnel. Aucune marque ne les distingue — cf.
+  // `prenomProvenance` pour le pourquoi.
   const provenanceLibelle = provenanceTexte(
     lead.provenanceCanal,
-    lead.provenancePar ? (users ?? []).find((u) => u.id === lead.provenancePar)?.name?.split(/\s+/)[0] ?? null : null,
+    prenomProvenance(
+      lead.provenancePar ? (users ?? []).find((u) => u.id === lead.provenancePar)?.name?.split(/\s+/)[0] ?? null : null,
+      lead.provenanceLibre,
+    ),
   );
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
@@ -424,12 +430,13 @@ export function CrmLeadDetailPage() {
               ⏳ {stagnationDays(lead)}j sans mouvement
             </span>
           ) : null}
-          {/* D'où vient cette personne — sa propre réponse, donnée après avoir
-              réservé. C'est la seule façon de savoir qui a distribué le flyer :
-              le QR imprimé est le même pour toute l'équipe. */}
+          {/* D'où vient cette personne — sa propre réponse, donnée au moment de
+              réserver son créneau. C'est la seule façon de savoir qui a
+              distribué le flyer : le QR imprimé est le même pour toute
+              l'équipe. */}
           {provenanceLibelle ? (
             <span
-              title="Réponse donnée après la réservation — mention, pas attribution"
+              title="Réponse donnée par la personne au moment de réserver son créneau — mention, pas attribution"
               style={sourceBadge("var(--ls-lime)")}
             >
               {provenanceLibelle}

@@ -70,6 +70,7 @@ import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { setClientEbeBbc } from "./clientEbeBbc";
 import { buildEmptyQuestionnaire } from "../../lib/leadConversion";
+import { PROVENANCE_CANAUX } from "../../types/domain";
 import type {
   AssessmentQuestionnaire,
   AssessmentRecord,
@@ -77,6 +78,7 @@ import type {
   BodyScanMetrics,
   Club,
   Objective,
+  ProvenanceCanal,
   RecommendationLead,
 } from "../../types/domain";
 
@@ -179,6 +181,13 @@ interface Brouillon {
   age: number;
   taille: number;
   sexe: BiologicalSex;
+  /**
+   * « Comment tu nous as connus ? » — `""` tant qu'on n'a pas répondu (la
+   * question est facultative, elle ne bloque jamais la validation).
+   */
+  provenanceCanal: ProvenanceCanal | "";
+  /** Le prénom cité, facultatif. Une chaîne écrite, jamais un identifiant. */
+  provenanceQui: string;
   objectifs: string[];
   coeurs: Coeur[];
   lever: string;
@@ -244,6 +253,8 @@ function brouillonVide(): Brouillon {
     age: 40,
     taille: 168,
     sexe: "female",
+    provenanceCanal: "",
+    provenanceQui: "",
     objectifs: [],
     coeurs: [
       { nom: "", contact: "" },
@@ -529,6 +540,12 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
       dinnerTiming: f.tropLeSoir ? `Trop manger le soir : ${f.tropLeSoir.toLowerCase()}` : "",
       alcohol: f.alcool,
       dailyFoodSpendEur: f.budget,
+      // « Comment tu nous as connus ? » — même vocabulaire que
+      // `prospect_leads.provenance_canal`, pour que les deux parcours se
+      // comptent ensemble. `undefined` quand la question est restée sans
+      // réponse : la clé est alors simplement absente du jsonb.
+      provenanceCanal: f.provenanceCanal || undefined,
+      provenanceQui: f.provenanceQui.trim() || undefined,
       mainBlocker: f.challenges,
       hardestPart: f.challengeLibre.trim(),
       objectiveFocus: f.objectifs,
@@ -965,6 +982,38 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
                     valeurs={[f.sexe]}
                     onToggle={(v) => maj({ sexe: v as BiologicalSex })}
                   />
+                </Champ>
+                {/* « Comment tu nous as connus ? » (2026-08-16, demande Mélanie).
+                    Ici et pas dans le bloc 4 : les 14 questions y sont numérotées
+                    à la main, dans l'ordre du PAPIER — une question insérée là
+                    obligerait à renuméroter 14 libellés qui ne doivent pas
+                    bouger. Et ce n'est pas une question de nutrition : c'est de
+                    l'identité, comme le reste de ce bloc. Un tap, un champ
+                    facultatif : la saisie ne s'allonge pas vraiment. */}
+                <Champ label="Comment tu nous as connus ?" aide="1 tap, facultatif">
+                  <Chips
+                    mono
+                    options={PROVENANCE_CANAUX.map((c) => ({ label: c.label, valeur: c.valeur }))}
+                    valeurs={[f.provenanceCanal]}
+                    // `mono` ne rend rien exclusif à lui seul : l'exclusivité
+                    // vit ici, et le second tap dé-sélectionne (le coach s'est
+                    // trompé de puce, il la retire sans recharger l'écran).
+                    onToggle={(v) =>
+                      maj({ provenanceCanal: v === f.provenanceCanal ? "" : (v as ProvenanceCanal) })
+                    }
+                  />
+                  <div style={{ marginTop: 9 }}>
+                    <Texte
+                      value={f.provenanceQui}
+                      onChange={(v) => maj({ provenanceQui: v })}
+                      placeholder="Qui ? (facultatif)"
+                      autoComplete="off"
+                      aria-label="Qui lui en a parlé, facultatif"
+                    />
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 6, lineHeight: 1.45 }}>
+                    Une information, pas un cœur : personne n'est crédité ici. Un cœur ne compte que si la personne démarre.
+                  </div>
                 </Champ>
               </Bloc>
 

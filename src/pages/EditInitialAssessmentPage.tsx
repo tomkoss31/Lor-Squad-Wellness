@@ -164,7 +164,14 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     snacksFastFoodPerWeek: questionnaire.snacksFastFoodPerWeek,
     preferredFlavor: questionnaire.preferredFlavor,
     consumesMilk: questionnaire.consumesMilk,
-    programChoice: questionnaire.programChoice
+    programChoice: questionnaire.programChoice,
+    // « Comment tu nous as connus ? » (2026-08-16). Même raison que ci-dessus :
+    // la question est posée à l'étape « Qui est cette personne » du bilan, elle
+    // n'a pas d'UI ici. Sans ces deux lignes, ouvrir « Modifier le bilan »
+    // effacerait la réponse — et personne ne le verrait, puisqu'il n'y a aucun
+    // écran qui l'affiche encore.
+    provenanceCanal: questionnaire.provenanceCanal,
+    provenanceQui: questionnaire.provenanceQui
   };
 }
 
