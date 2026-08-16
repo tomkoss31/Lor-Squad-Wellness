@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Fiche lead CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Tokens RÉELS du thème clair (src/styles/globals.css, html.theme-light). */
+:root{
+  --bg:#FAF7F0; --surface:#FFFFFF; --surface2:#F5F1EB;
+  --border:rgba(30,51,48,.07); --border2:rgba(30,51,48,.13);
+  --text:#17201C; --muted:#55605A; --hint:#68716C;
+  --teal:#0F766E; --lime:#5E7A09; --coral:#BC432C; --amber:#9A631A; --purple:#6D28D9;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px 70px}
+
+.avert{background:rgba(154,99,26,.10);border-bottom:1px solid rgba(154,99,26,.30);
+  padding:9px 14px;font-size:12px;color:#7a4d13;text-align:center;line-height:1.45}
+.avert b{color:#7a4d13}
+
+.onglets{display:flex;gap:6px;padding:14px 0 6px;flex-wrap:wrap}
+.onglets button{flex:1 1 190px;min-height:44px;border-radius:11px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.onglets button[aria-current="true"]{background:rgba(15,118,110,.10);border-color:rgba(15,118,110,.45);color:var(--teal)}
+.ecran{display:none} .ecran.on{display:block}
+
+/* ── Entête fiche ─────────────────────────────────────────────────────── */
+.retour{display:inline-block;margin:14px 0 10px;font-size:13px;color:var(--teal);text-decoration:none}
+h1{font-family:Anton;font-weight:400;text-transform:uppercase;letter-spacing:.01em;
+   font-size:clamp(28px,4vw,38px);line-height:1.03;margin:0 0 4px}
+.sousTitre{margin:0 0 4px;font-size:14px;color:var(--muted)}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 0}
+.chip{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--border2);color:var(--muted);background:var(--surface)}
+.chip.src{color:var(--teal);border-color:rgba(15,118,110,.35);background:rgba(15,118,110,.07)}
+.chip.chaud{color:var(--coral);border-color:rgba(188,67,44,.35);background:rgba(188,67,44,.06)}
+
+/* ── L'ÉTAT : un seul bloc, un seul jeu de boutons ───────────────────── */
+.etat{margin-top:16px;border-radius:16px;padding:16px 17px;border:1px solid var(--border2);background:var(--surface)}
+.etat.rdv{border-color:rgba(15,118,110,.35);background:rgba(15,118,110,.05)}
+.etat.sansRdv{border-color:rgba(188,67,44,.32);background:rgba(188,67,44,.04)}
+.etat .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.etat .grand{font-family:Anton;font-weight:400;font-size:22px;text-transform:uppercase;margin:5px 0 3px;line-height:1.15}
+.etat .exp{margin:0 0 13px;font-size:13px;line-height:1.55;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:10px 15px;border-radius:11px;
+  font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);text-decoration:none}
+.btn.p{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.d{color:var(--coral);border-color:rgba(188,67,44,.35)}
+
+/* ── Grille 2 colonnes ────────────────────────────────────────────────── */
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media (max-width:820px){.grille{grid-template-columns:1fr}}
+.carte{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 16px}
+.carte h2{font-family:Anton;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em;margin:0 0 3px}
+.carte .h2s{margin:0 0 13px;font-size:12.5px;color:var(--hint);line-height:1.5}
+
+/* ── Le tuto : les étapes ─────────────────────────────────────────────── */
+.etape{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+.etape:first-of-type{border-top:none;padding-top:2px}
+.num{width:25px;height:25px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+  background:var(--surface2);color:var(--muted);border:1px solid var(--border2)}
+.etape.faite .num{background:rgba(15,118,110,.12);color:var(--teal);border-color:rgba(15,118,110,.35)}
+.etape.now .num{background:var(--teal);color:#fff;border-color:var(--teal)}
+.etape .t{display:block;font-size:13.5px;font-weight:700;line-height:1.35}
+.etape.faite .t{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.etape .s{display:block;font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:3px}
+.maintenant{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);
+  border:1px solid rgba(15,118,110,.4);border-radius:6px;padding:1px 6px;margin-left:7px;white-space:nowrap}
+
+/* ── Noaly ────────────────────────────────────────────────────────────── */
+.noaly{background:linear-gradient(135deg,rgba(109,40,217,.08),var(--surface));
+  border:1px solid rgba(109,40,217,.28);border-radius:16px;padding:15px 16px}
+.noaly h2{color:var(--purple)}
+.btnNoaly{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:11px;
+  border:1px solid rgba(109,40,217,.35);background:rgba(109,40,217,.08);color:var(--purple);
+  font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+
+/* ── Et alors ─────────────────────────────────────────────────────────── */
+.reponse{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;
+  border:1px solid var(--border2);background:var(--surface2);margin-bottom:7px;cursor:pointer}
+.pastille{width:9px;height:9px;border-radius:50%;flex:none}
+.reponse .t{display:block;font-size:13.5px;font-weight:700}
+.reponse .s{display:block;font-size:11px;color:var(--hint);font-family:'JetBrains Mono',monospace;margin-top:2px}
+
+.note{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.55}
+.note b{color:var(--text)}
+.avant{border-left:3px solid var(--coral);padding:11px 13px;background:rgba(188,67,44,.05);
+  border-radius:0 10px 10px 0;font-size:12.5px;line-height:1.6;margin:12px 0}
+.avant b{color:var(--coral)}
+
+/* ── Écran 3 : la liste allégée ───────────────────────────────────────── */
+.barre{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.pill{min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer}
+.pill[aria-current="true"]{background:rgba(15,118,110,.06);border-color:rgba(15,118,110,.45);color:var(--teal)}
+.rech{flex:1;min-width:180px;min-height:44px;padding:8px 14px;border-radius:999px;
+  border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-size:12.5px}
+.grpTitre{display:flex;align-items:center;gap:7px;padding:9px 14px;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;font-weight:700;background:var(--surface2);border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border)}
+.ligne{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+.ligne:last-child{border-bottom:none}
+.ligne .nom{display:block;font-size:14px;font-weight:700}
+.ligne .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;flex:none}
+.tag.rdv{color:var(--teal);border:1px solid rgba(15,118,110,.38)}
+.tag.app{color:var(--coral);border:1px solid rgba(188,67,44,.38)}
+.tag.att{color:var(--muted);border:1px solid var(--border2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+</style>
+</head>
+<body>
+
+<div class="avert"><b>MAQUETTE</b> — rien n'est branché. Claire et Leslie sont de VRAIS leads de ton CRM ; le reste est illustratif.</div>
+
+<div class="wrap">
+  <div class="onglets" role="tablist">
+    <button data-go="a" aria-current="true">1 · Claire — elle a déjà réservé</button>
+    <button data-go="b">2 · Leslie — pas de créneau</button>
+    <button data-go="c">3 · La liste, allégée</button>
+  </div>
+
+  <!-- ══════════ 1 · CLAIRE ══════════ -->
+  <section class="ecran on" id="a">
+    <a class="retour" href="#">← Retour au CRM</a>
+    <h1>Claire Dehaese</h1>
+    <p class="sousTitre">Étain · reçue le 16 août à 12:17 · 06 25 01 49 46</p>
+    <div class="chips">
+      <span class="chip src">🏠 Réserver au club</span>
+      <span class="chip chaud">🔥 Chaud</span>
+      <span class="chip">Perdre du poids</span>
+      <span class="chip">Club de Verdun</span>
+    </div>
+
+    <!-- L'ÉTAT — un seul bloc, et il dit ce qui est vrai -->
+    <div class="etat rdv">
+      <div class="k">Son rendez-vous</div>
+      <div class="grand">Vendredi 21 août, 09:00</div>
+      <p class="exp">Elle a choisi ce créneau elle-même sur le site du club.
+        <b>Il est déjà dans ton agenda</b> — tu n'as rien à caler.</p>
+      <div class="actions">
+        <a class="btn" href="#">📅 Voir dans Google Agenda</a>
+        <button class="btn">🕘 Déplacer</button>
+        <button class="btn d">Annuler</button>
+      </div>
+    </div>
+
+    <div class="grille">
+      <!-- GAUCHE : le tuto -->
+      <div class="carte">
+        <h2>Quoi faire, dans l'ordre</h2>
+        <p class="h2s">Trois gestes. Le reste se cale tout seul.</p>
+
+        <div class="etape faite">
+          <span class="num">✓</span>
+          <span><span class="t">Elle a pris rendez-vous</span>
+            <span class="s">Toute seule, sur le site du club. Rien à faire de ton côté.</span></span>
+        </div>
+
+        <div class="etape now">
+          <span class="num">1</span>
+          <span><span class="t">Appelle-la avant vendredi <span class="maintenant">à faire</span></span>
+            <span class="s">Un appel court : tu confirmes, tu mets un visage sur le nom.
+              C'est ce qui divise par deux les gens qui ne viennent pas.</span></span>
+        </div>
+
+        <div class="etape">
+          <span class="num">2</span>
+          <span><span class="t">Dis ce qui s'est passé</span>
+            <span class="s">Le bouton « Et alors ? » à droite. Tu tapes une réponse,
+              et la date de rappel se pose toute seule — tu n'écris aucune date.</span></span>
+        </div>
+
+        <div class="etape">
+          <span class="num">3</span>
+          <span><span class="t">Le jour du RDV : son bilan</span>
+            <span class="s">Tu fais le body scan, puis « Convertir en client ».
+              Elle quitte le CRM et rejoint tes dossiers clients.</span></span>
+        </div>
+      </div>
+
+      <!-- DROITE : Noaly en haut, puis Et alors -->
+      <div>
+        <div class="noaly" style="margin-bottom:14px">
+          <h2>✨ Noaly</h2>
+          <p class="h2s">Elle n'a rempli aucun questionnaire — Noaly lit ce qu'on sait
+            d'elle et te propose quoi dire au téléphone.</p>
+          <button class="btnNoaly">✨ Préparer mon appel</button>
+        </div>
+
+        <div class="carte">
+          <h2>Et alors ?</h2>
+          <p class="h2s">Après ton appel, dis ce qui s'est passé.
+            Un tap, et sa date de retour est calée — <b>tu ne saisis jamais de date</b>.</p>
+          <div class="reponse"><span class="pastille" style="background:var(--coral)"></span>
+            <span><span class="t">Pas de réponse</span><span class="s">revient demain</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--amber)"></span>
+            <span><span class="t">Il/elle rappellera</span><span class="s">filet de sécurité dans 3 jours</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--amber)"></span>
+            <span><span class="t">Répondu, ne sait pas</span><span class="s">on revoit dans 7 jours</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--purple)"></span>
+            <span><span class="t">Pas maintenant</span><span class="s">on revoit dans 1 mois</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--hint)"></span>
+            <span><span class="t">Plus intéressé·e</span><span class="s">sort de la file</span></span></div>
+          <p class="note">« RDV calé » <b>a disparu d'ici</b> : elle en a déjà un.
+            Il ne réapparaît que sur les fiches sans créneau.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="avant"><b>Avant :</b> la fiche proposait « Caler un RDV » alors qu'elle avait
+      déjà réservé — un clic et tu te retrouvais avec <b>deux rendez-vous</b> dans l'agenda.</div>
+  </section>
+
+  <!-- ══════════ 2 · LESLIE ══════════ -->
+  <section class="ecran" id="b">
+    <a class="retour" href="#">← Retour au CRM</a>
+    <h1>Leslie Becker</h1>
+    <p class="sousTitre">Verdun · reçue le 15 août · 07 81 82 94 05</p>
+    <div class="chips">
+      <span class="chip src">🏠 Réserver au club</span>
+      <span class="chip chaud">🔥 Chaud</span>
+      <span class="chip">Retrouver de l'énergie</span>
+    </div>
+
+    <div class="etat sansRdv">
+      <div class="k">Où elle en est</div>
+      <div class="grand">Elle est partie sans choisir de créneau</div>
+      <p class="exp">Elle a laissé son numéro sur le site puis a quitté la page avant le calendrier.
+        <b>C'est le signal le plus fort du CRM</b> : elle voulait venir.</p>
+      <div class="actions">
+        <a class="btn p" href="#">📞 L'appeler maintenant</a>
+        <button class="btn">📅 Poser le rendez-vous</button>
+        <a class="btn" href="#">📱 WhatsApp</a>
+      </div>
+    </div>
+
+    <div class="grille">
+      <div class="carte">
+        <h2>Quoi faire, dans l'ordre</h2>
+        <p class="h2s">Elle est arrivée il y a 1 jour. C'est maintenant que ça se joue.</p>
+
+        <div class="etape now">
+          <span class="num">1</span>
+          <span><span class="t">Appelle-la <span class="maintenant">à faire</span></span>
+            <span class="s">Dans les 24 h. Passé 3 jours, une personne sur deux ne répond plus.</span></span>
+        </div>
+        <div class="etape">
+          <span class="num">2</span>
+          <span><span class="t">Pose le rendez-vous pendant l'appel</span>
+            <span class="s">« Poser le rendez-vous » ouvre ton agenda : tu choisis le créneau
+              avec elle, au téléphone. C'est ce bouton-là qui CRÉE un rendez-vous.</span></span>
+        </div>
+        <div class="etape">
+          <span class="num">3</span>
+          <span><span class="t">Dis ce qui s'est passé</span>
+            <span class="s">Même si elle n'a pas répondu — surtout si elle n'a pas répondu.
+              Sans ça, elle disparaît de ta liste.</span></span>
+        </div>
+      </div>
+
+      <div>
+        <div class="noaly" style="margin-bottom:14px">
+          <h2>✨ Noaly</h2>
+          <p class="h2s">Ce qu'on sait d'elle tient en trois lignes. Noaly te prépare l'accroche.</p>
+          <button class="btnNoaly">✨ Préparer mon appel</button>
+        </div>
+        <div class="carte">
+          <h2>Et alors ?</h2>
+          <p class="h2s">Après ton appel. Un tap, la suite est calée.</p>
+          <div class="reponse"><span class="pastille" style="background:var(--coral)"></span>
+            <span><span class="t">Pas de réponse</span><span class="s">revient demain</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--amber)"></span>
+            <span><span class="t">Il/elle rappellera</span><span class="s">filet de sécurité dans 3 jours</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--amber)"></span>
+            <span><span class="t">Répondu, ne sait pas</span><span class="s">on revoit dans 7 jours</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--purple)"></span>
+            <span><span class="t">Pas maintenant</span><span class="s">on revoit dans 1 mois</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--lime)"></span>
+            <span><span class="t">RDV calé</span><span class="s">passe dans l'agenda</span></span></div>
+          <div class="reponse"><span class="pastille" style="background:var(--hint)"></span>
+            <span><span class="t">Plus intéressé·e</span><span class="s">sort de la file</span></span></div>
+          <p class="note">Ici « RDV calé » <b>est présent</b> : c'est le seul écran où il a un sens,
+            puisqu'elle n'en a pas encore.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 3 · LA LISTE ══════════ -->
+  <section class="ecran" id="c">
+    <h1 style="margin-top:14px">Tes contacts</h1>
+    <p class="sousTitre">5 personnes t'attendent aujourd'hui.</p>
+
+    <div class="barre">
+      <button class="pill" aria-current="true">👤 Moi</button>
+      <button class="pill">Mon équipe</button>
+      <input class="rech" placeholder="🔍 Un nom, un numéro…">
+      <button class="pill">⋯ Plus de filtres</button>
+    </div>
+
+    <div class="card">
+      <div class="grpTitre"><span class="pastille" style="background:var(--coral)"></span> Aujourd'hui · 5</div>
+
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Claire Dehaese</span>
+          <span class="sub">🏠 Site du club · a réservé vendredi 21 août, 09:00</span></span>
+        <span class="tag rdv">RDV vendredi</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Leslie Becker</span>
+          <span class="sub">🏠 Site du club · partie sans choisir de créneau</span></span>
+        <span class="tag app">à appeler</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Djamal Kader</span>
+          <span class="sub">🌱 Bilan en ligne · contacté, sans suite prévue</span></span>
+        <span class="tag app">à appeler</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Florian Petit</span>
+          <span class="sub">🌱 Bilan en ligne · contacté, sans suite prévue</span></span>
+        <span class="tag app">à appeler</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Mylène Roux</span>
+          <span class="sub">🎁 Colis · devait rappeler — sans nouvelles depuis 3 jours</span></span>
+        <span class="tag app">à relancer</span>
+      </div>
+    </div>
+
+    <div class="grpTitre" style="border-radius:0"><span class="pastille" style="background:var(--hint)"></span> Cette semaine · 3</div>
+    <div class="card">
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Sofiane Merah</span>
+          <span class="sub">🌱 Bilan en ligne · pas le bon moment — on revoit lundi</span></span>
+        <span class="tag att">lundi</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Nadia Lambert</span>
+          <span class="sub">🏠 Site du club · hésite encore — on revoit mercredi</span></span>
+        <span class="tag att">mercredi</span>
+      </div>
+      <div class="ligne">
+        <span style="flex:1;min-width:0"><span class="nom">Kevin Marchal</span>
+          <span class="sub">🎁 Colis · devait rappeler — filet de sécurité jeudi</span></span>
+        <span class="tag att">jeudi</span>
+      </div>
+    </div>
+
+    <p class="note">Mylène ressort d'elle-même : elle avait dit qu'elle rappellerait, le délai est
+      passé. <b>Personne ne saisit de date</b> — les groupes « Cette semaine » et « Plus tard »
+      se remplissent seuls à partir de la dernière réponse.</p>
+
+    <div class="avant"><b>Avant :</b> <b id="n-avant"></b> contrôles à traverser avant le premier
+      lead, et Claire apparaissait <b>deux fois</b> — dans le bloc « RDV découverte » en haut,
+      puis dans la liste.</div>
+
+    <p class="note">Ce qui disparaît de la vue par défaut : le bloc « RDV découverte » (doublon),
+      les 5 pastilles de compteurs, les 5 filtres de source, Ligne 1 / Ligne 2, la liste des
+      distributeurs, le bandeau « Curieux », Liste / Pipeline et le tri.
+      <b>Rien n'est supprimé</b> — tout passe derrière « ⋯ Plus de filtres ».</p>
+    <p class="note">Le nom de famille apparaît partout : il était en base pour
+      <b>les 10 leads du site club</b>, affiché nulle part.</p>
+  </section>
+</div>
+
+<script>
+/* Le chiffre est CALCULÉ depuis la liste réelle des contrôles comptés sur la
+   page en production — jamais écrit à la main. */
+const CONTROLES_AVANT = [
+  'Nouveaux','Contactés','Qualifiés/RDV','Convertis','Perdus',
+  'Moi','Ligne 1','Ligne 2','Tous','Un distributeur…',
+  'Toutes sources','Bilan online','Opportunité','Colis','Réserver au club',
+  'Recherche','Stats','Curieux',
+  'Actifs','Historique','Endormis','Liste','Pipeline','Tri par échéance',
+];
+document.getElementById('n-avant').textContent = CONTROLES_AVANT.length;
+
+document.querySelectorAll('.onglets button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.onglets button').forEach(x => x.setAttribute('aria-current', String(x === b)));
+  document.querySelectorAll('.ecran').forEach(s => s.classList.toggle('on', s.id === b.dataset.go));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+</script>
+</body>
+</html>

@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
 import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
+import { nomPropre } from "../features/crm/nomPropre";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
 export type CrmTable =
@@ -46,6 +47,24 @@ export type CrmSource =
   /** Filet : une source qu'on ne connaît pas s'affiche telle quelle plutôt que
    *  de se déguiser en autre chose. Cf. `sourceRaw`. */
   | "inconnue";
+
+/**
+ * Le rendez-vous apparié à un lead (table `rdv_bookings`).
+ *
+ * Il est apparié par contact ou par prénom, donc c'est un LIEN PROBABLE, pas
+ * une clé étrangère : on s'en sert pour dire et pour agir sur un rendez-vous
+ * qu'on affiche, jamais pour écrire quelque chose sur le lead lui-même.
+ */
+export interface RdvLie {
+  id: string;
+  slotStart: string;
+  slotEnd: string | null;
+  clubId: string | null;
+  coachUserId: string | null;
+  /** Le créneau est derrière nous — l'écran ne doit plus proposer d'y aller. */
+  passe: boolean;
+  label: string;
+}
 
 export interface CrmLead {
   key: string;
@@ -120,8 +139,11 @@ export interface CrmLead {
   /** Un lead du tunnel club qui n'est jamais allé jusqu'au créneau. C'est le
    *  signal le plus fort du CRM : il a laissé son numéro puis il est parti. */
   abandonAvantCreneau?: boolean;
-  /** Le créneau réservé, s'il en a un. */
+  /** Le créneau réservé, s'il en a un. Libellé prêt à afficher. */
   rdvLabel?: string | null;
+  /** Le même rendez-vous, en entier : de quoi le déplacer, l'annuler, ou dire
+   *  qu'il est déjà passé. Null quand aucun créneau n'a été apparié. */
+  rdv?: RdvLie | null;
   funnelAnswers?: Record<string, string> | null;
   /** Réponses du funnel colis (question → réponse, déjà en libellés). */
   colisAnswers?: Record<string, string> | null;
@@ -436,7 +458,9 @@ export function useCrmLeads() {
           .limit(500),
         sb
           .from("rdv_bookings")
-          .select("first_name, contact, slot_start, status")
+          // id / slot_end / club_id : sans eux la fiche pouvait AFFICHER le
+          // rendez-vous mais rien en faire — ni le déplacer, ni l'annuler.
+          .select("id, first_name, contact, slot_start, slot_end, status, club_id, coach_user_id")
           .neq("status", "canceled")
           .order("slot_start", { ascending: true })
           .limit(500),
@@ -505,7 +529,7 @@ export function useCrmLeads() {
           key: `online_bilans:${row.id}`,
           table: "online_bilans",
           id: row.id as string,
-          firstName: (row.first_name as string) || "—",
+          firstName: nomPropre(row.first_name as string) || "—",
           contact,
           contactIsPhone: looksLikePhone(row.phone as string | null),
           city: (row.city as string | null) ?? null,
@@ -543,17 +567,56 @@ export function useCrmLeads() {
       // ensuite (le tunnel club demande les deux, mais rien ne garantit la même
       // saisie aux deux écrans). On ne relie que pour DIRE « a réservé » — aucune
       // écriture ne dépend de cet appariement.
-      const parContact = new Map<string, string>();
-      const parPrenom = new Map<string, string>();
+      //
+      // ⚠️ On garde le rendez-vous À VENIR le plus proche, et seulement à défaut
+      // le dernier passé. L'ancienne version prenait le PREMIER de la liste,
+      // triée par date croissante et sans filtre sur le passé : quelqu'un venu
+      // en juin puis revenu en août affichait son créneau de juin, et la fiche
+      // annonçait « il est déjà dans ton agenda » pour un rendez-vous vieux de
+      // deux mois.
+      const parContact = new Map<string, RdvLie>();
+      const parPrenom = new Map<string, RdvLie>();
+      const maintenantMs = Date.now();
+      // Voit-on seulement les réservations du club ? La policy
+      // `rdv_bookings_club_admin_read` exige `is_admin()` ; un coach ordinaire
+      // ne lit QUE ses propres rendez-vous (`coach_user_id = auth.uid()`), et
+      // reçoit zéro ligne club — sans erreur, silencieusement.
+      //
+      // Sans ce compteur, l'app en tirait la mauvaise conclusion : « pas de
+      // réservation trouvée » devenait « cette personne est partie sans choisir
+      // de créneau », affirmé en gros sur la fiche. Pour 10 des 12 comptes
+      // actifs, ç'aurait été faux à chaque fois. On préfère ne rien affirmer.
+      let resasClubVues = 0;
+      const meilleur = (a: RdvLie | undefined, b: RdvLie): RdvLie => {
+        if (!a) return b;
+        // Un rendez-vous à venir bat toujours un rendez-vous passé.
+        if (a.passe !== b.passe) return a.passe ? b : a;
+        // À venir : le plus proche. Passés : le plus récent.
+        const aMs = new Date(a.slotStart).getTime();
+        const bMs = new Date(b.slotStart).getTime();
+        return a.passe ? (bMs > aMs ? b : a) : bMs < aMs ? b : a;
+      };
       for (const b of (reservationsRes.data ?? []) as Array<Record<string, unknown>>) {
-        const quand = new Intl.DateTimeFormat("fr-FR", {
-          timeZone: "Europe/Paris", weekday: "short", day: "2-digit", month: "short",
-          hour: "2-digit", minute: "2-digit",
-        }).format(new Date(String(b.slot_start)));
+        const slotStart = String(b.slot_start);
+        const t = new Date(slotStart).getTime();
+        if (Number.isNaN(t)) continue;
+        if (b.club_id != null) resasClubVues += 1;
+        const rdv: RdvLie = {
+          id: String(b.id),
+          slotStart,
+          slotEnd: b.slot_end ? String(b.slot_end) : null,
+          clubId: (b.club_id as string | null) ?? null,
+          coachUserId: (b.coach_user_id as string | null) ?? null,
+          passe: t < maintenantMs,
+          label: new Intl.DateTimeFormat("fr-FR", {
+            timeZone: "Europe/Paris", weekday: "short", day: "2-digit", month: "short",
+            hour: "2-digit", minute: "2-digit",
+          }).format(new Date(slotStart)),
+        };
         const c = String(b.contact ?? "").trim().toLowerCase();
         const p = String(b.first_name ?? "").trim().toLowerCase();
-        if (c && !parContact.has(c)) parContact.set(c, quand);
-        if (p && !parPrenom.has(p)) parPrenom.set(p, quand);
+        if (c) parContact.set(c, meilleur(parContact.get(c), rdv));
+        if (p) parPrenom.set(p, meilleur(parPrenom.get(p), rdv));
       }
 
       for (const row of prospectsRes.data ?? []) {
@@ -587,16 +650,16 @@ export function useCrmLeads() {
                 : null;
         const cleContact = String(row.email ?? row.phone ?? "").trim().toLowerCase();
         const clePrenom = String(row.first_name ?? "").trim().toLowerCase();
-        const rdvTrouve =
-          (cleContact && parContact.get(cleContact)) ||
-          (clePrenom && parPrenom.get(clePrenom)) ||
+        const rdvTrouve: RdvLie | null =
+          (cleContact ? parContact.get(cleContact) : undefined) ??
+          (clePrenom ? parPrenom.get(clePrenom) : undefined) ??
           null;
 
         all.push({
           key: `prospect_leads:${row.id}`,
           table: "prospect_leads",
           id: row.id as string,
-          firstName: (row.first_name as string) || "—",
+          firstName: nomPropre(row.first_name as string) || "—",
           contact: (row.phone as string | null) || (row.email as string | null) || null,
           contactIsPhone: looksLikePhone(row.phone as string | null),
           city: (row.city as string | null) ?? null,
@@ -617,7 +680,7 @@ export function useCrmLeads() {
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
           sourceRaw: (row.source as string | null) ?? null,
-          lastName: typeof meta.nom === "string" && meta.nom.trim() ? (meta.nom as string).trim() : null,
+          lastName: typeof meta.nom === "string" && meta.nom.trim() ? nomPropre(meta.nom as string) : null,
           objectif: typeof meta.objectif === "string" ? (meta.objectif as string) : null,
           peopleCount: typeof meta.people_count === "number" ? (meta.people_count as number) : null,
           partnerName: [meta.partner_first_name, meta.partner_last_name]
@@ -626,11 +689,13 @@ export function useCrmLeads() {
           partnerObjectif: typeof meta.partner_objectif === "string" ? (meta.partner_objectif as string) : null,
           coachSlug: (row.coach_slug as string | null) ?? null,
           consentRecontact: typeof row.consent_recontact === "boolean" ? (row.consent_recontact as boolean) : null,
-          rdvLabel: rdvTrouve,
+          rdvLabel: rdvTrouve?.label ?? null,
+          rdv: rdvTrouve,
           // Le signal du chantier : parti avant de choisir son créneau. On ne
           // le lève que pour le tunnel club — ailleurs, ne pas avoir de RDV est
-          // l'état normal.
-          abandonAvantCreneau: source === "site-club" && !rdvTrouve,
+          // l'état normal — ET seulement si on a effectivement pu lire les
+          // réservations du club (cf. `resasClubVues`). Aveugle, on se tait.
+          abandonAvantCreneau: source === "site-club" && !rdvTrouve && resasClubVues > 0,
           funnelAnswers,
           colisAnswers,
           funnelScore: typeof meta.score === "number" ? (meta.score as number) : null,
@@ -644,7 +709,7 @@ export function useCrmLeads() {
           key: `client_referrals:${row.id}`,
           table: "client_referrals",
           id: row.id as string,
-          firstName: (row.referred_name as string) || "—",
+          firstName: nomPropre(row.referred_name as string) || "—",
           contact: (row.referred_contact as string | null) ?? null,
           contactIsPhone: looksLikePhone(row.referred_contact as string | null),
           city: null,
@@ -680,7 +745,7 @@ export function useCrmLeads() {
           key: `client_referral_intentions:${row.id}`,
           table: "client_referral_intentions",
           id: row.id,
-          firstName: row.prospect_first_name || "—",
+          firstName: nomPropre(row.prospect_first_name) || "—",
           contact: null,
           contactIsPhone: false,
           city: null,

@@ -33,8 +33,13 @@ import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import { LeadConvertModal } from "../components/leads/LeadConvertModal";
 import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { MoveClubBookingDialog } from "../components/crm/MoveClubBookingDialog";
+import { EtatRdvBloc } from "../components/crm/EtatRdvBloc";
+import { EtapesLead } from "../components/crm/EtapesLead";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
 import { estQualifiable } from "../features/crm/ecrireQualification";
+import { etapesDuLead, etatRdvDe } from "../features/crm/etapes";
+import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 
 // Dupliqué à l'identique depuis CrmPage.tsx (fonction pure de 6 lignes) —
@@ -157,6 +162,8 @@ export function CrmLeadDetailPage() {
   }, [searchParams, bilanRow, setSearchParams]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
+  const [showMove, setShowMove] = useState(false);
+  const [annulationRdv, setAnnulationRdv] = useState(false);
   // Résumé Noaly (Phase 4) — déclenché par bouton, jamais au montage (coût IA).
   const [noalySummary, setNoalySummary] = useState<string | null>(null);
   const [noalySummaryLoading, setNoalySummaryLoading] = useState(false);
@@ -208,6 +215,35 @@ export function CrmLeadDetailPage() {
         ? `Revient ${quandRevient(due, new Date())} — tu n'as rien à noter.`
         : reponse.quand,
     });
+  }
+
+  // Annuler le rendez-vous. Le chemin passe par `setRdvBookingStatus`, seul
+  // endroit autorisé à toucher le statut d'une réservation (il porte l'email
+  // d'acceptation ; à l'annulation, décision Thomas du 11/08 : aucun mail
+  // automatique, on décroche son téléphone).
+  async function handleAnnulerRdv() {
+    if (!lead?.rdv || annulationRdv) return;
+    const ok = window.confirm(
+      `Annuler le rendez-vous de ${lead.firstName} (${lead.rdv.label}) ?\n\n` +
+        "Aucun message ne part automatiquement : préviens-le·la toi-même.",
+    );
+    if (!ok) return;
+    setAnnulationRdv(true);
+    try {
+      const { error: err } = await setRdvBookingStatus(lead.rdv.id, "canceled");
+      if (err) {
+        pushToast({ tone: "error", title: "Annulation", message: "Le rendez-vous n'a pas pu être annulé." });
+        return;
+      }
+      await refetch();
+      pushToast({
+        tone: "success",
+        title: "Rendez-vous annulé",
+        message: `Le créneau est libéré. Préviens ${lead.firstName} — rien n'est parti automatiquement.`,
+      });
+    } finally {
+      setAnnulationRdv(false);
+    }
   }
 
   async function handleNotesBlur() {
@@ -332,6 +368,24 @@ export function CrmLeadDetailPage() {
 
   const src = CRM_SOURCE_META[lead.source];
   const statusMeta = CRM_STATUS_META[lead.status];
+  // L'instant de rendu suffit : la fiche est relue à chaque navigation, et un
+  // rendez-vous ne bascule de « à venir » à « passé » qu'une fois dans sa vie.
+  const maintenant = new Date();
+  const etatRdv = etatRdvDe(lead.rdv, maintenant);
+  const etapes = etapesDuLead(
+    {
+      prenom: lead.firstName,
+      status: lead.status,
+      contactedAt: lead.contactedAt,
+      derniereReponse: lead.derniereReponse,
+      relanceDueAt: lead.relanceDueAt,
+      rdv: etatRdv,
+      abandonAvantCreneau: Boolean(lead.abandonAvantCreneau),
+      peutConvertir: lead.table === "online_bilans",
+      dormant: Boolean(lead.dormant),
+    },
+    maintenant,
+  );
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
   const { score, temperature, raison } = computeLeadScore(lead);
@@ -346,7 +400,12 @@ export function CrmLeadDetailPage() {
 
       <header style={headerBlock}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <h1 style={nameStyle}>{lead.firstName}</h1>
+          {/* Nom de famille compris : il était en base pour les leads du tunnel
+              club et n'apparaissait NULLE PART à l'écran (demande Thomas 16/08). */}
+          <h1 style={nameStyle}>
+            {lead.firstName}
+            {lead.lastName ? ` ${lead.lastName}` : ""}
+          </h1>
           <span style={sourceBadge(statusMeta.color)}>{src.emoji} {src.label}</span>
           {/* Le nombre sur 10 ne disait pas quoi faire : « Froid · 3/10 » sur
               quelqu'un qui vient de laisser son numéro. On affiche la RAISON ;
@@ -408,25 +467,16 @@ export function CrmLeadDetailPage() {
         {/* Ce qu'on sait de lui — tout était déjà en base, et déjà dans le mail
             de réservation, mais nulle part à l'écran (audit 2026-08-11). Le
             bloc ne s'affiche que s'il a quelque chose à dire. */}
-        {(lead.abandonAvantCreneau || lead.rdvLabel || lead.lastName || lead.objectif
-          || lead.peopleCount === 2) ? (
+        {/* Le créneau et l'abandon ont quitté ce bloc : ils sont devenus L'ÉTAT
+            de la fiche, juste en dessous. Les laisser ici en plus, c'était le
+            même rendez-vous écrit à deux endroits de la même page. */}
+        {(lead.objectif || lead.peopleCount === 2 || lead.coachSlug) ? (
           <div style={{
             marginTop: 12, padding: "12px 14px", borderRadius: 12,
             background: "var(--ls-surface2)",
-            border: `1px solid ${lead.abandonAvantCreneau ? "var(--ls-coral)" : "var(--ls-border)"}`,
+            border: "1px solid var(--ls-border)",
             fontSize: 13, lineHeight: 1.6, color: "var(--ls-text-muted)",
           }}>
-            {lead.abandonAvantCreneau ? (
-              <div style={{ color: "var(--ls-coral)", fontWeight: 700, marginBottom: 8 }}>
-                ⛔ A laissé ses coordonnées, puis n'a jamais choisi de créneau.
-              </div>
-            ) : null}
-            {lead.rdvLabel ? (
-              <div style={{ color: "var(--ls-teal)", fontWeight: 700, marginBottom: 8 }}>
-                🗓 Créneau réservé : {lead.rdvLabel}
-              </div>
-            ) : null}
-            {lead.lastName ? <div><strong style={{ color: "var(--ls-text)" }}>Nom</strong> · {lead.lastName}</div> : null}
             {lead.objectif ? <div><strong style={{ color: "var(--ls-text)" }}>Objectif</strong> · {objectifLabel(lead.objectif)}</div> : null}
             {lead.peopleCount === 2 ? (
               <div>
@@ -460,12 +510,29 @@ export function CrmLeadDetailPage() {
         )}
       </header>
 
+      {/* L'ÉTAT, une seule fois, avec un seul jeu de boutons. Cf. EtatRdvBloc :
+          c'est ce bloc qui a remplacé les trois représentations concurrentes du
+          même rendez-vous. */}
+      <EtatRdvBloc
+        lead={lead}
+        etat={etatRdv}
+        telHref={lead.contactIsPhone && lead.contact ? `tel:${lead.contact.replace(/\s/g, "")}` : null}
+        whatsAppHref={lead.contactIsPhone && lead.contact ? buildCrmWhatsAppLink(lead.contact, message) : null}
+        onPoserRdv={() => (lead.table === "online_bilans" && bilanRow ? setShowSchedule(true) : setShowAgenda(true))}
+        onDeplacer={() => setShowMove(true)}
+        onAnnuler={() => void handleAnnulerRdv()}
+        annulationEnCours={annulationRdv}
+        peutModifierLeRdv={isAdmin}
+      />
+
       <div style={{ margin: "20px 0 24px" }}>
         <LeadQualificationStepper status={lead.status} />
       </div>
 
       <div className="cld-grid">
-        {/* ── Colonne Analyse ─────────────────────────────────────────── */}
+        {/* ── Colonne gauche : ce qu'il faut faire, puis ce qu'on sait ──── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <EtapesLead etapes={etapes} />
         <div style={colStyle}>
           <h2 style={colTitle}>Analyse</h2>
 
@@ -520,29 +587,40 @@ export function CrmLeadDetailPage() {
               </p>
             </div>
           )}
-          <div style={{ marginTop: 16 }}>
-            <button
-              type="button"
-              disabled={noalySummaryLoading}
-              onClick={() => {
-                if (noalySummary) { setNoalySummary(null); return; }
-                if (!window.confirm("✨ Noaly va analyser ce lead. Ça consomme des crédits — générer ?")) return;
-                void generateNoalySummary();
-              }}
-              style={secondaryBtn}
-            >
-              ✨ {noalySummaryLoading ? "Noaly analyse…" : noalySummary ? "Masquer l'analyse" : "Analyser avec Noaly"}
-            </button>
-            {noalySummary ? (
-              <div style={{ marginTop: 10, background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))", border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))", borderRadius: 10, padding: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>✨ Analyse de Noaly</div>
-                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--ls-text)", whiteSpace: "pre-wrap" }}>{noalySummary}</p>
-              </div>
-            ) : null}
-          </div>
+        </div>
         </div>
 
-        {/* ── Colonne Actions ─────────────────────────────────────────── */}
+        {/* ── Colonne droite : Noaly d'abord, puis les actions ──────────── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Noaly était tout en bas de la colonne de gauche, sous le détail du
+            bilan — hors de vue sur un téléphone. Remonté ici à la demande de
+            Thomas (16/08) : c'est la première chose à faire avant d'appeler. */}
+        <div style={noalyCard}>
+          <h2 style={{ ...colTitle, color: "var(--ls-purple)", margin: "0 0 3px" }}>✨ Noaly</h2>
+          <p style={{ margin: "0 0 12px", fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-text-hint)" }}>
+            {noalySummary
+              ? "Ce que Noaly retient de cette fiche."
+              : "Noaly lit tout ce qu'on sait de cette personne et te prépare quoi dire au téléphone."}
+          </p>
+          <button
+            type="button"
+            disabled={noalySummaryLoading}
+            onClick={() => {
+              if (noalySummary) { setNoalySummary(null); return; }
+              if (!window.confirm("✨ Noaly va analyser ce lead. Ça consomme des crédits — générer ?")) return;
+              void generateNoalySummary();
+            }}
+            style={noalyBtn}
+          >
+            ✨ {noalySummaryLoading ? "Noaly analyse…" : noalySummary ? "Masquer l'analyse" : "Préparer mon appel"}
+          </button>
+          {noalySummary ? (
+            <div style={{ marginTop: 10, background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))", border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))", borderRadius: 10, padding: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--ls-text)", whiteSpace: "pre-wrap" }}>{noalySummary}</p>
+            </div>
+          ) : null}
+        </div>
+
         <div style={colStyle}>
           <h2 style={colTitle}>Actions</h2>
 
@@ -637,16 +715,14 @@ export function CrmLeadDetailPage() {
                 <button type="button" onClick={() => setShowConvert(true)} disabled={!bilanRow} style={primaryBtn}>
                   ✅ Valider le bilan → créer la fiche client
                 </button>
-                <button type="button" onClick={() => setShowSchedule(true)} disabled={!bilanRow} style={secondaryBtn}>
-                  📅 Programmer un RDV
-                </button>
               </div>
             )
-          ) : !isConverted && lead.status !== "lost" ? (
-            <button type="button" onClick={() => setShowAgenda(true)} style={secondaryBtn}>
-              📅 Caler un RDV
-            </button>
           ) : null}
+          {/* « Caler un RDV » a quitté cette colonne. Il vivait ici EN PLUS du
+              rendez-vous affiché plus haut : sur la fiche de quelqu'un qui
+              venait de réserver, un clic créait un second rendez-vous. Poser un
+              créneau se fait désormais depuis le bloc d'état, et seulement
+              quand il n'y en a pas déjà un. */}
 
           <div style={actionBlock}>
             {lastTouch ? (
@@ -807,7 +883,32 @@ export function CrmLeadDetailPage() {
             ) : null}
           </div>
         </div>
+        </div>
       </div>
+
+      {/* Déplacer un rendez-vous du club : même fenêtre que le widget « RDV
+          découverte » de la liste, donc mêmes créneaux, même email, mêmes
+          garde-fous (créneau complet, créneau passé, droits). */}
+      {showMove && lead.rdv ? (
+        <MoveClubBookingDialog
+          booking={{
+            id: lead.rdv.id,
+            first_name: lead.firstName,
+            contact: lead.contact,
+            slot_start: lead.rdv.slotStart,
+            slot_end: lead.rdv.slotEnd ?? lead.rdv.slotStart,
+            status: "confirmed",
+            people_count: lead.peopleCount ?? 1,
+            partner_first_name: lead.partnerName ?? null,
+            objectif: lead.objectif ?? null,
+            confirm_email_sent_at: null,
+            reminder_email_sent_at: null,
+          }}
+          clubSlug="verdun"
+          onClose={() => setShowMove(false)}
+          onMoved={() => { void refetch(); }}
+        />
+      ) : null}
 
       {showConvert && bilanRow ? (
         <LeadConvertModal
@@ -1085,6 +1186,29 @@ function actionBtn(color: string): React.CSSProperties {
     cursor: "pointer",
   };
 }
+
+const noalyCard: React.CSSProperties = {
+  background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 8%, transparent), var(--ls-surface))",
+  border: "1px solid color-mix(in srgb, var(--ls-purple) 28%, var(--ls-border))",
+  borderRadius: 14,
+  padding: 18,
+};
+
+const noalyBtn: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  minHeight: 44,
+  padding: "10px 15px",
+  borderRadius: 11,
+  border: "1px solid color-mix(in srgb, var(--ls-purple) 35%, var(--ls-border))",
+  background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface))",
+  color: "var(--ls-purple)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13.5,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
 const cardActionBtn: React.CSSProperties = {
   padding: "8px 12px",
