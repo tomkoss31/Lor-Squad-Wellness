@@ -14,7 +14,7 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
+import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, provenanceTexte, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
 import { grouperParEcheance, pilule, pourquoi, teinteDe, type CleGroupe } from "../../features/crm/echeances";
 import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
 import { estQualifiable } from "../../features/crm/ecrireQualification";
@@ -422,6 +422,7 @@ function CrmLeadListRow({
                 const reste = [
                   // Le nom de famille est remonté à côté du prénom : le laisser
                   // aussi ici l'écrirait deux fois sur la même ligne.
+                  provenanceTexte(lead.provenanceCanal, null),
                   lead.viaName ? `via ${lead.viaName}` : lead.city,
                   lead.objectif ? objectifCourt(lead.objectif) : null,
                   lead.peopleCount === 2 ? "à deux" : null,

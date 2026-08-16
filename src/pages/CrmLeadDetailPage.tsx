@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
+import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, provenanceTexte, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -386,6 +386,12 @@ export function CrmLeadDetailPage() {
     },
     maintenant,
   );
+  // Le prénom de la personne qui a rapporté ce lead. On le résout ici, dans la
+  // liste des membres déjà chargée : la colonne ne porte qu'un identifiant.
+  const provenanceLibelle = provenanceTexte(
+    lead.provenanceCanal,
+    lead.provenancePar ? (users ?? []).find((u) => u.id === lead.provenancePar)?.name?.split(/\s+/)[0] ?? null : null,
+  );
   const isIntentionSource = lead.source === "intention";
   const isConverted = lead.status === "converted";
   const { score, temperature, raison } = computeLeadScore(lead);
@@ -416,6 +422,17 @@ export function CrmLeadDetailPage() {
           {stagnant ? (
             <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={sourceBadge("var(--ls-text-muted)")}>
               ⏳ {stagnationDays(lead)}j sans mouvement
+            </span>
+          ) : null}
+          {/* D'où vient cette personne — sa propre réponse, donnée après avoir
+              réservé. C'est la seule façon de savoir qui a distribué le flyer :
+              le QR imprimé est le même pour toute l'équipe. */}
+          {provenanceLibelle ? (
+            <span
+              title="Réponse donnée après la réservation — mention, pas attribution"
+              style={sourceBadge("var(--ls-lime)")}
+            >
+              {provenanceLibelle}
             </span>
           ) : null}
           {lead.callbackRequestedAt ? <span title="A demandé à être rappelé" aria-hidden="true">📞</span> : null}
