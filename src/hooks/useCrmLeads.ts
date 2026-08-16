@@ -20,10 +20,15 @@
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
 import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 import { nomPropre } from "../features/crm/nomPropre";
+// Le vocabulaire de provenance a UNE source (src/types/domain.ts) : le tunnel,
+// les deux bilans et cet écran en dérivent tous. Deux listes recopiées, ce sont
+// deux comptages qui ne se recoupent jamais.
+import { provenanceDesigneQuelquun, type ProvenanceCanalTunnel } from "../types/domain";
 
 export type CrmStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
 export type CrmTable =
@@ -160,19 +165,43 @@ export interface CrmLead {
    *  (null = lien public générique). Affiché « via <coach> » / « lien public ». */
   bilanCoachSlug?: string | null;
   /**
-   * Ce que la personne a répondu à « comment tu as connu le club ? », sur
-   * l'écran de confirmation de sa réservation.
+   * Ce que la personne a répondu à « comment tu as connu le club ? », sous les
+   * créneaux, juste avant de valider sa réservation (déplacé le 17/08 : posée
+   * sur l'écran de confirmation, la question n'atteignait presque personne).
    *
    * ⚠️ C'est une MENTION, pas une attribution : `provenancePar` ne donne aucun
    * droit et ne change pas `ownerUserId`. Le lead reste au club.
    */
-  provenanceCanal?: "flyer" | "parle" | "reseaux" | "autre" | null;
+  provenanceCanal?: ProvenanceCanalTunnel | null;
   provenancePar?: string | null;
+  /**
+   * Le prénom TAPÉ À LA MAIN dans le tunnel, par la personne elle-même.
+   *
+   * Depuis le 17/08 c'est le SEUL endroit où un prénom cité peut atterrir :
+   * `/reserver` ne propose plus de liste de coachs et n'envoie plus `p_qui`.
+   * Il s'affiche donc exactement comme un prénom d'équipe — c'est la même
+   * réponse à la même question, seule la façon de la saisir a changé.
+   *
+   * Exclusif de `provenancePar` : la base garantit qu'un seul des deux est
+   * rempli, et `provenancePar` gagne quand les deux arrivent.
+   *
+   * ⚠️ Peut manquer sans que ce soit une absence de réponse : la colonne
+   * n'existe en base qu'à partir de la migration `20261215100000`, et la
+   * lecture se replie sans elle tant qu'elle n'est pas appliquée (cf.
+   * `COLONNES_PROSPECTS`).
+   */
+  provenanceLibre?: string | null;
 }
 
-/** Ce qu'on lit à l'écran pour chaque réponse. */
+/**
+ * Ce qu'on lit à l'écran pour chaque réponse.
+ *
+ * `Record` sur le type fermé et pas un objet libre : ajouter un canal au
+ * vocabulaire sans lui donner de libellé ici devient une ERREUR DE COMPILATION,
+ * et non un « undefined » découvert en prod sur la fiche d'un lead.
+ */
 export const PROVENANCE_META: Record<
-  NonNullable<CrmLead["provenanceCanal"]>,
+  ProvenanceCanalTunnel,
   { emoji: string; label: string }
 > = {
   flyer: { emoji: "📬", label: "Flyer" },
@@ -190,11 +219,37 @@ export function provenanceTexte(
   const m = PROVENANCE_META[canal];
   if (!m) return null;
   // « de » n'a de sens que pour un flyer ou du bouche-à-oreille : personne ne
-  // distribue Instagram.
-  if (parNom && (canal === "flyer" || canal === "parle")) {
+  // distribue Instagram. Règle partagée avec le tunnel et la RPC.
+  if (parNom && provenanceDesigneQuelquun(canal)) {
     return `${m.emoji} ${m.label} de ${parNom}`;
   }
   return `${m.emoji} ${m.label}`;
+}
+
+/**
+ * Le prénom à afficher, quelle que soit la façon dont il a été saisi.
+ *
+ * L'identifiant d'équipe gagne quand les deux arrivent — la RPC applique déjà
+ * la même règle, donc en pratique ils ne coexistent jamais sur une fiche.
+ *
+ * ⚠️ AUCUNE MARQUE ne distingue les deux à l'écran, et c'est délibéré (retour
+ * Thomas + Mélanie, 17/08). Une version du 16/08 affichait « · hors équipe » en
+ * rouge sur tout prénom écrit à la main : depuis que le tunnel ne propose plus
+ * de liste de coachs, c'est le cas de TOUS les prénoms venus de `/reserver`.
+ * La marque ne distinguait donc plus rien, et affirmait une chose que le code
+ * n'avait jamais vérifiée — « Flyer de Mélanie · hors équipe » alors que
+ * Mélanie est l'une des deux personnes qui distribuent les flyers.
+ *
+ * Rapprocher le prénom des comptes de l'équipe ne sauverait pas la marque : à
+ * deux coachs, une amie prénommée Thomas serait affichée comme le coach. Ce
+ * que le coach doit savoir tient dans l'infobulle : c'est une MENTION, donnée
+ * par la personne, jamais une attribution.
+ */
+export function prenomProvenance(
+  parNomEquipe: string | null | undefined,
+  libre: string | null | undefined,
+): string | null {
+  return (parNomEquipe?.trim() || null) ?? (libre?.trim() || null);
 }
 
 export const CRM_STATUS_META: Record<CrmStatus, { label: string; emoji: string; color: string }> = {
@@ -467,6 +522,37 @@ export function useCrmLeads() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
 
+      // ── Les colonnes des leads « prospect », et une à part ────────────────
+      // `provenance_libre` n'est qu'un mot à AFFICHER, mais réclamée dans un
+      // `select` elle devient une CONDITION DE LECTURE. Tant que la migration
+      // `20261215100000` n'est pas appliquée — et la base est PARTAGÉE entre
+      // dev et prod, donc la fenêtre est certaine, pas hypothétique — PostgREST
+      // refuse la requête ENTIÈRE (42703, « column does not exist ») : pas la
+      // colonne, la requête. Le CRM perdait alors d'un coup TOUS les leads de
+      // cette table — tunnel club, /rejoindre, /colis, formulaire Welcome — au
+      // profit d'une mention décorative.
+      //
+      // On redemande donc sans elle plutôt que de rendre une liste vide. Le
+      // prénom cité manque le temps que la migration passe, rien d'autre. Une
+      // fois la colonne en base, le second appel ne part plus jamais : ce repli
+      // se retire tout seul, il n'y a rien à penser à enlever.
+      const COLONNES_PROSPECTS =
+        "id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse, provenance_canal, provenance_user_id";
+      // La liste de colonnes est une VARIABLE (c'est tout l'intérêt : pouvoir la
+      // redemander sans `provenance_libre`), donc supabase-js ne peut plus en
+      // déduire la forme des lignes — le client de l'app n'a pas de types
+      // générés. On l'annonce donc explicitement : le mapping plus bas cast déjà
+      // chaque champ un par un, exactement comme pour les autres tables.
+      const lireProspects = (colonnes: string) =>
+        sb
+          .from("prospect_leads")
+          .select(colonnes)
+          .order("created_at", { ascending: false })
+          .limit(500) as unknown as Promise<{
+            data: Array<Record<string, unknown>> | null;
+            error: PostgrestError | null;
+          }>;
+
       // Les réservations du club, pour savoir si un lead du tunnel /reserver
       // est allé jusqu'au créneau. Sans ça, impossible de distinguer celui qui
       // a réservé de celui qui a abandonné à l'écran 1 — or c'est justement
@@ -482,11 +568,16 @@ export function useCrmLeads() {
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
           .limit(500),
-        sb
-          .from("prospect_leads")
-          .select("id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse, provenance_canal, provenance_user_id")
-          .order("created_at", { ascending: false })
-          .limit(500),
+        (async () => {
+          const avec = await lireProspects(`${COLONNES_PROSPECTS}, provenance_libre`);
+          // On ne se replie QUE sur « cette colonne n'existe pas ». Une erreur
+          // de droits ou de réseau doit remonter telle quelle : un repli qui
+          // avale tout masquerait une panne derrière une liste incomplète.
+          const colonneAbsente =
+            !!avec.error &&
+            (avec.error.code === "42703" || /provenance_libre/.test(avec.error.message ?? ""));
+          return colonneAbsente ? await lireProspects(COLONNES_PROSPECTS) : avec;
+        })(),
         sb
           .from("client_referrals")
           .select("id, from_client_id, from_client_name, referred_name, referred_contact, status, created_at")
@@ -729,6 +820,7 @@ export function useCrmLeads() {
           rdv: rdvTrouve,
           provenanceCanal: (row.provenance_canal as CrmLead["provenanceCanal"]) ?? null,
           provenancePar: (row.provenance_user_id as string | null) ?? null,
+          provenanceLibre: (row.provenance_libre as string | null) ?? null,
           // Le signal du chantier : parti avant de choisir son créneau. On ne
           // le lève que pour le tunnel club — ailleurs, ne pas avoir de RDV est
           // l'état normal — ET seulement si on a effectivement pu lire les

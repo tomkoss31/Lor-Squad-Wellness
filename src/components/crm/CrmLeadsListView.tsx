@@ -14,7 +14,8 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, provenanceTexte, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
+import { useAppContext } from "../../context/AppContext";
+import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, prenomProvenance, provenanceTexte, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
 import { grouperParEcheance, pilule, pourquoi, teinteDe, type CleGroupe } from "../../features/crm/echeances";
 import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
 import { estQualifiable } from "../../features/crm/ecrireQualification";
@@ -85,6 +86,7 @@ export function CrmLeadsListView({
   emptyMessage,
   triExterne,
 }: CrmLeadsListViewProps) {
+  const { users } = useAppContext();
   // Les endormis sont une étagère, pas une file : les ranger par « quand »
   // afficherait « Aujourd'hui » au-dessus de gens qu'on a mis de côté exprès.
   const [sortInterne, setSortInterne] = useState<SortKey>(archived ? "recent" : "echeance");
@@ -113,10 +115,27 @@ export function CrmLeadsListView({
     return arr;
   }, [leads, sortKey]);
 
+  // Le prénom de la personne d'équipe citée (vieilles lignes : la colonne ne
+  // porte qu'un identifiant). Résolu une fois pour toutes les lignes, pas une
+  // fois par ligne. Depuis le 17/08 le tunnel n'écrit plus d'identifiant du
+  // tout — le prénom arrive en texte — mais les lignes du 16/08 existent.
+  const prenomParUserId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const u of users ?? []) {
+      const prenom = u.name?.trim().split(/\s+/)[0];
+      if (u.id && prenom) m.set(u.id, prenom);
+    }
+    return m;
+  }, [users]);
+
   const renderRow = (lead: CrmLead, groupe: CleGroupe | null, isLast: boolean) => (
     <CrmLeadListRow
       key={lead.key}
       lead={lead}
+      prenomCite={prenomProvenance(
+        (lead.provenancePar && prenomParUserId.get(lead.provenancePar)) || null,
+        lead.provenanceLibre,
+      )}
       msgCtx={msgCtx}
       archived={archived}
       isLast={isLast}
@@ -245,6 +264,7 @@ export function CrmLeadsListView({
 
 function CrmLeadListRow({
   lead,
+  prenomCite,
   msgCtx,
   archived,
   isLast,
@@ -264,6 +284,9 @@ function CrmLeadListRow({
   onQualifier,
 }: {
   lead: CrmLead;
+  /** Le prénom cité par la personne, déjà résolu par le parent — que la
+   *  réponse ait désigné un compte de l'équipe ou été tapée à la main. */
+  prenomCite: string | null;
   msgCtx: CrmMessageContext;
   archived: boolean;
   isLast: boolean;
@@ -422,7 +445,13 @@ function CrmLeadListRow({
                 const reste = [
                   // Le nom de famille est remonté à côté du prénom : le laisser
                   // aussi ici l'écrirait deux fois sur la même ligne.
-                  provenanceTexte(lead.provenanceCanal, null),
+                  //
+                  // Le prénom cité est affiché ICI, dans le texte joint, sans
+                  // couleur ni marque : « 📬 Flyer de Camille » se lit d'un
+                  // coup d'œil, et rien ne distingue un prénom tapé à la main
+                  // d'un prénom d'équipe — c'est la même réponse à la même
+                  // question (cf. `prenomProvenance`).
+                  provenanceTexte(lead.provenanceCanal, prenomCite),
                   lead.viaName ? `via ${lead.viaName}` : lead.city,
                   lead.objectif ? objectifCourt(lead.objectif) : null,
                   lead.peopleCount === 2 ? "à deux" : null,
