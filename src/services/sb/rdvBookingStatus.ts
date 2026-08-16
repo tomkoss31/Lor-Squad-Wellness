@@ -36,8 +36,20 @@ export async function setRdvBookingStatus(
   const sb = await getSupabaseClient();
   if (!sb) return { error: new Error("supabase_indisponible") };
 
-  const { error } = await sb.from("rdv_bookings").update({ status }).eq("id", id);
+  // `.select()` n'est pas décoratif : sans lui, un UPDATE refusé par le RLS
+  // revient **sans erreur** avec zéro ligne touchée, et l'écran annonce
+  // « Rendez-vous annulé » alors que rien n'a bougé. Les policies
+  // `rdv_bookings_club_admin_update` / `_coach_update` réservent l'écriture aux
+  // admins (résas club) et au coach propriétaire : le cas arrive pour de vrai.
+  const { data, error } = await sb
+    .from("rdv_bookings")
+    .update({ status })
+    .eq("id", id)
+    .select("id");
   if (error) return { error };
+  if (!data || data.length === 0) {
+    return { error: new Error("rdv_booking_non_modifiable") };
+  }
 
   if (status === "confirmed") {
     void sb.functions
