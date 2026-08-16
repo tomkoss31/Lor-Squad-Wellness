@@ -46,7 +46,8 @@ import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
-import { CrmLeadsListView } from "../components/crm/CrmLeadsListView";
+import { groupeDe } from "../features/crm/echeances";
+import { CrmLeadsListView, OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
@@ -110,6 +111,19 @@ export function CrmPage() {
   // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
   const { curious, completionRate, loading: curiousLoading } = useCuriousLeads();
   const [showCurious, setShowCurious] = useState(false);
+  // Tout ce qui n'est pas « qui dois-je appeler aujourd'hui » passe derrière ce
+  // panneau. Mesure du 16/08 : 24 contrôles à traverser avant d'atteindre le
+  // premier lead, dont 5 pastilles de compteur qui ne sont même pas cliquables.
+  // Rien n'est supprimé — un tap et tout revient.
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  // Les deux blocs de rendez-vous étaient AU-DESSUS des filtres, donc au-dessus
+  // de la liste. Quelqu'un qui a réservé sur le site du club y figurait ET
+  // figurait plus bas dans la liste : le même nom, deux fois sur un écran.
+  // Repliés, pas retirés : « Confirmer » n'existe nulle part ailleurs.
+  const [rdvOuverts, setRdvOuverts] = useState(false);
+  // Le tri vit désormais chez le parent : il a rejoint le panneau, et sa
+  // valeur sert aussi à savoir si un réglage est actif.
+  const [sortKey, setSortKey] = useState<SortKey>("echeance");
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -248,6 +262,31 @@ export function CrmPage() {
     return { regroupes: principaux, doublonsDe: doublons };
   }, [filtered]);
 
+  // Le seul chiffre qui mérite d'être en haut de l'écran : combien de gens
+  // attendent un geste AUJOURD'HUI. Les cinq compteurs par statut (Nouveaux,
+  // Contactés, Qualifiés…) ne disaient pas quoi faire — ils sont descendus
+  // dans « Plus de filtres ».
+  const nbAujourdhui = useMemo(
+    () => {
+      const maintenant = new Date();
+      return regroupes.filter((l) => groupeDe(l, maintenant) === "aujourdhui").length;
+    },
+    [regroupes],
+  );
+
+  // Combien de réglages ne sont PAS à leur valeur par défaut : le badge du
+  // bouton « Plus de filtres ». Sans lui, on peut filtrer sans le savoir et
+  // croire que sa liste est vide.
+  const filtresActifs = useMemo(() => {
+    let n = 0;
+    if (scope !== "me") n += 1;
+    if (filterSource !== "all") n += 1;
+    if (view !== "active") n += 1;
+    if (viewMode !== "list") n += 1;
+    if (sortKey !== "echeance") n += 1;
+    return n;
+  }, [scope, filterSource, view, viewMode, sortKey]);
+
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
     const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
@@ -357,33 +396,40 @@ export function CrmPage() {
 
   return (
     <div style={pageWrap}>
-      {/* Hero */}
-      <header style={heroBox}>
-        <div style={heroEyebrow}>🎯 CRM · Tous tes contacts<JargonTip term="crm" /></div>
-        <h1 style={heroTitle}>Tous tes contacts, au même endroit</h1>
-        <p style={heroSubtitle}>
-          Bilan online, Club VIP, opportunité, recos de tes clients — tout
-          arrive ici. Contacte avec un message pro pré-rédigé, classe, convertis.
+      {/* En-tête. Le pavé de présentation (« Bilan online, Club VIP,
+          opportunité… ») et les cinq compteurs par statut occupaient le premier
+          écran entier sans jamais dire quoi faire. Il reste le titre et le seul
+          chiffre qui appelle un geste. */}
+      <header style={{ margin: "4px 0 2px" }}>
+        <h1 style={heroTitle}>Tes contacts<JargonTip term="crm" /></h1>
+        <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ls-text-muted)" }}>
+          {loading
+            ? "Chargement…"
+            : nbAujourdhui === 0
+              ? "Personne n'attend de toi aujourd'hui. 👌"
+              : `${nbAujourdhui} personne${nbAujourdhui > 1 ? "s" : ""} t'${nbAujourdhui > 1 ? "attendent" : "attend"} aujourd'hui.`}
         </p>
-        {/* Stats */}
-        <div style={statsRow}>
-          {STATUS_ORDER.map((s) => (
-            <div key={s} style={statChip(CRM_STATUS_META[s].color)}>
-              <span aria-hidden="true">{CRM_STATUS_META[s].emoji}</span>
-              <strong style={{ fontFamily: "Syne, sans-serif" }}>{counts[s]}</strong>
-              <span style={{ fontSize: 11 }}>{CRM_STATUS_META[s].label}</span>
-            </div>
-          ))}
-        </div>
       </header>
 
-      {/* RDV demandés via le bilan en ligne (RDV V2 brique 4, 2026-06-14) —
-          masqué s'il n'y en a pas. */}
-      <RdvBookingsWidget />
-
-      {/* RDV découverte réservés via le site du club (/reserver) — visible
-          pour les admins, masqué s'il n'y en a pas (chantier 1d, 2026-07-31). */}
-      <ClubDiscoveryWidget />
+      {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
+          d'ici que part l'email d'acceptation, qui n'existe nulle part
+          ailleurs. */}
+      <div style={{ margin: "14px 0 0" }}>
+        <button
+          type="button"
+          onClick={() => setRdvOuverts((v) => !v)}
+          aria-expanded={rdvOuverts}
+          style={replisBtn}
+        >
+          🗓️ Rendez-vous demandés {rdvOuverts ? "▲" : "▼"}
+        </button>
+        {rdvOuverts ? (
+          <div style={{ marginTop: 10 }}>
+            <RdvBookingsWidget />
+            <ClubDiscoveryWidget />
+          </div>
+        ) : null}
+      </div>
 
       {error ? (
         <div style={errorBanner}>
@@ -394,9 +440,49 @@ export function CrmPage() {
         </div>
       ) : null}
 
+      {/* LA barre. Trois choses seulement : à qui appartiennent les leads, la
+          recherche, et une porte vers tout le reste. */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "14px 0 12px" }}>
+        {canFilterTeam ? (
+          <>
+            <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>
+              👤 Moi
+            </button>
+            <button
+              type="button"
+              onClick={() => setScope(isAdmin ? "all" : "l1")}
+              style={sourceChip(scope !== "me", "var(--ls-teal)")}
+            >
+              Mon équipe
+            </button>
+          </>
+        ) : null}
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="🔍 Un nom, un numéro…"
+          style={searchInput}
+          aria-label="Rechercher un lead"
+        />
+        <button
+          type="button"
+          onClick={() => setFiltresOuverts((v) => !v)}
+          aria-expanded={filtresOuverts}
+          // Neutre plutôt que violet : mesuré à 4,08:1 en violet sur son propre
+          // fond teinté, sous le seuil de 4,5.
+          style={sourceChip(filtresOuverts || filtresActifs > 0, "var(--ls-text)")}
+        >
+          ⋯ Plus de filtres{filtresActifs > 0 ? ` · ${filtresActifs}` : ""} {filtresOuverts ? "▲" : "▼"}
+        </button>
+      </div>
+
+      {/* ── Tout le reste, replié ────────────────────────────────────────── */}
+      {filtresOuverts ? (
+      <div style={panneauFiltres}>
       {/* Filtre par ligne (admin / référent uniquement) */}
       {canFilterTeam && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "12px 0 0" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
           <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
           <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>👤 Moi</button>
           {line1Ids.size > 0 && (
@@ -442,8 +528,8 @@ export function CrmPage() {
         </div>
       )}
 
-      {/* Filtres */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }}>
+      {/* Filtres par source + compteurs par statut */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
         <button
           type="button"
           onClick={() => setFilterSource("all")}
@@ -463,14 +549,6 @@ export function CrmPage() {
               {CRM_SOURCE_META[s].emoji} {CRM_SOURCE_META[s].label}
             </button>
           ))}
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 Nom, contact, parrain…"
-          style={searchInput}
-          aria-label="Rechercher un lead"
-        />
         <button
           type="button"
           onClick={() => setShowStats((s) => !s)}
@@ -478,6 +556,18 @@ export function CrmPage() {
         >
           📊 Stats {showStats ? "▲" : "▼"}
         </button>
+      </div>
+
+      {/* Les cinq compteurs par statut. Ils ne sont pas cliquables et ne
+          disent pas quoi faire — ils ont quitté le haut de page, pas l'app. */}
+      <div style={statsRow}>
+        {STATUS_ORDER.map((s) => (
+          <div key={s} style={statChip(CRM_STATUS_META[s].color)}>
+            <span aria-hidden="true">{CRM_STATUS_META[s].emoji}</span>
+            <strong style={{ fontFamily: "Syne, sans-serif" }}>{counts[s]}</strong>
+            <span style={{ fontSize: 11 }}>{CRM_STATUS_META[s].label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Stats par source (wagon 3 chantier 6) */}
@@ -622,7 +712,7 @@ export function CrmPage() {
       </div>
 
       {/* Switch Liste (défaut) / Pipeline — chantier refonte CRM 2026-07 */}
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 2 }}>
         <Tabs
           tabs={[
             { key: "list" as const, label: "Liste", icon: "📋" },
@@ -635,10 +725,39 @@ export function CrmPage() {
         />
       </div>
 
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+        <label htmlFor="crm-tri" style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
+          Trier :
+        </label>
+        <select
+          id="crm-tri"
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value as SortKey)}
+          style={{
+            minHeight: 40,
+            padding: "0 10px",
+            borderRadius: 999,
+            border: "1px solid var(--ls-border)",
+            background: "var(--ls-surface)",
+            color: "var(--ls-text)",
+            fontSize: 12.5,
+            fontFamily: "DM Sans, sans-serif",
+            cursor: "pointer",
+          }}
+        >
+          {OPTIONS_DE_TRI.map((o) => (
+            <option key={o.valeur} value={o.valeur}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+      </div>
+      ) : null}
+
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
       ) : viewMode === "list" ? (
         <CrmLeadsListView
+          triExterne={{ valeur: view === "archived" ? "recent" : sortKey, onChange: setSortKey }}
           leads={regroupes}
           doublonsDe={doublonsDe}
           msgCtx={msgCtx}
@@ -1196,22 +1315,29 @@ const pageWrap: React.CSSProperties = {
   padding: "20px 18px 60px",
 };
 
-const heroBox: React.CSSProperties = {
-  background:
-    "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 28%, var(--ls-border))",
-  borderRadius: 18,
-  padding: "22px 20px",
+/** Le repli des blocs de rendez-vous et le panneau de filtres. */
+const replisBtn: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 7,
+  minHeight: 40,
+  padding: "8px 14px",
+  borderRadius: 999,
+  border: "1px solid var(--ls-border)",
+  background: "var(--ls-surface)",
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
 };
 
-const heroEyebrow: React.CSSProperties = {
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: 1.4,
-  color: "var(--ls-teal)",
-  marginBottom: 6,
+const panneauFiltres: React.CSSProperties = {
+  border: "1px solid var(--ls-border)",
+  borderRadius: 14,
+  background: "var(--ls-surface2)",
+  padding: "14px 14px 12px",
+  marginBottom: 14,
 };
 
 const heroTitle: React.CSSProperties = {
@@ -1223,14 +1349,6 @@ const heroTitle: React.CSSProperties = {
   textTransform: "uppercase",
   color: "var(--ls-text)",
   lineHeight: 1.02,
-};
-
-const heroSubtitle: React.CSSProperties = {
-  margin: "6px 0 14px",
-  fontSize: 13.5,
-  lineHeight: 1.55,
-  color: "var(--ls-text-muted)",
-  maxWidth: 600,
 };
 
 const statsRow: React.CSSProperties = {
