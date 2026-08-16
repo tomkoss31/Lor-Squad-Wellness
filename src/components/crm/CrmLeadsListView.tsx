@@ -30,7 +30,7 @@ import { EmptyState } from "../ui/EmptyState";
 // « Par échéance » est le défaut : c'est le seul tri qui répond à « qu'est-ce
 // que je fais maintenant ». Les trois autres restent — trier par arrivée sert
 // encore quand on cherche quelqu'un de précis.
-type SortKey = "echeance" | "recent" | "oldest" | "name";
+export type SortKey = "echeance" | "recent" | "oldest" | "name";
 
 interface CrmLeadsListViewProps {
   leads: CrmLead[];
@@ -52,7 +52,21 @@ interface CrmLeadsListViewProps {
   /** « Et alors ? » — pose la suite depuis la liste, sans changer d'écran. */
   onQualifier: (lead: CrmLead, reponse: Reponse) => void;
   emptyMessage: string;
+  /**
+   * Masque le sélecteur de tri : il vit alors dans le panneau « Plus de
+   * filtres » du parent. Le tri par défaut (par échéance) est celui qu'on veut
+   * dans 99 % des cas, et ce menu prenait toute une ligne juste au-dessus de la
+   * liste, entre le coach et le premier nom.
+   */
+  triExterne?: { valeur: SortKey; onChange: (v: SortKey) => void };
 }
+
+export const OPTIONS_DE_TRI: Array<{ valeur: SortKey; label: string }> = [
+  { valeur: "echeance", label: "Par échéance" },
+  { valeur: "recent", label: "Plus récents" },
+  { valeur: "oldest", label: "Plus anciens" },
+  { valeur: "name", label: "Nom A→Z" },
+];
 
 export function CrmLeadsListView({
   leads,
@@ -69,10 +83,13 @@ export function CrmLeadsListView({
   onDelete,
   onQualifier,
   emptyMessage,
+  triExterne,
 }: CrmLeadsListViewProps) {
   // Les endormis sont une étagère, pas une file : les ranger par « quand »
   // afficherait « Aujourd'hui » au-dessus de gens qu'on a mis de côté exprès.
-  const [sortKey, setSortKey] = useState<SortKey>(archived ? "recent" : "echeance");
+  const [sortInterne, setSortInterne] = useState<SortKey>(archived ? "recent" : "echeance");
+  const sortKey = triExterne ? triExterne.valeur : sortInterne;
+  const setSortKey = triExterne ? triExterne.onChange : setSortInterne;
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   // Une seule lecture de l'horloge pour tout le rendu : sans ça, deux lignes
@@ -134,29 +151,30 @@ export function CrmLeadsListView({
         .crm-list-row:hover { background: color-mix(in srgb, var(--ls-teal) 5%, transparent); }
       `}</style>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
-          aria-label="Trier les leads"
-          style={{
-            height: 32,
-            padding: "0 10px",
-            borderRadius: 999,
-            border: "1px solid var(--ls-border)",
-            background: "var(--ls-surface)",
-            color: "var(--ls-text)",
-            fontSize: 12.5,
-            fontFamily: "DM Sans, sans-serif",
-            cursor: "pointer",
-          }}
-        >
-          <option value="echeance">Par échéance</option>
-          <option value="recent">Plus récents</option>
-          <option value="oldest">Plus anciens</option>
-          <option value="name">Nom A→Z</option>
-        </select>
-      </div>
+      {triExterne ? null : (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            aria-label="Trier les leads"
+            style={{
+              height: 32,
+              padding: "0 10px",
+              borderRadius: 999,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface)",
+              color: "var(--ls-text)",
+              fontSize: 12.5,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: "pointer",
+            }}
+          >
+            {OPTIONS_DE_TRI.map((o) => (
+              <option key={o.valeur} value={o.valeur}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div
         style={{
@@ -306,8 +324,17 @@ function CrmLeadListRow({
           style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, gap: 8, textDecoration: "none", color: "inherit" }}
         >
           <div style={{ flex: 2, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.firstName}</span>
+            {/* Les badges passent à la ligne plutôt que de rogner le nom :
+                sans ça, « Claire Dehaese » s'affichait « Claire De… » — on
+                avait remonté le nom de famille pour le tronquer aussitôt. */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", rowGap: 4, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
+              {/* Nom de famille compris. Il était en base pour les 10 leads du
+                  tunnel club et n'apparaissait qu'en tout petit, sur la ligne
+                  du dessous, mélangé à la ville (demande Thomas 16/08). */}
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {lead.firstName}
+                {lead.lastName ? ` ${lead.lastName}` : ""}
+              </span>
               {quand ? (
                 <span
                   style={{
@@ -393,7 +420,8 @@ function CrmLeadListRow({
               {motif ? <span style={{ color: teinteMotif, fontWeight: 600 }}>{motif}</span> : null}
               {(() => {
                 const reste = [
-                  lead.lastName,
+                  // Le nom de famille est remonté à côté du prénom : le laisser
+                  // aussi ici l'écrirait deux fois sur la même ligne.
                   lead.viaName ? `via ${lead.viaName}` : lead.city,
                   lead.objectif ? objectifCourt(lead.objectif) : null,
                   lead.peopleCount === 2 ? "à deux" : null,
