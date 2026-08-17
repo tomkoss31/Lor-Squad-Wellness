@@ -34,6 +34,7 @@ export async function setClientEbeBbc(clientId: string, value: boolean): Promise
     const { data: auth } = await sb.auth.getUser();
     const uid = auth?.user?.id;
     if (uid) {
+      // Le club qu'on POSSÈDE d'abord.
       const { data: club } = await sb
         .from("clubs")
         .select("id")
@@ -43,6 +44,20 @@ export async function setClientEbeBbc(clientId: string, value: boolean): Promise
         .limit(1)
         .maybeSingle();
       clubId = (club as { id?: string } | null)?.id ?? null;
+
+      // Sinon celui où l'on TRAVAILLE (`users.club_id`, migration du 17/08).
+      // Sans ce repli, un coach qui ne possède pas le club — Mélanie, sur le
+      // seul club de l'équipe — créait des membres sans `club_id`, donc sans
+      // aucun réglage de club dans leur application. En silence : la recherche
+      // ne renvoyait rien, et rien ne renvoyait d'erreur.
+      if (!clubId) {
+        const { data: moi } = await sb
+          .from("users")
+          .select("club_id")
+          .eq("id", uid)
+          .maybeSingle();
+        clubId = (moi as { club_id?: string | null } | null)?.club_id ?? null;
+      }
     }
   }
 

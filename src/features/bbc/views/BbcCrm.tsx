@@ -4,7 +4,7 @@
 // statut, visites, cœurs, RDV). Données réelles via useBbcMembers.
 // =============================================================================
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useBbcMembers, type BbcMember } from "../useBbcMembers";
 import { visitLevel } from "../useBbcVisits";
 import { BbcNewMemberButton } from "../BbcNewMemberButton";
@@ -56,8 +56,20 @@ interface BbcCrmProps {
 }
 
 export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
-  const { members, loading } = useBbcMembers(userId);
+  const { members: tous, loading } = useBbcMembers(userId);
   const [open, setOpen] = useState<string | null>(null);
+  // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
+  // pour retrouver les siens vite — il ne cache rien qu'on ne puisse rouvrir.
+  const [filtre, setFiltre] = useState<"club" | "moi">("club");
+
+  const inscritsParDautres = useMemo(
+    () => tous.some((m) => m.ownerId && m.ownerId !== userId),
+    [tous, userId],
+  );
+  const members = useMemo(
+    () => (filtre === "moi" ? tous.filter((m) => m.ownerId === userId) : tous),
+    [tous, filtre, userId],
+  );
 
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
   const totalHearts = members.reduce((s, m) => s + m.hearts, 0);
@@ -99,9 +111,46 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
 
       <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "18px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
-          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />mes membres BBC
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />
+          {filtre === "moi" ? "mes membres BBC" : "les membres du club"}
         </div>
         <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 12 }}>Tape un membre pour voir son récap complet.</div>
+
+        {/* Le filtre n'apparaît que s'il sert à quelque chose : tant que
+            personne d'autre n'a inscrit de membre, deux boutons donneraient
+            deux fois la même liste. */}
+        {inscritsParDautres ? (
+          <div role="group" aria-label="Filtrer les membres" style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            {([
+              { k: "club", label: "Tout le club" },
+              { k: "moi", label: "Mes membres" },
+            ] as const).map((o) => {
+              const actif = filtre === o.k;
+              return (
+                <button
+                  key={o.k}
+                  type="button"
+                  aria-pressed={actif}
+                  onClick={() => setFiltre(o.k)}
+                  style={{
+                    minHeight: 44,
+                    padding: "11px 15px",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    fontFamily: "var(--ls-bbc-font-body)",
+                    fontSize: 13,
+                    fontWeight: actif ? 800 : 600,
+                    border: `1px solid ${actif ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`,
+                    background: actif ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)",
+                    color: actif ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",
+                  }}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
         {loading ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0" }}>chargement…</div>
         ) : members.length === 0 ? (
@@ -114,7 +163,7 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
           </div>
         ) : (
           members.map((m) => (
-            <MemberRow key={m.id} m={m} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} />
+            <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} />
           ))
         )}
       </div>
@@ -122,15 +171,21 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
   );
 }
 
-function MemberRow({ m, open, onToggle }: { m: BbcMember; open: boolean; onToggle: () => void }) {
+function MemberRow({ m, open, onToggle, userId }: { m: BbcMember; open: boolean; onToggle: () => void; userId?: string }) {
   const lvlColor = levelColor(m);
+  // On ne le dit que quand c'est une information : « inscrite par moi » n'en
+  // est pas une. Le prénom suffit, c'est un club de deux personnes.
+  const parQui = m.ownerId && m.ownerId !== userId ? (m.ownerName ?? "").trim().split(/\s+/)[0] : null;
   return (
     <div style={{ borderTop: "1px solid var(--ls-bbc-line)" }}>
       <button type="button" onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 13, width: "100%", background: "transparent", border: 0, cursor: "pointer", textAlign: "left", padding: "13px 4px", color: "var(--ls-bbc-text)" }}>
         <span style={{ width: 40, height: 40, borderRadius: 999, flex: "none", background: "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700, color: lvlColor }}>{m.name[0]?.toUpperCase() ?? "?"}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>{m.name}</div>
-          <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>{m.started ? "membre" : "à démarrer"} · {objLabel(m.objective)}</div>
+          <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>
+            {m.started ? "membre" : "à démarrer"} · {objLabel(m.objective)}
+            {parQui ? <> · inscrite par {parQui}</> : null}
+          </div>
         </div>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: lvlColor }}>{visitLabel(m)}</span>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: "var(--ls-bbc-lime-text)" }}>{m.hearts}♥</span>
