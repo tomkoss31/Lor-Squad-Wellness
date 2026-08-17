@@ -8,6 +8,9 @@ import { useMemo, useState } from "react";
 import { useBbcMembers, type BbcMember } from "../useBbcMembers";
 import { visitLevel } from "../useBbcVisits";
 import { BbcNewMemberButton } from "../BbcNewMemberButton";
+import { BbcMemberCorps } from "./BbcMemberCorps";
+import { objectifAffichable } from "../bilan10Pesee";
+import { BbcPeseeSheet } from "../BbcPeseeSheet";
 
 function objLabel(o?: string) {
   const map: Record<string, string> = {
@@ -61,6 +64,14 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
   // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
   // pour retrouver les siens vite — il ne cache rien qu'on ne puisse rouvrir.
   const [filtre, setFiltre] = useState<"club" | "moi">("club");
+  // La feuille de pesée, ouverte depuis une fiche dépliée.
+  const [pesee, setPesee] = useState<BbcMember | null>(null);
+  // Change après chaque écriture : force le rechargement des relevés.
+  const [cleCorps, setCleCorps] = useState(0);
+  // Combien de pesées chaque membre a déjà : remonté par la fiche dépliée, il
+  // décide si la feuille pose la question « départ ou suivi » (la toute
+  // première pesée EST le départ, il n'y a rien à demander).
+  const [nbReleves, setNbReleves] = useState<Record<string, number>>({});
 
   const inscritsParDautres = useMemo(
     () => tous.some((m) => m.ownerId && m.ownerId !== userId),
@@ -163,15 +174,84 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
           </div>
         ) : (
           members.map((m) => (
-            <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} />
+            <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} />
           ))
         )}
       </div>
+
+      {pesee ? (
+        <BbcPeseeSheet
+          clientId={pesee.id}
+          clientName={pesee.name}
+          nbReleves={nbReleves[pesee.id] ?? 0}
+          onClose={() => setPesee(null)}
+          onEnregistre={() => setCleCorps((k) => k + 1)}
+        />
+      ) : null}
     </div>
   );
 }
 
-function MemberRow({ m, open, onToggle, userId }: { m: BbcMember; open: boolean; onToggle: () => void; userId?: string }) {
+/**
+ * La phrase du bandeau. Elle se calcule dans l'ordre de l'urgence réelle : ce
+ * qui bloque le club d'abord, ce qui se prépare ensuite, le calme en dernier.
+ * Un bandeau toujours rouge ne veut plus rien dire, un bandeau jamais rouge
+ * non plus.
+ */
+function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; detail: string } {
+  const c = m.card;
+  if (c?.expired) {
+    return {
+      ton: "var(--ls-bbc-coral)", ic: "🎫",
+      titre: "Sa carte est périmée",
+      detail: "Renouvelle-la avant son prochain passage, sinon le pointage ne compte sur rien.",
+    };
+  }
+  if (c && c.used >= c.type) {
+    return {
+      ton: "var(--ls-bbc-coral)", ic: "📋",
+      titre: `Carte finie — fais son bilan des ${c.type}`,
+      detail: "C'est là qu'on refait le scan, qu'on renouvelle la carte et qu'on demande ses recommandations.",
+    };
+  }
+  if (!c) {
+    return {
+      ton: "var(--ls-bbc-amber)", ic: "🎫",
+      titre: "Pas de carte active",
+      detail: "Sans carte, ses visites ne comptent vers aucun bilan — attribue-lui-en une.",
+    };
+  }
+  if (m.pendingHearts > 0) {
+    return {
+      ton: "var(--ls-bbc-amber)", ic: "❤️",
+      titre: `${m.pendingHearts} reco${m.pendingHearts > 1 ? "s" : ""} à valider`,
+      detail: "Un cœur ne compte que si la personne a démarré. Tranche depuis l'onglet Cœurs.",
+    };
+  }
+  if (c.remaining <= 3) {
+    return {
+      ton: "var(--ls-bbc-amber)", ic: "📣",
+      titre: `Plus que ${c.remaining} visite${c.remaining > 1 ? "s" : ""} avant son bilan`,
+      detail: "Préviens-la : le bilan se prépare, il ne se subit pas.",
+    };
+  }
+  return {
+    ton: "var(--ls-bbc-sage)", ic: "☕",
+    titre: `Rien d'urgent — ${c.remaining} visites avant son bilan`,
+    detail: m.nextFollowUp
+      ? `Sa carte de ${c.type} est à ${c.used}. Son prochain rendez-vous est le ${fmtDate(m.nextFollowUp)}.`
+      : `Sa carte de ${c.type} est à ${c.used}.`,
+  };
+}
+
+function MemberRow({
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge,
+}: {
+  m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
+  onPesee?: (m: BbcMember) => void; cleCorps?: number;
+  onCorpsCharge?: (id: string, nb: number) => void;
+}) {
   const lvlColor = levelColor(m);
   // On ne le dit que quand c'est une information : « inscrite par moi » n'en
   // est pas une. Le prénom suffit, c'est un club de deux personnes.
@@ -194,6 +274,35 @@ function MemberRow({ m, open, onToggle, userId }: { m: BbcMember; open: boolean;
 
       {open ? (
         <div style={{ padding: "4px 4px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* ── QUOI FAIRE MAINTENANT ──────────────────────────────────────
+              En tête parce que c'est la seule ligne qu'on lit toujours. Elle
+              se calcule, elle ne se choisit pas : un bandeau qui dit « rien
+              d'urgent » aussi clairement qu'il crierait s'il fallait agir. */}
+          {(() => {
+            const a = quoiFaire(m);
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 11,
+                  padding: "13px 14px",
+                  borderRadius: 15,
+                  lineHeight: 1.5,
+                  background: `color-mix(in srgb, ${a.ton} 13%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${a.ton} 45%, transparent)`,
+                  color: a.ton,
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 19, flex: "none", lineHeight: 1.2 }}>{a.ic}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{a.titre}</div>
+                  <div style={{ fontSize: 12.5, marginTop: 3, opacity: 0.9 }}>{a.detail}</div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* chiffres clés */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             <Stat
@@ -213,6 +322,30 @@ function MemberRow({ m, open, onToggle, userId }: { m: BbcMember; open: boolean;
             <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
             <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
           </div>
+          {/* ── SON CORPS ── chargé paresseusement, seulement à l'ouverture. */}
+          <BbcMemberCorps
+            clientId={m.id}
+            prenom={(m.name || "").trim().split(/\s+/)[0] || "elle"}
+            objectif={objectifAffichable(m.objective)}
+            onCharge={(c) => onCorpsCharge?.(m.id, c.releves.length)}
+            onNouvellePesee={onPesee ? () => onPesee(m) : undefined}
+            cle={cleCorps}
+          />
+
+          {/* ── CE QUI MANQUE, avec ce que ça coûte ────────────────────────
+              Un tiret ne dit ni pourquoi c'est vide, ni le prix du vide.
+              « Email — » veut dire « pas de rappel la veille de son RDV ». */}
+          {!m.email ? (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 14, background: "color-mix(in srgb, var(--ls-bbc-amber) 9%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 32%, transparent)", fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-bbc-amber)" }}>
+              <span aria-hidden="true">⚠️</span>
+              <span>
+                <strong>{m.phone ? "Pas d'email." : "Ni téléphone ni email."}</strong> Elle ne recevra aucun rappel la
+                veille de son rendez-vous{m.nextFollowUp ? ` du ${fmtDate(m.nextFollowUp)}` : ""} — ce rappel part par mail.
+                Son QR et son application marchent quand même.
+              </span>
+            </div>
+          ) : null}
+
           {/* détails */}
           <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
             <Line k="Objectif" v={objLabel(m.objective)} />

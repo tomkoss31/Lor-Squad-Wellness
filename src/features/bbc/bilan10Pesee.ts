@@ -339,7 +339,11 @@ export async function enregistrerPeseeBilan10(params: {
  * donc ce qui est déjà en base. Le type exclut `bodyScan` pour qu'aucun appelant
  * ne puisse envoyer par mégarde un scan à zéro. `null` si la ligne n'existe plus.
  */
-async function lireBilan(
+// Exporté depuis le 17/08 : la fiche membre en a besoin pour écarter une pesée
+// de la référence sans la supprimer (cf. `relevesMembre.ecarterDeLaReference`).
+// `/api/update-assessment` réécrit TOUTES les colonnes du bilan — envoyer un
+// payload partiel effacerait le body scan et les produits retenus.
+export async function lireBilan(
   clientId: string,
   assessmentId: string,
 ): Promise<Omit<AssessmentRecord, "bodyScan"> | null> {
