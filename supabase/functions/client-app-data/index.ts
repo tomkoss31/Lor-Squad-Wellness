@@ -422,7 +422,16 @@ serve(async (req) => {
     }
     const typedAssessments = rawAssessments as AssessmentRow[];
 
-    const assessment_history = typedAssessments.map((a) => {
+    // ⚠️ `excludeFromEvolution` est respecté ICI aussi, pas seulement côté coach
+    // (ajouté le 17/08). Sans ce filtre, un membre inscrit trois semaines avant
+    // l'ouverture du club et repesé le jour J verrait dans SA courbe les trois
+    // semaines écartées côté coach — deux vérités différentes pour la même
+    // personne, et celle qu'elle voit est la plus flatteuse des deux.
+    const retenus = typedAssessments.filter(
+      (a) => ((a.questionnaire ?? {}) as { excludeFromEvolution?: boolean }).excludeFromEvolution !== true,
+    );
+
+    const assessment_history = retenus.map((a) => {
       const bs = (a.body_scan ?? {}) as Record<string, unknown>;
       const num = (v: unknown): number | null =>
         typeof v === "number" && Number.isFinite(v)
