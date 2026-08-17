@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Répondre par mail depuis le CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Gauche : thème sombre de l'app coach (globals.css). Droite : les couleurs
+   EXACTES du gabarit d'email (_shared/email.ts). */
+:root{
+  --ls-bg:#0B0D11; --ls-surface:#12211E; --ls-surface2:#182B27;
+  --ls-border:rgba(236,239,234,.12); --ls-text:#ECEFEA; --ls-text-muted:#9BAAA3;
+  --ls-teal:#2DD4BF; --ls-lime:#c5f82a; --ls-coral:#FF6B57; --ls-purple:#A78BFA;
+  /* email.ts */
+  --m-bg:#07090a; --m-card:#0f1310; --m-line:#14171a;
+  --m-ink:#F1EFE8; --m-soft:#9AA0A6; --m-faint:#6b7280;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ls-bg);color:var(--ls-text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:0 18px 70px}
+.avert{background:rgba(167,139,250,.10);border-bottom:1px solid rgba(167,139,250,.30);
+  padding:9px 14px;font-size:12.5px;color:#C9B8FB;text-align:center;line-height:1.45}
+h1{font-family:Anton;font-weight:400;text-transform:uppercase;font-size:clamp(24px,3.4vw,32px);margin:18px 0 4px;line-height:1.05}
+.sst{margin:0 0 4px;font-size:14px;color:var(--ls-text-muted)}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;align-items:start}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+.col h2{font-family:Syne,sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ls-teal);margin:0 0 10px}
+
+/* ── La fenêtre dans le CRM ────────────────────────────────────────────── */
+.modale{background:var(--ls-surface);border:1px solid var(--ls-border);border-radius:18px;overflow:hidden}
+.mTitre{padding:16px 18px 0}
+.mTitre .h{font-family:Syne,sans-serif;font-size:19px;font-weight:700;margin:0}
+.mTitre .s{margin:5px 0 0;font-size:12.5px;color:var(--ls-text-muted);line-height:1.5}
+.bascule{display:inline-flex;gap:4px;margin-top:12px;padding:4px;border-radius:11px;background:var(--ls-surface2);border:1px solid var(--ls-border)}
+.bascule button{min-height:36px;padding:7px 16px;border-radius:8px;border:0;background:transparent;
+  color:var(--ls-text-muted);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.bascule button[aria-current="true"]{background:var(--ls-surface);color:var(--ls-text)}
+.champ{padding:13px 18px;border-bottom:1px solid var(--ls-border);display:flex;gap:10px;align-items:baseline}
+.champ:first-of-type{border-top:1px solid var(--ls-border);margin-top:14px}
+.champ .k{flex:none;width:64px;font-size:12px;color:var(--ls-text-muted);font-weight:600}
+.champ .v{font-size:13.5px;color:var(--ls-text);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.champ input{flex:1;min-width:0;background:transparent;border:0;color:var(--ls-text);
+  font-family:inherit;font-size:13.5px;padding:0;outline:none}
+.corps{padding:14px 18px}
+.corps textarea{width:100%;min-height:190px;background:var(--ls-surface2);color:var(--ls-text);
+  border:1px solid var(--ls-border);border-radius:12px;padding:12px 13px;font-family:inherit;
+  font-size:13.5px;line-height:1.6;resize:vertical;outline:none}
+.aide{margin:9px 0 0;font-size:12px;color:var(--ls-text-muted);line-height:1.55}
+.pied{display:flex;gap:9px;flex-wrap:wrap;padding:0 18px 18px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:11px 16px;border-radius:11px;
+  font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid var(--ls-border);
+  background:var(--ls-surface2);color:var(--ls-text)}
+.btn.p{background:var(--ls-teal);border-color:var(--ls-teal);color:#06241F}
+.btn.ai{color:var(--ls-purple);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.10)}
+.mini{margin-left:auto;font-size:11.5px;color:var(--ls-text-muted)}
+
+/* ── L'aperçu du mail (couleurs email.ts) ──────────────────────────────── */
+.boite{background:var(--m-bg);border-radius:18px;padding:18px;border:1px solid var(--ls-border)}
+.mail{background:var(--m-card);border:1px solid var(--m-line);border-radius:20px;padding:26px 24px;
+  font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--m-ink)}
+.logo{font-family:Anton;font-size:19px;letter-spacing:.02em;color:#fff;text-transform:uppercase}
+.logo i{font-style:normal;color:var(--ls-teal)}
+.badge{width:52px;height:52px;border-radius:14px;background:#182B27;display:grid;place-items:center;
+  font-size:24px;margin:18px 0 16px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ls-teal)}
+.mail h3{font-family:Anton;font-weight:400;font-size:27px;line-height:1.12;margin:9px 0 14px;color:#fff;text-transform:none}
+.mail p{margin:0 0 13px;font-size:15px;line-height:1.62;color:var(--m-ink)}
+.sign{margin-top:18px;padding-top:16px;border-top:1px solid var(--m-line);display:flex;gap:11px;align-items:center}
+.sign .rond{width:38px;height:38px;border-radius:999px;background:var(--ls-teal);color:#06241F;
+  display:grid;place-items:center;font-weight:800;font-size:15px;flex:none;font-family:Syne,sans-serif}
+.sign .n{font-size:14px;font-weight:700;color:#fff}
+.sign .r{font-size:12.5px;color:var(--m-soft)}
+.cta{display:inline-block;margin-top:16px;background:var(--ls-lime);color:#0a0c0a;font-weight:800;
+  font-size:14.5px;padding:13px 22px;border-radius:12px;text-decoration:none}
+.pieds{margin-top:20px;padding-top:15px;border-top:1px solid var(--m-line);font-size:12px;color:var(--m-faint);line-height:1.6}
+.pieds a{color:var(--ls-teal);text-decoration:none}
+
+.note{margin-top:16px;font-size:13px;line-height:1.65;color:var(--ls-text-muted)}
+.note b{color:var(--ls-text)}
+.avant{border-left:3px solid var(--ls-coral);padding:12px 15px;background:rgba(255,107,87,.07);
+  border-radius:0 12px 12px 0;font-size:13px;line-height:1.65;margin:16px 0}
+.avant b{color:var(--ls-coral)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="avert"><b>MAQUETTE</b> — rien n'est branché. Cas réel : Malone, bilan en ligne, joignable seulement par mail.</div>
+
+<div class="wrap">
+  <h1>Répondre depuis le CRM</h1>
+  <p class="sst">À gauche ce que tu fais. À droite ce que Malone reçoit.<br><b style="color:var(--ls-teal)">On ne refait rien</b> : c'est l'éditeur des Campagnes, ouvert sur une seule personne.</p>
+
+  <div class="duo">
+    <!-- ══════════ LE CRM ══════════ -->
+    <div class="col">
+      <h2>Dans l'app</h2>
+      <div class="modale">
+        <div class="mTitre">
+          <p class="h">Répondre à Malone</p>
+          <p class="s">Le mail part de La&nbsp;Base&nbsp;360, à ton nom. Sa réponse arrive dans ta boîte.</p>
+          <div class="bascule">
+            <button aria-current="true">Éditer</button><button>Aperçu</button>
+          </div>
+        </div>
+
+        <div class="champ"><span class="k">À</span><span class="v">malone.muri9@gmail.com</span></div>
+        <div class="champ"><span class="k">Objet</span><input value="Ton bilan bien-être — Thomas, La Base 360"></div>
+
+        <div class="corps">
+          <textarea>Hello Malone ! 🌿
+
+C'est Thomas, de La Base 360 — j'ai bien reçu ton bilan, merci pour ta confiance.
+
+J'ai regardé tes réponses : prise de masse, 44 kg pour 1,63 m, et pas encore de vraie routine côté repas. C'est très faisable, et on peut aller vite si on s'y prend bien.
+
+On se cale un échange de 15 minutes cette semaine ? Dis-moi ce qui t'arrange, je m'adapte.</textarea>
+          <p class="aide">Ta signature, le logo et la mise en page sont ajoutés automatiquement — tu n'écris que le message. <b style="color:var(--ls-text)">{prénom}</b> est remplacé par le sien à l'envoi.</p>
+        </div>
+
+        <div class="pied">
+          <button class="btn p">✉️ Envoyer</button>
+          <button class="btn ai">✨ Noaly me l'écrit</button>
+          <button class="btn">Annuler</button>
+          <span class="mini">Envoi tracé sur la fiche</span>
+        </div>
+      </div>
+
+      <div class="avant">
+        <b>Aujourd'hui :</b> le bouton ouvre Gmail avec un texte nu. Aucun logo, aucune signature —
+        alors que les mails automatiques de l'app, eux, sont soignés. Le prospect reçoit deux
+        choses qui n'ont pas l'air de venir de la même maison.
+      </div>
+    </div>
+
+    <!-- ══════════ LE MAIL ══════════ -->
+    <div class="col">
+      <h2>Ce que Malone reçoit</h2>
+      <div class="boite">
+        <div class="mail">
+          <div class="logo">LA BASE <i>360</i></div>
+          <div class="badge" aria-hidden="true">🌿</div>
+          <div class="eyebrow">Message de ton coach</div>
+          <h3>Hello Malone !</h3>
+
+          <p>C'est Thomas, de La Base 360 — j'ai bien reçu ton bilan, merci pour ta confiance.</p>
+          <p>J'ai regardé tes réponses : prise de masse, 44 kg pour 1,63 m, et pas encore de vraie
+             routine côté repas. C'est très faisable, et on peut aller vite si on s'y prend bien.</p>
+          <p>On se cale un échange de 15 minutes cette semaine ? Dis-moi ce qui t'arrange,
+             je m'adapte.</p>
+
+          <a class="cta" href="#">📅 Prendre rendez-vous avec moi</a>
+          <p style="margin:9px 0 0;font-size:12.5px;color:var(--m-soft)">labase360.fr/rdv/thomas</p>
+
+          <div class="sign">
+            <span class="rond">T</span>
+            <span>
+              <span class="n">Thomas</span><br>
+              <span class="r">Coach La Base 360 · Verdun</span>
+            </span>
+          </div>
+
+          <div class="pieds">
+            <a href="#">labase360.fr</a> · La Base Verdun
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        <b>Réponds-tu à ce mail&nbsp;?</b> Il part de
+        <span class="mono">no-reply@labase360.fr</span>, mais la réponse est dirigée vers
+        <span class="mono">fit2tom.coach@gmail.com</span> — ta vraie adresse. Malone clique
+        « Répondre », ça arrive chez toi.
+      </p>
+      <p class="note">
+        <b>Le bouton mène à TON tunnel de rendez-vous</b> —
+        <span class="mono">labase360.fr/rdv/thomas</span>. Malone choisit son créneau parmi tes
+        disponibilités, et le rendez-vous atterrit chez toi : ce chemin-là écrit le coach
+        propriétaire, contrairement à celui du club. Il reçoit sa confirmation et son rappel
+        automatiquement.
+      </p>
+      <p class="note">
+        <b>Pas de lien de désinscription.</b> Une campagne en porte un, c'est la règle. Une réponse
+        à quelqu'un qui vient de t'écrire, non — ça la ferait passer pour un envoi automatique.
+      </p>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:22px">
+    <b>Ce qu'on réutilise du chantier Campagnes, sans le refaire&nbsp;:</b>
+    le rendu brandé (<span class="mono">compileCampaignHtml</span>, qui s'appuie lui-même sur le
+    moteur de la newsletter), l'éditeur avec sa bascule Éditer&nbsp;/&nbsp;Aperçu
+    (<span class="mono">CampaignEditor</span>), le remplacement de
+    <span class="mono">{prénom}</span> (<span class="mono">personalize</span>) et l'envoi Resend
+    (<span class="mono">campaign-send</span>) avec son lien de désinscription.
+    Le domaine <span class="mono">labase360.fr</span> est déjà vérifié : rien à configurer.
+    <br><br>
+    <b>Ce qui reste à écrire&nbsp;:</b> une fenêtre dans le CRM et un envoi à UNE personne — l'envoi
+    actuel est réservé aux admins et travaille sur une liste.
+  </p>
+</div>
+</body>
+</html>
