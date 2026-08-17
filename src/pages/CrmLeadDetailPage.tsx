@@ -35,6 +35,7 @@ import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { MoveClubBookingDialog } from "../components/crm/MoveClubBookingDialog";
 import { EtatRdvBloc } from "../components/crm/EtatRdvBloc";
+import { RepondreParMailModal } from "../components/crm/RepondreParMailModal";
 import { EtapesLead } from "../components/crm/EtapesLead";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
 import { estQualifiable } from "../features/crm/ecrireQualification";
@@ -163,6 +164,7 @@ export function CrmLeadDetailPage() {
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
   const [showMove, setShowMove] = useState(false);
+  const [showMail, setShowMail] = useState(false);
   const [annulationRdv, setAnnulationRdv] = useState(false);
   // Résumé Noaly (Phase 4) — déclenché par bouton, jamais au montage (coût IA).
   const [noalySummary, setNoalySummary] = useState<string | null>(null);
@@ -787,13 +789,23 @@ export function CrmLeadDetailPage() {
                   était déjà rédigé juste là, mais il fallait copier l'adresse,
                   ouvrir sa messagerie, puis revenir chercher le texte. */}
               {!isIntentionSource && lead.contact && !lead.contactIsPhone ? (
-                <a
-                  href={buildCrmMailLink(lead.contact, message, objetPourLead(lead, msgCtx))}
-                  onClick={recordTouch}
-                  style={actionBtn("var(--ls-teal)")}
-                >
-                  ✉️ Répondre par mail
-                </a>
+                <>
+                  {/* Le mail part de l'app, à l'identité de la maison d'où vient
+                      la personne — club ou La Base 360 — avec la signature du
+                      coach. Le `mailto:` reste juste à côté pour les fois où on
+                      veut écrire vite depuis sa propre boîte. */}
+                  <button type="button" onClick={() => setShowMail(true)} style={actionBtn("var(--ls-teal)")}>
+                    ✉️ Répondre par mail
+                  </button>
+                  <a
+                    href={buildCrmMailLink(lead.contact, message, objetPourLead(lead, msgCtx))}
+                    onClick={recordTouch}
+                    title="Ouvrir ta messagerie avec le message pré-rempli, sans mise en forme"
+                    style={actionBtn("var(--ls-text-muted)")}
+                  >
+                    📤 Depuis ma boîte
+                  </a>
+                </>
               ) : null}
               <button
                 type="button"
@@ -952,6 +964,22 @@ export function CrmLeadDetailPage() {
           clubSlug="verdun"
           onClose={() => setShowMove(false)}
           onMoved={() => { void refetch(); }}
+        />
+      ) : null}
+
+      {showMail && lead.contact ? (
+        <RepondreParMailModal
+          lead={lead}
+          objetInitial={objetPourLead(lead, msgCtx)}
+          messageInitial={message}
+          prenomCoach={msgCtx.coachFirstName}
+          onClose={() => setShowMail(false)}
+          onEnvoye={(a) => {
+            setShowMail(false);
+            recordTouch();
+            void refetch();
+            pushToast({ tone: "success", title: "Mail envoyé", message: `Parti à ${a}. Sa réponse arrivera dans ta boîte.` });
+          }}
         />
       ) : null}
 

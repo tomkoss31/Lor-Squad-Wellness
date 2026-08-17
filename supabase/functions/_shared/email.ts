@@ -26,6 +26,16 @@ export interface BrandedEmailParts {
   otp?: string;         // code OTP à afficher (si pas de lien)
   outro?: string;       // petit paragraphe de fin (sécurité)
   validity?: string;    // ex. "Ce lien est valable 1 heure."
+  /**
+   * La signature d'une personne, quand le mail vient de quelqu'un et non de
+   * l'application. Ajoutée le 17/08 pour les réponses envoyées depuis le CRM :
+   * Thomas répondait par Gmail « message simple, aucune signature, que dalle »,
+   * pendant que les mails automatiques de l'app, eux, étaient soignés.
+   *
+   * Optionnelle : les mails transactionnels (mot de passe, confirmation…) ne
+   * viennent de personne et n'en portent pas.
+   */
+  signature?: { nom: string; role?: string };
 }
 
 // Rend un email complet, robuste sur les clients mail (Gmail/Apple/Outlook).
@@ -46,6 +56,32 @@ export function brandedEmail(p: BrandedEmailParts): string {
         <div style="display:inline-block;background:#0f1310;border:1px solid rgba(197,248,42,0.35);border-radius:14px;padding:16px 26px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:30px;font-weight:700;letter-spacing:0.32em;color:#c5f82a;">
           ${escapeHtml(p.otp)}
         </div>
+      </td></tr>`
+    : "";
+
+  // La signature : un rond avec l'initiale, le nom, le rôle. En table et en
+  // styles inline comme le reste — Outlook ignore flexbox, et c'est justement
+  // le client de Thomas.
+  const signature = p.signature
+    ? `
+      <tr><td style="padding:22px 34px 0 34px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="border-top:1px solid rgba(255,255,255,0.08);width:100%;">
+          <tr><td style="padding-top:18px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="width:40px;vertical-align:middle;">
+                  <div style="width:40px;height:40px;border-radius:999px;background:#2DD4BF;color:#06241F;font-size:16px;font-weight:800;text-align:center;line-height:40px;">
+                    ${escapeHtml((p.signature.nom.trim()[0] ?? "?").toUpperCase())}
+                  </div>
+                </td>
+                <td style="padding-left:12px;vertical-align:middle;">
+                  <div style="font-size:14.5px;font-weight:700;color:#F1EFE8;">${escapeHtml(p.signature.nom)}</div>
+                  ${p.signature.role ? `<div style="font-size:12.5px;color:#9AA0A6;">${escapeHtml(p.signature.role)}</div>` : ""}
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
       </td></tr>`
     : "";
 
@@ -101,6 +137,7 @@ export function brandedEmail(p: BrandedEmailParts): string {
         ${validity}
         ${linkFallback}
         ${outro}
+        ${signature}
 
         <!-- Footer -->
         <tr><td style="padding:26px 34px 30px 34px;">

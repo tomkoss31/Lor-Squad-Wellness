@@ -200,3 +200,85 @@ export function clubCardLeadEmailHtml(
   </table>
 </body></html>`;
 }
+
+/**
+ * Un MESSAGE LIBRE du coach à quelqu'un du Breakfast Club, à l'identité du
+ * club — crème et orange, pas le sombre de l'app coach.
+ *
+ * Pourquoi deux gabarits (Thomas, 17/08 : « fait la différence entre les leads
+ * club donc BBC et ceux online ») : quelqu'un qui a laissé son numéro sur
+ * labase-nutrition.com ne connaît pas « La Base 360 ». Lui répondre avec le
+ * logo de l'app coach, c'est lui écrire au nom d'une maison dont il n'a jamais
+ * entendu parler. Le pendant côté app est `brandedEmail` (_shared/email.ts).
+ *
+ * `message` arrive en TEXTE BRUT, tel que le coach l'a tapé : on échappe et on
+ * convertit les sauts de ligne ici. Jamais de HTML venu de l'écran.
+ */
+export interface ClubMessageParams {
+  prenom: string;
+  message: string;
+  signature: { nom: string; role?: string };
+  cta?: { label: string; url: string };
+}
+
+export function clubMessageHtml(p: ClubMessageParams): string {
+  const paragraphes = p.message
+    .split(/\n{2,}/)
+    .map((bloc) => bloc.trim())
+    .filter(Boolean)
+    .map(
+      (bloc) =>
+        `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;color:#17201C;">${esc(bloc).replace(/\n/g, "<br />")}</p>`,
+    )
+    .join("");
+
+  const cta = p.cta
+    ? `<tr><td style="padding:6px 30px 4px 30px;">
+         <a href="${esc(p.cta.url)}" style="display:inline-block;background:#E0532A;color:#FFFFFF;text-decoration:none;font-weight:700;font-size:15px;padding:14px 26px;border-radius:12px;">${esc(p.cta.label)}</a>
+       </td></tr>
+       <tr><td style="padding:10px 30px 0 30px;">
+         <p style="margin:0;font-size:12.5px;color:#8A938D;word-break:break-all;">${esc(p.cta.url)}</p>
+       </td></tr>`
+    : "";
+
+  return `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#E7E1D6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#E7E1D6;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FCF8F1;border:1px solid #F0E7D7;border-radius:20px;overflow:hidden;">
+
+        <tr><td style="padding:26px 30px 0 30px;">
+          <div style="font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#E0532A;font-weight:700;">The Breakfast Club</div>
+          <div style="font-size:12.5px;color:#8A938D;margin-top:3px;">by La Base · Verdun</div>
+        </td></tr>
+
+        <tr><td style="padding:22px 30px 0 30px;">
+          <h1 style="margin:0 0 14px 0;font-size:23px;line-height:1.2;color:#17201C;font-weight:800;">Bonjour ${esc(p.prenom)} !</h1>
+          ${paragraphes}
+        </td></tr>
+
+        ${cta}
+
+        <tr><td style="padding:22px 30px 0 30px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #F0E7D7;">
+            <tr><td style="padding-top:16px;">
+              <div style="font-size:14.5px;font-weight:700;color:#17201C;">${esc(p.signature.nom)}</div>
+              ${p.signature.role ? `<div style="font-size:12.5px;color:#55605A;">${esc(p.signature.role)}</div>` : ""}
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:20px 30px 28px 30px;">
+          <div style="font-size:12px;color:#8A938D;line-height:1.7;">
+            ${esc(CLUB_ADDRESS)}<br />
+            ${esc(CLUB_HOURS)}<br />
+            <a href="${CLUB_URL}" style="color:#E0532A;text-decoration:none;">labase-nutrition.com</a>
+          </div>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
