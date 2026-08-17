@@ -116,6 +116,56 @@ export function buildCrmSmsLink(contact: string | null, message: string): string
   return phone ? `sms:${phone}?body=${text}` : `sms:?body=${text}`;
 }
 
+/**
+ * Le lien « répondre par mail ».
+ *
+ * Il existe parce que 4 des 11 bilans en ligne — et les 14 réservations du
+ * club — n'ont **que** l'adresse mail, jamais de téléphone. Sur ces fiches,
+ * WhatsApp et SMS ne s'affichent pas, et il ne restait donc AUCUN bouton pour
+ * écrire. Thomas, 16/08 : « faut que je copie l'adresse, aller sur Gmail,
+ * ensuite aller re-copier son message pré-écrit sur l'app ». Deux allers-retours
+ * pour un message qui était déjà rédigé.
+ *
+ * `mailto:` ouvre la messagerie du coach avec tout déjà rempli — le message part
+ * donc de SA vraie adresse, et la réponse arrive dans SA boîte.
+ *
+ * ⚠️ L'objet ne se déduit pas du message : mis dans le corps, la première ligne
+ * ferait un objet vide et un mail qui commence par « Bonjour Malone ! » dans la
+ * barre de titre.
+ */
+export function buildCrmMailLink(
+  contact: string | null,
+  message: string,
+  objet: string,
+): string {
+  const email = (contact ?? "").trim();
+  const params = new URLSearchParams({ subject: objet, body: message });
+  // URLSearchParams encode l'espace en « + », que les clients mail affichent
+  // tel quel dans le corps du message. Il faut le vrai %20.
+  const q = params.toString().replace(/\+/g, "%20");
+  return email.includes("@") ? `mailto:${email}?${q}` : `mailto:?${q}`;
+}
+
+/** L'objet du mail, par source de lead — court, sans point final. */
+export function objetPourLead(lead: CrmLead, ctx: CrmMessageContext): string {
+  switch (lead.source) {
+    case "bilan-online":
+      return `Ton bilan bien-être — ${ctx.coachFirstName}, La Base 360`;
+    case "vip":
+      return `Ta demande Club VIP — ${ctx.coachFirstName}, La Base 360`;
+    case "reco-client":
+      return `On m'a parlé de toi — ${ctx.coachFirstName}, La Base 360`;
+    case "site-club":
+      return `Ton rendez-vous au Breakfast Club`;
+    case "opportunite":
+    case "simulateur":
+    case "business":
+      return `Ton projet avec La Base 360 — ${ctx.coachFirstName}`;
+    default:
+      return `La Base 360 — ${ctx.coachFirstName}`;
+  }
+}
+
 /** Telegram n'accepte pas de destinataire par numéro dans l'URL de partage
     (contrairement à wa.me) — le coach choisit le contact dans l'app. */
 export function buildCrmTelegramLink(message: string): string {

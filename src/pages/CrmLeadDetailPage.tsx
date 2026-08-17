@@ -21,7 +21,7 @@ import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, prenomProvenance, pr
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
-import { buildCrmSmsLink, buildCrmWhatsAppLink } from "../lib/crmMessages";
+import { buildCrmMailLink, buildCrmSmsLink, buildCrmWhatsAppLink, objetPourLead } from "../lib/crmMessages";
 import { relativeLeadDays } from "../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
@@ -782,6 +782,19 @@ export function CrmLeadDetailPage() {
                   </a>
                 </>
               ) : null}
+              {/* Répondre par mail. Sur les fiches sans téléphone — 4 bilans en
+                  ligne sur 11 — c'était le SEUL bouton manquant : le message
+                  était déjà rédigé juste là, mais il fallait copier l'adresse,
+                  ouvrir sa messagerie, puis revenir chercher le texte. */}
+              {!isIntentionSource && lead.contact && !lead.contactIsPhone ? (
+                <a
+                  href={buildCrmMailLink(lead.contact, message, objetPourLead(lead, msgCtx))}
+                  onClick={recordTouch}
+                  style={actionBtn("var(--ls-teal)")}
+                >
+                  ✉️ Répondre par mail
+                </a>
+              ) : null}
               <button
                 type="button"
                 onClick={() => { recordTouch(); copyMessage(message); }}
@@ -812,6 +825,10 @@ export function CrmLeadDetailPage() {
                   {lead.contactIsPhone ? (
                     <a href={buildCrmWhatsAppLink(lead.contact, aiMessage)} target="_blank" rel="noopener noreferrer" style={actionBtn("#25D366")}>
                       📱 WhatsApp
+                    </a>
+                  ) : lead.contact ? (
+                    <a href={buildCrmMailLink(lead.contact, aiMessage, objetPourLead(lead, msgCtx))} style={actionBtn("var(--ls-teal)")}>
+                      ✉️ Par mail
                     </a>
                   ) : null}
                   <button type="button" onClick={() => copyMessage(aiMessage)} style={actionBtn("var(--ls-teal)")}>📋 Copier</button>
@@ -844,6 +861,10 @@ export function CrmLeadDetailPage() {
                       {lead.contactIsPhone ? (
                         <a href={buildCrmWhatsAppLink(lead.contact, msg)} target="_blank" rel="noopener noreferrer" onClick={() => recordTouch()} style={actionBtn("#25D366")}>
                           📱 WhatsApp
+                        </a>
+                      ) : lead.contact ? (
+                        <a href={buildCrmMailLink(lead.contact, msg, `Ta page perso — ${msgCtx.coachFirstName}, La Base 360`)} onClick={() => recordTouch()} style={actionBtn("var(--ls-teal)")}>
+                          ✉️ Par mail
                         </a>
                       ) : null}
                       <button type="button" onClick={() => { recordTouch(); copyMessage(link); }} style={actionBtn("var(--ls-teal)")}>
