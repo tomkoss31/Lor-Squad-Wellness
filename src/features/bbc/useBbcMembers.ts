@@ -1,7 +1,20 @@
 // =============================================================================
-// useBbcMembers — les membres BBC du coach + leur récap (chantier BBC).
-// Membre BBC = client ebe_bbc du coach. Agrège : infos fiche + visites (RPC)
-// + cœurs (client_referrals). RLS-safe (clients/refs du coach, RPC own rows).
+// useBbcMembers — les membres BBC + leur récap (chantier BBC).
+// Agrège : infos fiche + visites (RPC) + cœurs (client_referrals).
+//
+// ── QUI VOIT QUOI (corrigé le 17/08) ────────────────────────────────────────
+// La liste filtrait sur `distributor_id = moi`. Conséquence vécue : Mélanie
+// inscrit Gwendoline, et Thomas — qui dirige le club — ne la voit nulle part.
+// Or un membre appartient au CLUB, pas à l'un des deux coachs du comptoir.
+//
+// Un ADMIN voit donc tous les membres de son club ; un coach non-admin garde
+// les siens. Ce n'est pas un changement de sécurité : la RLS autorisait DÉJÀ
+// la lecture (`clients select own or admin`), c'est l'écran qui restreignait.
+//
+// Corollaire, moins évident : les visites du jour et les jetons d'application
+// étaient eux aussi filtrés par coach. Un membre scanné par Mélanie n'aurait
+// pas été « vu aujourd'hui » chez Thomas, et son QR aurait été introuvable.
+// Les deux se filtrent désormais sur les membres affichés.
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -29,6 +42,9 @@ export interface BbcMember {
   card: { type: number; used: number; remaining: number; expired: boolean } | null;
   /** Token d'accès à son app membre — permet au coach d'ouvrir la PWA telle qu'il la voit. */
   appToken?: string;
+  /** Qui a inscrit cette personne. Sert au filtre « mes membres » et à l'afficher. */
+  ownerId?: string;
+  ownerName?: string;
 }
 
 export interface UseBbcMembersResult {
@@ -59,19 +75,46 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
       }
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
-      const [clientsRes, countsRes, refsRes, todayRes, cardsRes, tokensRes] = await Promise.all([
-        sb
-          .from("clients")
-          .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up")
-          .eq("distributor_id", userId)
-          .eq("ebe_bbc", true)
-          .order("first_name"),
+
+      // Le périmètre : le club pour un admin, sinon ses propres clients.
+      // `users.club_id` (migration du 17/08) dit où le coach travaille — un
+      // admin qui ne POSSÈDE pas le club en fait partie quand même.
+      const { data: moi } = await sb
+        .from("users")
+        .select("role, club_id")
+        .eq("id", userId)
+        .maybeSingle();
+      const monRole = String((moi as { role?: string } | null)?.role ?? "");
+      const monClub = (moi as { club_id?: string | null } | null)?.club_id ?? null;
+      const vueClub = monRole === "admin" && !!monClub;
+
+      let requeteClients = sb
+        .from("clients")
+        .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up, distributor_id, distributor_name")
+        .eq("ebe_bbc", true);
+      requeteClients = vueClub
+        ? requeteClients.eq("club_id", monClub)
+        : requeteClients.eq("distributor_id", userId);
+
+      const [clientsRes, countsRes, refsRes, cardsRes] = await Promise.all([
+        requeteClients.order("first_name"),
         sb.rpc("bbc_visit_counts"),
         sb.from("client_referrals").select("from_client_id, status"),
-        sb.from("club_visits").select("client_id").eq("coach_user_id", userId).gte("visited_at", startOfDay.toISOString()),
         sb.rpc("bbc_active_cards"),
-        sb.from("client_app_accounts").select("client_id, token").eq("coach_id", userId),
       ]);
+
+      // Visites du jour et jetons : filtrés sur les membres AFFICHÉS, plus sur
+      // le coach connecté. Sinon un membre inscrit par l'autre admin n'aurait
+      // ni pastille « vu aujourd'hui » ni QR. La RLS reste la vraie barrière.
+      const idsAffiches = Array.isArray(clientsRes.data)
+        ? (clientsRes.data as Array<Record<string, unknown>>).map((r) => String(r.id))
+        : [];
+      const [todayRes, tokensRes] = idsAffiches.length
+        ? await Promise.all([
+            sb.from("club_visits").select("client_id").in("client_id", idsAffiches).gte("visited_at", startOfDay.toISOString()),
+            sb.from("client_app_accounts").select("client_id, token").in("client_id", idsAffiches),
+          ])
+        : [{ data: [] }, { data: [] }];
       if (Array.isArray(tokensRes.data)) {
         const tk: Record<string, string> = {};
         for (const r of tokensRes.data as Array<Record<string, unknown>>) tk[String(r.client_id)] = String(r.token);
@@ -140,6 +183,8 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           visitedToday: today.has(id),
           card: cards[id] ?? null,
           appToken: tokens[id],
+          ownerId: (r.distributor_id as string) || undefined,
+          ownerName: (r.distributor_name as string) || undefined,
         } as BbcMember;
       }),
     [rows, counts, hearts, today, cards, tokens],
