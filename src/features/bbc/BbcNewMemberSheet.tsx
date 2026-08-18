@@ -397,6 +397,13 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
   const [busy, setBusy] = useState(false);
   const [termine, setTermine] = useState(false);
   const [confirmFermeture, setConfirmFermeture] = useState(false);
+  // Le garde-fou anti-doublon (audit du 18/08). La feuille créait TOUJOURS une
+  // fiche, sans jamais regarder si la personne existait déjà — et en mode BBC
+  // c'est le seul bouton du comptoir. Une cliente suivie depuis un an qui
+  // prend sa carte se retrouvait avec une DEUXIÈME fiche : deux bilans
+  // initiaux, deux accès à l'app, deux QR, et son historique coupé en deux.
+  const [doublon, setDoublon] = useState<{ id: string; nom: string; indice: string } | null>(null);
+  const [doublonEcarte, setDoublonEcarte] = useState(false);
   const [etats, setEtats] = useState<Record<EtapeId, Statut>>({
     fiche: "attente",
     membre: "attente",
@@ -603,6 +610,58 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
    * de rendre la main (cf. `retrouverFicheOrpheline`) — c'est ce qui empêche
    * un second tap de créer une deuxième fois la même personne.
    */
+  /**
+   * Cette personne est-elle DÉJÀ dans la base de ce coach ?
+   *
+   * On cherche sur trois pistes, dans l'ordre où elles se trompent le moins :
+   * le téléphone (chiffres seuls — « 06 12 » et « 0612 » sont le même), l'email,
+   * puis le nom complet. Les membres déjà au club sont exclus : ce ne sont pas
+   * des doublons, ils sont déjà passés par là.
+   *
+   * Un échec réseau ne bloque PAS la création : mieux vaut un doublon
+   * rattrapable qu'un comptoir en panne devant la personne.
+   */
+  async function chercherDoublon(): Promise<{ id: string; nom: string; indice: string } | null> {
+    const distributorId = currentUser?.id ?? userId ?? "";
+    if (!distributorId) return null;
+    const tel = f.tel.replace(/\D/g, "");
+    const email = f.email.trim().toLowerCase();
+    const prenom = f.prenom.trim();
+    const nom = f.nom.trim();
+    if (!tel && !email && !prenom) return null;
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) return null;
+      const { data, error } = await sb
+        .from("clients")
+        .select("id, first_name, last_name, phone, email, ebe_bbc")
+        .eq("distributor_id", distributorId)
+        .limit(400);
+      if (error || !Array.isArray(data)) return null;
+      for (const c of data as Array<Record<string, unknown>>) {
+        if (c.ebe_bbc === true) continue;
+        const cTel = String(c.phone ?? "").replace(/\D/g, "");
+        const cMail = String(c.email ?? "").trim().toLowerCase();
+        const cPrenom = String(c.first_name ?? "").trim();
+        const cNom = String(c.last_name ?? "").trim();
+        const memeNom =
+          prenom.localeCompare(cPrenom, "fr", { sensitivity: "base" }) === 0 &&
+          nom.localeCompare(cNom, "fr", { sensitivity: "base" }) === 0;
+        // Un téléphone se compare sur les 9 derniers chiffres : indicatif
+        // international ou non, c'est le même appareil.
+        const memeTel = tel.length >= 9 && cTel.length >= 9 && tel.slice(-9) === cTel.slice(-9);
+        const memeMail = email.length > 3 && cMail === email;
+        const indice = memeTel ? "même téléphone" : memeMail ? "même email" : memeNom ? "même nom" : null;
+        if (indice) {
+          return { id: String(c.id), nom: `${cPrenom} ${cNom}`.trim(), indice };
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async function creerLaFiche(): Promise<string> {
     const distributorId = currentUser?.id ?? userId ?? "";
     if (!distributorId) throw new Error("Coach inconnu — reconnecte-toi.");
@@ -807,6 +866,16 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
     setBusy(true);
 
     let id = clientIdRef.current;
+    if (!id && !doublonEcarte) {
+      const trouve = await chercherDoublon();
+      if (trouve) {
+        // On ne crée RIEN tant que le coach n'a pas tranché. C'est le seul
+        // moment où l'on peut encore éviter la deuxième fiche.
+        setDoublon(trouve);
+        setBusy(false);
+        return;
+      }
+    }
     if (!id) {
       poser("fiche", "encours");
       try {
@@ -1296,6 +1365,46 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
 
         {/* ── Barre de validation figée ─────────────────────────────────── */}
         <div style={{ flex: "none", padding: "12px 18px calc(16px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--ls-bbc-line)" }}>
+          {/* LE GARDE-FOU. Il s'affiche AVANT toute écriture : c'est le seul
+              moment où l'on peut encore éviter la deuxième fiche. Les deux
+              issues sont explicites — on ne devine pas à la place du coach. */}
+          {doublon ? (
+            <div style={{ marginBottom: 10, padding: "13px 14px", borderRadius: 13, background: "color-mix(in srgb, var(--ls-bbc-amber) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 38%, transparent)" }}>
+              <div style={{ fontSize: 13.5, color: "var(--ls-bbc-text)", lineHeight: 1.5, fontWeight: 600 }}>
+                Une fiche existe déjà : {doublon.nom}
+              </div>
+              <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginTop: 4 }}>
+                {doublon.indice}. Si c'est bien elle, on la passe en membre du club — elle
+                garde ses bilans, son poids de départ et son historique. Sinon on crée une
+                nouvelle fiche.
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 11, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // On ADOPTE la fiche existante : `executer` reprend à
+                    // l'étape 2 et ne crée donc aucune deuxième personne.
+                    clientIdRef.current = doublon.id;
+                    oublierBrouillon();
+                    setTermine(true);
+                    setDoublon(null);
+                    void executer();
+                  }}
+                  style={{ flex: "1 1 190px", minHeight: 46, border: 0, borderRadius: 12, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                >
+                  c'est elle — la passer en membre
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDoublonEcarte(true); setDoublon(null); void executer(); }}
+                  style={{ flex: "1 1 150px", minHeight: 46, borderRadius: 12, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, cursor: "pointer" }}
+                >
+                  non, quelqu'un d'autre
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {confirmFermeture ? (
             <div style={{ marginBottom: 10, padding: "11px 13px", borderRadius: 12, background: "color-mix(in srgb, var(--ls-bbc-amber) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 34%, transparent)" }}>
               <div style={{ fontSize: 12.5, color: "var(--ls-bbc-text)", lineHeight: 1.45 }}>
