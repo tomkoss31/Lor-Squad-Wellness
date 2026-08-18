@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Le CRM en un coup d'œil</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+/* Tokens réels du thème sombre de l'app (src/styles/globals.css). */
+:root{
+  --bg:#0B0D11; --surface:#12211E; --surface2:#182B27;
+  --border:rgba(236,239,234,.12); --text:#ECEFEA; --muted:#9BAAA3;
+  --teal:#2DD4BF; --lime:#c5f82a; --coral:#FF6B57; --amber:#E9A23B; --purple:#A78BFA;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 90px}
+.avert{background:rgba(167,139,250,.10);border-bottom:1px solid rgba(167,139,250,.30);
+  padding:9px 14px;font-size:12.5px;color:#C9B8FB;text-align:center;line-height:1.45}
+h1{font-family:Anton;font-weight:400;text-transform:uppercase;font-size:clamp(24px,3.4vw,32px);margin:18px 0 3px;line-height:1.05}
+.sst{margin:0 0 6px;font-size:14.5px;color:var(--muted);line-height:1.55}
+
+.onglets{display:flex;gap:7px;padding:14px 0 6px;flex-wrap:wrap}
+.onglets button{flex:1 1 230px;min-height:46px;border-radius:13px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.onglets button[aria-current="true"]{background:rgba(45,212,191,.10);border-color:rgba(45,212,191,.45);color:var(--teal)}
+.ecran{display:none} .ecran.on{display:block}
+
+.barreH{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.pill{min-height:44px;padding:10px 15px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer}
+.pill[aria-current="true"]{background:rgba(45,212,191,.08);border-color:rgba(45,212,191,.45);color:var(--teal)}
+.rech{flex:1;min-width:190px;min-height:44px;padding:10px 15px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12.5px}
+
+.zone{margin-top:16px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+.zt{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.zt .rond{width:9px;height:9px;border-radius:50%;flex:none}
+.zt .lib{font-family:Syne,sans-serif;font-size:14.5px;font-weight:700}
+.zt .n{font-size:12.5px;color:var(--muted);font-weight:600}
+.zt .quoi{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.row{display:flex;align-items:center;gap:13px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row.sel{background:color-mix(in srgb,var(--teal) 8%,transparent)}
+.row input[type=checkbox]{width:20px;height:20px;flex:none;cursor:pointer;accent-color:#2DD4BF}
+.who{flex:1;min-width:0}
+.nom{font-size:14.5px;font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.etat{font-size:12.5px;color:var(--muted);margin-top:3px;display:block;line-height:1.45}
+.etat .fort{color:var(--coral);font-weight:600}
+.etat .ok{color:var(--teal);font-weight:600}
+.src{font-size:12px;color:var(--muted);flex:none;white-space:nowrap}
+.tel{font-size:12.5px;color:var(--muted);flex:none;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+@media (max-width:760px){ .src,.tel{display:none} }
+
+.barre{position:sticky;bottom:12px;margin-top:16px;background:var(--surface);
+  border:1px solid color-mix(in srgb,var(--teal) 42%,var(--border));border-radius:16px;
+  padding:15px 17px;box-shadow:0 20px 44px -24px rgba(0,0,0,.95)}
+.barre .t{font-family:Syne,sans-serif;font-size:15.5px;font-weight:700;margin:0 0 3px}
+.barre .s{margin:0 0 13px;font-size:12.5px;color:var(--muted);line-height:1.55}
+.choix{display:flex;gap:8px;flex-wrap:wrap}
+.choix button{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:11px 15px;
+  border-radius:12px;border:1px solid var(--border);background:var(--surface2);
+  color:var(--text);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.choix button:hover{border-color:var(--teal)}
+.choix .q{font-weight:500;color:var(--muted);font-size:12px}
+.annuler{margin-top:11px;background:none;border:0;color:var(--muted);font-family:inherit;
+  font-size:13px;text-decoration:underline;cursor:pointer;padding:8px 0;min-height:44px}
+
+.apres{margin-top:16px;padding:16px 18px;border-radius:14px;background:rgba(45,212,191,.10);
+  border:1px solid rgba(45,212,191,.35);font-size:14px;line-height:1.6}
+.apres b{color:var(--text)}
+.note{margin-top:18px;font-size:13px;line-height:1.7;color:var(--muted)}
+.note b{color:var(--text)}
+.q2{border-left:3px solid var(--amber);padding:13px 16px;background:rgba(233,162,59,.08);
+  border-radius:0 12px 12px 0;font-size:13.5px;line-height:1.65;margin:18px 0}
+.q2 b{color:var(--amber)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+table.cmp{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+table.cmp td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.6}
+table.cmp td:first-child{color:var(--muted);width:42%}
+table.cmp td b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="avert"><b>MAQUETTE</b> — rien n'est branché. Les 7 personnes sont celles de ton CRM ce matin.</div>
+
+<div class="wrap">
+  <div class="onglets">
+    <button aria-current="true" onclick="ong(0)">1 · La liste, lisible</button>
+    <button onclick="ong(1)">2 · Ce qu'on a retiré</button>
+  </div>
+
+  <section class="ecran on" id="a">
+    <h1>Tes contacts</h1>
+    <p class="sst">7 personnes t'attendent aujourd'hui — <b style="color:var(--text)">mais pas pour la même chose</b>.</p>
+
+    <div class="barreH">
+      <button class="pill" aria-current="true">👤 Moi</button>
+      <button class="pill">Mon équipe</button>
+      <input class="rech" placeholder="🔍 Un nom, un numéro…">
+      <button class="pill">⋯ Plus de filtres</button>
+    </div>
+
+    <div class="zone">
+      <div class="zt"><span class="rond" style="background:var(--lime)"></span>
+        <span class="lib">Personne ne leur a encore parlé</span><span class="n">· 1</span>
+        <span class="quoi">Le plus urgent</span></div>
+      <label class="row"><input type="checkbox">
+        <span class="who"><span class="nom">Anthony Adeline</span>
+          <span class="etat"><span class="fort">Jamais rappelé</span> · arrivé hier · a déjà un RDV le 11 septembre</span></span>
+        <span class="src">🏠 Club</span><span class="tel">00647100615</span></label>
+    </div>
+
+    <div class="zone">
+      <div class="zt"><span class="rond" style="background:var(--coral)"></span>
+        <span class="lib">À relancer</span><span class="n">· 4</span>
+        <span class="quoi">Tu les as déjà appelés</span></div>
+
+      <label class="row sel"><input type="checkbox" checked>
+        <span class="who"><span class="nom">Armonie Chaumont</span>
+          <span class="etat"><span class="fort">Pas de réponse</span> · tu devais la rappeler il y a 3 jours</span></span>
+        <span class="src">🏠 Club</span><span class="tel">0608856678</span></label>
+
+      <label class="row sel"><input type="checkbox" checked>
+        <span class="who"><span class="nom">Djamal Kader</span>
+          <span class="etat">Contacté le 5 août · aucune suite prévue depuis</span></span>
+        <span class="src">🌱 Bilan</span><span class="tel">0768293198</span></label>
+
+      <label class="row sel"><input type="checkbox" checked>
+        <span class="who"><span class="nom">Florian Petit</span>
+          <span class="etat">Contacté le 7 août · aucune suite prévue depuis</span></span>
+        <span class="src">🌱 Bilan</span><span class="tel">0656767578</span></label>
+
+      <label class="row"><input type="checkbox">
+        <span class="who"><span class="nom">Malone Muri</span>
+          <span class="etat">Contacté hier · aucune suite prévue</span></span>
+        <span class="src">🌱 Bilan</span><span class="tel">malone.muri9@…</span></label>
+    </div>
+
+    <div class="zone">
+      <div class="zt"><span class="rond" style="background:var(--teal)"></span>
+        <span class="lib">Rendez-vous calés</span><span class="n">· 2</span>
+        <span class="quoi">Rien à caler, juste à préparer</span></div>
+      <label class="row"><input type="checkbox">
+        <span class="who"><span class="nom">Céline Ducastelle</span>
+          <span class="etat"><span class="ok">Mardi 8 septembre à 10:00</span> · reprendre du muscle</span></span>
+        <span class="src">🏠 Club</span><span class="tel">+33637632245</span></label>
+      <label class="row"><input type="checkbox">
+        <span class="who"><span class="nom">Mylène Roux</span>
+          <span class="etat"><span class="ok">Rendez-vous pris</span> · colis</span></span>
+        <span class="src">🎁 Colis</span><span class="tel">0788190704</span></label>
+    </div>
+
+    <div class="barre">
+      <p class="t">3 personnes cochées — qu'est-ce qui s'est passé ?</p>
+      <p class="s">La même réponse pour les trois. Tu n'écris aucune date.</p>
+      <div class="choix">
+        <button>📵 Pas de réponse <span class="q">· demain</span></button>
+        <button>📞 Rappellera <span class="q">· dans 3 jours</span></button>
+        <button>🤔 Ne sait pas <span class="q">· dans 7 jours</span></button>
+        <button>🌙 Pas maintenant <span class="q">· dans 1 mois</span></button>
+      </div>
+      <button class="annuler">Tout décocher</button>
+    </div>
+
+    <div class="apres">
+      ✅ <b>3 personnes rangées.</b> Elles quittent « À relancer » et reviendront d'elles-mêmes le
+      jour dit. Tu n'as rien à noter nulle part.
+    </div>
+
+    <div class="q2">
+      <b>Une question.</b> Le lot applique <b>une seule</b> réponse à toute la sélection — fait pour
+      « j'en ai appelé cinq, trois n'ont pas décroché ». Pour quelqu'un qui a répondu quelque chose
+      de particulier, tu le fais sur sa fiche. Ça te va, ou tu veux aussi un délai libre
+      « <span class="mono">rappelle-moi dans X jours</span> » sans dire ce qui s'est passé ?
+    </div>
+  </section>
+
+  <section class="ecran" id="b">
+    <h1>Ce qu'on a retiré</h1>
+    <p class="sst">Chaque ligne portait <b style="color:var(--coral)">16 informations</b>. Il en reste 4 :
+      le nom, ce qui s'est passé, d'où il vient, son numéro.</p>
+
+    <table class="cmp">
+      <tr><td>« sans suite » <b>et</b> la colonne « Contactés »</td>
+          <td><b>Fusionnés.</b> Les deux disaient la même chose avec deux mots différents. Il reste une phrase : « Contacté le 5 août, aucune suite prévue ».</td></tr>
+      <tr><td>« 2 fiches »</td>
+          <td>Descendu dans la fiche. C'est un doublon à nettoyer, pas une raison d'appeler.</td></tr>
+      <tr><td>« ⏳ 5j » (le sablier)</td>
+          <td>Remplacé par une phrase : « tu devais la rappeler il y a 3 jours ». Un nombre de jours ne dit pas s'il faut agir.</td></tr>
+      <tr><td>« Reçu le 05/08 »</td>
+          <td>Intégré à la phrase quand il sert, retiré sinon.</td></tr>
+      <tr><td>« ⛔ Sans créneau », « 👤 Non attribué », l'objectif, la ville</td>
+          <td>Dans la fiche. Utiles une fois qu'on l'ouvre, pas pour choisir qui appeler.</td></tr>
+      <tr><td>La colonne « Statut »</td>
+          <td>Devient le <b>groupe</b>. Le titre au-dessus dit déjà l'état ; le répéter sur chaque ligne n'apprend rien.</td></tr>
+    </table>
+
+    <p class="note">
+      <b>Ce qui change vraiment :</b> les groupes ne disent plus <i>quand</i>, mais <b>quoi faire</b>.
+      « Aujourd'hui · 7 » mélangeait quelqu'un qu'on n'a jamais appelé, quatre relances en retard et
+      deux rendez-vous déjà pris. Trois gestes différents dans un seul tas.
+    </p>
+    <p class="note">
+      <b>Rien n'est supprimé.</b> Tout ce qui quitte la ligne se retrouve sur la fiche, à un clic.
+      Et « ⋯ Plus de filtres » garde l'Historique, les Endormis et le Pipeline.
+    </p>
+  </section>
+</div>
+
+<script>
+function ong(i){
+  document.querySelectorAll('.ecran').forEach((e,k)=>e.classList.toggle('on',k===i));
+  document.querySelectorAll('.onglets button').forEach((b,k)=>b.setAttribute('aria-current',String(k===i)));
+  scrollTo(0,0);
+}
+</script>
+</body>
+</html>
