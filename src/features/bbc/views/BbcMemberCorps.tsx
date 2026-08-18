@@ -31,6 +31,7 @@ import {
   type Goal,
 } from "../../../lib/bodyMetricUnits";
 import { chargerCorpsMembre, type CorpsMembre } from "../relevesMembre";
+import { BbcMensurationsCoach } from "./BbcMensurationsCoach";
 
 interface Props {
   clientId: string;
@@ -300,6 +301,14 @@ export function BbcMemberCorps({ clientId, prenom, objectif, onCharge, onNouvell
           ⚖️ Nouvelle pesée
         </button>
       ) : null}
+
+      {/* LES MENSURATIONS. Elles manquaient totalement à la fiche du club
+          (Thomas, 18/08 : « je ne vois nulle part les mensurations, ni où les
+          appliquer manuellement »). Même silhouette et mêmes guides que côté
+          membre — seul l'auteur de la ligne change. */}
+      <div style={{ marginTop: 14 }}>
+        <BbcMensurationsCoach clientId={clientId} prenom={prenom} />
+      </div>
     </div>
   );
 }

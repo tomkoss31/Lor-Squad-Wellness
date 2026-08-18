@@ -34,6 +34,18 @@ import type { Measurement } from "./MemberEvolution";
 interface Props {
   token: string;
   measurements: Measurement[];
+  /**
+   * Le titre du bloc. Le coach lit « ses mensurations », la membre « mes
+   * mensurations » — c'est le seul mot qui change entre les deux usages.
+   */
+  titre?: string;
+  /**
+   * Comment écrire. Par défaut : l'edge `client-app-save-measurement`, seule
+   * voie du membre (rôle `anon`). Le COACH, lui, est authentifié et doit
+   * écrire sous son propre nom — il passe donc son écrivain, et la ligne porte
+   * `measured_by_type = 'coach'` au lieu de `'client'`.
+   */
+  ecrire?: (measures: Partial<Record<MeasurementKey, number>>) => Promise<void>;
 }
 
 /** Positions sur la silhouette 160×340 — celles de la PWA classique. */
@@ -90,7 +102,7 @@ const eyebrow: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function MemberMensurations({ token, measurements }: Props) {
+export function MemberMensurations({ token, measurements, titre, ecrire }: Props) {
   // Sessions triées : la plus ancienne est le point de départ des écarts.
   const sessions = useMemo(
     () => [...measurements].sort((a, b) => (a.measured_at ?? "").localeCompare(b.measured_at ?? "")),
@@ -171,12 +183,17 @@ export function MemberMensurations({ token, measurements }: Props) {
         const v = locales[k];
         if (v != null) measures[k] = v;
       }
-      const { error } = await sb.functions.invoke("client-app-save-measurement", {
-        body: { token, measures },
-      });
-      // `functions.invoke` remonte bien une erreur sur 400/403 : c'est ce qui
-      // empêche un faux « enregistré » quand l'edge a tout refusé.
-      if (error) throw error;
+      if (ecrire) {
+        // Chemin coach : il est authentifié, il écrit sous son nom.
+        await ecrire(measures);
+      } else {
+        const { error } = await sb.functions.invoke("client-app-save-measurement", {
+          body: { token, measures },
+        });
+        // `functions.invoke` remonte bien une erreur sur 400/403 : c'est ce qui
+        // empêche un faux « enregistré » quand l'edge a tout refusé.
+        if (error) throw error;
+      }
       setBrouillon([]);
       setFait(true);
       window.setTimeout(() => setFait(false), 2500);
@@ -193,7 +210,7 @@ export function MemberMensurations({ token, measurements }: Props) {
     <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 18, padding: 18 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <div style={eyebrow}>
-          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-teal)" }} />mes mensurations
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-teal)" }} />{titre ?? "mes mensurations"}
         </div>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-muted)" }}>
           {remplies}/10 zones{totalPerdu > 0 ? ` · − ${fr(totalPerdu)} cm` : ""}
