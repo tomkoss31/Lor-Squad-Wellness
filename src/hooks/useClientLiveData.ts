@@ -73,12 +73,28 @@ export interface ClientLiveData {
   }>;
   // Chantier MEGA app client v2 (2026-04-25) : mensurations normalisées
   // (cm, avg gauche/droite côté edge pour thigh/arm).
+  /**
+   * Une session de mensurations. Les quatre clés historiques restent — trois
+   * consommateurs en dépendent, dont le garde qui décide si le client a déjà un
+   * point de départ. `cm` porte le BRUT gauche/droite : une silhouette à dix
+   * points ne peut pas se contenter d'une moyenne, on ne saurait pas quel bras
+   * on modifie.
+   */
   measurements?: Array<{
     measured_at: string;
     waist_cm?: number;
     hips_cm?: number;
     thigh_cm?: number;
     arm_cm?: number;
+    neck_cm?: number;
+    chest_cm?: number;
+    calf_cm?: number;
+    by?: "coach" | "client";
+    cm?: Partial<Record<
+      "neck" | "chest" | "waist" | "hips" | "thigh_left" | "thigh_right"
+        | "arm_left" | "arm_right" | "calf_left" | "calf_right",
+      number
+    >>;
   }>;
   // Chantier Conseils client (2026-04-24) : enrichissements payload.
   assessment_history?: ClientLiveAssessmentRow[];

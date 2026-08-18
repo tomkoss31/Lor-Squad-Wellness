@@ -252,9 +252,15 @@ serve(async (req) => {
       // ces noms normalisés, indépendamment du schema DB.
       supabase
         .from("client_measurements")
-        .select("measured_at, waist, hips, thigh_left, thigh_right, arm_left, arm_right")
+        .select(
+          "measured_at, measured_by_type, neck, chest, waist, hips, thigh_left, thigh_right, arm_left, arm_right, calf_left, calf_right",
+        )
         .eq("client_id", clientId)
-        .order("measured_at", { ascending: true }),
+        .order("measured_at", { ascending: true })
+        // PostgREST tronque en SILENCE a 1000 lignes (HTTP 206 que supabase-js
+        // n'expose pas). 37 sessions aujourd'hui, mais une borne explicite vaut
+        // mieux qu'une troncature muette le jour ou il y en aura mille.
+        .limit(200),
 
       // Chantier BBC : compteur de visites du membre (carte de membre PWA).
       supabase
@@ -377,12 +383,17 @@ serve(async (req) => {
     // Normalisation mensurations → schéma payload uniforme.
     interface RawMeasurement {
       measured_at: string;
+      measured_by_type?: string | null;
+      neck?: number | null;
+      chest?: number | null;
       waist?: number | null;
       hips?: number | null;
       thigh_left?: number | null;
       thigh_right?: number | null;
       arm_left?: number | null;
       arm_right?: number | null;
+      calf_left?: number | null;
+      calf_right?: number | null;
     }
     const avgPair = (a: number | null | undefined, b: number | null | undefined): number | undefined => {
       const aN = typeof a === "number" ? a : null;
@@ -392,12 +403,39 @@ serve(async (req) => {
       if (bN != null) return bN;
       return undefined;
     };
+    const brut = (v: number | null | undefined): number | undefined =>
+      typeof v === "number" ? v : undefined;
     const measurementsPayload = ((measurementsRes.data ?? []) as RawMeasurement[]).map((m) => ({
       measured_at: m.measured_at,
-      waist_cm: typeof m.waist === "number" ? m.waist : undefined,
-      hips_cm: typeof m.hips === "number" ? m.hips : undefined,
+      // ⚠️ NE JAMAIS RETIRER ces quatre cles. Trois consommateurs en dependent,
+      // dont le garde de `ClientAppPage` qui decide si le client a deja un point
+      // de depart : les retirer ferait revenir l'ecran « point de depart » a
+      // TOUT LE MONDE.
+      waist_cm: brut(m.waist),
+      hips_cm: brut(m.hips),
       thigh_cm: avgPair(m.thigh_left, m.thigh_right),
       arm_cm: avgPair(m.arm_left, m.arm_right),
+      // Les trois zones qui manquaient — elles sont bien remplies en base
+      // (cou 24 sessions, poitrine 29, mollet 16), simplement jamais renvoyees.
+      neck_cm: brut(m.neck),
+      chest_cm: brut(m.chest),
+      calf_cm: avgPair(m.calf_left, m.calf_right),
+      // Qui a mesure : le membre distingue sa propre saisie de celle du coach.
+      by: m.measured_by_type === "coach" ? "coach" : "client",
+      // Le BRUT gauche/droite. Une silhouette a dix points ne peut pas se
+      // contenter d'une moyenne : on ne saurait pas quel bras on modifie.
+      cm: {
+        neck: brut(m.neck),
+        chest: brut(m.chest),
+        waist: brut(m.waist),
+        hips: brut(m.hips),
+        thigh_left: brut(m.thigh_left),
+        thigh_right: brut(m.thigh_right),
+        arm_left: brut(m.arm_left),
+        arm_right: brut(m.arm_right),
+        calf_left: brut(m.calf_left),
+        calf_right: brut(m.calf_right),
+      },
     }));
 
     // ─── 3. Dérivations Conseils (assessment history + recos + alerts) ─
