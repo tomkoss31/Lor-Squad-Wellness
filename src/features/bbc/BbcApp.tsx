@@ -20,7 +20,7 @@
 // =============================================================================
 
 import "../../styles/bbc-tokens.css";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Club, ClubSettings } from "../../types/domain";
 import { BbcModeSwitch } from "./BbcModeSwitch";
 import { BbcScripts } from "./views/BbcScripts";
@@ -163,6 +163,50 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
   // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
   // longtemps pour inscrire des membres à la mauvaise heure.
   const [reglagesFrais, setReglagesFrais] = useState<ClubSettings | null>(null);
+  /**
+   * Le thème du mode BBC (Thomas, 18/08 : « faudrait aussi le toggle mode clair
+   * pour l'app coach, pas only sombre »).
+   *
+   * ⚠️ Ouvrir ce toggle rend visibles au coach les jetons du bloc
+   * `.bbc-mode.bbc-light`, corrigés le même jour — dont `--ls-bbc-lime-ink`
+   * passé au BLANC. Vérifié call site par call site avant d'ouvrir : les ~50
+   * usages de `lime-ink` du mode coach sont TOUS posés sur un fond sombre en
+   * clair (lime #5E7A09, ambre #9A631A ou teal #0F766E). L'encre blanche y
+   * passe partout.
+   *
+   * Pas de persistance : le thème client ne l'est pas non plus, et inventer un
+   * stockage ici ferait diverger les deux côtés pour rien.
+   */
+  const [clair, setClair] = useState(false);
+
+  /**
+   * ⚠️ LE THÈME NE SE PROPAGE PAS TOUT SEUL. Le sélecteur est
+   * `.bbc-mode.bbc-light` : les DEUX classes doivent être sur le MÊME élément.
+   * Or QUATORZE éléments redéclarent `bbc-mode` sur eux-mêmes — la barre du
+   * bas, et toutes les feuilles qui s'affichent en `position: fixed` hors du
+   * flux (pesée, carte, nouveau membre, scanner, appels, semaine…). Sans ça,
+   * l'app passerait en clair et ses feuilles resteraient noires.
+   *
+   * On synchronise donc TOUS les `.bbc-mode` du document — c'est déjà ce que
+   * fait l'atelier. Le `MutationObserver` est indispensable : une feuille
+   * montée APRÈS le basculement n'aurait jamais reçu la classe.
+   */
+  useEffect(() => {
+    const appliquer = () => {
+      document
+        .querySelectorAll(".bbc-mode")
+        .forEach((el) => el.classList.toggle("bbc-light", clair));
+    };
+    appliquer();
+    const observateur = new MutationObserver(appliquer);
+    observateur.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      observateur.disconnect();
+      // On ne laisse JAMAIS le clair derrière soi : le mode coach classique et
+      // l'app membre ont leur propre thème, ils ne doivent pas hériter du nôtre.
+      document.querySelectorAll(".bbc-mode").forEach((el) => el.classList.remove("bbc-light"));
+    };
+  }, [clair]);
   const club = clubProp && reglagesFrais ? { ...clubProp, settings: reglagesFrais } : clubProp;
   const [section, setSection] = useState<SectionKey>("club");
   const [view, setViewState] = useState<BbcView>("cockpit");
@@ -197,7 +241,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
   }
 
   return (
-    <div className="bbc-mode bbc-shell">
+    <div className={clair ? "bbc-mode bbc-shell bbc-light" : "bbc-mode bbc-shell"}>
       {/* ── Sidebar (desktop) ─────────────────────────────────────────── */}
       <aside className="bbc-sidebar">
         <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "4px 8px 14px" }}>
@@ -384,7 +428,38 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "club100" && <BbcClub100 userId={userId} clubId={club?.id ?? null} />}
-        {view === "reglages" && <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />}
+        {view === "reglages" && (
+          <>
+            {/* L'APPARENCE, en tête des réglages. Le club ouvre à 7 h dans une
+                salle très éclairée : le sombre y est illisible, et c'est
+                justement l'heure où le coach pointe les visites. */}
+            <button
+              type="button"
+              onClick={() => setClair((v) => !v)}
+              aria-pressed={clair}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, width: "100%",
+                minHeight: 54, padding: "12px 15px", marginBottom: 14,
+                borderRadius: 14, background: "var(--ls-bbc-s1)",
+                border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-text)",
+                fontFamily: "var(--ls-bbc-font-body)", fontSize: 14.5,
+                textAlign: "left", cursor: "pointer",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 19 }}>{clair ? "☀️" : "🌙"}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontWeight: 600 }}>Apparence</span>
+                <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 2 }}>
+                  {clair ? "clair — pour le comptoir du matin" : "sombre — le réglage d'origine"}
+                </span>
+              </span>
+              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-muted)", flex: "none" }}>
+                {clair ? "clair" : "sombre"}
+              </span>
+            </button>
+            <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />
+          </>
+        )}
       </main>
 
       {/* ── Bottom nav (mobile) : les 5 sections, rien de caché ───────── */}

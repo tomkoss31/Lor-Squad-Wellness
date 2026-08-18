@@ -46,10 +46,24 @@ interface Props {
   cle?: number;
 }
 
-const LIGNES: Array<{ k: BodyMetricKey; ic: string; nom: string }> = [
-  { k: "weight", ic: "⚖️", nom: "Poids" },
-  { k: "bodyFat", ic: "🔥", nom: "Masse grasse" },
-  { k: "muscleMass", ic: "💪", nom: "Masse musculaire" },
+/**
+ * Les SIX métriques, celles de la PWA classique et de l'app membre.
+ *
+ * Il n'y en avait que trois ici — Thomas, 18/08 : « finalement le client a une
+ * meilleure visibilité que moi coach ». La donnée était pourtant déjà chargée :
+ * `ScanValues` porte les huit mesures de la balance depuis toujours.
+ *
+ * `teinte` sert au tracé de la courbe. Graisse viscérale et âge métabolique
+ * n'ont pas d'équivalent BBC dans la charte : ambre et sauge, les deux teintes
+ * encore libres de sens sur cet écran.
+ */
+const LIGNES: Array<{ k: BodyMetricKey; ic: string; nom: string; teinte: string }> = [
+  { k: "weight", ic: "⚖️", nom: "Poids", teinte: "var(--ls-bbc-lime)" },
+  { k: "bodyFat", ic: "🔥", nom: "Masse grasse", teinte: "var(--ls-bbc-coral)" },
+  { k: "muscleMass", ic: "💪", nom: "Masse musculaire", teinte: "var(--ls-bbc-teal)" },
+  { k: "hydration", ic: "💧", nom: "Hydratation", teinte: "var(--ls-bbc-violet)" },
+  { k: "visceralFat", ic: "🎯", nom: "Graisse viscérale", teinte: "var(--ls-bbc-amber)" },
+  { k: "metabolicAge", ic: "⏳", nom: "Âge métabolique", teinte: "var(--ls-bbc-sage)" },
 ];
 
 const fr = (n: number, d = 1) => n.toFixed(d).replace(".", ",");
@@ -65,6 +79,9 @@ export function BbcMemberCorps({ clientId, prenom, objectif, onCharge, onNouvell
   const [corps, setCorps] = useState<CorpsMembre | null>(null);
   const [unite, setUnite] = useState<DisplayUnit>("percent");
   const [ouvert, setOuvert] = useState(false);
+  // La métrique dont on trace la courbe. Le poids par défaut : c'est celle
+  // qu'on regarde en premier, et la seule qui est toujours renseignée.
+  const [choisie, setChoisie] = useState<BodyMetricKey>("weight");
 
   useEffect(() => {
     let vivant = true;
@@ -150,14 +167,26 @@ export function BbcMemberCorps({ clientId, prenom, objectif, onCharge, onNouvell
         </>
       ) : (
         mesures.map((m, i) => (
-          <div
+          <button
             key={m.k}
+            type="button"
+            onClick={() => setChoisie(m.k)}
+            aria-pressed={choisie === m.k}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 12,
-              padding: i === 0 ? "2px 0 12px" : "12px 0",
+              width: "100%",
+              textAlign: "left",
+              background: choisie === m.k ? `color-mix(in srgb, ${m.teinte} 10%, transparent)` : "transparent",
+              border: 0,
               borderTop: i === 0 ? 0 : "1px solid var(--ls-bbc-line)",
+              borderLeft: `3px solid ${choisie === m.k ? m.teinte : "transparent"}`,
+              borderRadius: choisie === m.k ? 10 : 0,
+              cursor: "pointer",
+              fontFamily: "var(--ls-bbc-font-body)",
+              color: "var(--ls-bbc-text)",
+              padding: i === 0 ? "2px 8px 12px" : "12px 8px",
             }}
           >
             <span aria-hidden="true" style={{ fontSize: 18, flex: "none", lineHeight: 1.2 }}>{m.ic}</span>
@@ -194,9 +223,84 @@ export function BbcMemberCorps({ clientId, prenom, objectif, onCharge, onNouvell
                 ? "—"
                 : `${m.c.delta.value > 0 ? "+" : m.c.delta.value < 0 ? "−" : ""}${fr(Math.abs(m.c.delta.value), m.c.decimals)}`}
             </span>
-          </div>
+          </button>
         ))
       )}
+
+      {/* LA COURBE. Elle n'existait pas côté coach : il lisait trois écarts et
+          aucune tendance, alors que la membre a la sienne depuis ce matin.
+          Même arithmétique que la PWA classique — dont le `padY` proportionnel,
+          indispensable dès qu'on trace autre chose que des kilos (l'indice
+          viscéral va de 1 à 59, l'âge métabolique de 20 à 60). */}
+      {(() => {
+        const ligne = LIGNES.find((l) => l.k === choisie) ?? LIGNES[0];
+        const pts = corps.releves
+          .map((r) => ({ date: r.date, v: r.scan[choisie] }))
+          .filter((p): p is { date: string; v: number } => typeof p.v === "number" && Number.isFinite(p.v) && p.v > 0);
+        if (pts.length < 2) {
+          return (
+            <div style={{ marginTop: 13, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)", fontSize: 12, color: "var(--ls-bbc-muted)", lineHeight: 1.5 }}>
+              Il faut deux relevés portant {ligne.nom.toLowerCase()} pour tracer sa courbe.
+            </div>
+          );
+        }
+        const L = 300, H = 116, marge = 14, haut = 8, bas = 100;
+        const vals = pts.map((p) => p.v);
+        const bas0 = Math.min(...vals), haut0 = Math.max(...vals);
+        const jeu = (haut0 - bas0) * 0.12 || Math.max(1, haut0 * 0.05);
+        const lo = bas0 - jeu, hi = haut0 + jeu, ampleur = hi - lo || 1;
+        const coords = vals.map((v, i) => [
+          marge + (pts.length > 1 ? (i * (L - 2 * marge)) / (pts.length - 1) : 0),
+          haut + ((hi - v) / ampleur) * (bas - haut),
+        ] as [number, number]);
+        const trace = coords.map((c) => c.join(",")).join(" ");
+        const aire = `${marge},${bas} ${trace} ${L - marge},${bas}`;
+        // On n'écrit pas toutes les valeurs quand il y en a trente : elles se
+        // chevaucheraient et deviendraient illisibles.
+        const pas = Math.max(1, Math.ceil(pts.length / 12));
+        const iDates = pts.length <= 5
+          ? pts.map((_, i) => i)
+          : [0, Math.round(pts.length * 0.33), Math.round(pts.length * 0.66), pts.length - 1];
+        return (
+          <div style={{ marginTop: 13, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
+                courbe · {ligne.nom.toLowerCase()}
+              </span>
+              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-muted)" }}>
+                {pts.length} relevés
+              </span>
+            </div>
+            <svg viewBox={`0 0 ${L} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible", marginTop: 8 }} aria-hidden="true">
+              <defs>
+                <linearGradient id={`corps-${choisie}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor={ligne.teinte} stopOpacity="0.26" />
+                  <stop offset="1" stopColor={ligne.teinte} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <line x1={marge} y1={bas} x2={L - marge} y2={bas} stroke="var(--ls-bbc-line)" strokeWidth="1" />
+              <polygon points={aire} fill={`url(#corps-${choisie})`} />
+              <polyline points={trace} fill="none" stroke={ligne.teinte} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              {coords.map((c, i) => {
+                const dernier = i === coords.length - 1;
+                return (
+                  <g key={i}>
+                    <circle cx={c[0]} cy={c[1]} r={dernier ? 4.2 : 2.2} fill={ligne.teinte} stroke="var(--ls-bbc-s1)" strokeWidth={dernier ? 2 : 1.2} />
+                    {i % pas === 0 || dernier ? (
+                      <text x={Math.max(12, Math.min(c[0], L - 12))} y={c[1] - 7} fill="var(--ls-bbc-text)" fontFamily="var(--ls-bbc-font-mono)" fontSize="6.5" fontWeight="700" textAnchor="middle">
+                        {fr(vals[i], vals[i] >= 100 ? 0 : 1)}
+                      </text>
+                    ) : null}
+                  </g>
+                );
+              })}
+            </svg>
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-muted)", marginTop: 5 }}>
+              {[...new Set(iDates)].map((i) => <span key={i}>{jour(pts[i].date)}</span>)}
+            </div>
+          </div>
+        );
+      })()}
 
       {corps.exclus > 0 ? (
         <div style={{ marginTop: 11, fontSize: 11.5, lineHeight: 1.5, color: "var(--ls-bbc-hint)" }}>
