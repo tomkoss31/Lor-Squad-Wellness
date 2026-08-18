@@ -52,8 +52,15 @@ interface CrmLeadsListViewProps {
   onDormant: (lead: CrmLead) => void;
   onWake: (lead: CrmLead) => void;
   onDelete?: (lead: CrmLead) => void;
-  /** « Et alors ? » — pose la suite depuis la liste, sans changer d'écran. */
-  onQualifier: (lead: CrmLead, reponse: Reponse) => void | Promise<void>;
+  /**
+   * « Et alors ? » — pose la suite depuis la liste, sans changer d'écran.
+   *
+   * ⚠️ DOIT renvoyer sa promesse : la qualification en lot l'attend pour
+   * écrire une fiche à la fois. `enLot` vaut true quand l'appel vient de la
+   * barre : le parent tait alors son bandeau de succès, sinon cocher cinq
+   * personnes en empile cinq.
+   */
+  onQualifier: (lead: CrmLead, reponse: Reponse, enLot?: boolean) => void | Promise<void>;
   emptyMessage: string;
   /**
    * Masque le sélecteur de tri : il vit alors dans le panneau « Plus de
@@ -119,13 +126,15 @@ export function CrmLeadsListView({
    * rangé alors qu'il en reste.
    */
   async function qualifierEnLot(reponse: Reponse) {
-    if (enCours || coches.size === 0) return;
+    if (enCours || cochesEffectives.length === 0) return;
     setEnCours(true);
     const restants = new Set(coches);
     try {
-      for (const lead of leads) {
-        if (!coches.has(lead.key)) continue;
-        await onQualifier(lead, reponse);
+      for (const lead of cochesEffectives) {
+        // ⚠️ `onQualifier` DOIT renvoyer sa promesse, sinon ce `await` ne
+        // retient rien et les cinq écritures partent d'un coup — exactement ce
+        // que cette boucle existe pour empêcher. Cf. `CrmPage`.
+        await onQualifier(lead, reponse, true);
         restants.delete(lead.key);
       }
     } finally {
@@ -182,14 +191,36 @@ export function CrmLeadsListView({
   /**
    * Qui peut être coché pour une réponse en lot.
    *
-   * Pas les endormis (on les a rangés exprès), et pas quelqu'un qui a déjà un
-   * créneau : les quatre réponses du lot posent toutes une date de rappel et
-   * écraseraient sa dernière réponse, alors qu'il n'y a rien à relancer — il
-   * faut le recevoir. Il resterait d'ailleurs dans « Rendez-vous calés », donc
-   * le geste n'aurait aucun effet visible : la pire des situations.
+   * Trois exclusions, et chacune évite un geste SANS EFFET VISIBLE — le pire
+   * des cas, parce qu'on croit avoir rangé :
+   * · les endormis, qu'on a mis de côté exprès ;
+   * · les tables qui n'acceptent pas de qualification (`estQualifiable`) —
+   *   c'est déjà la garde de la feuille « et alors ? » à l'unité ;
+   * · quelqu'un qui a déjà un créneau : les quatre réponses du lot posent une
+   *   date de rappel et écraseraient sa dernière réponse, alors qu'il resterait
+   *   dans « Rendez-vous calés ». Il n'y a rien à relancer, il faut le recevoir.
    */
   const cochable = (lead: CrmLead) =>
-    !archived && etatParCle.get(lead.key) !== "aVenir";
+    !archived && estQualifiable(lead.table) && etatParCle.get(lead.key) !== "aVenir";
+
+  /**
+   * Les cochés qui sont ENCORE dans la liste, ET encore cochables.
+   *
+   * `coches` ne retient que des clés, et rien ne les recroise : changer
+   * d'onglet, filtrer, chercher, ou qualifier quelqu'un en « plus intéressé »
+   * le fait sortir de `leads` sans vider sa case. La barre annonçait alors
+   * « 5 cochées » et n'en écrivait que deux, puis restait ouverte sur un
+   * fantôme que seule la croix pouvait chasser.
+   *
+   * Le second filtre (`cochable`) n'est pas du zèle : dans l'onglet Historique
+   * les cases SONT rendues, et un tap en lot y écrivait des leads Actifs restés
+   * cochés — invisibles à l'écran.
+   *
+   * Pas de `useMemo` : `cochable` se referme sur `etatParCle` et `archived`, et
+   * une liste de dépendances oubliée ici rendrait la sélection périmée, ce qui
+   * est bien pire que de refiltrer quelques dizaines de lignes.
+   */
+  const cochesEffectives = leads.filter((l) => coches.has(l.key) && cochable(l));
 
   const renderRow = (lead: CrmLead, groupe: CleZone | null, isLast: boolean) => (
     <CrmLeadListRow
@@ -218,6 +249,7 @@ export function CrmLeadsListView({
       onQualifier={(r) => onQualifier(lead, r)}
       coche={coches.has(lead.key)}
       onCocher={cochable(lead) ? () => basculer(lead.key) : undefined}
+      avecCases={!archived}
       etatRdv={etatParCle.get(lead.key) ?? "aucun"}
     />
   );
@@ -268,11 +300,20 @@ export function CrmLeadsListView({
         /* Trop étroit pour une seule ligne : le compte et la croix gardent la
            leur, les quatre réponses passent en deux par deux. */
         @media (max-width: 560px) {
-          .crm-barre-lot { flex-wrap: wrap; row-gap: 8px; padding: 9px 8px; }
+          /* ⚠️ \`!important\` OBLIGATOIRE : ces éléments portent des styles en
+             ligne (padding, width, flex…) qui battent la feuille de style,
+             media query comprise. Sans ça ce bloc entier est inerte et la
+             barre monte à quatre rangées sur un téléphone. */
+          .crm-barre-lot { flex-wrap: wrap; row-gap: 8px; padding: 9px 8px !important; }
           .crm-barre-lot .crm-lot-compte { order: 1; }
-          .crm-barre-lot .crm-lot-x { order: 2; margin-left: auto; width: 36px; height: 36px; }
-          .crm-barre-lot .crm-lot-rail { order: 3; flex-basis: 100%; }
-          .crm-barre-lot .crm-lot-rail > button { flex: 1 1 calc(50% - 4px); padding: 0 10px; }
+          .crm-barre-lot .crm-lot-x {
+            order: 2; margin-left: auto;
+            width: 36px !important; height: 36px !important;
+          }
+          .crm-barre-lot .crm-lot-rail { order: 3; flex: 1 1 100% !important; }
+          .crm-barre-lot .crm-lot-rail > button {
+            flex: 1 1 calc(50% - 4px) !important; padding: 0 10px !important;
+          }
         }
       `}</style>
 
@@ -363,7 +404,7 @@ export function CrmLeadsListView({
 
       {/* La barre n'existe QUE quand une case est cochée : un écran qui porte
           en permanence une zone d'action vide apprend à ne plus la regarder. */}
-      {coches.size > 0 ? (
+      {cochesEffectives.length > 0 ? (
         <div className="crm-barre-lot" style={barreLot}>
           {/* Le compte, et rien d'autre. L'ancienne version portait un titre en
               Syne et une phrase d'explication : mesuré le 18/08, la barre
@@ -379,8 +420,8 @@ export function CrmLeadsListView({
             </span>
             {enCours ? "Enregistrement…" : (
               <>
-                {coches.size} <em style={{ fontStyle: "normal", fontWeight: 500, color: "var(--ls-text-muted)" }}>
-                  {coches.size > 1 ? "cochées" : "cochée"}
+                {cochesEffectives.length} <em style={{ fontStyle: "normal", fontWeight: 500, color: "var(--ls-text-muted)" }}>
+                  {cochesEffectives.length > 1 ? "cochées" : "cochée"}
                 </em>
               </>
             )}
@@ -464,6 +505,7 @@ function CrmLeadListRow({
   onQualifier,
   coche,
   onCocher,
+  avecCases,
   etatRdv,
 }: {
   lead: CrmLead;
@@ -490,6 +532,8 @@ function CrmLeadListRow({
   onQualifier: (reponse: Reponse) => void;
   coche: boolean;
   onCocher?: () => void;
+  /** La liste montre-t-elle des cases du tout ? (faux en vue « Endormis ») */
+  avecCases: boolean;
   /** Déjà calculé par le parent — surtout pas recalculé ici. */
   etatRdv: ReturnType<typeof etatRdvDe>;
 }) {
@@ -539,10 +583,14 @@ function CrmLeadListRow({
             aria-label={`Sélectionner ${lead.firstName}`}
             style={{ width: 20, height: 20, flex: "none", cursor: "pointer", accentColor: "var(--ls-teal)", marginRight: 2 }}
           />
-        ) : etatRdv === "aVenir" ? (
+        ) : avecCases ? (
           // Une place vide, pas rien : sans elle, les lignes sans case (celles
-          // qui ont déjà un créneau) décalent leur nom de 22 px vers la gauche
-          // et le bord de la liste devient dentelé.
+          // qui ont déjà un créneau, ou qu'on ne peut pas qualifier) décalent
+          // leur nom de 22 px et le bord de la liste devient dentelé.
+          //
+          // ⚠️ Seulement quand la liste EN A, des cases. Dans les « Endormis »
+          // aucune ligne n'en porte : réserver la place y creuserait une marge
+          // que rien ne vient remplir.
           <span aria-hidden="true" style={{ width: 20, flex: "none", marginRight: 2 }} />
         ) : null}
         {/* Clic sur la ligne → fiche détail plein écran (Phase 2). Le

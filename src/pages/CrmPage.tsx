@@ -324,12 +324,17 @@ export function CrmPage() {
   // « Et alors ? » depuis la liste. La confirmation NOMME la date de retour :
   // c'est ce qui rend le geste sûr — on voit tout de suite ce qu'on vient de
   // caler, sans avoir à rouvrir la fiche.
-  async function handleQualifier(lead: CrmLead, reponse: Reponse) {
+  async function handleQualifier(lead: CrmLead, reponse: Reponse, enLot = false) {
     const err = await qualifier(lead, reponse);
     if (err) {
       pushToast({ tone: "warning", title: "Qualification non enregistrée", message: err });
       return;
     }
+    // En lot, on se tait : cinq personnes cochées empilaient cinq bandeaux.
+    // La barre dit « Enregistrement… » puis disparaît, et les lignes changent
+    // de zone sous les yeux — c'est déjà la preuve que c'est passé. Les échecs,
+    // eux, parlent toujours.
+    if (enLot) return;
     const due = dateDeRetour(reponse, new Date());
     pushToast({
       tone: "success",
@@ -770,7 +775,12 @@ export function CrmPage() {
           onDormant={(lead) => void handleDormant(lead, true)}
           onWake={(lead) => void handleDormant(lead, false)}
           onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
-          onQualifier={(lead, r) => void handleQualifier(lead, r)}
+          onQualifier={(lead, r, enLot) => {
+            // On RENVOIE la promesse : la barre en lot l'attend pour écrire une
+            // fiche à la fois. Un `void` ici et les cinq écritures partaient
+            // d'un coup sur une base qui tient sur une t4g.nano.
+            return handleQualifier(lead, r, enLot);
+          }}
           emptyMessage={
             view === "archived"
               ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
