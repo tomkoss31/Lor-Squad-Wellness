@@ -10,6 +10,7 @@ import "../../styles/bbc-tokens.css";
 import { useState } from "react";
 import { QRCode } from "../../components/ui/QRCode";
 import { MemberEvolution, type Measurement, type Metric } from "./member/MemberEvolution";
+import { MemberReglages } from "./member/MemberReglages";
 import { MemberCoeurs } from "./member/MemberCoeurs";
 import { MemberConseils } from "./member/MemberConseils";
 import { MemberMessages } from "./member/MemberMessages";
@@ -75,7 +76,16 @@ export function BbcClientApp(props: BbcClientAppProps) {
   // L'intro ne s'affiche que si le serveur dit explicitement « pas encore vue »
   // (undefined = données pas encore chargées → on n'affiche rien, pas de flash).
   const [entryDismissed, setEntryDismissed] = useState(false);
-  const showEntry = !entryDismissed && entrySeen === false;
+  const [revoirEntree, setRevoirEntree] = useState(false);
+  const showEntry = revoirEntree || (!entryDismissed && entrySeen === false);
+  // Les réglages, ouverts depuis l'avatar. Avant, l'avatar n'était pas
+  // cliquable et la membre n'avait AUCUN écran de réglages — ni thème, ni
+  // sortie, ni moyen d'activer ses notifications (audit du 18/08).
+  const [reglages, setReglages] = useState(false);
+  // ⚠️ Le thème client n'est persisté NULLE PART dans l'app (le classique fait
+  // aussi un simple useState). On garde la même règle plutôt que d'inventer un
+  // stockage qui divergerait des deux côtés.
+  const [clair, setClair] = useState(false);
   const [qrFull, setQrFull] = useState(false);
   const [noaly, setNoaly] = useState(false);
 
@@ -111,16 +121,21 @@ export function BbcClientApp(props: BbcClientAppProps) {
         clubName={clubSettings?.club_name ?? undefined}
         openHours={clubSettings?.open_hours}
         token={token}
-        onDone={() => setEntryDismissed(true)}
+        onDone={() => { setEntryDismissed(true); setRevoirEntree(false); }}
       />
     );
   }
 
   return (
-    <div className="bbc-mode" style={{ position: "relative", minHeight: "100vh", background: "var(--ls-bbc-bg)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", maxWidth: 460, margin: "0 auto", overflow: "hidden" }}>
+    <div className={clair ? "bbc-mode bbc-light" : "bbc-mode"} style={{ position: "relative", minHeight: "100vh", background: "var(--ls-bbc-bg)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", maxWidth: 460, margin: "0 auto", overflow: "hidden" }}>
       {/* header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "calc(14px + env(safe-area-inset-top)) 18px 8px" }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(140deg, var(--ls-bbc-teal), var(--ls-bbc-lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-display)", fontSize: 16, color: "#04201b", flex: "none" }}>{initials(clientName)}</div>
+        <button
+          type="button"
+          onClick={() => setReglages(true)}
+          aria-label="Mes réglages"
+          style={{ width: 46, height: 46, borderRadius: "50%", border: 0, padding: 0, background: "linear-gradient(140deg, var(--ls-bbc-teal), var(--ls-bbc-lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-display)", fontSize: 16, color: "#04201b", flex: "none", cursor: "pointer" }}
+        >{initials(clientName)}</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.15 }}>Salut {first} !</div>
           <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-muted)", marginTop: 2 }}>ton club du matin · {card ? `carte ${onCard}/${cardMax}` : `${visits} visite${visits > 1 ? "s" : ""}`}</div>
@@ -293,6 +308,18 @@ export function BbcClientApp(props: BbcClientAppProps) {
 
       {/* Noaly — chat réel (edge `noaly`, contexte BBC chargé côté serveur) */}
       {noaly ? <MemberNoaly token={token} firstName={first} onClose={() => setNoaly(false)} /> : null}
+      {reglages ? (
+        <MemberReglages
+          token={token ?? ""}
+          clientName={clientName}
+          coachName={coachName}
+          clair={clair}
+          onTheme={setClair}
+          onRevoirEntree={() => { setReglages(false); setRevoirEntree(true); }}
+          onFermer={() => setReglages(false)}
+        />
+      ) : null}
+
     </div>
   );
 }
