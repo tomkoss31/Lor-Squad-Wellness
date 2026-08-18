@@ -242,13 +242,25 @@ export function CrmLeadsListView({
           .crm-list-table { min-width: 0 !important; }
         }
 
-        /* La barre se gare 12 px au-dessus du bas de la FENÊTRE. Sous 1024 px,
-           c'est là que vit \`.bottom-nav\` (fixe, 52 px + 12 px de rembourrage,
-           masquée par \`lg:hidden\`) : sans ce dégagement, le bas de la barre
-           passe derrière elle. Constaté sur la capture du 18/08. */
+        /* La barre se gare au-dessus du bas de la FENÊTRE. Sous 1024 px, c'est
+           là que vit \`.bottom-nav\` (fixe, masquée par \`lg:hidden\`) : sans ce
+           dégagement, le bas de la barre passe derrière elle — constaté sur la
+           capture du 18/08.
+
+           Sa hauteur, décomposée depuis le vrai code : 1 px de bordure haute
+           (BottomNav.tsx) + la rangée icône/libellé, ~51 px (le
+           \`min-height: 52px\` de globals.css ne s'applique JAMAIS, un
+           \`minHeight: 44\` inline le bat — c'est le contenu qui fait la
+           hauteur) + un bas de \`max(12px, encoche)\`.
+
+           ⚠️ Ce dernier terme porte DÉJÀ l'encoche (globals.css, en
+           !important). L'ajouter une seconde fois ferait flotter la barre
+           34 px trop haut sur un iPhone installé. */
         .crm-barre-lot { bottom: 12px; }
         @media (max-width: 1023.98px) {
-          .crm-barre-lot { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+          .crm-barre-lot {
+            bottom: calc(52px + max(12px, env(safe-area-inset-bottom, 0px)) + 12px);
+          }
         }
         .crm-barre-lot button:hover:not(:disabled) { filter: brightness(1.06); }
         .crm-barre-lot button:disabled { opacity: .45; cursor: not-allowed; }
