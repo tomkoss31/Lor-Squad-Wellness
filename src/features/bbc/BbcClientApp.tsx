@@ -256,7 +256,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
             </div>
           </>
         ) : tab === "evolution" ? (
-          <MemberEvolution metrics={metrics} measurements={measurements} />
+          <MemberEvolution token={token ?? ""} metrics={metrics} measurements={measurements} />
         ) : tab === "coeurs" ? (
           <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
         ) : tab === "conseils" ? (
