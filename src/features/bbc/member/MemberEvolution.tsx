@@ -31,6 +31,7 @@
 
 import { useState } from "react";
 import { computeMetricDelta, muscleMassKgToPercent, type DisplayUnit } from "../../../lib/bodyMetricUnits";
+import { MemberMensurations } from "./MemberMensurations";
 
 export interface Metric {
   date?: string;
@@ -59,6 +60,7 @@ export interface Measurement {
 }
 
 interface MemberEvolutionProps {
+  token: string;
   metrics: Metric[];
   measurements: Measurement[];
 }
@@ -165,7 +167,7 @@ const eyebrow: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps) {
+export function MemberEvolution({ token, metrics, measurements }: MemberEvolutionProps) {
   // On garde la DATE avec le poids : sans elle, « 108,0 → 99,0 » ne dit pas
   // depuis quand, et c'est précisément ce que la membre venait chercher.
   const pesees = metrics
@@ -284,26 +286,6 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
     delta: string;
     sous: string | null;
   }>;
-
-  const lastM = measurements[measurements.length - 1];
-  const firstM = measurements[0];
-  const mDefs: Array<{ key: keyof Measurement; label: string }> = [
-    { key: "waist_cm", label: "tour de taille" },
-    { key: "hips_cm", label: "hanches" },
-    { key: "thigh_cm", label: "cuisses" },
-    { key: "arm_cm", label: "bras" },
-  ];
-  const mesures = lastM
-    ? mDefs
-        .map((m) => {
-          const v = num(lastM[m.key]);
-          if (v == null) return null;
-          const f = firstM ? num(firstM[m.key]) : null;
-          const d = f != null ? Math.round((v - f) * 10) / 10 : null;
-          return { label: m.label, val: `${fr(v, 0)} cm`, delta: d == null ? "—" : `${d > 0 ? "+" : ""}${fr(d, 0)}`, up: d != null && d > 0 };
-        })
-        .filter(Boolean) as Array<{ label: string; val: string; delta: string; up: boolean }>
-    : [];
 
   return (
     <>
@@ -476,24 +458,7 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
         </div>
       ) : null}
 
-      <div style={carte}>
-        <div style={eyebrow}>
-          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-teal)" }} />mes mensurations
-        </div>
-        {mesures.length ? (
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-            {mesures.map((m) => (
-              <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 12, padding: "10px 13px" }}>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{m.label}</span>
-                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700 }}>{m.val}</span>
-                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-muted)" }}>{m.delta}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginTop: 10 }}>on prend tes premières mesures ensemble à ton prochain passage — c'est ton point de départ.</div>
-        )}
-      </div>
+      <MemberMensurations token={token} measurements={measurements} />
     </>
   );
 }
