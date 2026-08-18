@@ -9,7 +9,7 @@
 import "../../styles/bbc-tokens.css";
 import { useState } from "react";
 import { QRCode } from "../../components/ui/QRCode";
-import { MemberEvolution } from "./member/MemberEvolution";
+import { MemberEvolution, type Measurement, type Metric } from "./member/MemberEvolution";
 import { MemberCoeurs } from "./member/MemberCoeurs";
 import { MemberConseils } from "./member/MemberConseils";
 import { MemberMessages } from "./member/MemberMessages";
@@ -28,8 +28,8 @@ interface BbcClientAppProps {
   currentWeight?: number | null;
   nextRdvDate?: string | null;
   nextRdvType?: string | null;
-  metrics?: Array<{ date?: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>;
-  measurements?: Array<{ measured_at?: string; waist_cm?: number; hips_cm?: number; thigh_cm?: number; arm_cm?: number }>;
+  metrics?: Metric[];
+  measurements?: Measurement[];
   heartsCount?: number;
   clientId?: string;
   coachId?: string;
