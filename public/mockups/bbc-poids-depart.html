@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette — Le poids de départ du membre</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Tokens RÉELS du mode BBC (src/styles/bbc-tokens.css). */
+:root{
+  --ls-bbc-bg:#162624; --ls-bbc-s1:#1E3330; --ls-bbc-s2:#26403B; --ls-bbc-s3:#2E4A44;
+  --ls-bbc-line:rgba(244,239,228,0.12); --ls-bbc-line2:rgba(244,239,228,0.20);
+  --ls-bbc-text:#F4EFE4; --ls-bbc-muted:rgba(244,239,228,0.68); --ls-bbc-hint:rgba(244,239,228,0.46);
+  --ls-bbc-lime:#C5F82A; --ls-bbc-lime-text:#C5F82A; --ls-bbc-teal:#2DD4BF;
+  --ls-bbc-coral:#F2775F; --ls-bbc-amber:#E8A93A; --ls-bbc-violet:#A78BFA;
+  --ls-bbc-font-display:"Anton",system-ui,sans-serif;
+  --ls-bbc-font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --ls-bbc-font-body:"Inter",system-ui,sans-serif;
+}
+html.clair{
+  --ls-bbc-bg:#FAF7F0; --ls-bbc-s1:#FFFFFF; --ls-bbc-s2:#F5F1EB; --ls-bbc-s3:#EFEAE1;
+  --ls-bbc-line:rgba(30,51,48,0.07); --ls-bbc-line2:rgba(30,51,48,0.13);
+  --ls-bbc-text:#17201C; --ls-bbc-muted:#55605A; --ls-bbc-hint:#8A938D;
+  --ls-bbc-lime:#6D8C0B; --ls-bbc-lime-text:#4D7A06; --ls-bbc-teal:#0D9488;
+  --ls-bbc-coral:#D9553C; --ls-bbc-amber:#B7791F; --ls-bbc-violet:#6D28D9;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ls-bbc-bg);color:var(--ls-bbc-text);
+  font-family:var(--ls-bbc-font-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1266px;margin:0 auto;padding:0 16px 70px}
+.avert{background:rgba(167,139,250,.12);border-bottom:1px solid rgba(167,139,250,.32);
+  padding:9px 14px;font-size:12.5px;color:var(--ls-bbc-violet);text-align:center;line-height:1.45}
+h1{font-family:var(--ls-bbc-font-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(23px,3.2vw,31px);margin:18px 0 6px;line-height:1.05}
+.sous{color:var(--ls-bbc-muted);font-size:14px;line-height:1.62;margin:0 0 6px;max-width:66ch}
+.sous b{color:var(--ls-bbc-text)}
+#bascule{position:fixed;right:14px;bottom:14px;z-index:9;min-height:36px;padding:0 14px;
+  border-radius:999px;border:1px solid var(--ls-bbc-line2);background:var(--ls-bbc-s2);
+  color:var(--ls-bbc-text);font-family:var(--ls-bbc-font-body);font-size:12.5px;font-weight:700;cursor:pointer}
+
+.colonnes{display:flex;gap:20px;flex-wrap:wrap;margin-top:26px;align-items:flex-start}
+.cas{width:390px;flex:none}
+.cas > h2{font-family:var(--ls-bbc-font-display);font-weight:400;text-transform:uppercase;
+  font-size:17px;margin:0 0 4px;letter-spacing:.02em}
+.cas > .quoi{font-size:12.5px;line-height:1.55;color:var(--ls-bbc-muted);margin:0 0 12px;min-height:56px}
+.cas > h2{display:flex;align-items:center;gap:8px}
+.cas > h2::before{content:"";width:9px;height:9px;border-radius:999px;flex:none}
+.cas.bon > h2::before{background:var(--ls-bbc-lime)}
+.cas.mauvais > h2::before{background:var(--ls-bbc-coral)}
+
+/* Le téléphone : 390 px pile, c'est le seul format qui compte ici. */
+.tel{border:1px solid var(--ls-bbc-line2);border-radius:22px;padding:14px;background:var(--ls-bbc-bg)}
+
+/* La carte « ton poids », styles repris de MemberEvolution.tsx. */
+.carte{background:var(--ls-bbc-s1);border:1px solid var(--ls-bbc-line);border-radius:18px;padding:18px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--ls-bbc-font-mono);
+  font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--ls-bbc-muted);text-transform:uppercase}
+.eyebrow .dot{width:7px;height:7px;border-radius:999px;background:var(--ls-bbc-lime);
+  box-shadow:0 0 8px var(--ls-bbc-lime)}
+.hero{display:flex;align-items:flex-end;gap:10px;margin-top:12px}
+.hero .n{font-family:var(--ls-bbc-font-display);font-size:44px;line-height:.85;color:var(--ls-bbc-lime-text)}
+.hero .u{font-family:var(--ls-bbc-font-mono);font-weight:600;font-size:18px;color:var(--ls-bbc-muted);padding-bottom:4px}
+.souschiffre{font-size:12px;color:var(--ls-bbc-muted);margin-top:4px}
+.vide{background:var(--ls-bbc-s1);border:1px solid var(--ls-bbc-line);border-radius:18px;
+  padding:22px 18px;text-align:center}
+.vide .em{font-size:30px}
+.vide .t{font-family:var(--ls-bbc-font-display);font-size:20px;margin-top:8px;font-weight:400}
+.vide .d{font-size:12.5px;color:var(--ls-bbc-muted);margin-top:6px;line-height:1.5}
+
+/* ── PROPOSÉ ─────────────────────────────────────────────────────────────── */
+/* Le couple DÉPART → AUJOURD'HUI, écrit en toutes lettres et daté. C'est ce
+   que la PWA classique fait déjà, et que le membre perdait. */
+.couple{display:flex;align-items:flex-end;gap:14px;margin-top:14px}
+.bloc{flex:1;min-width:0}
+.bloc .lab{font-family:var(--ls-bbc-font-mono);font-size:9.5px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ls-bbc-muted)}
+.bloc .val{font-family:var(--ls-bbc-font-display);font-size:30px;line-height:1;margin-top:5px;
+  color:var(--ls-bbc-text)}
+.bloc .val small{font-family:var(--ls-bbc-font-mono);font-size:13px;font-weight:600;
+  color:var(--ls-bbc-muted);margin-left:3px}
+.bloc .jour{font-family:var(--ls-bbc-font-mono);font-size:11px;margin-top:4px;color:var(--ls-bbc-muted)}
+.fleche{font-family:var(--ls-bbc-font-mono);font-size:17px;color:var(--ls-bbc-muted);padding-bottom:20px}
+.depuis{margin-top:13px;padding-top:12px;border-top:1px solid var(--ls-bbc-line);
+  font-size:12px;color:var(--ls-bbc-muted);line-height:1.5}
+.depuis b{color:var(--ls-bbc-text)}
+
+.note{margin-top:12px;padding:11px 13px;border-radius:12px;font-size:12.5px;line-height:1.55}
+.note.ko{background:color-mix(in srgb, var(--ls-bbc-coral) 10%, transparent);
+  border:1px solid color-mix(in srgb, var(--ls-bbc-coral) 32%, transparent);color:var(--ls-bbc-text)}
+.note.ok{background:color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent);
+  border:1px solid color-mix(in srgb, var(--ls-bbc-lime) 32%, transparent);color:var(--ls-bbc-text)}
+.note b{color:var(--ls-bbc-text)}
+</style>
+</head>
+<body>
+<div class="avert">Maquette — ce que Virginie lit dans SON application, avec ses vrais chiffres. Rien n'est enregistré.</div>
+<div class="wrap">
+
+<h1>Le poids de départ, vu par la membre</h1>
+<p class="sous">Virginie a <b>9 pesées : 108 kg le 2 mars → 99 kg aujourd'hui</b>. Elle prend sa
+carte du club aujourd'hui. Voici les trois écrans, à 390 px — la largeur de son téléphone.</p>
+
+<div class="colonnes">
+
+  <div class="cas mauvais">
+    <h2>Aujourd'hui · « c'est un suivi »</h2>
+    <p class="quoi">Ses 9 pesées sont gardées. Le chiffre de départ existe, mais c'est celui
+      de mars — cinq mois avant que le club ouvre.</p>
+    <div class="tel">
+      <div class="carte">
+        <div class="eyebrow"><span class="dot"></span>ton poids</div>
+        <div class="hero"><span class="n">-9,0</span><span class="u">kg</span></div>
+        <div class="souschiffre">108,0 → 99,0 kg</div>
+        <svg width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none" style="margin-top:12px;overflow:visible" aria-hidden="true">
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="var(--ls-bbc-lime)" stop-opacity=".22"/>
+            <stop offset="1" stop-color="var(--ls-bbc-lime)" stop-opacity="0"/></linearGradient></defs>
+          <path d="M10 14 L46 24 L82 44 L118 66 L154 88 L190 99 L226 110 L262 110 L290 110 L290 120 L10 120 Z" fill="url(#g1)"/>
+          <path d="M10 14 L46 24 L82 44 L118 66 L154 88 L190 99 L226 110 L262 110 L290 110" fill="none" stroke="var(--ls-bbc-lime)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="290" cy="110" r="4.5" fill="var(--ls-bbc-lime)"/>
+        </svg>
+      </div>
+      <div class="note ko"><b>Le club s'attribue ses 9 kg.</b> Et « 108,0 » est écrit en 12 px,
+        sans le mot « départ » et sans date : rien ne dit que c'est mars.</div>
+    </div>
+  </div>
+
+  <div class="cas mauvais">
+    <h2>Aujourd'hui · « c'est son vrai départ »</h2>
+    <p class="quoi">Ses 9 pesées sont écartées une par une. Il n'en reste qu'une — or la carte
+      exige deux mesures pour afficher quoi que ce soit.</p>
+    <div class="tel">
+      <div class="vide">
+        <div class="em" aria-hidden="true">📈</div>
+        <div class="t">ta transformation commence</div>
+        <div class="d">ta 1ʳᵉ pesée au club, c'est ton point de départ. la courbe se remplit à chaque visite.</div>
+      </div>
+      <div class="note ko"><b>Plus un seul chiffre</b>, et sa courbe de −9 kg a disparu du jour
+        au lendemain, sans un mot. Jusqu'au bilan des 10.</div>
+    </div>
+  </div>
+
+  <div class="cas bon">
+    <h2>Proposé</h2>
+    <p class="quoi">Son départ au club est écrit en toutes lettres et daté, dès la première
+      pesée. Et son passé reste le sien.</p>
+    <div class="tel">
+      <div class="carte">
+        <div class="eyebrow"><span class="dot"></span>ton poids</div>
+        <div class="couple">
+          <div class="bloc">
+            <div class="lab">départ</div>
+            <div class="val">99,0<small>kg</small></div>
+            <div class="jour">18 août</div>
+          </div>
+          <div class="fleche" aria-hidden="true">→</div>
+          <div class="bloc">
+            <div class="lab">prochaine pesée</div>
+            <div class="val" style="color:var(--ls-bbc-muted);font-size:19px;line-height:1.25;margin-top:9px">au bilan<br>des 10</div>
+          </div>
+        </div>
+        <svg width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none" style="margin-top:14px;overflow:visible" aria-hidden="true">
+          <!-- Le passé d'avant le club reste tracé, mais en sourdine : il est à
+               elle, il n'est pas au club. -->
+          <path d="M10 14 L46 24 L82 44 L118 66 L154 88 L190 99 L226 110 L262 110" fill="none"
+                stroke="var(--ls-bbc-muted)" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/>
+          <circle cx="262" cy="110" r="4.5" fill="var(--ls-bbc-lime)"/>
+          <line x1="262" y1="6" x2="262" y2="118" stroke="var(--ls-bbc-lime)" stroke-width="1" stroke-dasharray="2 4" opacity=".55"/>
+        </svg>
+        <div class="depuis">Avant le club, elle avait déjà fait <b>−9,0 kg</b> depuis le 2 mars.
+          Le club compte à partir d'aujourd'hui.</div>
+      </div>
+      <div class="note ok">Elle voit <b>son poids de démarrage</b> dès le premier jour. Au bilan
+        des 10, le grand chiffre devient l'écart — et le départ reste écrit dessous, avec sa date.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+<script>
+(() => {
+  const b = document.createElement("button");
+  b.id = "bascule";
+  const dire = () => { b.textContent = document.documentElement.classList.contains("clair") ? "☀️ Clair" : "🌙 Sombre"; };
+  b.onclick = () => { document.documentElement.classList.toggle("clair"); dire(); };
+  dire();
+  document.body.appendChild(b);
+})();
+</script>
+</body>
+</html>
