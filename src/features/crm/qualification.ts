@@ -110,6 +110,21 @@ export const REPONSE_PAR_CLE: Record<CleReponse, Reponse> = Object.fromEntries(
 ) as Record<CleReponse, Reponse>;
 
 /**
+ * `quand` en trois mots, pour un bouton de barre où la phrase entière ne tient
+ * pas (« Filet de sécurité dans 3 jours » fait 190 px à lui seul).
+ *
+ * Dérivé de `jours` plutôt que saisi à côté de `quand` : deux textes écrits à
+ * la main finissent toujours par se contredire. Le vocabulaire du GESTE, lui,
+ * ne bouge pas — c'est `titre` partout, ici comme dans la feuille.
+ */
+export function quandCourt(reponse: Reponse): string {
+  if (reponse.jours === null) return reponse.quand;
+  if (reponse.jours === 1) return "demain";
+  if (reponse.jours >= 28) return "dans 1 mois";
+  return `dans ${reponse.jours} jours`;
+}
+
+/**
  * La date de retour, calculée depuis le geste.
  *
  * ⚠️ On cale à 9 h du matin, jamais à l'heure du clic. Un « pas de réponse »

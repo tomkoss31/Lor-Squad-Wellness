@@ -23,7 +23,7 @@ import { grouperParZone, phraseEtat, type CleZone } from "../../features/crm/zon
 import { etatRdvDe } from "../../features/crm/etapes";
 import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
 import { estQualifiable } from "../../features/crm/ecrireQualification";
-import { REPONSES, type Reponse } from "../../features/crm/qualification";
+import { quandCourt, REPONSES, type Reponse } from "../../features/crm/qualification";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmMailLink, buildCrmSmsLink, buildCrmWhatsAppLink, objetPourLead, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
@@ -179,6 +179,18 @@ export function CrmLeadsListView({
     return m;
   }, [users]);
 
+  /**
+   * Qui peut être coché pour une réponse en lot.
+   *
+   * Pas les endormis (on les a rangés exprès), et pas quelqu'un qui a déjà un
+   * créneau : les quatre réponses du lot posent toutes une date de rappel et
+   * écraseraient sa dernière réponse, alors qu'il n'y a rien à relancer — il
+   * faut le recevoir. Il resterait d'ailleurs dans « Rendez-vous calés », donc
+   * le geste n'aurait aucun effet visible : la pire des situations.
+   */
+  const cochable = (lead: CrmLead) =>
+    !archived && etatParCle.get(lead.key) !== "aVenir";
+
   const renderRow = (lead: CrmLead, groupe: CleZone | null, isLast: boolean) => (
     <CrmLeadListRow
       key={lead.key}
@@ -205,7 +217,7 @@ export function CrmLeadsListView({
       onDelete={onDelete ? () => onDelete(lead) : undefined}
       onQualifier={(r) => onQualifier(lead, r)}
       coche={coches.has(lead.key)}
-      onCocher={archived ? undefined : () => basculer(lead.key)}
+      onCocher={cochable(lead) ? () => basculer(lead.key) : undefined}
       etatRdv={etatParCle.get(lead.key) ?? "aucun"}
     />
   );
@@ -228,6 +240,27 @@ export function CrmLeadsListView({
         @media (max-width: 700px) {
           .crm-col2 { display: none !important; }
           .crm-list-table { min-width: 0 !important; }
+        }
+
+        /* La barre se gare 12 px au-dessus du bas de la FENÊTRE. Sous 1024 px,
+           c'est là que vit \`.bottom-nav\` (fixe, 52 px + 12 px de rembourrage,
+           masquée par \`lg:hidden\`) : sans ce dégagement, le bas de la barre
+           passe derrière elle. Constaté sur la capture du 18/08. */
+        .crm-barre-lot { bottom: 12px; }
+        @media (max-width: 1023.98px) {
+          .crm-barre-lot { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+        }
+        .crm-barre-lot button:hover:not(:disabled) { filter: brightness(1.06); }
+        .crm-barre-lot button:disabled { opacity: .45; cursor: not-allowed; }
+
+        /* Trop étroit pour une seule ligne : le compte et la croix gardent la
+           leur, les quatre réponses passent en deux par deux. */
+        @media (max-width: 560px) {
+          .crm-barre-lot { flex-wrap: wrap; row-gap: 8px; padding: 9px 8px; }
+          .crm-barre-lot .crm-lot-compte { order: 1; }
+          .crm-barre-lot .crm-lot-x { order: 2; margin-left: auto; width: 36px; height: 36px; }
+          .crm-barre-lot .crm-lot-rail { order: 3; flex-basis: 100%; }
+          .crm-barre-lot .crm-lot-rail > button { flex: 1 1 calc(50% - 4px); padding: 0 10px; }
         }
       `}</style>
 
@@ -319,14 +352,33 @@ export function CrmLeadsListView({
       {/* La barre n'existe QUE quand une case est cochée : un écran qui porte
           en permanence une zone d'action vide apprend à ne plus la regarder. */}
       {coches.size > 0 ? (
-        <div style={barreLot}>
-          <p style={{ margin: "0 0 3px", fontFamily: "Syne, sans-serif", fontSize: 15.5, fontWeight: 700 }}>
-            {coches.size} {coches.size > 1 ? "personnes cochées" : "personne cochée"} — qu'est-ce qui s'est passé&nbsp;?
-          </p>
-          <p style={{ margin: "0 0 13px", fontSize: 12.5, lineHeight: 1.55, color: "var(--ls-text-muted)" }}>
-            La même réponse pour {coches.size > 1 ? "toutes" : "elle"}. Tu n'écris aucune date.
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="crm-barre-lot" style={barreLot}>
+          {/* Le compte, et rien d'autre. L'ancienne version portait un titre en
+              Syne et une phrase d'explication : mesuré le 18/08, la barre
+              faisait 240 px, soit près de QUATRE lignes de liste cachées, et
+              elle butait contre la navigation du bas. */}
+          <span className="crm-lot-compte" style={compteLot} aria-live="polite">
+            <span aria-hidden="true" style={caseCochee}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                   stroke="var(--ls-teal-contrast, #06241F)" strokeWidth="3.5"
+                   strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            {enCours ? "Enregistrement…" : (
+              <>
+                {coches.size} <em style={{ fontStyle: "normal", fontWeight: 500, color: "var(--ls-text-muted)" }}>
+                  {coches.size > 1 ? "cochées" : "cochée"}
+                </em>
+              </>
+            )}
+          </span>
+
+          {/* Les quatre réponses passent à la ligne quand elles ne tiennent pas —
+              elles ne défilent JAMAIS de côté. La largeur utile dépend du volet
+              latéral, pas de la fenêtre : une media query se tromperait, et un
+              rail qui défile cache des réponses sans le dire. */}
+          <div className="crm-lot-rail" style={railLot}>
             {/* Les réponses qui FERMENT le dossier (« plus intéressé », « RDV
                 calé ») ne sont pas ici : on ne raye pas cinq personnes d'un
                 geste, et un rendez-vous se prend une par une. */}
@@ -336,26 +388,39 @@ export function CrmLeadsListView({
                 type="button"
                 disabled={enCours}
                 onClick={() => void qualifierEnLot(r)}
-                style={boutonLot}
+                style={boutonLot(r.teinte)}
               >
-                {r.titre}
-                <span style={{ fontWeight: 500, color: "var(--ls-text-muted)", fontSize: 12 }}>
-                  · {r.quand.toLowerCase()}
+                {/* La teinte passe par la pastille, le fond et le liseré —
+                    jamais par le texte : `--ls-text-muted` sur un fond teinté
+                    tombe à 3,89:1 (mesuré). C'est la même pastille que la
+                    feuille « et alors ? », et la même que le bandeau de la zone
+                    où la personne va atterrir. */}
+                <span aria-hidden="true" style={{ ...pastilleLot, background: r.teinte }} />
+                <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)", lineHeight: 1.2 }}>
+                    {r.titre}
+                  </span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 500, lineHeight: 1.2,
+                    color: "color-mix(in srgb, var(--ls-text) 68%, transparent)",
+                  }}>
+                    {quandCourt(r)}
+                  </span>
                 </span>
               </button>
             ))}
           </div>
+
           <button
             type="button"
+            className="crm-lot-x"
             disabled={enCours}
             onClick={() => setCoches(new Set())}
-            style={{
-              marginTop: 11, background: "none", border: 0, color: "var(--ls-text-muted)",
-              fontFamily: "DM Sans, sans-serif", fontSize: 13, textDecoration: "underline",
-              cursor: "pointer", padding: "8px 0", minHeight: 44,
-            }}
+            aria-label="Tout décocher"
+            title="Tout décocher"
+            style={croixLot}
           >
-            {enCours ? "Enregistrement…" : "Tout décocher"}
+            ✕
           </button>
         </div>
       ) : null}
@@ -462,6 +527,11 @@ function CrmLeadListRow({
             aria-label={`Sélectionner ${lead.firstName}`}
             style={{ width: 20, height: 20, flex: "none", cursor: "pointer", accentColor: "var(--ls-teal)", marginRight: 2 }}
           />
+        ) : etatRdv === "aVenir" ? (
+          // Une place vide, pas rien : sans elle, les lignes sans case (celles
+          // qui ont déjà un créneau) décalent leur nom de 22 px vers la gauche
+          // et le bord de la liste devient dentelé.
+          <span aria-hidden="true" style={{ width: 20, flex: "none", marginRight: 2 }} />
         ) : null}
         {/* Clic sur la ligne → fiche détail plein écran (Phase 2). Le
             chevron reste un accordéon d'actions rapides sans quitter la
@@ -807,31 +877,101 @@ function groupHeader(teinte: string): React.CSSProperties {
   };
 }
 
+/**
+ * ⚠️ `bottom` n'est PAS fixé ici : il vit dans la feuille de style du composant,
+ * parce qu'il doit changer sous 1024 px pour passer AU-DESSUS de la navigation
+ * du bas (`.bottom-nav`, `position: fixed`, 52 px + 12 px de rembourrage). Un
+ * style inline gagnerait contre la media query, et la barre se garerait de
+ * nouveau derrière la navigation — ce qu'elle faisait avant le 18/08.
+ */
 const barreLot: React.CSSProperties = {
   position: "sticky",
-  bottom: 12,
+  zIndex: 2,
   marginTop: 14,
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
   background: "var(--ls-surface)",
   border: "1px solid color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border))",
-  borderRadius: 16,
-  padding: "15px 17px",
-  boxShadow: "0 20px 44px -24px rgba(0,0,0,.95)",
+  borderRadius: 14,
+  padding: "9px 10px 9px 12px",
+  // Ombre TEINTÉE vert, jamais noire (charte d'identité, docs/IDENTITE-GRAPHIQUE.md).
+  boxShadow: "0 20px 44px -32px rgba(30,51,48,.34)",
 };
 
-const boutonLot: React.CSSProperties = {
+const compteLot: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 8,
-  minHeight: 46,
-  padding: "11px 15px",
-  borderRadius: 12,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text)",
+  gap: 7,
+  flex: "none",
   fontFamily: "DM Sans, sans-serif",
-  fontSize: 13.5,
+  fontSize: 13,
   fontWeight: 700,
+  color: "var(--ls-teal)",
+  whiteSpace: "nowrap",
+};
+
+/** La case cochée du compte : elle rappelle celles des lignes au-dessus. */
+const caseCochee: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  borderRadius: 4,
+  background: "var(--ls-teal)",
+  flex: "none",
+};
+
+const railLot: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  rowGap: 8,
+};
+
+const pastilleLot: React.CSSProperties = {
+  width: 8,
+  height: 8,
+  borderRadius: "50%",
+  flex: "none",
+};
+
+/** Dosage repris de `groupHeader` — la seule recette du projet vérifiée au
+ *  contraste réel : 9 % de teinte au fond, 25 % au liseré, texte `--ls-text`. */
+function boutonLot(teinte: string): React.CSSProperties {
+  return {
+    flex: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 44,
+    padding: "0 12px",
+    borderRadius: 11,
+    border: `1px solid color-mix(in srgb, ${teinte} 25%, var(--ls-border))`,
+    background: `color-mix(in srgb, ${teinte} 9%, var(--ls-surface2))`,
+    color: "var(--ls-text)",
+    fontFamily: "DM Sans, sans-serif",
+    textAlign: "left",
+    cursor: "pointer",
+  };
+}
+
+const croixLot: React.CSSProperties = {
+  flex: "none",
+  width: 44,
+  height: 44,
+  borderRadius: 11,
+  border: "1px solid var(--ls-border)",
+  background: "none",
+  color: "var(--ls-text-muted)",
+  fontSize: 17,
   cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const headCell: React.CSSProperties = {
