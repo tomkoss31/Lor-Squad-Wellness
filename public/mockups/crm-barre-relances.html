@@ -68,31 +68,48 @@ h2{font-family:Syne,sans-serif;font-size:18px;margin:34px 0 4px}
 .bar-apres{background:var(--ls-surface);
   border:1px solid color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border));
   border-radius:14px;margin-top:14px;padding:9px 10px 9px 12px;
-  box-shadow:0 20px 44px -24px rgba(0,0,0,.95);
+  /* Ombre TEINTEE vert, jamais noire (regle d'identite). */
+  box-shadow:0 20px 44px -32px rgba(30,51,48,.34);
   display:flex;align-items:center;gap:10px}
-.bar-apres .cpt{display:inline-flex;align-items:center;gap:6px;flex:none;
+.bar-apres .cpt{display:inline-flex;align-items:center;gap:7px;flex:none;
   font-size:13px;font-weight:700;color:var(--ls-teal);white-space:nowrap}
+/* Une vraie case cochee, pas un emoji : l'identite exclut les emoji des
+   libelles d'interface. En React ce sera l'icone Lucide `check`. */
+.bar-apres .coche{position:relative;width:15px;height:15px;border-radius:4px;
+  background:var(--ls-teal);flex:none}
+.bar-apres .coche::after{content:"";position:absolute;left:5px;top:2px;
+  width:3px;height:7px;border:solid var(--ls-teal-contrast, #06241F);
+  border-width:0 2px 2px 0;transform:rotate(43deg)}
 .bar-apres .cpt em{font-style:normal;color:var(--ls-text-muted);font-weight:500}
 /* Le rail : il défile de côté SEULEMENT quand les 4 réponses ne tiennent pas.
    Sur l'écran de Thomas elles tiennent — le défilement ne concerne que le
    téléphone, et il porte un dégradé pour qu'on sache qu'il continue. */
-.rail{flex:1;min-width:0;display:flex;gap:8px;overflow-x:auto;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch}
-@media (max-width:700px){
-  .rail{mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
-}
+/* Le rail ne DEFILE JAMAIS de cote : il passe a la ligne. Un rail qui defile
+   cache des reponses sans le dire, et la largeur utile ici ne depend pas de
+   la fenetre mais du volet lateral — une media query se tromperait. En
+   laissant simplement le flex passer a la ligne, la barre tient sur une ligne
+   des qu'il y a la place, et sur deux quand il n'y en a pas. */
+.rail{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:8px;row-gap:8px}
 
 .rail::-webkit-scrollbar{display:none}
 /* Le geste au-dessus, le délai en dessous : deux lignes tiennent dans les
    44 px de la cible tactile, et le bouton devient DEUX FOIS plus étroit —
    c'est ce qui fait tenir les quatre réponses sur une ligne, même serré. */
-.rail button{flex:none;display:inline-flex;flex-direction:column;align-items:flex-start;
-  justify-content:center;gap:1px;min-height:44px;
-  padding:0 12px;border-radius:11px;border:1px solid var(--ls-border);
-  background:var(--ls-surface2);color:var(--ls-text);font-family:'DM Sans',sans-serif;
+.rail button{--t:var(--ls-teal);flex:none;display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 12px;border-radius:11px;
+  border:1px solid color-mix(in srgb, var(--t) 25%, var(--ls-border));
+  background:color-mix(in srgb, var(--t) 9%, var(--ls-surface2));
+  color:var(--ls-text);font-family:'DM Sans',sans-serif;
   font-size:12.5px;font-weight:700;line-height:1.2;cursor:pointer;white-space:nowrap;text-align:left}
-.rail button i{font-style:normal;font-weight:500;color:var(--ls-text-muted);font-size:11px;line-height:1.2}
-.rail button:hover{border-color:color-mix(in srgb,var(--ls-teal) 45%,var(--ls-border))}
+/* La pastille du bouton EST celle de l'en-tete de zone : meme forme, meme
+   couleur. Elle dit ou la personne va atterrir apres le clic. */
+.rail button .pt{flex:none;width:8px;height:8px;border-radius:50%;background:var(--t)}
+.rail button .tx{display:flex;flex-direction:column;gap:1px}
+.rail button i{font-style:normal;font-weight:500;font-size:11px;line-height:1.2;
+  color:color-mix(in srgb, var(--ls-text) 68%, transparent)}
+.rail button:hover{background:color-mix(in srgb, var(--t) 16%, var(--ls-surface2));
+  border-color:color-mix(in srgb, var(--t) 45%, var(--ls-border))}
+.rail button:focus-visible{outline:2px solid var(--t);outline-offset:2px}
 /* La croix ne défile jamais : on doit toujours pouvoir tout décocher. */
 .bar-apres .x{flex:none;width:44px;height:44px;border-radius:11px;border:1px solid var(--ls-border);
   background:none;color:var(--ls-text-muted);font-size:17px;cursor:pointer;
@@ -100,11 +117,11 @@ h2{font-family:Syne,sans-serif;font-size:18px;margin:34px 0 4px}
 .bar-apres .x:hover{color:var(--ls-text);background:var(--ls-surface2)}
 
 /* ── Le téléphone, pour voir le rail défiler ────────────────────────────── */
-.tel{width:390px;max-width:100%;border:1px solid var(--ls-border);border-radius:20px;
-  padding:10px;background:var(--ls-bg);margin-top:10px}
+.tel{width:392px;max-width:100%;border:1px solid var(--ls-border);border-radius:20px;
+  padding:0;overflow:hidden;background:var(--ls-bg);margin-top:10px}
 .tel .bar-apres{margin-top:0}
 .nav{display:flex;justify-content:space-around;align-items:center;height:64px;
-  margin-top:8px;border-top:1px solid var(--ls-border);color:var(--ls-text-hint);font-size:10px}
+  margin-top:0;border-top:1px solid var(--ls-border);color:var(--ls-text-hint);font-size:10px}
 
 .mes{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
 .mes div{background:var(--ls-surface2);border:1px solid var(--ls-border);border-radius:10px;
@@ -113,13 +130,30 @@ h2{font-family:Syne,sans-serif;font-size:18px;margin:34px 0 4px}
 @media (max-width:560px){
   /* Le compte et la croix sur leur ligne, les quatre réponses en dessous :
      personne ne devine qu'un rail défile quand il n'en montre que deux. */
-  .bar-apres{flex-wrap:wrap;row-gap:8px;padding:9px 10px}
+  .bar-apres{flex-wrap:wrap;row-gap:8px;padding:9px 8px}
   .bar-apres .cpt{order:1}
   .bar-apres .x{order:2;margin-left:auto;width:36px;height:36px}
   .rail{order:3;flex-basis:100%;flex-wrap:wrap;overflow:visible;mask-image:none;row-gap:8px}
-  .rail button{flex:1 1 calc(50% - 4px)}
+  .rail button{flex:1 1 calc(50% - 4px);padding:0 10px}
 }
 .gain{color:var(--ls-lime)!important}
+.legende{margin:12px 0 0;font-size:12.5px;line-height:1.9;color:var(--ls-text-muted)}
+.legende .lg{display:inline-flex;align-items:center;gap:5px;margin:0 4px;
+  padding:3px 9px;border-radius:999px;background:var(--ls-surface2);
+  border:1px solid var(--ls-border);color:var(--ls-text);font-weight:600}
+.legende .pt{width:7px;height:7px;border-radius:50%;display:inline-block}
+/* Tokens RÉELS du thème clair (globals.css, html.theme-light). La maquette
+   bascule pour qu'on vérifie la couleur dans les deux modes, pas dans un. */
+html.clair{
+  --ls-bg:#FAF7F0; --ls-surface:#FFFFFF; --ls-surface2:#F5F1EB;
+  --ls-border:rgba(30,51,48,0.07); --ls-text:#17201C;
+  --ls-text-muted:#55605A; --ls-text-hint:#68716C;
+  --ls-teal:#0F766E; --ls-lime:#5E7A09; --ls-coral:#BC432C;
+  --ls-amber:#9A631A; --ls-purple:#6D28D9;
+}
+#bascule{position:fixed;right:14px;top:44px;z-index:9;min-height:36px;padding:0 14px;
+  border-radius:999px;border:1px solid var(--ls-border);background:var(--ls-surface2);
+  color:var(--ls-text);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -152,27 +186,35 @@ fenêtre — c'est-à-dire derrière la barre de navigation du bas</b>, qui fait
 
 <h2>Proposé</h2>
 <p class="note">Le compte à gauche, les quatre réponses au milieu, la croix à droite.
-La phrase « tu n'écris aucune date » disparaît : chaque bouton la dit déjà, à sa façon
-(« · demain », « · 3 j »). <b>Et la barre remonte au-dessus de la navigation du bas</b>,
-pour ne plus la toucher.</p>
+Chaque bouton porte la <b>pastille de couleur de la zone où la personne va atterrir</b> —
+la même que les bandeaux juste au-dessus, et la même que la feuille « et alors ? » que
+tu connais déjà. La phrase « tu n'écris aucune date » disparaît : chaque bouton la dit,
+sous son titre. <b>Et la barre remonte au-dessus de la navigation du bas</b>, pour ne plus
+la toucher.</p>
 <div class="liste" id="liste-b"></div>
 <div class="bar-apres" id="bar-apres">
-  <span class="cpt">☑ 3 <em>cochées</em></span>
+  <span class="cpt"><span class="coche" aria-hidden="true"></span>3 <em>cochées</em></span>
   <div class="rail">
-    <button>Pas de réponse <i>demain</i></button>
-    <button>Il/elle rappellera <i>dans 3 jours</i></button>
-    <button>Répondu, ne sait pas <i>dans 7 jours</i></button>
-    <button>Pas maintenant <i>dans 1 mois</i></button>
+    <button style="--t:var(--ls-coral)"><span class="pt" aria-hidden="true"></span><span class="tx">Pas de réponse<i>demain</i></span></button>
+    <button style="--t:var(--ls-amber)"><span class="pt" aria-hidden="true"></span><span class="tx">Il/elle rappellera<i>dans 3 jours</i></span></button>
+    <button style="--t:var(--ls-amber)"><span class="pt" aria-hidden="true"></span><span class="tx">Répondu, ne sait pas<i>dans 7 jours</i></span></button>
+    <button style="--t:var(--ls-purple)"><span class="pt" aria-hidden="true"></span><span class="tx">Pas maintenant<i>dans 1 mois</i></span></button>
   </div>
   <button class="x" aria-label="Tout décocher" title="Tout décocher">✕</button>
 </div>
+<p class="legende">La couleur du bouton est celle du bandeau où la personne va atterrir&nbsp;:
+<span class="lg"><span class="pt" style="background:var(--ls-coral)"></span>à relancer</span>
+<span class="lg"><span class="pt" style="background:var(--ls-amber)"></span>cette semaine</span>
+<span class="lg"><span class="pt" style="background:var(--ls-purple)"></span>plus tard</span>
+— la même échelle que la liste au-dessus.</p>
 <div class="mes" id="mes-b"></div>
 
 <h2>Sur ton téléphone</h2>
-<p class="note">Sous 560 px les quatre réponses ne tiennent plus côte à côte : elles
-passent à la ligne, <b>deux par deux</b>. Le compte et la croix gardent leur ligne au-dessus.
-On voit les quatre sans faire un geste — un rail qui défile n'en montrerait que deux, et
-personne ne devine qu'il faut le pousser. Ci-dessous, la vraie barre dans 369 px.</p>
+<p class="note">Quand les quatre ne tiennent plus côte à côte, elles <b>passent à la
+ligne</b> — elles ne défilent jamais de côté. Un rail qui défile cache des réponses sans
+le dire, et personne ne devine qu'il faut le pousser. Résultat : <b>64 px</b> quand la
+place y est, <b>116 px</b> à deux rangées, <b>160 px</b> sur un téléphone. Jamais plus.
+Ci-dessous, la vraie barre dans 390 px.</p>
 <div class="tel">
   <iframe id="cadre" title="La barre à 390 px" src="crm-barre-relances.html?bar" style="width:100%;height:196px;border:0;display:block;overflow:hidden"></iframe>
   <div class="nav"><span>Clients</span><span>CRM</span><span>Bilan</span><span>Panier</span><span>Agenda</span></div>
@@ -217,8 +259,8 @@ window.mesures = () => {
   const ligne = document.querySelector("#liste-a .ligne").getBoundingClientRect().height;
   const largeA = avant.getBoundingClientRect().height;
   const largeB = apres.getBoundingClientRect().height;
-  // La même barre, remesurée dans 369 px de large : c'est là qu'elle explose.
-  wrap.style.maxWidth = "369px";
+  // La même barre, remesurée dans 390 px de large : c'est là qu'elle explose.
+  wrap.style.maxWidth = "390px";
   const etroitA = avant.getBoundingClientRect().height;
   wrap.style.maxWidth = garde;
   const cadre = document.getElementById("cadre");
@@ -228,16 +270,16 @@ window.mesures = () => {
 
   carte("mes-a", [
     ["Sur ton \u00e9cran", Math.round(largeA) + " px"],
-    ["Sur un t\u00e9l\u00e9phone (369 px)", Math.round(etroitA) + " px"],
+    ["Sur un téléphone (390 px)", Math.round(etroitA) + " px"],
     ["Lignes de liste cach\u00e9es", (largeA / ligne).toFixed(1)],
   ]);
   carte("mes-b", [
     ["Sur ton \u00e9cran", Math.round(largeB) + " px"],
     ["Rendu \u00e0 la liste", "+ " + ((largeA - largeB) / ligne).toFixed(1) + " lignes", "gain"],
-    ["M\u00eame hauteur de 740 \u00e0 1600 px", "oui"],
+    ["Une seule ligne dès", "820 px de large"],
   ]);
   carte("mes-tel", [
-    ["\u00c0 369 px", Math.round(etroitB) + " px"],
+    ["À 390 px", Math.round(etroitB) + " px"],
     ["Rendu \u00e0 la liste", "+ " + ((etroitA - etroitB) / ligne).toFixed(1) + " lignes", "gain"],
     ["R\u00e9ponses visibles sans geste", "4 sur 4"],
   ]);
@@ -245,9 +287,23 @@ window.mesures = () => {
 };
 if (location.search === "?bar") {
   document.body.innerHTML = document.getElementById("bar-apres").outerHTML;
-  document.body.style.padding = "10px";
+  document.body.style.padding = "8px 0";
   document.getElementById("bar-apres").style.marginTop = "0";
 } else {
+(() => {
+  const b = document.createElement("button");
+  b.id = "bascule";
+  const dire = () => { b.textContent = document.documentElement.classList.contains("clair") ? "\u2600\ufe0f Clair" : "\ud83c\udf19 Sombre"; };
+  b.onclick = () => {
+    document.documentElement.classList.toggle("clair");
+    const f = document.getElementById("cadre");
+    if (f && f.contentDocument) f.contentDocument.documentElement.classList.toggle("clair");
+    dire();
+    window.mesures();
+  };
+  dire();
+  document.body.appendChild(b);
+})();
   const lance = () => setTimeout(window.mesures, 80);
   document.fonts.ready.then(lance);
   document.getElementById("cadre").addEventListener("load", lance);
