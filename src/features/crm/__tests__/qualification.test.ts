@@ -13,6 +13,7 @@ import {
   dateDeRetour,
   ecritureFor,
   quandRevient,
+  quandCourt,
   messageDeRelance,
   type CleReponse,
 } from "../qualification";
@@ -183,5 +184,37 @@ describe("le message de 2e tentative", () => {
     const m = messageDeRelance(null, "Laure", "Thomas");
     expect(m).toContain("Laure");
     expect(m.trim().length).toBeGreaterThan(30);
+  });
+});
+
+// =============================================================================
+// La version courte, pour la barre des relances en lot (18/08).
+// =============================================================================
+
+describe("quandCourt — le delai en trois mots", () => {
+  it("donne le meme sens que `quand`, en plus court", () => {
+    expect(quandCourt(REPONSE_PAR_CLE.pas_de_reponse)).toBe("demain");
+    expect(quandCourt(REPONSE_PAR_CLE.rappellera)).toBe("dans 3 jours");
+    expect(quandCourt(REPONSE_PAR_CLE.ne_sait_pas)).toBe("dans 7 jours");
+    expect(quandCourt(REPONSE_PAR_CLE.pas_maintenant)).toBe("dans 1 mois");
+  });
+
+  it("ne raccourcit PAS les reponses qui ne posent aucune date", () => {
+    // Elles ne sont pas dans la barre en lot, mais si un jour elles y passent,
+    // « dans null jours » ne doit pas apparaitre.
+    expect(quandCourt(REPONSE_PAR_CLE.plus_interesse)).toBe(REPONSE_PAR_CLE.plus_interesse.quand);
+    expect(quandCourt(REPONSE_PAR_CLE.rdv)).toBe(REPONSE_PAR_CLE.rdv.quand);
+  });
+
+  it("reste court pour les quatre reponses de la barre", () => {
+    // La barre tient sur une ligne parce que ces textes sont courts : un
+    // libelle qui rallonge la ferait passer a deux rangees sans prevenir.
+    for (const r of REPONSES.filter((x) => x.jours !== null)) {
+      expect(quandCourt(r).length).toBeLessThanOrEqual(13);
+    }
+  });
+
+  it("ne dit jamais « dans 1 jours »", () => {
+    for (const r of REPONSES) expect(quandCourt(r)).not.toMatch(/1 jours/);
   });
 });
