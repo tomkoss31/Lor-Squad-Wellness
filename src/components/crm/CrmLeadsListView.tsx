@@ -15,17 +15,19 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, prenomProvenance, provenanceTexte, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus, objectifCourt } from "../../hooks/useCrmLeads";
-import { grouperParEcheance, pilule, pourquoi, teinteDe, type CleGroupe } from "../../features/crm/echeances";
+import { CRM_EDITABLE_SOURCES, CRM_SOURCE_META, CRM_STATUS_META, prenomProvenance, provenanceTexte, statusOptionsFor, type CrmLead, type CrmSource, type CrmStatus } from "../../hooks/useCrmLeads";
+// Le rangement par GESTE (18/08) : « Aujourd'hui » mettait dans le même tas
+// quelqu'un qu'on n'a jamais appelé, des relances en retard et des rendez-vous
+// déjà pris. `zones.ts` sépare les trois ; `echeances.ts` garde le « quand ».
+import { grouperParZone, phraseEtat, type CleZone } from "../../features/crm/zones";
+import { etatRdvDe } from "../../features/crm/etapes";
 import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
 import { estQualifiable } from "../../features/crm/ecrireQualification";
-import type { Reponse } from "../../features/crm/qualification";
+import { REPONSES, type Reponse } from "../../features/crm/qualification";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmMailLink, buildCrmSmsLink, buildCrmWhatsAppLink, objetPourLead, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
 import { computeLeadScore, TEMP_META } from "../../lib/leadScoring";
-import { isStagnant, stagnationDays } from "../../lib/leadActivity";
-import { tableSupportsAssignment } from "../../lib/leadRouting";
 import { EmptyState } from "../ui/EmptyState";
 
 // « Par échéance » est le défaut : c'est le seul tri qui répond à « qu'est-ce
@@ -51,7 +53,7 @@ interface CrmLeadsListViewProps {
   onWake: (lead: CrmLead) => void;
   onDelete?: (lead: CrmLead) => void;
   /** « Et alors ? » — pose la suite depuis la liste, sans changer d'écran. */
-  onQualifier: (lead: CrmLead, reponse: Reponse) => void;
+  onQualifier: (lead: CrmLead, reponse: Reponse) => void | Promise<void>;
   emptyMessage: string;
   /**
    * Masque le sélecteur de tri : il vit alors dans le panneau « Plus de
@@ -93,14 +95,63 @@ export function CrmLeadsListView({
   const sortKey = triExterne ? triExterne.valeur : sortInterne;
   const setSortKey = triExterne ? triExterne.onChange : setSortInterne;
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  // Cocher les relances faites (Thomas, 18/08 : « aujourd'hui j'ai fait les
+  // relances sur des leads, j'aimerais pouvoir les checker »). Sans ça il
+  // fallait déplier chaque ligne, cliquer « Et alors ? », choisir : trois
+  // gestes par personne, quinze pour une matinée.
+  const [coches, setCoches] = useState<Set<string>>(new Set());
+  const [enCours, setEnCours] = useState(false);
+
+  function basculer(cle: string) {
+    setCoches((s) => {
+      const n = new Set(s);
+      if (n.has(cle)) n.delete(cle); else n.add(cle);
+      return n;
+    });
+  }
+
+  /**
+   * Applique UNE réponse à toute la sélection.
+   *
+   * Séquentiel, pas en parallèle : la base tient sur une petite machine, et
+   * cinq écritures simultanées y ont déjà suffi à faire des dégâts. On garde
+   * aussi les fiches qui ont échoué cochées — sinon on croirait avoir tout
+   * rangé alors qu'il en reste.
+   */
+  async function qualifierEnLot(reponse: Reponse) {
+    if (enCours || coches.size === 0) return;
+    setEnCours(true);
+    const restants = new Set(coches);
+    try {
+      for (const lead of leads) {
+        if (!coches.has(lead.key)) continue;
+        await onQualifier(lead, reponse);
+        restants.delete(lead.key);
+      }
+    } finally {
+      setCoches(restants);
+      setEnCours(false);
+    }
+  }
 
   // Une seule lecture de l'horloge pour tout le rendu : sans ça, deux lignes
   // calculées à cheval sur minuit ne racontent pas la même journée.
   const maintenant = useMemo(() => new Date(), [leads]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Chaque lead porte son état de rendez-vous : c'est lui qui décide si la
+  // personne est « à relancer » ou « rien à caler ».
+  const etatParCle = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof etatRdvDe>>();
+    for (const l of leads) m.set(l.key, etatRdvDe(l.rdv, maintenant));
+    return m;
+  }, [leads, maintenant]);
+  const avecRdv = useMemo(
+    () => leads.map((l) => ({ ...l, rdv: etatParCle.get(l.key) ?? "aucun" }) as CrmLead & { rdv: ReturnType<typeof etatRdvDe> }),
+    [leads, etatParCle],
+  );
   const groupes = useMemo(
-    () => (sortKey === "echeance" ? grouperParEcheance(leads, maintenant) : null),
-    [leads, sortKey, maintenant],
+    () => (sortKey === "echeance" ? grouperParZone(avecRdv, maintenant) : null),
+    [avecRdv, sortKey, maintenant],
   );
 
   const sorted = useMemo(() => {
@@ -128,7 +179,7 @@ export function CrmLeadsListView({
     return m;
   }, [users]);
 
-  const renderRow = (lead: CrmLead, groupe: CleGroupe | null, isLast: boolean) => (
+  const renderRow = (lead: CrmLead, groupe: CleZone | null, isLast: boolean) => (
     <CrmLeadListRow
       key={lead.key}
       lead={lead}
@@ -153,6 +204,9 @@ export function CrmLeadsListView({
       onWake={archived ? () => onWake(lead) : undefined}
       onDelete={onDelete ? () => onDelete(lead) : undefined}
       onQualifier={(r) => onQualifier(lead, r)}
+      coche={coches.has(lead.key)}
+      onCocher={archived ? undefined : () => basculer(lead.key)}
+      etatRdv={etatParCle.get(lead.key) ?? "aucun"}
     />
   );
 
@@ -168,6 +222,13 @@ export function CrmLeadsListView({
     <div>
       <style>{`
         .crm-list-row:hover { background: color-mix(in srgb, var(--ls-teal) 5%, transparent); }
+        /* Sur un téléphone, la source et le numéro font scroller la table de
+           côté pour lire un nom. Ils redescendent dans la fiche, qui s'ouvre
+           d'un tap — la phrase d'état, elle, reste. */
+        @media (max-width: 700px) {
+          .crm-col2 { display: none !important; }
+          .crm-list-table { min-width: 0 !important; }
+        }
       `}</style>
 
       {triExterne ? null : (
@@ -204,7 +265,7 @@ export function CrmLeadsListView({
           overflowX: "auto",
         }}
       >
-        <div style={{ minWidth: 640 }}>
+        <div className="crm-list-table" style={{ minWidth: 520 }}>
           {/* Header colonnes */}
           <div
             style={{
@@ -217,10 +278,8 @@ export function CrmLeadsListView({
             }}
           >
             <div style={{ ...headCell, flex: 2 }}>Lead</div>
-            <div style={{ ...headCell, flex: 1.2 }}>Source</div>
-            <div style={{ ...headCell, flex: 1.4 }}>Contact</div>
-            <div style={{ ...headCell, width: 130 }}>Statut</div>
-            <div style={{ ...headCell, width: 60 }}>Reçu le</div>
+            <div className="crm-col2" style={{ ...headCell, flex: 1.2 }}>Source</div>
+            <div className="crm-col2" style={{ ...headCell, flex: 1.4 }}>Contact</div>
             <div style={{ ...headCell, width: 20 }} />
           </div>
 
@@ -256,6 +315,50 @@ export function CrmLeadsListView({
             : sorted.map((lead, i) => renderRow(lead, null, i === sorted.length - 1))}
         </div>
       </div>
+
+      {/* La barre n'existe QUE quand une case est cochée : un écran qui porte
+          en permanence une zone d'action vide apprend à ne plus la regarder. */}
+      {coches.size > 0 ? (
+        <div style={barreLot}>
+          <p style={{ margin: "0 0 3px", fontFamily: "Syne, sans-serif", fontSize: 15.5, fontWeight: 700 }}>
+            {coches.size} {coches.size > 1 ? "personnes cochées" : "personne cochée"} — qu'est-ce qui s'est passé&nbsp;?
+          </p>
+          <p style={{ margin: "0 0 13px", fontSize: 12.5, lineHeight: 1.55, color: "var(--ls-text-muted)" }}>
+            La même réponse pour {coches.size > 1 ? "toutes" : "elle"}. Tu n'écris aucune date.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {/* Les réponses qui FERMENT le dossier (« plus intéressé », « RDV
+                calé ») ne sont pas ici : on ne raye pas cinq personnes d'un
+                geste, et un rendez-vous se prend une par une. */}
+            {REPONSES.filter((r) => r.jours !== null).map((r) => (
+              <button
+                key={r.cle}
+                type="button"
+                disabled={enCours}
+                onClick={() => void qualifierEnLot(r)}
+                style={boutonLot}
+              >
+                {r.titre}
+                <span style={{ fontWeight: 500, color: "var(--ls-text-muted)", fontSize: 12 }}>
+                  · {r.quand.toLowerCase()}
+                </span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            disabled={enCours}
+            onClick={() => setCoches(new Set())}
+            style={{
+              marginTop: 11, background: "none", border: 0, color: "var(--ls-text-muted)",
+              fontFamily: "DM Sans, sans-serif", fontSize: 13, textDecoration: "underline",
+              cursor: "pointer", padding: "8px 0", minHeight: 44,
+            }}
+          >
+            {enCours ? "Enregistrement…" : "Tout décocher"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -282,6 +385,9 @@ function CrmLeadListRow({
   onWake,
   onDelete,
   onQualifier,
+  coche,
+  onCocher,
+  etatRdv,
 }: {
   lead: CrmLead;
   /** Le prénom cité par la personne, déjà résolu par le parent — que la
@@ -291,7 +397,7 @@ function CrmLeadListRow({
   archived: boolean;
   isLast: boolean;
   /** Le groupe d'échéance qui porte cette ligne — `null` en tri à plat. */
-  groupe: CleGroupe | null;
+  groupe: CleZone | null;
   maintenant: Date;
   expanded: boolean;
   onToggle: () => void;
@@ -305,9 +411,12 @@ function CrmLeadListRow({
   onWake?: () => void;
   onDelete?: () => void;
   onQualifier: (reponse: Reponse) => void;
+  coche: boolean;
+  onCocher?: () => void;
+  /** Déjà calculé par le parent — surtout pas recalculé ici. */
+  etatRdv: ReturnType<typeof etatRdvDe>;
 }) {
   const src = CRM_SOURCE_META[lead.source];
-  const statusMeta = CRM_STATUS_META[lead.status];
   const isIntentionSource = lead.source === "intention";
   const { message, messageLabel, aiMessage, setAiMessage, aiLoading, generateAi, lastTouch, recordTouch } =
     useLeadQuickActions(lead, msgCtx);
@@ -315,13 +424,15 @@ function CrmLeadListRow({
   const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const { temperature, raison } = computeLeadScore(lead);
   const temp = TEMP_META[temperature];
-  const stagnant = isStagnant(lead);
-  // Le « quand » et le « pourquoi » n'existent qu'en rangement par échéance :
-  // dans un tri à plat, une pilule « demain » sans groupe au-dessus ne veut
-  // rien dire.
-  const quand = groupe ? pilule(lead, groupe, maintenant) : null;
-  const motif = groupe ? pourquoi(lead) : null;
-  const teinteMotif = groupe ? teinteDe(lead, groupe) : "var(--ls-text-hint)";
+  // UNE phrase, à la place de quatre badges (pilule d'échéance, sablier de
+  // stagnation, motif, colonne « Statut »). « ⏳ 5j » ne disait pas s'il fallait
+  // agir ; « tu devais rappeler il y a 3 jours », si. En tri à plat il n'y a pas
+  // de zone au-dessus, donc pas de phrase non plus : elle n'aurait pas de sens.
+  const statusMeta = CRM_STATUS_META[lead.status];
+  const etat = groupe ? phraseEtat({ ...lead, rdv: etatRdv }, maintenant) : null;
+  // Rouge seulement quand quelque chose est en retard — sinon la couleur
+  // devient du décor et ne signale plus rien.
+  const etatUrgent = Boolean(etat && /tu devais rappeler|aujourd'hui|Jamais rappel/.test(etat));
 
   return (
     <div>
@@ -339,6 +450,19 @@ function CrmLeadListRow({
           fontFamily: "DM Sans, sans-serif",
         }}
       >
+        {/* La case vit hors du <Link> : cliquer dessus ne doit pas ouvrir la
+            fiche. `stopPropagation` en plus, parce que le label parent porte
+            aussi le clic. */}
+        {onCocher ? (
+          <input
+            type="checkbox"
+            checked={coche}
+            onChange={() => onCocher()}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Sélectionner ${lead.firstName}`}
+            style={{ width: 20, height: 20, flex: "none", cursor: "pointer", accentColor: "var(--ls-teal)", marginRight: 2 }}
+          />
+        ) : null}
         {/* Clic sur la ligne → fiche détail plein écran (Phase 2). Le
             chevron reste un accordéon d'actions rapides sans quitter la
             liste (WhatsApp/SMS/copier en 1 clic, cf. Phase 1). */}
@@ -347,151 +471,58 @@ function CrmLeadListRow({
           style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, gap: 8, textDecoration: "none", color: "inherit" }}
         >
           <div style={{ flex: 2, minWidth: 0 }}>
-            {/* Les badges passent à la ligne plutôt que de rogner le nom :
-                sans ça, « Claire Dehaese » s'affichait « Claire De… » — on
-                avait remonté le nom de famille pour le tronquer aussitôt. */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", rowGap: 4, fontSize: 13.5, fontWeight: 600, color: "var(--ls-text)" }}>
-              {/* Nom de famille compris. Il était en base pour les 10 leads du
-                  tunnel club et n'apparaissait qu'en tout petit, sur la ligne
-                  du dessous, mélangé à la ville (demande Thomas 16/08). */}
+            {/* LE NOM, et rien qui le rogne. Les badges passaient devant :
+                « Claire Dehaese » s'affichait « Claire De… ». */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", rowGap: 3, fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {lead.firstName}
                 {lead.lastName ? ` ${lead.lastName}` : ""}
               </span>
-              {quand ? (
-                <span
-                  style={{
-                    flexShrink: 0,
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    color: teinteMotif,
-                    // Pas de fond teinté : à 12 % il coûtait 1,4 point de
-                    // contraste et faisait passer la pilule sous le seuil
-                    // lisible dans les DEUX thèmes. La bordure suffit à en
-                    // faire une pilule.
-                    background: "transparent",
-                    border: `1px solid color-mix(in srgb, ${teinteMotif} 38%, transparent)`,
-                  }}
-                >
-                  {quand}
-                </span>
+              {/* Les deux seuls signaux qui survivent ici : « il attend un
+                  rappel qu'il a demandé lui-même » et « c'est déjà un client ».
+                  Tout le reste (doublons, stagnation, non attribué, sans
+                  créneau, objectif) est descendu dans la fiche — mesuré le
+                  18/08 : la ligne portait SEIZE informations. */}
+              {lead.callbackRequestedAt ? (
+                <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span>
               ) : null}
-              {lead.callbackRequestedAt ? <span title="A demandé à être rappelé depuis sa page Résultat Bilan" aria-hidden="true">📞</span> : null}
-              {/* En rangement par échéance, le 🔔 répéterait le titre du groupe. */}
-              {lead.relanceDue && !groupe ? <span title="Relance due" aria-hidden="true">🔔</span> : null}
-              {/* Le ⚠️ reste pour « déjà client » — une info différente. Le
-                  regroupement, lui, se dit en clair : combien de fois cette
-                  personne s'est inscrite, et quand. */}
               {dupeFlag && dupeFlag.kind === "client" ? (
                 <span title={dupeFlag.label} aria-hidden="true">⚠️</span>
               ) : null}
-              {doublons && doublons.length > 0 ? (
-                <span
-                  title={`S'est inscrit(e) ${doublons.length + 1} fois — ${
-                    [lead, ...doublons]
-                      .map((d) => new Date(d.createdAt).toLocaleString("fr-FR", {
-                        day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-                      }))
-                      .join(" · ")
-                  }. La fiche la plus récente porte le fil.`}
-                  style={{
-                    fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap",
-                    color: "var(--ls-text-hint)",
-                    border: "1px solid var(--ls-border)",
-                    borderRadius: 8, padding: "1px 6px",
-                  }}
-                >
-                  {doublons.length + 1} fiches
-                </span>
-              ) : null}
-              {stagnant ? (
-                <span
-                  title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`}
-                  style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-text-hint)", whiteSpace: "nowrap" }}
-                >
-                  ⏳ {stagnationDays(lead)}j
-                </span>
-              ) : null}
-              {lead.abandonAvantCreneau ? (
-                <span
-                  title="A laissé ses coordonnées sur /reserver puis n'a jamais choisi de créneau. C'est le moment de rappeler."
-                  style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ls-coral)", whiteSpace: "nowrap" }}
-                >
-                  ⛔ Sans créneau
-                </span>
-              ) : lead.rdvLabel ? (
-                <span
-                  title={`Créneau réservé : ${lead.rdvLabel}`}
-                  style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-teal)", whiteSpace: "nowrap" }}
-                >
-                  🗓 {lead.rdvLabel}
-                </span>
-              ) : null}
-              {!lead.ownerUserId && tableSupportsAssignment(lead.table) ? (
-                <span title="Non attribué — ouvre la fiche pour assigner" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
-                  👤 Non attribué
-                </span>
-              ) : null}
             </div>
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {/* Ce qui s'est passé la dernière fois, en tête et en couleur :
-                  c'est la seule ligne qui dise pourquoi cette personne est
-                  encore là. Le reste (nom, ville, objectif) suit. */}
-              {motif ? <span style={{ color: teinteMotif, fontWeight: 600 }}>{motif}</span> : null}
+
+            {/* UNE phrase : ce qui s'est passé, et pourquoi cette personne est
+                encore là. Elle remplace la pilule, le sablier, le motif et la
+                colonne « Statut ». */}
+            <div style={{ fontSize: 12, marginTop: 3, lineHeight: 1.45, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {etat ? (
+                <span style={{ color: etatUrgent ? "var(--ls-coral)" : "var(--ls-text-muted)", fontWeight: etatUrgent ? 600 : 400 }}>
+                  {etat}
+                </span>
+              ) : (
+                <span style={{ color: "var(--ls-text-muted)" }}>{formatLeadDate(lead.createdAt)}</span>
+              )}
               {(() => {
+                // Le complément reste court : d'où vient la personne, et où
+                // elle habite. Le reste attend dans la fiche.
                 const reste = [
-                  // Le nom de famille est remonté à côté du prénom : le laisser
-                  // aussi ici l'écrirait deux fois sur la même ligne.
-                  //
-                  // Le prénom cité est affiché ICI, dans le texte joint, sans
-                  // couleur ni marque : « 📬 Flyer de Camille » se lit d'un
-                  // coup d'œil, et rien ne distingue un prénom tapé à la main
-                  // d'un prénom d'équipe — c'est la même réponse à la même
-                  // question (cf. `prenomProvenance`).
                   provenanceTexte(lead.provenanceCanal, prenomCite),
                   lead.viaName ? `via ${lead.viaName}` : lead.city,
-                  lead.objectif ? objectifCourt(lead.objectif) : null,
-                  lead.peopleCount === 2 ? "à deux" : null,
                 ].filter(Boolean).join(" · ");
-                // Le séparateur ne s'affiche que s'il sépare vraiment quelque
-                // chose, et le tiret ne comble le vide que s'il n'y a rien du
-                // tout — sinon on lirait « Jamais rappelé·e · — ».
-                if (!reste) return motif ? null : "—";
-                return motif ? ` · ${reste}` : reste;
+                return reste ? <span style={{ color: "var(--ls-text-muted)" }}> · {reste}</span> : null;
               })()}
             </div>
           </div>
-          <div style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
+          <div className="crm-col2" style={{ flex: 1.2, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
             <span title={`${temp.label} — ${raison}`}>
               <span aria-hidden="true">{temp.emoji}</span>
               <span className="ls-sr-only">{temp.label} — {raison}</span>
             </span>
             {src.emoji} {lead.source === "inconnue" && lead.sourceRaw ? lead.sourceRaw : src.label}
           </div>
-          <div style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div className="crm-col2" style={{ flex: 1.4, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {lead.contact ?? (isIntentionSource ? "à demander au parrain" : "—")}
           </div>
-          <div style={{ width: 130 }}>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 10px",
-                borderRadius: 10,
-                fontSize: 10.5,
-                fontWeight: 600,
-                background: `color-mix(in srgb, ${statusMeta.color} 16%, transparent)`,
-                color: statusMeta.color,
-              }}
-            >
-              {statusMeta.emoji} {statusMeta.label}
-            </span>
-          </div>
-          <div style={{ width: 60, fontSize: 11, color: "var(--ls-text-hint)" }}>{formatLeadDate(lead.createdAt)}</div>
         </Link>
         <button
           type="button"
@@ -528,6 +559,16 @@ function CrmLeadListRow({
         >
           {lastTouch ? (
             <div style={{ fontSize: 11.5, color: "var(--ls-teal)" }}>📨 contacté {relativeLeadDays(lastTouch)}</div>
+          ) : null}
+
+          {doublons && doublons.length > 0 ? (
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
+              ⚠️ Cette personne s'est inscrite <strong style={{ color: "var(--ls-text)" }}>{doublons.length + 1} fois</strong> —{" "}
+              {[lead, ...doublons]
+                .map((d) => new Date(d.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }))
+                .join(" · ")}
+              . C'est cette fiche-ci qui porte le fil.
+            </div>
           ) : null}
 
           {/* « Et alors ? » — le geste qui manquait. Jusqu'ici on pouvait
@@ -765,6 +806,33 @@ function groupHeader(teinte: string): React.CSSProperties {
     borderBottom: `1px solid color-mix(in srgb, ${teinte} 25%, var(--ls-border))`,
   };
 }
+
+const barreLot: React.CSSProperties = {
+  position: "sticky",
+  bottom: 12,
+  marginTop: 14,
+  background: "var(--ls-surface)",
+  border: "1px solid color-mix(in srgb, var(--ls-teal) 42%, var(--ls-border))",
+  borderRadius: 16,
+  padding: "15px 17px",
+  boxShadow: "0 20px 44px -24px rgba(0,0,0,.95)",
+};
+
+const boutonLot: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  minHeight: 46,
+  padding: "11px 15px",
+  borderRadius: 12,
+  border: "1px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13.5,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
 const headCell: React.CSSProperties = {
   fontSize: 9,
