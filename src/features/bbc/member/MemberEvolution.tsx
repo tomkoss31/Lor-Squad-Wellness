@@ -364,7 +364,7 @@ export function MemberEvolution({ token, metrics, measurements }: MemberEvolutio
                 </div>
                 <div style={{ fontSize: 11, fontWeight: 600, marginTop: 8 }}>{g.label}</div>
                 <div style={{ fontSize: 10, color: "var(--ls-bbc-muted)" }}>{g.delta}</div>
-                {g.sous ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{g.sous}</div> : null}
+                {g.sous ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-muted)", marginTop: 2 }}>{g.sous}</div> : null}
               </button>
             );
           })}
@@ -446,7 +446,7 @@ export function MemberEvolution({ token, metrics, measurements }: MemberEvolutio
                   );
                 })}
               </svg>
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-muted)", marginTop: 6 }}>
                 {dateLabels.map((d, i) => <span key={i}>{d}</span>)}
               </div>
             </>
