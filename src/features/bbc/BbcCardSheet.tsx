@@ -11,12 +11,45 @@ interface BbcCardSheetProps {
   currentCard: { type: number; used: number; remaining: number } | null;
   /** Prix + durée par type, depuis les réglages du club (jamais en dur). */
   cardsConfig?: Record<string, { price: number | null; days: number }> | null;
+  /**
+   * Le jour d'ouverture du club (`clubs.settings.opening_date`, AAAA-MM-JJ).
+   * Tant qu'il est devant nous, c'est LUI la date de début proposée : une carte
+   * vendue en pré-lancement ne doit pas se consommer avant le premier
+   * petit-déjeuner (Thomas, 18/08).
+   */
+  ouvertureIso?: string | null;
   onClose: () => void;
-  onAssign: (type: 10 | 30, priceEur: number | null, days: number | null) => Promise<boolean>;
+  onAssign: (
+    type: 10 | 30,
+    priceEur: number | null,
+    days: number | null,
+    debutIso: string | null,
+  ) => Promise<boolean>;
 }
 
-export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, onAssign }: BbcCardSheetProps) {
+/** AAAA-MM-JJ du jour, en heure locale (pas en UTC : `toISOString` décale). */
+function aujourdhuiIso(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** « 7 septembre » — pour dire au coach ce qu'il est en train de poser. */
+function jourLisible(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+}
+
+export function BbcCardSheet({ memberName, currentCard, cardsConfig, ouvertureIso, onClose, onAssign }: BbcCardSheetProps) {
   const [type, setType] = useState<10 | 30>(10);
+  // Par défaut : le jour d'ouverture s'il est encore devant nous, sinon
+  // aujourd'hui. Le coach peut corriger — on propose, on n'impose pas.
+  const aujourdhui = aujourdhuiIso();
+  const [debut, setDebut] = useState(() =>
+    ouvertureIso && ouvertureIso > aujourdhui ? ouvertureIso : aujourdhui,
+  );
   const [price, setPrice] = useState(() => {
     const p = cardsConfig?.["10"]?.price;
     return p != null ? String(p) : "";
@@ -32,7 +65,15 @@ export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, on
     // La durée vient des réglages du club : c'est elle qui est annoncée à
     // l'écran (« valable X jours »), elle doit donc être celle qui est écrite.
     const jours = cardsConfig?.[String(type)]?.days ?? null;
-    const ok = await onAssign(type, Number.isFinite(parsed as number) ? (parsed as number) : null, jours);
+    // 7 h du matin, l'heure d'ouverture : minuit pile tombe sur la frontière de
+    // fuseau et se relit « la veille » en base (règle timestamptz du projet).
+    const debutIso = debut ? new Date(`${debut}T07:00:00`).toISOString() : null;
+    const ok = await onAssign(
+      type,
+      Number.isFinite(parsed as number) ? (parsed as number) : null,
+      jours,
+      debutIso,
+    );
     setBusy(false);
     if (ok) onClose();
     else setErr("Impossible d'enregistrer la carte — réessaie.");
@@ -84,6 +125,23 @@ export function BbcCardSheet({ memberName, currentCard, cardsConfig, onClose, on
               </button>
             );
           })}
+        </div>
+
+        <label htmlFor="bbc-carte-debut" style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)", marginBottom: 6 }}>
+          Premier jour de validité
+        </label>
+        <input
+          id="bbc-carte-debut"
+          type="date"
+          value={debut}
+          min={aujourdhui < debut ? undefined : aujourdhui}
+          onChange={(e) => setDebut(e.target.value)}
+          style={{ width: "100%", height: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16, padding: "0 14px", outline: "none", marginBottom: 6 }}
+        />
+        <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+          {debut && debut > aujourdhui
+            ? `Les ${cardsConfig?.[String(type)]?.days ?? (type === 10 ? 30 : 90)} jours partent du ${jourLisible(debut)} — pas d'aujourd'hui.`
+            : `Les ${cardsConfig?.[String(type)]?.days ?? (type === 10 ? 30 : 90)} jours partent d'aujourd'hui.`}
         </div>
 
         <label style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)", marginBottom: 6 }}>Prix payé (optionnel, en €)</label>

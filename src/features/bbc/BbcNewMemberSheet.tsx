@@ -783,11 +783,20 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated 
     const type = Number(f.carte) as 10 | 30;
     const prix = nombre(f.cartePrix);
     const jours = club?.settings?.cards?.[f.carte]?.days ?? null;
+    // Une carte vendue AVANT l'ouverture démarre le jour de l'ouverture, pas le
+    // jour du comptoir : sinon elle se consomme sur un club fermé. 7 h du matin,
+    // l'heure d'ouverture — minuit tombe sur la frontière de fuseau.
+    const ouverture = club?.settings?.opening_date ?? null;
+    const jourJ = new Date();
+    const aujourdhui = `${jourJ.getFullYear()}-${String(jourJ.getMonth() + 1).padStart(2, "0")}-${String(jourJ.getDate()).padStart(2, "0")}`;
+    const debutIso =
+      ouverture && ouverture > aujourdhui ? new Date(`${ouverture}T07:00:00`).toISOString() : null;
     const { error } = await sb.rpc("bbc_assign_card", {
       p_client_id: clientId,
       p_type: type,
       p_price: prix,
       p_days: jours,
+      p_started_at: debutIso,
     });
     if (error) throw error;
   }

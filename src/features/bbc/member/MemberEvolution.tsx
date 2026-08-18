@@ -75,12 +75,65 @@ function fr(n: number, d = 1) {
   return n.toFixed(d).replace(".", ",");
 }
 
+/** « 2 mars », « 18 août » — jamais l'année : elle n'aide personne ici. */
+function jourCourt(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+}
+
+/* Le couple « départ → aujourd'hui ». La teinte ne porte JAMAIS ces textes :
+   ils restent en --ls-bbc-text / --ls-bbc-muted, mesurés au-dessus de 4,5:1
+   dans les deux thèmes. */
+const etiquette: React.CSSProperties = {
+  fontFamily: "var(--ls-bbc-font-mono)",
+  fontSize: 9.5,
+  fontWeight: 600,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  color: "var(--ls-bbc-muted)",
+};
+const valeur: React.CSSProperties = {
+  fontFamily: "var(--ls-bbc-font-display)",
+  fontSize: 22,
+  lineHeight: 1,
+  marginTop: 5,
+  color: "var(--ls-bbc-text)",
+};
+const unite: React.CSSProperties = {
+  fontFamily: "var(--ls-bbc-font-mono)",
+  fontSize: 11.5,
+  fontWeight: 600,
+  color: "var(--ls-bbc-muted)",
+  marginLeft: 3,
+};
+const quandStyle: React.CSSProperties = {
+  fontFamily: "var(--ls-bbc-font-mono)",
+  fontSize: 11,
+  marginTop: 4,
+  color: "var(--ls-bbc-muted)",
+};
+
 export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps) {
-  const weights = metrics.map((m) => num(m.weight)).filter((w): w is number => w != null);
-  const hasWeight = weights.length >= 2;
-  const firstW = weights[0];
-  const lastW = weights[weights.length - 1];
-  const delta = hasWeight ? Math.round((lastW - firstW) * 10) / 10 : null;
+  // On garde la DATE avec le poids : sans elle, « 108,0 → 99,0 » ne dit pas
+  // depuis quand, et c'est précisément ce que la membre venait chercher.
+  const pesees = metrics
+    .map((m) => ({ w: num(m.weight), jour: jourCourt(m.date) }))
+    .filter((p): p is { w: number; jour: string | null } => p.w != null);
+  const weights = pesees.map((p) => p.w);
+
+  // UNE pesée suffit désormais pour afficher un chiffre. Avant il en fallait
+  // deux, et une nouvelle membre pesée à son inscription lisait « ta
+  // transformation commence » — pas son poids (Thomas, 18/08).
+  const hasWeight = pesees.length >= 1;
+  const peseeDepart = pesees[0] ?? null;
+  const peseeActuelle = pesees[pesees.length - 1] ?? null;
+  const firstW = peseeDepart?.w ?? 0;
+  const lastW = peseeActuelle?.w ?? 0;
+  // L'écart n'a de sens qu'à partir de deux pesées : avec une seule, le héros
+  // est le POIDS lui-même, pas un « 0,0 » qui ne raconte rien.
+  const delta = pesees.length >= 2 ? Math.round((lastW - firstW) * 10) / 10 : null;
 
   // courbe
   const W = 300, H = 120, pad = 10;
@@ -182,17 +235,42 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
             <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />ton poids
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginTop: 12 }}>
-            {/* Encre lime, pas l'aplat : --ls-bbc-lime ne se lit pas sur clair. */}
-            <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 44, lineHeight: 0.85, color: "var(--ls-bbc-lime-text)" }}>{delta != null && delta > 0 ? "+" : ""}{delta != null ? fr(delta) : "—"}</span>
+            {/* Encre lime, pas l'aplat : --ls-bbc-lime ne se lit pas sur clair.
+                Une seule pesée → on montre le POIDS ; deux ou plus → l'écart. */}
+            <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 44, lineHeight: 0.85, color: "var(--ls-bbc-lime-text)" }}>{delta != null && delta > 0 ? "+" : ""}{fr(delta != null ? delta : firstW)}</span>
             <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 600, fontSize: 18, color: "var(--ls-bbc-muted)", paddingBottom: 4 }}>kg</span>
           </div>
-          <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 4 }}>{fr(firstW)} → {fr(lastW)} kg</div>
+          {delta != null ? (
+            /* LE COUPLE NOMMÉ ET DATÉ. Avant, cette ligne disait « 108,0 → 99,0 »
+               en 12 px : le bon chiffre, mais rien ne disait que 108 était son
+               DÉPART ni qu'il datait du 2 mars. C'est ce que la membre venait
+               chercher (Thomas, 18/08 : « c'est le plus important »). */
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginTop: 13, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={etiquette}>départ</div>
+                <div style={valeur}>{fr(firstW)}<small style={unite}>kg</small></div>
+                {peseeDepart?.jour ? <div style={quandStyle}>{peseeDepart.jour}</div> : null}
+              </div>
+              <div aria-hidden="true" style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, color: "var(--ls-bbc-muted)", paddingTop: 20 }}>→</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={etiquette}>aujourd'hui</div>
+                <div style={valeur}>{fr(lastW)}<small style={unite}>kg</small></div>
+                {peseeActuelle?.jour ? <div style={quandStyle}>{peseeActuelle.jour}</div> : null}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 4 }}>
+              ton départ{peseeDepart?.jour ? ` · ${peseeDepart.jour}` : ""}
+            </div>
+          )}
+          {pesees.length >= 2 ? (
           <svg width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none" style={{ marginTop: 12, overflow: "visible" }}>
             <defs><linearGradient id="mwf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--ls-bbc-lime)" stopOpacity="0.22" /><stop offset="1" stopColor="var(--ls-bbc-lime)" stopOpacity="0" /></linearGradient></defs>
             <path d={area} fill="url(#mwf)" />
             <path d={line} fill="none" stroke="var(--ls-bbc-lime)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             {pts.length ? <circle cx={pts[pts.length - 1][0].toFixed(1)} cy={pts[pts.length - 1][1].toFixed(1)} r="4.5" fill="var(--ls-bbc-lime)" /> : null}
           </svg>
+          ) : null}
         </div>
       ) : (
         <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 18, padding: "22px 18px", textAlign: "center" }}>

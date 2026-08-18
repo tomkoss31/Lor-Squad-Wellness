@@ -52,7 +52,14 @@ export interface UseBbcVisitsResult {
   /** `days` vient de `clubs.settings.cards.<type>.days` : sans lui, la RPC
    *  retombe sur ses défauts et la date d'expiration contredit ce que l'écran
    *  annonce au coach. */
-  assignCard: (clientId: string, type: 10 | 30, priceEur?: number | null, days?: number | null) => Promise<boolean>;
+  assignCard: (
+    clientId: string,
+    type: 10 | 30,
+    priceEur?: number | null,
+    days?: number | null,
+    /** ISO du premier jour de validité. null = aujourd'hui. */
+    debutIso?: string | null,
+  ) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
@@ -166,7 +173,16 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
   );
 
   const assignCard = useCallback(
-    async (clientId: string, type: 10 | 30, priceEur?: number | null, days?: number | null): Promise<boolean> => {
+    async (
+      clientId: string,
+      type: 10 | 30,
+      priceEur?: number | null,
+      days?: number | null,
+      // Le club ouvre le 7 septembre et les cartes se vendent AVANT : sans
+      // cette date, une carte 10 visites achetee le 18 aout aurait consomme
+      // vingt de ses trente jours le jour du premier petit-dejeuner.
+      debutIso?: string | null,
+    ): Promise<boolean> => {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return false;
@@ -175,6 +191,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
           p_type: type,
           p_price: priceEur ?? null,
           p_days: days ?? null,
+          p_started_at: debutIso ?? null,
         });
         if (error) return false;
         await refetch();

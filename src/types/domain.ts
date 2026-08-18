@@ -213,6 +213,15 @@ export interface ClubSettings {
   hearts_bareme?: Record<string, string>;
   /** Cartes de membre : prix + durée de validité par type (10 / 30 visites). */
   cards?: Record<string, { price: number | null; days: number }>;
+  /**
+   * Le jour où le club ouvre (AAAA-MM-JJ). Sert de premier jour de validité par
+   * défaut aux cartes vendues AVANT l'ouverture — sinon une carte 10 visites
+   * achetée trois semaines plus tôt arrive à moitié consommée.
+   *
+   * ⚠️ Ne pas confondre avec `discovery.opening_date`, qui ouvre les
+   * rendez-vous découverte et n'a rien à voir.
+   */
+  opening_date?: string;
   /** Liens du club à partager (Zoom des rituels, avis Google…). */
   links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
   /**

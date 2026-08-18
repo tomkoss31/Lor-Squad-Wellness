@@ -125,8 +125,9 @@ export function BbcClub({ userId, club }: BbcClubProps) {
           memberName={members.find((m) => m.id === cardFor)?.name ?? ""}
           currentCard={members.find((m) => m.id === cardFor)?.card ?? null}
           cardsConfig={club?.settings?.cards ?? null}
+          ouvertureIso={club?.settings?.opening_date ?? null}
           onClose={() => setCardFor(null)}
-          onAssign={(type, priceEur, days) => assignCard(cardFor, type, priceEur, days)}
+          onAssign={(type, priceEur, days, debutIso) => assignCard(cardFor, type, priceEur, days, debutIso)}
         />
       ) : null}
       {bilan && userId ? (
