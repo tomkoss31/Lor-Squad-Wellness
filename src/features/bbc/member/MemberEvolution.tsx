@@ -1,45 +1,61 @@
 // =============================================================================
 // MemberEvolution — onglet Évolution de l'app membre BBC (port du design).
-// Poids + courbe · 3 jauges (masse grasse / muscle / hydratation) ·
-// mensurations. Données réelles (bilans + client_measurements). Empty states.
+// Poids + départ nommé/daté · courbe PILOTABLE sur 6 métriques · 3 jauges
+// (masse grasse / muscle / hydratation) · mensurations.
 //
-// ── LE BUG D'UNITÉ CORRIGÉ LE 2026-08-14 ─────────────────────────────────────
-// Les trois jauges étaient traitées à l'identique : valeur ÷ 100 pour remplir
-// l'anneau, « % » collé derrière le nombre, écart libellé « pts ». Or la masse
-// musculaire est stockée en KILOS (la balance Tanita la rend comme ça, et
-// `NewAssessmentPage` la saisit en kg). Une membre à 44,1 kg de muscle lisait
-// donc « 44 % », avec un anneau rempli à 44 % de rien du tout — deux fois faux,
-// et invisible parce que le nombre reste plausible en pourcentage.
+// ── LE PORTAGE DU 2026-08-18 (alignement sur la PWA classique) ───────────────
+// Constat de Thomas : « on ne voit pas l'évolution si on tape sur masse grasse,
+// muscle, hydrat » — les trois jauges étaient des <div> inertes, et la courbe
+// ne savait tracer QUE le poids. Pire : graisse viscérale et âge métabolique
+// n'existaient pas du tout côté membre, alors que la donnée arrive (c'était le
+// cast du prop dans ClientAppPage qui la jetait).
 //
-// Ce qui change ici, et RIEN d'autre :
-//   • masse grasse et hydratation restent des pourcentages (÷ 100 correct) ;
-//   • le muscle s'affiche en kg, avec son unité, et son écart en kg ;
-//   • l'anneau du muscle se remplit sur la part de muscle DANS LE POIDS
-//     (muscle ÷ poids du même relevé) : un anneau est une part d'un tout, il
-//     lui faut un dénominateur, et le seul juste est le poids de ce relevé-là ;
-//   • le départ d'une mesure est le premier relevé qui la porte VRAIMENT.
-//     `ClientAppPage` remplace les valeurs absentes par 0 : prendre
-//     `metrics[0]` en aveugle faisait passer un vrai écart pour « stable ».
+// Ce qui vient de la PWA classique (EvolutionTab), à l'identique :
+//   • l'arithmétique de la courbe (padY proportionnel — indispensable dès qu'on
+//     trace autre chose que des kilos : un indice viscéral va de 1 à 59) ;
+//   • les valeurs écrites sur les points, éclaircies au-delà de 12 relevés ;
+//   • ~5 étiquettes de dates réparties sous la courbe ;
+//   • la garde « il faut au moins 2 relevés » et son message.
+// Ce qui reste BBC : les tokens --ls-bbc-*, la voix minuscule, les jauges.
 //
-// Toute l'arithmétique vient de `lib/bodyMetricUnits`, la même que le coach
-// utilise dans le bilan des 10 : les deux écrans ne peuvent pas diverger.
+// ⚠️ La teinte de la métrique ne porte JAMAIS le texte (coral clair = 3,69:1,
+// dette de contraste connue de bbc-tokens.css) : elle porte la pastille, le
+// liseré et le trait de la courbe. Le texte reste --ls-bbc-text / muted.
+//
+// ── LE BUG D'UNITÉ CORRIGÉ LE 2026-08-14 (conservé tel quel) ─────────────────
+// La masse musculaire est stockée en KILOS : elle s'affiche en kg, son anneau
+// se remplit sur muscle ÷ poids du même relevé, et le départ d'une mesure est
+// le premier relevé qui la porte VRAIMENT (les absentes valent 0 côté payload).
+// Toute l'arithmétique vient de `lib/bodyMetricUnits`, la même que le coach.
 // =============================================================================
 
+import { useState } from "react";
 import { computeMetricDelta, muscleMassKgToPercent, type DisplayUnit } from "../../../lib/bodyMetricUnits";
 
-interface Metric {
+export interface Metric {
   date?: string;
   weight?: number;
   bodyFat?: number;
   muscleMass?: number;
   hydration?: number;
+  visceralFat?: number;
+  metabolicAge?: number;
 }
-interface Measurement {
+export interface Measurement {
   measured_at?: string;
   waist_cm?: number;
   hips_cm?: number;
   thigh_cm?: number;
   arm_cm?: number;
+  neck_cm?: number;
+  chest_cm?: number;
+  calf_cm?: number;
+  by?: "coach" | "client";
+  cm?: Partial<Record<
+    "neck" | "chest" | "waist" | "hips" | "thigh_left" | "thigh_right"
+      | "arm_left" | "arm_right" | "calf_left" | "calf_right",
+    number
+  >>;
 }
 
 interface MemberEvolutionProps {
@@ -47,7 +63,23 @@ interface MemberEvolutionProps {
   measurements: Measurement[];
 }
 
+type CleMetrique = "weight" | "bodyFat" | "muscleMass" | "hydration" | "visceralFat" | "metabolicAge";
 type MesureJauge = "bodyFat" | "muscleMass" | "hydration";
+
+/**
+ * Les six métriques traçables — le même périmètre que la PWA classique.
+ * `dec` : décimales à l'écran (un âge métabolique de « 41,0 ans » serait du
+ * bruit). Les teintes sont les jumelles BBC de celles du classique ; gold et
+ * emerald n'ont pas d'équivalent BBC → ambre et sauge, leurs voisines.
+ */
+const METRIQUES: Array<{ key: CleMetrique; court: string; unite: string; dec: number; teinte: string }> = [
+  { key: "weight", court: "poids", unite: "kg", dec: 1, teinte: "var(--ls-bbc-lime)" },
+  { key: "bodyFat", court: "masse grasse", unite: "%", dec: 1, teinte: "var(--ls-bbc-coral)" },
+  { key: "muscleMass", court: "muscle", unite: "kg", dec: 1, teinte: "var(--ls-bbc-teal)" },
+  { key: "hydration", court: "eau", unite: "%", dec: 1, teinte: "var(--ls-bbc-violet)" },
+  { key: "visceralFat", court: "graisse visc.", unite: "", dec: 0, teinte: "var(--ls-bbc-amber)" },
+  { key: "metabolicAge", court: "âge méta.", unite: "ans", dec: 0, teinte: "var(--ls-bbc-sage)" },
+];
 
 /**
  * Les trois jauges. `unite` dit dans quelle unité la valeur s'AFFICHE : c'est
@@ -115,17 +147,34 @@ const quandStyle: React.CSSProperties = {
   color: "var(--ls-bbc-muted)",
 };
 
+const carte: React.CSSProperties = {
+  background: "var(--ls-bbc-s1)",
+  border: "1px solid var(--ls-bbc-line)",
+  borderRadius: 18,
+  padding: 18,
+};
+const eyebrow: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  fontFamily: "var(--ls-bbc-font-mono)",
+  fontSize: 10,
+  fontWeight: 600,
+  letterSpacing: "0.14em",
+  color: "var(--ls-bbc-muted)",
+  textTransform: "uppercase",
+};
+
 export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps) {
   // On garde la DATE avec le poids : sans elle, « 108,0 → 99,0 » ne dit pas
   // depuis quand, et c'est précisément ce que la membre venait chercher.
   const pesees = metrics
     .map((m) => ({ w: num(m.weight), jour: jourCourt(m.date) }))
     .filter((p): p is { w: number; jour: string | null } => p.w != null);
-  const weights = pesees.map((p) => p.w);
 
-  // UNE pesée suffit désormais pour afficher un chiffre. Avant il en fallait
-  // deux, et une nouvelle membre pesée à son inscription lisait « ta
-  // transformation commence » — pas son poids (Thomas, 18/08).
+  // UNE pesée suffit pour afficher un chiffre. Avant il en fallait deux, et
+  // une nouvelle membre pesée à son inscription lisait « ta transformation
+  // commence » — pas son poids (Thomas, 18/08).
   const hasWeight = pesees.length >= 1;
   const peseeDepart = pesees[0] ?? null;
   const peseeActuelle = pesees[pesees.length - 1] ?? null;
@@ -135,16 +184,43 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
   // est le POIDS lui-même, pas un « 0,0 » qui ne raconte rien.
   const delta = pesees.length >= 2 ? Math.round((lastW - firstW) * 10) / 10 : null;
 
-  // courbe
-  const W = 300, H = 120, pad = 10;
-  const mn = hasWeight ? Math.min(...weights) - 0.3 : 0;
-  const mx = hasWeight ? Math.max(...weights) + 0.3 : 1;
-  const pts = weights.map((v, i) => [
-    pad + (weights.length > 1 ? (i * (W - 2 * pad)) / (weights.length - 1) : 0),
-    pad + ((mx - v) / (mx - mn || 1)) * (H - 2 * pad),
-  ]);
-  const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
-  const area = pts.length ? `${line} L ${pts[pts.length - 1][0].toFixed(1)} ${H - pad} L ${pad} ${H - pad} Z` : "";
+  // ── La courbe pilotable ────────────────────────────────────────────────────
+  // Même règle que le classique, mais avec le `num()` local : côté payload les
+  // métriques absentes valent 0, un `typeof === "number"` afficherait les six
+  // chips à tout le monde.
+  const disponibles = METRIQUES.filter((mt) => metrics.some((m) => num(m[mt.key]) != null));
+  const [choisie, setChoisie] = useState<CleMetrique>("weight");
+  const cleActive = disponibles.some((m) => m.key === choisie)
+    ? choisie
+    : (disponibles[0]?.key ?? "weight");
+  const sel = METRIQUES.find((m) => m.key === cleActive) ?? METRIQUES[0];
+
+  // Arithmétique portée telle quelle d'EvolutionTab : le padY proportionnel
+  // remplace l'ancien ±0,3 en dur — vital hors kilos (indice viscéral 1→59).
+  const W = 300, H = 132, P = 14, top = 8, bottom = 104;
+  const serie = metrics
+    .map((m) => ({ date: m.date ?? "", v: num(m[cleActive]) }))
+    .filter((p): p is { date: string; v: number } => p.v != null);
+  const n = serie.length;
+  const vals = serie.map((p) => p.v);
+  const rawMin = n ? Math.min(...vals) : 0;
+  const rawMax = n ? Math.max(...vals) : 1;
+  const padY = (rawMax - rawMin) * 0.12 || Math.max(1, rawMax * 0.05);
+  const lo = rawMin - padY, hi = rawMax + padY, span = hi - lo || 1;
+  const pts = vals.map((v, i) => {
+    const x = P + (n > 1 ? (i * (W - 2 * P)) / (n - 1) : 0);
+    const y = top + ((hi - v) / span) * (bottom - top);
+    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10] as [number, number];
+  });
+  const chartLine = pts.map((p) => p.join(",")).join(" ");
+  const chartArea = `${P},${bottom} ${chartLine} ${W - P},${bottom}`;
+  // Étiquettes de date : ~5 réparties. Valeurs sur les points : éclaircies
+  // au-delà de 12 relevés, sinon elles se marchent dessus.
+  const idxDates = n <= 5 ? serie.map((_, i) => i) : [0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1];
+  const dateLabels = [...new Set(idxDates)].map((i) =>
+    new Date(serie[i].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
+  );
+  const labelStep = Math.max(1, Math.ceil(n / 12));
 
   const dernier = metrics[metrics.length - 1] ?? {};
 
@@ -188,6 +264,7 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
               : `${ecart.value > 0 ? "+" : "−"}${fr(Math.abs(ecart.value), ecart.decimals)}${suffixe}`;
 
       return {
+        cle: g.key as CleMetrique,
         label: g.label,
         aplat: g.aplat,
         encre: g.encre,
@@ -198,6 +275,7 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
       };
     })
     .filter(Boolean) as Array<{
+    cle: CleMetrique;
     label: string;
     aplat: string;
     encre: string;
@@ -215,8 +293,8 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
     { key: "thigh_cm", label: "cuisses" },
     { key: "arm_cm", label: "bras" },
   ];
-  const mensur = lastM
-    ? (mDefs
+  const mesures = lastM
+    ? mDefs
         .map((m) => {
           const v = num(lastM[m.key]);
           if (v == null) return null;
@@ -224,14 +302,14 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
           const d = f != null ? Math.round((v - f) * 10) / 10 : null;
           return { label: m.label, val: `${fr(v, 0)} cm`, delta: d == null ? "—" : `${d > 0 ? "+" : ""}${fr(d, 0)}`, up: d != null && d > 0 };
         })
-        .filter(Boolean) as Array<{ label: string; val: string; delta: string; up: boolean }>)
+        .filter(Boolean) as Array<{ label: string; val: string; delta: string; up: boolean }>
     : [];
 
   return (
     <>
       {hasWeight ? (
-        <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 18, padding: 18 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
+        <div style={carte}>
+          <div style={eyebrow}>
             <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />ton poids
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginTop: 12 }}>
@@ -263,17 +341,9 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
               ton départ{peseeDepart?.jour ? ` · ${peseeDepart.jour}` : ""}
             </div>
           )}
-          {pesees.length >= 2 ? (
-          <svg width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none" style={{ marginTop: 12, overflow: "visible" }}>
-            <defs><linearGradient id="mwf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--ls-bbc-lime)" stopOpacity="0.22" /><stop offset="1" stopColor="var(--ls-bbc-lime)" stopOpacity="0" /></linearGradient></defs>
-            <path d={area} fill="url(#mwf)" />
-            <path d={line} fill="none" stroke="var(--ls-bbc-lime)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            {pts.length ? <circle cx={pts[pts.length - 1][0].toFixed(1)} cy={pts[pts.length - 1][1].toFixed(1)} r="4.5" fill="var(--ls-bbc-lime)" /> : null}
-          </svg>
-          ) : null}
         </div>
       ) : (
-        <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 18, padding: "22px 18px", textAlign: "center" }}>
+        <div style={{ ...carte, padding: "22px 18px", textAlign: "center" }}>
           <div style={{ fontSize: 30 }} aria-hidden="true">📈</div>
           <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, marginTop: 8 }}>ta transformation commence</div>
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 6, lineHeight: 1.5 }}>ta 1ʳᵉ pesée au club, c'est ton point de départ. la courbe se remplit à chaque visite.</div>
@@ -282,46 +352,146 @@ export function MemberEvolution({ metrics, measurements }: MemberEvolutionProps)
 
       {gauges.length ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-          {gauges.map((g) => (
-            <div key={g.label} style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "14px 10px", textAlign: "center" }}>
-              <div style={{ position: "relative", width: 64, height: 64, margin: "0 auto" }}>
-                <svg width="64" height="64" viewBox="0 0 64 64">
-                  <circle cx="32" cy="32" r="26" fill="none" stroke="var(--ls-bbc-s2)" strokeWidth="6" />
-                  <circle cx="32" cy="32" r="26" fill="none" stroke={g.aplat} strokeWidth="6" strokeLinecap="round" strokeDasharray="163" strokeDashoffset={g.off} transform="rotate(-90 32 32)" />
-                </svg>
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 700, fontSize: 15, color: g.encre }}>{g.val}</div>
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 600, marginTop: 8 }}>{g.label}</div>
-              <div style={{ fontSize: 10, color: "var(--ls-bbc-muted)" }}>{g.delta}</div>
-              {g.sous ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{g.sous}</div> : null}
-            </div>
-          ))}
+          {/* Les jauges PILOTENT la courbe : c'étaient des <div> inertes —
+              « on tape dessus, rien ne bouge » (Thomas, 18/08). */}
+          {gauges.map((g) => {
+            const active = cleActive === g.cle;
+            return (
+              <button
+                key={g.label}
+                type="button"
+                onClick={() => setChoisie(g.cle)}
+                aria-pressed={active}
+                style={{
+                  background: active ? `color-mix(in srgb, ${g.aplat} 9%, var(--ls-bbc-s1))` : "var(--ls-bbc-s1)",
+                  border: `1px solid ${active ? `color-mix(in srgb, ${g.aplat} 55%, var(--ls-bbc-line))` : "var(--ls-bbc-line)"}`,
+                  borderRadius: 16,
+                  padding: "14px 10px",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  color: "var(--ls-bbc-text)",
+                }}
+              >
+                <div style={{ position: "relative", width: 64, height: 64, margin: "0 auto" }}>
+                  <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="var(--ls-bbc-s2)" strokeWidth="6" />
+                    <circle cx="32" cy="32" r="26" fill="none" stroke={g.aplat} strokeWidth="6" strokeLinecap="round" strokeDasharray="163" strokeDashoffset={g.off} transform="rotate(-90 32 32)" />
+                  </svg>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 700, fontSize: 15, color: g.encre }}>{g.val}</div>
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 600, marginTop: 8 }}>{g.label}</div>
+                <div style={{ fontSize: 10, color: "var(--ls-bbc-muted)" }}>{g.delta}</div>
+                {g.sous ? <div style={{ fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{g.sous}</div> : null}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 
-      <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 18, padding: 18 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase", marginBottom: 14 }}>
-          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-teal)", boxShadow: "0 0 8px var(--ls-bbc-teal)" }} />mes mensurations
-        </div>
-        {mensur.length ? (
-          <>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <svg width="60" height="130" viewBox="0 0 70 150" style={{ flex: "none" }}>
-                <path d="M35 8a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM22 30h26l-4 40h-18zM26 70h18l2 46h-9l-2-30-2 30h-9z" fill="none" stroke="var(--ls-bbc-teal)" strokeWidth="2" strokeLinejoin="round" />
-              </svg>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                {mensur.map((m) => (
-                  <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ flex: 1, fontSize: 12.5, fontWeight: 500, color: "var(--ls-bbc-muted)" }}>{m.label}</span>
-                    <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 14, fontWeight: 700 }}>{m.val}</span>
-                    <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, width: 42, textAlign: "right", color: m.up ? "var(--ls-bbc-teal)" : "var(--ls-bbc-lime-text)" }}>{m.delta}</span>
-                  </div>
-                ))}
-              </div>
+      {/* ── La courbe, pour n'importe laquelle des six métriques ─────────── */}
+      {disponibles.length > 0 ? (
+        <div style={carte}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <div style={eyebrow}>
+              <span style={{ width: 7, height: 7, borderRadius: 999, background: sel.teinte }} />
+              courbe · {sel.court}{n >= 2 ? ` · ${n} relevés` : ""}
             </div>
-          </>
+          </div>
+
+          {/* Les chips : toutes les métriques qui ont au moins une vraie valeur.
+              La teinte va sur la pastille et le liseré, jamais sur le texte. */}
+          {disponibles.length > 1 ? (
+            <div style={{ display: "flex", gap: 7, overflowX: "auto", scrollbarWidth: "none", padding: "12px 0 2px" }}>
+              {disponibles.map((mt) => {
+                const on = cleActive === mt.key;
+                return (
+                  <button
+                    key={mt.key}
+                    type="button"
+                    onClick={() => setChoisie(mt.key)}
+                    aria-pressed={on}
+                    style={{
+                      flex: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 12px",
+                      minHeight: 34,
+                      borderRadius: 999,
+                      background: on ? `color-mix(in srgb, ${mt.teinte} 12%, var(--ls-bbc-s2))` : "var(--ls-bbc-s2)",
+                      border: `1px solid ${on ? `color-mix(in srgb, ${mt.teinte} 55%, var(--ls-bbc-line))` : "var(--ls-bbc-line)"}`,
+                      color: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)",
+                      fontFamily: "var(--ls-bbc-font-body)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 999, background: mt.teinte, flex: "none" }} />
+                    {mt.court}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {n >= 2 ? (
+            <>
+              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible", marginTop: 8 }}>
+                <defs>
+                  <linearGradient id="bbcCourbeAire" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor={sel.teinte} stopOpacity="0.24" />
+                    <stop offset="1" stopColor={sel.teinte} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <line x1={P} y1={bottom} x2={W - P} y2={bottom} stroke="var(--ls-bbc-line)" strokeWidth="1" />
+                <polygon points={chartArea} fill="url(#bbcCourbeAire)" />
+                <polyline points={chartLine} fill="none" stroke={sel.teinte} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                {pts.map((p, i) => {
+                  const isLast = i === pts.length - 1;
+                  const showLabel = i % labelStep === 0 || isLast;
+                  return (
+                    <g key={i}>
+                      <circle cx={p[0]} cy={p[1]} r={isLast ? 4.5 : 2.4} fill={sel.teinte} stroke="var(--ls-bbc-s1)" strokeWidth={isLast ? 2 : 1.2} />
+                      {showLabel ? (
+                        <text x={Math.max(11, Math.min(p[0], W - 11))} y={p[1] - 7} fill="var(--ls-bbc-text)" fontFamily="var(--ls-bbc-font-mono)" fontSize="6.5" fontWeight="700" textAnchor="middle">
+                          {fr(vals[i], sel.dec)}
+                        </text>
+                      ) : null}
+                    </g>
+                  );
+                })}
+              </svg>
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 6 }}>
+                {dateLabels.map((d, i) => <span key={i}>{d}</span>)}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 12, lineHeight: 1.5 }}>
+              il faut au moins 2 relevés pour tracer {sel.court} — {n === 1 ? "il y en a un, le prochain dessine la courbe." : "ils arrivent avec tes pesées au club."}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      <div style={carte}>
+        <div style={eyebrow}>
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-teal)" }} />mes mensurations
+        </div>
+        {mesures.length ? (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+            {mesures.map((m) => (
+              <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 12, padding: "10px 13px" }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{m.label}</span>
+                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700 }}>{m.val}</span>
+                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-muted)" }}>{m.delta}</span>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5 }}>on prend tes premières mesures ensemble à ton prochain passage — c'est ton point de départ.</div>
+          <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginTop: 10 }}>on prend tes premières mesures ensemble à ton prochain passage — c'est ton point de départ.</div>
         )}
       </div>
     </>
