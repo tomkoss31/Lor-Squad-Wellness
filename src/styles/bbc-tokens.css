@@ -47,14 +47,25 @@
   --ls-bbc-line2: rgba(30, 51, 48, 0.13);
   --ls-bbc-text: #17201C;
   --ls-bbc-muted: #55605A;
-  --ls-bbc-hint: #8A938D;
-  --ls-bbc-lime: #6D8C0B;
-  --ls-bbc-teal: #0D9488;
-  --ls-bbc-coral: #D9553C;
+  /* ── Corrigé le 18/08 : ce bloc avait gardé les valeurs d'AVANT la passe de
+     contraste du 13/08 faite dans l'app. Mesuré sur l'écran réel, en clair :
+     le gris à 3,16:1, le corail en texte à 3,51 — sous le seuil lisible.
+     Les valeurs ci-dessous sont celles de `globals.css`, thème clair. ── */
+  --ls-bbc-hint: #626B66;
+  --ls-bbc-lime: #5E7A09;
+  --ls-bbc-teal: #0F766E;
+  --ls-bbc-coral: #BC432C;
   --ls-bbc-sage: #5F7154;
-  --ls-bbc-amber: #B7791F;
+  --ls-bbc-amber: #9A631A;
   --ls-bbc-violet: #6D28D9;
   --ls-bbc-lime-text: #4D7A06;
+  /* ⚠️ L'ENCRE POSÉE SUR LE LIME n'était définie QUE dans le bloc sombre :
+     en clair, le #06241F du sombre atterrissait sur un lime devenu olive et
+     tombait à 4,22:1 — sur le bouton PRINCIPAL de toute l'app membre. En
+     clair le lime est foncé, donc son encre est blanche. Vérifié : `bbc-light`
+     n'est posé que par l'app membre et l'atelier, jamais par le mode coach —
+     les ~50 autres usages de `lime-ink` ne voient jamais cette valeur. */
+  --ls-bbc-lime-ink: #FFFFFF;
 }
 
 /* ── Layout de l'environnement BBC (prise de contrôle plein écran) ──────── */
