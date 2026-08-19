@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qualifier un RDV depuis l'agenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens RÉELS du projet — copiés de globals.css et bbc-tokens.css, pas
+   réinventés. Si une couleur détonne ici, elle détonnera dans l'app. */
+:root{
+  --ls-bg:#162624; --ls-surface:#1E3330; --ls-surface2:#26403B;
+  --ls-text:#F4EFE4; --ls-text-muted:#9BAAA3;
+  --ls-teal:#2DD4BF; --ls-coral:#F2775F;
+  --ls-line:rgba(244,239,228,.12); --ls-line2:rgba(244,239,228,.20);
+  --bbc-lime:#C5F82A; --bbc-lime-ink:#06241F; --bbc-amber:#E8A93A;
+  --page:#0F1C1A;
+}
+body.clair{
+  --ls-bg:#FAF7F0; --ls-surface:#FFFFFF; --ls-surface2:#F5F1EB;
+  --ls-text:#17201C; --ls-text-muted:#5A6B63;
+  --ls-teal:#0D9488; --ls-coral:#BC432C;
+  --ls-line:rgba(23,32,28,.12); --ls-line2:rgba(23,32,28,.20);
+  --bbc-lime:#5E7A09; --bbc-lime-ink:#FFFFFF; --bbc-amber:#9A631A;
+  --page:#EFEAE0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ls-text);
+  font-family:Inter,system-ui,sans-serif;line-height:1.6;padding:28px 18px 80px}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.02em;
+  font-size:clamp(26px,4vw,40px);margin:0 0 4px;line-height:1.05}
+h2{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.02em;
+  font-size:19px;margin:38px 0 10px}
+p{margin:0 0 12px;max-width:70ch;color:var(--ls-text-muted)}
+p strong{color:var(--ls-text)}
+code{font-family:"JetBrains Mono",monospace;font-size:.88em;
+  background:var(--ls-surface2);padding:1px 5px;border-radius:5px}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ls-teal);margin:0 0 8px}
+.bascule{position:fixed;top:14px;right:14px;z-index:50;border:1px solid var(--ls-line2);
+  background:var(--ls-surface);color:var(--ls-text);border-radius:999px;
+  padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* le cadre telephone : un VRAI 390 px, pas une approximation */
+.scene{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-top:18px}
+.tel{width:390px;flex:none;border:1px solid var(--ls-line2);border-radius:26px;
+  background:var(--ls-bg);overflow:hidden;position:relative;
+  box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.tel .barre{height:26px;background:var(--ls-surface);border-bottom:1px solid var(--ls-line);
+  display:flex;align-items:center;justify-content:center;
+  font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--ls-text-muted);
+  letter-spacing:.1em}
+.ecran{padding:14px;min-height:520px;position:relative}
+.notes{flex:1 1 300px;min-width:280px}
+.notes ul{padding-left:18px;margin:0}
+.notes li{margin-bottom:9px;color:var(--ls-text-muted);font-size:14.5px}
+.notes li b{color:var(--ls-text)}
+
+/* elements d'app */
+.titre-jour{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ls-text-muted);margin:2px 0 8px}
+.carte{background:var(--ls-surface);border:1px solid var(--ls-line);border-radius:14px;
+  padding:12px 13px;margin-bottom:9px;display:flex;gap:11px;align-items:center}
+.carte.tapable{cursor:pointer;border-color:color-mix(in srgb,var(--ls-teal) 40%,var(--ls-line))}
+.carte.tapable:hover{background:var(--ls-surface2)}
+/* L'heure suit le composant reel : --ls-text a 15px en 800, pas du teal.
+   Mesure : teal clair #0D9488 sur blanc = 3,74 — sous le seuil. */
+.heure{font-family:Syne,"DM Sans",sans-serif;font-size:15px;font-weight:800;
+  color:var(--ls-text);flex:none;width:46px;font-variant-numeric:tabular-nums}
+.qui{font-weight:700;font-size:14.5px;font-family:"DM Sans",sans-serif}
+.quoi{font-size:12px;color:var(--ls-text-muted)}
+.chev{margin-left:auto;color:var(--ls-text-muted);font-size:17px;flex:none}
+.pastille{display:inline-block;width:7px;height:7px;border-radius:99px;background:var(--ls-teal);
+  margin-right:6px;vertical-align:middle}
+
+/* la feuille du bas */
+.feuille{position:absolute;left:0;right:0;bottom:0;background:var(--ls-surface);
+  border-top:1px solid var(--ls-line2);border-radius:22px 22px 0 0;padding:16px 15px 20px}
+.poignee{width:38px;height:4px;border-radius:99px;background:var(--ls-line2);margin:0 auto 14px}
+.choix{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;
+  background:var(--ls-surface2);border:1px solid var(--ls-line);border-radius:14px;
+  padding:13px;margin-bottom:9px;color:var(--ls-text);font-family:inherit;font-size:14px;
+  cursor:pointer;min-height:56px}
+.choix:hover{border-color:var(--ls-line2)}
+.choix .ic{font-size:20px;flex:none;line-height:1.2}
+.choix b{display:block;font-size:14.5px;font-weight:700;margin-bottom:2px;font-family:"DM Sans",sans-serif}
+/* Sur un fond teinte, --ls-text-muted tombe a 3,38 (sombre) et 4,34 (clair) :
+   c'est le piege deja rencontre le 09/08. On derive de l'encre du texte. */
+.choix i{display:block;font-style:normal;font-size:12.5px;line-height:1.45;
+  color:color-mix(in srgb,var(--ls-text) 72%,transparent)}
+.choix.principal{background:color-mix(in srgb,var(--bbc-lime) 12%,var(--ls-surface2));
+  border-color:color-mix(in srgb,var(--bbc-lime) 45%,var(--ls-line))}
+.choix.discret{background:transparent;min-height:46px}
+/* 44 px minimum sous le doigt, y compris pour les sorties : au comptoir on
+   tape debout, avec une main. */
+.discretlien{display:block;width:100%;text-align:center;background:none;border:0;
+  color:var(--ls-text-muted);font-family:inherit;font-size:13px;padding:13px;
+  min-height:44px;cursor:pointer}
+
+/* ecran BBC : son identite a lui */
+.champ{background:var(--ls-surface2);border:1px solid var(--ls-line);border-radius:11px;
+  padding:9px 11px;margin-bottom:8px;font-size:14px}
+.champ .lbl{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ls-text-muted);display:block;margin-bottom:2px}
+.rempli{border-color:color-mix(in srgb,var(--ls-teal) 42%,var(--ls-line))}
+/* 9px en teal = 3,33 en clair. Une mention qui explique d'ou vient une valeur
+   doit se lire : on monte a 10px et on passe sur l'encre du texte. */
+.badge-pre{font-family:"JetBrains Mono",monospace;font-size:10px;
+  color:color-mix(in srgb,var(--ls-text) 72%,transparent);
+  letter-spacing:.09em;text-transform:uppercase;float:right;margin-top:1px}
+.cta{width:100%;border:0;border-radius:13px;min-height:50px;background:var(--bbc-lime);
+  color:var(--bbc-lime-ink);font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;margin-top:6px}
+.encart{border:1px solid color-mix(in srgb,var(--bbc-amber) 45%,var(--ls-line));
+  background:color-mix(in srgb,var(--bbc-amber) 10%,transparent);
+  border-radius:12px;padding:10px 12px;font-size:12.5px;margin:10px 0;color:var(--ls-text-muted)}
+.encart b{color:var(--ls-text)}
+.retour{background:none;border:0;color:var(--ls-text-muted);font-size:13px;cursor:pointer;
+  font-family:inherit;padding:6px 10px 6px 0;margin:0 0 4px -10px;min-height:44px;
+  display:inline-flex;align-items:center}
+.ok{text-align:center;padding:36px 12px}
+.ok .rond{width:62px;height:62px;border-radius:99px;margin:0 auto 14px;
+  background:color-mix(in srgb,var(--bbc-lime) 20%,transparent);
+  border:1px solid var(--bbc-lime);display:flex;align-items:center;justify-content:center;font-size:28px}
+.bilan{list-style:none;padding:0;margin:16px 0 0;text-align:left}
+.bilan li{font-size:13.5px;padding:8px 0;border-bottom:1px solid var(--ls-line);color:var(--ls-text-muted)}
+.bilan li b{color:var(--ls-text)}
+.tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:99px;
+  border:1px solid var(--ls-line2);color:var(--ls-text-muted);margin-left:6px}
+.manque{border-left:3px solid var(--ls-coral);padding-left:13px;margin:14px 0;
+  font-size:14px;color:var(--ls-text-muted)}
+.manque b{color:var(--ls-coral)}
+</style>
+</head>
+<body>
+<button class="bascule" onclick="document.body.classList.toggle('clair')">☀️ / 🌙</button>
+<div class="wrap">
+
+<p class="eyebrow">Maquette · 19 août 2026</p>
+<h1>Elle est venue. Et alors ?</h1>
+<p><strong>Le trou :</strong> un RDV du club arrive dans l'agenda, la personne vient, l'EBE
+se fait sur papier — et là, plus rien. La carte du rendez-vous <strong>n'est même pas
+cliquable</strong> (<code>AgendaPage.tsx:610</code>, <code>if (kind === "discovery") return;</code>).
+Il faut sortir de l'agenda, aller dans les dossiers, créer une fiche à la main, retaper le
+prénom, le nom et le téléphone qu'on a déjà.</p>
+<p>Ce parcours ferme le trou : <strong>on tape sur son nom, on dit ce qui s'est passé, c'est
+réglé.</strong> Testé à 390 px — la largeur d'un téléphone au comptoir.</p>
+
+<h2>1 · L'agenda — la carte devient tapable</h2>
+<div class="scene">
+  <div class="tel">
+    <div class="barre">390 px · l'agenda de Mélanie</div>
+    <div class="ecran">
+      <div class="titre-jour">Aujourd'hui — mercredi 19 août</div>
+      <div class="carte tapable" onclick="go(2)">
+        <div class="heure">09:00</div>
+        <div>
+          <div class="qui"><span class="pastille"></span>Céline Ducastelle</div>
+          <div class="quoi">RDV découverte · perte de poids</div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+      <div class="carte tapable" onclick="go(2)">
+        <div class="heure">11:00</div>
+        <div>
+          <div class="qui">Marie Rose Catalano</div>
+          <div class="quoi">RDV découverte · vient à deux</div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+      <div class="titre-jour" style="margin-top:16px">Demain</div>
+      <div class="carte">
+        <div class="heure">10:00</div>
+        <div>
+          <div class="qui">Manon Perrin</div>
+          <div class="quoi">Suivi · 3 semaines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <ul>
+      <li><b>Le nom complet s'affiche</b> — livré ce matin. Avant : « Céline », et il fallait
+        rouvrir sa boîte mail pour savoir de qui il s'agissait.</li>
+      <li><b>Le chevron et le liseré</b> disent que ça s'ouvre. Aujourd'hui la carte a
+        exactement la même apparence… et ne fait rien quand on tape dessus.</li>
+      <li><b>Rien d'autre ne bouge</b> dans l'agenda. Les suivis clients gardent leur propre
+        feuille, celle du 27 juillet.</li>
+    </ul>
+    <div class="manque">
+      <b>À trancher :</b> Marie Rose vient <b>à deux</b>. On qualifie les deux personnes d'un
+      coup, ou l'une puis l'autre ?
+    </div>
+  </div>
+</div>
+
+<h2>2 · La feuille — trois réponses, pas une de plus</h2>
+<div class="scene">
+  <div class="tel">
+    <div class="barre">390 px · au tap sur son nom</div>
+    <div class="ecran" style="opacity:.4">
+      <div class="titre-jour">Aujourd'hui — mercredi 19 août</div>
+      <div class="carte"><div class="heure">09:00</div><div><div class="qui">Céline Ducastelle</div><div class="quoi">RDV découverte</div></div></div>
+      <div class="carte"><div class="heure">11:00</div><div><div class="qui">Marie Rose Catalano</div><div class="quoi">RDV découverte</div></div></div>
+    </div>
+    <div class="feuille">
+      <div class="poignee"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+        text-transform:uppercase;color:var(--ls-text-muted)">rdv de 9h00 · aujourd'hui</div>
+      <div style="font-family:Anton,sans-serif;text-transform:uppercase;font-size:21px;margin:4px 0 3px">Céline Ducastelle</div>
+      <div style="font-size:12.5px;color:var(--ls-text-muted);margin-bottom:15px">
+        Perte de poids · vient du site du club · 06 12 34 56 78</div>
+
+      <button class="choix principal" onclick="go(3)">
+        <span class="ic">☕</span>
+        <span><b>Elle prend sa carte de membre</b>
+        <i>Fiche créée dans le club, carte activée, prix saisi à la main.</i></span>
+      </button>
+      <button class="choix" onclick="go(4)">
+        <span class="ic">📋</span>
+        <span><b>Elle démarre en suivi classique</b>
+        <i>Fiche client normale, hors club. Le bilan se complète ensuite.</i></span>
+      </button>
+      <button class="choix discret" onclick="go(5)">
+        <span class="ic">🕓</span>
+        <span><b>Pas encore</b>
+        <i>Elle réfléchit, ou elle n'est pas venue.</i></span>
+      </button>
+      <button class="discretlien" onclick="go(1)">Fermer</button>
+    </div>
+  </div>
+  <div class="notes">
+    <ul>
+      <li><b>Son nom en grand, ce qu'on sait d'elle en petit.</b> Objectif, provenance,
+        téléphone : tout est déjà en base, personne ne le retape.</li>
+      <li><b>Deux vraies réponses</b> et une sortie. Le lime ne colore que celle qui fait
+        entrer quelqu'un au club — c'est la seule « victoire » de cet écran.</li>
+      <li><b>« Pas encore » n'est pas un abandon</b> : le rendez-vous reste, le lead reste
+        dans le CRM, et on peut poser une relance.</li>
+    </ul>
+    <div class="manque">
+      <b>Ce qui manque en base :</b> <code>rdv_bookings.status</code> ne connaît que
+      <code>requested</code>, <code>confirmed</code> et <code>canceled</code>. Il faut un
+      quatrième état — <b>« honoré »</b> — sinon un rendez-vous qui a bien eu lieu devrait
+      être marqué « annulé » pour sortir de l'agenda, ce qui fausserait tous les comptes.
+    </div>
+  </div>
+</div>
+
+<h2>3 · Membre du club — la feuille existante, déjà remplie</h2>
+<div class="scene">
+  <div class="tel">
+    <div class="barre">390 px · création de membre</div>
+    <div class="ecran">
+      <button class="retour" onclick="go(2)">‹ Retour</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+        text-transform:uppercase;color:var(--ls-text-muted)">nouvelle membre · 1 sur 4</div>
+      <div style="font-family:Anton,sans-serif;text-transform:uppercase;font-size:20px;margin:4px 0 12px">Qui elle est</div>
+
+      <div class="champ rempli"><span class="lbl">Prénom <span class="badge-pre">pré-rempli</span></span>Céline</div>
+      <div class="champ rempli"><span class="lbl">Nom <span class="badge-pre">pré-rempli</span></span>Ducastelle</div>
+      <div class="champ rempli"><span class="lbl">Téléphone <span class="badge-pre">pré-rempli</span></span>06 12 34 56 78</div>
+      <div class="champ rempli"><span class="lbl">Email <span class="badge-pre">pré-rempli</span></span>celine-ducastelle@outlook.fr</div>
+      <div class="champ rempli"><span class="lbl">Comment elle nous a connus <span class="badge-pre">pré-rempli</span></span>Site du club</div>
+      <div class="champ"><span class="lbl">Âge</span>— à saisir</div>
+      <div class="champ"><span class="lbl">Taille</span>— à saisir</div>
+
+      <div class="encart">
+        <b>Sa carte démarre le lundi 7 septembre.</b><br>
+        On est en pré-lancement : les 30 jours comptent à partir de l'ouverture du club,
+        pas d'aujourd'hui. Après le 7, la carte démarrera le jour de l'achat.
+      </div>
+      <div class="champ"><span class="lbl">Prix de la carte</span>80,00 € <span class="tag">modifiable</span></div>
+
+      <button class="cta" onclick="go(6)">Continuer — ses objectifs</button>
+    </div>
+  </div>
+  <div class="notes">
+    <ul>
+      <li><b>C'est la feuille du comptoir, pas une nouvelle.</b> <code>BbcNewMemberSheet</code>
+        existe et sait déjà tout faire : identité, trois cœurs, body scan à huit mesures,
+        carte, prix, garde-fou anti-doublon. Elle démarrait juste toujours <b>vide</b>.</li>
+      <li><b>Cinq champs pré-remplis</b> depuis le lead. Le liseré teal et la mention
+        « pré-rempli » disent d'où ça vient — et tout reste modifiable.</li>
+      <li><b>La date de départ est automatique</b> : avant le 7/09 → 7/09 ; après → le jour
+        même. Le réglage existe déjà (<code>clubs.settings.opening_date</code>) et
+        <code>bbc_assign_card</code> sait le prendre.</li>
+      <li><b>Le prix reste à la main</b>, comme tu l'as demandé — avec le tarif du club
+        proposé par défaut.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4 · Suivi classique — la version courte</h2>
+<div class="scene">
+  <div class="tel">
+    <div class="barre">390 px · fiche client classique</div>
+    <div class="ecran">
+      <button class="retour" onclick="go(2)">‹ Retour</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+        text-transform:uppercase;color:var(--ls-text-muted)">nouvelle cliente</div>
+      <div style="font-family:Anton,sans-serif;text-transform:uppercase;font-size:20px;margin:4px 0 12px">Céline Ducastelle</div>
+
+      <div class="champ rempli"><span class="lbl">Téléphone <span class="badge-pre">pré-rempli</span></span>06 12 34 56 78</div>
+      <div class="champ rempli"><span class="lbl">Email <span class="badge-pre">pré-rempli</span></span>celine-ducastelle@outlook.fr</div>
+      <div class="champ rempli"><span class="lbl">Objectif <span class="badge-pre">pré-rempli</span></span>Perte de poids</div>
+      <div class="champ"><span class="lbl">Sexe</span>— obligatoire</div>
+      <div class="champ"><span class="lbl">Poids de départ</span>— facultatif</div>
+      <div class="champ"><span class="lbl">Notes</span>—</div>
+
+      <div class="encart" style="border-color:var(--ls-line2);background:var(--ls-surface2)">
+        Le bilan complet (body scan, produits) se fait ensuite depuis sa fiche.
+        Ici on ne crée que le dossier.
+      </div>
+      <button class="cta" style="background:var(--ls-teal);color:#04201D" onclick="go(6)">Créer sa fiche</button>
+    </div>
+  </div>
+  <div class="notes">
+    <ul>
+      <li><b>Cette modale existe aussi</b> — <code>LeadConvertModal</code>, écrite en juin
+        pour les bilans en ligne. Elle ne sait lire qu'un lead de <i>ce</i> tunnel-là : il
+        faut l'ouvrir à un lead du club, pas la réécrire.</li>
+      <li><b>Obligatoire : le sexe.</b> C'était ta décision du 3 juin, et les plages du body
+        scan en dépendent. Le reste peut attendre.</li>
+      <li><b>Volontairement plus courte</b> que la feuille du club : ici on ne vend pas de
+        carte, on ouvre un dossier.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>5 · Après — ce qui bouge, et où</h2>
+<div class="scene">
+  <div class="tel">
+    <div class="barre">390 px · c'est réglé</div>
+    <div class="ecran">
+      <div class="ok">
+        <div class="rond">☕</div>
+        <div style="font-family:Anton,sans-serif;text-transform:uppercase;font-size:21px">Céline est membre</div>
+        <div style="font-size:13px;color:var(--ls-text-muted);margin-top:5px">
+          Carte à 80 € · démarre le 7 septembre · 30 jours</div>
+        <ul class="bilan">
+          <li><b>Sa fiche</b> est créée, avec son point de départ.</li>
+          <li><b>Son rendez-vous</b> passe en « honoré » et quitte l'agenda.</li>
+          <li><b>Son lead</b> passe en « converti » et quitte la liste du CRM.</li>
+          <li><b>Sa carte de membre</b> et son QR sont prêts.</li>
+        </ul>
+        <button class="cta" style="margin-top:18px" onclick="go(1)">Ouvrir sa fiche</button>
+        <button class="discretlien" onclick="go(1)">Revenir à l'agenda</button>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <ul>
+      <li><b>« Converti », pas supprimé</b> — ta décision de ce matin. On garde d'où elle
+        vient, comment elle a connu le club et qui l'a convertie : c'est ce qui alimente les
+        statistiques d'attribution.</li>
+      <li><b>Elle sort des deux listes d'un coup.</b> Aujourd'hui un lead converti à la main
+        reste dans l'agenda <i>et</i> dans le CRM — deux endroits à nettoyer, donc jamais
+        nettoyés.</li>
+      <li><b>Rien n'est envoyé à Céline</b> à cette étape. Aucun email, aucun SMS : elle est
+        en face de toi.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Ce que ça coûte</h2>
+<p><strong>La moitié du travail est déjà écrite.</strong> <code>BbcNewMemberSheet</code> fait
+tout le club, <code>LeadConvertModal</code> fait le classique, <code>bbc_assign_card</code>
+gère la date de démarrage. Ce qui manque tient en quatre points :</p>
+<div class="notes" style="max-width:70ch">
+<ul>
+  <li>rendre la carte de l'agenda cliquable, et écrire la feuille de choix ;</li>
+  <li>pouvoir pré-remplir les deux formulaires depuis un lead ;</li>
+  <li>ajouter l'état <b>« honoré »</b> à <code>rdv_bookings</code> — sinon un rendez-vous qui
+    a eu lieu doit être marqué « annulé » pour disparaître ;</li>
+  <li>basculer le lead en « converti » au passage.</li>
+</ul>
+</div>
+
+<script>
+// Le parcours est piloté par les titres : chaque écran est une section, on fait
+// défiler jusqu'à elle. Pas de framework, pas d'état — une maquette doit pouvoir
+// s'ouvrir dans dix ans.
+function go(n){
+  var titres = document.querySelectorAll("h2");
+  var cible = titres[Math.min(n, titres.length) - 1];
+  if (cible) cible.scrollIntoView({behavior:"smooth", block:"start"});
+}
+</script>
+</div>
+</body>
+</html>
