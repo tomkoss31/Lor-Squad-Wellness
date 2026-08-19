@@ -32,7 +32,19 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const MAX_PER_CALL = 120; // marge sous le timeout edge
+// Taille d'un lot. 55 et pas 120 pour deux raisons :
+//   1. règle Thomas (2026-08-19) : jamais plus de 50-55 mails d'un coup ;
+//   2. le mode immédiat attend `delayMs` entre deux envois → 120 × 1,5 s =
+//      179 s de temps mural, soit AU-DELÀ du timeout d'une edge function.
+//      55 × 1,5 s = 81 s, confortable. L'UI rappelle la fonction tant que
+//      `remaining > 0`, donc une liste plus longue part en plusieurs lots.
+const MAX_PER_CALL = 55;
+
+// Cadence des appels à l'API Resend en mode PROGRAMMÉ. Resend limite à
+// 10 requêtes/seconde par équipe (doc officielle ; le « 2 req/s » qui traîne
+// sur les blogs est périmé). 150 ms ≈ 6,7 req/s : sous la limite avec marge.
+// Sans cette pause, un lot programmé partait en rafale → 429 rate_limit_exceeded.
+const SCHEDULED_API_PACING_MS = 150;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -188,9 +200,14 @@ serve(async (req) => {
       await sb.from("campaign_recipients").update({ send_error: e instanceof Error ? e.message : "send_failed" }).eq("id", r.id);
       failed++;
     }
-    // envoi immédiat : petit délai anti-rafale. Programmé : pas d'attente (les
-    // scheduled_at étalent la délivrance côté Resend).
-    if (!scheduledAt && i < batch.length - 1) await sleep(delayMs);
+    // Deux cadences distinctes, à ne pas confondre :
+    //   - IMMÉDIAT : on attend `delayMs` entre deux envois, c'est ce délai qui
+    //     étale la distribution. Attention au temps mural (cf. MAX_PER_CALL).
+    //   - PROGRAMMÉ : c'est `scheduled_at` qui étale la DISTRIBUTION côté
+    //     Resend ; la fonction, elle, ne fait qu'enregistrer les envois. Mais
+    //     elle doit quand même espacer ses APPELS, sinon 55 requêtes partent
+    //     en rafale et Resend répond 429 (limite 10 req/s par équipe).
+    if (i < batch.length - 1) await sleep(scheduledAt ? SCHEDULED_API_PACING_MS : delayMs);
   }
 
   const remaining = targets.length - batch.length;
