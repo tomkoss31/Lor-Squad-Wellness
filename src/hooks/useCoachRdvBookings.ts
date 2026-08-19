@@ -19,6 +19,7 @@ export interface RdvBookingMetadata {
 export interface RdvBooking {
   id: string;
   first_name: string | null;
+  last_name: string | null;
   contact: string | null;
   mode: "presentiel" | "visio";
   slot_start: string;
@@ -58,7 +59,7 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
     }
     const { data, error } = await sb
       .from("rdv_bookings")
-      .select("id, first_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at, booking_type, metadata")
+      .select("id, first_name, last_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at, booking_type, metadata")
       .eq("coach_user_id", coachUserId)
       .neq("status", "canceled")
       .gte("slot_start", new Date().toISOString())

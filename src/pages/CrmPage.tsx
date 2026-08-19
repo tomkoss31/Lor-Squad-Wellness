@@ -120,7 +120,10 @@ export function CrmPage() {
   // de la liste. Quelqu'un qui a réservé sur le site du club y figurait ET
   // figurait plus bas dans la liste : le même nom, deux fois sur un écran.
   // Repliés, pas retirés : « Confirmer » n'existe nulle part ailleurs.
-  const [rdvOuverts, setRdvOuverts] = useState(false);
+  // Ouvert à l'arrivée (Mélanie, 19/08 : « pas caché quand on ouvre la page »).
+  // Il l'était pour garder le premier écran court — mais c'est d'ici que part
+  // l'email d'acceptation, et un bloc replié se traduit par des RDV oubliés.
+  const [rdvOuverts, setRdvOuverts] = useState(true);
   // Le tri vit désormais chez le parent : il a rejoint le panneau, et sa
   // valeur sert aussi à savoir si un réglage est actif.
   const [sortKey, setSortKey] = useState<SortKey>("echeance");

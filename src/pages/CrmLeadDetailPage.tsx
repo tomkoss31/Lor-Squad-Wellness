@@ -951,6 +951,7 @@ export function CrmLeadDetailPage() {
           booking={{
             id: lead.rdv.id,
             first_name: lead.firstName,
+            last_name: lead.lastName ?? null,
             contact: lead.contact,
             slot_start: lead.rdv.slotStart,
             slot_end: lead.rdv.slotEnd ?? lead.rdv.slotStart,

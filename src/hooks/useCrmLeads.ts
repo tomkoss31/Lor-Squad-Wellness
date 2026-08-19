@@ -537,7 +537,7 @@ export function useCrmLeads() {
       // fois la colonne en base, le second appel ne part plus jamais : ce repli
       // se retire tout seul, il n'y a rien à penser à enlever.
       const COLONNES_PROSPECTS =
-        "id, first_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse, provenance_canal, provenance_user_id";
+        "id, first_name, last_name, phone, email, city, source, status, metadata, created_at, contacted_at, notes, referrer_user_id, assigned_to_user_id, coach_slug, consent_recontact, relance_due_at, relance_done_at, derniere_reponse, provenance_canal, provenance_user_id";
       // La liste de colonnes est une VARIABLE (c'est tout l'intérêt : pouvoir la
       // redemander sans `provenance_libre`), donc supabase-js ne peut plus en
       // déduire la forme des lignes — le client de l'app n'a pas de types
@@ -587,7 +587,7 @@ export function useCrmLeads() {
           .from("rdv_bookings")
           // id / slot_end / club_id : sans eux la fiche pouvait AFFICHER le
           // rendez-vous mais rien en faire — ni le déplacer, ni l'annuler.
-          .select("id, first_name, contact, slot_start, slot_end, status, club_id, coach_user_id")
+          .select("id, first_name, last_name, contact, slot_start, slot_end, status, club_id, coach_user_id")
           .neq("status", "canceled")
           .order("slot_start", { ascending: true })
           .limit(500),
@@ -807,7 +807,10 @@ export function useCrmLeads() {
           contactedAt: (row.contacted_at as string | null) ?? null,
           notes: (row.notes as string | null) ?? null,
           sourceRaw: (row.source as string | null) ?? null,
-          lastName: typeof meta.nom === "string" && meta.nom.trim() ? nomPropre(meta.nom as string) : null,
+          lastName: nomPropre(
+            (row.last_name as string | null)
+            ?? (typeof meta.nom === "string" ? (meta.nom as string) : null),
+          ) || null,
           objectif: typeof meta.objectif === "string" ? (meta.objectif as string) : null,
           peopleCount: typeof meta.people_count === "number" ? (meta.people_count as number) : null,
           partnerName: [meta.partner_first_name, meta.partner_last_name]

@@ -195,6 +195,22 @@ serve(async (req: Request) => {
   if (bookErr) return jsonResponse({ success: false, error: "insert_failed", detail: bookErr.message }, 500);
   if (!bookingId) return jsonResponse({ success: false, error: "creneau_pris" }, 409);
 
+  // 2a. Le nom de famille (Mélanie, 19/08). Il arrive du formulaire depuis
+  // toujours, obligatoire, et se perdait ici : la RPC ne le prend pas en
+  // paramètre. On l'écrit APRÈS coup plutôt que d'élargir sa signature —
+  // c'est elle qui porte le verrou anti-doublon du créneau, on n'y touche pas
+  // pour un champ d'affichage. Best-effort assumé : un nom manquant est un
+  // désagrément, une réservation perdue est un client perdu.
+  if (lastName || partnerLast) {
+    const { error: nomErr } = await sb.from("rdv_bookings")
+      .update({
+        last_name: lastName || null,
+        ...(partnerLast ? { metadata: { partner_last_name: partnerLast } } : {}),
+      })
+      .eq("id", bookingId as string);
+    if (nomErr) console.warn(`[book-club-discovery] nom non enregistré : ${nomErr.message}`);
+  }
+
   // 2b. Agenda Google de l'équipe — le rendez-vous s'y pose tout seul.
   // BEST-EFFORT, comme le push et les mails : la réservation est DÉJÀ
   // enregistrée, une panne d'agenda ne doit rien casser. Si le secret n'est pas

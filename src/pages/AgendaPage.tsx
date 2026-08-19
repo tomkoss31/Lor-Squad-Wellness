@@ -25,6 +25,7 @@ import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { useBbcMode } from "../features/bbc/useBbcMode";
 import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
+import { nomAffiche } from "../features/crm/nomPropre";
 import {
   toCalendarEvents,
   startOfWeekMonday,
@@ -402,6 +403,7 @@ export function AgendaPage() {
           distributorId: clubOwnerId,
           discovery: {
             firstName: (b.first_name ?? "").trim() || "Prospect",
+            lastName: b.last_name,
             peopleCount: b.people_count,
             partnerFirstName: b.partner_first_name,
             objectif: b.objectif,
@@ -1042,8 +1044,8 @@ export function AgendaPage() {
             ? `${nextRdv.prospect.firstName} ${nextRdv.prospect.lastName}`
             : nextRdv.kind === "discovery"
               ? (nextRdv.discovery.peopleCount === 2
-                  ? `${nextRdv.discovery.firstName} + 1`
-                  : nextRdv.discovery.firstName)
+                  ? `${nomAffiche(nextRdv.discovery.firstName, nextRdv.discovery.lastName)} + 1`
+                  : nomAffiche(nextRdv.discovery.firstName, nextRdv.discovery.lastName))
               : `${nextRdv.due.client.firstName} ${nextRdv.due.client.lastName}`;
         const subtitle = nextRdv.kind === "client"
           ? (nextRdv.followUp.type || "Suivi")
@@ -1866,7 +1868,9 @@ function DiscoveryAgendaCard({
   const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   const jour = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   const objectif = session.objectif ? DISCOVERY_LABELS[session.objectif] ?? session.objectif : null;
-  const nom = session.peopleCount === 2 ? `${session.firstName} + 1` : session.firstName;
+  const nom = session.peopleCount === 2
+    ? `${nomAffiche(session.firstName, session.lastName)} + 1`
+    : nomAffiche(session.firstName, session.lastName);
 
   return (
     <div
