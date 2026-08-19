@@ -24,7 +24,7 @@ import {
 } from "../lib/campaignContent";
 import { CampaignEditor } from "../components/campagnes/CampaignEditor";
 
-type CampaignType = "rich" | "plain";
+type CampaignType = "rich" | "plain" | "html";
 type CampaignStatus = "draft" | "scheduled" | "sending" | "sent" | "archived";
 
 interface Campaign {
@@ -34,6 +34,7 @@ interface Campaign {
   subject: string;
   body_json: unknown;
   body_text: string;
+  body_html: string;
   audience_label: string;
   status: CampaignStatus;
   recipient_count: number;
@@ -78,6 +79,7 @@ export function AdminCampagneEditPage() {
   const [subject, setSubject] = useState("");
   const [rich, setRich] = useState<CampaignRichContent>(defaultRichContent());
   const [plainText, setPlainText] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("");
   const [savingContent, setSavingContent] = useState(false);
 
   // état envoi
@@ -100,7 +102,7 @@ export function AdminCampagneEditPage() {
       }
       const { data, error } = await sb
         .from("campaigns")
-        .select("id, title, type, subject, body_json, body_text, audience_label, status, recipient_count, delivered_count, opened_count, clicked_count, bounced_count, unsubscribed_count")
+        .select("id, title, type, subject, body_json, body_text, body_html, audience_label, status, recipient_count, delivered_count, opened_count, clicked_count, bounced_count, unsubscribed_count")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -114,6 +116,7 @@ export function AdminCampagneEditPage() {
       setSubject(c.subject ?? "");
       setRich(normalizeRichContent(c.body_json));
       setPlainText(c.body_text ?? "");
+      setBodyHtml(c.body_html ?? "");
       setLoading(false);
 
       // Stats : si la campagne est partie, on charge le détail par destinataire.
@@ -242,6 +245,7 @@ export function AdminCampagneEditPage() {
         subject: subject.trim(),
         body_json: rich,
         body_text: plainText,
+        body_html: bodyHtml,
         updated_at: new Date().toISOString(),
       })
       .eq("id", campaign.id);
@@ -404,6 +408,18 @@ export function AdminCampagneEditPage() {
           <p>Une lettre simple, ton direct, zéro fioriture. Pour relancer chaleureusement des leads froids.</p>
         </span>
       </button>
+      <button
+        type="button"
+        className="ce-typecard b"
+        data-on={campaign.type === "html" ? "1" : "0"}
+        onClick={() => chooseType("html")}
+      >
+        <span className="ce-ic b">🎨</span>
+        <span>
+          <h3>Gabarit HTML</h3>
+          <p>Ton propre design, collé tel quel (ex. identité Breakfast Club). Le lien de désinscription reste ajouté automatiquement.</p>
+        </span>
+      </button>
 
       {/* ── Écran 3 : import destinataires ── */}
       <h2 className="ce-h2" style={{ marginTop: 28 }}>Destinataires</h2>
@@ -466,6 +482,8 @@ export function AdminCampagneEditPage() {
         rich={rich}
         onRich={setRich}
         plainText={plainText}
+        html={bodyHtml}
+        onHtml={setBodyHtml}
         onPlain={setPlainText}
         onSave={saveContent}
         saving={savingContent}

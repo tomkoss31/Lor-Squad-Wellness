@@ -21,8 +21,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import {
   compileCampaignHtml,
+  compileCustomHtml,
   compilePlainText,
+  isHtmlEmpty,
   isRichEmpty,
+  personalize,
 } from "./campaign-html.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -94,13 +97,19 @@ serve(async (req) => {
   const subject = (c.subject as string)?.trim() || (c.title as string) || "La Base 360";
   const from = (c.from_email as string) || "bonjour@labase360.fr";
   const replyTo = (c.reply_to as string) || "labaseverdun@gmail.com";
-  const type = (c.type as string) === "plain" ? "plain" : "rich";
+  const rawType = c.type as string;
+  const type: "plain" | "html" | "rich" = rawType === "plain" ? "plain" : rawType === "html" ? "html" : "rich";
   // Désinscription : edge dédiée (GET = page, POST = 1-clic Gmail). `r` = id du
   // destinataire (uuid aléatoire = jeton non énumérable).
   const unsubUrlFor = (recipientId: string) => `${SUPABASE_URL}/functions/v1/campaign-unsubscribe?r=${recipientId}`;
 
   // Garde-fou contenu vide : on ne compile/n'envoie pas un mail blanc.
-  const empty = type === "plain" ? !(c.body_text as string)?.trim() : isRichEmpty(c.body_json);
+  const empty =
+    type === "plain"
+      ? !(c.body_text as string)?.trim()
+      : type === "html"
+        ? isHtmlEmpty(c.body_html)
+        : isRichEmpty(c.body_json);
   if (empty) {
     return json({ error: "campaign_empty", message: "Ajoute du contenu (un titre, un texte ou une section) avant d'envoyer." }, 400);
   }
@@ -109,13 +118,20 @@ serve(async (req) => {
   if (mode === "dry-run") {
     const s = targets[0];
     const unsub = unsubUrlFor(s.id);
-    const html = type === "rich" ? compileCampaignHtml(c.body_json, s.first_name, unsub) : null;
+    const html =
+      type === "rich"
+        ? compileCampaignHtml(c.body_json, s.first_name, unsub)
+        : type === "html"
+          ? compileCustomHtml(c.body_html as string, s.first_name, unsub)
+          : null;
     const text = type === "plain" ? compilePlainText(c.body_text as string, s.first_name, unsub) : null;
     return json({
       ok: true,
       mode: "dry-run",
       would_send: targets.length,
-      subject,
+      // objet tel qu'il partira RÉELLEMENT (personnalisé) — sinon l'aperçu
+      // ment sur un objet contenant {prénom}.
+      subject: personalize(subject, s.first_name),
       from,
       reply_to: replyTo,
       sample: { to: s.email, html_length: html?.length ?? null, text_preview: text?.slice(0, 300) ?? null },
@@ -133,8 +149,16 @@ serve(async (req) => {
   for (let i = 0; i < batch.length; i++) {
     const r = batch[i];
     const unsub = unsubUrlFor(r.id);
-    const html = type === "rich" ? compileCampaignHtml(c.body_json, r.first_name, unsub) : undefined;
+    const html =
+      type === "rich"
+        ? compileCampaignHtml(c.body_json, r.first_name, unsub)
+        : type === "html"
+          ? compileCustomHtml(c.body_html as string, r.first_name, unsub)
+          : undefined;
     const text = type === "plain" ? compilePlainText(c.body_text as string, r.first_name, unsub) : undefined;
+    // Bug corrigé 2026-08-19 : l'objet n'était jamais personnalisé — un
+    // « {prénom} » dans le champ Objet partait tel quel chez le destinataire.
+    const subjectForRecipient = personalize(subject, r.first_name);
     const scheduled_at = scheduledAt ? new Date(new Date(scheduledAt).getTime() + i * delayMs).toISOString() : undefined;
 
     try {
@@ -144,7 +168,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from,
           to: [r.email],
-          subject,
+          subject: subjectForRecipient,
           ...(html ? { html } : {}),
           ...(text ? { text } : {}),
           reply_to: replyTo,

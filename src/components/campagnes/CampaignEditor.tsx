@@ -20,13 +20,16 @@ import {
 } from "../../lib/campaignContent";
 
 interface Props {
-  type: "rich" | "plain";
+  type: "rich" | "plain" | "html";
   subject: string;
   onSubject: (v: string) => void;
   rich: CampaignRichContent;
   onRich: (v: CampaignRichContent) => void;
   plainText: string;
   onPlain: (v: string) => void;
+  /** type 'html' : gabarit email complet fourni par l'admin. */
+  html?: string;
+  onHtml?: (v: string) => void;
   onSave: () => void;
   saving: boolean;
   previewName?: string; // prénom d'exemple pour l'aperçu
@@ -34,6 +37,8 @@ interface Props {
 
 export function CampaignEditor(props: Props) {
   const { type, subject, onSubject, rich, onRich, plainText, onPlain, onSave, saving } = props;
+  const html = props.html ?? "";
+  const onHtml = props.onHtml ?? (() => {});
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const name = props.previewName || "Marie";
 
@@ -60,6 +65,8 @@ export function CampaignEditor(props: Props) {
         .ceo-inp { width:100%; background:var(--ls-input-bg); border:1px solid var(--ls-border2); border-radius:8px; color:var(--ls-text); padding:11px 12px; font-family:'DM Sans',sans-serif; font-size:14px; }
         textarea.ceo-inp { resize:vertical; min-height:70px; line-height:1.5; }
         textarea.ceo-letter { min-height:280px; font-size:14.5px; }
+        textarea.ceo-code { font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; min-height:340px; white-space:pre; }
+        .ceo-frame { width:100%; height:620px; border:1px solid var(--ls-border2); border-radius:14px; background:#fff; display:block; }
         .ceo-block { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:12px; padding:13px; margin-bottom:10px; }
         .ceo-bhead { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
         .ceo-emoji { width:44px; text-align:center; background:var(--ls-input-bg); border:1px solid var(--ls-border2); border-radius:8px; padding:9px 0; font-size:16px; }
@@ -124,6 +131,22 @@ export function CampaignEditor(props: Props) {
                 placeholder={"Bonjour {prénom},\n\nJe reviens vers toi car…"}
               />
             </>
+          ) : type === "html" ? (
+            <>
+              <label className="ceo-lbl">Ton gabarit HTML</label>
+              <textarea
+                className="ceo-inp ceo-letter ceo-code"
+                value={html}
+                onChange={(e) => onHtml(e.target.value)}
+                spellCheck={false}
+                placeholder={"<!doctype html>\n<html>…</html>"}
+              />
+              <p className="ceo-hint">
+                Colle ici l'email complet. Écris {"{prénom}"} pour personnaliser, et{" "}
+                {"{lien_desabonnement}"} à l'endroit du lien de désinscription — si tu l'oublies, un
+                pied de page est ajouté automatiquement (obligatoire).
+              </p>
+            </>
           ) : (
             <>
               <label className="ceo-lbl">Titre principal (hero)</label>
@@ -174,6 +197,19 @@ export function CampaignEditor(props: Props) {
         </>
       ) : type === "plain" ? (
         <div className="ceo-letterview">{personalize(plainText, name) || "Ta lettre apparaîtra ici."}</div>
+      ) : type === "html" ? (
+        // Aperçu dans une iframe SANDBOX : le gabarit ne peut ni exécuter de
+        // script, ni naviguer, ni casser la mise en page de l'app.
+        html.trim() ? (
+          <iframe
+            className="ceo-frame"
+            title="Aperçu de l'email"
+            sandbox=""
+            srcDoc={personalize(html, name)}
+          />
+        ) : (
+          <div className="ceo-letterview">Colle ton gabarit HTML pour voir l'aperçu.</div>
+        )
       ) : (
         <div className="ceo-mail">
           <div className="ceo-mh">

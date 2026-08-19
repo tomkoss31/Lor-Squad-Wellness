@@ -51,6 +51,52 @@ export function compilePlainText(letter: string, firstName: string | null, unsub
   return `${body}\n\n—\nLa Base 360 · Verdun, France\nSe désabonner : ${unsubUrl}`;
 }
 
+// ─── type 'html' : gabarit libre fourni par l'admin ────────────────────────
+// On ne touche PAS au design (c'est tout l'intérêt), mais deux choses sont
+// non négociables et donc forcées ici :
+//   1. la personnalisation {prénom} ;
+//   2. la présence d'un lien de désabonnement (RGPD + délivrabilité Gmail).
+// Le token {lien_desabonnement} est remplacé partout où il apparaît ; s'il est
+// absent, un pied de page minimal est ajouté avant </body>. Impossible donc
+// d'envoyer une campagne sans porte de sortie, même en cas d'oubli.
+
+// Token attendu dans le gabarit libre pour placer le lien de désabonnement.
+// Fabriqué à CHAQUE appel : une regex /g partagée au niveau module garde son
+// `lastIndex` entre les requêtes concurrentes de l'edge → faux négatifs.
+const unsubToken = () => /\{lien_desabonnement\}|\{lien_désabonnement\}|\{unsub\}/gi;
+
+/** Échappe une URL pour un attribut href (contexte guillemets doubles). */
+function escAttr(s: string): string {
+  return (s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Vrai si le gabarit libre est vide (rien à envoyer). */
+export function isHtmlEmpty(raw: unknown): boolean {
+  return !(typeof raw === "string" ? raw : "").trim();
+}
+
+/**
+ * Compile le type 'html' : personnalise, puis GARANTIT le lien de désabo.
+ * Retourne le HTML prêt à partir chez Resend.
+ */
+export function compileCustomHtml(rawHtml: string, firstName: string | null, unsubUrl: string): string {
+  let out = personalize(rawHtml ?? "", firstName);
+
+  if (unsubToken().test(out)) {
+    out = out.replace(unsubToken(), escAttr(unsubUrl));
+  } else {
+    // Filet de sécurité : aucun token → on ajoute un pied de page discret.
+    const footer =
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:transparent;">` +
+      `<tr><td align="center" style="padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#8A8A8A;">` +
+      `Tu reçois ce message car tu as laissé tes coordonnées à La Base 360.<br>` +
+      `<a href="${escAttr(unsubUrl)}" style="color:#8A8A8A;text-decoration:underline;">Se désabonner</a>` +
+      `</td></tr></table>`;
+    out = /<\/body\s*>/i.test(out) ? out.replace(/<\/body\s*>/i, `${footer}</body>`) : out + footer;
+  }
+  return out;
+}
+
 // Coerce un body_json quelconque (souvent `[]` par défaut en base) en CampRich
 // sûr — le compilateur ne doit JAMAIS planter sur un contenu incomplet.
 function safeRich(raw: unknown): CampRich {
