@@ -11,6 +11,8 @@ import { BbcNewMemberButton } from "../BbcNewMemberButton";
 import { BbcMemberCorps } from "./BbcMemberCorps";
 import { objectifAffichable } from "../bilan10Pesee";
 import { BbcPeseeSheet } from "../BbcPeseeSheet";
+import { BbcSupprimerMembre } from "./BbcSupprimerMembre";
+import { useAppContext } from "../../../context/AppContext";
 
 function objLabel(o?: string) {
   const map: Record<string, string> = {
@@ -72,6 +74,10 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
   // décide si la feuille pose la question « départ ou suivi » (la toute
   // première pesée EST le départ, il n'y a rien à demander).
   const [nbReleves, setNbReleves] = useState<Record<string, number>>({});
+  // La fiche qu'on s'apprête à supprimer (19/08). Elle n'existait nulle part
+  // côté club : une saisie en double au comptoir restait là pour toujours.
+  const [aSupprimer, setASupprimer] = useState<BbcMember | null>(null);
+  const { deleteClient } = useAppContext();
 
   const inscritsParDautres = useMemo(
     () => tous.some((m) => m.ownerId && m.ownerId !== userId),
@@ -175,10 +181,32 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
-              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} />
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} />
           ))
         )}
       </div>
+
+      {aSupprimer ? (
+        <BbcSupprimerMembre
+          prenom={aSupprimer.name.trim().split(/\s+/)[0] || "ce membre"}
+          nomComplet={aSupprimer.name}
+          visites={aSupprimer.visits}
+          onFermer={() => setASupprimer(null)}
+          onConfirmer={async () => {
+            try {
+              await deleteClient(aSupprimer.id);
+              // La liste se relit toute seule : deleteClient rafraîchit les
+              // données de l'app. On repousse quand même la clé des relevés,
+              // sinon un corps déjà chargé resterait en mémoire.
+              setCleCorps((n) => n + 1);
+              setOpen(null);
+              return null;
+            } catch (e) {
+              return e instanceof Error ? e.message : "La suppression n'a pas abouti.";
+            }
+          }}
+        />
+      ) : null}
 
       {pesee ? (
         <BbcPeseeSheet
@@ -246,9 +274,10 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
 }
 
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
+  onSupprimer: (m: BbcMember) => void;
   onPesee?: (m: BbcMember) => void; cleCorps?: number;
   onCorpsCharge?: (id: string, nb: number) => void;
 }) {
@@ -400,6 +429,48 @@ function MemberRow({
                 Pas encore d'accès à l'app pour ce membre — génère-le depuis sa fiche client.
               </div>
             )}
+          </div>
+
+          {/* ── Sortir de là ────────────────────────────────────────────────
+              Thomas (19/08) : « les clients rentrés par erreur sur l'app BBC —
+              côté classique on peut tout faire depuis Actions, mais rien sur le
+              BBC. » Deux sorties, dans cet ordre : le lien vers sa fiche, qui
+              donne accès à TOUT le reste sans le redévelopper ici, puis la
+              suppression, qui n'existait nulle part côté club. */}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-bbc-line)", display: "flex", flexWrap: "wrap", gap: 9, alignItems: "center" }}>
+            <a
+              href={`/clients/${m.id}`}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 12,
+                background: "var(--ls-bbc-s2)",
+                border: "1px solid var(--ls-bbc-line)",
+                color: "var(--ls-bbc-text)",
+                fontWeight: 600,
+                fontSize: 12.5,
+                textDecoration: "none",
+              }}
+            >
+              📋 Sa fiche complète
+            </a>
+            <button
+              type="button"
+              onClick={() => onSupprimer(m)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 12,
+                background: "transparent",
+                border: "1px solid color-mix(in srgb, var(--ls-bbc-coral) 45%, var(--ls-bbc-line))",
+                color: "var(--ls-bbc-coral)",
+                fontWeight: 600,
+                fontSize: 12.5,
+                cursor: "pointer",
+                fontFamily: "var(--ls-bbc-font-body)",
+                minHeight: 44,
+              }}
+            >
+              Supprimer ce membre
+            </button>
           </div>
         </div>
       ) : null}
