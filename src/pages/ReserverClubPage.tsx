@@ -415,7 +415,12 @@ export function ReserverClubPage() {
   return (
     <div className="rc">
       <header className="rc-header"><div className="rc-wrap in">
-        <a href={`/reserver${slug !== "verdun" ? `/${slug}` : ""}`} onClick={(e) => { e.preventDefault(); setScreen("capture"); }} aria-label="Recommencer">
+        {/* Le logo ramène au SITE, pas au formulaire (corrigé le 19/08).
+            Avant, il faisait `setScreen("capture")` : cliquer le logo — le
+            geste le plus universel du web pour « aller à l'accueil » — effaçait
+            le créneau choisi, et depuis l'écran de confirmation relançait le
+            formulaire alors que le rendez-vous était déjà pris. */}
+        <a href="/club" aria-label="Aller au site du Breakfast Club">
           <img src={LOGO} alt="The Breakfast Club by La Base" />
         </a>
         <div className="rc-badge">
@@ -531,7 +536,19 @@ export function ReserverClubPage() {
       {screen === "dispo" && (
         <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
           <div style={{ maxWidth: 640 }}>
-            <p className="rc-eyebrow">Étape 2 sur 2 · Ton créneau</p>
+            {/* Le retour vit ICI, au-dessus du titre (19/08). Il existait déjà,
+                mais enterré dans la colonne de gauche : on le croisait en
+                descendant VERS le bouton de réservation, ce qui est exactement
+                l'endroit où il ne faut pas proposer de partir. */}
+            <button
+              type="button"
+              onClick={() => setScreen("capture")}
+              className="rc-retour"
+              aria-label="Revenir à mes coordonnées"
+            >
+              <span aria-hidden="true">←</span> Retour
+            </button>
+            <p className="rc-eyebrow" style={{ marginTop: 14 }}>Étape 2 sur 2 · Ton créneau</p>
             <h1 style={{ marginTop: 14, fontSize: "clamp(30px,5vw,52px)" }}>Choisis quand on t'accueille.</h1>
           </div>
 
@@ -551,7 +568,6 @@ export function ReserverClubPage() {
               <p style={{ margin: "20px 0 0", fontSize: 14, lineHeight: 1.55, color: "#5F7154", paddingTop: 18, borderTop: "1px solid rgba(30,51,48,.1)" }}>
                 Réservation <strong style={{ color: "var(--ink)" }}>gratuite et sans engagement</strong>. On t'accueille pour ton body scan et un vrai point sur tes objectifs.
               </p>
-              <button type="button" onClick={() => setScreen("capture")} style={{ marginTop: 18, background: "none", border: "none", color: "var(--orange)", fontFamily: "Poppins", fontSize: 14, fontWeight: 600, cursor: "pointer", padding: 0 }}>← Modifier mes infos</button>
             </aside>
 
             <section className="rc-col">
@@ -720,6 +736,17 @@ export function ReserverClubPage() {
                 <span aria-hidden="true">📅</span> Ajouter à mon agenda
               </button>
               <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--sub)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
+
+              {/* ── LA SORTIE (19/08) ────────────────────────────────────
+                  Des LIENS, pas des boutons : elle vient de dire oui, on ne
+                  lui vend plus rien. Ils descendent sous le CTA agenda pour
+                  ne jamais lui disputer l'attention. */}
+              <div className="rc-sorties">
+                <p className="rc-sorties-titre">En attendant ton rendez-vous</p>
+                <a href="/club/le-rituel">Le rituel du matin, en 3 minutes</a>
+                <a href="/club/resultats">Les résultats des membres</a>
+                <a href="/club">Découvrir le club</a>
+              </div>
 
               {/* « Comment tu as connu le club ? » ne se pose PLUS ici : la
                   question est passée sous les créneaux, à l'écran précédent, où
