@@ -67,6 +67,7 @@ import {
   type SetStateAction,
 } from "react";
 import { useAppContext } from "../../context/AppContext";
+import { QRCodeSVG } from "qrcode.react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { setClientEbeBbc } from "./clientEbeBbc";
 import { buildEmptyQuestionnaire } from "../../lib/leadConversion";
@@ -287,6 +288,28 @@ function brouillonVide(): Brouillon {
   };
 }
 
+/** Le lien permanent de son espace. Même forme que le QR de l'étape « scan appli ». */
+function lienEspace(token: string): string {
+  const origine = typeof window !== "undefined" ? window.location.origin : "https://www.labase360.fr";
+  return `${origine}/client/${token}`;
+}
+
+/**
+ * Copie le lien, et le DIT. Un bouton qui ne répond rien laisse croire qu'il
+ * n'a pas marché — on retape, on recopie, on doute.
+ */
+async function copierLien(lien: string, dire: (v: boolean) => void): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(lien);
+    dire(true);
+    window.setTimeout(() => dire(false), 2200);
+  } catch {
+    // Presse-papiers refusé (Safari hors geste utilisateur, http) : on ne
+    // ment pas en affichant « copié ».
+    dire(false);
+  }
+}
+
 /**
  * Ce qu'on sait déjà de la personne avant même d'ouvrir la feuille — parce
  * qu'elle a rempli le formulaire du club et qu'elle vient d'honorer son
@@ -478,6 +501,18 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
 
   // Ce qui a DÉJÀ été écrit — indispensable pour qu'une reprise ne double rien.
   const clientIdRef = useRef<string | null>(null);
+  /**
+   * Le jeton de son espace, relu à la création (19/08).
+   *
+   * L'écran de fin disait « le lien de l'app existe, envoie-le depuis la fiche
+   * quand tu le décides ». C'était prudent — deux mails prématurés ont déjà été
+   * retirés de ce parcours — mais ça visait le mauvais geste : au comptoir elle
+   * est DEVANT vous. Le bon geste, c'est son téléphone qui scanne, pas un mail
+   * qu'elle lira ce soir. Le QR n'envoie rien à personne et supprime un
+   * aller-retour vers la fiche.
+   */
+  const [tokenApp, setTokenApp] = useState<string | null>(null);
+  const [lienCopie, setLienCopie] = useState(false);
   const coeursEcritsRef = useRef<boolean[]>([false, false, false]);
   const panneauRef = useRef<HTMLDivElement | null>(null);
   const focusAvantRef = useRef<Element | null>(null);
@@ -857,18 +892,31 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
       .select("token")
       .eq("client_id", clientId)
       .maybeSingle();
-    if ((deja as { token?: string } | null)?.token) return;
+    const dejaToken = (deja as { token?: string } | null)?.token;
+    if (dejaToken) {
+      setTokenApp(dejaToken);
+      return;
+    }
 
     // ⚠️ `client_id` et `coach_id` sont en TEXT alors que `clients.id` et
     // `users.id` sont en UUID : la policy compare sans cast.
-    const { error } = await sb.from("client_app_accounts").insert({
-      client_id: clientId,
-      coach_id: coachId,
-      coach_name: currentUser?.name ?? coachName ?? "La Base 360",
-      client_first_name: f.prenom.trim(),
-      client_last_name: f.nom.trim(),
-    });
+    const { data: cree, error } = await sb
+      .from("client_app_accounts")
+      .insert({
+        client_id: clientId,
+        coach_id: coachId,
+        coach_name: currentUser?.name ?? coachName ?? "La Base 360",
+        client_first_name: f.prenom.trim(),
+        client_last_name: f.nom.trim(),
+      })
+      // On relit le jeton généré par la base : c'est lui qui ouvre son espace,
+      // et sans lui l'écran de fin ne peut pas afficher le QR — donc le coach
+      // repartirait vers la fiche alors qu'elle est encore devant lui.
+      .select("token")
+      .maybeSingle();
     if (error) throw error;
+    const token = (cree as { token?: string } | null)?.token;
+    if (token) setTokenApp(token);
   }
 
   /** 4. les 3 cœurs. Une ligne vide n'est pas insérée. */
@@ -1552,15 +1600,53 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
                   {busy ? "nouvelle tentative…" : `Réessayer ce qui a échoué (${restantes.length})`}
                 </button>
               ) : null}
+              {tokenApp ? (
+                <div
+                  style={{
+                    background: "var(--ls-bbc-s2)",
+                    border: "1px solid var(--ls-bbc-line)",
+                    borderRadius: 16,
+                    padding: 16,
+                    marginBottom: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
+                    son espace
+                  </div>
+                  <div style={{ fontSize: 13, color: "var(--ls-bbc-text)", margin: "6px 0 12px", lineHeight: 1.5 }}>
+                    Fais-lui scanner maintenant — elle est devant toi.
+                  </div>
+                  {/* Fond BLANC dans les deux thèmes : un QR sur fond sombre ne
+                      se scanne pas. Même règle que la page de remerciement. */}
+                  <div style={{ background: "#FFFFFF", padding: 12, borderRadius: 12, display: "inline-block" }}>
+                    <QRCodeSVG value={lienEspace(tokenApp)} size={168} level="M" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void copierLien(lienEspace(tokenApp), setLienCopie)}
+                    style={{ ...boutonFantomeStyle, marginTop: 12, marginBottom: 0 }}
+                  >
+                    {lienCopie ? "lien copié ✓" : "copier le lien"}
+                  </button>
+                  <p style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 8, lineHeight: 1.45 }}>
+                    Ce lien EST sa clé : qui l'a, entre dans son dossier. On ne l'envoie
+                    à personne d'autre qu'elle.
+                  </p>
+                </div>
+              ) : null}
+
               <button type="button" onClick={() => reinitialiser(setF, setEtats, setErreurs, setTermine, clientIdRef, coeursEcritsRef)} style={{ ...boutonFantomeStyle, marginBottom: 9 }}>
                 Saisir la 2ᵉ fiche papier
               </button>
               <button type="button" onClick={onClose} style={boutonFantomeStyle}>
                 Fermer
               </button>
-              <p style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", textAlign: "center", marginTop: 8, lineHeight: 1.45 }}>
-                Le lien de l'app existe : envoie-le depuis la fiche du membre quand tu le décides.
-              </p>
+              {!tokenApp ? (
+                <p style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", textAlign: "center", marginTop: 8, lineHeight: 1.45 }}>
+                  Le lien de l'app existe : envoie-le depuis la fiche du membre quand tu le décides.
+                </p>
+              ) : null}
             </>
           )}
         </div>

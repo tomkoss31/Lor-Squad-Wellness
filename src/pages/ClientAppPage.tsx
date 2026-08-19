@@ -404,6 +404,10 @@ export function ClientAppPage() {
         programTitle={data.program_title}
         token={token as string}
         visitsCount={(liveData as { visits_count?: number } | null)?.visits_count ?? 0}
+        // Les DATES de ses passages, pour les poser sous sa courbe (19/08).
+        // Le compteur au-dessus reste la source du nombre affiché sur sa carte :
+        // il vient d'un `count` exact, celui-ci d'une liste plafonnée.
+        visitDates={(liveData as { visit_dates?: string[] } | null)?.visit_dates ?? []}
         weightDeltaKg={bbcDelta}
         currentWeight={bbcLastW}
         nextRdvDate={data.next_follow_up ?? null}

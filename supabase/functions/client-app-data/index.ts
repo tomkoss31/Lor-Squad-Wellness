@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, heartsRes, entryRes, cardRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, visitDatesRes, heartsRes, entryRes, cardRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc, club_id")
@@ -267,6 +267,25 @@ serve(async (req) => {
         .from("club_visits")
         .select("*", { count: "exact", head: true })
         .eq("client_id", clientId),
+
+      // Les DATES de ses passages (19/08), pas seulement leur nombre.
+      //
+      // POURQUOI : sa courbe de poids ne dit rien de ce qui la fait bouger.
+      // Posés sous la courbe, ses passages montrent la seule chose qui décide
+      // d'un renouvellement — « quand je viens, ça descend ». C'est le seul
+      // recoupement qu'un club seul ou une app seule ne peuvent pas faire.
+      //
+      // Requête SÉPARÉE du compteur juste au-dessus : celui-ci est un
+      // `head: true` (il ne ramène aucune ligne, seulement un total), et il
+      // reste la source du nombre affiché sur la carte de membre. On ne le
+      // remplace pas par `dates.length` — la limite ci-dessous fausserait le
+      // compte le jour où quelqu'un dépassera 400 passages.
+      supabase
+        .from("club_visits")
+        .select("visited_at")
+        .eq("client_id", clientId)
+        .order("visited_at", { ascending: true })
+        .limit(400),
 
       // Chantier BBC : cœurs du membre = recos qui ont démarré.
       // ⚠️ DEUX vocabulaires cohabitent dans `client_referrals.status` : le CRM
@@ -756,6 +775,10 @@ serve(async (req) => {
       current_intake,
       coach_advice,
       visits_count: (visitsRes as { count?: number | null }).count ?? 0,
+      // Les jours où elle est passée, en ISO. Le front n'en garde que la date.
+      visit_dates: (((visitDatesRes as { data?: Array<{ visited_at?: string }> }).data ?? [])
+        .map((v) => v.visited_at)
+        .filter((d): d is string => typeof d === "string" && d.length > 0)),
       hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
       member_card: memberCard,
       club_settings: clubSettings,

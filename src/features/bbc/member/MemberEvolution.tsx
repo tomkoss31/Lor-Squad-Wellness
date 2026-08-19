@@ -63,6 +63,14 @@ interface MemberEvolutionProps {
   token: string;
   metrics: Metric[];
   measurements: Measurement[];
+  /**
+   * Les jours où elle est passée au club, en ISO (19/08). Posés sous sa courbe :
+   * c'est ce qui transforme un constat en démonstration.
+   *
+   * Optionnel à dessein — une cliente classique n'a pas de passages, et la
+   * courbe doit s'afficher exactement comme avant sans cette donnée.
+   */
+  visitDates?: string[];
 }
 
 type CleMetrique = "weight" | "bodyFat" | "muscleMass" | "hydration" | "visceralFat" | "metabolicAge";
@@ -167,7 +175,7 @@ const eyebrow: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function MemberEvolution({ token, metrics, measurements }: MemberEvolutionProps) {
+export function MemberEvolution({ token, metrics, measurements, visitDates = [] }: MemberEvolutionProps) {
   // On garde la DATE avec le poids : sans elle, « 108,0 → 99,0 » ne dit pas
   // depuis quand, et c'est précisément ce que la membre venait chercher.
   const pesees = metrics
@@ -223,6 +231,45 @@ export function MemberEvolution({ token, metrics, measurements }: MemberEvolutio
     new Date(serie[i].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
   );
   const labelStep = Math.max(1, Math.ceil(n / 12));
+
+  // ── Ses passages au club, posés sous sa courbe (19/08) ──────────────────
+  //
+  // POURQUOI : une courbe de poids est un constat. La même courbe AVEC ses
+  // passages dessous est une démonstration — « quand je viens, ça descend ».
+  // C'est la seule chose qui décide d'un renouvellement, et le seul
+  // recoupement qu'un club seul ou une app seule ne peuvent pas faire.
+  //
+  // ⚠️ L'AXE X N'EST PAS UNE ÉCHELLE DE TEMPS : les relevés sont espacés
+  // RÉGULIÈREMENT (`i * (W-2P)/(n-1)`), quelle que soit leur date réelle. Une
+  // visite ne peut donc pas se convertir en X par une règle de trois sur les
+  // dates — il faut l'interpoler DANS le segment qui l'encadre, sinon les
+  // marques se décalent dès que deux pesées ne sont pas espacées pareil.
+  const tempsReleves = serie.map((p) => new Date(p.date).getTime());
+  const marquesVisites = (() => {
+    // Sous deux relevés il n'y a pas de segment : rien à poser dessus.
+    if (n < 2 || visitDates.length === 0) return [] as number[];
+    const debut = tempsReleves[0], fin = tempsReleves[n - 1];
+    const xs: number[] = [];
+    for (const iso of visitDates) {
+      const t = new Date(iso).getTime();
+      // Hors plage : une visite d'avant sa première pesée n'a nulle part où
+      // aller. On l'ignore plutôt que de l'écraser sur le bord, ce qui
+      // inventerait un passage le jour du départ.
+      if (!Number.isFinite(t) || t < debut || t > fin) continue;
+      for (let i = 0; i < n - 1; i += 1) {
+        const a = tempsReleves[i], b = tempsReleves[i + 1];
+        if (t >= a && t <= b) {
+          const f = b === a ? 0 : (t - a) / (b - a);
+          xs.push(pts[i][0] + f * (pts[i + 1][0] - pts[i][0]));
+          break;
+        }
+      }
+    }
+    return xs;
+  })();
+
+  /** L'écart sur la métrique affichée, entre le premier et le dernier relevé. */
+  const ecartSerie = n >= 2 ? serie[n - 1].v - serie[0].v : null;
 
   const dernier = metrics[metrics.length - 1] ?? {};
 
@@ -429,6 +476,24 @@ export function MemberEvolution({ token, metrics, measurements }: MemberEvolutio
                   </linearGradient>
                 </defs>
                 <line x1={P} y1={bottom} x2={W - P} y2={bottom} stroke="var(--ls-bbc-line)" strokeWidth="1" />
+
+                {/* Ses passages au club, en petits traits SOUS l'axe. Sous la
+                    ligne et non dessus : ils accompagnent la courbe, ils ne la
+                    concurrencent pas. Le lime, parce qu'un passage est une
+                    victoire — c'est ce à quoi la charte le réserve. */}
+                {marquesVisites.map((x, i) => (
+                  <line
+                    key={`v${i}`}
+                    x1={x}
+                    y1={bottom + 2}
+                    x2={x}
+                    y2={bottom + 7}
+                    stroke="var(--ls-bbc-lime)"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    opacity="0.85"
+                  />
+                ))}
                 <polygon points={chartArea} fill="url(#bbcCourbeAire)" />
                 <polyline points={chartLine} fill="none" stroke={sel.teinte} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
                 {pts.map((p, i) => {
@@ -449,6 +514,40 @@ export function MemberEvolution({ token, metrics, measurements }: MemberEvolutio
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-muted)", marginTop: 6 }}>
                 {dateLabels.map((d, i) => <span key={i}>{d}</span>)}
               </div>
+
+              {/* Le recoupement, en une phrase. C'est LUI le produit : le
+                  nombre de passages et l'écart sont deux chiffres qu'elle a
+                  déjà chacun de leur côté — mis dans la même phrase, ils
+                  répondent enfin à « est-ce que ça marche pour moi ? ».
+                  On ne l'affiche que si les deux existent : « 0 passage » ou
+                  « 0,0 kg » ne démontrent rien et découragent. */}
+              {marquesVisites.length > 0 && ecartSerie != null && Math.abs(ecartSerie) >= 0.05 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 10,
+                    padding: "9px 11px",
+                    borderRadius: 12,
+                    background: "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 32%, var(--ls-bbc-line))",
+                  }}
+                >
+                  <span aria-hidden="true" style={{ width: 3, height: 22, borderRadius: 99, background: "var(--ls-bbc-lime)", flex: "none" }} />
+                  <span style={{ fontSize: 12.5, lineHeight: 1.45, color: "var(--ls-bbc-text)" }}>
+                    <strong>
+                      {marquesVisites.length} passage{marquesVisites.length > 1 ? "s" : ""} au club
+                    </strong>{" "}
+                    depuis ton départ, et {sel.court.toLowerCase()}{" "}
+                    {ecartSerie < 0 ? "en baisse de" : "en hausse de"}{" "}
+                    <strong>
+                      {fr(Math.abs(ecartSerie), sel.dec)} {sel.unite}
+                    </strong>
+                    . C'est le rythme qui fait la différence.
+                  </span>
+                </div>
+              ) : null}
             </>
           ) : (
             <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 12, lineHeight: 1.5 }}>

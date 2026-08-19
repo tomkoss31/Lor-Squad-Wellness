@@ -25,6 +25,8 @@ interface BbcClientAppProps {
   programTitle?: string;
   token?: string;
   visitsCount?: number;
+  /** Les jours où elle est passée, en ISO — posés sous sa courbe (19/08). */
+  visitDates?: string[];
   weightDeltaKg?: number | null;
   currentWeight?: number | null;
   nextRdvDate?: string | null;
@@ -64,7 +66,7 @@ function fmtRdv(iso?: string | null) {
 }
 
 export function BbcClientApp(props: BbcClientAppProps) {
-  const { clientName, coachName, token, visitsCount = 0, weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen, clubSettings } = props;
+  const { clientName, coachName, token, visitsCount = 0, visitDates = [], weightDeltaKg, currentWeight, nextRdvDate, nextRdvType, metrics = [], measurements = [], heartsCount = 0, clientId, coachId, coachAdvice, card, entrySeen, clubSettings } = props;
   // La notif « ton coach t'a répondu » ouvre l'app avec ?tab=messages. Sans
   // lire ce paramètre, le membre atterrissait sur l'Accueil et refermait,
   // persuadé que la notification était vide.
@@ -271,7 +273,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
             </div>
           </>
         ) : tab === "evolution" ? (
-          <MemberEvolution token={token ?? ""} metrics={metrics} measurements={measurements} />
+          <MemberEvolution token={token ?? ""} metrics={metrics} measurements={measurements} visitDates={visitDates} />
         ) : tab === "coeurs" ? (
           <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
         ) : tab === "conseils" ? (
