@@ -385,9 +385,16 @@ export function AgendaPage() {
     }
 
     // 4. RDV découverte du club — chantier RDV du club (2026-08-09).
-    // Le hook ne remonte que les résas à venir et non annulées. Elles n'ont pas
-    // de coach : on les rattache au propriétaire du club pour qu'elles suivent
-    // le sélecteur d'équipe comme le reste.
+    // Le hook ne remonte que les résas à venir et non annulées.
+    //
+    // ⚠️ 19/08 : elles étaient TOUTES rattachées au propriétaire du club. Le
+    // commentaire d'origine disait vrai (« elles n'ont pas de coach ») mais la
+    // conséquence était invisible : Mélanie confirmait un rendez-vous et ne le
+    // retrouvait jamais, parce que `isInScope` écarte tout ce qui n'est pas soi
+    // quand le sélecteur est sur « Moi ». Depuis, `coach_user_id` est rempli —
+    // par le réglage `discovery.default_coach_user_id`, ou par l'attribution du
+    // lead dans le CRM, qui prime. Le propriétaire du club n'est plus qu'un
+    // dernier recours, pour un club mal configuré.
     if (entityFilter === "all" || entityFilter === "discovery") {
       const clubOwnerId = activeClub?.ownerUserId ?? currentUser?.id ?? "";
       for (const b of clubDiscoveries) {
@@ -395,12 +402,13 @@ export function AgendaPage() {
         if (Number.isNaN(d.getTime())) continue;
         if (effectiveDateFilter === "today" && !isSameDay(d, todayStart)) continue;
         if (effectiveDateFilter === "week" && (d < todayStart || d > weekEnd)) continue;
-        if (!isInScope(clubOwnerId)) continue;
+        const aQui = b.coach_user_id ?? clubOwnerId;
+        if (!isInScope(aQui)) continue;
         entries.push({
           kind: "discovery",
           id: b.id,
           date: b.slot_start,
-          distributorId: clubOwnerId,
+          distributorId: aQui,
           discovery: {
             firstName: (b.first_name ?? "").trim() || "Prospect",
             lastName: b.last_name,

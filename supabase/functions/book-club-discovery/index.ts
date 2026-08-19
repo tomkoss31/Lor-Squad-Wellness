@@ -201,14 +201,27 @@ serve(async (req: Request) => {
   // c'est elle qui porte le verrou anti-doublon du créneau, on n'y touche pas
   // pour un champ d'affichage. Best-effort assumé : un nom manquant est un
   // désagrément, une réservation perdue est un client perdu.
-  if (lastName || partnerLast) {
-    const { error: nomErr } = await sb.from("rdv_bookings")
-      .update({
-        last_name: lastName || null,
-        ...(partnerLast ? { metadata: { partner_last_name: partnerLast } } : {}),
-      })
+  //
+  // Et À QUI il appartient (19/08). Une réservation du club n'a pas de coach :
+  // l'agenda la rattachait donc au propriétaire du club, et la coache qui
+  // décrochait ne la voyait jamais chez elle. Le réglage
+  // `discovery.default_coach_user_id` répond à « jusqu'à nouvel ordre » sans
+  // redéploiement — et si le CRM attribue ensuite le lead à quelqu'un d'autre,
+  // c'est cette attribution qui gagne.
+  const coachParDefaut =
+    (club.settings as { discovery?: { default_coach_user_id?: string } })
+      ?.discovery?.default_coach_user_id ?? null;
+
+  const aEcrire: Record<string, unknown> = {};
+  if (lastName) aEcrire.last_name = lastName;
+  if (partnerLast) aEcrire.metadata = { partner_last_name: partnerLast };
+  if (coachParDefaut) aEcrire.coach_user_id = coachParDefaut;
+
+  if (Object.keys(aEcrire).length > 0) {
+    const { error: majErr } = await sb.from("rdv_bookings")
+      .update(aEcrire)
       .eq("id", bookingId as string);
-    if (nomErr) console.warn(`[book-club-discovery] nom non enregistré : ${nomErr.message}`);
+    if (majErr) console.warn(`[book-club-discovery] nom / coach non enregistrés : ${majErr.message}`);
   }
 
   // 2b. Agenda Google de l'équipe — le rendez-vous s'y pose tout seul.

@@ -1144,6 +1144,35 @@ export function useCrmLeads() {
     if (!sb) return "Service indisponible.";
     const { error: e } = await sb.from(lead.table).update({ assigned_to_user_id: userId }).eq("id", lead.id);
     if (e) return e.message;
+
+    // Le rendez-vous suit la personne (Thomas, 19/08 : « si dans le CRM on dit
+    // que ce lead est pour Mélanie, le RDV doit être chez Mélanie »). Sans ça
+    // on confie le contact à quelqu'un et son rendez-vous reste dans l'agenda
+    // d'un autre — c'est exactement le symptôme remonté par Mélanie.
+    //
+    // On rapproche par email, seule clé commune : il n'y a pas de lead_id sur
+    // rdv_bookings. Deux égalités plutôt qu'une comparaison insensible à la
+    // casse, parce qu'un motif SQL obligerait à échapper les jokers — et le
+    // tiret bas est un caractère parfaitement valide dans une adresse, qui
+    // matcherait alors n'importe quelle lettre à sa place. Mesuré le 19/08 :
+    // une des 21 réservations porte une majuscule, le cas n'est pas théorique.
+    //
+    // Best-effort et silencieux : l'attribution du lead, elle, a réussi, et
+    // c'est ce que le coach vient de demander. Sans email, rien à rapprocher —
+    // on ne devine pas sur le prénom seul, « Manon » ne désigne personne.
+    const mail = (lead.contact ?? "").trim();
+    if (userId && mail.includes("@")) {
+      const formes = [...new Set([mail, mail.toLowerCase()])];
+      for (const forme of formes) {
+        const { error: eRdv } = await sb
+          .from("rdv_bookings")
+          .update({ coach_user_id: userId })
+          .eq("contact", forme)
+          .neq("status", "canceled");
+        if (eRdv) console.warn(`[crm] RDV non redirige vers son coach : ${eRdv.message}`);
+      }
+    }
+
     setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, ownerUserId: userId } : l)));
     return null;
   }, []);

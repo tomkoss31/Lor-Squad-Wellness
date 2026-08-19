@@ -16,6 +16,10 @@ export interface ClubDiscoveryBooking {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  /** À qui ce rendez-vous appartient. NULL avant le 19/08 pour tout ce qui
+   *  venait du club — c'est ce qui le rendait invisible dans l'agenda de la
+   *  coache qui s'en occupait. */
+  coach_user_id: string | null;
   contact: string | null;
   slot_start: string;
   slot_end: string;
@@ -55,7 +59,7 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
     const { data, error } = await sb
       .from("rdv_bookings")
       .select(
-        "id, first_name, last_name, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
+        "id, first_name, last_name, coach_user_id, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
       )
       .eq("club_id", clubId)
       .is("coach_user_id", null)
