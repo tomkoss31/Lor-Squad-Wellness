@@ -1,8 +1,17 @@
 // =============================================================================
 // useClubDiscoveryBookings — RDV découverte réservés via le tunnel public
 // du Breakfast Club (/reserver). Table rdv_bookings, lignes "club" :
-// coach_user_id = null, club_id = <club>. Lisibles par les admins (RLS
-// rdv_bookings_club_admin_read, 2026-07-31).
+// club_id = <club>. C'est LUI le discriminant, et lui seul : un RDV pris sur
+// /rdv/<prénom> a `club_id` à NULL.
+//
+// ⚠️ Ne PAS ajouter « coach_user_id = null » à cette définition. C'était vrai
+// jusqu'au 19/08 et ça ne l'est plus : les réservations du club ont désormais
+// une coache (sinon personne ne les voyait dans son agenda). Un filtre là-dessus
+// les ferait toutes disparaître, du CRM comme de l'agenda.
+//
+// Lisibles par les admins (RLS rdv_bookings_club_admin_read : `club_id is not
+// null and is_admin()` — elle ne regarde pas le coach), et par la coache à qui
+// le rendez-vous appartient (rdv_bookings_coach_read).
 //
 // Jumeau de useCoachRdvBookings, mais scopé au club et avec les champs propres
 // au RDV découverte (nb de personnes, binôme, objectif).
@@ -62,7 +71,12 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
         "id, first_name, last_name, coach_user_id, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
       )
       .eq("club_id", clubId)
-      .is("coach_user_id", null)
+      // ⚠️ Il y avait ici un `.is("coach_user_id", null)`. Il servait à isoler
+      // les réservations du club de celles du tunnel /rdv/<prénom> — mais
+      // `club_id` fait déjà exactement ça, et lui ne ment pas : les RDV d'un
+      // coach ont `club_id` à NULL. Depuis le 19/08 les réservations du club
+      // ONT un coach (c'est tout l'objet du chantier), donc ce filtre les
+      // aurait TOUTES fait disparaître — de l'agenda et du CRM d'un coup.
       .neq("status", "canceled")
       .gte("slot_start", new Date().toISOString())
       .order("slot_start", { ascending: true })
