@@ -141,6 +141,17 @@ serve(async (req) => {
       .from("prospect_leads")
       .insert({
         first_name: firstName,
+        // Le nom arrive dans `metadata.nom` (site du club) ou `metadata.last_name`
+        // (tunnel recrutement). Depuis le 19/08 il a une COLONNE : deux clés
+        // selon la provenance, c'était la garantie qu'un troisième tunnel
+        // arrive avec une troisième. On continue d'écrire metadata tel quel,
+        // on ne fait qu'ajouter l'endroit unique où le lire.
+        last_name: (() => {
+          const m = (metadata ?? {}) as Record<string, unknown>;
+          const brut = typeof m.nom === "string" ? m.nom
+            : typeof m.last_name === "string" ? m.last_name : "";
+          return brut.trim() || null;
+        })(),
         phone,
         email,
         city,

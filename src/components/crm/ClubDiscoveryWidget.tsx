@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { nomAffiche } from "../../features/crm/nomPropre";
 import { useAppContext } from "../../context/AppContext";
 import { Card } from "../ui/Card";
 import { MoveClubBookingDialog } from "./MoveClubBookingDialog";
@@ -33,7 +34,8 @@ function fmtWhen(iso: string): string {
 
 function googleCalUrl(b: ClubDiscoveryBooking): string {
   const fmt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const qui = b.people_count === 2 ? `${b.first_name ?? "Prospect"} +1` : b.first_name ?? "Prospect";
+  const nom = nomAffiche(b.first_name, b.last_name);
+  const qui = b.people_count === 2 ? `${nom} +1` : nom;
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: `RDV découverte — ${qui}`,
@@ -87,7 +89,7 @@ export function ClubDiscoveryWidget() {
               <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
-                    {b.first_name || "Prospect"}{aDeux ? " + 1" : ""}
+                    {nomAffiche(b.first_name, b.last_name)}{aDeux ? " + 1" : ""}
                   </span>
                   <span style={{
                     fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",

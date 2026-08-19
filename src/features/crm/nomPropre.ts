@@ -57,3 +57,23 @@ export function nomPropre(brut: string | null | undefined): string {
     })
     .join(" ");
 }
+
+/**
+ * Le nom complet tel qu'on l'affiche : « Claire Dehaese », pas « claire » ni
+ * « claire dehaese ». Le prénom seul si on n'a pas le nom, et le repli fourni
+ * si on n'a ni l'un ni l'autre.
+ *
+ * Un seul endroit décide de cette règle — sinon chaque écran réinvente son
+ * `${prenom} ${nom}` et l'un d'eux oublie la casse. Mesuré le 19/08 : la base
+ * contient « dehaese », « PERRIN », « Lamri zeggar ». Aucune n'est écrite comme
+ * on l'écrirait à la main.
+ */
+export function nomAffiche(
+  prenom: string | null | undefined,
+  nom: string | null | undefined,
+  repli = "Prospect",
+): string {
+  const p = nomPropre(prenom);
+  const n = nomPropre(nom);
+  return [p, n].filter(Boolean).join(" ") || repli;
+}

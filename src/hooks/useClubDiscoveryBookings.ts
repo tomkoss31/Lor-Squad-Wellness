@@ -15,6 +15,7 @@ import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 export interface ClubDiscoveryBooking {
   id: string;
   first_name: string | null;
+  last_name: string | null;
   contact: string | null;
   slot_start: string;
   slot_end: string;
@@ -54,7 +55,7 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
     const { data, error } = await sb
       .from("rdv_bookings")
       .select(
-        "id, first_name, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
+        "id, first_name, last_name, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
       )
       .eq("club_id", clubId)
       .is("coach_user_id", null)

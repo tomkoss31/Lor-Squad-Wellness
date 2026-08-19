@@ -8,6 +8,7 @@
 import { useAppContext } from "../../context/AppContext";
 import { Card } from "../ui/Card";
 import { useCoachRdvBookings, type RdvBooking } from "../../hooks/useCoachRdvBookings";
+import { nomAffiche } from "../../features/crm/nomPropre";
 
 function fmtWhen(iso: string): string {
   const d = new Date(iso);
@@ -31,10 +32,13 @@ const TIMING_LABELS: Record<string, string> = {
   info: "Se renseigne",
 };
 
-function recruitFullName(b: RdvBooking): string {
-  const first = b.first_name ?? "";
-  const last = b.booking_type === "recrutement" ? (b.metadata?.last_name ?? "") : "";
-  return `${first}${last ? " " + last : ""}`.trim();
+// Le nom complet, pour TOUS les rendez-vous — pas seulement le recrutement
+// (Mélanie, 19/08 : « ajouter le nom de famille des personnes »). La colonne
+// `last_name` est la source ; `metadata.last_name` reste le repli pour les
+// candidatures recrutement d'avant la colonne.
+function nomComplet(b: RdvBooking): string {
+  const last = b.last_name ?? (b.booking_type === "recrutement" ? b.metadata?.last_name : null);
+  return nomAffiche(b.first_name, last, "");
 }
 
 // Ligne « ce que le candidat cherche » + son mot, sous le nom (recrutement only).
@@ -113,7 +117,7 @@ function googleCalUrl(b: RdvBooking): string {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: isRecruit
-      ? `RDV équipe — ${recruitFullName(b) || "Candidat"}`
+      ? `RDV équipe — ${nomComplet(b) || "Candidat"}`
       : `RDV bilan — ${b.first_name ?? "Prospect"}`,
     dates: `${fmt(b.slot_start)}/${fmt(b.slot_end)}`,
     details: `${isRecruit ? "Candidat « ouvrir un club »" : "RDV"} pris via La Base 360 (${modeLabel}).${b.contact ? ` Contact : ${b.contact}` : ""}${phone ? ` · Tél : ${phone}` : ""}`,
@@ -160,7 +164,7 @@ export function RdvBookingsWidget() {
             <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
-                  {recruitFullName(b) || "Prospect"}
+                  {nomComplet(b) || "Prospect"}
                 </span>
                 {b.booking_type === "recrutement" && (
                   <span style={{

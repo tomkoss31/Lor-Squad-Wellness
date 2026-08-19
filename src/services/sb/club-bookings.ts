@@ -41,6 +41,8 @@ export interface ClubInfo {
 export interface ClubBooking {
   id: string;
   firstName: string;
+  /** Nom de famille tel que tapé. Passer par nomPropre() pour l'afficher. */
+  lastName: string | null;
   contact: string | null;
   slotStart: string;
   slotEnd: string;
@@ -104,7 +106,7 @@ export async function fetchClubBookings(
   const { data, error } = await supabase
     .from("rdv_bookings")
     .select(
-      "id, first_name, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, created_at",
+      "id, first_name, last_name, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, created_at",
     )
     .eq("club_id", clubId)
     .neq("status", "canceled")
@@ -119,6 +121,7 @@ export async function fetchClubBookings(
     return {
       id: String(r.id),
       firstName: String(r.first_name ?? ""),
+      lastName: (r.last_name as string | null) ?? null,
       contact: (r.contact as string | null) ?? null,
       slotStart: String(r.slot_start),
       slotEnd: String(r.slot_end ?? r.slot_start),

@@ -20,6 +20,7 @@
 
 import type { Client, FollowUp, Prospect } from "../../types/domain";
 import type { FollowUpDueItem } from "../../lib/followUpProtocolScheduler";
+import { nomAffiche } from "../crm/nomPropre";
 
 /**
  * RDV découverte réservé depuis le site public du club (/reserver).
@@ -28,6 +29,9 @@ import type { FollowUpDueItem } from "../../lib/followUpProtocolScheduler";
  */
 export interface DiscoverySession {
   firstName: string;
+  /** Ajouté le 19/08 (Mélanie) : sans lui, l'agenda affiche « claire », « Manon »
+   *  et il faut rouvrir sa boîte mail pour savoir de qui il s'agit. */
+  lastName: string | null;
   peopleCount: number;
   partnerFirstName: string | null;
   objectif: string | null;
@@ -317,7 +321,7 @@ export function toCalendarEvent(
     const objectif = d.objectif ? DISCOVERY_OBJECTIFS[d.objectif] ?? d.objectif : null;
     return {
       ...base,
-      title: d.peopleCount === 2 ? `${d.firstName} + 1` : d.firstName,
+      title: d.peopleCount === 2 ? `${nomAffiche(d.firstName, d.lastName)} + 1` : nomAffiche(d.firstName, d.lastName),
       subtitle: ["RDV découverte", objectif].filter(Boolean).join(" · "),
     };
   }
