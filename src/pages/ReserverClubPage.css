@@ -134,3 +134,50 @@
 .rc-prov-valider .rc-cta{max-width:420px;min-height:54px;font-size:16px}
 .rc-prov-manque{margin:0;text-align:center;font-size:13.5px;line-height:1.5;color:var(--sub)}
 @media (prefers-reduced-motion: reduce){ .rc .rc-choix{transition:none} }
+
+/* ── Retour et sorties (19/08) ───────────────────────────────────────────
+   Thomas : « bouton retour sur l'écran réserver et choix du créneau, puis
+   aussi un retour vers le site après validation ». Deux manques réels :
+   le retour existait mais enterré dans la colonne de gauche, et l'écran de
+   confirmation n'avait AUCUN lien vers le site — un cul-de-sac. */
+
+.rc .rc-retour{
+  display:inline-flex; align-items:center; gap:7px;
+  min-height:44px; padding:10px 16px 10px 13px;
+  border:1px solid rgba(30,51,48,.18); border-radius:999px;
+  background:var(--panel); color:var(--sub);
+  font-family:Poppins,sans-serif; font-size:14.5px; font-weight:600;
+  cursor:pointer; transition:border-color .16s, color .16s, background .16s;
+}
+.rc .rc-retour:hover{ border-color:var(--orange); color:var(--orange); background:#fff }
+.rc .rc-retour:focus-visible{ outline:2px solid var(--green-d); outline-offset:3px }
+
+/* Les sorties : une pile de liens, jamais des boutons. La personne vient de
+   réserver — lui présenter trois CTA de plus donnerait l'impression qu'on
+   n'a pas fini de lui demander quelque chose. */
+.rc .rc-sorties{
+  margin-top:26px; padding-top:20px;
+  border-top:1px solid rgba(30,51,48,.1);
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+}
+/* `--muted` (#8A938D) tombe a 2,81:1 sur blanc — mesure, pas estime. On prend
+   `--sub` (6,55:1). Le gris clair reste bon pour une bordure, jamais pour un
+   texte qu'on veut voir lu. */
+.rc .rc-sorties-titre{
+  margin:0 0 6px; font-family:Poppins,sans-serif; font-size:12.5px;
+  font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--sub);
+}
+/* ⚠️ `--orange` (#E0532A) ne fait que 3,86:1 sur blanc : sous le seuil de
+   lisibilite pour du texte. C'est vrai de TOUS les liens du tunnel, pas
+   seulement d'ici — mais on ne va pas livrer un manque de plus. #B23F1C tient
+   5,80:1 et reste le meme orange a l'oeil. */
+.rc .rc-sorties a{
+  display:inline-flex; align-items:center; min-height:44px;
+  color:#B23F1C; font-family:Poppins,sans-serif;
+  font-size:15.5px; font-weight:600; text-decoration:none;
+}
+.rc .rc-sorties a::after{ content:" →"; opacity:.55; margin-left:6px; transition:margin-left .16s }
+.rc .rc-sorties a:hover{ color:var(--ink) }  /* 13,4:1 */
+.rc .rc-sorties a:hover::after{ margin-left:10px }
+.rc .rc-sorties a:focus-visible{ outline:2px solid var(--green-d); outline-offset:3px; border-radius:6px }
