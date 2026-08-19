@@ -181,6 +181,14 @@ export const ATELIER_MEMBERS: AtelierMemberPersona[] = [
         { date: ilYAnJours(16), weight: 90.3, bodyFat: 27.2, muscleMass: 62.4, hydration: 52.1 },
         { date: ilYAnJours(2), weight: 88.6, bodyFat: 26.1, muscleMass: 62.8, hydration: 53.0 },
       ],
+      // Ses 8 passages, dans la plage de ses pesées (19/08). Deux tombent
+      // volontairement dans le MÊME segment et deux autres près d'un relevé :
+      // c'est ce qui vérifie l'interpolation, un espacement régulier ne
+      // prouverait rien.
+      visitDates: [
+        ilYAnJours(27), ilYAnJours(24), ilYAnJours(20), ilYAnJours(17),
+        ilYAnJours(13), ilYAnJours(10), ilYAnJours(6), ilYAnJours(3),
+      ],
       measurements: [
         { measured_at: ilYAnJours(30), waist_cm: 104, hips_cm: 110, thigh_cm: 64, arm_cm: 36 },
         { measured_at: ilYAnJours(2), waist_cm: 99, hips_cm: 107, thigh_cm: 62, arm_cm: 36 },
