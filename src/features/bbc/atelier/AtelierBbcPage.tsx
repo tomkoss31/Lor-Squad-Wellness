@@ -41,6 +41,7 @@ import { BbcBilan10Scan, type ScanValues } from "../BbcBilan10Scan";
 import { BbcClientApp } from "../BbcClientApp";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet";
+import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
 import { BbcClub100 } from "../views/BbcClub100";
@@ -84,6 +85,7 @@ type ScreenKey =
   | "membre"
   | "saisie"
   | "qualifier"
+  | "supprimer"
   | "bilan10";
 
 /**
@@ -122,6 +124,12 @@ const SCREENS: Screen[] = [
   { k: "clubs", label: "Mes clubs", source: "props", note: "Les 3 clubs sont passés en prop → écran complet, y compris la carte « dupliquer un club »." },
   { k: "reglages", label: "Réglages", source: "props", note: "Formulaire alimenté par le club en fixture → écran complet. L'enregistrement échouera (pas de session) : c'est normal, on ne regarde que le rendu." },
   { k: "membre", label: "App MEMBRE", source: "props", note: "`BbcClientApp` prend TOUTES ses données en props : le seul écran BBC entièrement remplissable. Choisis un stade de carte ci-dessous." },
+  {
+    k: "supprimer",
+    label: "Supprimer un membre",
+    source: "props",
+    note: "La confirmation avant d'effacer quelqu'un (19/08). Tout est en props → écran complet. Le bouton rouge ne s'active qu'une fois le prénom recopié — c'est le garde-fou qu'on vérifie ici. Rien n'est supprimé depuis l'atelier.",
+  },
   {
     k: "qualifier",
     label: "Qualifier un RDV",
@@ -358,6 +366,20 @@ function AtelierScene({
   // Elle vit dans l'app coach (jetons --ls-*), pas en mode BBC : on la monte
   // donc SANS la classe `bbc-mode`, sinon on verifierait des couleurs qu'elle
   // n'aura jamais a l'ecran.
+  if (screen === "supprimer") {
+    return (
+      <div className="bbc-mode">
+        <BbcSupprimerMembre
+          prenom="Gwendoline"
+          nomComplet="Gwendoline DROUET"
+          visites={7}
+          onFermer={() => undefined}
+          onConfirmer={async () => "Atelier : rien n'est supprimé ici."}
+        />
+      </div>
+    );
+  }
+
   if (screen === "qualifier") {
     return (
       <QualifierRdvSheet

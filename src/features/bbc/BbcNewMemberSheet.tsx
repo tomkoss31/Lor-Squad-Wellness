@@ -215,7 +215,6 @@ interface Brouillon {
   /** Jour de démarrage, en local, format AAAA-MM-JJ. */
   demarrage: string;
   /** Jours avant le prochain RDV. J+7 par défaut (la fiche en exige un). */
-  rdvDansJours: number;
 }
 
 const CLE_BROUILLON = "bbc-nouveau-membre-brouillon";
@@ -284,7 +283,6 @@ function brouillonVide(): Brouillon {
     carte: "10",
     cartePrix: "",
     demarrage: jourLocal(0),
-    rdvDansJours: 7,
   };
 }
 
@@ -773,8 +771,20 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
     // Le jour de démarrage à midi : `assessments.date` est une colonne `date`,
     // et midi met à l'abri d'un décalage de fuseau qui changerait le jour.
     const debut = new Date(`${f.demarrage}T12:00:00`);
+
+    // ── LE PROCHAIN RENDEZ-VOUS TOMBE À LA FIN DE SA CARTE (19/08) ─────────
+    // Thomas : « prochain RDV à enlever, ça se fera avec la 10e visite ». Le
+    // sélecteur J+3 / J+7 / J+14 demandait au comptoir une date que personne ne
+    // connaissait, et qui n'avait aucun rapport avec ce qui va réellement se
+    // passer : le vrai rendez-vous, c'est le bilan de fin de carte.
+    //
+    // `clients.next_follow_up` est NOT NULL — on ne peut pas ne rien mettre.
+    // On y pose donc l'échéance de sa carte, lue dans les réglages du club et
+    // jamais en dur. Sans carte (« pas encore »), 30 jours : le délai d'une
+    // carte 10 visites, celui qu'elle prendra quasi toujours ensuite.
+    const joursCarte = f.carte === "0" ? 30 : (club?.settings?.cards?.[f.carte]?.days ?? 30);
     const rdv = new Date(debut.getTime());
-    rdv.setDate(rdv.getDate() + f.rdvDansJours);
+    rdv.setDate(rdv.getDate() + joursCarte);
     rdv.setHours(10, 0, 0, 0);
 
     const label = OBJECTIFS.find((o) => o.objective === objectifPrincipal)?.label ?? "Perte de poids";
@@ -824,7 +834,7 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
       currentProgram: "",
       started: true,
       nextFollowUp: rdv.toISOString(),
-      followUpType: "Premier suivi",
+      followUpType: "Bilan de fin de carte",
       followUpStatus: "scheduled",
       notes: `Évaluation bien-être du club, saisie le ${new Date().toLocaleDateString("fr-FR")}. Programme et produits à poser au comptoir.`,
       afterAssessmentAction: "started",
@@ -1456,19 +1466,6 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
                   ) : null}
                 </Champ>
 
-                <Champ label="Prochain rendez-vous" aide="la fiche en exige un — modifiable en un tap">
-                  <Chips
-                    mono
-                    teal
-                    options={[
-                      { label: "J+3", valeur: "3" },
-                      { label: "J+7", valeur: "7" },
-                      { label: "J+14", valeur: "14" },
-                    ]}
-                    valeurs={[String(f.rdvDansJours)]}
-                    onToggle={(v) => maj({ rdvDansJours: Number(v) })}
-                  />
-                </Champ>
               </Bloc>
             </>
           )}
@@ -1683,7 +1680,7 @@ function reinitialiser(
   clientIdRef: MutableRefObject<string | null>,
   coeursEcritsRef: MutableRefObject<boolean[]>,
 ) {
-  setF((prec) => ({ ...brouillonVide(), carte: prec.carte, cartePrix: prec.cartePrix, rdvDansJours: prec.rdvDansJours }));
+  setF((prec) => ({ ...brouillonVide(), carte: prec.carte, cartePrix: prec.cartePrix}));
   setEtats({ fiche: "attente", membre: "attente", acces: "attente", coeurs: "attente", carte: "attente" });
   setErreurs({});
   clientIdRef.current = null;

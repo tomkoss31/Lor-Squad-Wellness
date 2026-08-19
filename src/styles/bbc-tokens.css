@@ -32,6 +32,10 @@
      l'ambre « personne n'ouvre » — un rituel n'est rien de tout ça. */
   --ls-bbc-violet: #A78BFA;
   --ls-bbc-lime-ink: #06241F;
+  /* L'encre posée SUR un aplat coral. Même logique que lime-ink : en sombre le
+     coral est clair (#F2775F), donc il lui faut une encre foncée — mesuré le
+     19/08, du blanc dessus tombe à 3,39. */
+  --ls-bbc-coral-ink: #3A0F06;
   --ls-bbc-lime-text: #C5F82A;
   --ls-bbc-font-display: "Anton", system-ui, sans-serif;
   --ls-bbc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -66,6 +70,8 @@
      n'est posé que par l'app membre et l'atelier, jamais par le mode coach —
      les ~50 autres usages de `lime-ink` ne voient jamais cette valeur. */
   --ls-bbc-lime-ink: #FFFFFF;
+  /* En clair le coral fonce (#BC432C) : c'est le blanc qui se lit dessus. */
+  --ls-bbc-coral-ink: #FFFFFF;
 }
 
 /* ── Layout de l'environnement BBC (prise de contrôle plein écran) ──────── */
