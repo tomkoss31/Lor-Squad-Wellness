@@ -306,6 +306,13 @@ export function RejoindreQuestionnairePage() {
         body: {
           first_name: (answers.firstName || "").trim(),
           phone: (answers.phone || "").trim(),
+          // ⚠️ L'email doit partir À LA RACINE, pas seulement dans metadata.
+          // Il l'a longtemps ete uniquement dans `metadata.email` : la colonne
+          // `prospect_leads.email` restait vide, et TOUT ce qui envoie du mail
+          // lit la colonne (reponse depuis le CRM, relances, newsletter).
+          // Sept personnes ont donne leur adresse entre juin et aout sans que
+          // rien ne puisse leur ecrire. Corrige le 19/08, colonne rattrapee.
+          email: (answers.email || "").trim() || undefined,
           city: (answers.city || "").trim() || undefined,
           source: "rejoindre-funnel",
           coach_slug: coachSlug || undefined,
