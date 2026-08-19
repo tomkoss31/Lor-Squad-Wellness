@@ -181,3 +181,76 @@
 .rc .rc-sorties a:hover{ color:var(--ink) }  /* 13,4:1 */
 .rc .rc-sorties a:hover::after{ margin-left:10px }
 .rc .rc-sorties a:focus-visible{ outline:2px solid var(--green-d); outline-offset:3px; border-radius:6px }
+
+/* ── « Aucun horaire ne me va » (19/08) ──────────────────────────────────
+   Une porte de secours, pas une offre. Elle vit SOUS les créneaux, sur le
+   fond crème et sans carte blanche : le calendrier au-dessus garde toute la
+   présence visuelle, et celle-ci n'attire que ceux qui n'ont rien trouvé. */
+
+.rc .rc-dispo{ margin-top:clamp(14px,1.8vw,20px) }
+
+/* Replié : un lien à hauteur de doigt, jamais un bouton — un troisième bouton
+   sur cet écran mettrait « je ne peux pas » au même rang que « je réserve ». */
+.rc .rc-dispo-ouvrir{
+  display:block; width:100%; min-height:52px;
+  padding:14px 18px; border:1px dashed rgba(30,51,48,.22); border-radius:16px;
+  background:transparent; color:var(--sub);                   /* 5,82:1 sur crème */
+  font-family:Poppins,sans-serif; font-size:15px; font-weight:500; text-align:center;
+  cursor:pointer; transition:border-color .16s, background .16s;
+}
+.rc .rc-dispo-ouvrir-fort{ color:#B23F1C; font-weight:600 }   /* 5,16:1 sur crème */
+.rc .rc-dispo-ouvrir:hover{ border-color:#B23F1C; background:#fff }
+.rc .rc-dispo-ouvrir:focus-visible{ outline:2px solid var(--green-d); outline-offset:3px }
+
+.rc .rc-dispo-boite{
+  background:#fff; border:1px solid rgba(30,51,48,.1); border-radius:22px;
+  padding:clamp(20px,2.4vw,28px);
+}
+.rc .rc-dispo-titre{ font-size:clamp(19px,2vw,23px) }
+.rc .rc-dispo-sub{ margin:9px 0 18px; font-size:15px; line-height:1.55; color:var(--sub); max-width:56ch }
+
+/* Même bataille de spécificité que `.rc-field` : globals.css habille TOUS les
+   <textarea> nus au thème de l'app coach, et en thème clair avec `!important`
+   (`html.theme-light textarea`, 0,1,2). `.rc textarea.rc-dispo-texte` monte à
+   (0,2,1) et passe devant. Le font-size:16px n'est pas décoratif — en dessous,
+   iOS zoome tout seul à la mise au point et déforme la page. */
+.rc textarea.rc-dispo-texte{
+  width:100%; min-height:104px; padding:14px 18px; border-radius:14px;
+  background:var(--panel) !important; color:var(--ink) !important;
+  border:1px solid rgba(30,51,48,.18) !important;
+  font-family:Poppins,sans-serif !important; font-size:16px !important; line-height:1.5;
+  resize:vertical;
+}
+.rc textarea.rc-dispo-texte:focus,
+.rc textarea.rc-dispo-texte:focus-visible{
+  border-color:var(--orange) !important; outline:2px solid var(--green-d); outline-offset:2px;
+  box-shadow:none !important;
+}
+/* L'exemple doit se LIRE : à .36 (la valeur des autres champs) il tombe à
+   2,4:1. Ici le placeholder porte la seule illustration de ce qu'on attend. */
+.rc textarea.rc-dispo-texte::placeholder{ color:rgba(30,51,48,.70) !important }  /* 5,03:1 */
+
+.rc .rc-dispo-pied{ margin-top:16px; display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px }
+/* Contour, pas plein : « Confirmer ma réservation » reste le seul bouton
+   orange plein de l'écran. */
+.rc .rc-dispo-envoyer{
+  min-height:50px; padding:13px 22px; border-radius:999px;
+  border:1.5px solid #B23F1C; background:#fff; color:#B23F1C;   /* 5,80:1 sur blanc */
+  font-family:Poppins,sans-serif; font-size:15.5px; font-weight:600;
+  cursor:pointer; transition:background .16s, color .16s;
+}
+.rc .rc-dispo-envoyer:hover:not(:disabled){ background:#B23F1C; color:#fff }
+.rc .rc-dispo-envoyer:disabled{ opacity:.5; cursor:not-allowed }
+.rc .rc-dispo-envoyer:focus-visible{ outline:2px solid var(--green-d); outline-offset:3px }
+.rc .rc-dispo-aide{ margin:0; flex:1 1 200px; font-size:13.5px; line-height:1.5; color:var(--sub) }
+
+.rc .rc-dispo-ok{
+  margin:0; padding:16px 20px; border-radius:16px;
+  background:rgba(147,166,126,.16); border:1px solid rgba(95,113,84,.28);
+  font-size:15px; line-height:1.55; color:#41513C;               /* 7,3:1 */
+}
+.rc .rc-dispo-ok span{ font-weight:700; margin-right:6px }
+
+@media (prefers-reduced-motion: reduce){
+  .rc .rc-dispo-ouvrir, .rc .rc-dispo-envoyer{ transition:none }
+}

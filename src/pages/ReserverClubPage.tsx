@@ -75,6 +75,10 @@ const LIBELLES_CANAL: Record<ProvenanceCanalTunnel, { emoji: string; libelle: st
  * que de laisser la RPC tronquer en silence une réponse déjà envoyée.
  */
 const PRENOM_MAX = 80;
+// Même borne que la RPC `noter_disponibilites_lead`. De quoi écrire « seulement
+// le samedi matin, ou après 18h en semaine », pas de quoi raconter sa vie —
+// c'est une note qu'un coach doit lire d'un coup d'œil dans le CRM.
+const DISPO_MAX = 300;
 
 export function ReserverClubPage() {
   const { clubSlug } = useParams<{ clubSlug?: string }>();
@@ -130,6 +134,13 @@ export function ReserverClubPage() {
   // case à écrire, laissée vide par tous ceux qui ne savent pas.
   const [canal, setCanal] = useState<ProvenanceCanalTunnel | null>(null);
   const [prenomSource, setPrenomSource] = useState("");
+
+  // « Aucun horaire ne me va » — cf. le bloc `rc-dispo` plus bas. Replié par
+  // défaut : c'est une porte de secours, elle ne doit pas concurrencer les
+  // créneaux affichés juste au-dessus.
+  const [dispoOuvert, setDispoOuvert] = useState(false);
+  const [dispoTexte, setDispoTexte] = useState("");
+  const [dispoEtat, setDispoEtat] = useState<"repos" | "envoi" | "fait" | "erreur">("repos");
 
   // Pré-sélection objectif via ?objectif=
   useEffect(() => {
@@ -258,6 +269,31 @@ export function ReserverClubPage() {
         await sb.rpc("noter_provenance_lead", { p_lead_id: idDuLead, p_canal: c });
       }
     } catch { /* la réponse est un bonus, jamais un obstacle */ }
+  }
+
+  /**
+   * « Aucun horaire ne me va » — la personne dicte ses disponibilités.
+   *
+   * Contrairement à la provenance, l'échec est DIT. On lui promet un rappel :
+   * si la phrase n'est pas arrivée, la promesse serait fausse, et elle a le
+   * droit de le savoir pour retenter ou passer un coup de fil.
+   */
+  async function envoyerDisponibilites() {
+    const texte = dispoTexte.trim();
+    if (!leadId || !texte || dispoEtat === "envoi") return;
+    setDispoEtat("envoi");
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) { setDispoEtat("erreur"); return; }
+      const { data, error } = await sb.rpc("noter_disponibilites_lead", {
+        p_lead_id: leadId,
+        p_texte: texte.slice(0, DISPO_MAX),
+      });
+      // La RPC répond « ok », « vide », « introuvable » ou « trop_tard ». Tout
+      // ce qui n'est pas « ok » n'a RIEN écrit : l'annoncer comme envoyé
+      // enverrait la personne attendre un appel qui ne viendrait jamais.
+      setDispoEtat(!error && data === "ok" ? "fait" : "erreur");
+    } catch { setDispoEtat("erreur"); }
   }
 
   async function confirmBooking() {
@@ -623,6 +659,70 @@ export function ReserverClubPage() {
               )}
             </section>
           </div>
+
+          {/* ── « Aucun horaire ne me va » (19/08) ────────────────────────────
+              LA FUITE, mesurée en base du 15 au 19 août : 51 personnes laissent
+              leurs coordonnées, 14 arrivent au choix du créneau, 7 réservent.
+              Et sur les 6 vrais rendez-vous pris, QUATRE sont à 9h ou 10h — le
+              premier créneau du jour — quand personne n'a jamais réservé à 13h.
+              Quand tout le monde s'entasse sur le créneau le plus tôt, c'est en
+              général qu'il en faudrait un avant.
+
+              Thomas ne veut PAS ouvrir 7h-8h avant l'ouverture du club le
+              7 septembre — et il a raison, ce serait deviner. Alors on demande.
+              La personne dicte quand elle peut, le coach rappelle. Au bout de
+              quelques semaines, les réponses diront d'elles-mêmes quels créneaux
+              manquent, sans avoir eu à parier.
+
+              Replié, et SOUS les créneaux : c'est une porte de secours. Ouverte
+              d'emblée, elle offrirait le choix de ne pas choisir à des gens qui
+              auraient très bien trouvé leur horaire.
+
+              Rien sans `leadId` : sans fiche au CRM, on n'aurait ni son nom ni
+              son numéro, et « on te rappelle » serait un mensonge. */}
+          {leadId && (
+            <section className="rc-dispo" aria-labelledby="rc-dispo-titre">
+              {dispoEtat === "fait" ? (
+                <p className="rc-dispo-ok" role="status">
+                  <span aria-hidden="true">✓</span> C'est noté. On te rappelle pour te proposer un horaire qui te va.
+                </p>
+              ) : !dispoOuvert ? (
+                <button type="button" className="rc-dispo-ouvrir" onClick={() => setDispoOuvert(true)}>
+                  Aucun horaire ne te va&nbsp;? <span className="rc-dispo-ouvrir-fort">Dis-nous quand tu peux</span>
+                </button>
+              ) : (
+                <div className="rc-dispo-boite">
+                  <h2 id="rc-dispo-titre" className="rc-dispo-titre">Dis-nous quand tu es disponible</h2>
+                  <p className="rc-dispo-sub">On s'adapte. Écris tes créneaux comme tu les dis&nbsp;: on te rappelle pour caler le rendez-vous.</p>
+                  <label className="rc-lbl" htmlFor="rc-dispo-texte">Tes disponibilités</label>
+                  <textarea
+                    id="rc-dispo-texte"
+                    className="rc-dispo-texte"
+                    rows={3}
+                    value={dispoTexte}
+                    maxLength={DISPO_MAX}
+                    placeholder="Ex. : tôt le matin avant 8h, ou le samedi dans la journée."
+                    onChange={(e) => { setDispoTexte(e.target.value); if (dispoEtat === "erreur") setDispoEtat("repos"); }}
+                  />
+                  <div className="rc-dispo-pied">
+                    <button
+                      type="button"
+                      className="rc-dispo-envoyer"
+                      disabled={!dispoTexte.trim() || dispoEtat === "envoi"}
+                      onClick={() => void envoyerDisponibilites()}
+                    >
+                      {dispoEtat === "envoi" ? "…" : "Envoyer mes disponibilités"}
+                    </button>
+                    <p className="rc-dispo-aide" aria-live="polite">
+                      {dispoEtat === "erreur"
+                        ? "L'envoi n'est pas passé. Réessaie, ou appelle-nous directement."
+                        : "Ça ne réserve rien — c'est nous qui revenons vers toi."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* ── « Comment tu as connu le club ? » ────────────────────────────
               ICI, sous les créneaux, et plus sur l'écran de confirmation.
