@@ -952,6 +952,7 @@ export function CrmLeadDetailPage() {
             id: lead.rdv.id,
             first_name: lead.firstName,
             last_name: lead.lastName ?? null,
+            coach_user_id: lead.ownerUserId ?? null,
             contact: lead.contact,
             slot_start: lead.rdv.slotStart,
             slot_end: lead.rdv.slotEnd ?? lead.rdv.slotStart,
