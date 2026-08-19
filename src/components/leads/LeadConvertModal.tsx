@@ -55,7 +55,15 @@ export function LeadConvertModal({ bilan, onClose, onConverted }: Props) {
   const { createClientWithInitialAssessment, currentUser, users, clients } = useAppContext();
   const { push: pushToast } = useToast();
 
-  const [lastName, setLastName] = useState("");
+  // Pré-rempli quand la source nous donne déjà le nom (19/08). Le tunnel du
+  // club le demande — et il est obligatoire — donc le faire retaper au
+  // comptoir, c'est du temps perdu et une faute de frappe en puissance.
+  // Le champ reste modifiable, et un payload sans nom laisse le comportement
+  // d'avant : une chaîne vide, que le coach remplit.
+  const [lastName, setLastName] = useState(() => {
+    const brut = (bilan.payload as { last_name?: unknown } | null)?.last_name;
+    return typeof brut === "string" ? brut.trim() : "";
+  });
   const [sex, setSex] = useState<BiologicalSex | "">("");
   const [objective, setObjective] = useState<Objective>(
     () => mapOnlineObjective(bilan.objectives),
