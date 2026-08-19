@@ -190,6 +190,74 @@ dépend qu'on ait des chiffres justes — donc dépend de cette décision.
 
 ---
 
+## 📣 Campagnes email — les 3 types de contenu (2026-08-19)
+
+Page admin `/admin/campagnes` (+ `/admin/campagnes/:id`), via **Paramètres →
+Admin**, admin only. Tables : `campaigns`, `campaign_recipients` (tracking PAR
+personne), `email_suppressions` (liste de suppression GLOBALE et définitive).
+
+### Les 3 types (`campaigns.type`)
+
+| Type | Contenu | Rendu |
+|---|---|---|
+| `rich` | `body_json` — hero + blocs + offre + bouton | `compileCampaignHtml()` : identité **La Base 360** (header sombre, dégradé teal→violet) |
+| `plain` | `body_text` — une lettre | `compilePlainText()` : texte brut |
+| `html` | `body_html` — **gabarit libre** | `compileCustomHtml()` : le HTML part tel quel |
+
+**Pourquoi le type `html` existe** : les types `rich`/`plain` **échappent tout
+le contenu** (`esc()` dans `campaign-html.ts`) et imposent le gabarit maison.
+Impossible d'envoyer un email à une autre identité (ex. la lettre Breakfast
+Club crème/orange de l'ouverture du 7 septembre). Les contournements coûtaient
+plus cher que le mode : envoyer hors de l'app aurait perdu le tracking **et**
+l'exclusion des désabonnés — manquement RGPD sur plusieurs centaines de
+personnes.
+
+### Les deux jetons du mode `html`
+
+- `{prénom}` (accolades **SIMPLES**, pas doubles) → remplacé par le prénom du
+  destinataire. Sans prénom, « Bonjour {prénom}, » devient « Bonjour, » proprement.
+  ⚠️ `{{Prénom}}` ne marche PAS : la regex matche l'intérieur et laisse les
+  accolades externes → « Bonjour {Marie}, » chez le destinataire.
+- `{lien_desabonnement}` → l'URL de désinscription. **S'il est absent, un pied
+  de page est injecté d'office avant `</body>`** : on ne peut pas envoyer une
+  campagne sans porte de sortie, même en cas d'oubli.
+
+### Ce qui reste garanti quel que soit le type
+
+Exclusion `email_suppressions` au moment de l'envoi · en-têtes
+`List-Unsubscribe` + `List-Unsubscribe-Post` (désabo 1-clic, exigé par Gmail
+pour les envois de masse) · envoi par lot **résumable** (`MAX_PER_CALL = 120`,
+seuls les `sent_at IS NULL` sont repris → pas de double envoi) · tracking par
+destinataire alimenté par le webhook Resend.
+
+### Pièges vérifiés en production
+
+- **Le bouton « 🧪 Tester » n'envoie AUCUN mail** — c'est un dry-run qui compile
+  un échantillon et compte les destinataires. Pour voir le rendu réel : créer
+  une campagne avec sa seule adresse et l'envoyer pour de vrai.
+- **L'envoi tourne dans le NAVIGATEUR** (l'UI rappelle l'edge jusqu'à
+  `remaining = 0`). Fermer l'onglet interrompt l'envoi en cours de liste ;
+  re-cliquer sur Envoyer reprend proprement.
+- **Quota Resend (offre gratuite) : 100 mails/JOUR partagés** avec tous les
+  mails transactionnels de l'app (confirmations et rappels de RDV…). Plafonner
+  une campagne à **50/jour** — sinon un client qui réserve ne reçoit plus sa
+  confirmation.
+- `campaigns.status` doit valoir `sent` pour que l'écran Résultats s'affiche.
+  Si un envoi est interrompu, la campagne reste en `sending` : les stats
+  arrivent bien en base mais l'UI n'affiche rien.
+- Les pourcentages se calculent sur `delivered_count` : tant qu'aucun event
+  `delivered` n'est arrivé, les taux affichent « — ».
+
+### Appeler `campaign-send` sans session (scripts, tests)
+
+La fonction exige un JWT **admin**. Pour la déclencher hors navigateur :
+`POST /auth/v1/admin/generate_link` (service_role, `{type:'magiclink', email:<admin>}`)
+— ⚠️ **les champs sont à la RACINE de la réponse, pas sous `properties`** —
+puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
+→ `access_token`. **Révoquer ensuite** via `POST /auth/v1/logout`.
+
+---
+
 ## ⚠️ Règle du build vérifié avant push prod (2026-05-27)
 
 **Avant tout `git push origin claude/focused-pike`, lancer impérativement :**
@@ -1089,6 +1157,8 @@ avec `supabase functions deploy <name>`.
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
+| `campaign-send` | fetch front (admin, JWT) | Envoi d'une campagne par lot — dry-run / send. `verify_jwt=false` (contrôle admin DANS la fonction) |
+| `campaign-unsubscribe` | GET (page) + POST (1-clic Gmail) | Désabonnement → alimente `email_suppressions` |
 | `client-app-data` | fetch front (app client) | Migration RLS → service_role |
 | `client-app-confirm-calendar` | fetch front (app client) | Confirmation RDV client |
 | `client-app-mark-onboarded` | fetch front (app client) | Marque PWA onboardé |
