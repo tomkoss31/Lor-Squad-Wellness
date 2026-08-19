@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
@@ -11,6 +11,19 @@ import { useGlobalView } from "../hooks/useGlobalView";
 // GlobalViewToggle retire 2026-04-29 — toggle inutile en haut d'agenda
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
+import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
+import { marquerRdvQualifie } from "../services/sb/qualifierRdv";
+import type { OnlineBilanRow } from "../hooks/useOnlineBilans";
+
+// Chargées à la demande : ce sont deux gros formulaires qui ne servent qu'au
+// moment de qualifier quelqu'un. Les mettre dans le paquet de l'agenda
+// alourdirait un écran qu'on ouvre vingt fois par jour pour ne rien saisir.
+const BbcNewMemberSheet = lazy(() =>
+  import("../features/bbc/BbcNewMemberSheet").then((m) => ({ default: m.BbcNewMemberSheet })),
+);
+const LeadConvertModal = lazy(() =>
+  import("../components/leads/LeadConvertModal").then((m) => ({ default: m.LeadConvertModal })),
+);
 import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../types/domain";
 import { getFollowUpsDue, type FollowUpDueItem } from "../lib/followUpProtocolScheduler";
@@ -177,7 +190,7 @@ export function AgendaPage() {
   // dupliquée. Sans club (coach non-BBC), le hook renvoie simplement une liste
   // vide et rien ne change à l'écran.
   const { activeClub } = useBbcMode(currentUser?.id, currentUser?.role === "admin");
-  const { bookings: clubDiscoveries } = useClubDiscoveryBookings(activeClub?.id ?? null);
+  const { bookings: clubDiscoveries, reload: rechargerDiscoveries } = useClubDiscoveryBookings(activeClub?.id ?? null);
 
   // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
   // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
@@ -246,6 +259,49 @@ export function AgendaPage() {
   const [prefillRdvDate, setPrefillRdvDate] = useState<Date | null>(null);
   /** RDV client ouvert depuis le calendrier (feuille d'action, 2026-07-27). */
   const [clientRdv, setClientRdv] = useState<{ client: Client; followUp: FollowUp | null } | null>(null);
+
+  // Qualifier un RDV du club (19/08). Un seul état porte les trois écrans :
+  // la question, puis l'un OU l'autre des deux formulaires. Deux états séparés
+  // auraient permis d'ouvrir les deux à la fois — un formulaire de membre par
+  // dessus un formulaire de cliente, avec deux fiches à la clé.
+  const [qualif, setQualif] = useState<{
+    bookingId: string;
+    date: string;
+    session: DiscoverySession;
+    etape: "choix" | "membre" | "classique";
+  } | null>(null);
+
+  /**
+   * La fiche vient d'être créée. On range derrière : le rendez-vous quitte
+   * l'agenda, le lead quitte le CRM.
+   *
+   * On ferme la feuille QUOI QU'IL ARRIVE — la fiche, elle, existe bel et bien,
+   * et laisser le formulaire ouvert sur un rangement raté ferait croire que la
+   * création a échoué. On le DIT en revanche, plutôt que d'afficher « c'est
+   * réglé » sur un rangement à moitié fait.
+   */
+  const finaliserQualification = useCallback(async () => {
+    if (!qualif) return;
+    const { bookingId, session } = qualif;
+    setQualif(null);
+    const r = await marquerRdvQualifie(bookingId, session.contact);
+    if (!r.rdvRange) {
+      pushToast({
+        tone: "warning",
+        title: "Fiche créée, rendez-vous non rangé",
+        message: `${r.erreurRdv ?? "Le rendez-vous est resté dans l'agenda."} Tu peux le retirer depuis la semaine du club.`,
+      });
+    } else {
+      pushToast({
+        tone: "success",
+        title: "C'est réglé",
+        message: r.leadRange
+          ? "Sa fiche est créée. Son rendez-vous et son lead sont rangés."
+          : "Sa fiche est créée et son rendez-vous est rangé. Aucun lead correspondant à retirer du CRM.",
+      });
+    }
+    void rechargerDiscoveries();
+  }, [qualif, pushToast, rechargerDiscoveries]);
   /** Replanification du RDV client ouvert. */
   const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
@@ -412,6 +468,7 @@ export function AgendaPage() {
           discovery: {
             firstName: (b.first_name ?? "").trim() || "Prospect",
             lastName: b.last_name,
+            contact: b.contact,
             peopleCount: b.people_count,
             partnerFirstName: b.partner_first_name,
             objectif: b.objectif,
@@ -615,9 +672,14 @@ export function AgendaPage() {
         setOpenProtocol(entry.due);
         return;
       }
-      // RDV découverte : personne à contacter côté fiche (le prospect n'a
-      // pas encore de dossier). On la pilote depuis la semaine du club.
-      if (entry.kind === "discovery") return;
+      // RDV découverte : la personne n'a pas encore de dossier — c'est
+      // justement ce qu'on vient créer. Depuis le 19/08 on ouvre la question
+      // « elle est venue, et alors ? » ; avant, ce `return` faisait qu'un tap
+      // ne produisait rien du tout.
+      if (entry.kind === "discovery") {
+        setQualif({ bookingId: entry.id, date: entry.date, session: entry.discovery, etape: "choix" });
+        return;
+      }
       // Suivi client : feuille d'action sur place (2026-07-27). C'était la
       // dernière branche qui éjectait vers la fiche — et la majoritaire :
       // 44 des 46 RDV à venir en base.
@@ -1672,6 +1734,14 @@ export function AgendaPage() {
                       date={entry.date}
                       session={entry.discovery}
                       showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                      onOpen={() =>
+                        setQualif({
+                          bookingId: entry.id,
+                          date: entry.date,
+                          session: entry.discovery,
+                          etape: "choix",
+                        })
+                      }
                     />
                   );
                 }
@@ -1724,6 +1794,55 @@ export function AgendaPage() {
           }}
         />
       )}
+
+      {/* ── Qualifier un RDV du club (19/08) ────────────────────────────────
+          La question, puis l'un des deux formulaires. Jamais les deux : une
+          seule variable d'étape, donc l'un ferme forcément l'autre. */}
+      {qualif && qualif.etape === "choix" ? (
+        <QualifierRdvSheet
+          cible={{
+            nomComplet: nomAffiche(qualif.session.firstName, qualif.session.lastName),
+            heure: new Date(qualif.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+            jour: new Date(qualif.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
+            objectif: qualif.session.objectif
+              ? DISCOVERY_LABELS[qualif.session.objectif] ?? qualif.session.objectif
+              : null,
+            contact: qualif.session.contact,
+            partenaire: qualif.session.peopleCount === 2 ? (qualif.session.partnerFirstName ?? "son accompagnante") : null,
+          }}
+          onMembre={() => setQualif((q) => (q ? { ...q, etape: "membre" } : q))}
+          onClassique={() => setQualif((q) => (q ? { ...q, etape: "classique" } : q))}
+          onPasEncore={() => setQualif(null)}
+          onFermer={() => setQualif(null)}
+        />
+      ) : null}
+
+      {qualif && qualif.etape === "membre" ? (
+        <Suspense fallback={null}>
+          <BbcNewMemberSheet
+            userId={currentUser?.id}
+            coachName={currentUser?.name}
+            club={activeClub}
+            prefill={{
+              prenom: qualif.session.firstName,
+              nom: qualif.session.lastName,
+              email: qualif.session.contact,
+            }}
+            onClose={() => setQualif(null)}
+            onCreated={() => void finaliserQualification()}
+          />
+        </Suspense>
+      ) : null}
+
+      {qualif && qualif.etape === "classique" ? (
+        <Suspense fallback={null}>
+          <LeadConvertModal
+            bilan={bilanSyntheseDepuisRdv(qualif.bookingId, qualif.session, currentUser?.id ?? null, qualif.date)}
+            onClose={() => setQualif(null)}
+            onConverted={() => void finaliserQualification()}
+          />
+        </Suspense>
+      ) : null}
 
       {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
       {clientRdv ? (
@@ -1861,16 +1980,21 @@ export function AgendaPage() {
 }
 
 // ─── Carte RDV découverte du club (chantier RDV du club, 2026-08-09) ──────
-// Lecture seule ici : on confirme et on annule depuis la semaine du club, qui
-// est l'écran de pilotage. L'agenda sert à SAVOIR que quelqu'un vient.
+// On confirme et on annule toujours depuis la semaine du club, qui reste
+// l'écran de pilotage. Mais depuis le 19/08 la carte s'OUVRE : c'est d'ici
+// qu'on dit ce qui s'est passé une fois la personne venue (Thomas : « il faut
+// pouvoir qualifier le lead qui est sur l'agenda »). Avant, taper dessus ne
+// faisait rien du tout.
 function DiscoveryAgendaCard({
   date,
   session,
   showDate,
+  onOpen,
 }: {
   date: string;
   session: DiscoverySession;
   showDate: boolean;
+  onOpen?: () => void;
 }) {
   const d = new Date(date);
   const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -1882,6 +2006,11 @@ function DiscoveryAgendaCard({
 
   return (
     <div
+      role={onOpen ? "button" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      aria-label={onOpen ? `Qualifier le rendez-vous de ${nom}` : undefined}
+      onClick={onOpen}
+      onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } } : undefined}
       style={{
         display: "flex",
         alignItems: "center",
@@ -1891,6 +2020,9 @@ function DiscoveryAgendaCard({
         borderLeft: `3px solid ${KIND_COLORS.discovery}`,
         borderRadius: 12,
         padding: "12px 14px",
+        cursor: onOpen ? "pointer" : undefined,
+        // 44 px sous le doigt : au comptoir on tape debout, d'une main.
+        minHeight: onOpen ? 44 : undefined,
       }}
     >
       <div style={{ flex: "none", textAlign: "center", minWidth: 52 }}>
@@ -1925,6 +2057,59 @@ function DiscoveryAgendaCard({
       </div>
     </div>
   );
+}
+
+/**
+ * Un RDV du club, présenté sous la forme qu'attend `LeadConvertModal`.
+ *
+ * Cette modale sait déjà convertir un lead en fiche client — elle a été écrite
+ * en juin pour les bilans en ligne. La réécrire pour le club aurait fait deux
+ * formulaires à maintenir qui créent la même chose.
+ *
+ * ⚠️ ELLE N'ÉCRIT RIEN toute seule : vérifié, elle appelle
+ * `createClientWithInitialAssessment` puis rend la main par `onConverted`.
+ * C'est ce qui rend cette passerelle sûre — l'`id` ci-dessous est celui d'une
+ * réservation, pas d'un `online_bilans`, et aucune requête ne l'utilisera.
+ * Si un jour la modale se met à écrire dans `online_bilans` avec cet id, elle
+ * écrira à côté : c'est le point à re-vérifier avant de la modifier.
+ *
+ * Les champs qu'on n'a pas (âge, taille, poids) restent vides et le coach les
+ * complète — il a la personne devant lui.
+ */
+function bilanSyntheseDepuisRdv(
+  bookingId: string,
+  session: DiscoverySession,
+  coachUserId: string | null,
+  date: string,
+): OnlineBilanRow {
+  return {
+    id: bookingId,
+    coach_user_id: coachUserId,
+    coach_slug: null,
+    first_name: session.firstName,
+    age: null,
+    height_cm: null,
+    city: null,
+    phone: null,
+    email: session.contact,
+    objectives: session.objectif ? [session.objectif] : [],
+    weight_loss_target_kg: null,
+    current_weight_kg: null,
+    motivation_score: null,
+    // Le nom de famille passe par le payload : c'est là que la modale va le
+    // chercher pour pré-remplir son champ obligatoire.
+    payload: session.lastName ? { last_name: session.lastName } : {},
+    lead_status: "new",
+    converted_to_client_id: null,
+    converted_at: null,
+    assigned_to_user_id: coachUserId,
+    notes: null,
+    contacted_at: null,
+    relance_due_at: null,
+    relance_done_at: null,
+    created_at: date,
+    updated_at: date,
+  };
 }
 
 const DISCOVERY_LABELS: Record<string, string> = {

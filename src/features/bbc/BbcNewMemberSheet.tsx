@@ -287,6 +287,62 @@ function brouillonVide(): Brouillon {
   };
 }
 
+/**
+ * Ce qu'on sait déjà de la personne avant même d'ouvrir la feuille — parce
+ * qu'elle a rempli le formulaire du club et qu'elle vient d'honorer son
+ * rendez-vous. Tout est facultatif et tout reste modifiable à l'écran : c'est
+ * un point de départ, pas une vérité.
+ */
+export interface PrefillMembre {
+  prenom?: string | null;
+  nom?: string | null;
+  tel?: string | null;
+  email?: string | null;
+  provenanceCanal?: Brouillon["provenanceCanal"];
+  provenanceQui?: string | null;
+}
+
+/**
+ * Le brouillon de départ.
+ *
+ * ⚠️ LE PIÈGE : le brouillon local est GLOBAL (une seule clé pour tout
+ * l'écran). Sans garde-fou, ouvrir la feuille pour Céline alors qu'un
+ * brouillon traîne pour Virginie donnerait la fiche de Virginie avec le nom
+ * de Céline — un mélange silencieux de deux personnes, impossible à
+ * rattraper une fois enregistré.
+ *
+ * On ne reprend donc le brouillon que s'il concerne BIEN cette personne-là.
+ * Sinon on repart du vide, garni de ce que le lead nous donne.
+ */
+function departBrouillon(pre?: PrefillMembre | null): Brouillon {
+  const brouillon = lireBrouillon();
+  if (!pre) return brouillon ?? brouillonVide();
+
+  const bas = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
+  const mailPre = bas(pre.email);
+  const memePersonne =
+    !!brouillon &&
+    ((!!mailPre && bas(brouillon.email) === mailPre) ||
+      (!!bas(pre.prenom) &&
+        !!bas(pre.nom) &&
+        bas(brouillon.prenom) === bas(pre.prenom) &&
+        bas(brouillon.nom) === bas(pre.nom)));
+  if (memePersonne && brouillon) return brouillon;
+
+  const vide = brouillonVide();
+  return {
+    ...vide,
+    prenom: (pre.prenom ?? "").trim() || vide.prenom,
+    nom: (pre.nom ?? "").trim() || vide.nom,
+    tel: (pre.tel ?? "").trim() || vide.tel,
+    email: (pre.email ?? "").trim() || vide.email,
+    // La provenance vient du lead — elle a été demandée APRÈS sa réservation
+    // (chantier du 16/08). On ne la redemande pas au comptoir.
+    provenanceCanal: pre.provenanceCanal ?? vide.provenanceCanal,
+    provenanceQui: (pre.provenanceQui ?? "").trim() || vide.provenanceQui,
+  };
+}
+
 function lireBrouillon(): Brouillon | null {
   try {
     const brut = window.localStorage.getItem(CLE_BROUILLON);
@@ -388,12 +444,19 @@ interface BbcNewMemberSheetProps {
   onClose: () => void;
   /** Appelé une fois la fiche créée, pour que les listes se rafraîchissent. */
   onCreated?: (clientId: string) => void;
+  /**
+   * Ce qu'on sait déjà d'elle (19/08). Quand la feuille s'ouvre depuis un
+   * rendez-vous de l'agenda, son nom, son téléphone et son email sont en base
+   * depuis sa réservation : les retaper au comptoir, c'est du temps perdu et
+   * une faute de frappe en puissance.
+   */
+  prefill?: PrefillMembre | null;
 }
 
-export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated }: BbcNewMemberSheetProps) {
+export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated, prefill }: BbcNewMemberSheetProps) {
   const { createClientWithInitialAssessment, currentUser } = useAppContext();
 
-  const [f, setF] = useState<Brouillon>(() => lireBrouillon() ?? brouillonVide());
+  const [f, setF] = useState<Brouillon>(() => departBrouillon(prefill));
   const [busy, setBusy] = useState(false);
   const [termine, setTermine] = useState(false);
   const [confirmFermeture, setConfirmFermeture] = useState(false);

@@ -32,6 +32,9 @@ export interface DiscoverySession {
   /** Ajouté le 19/08 (Mélanie) : sans lui, l'agenda affiche « claire », « Manon »
    *  et il faut rouvrir sa boîte mail pour savoir de qui il s'agit. */
   lastName: string | null;
+  /** Son email. Seule clé qui relie une réservation à son lead au moment de la
+   *  qualifier — il n'y a pas de lead_id sur rdv_bookings. */
+  contact: string | null;
   peopleCount: number;
   partnerFirstName: string | null;
   objectif: string | null;

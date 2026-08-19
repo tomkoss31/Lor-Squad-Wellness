@@ -40,6 +40,7 @@ import { BbcApp } from "../BbcApp";
 import { BbcBilan10Scan, type ScanValues } from "../BbcBilan10Scan";
 import { BbcClientApp } from "../BbcClientApp";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
+import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
 import { BbcClub100 } from "../views/BbcClub100";
@@ -82,6 +83,7 @@ type ScreenKey =
   | "reglages"
   | "membre"
   | "saisie"
+  | "qualifier"
   | "bilan10";
 
 /**
@@ -120,6 +122,12 @@ const SCREENS: Screen[] = [
   { k: "clubs", label: "Mes clubs", source: "props", note: "Les 3 clubs sont passés en prop → écran complet, y compris la carte « dupliquer un club »." },
   { k: "reglages", label: "Réglages", source: "props", note: "Formulaire alimenté par le club en fixture → écran complet. L'enregistrement échouera (pas de session) : c'est normal, on ne regarde que le rendu." },
   { k: "membre", label: "App MEMBRE", source: "props", note: "`BbcClientApp` prend TOUTES ses données en props : le seul écran BBC entièrement remplissable. Choisis un stade de carte ci-dessous." },
+  {
+    k: "qualifier",
+    label: "Qualifier un RDV",
+    source: "props",
+    note: "La feuille « elle est venue, et alors ? » ouverte depuis l'agenda (19/08). Tout est en props → écran complet. Les trois boutons ne font rien ici : on regarde la question, pas ce qu'elle déclenche.",
+  },
   {
     k: "saisie",
     label: "Saisie EBE",
@@ -347,6 +355,28 @@ function AtelierScene({
 
   // La feuille de saisie est en `position: fixed` : elle pose sa propre pleine
   // page, exactement comme dans `BbcApp`. On la monte donc sans cadre.
+  // Elle vit dans l'app coach (jetons --ls-*), pas en mode BBC : on la monte
+  // donc SANS la classe `bbc-mode`, sinon on verifierait des couleurs qu'elle
+  // n'aura jamais a l'ecran.
+  if (screen === "qualifier") {
+    return (
+      <QualifierRdvSheet
+        cible={{
+          nomComplet: "Céline Ducastelle",
+          heure: "09:00",
+          jour: "mercredi 19 août",
+          objectif: "perte de poids",
+          contact: "celine-ducastelle@outlook.fr",
+          partenaire: null,
+        }}
+        onMembre={() => undefined}
+        onClassique={() => undefined}
+        onPasEncore={() => undefined}
+        onFermer={() => undefined}
+      />
+    );
+  }
+
   if (screen === "saisie") {
     return (
       <BbcNewMemberSheet
