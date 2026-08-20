@@ -54,6 +54,8 @@ import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { tableSupportsAssignment } from "../lib/leadRouting";
 import { dateDeRetour, quandRevient, type Reponse } from "../features/crm/qualification";
+import { FeuilleQualification } from "../features/crm/FeuilleQualification";
+import { estQualifiable } from "../features/crm/ecrireQualification";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -104,6 +106,9 @@ export function CrmPage() {
   // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
   // desktop ; sur mobile le select par card reste le moyen principal).
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
+  // Le contact déposé, en attente de sa question. Tant qu'il est là, la feuille
+  // « Et alors ? » est ouverte et rien n'a encore été écrit.
+  const [qualifApresDrop, setQualifApresDrop] = useState<CrmLead | null>(null);
   // Wagon 2 chantier 3 : lead chaud → RDV agenda en 1 clic (prospect pré-rempli).
   const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
   // Wagon 3 chantier 6 : panneau stats par source (toggle).
@@ -375,22 +380,54 @@ export function CrmPage() {
     );
   }
 
+  // ── DÉPOSER UNE CARTE POSE LA QUESTION (CRM Board V2, lot 1) ─────────────
+  //
+  // Avant : le drop écrivait le statut À SEC (`handleStatusChange`). Une carte
+  // glissée sur « Contacté » changeait de colonne SANS date de suite — donc la
+  // personne sortait de tous les radars de relance. C'est le bug que la
+  // maquette V2 nomme : « l'étape ne change jamais sans sa date de suite ».
+  //
+  // Depuis : le drop OUVRE « Et alors ? ». La réponse choisie écrit l'issue ET
+  // la date, par le même chemin que partout ailleurs (`handleQualifier`) — il
+  // n'y a pas deux façons de faire avancer un lead dans l'app.
+  //
+  // ⚠️ La colonne cible ne décide de RIEN. Elle a servi à ouvrir la question,
+  // c'est la réponse qui fait foi : déposer sur « Contacté » puis répondre
+  // « pas de réponse » laisse la carte à relancer, et c'est juste. Prétendre
+  // l'inverse rendrait le geste menteur.
   function handleDrop(leadKey: string, target: CrmStatus) {
     setDragOverStatus(null);
     const lead = leads.find((l) => l.key === leadKey);
     if (!lead || lead.status === target) return;
+
+    // Converti reste verrouillé au glisser-déposer : créer une fiche client
+    // demande un nom, un sexe, un point de départ. Ça passe par la fiche.
+    if (target === "converted") {
+      pushToast({
+        tone: "warning",
+        title: "La conversion passe par la fiche",
+        message: "Ouvre le contact pour créer sa fiche client — un glisser-déposer ne peut pas saisir son bilan.",
+      });
+      return;
+    }
+
     if (!statusOptionsFor(lead.table).includes(target)) {
       pushToast({
         tone: "warning",
         title: "Pas par ici",
-        message:
-          lead.table === "online_bilans" && target === "converted"
-            ? "Pour convertir un bilan en fiche client, ouvre-le avec le bouton 📂 Détails."
-            : "Ce statut n'est pas disponible pour cette source.",
+        message: "Ce statut n'est pas disponible pour cette source.",
       });
       return;
     }
-    void handleStatusChange(lead, target);
+
+    if (!estQualifiable(lead.table)) {
+      // Une source sans qualification (reco, intention) garde l'ancien chemin :
+      // pour elle, le statut EST l'information, il n'y a pas de date à poser.
+      void handleStatusChange(lead, target);
+      return;
+    }
+
+    setQualifApresDrop(lead);
   }
 
   async function copyMessage(text: string) {
@@ -857,6 +894,15 @@ export function CrmPage() {
                 <div style={columnHeader(CRM_STATUS_META[status].color)}>
                   <span aria-hidden="true">{CRM_STATUS_META[status].emoji}</span>{" "}
                   {CRM_STATUS_META[status].label}
+                  {/* Pendant le survol, l'en-tête dit ce qui va se passer —
+                      « dépose ici », ou le cadenas sur Converti qui n'accepte
+                      pas le drop (la conversion demande un bilan, pas un geste
+                      de la souris). Repris de la maquette V2. */}
+                  {isDragOver ? (
+                    <span style={{ marginLeft: 6, fontSize: 11.5, fontWeight: 600, opacity: 0.85 }}>
+                      {status === "converted" ? "🔒 passe par la fiche" : "— dépose ici ✊"}
+                    </span>
+                  ) : null}
                   <span style={columnCount}>{col.length}</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -913,6 +959,38 @@ export function CrmPage() {
             }
           }}
         />
+      ) : null}
+
+      {/* « Et alors ? » après un glisser-déposer (CRM Board V2, lot 1).
+          Elle monte du bas, comme sur mobile, et non en modale centrée : c'est
+          le même geste que partout ailleurs dans l'app. */}
+      {qualifApresDrop ? (
+        <div
+          onClick={() => setQualifApresDrop(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 460,
+              margin: "0 auto",
+              maxHeight: "88vh",
+              overflowY: "auto",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
+          >
+            <FeuilleQualification
+              prenom={qualifApresDrop.firstName}
+              onChoisir={(r) => {
+                const lead = qualifApresDrop;
+                setQualifApresDrop(null);
+                void handleQualifier(lead, r);
+              }}
+              onIgnorer={() => setQualifApresDrop(null)}
+            />
+          </div>
+        </div>
       ) : null}
 
       <footer style={footerHint}>
