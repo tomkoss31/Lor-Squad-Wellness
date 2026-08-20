@@ -300,6 +300,26 @@ export function CrmPage() {
     [regroupes],
   );
 
+  /**
+   * Le cap du jour (CRM Board V2, lot 4). La maquette met en tête de la file
+   * « 11 gestes · ≈ 25 min — commence en haut ».
+   *
+   * ⚠️ On garde le décompte et on ABANDONNE la durée : rien en base ne dit
+   * combien de temps prend un appel. « ≈ 25 min » serait un chiffre inventé —
+   * et un coach qui se fie à une estimation fausse organise sa matinée dessus.
+   *
+   * À la place, la ventilation par zone : elle dit la même chose (l'ampleur)
+   * en n'affirmant que du mesuré, et elle annonce l'ordre dans lequel la liste
+   * est rangée juste en dessous.
+   */
+  const capDuJour = useMemo(() => {
+    const maintenant = new Date();
+    const ici = regroupes.filter((l) => groupeDe(l, maintenant) === "aujourdhui");
+    const jamais = ici.filter((l) => !l.contactedAt && l.derniereReponse === null && l.status === "new").length;
+    const retard = ici.filter((l) => l.relanceDue).length;
+    return { total: ici.length, jamais, retard };
+  }, [regroupes]);
+
   // Combien de réglages ne sont PAS à leur valeur par défaut : le badge du
   // bouton « Plus de filtres ». Sans lui, on peut filtrer sans le savoir et
   // croire que sa liste est vide.
@@ -484,6 +504,17 @@ export function CrmPage() {
               ? "Personne n'attend de toi aujourd'hui. 👌"
               : `${nbAujourdhui} personne${nbAujourdhui > 1 ? "s" : ""} t'${nbAujourdhui > 1 ? "attendent" : "attend"} aujourd'hui.`}
         </p>
+        {!loading && capDuJour.total > 0 ? (
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+            {[
+              capDuJour.jamais > 0 ? `${capDuJour.jamais} à qui personne n'a parlé` : null,
+              capDuJour.retard > 0 ? `${capDuJour.retard} en retard` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "rangés du plus urgent au moins pressé"}
+            {capDuJour.jamais > 0 || capDuJour.retard > 0 ? " — commence en haut." : "."}
+          </p>
+        ) : null}
       </header>
 
       {/* La boîte d'arrivée, AVANT l'entonnoir et avant tout le reste : c'est
