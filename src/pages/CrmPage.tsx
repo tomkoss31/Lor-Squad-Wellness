@@ -48,6 +48,17 @@ import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
+import {
+  ecrireVues,
+  estVide as qualifEstVide,
+  FILTRE_VIDE,
+  lireVues,
+  nbActifs as nbFiltresQualif,
+  passe as passeQualif,
+  SIGNAUX,
+  type FiltreQualif,
+  type VueSauvee,
+} from "../features/crm/filtresQualification";
 import { groupeDe } from "../features/crm/echeances";
 import { CrmLeadsListView, OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
@@ -128,6 +139,11 @@ export function CrmPage() {
   // premier lead, dont 5 pastilles de compteur qui ne sont même pas cliquables.
   // Rien n'est supprimé — un tap et tout revient.
   const [filtresOuverts, setFiltresOuverts] = useState(false);
+  // Les questions qui qualifient (CRM Board V2, lot 5) : température, signaux
+  // d'alerte, objectif. Et les vues sauvées, en localStorage — une vue est un
+  // confort personnel, propre à l'appareil sur lequel on travaille.
+  const [qualif, setQualif] = useState<FiltreQualif>(FILTRE_VIDE);
+  const [vues, setVues] = useState<VueSauvee[]>(() => lireVues());
   // Les deux blocs de rendez-vous étaient AU-DESSUS des filtres, donc au-dessus
   // de la liste. Quelqu'un qui a réservé sur le site du club y figurait ET
   // figurait plus bas dans la liste : le même nom, deux fois sur un écran.
@@ -238,9 +254,12 @@ export function CrmPage() {
         if (jauge.etape && l.status !== jauge.etape) return false;
         if (jauge.relance && !l.relanceDue) return false;
 
+        // Les questions de qualification (température, signaux, objectif).
+        if (!passeQualif(l, qualif)) return false;
+
         return true;
       }),
-    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, jauge],
+    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, jauge, qualif],
   );
 
   // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
@@ -330,8 +349,9 @@ export function CrmPage() {
     if (view !== "active") n += 1;
     if (viewMode !== "list") n += 1;
     if (sortKey !== "echeance") n += 1;
+    n += nbFiltresQualif(qualif);
     return n;
-  }, [scope, filterSource, view, viewMode, sortKey]);
+  }, [scope, filterSource, view, viewMode, sortKey, qualif]);
 
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
@@ -601,6 +621,99 @@ export function CrmPage() {
       {/* ── Tout le reste, replié ────────────────────────────────────────── */}
       {filtresOuverts ? (
       <div style={panneauFiltres}>
+      {/* ── Les questions qui qualifient (lot 5) ────────────────────────────
+          Elles passent AVANT le périmètre et la source : ce sont elles qui
+          disent qui vaut la peine d'être rappelé aujourd'hui, pas la
+          provenance. */}
+      <div style={{ margin: "0 0 12px" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Température :</span>
+          {(["hot", "warm", "cold"] as const).map((t) => {
+            const actif = qualif.temperatures.includes(t);
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() =>
+                  setQualif((q) => ({
+                    ...q,
+                    temperatures: actif ? q.temperatures.filter((x) => x !== t) : [...q.temperatures, t],
+                  }))
+                }
+                style={sourceChip(actif, TEMP_META[t].color)}
+              >
+                {TEMP_META[t].emoji} {TEMP_META[t].label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Ce qui cloche :</span>
+          {SIGNAUX.map((sig) => {
+            const actif = qualif.signaux.includes(sig.cle);
+            return (
+              <button
+                key={sig.cle}
+                type="button"
+                title={sig.pourquoi}
+                onClick={() =>
+                  setQualif((q) => ({
+                    ...q,
+                    signaux: actif ? q.signaux.filter((x) => x !== sig.cle) : [...q.signaux, sig.cle],
+                  }))
+                }
+                style={sourceChip(actif, "var(--ls-coral)")}
+              >
+                {sig.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sauver / rappeler une combinaison. N'apparaît que quand il y a
+            quelque chose à sauver — un bouton « Sauver » sur un filtre vide
+            n'aurait rien à enregistrer. */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+          {vues.map((v) => (
+            <button
+              key={v.nom}
+              type="button"
+              onClick={() => setQualif(v.filtre)}
+              onDoubleClick={() => {
+                const reste = vues.filter((x) => x.nom !== v.nom);
+                setVues(reste);
+                ecrireVues(reste);
+              }}
+              title="Double-clic pour retirer cette vue"
+              style={sourceChip(false, "var(--ls-purple)")}
+            >
+              ⭐ {v.nom}
+            </button>
+          ))}
+          {!qualifEstVide(qualif) ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  const nom = window.prompt("Nom de la vue ?", "Mes prioritaires")?.trim();
+                  if (!nom) return;
+                  const reste = [...vues.filter((v) => v.nom !== nom), { nom, filtre: qualif }];
+                  setVues(reste);
+                  ecrireVues(reste);
+                }}
+                style={sourceChip(false, "var(--ls-teal)")}
+              >
+                💾 Sauver comme vue
+              </button>
+              <button type="button" onClick={() => setQualif(FILTRE_VIDE)} style={sourceChip(false, "var(--ls-text)")}>
+                Tout effacer
+              </button>
+            </>
+          ) : null}
+        </div>
+      </div>
+
       {/* Filtre par ligne (admin / référent uniquement) */}
       {canFilterTeam && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
