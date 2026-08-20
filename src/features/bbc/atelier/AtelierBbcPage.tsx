@@ -43,6 +43,7 @@ import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet";
 import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
 import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
+import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
 import { BbcClub100 } from "../views/BbcClub100";
@@ -88,6 +89,7 @@ type ScreenKey =
   | "qualifier"
   | "supprimer"
   | "arrivees"
+  | "entonnoir"
   | "bilan10";
 
 /**
@@ -126,6 +128,12 @@ const SCREENS: Screen[] = [
   { k: "clubs", label: "Mes clubs", source: "props", note: "Les 3 clubs sont passés en prop → écran complet, y compris la carte « dupliquer un club »." },
   { k: "reglages", label: "Réglages", source: "props", note: "Formulaire alimenté par le club en fixture → écran complet. L'enregistrement échouera (pas de session) : c'est normal, on ne regarde que le rendu." },
   { k: "membre", label: "App MEMBRE", source: "props", note: "`BbcClientApp` prend TOUTES ses données en props : le seul écran BBC entièrement remplissable. Choisis un stade de carte ci-dessous." },
+  {
+    k: "entonnoir",
+    label: "Jauge entonnoir (CRM)",
+    source: "props",
+    note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
   {
     k: "arrivees",
     label: "Boîte d'arrivée (CRM)",
@@ -374,6 +382,28 @@ function AtelierScene({
   // Elle vit dans l'app coach (jetons --ls-*), pas en mode BBC : on la monte
   // donc SANS la classe `bbc-mode`, sinon on verifierait des couleurs qu'elle
   // n'aura jamais a l'ecran.
+  if (screen === "entonnoir") {
+    // 20 leads repartis pour que les 3 taux soient calculables (base >= 3).
+    const fabrique = (statut: string, n: number, relance = false) =>
+      Array.from({ length: n }, (_, i) => ({
+        key: `${statut}-${i}`, id: `${statut}-${i}`, table: "prospect_leads",
+        firstName: "Test", status: statut, relanceDue: relance, dormant: false,
+      }));
+    const faux = [
+      ...fabrique("new", 6),
+      ...fabrique("contacted", 5, true),
+      ...fabrique("contacted", 3),
+      ...fabrique("qualified", 4),
+      ...fabrique("converted", 2),
+      ...fabrique("lost", 3),
+    ] as unknown as Parameters<typeof CrmJaugeEntonnoir>[0]["leads"];
+    return (
+      <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
+        <CrmJaugeEntonnoir leads={faux} filtre={{ etape: null, relance: false }} onFiltrer={() => undefined} />
+      </div>
+    );
+  }
+
   if (screen === "arrivees") {
     // Trois arrivees types : un bilan en ligne, un lead du site, un prenom
     // confie sans numero. De quoi voir les trois libelles de source et le
