@@ -46,6 +46,7 @@ import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
+import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { groupeDe } from "../features/crm/echeances";
 import { CrmLeadsListView, OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
@@ -71,7 +72,8 @@ function normalizeSlug(input: string): string {
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
-  const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, setDormant, deleteLead } = useCrmLeads();
+  const navigate = useNavigate();
+  const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, accepter, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
   // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
@@ -178,6 +180,13 @@ export function CrmPage() {
   const filtered = useMemo(
     () =>
       leads.filter((l) => {
+        // Un lead pas encore accepté n'est NULLE PART dans l'entonnoir (CRM
+        // Board V2, lot 2) : ni dans une colonne, ni dans l'historique, ni
+        // dans les compteurs. Il attend dans la boîte d'arrivée, au-dessus.
+        // Sans cette ligne il apparaîtrait aux deux endroits, et « rien
+        // n'entre sans ton geste » ne voudrait plus rien dire.
+        if (l.enAttente) return false;
+
         // Répartition par vue :
         //   - Endormis  → uniquement les archivés (dormant)
         //   - Historique→ non-dormant + statut clos (converti / perdu)
@@ -310,6 +319,18 @@ export function CrmPage() {
     }
     return by;
   }, [leads, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids]);
+  // La boîte d'arrivée : ce qui attend un geste, le plus récent d'abord.
+  // On ne la filtre PAS par la recherche ni par les onglets — c'est une file
+  // d'attente, pas une vue. La masquer derrière un filtre reviendrait à
+  // laisser des gens à la porte sans le savoir.
+  const enAttente = useMemo(
+    () =>
+      leads
+        .filter((l) => l.enAttente && !l.dormant)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [leads],
+  );
+
   const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
   const historiqueCount = useMemo(
     () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
@@ -455,6 +476,16 @@ export function CrmPage() {
               : `${nbAujourdhui} personne${nbAujourdhui > 1 ? "s" : ""} t'${nbAujourdhui > 1 ? "attendent" : "attend"} aujourd'hui.`}
         </p>
       </header>
+
+      {/* La boîte d'arrivée, AVANT l'entonnoir et avant tout le reste : c'est
+          la seule porte d'entrée, elle doit être ce qu'on voit en premier.
+          Vide, elle ne s'affiche pas du tout. */}
+      <CrmBoiteArrivee
+        leads={enAttente}
+        onAccepter={accepter}
+        onRefuser={(lead) => setDormant(lead, true)}
+        onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
+      />
 
       {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
           d'ici que part l'email d'acceptation, qui n'existe nulle part

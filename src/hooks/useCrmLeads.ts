@@ -109,6 +109,9 @@ export interface CrmLead {
   derniereReponse: CleReponse | null;
   /** Lead « endormi » (archivé) — sorti du flux actif, zéro relance. */
   dormant?: boolean;
+  /** Pas encore entré dans l'entonnoir : il attend un geste dans la boîte
+   *  d'arrivée (CRM Board V2, lot 2). Un lead accepté ne revient jamais ici. */
+  enAttente?: boolean;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
   /** Le lead a cliqué « Fais-toi rappeler » sur sa page Résultat Bilan
@@ -954,6 +957,27 @@ export function useCrmLeads() {
         });
       }
 
+      // Boîte d'arrivée (CRM Board V2, lot 2). Un lead SANS ligne dans
+      // `crm_lead_acceptations` n'est pas encore entré dans l'entonnoir : il
+      // attend un geste. Même motif que l'archive juste en dessous — une table
+      // de marquage plutôt qu'une colonne sur chacune des 4 tables sources.
+      //
+      // ⚠️ On lit la table ENTIÈRE sans filtre : elle n'a que deux colonnes et
+      // une ligne par lead déjà vu. Si elle devait dépasser le millier, il
+      // faudrait la paginer — PostgREST tronque en silence à 1000 (mesuré le
+      // 14/08), et une troncature ici ferait RÉAPPARAÎTRE dans la boîte des
+      // leads traités il y a des mois.
+      const { data: acc } = await sb
+        .from("crm_lead_acceptations")
+        .select("lead_table, lead_id")
+        .limit(5000);
+      const accSet = new Set(
+        ((acc ?? []) as Array<{ lead_table: string; lead_id: string }>).map(
+          (a) => `${a.lead_table}:${a.lead_id}`,
+        ),
+      );
+      for (const l of all) l.enAttente = !accSet.has(`${l.table}:${l.id}`);
+
       // Archive « endormi » (flag orthogonal, table crm_archived_leads).
       const { data: arch } = await sb.from("crm_archived_leads").select("lead_table, lead_id");
       const archSet = new Set(
@@ -1134,6 +1158,31 @@ export function useCrmLeads() {
     return null;
   }, [majLeads]);
 
+  /**
+   * Faire entrer un lead dans l'entonnoir (CRM Board V2, lot 2).
+   *
+   * C'est le SEUL geste qui l'y fait entrer — d'où le nom. Il ne change ni le
+   * statut ni la date de relance : accepter, c'est dire « celui-là est un vrai
+   * contact », pas « je l'ai appelé ». La suite se pose avec « Et alors ? ».
+   *
+   * `upsert` et non `insert` : deux taps rapides sur le même bouton ne doivent
+   * pas produire une erreur de clé primaire à l'écran.
+   */
+  const accepter = useCallback(async (lead: CrmLead): Promise<string | null> => {
+    const sb = await getSupabaseClient();
+    if (!sb) return "Service indisponible.";
+    const { data: moi } = await sb.auth.getUser();
+    const { error: e } = await sb
+      .from("crm_lead_acceptations")
+      .upsert(
+        { lead_table: lead.table, lead_id: lead.id, accepted_by: moi?.user?.id ?? null },
+        { onConflict: "lead_table,lead_id" },
+      );
+    if (e) return e.message;
+    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, enAttente: false } : l)));
+    return null;
+  }, []);
+
   // Endormir / réveiller un lead (archive orthogonale).
   const setDormant = useCallback(async (lead: CrmLead, value: boolean): Promise<string | null> => {
     const sb = await getSupabaseClient();
@@ -1264,6 +1313,7 @@ export function useCrmLeads() {
     updateSource,
     updateNotes,
     assignOwner,
+    accepter,
     setDormant,
     deleteLead,
   };

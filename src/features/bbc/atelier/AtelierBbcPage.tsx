@@ -42,6 +42,7 @@ import { BbcClientApp } from "../BbcClientApp";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet";
 import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
+import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
 import { BbcClub100 } from "../views/BbcClub100";
@@ -86,6 +87,7 @@ type ScreenKey =
   | "saisie"
   | "qualifier"
   | "supprimer"
+  | "arrivees"
   | "bilan10";
 
 /**
@@ -124,6 +126,12 @@ const SCREENS: Screen[] = [
   { k: "clubs", label: "Mes clubs", source: "props", note: "Les 3 clubs sont passés en prop → écran complet, y compris la carte « dupliquer un club »." },
   { k: "reglages", label: "Réglages", source: "props", note: "Formulaire alimenté par le club en fixture → écran complet. L'enregistrement échouera (pas de session) : c'est normal, on ne regarde que le rendu." },
   { k: "membre", label: "App MEMBRE", source: "props", note: "`BbcClientApp` prend TOUTES ses données en props : le seul écran BBC entièrement remplissable. Choisis un stade de carte ci-dessous." },
+  {
+    k: "arrivees",
+    label: "Boîte d'arrivée (CRM)",
+    source: "props",
+    note: "La file d'attente du CRM (lot 2 du Board V2). Écran de l'app classique, pas du mode BBC : il est monté SANS `bbc-mode`, avec les jetons --ls-*. Les boutons ne font rien ici.",
+  },
   {
     k: "supprimer",
     label: "Supprimer un membre",
@@ -366,6 +374,30 @@ function AtelierScene({
   // Elle vit dans l'app coach (jetons --ls-*), pas en mode BBC : on la monte
   // donc SANS la classe `bbc-mode`, sinon on verifierait des couleurs qu'elle
   // n'aura jamais a l'ecran.
+  if (screen === "arrivees") {
+    // Trois arrivees types : un bilan en ligne, un lead du site, un prenom
+    // confie sans numero. De quoi voir les trois libelles de source et le
+    // « depuis » a trois echelles (minutes, heures, hier).
+    const faux = [
+      { key: "a", id: "a", table: "online_bilans", firstName: "Marc", lastName: "Leroy",
+        source: "bilan-online", createdAt: new Date(Date.now() - 25 * 60000).toISOString() },
+      { key: "b", id: "b", table: "prospect_leads", firstName: "nadia", lastName: "CHEVALIER",
+        source: "site-club", createdAt: new Date(Date.now() - 4 * 3600000).toISOString() },
+      { key: "c", id: "c", table: "client_referral_intentions", firstName: "Léa", lastName: null,
+        source: "intention", createdAt: new Date(Date.now() - 30 * 3600000).toISOString() },
+    ] as unknown as Parameters<typeof CrmBoiteArrivee>[0]["leads"];
+    return (
+      <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
+        <CrmBoiteArrivee
+          leads={faux}
+          onAccepter={async () => null}
+          onRefuser={async () => null}
+          onOuvrir={() => undefined}
+        />
+      </div>
+    );
+  }
+
   if (screen === "supprimer") {
     return (
       <div className="bbc-mode">
