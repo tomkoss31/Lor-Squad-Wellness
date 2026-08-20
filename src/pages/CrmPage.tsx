@@ -47,6 +47,7 @@ import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
+import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
 import { groupeDe } from "../features/crm/echeances";
 import { CrmLeadsListView, OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
@@ -79,6 +80,10 @@ export function CrmPage() {
   // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
   // CRM 2026-07, demande Thomas « arrêter le kanban empilé comme vue principale ».
   const [viewMode, setViewMode] = useState<"list" | "pipeline">("list");
+  // Le filtre posé en tapant un segment de la jauge (CRM Board V2, lot 3).
+  // Une étape OU le signal « à relancer », jamais les deux : deux filtres
+  // cumulés sur une seule barre donnent une liste vide qu'on ne s'explique pas.
+  const [jauge, setJauge] = useState<JaugeFiltre>({ etape: null, relance: false });
   const isAdmin = currentUser?.role === "admin";
 
   // ── Filtre par ligne (2026-06-15) : par défaut chacun voit SES leads. Un
@@ -229,9 +234,13 @@ export function CrmPage() {
           )
             return false;
         }
+        // Le segment de jauge tapé, s'il y en a un.
+        if (jauge.etape && l.status !== jauge.etape) return false;
+        if (jauge.relance && !l.relanceDue) return false;
+
         return true;
       }),
-    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids],
+    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, jauge],
   );
 
   // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
@@ -486,6 +495,11 @@ export function CrmPage() {
         onRefuser={(lead) => setDormant(lead, true)}
         onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
       />
+
+      {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
+          périmètre — et NON `filtered` : une jauge qui se recalcule sur son
+          propre filtre afficherait 100 % partout dès qu'on tape un segment. */}
+      <CrmJaugeEntonnoir leads={leads.filter((l) => !l.enAttente)} filtre={jauge} onFiltrer={setJauge} />
 
       {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
           d'ici que part l'email d'acceptation, qui n'existe nulle part
