@@ -19,6 +19,10 @@ import {
   type ClubDiscoveryBooking,
 } from "../../hooks/useClubDiscoveryBookings";
 
+/** Même expression que l'edge `book-club-discovery` : c'est elle qui décide
+ *  s'il y avait un mail à envoyer — donc s'il y a un mail à regretter. */
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
 const OBJECTIF_LABEL: Record<string, string> = {
   poids: "perte de poids",
   muscle: "prise de muscle",
@@ -102,6 +106,40 @@ export function ClubDiscoveryWidget() {
                     <span style={{ fontSize: 11, color: "var(--ls-teal)", fontWeight: 600 }}>✓ Confirmé</span>
                   )}
                 </div>
+
+                {/* ── « Elle n'a pas eu son mail » (21/08) ──────────────────
+                    L'information était DÉJÀ chargée par le hook
+                    (`confirm_email_sent_at`) et n'était affichée nulle part.
+                    Le 21/08 : Ghislaine réserve mardi 25 à 10h, la campagne
+                    d'ouverture du matin (199 mails) avait épuisé le quota
+                    Resend de 100/jour, et ni elle ni les coachs n'ont rien
+                    reçu — trois envois de suite tombés dans le vide, en
+                    silence. Personne ne pouvait le savoir.
+
+                    Un badge ne répare rien : il rend la panne VISIBLE là où
+                    le coach travaille, avec la seule action qui compte —
+                    prévenir la personne à la main. */}
+                {/* Borné aux contacts qui SONT un email : une personne venue
+                    avec un téléphone n'attendait aucun mail, lui afficher
+                    « sa confirmation n'est pas partie » serait crier au loup.
+                    Même test que l'edge, qui n'envoie que dans ce cas. */}
+                {!b.confirm_email_sent_at && EMAIL_RE.test(b.contact ?? "") && (
+                  <div
+                    role="status"
+                    style={{
+                      marginTop: 6, padding: "7px 10px", borderRadius: 8,
+                      background: "color-mix(in srgb, var(--ls-amber) 14%, var(--ls-surface2))",
+                      border: "0.5px solid color-mix(in srgb, var(--ls-amber) 55%, transparent)",
+                      color: "var(--ls-text)", fontSize: 12, lineHeight: 1.45,
+                      fontFamily: "DM Sans, sans-serif",
+                    }}
+                  >
+                    <strong>⚠️ Sa confirmation n'est pas partie.</strong>{" "}
+                    Elle ne connaît pas son horaire — préviens-la
+                    {b.contact ? " " : ""}
+                    {b.contact ? <a href={`mailto:${b.contact}`} style={{ color: "var(--ls-text)", fontWeight: 600 }}>{b.contact}</a> : null}.
+                  </div>
+                )}
                 <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 3 }}>
                   {fmtWhen(b.slot_start)}
                   {obj ? ` · ${obj}` : ""}
