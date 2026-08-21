@@ -37,6 +37,7 @@ interface Campaign {
   body_html: string;
   audience_label: string;
   status: CampaignStatus;
+  sent_at: string | null;
   recipient_count: number;
   delivered_count: number;
   opened_count: number;
@@ -55,8 +56,54 @@ interface RecipStat {
   unsubscribed_at: string | null;
 }
 
+// Retombées sur le site : on ne peut PAS relier une visite à une personne
+// (le site public ne connaît pas le destinataire). Ce qu'on peut faire, et qui
+// suffit à trancher, c'est comparer le jour de l'envoi à une journée normale.
+// D'où la médiane des 14 jours précédents — sans elle, « 7 visites » ne veut
+// rien dire. C'est une corrélation, jamais une preuve, mais quand elle est
+// plate alors que 53 mails sont partis, elle confirme les 0 clic.
+interface SiteEffect {
+  jour: string;
+  visitesJour: number;
+  reference: number;
+  nJoursReference: number;
+}
+
 function normEmail(s: string): string {
   return s.trim().toLowerCase();
+}
+
+// Somme des visites du site club par jour, puis médiane des 14 jours qui
+// précèdent l'envoi. Médiane et pas moyenne : un seul pic (un partage Insta,
+// un bot) fausserait une moyenne et rendrait toute campagne « décevante ».
+async function loadSiteEffect(
+  sb: NonNullable<Awaited<ReturnType<typeof getSupabaseClient>>>,
+  sentAt: string,
+): Promise<SiteEffect | null> {
+  const jour = new Date(sentAt).toISOString().slice(0, 10);
+  const debut = new Date(new Date(sentAt).getTime() - 15 * 86400000).toISOString().slice(0, 10);
+  const { data } = await sb
+    .from("audience_daily")
+    .select("jour, cle, visites")
+    .eq("type", "page")
+    .gte("jour", debut)
+    .lte("jour", jour)
+    .limit(2000);
+  const rows = (data ?? []) as { jour: string; cle: string; visites: number }[];
+  if (rows.length === 0) return null;
+  const parJour = new Map<string, number>();
+  for (const r of rows) {
+    if (!/^\/(club|reserver)/.test(r.cle)) continue;
+    parJour.set(r.jour, (parJour.get(r.jour) ?? 0) + (r.visites ?? 0));
+  }
+  const avant = [...parJour.entries()].filter(([j]) => j < jour).map(([, v]) => v).sort((a, b) => a - b);
+  if (avant.length < 3) return null;
+  return {
+    jour,
+    visitesJour: parJour.get(jour) ?? 0,
+    reference: avant[Math.floor(avant.length / 2)],
+    nJoursReference: avant.length,
+  };
 }
 
 export function AdminCampagneEditPage() {
@@ -91,6 +138,7 @@ export function AdminCampagneEditPage() {
 
   // stats (campagne envoyée)
   const [recipStats, setRecipStats] = useState<RecipStat[]>([]);
+  const [siteEffect, setSiteEffect] = useState<SiteEffect | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -102,7 +150,7 @@ export function AdminCampagneEditPage() {
       }
       const { data, error } = await sb
         .from("campaigns")
-        .select("id, title, type, subject, body_json, body_text, body_html, audience_label, status, recipient_count, delivered_count, opened_count, clicked_count, bounced_count, unsubscribed_count")
+        .select("id, title, type, subject, body_json, body_text, body_html, audience_label, status, sent_at, recipient_count, delivered_count, opened_count, clicked_count, bounced_count, unsubscribed_count")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -128,6 +176,7 @@ export function AdminCampagneEditPage() {
           .order("clicked_at", { ascending: false, nullsFirst: false })
           .limit(500);
         setRecipStats((recs ?? []) as RecipStat[]);
+        if (c.sent_at) void loadSiteEffect(sb, c.sent_at).then(setSiteEffect);
       }
     })();
   }, [id, navigate, push]);
@@ -514,6 +563,11 @@ export function AdminCampagneEditPage() {
                 .cs-row:last-child { border:0; } .cs-row .em { margin-left:auto; font-size:11px; padding:3px 8px; border-radius:999px; white-space:nowrap; }
                 .cs-row .em.c { background:var(--ls-teal-bg); color:var(--ls-teal); } .cs-row .em.o { background:var(--ls-teal-bg); color:var(--ls-teal); }
                 .cs-row .em.u,.cs-row .em.b { background:var(--ls-coral-bg); color:var(--ls-coral); } .cs-row .em.d { background:rgba(122,128,153,.14); color:var(--ls-text-muted); }
+                .cs-site { background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:14px; padding:14px; margin-bottom:16px; }
+                .cs-site-h { font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ls-text-muted); margin-bottom:10px; }
+                .cs-site-r { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:5px 0; font-size:13px; color:var(--ls-text); }
+                .cs-site-r b { font-family:'JetBrains Mono',monospace; font-size:14px; white-space:nowrap; }
+                .cs-site-p { margin:10px 0 0; font-size:12px; line-height:1.55; color:var(--ls-text-muted); }
                 .cs-row .nm { font-weight:600; } .cs-row .ml { color:var(--ls-text-hint); font-family:'JetBrains Mono',monospace; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; }
               `}</style>
               <div className="cs-grid">
@@ -522,6 +576,39 @@ export function AdminCampagneEditPage() {
                 <div className="cs-kpi g"><div className="n">{campaign.clicked_count || 0}</div><div className="l">Cliqués {pctOf(campaign.clicked_count || 0)}</div></div>
                 <div className="cs-kpi c"><div className="n">{campaign.unsubscribed_count || 0}</div><div className="l">Désabonnés</div></div>
               </div>
+              {siteEffect && (() => {
+                const ecart = siteEffect.visitesJour - siteEffect.reference;
+                const clics = campaign.clicked_count || 0;
+                return (
+                  <div className="cs-site">
+                    <div className="cs-site-h">Retombées sur le site club</div>
+                    <div className="cs-site-r">
+                      <span>Le jour de l'envoi</span>
+                      <b>{siteEffect.visitesJour} visites</b>
+                    </div>
+                    <div className="cs-site-r">
+                      <span>Une journée normale</span>
+                      <b style={{ color: "var(--ls-text-muted)" }}>
+                        {siteEffect.reference} visites
+                        <span style={{ fontSize: 10.5, fontWeight: 400 }}> · médiane sur {siteEffect.nJoursReference} j</span>
+                      </b>
+                    </div>
+                    <div className="cs-site-r">
+                      <span>Écart</span>
+                      <b style={{ color: ecart > 0 ? "var(--ls-teal)" : "var(--ls-text-muted)" }}>
+                        {ecart > 0 ? `+${ecart}` : ecart} visite{Math.abs(ecart) > 1 ? "s" : ""}
+                      </b>
+                    </div>
+                    <p className="cs-site-p">
+                      {ecart > 0
+                        ? `Le site a reçu ${ecart} visite${ecart > 1 ? "s" : ""} de plus que d'habitude ce jour-là. On ne peut pas prouver qu'elles viennent du mail — le site ne sait pas qui tu as contacté — mais l'envoi est la seule chose qui a changé.`
+                        : clics === 0
+                          ? "Aucune hausse de fréquentation, et aucun clic enregistré : deux mesures indépendantes qui disent la même chose. Les gens ouvrent, et ne vont pas plus loin. C'est le message qu'il faut revoir, pas la technique."
+                          : "Pas de hausse visible ce jour-là. Le trafic du site varie beaucoup d'un jour à l'autre : sur un envoi de cette taille, l'effet peut simplement se noyer dedans."}
+                    </p>
+                  </div>
+                );
+              })()}
               <h2 className="ce-h2" style={{ fontSize: 16 }}>Qui a réagi</h2>
               {recipStats.length === 0 ? (
                 <p className="ce-sub">Les réactions apparaîtront ici au fil des ouvertures.</p>
