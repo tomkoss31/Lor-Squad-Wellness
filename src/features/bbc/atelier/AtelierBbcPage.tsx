@@ -47,6 +47,7 @@ import { CrmCarteLead } from "../../../components/crm/CrmCarteLead";
 import { CrmColonneEtape } from "../../../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../../../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../../../components/crm/CrmPanneauFiltres";
+import { CrmFileDuJour } from "../../../components/crm/CrmFileDuJour";
 import { FILTRE_VIDE, lireVues, type FiltreQualif, type VueSauvee } from "../../../features/crm/filtresQualification";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
@@ -98,6 +99,7 @@ type ScreenKey =
   | "board-crm"
   | "volet-lead"
   | "filtres-crm"
+  | "file-du-jour"
   | "entonnoir"
   | "bilan10";
 
@@ -142,6 +144,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "file-du-jour",
+    label: "File du jour (mobile)",
+    source: "props",
+    note: "La file unique du téléphone (lot 6), rangée par geste via zones.ts : à contacter, à relancer, RDV du jour ; le reste résumé en pied. Sur 6 leads fictifs, cadre 390px.",
   },
   {
     k: "filtres-crm",
@@ -453,6 +461,27 @@ function AtelierScene({
     return (
       <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
         <CrmJaugeEntonnoir leads={faux} filtre={{ etape: null, relance: false }} onFiltrer={() => undefined} />
+      </div>
+    );
+  }
+
+  if (screen === "file-du-jour") {
+    const j = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+    const fut = (n: number) => new Date(Date.now() + n * 86400000).toISOString();
+    const b = { table: "prospect_leads", contact: "06 00 00 00 00", contactIsPhone: true, bilanMotivation: 8, dormant: false, derniereReponse: null, rdv: undefined, viaName: null };
+    const L = [
+      { ...b, key: "a", id: "a", firstName: "Anthony", lastName: "Marin", status: "new", contactedAt: null, relanceDueAt: j(0), createdAt: j(1) },
+      { ...b, key: "l", id: "l", firstName: "Laure", lastName: "Petit", status: "contacted", contactedAt: j(4), relanceDueAt: j(3), createdAt: j(6), bilanWeightTarget: 9 },
+      { ...b, key: "m", id: "m", firstName: "Mylène", lastName: "Girard", status: "contacted", contactedAt: j(1), relanceDueAt: j(0), createdAt: j(2) },
+      { ...b, key: "jv", id: "jv", firstName: "Jeremy", lastName: "Vidal", status: "qualified", contactedAt: j(1), relanceDueAt: null, createdAt: j(2), rdv: { slotStart: fut(0.2) }, rdvLabel: "14 h" },
+      { ...b, key: "s", id: "s", firstName: "Sophie", lastName: "Bonnet", status: "contacted", contactedAt: j(2), relanceDueAt: fut(3), createdAt: j(5) },
+      { ...b, key: "p", id: "p", firstName: "Karim", lastName: "Benali", status: "contacted", contactedAt: j(10), relanceDueAt: fut(30), createdAt: j(20) },
+    ] as unknown as Parameters<typeof CrmFileDuJour>[0]["leads"];
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--ls-bg)", padding: 16 }}>
+        <div style={{ maxWidth: 390, margin: "0 auto" }}>
+          <CrmFileDuJour leads={L} maintenant={new Date()} onOuvrir={() => undefined} onWhatsApp={() => undefined} onAlors={() => undefined} onEntonnoir={() => undefined} />
+        </div>
       </div>
     );
   }

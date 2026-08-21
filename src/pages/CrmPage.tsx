@@ -51,6 +51,7 @@ import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeE
 import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
+import { CrmFileDuJour } from "../components/crm/CrmFileDuJour";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
   FILTRE_VIDE,
@@ -948,36 +949,61 @@ export function CrmPage() {
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
       ) : viewMode === "list" ? (
-        <CrmLeadsListView
-          triExterne={{ valeur: view === "archived" ? "recent" : sortKey, onChange: setSortKey }}
-          leads={regroupes}
-          doublonsDe={doublonsDe}
-          msgCtx={msgCtx}
-          archived={view === "archived"}
-          onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
-          onSourceChange={(lead, s) => void handleSourceChange(lead, s)}
-          onCopy={(text) => void copyMessage(text)}
-          onAgenda={(lead) => setAgendaLead(lead)}
-          dupeFlagFor={dupeFlagFor}
-          onDormant={(lead) => void handleDormant(lead, true)}
-          onWake={(lead) => void handleDormant(lead, false)}
-          onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
-          onQualifier={(lead, r, enLot) => {
-            // On RENVOIE la promesse : la barre en lot l'attend pour écrire une
-            // fiche à la fois. Un `void` ici et les cinq écritures partaient
-            // d'un coup sur une base qui tient sur une t4g.nano.
-            return handleQualifier(lead, r, enLot);
-          }}
-          emptyMessage={
-            view === "archived"
-              ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
-              : view === "historique"
-              ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
-              : leads.length === 0
-              ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
-              : "Aucun lead ne correspond aux filtres."
-          }
-        />
+        (() => {
+          // Desktop : la vue Liste. Mobile : la file du jour (lot 6), la même
+          // donnée rangée par geste. Swap CSS pur — les deux se rendent, le
+          // media query en montre une. Seulement en vue Active (la file ne
+          // parle que des gestes du jour, pas des archivés).
+          const vueListe = (
+            <CrmLeadsListView
+              triExterne={{ valeur: view === "archived" ? "recent" : sortKey, onChange: setSortKey }}
+              leads={regroupes}
+              doublonsDe={doublonsDe}
+              msgCtx={msgCtx}
+              archived={view === "archived"}
+              onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
+              onSourceChange={(lead, s) => void handleSourceChange(lead, s)}
+              onCopy={(text) => void copyMessage(text)}
+              onAgenda={(lead) => setAgendaLead(lead)}
+              dupeFlagFor={dupeFlagFor}
+              onDormant={(lead) => void handleDormant(lead, true)}
+              onWake={(lead) => void handleDormant(lead, false)}
+              onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
+              onQualifier={(lead, r, enLot) => {
+                // On RENVOIE la promesse : la barre en lot l'attend pour écrire une
+                // fiche à la fois. Un `void` ici et les cinq écritures partaient
+                // d'un coup sur une base qui tient sur une t4g.nano.
+                return handleQualifier(lead, r, enLot);
+              }}
+              emptyMessage={
+                view === "archived"
+                  ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
+                  : view === "historique"
+                  ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
+                  : leads.length === 0
+                  ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
+                  : "Aucun lead ne correspond aux filtres."
+              }
+            />
+          );
+          if (view !== "active") return vueListe;
+          return (
+            <>
+              <style>{".crm-file-mobile{display:none}@media(max-width:767.98px){.crm-liste-desktop{display:none}.crm-file-mobile{display:block}}"}</style>
+              <div className="crm-liste-desktop">{vueListe}</div>
+              <div className="crm-file-mobile">
+                <CrmFileDuJour
+                  leads={regroupes}
+                  maintenant={new Date()}
+                  onOuvrir={(l) => setPanneauLead(l)}
+                  onWhatsApp={ouvrirWhatsApp}
+                  onAlors={(l) => setQualifApresDrop(l)}
+                  onEntonnoir={() => setViewMode("pipeline")}
+                />
+              </div>
+            </>
+          );
+        })()
       ) : regroupes.length === 0 ? (
         <div style={emptyState}>
           {view === "archived"
