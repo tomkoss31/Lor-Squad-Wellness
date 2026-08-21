@@ -45,6 +45,7 @@ import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
 import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
 import { CrmCarteLead } from "../../../components/crm/CrmCarteLead";
 import { CrmColonneEtape } from "../../../components/crm/CrmColonneEtape";
+import { CrmPanneauLead } from "../../../components/crm/CrmPanneauLead";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
@@ -93,6 +94,7 @@ type ScreenKey =
   | "arrivees"
   | "cartes-lead"
   | "board-crm"
+  | "volet-lead"
   | "entonnoir"
   | "bilan10";
 
@@ -137,6 +139,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "volet-lead",
+    label: "Volet lead (CRM)",
+    source: "props",
+    note: "Le volet lead docké (lot 4) : anneau de score + détail, coordonnées, gestes. Fictif. Les boutons et flèches ne font rien ici.",
   },
   {
     k: "board-crm",
@@ -416,6 +424,24 @@ function AtelierScene({
     return (
       <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
         <CrmJaugeEntonnoir leads={faux} filtre={{ etape: null, relance: false }} onFiltrer={() => undefined} />
+      </div>
+    );
+  }
+
+  if (screen === "volet-lead") {
+    const faux = { key: "z", id: "z", table: "prospect_leads", firstName: "Laure", lastName: "Petit",
+      contact: "06 51 55 55 08", contactIsPhone: true, city: "Toulouse", viaName: "Jeremy",
+      status: "contacted", createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+      contactedAt: new Date(Date.now() - 4 * 86400000).toISOString(), relanceDue: true,
+      relanceDueAt: new Date(Date.now() - 3 * 86400000).toISOString(), objectif: "Perte de poids",
+      bilanObjectives: ["Perte de poids", "Sommeil"], bilanWeightTarget: 9, bilanMotivation: 8,
+      bilanAge: 41, dormant: false } as unknown as Parameters<typeof CrmPanneauLead>[0]["lead"];
+    return (
+      <div style={{ position: "relative", minHeight: "100vh", background: "var(--ls-bg)" }}>
+        <CrmPanneauLead lead={faux} index={2} total={7}
+          onFermer={() => undefined} onNaviguer={() => undefined}
+          onWhatsApp={() => undefined} onAlors={() => undefined}
+          onFiche={() => undefined} onConvertir={() => undefined} />
       </div>
     );
   }

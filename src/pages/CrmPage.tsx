@@ -49,6 +49,7 @@ import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
 import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
+import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
   ecrireVues,
@@ -127,6 +128,9 @@ export function CrmPage() {
   // desktop ; sur mobile le select par card reste le moyen principal).
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
   const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  // Le volet lead docké (lot 4) : la carte cliquée. La navigation ↑↓ se fait
+  // sur `ordreBoard`, la file dans l'ordre des colonnes.
+  const [panneauLead, setPanneauLead] = useState<CrmLead | null>(null);
   // Le contact déposé, en attente de sa question. Tant qu'il est là, la feuille
   // « Et alors ? » est ouverte et rien n'a encore été écrit.
   const [qualifApresDrop, setQualifApresDrop] = useState<CrmLead | null>(null);
@@ -403,6 +407,15 @@ export function CrmPage() {
     return l.status; // new | contacted | qualified
   };
   const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
+
+  // La file du board mise à plat, dans l'ordre des colonnes — support des
+  // flèches ↑↓ du volet.
+  const ordreBoard = useMemo(() => {
+    const parCle: Record<string, CrmLead[]> = {};
+    for (const l of regroupes) { const c = colonneDe(l); (parCle[c] ??= []).push(l); }
+    return BOARD_COLONNES.flatMap((c) => parCle[c.cle] ?? []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regroupes]);
 
   // WhatsApp direct depuis la carte du board (variante en retard). Message de
   // relance douce ; les templates fins vivent dans la fiche.
@@ -1111,7 +1124,7 @@ export function CrmPage() {
                   if (key && c.drop) handleDrop(key, c.drop);
                   setDragOverStatus(null);
                 }}
-                onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
+                onOuvrir={(lead) => setPanneauLead(lead)}
                 onWhatsApp={ouvrirWhatsApp}
                 onAlors={(lead) => setQualifApresDrop(lead)}
                 onDragStartCard={(lead) => setDraggingKey(lead.key)}
@@ -1199,6 +1212,29 @@ export function CrmPage() {
       ) : null}
         </div>{/* fin colonne droite (entonnoir) */}
       </div>{/* fin des deux colonnes */}
+
+      {/* Le volet lead docké (lot 4). Ouvert par une carte du board ; la fiche
+          pleine reste a un clic (route inchangee). */}
+      {panneauLead ? (() => {
+        const i = ordreBoard.findIndex((l) => l.key === panneauLead.key);
+        const idx = i >= 0 ? i : 0;
+        return (
+          <CrmPanneauLead
+            lead={panneauLead}
+            index={idx + 1}
+            total={Math.max(1, ordreBoard.length)}
+            onFermer={() => setPanneauLead(null)}
+            onNaviguer={(d) => {
+              const suivant = ordreBoard[idx + d];
+              if (suivant) setPanneauLead(suivant);
+            }}
+            onWhatsApp={ouvrirWhatsApp}
+            onAlors={(lead) => { setPanneauLead(null); setQualifApresDrop(lead); }}
+            onFiche={(lead) => navigate(`/crm/leads/${lead.key}`)}
+            onConvertir={(lead) => navigate(`/crm/leads/${lead.key}?convert=1`)}
+          />
+        );
+      })() : null}
 
       <footer style={footerHint}>
         💡 Clique sur un lead pour ouvrir sa fiche complète (réponses, conversion, RDV,
