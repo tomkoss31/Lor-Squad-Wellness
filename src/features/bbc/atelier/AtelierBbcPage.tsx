@@ -44,6 +44,7 @@ import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet"
 import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
 import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
 import { CrmCarteLead } from "../../../components/crm/CrmCarteLead";
+import { CrmColonneEtape } from "../../../components/crm/CrmColonneEtape";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
@@ -91,6 +92,7 @@ type ScreenKey =
   | "supprimer"
   | "arrivees"
   | "cartes-lead"
+  | "board-crm"
   | "entonnoir"
   | "bilan10";
 
@@ -135,6 +137,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "board-crm",
+    label: "Board CRM (5 colonnes)",
+    source: "props",
+    note: "Les 5 colonnes du board CRM V2 (lot 3) avec leurs cartes, fictives. Écran de l'app classique. Le drop et les boutons ne font rien ici.",
   },
   {
     k: "cartes-lead",
@@ -408,6 +416,40 @@ function AtelierScene({
     return (
       <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
         <CrmJaugeEntonnoir leads={faux} filtre={{ etape: null, relance: false }} onFiltrer={() => undefined} />
+      </div>
+    );
+  }
+
+  if (screen === "board-crm") {
+    const j = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+    const b = { table: "prospect_leads", contact: "x@y.fr", contactIsPhone: true,
+      bilanObjectives: ["Perte de poids"], bilanWeightTarget: 8, bilanMotivation: 8,
+      bilanAge: 41, city: "Toulouse", viaName: null, dormant: false } as Record<string, unknown>;
+    const mk = (k: string, nom: string, st: string, o: Record<string, unknown>) =>
+      ({ ...b, key: k, id: k, firstName: nom, lastName: "T.", status: st, createdAt: j(3), contactedAt: null, relanceDue: false, relanceDueAt: null, ...o });
+    const cols = [
+      { cle: "new", label: "Nouveau", teinte: "var(--ls-lime)", drop: "new",
+        leads: [mk("n1","Anthony","new",{contactedAt:null,relanceDueAt:j(0)}), mk("n2","Sabrina","new",{createdAt:j(6),relanceDueAt:j(-2)})] },
+      { cle: "contacted", label: "Contacté", teinte: "var(--ls-teal)", drop: "contacted",
+        leads: [mk("c1","Claire","contacted",{contactedAt:j(2),relanceDueAt:j(-1)}), mk("c2","Karim","contacted",{contactedAt:j(2)})] },
+      { cle: "relance", label: "À relancer", teinte: "var(--ls-coral)", drop: null,
+        leads: [mk("r1","Laure","contacted",{relanceDue:true,relanceDueAt:j(3)})] },
+      { cle: "qualified", label: "RDV calé", teinte: "var(--ls-purple)", drop: "qualified",
+        leads: [mk("q1","Jeremy","qualified",{rdvLabel:"demain 14 h"})] },
+      { cle: "converted", label: "Converti", teinte: "var(--ls-amber)", drop: null,
+        leads: [mk("v1","Mélanie","converted",{})] },
+    ] as unknown as Array<{ cle: string; label: string; teinte: string; drop: string | null; leads: Parameters<typeof CrmColonneEtape>[0]["leads"] }>;
+    return (
+      <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
+        <div style={{ display: "flex", gap: 12, overflowX: "auto" }}>
+          {cols.map((c) => (
+            <CrmColonneEtape key={c.cle} label={c.label} teinte={c.teinte} leads={c.leads}
+              cibleDrop={c.drop} survole={false}
+              onDragOver={() => undefined} onDragLeave={() => undefined} onDrop={() => undefined}
+              onOuvrir={() => undefined} onWhatsApp={() => undefined} onAlors={() => undefined}
+              onDragStartCard={() => undefined} onDragEndCard={() => undefined} />
+          ))}
+        </div>
       </div>
     );
   }

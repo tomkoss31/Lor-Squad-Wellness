@@ -48,6 +48,8 @@ import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
+import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
+import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
   ecrireVues,
   estVide as qualifEstVide,
@@ -124,6 +126,7 @@ export function CrmPage() {
   // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
   // desktop ; sur mobile le select par card reste le moyen principal).
   const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
   // Le contact déposé, en attente de sa question. Tant qu'il est là, la feuille
   // « Et alors ? » est ouverte et rien n'a encore été écrit.
   const [qualifApresDrop, setQualifApresDrop] = useState<CrmLead | null>(null);
@@ -381,6 +384,33 @@ export function CrmPage() {
   );
 
   const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
+
+  // ── Le board V2 : 5 colonnes par ZONE (CRM Board V2, lot 3) ──────────────
+  // « À relancer » n'est pas un statut mais un DÉRIVÉ (relanceDue) — comme dans
+  // la jauge. Un lead à relancer va dans cette colonne quelle que soit son
+  // étape réelle. Converti/perdu/endormi ne sont pas des colonnes ouvertes.
+  const BOARD_COLONNES: Array<{ cle: string; label: string; teinte: string; drop: CrmStatus | null }> = [
+    { cle: "new", label: "Nouveau", teinte: "var(--ls-lime)", drop: "new" },
+    { cle: "contacted", label: "Contacté", teinte: "var(--ls-teal)", drop: "contacted" },
+    { cle: "relance", label: "À relancer", teinte: "var(--ls-coral)", drop: null },
+    { cle: "qualified", label: "RDV calé", teinte: "var(--ls-purple)", drop: "qualified" },
+    { cle: "converted", label: "Converti", teinte: "var(--ls-amber)", drop: null },
+  ];
+  const colonneDe = (l: CrmLead): string => {
+    if (l.status === "converted") return "converted";
+    if (l.status === "lost" || l.dormant) return "hors";
+    if (l.relanceDue) return "relance";
+    return l.status; // new | contacted | qualified
+  };
+  const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
+
+  // WhatsApp direct depuis la carte du board (variante en retard). Message de
+  // relance douce ; les templates fins vivent dans la fiche.
+  function ouvrirWhatsApp(lead: CrmLead) {
+    const msg = `Bonjour ${lead.firstName}, ${msgCtx.coachFirstName} de La Base 360. Je reviens vers toi 🙂`;
+    const url = buildWa(lead.contact, msg);
+    if (url) window.open(url, "_blank", "noopener");
+  }
   const historiqueCount = useMemo(
     () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
     [leads],
@@ -1060,71 +1090,46 @@ export function CrmPage() {
           ))}
         </div>
       ) : (
-        <div style={columnsWrap}>
-          {(view === "historique"
-            ? (["converted", "lost"] as CrmStatus[])
-            : (["new", "contacted", "qualified"] as CrmStatus[])
-          ).map((status) => {
-            const col = regroupes.filter((l) => l.status === status);
-            const isDragOver = dragOverStatus === status;
-            return (
-              <div
-                key={status}
-                style={{
-                  ...column,
-                  ...(isDragOver
-                    ? {
-                        borderColor: `color-mix(in srgb, ${CRM_STATUS_META[status].color} 60%, transparent)`,
-                        background: `color-mix(in srgb, ${CRM_STATUS_META[status].color} 6%, var(--ls-surface2))`,
-                      }
-                    : {}),
+        // ── Le board V2 : 5 colonnes par zone + Perdus/Endormis repliés ──────
+        // Les cartes ouvrent la FICHE (où vivent toutes les actions), plus 2
+        // gestes directs sur la carte urgente. Le drop ouvre « Et alors ? »
+        // (garde-fou du lot 1) via handleDrop — inchangé.
+        <div>
+          <div style={columnsWrap}>
+            {BOARD_COLONNES.map((c) => (
+              <CrmColonneEtape
+                key={c.cle}
+                label={c.label}
+                teinte={c.teinte}
+                leads={regroupes.filter((l) => colonneDe(l) === c.cle)}
+                cibleDrop={c.drop}
+                survole={c.drop !== null && dragOverStatus === c.drop}
+                onDragOver={() => c.drop && setDragOverStatus(c.drop)}
+                onDragLeave={() => setDragOverStatus(null)}
+                onDrop={() => {
+                  const key = draggingKey;
+                  if (key && c.drop) handleDrop(key, c.drop);
+                  setDragOverStatus(null);
                 }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverStatus(status);
-                }}
-                onDragLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverStatus(null);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleDrop(e.dataTransfer.getData("text/plain"), status);
-                }}
-              >
-                <div style={columnHeader(CRM_STATUS_META[status].color)}>
-                  <span aria-hidden="true">{CRM_STATUS_META[status].emoji}</span>{" "}
-                  {CRM_STATUS_META[status].label}
-                  {/* Pendant le survol, l'en-tête dit ce qui va se passer —
-                      « dépose ici », ou le cadenas sur Converti qui n'accepte
-                      pas le drop (la conversion demande un bilan, pas un geste
-                      de la souris). Repris de la maquette V2. */}
-                  {isDragOver ? (
-                    <span style={{ marginLeft: 6, fontSize: 11.5, fontWeight: 600, opacity: 0.85 }}>
-                      {status === "converted" ? "🔒 passe par la fiche" : "— dépose ici ✊"}
-                    </span>
-                  ) : null}
-                  <span style={columnCount}>{col.length}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {col.map((lead) => (
-                    <LeadCard
-                      key={lead.key}
-                      lead={lead}
-                      msgCtx={msgCtx}
-                      onStatusChange={(s) => void handleStatusChange(lead, s)}
-              onSourceChange={(s) => void handleSourceChange(lead, s)}
-                      onCopy={(text) => void copyMessage(text)}
-                      onAgenda={() => setAgendaLead(lead)}
-                      dupeFlag={dupeFlagFor(lead)}
-                      onDormant={() => void handleDormant(lead, true)}
-                      onDelete={isAdmin ? () => void handleDelete(lead) : undefined}
-                    />
-                  ))}
-                  {col.length === 0 ? <div style={columnEmpty}>—</div> : null}
-                </div>
-              </div>
-            );
-          })}
+                onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
+                onWhatsApp={ouvrirWhatsApp}
+                onAlors={(lead) => setQualifApresDrop(lead)}
+                onDragStartCard={(lead) => setDraggingKey(lead.key)}
+                onDragEndCard={() => setDraggingKey(null)}
+              />
+            ))}
+          </div>
+
+          {/* Perdus / Endormis : deux lignes repliées sous les colonnes, comme
+              la maquette. Un tap ouvre la vue correspondante. */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            <button type="button" onClick={() => setView("historique")} style={ligneRepliee()}>
+              🌙 Perdus <strong style={{ marginLeft: 6 }}>{perdusCount}</strong>
+            </button>
+            <button type="button" onClick={() => setView("archived")} style={ligneRepliee()}>
+              💤 Endormis <strong style={{ marginLeft: 6 }}>{dormantCount}</strong>
+            </button>
+          </div>
         </div>
       )}
 
@@ -1602,6 +1607,17 @@ const cardActionBtn: React.CSSProperties = {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
+function ligneRepliee(): React.CSSProperties {
+  return {
+    display: "flex", alignItems: "center", gap: 6,
+    padding: "9px 13px", borderRadius: 11,
+    background: "color-mix(in srgb, var(--ls-bg) 40%, var(--ls-surface))",
+    border: "1px solid var(--ls-border)",
+    color: "var(--ls-text-muted)", fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: "DM Sans, sans-serif",
+  };
+}
+
 const pageWrap: React.CSSProperties = {
   maxWidth: 1280,
   margin: "0 auto",
@@ -1740,36 +1756,8 @@ const columnsWrap: React.CSSProperties = {
   alignItems: "flex-start",
 };
 
-const column: React.CSSProperties = {
-  flex: "0 0 290px",
-  minWidth: 290,
-  background: "var(--ls-surface2)",
-  border: "0.5px solid var(--ls-border)",
-  borderRadius: 14,
-  padding: 10,
-};
-
-const columnHeader = (color: string): React.CSSProperties => ({
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  fontFamily: "Syne, sans-serif",
-  fontSize: 13,
-  fontWeight: 700,
-  color,
-  padding: "4px 6px 10px",
-});
-
-const columnCount: React.CSSProperties = {
-  marginLeft: "auto",
-  fontSize: 11,
-  fontWeight: 800,
-  color: "var(--ls-text-muted)",
-  background: "var(--ls-surface)",
-  borderRadius: 999,
-  padding: "1px 8px",
-  border: "0.5px solid var(--ls-border)",
-};
+// (Les anciens styles column / columnHeader / columnCount sont retirés : le
+//  board V2 les remplace par CrmColonneEtape, lot 3.)
 
 const columnEmpty: React.CSSProperties = {
   textAlign: "center",
