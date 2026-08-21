@@ -35,6 +35,9 @@ interface Props {
   onWhatsApp?: (lead: CrmLead) => void;
   /** Ouvre « Et alors ? » — variante « en retard » et « RDV passé ». */
   onAlors?: (lead: CrmLead) => void;
+  /** Rend la carte glissable (board). Le drop ouvre « Et alors ? », lot 1. */
+  onDragStart?: (lead: CrmLead) => void;
+  onDragEnd?: () => void;
 }
 
 /** La couleur de l'étape — sert de bordure gauche quand rien ne cloche. */
@@ -120,7 +123,7 @@ const CSS = `
 }
 `;
 
-export function CrmCarteLead({ lead, onOuvrir, onWhatsApp, onAlors }: Props) {
+export function CrmCarteLead({ lead, onOuvrir, onWhatsApp, onAlors, onDragStart, onDragEnd }: Props) {
   const { score100, temperature, details } = computeLeadScore(lead);
   const etat = etatDe(lead);
   const badge = badgeAction(lead, etat);
@@ -150,6 +153,9 @@ export function CrmCarteLead({ lead, onOuvrir, onWhatsApp, onAlors }: Props) {
       style={{ borderColor: etat === "saine" ? "var(--ls-border)" : `color-mix(in srgb, ${teinte} 30%, var(--ls-border))`, borderLeft: `3px solid ${teinte}` }}
       role="button"
       tabIndex={0}
+      draggable={!!onDragStart}
+      onDragStart={onDragStart ? (e) => { e.dataTransfer.setData("text/plain", lead.key); e.dataTransfer.effectAllowed = "move"; onDragStart(lead); } : undefined}
+      onDragEnd={onDragEnd}
       onClick={() => onOuvrir(lead)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOuvrir(lead); } }}
       aria-label={`Ouvrir ${nomAffiche(lead.firstName, lead.lastName)}`}
