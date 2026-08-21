@@ -3,12 +3,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren
 } from "react";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { PROGRAMS_LEGACY } from "../data/programs";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
+import { reactionSession } from "../lib/sessionAuth";
 import {
   getStoredActivityLogs,
   getStoredPvClientProducts,
@@ -88,6 +90,10 @@ interface AppContextValue {
   // Garde-fou 2026-04-25 : erreur du dernier refresh. Si non-null, l'app
   // affiche un bandeau rouge → évite les régressions RLS silencieuses.
   lastFetchError: string | null;
+  // Vrai quand Supabase a supprime la session sans qu'on l'ait demande
+  // (cf. `sessionExpiree` plus bas). L'app affiche alors un bandeau : sans lui,
+  // on continue de travailler dans le vide.
+  sessionExpiree: boolean;
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
   activityLogs: ActivityLog[];
@@ -274,6 +280,31 @@ export function AppProvider({ children }: PropsWithChildren) {
   // affiché en bandeau rouge en haut de l'app pour rendre les régressions
   // RLS visibles au lieu de "app vide" silencieux.
   const [lastFetchError, setLastFetchError] = useState<string | null>(null);
+
+  // ── Session morte sans prevenir (21/08) ──────────────────────────────────
+  //
+  // CE QUI EST ARRIVE. A 12h20m47s, deux renouvellements de jeton partent a
+  // 250 ms d'ecart et se font tous les deux refuser (HTTP 400). Supabase fait
+  // TOURNER le jeton de rafraichissement : le premier appel le consomme, le
+  // second arrive avec un jeton deja utilise. Les deux echouent, la session est
+  // detruite. Deux appels simultanes, c'est l'app ouverte a deux endroits en
+  // meme temps (application Windows + onglet du navigateur).
+  //
+  // CE QUE CA A COUTE. L'app a continue d'afficher « Thomas · Coach · Admin »
+  // et ses donnees — elles vivaient deja dans le state React. Thomas a valide
+  // un panier (13h03), puis rempli le bilan d'un client et tente de
+  // l'enregistrer SIX fois entre 13h23 et 13h24. Tout en 401. Une heure de
+  // travail perdue parce que personne ne lui a dit qu'il etait deconnecte.
+  //
+  // POURQUOI `SIGNED_OUT` EST LE BON SIGNAL. Verifie dans auth-js :
+  // `_callRefreshToken` n'appelle `_removeSession()` — donc n'emet l'evenement —
+  // que si l'erreur N'EST PAS `isAuthRetryableFetchError`. Une coupure reseau
+  // ne declenche donc rien : on ne criera pas au loup dans le train.
+  const [sessionExpiree, setSessionExpiree] = useState(false);
+  // Une deconnexion VOULUE emet le meme `SIGNED_OUT`. Ce drapeau les separe :
+  // sans lui, cliquer « Sortir » afficherait « ta session a expire ».
+  const deconnexionVoulue = useRef(false);
+
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
@@ -385,6 +416,42 @@ export function AppProvider({ children }: PropsWithChildren) {
     // Reset de l'erreur si le fetch a réussi
     setLastFetchError(null);
   }
+
+  // L'ecoute. Montee une seule fois, elle survit a toute la session d'usage.
+  useEffect(() => {
+    let vivant = true;
+    let stop: (() => void) | undefined;
+
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb || !vivant) return;
+      const { data } = sb.auth.onAuthStateChange((evenement) => {
+        // La regle vit dans `lib/sessionAuth.ts` et y est testee : `SIGNED_OUT`
+        // est emis A L'IDENTIQUE par « Sortir » et par un jeton refuse.
+        switch (reactionSession(evenement, deconnexionVoulue.current)) {
+          case "retablie":
+            deconnexionVoulue.current = false;
+            setSessionExpiree(false);
+            break;
+          case "sortie-voulue":
+            deconnexionVoulue.current = false;
+            break;
+          case "expiree":
+            console.warn("[auth] session supprimee sans demande — jeton de rafraichissement refuse");
+            setSessionExpiree(true);
+            break;
+          default:
+            break;
+        }
+      });
+      stop = () => data.subscription.unsubscribe();
+    })();
+
+    return () => {
+      vivant = false;
+      stop?.();
+    };
+  }, []);
 
   useEffect(() => {
     async function initialize() {
@@ -524,6 +591,9 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function logout() {
+    // Avant le signOut : sinon `SIGNED_OUT` arrive et on croit a une expiration.
+    deconnexionVoulue.current = true;
+    setSessionExpiree(false);
     try {
       await logoutFromSupabase();
     } catch (error) {
@@ -541,6 +611,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function forceResetSession() {
+    deconnexionVoulue.current = true;
+    setSessionExpiree(false);
     try {
       await logoutFromSupabase();
     } catch (error) {
@@ -968,6 +1040,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       clients,
       visibleClients: getVisibleClients(currentUser, clients, users),
       lastFetchError,
+      sessionExpiree,
       followUps,
       visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients, users),
       activityLogs,
@@ -1330,6 +1403,13 @@ export function AppProvider({ children }: PropsWithChildren) {
       currentSession,
       currentUser,
       followUps,
+      // `sessionExpiree` DOIT etre ici : rien d'autre ne change quand la session
+      // meurt, donc sans lui le useMemo ne se recalcule pas et le bandeau
+      // n'apparait jamais. `lastFetchError` etait dans le meme cas — il ne
+      // s'affichait que parce que `clients`/`users` changent en meme temps que
+      // lui dans `refreshRemoteData`, ce qui n'est vrai que par accident.
+      lastFetchError,
+      sessionExpiree,
       pvClientProducts,
       pvTransactions,
       prospects,
