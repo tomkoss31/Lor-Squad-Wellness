@@ -83,6 +83,21 @@ function normalizeSlug(input: string): string {
     .trim();
 }
 
+// Le choix Liste / Pipeline, persisté : ouvrir une fiche puis revenir remonte
+// la page, et sans mémoire on retombait toujours sur Liste — alors que le
+// travail est sur le board (retour Thomas 21/08 : « c'est soit l'un ou
+// l'autre »). localStorage et pas l'URL : c'est une préférence d'appareil, pas
+// un état à partager par lien.
+const VUE_MODE_CLE = "ls-crm-vue-mode";
+function lireVueMode(): "list" | "pipeline" {
+  try {
+    const v = window.localStorage.getItem(VUE_MODE_CLE);
+    return v === "pipeline" || v === "list" ? v : "list";
+  } catch {
+    return "list";
+  }
+}
+
 export function CrmPage() {
   const { currentUser, clients, users } = useAppContext();
   const { push: pushToast } = useToast();
@@ -92,7 +107,15 @@ export function CrmPage() {
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
   // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
   // CRM 2026-07, demande Thomas « arrêter le kanban empilé comme vue principale ».
-  const [viewMode, setViewMode] = useState<"list" | "pipeline">("list");
+  // Persisté (cf. lireVueMode) : le choix survit à l'aller-retour vers une fiche.
+  const [viewMode, setViewMode] = useState<"list" | "pipeline">(() => lireVueMode());
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VUE_MODE_CLE, viewMode);
+    } catch {
+      // Navigation privée / stockage plein : le confort saute, pas la page.
+    }
+  }, [viewMode]);
   // Le filtre posé en tapant un segment de la jauge (CRM Board V2, lot 3).
   // Une étape OU le signal « à relancer », jamais les deux : deux filtres
   // cumulés sur une seule barre donnent une liste vide qu'on ne s'explique pas.
