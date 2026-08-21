@@ -39,7 +39,7 @@ const BbcApp = lazy(() => import("../../features/bbc/BbcApp").then((m) => ({ def
 // SVG reste accessible via Git history si on veut un mode icons-only.
 
 export function AppLayout() {
-  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError, sessionExpiree } = useAppContext();
   // Chantier Notif in-app temps réel (2026-04-23) : s'abonne à
   // client_messages Realtime tant que le coach est authentifié et sur
   // l'app (les routes publiques /client/:token, /recap/:token, etc.
@@ -766,6 +766,80 @@ export function AppLayout() {
           {/* Garde-fou 2026-04-25 : bandeau rouge si le dernier fetch
               principal a planté (typiquement RLS foireuse). Rend les
               régressions visibles au lieu de "app vide" silencieux. */}
+          {/* ── Session morte (21/08) ─────────────────────────────────────
+              Passe AVANT le bandeau de fetch : quand la session tombe, les
+              lectures echouent aussi, et « reconnecte-toi » est la seule
+              consigne qui serve a quelque chose.
+
+              Vecu : Thomas a rempli le bilan d'un client en entier et tente de
+              l'enregistrer six fois de suite, sans rien voir venir. L'app
+              affichait toujours son nom et ses donnees — elles etaient deja en
+              memoire. Une heure perdue.
+
+              Le bouton fait un `logout()` VOLONTAIRE, pas un rechargement : la
+              page repart proprement sur l'ecran de connexion. Et surtout, on
+              DIT que le bilan en cours est garde — il vit dans le
+              localStorage (`lor-squad-wellness-assessment-draft-v2`), que ni
+              `logout()` ni supabase-js ne touchent, et il n'est efface qu'a un
+              enregistrement REUSSI. Sans cette phrase, personne n'ose cliquer. */}
+          {sessionExpiree ? (
+            <div
+              role="alert"
+              aria-live="assertive"
+              // ⚠️ Tokens, pas de couleurs en dur. Le bandeau rouge juste en
+              // dessous fige #FCA5A5 : lisible en sombre, delave sur fond clair.
+              // Ici le texte est `--ls-text`, donc la paire lisible du theme
+              // ACTIF par definition ; l'ambre ne fait que teinter le fond de
+              // 12 %, ce qui ne deplace pas le contraste. Cf. la regle « jamais
+              // de #HEXVALUE dans un .tsx de l'app coach » (CLAUDE.md).
+              //
+              // `--ls-amber` et surtout PAS `--ls-gold` : depuis la passe de
+              // chaleur, `--ls-gold` vaut #2DD4BF (teal) en sombre et #0F766E en
+              // clair. Le bandeau ressortait VERT — la couleur qui dit « tout va
+              // bien » sur un message qui dit l'inverse. `--ls-amber` est
+              // declinee pour les deux themes (#E8A93A / #9A631A).
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                background: "color-mix(in srgb, var(--ls-amber) 14%, var(--ls-surface2))",
+                border: "1px solid color-mix(in srgb, var(--ls-amber) 60%, transparent)",
+                color: "var(--ls-text)",
+                fontSize: 13,
+                lineHeight: 1.55,
+              }}
+            >
+              <strong>⚠ Ta session a expiré — </strong>
+              plus rien ne s'enregistre tant que tu ne t'es pas reconnecté.
+              {/* Pas `--ls-text-muted` : mesure en sombre, #9BAAA3 sur le fond
+                  ambre tombe a 3,62:1. Or c'est LA phrase qui donne le courage
+                  de cliquer sur « Me reconnecter ». On garde `--ls-text` et on
+                  ne distingue que par la taille. */}
+              <div style={{ fontSize: 12, color: "var(--ls-text)", opacity: 0.88, marginTop: 6 }}>
+                Ce que tu as saisi n'est pas perdu : un bilan en cours est gardé
+                et revient là où tu l'as laissé après reconnexion.
+              </div>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                style={{
+                  marginTop: 10,
+                  minHeight: 44,
+                  padding: "10px 18px",
+                  borderRadius: 10,
+                  border: "1px solid color-mix(in srgb, var(--ls-amber) 65%, transparent)",
+                  background: "color-mix(in srgb, var(--ls-amber) 18%, transparent)",
+                  color: "var(--ls-text)",
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  fontFamily: "DM Sans, sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                Me reconnecter
+              </button>
+            </div>
+          ) : null}
+
           {lastFetchError ? (
             <div
               role="alert"
