@@ -25,6 +25,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
 import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 import { nomPropre } from "../features/crm/nomPropre";
+import { cleIdentite } from "../features/crm/appariementRdv";
 import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 // Le vocabulaire de provenance a UNE source (src/types/domain.ts) : le tunnel,
 // les deux bilans et cet écran en dérivent tous. Deux listes recopiées, ce sont
@@ -742,7 +743,10 @@ export function useCrmLeads() {
       // annonçait « il est déjà dans ton agenda » pour un rendez-vous vieux de
       // deux mois.
       const parContact = new Map<string, RdvLie>();
-      const parPrenom = new Map<string, RdvLie>();
+      // ⚠️ Par NOM COMPLET, plus par prénom seul (21/08). Un prénom n'identifie
+      // personne : « Manon Legrand » héritait du rendez-vous de « Manon PERRIN ».
+      // Cf. `features/crm/appariementRdv.ts` pour l'histoire et la règle.
+      const parIdentite = new Map<string, RdvLie>();
       const maintenantMs = Date.now();
       // Voit-on seulement les réservations du club ? La policy
       // `rdv_bookings_club_admin_read` exige `is_admin()` ; un coach ordinaire
@@ -781,9 +785,11 @@ export function useCrmLeads() {
           }).format(new Date(slotStart)),
         };
         const c = String(b.contact ?? "").trim().toLowerCase();
-        const p = String(b.first_name ?? "").trim().toLowerCase();
+        const identite = cleIdentite(b.first_name, b.last_name);
         if (c) parContact.set(c, meilleur(parContact.get(c), rdv));
-        if (p) parPrenom.set(p, meilleur(parPrenom.get(p), rdv));
+        // `null` quand le nom de famille manque : la réservation reste
+        // trouvable par son contact, jamais par ressemblance de prénom.
+        if (identite) parIdentite.set(identite, meilleur(parIdentite.get(identite), rdv));
       }
 
       for (const row of prospectsRes.data ?? []) {
@@ -816,10 +822,13 @@ export function useCrmLeads() {
                 ? "⚪ A laissé son email"
                 : null;
         const cleContact = String(row.email ?? row.phone ?? "").trim().toLowerCase();
-        const clePrenom = String(row.first_name ?? "").trim().toLowerCase();
+        const cleNom = cleIdentite(row.first_name, row.last_name);
+        // Le contact d'abord (c'est lui qui identifie vraiment), le nom complet
+        // ensuite — il rattrape les fautes de frappe dans l'adresse, sans jamais
+        // confondre deux personnes qui partagent un prénom.
         const rdvTrouve: RdvLie | null =
           (cleContact ? parContact.get(cleContact) : undefined) ??
-          (clePrenom ? parPrenom.get(clePrenom) : undefined) ??
+          (cleNom ? parIdentite.get(cleNom) : undefined) ??
           null;
 
         all.push({
