@@ -133,6 +133,9 @@
   --ls-purple-ink: #1C1233;
   --ls-amber-ink: #2A1E05;
   --ls-lime-ink: #1B2409;
+  --ls-coral-ink: #2A0D0D;
+  /* WhatsApp : couleur de marque, isolee pour ne pas etre prise pour une regression. */
+  --ls-wa: #25D366; --ls-wa-ink: #04210f;
   --ls-gold-bg: rgba(201,168,76,0.1);
   --ls-teal-bg: rgba(45,212,191,0.1);
   --ls-coral-bg: rgba(242,119,95,0.1);
@@ -220,6 +223,7 @@ html.theme-light {
   --ls-purple-ink: #FFFFFF;
   --ls-amber-ink: #FFFFFF;
   --ls-lime-ink: #FFFFFF;
+  --ls-coral-ink: #FFFFFF;
   /* ── CONTRASTE (audit du 13/08/2026) ─────────────────────────────────────
      Mesuré dans le navigateur : CINQ tokens du thème clair étaient sous le
      seuil lisible (4,5:1 pour du petit texte), y compris quand ils servent de
