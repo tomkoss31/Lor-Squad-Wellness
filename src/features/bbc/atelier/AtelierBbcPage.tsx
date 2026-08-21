@@ -33,7 +33,7 @@
 
 import "../../../styles/bbc-tokens.css";
 import "./atelier-bbc.css";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { BbcApp } from "../BbcApp";
@@ -46,6 +46,8 @@ import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
 import { CrmCarteLead } from "../../../components/crm/CrmCarteLead";
 import { CrmColonneEtape } from "../../../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../../../components/crm/CrmPanneauLead";
+import { CrmPanneauFiltres } from "../../../components/crm/CrmPanneauFiltres";
+import { FILTRE_VIDE, lireVues, type FiltreQualif, type VueSauvee } from "../../../features/crm/filtresQualification";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
@@ -95,6 +97,7 @@ type ScreenKey =
   | "cartes-lead"
   | "board-crm"
   | "volet-lead"
+  | "filtres-crm"
   | "entonnoir"
   | "bilan10";
 
@@ -139,6 +142,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "filtres-crm",
+    label: "Tiroir filtres (CRM)",
+    source: "props",
+    note: "Le tiroir de qualification (lot 5) : température, ce qui cloche, objectif — chaque puce avec son compteur de facette. Vues sauvées en localStorage. Sur 6 leads fictifs.",
   },
   {
     k: "volet-lead",
@@ -387,6 +396,26 @@ export function AtelierBbcPage() {
 // rien : on préfère un écran vide honnête à une belle démo mensongère.
 // ─────────────────────────────────────────────────────────────────────────────
 
+function SceneFiltres() {
+  const j = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+  const b = { table: "prospect_leads", contact: "06 00 00 00 00", contactIsPhone: true, bilanMotivation: 8, dormant: false };
+  const L = [
+    { ...b, key: "a", id: "a", firstName: "Anthony", lastName: "M.", status: "new", objectif: "Perte de poids", createdAt: j(1), contactedAt: null, relanceDue: false, relanceDueAt: null, derniereReponse: null, ownerUserId: null, viaName: "Jeremy" },
+    { ...b, key: "c2", id: "c2", firstName: "Claire", lastName: "T.", status: "contacted", objectif: "Sport", createdAt: j(6), contactedAt: j(4), relanceDue: true, relanceDueAt: j(3), derniereReponse: j(4), ownerUserId: "u1", viaName: null },
+    { ...b, key: "k", id: "k", firstName: "Karim", lastName: "B.", status: "contacted", objectif: "Perte de poids", createdAt: j(20), contactedAt: j(12), relanceDue: false, relanceDueAt: null, derniereReponse: j(12), ownerUserId: "u1", viaName: null },
+    { ...b, key: "s", id: "s", firstName: "Sabrina", lastName: "L.", status: "new", objectif: "Sommeil", contact: "s@x.fr", contactIsPhone: false, createdAt: j(40), contactedAt: null, relanceDue: false, relanceDueAt: null, derniereReponse: null, ownerUserId: null, viaName: null },
+    { ...b, key: "j", id: "j", firstName: "Jeremy", lastName: "P.", status: "qualified", objectif: "Sport", rdvLabel: "demain 14 h", createdAt: j(2), contactedAt: j(1), relanceDue: false, relanceDueAt: j(-1), derniereReponse: j(1), ownerUserId: "u1", viaName: null },
+    { ...b, key: "n", id: "n", firstName: "Nadia", lastName: "R.", status: "contacted", objectif: "Perte de poids", createdAt: j(9), contactedAt: j(8), relanceDue: false, relanceDueAt: j(1), derniereReponse: j(8), ownerUserId: "u1", viaName: null },
+  ] as unknown as Parameters<typeof CrmPanneauFiltres>[0]["leads"];
+  const [qualif, setQualif] = useState<FiltreQualif>(FILTRE_VIDE);
+  const [vues, setVues] = useState<VueSauvee[]>(() => lireVues());
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--ls-bg)" }}>
+      <CrmPanneauFiltres leads={L} qualif={qualif} setQualif={setQualif} vues={vues} setVues={setVues} onFermer={() => undefined} />
+    </div>
+  );
+}
+
 function AtelierScene({
   screen,
   personaKey,
@@ -427,6 +456,8 @@ function AtelierScene({
       </div>
     );
   }
+
+  if (screen === "filtres-crm") return <SceneFiltres />;
 
   if (screen === "volet-lead") {
     const faux = { key: "z", id: "z", table: "prospect_leads", firstName: "Laure", lastName: "Petit",

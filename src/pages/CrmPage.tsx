@@ -50,15 +50,13 @@ import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
 import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
+import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
-  ecrireVues,
-  estVide as qualifEstVide,
   FILTRE_VIDE,
   lireVues,
   nbActifs as nbFiltresQualif,
   passe as passeQualif,
-  SIGNAUX,
   type FiltreQualif,
   type VueSauvee,
 } from "../features/crm/filtresQualification";
@@ -146,6 +144,9 @@ export function CrmPage() {
   // premier lead, dont 5 pastilles de compteur qui ne sont même pas cliquables.
   // Rien n'est supprimé — un tap et tout revient.
   const [filtresOuverts, setFiltresOuverts] = useState(false);
+  // Le tiroir de qualification (CRM Board V2, lot 5), séparé du panneau
+  // périmètre/sources.
+  const [qualifOuvert, setQualifOuvert] = useState(false);
   // Les questions qui qualifient (CRM Board V2, lot 5) : température, signaux
   // d'alerte, objectif. Et les vues sauvées, en localStorage — une vue est un
   // confort personnel, propre à l'appareil sur lequel on travaille.
@@ -347,19 +348,6 @@ export function CrmPage() {
   }, [regroupes]);
 
   // Combien de réglages ne sont PAS à leur valeur par défaut : le badge du
-  // bouton « Plus de filtres ». Sans lui, on peut filtrer sans le savoir et
-  // croire que sa liste est vide.
-  const filtresActifs = useMemo(() => {
-    let n = 0;
-    if (scope !== "me") n += 1;
-    if (filterSource !== "all") n += 1;
-    if (view !== "active") n += 1;
-    if (viewMode !== "list") n += 1;
-    if (sortKey !== "echeance") n += 1;
-    n += nbFiltresQualif(qualif);
-    return n;
-  }, [scope, filterSource, view, viewMode, sortKey, qualif]);
-
   // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
   const counts = useMemo(() => {
     const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
@@ -660,114 +648,30 @@ export function CrmPage() {
           style={searchInput}
           aria-label="Rechercher un lead"
         />
+        {/* Les questions qui qualifient : dans un tiroir (lot 5), plus dans
+            l'empilement. */}
+        <button
+          type="button"
+          onClick={() => setQualifOuvert(true)}
+          style={sourceChip(nbFiltresQualif(qualif) > 0, "var(--ls-coral)")}
+        >
+          ⋯ Filtres{nbFiltresQualif(qualif) > 0 ? ` · ${nbFiltresQualif(qualif)}` : ""}
+        </button>
+        {/* Périmètre & sources : l'analytique, séparée du travail de qualif.
+            Neutre plutôt que violet (mesuré 4,08:1 en violet sur fond teinté). */}
         <button
           type="button"
           onClick={() => setFiltresOuverts((v) => !v)}
           aria-expanded={filtresOuverts}
-          // Neutre plutôt que violet : mesuré à 4,08:1 en violet sur son propre
-          // fond teinté, sous le seuil de 4,5.
-          style={sourceChip(filtresOuverts || filtresActifs > 0, "var(--ls-text)")}
+          style={sourceChip(filtresOuverts, "var(--ls-text)")}
         >
-          ⋯ Plus de filtres{filtresActifs > 0 ? ` · ${filtresActifs}` : ""} {filtresOuverts ? "▲" : "▼"}
+          📊 Périmètre & sources {filtresOuverts ? "▲" : "▼"}
         </button>
       </div>
 
       {/* ── Tout le reste, replié ────────────────────────────────────────── */}
       {filtresOuverts ? (
       <div style={panneauFiltres}>
-      {/* ── Les questions qui qualifient (lot 5) ────────────────────────────
-          Elles passent AVANT le périmètre et la source : ce sont elles qui
-          disent qui vaut la peine d'être rappelé aujourd'hui, pas la
-          provenance. */}
-      <div style={{ margin: "0 0 12px" }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Température :</span>
-          {(["hot", "warm", "cold"] as const).map((t) => {
-            const actif = qualif.temperatures.includes(t);
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() =>
-                  setQualif((q) => ({
-                    ...q,
-                    temperatures: actif ? q.temperatures.filter((x) => x !== t) : [...q.temperatures, t],
-                  }))
-                }
-                style={sourceChip(actif, TEMP_META[t].color)}
-              >
-                {TEMP_META[t].emoji} {TEMP_META[t].label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Ce qui cloche :</span>
-          {SIGNAUX.map((sig) => {
-            const actif = qualif.signaux.includes(sig.cle);
-            return (
-              <button
-                key={sig.cle}
-                type="button"
-                title={sig.pourquoi}
-                onClick={() =>
-                  setQualif((q) => ({
-                    ...q,
-                    signaux: actif ? q.signaux.filter((x) => x !== sig.cle) : [...q.signaux, sig.cle],
-                  }))
-                }
-                style={sourceChip(actif, "var(--ls-coral)")}
-              >
-                {sig.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Sauver / rappeler une combinaison. N'apparaît que quand il y a
-            quelque chose à sauver — un bouton « Sauver » sur un filtre vide
-            n'aurait rien à enregistrer. */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
-          {vues.map((v) => (
-            <button
-              key={v.nom}
-              type="button"
-              onClick={() => setQualif(v.filtre)}
-              onDoubleClick={() => {
-                const reste = vues.filter((x) => x.nom !== v.nom);
-                setVues(reste);
-                ecrireVues(reste);
-              }}
-              title="Double-clic pour retirer cette vue"
-              style={sourceChip(false, "var(--ls-purple)")}
-            >
-              ⭐ {v.nom}
-            </button>
-          ))}
-          {!qualifEstVide(qualif) ? (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  const nom = window.prompt("Nom de la vue ?", "Mes prioritaires")?.trim();
-                  if (!nom) return;
-                  const reste = [...vues.filter((v) => v.nom !== nom), { nom, filtre: qualif }];
-                  setVues(reste);
-                  ecrireVues(reste);
-                }}
-                style={sourceChip(false, "var(--ls-teal)")}
-              >
-                💾 Sauver comme vue
-              </button>
-              <button type="button" onClick={() => setQualif(FILTRE_VIDE)} style={sourceChip(false, "var(--ls-text)")}>
-                Tout effacer
-              </button>
-            </>
-          ) : null}
-        </div>
-      </div>
-
       {/* Filtre par ligne (admin / référent uniquement) */}
       {canFilterTeam && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
@@ -1235,6 +1139,19 @@ export function CrmPage() {
           />
         );
       })() : null}
+
+      {/* Le tiroir de filtres qualifiants (lot 5). Alimenté par le périmètre
+          courant (regroupes) pour des compteurs de facette justes. */}
+      {qualifOuvert ? (
+        <CrmPanneauFiltres
+          leads={regroupes}
+          qualif={qualif}
+          setQualif={setQualif}
+          vues={vues}
+          setVues={setVues}
+          onFermer={() => setQualifOuvert(false)}
+        />
+      ) : null}
 
       <footer style={footerHint}>
         💡 Clique sur un lead pour ouvrir sa fiche complète (réponses, conversion, RDV,
