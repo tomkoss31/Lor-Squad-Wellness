@@ -223,19 +223,76 @@ function isMissingColumnError(error: { message?: string } | null | undefined, co
   return Boolean(error?.message?.toLowerCase().includes(column.toLowerCase()));
 }
 
-function isMissingTableError(error: { message?: string } | null | undefined, table: string) {
-  return Boolean(error?.message?.toLowerCase().includes(table.toLowerCase()));
+/**
+ * La table n'existe VRAIMENT pas.
+ *
+ * Remplace l'ancien `isMissingTableError`, qui se contentait de chercher le nom
+ * de la table dans le message : Postgres l'y met dans presque toutes ses
+ * erreurs, donc « refus de droits » et « table absente » etaient confondus.
+ *
+ * 42P01 = undefined_table cote Postgres · PGRST205 = PostgREST ne trouve pas la
+ * table dans son cache de schema (le cas d'`activity_logs`, supprimee).
+ */
+function tableAbsente(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "42P01" || error?.code === "PGRST205";
 }
 
-function getPvModuleSetupError(error: { message?: string } | null | undefined) {
-  const pvTables = ["pv_client_products", "pv_transactions", "pv_products", "pv_programs"];
-  const missingPvTable = pvTables.find((table) => isMissingTableError(error, table));
+/**
+ * Ce qu'il faut dire a quelqu'un dont une ecriture Suivi PV vient d'echouer.
+ *
+ * ⚠️ NE JAMAIS revenir a « le message contient le nom de la table ». C'etait la
+ * regle jusqu'au 21/08, et elle etait fausse par construction : Postgres nomme
+ * la table dans PRESQUE TOUTES ses erreurs d'ecriture.
+ *
+ *   permission denied for table "pv_transactions"
+ *   new row violates row-level security policy for table "pv_transactions"
+ *   new row for relation "pv_transactions" violates check constraint ...
+ *   insert or update on table "pv_transactions" violates foreign key ...
+ *
+ * Les quatre devenaient « le module Suivi PV n'est pas installe, lance le
+ * fichier de migration » — un message faux (le module tourne depuis toujours),
+ * inapplicable, et surtout qui DETRUISAIT la seule information utile.
+ *
+ * Vecu le 21/08 : Thomas valide une vente au Panier, sa session Supabase avait
+ * expire, la requete part sans jeton donc en `anon`. Or `anon` a INSERT mais
+ * pas UPDATE sur `pv_client_products`, et un upsert PostgREST est un
+ * `INSERT ... ON CONFLICT DO UPDATE` : il exige les DEUX. D'ou un
+ * « permission denied » (HTTP 401) que l'app a traduit par « installe le
+ * module ». La vraie reponse tenait en trois mots : reconnecte-toi.
+ *
+ * On classe donc par CODE SQLSTATE, jamais par le texte. Tout ce qui n'est pas
+ * reconnu ici renvoie `null` et l'appelant remonte le message brut de Postgres
+ * — mieux vaut un message technique qu'un message faux.
+ */
+function messageErreurEcriturePv(
+  error: { message?: string; code?: string } | null | undefined,
+): string | null {
+  const code = error?.code;
 
-  if (!missingPvTable) {
-    return null;
+  // 42P01 = la relation n'existe pas · PGRST205 = absente du cache de schema
+  // PostgREST. Ce sont les DEUX seuls cas ou « pas installe » est vrai.
+  if (code === "42P01" || code === "PGRST205") {
+    return "Le module Suivi PV n'est pas installe sur cette base. Lance supabase/pv-module-migration.sql dans le SQL Editor, puis recharge l'application.";
   }
 
-  return "Le module Suivi PV n'est pas encore installe sur cette base Supabase. Lance d'abord le fichier supabase/pv-module-migration.sql dans SQL Editor, puis recharge l'application.";
+  return messageSessionExpiree(error);
+}
+
+/**
+ * 42501 = privilege insuffisant.
+ *
+ * En pratique la requete est partie SANS session valide : PostgREST l'execute
+ * alors en `anon`, qui n'a le droit d'ecrire nulle part. Vaut pour n'importe
+ * quelle table, d'ou l'extraction hors du classifieur PV.
+ *
+ * On previent qu'une partie a pu passer : le Panier ecrit ligne par ligne,
+ * donc une expiration en cours de route laisse un panier a moitie enregistre.
+ */
+function messageSessionExpiree(
+  error: { message?: string; code?: string } | null | undefined,
+): string | null {
+  if (error?.code !== "42501") return null;
+  return "Ta session a expire : la base a refuse l'ecriture. Reconnecte-toi, puis verifie la fiche du client avant de refaire la vente — une partie a pu passer.";
 }
 
 function getTeamHierarchySetupError(
@@ -839,10 +896,14 @@ export async function fetchSupabasePvClientProducts() {
     .order("start_date", { ascending: false });
 
   if (error || !data) {
-    if (getPvModuleSetupError(error)) {
-      return [] as PvClientProductRecord[];
+    // Les deux branches d'avant renvoyaient [] : le `if` ne servait a rien et
+    // l'echec disparaissait sans laisser de trace. On rend toujours une liste
+    // vide (l'app doit continuer de s'afficher), mais on l'ECRIT dans la
+    // console avec le code SQLSTATE — sinon un refus de droits ressemble a
+    // « ce coach n'a aucun produit actif », ce qui est indiscernable.
+    if (error) {
+      console.warn("[pv_client_products] lecture refusee :", error.code, error.message);
     }
-
     return [] as PvClientProductRecord[];
   }
 
@@ -857,10 +918,11 @@ export async function fetchSupabasePvTransactions() {
     .order("date", { ascending: false });
 
   if (error || !data) {
-    if (getPvModuleSetupError(error)) {
-      return [] as PvClientTransaction[];
+    // Meme remarque que pour pv_client_products ci-dessus : liste vide pour ne
+    // pas casser l'affichage, mais l'echec est trace.
+    if (error) {
+      console.warn("[pv_transactions] lecture refusee :", error.code, error.message);
     }
-
     return [] as PvClientTransaction[];
   }
 
@@ -876,7 +938,7 @@ export async function fetchSupabaseActivityLogs() {
     .limit(120);
 
   if (error) {
-    if (isMissingTableError(error, "activity_logs")) {
+    if (tableAbsente(error)) {
       return [] as ActivityLog[];
     }
 
@@ -1110,8 +1172,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
 
   if (seedProducts.length) {
     const { error: pvSeedError } = await client.from("pv_client_products").insert(seedProducts);
-    if (pvSeedError && !isMissingTableError(pvSeedError, "pv_client_products")) {
-      throw new Error("Le client a ete cree, mais pas le socle de suivi PV.");
+    // ⚠️ On ne tolere le silence QUE si la table n'existe pas. Avant le 21/08 la
+    // condition testait « le message contient pv_client_products » : un refus de
+    // droits (session expirée) ou un refus RLS passait donc pour une absence de
+    // table et etait AVALE. La fiche se creait sans ses produits, sans un mot —
+    // exactement la perte silencieuse que CLAUDE.md interdit sur cette table.
+    if (pvSeedError && !tableAbsente(pvSeedError)) {
+      console.error("[pv_client_products] socle non cree :", pvSeedError.code, pvSeedError.message);
+      throw new Error(
+        messageErreurEcriturePv(pvSeedError) ??
+          `Le client a ete cree, mais pas le socle de suivi PV : ${pvSeedError.message}`,
+      );
     }
   }
 
@@ -1214,13 +1285,13 @@ export async function upsertSupabasePvClientProduct(product: PvClientProductReco
     .single<PvClientProductRow>();
 
   if (error || !data) {
-    const pvSetupError = getPvModuleSetupError(error);
-    if (pvSetupError) {
-      throw new Error(pvSetupError);
-    }
-
+    // ⚠️ `.upsert()` = INSERT ... ON CONFLICT DO UPDATE cote PostgREST : il
+    // exige INSERT **et** UPDATE. Une requete partie sans session tombe donc
+    // ici avec 42501, meme quand aucune ligne n'existait a mettre a jour.
+    console.error("[pv_client_products] ecriture refusee :", error?.code, error?.message);
     throw new Error(
-      error?.message ??
+      messageErreurEcriturePv(error) ??
+        error?.message ??
         "Impossible de mettre a jour ce produit actif dans le suivi PV."
     );
   }
@@ -1345,8 +1416,10 @@ export async function recordQuickSale(payload: {
   if (toInsert.length > 0) {
     const { error: pErr } = await client.from("pv_client_products").insert(toInsert);
     if (pErr) {
-      const pvSetupError = getPvModuleSetupError(pErr);
-      throw new Error(pvSetupError ?? `Enregistrement des produits impossible : ${pErr.message}`);
+      console.error("[pv_client_products] insertion refusee :", pErr.code, pErr.message);
+      throw new Error(
+        messageErreurEcriturePv(pErr) ?? `Enregistrement des produits impossible : ${pErr.message}`,
+      );
     }
   }
 
@@ -1411,7 +1484,10 @@ export async function recordConsumptionOrder(payload: {
     p_lines: payload.lines,
     p_note: payload.note ?? null,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[record_consumption_order] refusee :", error.code, error.message);
+    throw new Error(messageSessionExpiree(error) ?? error.message);
+  }
   return data as string;
 }
 
@@ -1587,10 +1663,11 @@ export async function updateSupabasePvClientProductStartDate(
     .single<PvClientProductRow>();
 
   if (error || !data) {
-    const pvSetupError = getPvModuleSetupError(error);
-    if (pvSetupError) throw new Error(pvSetupError);
+    console.error("[pv_client_products] date de demarrage refusee :", error?.code, error?.message);
     throw new Error(
-      error?.message ?? "Impossible de mettre à jour la date de démarrage du produit.",
+      messageErreurEcriturePv(error) ??
+        error?.message ??
+        "Impossible de mettre à jour la date de démarrage du produit.",
     );
   }
 
@@ -1619,13 +1696,11 @@ export async function addSupabasePvTransaction(transaction: PvClientTransaction)
     .single<PvTransactionRow>();
 
   if (error || !data) {
-    const pvSetupError = getPvModuleSetupError(error);
-    if (pvSetupError) {
-      throw new Error(pvSetupError);
-    }
-
+    console.error("[pv_transactions] ecriture refusee :", error?.code, error?.message);
     throw new Error(
-      error?.message ?? "Impossible d'ajouter ce mouvement produit."
+      messageErreurEcriturePv(error) ??
+        error?.message ??
+        "Impossible d'ajouter ce mouvement produit."
     );
   }
 
@@ -1830,13 +1905,15 @@ export async function createSupabaseActivityLog(log: ActivityLog) {
     .single<ActivityLogRow>();
 
   if (error || !data) {
-    if (isMissingTableError(error, "activity_logs")) {
+    if (tableAbsente(error)) {
       throw new Error(
         "La table activity_logs n'existe pas encore sur Supabase. Lance la migration equipe pour activer l'historique."
       );
     }
 
-    throw new Error(error?.message ?? "Impossible d'enregistrer cette action.");
+    throw new Error(
+      messageSessionExpiree(error) ?? error?.message ?? "Impossible d'enregistrer cette action.",
+    );
   }
 
   return mapActivityLog(data);
