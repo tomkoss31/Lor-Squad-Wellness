@@ -1,27 +1,39 @@
 // =============================================================================
 // CrmBoiteArrivee — « Rien n'entre dans l'entonnoir sans ton geste. »
 //
-// Lot 2 du chantier CRM Board V2 (maquette Claude Design du 20/08).
+// Lot 2 du chantier CRM Board V2. RÉÉCRIT le 20/08 après que Thomas a regardé
+// la première version : « c'est pourri et rien à voir avec le design ». Il
+// avait raison — j'avais lu la spec ÉCRITE et jamais ouvert la maquette. Cette
+// version est mesurée sur le rendu réel, élément par élément.
 //
-// LE CONSTAT DE L'AUDIT : les 11 points d'entrée déversaient DIRECTEMENT dans
-// les colonnes du pipeline — mélangés à des doublons, des bilans à peine
-// commencés et des prénoms sans numéro. L'entonnoir ne disait donc plus qui en
-// était où : il disait seulement « il s'est passé quelque chose quelque part ».
+// ── CE QUI VIENT DE LA MAQUETTE, AU PIXEL ─────────────────────────────────
+// Bloc : padding 18/18/14 · titre Syne 16px/800 en encre pleine · badge de
+// compte à rayon 6px (PAS une pilule) · sous-titre 11.5px.
+// Carte : rayon 13px, padding 12/13, gap 8 · nom 13.5px/700 en encre pleine ·
+// horodatage 10.5px en teinte la plus faible · contexte 11.5px.
+// Boutons : rayon 8px, 11.5px/800, gap 6.
 //
-// Cette file d'attente s'intercale avant. Chaque carte porte UN geste explicite,
-// et ce geste est le seul chemin vers l'entonnoir.
+// ── LA RÈGLE DE COULEUR, ET C'EST LE CŒUR DU DESIGN ───────────────────────
+// Seules les cartes qui demandent une décision SPÉCIFIQUE sont colorées, et
+// chacune a sa teinte : violet pour un RDV du club à confirmer, ambre pour un
+// doublon. Bilan, intention et curieux restent neutres. Une file où tout
+// clignote ne hiérarchise plus rien — c'est le contraire du but.
 //
-// ── CE QUI N'EST PAS UN OUBLI ─────────────────────────────────────────────
-// • Elle ne répond NI à la recherche NI aux onglets. C'est une file d'attente,
-//   pas une vue : la masquer derrière un filtre laisserait des gens à la porte
-//   sans que personne le sache.
-// • Hauteur bornée avec défilement interne. Le travers de l'écran actuel est
-//   exactement là : chaque bloc ajouté en tête repousse le premier lead plus
-//   bas. Ici la liste grandit à l'intérieur, jamais vers le bas.
-// • Accepter ne pose AUCUNE date. Accepter, c'est dire « celui-là est un vrai
-//   contact » — pas « je l'ai appelé ». La suite se cale avec « Et alors ? ».
-// • Vide, le bloc disparaît complètement. Un « 0 à valider » permanent est du
-//   bruit : on n'affiche une file d'attente que quand quelqu'un attend.
+// ── CE QUI A ÉTÉ TRADUIT, ET POURQUOI ─────────────────────────────────────
+// La maquette est en noir #07090B + lime + doré ; l'app est en vert profond et
+// a purgé le doré. Décision de Thomas (20/08) : « la structure de la maquette,
+// aux couleurs de l'app ». Les accents tombent juste — `--ls-purple` vaut
+// EXACTEMENT le violet de la maquette (#A78BFA), `--ls-amber` et `--ls-lime`
+// en sont les jumeaux. Seuls les fonds changent.
+//
+// ── CE QUI N'EST PAS REPRODUIT, ET C'EST VOULU ────────────────────────────
+// • Les pastilles rondes numérotées (1, 2, 3…) sont les ANNOTATIONS de la
+//   maquette — elle numérote ses propres zones pour les commenter. Les coder
+//   afficherait un décompte qui ne veut rien dire dans le produit.
+// • Les boutons font 35 px dans la maquette. On les monte à 44 px sous 1024 px
+//   (arbitrage délégué par Thomas) : à la souris 35 suffit, au doigt non. Via
+//   une CLASSE et pas un style en ligne — un style en ligne battrait la media
+//   query, piège déjà payé sur la barre de relances le 18/08.
 // =============================================================================
 
 import { useState } from "react";
@@ -38,8 +50,17 @@ interface Props {
   onOuvrir: (lead: CrmLead) => void;
 }
 
-/** « il y a 25 min », « il y a 4 h », « hier ». Jamais une date absolue : ce
- *  qui compte dans une file d'attente, c'est depuis combien de temps ça attend. */
+const CSS = `
+.crm-arr-btn{min-height:35px}
+.crm-arr-carte{border-radius:13px;padding:12px 13px}
+@media (max-width: 1023.98px){
+  /* Au doigt, 35 px ne suffit pas. La maquette est pensée à la souris. */
+  .crm-arr-btn{min-height:44px !important}
+}
+`;
+
+/** « il y a 25 min », « il y a 4 h », « hier » — la maquette compte le temps
+ *  d'attente, jamais une date : dans une file, c'est l'attente qui presse. */
 function depuis(iso: string): string {
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return "";
@@ -52,69 +73,47 @@ function depuis(iso: string): string {
 }
 
 /**
- * Ce que la carte propose, selon d'où vient le lead. Un seul geste principal —
- * deux boutons de même poids obligent à réfléchir, ce qui est exactement ce
- * qu'une file d'attente doit éviter.
+ * La teinte de la carte. `null` = neutre.
+ *
+ * La maquette ne colore QUE les deux cas qui demandent une décision qu'on ne
+ * peut pas remettre : un rendez-vous du club qui attend sa confirmation, et un
+ * doublon qui va créer deux fiches si on ne tranche pas.
  */
-function geste(lead: CrmLead): { principal: string; detail: string } {
-  // ⚠️ Le libellé principal est le MÊME partout, et c'est voulu : la maquette
-  // montre des gestes différents par source (« Confirmer + email », « Fusionner
-  // les 2 »…) mais chacun déclenche un flux qui lui est propre. Ce lot pose la
-  // file d'attente et le geste d'entrée ; les gestes spécialisés viendront
-  // dessus, sans avoir à la redéfaire. Promettre « ⇥ Fusionner » avant que la
-  // fusion existe serait un bouton menteur.
-  switch (lead.table) {
-    case "client_referral_intentions":
-      return { principal: "✓ Accepter → Nouveau", detail: "Prénom confié — pas encore de numéro." };
-    case "client_referrals":
-      return { principal: "✓ Accepter → Nouveau", detail: "Recommandé par un client." };
-    case "online_bilans":
-      return { principal: "✓ Accepter → Nouveau", detail: "Bilan en ligne rempli." };
-    default:
-      return { principal: "✓ Accepter → Nouveau", detail: "" };
-  }
+function teinteDe(lead: CrmLead, doublon: boolean): { fond: string; encre: string } | null {
+  // Chaque teinte porte SON encre, comme dans la maquette (#1C1233 sur le
+  // violet, #2A1E05 sur l'ambre). Une encre unique passerait sur l'une et
+  // pas sur l'autre : l'ambre est bien plus lumineux que le violet.
+  if (doublon) return { fond: "var(--ls-amber)", encre: "var(--ls-amber-ink)" };
+  if (lead.source === "site-club") return { fond: "var(--ls-purple)", encre: "var(--ls-purple-ink)" };
+  return null;
 }
 
-const carte: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  padding: "12px 13px",
-  borderRadius: 13,
-  background: "var(--ls-surface2)",
-  border: "0.5px solid var(--ls-border)",
-};
-
-const boutonPrincipal: React.CSSProperties = {
-  minHeight: 44,
-  padding: "10px 14px",
-  borderRadius: 11,
-  border: "1px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
-  background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))",
-  color: "var(--ls-text)",
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 13,
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const boutonDiscret: React.CSSProperties = {
-  minHeight: 44,
-  padding: "10px 13px",
-  borderRadius: 11,
-  border: "0.5px solid var(--ls-border)",
-  background: "transparent",
-  color: "var(--ls-text-muted)",
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 12.5,
-  cursor: "pointer",
-};
+function detailDe(lead: CrmLead): string {
+  switch (lead.table) {
+    case "client_referral_intentions":
+      return "Prénom confié — pas encore de numéro";
+    case "client_referrals":
+      return "Recommandé par un client";
+    case "online_bilans":
+      return "Bilan en ligne rempli";
+    default:
+      return "";
+  }
+}
 
 export function CrmBoiteArrivee({ leads, onAccepter, onRefuser, onOuvrir }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
   if (leads.length === 0) return null;
+
+  // Un doublon d'arrivée = même téléphone ou même email qu'un autre en attente.
+  // Détecté ICI et pas en base : c'est un état de la file, pas une donnée.
+  const clefs = new Map<string, number>();
+  for (const l of leads) {
+    const k = (l.contact ?? "").trim().toLowerCase();
+    if (k) clefs.set(k, (clefs.get(k) ?? 0) + 1);
+  }
 
   async function agir(lead: CrmLead, action: (l: CrmLead) => Promise<string | null>) {
     if (busy) return;
@@ -130,49 +129,65 @@ export function CrmBoiteArrivee({ leads, onAccepter, onRefuser, onOuvrir }: Prop
       aria-label="Boîte d'arrivée"
       style={{
         margin: "14px 0 0",
-        padding: "14px 15px",
+        padding: "18px 18px 14px",
         borderRadius: 16,
         background: "var(--ls-surface)",
-        border: "0.5px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
+        border: "1px solid var(--ls-border)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
-        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 15, color: "var(--ls-text)" }}>
+      <style>{CSS}</style>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 16, color: "var(--ls-text)" }}>
           📥 Arrivées
         </span>
+        {/* Rayon 6 px, pas une pilule : la maquette pose un rectangle arrondi. */}
         <span
           style={{
             fontFamily: "DM Sans, sans-serif",
-            fontSize: 12,
-            fontWeight: 700,
-            padding: "2px 9px",
-            borderRadius: 99,
-            background: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
-            color: "var(--ls-text)",
+            fontSize: 11.5,
+            fontWeight: 800,
+            padding: "2px 8px",
+            borderRadius: 6,
+            background: "var(--ls-lime)",
+            // `--ls-lime` fonce aussi en thème clair (#5E7A09) : encre à jeton.
+            color: "var(--ls-lime-ink)",
           }}
         >
           {leads.length} à valider
         </span>
       </div>
-      <p style={{ margin: "5px 0 12px", fontSize: 12.5, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
-        Rien n'entre dans l'entonnoir sans ton geste.
+      <p style={{ margin: "6px 0 12px", fontSize: 11.5, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
+        Rien n'entre dans l'entonnoir sans ton geste. Objectif : répondre dans l'heure.
       </p>
 
       {erreur ? (
-        <div role="alert" style={{ marginBottom: 10, fontSize: 12.5, color: "var(--ls-coral)", lineHeight: 1.5 }}>
+        <div role="alert" style={{ marginBottom: 10, fontSize: 11.5, color: "var(--ls-coral)", lineHeight: 1.5 }}>
           {erreur}
         </div>
       ) : null}
 
-      {/* Hauteur bornée : la file grandit à l'intérieur, elle ne pousse jamais
-          l'entonnoir vers le bas. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 9, maxHeight: 340, overflowY: "auto" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto" }}>
         {leads.map((lead) => {
-          const g = geste(lead);
+          const k = (lead.contact ?? "").trim().toLowerCase();
+          const doublon = !!k && (clefs.get(k) ?? 0) > 1;
+          const teinte = teinteDe(lead, doublon);
           const enCours = busy === lead.key;
+          const src = CRM_SOURCE_META[lead.source];
+
           return (
-            <div key={lead.key} style={carte}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+            <div
+              key={lead.key}
+              className="crm-arr-carte"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                background: "var(--ls-surface2)",
+                border: `1px solid ${teinte ? `color-mix(in srgb, ${teinte.fond} 30%, transparent)` : "var(--ls-border)"}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                 <button
                   type="button"
                   onClick={() => onOuvrir(lead)}
@@ -183,40 +198,77 @@ export function CrmBoiteArrivee({ leads, onAccepter, onRefuser, onOuvrir }: Prop
                     cursor: "pointer",
                     fontFamily: "DM Sans, sans-serif",
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 13.5,
                     color: "var(--ls-text)",
                     textAlign: "left",
                   }}
                 >
                   {nomAffiche(lead.firstName, lead.lastName)}
                 </button>
-                <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>{depuis(lead.createdAt)}</span>
+                <span style={{ fontSize: 10.5, color: "var(--ls-text-muted)" }}>{depuis(lead.createdAt)}</span>
               </div>
 
-              <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
-                {[
-                  `${CRM_SOURCE_META[lead.source].emoji} ${CRM_SOURCE_META[lead.source].label}`,
-                  g.detail,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
+              {/* La ligne de contexte : la source prend la teinte de la carte
+                  quand il y en a une — c'est elle qui explique la couleur. */}
+              <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", lineHeight: 1.45 }}>
+                {/* ⚠️ La teinte ne porte JAMAIS le texte : mesuré 4,11:1 pour
+                    le violet sur la surface de la carte. La maquette se le
+                    permet sur un fond noir, pas nous. C'est la règle du projet
+                    depuis le 18/08 — la couleur passe par le liseré et
+                    l'aplat, jamais par l'encre. */}
+                <span style={{ fontWeight: teinte ? 700 : 400, color: "var(--ls-text-muted)" }}>
+                  {src.emoji} {src.label}
+                </span>
+                {doublon ? (
+                  <>
+                    {" · "}
+                    <span style={{ fontWeight: 700, color: "var(--ls-text)" }}>2 fiches, même contact</span>
+                  </>
+                ) : detailDe(lead) ? (
+                  <> · {detailDe(lead)}</>
+                ) : null}
               </div>
 
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <button
                   type="button"
+                  className="crm-arr-btn"
                   disabled={enCours}
                   onClick={() => void agir(lead, onAccepter)}
-                  style={{ ...boutonPrincipal, opacity: enCours ? 0.6 : 1, cursor: enCours ? "wait" : "pointer" }}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: 0,
+                    // Plein quand la carte demande une décision spécifique,
+                    // discret sinon : c'est la hiérarchie de la maquette.
+                    background: teinte?.fond ?? "var(--ls-surface)",
+                    color: teinte?.encre ?? "var(--ls-text)",
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    cursor: enCours ? "wait" : "pointer",
+                    opacity: enCours ? 0.6 : 1,
+                  }}
                 >
-                  {enCours ? "…" : g.principal}
+                  {enCours ? "…" : "✓ Accepter → Nouveau"}
                 </button>
                 <button
                   type="button"
+                  className="crm-arr-btn"
                   disabled={enCours}
                   onClick={() => void agir(lead, onRefuser)}
                   title="Le met de côté sans rien supprimer"
-                  style={boutonDiscret}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface)",
+                    color: "var(--ls-text-muted)",
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
                 >
                   Plus tard
                 </button>

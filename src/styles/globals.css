@@ -125,6 +125,14 @@
   --ls-sage: #93A67E;
   --ls-amber: #E8A93A;
   --ls-purple: #A78BFA;
+  /* L'encre posée SUR un aplat d'accent. Le thème clair ASSOMBRIT les accents
+     (--ls-purple passe à #6D28D9, --ls-amber à #9A631A) pour porter du blanc :
+     une encre écrite en dur ne peut donc être juste que dans UN des deux
+     thèmes. Mesuré le 20/08 : #1C1233 sur le violet clair = 2,5:1.
+     Même motif que --ls-bbc-lime-ink, pour la même raison. */
+  --ls-purple-ink: #1C1233;
+  --ls-amber-ink: #2A1E05;
+  --ls-lime-ink: #1B2409;
   --ls-gold-bg: rgba(201,168,76,0.1);
   --ls-teal-bg: rgba(45,212,191,0.1);
   --ls-coral-bg: rgba(242,119,95,0.1);
@@ -208,6 +216,10 @@
    du site) qui séparent, pas des traits gris. Accents assombris pour tenir sur
    du clair (le lime devient olive, sinon illisible sur blanc). */
 html.theme-light {
+  /* Accents assombris en clair : c'est le blanc qui s'y lit. */
+  --ls-purple-ink: #FFFFFF;
+  --ls-amber-ink: #FFFFFF;
+  --ls-lime-ink: #FFFFFF;
   /* ── CONTRASTE (audit du 13/08/2026) ─────────────────────────────────────
      Mesuré dans le navigateur : CINQ tokens du thème clair étaient sous le
      seuil lisible (4,5:1 pour du petit texte), y compris quand ils servent de
