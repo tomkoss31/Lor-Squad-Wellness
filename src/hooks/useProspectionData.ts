@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 import { lireMonProfil, oublierMonProfil } from "../services/monProfil";
 
 export interface ProspectionMarket {
@@ -301,8 +302,27 @@ const INITIAL: State = {
   routines: [],
 };
 
+/** Clé du cache d'écran. Un seul jeu de contenu, une seule clé. */
+const CLE_CACHE = "prospection:contenu";
+
 export function useProspectionData() {
-  const [state, setState] = useState<State>(INITIAL);
+  // ── Le plus gros gain de tout l'écran (21/08) ────────────────────────────
+  //
+  // Cet effet lance SEIZE lectures a chaque montage — marchés, profils,
+  // hashtags, scripts, objections, relances, closing… Mesuré en prod, chaque
+  // requête coûte de 0,5 à 4 secondes sur cette machine ; elles partent en
+  // parallèle, mais l'écran attend la plus lente. Et ça recommençait à chaque
+  // passage sur la page.
+  //
+  // C'est aussi le cache le plus SÛR de l'app : ce sont des contenus de
+  // référence, écrits par l'admin dans les tables `prospection_*`. Aucune
+  // écriture ne passe par ce hook — il n'y a donc rien à re-synchroniser,
+  // contrairement au CRM et à ses mises à jour optimistes.
+  //
+  // « Montre d'abord, vérifie ensuite » : la lecture repart quand même en
+  // fond, donc un script modifié côté admin apparaît au passage suivant.
+  const dejaVu = lireCacheEcran<State>(CLE_CACHE);
+  const [state, setState] = useState<State>(dejaVu ?? INITIAL);
 
   useEffect(() => {
     let cancelled = false;
@@ -336,11 +356,15 @@ export function useProspectionData() {
         const allResults = [m, p, h, s, t, mb, mt, pf, src, rt, obj, fu, cl, sc, st, rt2];
         const firstError = allResults.find((r) => r.error)?.error;
         if (firstError) {
-          setState({ ...INITIAL, loading: false, error: firstError.message });
+          // ⚠️ On ne repart PAS de `INITIAL` quand on a déjà du contenu affiché :
+          // une lecture qui échoue (session expirée, coupure) viderait l'écran
+          // de scripts parfaitement valides. On garde ce qu'on montre et on dit
+          // ce qui s'est passé.
+          setState((prev) => ({ ...prev, loading: false, error: firstError.message }));
           return;
         }
 
-        setState({
+        const suivant: State = {
           loading: false,
           error: null,
           markets: (m.data ?? []) as ProspectionMarket[],
@@ -359,14 +383,16 @@ export function useProspectionData() {
           specialCases: (sc.data ?? []) as ProspectionSpecialCase[],
           storytelling: (st.data ?? []) as ProspectionStoryBlock[],
           routines: (rt2.data ?? []) as ProspectionRoutineItem[],
-        });
+        };
+        setState(suivant);
+        ecrireCacheEcran(CLE_CACHE, suivant);
       } catch (e) {
         if (!cancelled) {
-          setState({
-            ...INITIAL,
+          setState((prev) => ({
+            ...prev,
             loading: false,
             error: e instanceof Error ? e.message : "Erreur inconnue.",
-          });
+          }));
         }
       }
     })();

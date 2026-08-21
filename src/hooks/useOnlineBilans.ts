@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 
 export type LeadStatus =
   | "new"
@@ -78,10 +79,35 @@ interface UseOnlineBilansResult {
   convertLead: (id: string, clientId: string) => Promise<void>;
 }
 
+const CLE_CACHE = "bilans-online:liste";
+
 export function useOnlineBilans(): UseOnlineBilansResult {
-  const [bilans, setBilans] = useState<OnlineBilanRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Même principe que le CRM : au retour sur la page, on réaffiche la liste
+  // qu'on avait pendant que la lecture repart en fond. Ici c'est d'autant plus
+  // net que ce hook relit AUSSI à chaque retour de focus sur la fenêtre.
+  const dejaVu = lireCacheEcran<OnlineBilanRow[]>(CLE_CACHE);
+  const [bilans, setBilans] = useState<OnlineBilanRow[]>(dejaVu ?? []);
+  const [loading, setLoading] = useState(dejaVu === null);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * LE seul point de mise à jour — état ET cache ensemble.
+   *
+   * ⚠️ Ne jamais rappeler `setBilans` en direct : les quatre gestes de la page
+   * (statut, note, suppression, conversion) mettent la liste à jour de façon
+   * optimiste. Sans passer par ici, un aller-retour réafficherait le cache
+   * d'AVANT le geste et le changement semblerait s'être annulé tout seul.
+   */
+  const majBilans = useCallback(
+    (maj: OnlineBilanRow[] | ((prev: OnlineBilanRow[]) => OnlineBilanRow[])) => {
+      setBilans((prev) => {
+        const suivant = typeof maj === "function" ? maj(prev) : maj;
+        ecrireCacheEcran(CLE_CACHE, suivant);
+        return suivant;
+      });
+    },
+    [],
+  );
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -93,14 +119,14 @@ export function useOnlineBilans(): UseOnlineBilansResult {
         .select("*")
         .order("created_at", { ascending: false });
       if (err) throw err;
-      setBilans((data ?? []) as OnlineBilanRow[]);
+      majBilans((data ?? []) as OnlineBilanRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erreur inconnue";
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [majBilans]);
 
   useEffect(() => {
     void fetchAll();
@@ -134,14 +160,14 @@ export function useOnlineBilans(): UseOnlineBilansResult {
       .eq("id", id);
     if (err) throw err;
     // Optimistic update local
-    setBilans((prev) =>
+    majBilans((prev) =>
       prev.map((b) =>
         b.id === id
           ? { ...b, lead_status: status, ...(patch as Partial<OnlineBilanRow>) }
           : b,
       ),
     );
-  }, []);
+  }, [majBilans]);
 
   const updateNotes = useCallback(async (id: string, notes: string) => {
     const sb = await getSupabaseClient();
@@ -151,10 +177,10 @@ export function useOnlineBilans(): UseOnlineBilansResult {
       .update({ notes })
       .eq("id", id);
     if (err) throw err;
-    setBilans((prev) =>
+    majBilans((prev) =>
       prev.map((b) => (b.id === id ? { ...b, notes } : b)),
     );
-  }, []);
+  }, [majBilans]);
 
   const deleteBilan = useCallback(async (id: string) => {
     const sb = await getSupabaseClient();
@@ -166,8 +192,8 @@ export function useOnlineBilans(): UseOnlineBilansResult {
       .delete()
       .eq("id", id);
     if (err) throw err;
-    setBilans((prev) => prev.filter((b) => b.id !== id));
-  }, []);
+    majBilans((prev) => prev.filter((b) => b.id !== id));
+  }, [majBilans]);
 
   const convertLead = useCallback(async (id: string, clientId: string) => {
     const sb = await getSupabaseClient();
@@ -185,12 +211,12 @@ export function useOnlineBilans(): UseOnlineBilansResult {
       .update(patch)
       .eq("id", id);
     if (err) throw err;
-    setBilans((prev) =>
+    majBilans((prev) =>
       prev.map((b) =>
         b.id === id ? { ...b, ...(patch as Partial<OnlineBilanRow>) } : b,
       ),
     );
-  }, []);
+  }, [majBilans]);
 
   return { bilans, loading, error, refetch: fetchAll, updateStatus, updateNotes, deleteBilan, convertLead };
 }
