@@ -24,7 +24,6 @@ import {
   fetchSupabaseAssessment,
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
-  createSupabaseActivityLog,
   createSupabaseUserAccess,
   deleteSupabaseClient,
   fetchSupabaseClients,
@@ -259,6 +258,8 @@ interface AppContextValue {
     }
   ) => Promise<void>;
   addPvTransaction: (transaction: PvClientTransaction) => Promise<void>;
+  /** Un panier entier : ecrit chaque ligne, ne recharge qu'une fois. */
+  addPvTransactions: (transactions: PvClientTransaction[]) => Promise<void>;
   savePvClientProduct: (product: PvClientProductRecord) => Promise<void>;
   /** Corrige la date de démarrage d'un produit actif (fiche Suivi PV). */
   updatePvProductStartDate: (recordId: string, startDateIso: string) => Promise<void>;
@@ -340,7 +341,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         nextUsers,
         nextPvTransactions,
         nextPvClientProducts,
-        nextProspects
+        nextProspects,
+        nextMessages
       ] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
@@ -350,7 +352,27 @@ export function AppProvider({ children }: PropsWithChildren) {
         fetchSupabaseProspects().catch((error) => {
           console.error("Prospects indisponibles pour l'instant.", error);
           return [] as Prospect[];
-        })
+        }),
+        // Les messages EN MEME TEMPS que le reste (21/08), plus a la suite.
+        // Ils ne dependent d'aucun des six autres appels, mais ils partaient
+        // apres eux : mesure en prod, 7,5 s ajoutes bout a bout a un
+        // rechargement qui en prenait deja 20. Ils rejoignent le peloton.
+        // Le `catch` reste local pour garder le comportement d'origine : des
+        // messages indisponibles ne doivent pas vider le reste de l'app.
+        (async () => {
+          try {
+            const sb2 = await getSupabaseClient();
+            if (!sb2) return [] as ClientMessage[];
+            const { data } = await sb2
+              .from("client_messages")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(1000);
+            return (data ?? []) as ClientMessage[];
+          } catch {
+            return [] as ClientMessage[];
+          }
+        })()
       ]);
 
       setClients(nextClients);
@@ -387,13 +409,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       // anciennes disparaissaient de la liste mobile (cf. AppContext:278).
       // ConversationView fait un fetch direct par client_id pour les
       // deep-links donc 1000 suffit largement pour l'inbox actif.
-      try {
-        const sb2 = await getSupabaseClient();
-        if (sb2) {
-          const { data: msgs } = await sb2.from('client_messages').select('*').order('created_at', { ascending: false }).limit(1000);
-          setClientMessages((msgs ?? []) as ClientMessage[]);
-        }
-      } catch { /* messages unavailable */ }
+      setClientMessages(nextMessages);
     } catch (error) {
       // Garde-fou (2026-04-25) : un fetch principal qui plante
       // (typiquement RLS foireuse) doit hurler dans la console avec le
@@ -549,12 +565,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       ...payload
     };
 
-    try {
-      const createdEntry = await createSupabaseActivityLog(nextEntry);
-      setActivityLogs((previousLogs) => [createdEntry, ...previousLogs].slice(0, 120));
-    } catch (error) {
-      console.error("Journal d'activité indisponible.", error);
-    }
+    // ⚠️ On n'appelle PLUS le serveur ici (21/08). `activity_logs` a ete
+    // SUPPRIMEE de la base — verifie : elle n'est plus dans `pg_tables`, et
+    // PostgREST repond PGRST205. Chacun des 12 endroits qui appellent
+    // `recordActivity` payait donc un aller-retour HTTP **attendu** qui finit
+    // en 404, a chaque validation de bilan, de vente, de suivi. Mesure du jour :
+    // 106 ms le plus rapide, 863 ms le plus lent, pour rien.
+    //
+    // Et le resultat n'allait nulle part : `activityLogs` n'est lu par AUCUN
+    // composant de l'interface (grep a l'appui). C'est du poids mort integral.
+    //
+    // On garde l'entree en memoire pour ne pas toucher aux 12 appelants ni au
+    // type du contexte. Le jour ou le journal revient, il suffit de remettre
+    // l'appel serveur ici — et de recreer la table AVANT.
+    setActivityLogs((previousLogs) => [nextEntry, ...previousLogs].slice(0, 120));
   }
 
   async function loginWithCredentials(payload: { email: string; password: string }) {
@@ -972,7 +996,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     });
   }
 
-  async function addPvTransaction(transaction: PvClientTransaction) {
+  /** L'ecriture seule : les deux tables, sans rechargement. */
+  async function ecrirePvTransaction(transaction: PvClientTransaction) {
     const targetClient = clients.find((client) => client.id === transaction.clientId);
     const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
     const existingProduct = pvClientProducts.find(
@@ -1012,6 +1037,41 @@ export function AppProvider({ children }: PropsWithChildren) {
       active: true
     });
     await addSupabasePvTransaction(transaction);
+  }
+
+  /**
+   * Enregistre un mouvement PV.
+   *
+   * Reste mono-produit pour ses appelants existants (fiche PV client). Pour un
+   * PANIER, utiliser `addPvTransactions` : voir pourquoi juste en dessous.
+   */
+  async function addPvTransaction(transaction: PvClientTransaction) {
+    await ecrirePvTransaction(transaction);
+    await refreshRemoteData(currentUser);
+  }
+
+  /**
+   * Enregistre PLUSIEURS mouvements et ne recharge qu'UNE fois, a la fin.
+   *
+   * Le Panier bouclait sur `addPvTransaction`, qui recharge TOUTE l'app apres
+   * chaque produit : clients, suivis, utilisateurs, mouvements PV, produits
+   * actifs, prospects, plus les 1000 derniers messages. Un panier de trois
+   * produits declenchait donc trois rechargements complets, en serie.
+   *
+   * Ce que ca coute vraiment, mesure en prod le 21/08 sur une seule validation :
+   * l'ecriture prend 1,7 s, le rechargement qui suit en prend 28 — dont un
+   * `GET /clients` a 14,5 s pour 136 lignes. Multiplier ca par le nombre de
+   * produits n'apporte rien : les donnees rechargees apres le produit 1 sont
+   * jetees par le rechargement du produit 2.
+   *
+   * Les ecritures restent EN SERIE a dessein : les paralleliser changerait le
+   * comportement en cas d'echec au milieu du panier, et ce n'est pas la qu'est
+   * le temps.
+   */
+  async function addPvTransactions(transactions: PvClientTransaction[]) {
+    for (const transaction of transactions) {
+      await ecrirePvTransaction(transaction);
+    }
     await refreshRemoteData(currentUser);
   }
 
@@ -1385,6 +1445,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateClientSchedule,
       reassignClientOwner,
       addPvTransaction,
+      addPvTransactions,
       savePvClientProduct,
       updatePvProductStartDate,
       linkClientToUser,

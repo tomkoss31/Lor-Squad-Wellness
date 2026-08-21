@@ -130,7 +130,7 @@ interface CatProduct {
 
 export function PanierPage() {
   const { push } = useToast();
-  const { currentUser, clients, addPvTransaction, pvTransactions, pvClientProducts, users, linkClientToUser } = useAppContext();
+  const { currentUser, clients, addPvTransactions, pvTransactions, pvClientProducts, users, linkClientToUser } = useAppContext();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -424,7 +424,7 @@ export function PanierPage() {
   }
 
   // Valider la vente. Deux chemins selon l'attribution :
-  //  • Client existant → addPvTransaction par ligne (MÊME chemin que le réassort) :
+  //  • Client existant → addPvTransactions (MÊME chemin que le réassort) :
   //    atterrit sur sa fiche + son app + rentabilité, incrémenté à l'identique.
   //    « Sur son compte » = commande (PV au client) ; « Sur place » = 0 PV pour
   //    le client mais le € remonte quand même dans la rentabilité du distri.
@@ -459,6 +459,13 @@ export function PanierPage() {
         const respName = selectedClient.distributorName || currentUser.name;
         const isPlace = saleType === "reprise-sur-place";
         const fullName = `${selectedClient.firstName} ${selectedClient.lastName}`.trim();
+        // On CONSTRUIT d'abord toutes les lignes, on ecrit ensuite d'un bloc.
+        // Avant, la boucle appelait `addPvTransaction` produit par produit, et
+        // chacun rechargeait TOUTE l'app derriere lui (clients, suivis, PV,
+        // messages...). Mesure du 21/08 : l'ecriture prend 1,7 s, le
+        // rechargement 28. Un panier de trois produits attendait donc trois
+        // fois ce rechargement, dont les deux premiers pour rien.
+        const mouvements: PvClientTransaction[] = [];
         for (let i = 0; i < lines.length; i += 1) {
           const p = lines[i];
           const qty = cart[p.id];
@@ -482,8 +489,9 @@ export function PanierPage() {
               : `Commande (panier) — ${lines.length} ligne${lines.length > 1 ? "s" : ""}${startOverride ? ` · cure démarre J+${delayDays}` : ""}`,
             ...(startOverride ? { startDateOverride: startOverride } : {}),
           };
-          await addPvTransaction(tx);
+          mouvements.push(tx);
         }
+        await addPvTransactions(mouvements);
         push({
           tone: "success",
           title: isPlace ? "Vente sur place enregistrée 🏪" : `+${totalPV.toFixed(1)} PV pour ${selectedClient.firstName} 🎉`,
