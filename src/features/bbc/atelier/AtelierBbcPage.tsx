@@ -43,6 +43,7 @@ import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { QualifierRdvSheet } from "../../../components/agenda/QualifierRdvSheet";
 import { BbcSupprimerMembre } from "../views/BbcSupprimerMembre";
 import { CrmBoiteArrivee } from "../../../components/crm/CrmBoiteArrivee";
+import { CrmCarteLead } from "../../../components/crm/CrmCarteLead";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
 import { BbcClub } from "../views/BbcClub";
@@ -89,6 +90,7 @@ type ScreenKey =
   | "qualifier"
   | "supprimer"
   | "arrivees"
+  | "cartes-lead"
   | "entonnoir"
   | "bilan10";
 
@@ -133,6 +135,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "cartes-lead",
+    label: "Cartes lead (CRM)",
+    source: "props",
+    note: "Les 5 variantes de la carte du board CRM V2 (lot 2), fictives : saine / en retard / sans suite / pourrit / RDV passé. Écran de l'app classique. Vérifie le contraste et les 4 lignes dont « Pourquoi 82 ».",
   },
   {
     k: "arrivees",
@@ -400,6 +408,37 @@ function AtelierScene({
     return (
       <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
         <CrmJaugeEntonnoir leads={faux} filtre={{ etape: null, relance: false }} onFiltrer={() => undefined} />
+      </div>
+    );
+  }
+
+  if (screen === "cartes-lead") {
+    // Cinq leads fictifs, un par variante. Dates calees pour declencher chaque etat.
+    const base = { key: "x", table: "prospect_leads", contact: "x@y.fr", contactIsPhone: true,
+      bilanObjectives: ["Perte de poids", "Sommeil"], bilanWeightTarget: 8, bilanMotivation: 8,
+      bilanAge: 41, city: "Toulouse", viaName: null, dormant: false } as Record<string, unknown>;
+    const jours = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+    const faux = [
+      { ...base, key: "a", id: "a", firstName: "Anthony", lastName: "Marin", status: "new",
+        createdAt: jours(1), contactedAt: null, relanceDue: false, relanceDueAt: jours(-0) },
+      { ...base, key: "b", id: "b", firstName: "Laure", lastName: "Petit", status: "contacted",
+        createdAt: jours(6), contactedAt: jours(4), relanceDue: true, relanceDueAt: jours(3) },
+      { ...base, key: "c", id: "c", firstName: "Karim", lastName: "Thabet", status: "contacted",
+        createdAt: jours(2), contactedAt: jours(2), relanceDue: false, relanceDueAt: null },
+      { ...base, key: "d", id: "d", firstName: "Sabrina", lastName: "Long", status: "new",
+        createdAt: jours(6), contactedAt: null, relanceDue: false, relanceDueAt: jours(-2) },
+      { ...base, key: "e", id: "e", firstName: "Sonia", lastName: "Roche", status: "qualified",
+        createdAt: jours(10), contactedAt: jours(8), relanceDue: false, relanceDueAt: jours(5),
+        rdvLabel: "hier 14 h", rdv: { id: "r", slotStart: jours(1), slotEnd: null, clubId: null, coachUserId: null, passe: true, label: "hier 14 h" } },
+    ] as unknown as Parameters<typeof CrmCarteLead>[0]["lead"][];
+    return (
+      <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh", maxWidth: 340 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {faux.map((l, i) => (
+            <CrmCarteLead key={i} lead={l} onOuvrir={() => undefined}
+              onWhatsApp={() => undefined} onAlors={() => undefined} />
+          ))}
+        </div>
       </div>
     );
   }

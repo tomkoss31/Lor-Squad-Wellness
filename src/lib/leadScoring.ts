@@ -41,13 +41,26 @@ import type { LeadTemperature } from "./opportunityLeadScore";
 
 export type { LeadTemperature };
 
+/** Une contribution au score, avec son montant sur 100 (ex. « tout frais » +40). */
+export interface MotifScore {
+  motif: string;
+  points: number;
+}
+
 export interface UnifiedLeadScore {
-  /** 0-10, comparable entre toutes les sources. Sert au tri. */
+  /** 0-10, comparable entre toutes les sources. Sert au TRI (ne pas changer). */
   score: number;
+  /** Le même score sur 100, pour l'affichage (carte CRM Board V2). La maquette
+   *  montre « 🔥 82 » : c'est cette échelle-là. */
+  score100: number;
   temperature: LeadTemperature;
   /** En trois mots, ce qui rend ce lead chaud ou froid. Affiché à côté de la
    *  température — un nombre sur 10 ne dit pas quoi faire, une raison si. */
   raison: string;
+  /** Le détail auditable du score, chaque contribution avec son montant /100.
+   *  C'est la ligne « Pourquoi 82 : … (+30) · … (+20) » de la maquette. Vide
+   *  pour les scores forfaitaires (funnel, geste décisif). */
+  details: MotifScore[];
 }
 
 /** Température — vocabulaire unique dans tout le CRM (Liste/Pipeline/Détail).
@@ -85,7 +98,7 @@ export function computeLeadScore(lead: CrmLead): UnifiedLeadScore {
   if (lead.source === "opportunite" && typeof lead.funnelScore === "number") {
     const score = clamp10((lead.funnelScore / 15) * 10);
     const temperature = (lead.funnelTemperature as LeadTemperature) || scoreToTemperature(score);
-    return { score, temperature, raison: "questionnaire" };
+    return { score, score100: score * 10, temperature, raison: "questionnaire", details: [] };
   }
 
   const jours = joursDepuis(lead.createdAt);
@@ -94,51 +107,59 @@ export function computeLeadScore(lead: CrmLead): UnifiedLeadScore {
   // ── Ce qu'il a FAIT. Deux gestes décident à eux seuls, parce qu'ils ne
   //    laissent aucun doute sur l'intention.
   if (lead.abandonAvantCreneau && jours <= 14) {
-    return { score: 10, temperature: "hot", raison: "parti sans créneau" };
+    return { score: 10, score100: 100, temperature: "hot", raison: "parti sans créneau", details: [{ motif: "parti sans réserver de créneau", points: 100 }] };
   }
   if (lead.rdvLabel) {
-    return { score: 9, temperature: "hot", raison: "rendez-vous pris" };
+    return { score: 9, score100: 90, temperature: "hot", raison: "rendez-vous pris", details: [{ motif: "rendez-vous déjà pris", points: 90 }] };
   }
   if (lead.callbackRequestedAt) {
-    return { score: 9, temperature: "hot", raison: "a demandé à être rappelé" };
+    return { score: 9, score100: 90, temperature: "hot", raison: "a demandé à être rappelé", details: [{ motif: "a demandé à être rappelé", points: 90 }] };
   }
 
   // ── Sinon, un barème court. Chaque ligne doit pouvoir s'expliquer en une
   //    phrase à quelqu'un qui n'a jamais ouvert le code.
   let raw = 0;
   const motifs: string[] = [];
+  const details: MotifScore[] = [];
+  // Chaque contribution est enregistrée AVEC son montant /100 (le poids /10 ×10).
+  const add = (points: number, motif: string) => { raw += points; motifs.push(motif); details.push({ motif, points: points * 10 }); };
 
   // Quand. C'est le signal le plus fort après l'action : une demande du jour
   // se rappelle le jour même, une demande de mars ne se rappelle plus pareil.
-  if (jours <= 2) { raw += 4; motifs.push("tout frais"); }
-  else if (jours <= 7) { raw += 2; motifs.push("cette semaine"); }
-  else if (jours > 60 && jamaisContacte) { raw -= 2; motifs.push("jamais rappelé depuis 2 mois"); }
-  else if (jours > 30 && jamaisContacte) { raw -= 1; motifs.push("en attente depuis 1 mois"); }
+  if (jours <= 2) add(4, "tout frais");
+  else if (jours <= 7) add(2, "cette semaine");
+  else if (jours > 60 && jamaisContacte) add(-2, "jamais rappelé depuis 2 mois");
+  else if (jours > 30 && jamaisContacte) add(-1, "en attente depuis 1 mois");
 
   // Comment le joindre.
-  if (lead.contactIsPhone) { raw += 3; motifs.push("a laissé son numéro"); }
-  else if (lead.contact) { raw += 1; motifs.push("a laissé son email"); }
+  if (lead.contactIsPhone) add(3, "a laissé son numéro");
+  else if (lead.contact) add(1, "a laissé son email");
 
   // La confiance d'un client qui le recommande vaut mieux qu'un formulaire.
-  if (lead.viaName) { raw += 2; motifs.push("recommandé"); }
+  if (lead.viaName) add(2, "recommandé");
 
   // Déjà en mouvement.
-  if (lead.status === "qualified") { raw += 3; motifs.push("qualifié"); }
-  else if (lead.status === "contacted") { raw += 2; motifs.push("déjà contacté"); }
+  if (lead.status === "qualified") add(3, "qualifié");
+  else if (lead.status === "contacted") add(2, "déjà contacté");
 
-  if (lead.relanceDue) { raw += 1; motifs.push("relance due"); }
+  if (lead.relanceDue) add(1, "relance due");
 
   // Motivation déclarée sur le bilan online (0-10 → 0-3).
   if (typeof lead.bilanMotivation === "number") {
     const m = Math.round((lead.bilanMotivation / 10) * 3);
-    if (m > 0) { raw += m; motifs.push(`motivation ${lead.bilanMotivation}/10`); }
+    if (m > 0) add(m, `motivation ${lead.bilanMotivation}/10`);
   }
 
   const score = clamp10(raw);
   return {
     score,
+    // Le clamp ne bride qu'au-delà de raw=10 (rare) ; en dessous, la somme des
+    // details ×10 = score100 exactement — c'est ce qui rend « Pourquoi 82 »
+    // arithmétiquement juste dans le cas courant.
+    score100: Math.max(0, Math.min(100, raw * 10)),
     temperature: scoreToTemperature(score),
-    // Les deux motifs qui pèsent le plus, dans l'ordre où on les a ajoutés.
     raison: motifs.slice(0, 2).join(" · ") || "rien de plus à dire",
+    // Les contributions positives, de la plus forte à la plus faible.
+    details: details.filter((d) => d.points > 0).sort((a, b) => b.points - a.points),
   };
 }
