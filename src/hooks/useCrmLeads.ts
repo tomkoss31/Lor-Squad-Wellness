@@ -25,6 +25,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qualification";
 import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 import { nomPropre } from "../features/crm/nomPropre";
+import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 // Le vocabulaire de provenance a UNE source (src/types/domain.ts) : le tunnel,
 // les deux bilans et cet écran en dérivent tous. Deux listes recopiées, ce sont
 // deux comptages qui ne se recoupent jamais.
@@ -513,13 +514,52 @@ export function computeCrmStats(leads: CrmLead[]): {
   };
 }
 
+/** La clé du cache d'écran pour cette liste. Une seule liste, une seule clé. */
+const CLE_CACHE = "crm:leads";
+
 export function useCrmLeads() {
-  const [leads, setLeads] = useState<CrmLead[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ── Revenir sur le CRM ne doit plus rouvrir une page vide (21/08) ────────
+  //
+  // Le hook se remonte à CHAQUE passage sur la page, et relançait les cinq
+  // lectures à chaque fois. Mesuré dans les journaux du jour : ~5 secondes
+  // d'écran vide par aller-retour, avec des requêtes à plus de 4 s pièce.
+  //
+  // Désormais : on repart de ce qu'on avait, affiché tout de suite, et la
+  // lecture part quand même derrière pour corriger l'écran. On n'affiche donc
+  // jamais du périmé durablement — on évite juste d'attendre devant du vide
+  // pour réapprendre ce qu'on savait déjà.
+  const dejaVu = lireCacheEcran<CrmLead[]>(CLE_CACHE);
+  const [leads, setLeads] = useState<CrmLead[]>(dejaVu ?? []);
+  // `loading` ne vaut vrai que la PREMIÈRE fois. Au retour, la liste est là :
+  // lever le drapeau afficherait un squelette par-dessus des données valides.
+  const [loading, setLoading] = useState(dejaVu === null);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * LE seul point de mise à jour de la liste — état ET cache, ensemble.
+   *
+   * ⚠️ Ne jamais rappeler `setLeads` en direct. Le CRM met la liste à jour de
+   * façon optimiste après chaque geste (qualifier, archiver, changer la source,
+   * écrire une note, attribuer, supprimer). Si ces gestes n'écrivaient que dans
+   * l'état React, un aller-retour vers la page réafficherait le cache d'AVANT
+   * le geste : le lead qu'on vient de qualifier redeviendrait « à traiter »
+   * pendant une seconde, avant que la lecture de fond ne le recorrige. Un
+   * clignotement qui donne l'impression que le clic n'a pas pris.
+   */
+  const majLeads = useCallback(
+    (maj: CrmLead[] | ((prev: CrmLead[]) => CrmLead[])) => {
+      setLeads((prev) => {
+        const suivant = typeof maj === "function" ? maj(prev) : maj;
+        ecrireCacheEcran(CLE_CACHE, suivant);
+        return suivant;
+      });
+    },
+    [],
+  );
+
   const fetchAll = useCallback(async () => {
-    setLoading(true);
+    // Pareil ici : on ne vide l'écran que si on n'a rien à montrer.
+    if (lireCacheEcran<CrmLead[]>(CLE_CACHE) === null) setLoading(true);
     setError(null);
     try {
       const sb = await getSupabaseClient();
@@ -947,13 +987,13 @@ export function useCrmLeads() {
       }
 
       all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setLeads(all);
+      majLeads(all);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Chargement CRM impossible.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [majLeads]);
 
   useEffect(() => {
     void fetchAll();
@@ -979,7 +1019,7 @@ export function useCrmLeads() {
       if (err) return err;
 
       const ecrit = ecritureFor(reponse, maintenant);
-      setLeads((prev) =>
+      majLeads((prev) =>
         prev.map((l) =>
           l.key === lead.key
             ? {
@@ -1003,7 +1043,7 @@ export function useCrmLeads() {
       );
       return null;
     },
-    [],
+    [majLeads],
   );
 
   const updateStatus = useCallback(
@@ -1060,7 +1100,7 @@ export function useCrmLeads() {
       }
 
       if (!err) {
-        setLeads((prev) =>
+        majLeads((prev) =>
           prev.map((l) =>
             l.key === lead.key
               ? {
@@ -1090,7 +1130,7 @@ export function useCrmLeads() {
       }
       return err;
     },
-    [],
+    [majLeads],
   );
 
   // Re-catégoriser la source d'un lead prospect (A, 2026-06-16). Les autres
@@ -1105,9 +1145,9 @@ export function useCrmLeads() {
     if (!sb) return "Service indisponible.";
     const { error: e } = await sb.from("prospect_leads").update({ source: dbVal }).eq("id", lead.id);
     if (e) return e.message;
-    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, source: next } : l)));
+    majLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, source: next } : l)));
     return null;
-  }, []);
+  }, [majLeads]);
 
   /**
    * Faire entrer un lead dans l'entonnoir (CRM Board V2, lot 2).
@@ -1151,7 +1191,7 @@ export function useCrmLeads() {
         .eq("lead_id", lead.id);
       if (e) return e.message;
     }
-    setLeads((prev) =>
+    majLeads((prev) =>
       prev.map((l) =>
         l.key === lead.key
           ? {
@@ -1164,7 +1204,7 @@ export function useCrmLeads() {
       ),
     );
     return null;
-  }, []);
+  }, [majLeads]);
 
   // Notes coach — générique 4 tables (Phase 2 fiche détail). client_referrals
   // n'a pas de colonne notes en base (confirmé 2026-07-16) : erreur explicite
@@ -1177,9 +1217,9 @@ export function useCrmLeads() {
     if (!sb) return "Service indisponible.";
     const { error: e } = await sb.from(lead.table).update({ notes }).eq("id", lead.id);
     if (e) return e.message;
-    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, notes } : l)));
+    majLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, notes } : l)));
     return null;
-  }, []);
+  }, [majLeads]);
 
   // Attribution manuelle (Phase 5 routage, suggestion validée par le coach —
   // JAMAIS automatique). Seules online_bilans/prospect_leads ont une colonne
@@ -1222,9 +1262,9 @@ export function useCrmLeads() {
       }
     }
 
-    setLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, ownerUserId: userId } : l)));
+    majLeads((prev) => prev.map((l) => (l.key === lead.key ? { ...l, ownerUserId: userId } : l)));
     return null;
-  }, []);
+  }, [majLeads]);
 
   // Suppression définitive (admin) depuis la table source + nettoyage archive.
   const deleteLead = useCallback(async (lead: CrmLead): Promise<string | null> => {
@@ -1237,9 +1277,9 @@ export function useCrmLeads() {
       .delete()
       .eq("lead_table", lead.table)
       .eq("lead_id", lead.id);
-    setLeads((prev) => prev.filter((l) => l.key !== lead.key));
+    majLeads((prev) => prev.filter((l) => l.key !== lead.key));
     return null;
-  }, []);
+  }, [majLeads]);
 
   const counts = useMemo(() => {
     const byStatus: Record<CrmStatus, number> = {

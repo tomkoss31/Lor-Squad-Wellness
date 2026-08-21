@@ -11,6 +11,7 @@ import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { PROGRAMS_LEGACY } from "../data/programs";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import { reactionSession } from "../lib/sessionAuth";
+import { viderCacheEcran } from "../lib/cacheEcran";
 import {
   getStoredActivityLogs,
   getStoredPvClientProducts,
@@ -618,6 +619,11 @@ export function AppProvider({ children }: PropsWithChildren) {
     // Avant le signOut : sinon `SIGNED_OUT` arrive et on croit a une expiration.
     deconnexionVoulue.current = true;
     setSessionExpiree(false);
+    // Le cache d'ecran garde en memoire ce que les pages ont deja lu (leads du
+    // CRM, etc.). Sans ce vidage, la personne suivante a se connecter sur le
+    // meme navigateur verrait, le temps d'un battement, les donnees de la
+    // precedente — l'affichage se fait AVANT que la lecture de fond revienne.
+    viderCacheEcran();
     try {
       await logoutFromSupabase();
     } catch (error) {
@@ -637,6 +643,11 @@ export function AppProvider({ children }: PropsWithChildren) {
   async function forceResetSession() {
     deconnexionVoulue.current = true;
     setSessionExpiree(false);
+    // Le cache d'ecran garde en memoire ce que les pages ont deja lu (leads du
+    // CRM, etc.). Sans ce vidage, la personne suivante a se connecter sur le
+    // meme navigateur verrait, le temps d'un battement, les donnees de la
+    // precedente — l'affichage se fait AVANT que la lecture de fond revienne.
+    viderCacheEcran();
     try {
       await logoutFromSupabase();
     } catch (error) {
