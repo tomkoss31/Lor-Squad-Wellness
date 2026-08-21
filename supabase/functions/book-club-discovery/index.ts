@@ -84,8 +84,20 @@ async function sendViaResend(
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    // ⚠️ NE JAMAIS ravaler la raison (21/08). Cette fonction rendait `false` en
+    // silence : le 21/08, Ghislaine a reserve a 16h50, n'a recu aucune
+    // confirmation, l'equipe non plus, et RIEN nulle part ne disait pourquoi.
+    // Il a fallu lire `campaign_recipients.send_error` pour trouver le mot de
+    // Resend : « You have reached your daily email sending quota ». Une
+    // campagne de 199 mails partie le matin avait mange le quota de 100/jour,
+    // partage avec TOUS les mails transactionnels de l'app.
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.error(`[book-club-discovery] Resend a refuse (${res.status}) : ${detail.slice(0, 300)}`);
+    }
     return res.ok;
-  } catch {
+  } catch (e) {
+    console.error(`[book-club-discovery] Resend injoignable : ${e instanceof Error ? e.message : String(e)}`);
     return false;
   }
 }
@@ -343,6 +355,32 @@ serve(async (req: Request) => {
       }
     } catch (_e) {
       // email best-effort — la résa est déjà enregistrée
+    }
+
+    // La personne a reserve mais ne le SAIT pas : son mail n'est jamais parti.
+    // On previent les coachs par PUSH — precisement parce que c'est l'email qui
+    // est casse, le prevenir par email n'aurait aucun sens. Sans ca, la
+    // reservation dort dans le CRM et personne ne sait qu'il faut appeler.
+    if (!confirmEmailSent) {
+      const quand = new Intl.DateTimeFormat("fr-FR", {
+        weekday: "short", day: "2-digit", month: "short",
+        hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris",
+      }).format(slotStart);
+      for (const a of clubStaff) {
+        try {
+          await sendPushToUser(sb, {
+            userId: a.id,
+            payload: {
+              title: "⚠️ Confirmation non envoyée",
+              body: `${firstName} a réservé ${quand} mais n'a PAS reçu son mail. Préviens-la.`,
+              url: "/crm",
+              type: "club_discovery_confirm_failed",
+            },
+          });
+        } catch (_e) {
+          // push best-effort
+        }
+      }
     }
   }
 
