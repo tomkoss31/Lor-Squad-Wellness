@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM Board V2 — aux couleurs de l'app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Tokens EXACTS de l'app (globals.css). La maquette Claude Design est en noir +
+   doré ; ici c'est sa STRUCTURE aux COULEURS DE L'APP — décision Thomas du 20/08. */
+:root{
+  --bg:#162624; --surface:#1E3330; --surface2:#26403B;
+  --border:rgba(244,239,228,.10); --line:rgba(244,239,228,.16);
+  --text:#F4EFE4; --muted:#9BAAA3; --hint:#7E8E86;
+  --teal:#2DD4BF; --lime:#c5f82a; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+  --purple-ink:#1C1233; --amber-ink:#2A1E05; --lime-ink:#1B2409; --coral-ink:#2A0D0D;
+  --wa:#25D366; --wa-ink:#04210f;
+  --page:#0F1C1A;
+}
+body.clair{
+  --bg:#FAF7F0; --surface:#FFFFFF; --surface2:#F5F1EB;
+  --border:rgba(30,51,48,.10); --line:rgba(30,51,48,.16);
+  --text:#17201C; --muted:#55605A; --hint:#68716C;
+  --teal:#0F766E; --lime:#5E7A09; --coral:#BC432C; --amber:#9A631A; --purple:#6D28D9;
+  --purple-ink:#fff; --amber-ink:#fff; --lime-ink:#fff; --coral-ink:#fff;
+  --page:#EFEAE0;
+}
+*{box-sizing:border-box}
+button{font-family:inherit;color:inherit;background:transparent;border:0;padding:0}
+body{margin:0;background:var(--page);color:var(--text);font-family:"DM Sans",system-ui,sans-serif;padding:22px 16px 70px}
+.wrap{max-width:1400px;margin:0 auto}
+h2{font-family:Syne,sans-serif;text-transform:uppercase;letter-spacing:.02em;font-size:16px;margin:34px 0 10px}
+.intro{color:var(--muted);font-size:13.5px;max-width:80ch;line-height:1.55}
+.bascule{position:fixed;top:12px;right:12px;z-index:60;border:1px solid var(--line);
+  background:var(--surface);color:var(--text);border-radius:999px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.legende{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+
+/* ── ÉCRAN CRM : deux colonnes ─────────────────────────────────────────── */
+.ecran{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;display:flex;box-shadow:0 30px 80px -40px rgba(0,0,0,.6)}
+.cadre-desktop{width:100%}
+
+/* Colonne ARRIVÉES (~20%) */
+.aside{width:300px;flex:none;background:color-mix(in srgb,var(--bg) 55%,var(--surface));border-right:1px solid var(--border);display:flex;flex-direction:column}
+.aside-tete{padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.aside-titre{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aside-titre b{font-family:Syne,sans-serif;font-weight:800;font-size:16px}
+.badge-cpt{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--lime);color:var(--lime-ink)}
+.aside-sous{margin:6px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+.aside-pile{padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0}
+.aside-pied{margin-top:auto;padding:12px 14px 14px;border-top:1px solid var(--border)}
+.aside-pied .lbl{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);font-weight:600}
+.sources{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.src{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:3px 7px;font-size:10px;color:var(--muted)}
+
+/* carte d'arrivée */
+.arr{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:12px 13px;display:flex;flex-direction:column;gap:8px}
+.arr.violet{border-color:color-mix(in srgb,var(--purple) 30%,var(--border))}
+.arr.ambre{border-color:color-mix(in srgb,var(--amber) 30%,var(--border))}
+.arr-l1{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.arr-nom{font-weight:700;font-size:13.5px}
+.arr-h{font-size:10.5px;color:var(--muted);margin-left:auto}
+.arr-ctx{font-size:11.5px;color:var(--muted);line-height:1.45}
+.arr-ctx .club{color:var(--purple);font-weight:700}
+.arr-ctx .quand{color:var(--purple);font-weight:700}
+.arr-ctx .dup{color:var(--amber);font-weight:700}
+.arr-btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{min-height:35px;padding:8px 12px;border-radius:8px;border:0;font-family:"DM Sans";font-size:11.5px;font-weight:800;cursor:pointer}
+.btn.violet{background:var(--purple);color:var(--purple-ink)}
+.btn.ambre{background:var(--amber);color:var(--amber-ink)}
+.btn.lime{background:var(--lime);color:var(--lime-ink)}
+.btn.plat{background:var(--surface);border:1px solid var(--border);color:var(--muted);font-weight:700}
+.score-pill{font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:5px;background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal)}
+
+/* Colonne ENTONNOIR (~80%) */
+.entonnoir{flex:1;min-width:0;display:flex;flex-direction:column}
+.barre{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.barre h1{font-family:Syne,sans-serif;font-weight:800;font-size:17px;margin:0}
+.recherche{flex:1;max-width:280px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:7px 11px;color:var(--hint);font-size:12.5px}
+.chip-barre{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:7px 11px;font-size:12.5px;color:var(--muted);cursor:pointer}
+.ml-auto{margin-left:auto}
+.btn-lead{background:var(--teal);color:#04211d;border:0;border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
+
+/* jauge */
+.jauge-bande{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.cemois .lbl{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--hint);font-weight:600}
+.cemois .n{font-family:Syne,sans-serif;font-weight:800;font-size:22px}
+.cemois .n small{font-size:13px;color:var(--muted);font-weight:600}
+.jauge{flex:1;min-width:260px;display:flex;align-items:flex-end;gap:2px}
+.seg{flex:1;min-width:90px;padding:6px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer}
+.seg.actif{border-radius:10px}
+.seg .sl{font-size:11.5px;color:var(--muted)}
+.seg .sn{font-family:Syne,sans-serif;font-weight:800;font-size:17px;line-height:1.2;color:var(--text)}
+.seg .bar{height:4px;border-radius:3px;margin-top:6px}
+.taux{font-size:10.5px;font-weight:700;color:var(--muted);padding:0 2px 8px}
+
+/* board */
+.board{display:flex;gap:12px;padding:16px 18px 20px;overflow-x:auto}
+.col{flex:1;min-width:220px;display:flex;flex-direction:column;gap:9px}
+.col-tete{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px}
+.col-tete .pt{width:7px;height:7px;border-radius:99px;flex:none}
+.col-tete b{font-size:11.5px;font-weight:700}
+.col-tete .cn{font-family:Syne,sans-serif;font-weight:800;font-size:13px;margin-left:auto}
+.col-pied{border:1px dashed var(--border);border-radius:11px;padding:9px;text-align:center;font-size:11px;color:var(--hint);cursor:pointer}
+.replie{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px;background:color-mix(in srgb,var(--bg) 40%,var(--surface));border:1px solid var(--border)}
+.replie .pt{width:7px;height:7px;border-radius:99px;background:var(--hint);flex:none}
+.replie b{font-size:11.5px;color:var(--muted);font-weight:600}
+.replie .cn{font-family:Syne,sans-serif;font-weight:800;font-size:13px;color:var(--hint);margin-left:auto}
+.note{background:color-mix(in srgb,var(--bg) 40%,var(--surface));border:1px dashed var(--border);border-radius:11px;padding:10px 11px;font-size:10.5px;color:var(--hint);line-height:1.5}
+
+/* carte lead du board */
+.lead{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+.lead.retard{border-color:color-mix(in srgb,var(--coral) 30%,var(--border));border-left-color:var(--coral);background:color-mix(in srgb,var(--coral) 7%,var(--surface2));box-shadow:0 8px 24px -14px color-mix(in srgb,var(--coral) 40%,transparent)}
+.lead.pourrit{border-color:color-mix(in srgb,var(--coral) 35%,var(--border));border-left-color:var(--coral);background:color-mix(in srgb,var(--coral) 9%,var(--surface2))}
+.lead.sanssuite{border-color:color-mix(in srgb,var(--amber) 35%,var(--border));border-left-color:var(--amber)}
+.lead.rdvpasse{border-color:color-mix(in srgb,var(--amber) 40%,var(--border));border-left-color:var(--amber)}
+.lead-l1{display:flex;align-items:center;gap:7px}
+.lead-nom{font-family:Syne,sans-serif;font-weight:700;font-size:13.5px}
+.lead-meteo{margin-left:auto;font-size:11px}
+.lead-ctx{font-size:11.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.tag{background:color-mix(in srgb,var(--teal) 12%,transparent);color:var(--teal);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700}
+.metriques{font-size:10px;color:var(--muted)}
+.pourquoi{font-size:10.5px;color:var(--hint);line-height:1.4}
+.badge{align-self:flex-start;border-radius:6px;padding:3px 8px;font-size:10.5px;font-weight:700}
+.badge.lime{background:color-mix(in srgb,var(--lime) 14%,transparent);color:var(--lime)}
+.badge.teal{background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal)}
+.badge.coral-plein{background:var(--coral);color:var(--coral-ink);font-weight:800}
+.badge.coral{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral);font-weight:800}
+.badge.ambre{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber);font-weight:800}
+.badge.violet{background:color-mix(in srgb,var(--purple) 15%,transparent);color:var(--purple)}
+.lead-btns{display:flex;gap:6px}
+.btn-wa{flex:1;min-height:32px;background:var(--wa);color:var(--wa-ink);border:0;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer}
+.btn-alors{flex:1;min-height:32px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer}
+.btn-venue{width:100%;min-height:32px;background:color-mix(in srgb,var(--amber) 15%,transparent);border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);color:var(--amber);border-radius:7px;font-size:10.5px;font-weight:800;cursor:pointer}
+.btn-mini{flex:1;min-height:32px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:7px;font-size:10.5px;font-weight:700;cursor:pointer}
+
+/* cadre mobile */
+.tel{width:390px;border:1px solid var(--line);border-radius:26px;background:var(--bg);overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.tel-in{padding:14px;min-height:560px}
+.file-tete{font-family:Syne,sans-serif;font-weight:800;font-size:21px}
+.file-sous{font-size:11.5px;color:var(--muted);margin:2px 0 12px}
+.file-sec{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px}
+.file-ligne{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.file-ligne.retard{border-left:3px solid var(--coral)}
+.file-nom{font-weight:700;font-size:13.5px}
+.file-ctx{font-size:11px;color:var(--muted)}
+.file-actions{margin-left:auto;display:flex;gap:6px}
+.file-actions button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:15px;cursor:pointer}
+.file-actions .wa{background:var(--wa);border:0}
+</style>
+</head>
+<body>
+<button class="bascule" onclick="document.body.classList.toggle('clair')">☀️ / 🌙</button>
+<div class="wrap">
+
+<p class="legende">Maquette · 21 août · structure du design, couleurs de l'app</p>
+<h2 style="margin-top:6px">CRM Board V2 — l'écran cible</h2>
+<p class="intro">Le vrai écran : deux colonnes. À gauche les <b>arrivées</b> à valider,
+à droite l'<b>entonnoir</b>. Fini l'empilement de onze blocs. Chaque type d'arrivée porte
+sa couleur (violet = RDV club, ambre = doublon, lime = bilan). La jauge a ses barres de 4 px.
+Les cartes portent leur badge d'action daté. Bascule clair/sombre en haut à droite.</p>
+
+<div class="ecran cadre-desktop">
+  <!-- ARRIVÉES -->
+  <aside class="aside">
+    <div class="aside-tete">
+      <div class="aside-titre"><b>📥 Arrivées</b><span class="badge-cpt">5 à valider</span></div>
+      <p class="aside-sous">Rien n'entre dans l'entonnoir sans ton geste. Objectif : répondre dans l'heure.</p>
+    </div>
+    <div class="aside-pile">
+      <div class="arr violet">
+        <div class="arr-l1"><span class="arr-nom">Nadia Chevalier</span><span class="arr-h">il y a 25 min</span></div>
+        <div class="arr-ctx">🏠 <span class="club">Réserver au club</span> · demande <span class="quand">sam. 10 h</span> · 06 51 •• •• 08</div>
+        <div class="arr-btns"><button class="btn violet">✓ Confirmer + email</button><button class="btn plat">Déplacer</button></div>
+      </div>
+      <div class="arr ambre">
+        <div class="arr-l1"><span class="arr-nom">Fatiha Lamri</span><span class="arr-h">il y a 2 h</span></div>
+        <div class="arr-ctx"><span class="dup">⚠ 2 fiches, même téléphone</span> — 🎁 Colis puis 🌱 Bilan online</div>
+        <div class="arr-btns"><button class="btn ambre">⇥ Fusionner les 2</button><button class="btn plat">Garder les 2</button></div>
+      </div>
+      <div class="arr">
+        <div class="arr-l1"><span class="arr-nom">Marc Leroy</span><span>🔥</span><span class="score-pill">74/100</span><span class="arr-h">il y a 4 h</span></div>
+        <div class="arr-ctx">🌱 Bilan online complet · −7 kg · via ton lien</div>
+        <div class="arr-btns"><button class="btn lime">✓ Accepter → Nouveau</button><button class="btn plat">✕</button></div>
+      </div>
+      <div class="arr">
+        <div class="arr-l1"><span class="arr-nom">Léa (prénom confié)</span><span class="arr-h">hier</span></div>
+        <div class="arr-ctx">💭 Intention · via Jeremy — pas encore de numéro</div>
+        <div class="arr-btns"><button class="btn plat">📱 Demander le numéro à Jeremy</button></div>
+      </div>
+      <div class="arr" style="opacity:.9">
+        <div class="arr-l1"><span class="arr-nom">Chloé D.</span><span class="arr-h">hier</span></div>
+        <div class="arr-ctx">💭 Bilan commencé, arrêté à l'étape 2/6</div>
+        <div class="arr-btns"><button class="btn plat">🌿 Relancer en douceur</button></div>
+      </div>
+    </div>
+    <div class="aside-pied">
+      <div class="lbl">11 points d'entrée branchés</div>
+      <div class="sources">
+        <span class="src">🌱 Bilan online</span><span class="src">🎁 Colis</span><span class="src">🏠 Club</span>
+        <span class="src">🤝 Reco</span><span class="src">💭 Intention</span><span class="src">👑 VIP</span>
+        <span class="src">🚪 Opportunité</span><span class="src">✨ Simulateur</span><span class="src">💼 Business</span>
+        <span class="src">🌐 Site web</span><span class="src">📰 Newsletter</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ENTONNOIR -->
+  <section class="entonnoir">
+    <div class="barre">
+      <h1>Entonnoir</h1>
+      <div class="recherche">🔍 Un nom, un numéro…</div>
+      <button class="chip-barre ml-auto">👤 Moi ▾</button>
+      <button class="chip-barre">⋯ Filtres · 2</button>
+      <button class="btn-lead">+ Lead</button>
+    </div>
+
+    <div class="jauge-bande">
+      <div class="cemois"><div class="lbl">Ce mois</div><div class="n">34 <small>leads</small></div></div>
+      <div class="jauge">
+        <button class="seg"><div class="sl">Nouveau</div><div class="sn">6</div><div class="bar" style="background:var(--lime)"></div></button>
+        <span class="taux">↳ 71%</span>
+        <button class="seg"><div class="sl">Contacté</div><div class="sn">11</div><div class="bar" style="background:var(--teal)"></div></button>
+        <span class="taux">↳ 45%</span>
+        <button class="seg actif" style="background:color-mix(in srgb,var(--coral) 8%,transparent);border-color:color-mix(in srgb,var(--coral) 30%,transparent)">
+          <div class="sl" style="color:var(--coral)">À relancer · filtré ✕</div><div class="sn">8</div><div class="bar" style="background:var(--coral)"></div></button>
+        <span class="taux">↳ 38%</span>
+        <button class="seg"><div class="sl">RDV calé</div><div class="sn">5</div><div class="bar" style="background:var(--purple)"></div></button>
+        <span class="taux">↳ 60%</span>
+        <button class="seg"><div class="sl">Converti</div><div class="sn">4</div><div class="bar" style="background:var(--amber)"></div></button>
+      </div>
+    </div>
+
+    <div class="board">
+      <!-- Nouveau -->
+      <div class="col">
+        <div class="col-tete" style="background:color-mix(in srgb,var(--lime) 7%,transparent);border:1px solid color-mix(in srgb,var(--lime) 22%,transparent)">
+          <span class="pt" style="background:var(--lime)"></span><b>Nouveau</b><span class="cn" style="color:var(--lime)">6</span></div>
+        <div class="lead" style="border-left-color:var(--lime)">
+          <div class="lead-l1"><span class="lead-nom">Anthony M.</span><span class="lead-meteo">🔥</span></div>
+          <div class="lead-ctx">🌱 Bilan online — ce qu'il a répondu :</div>
+          <div class="chips"><span class="tag">Perte de poids</span><span class="tag">Sommeil</span></div>
+          <div class="metriques">🎯 −8 kg · 🔥 8/10 · 34 ans</div>
+          <span class="badge lime">→ 1er contact aujourd'hui</span>
+        </div>
+        <div class="lead pourrit">
+          <div class="lead-l1"><span class="lead-nom">Sabrina L.</span><span class="lead-meteo">🌤️</span></div>
+          <div class="lead-ctx">🤝 Reco · via Jeremy</div>
+          <span class="badge coral-plein">🕸️ 6 j sans mouvement</span>
+        </div>
+        <div class="col-pied">+ 4 autres</div>
+      </div>
+
+      <!-- Contacté -->
+      <div class="col">
+        <div class="col-tete" style="background:color-mix(in srgb,var(--teal) 7%,transparent);border:1px solid color-mix(in srgb,var(--teal) 22%,transparent)">
+          <span class="pt" style="background:var(--teal)"></span><b>Contacté</b><span class="cn" style="color:var(--teal)">11</span></div>
+        <div class="lead">
+          <div class="lead-l1"><span class="lead-nom">Claire Dehaese</span><span class="lead-meteo">🔥</span></div>
+          <div class="lead-ctx">Hésite encore · 👑 Club VIP</div>
+          <span class="badge teal">↻ relance lun. 24 · 9 h</span>
+        </div>
+        <div class="lead sanssuite">
+          <div class="lead-l1"><span class="lead-nom">Karim T.</span><span class="lead-meteo">🌤️</span></div>
+          <div class="lead-ctx">Contacté il y a 2 j · 🎁 Colis</div>
+          <span class="badge ambre">⚠ aucune suite prévue</span>
+        </div>
+        <div class="col-pied">+ 9 autres</div>
+      </div>
+
+      <!-- À relancer -->
+      <div class="col">
+        <div class="col-tete" style="background:color-mix(in srgb,var(--coral) 10%,transparent);border:1px solid color-mix(in srgb,var(--coral) 30%,transparent)">
+          <span class="pt" style="background:var(--coral)"></span><b>À relancer</b><span class="cn" style="color:var(--coral)">8</span></div>
+        <div class="lead retard">
+          <div class="lead-l1"><span class="lead-nom">Laure P.</span><span class="lead-meteo">🔥</span></div>
+          <div class="lead-ctx">Appelée, pas de réponse</div>
+          <span class="badge coral-plein">3 j de retard</span>
+          <div class="lead-btns"><button class="btn-wa">WhatsApp</button><button class="btn-alors">🎯 Et alors ?</button></div>
+        </div>
+        <div class="lead" style="border-left-color:var(--coral)">
+          <div class="lead-l1"><span class="lead-nom">Mylène G.</span><span class="lead-meteo">🌤️</span></div>
+          <div class="lead-ctx">Hésite encore · 🎁 Colis</div>
+          <span class="badge coral">aujourd'hui</span>
+        </div>
+        <div class="col-pied">+ 6 autres</div>
+      </div>
+
+      <!-- RDV calé -->
+      <div class="col">
+        <div class="col-tete" style="background:color-mix(in srgb,var(--purple) 7%,transparent);border:1px solid color-mix(in srgb,var(--purple) 22%,transparent)">
+          <span class="pt" style="background:var(--purple)"></span><b>RDV calé</b><span class="cn" style="color:var(--purple)">5</span></div>
+        <div class="lead" style="border-left-color:var(--purple)">
+          <div class="lead-l1"><span class="lead-nom">Jeremy V.</span><span class="lead-meteo">🔥</span></div>
+          <div class="lead-ctx">🌱 Bilan complet · −12 kg</div>
+          <span class="badge violet">📅 demain 14 h · préparer</span>
+        </div>
+        <div class="lead rdvpasse">
+          <div class="lead-l1"><span class="lead-nom">Sonia R.</span><span class="lead-meteo">🌤️</span></div>
+          <span class="badge ambre">RDV passé hier — et alors ?</span>
+          <button class="btn-venue">✅ Venue → fiche client</button>
+          <div class="lead-btns"><button class="btn-mini">🤔 Réfléchit · 7 j</button><button class="btn-mini">👻 Pas venue</button></div>
+        </div>
+        <div class="col-pied">+ 2 autres</div>
+      </div>
+
+      <!-- Converti + repliés -->
+      <div class="col">
+        <div class="col-tete" style="background:color-mix(in srgb,var(--amber) 7%,transparent);border:1px solid color-mix(in srgb,var(--amber) 22%,transparent)">
+          <span class="pt" style="background:var(--amber)"></span><b>Converti</b><span class="cn" style="color:var(--amber)">4</span></div>
+        <div class="lead" style="border-left-color:var(--amber)">
+          <div class="lead-l1"><span class="lead-nom">Mélanie O.</span><span class="lead-meteo">✅</span></div>
+          <div class="lead-ctx">Programme 3 mois · fiche client créée</div>
+          <span class="badge" style="background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber)">il y a 2 j</span>
+        </div>
+        <div class="replie"><span class="pt"></span><b>Perdus</b><span class="cn">6</span></div>
+        <div class="replie"><span class="pt"></span><b>💤 Endormis</b><span class="cn">12</span></div>
+        <div class="note">Un perdu revient tout seul : relance douce automatique à 3 mois (recyclage).</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<h2>Sur téléphone — la file du jour (pas le board)</h2>
+<p class="intro">Sur téléphone, glisser entre 5 colonnes en cache 4. À la place : une liste unique,
+rangée par urgence, qu'on descend au pouce. L'entonnoir reste à un tap en haut.</p>
+<div class="tel">
+  <div class="tel-in">
+    <div class="file-tete">Aujourd'hui</div>
+    <div class="file-sous">11 gestes — commence en haut. &nbsp; <b style="color:var(--teal)">Entonnoir ›</b></div>
+
+    <div class="file-sec">📥 à valider · 2</div>
+    <div class="file-ligne violet" style="border-left:3px solid var(--purple)">
+      <div><div class="file-nom">Nadia Chevalier</div><div class="file-ctx">🏠 Club BBC · sam. 10 h</div></div>
+      <div class="file-actions"><button style="background:var(--purple);border:0">✓</button></div>
+    </div>
+
+    <div class="file-sec">🔴 en retard · 3</div>
+    <div class="file-ligne retard">
+      <div><div class="file-nom">Laure P. 🔥</div><div class="file-ctx">3 j · pas de réponse · −9 kg</div></div>
+      <div class="file-actions"><button class="wa">📱</button><button>🎯</button></div>
+    </div>
+    <div class="file-ligne retard">
+      <div><div class="file-nom">Mylène G.</div><div class="file-ctx">aujourd'hui · Colis</div></div>
+      <div class="file-actions"><button class="wa">📱</button><button>🎯</button></div>
+    </div>
+
+    <div class="file-sec">📅 rdv du jour · 1</div>
+    <div class="file-ligne" style="border-left:3px solid var(--purple)">
+      <div><div class="file-nom">Jeremy V. 🔥</div><div class="file-ctx">14 h · visio · bilan à relire</div></div>
+      <div class="file-actions"><button style="background:color-mix(in srgb,var(--purple) 20%,transparent);border:0">Préparer</button></div>
+    </div>
+
+    <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px">Puis 5 relances calées demain — rien à faire aujourd'hui 👌</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -509,8 +509,29 @@ export function CrmPage() {
     }
   }
 
+  // ── CRM Board V2, lot 1 : deux colonnes (maquette validée 21/08) ─────────
+  // Arrivées à gauche, entonnoir à droite. Fini l'empilement. La colonne gauche
+  // n'apparaît QUE s'il y a des arrivées — sinon l'entonnoir prend 100 %, comme
+  // avant (aucune régression quand la boîte est vide).
+  // ⚠️ Responsive PAR CLASSE, jamais par style en ligne : un style en ligne bat
+  //    une media query (piège payé le 18/08 sur la barre de relances).
+  const aDesArrivees = enAttente.length > 0;
+
   return (
     <div style={pageWrap}>
+      <style>{CRM_COLS_CSS}</style>
+      <div className={aDesArrivees ? "crm-cols" : undefined}>
+        {aDesArrivees ? (
+          <aside className="crm-aside">
+            <CrmBoiteArrivee
+              leads={enAttente}
+              onAccepter={accepter}
+              onRefuser={(lead) => setDormant(lead, true)}
+              onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
+            />
+          </aside>
+        ) : null}
+        <div className={aDesArrivees ? "crm-droite" : undefined}>
       {/* En-tête. Le pavé de présentation (« Bilan online, Club VIP,
           opportunité… ») et les cinq compteurs par statut occupaient le premier
           écran entier sans jamais dire quoi faire. Il reste le titre et le seul
@@ -536,16 +557,6 @@ export function CrmPage() {
           </p>
         ) : null}
       </header>
-
-      {/* La boîte d'arrivée, AVANT l'entonnoir et avant tout le reste : c'est
-          la seule porte d'entrée, elle doit être ce qu'on voit en premier.
-          Vide, elle ne s'affiche pas du tout. */}
-      <CrmBoiteArrivee
-        leads={enAttente}
-        onAccepter={accepter}
-        onRefuser={(lead) => setDormant(lead, true)}
-        onOuvrir={(lead) => navigate(`/crm/leads/${lead.key}`)}
-      />
 
       {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
           périmètre — et NON `filtered` : une jauge qui se recalcule sur son
@@ -1181,6 +1192,8 @@ export function CrmPage() {
           </div>
         </div>
       ) : null}
+        </div>{/* fin colonne droite (entonnoir) */}
+      </div>{/* fin des deux colonnes */}
 
       <footer style={footerHint}>
         💡 Clique sur un lead pour ouvrir sa fiche complète (réponses, conversion, RDV,
@@ -1594,6 +1607,22 @@ const pageWrap: React.CSSProperties = {
   margin: "0 auto",
   padding: "20px 18px 60px",
 };
+
+/**
+ * Les deux colonnes du CRM Board V2 (lot 1). Arrivées à gauche (largeur fixe,
+ * collée en défilement), entonnoir à droite. Sous 1024 px, elles s'empilent —
+ * l'aside repasse en pleine largeur au-dessus, exactement comme le bandeau iPad
+ * de la maquette. Tout en CLASSE : un style en ligne battrait la media query.
+ */
+const CRM_COLS_CSS = `
+.crm-cols{display:flex;gap:18px;align-items:flex-start}
+.crm-aside{width:300px;flex:none;position:sticky;top:16px}
+.crm-droite{flex:1;min-width:0}
+@media (max-width:1023.98px){
+  .crm-cols{flex-direction:column}
+  .crm-aside{width:auto;position:static}
+}
+`;
 
 /** Le repli des blocs de rendez-vous et le panneau de filtres. */
 const replisBtn: React.CSSProperties = {
