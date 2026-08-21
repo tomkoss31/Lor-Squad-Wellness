@@ -408,13 +408,24 @@ function AtelierScene({
     // Trois arrivees types : un bilan en ligne, un lead du site, un prenom
     // confie sans numero. De quoi voir les trois libelles de source et le
     // « depuis » a trois echelles (minutes, heures, hier).
+    // Les TROIS cas de la maquette : un RDV du club (violet), un doublon
+    // (ambre, deux fiches au meme contact), et des arrivees neutres.
     const faux = [
-      { key: "a", id: "a", table: "online_bilans", firstName: "Marc", lastName: "Leroy",
-        source: "bilan-online", createdAt: new Date(Date.now() - 25 * 60000).toISOString() },
-      { key: "b", id: "b", table: "prospect_leads", firstName: "nadia", lastName: "CHEVALIER",
-        source: "site-club", createdAt: new Date(Date.now() - 4 * 3600000).toISOString() },
-      { key: "c", id: "c", table: "client_referral_intentions", firstName: "Léa", lastName: null,
-        source: "intention", createdAt: new Date(Date.now() - 30 * 3600000).toISOString() },
+      { key: "a", id: "a", table: "prospect_leads", firstName: "nadia", lastName: "CHEVALIER",
+        source: "site-club", contact: "nadia@exemple.fr",
+        createdAt: new Date(Date.now() - 25 * 60000).toISOString() },
+      { key: "b", id: "b", table: "prospect_leads", firstName: "Fatiha", lastName: "Lamri",
+        source: "colis", contact: "fatiha@exemple.fr",
+        createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
+      { key: "b2", id: "b2", table: "online_bilans", firstName: "Fatiha", lastName: "Lamri",
+        source: "bilan-online", contact: "fatiha@exemple.fr",
+        createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
+      { key: "c", id: "c", table: "online_bilans", firstName: "Marc", lastName: "Leroy",
+        source: "bilan-online", contact: "marc@exemple.fr",
+        createdAt: new Date(Date.now() - 4 * 3600000).toISOString() },
+      { key: "d", id: "d", table: "client_referral_intentions", firstName: "Léa", lastName: null,
+        source: "intention", contact: null,
+        createdAt: new Date(Date.now() - 30 * 3600000).toISOString() },
     ] as unknown as Parameters<typeof CrmBoiteArrivee>[0]["leads"];
     return (
       <div style={{ padding: 18, background: "var(--ls-bg)", minHeight: "100vh" }}>
