@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reactionSession } from "../sessionAuth";
+import { estRefusDeSession, reactionSession } from "../sessionAuth";
 
 describe("reactionSession", () => {
   it("une session supprimee sans qu'on l'ait demandee doit alerter", () => {
@@ -28,5 +28,24 @@ describe("reactionSession", () => {
       expect(reactionSession(e, false)).toBe("rien");
       expect(reactionSession(e, true)).toBe("rien");
     }
+  });
+});
+
+describe("estRefusDeSession", () => {
+  it("un 401 sur une lecture ou une ecriture de donnees leve l'alerte", () => {
+    // Le cas du 22/08 : six POST /rest/v1/assessments refuses d'affilee.
+    expect(estRefusDeSession("https://x.supabase.co/rest/v1/assessments", 401)).toBe(true);
+    expect(estRefusDeSession("https://x.supabase.co/rest/v1/clients?select=*", 401)).toBe(true);
+  });
+
+  it("un autre code sur la meme route ne leve rien", () => {
+    for (const s of [200, 204, 403, 404, 406, 409, 500]) {
+      expect(estRefusDeSession("https://x.supabase.co/rest/v1/clients", s)).toBe(false);
+    }
+  });
+
+  it("les fonctions edge et l'auth sont hors perimetre — elles ont leurs propres 401", () => {
+    expect(estRefusDeSession("https://x.supabase.co/functions/v1/book-rdv", 401)).toBe(false);
+    expect(estRefusDeSession("https://x.supabase.co/auth/v1/token", 401)).toBe(false);
   });
 });

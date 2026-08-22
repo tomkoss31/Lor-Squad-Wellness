@@ -10,7 +10,7 @@ import {
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { PROGRAMS_LEGACY } from "../data/programs";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
-import { reactionSession } from "../lib/sessionAuth";
+import { reactionSession, surRefusAuth } from "../lib/sessionAuth";
 import { viderCacheEcran } from "../lib/cacheEcran";
 import {
   getStoredActivityLogs,
@@ -467,6 +467,49 @@ export function AppProvider({ children }: PropsWithChildren) {
     return () => {
       vivant = false;
       stop?.();
+    };
+  }, []);
+
+  // ── Le réveil, et le refus sec (22/08) ───────────────────────────────────
+  //
+  // L'écoute ci-dessus ne voit que ce que la bibliothèque annonce. Le 22/08
+  // elle n'a rien annoncé : le PC sortait de veille avec un jeton périmé, six
+  // enregistrements de bilan sont partis quand même, et PostgREST a répondu
+  // six fois 401 — sans « session supprimée », donc sans bandeau. Un bilan
+  // client perdu en plein rendez-vous.
+  //
+  // Deux garde-fous, dans cet ordre d'importance :
+  //
+  //  1. REVALIDER AU RÉVEIL. `getSession()` renouvelle le jeton s'il a expiré.
+  //     Appelé quand l'onglet redevient visible, il répare la session AVANT
+  //     que la personne ne clique sur « Enregistrer » — c'est le seul des deux
+  //     qui évite réellement la perte.
+  //  2. RÉAGIR AU PREMIER REFUS, pour le cas où le réveil n'a pas suffi.
+  useEffect(() => {
+    let vivant = true;
+
+    const revalider = () => {
+      if (document.visibilityState !== "visible") return;
+      void (async () => {
+        const sb = await getSupabaseClient();
+        if (!sb || !vivant) return;
+        // Ne rien faire si on n'a jamais été connecté (pages publiques).
+        const { data } = await sb.auth.getSession();
+        if (data.session && vivant) setSessionExpiree(false);
+      })();
+    };
+
+    const seDesabonner = surRefusAuth(() => {
+      if (vivant) setSessionExpiree(true);
+    });
+
+    document.addEventListener("visibilitychange", revalider);
+    window.addEventListener("focus", revalider);
+    return () => {
+      vivant = false;
+      seDesabonner();
+      document.removeEventListener("visibilitychange", revalider);
+      window.removeEventListener("focus", revalider);
     };
   }, []);
 

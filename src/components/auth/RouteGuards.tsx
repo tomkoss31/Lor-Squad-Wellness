@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { hasRequiredRole } from "../../lib/auth";
 import type { UserRole } from "../../types/domain";
@@ -92,8 +92,8 @@ const BOOT_MESSAGES = [
 ];
 
 function AuthBootSplash() {
-  const { forceResetSession } = useAppContext();
-  const navigate = useNavigate();
+  // Ni `forceResetSession` ni `navigate` ici : le bouton de secours recharge
+  // simplement la page (cf. `handleRecovery`). C'est volontaire.
   const [showRecovery, setShowRecovery] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
 
@@ -111,9 +111,23 @@ function AuthBootSplash() {
     };
   }, []);
 
-  async function handleRecovery() {
-    await forceResetSession();
-    navigate("/login", { replace: true });
+  /**
+   * Le bouton de secours du démarrage lent — il RECHARGE, il ne déconnecte plus.
+   *
+   * ⚠️ NE JAMAIS y remettre `forceResetSession()` (22/08). Ce bouton apparaît au
+   * bout de 5 secondes d'attente, et l'app met régulièrement 14 secondes à
+   * charger : il s'affiche donc sur presque chaque démarrage à froid. Il
+   * appelait une déconnexion — et `signOut()` était de portée GLOBALE, donc un
+   * clic ici, sur n'importe quel appareil, révoquait la session de TOUS les
+   * autres. Thomas a perdu un bilan en plein rendez-vous client : son PC avait
+   * été déconnecté à distance sans qu'il touche à rien.
+   *
+   * Ce qu'on veut quand un chargement traîne, c'est le refaire. Pas se faire
+   * éjecter de partout. Un rechargement suffit : si la session est vraiment
+   * morte, `ProtectedRoute` renverra vers la connexion tout seul.
+   */
+  function handleRecovery() {
+    window.location.reload();
   }
 
   return (
@@ -443,7 +457,7 @@ function AuthBootSplash() {
                 lineHeight: 1.5,
               }}
             >
-              Ça prend plus de temps que prévu ?
+              Ça prend plus de temps que prévu ? Tu peux relancer le chargement.
             </p>
             <button
               type="button"
@@ -471,7 +485,7 @@ function AuthBootSplash() {
                 e.currentTarget.style.color = "rgba(240,237,232,0.8)";
               }}
             >
-              Revenir à la connexion
+              Réessayer
             </button>
           </div>
         ) : null}
