@@ -996,7 +996,21 @@ export function useCrmLeads() {
           (a) => `${a.lead_table}:${a.lead_id}`,
         ),
       );
-      for (const l of all) l.enAttente = !accSet.has(`${l.table}:${l.id}`);
+      // ⚠️ UN RENDEZ-VOUS VAUT ACCEPTATION (retour Thomas, 24/08).
+      //
+      // Constat à l'écran : Cassandre, Amandine et Ghislaine attendaient d'être
+      // « validées » dans la boîte d'arrivée alors que leur RDV était CONFIRMÉ
+      // et affiché juste en dessous, sur le même écran. On demandait donc de
+      // faire entrer dans l'entonnoir quelqu'un qui y était déjà — et la même
+      // personne apparaissait DEUX FOIS.
+      //
+      // Réserver un créneau EST le geste d'entrée : personne ne réserve par
+      // accident. La boîte d'arrivée ne sert qu'à ceux qui ont laissé leurs
+      // coordonnées sans aller jusqu'au bout.
+      //
+      // `rdv` n'est jamais un créneau annulé : la requête filtre déjà
+      // `.neq("status", "canceled")` — un RDV présent est donc un RDV vivant.
+      for (const l of all) l.enAttente = !accSet.has(`${l.table}:${l.id}`) && !l.rdv;
 
       // Archive « endormi » (flag orthogonal, table crm_archived_leads).
       const { data: arch } = await sb.from("crm_archived_leads").select("lead_table, lead_id");
