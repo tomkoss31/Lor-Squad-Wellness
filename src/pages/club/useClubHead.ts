@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { CLUB_RUE, CLUB_CODE_POSTAL, CLUB_VILLE, CLUB_TEL_HREF } from "../../data/clubInfos";
 
 // Titre d'onglet + favicon + SEO Breakfast Club pour les VRAIS visiteurs du site
 // public. Le SPA hérite sinon du titre/favicon « La Base 360 » de index.html
@@ -40,13 +41,13 @@ const LOCAL_BUSINESS_LD = {
   ],
   description:
     "Club de nutrition et de petit-déjeuner à Verdun : un rituel du matin, un suivi quotidien et une communauté. Accompagnement perte de poids, remise en forme et énergie. Body scan offert.",
-  telephone: "+33679448759",
+  telephone: CLUB_TEL_HREF.replace("tel:", ""),
   priceRange: "€€",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "11 rue Saint Pierre",
-    postalCode: "55100",
-    addressLocality: "Verdun",
+    streetAddress: CLUB_RUE,
+    postalCode: CLUB_CODE_POSTAL,
+    addressLocality: CLUB_VILLE,
     addressCountry: "FR",
   },
   openingHoursSpecification: [

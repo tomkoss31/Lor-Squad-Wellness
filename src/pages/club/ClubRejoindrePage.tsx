@@ -1,5 +1,6 @@
 // Rejoindre l'équipe — page interne « Et si le club, c'était toi qui l'ouvrais ? ». v7 fidèle.
 import { ClubShell, InnerHero, TEL } from "./ClubShell";
+import { CLUB_TEL } from "../../data/clubInfos";
 
 const CHERCHE = [
   "Quelqu'un de régulier, du matin, qui aime les gens plus que les gadgets.",
@@ -62,7 +63,7 @@ export function ClubRejoindrePage() {
         <p className="cl-lead" style={{ marginTop: 16, marginLeft: "auto", marginRight: "auto", maxWidth: 540 }}>Écris-nous ou appelle, on te rappelle et on prend le temps d'en discuter sans engagement.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 26 }}>
           <a className="cl-cta" href="/club/rejoindre/rdv?utm_source=site-club">En parler avec l'équipe</a>
-          <a className="cl-ghost" href={TEL}>06 79 44 87 59</a>
+          <a className="cl-ghost" href={TEL}>{CLUB_TEL}</a>
         </div>
       </div></div>
     </ClubShell>

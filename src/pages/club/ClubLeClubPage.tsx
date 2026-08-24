@@ -1,5 +1,6 @@
 // Le club — page interne « Un club de petit-déjeuner, pas un bar ni une salle ». v7 fidèle.
 import { ClubShell, InnerHero, Slot, R } from "./ClubShell";
+import { HORAIRES_PHRASE } from "../../data/clubInfos";
 
 // La section « Ce que ce n'est pas » vivait ici. Retirée le 2026-08-10 : trois
 // de ses quatre lignes étaient déjà dites ailleurs (« pas un régime » dans la
@@ -53,7 +54,7 @@ export function ClubLeClubPage() {
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv">
         <span className="cl-pill o">Une visite type</span>
         <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>Un quart d'heure, <span className="cl-a-orange">pas ta matinée.</span></h2>
-        <p className="cl-lead" style={{ marginTop: 16, maxWidth: "52ch" }}>Tu passes une seule fois, quand tu veux entre 7h et 11h, sans rendez-vous. Compte un quart d'heure — un peu plus si tu t'assois pour discuter.</p>
+        <p className="cl-lead" style={{ marginTop: 16, maxWidth: "52ch" }}>Tu passes une seule fois, quand tu veux {HORAIRES_PHRASE}, sans rendez-vous. Compte un quart d'heure — un peu plus si tu t'assois pour discuter.</p>
         <ul style={{ listStyle: "none", padding: 0, margin: "30px 0 0" }}>
           {MATINEE.map((m) => (
             <li key={m.h} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "clamp(12px,3vw,28px)", padding: "22px 0", borderTop: "1px solid rgba(30,51,48,.16)" }}>

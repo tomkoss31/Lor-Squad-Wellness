@@ -21,6 +21,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { CLUB_TEL } from "../../data/clubInfos";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -36,7 +37,7 @@ export interface CardOffer {
 }
 
 /** Messages par code d'erreur de l'edge. Le défaut couvre l'imprévu. */
-const INDISPO = "Le paiement en ligne n'est pas disponible pour le moment — appelle-nous au 06 79 44 87 59, on s'occupe de toi.";
+const INDISPO = `Le paiement en ligne n'est pas disponible pour le moment — appelle-nous au ${CLUB_TEL}, on s'occupe de toi.`;
 const MESSAGES: Record<string, string> = {
   prenom_requis: "Il nous faut ton prénom.",
   nom_requis: "Il nous faut ton nom de famille.",
@@ -48,7 +49,7 @@ const MESSAGES: Record<string, string> = {
   fournisseur_non_supporte: INDISPO,
   fournisseur_indisponible: "Notre prestataire de paiement ne répond pas. Réessaie dans un instant.",
 };
-const DEFAULT_MESSAGE = "Le paiement n'a pas pu démarrer. Réessaie, ou appelle-nous au 06 79 44 87 59.";
+const DEFAULT_MESSAGE = `Le paiement n'a pas pu démarrer. Réessaie, ou appelle-nous au ${CLUB_TEL}.`;
 
 const inputStyle: CSSProperties = {
   width: "100%",

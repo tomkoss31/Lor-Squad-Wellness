@@ -24,6 +24,7 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 import { useClubHead } from "./useClubHead";
 import "../ReserverClubPage.css";
 import "./ClubRejoindreRdvPage.css";
+import { CLUB_ADRESSE } from "../../data/clubInfos";
 
 type Screen = "capture" | "dispo" | "confirm";
 type Mode = "presentiel" | "visio";
@@ -176,7 +177,7 @@ export function ClubRejoindreRdvPage() {
     const start = new Date(selectedSlot.iso);
     const end = new Date(start.getTime() + 30 * 60_000);
     const z = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-    const where = mode === "visio" ? "En visio — le lien te sera envoyé avant le RDV" : "11 rue Saint Pierre\\, 55100 Verdun";
+    const where = mode === "visio" ? "En visio — le lien te sera envoyé avant le RDV" : CLUB_ADRESSE.replace(/,/g, "\\,");
     const ics = [
       "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//The Breakfast Club//FR", "CALSCALE:GREGORIAN",
       "BEGIN:VEVENT",
