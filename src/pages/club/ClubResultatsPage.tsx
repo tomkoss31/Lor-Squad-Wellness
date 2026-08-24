@@ -1,6 +1,6 @@
 // Résultats — page interne « Ce qu'ils en disent, et ce qu'on ne promet pas ». v7 fidèle.
 import { useEffect } from "react";
-import { ClubShell, InnerHero, R } from "./ClubShell";
+import { ClubShell, InnerHero, R, CTA_PRINCIPAL } from "./ClubShell";
 import { CLUB_RESULTATS } from "../../data/clubResultats";
 import { useClubTemoignages } from "./useClubTemoignages";
 
@@ -185,7 +185,7 @@ export function ClubResultatsPage() {
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ textAlign: "center", maxWidth: 720 }}>
         <h2 style={{ fontSize: "clamp(34px,5.4vw,66px)" }}>Tu veux savoir si ça <span className="cl-a-orange">marcherait pour toi ?</span></h2>
         <p className="cl-lead" style={{ marginTop: 16, marginLeft: "auto", marginRight: "auto", maxWidth: 560 }}>C'est exactement la question à laquelle le body scan répond. Il est offert et dure environ 45 minutes.</p>
-        <a className="cl-cta" style={{ marginTop: 26 }} href={R}>Réserver mon body scan</a>
+        <a className="cl-cta" style={{ marginTop: 26 }} href={R}>{CTA_PRINCIPAL}</a>
       </div></div>
     </ClubShell>
   );

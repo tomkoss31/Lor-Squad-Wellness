@@ -5,7 +5,7 @@
 // =============================================================================
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
+import { ClubShell, Slot, R, objUrl, TEL, CTA_PRINCIPAL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
 import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
 import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
@@ -23,23 +23,10 @@ const CARD_OFFERS: Record<10 | 30, CardOffer> = {
   30: { type: 30, priceEur: 185, validityDays: 90 },
 };
 
-/**
- * LE LIBELLÉ UNIQUE DU BOUTON PRINCIPAL (brief du 14/08).
- *
- * Relevé avant : SIX formulations pour la même action sur une seule page —
- * « Je commence », « Réserver mon body scan », « Mon bilan offert »,
- * « Je réserve », « Mon body scan offert », « Réserver ». Six promesses
- * différentes pour un seul geste, et aucune ne disait clairement que c'est
- * gratuit.
- *
- * Celui-ci dit les trois choses qui décident : ce qu'on fait (je réserve), ce
- * qu'on obtient (mon bilan), ce que ça coûte (offert).
- *
- * ⚠ Ne s'applique PAS aux boutons des cartes 10 et 30 visites : eux déclenchent
- * un PAIEMENT, pas une réservation. Confondre les deux ferait croire qu'on paie
- * un bilan gratuit.
- */
-const CTA_PRINCIPAL = "Je réserve mon bilan offert";
+// CTA_PRINCIPAL était défini ICI, donc la page d'accueil parlait d'une seule
+// voix pendant que les cinq autres pages gardaient chacune la leur. Il vit
+// maintenant dans ClubShell, avec le lien qu'il porte — voir le relevé des
+// sept libellés là-bas.
 
 // Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
 const WORDMARK = "/brand/breakfast-club/logo-heart.png";
@@ -269,10 +256,20 @@ export function ClubLandingPage() {
               <span className="cl-pill y">Notre philosophie</span>
               <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>Du concret,<br /><span className="cl-a-sage">pas des promesses.</span></h2>
             </div>
+            {/* Copie de Thomas du 14/08. L'idée n'a pas bougé — régularité
+                plutôt que miracle — mais l'ancienne version la disait en
+                mettant le lecteur en défaut : « un groupe qui t'attend » (donc
+                tu dois), « un plan que tu lâcheras » (donc tu lâches), « ce
+                n'est pas la volonté qui te manque » (donc on parle déjà de tes
+                échecs). Trois piques dans un bloc censé rassurer.
+                La nouvelle dit la même chose sans désigner personne, et la
+                chute est devenue une permission au lieu d'un diagnostic. */}
             <div>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de régime express, pas de produit magique. Ce qui marche, c'est la régularité : un bon petit-déjeuner pris chaque matin au même endroit, avec quelqu'un qui suit tes chiffres et ton ressenti — c'est ça qui finit par tout changer. Ici, tu trouves tout au même endroit : de quoi bien manger, un coach qui te suit, et un groupe qui t'attend, dès 7h.</p>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>On t'aide à installer des habitudes qui tiennent et à comprendre ce dont ton corps a besoin — pas à suivre un plan que tu lâcheras dans deux semaines. Au bout du compte : plus d'énergie dès le réveil, un corps qui bouge dans le bon sens, et la fierté de t'y être tenu.</p>
-              <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.05, marginTop: 26 }}>Ce n'est pas la volonté qui te manque. <span className="cl-a-pink">C'est un rendez-vous.</span></p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de solution miracle ni de changement du jour au lendemain. Nous croyons surtout à la régularité, aux bonnes habitudes et à un accompagnement qui s'adapte à toi.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Au Breakfast Club, tu retrouves au même endroit ton petit-déjeuner, tes coachs, ton suivi et une communauté avec qui partager ton parcours.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Petit à petit, tu apprends à mieux comprendre tes habitudes, à prendre soin de toi et à avancer vers ton objectif à ton rythme, sans pression et sans jugement.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Parce que les changements qui durent ne se construisent pas en quelques jours. Ils se construisent ensemble, une habitude après l'autre. ❤️</p>
+              <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.15, marginTop: 26 }}>Pas besoin d'être parfait(e).<br /><span className="cl-a-pink">Juste d'avancer, un jour après l'autre.</span> ❤️</p>
             </div>
           </div>
         </div>

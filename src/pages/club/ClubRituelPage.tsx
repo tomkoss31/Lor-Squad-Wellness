@@ -1,5 +1,5 @@
 // Le rituel — page interne « Ce qu'il y a dans ton verre, et pourquoi dans cet ordre ». v7 fidèle.
-import { ClubShell, InnerHero, Slot, R } from "./ClubShell";
+import { ClubShell, InnerHero, Slot, R, CTA_PRINCIPAL } from "./ClubShell";
 
 const ETAPES = [
   {
@@ -82,7 +82,7 @@ export function ClubRituelPage() {
         <div className="cl-card" style={{ background: "#fff", borderLeft: "6px solid var(--orange)", padding: "clamp(30px,4.5vw,52px)" }}>
           <h2 style={{ fontSize: "clamp(24px,3.2vw,38px)" }}>À dire clairement.</h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--muted)", marginTop: 14, maxWidth: "62ch" }}>Les boissons du club sont des produits de bien-être, pas des médicaments. Elles ne soignent rien, ne remplacent pas une alimentation variée ni un avis médical. Ce qui marche, c'est la régularité et le suivi — pas un ingrédient magique.</p>
-          <a className="cl-cta" style={{ marginTop: 24 }} href={R}>Venir goûter le rituel — c'est offert</a>
+          <a className="cl-cta" style={{ marginTop: 24 }} href={R}>{CTA_PRINCIPAL}</a>
         </div>
       </div></div>
     </ClubShell>

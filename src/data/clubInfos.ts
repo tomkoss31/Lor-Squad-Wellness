@@ -36,6 +36,21 @@ export const CLUB_CODE_POSTAL = "55100";
 export const CLUB_VILLE = "Verdun";
 export const CLUB_ADRESSE = `${CLUB_RUE}, ${CLUB_CODE_POSTAL} ${CLUB_VILLE}`;
 
+// ─── Réseaux ────────────────────────────────────────────────────────────────
+/**
+ * Les comptes officiels, donnés par Thomas le 13/08.
+ *
+ * ⚠ Ils n'étaient écrits que dans les données structurées (`useClubHead`), pas
+ * dans le pied de page : les liens « Instagram » et « Facebook » du site
+ * pointaient sur `https://www.instagram.com/` et `https://www.facebook.com/`,
+ * c'est-à-dire l'accueil de ces réseaux. Un visiteur qui cliquait était envoyé
+ * chez le concurrent le plus proche : son propre fil d'actualité.
+ */
+export const RESEAUX = {
+  instagram: "https://www.instagram.com/thebreakfastclub.verdun/",
+  facebook: "https://www.facebook.com/profile.php?id=61592788492152",
+} as const;
+
 // ─── Horaires ───────────────────────────────────────────────────────────────
 /**
  * Le club ouvre AUSSI le samedi, à 8h. C'est le fait qui se perdait.

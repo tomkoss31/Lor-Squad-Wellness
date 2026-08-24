@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CLUB_RUE, CLUB_CODE_POSTAL, CLUB_VILLE, CLUB_TEL_HREF } from "../../data/clubInfos";
+import { CLUB_RUE, CLUB_CODE_POSTAL, CLUB_VILLE, CLUB_TEL_HREF, RESEAUX } from "../../data/clubInfos";
 
 // Titre d'onglet + favicon + SEO Breakfast Club pour les VRAIS visiteurs du site
 // public. Le SPA hérite sinon du titre/favicon « La Base 360 » de index.html
@@ -35,10 +35,7 @@ const LOCAL_BUSINESS_LD = {
   name: "Breakfast Club by La Base",
   url: "https://www.labase-nutrition.com/club",
   image: "https://www.labase-nutrition.com/api/og/club?path=club",
-  sameAs: [
-    "https://www.instagram.com/thebreakfastclub.verdun/",
-    "https://www.facebook.com/profile.php?id=61592788492152",
-  ],
+  sameAs: [RESEAUX.instagram, RESEAUX.facebook],
   description:
     "Club de nutrition et de petit-déjeuner à Verdun : un rituel du matin, un suivi quotidien et une communauté. Accompagnement perte de poids, remise en forme et énergie. Body scan offert.",
   telephone: CLUB_TEL_HREF.replace("tel:", ""),

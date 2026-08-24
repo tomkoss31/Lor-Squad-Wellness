@@ -1,6 +1,6 @@
 // Le club — page interne « Un club de petit-déjeuner, pas un bar ni une salle ». v7 fidèle.
-import { ClubShell, InnerHero, Slot, R } from "./ClubShell";
-import { HORAIRES_PHRASE } from "../../data/clubInfos";
+import { ClubShell, InnerHero, Slot, R, CTA_PRINCIPAL } from "./ClubShell";
+import { HORAIRES_LIGNES } from "../../data/clubInfos";
 
 // La section « Ce que ce n'est pas » vivait ici. Retirée le 2026-08-10 : trois
 // de ses quatre lignes étaient déjà dites ailleurs (« pas un régime » dans la
@@ -12,12 +12,27 @@ import { HORAIRES_PHRASE } from "../../data/clubInfos";
 // Sa seule phrase irremplaçable — « aucune performance à prouver, aucun regard
 // sur ce que tu soulèves » — a été remontée dans la FAQ « Je ne suis pas
 // sportif », où elle répond à quelqu'un qui se pose vraiment la question.
-const MATINEE = [
-  { h: "0 min", t: "Tu passes la porte", d: "On te connaît, ton aloe est déjà prêt. Pas de file, pas d'attente." },
-  { h: "5 min", t: "Ton rituel", d: "Les trois boissons dans l'ordre, à ton rythme, assis ou à emporter." },
-  { h: "12 min", t: "La pesée + deux mots", d: "Dix secondes sur la balance, une remarque du coach sur hier." },
-  { h: "15 min", t: "Tu repars lancé", d: "C'est réglé pour la journée. Le reste t'appartient." },
+// « UNE VISITE TYPE — un quart d'heure, pas ta matinée » vivait ici : quatre
+// lignes chronométrées, 0 / 5 / 12 / 15 min. Retirée le 14/08 à la demande de
+// Thomas, et elle méritait de partir : un club qui affiche un chronomètre à
+// l'entrée promet le contraire de ce qu'il vend. On y lisait « compte un quart
+// d'heure », « dix secondes sur la balance », « tu repars lancé » — la
+// grammaire d'un drive, pas d'un lieu où l'on s'assoit.
+// Sa copie dit maintenant l'inverse : viens quand ça t'arrange, reste le temps
+// que tu veux, et si tu es pressé(e) c'est possible aussi — mais ce n'est pas
+// la règle.
+/** Ce qu'on vient y faire, dans l'ordre de sa copie. */
+const AU_CLUB = [
+  { e: "🥤", t: "Tu prends ton petit-déjeuner" },
+  { e: "🤝", t: "Tu retrouves tes coachs et les autres membres" },
+  { e: "💬", t: "Tu échanges, tu partages, tu poses tes questions" },
+  { e: "📊", t: "Tu suis régulièrement ton évolution" },
+  { e: "❤️", t: "Et surtout, tu profites de l'énergie de la communauté" },
 ];
+
+/** « du lundi au vendredi : 7h–11h » → « Du lundi… ». La source reste
+ *  clubInfos.ts : on ne recopie pas un horaire, on capitalise le sien. */
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function ClubLeClubPage() {
   return (
@@ -65,17 +80,36 @@ export function ClubLeClubPage() {
       </div></div>
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv">
-        <span className="cl-pill o">Une visite type</span>
-        <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>Un quart d'heure, <span className="cl-a-orange">pas ta matinée.</span></h2>
-        <p className="cl-lead" style={{ marginTop: 16, maxWidth: "52ch" }}>Tu passes une seule fois, quand tu veux {HORAIRES_PHRASE}, sans rendez-vous. Compte un quart d'heure — un peu plus si tu t'assois pour discuter.</p>
-        <ul style={{ listStyle: "none", padding: 0, margin: "30px 0 0" }}>
-          {MATINEE.map((m) => (
-            <li key={m.h} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "clamp(12px,3vw,28px)", padding: "22px 0", borderTop: "1px solid rgba(30,51,48,.16)" }}>
-              <span style={{ fontFamily: "Anton", fontSize: 30, color: "var(--orange)" }}>{m.h}</span>
-              <div><div style={{ fontWeight: 700, fontSize: 18 }}>{m.t}</div><div style={{ fontSize: 16, color: "var(--muted)", marginTop: 4 }}>{m.d}</div></div>
+        <span className="cl-pill o">Ton rythme</span>
+        <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>Un moment pour toi, <span className="cl-a-orange">à ton rythme</span> ❤️</h2>
+        <p className="cl-lead" style={{ marginTop: 16, maxWidth: "60ch" }}>Le Breakfast Club est ouvert chaque matin pour te permettre d'intégrer facilement ta nouvelle routine à ton quotidien.</p>
+        <p className="cl-lead" style={{ marginTop: 12, maxWidth: "60ch" }}>Avant le travail, après avoir déposé les enfants ou simplement pour prendre un moment pour toi : tu viens au moment qui te convient.</p>
+
+        <ul style={{ listStyle: "none", padding: 0, margin: "clamp(26px,3.6vw,38px) 0 0" }}>
+          {AU_CLUB.map((m) => (
+            <li key={m.t} style={{ display: "grid", gridTemplateColumns: "clamp(34px,5vw,44px) 1fr", gap: "clamp(10px,2vw,18px)", alignItems: "center", padding: "18px 0", borderTop: "1px solid rgba(30,51,48,.16)" }}>
+              <span aria-hidden="true" style={{ fontSize: "clamp(22px,3vw,28px)", lineHeight: 1 }}>{m.e}</span>
+              <span style={{ fontSize: "clamp(16.5px,2vw,18.5px)", lineHeight: 1.5 }}>{m.t}</span>
             </li>
           ))}
         </ul>
+
+        <p style={{ fontWeight: 700, fontSize: 18.5, marginTop: "clamp(28px,3.8vw,40px)" }}>Tu es pressé(e) ? Aucun problème.</p>
+        <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--muted)", marginTop: 10, maxWidth: "62ch" }}>Tu peux aussi faire un passage plus rapide les jours où ton emploi du temps est chargé. Mais ici, aucune course contre la montre.</p>
+        <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--muted)", marginTop: 10, maxWidth: "62ch" }}>Le Breakfast Club, c'est avant tout un moment pour prendre soin de toi et avancer vers ton objectif, entouré(e).</p>
+
+        {/* Les horaires, enfin donnés en clair sur cette page : jusqu'ici elle
+            se contentait de la tournure « quand tu veux entre 7h et 11h »
+            glissée dans une phrase. */}
+        <div className="cl-card cl-top-s" style={{ padding: "clamp(24px,3.4vw,36px)", marginTop: "clamp(28px,4vw,40px)", maxWidth: 560 }}>
+          <span className="cl-pill s">Horaires du club</span>
+          <div style={{ marginTop: 16 }}>
+            {HORAIRES_LIGNES.map((l) => (
+              <div key={l} style={{ fontFamily: "Anton", fontSize: "clamp(19px,2.4vw,25px)", lineHeight: 1.45 }}>{majuscule(l)}</div>
+            ))}
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: "var(--muted)", marginTop: 14 }}>Tu arrives quand tu veux pendant les horaires d'ouverture, selon ton emploi du temps.</p>
+        </div>
       </div></div>
 
       <div className="cl-band alt"><div className="cl-wrap cl-sec cl-rv">
@@ -83,7 +117,7 @@ export function ClubLeClubPage() {
           <span className="cl-pill s">Le lien avec La Base</span>
           <h2 style={{ marginTop: 20, fontSize: "clamp(28px,3.8vw,48px)" }}>Le club, c'est La Base, <span className="cl-a-sage">version matin.</span></h2>
           <p style={{ fontSize: 18, lineHeight: 1.7, color: "var(--muted)", marginTop: 16, maxWidth: "60ch" }}>La Base accompagne des gens à Verdun depuis quatre ans. Le club, c'est le même sérieux, le même suivi — mais autour d'un rituel du matin simple et régulier. Tu bénéficies de toute cette expérience dès ta première visite.</p>
-          <a className="cl-cta" style={{ marginTop: 24 }} href={R}>Réserver mon body scan offert</a>
+          <a className="cl-cta" style={{ marginTop: 24 }} href={R}>{CTA_PRINCIPAL}</a>
         </div>
       </div></div>
     </ClubShell>
