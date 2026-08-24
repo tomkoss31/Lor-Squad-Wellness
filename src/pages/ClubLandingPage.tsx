@@ -80,7 +80,7 @@ const FAQ = [
   // client doit lire les deux au même endroit.
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois, et c'est tout. En revanche une carte a une durée de validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30 visites, à partir du jour de l'achat. C'est ce qui garde le rythme : une carte 10 visites, c'est deux à trois matins par semaine pendant un mois." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
-  { q: "Je n'ai jamais le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin.` },
+  { q: "Je n'ai jamais le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin. Seul le premier rendez-vous, ton bilan, se cale à l'avance.` },
   // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
   // supprimée parce que redondante. Elle, non : elle enlève la peur numéro un
   // de quelqu'un qui n'est pas en forme, et rien d'autre ne le disait ici.
