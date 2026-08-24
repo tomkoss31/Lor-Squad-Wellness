@@ -26,6 +26,7 @@ import { ecritureFor, type CleReponse, type Reponse } from "../features/crm/qual
 import { ecrireQualification, estQualifiable, statutPour } from "../features/crm/ecrireQualification";
 import { nomPropre } from "../features/crm/nomPropre";
 import { cleIdentite } from "../features/crm/appariementRdv";
+import { clesDoublon } from "../features/crm/cleDoublon";
 import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 // Le vocabulaire de provenance a UNE source (src/types/domain.ts) : le tunnel,
 // les deux bilans et cet écran en dérivent tous. Deux listes recopiées, ce sont
@@ -1014,8 +1015,24 @@ export function useCrmLeads() {
         }
       }
 
-      all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      majLeads(all);
+      // ── Les comptes de test sortent du CRM (demande Thomas, 24/08) ────────
+      //
+      // Thomas et Mélanie essaient les tunnels publics avec leurs propres
+      // coordonnées : 13 lignes de test mesurées en base le 24/08, dont 8
+      // réservations au nom de « MELANIE ». Elles faussaient les compteurs et
+      // ressortaient en tête de l'analyse des doublons.
+      //
+      // On filtre sur les COORDONNÉES (`crm_contacts_test`), pas sur les
+      // lignes : ce qui arrivera demain avec l'adresse de Thomas sera écarté
+      // sans que personne ait à y penser. Rien n'est supprimé en base.
+      const { data: testsRows } = await sb.from("crm_contacts_test").select("cle");
+      const clesTest = new Set(((testsRows ?? []) as Array<{ cle: string }>).map((t) => t.cle));
+      const retenus = clesTest.size
+        ? all.filter((l) => !clesDoublon(l).some((k) => clesTest.has(k)))
+        : all;
+
+      retenus.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      majLeads(retenus);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Chargement CRM impossible.");
     } finally {
