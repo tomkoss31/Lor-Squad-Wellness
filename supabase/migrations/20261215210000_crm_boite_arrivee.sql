@@ -44,6 +44,12 @@ alter table public.crm_lead_acceptations enable row level security;
 -- Même portée que sa jumelle : le CRM est un outil de coach, tout compte
 -- connecté le manipule. Le cloisonnement par propriétaire se fait à l'affichage
 -- (`isInScope`), pas ici — c'est déjà le choix fait pour crm_archived_leads.
+-- `drop ... if exists` d'abord : Postgres n'a pas de `create policy if not
+-- exists`, et cette migration a déjà été appliquée sur la base partagée (elle
+-- portait un numéro en collision avec `20261215200000_dispos_lead`, renumérotée
+-- au moment de la release). Sans ça, la rejouer casserait sur « policy already
+-- exists ».
+drop policy if exists crm_lead_acceptations_auth_manage on public.crm_lead_acceptations;
 create policy crm_lead_acceptations_auth_manage
   on public.crm_lead_acceptations for all to authenticated
   using ((select auth.uid()) is not null)

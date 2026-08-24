@@ -731,7 +731,9 @@ export async function loginWithSupabaseCredentials(payload: {
   }
 
   // Aucun profil nulle part. Sign out pour éviter une session zombie.
-  await client.auth.signOut();
+  // `scope: "local"` — voir `logoutFromSupabase` ci-dessous : sans lui, ce
+  // nettoyage local déconnecterait la personne de TOUS ses appareils.
+  await client.auth.signOut({ scope: "local" });
   if (user && !user.active) {
     return {
       ok: false as const,
@@ -747,7 +749,25 @@ export async function loginWithSupabaseCredentials(payload: {
 
 export async function logoutFromSupabase() {
   const client = await requireSupabase();
-  await client.auth.signOut();
+  // ⚠️ `scope: "local"` — NE PAS RETIRER (22/08).
+  //
+  // `signOut()` sans argument utilise la portée **globale**, c'est le défaut de
+  // la bibliothèque, écrit dans son code :
+  //   « By default, signOut() uses the global scope, which signs out all other
+  //     sessions that the user is logged into as well. »
+  //
+  // Autrement dit : se déconnecter sur son téléphone révoquait la session du PC
+  // du club et celle de la borne, à la seconde, sans un mot. Personne n'attend
+  // ça de « Sortir ».
+  //
+  // Mesuré le 22/08 : Thomas était le SEUL de l'équipe dont aucune session ne
+  // survivait à la journée — 2 sessions, toutes deux du matin — quand celles de
+  // Mélanie duraient depuis le 27 juillet et celles d'Alexis depuis le 24 juin.
+  // Son PC n'expirait pas : il était révoqué depuis un autre de ses appareils.
+  // Il a perdu un bilan client en plein rendez-vous à cause de ça.
+  //
+  // Une déconnexion ne concerne QUE l'appareil sur lequel on l'a demandée.
+  await client.auth.signOut({ scope: "local" });
   // Le cache de fraîcheur garde des données jusqu'à une semaine, et le
   // localStorage survit à la déconnexion : sans ce vidage, le coach suivant
   // qui se connecte sur le même navigateur verrait les chiffres du précédent.

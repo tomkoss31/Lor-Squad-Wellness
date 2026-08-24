@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { estRefusDeSession, signalerRefusAuth } from "../lib/sessionAuth";
 
 type RuntimeSupabaseConfig = {
   supabaseUrl: string;
@@ -160,7 +161,32 @@ export async function getSupabaseClient() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true
-    }
+    },
+    global: {
+      // Un seul but : repérer une session qui n'est plus valable, au moment où
+      // la base le dit. Le 22/08, six enregistrements de bilan ont été refusés
+      // en 401 sans que la bibliothèque n'émette le moindre événement — le PC
+      // sortait de veille avec un jeton périmé. L'app n'avait aucun moyen de
+      // savoir, et un bilan client a été perdu en plein rendez-vous.
+      //
+      // On n'INTERCEPTE rien : la réponse est rendue telle quelle, l'appelant
+      // ne voit aucune différence. On se contente de prévenir qui écoute.
+      fetch: async (input, init) => {
+        const reponse = await fetch(input as RequestInfo, init);
+        try {
+          const url =
+            typeof input === "string"
+              ? input
+              : input instanceof URL
+                ? input.toString()
+                : (input as Request).url;
+          if (estRefusDeSession(url, reponse.status)) signalerRefusAuth();
+        } catch {
+          // le repérage ne doit jamais gêner la requête elle-même
+        }
+        return reponse;
+      },
+    },
   });
 
   return cachedClient;
