@@ -64,6 +64,8 @@ const PLACEHOLDER_LEAD: CrmLead = {
   firstName: "",
   contact: null,
   contactIsPhone: false,
+  phone: null,
+  email: null,
   city: null,
   source: "welcome",
   status: "new",

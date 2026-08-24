@@ -51,6 +51,8 @@ import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeE
 import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
+import { grouperParPersonne, normaliserTelephone } from "../features/crm/cleDoublon";
+import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
 import { CrmFileDuJour } from "../components/crm/CrmFileDuJour";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
@@ -195,25 +197,32 @@ export function CrmPage() {
   const stats = useMemo(() => computeCrmStats(leads), [leads]);
 
   // Wagon 3 chantier 7 : anti-doublon. Index des téléphones déjà clients +
-  // détection des leads en double dans le pipeline (même téléphone).
+  // détection des leads en double dans le pipeline.
+  //
+  // ⚠️ 24/08 — la normalisation maison était une mine. `(s).replace(/\D/g,"")`
+  // ne vérifiait pas qu'il s'agissait d'un téléphone : appliquée à une adresse,
+  // elle n'en gardait que les chiffres (« sarah123456@gmail.com » → « 123456 »,
+  // six chiffres, seuil atteint). Deux inconnus partageant six chiffres dans
+  // leur adresse étaient déclarés doublons. Vérifié en base le 24/08 : pas
+  // encore d'explosion, mais c'est le bug « Manon Legrand héritait du RDV de
+  // Manon PERRIN ». On passe sur la clé unique et testée.
   const dupeInfo = useMemo(() => {
-    const norm = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").slice(-9);
     const clientPhones = new Map<string, string>();
     for (const c of clients ?? []) {
-      const p = norm(c.phone);
-      if (p.length >= 6) clientPhones.set(p, `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim());
+      const p = normaliserTelephone(c.phone);
+      if (p) clientPhones.set(p, `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim());
     }
     const leadPhoneCount = new Map<string, number>();
     for (const l of leads) {
-      const p = norm(l.contact);
-      if (p.length >= 6) leadPhoneCount.set(p, (leadPhoneCount.get(p) ?? 0) + 1);
+      const p = normaliserTelephone(l.phone) ?? normaliserTelephone(l.contact);
+      if (p) leadPhoneCount.set(p, (leadPhoneCount.get(p) ?? 0) + 1);
     }
-    return { norm, clientPhones, leadPhoneCount };
+    return { clientPhones, leadPhoneCount };
   }, [clients, leads]);
 
   function dupeFlagFor(lead: CrmLead): { kind: "client" | "dupe"; label: string } | null {
-    const p = dupeInfo.norm(lead.contact);
-    if (p.length < 6) return null;
+    const p = normaliserTelephone(lead.phone) ?? normaliserTelephone(lead.contact);
+    if (!p) return null;
     const clientName = dupeInfo.clientPhones.get(p);
     if (clientName) return { kind: "client", label: `déjà client (${clientName})` };
     if ((dupeInfo.leadPhoneCount.get(p) ?? 0) > 1) return { kind: "dupe", label: "doublon pipeline" };
@@ -300,43 +309,35 @@ export function CrmPage() {
   // deux fiches dans le CRM pour une seule personne. Le repère ⚠️ existait
   // déjà, mais il SIGNALAIT sans regrouper — et seulement sur le téléphone.
   //
-  // On regroupe sur l'email OU le téléphone normalisé. La fiche la plus
-  // RÉCENTE devient la ligne visible ; les autres sont repliées derrière un
-  // badge « n fiches ». Rien n'est supprimé en base : c'est un regroupement
-  // d'affichage, réversible en retirant ces lignes.
+  // ── MISE À JOUR DU 24/08 : on ne choisit plus, on RÉUNIT ──────────────────
+  //
+  // La version du 12/08 gardait « la plus récente » et repliait les autres —
+  // donc tout ce qu'elles portaient devenait invisible. Mesure en base : la
+  // fiche club de Florian et son bilan en ligne sont arrivés à UNE MINUTE
+  // d'écart ; si le bilan était arrivé en premier, ses 3 objectifs et sa
+  // motivation seraient restés cachés derrière un « 2 fiches ».
+  //
+  // Désormais : `grouperParPersonne` (téléphone ET adresse, transitif) puis
+  // `fusionnerGroupe` (chaque champ pris là où il est le plus utile). Rien
+  // n'est supprimé en base — c'est une VUE, réversible.
   //
   // Le regroupement se fait APRÈS le filtrage : filtrer sur « Colis » ne doit
   // pas faire disparaître une fiche colis parce qu'elle serait absorbée par
   // une fiche d'une autre source.
-  const { regroupes, doublonsDe } = useMemo(() => {
-    const cle = (l: CrmLead): string | null => {
-      const c = (l.contact ?? "").trim().toLowerCase();
-      if (!c) return null;
-      if (c.includes("@")) return "e:" + c;
-      const tel = c.replace(/\D/g, "").replace(/^0+/, "").replace(/^33/, "");
-      return tel.length >= 8 ? "t:" + tel.slice(-9) : null;
-    };
-    const paquets = new Map<string, CrmLead[]>();
-    const seuls: CrmLead[] = [];
-    for (const l of filtered) {
-      const k = cle(l);
-      if (!k) { seuls.push(l); continue; }
-      const p = paquets.get(k);
-      if (p) p.push(l); else paquets.set(k, [l]);
-    }
-    const principaux: CrmLead[] = [...seuls];
+  const { regroupes, doublonsDe, fusionsDe } = useMemo(() => {
+    const principaux: CrmLead[] = [];
     const doublons = new Map<string, CrmLead[]>();
-    for (const groupe of paquets.values()) {
-      // Le plus récent porte le fil : c'est celui qui reflète l'intention
-      // actuelle de la personne.
-      const tries = [...groupe].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-      principaux.push(tries[0]);
-      if (tries.length > 1) doublons.set(tries[0].key, tries.slice(1));
+    const fusions = new Map<string, Fusion<CrmLead>>();
+    for (const groupe of grouperParPersonne(filtered)) {
+      const f = fusionnerGroupe(groupe);
+      principaux.push(f.vue);
+      if (f.autres.length > 0) {
+        doublons.set(f.vue.key, f.autres);
+        fusions.set(f.vue.key, f);
+      }
     }
     principaux.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return { regroupes: principaux, doublonsDe: doublons };
+    return { regroupes: principaux, doublonsDe: doublons, fusionsDe: fusions };
   }, [filtered]);
 
   // Le seul chiffre qui mérite d'être en haut de l'écran : combien de gens
@@ -387,6 +388,16 @@ export function CrmPage() {
     }
     return by;
   }, [leads, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids]);
+  // La jauge d'entonnoir comptait les DOUBLONS : elle lisait `leads` brut,
+  // alors que la liste, elle, regroupe. claire y pesait 3 personnes et Manon 3
+  // — mesuré le 24/08 : 8 lignes en trop sur 42, soit ~19 % de gonflement sur
+  // tous les chiffres du haut de page. Elle lit désormais le même monde que le
+  // reste de l'écran.
+  const leadsEntonnoir = useMemo(
+    () => grouperParPersonne(leads.filter((l) => !l.enAttente)).map((g) => fusionnerGroupe(g).vue),
+    [leads],
+  );
+
   // La boîte d'arrivée : ce qui attend un geste, le plus récent d'abord.
   // On ne la filtre PAS par la recherche ni par les onglets — c'est une file
   // d'attente, pas une vue. La masquer derrière un filtre reviendrait à
@@ -616,7 +627,7 @@ export function CrmPage() {
       {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
           périmètre — et NON `filtered` : une jauge qui se recalcule sur son
           propre filtre afficherait 100 % partout dès qu'on tape un segment. */}
-      <CrmJaugeEntonnoir leads={leads.filter((l) => !l.enAttente)} filtre={jauge} onFiltrer={setJauge} />
+      <CrmJaugeEntonnoir leads={leadsEntonnoir} filtre={jauge} onFiltrer={setJauge} />
 
       {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
           d'ici que part l'email d'acceptation, qui n'existe nulle part
@@ -982,6 +993,7 @@ export function CrmPage() {
               triExterne={{ valeur: view === "archived" ? "recent" : sortKey, onChange: setSortKey }}
               leads={regroupes}
               doublonsDe={doublonsDe}
+          conflitsDe={new Map([...fusionsDe].map(([k, f]) => [k, f.conflits]))}
               msgCtx={msgCtx}
               archived={view === "archived"}
               onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
