@@ -25,7 +25,7 @@ export function ClubLeClubPage() {
       title="Le club — The Breakfast Club Verdun"
       description="Un club de petit-déjeuner ouvert dès 7h à Verdun : trois boissons, une table, et quelqu'un qui suit tes chiffres chaque matin. Premier body scan offert."
     >
-      <InnerHero pill="Le club" pillClass="p" title="Un club de petit-déjeuner." accent="Pas un bar, pas une salle de sport." intro="Un lieu simple, ouvert tous les matins, où l'on prend soin de toi sans en faire tout un cinéma." />
+      <InnerHero pill="Le club" pillClass="p" title="Un club de petit-déjeuner." accent="Pas un bar, pas une salle de sport." intro="Un lieu simple, ouvert tous les matins, où l'on prend soin de toi." />
 
       <div className="cl-band"><div className="cl-wrap" style={{ paddingBottom: "clamp(40px,6vw,72px)" }}>
         <Slot
