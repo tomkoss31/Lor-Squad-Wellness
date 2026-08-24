@@ -1,6 +1,7 @@
 // Nous — page interne « Mélanie, Thomas, et un local rue Saint Pierre ». v7 fidèle.
 import { Link } from "react-router-dom";
-import { ClubShell, InnerHero, Slot, R, TEL } from "./ClubShell";
+import { ClubShell, InnerHero, Slot, R, TEL, CTA_PRINCIPAL } from "./ClubShell";
+import { CLUB_TEL, CLUB_ADRESSE } from "../../data/clubInfos";
 
 /**
  * Les visages du matin.
@@ -39,20 +40,20 @@ const EQUIPE: Array<{ nom: string; role: string; src?: string; alt?: string; cad
   },
 ];
 const PRATIQUE = [
-  ["Adresse", "11 rue Saint Pierre, 55100 Verdun"],
+  ["Adresse", CLUB_ADRESSE],
   ["Horaires", "Lundi au vendredi 7h–11h · Samedi 8h–11h"],
   ["Accès", "En centre-ville, stationnement à proximité"],
   ["Paiement", "Carte, espèces — sur place"],
-  ["Téléphone", "06 79 44 87 59"],
+  ["Téléphone", CLUB_TEL],
 ];
 
 export function ClubNousPage() {
   return (
     <ClubShell
-      title="Mélanie & Thomas — Breakfast Club Verdun"
-      description="Qui sont les deux coachs du Breakfast Club de Verdun, pourquoi ils ont ouvert ce club, et comment ils accompagnent leurs membres chaque matin."
+      title="Qui sommes-nous ? — Breakfast Club Verdun"
+      description="Mel & Tom, derrière le Breakfast Club de Verdun : quatre ans à accompagner des gens, l'ouverture de La Base, et pourquoi ce club de nutrition existe."
     >
-      <InnerHero pill="Nous" pillClass="s" title="Mélanie, Thomas," accent="et un local rue Saint Pierre." intro="Pas une franchise anonyme. Deux personnes de Verdun qui accompagnent des gens depuis quatre ans, et un lieu bien réel où l'on t'attend le matin." />
+      <InnerHero pill="Qui sommes-nous ?" pillClass="s" title="Derrière le club," accent="il y a nous." intro="Mel & Tom. Deux personnes de Verdun, un lieu bien réel rue Saint Pierre, et quatre ans à accompagner des gens le matin." />
 
       {/* Répartition décidée par Thomas, et elle est juste : le SELFIE ici,
           parce que cette page parle d'EUX ; la photo de groupe sur l'accueil,
@@ -73,11 +74,64 @@ export function ClubNousPage() {
             position="50% 22%"
             alt="Mélanie et Thomas, souriants devant le mur végétal et l'enseigne lumineuse La Base."
           />
+          {/* Copie de Thomas du 14/08, reprise mot pour mot. Le récit remplace
+              l'ancien (« on a commencé simplement… ») : il raconte la même
+              chose mais dans leur voix, avec les quatre ans et l'ouverture de
+              La Base, que l'ancien texte passait sous silence. */}
           <div>
-            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)" }}>On a commencé simplement : aider des proches à reprendre de bonnes habitudes le matin. Puis d'autres sont venus, et une évidence s'est imposée — ce qui manque à la plupart des gens, ce n'est pas la connaissance, c'est un cadre et quelqu'un qui suit.</p>
-            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Le club, c'est ça mis en lieu et en heure. Un local, un rituel, une équipe qui te connaît par ton prénom. Rien de sophistiqué — juste tenu, tous les matins.</p>
-            <p style={{ fontFamily: "Anton", fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.08, marginTop: 26 }}>On ne t'accueille pas comme un client. <span className="cl-a-sage">On t'attend comme un habitué.</span></p>
+            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)" }}>Il y a 4 ans, nous avons commencé cette aventure avec un objectif simple : améliorer notre forme, notre énergie et nos habitudes.</p>
+            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Les résultats obtenus nous ont donné envie d'aider à notre tour d'autres personnes à se sentir mieux dans leur corps et dans leur quotidien.</p>
+            <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Au fil des années, l'accompagnement a pris de plus en plus de place dans notre vie, jusqu'à l'ouverture de La Base à Verdun. Puis nous avons voulu aller encore plus loin…</p>
+            <p style={{ fontFamily: "Anton", fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.08, marginTop: 26 }}>C'est ainsi qu'est né <span className="cl-a-sage">The Breakfast Club.</span> ❤️</p>
           </div>
+        </div>
+      </div></div>
+
+      {/* CE QU'EST LE CLUB, ET LA MISSION — la fin de la copie du 14/08.
+          Placée ici et pas ailleurs : elle vient juste après « c'est ainsi
+          qu'est né The Breakfast Club », donc elle répond à la question que
+          cette phrase pose — « né pour quoi faire ? ».
+          Les cinq lignes sont montées en liste plutôt qu'en paragraphe : dans
+          sa copie elles sont déjà écrites une par ligne, c'est un rythme, pas
+          une énumération à aplatir. */}
+      <div className="cl-band alt"><div className="cl-wrap cl-sec cl-rv">
+        <div style={{ maxWidth: 760 }}>
+          <span className="cl-pill o">Le club</span>
+          <h2 style={{ marginTop: 20, fontSize: "clamp(28px,3.8vw,48px)" }}>On ne vient pas simplement <span className="cl-a-orange">prendre son petit-déjeuner.</span></h2>
+          <p style={{ fontSize: 19, lineHeight: 1.8, color: "var(--muted)", marginTop: 18 }}>Un lieu convivial, motivant et sans jugement.</p>
+          <ul style={{ listStyle: "none", padding: 0, margin: "24px 0 0" }}>
+            {[
+              "On vient avec un objectif.",
+              "On est accompagné.",
+              "On suit ses progrès.",
+              "On crée de nouvelles habitudes.",
+              "Et surtout, on n'avance plus seul.",
+            ].map((ligne, i, tout) => (
+              <li
+                key={ligne}
+                style={{
+                  fontFamily: "Anton",
+                  fontSize: "clamp(21px,2.8vw,30px)",
+                  lineHeight: 1.25,
+                  padding: "12px 0",
+                  borderTop: "1px solid rgba(30,51,48,.12)",
+                  // La dernière est la chute : elle prend la couleur.
+                  color: i === tout.length - 1 ? "var(--orange-h)" : "var(--ink)",
+                }}
+              >
+                {ligne}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="cl-card" style={{ marginTop: "clamp(28px,4vw,44px)", padding: "clamp(26px,3.6vw,40px)", borderLeft: "5px solid var(--sage)", maxWidth: 760 }}>
+          <div style={{ fontSize: 12, letterSpacing: ".16em", textTransform: "uppercase", fontWeight: 700, color: "var(--muted2)" }}>Notre mission</div>
+          {/* Sa copie vouvoyait ici. Tout le site tutoie — un visiteur qui lit
+              « tu » partout et « vous » à la fin le remarque. Arbitré par
+              Thomas le 14/08 : on garde le tutoiement. */}
+          <p style={{ fontSize: 19, lineHeight: 1.75, marginTop: 10 }}>T'aider à obtenir des résultats durables, tout en te sentant bien et entouré(e). ❤️</p>
+          <p style={{ fontFamily: "Anton", fontSize: 22, marginTop: 16 }}>Mel &amp; Tom</p>
         </div>
       </div></div>
 
@@ -142,11 +196,11 @@ export function ClubNousPage() {
                 </li>
               ))}
             </ul>
-            <a className="cl-cta" style={{ marginTop: 24 }} href={R}>Réserver ma venue</a>
+            <a className="cl-cta" style={{ marginTop: 24 }} href={R}>{CTA_PRINCIPAL}</a>
             <a className="cl-ghost" style={{ marginTop: 12, marginLeft: 12 }} href={TEL}>Appeler</a>
           </div>
           <iframe
-            title="Plan du club — 11 rue Saint Pierre, Verdun"
+            title={`Plan du club — ${CLUB_ADRESSE}`}
             src="https://www.google.com/maps?q=11+rue+Saint+Pierre+Verdun&output=embed"
             style={{ width: "100%", height: 400, border: 0, borderRadius: 20 }}
             loading="lazy"

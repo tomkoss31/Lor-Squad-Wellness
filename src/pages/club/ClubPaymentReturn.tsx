@@ -16,6 +16,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { TEL } from "./ClubShell";
+import { CLUB_TEL, HORAIRES_PHRASE } from "../../data/clubInfos";
 
 interface OrderStatus {
   status: "pending" | "paid" | "canceled" | "failed";
@@ -121,7 +122,7 @@ export function ClubPaymentReturn({ orderId, onClose }: { orderId: string; onClo
             {[
               <>Ta <b>preuve d'achat</b> part {order?.email ? <>sur <b>{order.email}</b></> : "sur ton email"}. Garde-la, c'est elle qui fait foi au comptoir.</>,
               <><b>Mélanie ou Thomas te rappelle</b> dans la journée pour caler ton premier matin.</>,
-              <>Tu passes <b>quand tu veux entre 7h et 11h</b>. Dis ton nom en arrivant — on retrouve ta carte.</>,
+              <>Tu passes <b>quand tu veux {HORAIRES_PHRASE}</b>. Dis ton nom en arrivant — on retrouve ta carte.</>,
             ].map((txt, i) => (
               <li key={i} style={{ display: "flex", gap: 11, fontSize: 14, lineHeight: 1.55, color: "var(--muted, #55605A)" }}>
                 <span aria-hidden="true" style={{
@@ -137,7 +138,7 @@ export function ClubPaymentReturn({ orderId, onClose }: { orderId: string; onClo
           <div style={{ background: "var(--cream-alt, #F0E7D7)", border: "1px solid var(--hair, #E7E1D6)", borderRadius: 13, padding: "13px 15px", marginTop: 18 }}>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>Pas reçu le mail ?</p>
             <p style={{ margin: "5px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "var(--muted, #55605A)" }}>
-              Regarde tes spams, puis appelle-nous au <a href={TEL}>06 79 44 87 59</a>. Ton paiement est enregistré quoi qu'il arrive.
+              Regarde tes spams, puis appelle-nous au <a href={TEL}>{CLUB_TEL}</a>. Ton paiement est enregistré quoi qu'il arrive.
             </p>
           </div>
 

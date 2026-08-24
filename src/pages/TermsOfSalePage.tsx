@@ -23,6 +23,7 @@
 // ⚠ Ces conditions sont rédigées avec soin mais ne remplacent pas la
 // relecture d'un juriste avant l'ouverture des ventes.
 
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   COMPANY_NAME,
@@ -39,6 +40,17 @@ import {
 const MAJ = "13 août 2026";
 
 export default function TermsOfSalePage() {
+  // Titre d'onglet propre à la page (14/08). Ces trois pages sont dans le plan
+  // du site, donc destinées à être indexées — or aucune ne posait de titre : elles
+  // héritaient toutes les trois de celui de index.html, « La Base 360 — The
+  // wellness nutrition club ». Trois URL publiques sous le même titre, et le nom
+  // de l'outil interne affiché au visiteur du club.
+  useEffect(() => {
+    const precedent = document.title;
+    document.title = "Conditions de vente · La Base, Verdun";
+    return () => { document.title = precedent; };
+  }, []);
+
   return (
     <main
       style={{

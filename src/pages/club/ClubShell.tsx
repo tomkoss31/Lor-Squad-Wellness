@@ -12,6 +12,7 @@ import { useClubHead } from "./useClubHead";
 import { useRevelationAuScroll } from "./useRevelationAuScroll";
 import { useEffetsAuScroll } from "./useEffetsAuScroll";
 import { ClubNewsletter } from "./ClubNewsletter";
+import { CLUB_TEL, CLUB_RUE, CLUB_CODE_POSTAL, CLUB_VILLE, HORAIRES_COURT_JOURS, RESEAUX } from "../../data/clubInfos";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
 // Wordmark AVEC le cœur rouge — pour les fonds clairs.
@@ -25,20 +26,61 @@ export const R = "/reserver?utm_source=site";
 export const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
 export const TEL = "tel:+33679448759";
 
+/**
+ * LE LIBELLÉ UNIQUE DU BOUTON PRINCIPAL (brief du 14/08).
+ *
+ * Il vivait dans ClubLandingPage, donc la page d'accueil parlait d'une seule
+ * voix pendant que les cinq autres continuaient chacune la leur. Relevé le
+ * 14/08 sur l'ensemble du site — MÊME lien, SEPT libellés :
+ *     « Je réserve mon bilan offert »        page d'accueil (×6)
+ *     « Mon bilan offert »                   en-tête et barre du bas
+ *     « Réserver mon body scan »             menu déplié, page Résultats
+ *     « Réserver mon body scan offert »      page Le club
+ *     « Réserver ma venue »                  page Qui sommes-nous
+ *     « Réserver ma première visite »        page Comment ça se passe
+ *     « Venir goûter le rituel — c'est offert » page Le rituel
+ * Sept promesses pour un seul geste : celui qui a lu deux pages ne sait plus
+ * s'il réserve un scan, une venue, une visite ou une dégustation.
+ *
+ * Celui-ci dit les trois choses qui décident : ce qu'on fait (je réserve), ce
+ * qu'on obtient (mon bilan), ce que ça coûte (offert).
+ *
+ * ⚠ Ne s'applique PAS aux boutons des cartes 10 et 30 visites : eux déclenchent
+ * un PAIEMENT, pas une réservation. Confondre les deux ferait croire qu'on paie
+ * un bilan gratuit.
+ */
+export const CTA_PRINCIPAL = "Je réserve mon bilan offert";
+/** La même promesse, là où la place manque (en-tête, barre collée en bas). */
+export const CTA_COURT = "Mon bilan offert";
+
+// Menu revu le 14/08 sur le brief de Thomas : « deux objectifs très différents,
+// je rendrais les parcours extrêmement clairs ».
+//
+// Le sien tenait en cinq entrées. Celui-ci en a six, et la raison est mesurée :
+// `/club/le-rituel`, `/club/resultats`, `/club/le-club` et `/club/nous` ne sont
+// liés NULLE PART ailleurs que dans ce menu. Les en retirer ne les cache pas,
+// ça les rend inatteignables — et « Résultats », les transformations, est la
+// meilleure preuve du site.
+//
+// « Accueil » disparaît en revanche : le logo y ramène, depuis l'en-tête comme
+// depuis le tiroir mobile (vérifié). Une entrée de moins pour la même
+// destination, c'est la seule qu'on pouvait retirer sans rien perdre.
+//
+// « Comment ça se passe » devient « Comment ça marche » et « Nous » devient
+// « Qui sommes-nous » : les libellés de son brief, plus explicites pour
+// quelqu'un qui arrive sans rien connaître.
 const NAV: Array<{ to: string; label: string }> = [
-  { to: "/club", label: "Accueil" },
   { to: "/club/le-club", label: "Le club" },
   { to: "/club/le-rituel", label: "Le rituel" },
-  { to: "/club/comment-ca-se-passe", label: "Comment ça se passe" },
+  { to: "/club/comment-ca-se-passe", label: "Comment ça marche" },
   { to: "/club/resultats", label: "Résultats" },
-  // Demandé par Mélanie le 13/08. Le prix était atteignable seulement en
-  // descendant l'accueil jusqu'en bas — or c'est la première question qu'on se
-  // pose. Placé après « Résultats », comme sur l'exemple qu'elle a envoyé.
-  // Pointe vers la section existante `#formule` : pas de page de plus, donc
-  // pas un endroit de plus où maintenir les mêmes prix (règle B9).
+  // Pointe vers la section existante `#formule` : pas de page de plus, donc pas
+  // un endroit de plus où maintenir les mêmes prix (règle B9).
   { to: "/club#formule", label: "Tarifs" },
-  { to: "/club/nous", label: "Nous" },
-  { to: "/club/rejoindre", label: "Rejoindre l'équipe" },
+  { to: "/club/nous", label: "Qui sommes-nous" },
+  // À part, dans son propre bouton mis en avant : devenir coach n'est pas une
+  // rubrique du site, c'est l'AUTRE parcours.
+  { to: "/club/rejoindre", label: "Devenir coach" },
 ];
 
 /**
@@ -171,10 +213,25 @@ export function ClubShell({
   children,
   title = "The Breakfast Club · Verdun",
   description = "Le club de petit-déjeuner et de coaching nutrition de Verdun : aloe vera, boisson thermo, smoothie complet et suivi quotidien. Ton premier body scan est offert, sans engagement.",
+  ctaHref = R,
+  ctaLabel = CTA_PRINCIPAL,
+  ctaCourt = CTA_COURT,
 }: {
   children: ReactNode;
   title?: string;
   description?: string;
+  /**
+   * LE BOUTON DE LA PAGE — et non celui du site.
+   *
+   * La barre collée en bas sur mobile est l'élément le plus vu du site : elle
+   * est là sur les huit pages, sous le pouce. Elle envoyait TOUJOURS vers le
+   * tunnel client, y compris sur « Devenir coach » : quelqu'un venu pour
+   * ouvrir un club touchait « Mon bilan offert » et se retrouvait à réserver
+   * un body scan. Deux parcours, un seul bouton — celui du mauvais.
+   */
+  ctaHref?: string;
+  ctaLabel?: string;
+  ctaCourt?: string;
 }) {
   const { pathname, hash } = useLocation();
   const [open, setOpen] = useState(false);
@@ -255,8 +312,8 @@ export function ClubShell({
                   menu desktop et n'était visible que dans le menu mobile plein
                   écran. Recrutement ≠ parcourir le site → sa propre place à
                   côté du CTA principal, pas une 7e entrée dans la nav. */}
-              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Rejoindre l'équipe</Link>
-              <a className="cl-hcta cl-hcta-desk" href={R}>Je commence</a>
+              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Devenir coach</Link>
+              <a className="cl-hcta cl-hcta-desk" href={ctaHref}>{ctaCourt}</a>
               <button type="button" className="cl-burger" aria-label="Ouvrir le menu" aria-expanded={open} onClick={() => setOpen(true)}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
               </button>
@@ -290,8 +347,8 @@ export function ClubShell({
             ))}
           </nav>
           <div className="cl-menu-foot">
-            <a className="cl-cta" style={{ width: "100%" }} href={R} onClick={() => setOpen(false)}>Réserver mon body scan</a>
-            <a className="cl-ghost" style={{ width: "100%", marginTop: 10 }} href={TEL}>Appeler · 06 79 44 87 59</a>
+            <a className="cl-cta" style={{ width: "100%" }} href={ctaHref} onClick={() => setOpen(false)}>{ctaLabel}</a>
+            <a className="cl-ghost" style={{ width: "100%", marginTop: 10 }} href={TEL}>Appeler · {CLUB_TEL}</a>
           </div>
         </div>
       ) : null}
@@ -305,26 +362,36 @@ export function ClubShell({
               <ClubWordmarkDark width={210} />
               <p style={{ color: "var(--on-dark-3)", fontSize: 16, marginTop: 16, maxWidth: "34ch" }}>Le club de petit-déjeuner de Verdun. Nutrition, énergie, communauté.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 18 }}>
-                <a className="cl-social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
-                <a className="cl-social" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a>
+                <a className="cl-social" href={RESEAUX.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a className="cl-social" href={RESEAUX.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
                 {/* Google : remplacer par la vraie fiche Google Business du club */}
                 <a className="cl-social" href="https://www.google.com/maps/place//data=!4m3!3m2!1s0x47eb1d44e38c23ab:0x685b5b72dd6c5ae2!12e1?source=g.page.m._&laa=merchant-review-solicitation" target="_blank" rel="noopener noreferrer">Google</a>
               </div>
             </div>
             <div>
-              <div className="k">Le club</div>
+              {/* En-tête « Découvrir » et non « Le club » : la colonne contient
+                  maintenant un lien qui s'appelle lui-même « Le club », et le
+                  pied de page affichait « Le club / Le club ». */}
+              <div className="k">Découvrir</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* « Le club » et « Tarifs » manquaient : le pied de page
+                    listait cinq des sept destinations du menu. */}
+                <Link to="/club/le-club">Le club</Link>
                 <Link to="/club/le-rituel">Le rituel</Link>
                 <Link to="/club/comment-ca-se-passe">Comment ça se passe</Link>
                 <Link to="/club/resultats">Résultats</Link>
-                <Link to="/club/nous">Nous</Link>
-                <Link to="/club/rejoindre">Rejoindre l'équipe</Link>
+                <Link to="/club#formule">Tarifs</Link>
+                {/* « Qui sommes-nous » et non « Nous » : le même lien portait
+                    deux noms selon qu'on le lisait dans le menu ou en pied de
+                    page. */}
+                <Link to="/club/nous">Qui sommes-nous</Link>
+                <Link to="/club/rejoindre">Devenir coach</Link>
                 <a href={R}>Réserver</a>
               </div>
             </div>
             <div>
               <div className="k">Nous trouver</div>
-              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br />Dimanche fermé<br /><a href={TEL}>06 79 44 87 59</a></div>
+              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>{CLUB_RUE}<br />{CLUB_CODE_POSTAL} {CLUB_VILLE}<br />{HORAIRES_COURT_JOURS}<br />Dimanche fermé<br /><a href={TEL}>{CLUB_TEL}</a></div>
             </div>
             <ClubNewsletter />
           </div>
@@ -352,7 +419,7 @@ export function ClubShell({
             C'est le bouton le plus vu du site — collé en bas sur tout mobile,
             sur les neuf pages. « Réserver un matin » décrit le geste ; « Mon
             bilan offert » dit ce qu'on y gagne, et que ça ne coûte rien. */}
-        <a className="cl-sticky-main" href={R}>Mon bilan offert</a>
+        <a className="cl-sticky-main" href={ctaHref}>{ctaCourt}</a>
         <a className="cl-sticky-call" href={TEL} aria-label="Appeler le club">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z" /></svg>
         </a>

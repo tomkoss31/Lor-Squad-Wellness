@@ -5,13 +5,14 @@
 // =============================================================================
 
 import { useEffect, useState, type ReactNode } from "react";
-import { ClubShell, Slot, R, objUrl, TEL } from "./club/ClubShell";
+import { ClubShell, Slot, R, objUrl, TEL, CTA_PRINCIPAL } from "./club/ClubShell";
 import { CountUp } from "./club/CountUp";
 import { ClubCardCheckout, type CardOffer } from "./club/ClubCardCheckout";
 import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
 import { ClubOfferPopup } from "./club/ClubOfferPopup";
 import { PrelaunchCounter } from "./club/PrelaunchCounter";
 import { mentionOuverture } from "../data/clubOuverture";
+import { CLUB_TEL, HORAIRES_PHRASE, CLUB_ADRESSE, CLUB_RUE, CLUB_VILLE, HORAIRES_INLINE } from "../data/clubInfos";
 
 // Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
 // avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
@@ -21,6 +22,11 @@ const CARD_OFFERS: Record<10 | 30, CardOffer> = {
   10: { type: 10, priceEur: 80, validityDays: 30 },
   30: { type: 30, priceEur: 185, validityDays: 90 },
 };
+
+// CTA_PRINCIPAL était défini ICI, donc la page d'accueil parlait d'une seule
+// voix pendant que les cinq autres pages gardaient chacune la leur. Il vit
+// maintenant dans ClubShell, avec le lien qu'il porte — voir le relevé des
+// sept libellés là-bas.
 
 // Wordmark AVEC le cœur rouge (logo officiel) — sur fond crème clair le cœur ressort.
 const WORDMARK = "/brand/breakfast-club/logo-heart.png";
@@ -74,7 +80,7 @@ const FAQ = [
   // client doit lire les deux au même endroit.
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois, et c'est tout. En revanche une carte a une durée de validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30 visites, à partir du jour de l'achat. C'est ce qui garde le rythme : une carte 10 visites, c'est deux à trois matins par semaine pendant un mois." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
-  { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
+  { q: "Je n'ai jamais le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin. Seul le premier rendez-vous, ton bilan, se cale à l'avance.` },
   // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
   // supprimée parce que redondante. Elle, non : elle enlève la peur numéro un
   // de quelqu'un qui n'est pas en forme, et rien d'autre ne le disait ici.
@@ -121,10 +127,27 @@ export function ClubLandingPage() {
                   septembre » à « ouvert dès 7h », sans redéploiement. */}
               <span className="cl-pill y">{mentionOuverture()} · Verdun</span>
               <img src={WORDMARK} alt="The Breakfast Club by La Base" style={{ width: "min(460px,84%)", marginTop: "clamp(22px,3vw,32px)" }} />
+              {/* CE QUE C'EST, EN UNE LIGNE (brief du 14/08). Le logo est une
+                  marque, pas une explication : quelqu'un qui ne connaît pas le
+                  club voyait « The Breakfast Club » puis « Reprends ta forme »
+                  sans jamais lire de quoi il s'agit. Cette ligne le dit, et
+                  elle porte les mots qu'on tape : nutrition, remise en forme,
+                  Verdun. */}
+              <p style={{ marginTop: "clamp(10px,1.4vw,14px)", fontSize: "clamp(15px,1.7vw,19px)", letterSpacing: ".02em", color: "var(--muted)", fontWeight: 600 }}>
+                Club de nutrition &amp; remise en forme à Verdun
+              </p>
               <h1 style={{ marginTop: "clamp(18px,2.5vw,26px)", fontSize: "clamp(32px,5vw,60px)" }}>Reprends ta forme,<br /><span className="cl-a-sage">un matin à la fois.</span></h1>
-              <p className="cl-lead" style={{ marginTop: 18, maxWidth: "32em" }}>Le club de petit-déjeuner et de coaching nutrition de Verdun. On t'accompagne chaque matin pour atteindre ton objectif. C'est quoi, le tien ?</p>
+              {/* LA PROMESSE EN QUATRE MOTS (brief du 14/08). Quatre noms, un
+                  par pilier, chacun précédé de « ton » : c'est ce qu'on
+                  emporte, et ça se lit en une seconde. Placé AVANT le
+                  paragraphe : quelqu'un qui ne lit qu'une ligne lit celle-là. */}
+              <p style={{ marginTop: 18, fontFamily: "Anton", fontSize: "clamp(19px,2.3vw,26px)", lineHeight: 1.3 }}>
+                Ton petit-déjeuner. <span className="cl-a-orange">Ton coaching.</span><br />
+                Ta communauté. <span className="cl-a-sage">Tes résultats.</span>
+              </p>
+              <p className="cl-lead" style={{ marginTop: 14, maxWidth: "32em" }}>On t'accompagne chaque matin pour atteindre ton objectif. C'est quoi, le tien ?</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28 }}>
-                <a className="cl-cta" href={R}>Réserver mon body scan</a>
+                <a className="cl-cta" href={R}>{CTA_PRINCIPAL}</a>
                 <a className="cl-ghost" href="#rituel">Voir le rituel</a>
               </div>
               <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 14.5 }}>
@@ -173,9 +196,55 @@ export function ClubLandingPage() {
       {/* INFO BAR */}
       <div className="cl-band dark">
         <div className="cl-wrap" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", textAlign: "center", gap: "14px clamp(28px,5vw,64px)", paddingTop: "clamp(22px,3vw,30px)", paddingBottom: "clamp(22px,3vw,30px)" }}>
-          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>11 rue Saint Pierre, Verdun</div></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>{CLUB_RUE}, {CLUB_VILLE}</div></div>
           <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Horaires</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>Lun–Ven 7h–11h · Sam 8h–11h</div></div>
-          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Téléphone</div><a href={TEL} style={{ color: "#fff", marginTop: 3, display: "inline-block", textDecoration: "underline", textDecorationColor: "var(--yellow)" }}>06 79 44 87 59</a></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Téléphone</div><a href={TEL} style={{ color: "#fff", marginTop: 3, display: "inline-block", textDecoration: "underline", textDecorationColor: "var(--yellow)" }}>{CLUB_TEL}</a></div>
+        </div>
+      </div>
+
+      {/* BIEN PLUS QU'UN PETIT-DÉJEUNER — le message central (brief du 14/08).
+          « Votre gros avantage n'est pas simplement le petit-déjeuner. C'est la
+          régularité de l'accompagnement. »
+
+          Placée ICI, juste après le choix d'objectif : quelqu'un vient de dire
+          ce qu'il veut, c'est le moment de lui dire pourquoi ce club-là plutôt
+          qu'un petit-déjeuner pris chez lui. Plus bas, il serait déjà parti.
+
+          Les quatre piliers utilisent les icônes filaires du site et non les
+          emoji du brief : le rendu des emoji change d'un système à l'autre —
+          c'est la raison pour laquelle ils avaient été retirés partout
+          ailleurs (cf. le commentaire de IIC plus haut). */}
+      <div className="cl-band alt cl-rel">
+        <div className="cl-wrap cl-sec cl-rv">
+          <div style={{ maxWidth: 780 }}>
+            <span className="cl-pill p">Notre différence</span>
+            <h2 style={{ marginTop: 20, fontSize: "clamp(30px,5vw,58px)" }}>Bien plus qu'un <span className="cl-a-pink">petit-déjeuner.</span></h2>
+            <p className="cl-lead" style={{ marginTop: 18 }}>Ici, tu ne repars pas simplement avec des conseils à appliquer seul(e) chez toi.</p>
+            <p className="cl-lead" style={{ marginTop: 12 }}>Tu viens régulièrement au club, tu prends ton petit-déjeuner, tu retrouves tes coachs, tu suis tes progrès et tu construis petit à petit de nouvelles habitudes.</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,170px),1fr))", gap: "clamp(12px,2vw,20px)", marginTop: "clamp(28px,4vw,44px)" }}>
+            {[
+              { ic: "drink", t: "Nutrition", d: "Un vrai petit-déjeuner, dosé avec toi.", c: "var(--orange)" },
+              { ic: "pulse", t: "Suivi", d: "Tes chiffres, chaque matin.", c: "var(--pink)" },
+              { ic: "chat", t: "Coaching", d: "Quelqu'un qui te connaît.", c: "var(--sage)" },
+              { ic: "heart", t: "Communauté", d: "Les mêmes visages, tous les jours.", c: "var(--amber)" },
+            ].map((p) => (
+              <div key={p.t} className="cl-card" style={{ padding: "clamp(20px,2.6vw,28px)", textAlign: "center" }}>
+                <span style={{ color: p.c, display: "inline-flex" }}><Ico name={p.ic} size={30} /></span>
+                <div style={{ fontFamily: "Anton", fontSize: "clamp(18px,2.1vw,23px)", textTransform: "uppercase", marginTop: 10 }}>{p.t}</div>
+                <div style={{ fontSize: 14.5, color: "var(--muted)", marginTop: 6, lineHeight: 1.5 }}>{p.d}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* LE BOUTON QUI MANQUAIT. Mesuré avant : 8 458 px de page sans le
+              moindre appel à l'action, de 5 % à 57 %. Tout le cœur du site —
+              le rituel, ce qui est inclus, la communauté — n'en avait aucun. */}
+          <div style={{ textAlign: "center", marginTop: "clamp(28px,4vw,44px)" }}>
+            <a className="cl-cta" href={R}>{CTA_PRINCIPAL}</a>
+            <p style={{ fontSize: 14.5, color: "var(--muted2)", marginTop: 12 }}>45 minutes, 0 €, sans engagement.</p>
+          </div>
         </div>
       </div>
 
@@ -187,10 +256,20 @@ export function ClubLandingPage() {
               <span className="cl-pill y">Notre philosophie</span>
               <h2 style={{ marginTop: 24, fontSize: "clamp(40px,6.4vw,84px)" }}>Du concret,<br /><span className="cl-a-sage">pas des promesses.</span></h2>
             </div>
+            {/* Copie de Thomas du 14/08. L'idée n'a pas bougé — régularité
+                plutôt que miracle — mais l'ancienne version la disait en
+                mettant le lecteur en défaut : « un groupe qui t'attend » (donc
+                tu dois), « un plan que tu lâcheras » (donc tu lâches), « ce
+                n'est pas la volonté qui te manque » (donc on parle déjà de tes
+                échecs). Trois piques dans un bloc censé rassurer.
+                La nouvelle dit la même chose sans désigner personne, et la
+                chute est devenue une permission au lieu d'un diagnostic. */}
             <div>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de régime express, pas de produit magique. Ce qui marche, c'est la régularité : un bon petit-déjeuner pris chaque matin au même endroit, avec quelqu'un qui suit tes chiffres et ton ressenti — c'est ça qui finit par tout changer. Ici, tu trouves tout au même endroit : de quoi bien manger, un coach qui te suit, et un groupe qui t'attend, dès 7h.</p>
-              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>On t'aide à installer des habitudes qui tiennent et à comprendre ce dont ton corps a besoin — pas à suivre un plan que tu lâcheras dans deux semaines. Au bout du compte : plus d'énergie dès le réveil, un corps qui bouge dans le bon sens, et la fierté de t'y être tenu.</p>
-              <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.05, marginTop: 26 }}>Ce n'est pas la volonté qui te manque. <span className="cl-a-pink">C'est un rendez-vous.</span></p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)" }}>Pas de solution miracle ni de changement du jour au lendemain. Nous croyons surtout à la régularité, aux bonnes habitudes et à un accompagnement qui s'adapte à toi.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Au Breakfast Club, tu retrouves au même endroit ton petit-déjeuner, tes coachs, ton suivi et une communauté avec qui partager ton parcours.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Petit à petit, tu apprends à mieux comprendre tes habitudes, à prendre soin de toi et à avancer vers ton objectif à ton rythme, sans pression et sans jugement.</p>
+              <p style={{ fontSize: 19, lineHeight: 1.75, color: "var(--muted)", marginTop: 16 }}>Parce que les changements qui durent ne se construisent pas en quelques jours. Ils se construisent ensemble, une habitude après l'autre. ❤️</p>
+              <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,2.6vw,30px)", lineHeight: 1.15, marginTop: 26 }}>Pas besoin d'être parfait(e).<br /><span className="cl-a-pink">Juste d'avancer, un jour après l'autre.</span> ❤️</p>
             </div>
           </div>
         </div>
@@ -256,6 +335,21 @@ export function ClubLandingPage() {
           <p style={{ marginTop: 30, paddingTop: 20, borderTop: "1px solid rgba(244,239,228,.18)", fontSize: 15, color: "var(--on-dark-3)", maxWidth: "70ch" }}>Les boissons et compléments servis au club sont des produits de bien-être, pas des médicaments. Ils ne remplacent pas une alimentation variée ni un avis médical.</p>
         </div>
       </div>
+
+      {/* UN BOUTON AU MILIEU, et pas de décoration autour.
+          Mesuré : même après le bouton ajouté plus haut, il restait 7 408 px
+          — 42 % de la page — sans le moindre appel à l'action. Or on sort ici
+          de « ce que t'apporte chaque matin » : la personne vient d'apprendre
+          ce qu'elle obtient, c'est le moment où elle sait si ça l'intéresse.
+          Lui demander de remonter ou de descendre 3 000 px pour trouver un
+          bouton, c'est la perdre. */}
+      <div className="cl-band"><div className="cl-wrap cl-rv" style={{ paddingTop: "clamp(34px,4.6vw,56px)", paddingBottom: "clamp(34px,4.6vw,56px)", textAlign: "center" }}>
+        <p style={{ fontFamily: "Anton", fontSize: "clamp(22px,3vw,34px)", lineHeight: 1.2, maxWidth: "22ch", margin: "0 auto" }}>
+          Le premier matin, <span className="cl-a-orange">c'est offert.</span>
+        </p>
+        <a className="cl-cta" style={{ marginTop: 20 }} href={R}>{CTA_PRINCIPAL}</a>
+        <p style={{ fontSize: 14.5, color: "var(--muted2)", marginTop: 12 }}>45 minutes avec un coach, sans engagement.</p>
+      </div></div>
 
       {/* COMMUNAUTÉ */}
       <div id="equipe" className="cl-band cl-rel">
@@ -331,7 +425,7 @@ export function ClubLandingPage() {
             ))}
           </div>
           <div style={{ textAlign: "center", marginTop: "clamp(28px,4vw,40px)", display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
-            <a className="cl-cta" href={R}>Réserver mon body scan</a>
+            <a className="cl-cta" href={R}>{CTA_PRINCIPAL}</a>
             <a className="cl-ghost" href="/club/comment-ca-se-passe">Voir le détail</a>
           </div>
         </div>
@@ -357,7 +451,7 @@ export function ClubLandingPage() {
                 <li>Ton plan de départ, clair et à toi</li>
                 <li>Zéro engagement, tu repars libre</li>
               </ul>
-              <a className="cl-cta" style={{ marginTop: "auto", background: "transparent", border: "2px solid var(--sage)", color: "var(--sage-d)", boxShadow: "none" }} href={R}>Je réserve</a>
+              <a className="cl-cta" style={{ marginTop: "auto", background: "transparent", border: "2px solid var(--sage)", color: "var(--sage-d)", boxShadow: "none" }} href={R}>{CTA_PRINCIPAL}</a>
             </div>
             <div className="cl-card" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Découverte</div>
@@ -373,7 +467,7 @@ export function ClubLandingPage() {
                 <li>L'accès au groupe du club</li>
                 <li>Le bilan mesures à la 10ᵉ visite</li>
               </ul>
-              <button type="button" className="cl-cta" style={{ marginTop: "auto", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[10])}>Je commence</button>
+              <button type="button" className="cl-cta" style={{ marginTop: "auto", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[10])}>Je prends cette carte</button>
             </div>
             <div className="cl-card dark" style={{ padding: "14px 32px 34px", display: "flex", flexDirection: "column" }}>
               <div className="cl-ribbon" style={{ background: "var(--grad)" }}>Le plus choisi</div>
@@ -394,7 +488,7 @@ export function ClubLandingPage() {
                 <li>Le <b>meilleur tarif par visite</b> du club</li>
                 <li>Fait pour t'installer dans la durée</li>
               </ul>
-              <button type="button" className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[30])}>Je commence</button>
+              <button type="button" className="cl-cta" style={{ marginTop: "auto", background: "#fff", color: "var(--dark)", boxShadow: "none", border: "none", font: "inherit", cursor: "pointer" }} onClick={() => setOffer(CARD_OFFERS[30])}>Je prends cette carte</button>
             </div>
           </div>
           {/* La validité et le non-remboursement sont des conditions de vente :
@@ -417,7 +511,7 @@ export function ClubLandingPage() {
               <div className="ans">{f.a}</div>
             </details>
           ))}
-          <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>06 79 44 87 59</a>, on répond entre 7h et 11h.</p>
+          <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>{CLUB_TEL}</a>, on répond {HORAIRES_PHRASE}.</p>
         </div>
       </div>
 
@@ -426,11 +520,11 @@ export function ClubLandingPage() {
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
           <span className="cl-pill s">Nous trouver</span>
           <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>On t'attend <span className="cl-a-sage">rue Saint Pierre.</span></h2>
-          <p className="cl-lead" style={{ marginTop: 16 }}>11 rue Saint Pierre, 55100 Verdun. Ouvert Lun–Ven 7h–11h et Sam 8h–11h.</p>
+          <p className="cl-lead" style={{ marginTop: 16 }}>{CLUB_ADRESSE}. Ouvert {HORAIRES_INLINE}.</p>
         </div>
         <div style={{ marginTop: 32, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(30,51,48,.14)", boxShadow: "0 12px 40px rgba(0,0,0,.08)" }}>
           <iframe
-            title="Carte — The Breakfast Club, 11 rue Saint Pierre, Verdun"
+            title={`Carte — The Breakfast Club, ${CLUB_ADRESSE}`}
             src="https://www.google.com/maps?q=11+rue+Saint+Pierre+55100+Verdun&output=embed"
             width="100%"
             height="360"
@@ -452,7 +546,7 @@ export function ClubLandingPage() {
           <h2 style={{ marginTop: 24, fontSize: "clamp(42px,7vw,92px)", color: "#fff" }}>On se voit<br /><span className="cl-a-yellow">demain matin ?</span></h2>
           <p className="cl-lead" style={{ marginTop: 18, marginLeft: "auto", marginRight: "auto", maxWidth: 620 }}>Le body scan est offert et dure environ 45 minutes. C'est la meilleure façon de savoir si le club est fait pour toi.</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 28 }}>
-            <a className="cl-cta" href={R}>Mon body scan offert</a>
+            <a className="cl-cta" href={R}>{CTA_PRINCIPAL}</a>
             <a className="cl-ghost" href={TEL}>Appeler le club</a>
           </div>
         </div>
