@@ -26,20 +26,34 @@ export const R = "/reserver?utm_source=site";
 export const objUrl = (o: string) => `/reserver?objectif=${o}&utm_source=site`;
 export const TEL = "tel:+33679448759";
 
+// Menu revu le 14/08 sur le brief de Thomas : « deux objectifs très différents,
+// je rendrais les parcours extrêmement clairs ».
+//
+// Le sien tenait en cinq entrées. Celui-ci en a six, et la raison est mesurée :
+// `/club/le-rituel`, `/club/resultats`, `/club/le-club` et `/club/nous` ne sont
+// liés NULLE PART ailleurs que dans ce menu. Les en retirer ne les cache pas,
+// ça les rend inatteignables — et « Résultats », les transformations, est la
+// meilleure preuve du site.
+//
+// « Accueil » disparaît en revanche : le logo y ramène, depuis l'en-tête comme
+// depuis le tiroir mobile (vérifié). Une entrée de moins pour la même
+// destination, c'est la seule qu'on pouvait retirer sans rien perdre.
+//
+// « Comment ça se passe » devient « Comment ça marche » et « Nous » devient
+// « Qui sommes-nous » : les libellés de son brief, plus explicites pour
+// quelqu'un qui arrive sans rien connaître.
 const NAV: Array<{ to: string; label: string }> = [
-  { to: "/club", label: "Accueil" },
   { to: "/club/le-club", label: "Le club" },
   { to: "/club/le-rituel", label: "Le rituel" },
-  { to: "/club/comment-ca-se-passe", label: "Comment ça se passe" },
+  { to: "/club/comment-ca-se-passe", label: "Comment ça marche" },
   { to: "/club/resultats", label: "Résultats" },
-  // Demandé par Mélanie le 13/08. Le prix était atteignable seulement en
-  // descendant l'accueil jusqu'en bas — or c'est la première question qu'on se
-  // pose. Placé après « Résultats », comme sur l'exemple qu'elle a envoyé.
-  // Pointe vers la section existante `#formule` : pas de page de plus, donc
-  // pas un endroit de plus où maintenir les mêmes prix (règle B9).
+  // Pointe vers la section existante `#formule` : pas de page de plus, donc pas
+  // un endroit de plus où maintenir les mêmes prix (règle B9).
   { to: "/club#formule", label: "Tarifs" },
-  { to: "/club/nous", label: "Nous" },
-  { to: "/club/rejoindre", label: "Rejoindre l'équipe" },
+  { to: "/club/nous", label: "Qui sommes-nous" },
+  // À part, dans son propre bouton mis en avant : devenir coach n'est pas une
+  // rubrique du site, c'est l'AUTRE parcours.
+  { to: "/club/rejoindre", label: "Devenir coach" },
 ];
 
 /**
@@ -256,8 +270,8 @@ export function ClubShell({
                   menu desktop et n'était visible que dans le menu mobile plein
                   écran. Recrutement ≠ parcourir le site → sa propre place à
                   côté du CTA principal, pas une 7e entrée dans la nav. */}
-              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Rejoindre l'équipe</Link>
-              <a className="cl-hcta cl-hcta-desk" href={R}>Je commence</a>
+              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Devenir coach</Link>
+              <a className="cl-hcta cl-hcta-desk" href={R}>Mon bilan offert</a>
               <button type="button" className="cl-burger" aria-label="Ouvrir le menu" aria-expanded={open} onClick={() => setOpen(true)}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
               </button>
@@ -319,7 +333,7 @@ export function ClubShell({
                 <Link to="/club/comment-ca-se-passe">Comment ça se passe</Link>
                 <Link to="/club/resultats">Résultats</Link>
                 <Link to="/club/nous">Nous</Link>
-                <Link to="/club/rejoindre">Rejoindre l'équipe</Link>
+                <Link to="/club/rejoindre">Devenir coach</Link>
                 <a href={R}>Réserver</a>
               </div>
             </div>

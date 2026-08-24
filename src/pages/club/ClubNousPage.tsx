@@ -127,7 +127,10 @@ export function ClubNousPage() {
 
         <div className="cl-card" style={{ marginTop: "clamp(28px,4vw,44px)", padding: "clamp(26px,3.6vw,40px)", borderLeft: "5px solid var(--sage)", maxWidth: 760 }}>
           <div style={{ fontSize: 12, letterSpacing: ".16em", textTransform: "uppercase", fontWeight: 700, color: "var(--muted2)" }}>Notre mission</div>
-          <p style={{ fontSize: 19, lineHeight: 1.75, marginTop: 10 }}>Vous aider à obtenir des résultats durables, tout en vous sentant bien et entouré(e). ❤️</p>
+          {/* Sa copie vouvoyait ici. Tout le site tutoie — un visiteur qui lit
+              « tu » partout et « vous » à la fin le remarque. Arbitré par
+              Thomas le 14/08 : on garde le tutoiement. */}
+          <p style={{ fontSize: 19, lineHeight: 1.75, marginTop: 10 }}>T'aider à obtenir des résultats durables, tout en te sentant bien et entouré(e). ❤️</p>
           <p style={{ fontFamily: "Anton", fontSize: 22, marginTop: 16 }}>Mel &amp; Tom</p>
         </div>
       </div></div>
