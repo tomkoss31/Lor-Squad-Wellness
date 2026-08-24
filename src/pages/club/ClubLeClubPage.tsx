@@ -40,13 +40,26 @@ export function ClubLeClubPage() {
 
       <div className="cl-band"><div className="cl-wrap cl-sec cl-rv" style={{ paddingTop: 0 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(32px,5vw,64px)" }}>
+          {/* Copie de Thomas du 14/08.
+              L'ancienne version disait la même chose, mais à l'envers : « le
+              seul moment que personne ne te prend », « parce que seul, on
+              lâche », « tout le monde est fatigué, distrait, sollicité ». Elle
+              démontrait par le manque et par le reproche.
+              Celle-ci dit ce qu'on GAGNE — l'énergie, l'intention, le sentiment
+              d'avoir déjà fait quelque chose pour soi. Et « chacun avance à son
+              rythme, sans jugement » enlève la peur qui retient vraiment
+              quelqu'un devant la porte d'un groupe. */}
           <div>
-            <h2 style={{ fontSize: "clamp(26px,3.4vw,40px)" }}>Pourquoi le matin</h2>
-            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Parce que c'est le seul moment que personne ne te prend. Un bon premier repas et un cap posé à 8h, et le reste de la journée suit. Le soir, tout le monde est fatigué, distrait, sollicité. Le matin, tu gagnes.</p>
+            <h2 style={{ fontSize: "clamp(26px,3.4vw,40px)" }}>Pourquoi le matin ☀️</h2>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Parce que commencer la journée en prenant soin de soi peut changer toute la dynamique de la journée.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Un petit-déjeuner équilibré, un moment pour soi, quelques échanges et de bonnes habitudes qui s'installent petit à petit.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>On démarre la journée avec une intention positive, de l'énergie et le sentiment d'avoir déjà fait quelque chose pour soi. ❤️</p>
           </div>
           <div>
-            <h2 style={{ fontSize: "clamp(26px,3.4vw,40px)" }}>Pourquoi en groupe</h2>
-            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Parce que seul, on lâche. Au club, il y a une heure, un lieu, des têtes connues et quelqu'un qui note que tu es venu. Ce petit rendez-vous social, c'est exactement ce qui manque quand on essaie « tout seul, à la maison ».</p>
+            <h2 style={{ fontSize: "clamp(26px,3.4vw,40px)" }}>Pourquoi en groupe 🤝</h2>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Parce qu'il est souvent plus facile de rester régulier quand on se sent entouré, encouragé et soutenu.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Au Club, on retrouve des personnes qui avancent elles aussi vers leurs objectifs. On échange, on partage ses réussites comme ses difficultés et on profite de l'énergie du groupe.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--muted)", marginTop: 14 }}>Chacun avance à son rythme, sans jugement, mais jamais seul. ❤️</p>
           </div>
         </div>
       </div></div>
