@@ -1,5 +1,6 @@
 // Comment ça se passe — page interne « De ta première visite à tes premiers résultats ». v7 fidèle.
 import { ClubShell, InnerHero, R, PhotoBand } from "./ClubShell";
+import { CLUB_TEL, HORAIRES_PHRASE } from "../../data/clubInfos";
 
 const STEPS = [
   { n: "01", t: "Le body scan — 45 min, offert", top: "cl-top-o", d: "On mesure ta composition corporelle (masse, eau, muscle), on parle vraiment de ton objectif, et tu repars avec un point de départ clair et un plan à toi. Ce que tu dois prévoir : environ 45 minutes, une tenue normale, rien d'autre.", note: "C'est offert et ça n'engage à rien." },
@@ -14,7 +15,7 @@ const QA = [
   // et validité (il y en a une) sont deux choses distinctes : on dit les deux.
   { q: "Je m'engage sur une durée ?", a: "Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois. En revanche elle a une validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30, à partir de l'achat. C'est ce qui garde le rythme.", top: "cl-top-p" },
   { q: "Dois-je acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite.", top: "cl-top-s" },
-  { q: "Je n'ai pas le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Tes trois boissons se prennent à ton rythme — souvent un quart d'heure, mais rien ne te presse.", top: "cl-top-a" },
+  { q: "Je n'ai pas le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}, sans rendez-vous. Tes trois boissons se prennent à ton rythme — souvent un quart d'heure, mais rien ne te presse.`, top: "cl-top-a" },
   { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport : aucune performance à prouver, aucun regard sur ce que tu soulèves. On part d'où tu en es, à ton rythme.", top: "cl-top-o" },
   { q: "Au bout de combien de temps ?", a: "On fait le point à la 10ᵉ visite : c'est là qu'on regarde le chemin parcouru.", top: "cl-top-p" },
 ];
@@ -78,7 +79,7 @@ export function ClubParcoursPage() {
             </div>
           ))}
         </div>
-        <p style={{ marginTop: 26, fontSize: 16, color: "var(--yellow)" }}>Une autre question ? Appelle-nous au 06 79 44 87 59, entre 7h et 11h.</p>
+        <p style={{ marginTop: 26, fontSize: 16, color: "var(--yellow)" }}>Une autre question ? Appelle-nous au {CLUB_TEL}, {HORAIRES_PHRASE}.</p>
         <a className="cl-cta" style={{ marginTop: 22 }} href={R}>Réserver ma première visite</a>
       </div></div>
     </ClubShell>

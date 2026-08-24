@@ -12,6 +12,7 @@ import { ClubPaymentReturn } from "./club/ClubPaymentReturn";
 import { ClubOfferPopup } from "./club/ClubOfferPopup";
 import { PrelaunchCounter } from "./club/PrelaunchCounter";
 import { mentionOuverture } from "../data/clubOuverture";
+import { CLUB_TEL, HORAIRES_PHRASE, CLUB_ADRESSE, CLUB_RUE, CLUB_VILLE, HORAIRES_INLINE } from "../data/clubInfos";
 
 // Affichage seulement — l'edge relit prix ET validité dans clubs.settings.cards
 // avant d'encaisser quoi que ce soit. Ces valeurs sont là pour que la modale
@@ -74,7 +75,7 @@ const FAQ = [
   // client doit lire les deux au même endroit.
   { q: "Est-ce que je m'engage sur une durée ?", a: "Non. Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois, et c'est tout. En revanche une carte a une durée de validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30 visites, à partir du jour de l'achat. C'est ce qui garde le rythme : une carte 10 visites, c'est deux à trois matins par semaine pendant un mois." },
   { q: "Suis-je obligé d'acheter des produits ?", a: "Non. Tout ce que tu consommes pendant ta visite est déjà compris dans ta carte. Pour continuer à la maison, on a de la nutrition à emporter — collations, smoothie et boissons pour les matins où tu ne passes pas au club. Utile, mais jamais imposé." },
-  { q: "Je n'ai jamais le temps le matin.", a: "Tu passes quand tu veux entre 7h et 11h, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin." },
+  { q: "Je n'ai jamais le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}, sans rendez-vous. Sur place, tu prends tes trois boissons à ton rythme : souvent un quart d'heure, parfois plus si tu t'assois pour discuter. Il n'y a pas de chrono — juste ton moment du matin.` },
   // La phrase forte vient de la section « Ce que ce n'est pas » (page Le club),
   // supprimée parce que redondante. Elle, non : elle enlève la peur numéro un
   // de quelqu'un qui n'est pas en forme, et rien d'autre ne le disait ici.
@@ -173,9 +174,9 @@ export function ClubLandingPage() {
       {/* INFO BAR */}
       <div className="cl-band dark">
         <div className="cl-wrap" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", textAlign: "center", gap: "14px clamp(28px,5vw,64px)", paddingTop: "clamp(22px,3vw,30px)", paddingBottom: "clamp(22px,3vw,30px)" }}>
-          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>11 rue Saint Pierre, Verdun</div></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Adresse</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>{CLUB_RUE}, {CLUB_VILLE}</div></div>
           <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Horaires</div><div style={{ color: "var(--on-dark-2)", marginTop: 3 }}>Lun–Ven 7h–11h · Sam 8h–11h</div></div>
-          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Téléphone</div><a href={TEL} style={{ color: "#fff", marginTop: 3, display: "inline-block", textDecoration: "underline", textDecorationColor: "var(--yellow)" }}>06 79 44 87 59</a></div>
+          <div><div style={{ color: "var(--yellow)", fontSize: 12, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 700 }}>Téléphone</div><a href={TEL} style={{ color: "#fff", marginTop: 3, display: "inline-block", textDecoration: "underline", textDecorationColor: "var(--yellow)" }}>{CLUB_TEL}</a></div>
         </div>
       </div>
 
@@ -417,7 +418,7 @@ export function ClubLandingPage() {
               <div className="ans">{f.a}</div>
             </details>
           ))}
-          <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>06 79 44 87 59</a>, on répond entre 7h et 11h.</p>
+          <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "var(--muted)" }}>Une question qui n'est pas là ? Appelle-nous au <a href={TEL} style={{ color: "var(--ink)", fontWeight: 700 }}>{CLUB_TEL}</a>, on répond {HORAIRES_PHRASE}.</p>
         </div>
       </div>
 
@@ -426,11 +427,11 @@ export function ClubLandingPage() {
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
           <span className="cl-pill s">Nous trouver</span>
           <h2 style={{ marginTop: 24, fontSize: "clamp(32px,4.6vw,56px)" }}>On t'attend <span className="cl-a-sage">rue Saint Pierre.</span></h2>
-          <p className="cl-lead" style={{ marginTop: 16 }}>11 rue Saint Pierre, 55100 Verdun. Ouvert Lun–Ven 7h–11h et Sam 8h–11h.</p>
+          <p className="cl-lead" style={{ marginTop: 16 }}>{CLUB_ADRESSE}. Ouvert {HORAIRES_INLINE}.</p>
         </div>
         <div style={{ marginTop: 32, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(30,51,48,.14)", boxShadow: "0 12px 40px rgba(0,0,0,.08)" }}>
           <iframe
-            title="Carte — The Breakfast Club, 11 rue Saint Pierre, Verdun"
+            title={`Carte — The Breakfast Club, ${CLUB_ADRESSE}`}
             src="https://www.google.com/maps?q=11+rue+Saint+Pierre+55100+Verdun&output=embed"
             width="100%"
             height="360"

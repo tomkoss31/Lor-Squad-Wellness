@@ -1,6 +1,7 @@
 // Nous — page interne « Mélanie, Thomas, et un local rue Saint Pierre ». v7 fidèle.
 import { Link } from "react-router-dom";
 import { ClubShell, InnerHero, Slot, R, TEL } from "./ClubShell";
+import { CLUB_TEL, CLUB_ADRESSE } from "../../data/clubInfos";
 
 /**
  * Les visages du matin.
@@ -39,11 +40,11 @@ const EQUIPE: Array<{ nom: string; role: string; src?: string; alt?: string; cad
   },
 ];
 const PRATIQUE = [
-  ["Adresse", "11 rue Saint Pierre, 55100 Verdun"],
+  ["Adresse", CLUB_ADRESSE],
   ["Horaires", "Lundi au vendredi 7h–11h · Samedi 8h–11h"],
   ["Accès", "En centre-ville, stationnement à proximité"],
   ["Paiement", "Carte, espèces — sur place"],
-  ["Téléphone", "06 79 44 87 59"],
+  ["Téléphone", CLUB_TEL],
 ];
 
 export function ClubNousPage() {
@@ -146,7 +147,7 @@ export function ClubNousPage() {
             <a className="cl-ghost" style={{ marginTop: 12, marginLeft: 12 }} href={TEL}>Appeler</a>
           </div>
           <iframe
-            title="Plan du club — 11 rue Saint Pierre, Verdun"
+            title={`Plan du club — ${CLUB_ADRESSE}`}
             src="https://www.google.com/maps?q=11+rue+Saint+Pierre+Verdun&output=embed"
             style={{ width: "100%", height: 400, border: 0, borderRadius: 20 }}
             loading="lazy"

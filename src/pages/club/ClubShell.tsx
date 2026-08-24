@@ -12,6 +12,7 @@ import { useClubHead } from "./useClubHead";
 import { useRevelationAuScroll } from "./useRevelationAuScroll";
 import { useEffetsAuScroll } from "./useEffetsAuScroll";
 import { ClubNewsletter } from "./ClubNewsletter";
+import { CLUB_TEL, CLUB_RUE, CLUB_CODE_POSTAL, CLUB_VILLE, HORAIRES_COURT_JOURS } from "../../data/clubInfos";
 
 const MARK = "/brand/breakfast-club/logo-mark.png";
 // Wordmark AVEC le cœur rouge — pour les fonds clairs.
@@ -291,7 +292,7 @@ export function ClubShell({
           </nav>
           <div className="cl-menu-foot">
             <a className="cl-cta" style={{ width: "100%" }} href={R} onClick={() => setOpen(false)}>Réserver mon body scan</a>
-            <a className="cl-ghost" style={{ width: "100%", marginTop: 10 }} href={TEL}>Appeler · 06 79 44 87 59</a>
+            <a className="cl-ghost" style={{ width: "100%", marginTop: 10 }} href={TEL}>Appeler · {CLUB_TEL}</a>
           </div>
         </div>
       ) : null}
@@ -324,7 +325,7 @@ export function ClubShell({
             </div>
             <div>
               <div className="k">Nous trouver</div>
-              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>11 rue Saint Pierre<br />55100 Verdun<br />Lun–Ven 7h–11h · Sam 8h–11h<br />Dimanche fermé<br /><a href={TEL}>06 79 44 87 59</a></div>
+              <div style={{ color: "var(--on-dark-2)", fontSize: 15, lineHeight: 1.7 }}>{CLUB_RUE}<br />{CLUB_CODE_POSTAL} {CLUB_VILLE}<br />{HORAIRES_COURT_JOURS}<br />Dimanche fermé<br /><a href={TEL}>{CLUB_TEL}</a></div>
             </div>
             <ClubNewsletter />
           </div>
