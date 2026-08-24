@@ -39,6 +39,7 @@
 import { useState } from "react";
 import { CRM_SOURCE_META, type CrmLead } from "../../hooks/useCrmLeads";
 import { nomAffiche } from "../../features/crm/nomPropre";
+import { clesDoublon } from "../../features/crm/cleDoublon";
 
 interface Props {
   leads: CrmLead[];
@@ -109,11 +110,17 @@ export function CrmBoiteArrivee({ leads, onAccepter, onRefuser, onOuvrir }: Prop
 
   // Un doublon d'arrivée = même téléphone ou même email qu'un autre en attente.
   // Détecté ICI et pas en base : c'est un état de la file, pas une donnée.
+  //
+  // ⚠️ 24/08 — la clé était le contact BRUT (`trim().toLowerCase()`), sans
+  // aucune normalisation de numéro : « 06 12 34 56 78 » et « 0612345678 »
+  // étaient deux personnes. L'ambre ne s'allumait donc que sur une saisie
+  // strictement identique — c'est-à-dire presque jamais. On passe sur la clé
+  // partagée avec le reste du CRM.
   const clefs = new Map<string, number>();
   for (const l of leads) {
-    const k = (l.contact ?? "").trim().toLowerCase();
-    if (k) clefs.set(k, (clefs.get(k) ?? 0) + 1);
+    for (const k of clesDoublon(l)) clefs.set(k, (clefs.get(k) ?? 0) + 1);
   }
+  const estDoublon = (l: CrmLead): boolean => clesDoublon(l).some((k) => (clefs.get(k) ?? 0) > 1);
 
   async function agir(lead: CrmLead, action: (l: CrmLead) => Promise<string | null>) {
     if (busy) return;
@@ -169,8 +176,7 @@ export function CrmBoiteArrivee({ leads, onAccepter, onRefuser, onOuvrir }: Prop
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto" }}>
         {leads.map((lead) => {
-          const k = (lead.contact ?? "").trim().toLowerCase();
-          const doublon = !!k && (clefs.get(k) ?? 0) > 1;
+          const doublon = estDoublon(lead);
           const teinte = teinteDe(lead, doublon);
           const enCours = busy === lead.key;
           const src = CRM_SOURCE_META[lead.source];

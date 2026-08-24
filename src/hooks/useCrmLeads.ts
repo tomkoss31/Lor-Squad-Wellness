@@ -81,6 +81,14 @@ export interface CrmLead {
   /** Téléphone, email ou handle — tel que saisi. */
   contact: string | null;
   contactIsPhone: boolean;
+  /** Le numéro et l'adresse SÉPARÉMENT (chantier doublons, 24/08).
+   *
+   *  `contact` vaut `phone || email` : quelqu'un qui laisse son numéro au club
+   *  et son adresse sur le bilan en ligne produisait une clé « t:… » d'un côté
+   *  et « e:… » de l'autre — donc n'était JAMAIS vu comme un doublon. Les deux
+   *  colonnes existaient en base, elles étaient juste écrasées à la lecture. */
+  phone: string | null;
+  email: string | null;
   city: string | null;
   source: CrmSource;
   status: CrmStatus;
@@ -696,6 +704,8 @@ export function useCrmLeads() {
 
       for (const row of bilansRes.data ?? []) {
         const contact = (row.phone as string | null) || (row.email as string | null) || null;
+        const phone = (row.phone as string | null) ?? null;
+        const email = (row.email as string | null) ?? null;
         all.push({
           key: `online_bilans:${row.id}`,
           table: "online_bilans",
@@ -703,6 +713,8 @@ export function useCrmLeads() {
           firstName: nomPropre(row.first_name as string) || "—",
           contact,
           contactIsPhone: looksLikePhone(row.phone as string | null),
+          phone,
+          email,
           city: (row.city as string | null) ?? null,
           source: "bilan-online",
           status: mapBilanStatus(
@@ -841,6 +853,8 @@ export function useCrmLeads() {
           firstName: nomPropre(row.first_name as string) || "—",
           contact: (row.phone as string | null) || (row.email as string | null) || null,
           contactIsPhone: looksLikePhone(row.phone as string | null),
+          phone: (row.phone as string | null) ?? null,
+          email: (row.email as string | null) ?? null,
           city: (row.city as string | null) ?? null,
           source,
           status: mapSimpleStatus(row.status as string | null),
@@ -896,6 +910,9 @@ export function useCrmLeads() {
           id: row.id as string,
           firstName: nomPropre(row.referred_name as string) || "—",
           contact: (row.referred_contact as string | null) ?? null,
+          // Un seul champ libre en base : `clesDoublon` saura lire l'un ou l'autre.
+          phone: null,
+          email: null,
           contactIsPhone: looksLikePhone(row.referred_contact as string | null),
           city: null,
           source: "reco-client",
@@ -932,6 +949,8 @@ export function useCrmLeads() {
           id: row.id,
           firstName: nomPropre(row.prospect_first_name) || "—",
           contact: null,
+          phone: null,
+          email: null,
           contactIsPhone: false,
           city: null,
           source: "intention",

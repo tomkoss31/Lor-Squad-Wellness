@@ -49,6 +49,8 @@ interface CrmLeadsListViewProps {
    *  saisis plusieurs fois. Rien n'est supprimé — c'est un regroupement
    *  d'affichage (2026-08-12). */
   doublonsDe?: Map<string, CrmLead[]>;
+  /** Ce qui n'a PAS ete tranche tout seul lors de la reunion (ex. 2 coachs). */
+  conflitsDe?: Map<string, string[]>;
   onDormant: (lead: CrmLead) => void;
   onWake: (lead: CrmLead) => void;
   onDelete?: (lead: CrmLead) => void;
@@ -88,6 +90,7 @@ export function CrmLeadsListView({
   onAgenda,
   dupeFlagFor,
   doublonsDe,
+  conflitsDe,
   onDormant,
   onWake,
   onDelete,
@@ -243,6 +246,7 @@ export function CrmLeadsListView({
       onAgenda={() => onAgenda(lead)}
       dupeFlag={dupeFlagFor(lead)}
       doublons={doublonsDe?.get(lead.key) ?? null}
+      conflits={conflitsDe?.get(lead.key) ?? null}
       onDormant={!archived ? () => onDormant(lead) : undefined}
       onWake={archived ? () => onWake(lead) : undefined}
       onDelete={onDelete ? () => onDelete(lead) : undefined}
@@ -499,6 +503,7 @@ function CrmLeadListRow({
   onAgenda,
   dupeFlag,
   doublons,
+  conflits,
   onDormant,
   onWake,
   onDelete,
@@ -526,6 +531,7 @@ function CrmLeadListRow({
   onAgenda: () => void;
   dupeFlag: { kind: "client" | "dupe"; label: string } | null;
   doublons: CrmLead[] | null;
+  conflits: string[] | null;
   onDormant?: () => void;
   onWake?: () => void;
   onDelete?: () => void;
@@ -697,7 +703,13 @@ function CrmLeadListRow({
               {[lead, ...doublons]
                 .map((d) => new Date(d.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }))
                 .join(" · ")}
-              . C'est cette fiche-ci qui porte le fil.
+              . Cette fiche les <strong style={{ color: "var(--ls-text)" }}>réunit</strong> : rien n'est perdu.
+              {conflits && conflits.length > 0 ? (
+                <div style={{ marginTop: 4, color: "var(--ls-amber)" }}>
+                  {/* On ne tranche pas l'attribution en silence : on la montre. */}
+                  ⓘ {conflits.join(" · ")}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
