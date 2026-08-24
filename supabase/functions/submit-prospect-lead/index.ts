@@ -136,7 +136,98 @@ serve(async (req) => {
     }
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // QUELQU'UN QUI REVIENT REPREND SA FICHE — il n'en crée pas une deuxième.
+  //
+  // LE CONSTAT (mesure en base du 24/08). Cette fonction faisait un `.insert()`
+  // sec, sans aucun contrôle. Chaque passage dans le tunnel du club créait donc
+  // une fiche de plus — et comme une personne annule et re-réserve, les fiches
+  // s'empilaient. Le pire cas mesuré : **claire dehaese, 3 fiches en 4 minutes**
+  // (10:15:52, 10:17:31, 10:19:54), avec des statuts DIVERGENTS (contacted /
+  // new / contacted) — donc travaillées comme trois personnes différentes.
+  // 3 des 5 groupes de doublons réels venaient de là.
+  //
+  // Règle de Thomas (24/08) : « si quelqu'un revient on reprend la fiche
+  // existante et on la remonte ».
+  //
+  // ⚠️ NORMALISATION DUPLIQUÉE, ET C'EST ASSUMÉ. Une edge function ne peut pas
+  // importer le front : ces deux fonctions sont le jumeau EXACT de
+  // `src/features/crm/cleDoublon.ts`. Toute modification de l'une doit être
+  // reportée sur l'autre — même règle que le catalogue PV (cf. CLAUDE.md).
+  const telNorm = (v: string | null): string | null => {
+    if (!v || v.includes("@")) return null; // un email n'est pas un téléphone
+    const c = v.replace(/\D/g, "").replace(/^0+/, "").replace(/^33/, "");
+    return c.length >= 9 ? c.slice(-9) : null;
+  };
+  const mailNorm = (v: string | null): string | null => {
+    const c = (v ?? "").trim().toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) ? c : null;
+  };
+
+  const monTel = telNorm(phone);
+  const monMail = mailNorm(email);
+
+  /** L'id de la fiche — nouvelle, ou reprise. */
+  let leadId: string | null = null;
+  /** Vrai quand on a repris une fiche existante au lieu d'en créer une. */
+  let reprise = false;
+
   try {
+    // On relit un lot borné et on rapproche en JS : la normalisation vit dans
+    // UN seul endroit, et le volume le permet largement (~3 leads/semaine).
+    const { data: existants } = await sb
+      .from("prospect_leads")
+      .select("id, phone, email, status, notes, city, last_name")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    const dejaLa = (existants ?? []).find((l) => {
+      const t = telNorm((l.phone as string | null) ?? null);
+      const m = mailNorm((l.email as string | null) ?? null);
+      return (monTel && t && t === monTel) || (monMail && m && m === monMail);
+    });
+
+    if (dejaLa) {
+      // ── ON LA REMONTE ────────────────────────────────────────────────────
+      // Elle redevient à traiter aujourd'hui, elle se réveille si elle dormait,
+      // et on complète ce qui manquait. On ne TOUCHE PAS au statut travaillé
+      // par le coach — sauf « perdu » : quelqu'un qui revient n'est plus perdu.
+      const nom = (() => {
+        const m = (metadata ?? {}) as Record<string, unknown>;
+        const brut = typeof m.nom === "string" ? m.nom : typeof m.last_name === "string" ? m.last_name : "";
+        return brut.trim() || null;
+      })();
+      const quand = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long" });
+      const trace = `↩︎ Revenu·e le ${quand} (${source})`;
+      const notes = [(dejaLa.notes as string | null) ?? "", trace].filter(Boolean).join("\n");
+
+      await sb
+        .from("prospect_leads")
+        .update({
+          relance_due_at: new Date().toISOString(),
+          relance_done_at: null,
+          status: dejaLa.status === "lost" ? "contacted" : dejaLa.status,
+          notes,
+          // On enrichit sans jamais écraser ce qui était déjà renseigné.
+          email: (dejaLa.email as string | null) ?? email,
+          city: (dejaLa.city as string | null) ?? city,
+          last_name: (dejaLa.last_name as string | null) ?? nom,
+        })
+        .eq("id", dejaLa.id);
+
+      // Une personne qui revient se réveille : sinon elle resterait invisible
+      // dans « Endormis » malgré sa nouvelle démarche.
+      await sb.from("crm_archived_leads").delete().eq("lead_table", "prospect_leads").eq("lead_id", dejaLa.id);
+
+      // ⚠️ PAS de retour anticipé ici. Le premier jet en faisait un, et sautait
+      // la notification push au coach : une personne qui revient serait entrée
+      // dans le CRM EN SILENCE — précisément le trou de notification déjà payé
+      // le 13/08. On poursuit donc jusqu'au bloc de notification.
+      reprise = true;
+      leadId = dejaLa.id as string;
+    }
+
+    if (!reprise) {
     const { data: inserted, error: insertErr } = await sb
       .from("prospect_leads")
       .insert({
@@ -169,11 +260,14 @@ serve(async (req) => {
       .select("id")
       .single();
 
-    if (insertErr) throw insertErr;
+      if (insertErr) throw insertErr;
+      leadId = (inserted as { id: string }).id;
+    }
 
     // Chantier colis (2026-07-08) : email de remerciement personnalisé Noaly,
     // fire-and-forget — best-effort, ne bloque jamais la réponse au funnel.
-    if (source === "colis" && email) {
+    // Pas de renvoi sur une reprise : la personne l'a déjà reçu.
+    if (source === "colis" && email && !reprise) {
       fetch(`${SUPABASE_URL}/functions/v1/send-colis-welcome-email`, {
         signal: AbortSignal.timeout(2500),
         method: "POST",
@@ -181,7 +275,7 @@ serve(async (req) => {
           Authorization: `Bearer ${SERVICE_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prospect_lead_id: (inserted as { id: string }).id }),
+        body: JSON.stringify({ prospect_lead_id: leadId }),
       }).catch(() => { /* non bloquant */ });
     }
 
@@ -211,7 +305,9 @@ serve(async (req) => {
           ({ hot: "🔥 chaud", warm: "🟡 tiède", cold: "❄️ froid" } as Record<string, string>)[
             String(meta.temperature)
           ] ?? "";
-        const title = isFunnel ? `🚪 Lead opportunité ${tempLabel}`.trim() : "🔥 Nouveau prospect";
+        const title = reprise
+          ? "↩︎ Un prospect revient"
+          : isFunnel ? `🚪 Lead opportunité ${tempLabel}`.trim() : "🔥 Nouveau prospect";
         const pushBody = isFunnel
           ? `${firstName}${profileLabel ? ` · ${profileLabel}` : ""} · ${phone}`
           : `${firstName}${city ? " de " + city : ""} · ${phone}`;
@@ -289,7 +385,7 @@ serve(async (req) => {
       }
     }
 
-    return json({ success: true, id: (inserted as { id: string }).id });
+    return json({ success: true, id: leadId, reprise });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";
     return json({ success: false, error: msg }, 500);
