@@ -1,6 +1,6 @@
 // Nous — page interne « Mélanie, Thomas, et un local rue Saint Pierre ». v7 fidèle.
 import { Link } from "react-router-dom";
-import { ClubShell, InnerHero, Slot, R, TEL } from "./ClubShell";
+import { ClubShell, InnerHero, Slot, R, TEL, CTA_PRINCIPAL } from "./ClubShell";
 import { CLUB_TEL, CLUB_ADRESSE } from "../../data/clubInfos";
 
 /**
@@ -196,7 +196,7 @@ export function ClubNousPage() {
                 </li>
               ))}
             </ul>
-            <a className="cl-cta" style={{ marginTop: 24 }} href={R}>Réserver ma venue</a>
+            <a className="cl-cta" style={{ marginTop: 24 }} href={R}>{CTA_PRINCIPAL}</a>
             <a className="cl-ghost" style={{ marginTop: 12, marginLeft: 12 }} href={TEL}>Appeler</a>
           </div>
           <iframe

@@ -59,10 +59,16 @@ const POUR_QUI = [
 ];
 
 export function ClubRejoindrePage() {
+  // La barre du bas et l'en-tête suivent CETTE page, pas le tunnel client :
+  // « Mon bilan offert » vers /reserver était le plus gros bouton d'une page de
+  // recrutement, sous le pouce, sur mobile.
   return (
     <ClubShell
       title="Devenir coach et ouvrir son club — Verdun"
       description="Deviens coach au Breakfast Club de Verdun : tu démarres accompagné(e), tu fais grandir ta communauté, et tu peux ouvrir ton propre club de nutrition."
+      ctaHref="/club/rejoindre/rdv?utm_source=site-club"
+      ctaLabel="Découvrir l'opportunité coach"
+      ctaCourt="Devenir coach"
     >
       <InnerHero
         pill="Rejoindre l'équipe"

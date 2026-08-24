@@ -1,5 +1,5 @@
 // Comment ça se passe — page interne « De ta première visite à tes premiers résultats ». v7 fidèle.
-import { ClubShell, InnerHero, R, PhotoBand } from "./ClubShell";
+import { ClubShell, InnerHero, R, PhotoBand, CTA_PRINCIPAL } from "./ClubShell";
 import { CLUB_TEL, HORAIRES_PHRASE } from "../../data/clubInfos";
 
 const STEPS = [
@@ -9,7 +9,7 @@ const STEPS = [
   { n: "04", t: "Le point des 10 visites", top: "cl-top-a", d: "On refait les mesures, de nouvelles photos si tu veux, et on regarde ensemble le chemin. Ensuite, tu choisis la suite — sans pression." },
 ];
 const QA = [
-  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, la visite revient à 8 € — et tu y as tes trois boissons, ton smoothie nutritionnel (≈ 40 % de tes apports du jour) et ton point coach. Carte 10 visites à 80 € (valable 30 jours), ou 30 à 185 € en offre de pré-lancement (6,17 € la visite, valable 90 jours).", top: "cl-top-o" },
+  { q: "Combien ça coûte ?", a: "Ton premier body scan est offert. Ensuite, la visite revient à 8 € — et tu y as tes trois boissons, ton smoothie nutritionnel (≈ 40 % de tes apports du jour) et ton point coach. Carte 10 visites à 80 € (valable 30 jours), ou 30 à 185 € (6,17 € la visite, valable 90 jours) — offre de pré-lancement réservée aux 20 premiers membres, ensuite 210 €.", top: "cl-top-o" },
   // ⚠ Disait « ni de durée minimum, tu utilises tes visites à ton rythme » —
   // faux depuis que les cartes ont une validité. Engagement (il n'y en a pas)
   // et validité (il y en a une) sont deux choses distinctes : on dit les deux.
@@ -80,7 +80,7 @@ export function ClubParcoursPage() {
           ))}
         </div>
         <p style={{ marginTop: 26, fontSize: 16, color: "var(--yellow)" }}>Une autre question ? Appelle-nous au {CLUB_TEL}, {HORAIRES_PHRASE}.</p>
-        <a className="cl-cta" style={{ marginTop: 22 }} href={R}>Réserver ma première visite</a>
+        <a className="cl-cta" style={{ marginTop: 22 }} href={R}>{CTA_PRINCIPAL}</a>
       </div></div>
     </ClubShell>
   );

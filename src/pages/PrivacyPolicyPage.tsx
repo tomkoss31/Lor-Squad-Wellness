@@ -1,6 +1,7 @@
 // Politique de confidentialité (RGPD Phase 1 — 2026-04-30).
 // Accessible publiquement (sans auth). Theme-aware var(--ls-*).
 
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   APP_NAME_FULL,
@@ -11,6 +12,17 @@ import {
 } from "../lib/branding";
 
 export default function PrivacyPolicyPage() {
+  // Titre d'onglet propre à la page (14/08). Ces trois pages sont dans le plan
+  // du site, donc destinées à être indexées — or aucune ne posait de titre : elles
+  // héritaient toutes les trois de celui de index.html, « La Base 360 — The
+  // wellness nutrition club ». Trois URL publiques sous le même titre, et le nom
+  // de l'outil interne affiché au visiteur du club.
+  useEffect(() => {
+    const precedent = document.title;
+    document.title = "Politique de confidentialité · La Base, Verdun";
+    return () => { document.title = precedent; };
+  }, []);
+
   return (
     <main
       style={{
