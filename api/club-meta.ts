@@ -58,7 +58,7 @@ const META_PAGES: Record<string, { title: string; description: string }> = {
   "le-club": {
     title: "Le club de petit-déjeuner de Verdun · Breakfast Club",
     description:
-      "Un lieu ouvert dès 7h à Verdun : nutrition, coaching et une communauté qui t'attend chaque matin. Sans rendez-vous, sans engagement, body scan offert.",
+      "Nutrition, coaching et une communauté qui t'attend chaque matin à Verdun. Ouvert 7h–11h en semaine, 8h–11h le samedi. Sans engagement, body scan offert.",
   },
   "le-rituel": {
     title: "Le rituel du matin : nutrition complète · Verdun",

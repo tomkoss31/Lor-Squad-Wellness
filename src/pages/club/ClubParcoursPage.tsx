@@ -15,7 +15,7 @@ const QA = [
   // et validité (il y en a une) sont deux choses distinctes : on dit les deux.
   { q: "Je m'engage sur une durée ?", a: "Pas d'abonnement, pas de prélèvement automatique : tu paies ta carte une fois. En revanche elle a une validité — 30 jours pour la carte 10 visites, 90 jours pour la carte 30, à partir de l'achat. C'est ce qui garde le rythme.", top: "cl-top-p" },
   { q: "Dois-je acheter des produits ?", a: "Non. Tout ce que tu bois est compris dans ta visite.", top: "cl-top-s" },
-  { q: "Je n'ai pas le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}, sans rendez-vous. Tes trois boissons se prennent à ton rythme — souvent un quart d'heure, mais rien ne te presse.`, top: "cl-top-a" },
+  { q: "Je n'ai pas le temps le matin.", a: `Tu passes quand tu veux ${HORAIRES_PHRASE}. Tes trois boissons se prennent à ton rythme — souvent un quart d'heure, mais rien ne te presse. Seul le premier rendez-vous, ton bilan, se cale à l'avance.`, top: "cl-top-a" },
   { q: "Je ne suis pas sportif.", a: "Ce n'est pas une salle de sport : aucune performance à prouver, aucun regard sur ce que tu soulèves. On part d'où tu en es, à ton rythme.", top: "cl-top-o" },
   { q: "Au bout de combien de temps ?", a: "On fait le point à la 10ᵉ visite : c'est là qu'on regarde le chemin parcouru.", top: "cl-top-p" },
 ];
