@@ -2282,7 +2282,30 @@ function bilanSyntheseDepuisRdv(
     converted_to_client_id: null,
     converted_at: null,
     assigned_to_user_id: coachUserId,
-    notes: null,
+    // ⚠️ 25/08 — le rendez-vous du club ne devenait un suivi client NULLE PART.
+    // Le formulaire posait un J+3 « Prise de contact » en dur, et le vrai
+    // créneau — sa date, l'objectif qu'elle avait choisi, le fait qu'elle soit
+    // venue à deux — restait dans `rdv_bookings`, invisible sur sa fiche. On
+    // le fait suivre dans les notes de création : c'est le seul endroit qui
+    // survit à la conversion, et un coach qui rouvre la fiche dans trois mois
+    // saura d'où elle vient.
+    notes: (() => {
+      const quand = new Date(date);
+      const jour = Number.isNaN(quand.getTime())
+        ? null
+        : new Intl.DateTimeFormat("fr-FR", {
+            timeZone: "Europe/Paris", weekday: "long", day: "numeric",
+            month: "long", hour: "2-digit", minute: "2-digit",
+          }).format(quand);
+      const bouts = [
+        jour ? `RDV découverte du club le ${jour}` : "RDV découverte du club",
+        session.objectif ? `objectif annoncé : ${DISCOVERY_LABELS[session.objectif] ?? session.objectif}` : null,
+        session.peopleCount === 2
+          ? `venue à deux${session.partnerFirstName ? ` (avec ${session.partnerFirstName})` : ""}`
+          : null,
+      ].filter(Boolean);
+      return `${bouts.join(" · ")}.`;
+    })(),
     contacted_at: null,
     relance_due_at: null,
     relance_done_at: null,

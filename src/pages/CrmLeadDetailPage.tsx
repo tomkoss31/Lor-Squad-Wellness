@@ -1065,7 +1065,7 @@ export function CrmLeadDetailPage() {
               // Le LIEN, pas seulement le mot : c'est lui qui permet enfin
               // d'aller du lead a sa fiche cliente, et de compter de vraies
               // conversions au lieu d'etiquettes.
-              const { error } = await sb
+              const { data: donnees, error } = await sb
                 .from("prospect_leads")
                 .update({
                   status: "converted",
@@ -1075,9 +1075,19 @@ export function CrmLeadDetailPage() {
                   relance_done_at: new Date().toISOString(),
                 })
                 .eq("id", lead.id)
+                // Meme garde-fou que pour les bilans : on n'ecrase jamais une
+                // conversion deja faite, sinon la premiere fiche cliente
+                // devient orpheline (aucun lead ne pointe plus vers elle).
+                .is("converted_to_client_id", null)
                 .select("id");
               if (error) {
                 pushToast({ tone: "warning", title: "Fiche creee, lead non range", message: error.message });
+              } else if (!Array.isArray(donnees) || donnees.length === 0) {
+                pushToast({
+                  tone: "warning",
+                  title: "Deja converti",
+                  message: "Ce lead etait deja relie a une fiche cliente. Rafraichis pour voir laquelle.",
+                });
               }
             }
             await refetch();
