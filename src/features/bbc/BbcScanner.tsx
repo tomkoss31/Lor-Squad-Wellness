@@ -28,6 +28,9 @@ interface DetectedCode {
   rawValue: string;
 }
 
+/** Le choix avant/arrière, retenu sur CET appareil. */
+const CLE_CAMERA = "bbc-scan-camera";
+
 export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -40,6 +43,18 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
+  // Avant / arrière — et le choix RESTE (22/08, demande Thomas). La tablette du
+  // comptoir lit sur la caméra AVANT : le membre présente son QR face à
+  // l'écran, comme au Shakes Bar. Un téléphone, lui, scanne par l'arrière.
+  // Mémoriser par appareil évite de reposer la question à chaque visite — au
+  // comptoir on scanne des dizaines de fois par matinée.
+  const [cameraFace, setCameraFace] = useState<"environment" | "user">(() => {
+    try {
+      return window.localStorage.getItem(CLE_CAMERA) === "user" ? "user" : "environment";
+    } catch {
+      return "environment";
+    }
+  });
   // La prop onScanned change à chaque render du parent : on la garde dans une
   // ref pour que l'effet caméra ne se relance pas (flash + perte de mise au point).
   const onScannedRef = useRef(onScanned);
@@ -109,7 +124,27 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        // Trois essais, du plus précis au plus permissif. `exact` est le seul
+        // qui BASCULE vraiment sur un appareil à deux caméras — `facingMode`
+        // seul n'est qu'une préférence, souvent ignorée. Mais `exact` échoue
+        // net s'il n'y a qu'une caméra : d'où les deux replis, sans quoi on
+        // casserait le scan sur les appareils qui marchaient déjà.
+        const essais: MediaStreamConstraints[] = [
+          { video: { facingMode: { exact: cameraFace } } },
+          { video: { facingMode: cameraFace } },
+          { video: true },
+        ];
+        let stream: MediaStream | null = null;
+        let dernierEchec: unknown = null;
+        for (const contrainte of essais) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(contrainte);
+            break;
+          } catch (e) {
+            dernierEchec = e;
+          }
+        }
+        if (!stream) throw dernierEchec ?? new Error("camera_indisponible");
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -184,19 +219,72 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [handleValue]);
+    // `cameraFace` dans les dépendances : changer de caméra relance proprement
+    // le flux (le nettoyage ci-dessus coupe l'ancien avant d'ouvrir le nouveau).
+  }, [handleValue, cameraFace]);
+
+  function basculerCamera() {
+    setCameraFace((precedente) => {
+      const suivante = precedente === "environment" ? "user" : "environment";
+      try {
+        window.localStorage.setItem(CLE_CAMERA, suivante);
+      } catch {
+        // navigation privée : on bascule quand même, on ne retient juste pas
+      }
+      return suivante;
+    });
+    setError(null);
+  }
 
   return (
     <div className="bbc-mode" style={{ position: "fixed", inset: 0, zIndex: 1400, background: "#000", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "calc(14px + env(safe-area-inset-top)) 18px 12px", color: "#FBF7F0" }}>
-        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, color: "var(--ls-bbc-lime)" }}>Scanner un membre</div>
-        <button type="button" onClick={onClose} aria-label="Fermer" style={{ width: 38, height: 38, borderRadius: 12, border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)", color: "#FBF7F0", cursor: "pointer", fontSize: 17 }}>✕</button>
+        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, color: "var(--ls-bbc-lime)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>Scanner un membre</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+          {/* Bascule avant/arrière. Toujours visible : `enumerateDevices` ne
+              nomme les caméras qu'APRÈS une autorisation accordée, donc tester
+              leur nombre avant d'afficher le bouton le ferait disparaître
+              précisément là où il sert. Sur un appareil à une seule caméra, la
+              bascule retombe dessus sans rien casser (cf. les trois essais de
+              contraintes). Le libellé dit vers QUOI on bascule. */}
+          <button
+            type="button"
+            onClick={basculerCamera}
+            aria-label={cameraFace === "environment" ? "Basculer sur la caméra avant" : "Basculer sur la caméra arrière"}
+            style={{
+              minHeight: 38, padding: "0 14px", borderRadius: 12,
+              border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)",
+              color: "#FBF7F0", cursor: "pointer", fontSize: 13.5, fontWeight: 600,
+              display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap",
+            }}
+          >
+            <span aria-hidden="true">🔄</span>
+            {/* Libellé court : « Caméra avant » faisait 146 px et cassait le
+                titre en trois lignes à 375 px. L'icône porte déjà le sens de
+                bascule, `aria-label` porte la phrase entière. */}
+            {cameraFace === "environment" ? "Avant" : "Arrière"}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Fermer" style={{ width: 38, height: 38, borderRadius: 12, border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)", color: "#FBF7F0", cursor: "pointer", fontSize: 17, flex: "none" }}>✕</button>
+        </div>
       </div>
 
       <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         {supported && !error ? (
           <>
-            <video ref={videoRef} playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {/* Miroir en caméra avant, comme une glace — sans ça, viser le QR
+                est contre-intuitif : on bouge à droite, l'image part à gauche.
+                ⚠️ Purement visuel : le décodage lit l'image BRUTE du flux
+                (`drawImage` ignore les transformations CSS), donc le QR n'est
+                jamais lu à l'envers. */}
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                transform: cameraFace === "user" ? "scaleX(-1)" : undefined,
+              }}
+            />
             {/* viseur */}
             <div style={{ position: "absolute", width: 230, height: 230, borderRadius: 24, border: "3px solid var(--ls-bbc-lime)", boxShadow: "0 0 0 9999px rgba(0,0,0,.45)" }} />
           </>
