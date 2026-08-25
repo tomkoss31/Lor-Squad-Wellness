@@ -238,10 +238,13 @@ destinataire alimenté par le webhook Resend.
 - **L'envoi tourne dans le NAVIGATEUR** (l'UI rappelle l'edge jusqu'à
   `remaining = 0`). Fermer l'onglet interrompt l'envoi en cours de liste ;
   re-cliquer sur Envoyer reprend proprement.
-- **Quota Resend (offre gratuite) : 100 mails/JOUR partagés** avec tous les
-  mails transactionnels de l'app (confirmations et rappels de RDV…). Plafonner
-  une campagne à **50/jour** — sinon un client qui réserve ne reçoit plus sa
-  confirmation.
+- **Quota Resend — PLAN PRO depuis le 2026-08-25.** Le plafond de 100 mails/jour
+  de l'offre gratuite **n'existe plus** : une campagne n'a plus à être bridée à
+  50/jour, et il n'y a plus de risque qu'un envoi de masse mange la confirmation
+  de RDV d'un client. ⚠️ **Cette ligne disait le contraire jusqu'au 25/08** — si
+  un raisonnement s'appuie sur « on n'a que 100 mails », il est périmé.
+  Reste à surveiller : le quota MENSUEL du plan et la limite de requêtes par
+  seconde (les envois en lot restent séquentiels, cf. `MAX_PER_CALL = 120`).
 - `campaigns.status` doit valoir `sent` pour que l'écran Résultats s'affiche.
   Si un envoi est interrompu, la campagne reste en `sending` : les stats
   arrivent bien en base mais l'UI n'affiche rien.
