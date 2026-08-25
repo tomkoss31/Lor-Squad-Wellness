@@ -110,3 +110,53 @@ export function mailPasVenue(prenom: string | null, heure: string | null): MailE
     cta: { label: "Reprendre un rendez-vous", url: URL_RESERVER },
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. La relance des dormants — celles qui ont laissé leurs coordonnées et
+//    qu'on n'a jamais réussi à joindre.
+//
+// ⚠️ CORRECTION DE THOMAS (25/08) : le premier jet disait « on s'est croisés ».
+// C'EST FAUX, et il l'a vu tout de suite. Ces personnes ont rempli un
+// formulaire sur le site — on ne les a JAMAIS rencontrées. Écrire le contraire
+// serait la première phrase d'un mail qui sonne faux.
+//
+// Le nombre de jours est LU sur la vraie date d'entrée du lead, jamais
+// approximé : « il y a quelque temps » est le genre de flou qui dit qu'on ne
+// sait plus qui elle est.
+//
+// La porte de sortie n'est pas de la politesse. Sur quelqu'un qui n'a pas
+// répondu depuis deux semaines, c'est elle qui fait la différence entre du
+// silence de plus et une vraie réponse — même négative, qui libère la place.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** D'où vient ce dormant — la première phrase en dépend. */
+export type ContexteDormant =
+  /** Elle a laissé ses coordonnées, on n'a jamais réussi à se parler. */
+  | "jamais_parle"
+  /** Elle avait un créneau, elle l'a annulé et n'en a jamais repris. */
+  | "a_annule";
+
+export function mailRelanceDormant(
+  prenom: string | null,
+  jours: number,
+  contexte: ContexteDormant = "jamais_parle",
+): MailEntonnoir {
+  const p = prenomOu(prenom);
+  const depuis = jours <= 1 ? "hier" : `il y a ${jours} jours`;
+
+  const ouverture =
+    contexte === "a_annule"
+      ? `Tu avais réservé un créneau au Breakfast Club ${depuis}, puis tu as dû l'annuler — et on n'a pas eu l'occasion d'en recaler un autre.`
+      : `Tu as laissé tes coordonnées au Breakfast Club ${depuis}, et on n'a pas encore réussi à se parler. Ça arrive — la vie va vite.`;
+
+  return {
+    objet: `Toujours envie de faire le point, ${p} ?`,
+    titre: `Ça tient toujours, ${p} ?`,
+    message: [
+      ouverture,
+      "Si l'envie est toujours là, il te suffit de choisir une heure. C'est gratuit, ça dure 45 minutes, et tu repars avec quelque chose de clair même si tu ne fais rien ensuite.",
+      "Et si ce n'est plus d'actualité, réponds-moi juste « non merci » : je ne te relancerai plus, sans rancune.",
+    ].join("\n\n"),
+    cta: { label: "Choisir mon créneau", url: URL_RESERVER },
+  };
+}
