@@ -234,7 +234,16 @@ serve(async (req) => {
       const { data: bookings } = await sb
         .from("rdv_bookings")
         .select("id, coach_user_id, first_name, contact, mode, slot_start")
-        .neq("status", "canceled")
+        // ⚠️ 25/08 — c'était `.neq("status", "canceled")`, donc le rappel partait
+        // AUSSI sur les demandes jamais acceptées : toute réservation du club
+        // naît en « requested ». La personne recevait « ton rendez-vous, c'est
+        // demain » pour un créneau que personne n'avait validé — et le drapeau
+        // anti-doublon était posé au passage, donc le VRAI rappel ne pouvait
+        // plus jamais partir.
+        //
+        // On ne rappelle que ce qui est CONFIRMÉ. Ça écarte du même coup
+        // `honored` et `no_show`, qui n'ont plus rien à rappeler.
+        .eq("status", "confirmed")
         .is("reminder_email_sent_at", null)
         .gte("slot_start", now.toISOString())
         .lte("slot_start", coarseEnd);
