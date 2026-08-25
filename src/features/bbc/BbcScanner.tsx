@@ -2,8 +2,18 @@
 // BbcScanner — scan caméra du QR membre → valide une visite (chantier BBC).
 // Le membre montre son QR (= son token PWA) ; le coach scanne ; on appelle le
 // RPC bbc_scan_visit (résout token → client, vérifie l'appartenance, +1 visite).
-// Décodage via l'API native BarcodeDetector (Chrome/Android/Edge). Fallback :
-// message clair si le navigateur ne la supporte pas (ex. iOS Safari).
+// DÉCODAGE — deux chemins, et c'est voulu :
+//   1. `BarcodeDetector`, l'API native, quand elle existe : c'est le décodage
+//      du système, le plus rapide et le moins gourmand en batterie.
+//   2. Sinon `jsQR`, en JavaScript pur, chargé À LA DEMANDE.
+//
+// ⚠️ NE PAS revenir à « BarcodeDetector seul » (22/08). C'était le cas jusqu'à
+// aujourd'hui, et ça affichait « Scan non supporté ici » sur la tablette du
+// club. Cette API n'existe QUE sur Chrome Android / ChromeOS / macOS — elle est
+// absente d'iPad et d'iPhone (Safari), de Firefox sur toutes les plateformes,
+// et même de Chrome sur Windows. Autrement dit, le scan ne marchait que sur un
+// téléphone Android. Le message conseillait « utilise le device du club » alors
+// que c'est précisément le device du club qui ne marchait pas.
 // =============================================================================
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,6 +32,9 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Toile de décodage du repli jsQR : on y peint l'image de la caméra pour en
+  // lire les pixels. Créée une seule fois, jamais montée dans le DOM.
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const busyRef = useRef(false);
   const lastRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
   const [error, setError] = useState<string | null>(null);
@@ -79,13 +92,22 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   useEffect(() => {
     let cancelled = false;
     const DetectorCtor = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (s: CanvasImageSource) => Promise<DetectedCode[]> } }).BarcodeDetector;
-    if (!DetectorCtor) {
-      setSupported(false);
-      return;
-    }
-    const detector = new DetectorCtor({ formats: ["qr_code"] });
+    const detector = DetectorCtor ? new DetectorCtor({ formats: ["qr_code"] }) : null;
 
     void (async () => {
+      // Le repli n'est téléchargé que si l'API native manque : sur le device
+      // qui l'a, jsQR ne coûte pas un octet.
+      let lireQr: typeof import("jsqr").default | null = null;
+      if (!detector) {
+        try {
+          lireQr = (await import("jsqr")).default;
+        } catch {
+          setSupported(false);
+          return;
+        }
+        if (cancelled) return;
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         if (cancelled) {
@@ -97,19 +119,63 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => undefined);
         }
+        // Le repli décode en JavaScript : inutile de le faire 60 fois par
+        // seconde, ça chaufferait la tablette pour rien. Toutes les 200 ms
+        // suffit largement pour un QR qu'on présente à la main.
+        let dernierDecodage = 0;
         const loop = async () => {
           if (cancelled || !videoRef.current) return;
+          const video = videoRef.current;
           try {
-            const codes = await detector.detect(videoRef.current);
-            if (codes.length && codes[0].rawValue) void handleValue(codes[0].rawValue);
+            if (detector) {
+              const codes = await detector.detect(video);
+              if (codes.length && codes[0].rawValue) void handleValue(codes[0].rawValue);
+            } else if (lireQr && video.readyState >= 2 && video.videoWidth > 0) {
+              const maintenant = performance.now();
+              if (maintenant - dernierDecodage >= 200) {
+                dernierDecodage = maintenant;
+                // On décode une image RÉDUITE (largeur 480 max) : un QR reste
+                // parfaitement lisible à cette taille, et on divise d'autant le
+                // travail par image.
+                const echelle = Math.min(1, 480 / video.videoWidth);
+                const l = Math.round(video.videoWidth * echelle);
+                const h = Math.round(video.videoHeight * echelle);
+                if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
+                const toile = canvasRef.current;
+                if (toile.width !== l || toile.height !== h) {
+                  toile.width = l;
+                  toile.height = h;
+                }
+                // `willReadFrequently` : sans lui, les navigateurs gardent la
+                // toile sur le GPU et chaque lecture de pixels devient lente.
+                const ctx = toile.getContext("2d", { willReadFrequently: true });
+                if (ctx) {
+                  ctx.drawImage(video, 0, 0, l, h);
+                  const image = ctx.getImageData(0, 0, l, h);
+                  const code = lireQr(image.data, l, h, { inversionAttempts: "dontInvert" });
+                  if (code?.data) void handleValue(code.data);
+                }
+              }
+            }
           } catch {
             /* frame non prête — ignore */
           }
           rafRef.current = requestAnimationFrame(() => void loop());
         };
         void loop();
-      } catch {
-        setError("Impossible d'accéder à la caméra. Autorise l'accès dans ton navigateur.");
+      } catch (e) {
+        // Dire LEQUEL des trois cas : au comptoir, « autorise l'accès » ne sert
+        // à rien si le refus vient d'une autre application qui tient la caméra.
+        const nom = (e as { name?: string } | null)?.name ?? "";
+        setError(
+          nom === "NotAllowedError"
+            ? "L'accès à la caméra est refusé. Autorise-le dans les réglages du navigateur, puis rouvre le scan."
+            : nom === "NotFoundError" || nom === "OverconstrainedError"
+              ? "Aucune caméra détectée sur cet appareil."
+              : nom === "NotReadableError"
+                ? "La caméra est déjà utilisée par une autre application. Ferme-la et réessaie."
+                : "Impossible d'accéder à la caméra. Autorise l'accès dans ton navigateur.",
+        );
       }
     })();
 
@@ -137,9 +203,14 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
         ) : (
           <div style={{ padding: "40px 24px", textAlign: "center", color: "#FBF7F0", maxWidth: 340 }}>
             <div style={{ fontSize: 30, marginBottom: 12 }} aria-hidden="true">📷</div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{error ? "Caméra indisponible" : "Scan non supporté ici"}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{error ? "Caméra indisponible" : "Scan impossible ici"}</div>
             <div style={{ fontSize: 13, color: "rgba(251,247,240,.7)", lineHeight: 1.5 }}>
-              {error ?? "Ton navigateur ne gère pas le scan QR (souvent iOS Safari). Utilise le device du club (Android/Chrome), ou pointe le membre manuellement depuis l'onglet Le club."}
+              {/* Le conseil d'avant (« utilise le device du club ») envoyait
+                  vers l'appareil qui, justement, ne marchait pas. Depuis le
+                  repli jsQR, ce message ne s'affiche plus que si la caméra est
+                  refusée ou si le décodeur n'a pas pu être chargé — dans les
+                  deux cas, ce qu'il faut donner c'est la sortie de secours. */}
+              {error ?? "Le décodeur n'a pas pu se charger. Vérifie ta connexion, ou valide la visite à la main depuis l'onglet « Le club »."}
             </div>
           </div>
         )}
