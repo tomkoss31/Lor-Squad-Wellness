@@ -41,14 +41,30 @@ describe("les six réponses", () => {
     }
   });
 
-  it("deux seulement ne font pas revenir la personne", () => {
+  it("UNE SEULE reponse ne fait pas revenir la personne", () => {
+    // 25/08 : « RDV cale » en faisait partie, et c'etait le placard — 9
+    // personnes mesurees en base sans aucune porte de sortie. Il pose
+    // desormais un filet a 7 jours. Ne reste que « plus interesse·e », le seul
+    // cas ou l'on ferme VOLONTAIREMENT.
     const sansRetour = REPONSES.filter((r) => r.jours === null).map((r) => r.cle);
-    expect(sansRetour).toEqual(["plus_interesse", "rdv"]);
+    expect(sansRetour).toEqual(["plus_interesse"]);
+  });
+
+  it("« RDV cale » pose bien un filet — c'est le correctif du placard", () => {
+    expect(REPONSE_PAR_CLE.rdv.jours).toBe(7);
+    const e = ecritureFor(REPONSE_PAR_CLE.rdv, T0);
+    expect(e.relance_due_at).not.toBeNull();
+    // Et le filet doit naitre OUVERT, sinon il ne sonne jamais.
+    expect(e.relance_done_at).toBeNull();
   });
 
   it("aucune ne laisse quelqu'un dans le vide : « contacté » sans échéance n'existe plus", () => {
+    // L'invariant est « un statut qui garde la personne SUIVIE », pas
+    // litteralement `to_recontact` : depuis le 25/08, « RDV cale » porte une
+    // date ET le statut `qualified`, ce qui est exact et se suit tres bien.
+    // Ce qui reste interdit, c'est `contacted` — le statut sans suite.
     for (const r of REPONSES) {
-      if (r.jours !== null) expect(r.statut).toBe("to_recontact");
+      if (r.jours !== null) expect(["to_recontact", "qualified"]).toContain(r.statut);
     }
   });
 });
@@ -91,9 +107,10 @@ describe("dateDeRetour", () => {
     expect(d.getDate()).toBe(29);
   });
 
-  it("rend null quand la personne ne revient pas", () => {
+  it("rend null UNIQUEMENT pour « plus interesse·e »", () => {
     expect(dateDeRetour(REPONSE_PAR_CLE.plus_interesse, T0)).toBeNull();
-    expect(dateDeRetour(REPONSE_PAR_CLE.rdv, T0)).toBeNull();
+    // « RDV cale » revient desormais au bout de 7 jours (correctif du placard).
+    expect(dateDeRetour(REPONSE_PAR_CLE.rdv, T0)).not.toBeNull();
   });
 });
 
@@ -107,12 +124,10 @@ describe("ce qu'on écrit en base", () => {
     expect(e.relance_done_at).toBeNull();
   });
 
-  it("referme au contraire quand personne ne revient", () => {
-    for (const cle of ["plus_interesse", "rdv"] as const) {
-      const e = ecritureFor(REPONSE_PAR_CLE[cle], T0);
-      expect(e.relance_due_at).toBeNull();
-      expect(e.relance_done_at).toBe(T0.toISOString());
-    }
+  it("referme au contraire quand personne ne revient — « plus interesse·e » SEUL", () => {
+    const e = ecritureFor(REPONSE_PAR_CLE.plus_interesse, T0);
+    expect(e.relance_due_at).toBeNull();
+    expect(e.relance_done_at).toBe(T0.toISOString());
   });
 
   it("marque toujours le contact — c'est ce qui sort la personne des « jamais rappelés »", () => {
@@ -203,7 +218,8 @@ describe("quandCourt — le delai en trois mots", () => {
     // Elles ne sont pas dans la barre en lot, mais si un jour elles y passent,
     // « dans null jours » ne doit pas apparaitre.
     expect(quandCourt(REPONSE_PAR_CLE.plus_interesse)).toBe(REPONSE_PAR_CLE.plus_interesse.quand);
-    expect(quandCourt(REPONSE_PAR_CLE.rdv)).toBe(REPONSE_PAR_CLE.rdv.quand);
+    // « RDV cale » a maintenant une date : il se raccourcit comme les autres.
+    expect(quandCourt(REPONSE_PAR_CLE.rdv)).toBe("dans 7 jours");
   });
 
   it("reste court pour les quatre reponses de la barre", () => {

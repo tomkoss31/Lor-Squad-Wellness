@@ -41,6 +41,13 @@ interface Props {
   onMembre: () => void;
   onClassique: () => void;
   onPasEncore: () => void;
+  /** Le créneau est derrière nous : « pas encore » n'a plus de sens, la vraie
+   *  question devient « est-elle venue ? ». */
+  rdvPasse?: boolean;
+  /** Enregistre le lapin (25/08). Avant, le bouton portait le mot « elle n'est
+   *  pas venue » et n'écrivait RIEN : la personne ne retombait dans aucune
+   *  file, elle restait « RDV calé » pour toujours. */
+  onPasVenue?: () => void;
   onFermer: () => void;
 }
 
@@ -89,7 +96,7 @@ const sousTexte: React.CSSProperties = {
   color: "color-mix(in srgb, var(--ls-text) 72%, transparent)",
 };
 
-export function QualifierRdvSheet({ cible, onMembre, onClassique, onPasEncore, onFermer }: Props) {
+export function QualifierRdvSheet({ cible, onMembre, onClassique, onPasEncore, rdvPasse, onPasVenue, onFermer }: Props) {
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => {
       if (e.key === "Escape") onFermer();
@@ -176,11 +183,27 @@ export function QualifierRdvSheet({ cible, onMembre, onClassique, onPasEncore, o
           </span>
         </button>
 
+        {/* ⚠️ 25/08 — ce bouton disait « ou elle n'est pas venue » et n'écrivait
+            RIEN. Un lapin ne laissait aucune trace et ne relançait rien : la
+            personne restait « RDV calé » à vie. On sépare donc les deux cas, et
+            la question posée dépend de si le créneau est derrière nous. */}
+        {rdvPasse && onPasVenue ? (
+          <button type="button" onClick={onPasVenue} style={{ ...choix, background: "transparent", minHeight: 46 }}>
+            <span aria-hidden="true" style={{ fontSize: 20, flex: "none", lineHeight: 1.2 }}>🚫</span>
+            <span>
+              <span style={titreChoix}>Elle n'est pas venue</span>
+              <span style={sousTexte}>Le rendez-vous est marqué manqué, et elle revient dans ta file.</span>
+            </span>
+          </button>
+        ) : null}
+
         <button type="button" onClick={onPasEncore} style={{ ...choix, background: "transparent", minHeight: 46 }}>
           <span aria-hidden="true" style={{ fontSize: 20, flex: "none", lineHeight: 1.2 }}>🕓</span>
           <span>
             <span style={titreChoix}>Pas encore</span>
-            <span style={sousTexte}>Elle réfléchit, ou elle n'est pas venue. Rien ne bouge.</span>
+            <span style={sousTexte}>
+              {rdvPasse ? "Elle est venue mais réfléchit. Rien ne bouge." : "Elle réfléchit. Rien ne bouge."}
+            </span>
           </span>
         </button>
 

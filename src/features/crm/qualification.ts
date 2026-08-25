@@ -97,9 +97,19 @@ export const REPONSES: Reponse[] = [
   {
     cle: "rdv",
     titre: "RDV calé",
-    quand: "Passe dans l'agenda",
+    quand: "Filet dans 7 jours",
     resume: "Rendez-vous pris",
-    jours: null,
+    // ⚠️ 25/08 — c'était `null`, donc `relance_done_at = maintenant` : la fiche
+    // se refermait DÉFINITIVEMENT. Mesure en base : 9 personnes dans un placard
+    // dont l'étiquette disait « rien à faire », qu'aucun cron, aucune file,
+    // aucun badge ne pouvait plus faire remonter. Si la personne ne venait pas,
+    // ou venait sans démarrer, elle disparaissait pour toujours — exactement la
+    // disparition silencieuse que le chantier « Et alors ? » devait supprimer.
+    //
+    // 7 jours : le temps que le rendez-vous ait lieu et qu'on ait pu convertir.
+    // Si la fiche cliente est créée entre-temps, le lead sort de la file avant
+    // que le filet ne sonne. Sinon il revient — et c'est tout l'objet.
+    jours: 7,
     statut: "qualified",
     teinte: "var(--ls-lime)",
   },
