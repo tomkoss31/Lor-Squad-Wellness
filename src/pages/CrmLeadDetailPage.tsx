@@ -19,6 +19,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { CRM_SOURCE_META, CRM_STATUS_META, parseCrmLeadKey, prenomProvenance, provenanceTexte, statusOptionsFor, tableHasNotes, useCrmLeads, type CrmLead, type CrmStatus, objectifLabel } from "../hooks/useCrmLeads";
 import { useOnlineBilans } from "../hooks/useOnlineBilans";
+import type { OnlineBilanRow } from "../hooks/useOnlineBilans";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { buildCrmMailLink, buildCrmSmsLink, buildCrmWhatsAppLink, objetPourLead } from "../lib/crmMessages";
@@ -84,6 +85,48 @@ const PLACEHOLDER_LEAD: CrmLead = {
   contactedAt: null,
   notes: null,
 };
+
+/**
+ * Un `prospect_lead` présenté sous la forme que `LeadConvertModal` sait lire.
+ *
+ * Même motif que `bilanSyntheseDepuisRdv` dans l'agenda : plutôt qu'un second
+ * formulaire de création (avec sa propre dérive), on parle à celui qui existe.
+ * Les champs qu'un lead du club ne porte pas (taille, poids, motivation)
+ * restent nuls — la modale les demande, et le bilan complet se fait ensuite.
+ */
+function bilanDepuisProspectLead(lead: CrmLead): OnlineBilanRow {
+  return {
+    id: lead.id,
+    coach_user_id: lead.ownerUserId,
+    coach_slug: lead.coachSlug ?? null,
+    first_name: lead.firstName,
+    age: lead.bilanAge ?? null,
+    height_cm: null,
+    city: lead.city,
+    phone: lead.phone ?? (lead.contactIsPhone ? lead.contact : null),
+    email: lead.email ?? (lead.contactIsPhone ? null : lead.contact),
+    objectives: lead.objectif ? [lead.objectif] : [],
+    weight_loss_target_kg: lead.bilanWeightTarget ?? null,
+    current_weight_kg: null,
+    motivation_score: lead.bilanMotivation ?? null,
+    // La modale y cherche le nom de famille pour préremplir son champ obligatoire.
+    payload: lead.lastName ? { last_name: lead.lastName } : {},
+    lead_status: "new",
+    converted_to_client_id: null,
+    converted_at: null,
+    assigned_to_user_id: lead.ownerUserId,
+    notes: lead.notes,
+    contacted_at: lead.contactedAt,
+    relance_due_at: lead.relanceDueAt,
+    relance_done_at: null,
+    derniere_reponse: lead.derniereReponse,
+    result_token: null,
+    callback_requested_at: lead.callbackRequestedAt,
+    engagement: lead.engagement,
+    created_at: lead.createdAt,
+    completed_at: lead.createdAt,
+  } as unknown as OnlineBilanRow;
+}
 
 export function CrmLeadDetailPage() {
   const { leadId } = useParams<{ leadId: string }>();
@@ -385,7 +428,7 @@ export function CrmLeadDetailPage() {
       relanceDueAt: lead.relanceDueAt,
       rdv: etatRdv,
       abandonAvantCreneau: Boolean(lead.abandonAvantCreneau),
-      peutConvertir: lead.table === "online_bilans",
+      peutConvertir: lead.table === "online_bilans" || lead.table === "prospect_leads",
       dormant: Boolean(lead.dormant),
     },
     maintenant,
@@ -745,6 +788,20 @@ export function CrmLeadDetailPage() {
                 </button>
               </div>
             )
+          ) : lead.table === "prospect_leads" ? (
+            lead.convertedClientId ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/clients/${lead.convertedClientId}`)}
+                style={primaryBtn}
+              >
+                ✅ Fiche créée — Ouvrir la fiche →
+              </button>
+            ) : (
+              <button type="button" onClick={() => setShowConvert(true)} style={primaryBtn}>
+                ✅ Valider → créer la fiche client
+              </button>
+            )
           ) : null}
           {/* « Caler un RDV » a quitté cette colonne. Il vivait ici EN PLUS du
               rendez-vous affiché plus haut : sur la fiche de quelqu'un qui
@@ -983,6 +1040,48 @@ export function CrmLeadDetailPage() {
             recordTouch();
             void refetch();
             pushToast({ tone: "success", title: "Mail envoyé", message: `Parti à ${a}. Sa réponse arrivera dans ta boîte.` });
+          }}
+        />
+      ) : null}
+
+      {/* ⚠️ 25/08 — LE GESTE PRINCIPAL DU CRM NE MARCHAIT QUE POUR LES BILANS.
+          Pour tout ce qui vient du site du club, de colis, de /welcome ou de
+          /rejoindre — 30 leads sur 33 — « Valider → fiche client » n'existait
+          pas : « Converti » n'était qu'une étiquette du menu déroulant, qui ne
+          créait rien. Mesure : 1 seul prospect_lead marqué converti, et AUCUNE
+          fiche cliente ne lui correspondait ; pour 137 clients en base, le CRM
+          n'en connaissait que 3.
+
+          On réutilise la MÊME modale (une feature, un seul endroit) en lui
+          présentant le lead sous la forme qu'elle sait lire — exactement le
+          motif déjà employé par l'agenda pour les RDV du club. */}
+      {showConvert && !bilanRow && lead.table === "prospect_leads" ? (
+        <LeadConvertModal
+          bilan={bilanDepuisProspectLead(lead)}
+          onClose={() => setShowConvert(false)}
+          onConverted={async (clientId) => {
+            const sb = await getSupabaseClient();
+            if (sb) {
+              // Le LIEN, pas seulement le mot : c'est lui qui permet enfin
+              // d'aller du lead a sa fiche cliente, et de compter de vraies
+              // conversions au lieu d'etiquettes.
+              const { error } = await sb
+                .from("prospect_leads")
+                .update({
+                  status: "converted",
+                  converted_to_client_id: clientId,
+                  converted_at: new Date().toISOString(),
+                  relance_due_at: null,
+                  relance_done_at: new Date().toISOString(),
+                })
+                .eq("id", lead.id)
+                .select("id");
+              if (error) {
+                pushToast({ tone: "warning", title: "Fiche creee, lead non range", message: error.message });
+              }
+            }
+            await refetch();
+            pushToast({ tone: "success", title: "Lead converti", message: "Fiche client creee" });
           }}
         />
       ) : null}

@@ -121,6 +121,13 @@ export interface CrmLead {
   /** Pas encore entré dans l'entonnoir : il attend un geste dans la boîte
    *  d'arrivée (CRM Board V2, lot 2). Un lead accepté ne revient jamais ici. */
   enAttente?: boolean;
+  /** La fiche cliente née de ce lead — le LIEN, pas le mot (25/08).
+   *
+   *  `online_bilans` l'avait ; `prospect_leads` ne l'avait PAS, si bien que
+   *  « converti » n'y était qu'une étiquette : impossible d'aller du lead à sa
+   *  cliente. Mesure du 25/08 : pour 137 clients en base, le CRM n'en
+   *  connaissait que 3. Colonne ajoutée par `20261215240000`. */
+  convertedClientId?: string | null;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
   /** Le lead a cliqué « Fais-toi rappeler » sur sa page Résultat Bilan
@@ -716,6 +723,7 @@ export function useCrmLeads() {
           contactIsPhone: looksLikePhone(row.phone as string | null),
           phone,
           email,
+          convertedClientId: (row.converted_to_client_id as string | null) ?? null,
           city: (row.city as string | null) ?? null,
           source: "bilan-online",
           status: mapBilanStatus(
@@ -856,6 +864,7 @@ export function useCrmLeads() {
           contactIsPhone: looksLikePhone(row.phone as string | null),
           phone: (row.phone as string | null) ?? null,
           email: (row.email as string | null) ?? null,
+          convertedClientId: (row.converted_to_client_id as string | null) ?? null,
           city: (row.city as string | null) ?? null,
           source,
           status: mapSimpleStatus(row.status as string | null),
