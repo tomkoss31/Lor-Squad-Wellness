@@ -51,11 +51,24 @@ const TEINTE_ETAPE: Record<CrmStatus, string> = {
 
 type Etat = "saine" | "retard" | "sansSuite" | "pourrit" | "rdvPasse";
 
-/** L'anomalie l'emporte sur l'étape. Ordre = priorité. */
-function etatDe(lead: CrmLead): Etat {
+/** L'anomalie l'emporte sur l'étape. Ordre = priorité.
+ *
+ *  ⚠️ 25/08 — la carte contredisait sa propre colonne. Quelqu'un qui a un
+ *  créneau CONFIRMÉ demain, mais aucune date de relance, tombait dans
+ *  « sansSuite » : la carte affichait « ⚠ aucune suite prévue » et une bordure
+ *  d'alerte, en REMPLAÇANT le seul renseignement utile — la date du rendez-vous.
+ *  Pire encore au-delà de 5 jours d'ancienneté : « 🕸️ N j sans mouvement »,
+ *  sur quelqu'un qu'on reçoit le lendemain.
+ *
+ *  Un créneau à venir EST la suite prévue. Il passe donc avant toute anomalie
+ *  de suivi — même ordre que `etapeDuLead` et `zoneDe`.
+ */
+export function etatDe(lead: CrmLead): Etat {
   const vivant = lead.status !== "converted" && lead.status !== "lost" && !lead.dormant;
   const rdvPasse = !!lead.rdv && lead.rdv.passe === true;
   if (rdvPasse) return "rdvPasse";
+  // Rien ne cloche chez quelqu'un qui a rendez-vous.
+  if (lead.rdv && !lead.rdv.passe) return "saine";
   if (vivant && stagnationDays(lead) >= 5) return "pourrit";
   if (vivant && !lead.relanceDueAt) return "sansSuite";
   if (lead.relanceDue) return "retard";
