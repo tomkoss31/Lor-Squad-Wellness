@@ -1308,16 +1308,46 @@ export function useCrmLeads() {
     // Best-effort et silencieux : l'attribution du lead, elle, a réussi, et
     // c'est ce que le coach vient de demander. Sans email, rien à rapprocher —
     // on ne devine pas sur le prénom seul, « Manon » ne désigne personne.
-    const mail = (lead.contact ?? "").trim();
-    if (userId && mail.includes("@")) {
-      const formes = [...new Set([mail, mail.toLowerCase()])];
-      for (const forme of formes) {
-        const { error: eRdv } = await sb
+    //
+    // ⚠️ 25/08 — CE BLOC NE S'EXÉCUTAIT JAMAIS. Il lisait `lead.contact`, qui
+    // vaut `phone || email` : dès que le lead a un téléphone — c'est-à-dire
+    // presque toujours — `contact` est un NUMÉRO, `includes("@")` est faux, et
+    // tout le bloc était sauté en silence. Mesuré ce matin : Ghislaine,
+    // Amandine et Cassandre étaient attribuées à Thomas dans le CRM, et leurs
+    // trois rendez-vous étaient restés chez Mélanie.
+    //
+    // Le comble : l'AFFICHAGE, lui, rapproche avec `row.email ?? row.phone`
+    // (l'adresse d'abord) et fonctionne. Les deux chaînes utilisaient des
+    // priorités OPPOSÉES pour la même question.
+    //
+    // On passe donc par la clé unique du CRM (`cleDoublon.ts`), qui traite
+    // l'adresse ET le numéro, et on rapproche en JS plutôt qu'en SQL : la
+    // normalisation d'un numéro (0/+33/espaces) ne se fait pas dans un `.eq()`.
+    if (userId) {
+      const clesLead = clesDoublon(lead);
+      if (clesLead.length > 0) {
+        const { data: resas } = await sb
           .from("rdv_bookings")
-          .update({ coach_user_id: userId })
-          .eq("contact", forme)
-          .neq("status", "canceled");
-        if (eRdv) console.warn(`[crm] RDV non redirige vers son coach : ${eRdv.message}`);
+          .select("id, contact")
+          .neq("status", "canceled")
+          .limit(500);
+        const aBouger = ((resas ?? []) as Array<{ id: string; contact: string | null }>)
+          .filter((r) => {
+            const cles = clesDoublon({ contact: r.contact });
+            return cles.some((k) => clesLead.includes(k));
+          })
+          .map((r) => r.id);
+        if (aBouger.length > 0) {
+          const { error: eRdv } = await sb
+            .from("rdv_bookings")
+            .update({ coach_user_id: userId })
+            .in("id", aBouger);
+          // Best-effort et bruyant dans la console : l'attribution du lead a
+          // réussi, c'est ce que le coach vient de demander. Mais un échec ici
+          // ne doit plus être totalement muet — c'est ce silence qui a laissé
+          // le bug vivre.
+          if (eRdv) console.warn(`[crm] RDV non redirigé vers son coach : ${eRdv.message}`);
+        }
       }
     }
 

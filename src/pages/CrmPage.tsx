@@ -53,6 +53,7 @@ import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { grouperParPersonne, normaliserTelephone } from "../features/crm/cleDoublon";
 import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
+import { etapeDuLead } from "../features/crm/etapeLead";
 import { CrmFileDuJour } from "../components/crm/CrmFileDuJour";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
@@ -426,8 +427,20 @@ export function CrmPage() {
   const colonneDe = (l: CrmLead): string => {
     if (l.status === "converted") return "converted";
     if (l.status === "lost" || l.dormant) return "hors";
+    // ⚠️ 25/08 — le board ne regardait QUE `status`, jamais le rendez-vous.
+    // Ghislaine, Amandine et Cassandre avaient un créneau CONFIRMÉ le jour même
+    // et s'affichaient en « Nouveau », parce que leur colonne `status` en base
+    // était restée à `new`. Pendant ce temps la vue Liste, elle, les rangeait
+    // bien dans « Rendez-vous calés » — `zones.ts` regarde le RDV. Le même lead
+    // était donc à deux endroits différents selon la vue qu'on ouvrait.
+    //
+    // On reprend EXACTEMENT la règle de `zoneDe` (features/crm/zones.ts), y
+    // compris son ordre : un rendez-vous passe AVANT l'échéance de relance —
+    // quelqu'un qui a un créneau vendredi n'est pas « à relancer » parce qu'une
+    // date de rappel traîne, il faut le recevoir.
+    if (etapeDuLead(l) === "qualified") return "qualified";
     if (l.relanceDue) return "relance";
-    return l.status; // new | contacted | qualified
+    return l.status; // new | contacted
   };
   const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
 
