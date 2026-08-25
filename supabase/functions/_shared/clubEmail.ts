@@ -219,6 +219,13 @@ export interface ClubMessageParams {
   message: string;
   signature: { nom: string; role?: string };
   cta?: { label: string; url: string };
+  /** Le titre du mail. Par défaut « Bonjour {prénom} ! ».
+   *
+   *  Ajouté le 25/08 pour les mails de l'entonnoir : sur un lapin, « Bonjour
+   *  Marie ! » sonne à côté — le titre doit dire de quoi il s'agit
+   *  (« On ne t'a pas vue hier »). Optionnel, donc les appelants existants ne
+   *  changent pas d'un pouce. */
+  titre?: string;
 }
 
 export function clubMessageHtml(p: ClubMessageParams): string {
@@ -254,7 +261,7 @@ export function clubMessageHtml(p: ClubMessageParams): string {
         </td></tr>
 
         <tr><td style="padding:22px 30px 0 30px;">
-          <h1 style="margin:0 0 14px 0;font-size:23px;line-height:1.2;color:#17201C;font-weight:800;">Bonjour ${esc(p.prenom)} !</h1>
+          <h1 style="margin:0 0 14px 0;font-size:23px;line-height:1.2;color:#17201C;font-weight:800;">${esc(p.titre ?? `Bonjour ${p.prenom} !`)}</h1>
           ${paragraphes}
         </td></tr>
 

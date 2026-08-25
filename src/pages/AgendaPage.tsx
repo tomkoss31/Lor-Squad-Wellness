@@ -338,6 +338,25 @@ export function AgendaPage() {
    * réglé » sur un rangement à moitié fait.
    */
   /**
+   * Le mail d'après-rendez-vous (25/08). Best-effort et SILENCIEUX en cas
+   * d'échec : le geste du coach — marquer venue ou pas venue — a déjà réussi
+   * et compte pour lui. Un mail qui ne part pas ne doit pas faire croire que
+   * le rangement a raté.
+   */
+  const envoyerMailApresRdv = useCallback(
+    async (bookingId: string, type: "demarre" | "pas_venue") => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        await sb.functions.invoke("club-mail-apres-rdv", { body: { booking_id: bookingId, type } });
+      } catch (e) {
+        console.warn("[agenda] mail après RDV non envoyé :", e);
+      }
+    },
+    [],
+  );
+
+  /**
    * « Elle n'est pas venue » (25/08).
    *
    * Deux écritures, et les deux comptent : le rendez-vous sort de l'agenda en
@@ -378,9 +397,14 @@ export function AgendaPage() {
         }
       }
     }
+    void envoyerMailApresRdv(bookingId, "pas_venue");
     void rechargerDiscoveries();
-    pushToast({ tone: "success", title: "Noté", message: `${session.firstName} revient dans ta file demain.` });
-  }, [qualif, pushToast, rechargerDiscoveries]);
+    pushToast({
+      tone: "success",
+      title: "Noté",
+      message: `${session.firstName} revient dans ta file demain, et reçoit un mot pour reprendre un créneau.`,
+    });
+  }, [qualif, pushToast, rechargerDiscoveries, envoyerMailApresRdv]);
 
   const finaliserQualification = useCallback(async () => {
     if (!qualif) return;
@@ -402,8 +426,10 @@ export function AgendaPage() {
           : "Sa fiche est créée et son rendez-vous est rangé. Aucun lead correspondant à retirer du CRM.",
       });
     }
+    // Elle a démarré : on le lui dit. Court, chaleureux, et on s'arrête là.
+    void envoyerMailApresRdv(bookingId, "demarre");
     void rechargerDiscoveries();
-  }, [qualif, pushToast, rechargerDiscoveries]);
+  }, [qualif, pushToast, rechargerDiscoveries, envoyerMailApresRdv]);
   /** Replanification du RDV client ouvert. */
   const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
