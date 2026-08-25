@@ -33,6 +33,8 @@ export interface LeadEtape {
   rdv?: { passe: boolean } | null;
   /** Ce qu'a répondu la feuille « Et alors ? ». */
   derniereReponse?: string | null;
+  /** Le filet a sonné : la date de retour est passée et rien n'a bougé. */
+  relanceDue?: boolean;
   dormant?: boolean;
 }
 
@@ -43,9 +45,14 @@ export function etapeDuLead(l: LeadEtape): EtapeLead {
 
   // Un rendez-vous À VENIR est un fait. Un rendez-vous PASSÉ, lui, ne dit plus
   // où on en est — la personne est venue, ou pas : c'est le suivi qui tranche.
-  if (l.status === "qualified" || (l.rdv && !l.rdv.passe) || l.derniereReponse === "rdv") {
-    return "qualified";
-  }
+  // Un créneau réservé et À VENIR : c'est un fait, il prime.
+  if (l.status === "qualified" || (l.rdv && !l.rdv.passe)) return "qualified";
+
+  // « RDV calé » dit à la main (sans créneau réservé dans l'app) ne vaut que
+  // TANT QUE LE FILET N'A PAS SONNÉ. Sinon la mention collait à la fiche à vie :
+  // 9 personnes restaient « rien à faire » alors que leur rendez-vous était
+  // passé depuis des jours et qu'aucune fiche cliente n'avait été créée.
+  if (l.derniereReponse === "rdv" && !l.relanceDue) return "qualified";
 
   return l.status === "contacted" ? "contacted" : "new";
 }

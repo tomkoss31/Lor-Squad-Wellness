@@ -13,6 +13,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
 import { marquerRdvQualifie } from "../services/sb/qualifierRdv";
+import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import type { OnlineBilanRow } from "../hooks/useOnlineBilans";
 
 // Chargées à la demande : ce sont deux gros formulaires qui ne servent qu'au
@@ -40,6 +41,8 @@ import { useBbcMode } from "../features/bbc/useBbcMode";
 import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
 import { voitCeRdvDuClub } from "../features/agenda/visibiliteRdvClub";
 import { useActiveClubId } from "../hooks/useActiveClubId";
+import { clesDoublon } from "../features/crm/cleDoublon";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { nomAffiche } from "../features/crm/nomPropre";
 import {
   toCalendarEvents,
@@ -281,8 +284,49 @@ export function AgendaPage() {
     bookingId: string;
     date: string;
     session: DiscoverySession;
+    /** À QUI appartient ce rendez-vous — pas à qui clique dessus (25/08).
+     *  Depuis que le propriétaire du club voit tout ce qui s'y passe, qualifier
+     *  un rendez-vous mené par quelqu'un d'autre créait la fiche cliente sous
+     *  SON nom : l'attribution du RDV, rejouée à la création. */
+    proprietaire: string | null;
     etape: "choix" | "membre" | "classique";
   } | null>(null);
+
+  /** Ce que la fiche du lead porte et que la réservation ignore : le TÉLÉPHONE
+   *  (obligatoire au tunnel club), la ville, le nom. Sans ça la fiche cliente
+   *  naissait sans numéro — donc sans WhatsApp ni SMS le jour même où la
+   *  personne démarre. */
+  const [complementLead, setComplementLead] = useState<{
+    phone: string | null; city: string | null; lastName: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!qualif) { setComplementLead(null); return; }
+    let vivant = true;
+    void (async () => {
+      const cles = clesDoublon({ contact: qualif.session.contact });
+      if (cles.length === 0) return;
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data } = await sb
+        .from("prospect_leads")
+        .select("phone, email, city, last_name")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      const trouve = ((data ?? []) as Array<Record<string, unknown>>).find((l) =>
+        clesDoublon({ phone: l.phone as string | null, email: l.email as string | null })
+          .some((k) => cles.includes(k)),
+      );
+      if (vivant && trouve) {
+        setComplementLead({
+          phone: (trouve.phone as string | null) ?? null,
+          city: (trouve.city as string | null) ?? null,
+          lastName: (trouve.last_name as string | null) ?? null,
+        });
+      }
+    })();
+    return () => { vivant = false; };
+  }, [qualif]);
 
   /**
    * La fiche vient d'être créée. On range derrière : le rendez-vous quitte
@@ -293,6 +337,51 @@ export function AgendaPage() {
    * création a échoué. On le DIT en revanche, plutôt que d'afficher « c'est
    * réglé » sur un rangement à moitié fait.
    */
+  /**
+   * « Elle n'est pas venue » (25/08).
+   *
+   * Deux écritures, et les deux comptent : le rendez-vous sort de l'agenda en
+   * `no_show` (pas `canceled` — un lapin n'est pas une annulation, et le
+   * confondre fausserait le taux de présence du club), ET la personne revient
+   * dans la file du CRM. Sans la seconde, elle resterait « RDV calé » à vie :
+   * c'est le placard qu'on vient de vider.
+   */
+  const enregistrerLapin = useCallback(async () => {
+    if (!qualif) return;
+    const { bookingId, session } = qualif;
+    setQualif(null);
+    const { error } = await setRdvBookingStatus(bookingId, "no_show");
+    if (error) {
+      pushToast({
+        tone: "error",
+        title: "Rendez-vous non rangé",
+        message: error instanceof Error ? error.message : "Droits insuffisants ?",
+      });
+      return;
+    }
+    // La ramener dans la file : un filet à demain, et l'échéance ROUVERTE
+    // (sinon elle ne sonne jamais — sémantique de `crm-relance-notifier`).
+    const cles = clesDoublon({ contact: session.contact });
+    if (cles.length > 0) {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        const { data } = await sb.from("prospect_leads").select("id, phone, email").limit(500);
+        const ids = ((data ?? []) as Array<{ id: string; phone: string | null; email: string | null }>)
+          .filter((l) => clesDoublon(l).some((k) => cles.includes(k)))
+          .map((l) => l.id);
+        if (ids.length > 0) {
+          const demain = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          await sb
+            .from("prospect_leads")
+            .update({ relance_due_at: demain, relance_done_at: null, derniere_reponse: "pas_de_reponse" })
+            .in("id", ids);
+        }
+      }
+    }
+    void rechargerDiscoveries();
+    pushToast({ tone: "success", title: "Noté", message: `${session.firstName} revient dans ta file demain.` });
+  }, [qualif, pushToast, rechargerDiscoveries]);
+
   const finaliserQualification = useCallback(async () => {
     if (!qualif) return;
     const { bookingId, session } = qualif;
@@ -723,7 +812,7 @@ export function AgendaPage() {
       // « elle est venue, et alors ? » ; avant, ce `return` faisait qu'un tap
       // ne produisait rien du tout.
       if (entry.kind === "discovery") {
-        setQualif({ bookingId: entry.id, date: entry.date, session: entry.discovery, etape: "choix" });
+        setQualif({ bookingId: entry.id, date: entry.date, session: entry.discovery, proprietaire: entry.distributorId, etape: "choix" });
         return;
       }
       // Suivi client : feuille d'action sur place (2026-07-27). C'était la
@@ -1785,6 +1874,7 @@ export function AgendaPage() {
                           bookingId: entry.id,
                           date: entry.date,
                           session: entry.discovery,
+                          proprietaire: entry.distributorId,
                           etape: "choix",
                         })
                       }
@@ -1859,6 +1949,8 @@ export function AgendaPage() {
           onMembre={() => setQualif((q) => (q ? { ...q, etape: "membre" } : q))}
           onClassique={() => setQualif((q) => (q ? { ...q, etape: "classique" } : q))}
           onPasEncore={() => setQualif(null)}
+          rdvPasse={new Date(qualif.date).getTime() < Date.now()}
+          onPasVenue={() => void enregistrerLapin()}
           onFermer={() => setQualif(null)}
         />
       ) : null}
@@ -1883,7 +1975,14 @@ export function AgendaPage() {
       {qualif && qualif.etape === "classique" ? (
         <Suspense fallback={null}>
           <LeadConvertModal
-            bilan={bilanSyntheseDepuisRdv(qualif.bookingId, qualif.session, currentUser?.id ?? null, qualif.date)}
+            bilan={bilanSyntheseDepuisRdv(
+              qualif.bookingId,
+              qualif.session,
+              // Le coach du RENDEZ-VOUS, pas celui qui clique.
+              qualif.proprietaire ?? currentUser?.id ?? null,
+              qualif.date,
+              complementLead,
+            )}
             onClose={() => setQualif(null)}
             onConverted={() => void finaliserQualification()}
           />
@@ -2127,6 +2226,8 @@ function bilanSyntheseDepuisRdv(
   session: DiscoverySession,
   coachUserId: string | null,
   date: string,
+  /** Ce que porte la fiche du lead et que la réservation ignore (25/08). */
+  complement?: { phone: string | null; city: string | null; lastName: string | null } | null,
 ): OnlineBilanRow {
   return {
     id: bookingId,
@@ -2135,8 +2236,12 @@ function bilanSyntheseDepuisRdv(
     first_name: session.firstName,
     age: null,
     height_cm: null,
-    city: null,
-    phone: null,
+    city: complement?.city ?? null,
+    // ⚠️ 25/08 — c'était `null` en dur : la fiche cliente naissait sans numéro,
+    // donc sans WhatsApp ni SMS, le jour même où la personne démarre. Le
+    // tunnel club EXIGE pourtant un téléphone — il était juste sur la fiche du
+    // lead, pas sur la réservation.
+    phone: complement?.phone ?? null,
     email: session.contact,
     objectives: session.objectif ? [session.objectif] : [],
     weight_loss_target_kg: null,
@@ -2144,7 +2249,9 @@ function bilanSyntheseDepuisRdv(
     motivation_score: null,
     // Le nom de famille passe par le payload : c'est là que la modale va le
     // chercher pour pré-remplir son champ obligatoire.
-    payload: session.lastName ? { last_name: session.lastName } : {},
+    payload: (session.lastName ?? complement?.lastName)
+      ? { last_name: session.lastName ?? complement?.lastName }
+      : {},
     lead_status: "new",
     converted_to_client_id: null,
     converted_at: null,

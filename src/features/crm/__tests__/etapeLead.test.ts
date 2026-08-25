@@ -24,6 +24,23 @@ describe("etapeDuLead", () => {
     expect(etapeDuLead({ status: "contacted" })).toBe("contacted");
   });
 
+  // ── LE PLACARD (mesure du 25/08 : 9 personnes injoignables) ────────────
+  it("« RDV cale » dit a la main vaut TANT QUE le filet n'a pas sonne", () => {
+    expect(etapeDuLead({ status: "contacted", derniereReponse: "rdv", relanceDue: false })).toBe("qualified");
+  });
+
+  it("quand le filet SONNE, la personne sort du placard et redevient joignable", () => {
+    // Avant le 25/08, « rdv » collait a la fiche a vie : le rendez-vous etait
+    // passe depuis des jours, aucune fiche cliente creee, et la personne
+    // restait rangee « rien a faire » pour toujours.
+    expect(etapeDuLead({ status: "contacted", derniereReponse: "rdv", relanceDue: true })).toBe("contacted");
+  });
+
+  it("mais un vrai creneau A VENIR prime sur le filet", () => {
+    // Elle a un rendez-vous demain : peu importe qu'une echeance traine.
+    expect(etapeDuLead({ status: "new", derniereReponse: "rdv", relanceDue: true, rdv: { passe: false } })).toBe("qualified");
+  });
+
   it("converti et perdu priment sur tout", () => {
     expect(etapeDuLead({ status: "converted", rdv: { passe: false } })).toBe("converted");
     expect(etapeDuLead({ status: "lost", rdv: { passe: false } })).toBe("lost");
