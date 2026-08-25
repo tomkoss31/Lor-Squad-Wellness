@@ -32,7 +32,8 @@ export interface ClubDiscoveryBooking {
   contact: string | null;
   slot_start: string;
   slot_end: string;
-  status: "requested" | "confirmed" | "canceled";
+  /** « honored » = la personne est venue (ajouté le 19/08). Il manquait ici. */
+  status: "requested" | "confirmed" | "canceled" | "honored";
   people_count: number;
   partner_first_name: string | null;
   objectif: string | null;
@@ -77,8 +78,23 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
       // coach ont `club_id` à NULL. Depuis le 19/08 les réservations du club
       // ONT un coach (c'est tout l'objet du chantier), donc ce filtre les
       // aurait TOUTES fait disparaître — de l'agenda et du CRM d'un coup.
-      .neq("status", "canceled")
-      .gte("slot_start", new Date().toISOString())
+      // ⚠️ 25/08 — ON GARDE LES CRÉNEAUX PASSÉS TANT QU'ILS NE SONT PAS SOLDÉS.
+      //
+      // Il y avait ici `.gte("slot_start", maintenant)` : dès qu'un rendez-vous
+      // était passé, sa carte disparaissait — et avec elle le SEUL endroit où
+      // dire « elle est venue » (`QualifierRdvSheet` ne s'ouvre que depuis ces
+      // cartes). Le coach recevait la personne le matin et n'avait plus rien à
+      // taper le soir.
+      //
+      // Preuve par les chiffres, mesurée en base le 25/08 : ZÉRO ligne
+      // `honored` depuis la création de cet état le 19/08, et SIX rendez-vous
+      // passés jamais soldés — dont claire (4 j), Mylène (7 j), Fatiha (11 j).
+      //
+      // On remonte donc aussi les créneaux des 14 derniers jours qui attendent
+      // encore une réponse. Borné à 14 jours pour ne pas transformer la liste
+      // en cimetière : au-delà, le rendez-vous ne se solde plus, il s'oublie.
+      .in("status", ["requested", "confirmed"])
+      .gte("slot_start", new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
       .order("slot_start", { ascending: true })
       .limit(100);
     if (error) {

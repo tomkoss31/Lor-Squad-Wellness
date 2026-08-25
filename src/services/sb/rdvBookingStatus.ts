@@ -16,7 +16,10 @@
 
 import { getSupabaseClient } from "../supabaseClient";
 
-export type RdvBookingStatus = "requested" | "confirmed" | "canceled";
+/** ⚠️ « honored » (la personne est venue) existe en base depuis le 19/08
+ *  (`20261215170000_rdv_bookings_honore.sql`) mais manquait ici : le type
+ *  mentait sur ce que la colonne accepte. */
+export type RdvBookingStatus = "requested" | "confirmed" | "canceled" | "honored";
 
 /**
  * Change le statut d'une demande de RDV, et prévient la personne quand le
