@@ -2,8 +2,18 @@
 // BbcScanner — scan caméra du QR membre → valide une visite (chantier BBC).
 // Le membre montre son QR (= son token PWA) ; le coach scanne ; on appelle le
 // RPC bbc_scan_visit (résout token → client, vérifie l'appartenance, +1 visite).
-// Décodage via l'API native BarcodeDetector (Chrome/Android/Edge). Fallback :
-// message clair si le navigateur ne la supporte pas (ex. iOS Safari).
+// DÉCODAGE — deux chemins, et c'est voulu :
+//   1. `BarcodeDetector`, l'API native, quand elle existe : c'est le décodage
+//      du système, le plus rapide et le moins gourmand en batterie.
+//   2. Sinon `jsQR`, en JavaScript pur, chargé À LA DEMANDE.
+//
+// ⚠️ NE PAS revenir à « BarcodeDetector seul » (22/08). C'était le cas jusqu'à
+// aujourd'hui, et ça affichait « Scan non supporté ici » sur la tablette du
+// club. Cette API n'existe QUE sur Chrome Android / ChromeOS / macOS — elle est
+// absente d'iPad et d'iPhone (Safari), de Firefox sur toutes les plateformes,
+// et même de Chrome sur Windows. Autrement dit, le scan ne marchait que sur un
+// téléphone Android. Le message conseillait « utilise le device du club » alors
+// que c'est précisément le device du club qui ne marchait pas.
 // =============================================================================
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -18,15 +28,33 @@ interface DetectedCode {
   rawValue: string;
 }
 
+/** Le choix avant/arrière, retenu sur CET appareil. */
+const CLE_CAMERA = "bbc-scan-camera";
+
 export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Toile de décodage du repli jsQR : on y peint l'image de la caméra pour en
+  // lire les pixels. Créée une seule fois, jamais montée dans le DOM.
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const busyRef = useRef(false);
   const lastRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
+  // Avant / arrière — et le choix RESTE (22/08, demande Thomas). La tablette du
+  // comptoir lit sur la caméra AVANT : le membre présente son QR face à
+  // l'écran, comme au Shakes Bar. Un téléphone, lui, scanne par l'arrière.
+  // Mémoriser par appareil évite de reposer la question à chaque visite — au
+  // comptoir on scanne des dizaines de fois par matinée.
+  const [cameraFace, setCameraFace] = useState<"environment" | "user">(() => {
+    try {
+      return window.localStorage.getItem(CLE_CAMERA) === "user" ? "user" : "environment";
+    } catch {
+      return "environment";
+    }
+  });
   // La prop onScanned change à chaque render du parent : on la garde dans une
   // ref pour que l'effet caméra ne se relance pas (flash + perte de mise au point).
   const onScannedRef = useRef(onScanned);
@@ -79,15 +107,44 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
   useEffect(() => {
     let cancelled = false;
     const DetectorCtor = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (s: CanvasImageSource) => Promise<DetectedCode[]> } }).BarcodeDetector;
-    if (!DetectorCtor) {
-      setSupported(false);
-      return;
-    }
-    const detector = new DetectorCtor({ formats: ["qr_code"] });
+    const detector = DetectorCtor ? new DetectorCtor({ formats: ["qr_code"] }) : null;
 
     void (async () => {
+      // Le repli n'est téléchargé que si l'API native manque : sur le device
+      // qui l'a, jsQR ne coûte pas un octet.
+      let lireQr: typeof import("jsqr").default | null = null;
+      if (!detector) {
+        try {
+          lireQr = (await import("jsqr")).default;
+        } catch {
+          setSupported(false);
+          return;
+        }
+        if (cancelled) return;
+      }
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        // Trois essais, du plus précis au plus permissif. `exact` est le seul
+        // qui BASCULE vraiment sur un appareil à deux caméras — `facingMode`
+        // seul n'est qu'une préférence, souvent ignorée. Mais `exact` échoue
+        // net s'il n'y a qu'une caméra : d'où les deux replis, sans quoi on
+        // casserait le scan sur les appareils qui marchaient déjà.
+        const essais: MediaStreamConstraints[] = [
+          { video: { facingMode: { exact: cameraFace } } },
+          { video: { facingMode: cameraFace } },
+          { video: true },
+        ];
+        let stream: MediaStream | null = null;
+        let dernierEchec: unknown = null;
+        for (const contrainte of essais) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(contrainte);
+            break;
+          } catch (e) {
+            dernierEchec = e;
+          }
+        }
+        if (!stream) throw dernierEchec ?? new Error("camera_indisponible");
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -97,19 +154,63 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => undefined);
         }
+        // Le repli décode en JavaScript : inutile de le faire 60 fois par
+        // seconde, ça chaufferait la tablette pour rien. Toutes les 200 ms
+        // suffit largement pour un QR qu'on présente à la main.
+        let dernierDecodage = 0;
         const loop = async () => {
           if (cancelled || !videoRef.current) return;
+          const video = videoRef.current;
           try {
-            const codes = await detector.detect(videoRef.current);
-            if (codes.length && codes[0].rawValue) void handleValue(codes[0].rawValue);
+            if (detector) {
+              const codes = await detector.detect(video);
+              if (codes.length && codes[0].rawValue) void handleValue(codes[0].rawValue);
+            } else if (lireQr && video.readyState >= 2 && video.videoWidth > 0) {
+              const maintenant = performance.now();
+              if (maintenant - dernierDecodage >= 200) {
+                dernierDecodage = maintenant;
+                // On décode une image RÉDUITE (largeur 480 max) : un QR reste
+                // parfaitement lisible à cette taille, et on divise d'autant le
+                // travail par image.
+                const echelle = Math.min(1, 480 / video.videoWidth);
+                const l = Math.round(video.videoWidth * echelle);
+                const h = Math.round(video.videoHeight * echelle);
+                if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
+                const toile = canvasRef.current;
+                if (toile.width !== l || toile.height !== h) {
+                  toile.width = l;
+                  toile.height = h;
+                }
+                // `willReadFrequently` : sans lui, les navigateurs gardent la
+                // toile sur le GPU et chaque lecture de pixels devient lente.
+                const ctx = toile.getContext("2d", { willReadFrequently: true });
+                if (ctx) {
+                  ctx.drawImage(video, 0, 0, l, h);
+                  const image = ctx.getImageData(0, 0, l, h);
+                  const code = lireQr(image.data, l, h, { inversionAttempts: "dontInvert" });
+                  if (code?.data) void handleValue(code.data);
+                }
+              }
+            }
           } catch {
             /* frame non prête — ignore */
           }
           rafRef.current = requestAnimationFrame(() => void loop());
         };
         void loop();
-      } catch {
-        setError("Impossible d'accéder à la caméra. Autorise l'accès dans ton navigateur.");
+      } catch (e) {
+        // Dire LEQUEL des trois cas : au comptoir, « autorise l'accès » ne sert
+        // à rien si le refus vient d'une autre application qui tient la caméra.
+        const nom = (e as { name?: string } | null)?.name ?? "";
+        setError(
+          nom === "NotAllowedError"
+            ? "L'accès à la caméra est refusé. Autorise-le dans les réglages du navigateur, puis rouvre le scan."
+            : nom === "NotFoundError" || nom === "OverconstrainedError"
+              ? "Aucune caméra détectée sur cet appareil."
+              : nom === "NotReadableError"
+                ? "La caméra est déjà utilisée par une autre application. Ferme-la et réessaie."
+                : "Impossible d'accéder à la caméra. Autorise l'accès dans ton navigateur.",
+        );
       }
     })();
 
@@ -118,28 +219,86 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [handleValue]);
+    // `cameraFace` dans les dépendances : changer de caméra relance proprement
+    // le flux (le nettoyage ci-dessus coupe l'ancien avant d'ouvrir le nouveau).
+  }, [handleValue, cameraFace]);
+
+  function basculerCamera() {
+    setCameraFace((precedente) => {
+      const suivante = precedente === "environment" ? "user" : "environment";
+      try {
+        window.localStorage.setItem(CLE_CAMERA, suivante);
+      } catch {
+        // navigation privée : on bascule quand même, on ne retient juste pas
+      }
+      return suivante;
+    });
+    setError(null);
+  }
 
   return (
     <div className="bbc-mode" style={{ position: "fixed", inset: 0, zIndex: 1400, background: "#000", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "calc(14px + env(safe-area-inset-top)) 18px 12px", color: "#FBF7F0" }}>
-        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, color: "var(--ls-bbc-lime)" }}>Scanner un membre</div>
-        <button type="button" onClick={onClose} aria-label="Fermer" style={{ width: 38, height: 38, borderRadius: 12, border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)", color: "#FBF7F0", cursor: "pointer", fontSize: 17 }}>✕</button>
+        <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20, color: "var(--ls-bbc-lime)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>Scanner un membre</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+          {/* Bascule avant/arrière. Toujours visible : `enumerateDevices` ne
+              nomme les caméras qu'APRÈS une autorisation accordée, donc tester
+              leur nombre avant d'afficher le bouton le ferait disparaître
+              précisément là où il sert. Sur un appareil à une seule caméra, la
+              bascule retombe dessus sans rien casser (cf. les trois essais de
+              contraintes). Le libellé dit vers QUOI on bascule. */}
+          <button
+            type="button"
+            onClick={basculerCamera}
+            aria-label={cameraFace === "environment" ? "Basculer sur la caméra avant" : "Basculer sur la caméra arrière"}
+            style={{
+              minHeight: 38, padding: "0 14px", borderRadius: 12,
+              border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)",
+              color: "#FBF7F0", cursor: "pointer", fontSize: 13.5, fontWeight: 600,
+              display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap",
+            }}
+          >
+            <span aria-hidden="true">🔄</span>
+            {/* Libellé court : « Caméra avant » faisait 146 px et cassait le
+                titre en trois lignes à 375 px. L'icône porte déjà le sens de
+                bascule, `aria-label` porte la phrase entière. */}
+            {cameraFace === "environment" ? "Avant" : "Arrière"}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Fermer" style={{ width: 38, height: 38, borderRadius: 12, border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)", color: "#FBF7F0", cursor: "pointer", fontSize: 17, flex: "none" }}>✕</button>
+        </div>
       </div>
 
       <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         {supported && !error ? (
           <>
-            <video ref={videoRef} playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {/* Miroir en caméra avant, comme une glace — sans ça, viser le QR
+                est contre-intuitif : on bouge à droite, l'image part à gauche.
+                ⚠️ Purement visuel : le décodage lit l'image BRUTE du flux
+                (`drawImage` ignore les transformations CSS), donc le QR n'est
+                jamais lu à l'envers. */}
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                transform: cameraFace === "user" ? "scaleX(-1)" : undefined,
+              }}
+            />
             {/* viseur */}
             <div style={{ position: "absolute", width: 230, height: 230, borderRadius: 24, border: "3px solid var(--ls-bbc-lime)", boxShadow: "0 0 0 9999px rgba(0,0,0,.45)" }} />
           </>
         ) : (
           <div style={{ padding: "40px 24px", textAlign: "center", color: "#FBF7F0", maxWidth: 340 }}>
             <div style={{ fontSize: 30, marginBottom: 12 }} aria-hidden="true">📷</div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{error ? "Caméra indisponible" : "Scan non supporté ici"}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{error ? "Caméra indisponible" : "Scan impossible ici"}</div>
             <div style={{ fontSize: 13, color: "rgba(251,247,240,.7)", lineHeight: 1.5 }}>
-              {error ?? "Ton navigateur ne gère pas le scan QR (souvent iOS Safari). Utilise le device du club (Android/Chrome), ou pointe le membre manuellement depuis l'onglet Le club."}
+              {/* Le conseil d'avant (« utilise le device du club ») envoyait
+                  vers l'appareil qui, justement, ne marchait pas. Depuis le
+                  repli jsQR, ce message ne s'affiche plus que si la caméra est
+                  refusée ou si le décodeur n'a pas pu être chargé — dans les
+                  deux cas, ce qu'il faut donner c'est la sortie de secours. */}
+              {error ?? "Le décodeur n'a pas pu se charger. Vérifie ta connexion, ou valide la visite à la main depuis l'onglet « Le club »."}
             </div>
           </div>
         )}
