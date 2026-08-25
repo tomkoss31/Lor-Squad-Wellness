@@ -1323,6 +1323,23 @@ export function useCrmLeads() {
     // On passe donc par la clé unique du CRM (`cleDoublon.ts`), qui traite
     // l'adresse ET le numéro, et on rapproche en JS plutôt qu'en SQL : la
     // normalisation d'un numéro (0/+33/espaces) ne se fait pas dans un `.eq()`.
+    //
+    // ⚠️ On ne déplace QUE les rendez-vous À VENIR. Sans ce filtre, quelqu'un
+    // venu en juin puis revenu en août verrait ses DEUX créneaux changer de
+    // coach — dont un passé, qui appartient à l'historique de quelqu'un
+    // d'autre. La fiche, elle, n'en montre qu'un seul (cf. `meilleur()` plus
+    // haut : un rendez-vous à venir bat toujours un passé).
+    //
+    // ⚠️ Le `.select("id")` n'est PAS décoratif : un UPDATE refusé par la RLS
+    // ne renvoie pas d'erreur, il renvoie ZÉRO LIGNE. Sans lui, le
+    // `console.warn` ne se déclenche jamais et l'écran annonce un succès qui
+    // n'a pas eu lieu. Piège déjà payé le 16/08 (cf. `rdvBookingStatus.ts` et
+    // `qualifierRdv.ts`, qui font tous les deux la même chose).
+    //
+    // Cas non couvert, et assumé : remettre un lead « à personne »
+    // (`userId === null`). On laisse alors le rendez-vous où il est — le
+    // déposséder le ferait disparaître de tous les agendas sauf ceux des
+    // admins, ce qui est pire que l'incohérence.
     if (userId) {
       const clesLead = clesDoublon(lead);
       if (clesLead.length > 0) {
@@ -1330,6 +1347,8 @@ export function useCrmLeads() {
           .from("rdv_bookings")
           .select("id, contact")
           .neq("status", "canceled")
+          .gte("slot_start", new Date().toISOString())
+          .order("slot_start", { ascending: true })
           .limit(500);
         const aBouger = ((resas ?? []) as Array<{ id: string; contact: string | null }>)
           .filter((r) => {
@@ -1338,15 +1357,22 @@ export function useCrmLeads() {
           })
           .map((r) => r.id);
         if (aBouger.length > 0) {
-          const { error: eRdv } = await sb
+          const { data: bouges, error: eRdv } = await sb
             .from("rdv_bookings")
             .update({ coach_user_id: userId })
-            .in("id", aBouger);
-          // Best-effort et bruyant dans la console : l'attribution du lead a
-          // réussi, c'est ce que le coach vient de demander. Mais un échec ici
-          // ne doit plus être totalement muet — c'est ce silence qui a laissé
-          // le bug vivre.
-          if (eRdv) console.warn(`[crm] RDV non redirigé vers son coach : ${eRdv.message}`);
+            .in("id", aBouger)
+            .select("id");
+          const nbBouges = Array.isArray(bouges) ? bouges.length : 0;
+          if (eRdv) {
+            console.warn(`[crm] RDV non redirigé vers son coach : ${eRdv.message}`);
+          } else if (nbBouges < aBouger.length) {
+            // Zéro erreur mais moins de lignes que prévu = refus RLS. C'est le
+            // cas d'un RDV du tunnel /rdv/<prénom> appartenant à un autre coach :
+            // aucune policy ne le rend modifiable, même à un admin.
+            console.warn(
+              `[crm] ${aBouger.length - nbBouges} rendez-vous n'ont PAS suivi (droits insuffisants) — ils restent chez leur coach actuel.`,
+            );
+          }
         }
       }
     }
