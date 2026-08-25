@@ -58,7 +58,12 @@ serve(async (req: Request) => {
         .lt("created_at", cutoff24h),
       sb
         .from("prospect_leads")
-        .select("referrer_user_id, assigned_to_user_id")
+        // ⚠️ 25/08 — on ramène aussi de quoi ÉCARTER ceux qui ont un rendez-vous.
+        // `status` ment : « RDV calé » n'existe pas pour un prospect_lead
+        // (`statutPour` le traduit en « contacted »), donc quelqu'un qui a un
+        // créneau confirmé est stocké exactement comme quelqu'un qu'on n'a pas
+        // rappelé depuis trois jours.
+        .select("referrer_user_id, assigned_to_user_id, email, phone, derniere_reponse")
         .eq("status", "contacted")
         .lt("contacted_at", cutoff3d),
       sb
@@ -83,7 +88,50 @@ serve(async (req: Request) => {
     for (const r of bilansNew.data ?? []) bump((r.assigned_to_user_id ?? r.coach_user_id) as string | null);
     for (const r of bilansRelance.data ?? []) bump((r.assigned_to_user_id ?? r.coach_user_id) as string | null);
     for (const r of prospects.data ?? []) bump((r.assigned_to_user_id ?? r.referrer_user_id) as string | null);
-    for (const r of prospectsContacted.data ?? []) bump((r.assigned_to_user_id ?? r.referrer_user_id) as string | null);
+    // ── On ne réveille personne pour quelqu'un qu'on doit juste RECEVOIR ──
+    //
+    // Mesure du 25/08 : le push annonçait « 14 leads attendent » à Thomas, dont
+    // 4 avec un rendez-vous À VENIR et 6 qui avaient répondu « RDV calé ». Le
+    // vrai chiffre était 8. Comme ces gens n'ont aucune raison de sortir de ce
+    // décompte, il ne pouvait jamais retomber à zéro — un compteur qui ne se
+    // vide pas cesse d'être lu.
+    //
+    // ⚠️ Normalisation dupliquée et assumée (une edge fn ne peut pas importer
+    // le front) : jumelle de `src/features/crm/cleDoublon.ts`. Toute modif de
+    // l'une est à reporter sur l'autre.
+    const telNorm = (v: string | null): string | null => {
+      if (!v || v.includes("@")) return null;
+      const c = v.replace(/\D/g, "").replace(/^0+/, "").replace(/^33/, "");
+      return c.length >= 9 ? c.slice(-9) : null;
+    };
+    const mailNorm = (v: string | null): string | null => {
+      const c = (v ?? "").trim().toLowerCase();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) ? c : null;
+    };
+
+    const { data: resasAVenir } = await sb
+      .from("rdv_bookings")
+      .select("contact")
+      .neq("status", "canceled")
+      .gte("slot_start", nowIso)
+      .limit(1000);
+    const clesRdv = new Set<string>();
+    for (const r of resasAVenir ?? []) {
+      const c = (r as { contact: string | null }).contact;
+      const t = telNorm(c); if (t) clesRdv.add(`t:${t}`);
+      const m = mailNorm(c); if (m) clesRdv.add(`e:${m}`);
+    }
+
+    for (const r of prospectsContacted.data ?? []) {
+      const row = r as Record<string, unknown>;
+      // Il a dit lui-même « RDV calé » dans la feuille « Et alors ? ».
+      if (row.derniere_reponse === "rdv") continue;
+      // Ou il a un créneau réservé qui n'est pas encore passé.
+      const t = telNorm((row.phone as string | null) ?? null);
+      const m = mailNorm((row.email as string | null) ?? null);
+      if ((t && clesRdv.has(`t:${t}`)) || (m && clesRdv.has(`e:${m}`))) continue;
+      bump((row.assigned_to_user_id ?? row.referrer_user_id) as string | null);
+    }
     for (const r of referrals.data ?? []) bump(r.coach_id as string | null);
 
     const today = nowIso.slice(0, 10);
