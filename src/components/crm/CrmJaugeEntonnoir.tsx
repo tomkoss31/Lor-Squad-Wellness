@@ -35,6 +35,7 @@
 // =============================================================================
 
 import type { CrmLead, CrmStatus } from "../../hooks/useCrmLeads";
+import { etapeDuLead } from "../../features/crm/etapeLead";
 
 type CleSegment = CrmStatus | "relance";
 
@@ -76,15 +77,21 @@ const CSS = `
 
 export function CrmJaugeEntonnoir({ leads, filtre, onFiltrer }: Props) {
   // Un perdu n'a pas d'étape connue, un endormi est mis de côté exprès.
-  const enJeu = leads.filter((l) => !l.dormant && l.status !== "lost");
+  // ⚠️ 25/08 — on comptait `l.status`, une colonne écrite à la main qui reste
+  // à « new » même quand la personne a réservé. Résultat à l'écran : « RDV
+  // calé : 1 » alors que SIX personnes avaient un créneau confirmé à venir.
+  // `etapeDuLead` est la MÊME règle que la vue Liste et le board.
+  const enJeu = leads.filter((l) => !l.dormant && etapeDuLead(l) !== "lost");
   const atteint = (rangMin: number) =>
-    enJeu.filter((l) => { const r = RANG[l.status]; return r !== undefined && r >= rangMin; }).length;
+    enJeu.filter((l) => { const r = RANG[etapeDuLead(l)]; return r !== undefined && r >= rangMin; }).length;
 
   const compteur = (cle: CleSegment) =>
-    cle === "relance" ? enJeu.filter((l) => l.relanceDue).length : enJeu.filter((l) => l.status === cle).length;
+    cle === "relance"
+      ? enJeu.filter((l) => l.relanceDue && etapeDuLead(l) !== "qualified").length
+      : enJeu.filter((l) => etapeDuLead(l) === cle).length;
 
   const total = enJeu.length;
-  const perdus = leads.filter((l) => !l.dormant && l.status === "lost").length;
+  const perdus = leads.filter((l) => !l.dormant && etapeDuLead(l) === "lost").length;
 
   /** Le taux affiché ENTRE deux segments, quand il veut dire quelque chose. */
   function tauxApres(cle: CleSegment): { valeur: number; base: number; passes: number; vers: string } | null {
