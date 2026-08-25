@@ -38,6 +38,8 @@ import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { useBbcMode } from "../features/bbc/useBbcMode";
 import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
+import { voitCeRdvDuClub } from "../features/agenda/visibiliteRdvClub";
+import { useActiveClubId } from "../hooks/useActiveClubId";
 import { nomAffiche } from "../features/crm/nomPropre";
 import {
   toCalendarEvents,
@@ -190,7 +192,18 @@ export function AgendaPage() {
   // dupliquée. Sans club (coach non-BBC), le hook renvoie simplement une liste
   // vide et rien ne change à l'écran.
   const { activeClub } = useBbcMode(currentUser?.id, currentUser?.role === "admin");
-  const { bookings: clubDiscoveries, reload: rechargerDiscoveries } = useClubDiscoveryBookings(activeClub?.id ?? null);
+  // ⚠️ 25/08 — on chargeait sur `activeClub?.id`, qui n'existe QUE pour le
+  // PROPRIÉTAIRE du club. Mélanie y est rattachée sans le posséder : son agenda
+  // ne recevait donc AUCUN rendez-vous du club — pas même les 5 qu'elle doit
+  // animer elle-même. Le correctif du 19/08 (remplir `coach_user_id`) n'y
+  // pouvait rien : la liste était vide avant même d'être filtrée.
+  //
+  // `useActiveClubId` existait DÉJÀ pour exactement ce cas — son en-tête le dit
+  // mot pour mot (« un admin en mode classique qui n'est pas propriétaire »).
+  // Le CRM s'en sert depuis toujours ; l'agenda, lui, avait pris l'autre. Une
+  // feature, un seul endroit : on prend celui qui existe.
+  const clubIdAgenda = useActiveClubId();
+  const { bookings: clubDiscoveries, reload: rechargerDiscoveries } = useClubDiscoveryBookings(clubIdAgenda);
 
   // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
   // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
@@ -459,7 +472,39 @@ export function AgendaPage() {
         if (effectiveDateFilter === "today" && !isSameDay(d, todayStart)) continue;
         if (effectiveDateFilter === "week" && (d < todayStart || d > weekEnd)) continue;
         const aQui = b.coach_user_id ?? clubOwnerId;
-        if (!isInScope(aQui)) continue;
+
+        // ⚠️ 25/08 — LE BALANCIER. Avant le 19/08, ces RDV étaient rattachés au
+        // PROPRIÉTAIRE du club : Mélanie confirmait un rendez-vous et ne le
+        // retrouvait jamais. On les a donc rattachés à leur coache… ce qui les
+        // a fait disparaître de l'agenda de Thomas, qui possède le club :
+        // filtre « Moi » + coache = Mélanie ⇒ `isInScope` écartait TOUT.
+        // Constaté à l'écran le 25/08 : 5 RDV du jour, aucun dans l'agenda.
+        //
+        // Corriger en re-basculant vers le propriétaire recasserait le cas de
+        // Mélanie. Un rendez-vous du club concerne DEUX personnes : la coache
+        // qui le mène, et le propriétaire dont on occupe le créneau et la
+        // salle. Les deux doivent le voir — personne ne perd.
+        //
+        // L'exception ne vaut QUE pour « Moi » : si on demande explicitement
+        // l'agenda d'un autre distributeur, on respecte ce choix.
+        // (`activeClub` n'existe que pour le propriétaire — useBbcMode filtre
+        // sur `owner_user_id`.)
+        // La règle vit dans `visibiliteRdvClub.ts`, avec ses 9 tests — dont
+        // les DEUX cassages réels, un dans chaque sens.
+        if (!voitCeRdvDuClub({
+          aQui,
+          moi: currentUser?.id ?? null,
+          filtre: agendaFilter,
+          proprietaireDuClub: !!activeClub,
+          estAdmin: currentUser?.role === "admin",
+        })) continue;
+
+        // Si quelqu'un d'autre le mène, on le NOMME : sans ça on remplace une
+        // absence par une confusion (« ce RDV est-il à moi ? »).
+        const coachName =
+          aQui && aQui !== currentUser?.id
+            ? (users.find((u) => u.id === aQui)?.name ?? null)
+            : null;
         entries.push({
           kind: "discovery",
           id: b.id,
@@ -473,13 +518,14 @@ export function AgendaPage() {
             partnerFirstName: b.partner_first_name,
             objectif: b.objectif,
             status: b.status,
+            coachName,
           },
         });
       }
     }
 
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter, users]);
 
   const grouped = useMemo(() => {
     const now = new Date();
