@@ -39,6 +39,13 @@ export interface DiscoverySession {
   partnerFirstName: string | null;
   objectif: string | null;
   status: string;
+  /** La coache qui MENE ce rendez-vous, quand ce n'est pas moi (25/08).
+   *
+   *  Le proprietaire du club voit desormais tout ce qui se passe chez lui —
+   *  il faut donc qu'il distingue d'un coup d'oeil ce qu'il anime lui-meme de
+   *  ce qu'anime quelqu'un d'autre, sinon on remplace une absence par une
+   *  confusion. `null` = c'est moi. */
+  coachName?: string | null;
 }
 
 /**
@@ -325,7 +332,9 @@ export function toCalendarEvent(
     return {
       ...base,
       title: d.peopleCount === 2 ? `${nomAffiche(d.firstName, d.lastName)} + 1` : nomAffiche(d.firstName, d.lastName),
-      subtitle: ["RDV découverte", objectif].filter(Boolean).join(" · "),
+      subtitle: ["RDV découverte", objectif, d.coachName ? `avec ${d.coachName}` : null]
+        .filter(Boolean)
+        .join(" · "),
     };
   }
 
