@@ -206,11 +206,26 @@ export function useOnlineBilans(): UseOnlineBilansResult {
       // La conversion clôt aussi toute relance en attente.
       relance_done_at: now,
     };
-    const { error: err } = await sb
+    // ⚠️ 25/08 — `.eq("id", id)` SEUL écrasait une conversion déjà faite.
+    // Deux onglets, deux coachs, ou simplement un cache d'écran périmé, et la
+    // personne était créée DEUX FOIS : la seconde conversion remplaçait
+    // l'identifiant, et la première fiche cliente devenait orpheline — plus
+    // aucun lead ne pointait vers elle.
+    //
+    // `.is(..., null)` refuse d'écraser, et `.select()` dit combien de lignes
+    // ont VRAIMENT bougé : un UPDATE qui ne touche rien revient sans erreur.
+    const { data: touche, error: err } = await sb
       .from("online_bilans")
       .update(patch)
-      .eq("id", id);
+      .eq("id", id)
+      .is("converted_to_client_id", null)
+      .select("id");
     if (err) throw err;
+    if (!Array.isArray(touche) || touche.length === 0) {
+      throw new Error(
+        "Ce bilan est déjà relié à une fiche cliente. Rafraîchis la page pour voir laquelle.",
+      );
+    }
     majBilans((prev) =>
       prev.map((b) =>
         b.id === id ? { ...b, ...(patch as Partial<OnlineBilanRow>) } : b,
