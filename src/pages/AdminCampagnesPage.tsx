@@ -31,7 +31,7 @@ interface CampaignRow {
   created_at: string;
 }
 
-type Filter = "all" | "draft" | "scheduled" | "sent";
+type Filter = "all" | "draft" | "scheduled" | "sent" | "archived";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   draft: "Brouillon",
@@ -82,16 +82,18 @@ export function AdminCampagnesPage() {
 
   const counts = useMemo(
     () => ({
-      all: rows.length,
+      // « Toutes » n'affiche plus les archivées : elles ont leur propre onglet.
+      all: rows.filter((r) => r.status !== "archived").length,
       draft: rows.filter((r) => r.status === "draft").length,
       scheduled: rows.filter((r) => r.status === "scheduled").length,
       sent: rows.filter((r) => r.status === "sent").length,
+      archived: rows.filter((r) => r.status === "archived").length,
     }),
     [rows],
   );
 
   const filtered = useMemo(() => {
-    if (filter === "all") return rows;
+    if (filter === "all") return rows.filter((r) => r.status !== "archived");
     return rows.filter((r) => r.status === filter);
   }, [rows, filter]);
 
@@ -127,7 +129,23 @@ export function AdminCampagnesPage() {
       return;
     }
     setRows((prev) => prev.filter((r) => r.id !== id));
-    push({ tone: "success", title: "Brouillon supprimé", message: "" });
+    push({ tone: "success", title: "Campagne supprimée", message: "" });
+  }
+
+  // Archivage : range une campagne envoyée hors de la liste principale SANS
+  // perdre ses stats (statut `archived`, réversible). Seul chemin pour nettoyer
+  // l'écran sans détruire l'historique. Désarchiver la remet en `sent`.
+  async function setArchived(id: string, archived: boolean) {
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    const next: CampaignStatus = archived ? "archived" : "sent";
+    const { error } = await sb.from("campaigns").update({ status: next }).eq("id", id);
+    if (error) {
+      push({ tone: "error", title: archived ? "Archivage impossible" : "Restauration impossible", message: error.message });
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: next } : r)));
+    push({ tone: "success", title: archived ? "Campagne archivée" : "Campagne restaurée", message: "" });
   }
 
   const FILTERS: { key: Filter; label: string; n: number }[] = [
@@ -135,6 +153,7 @@ export function AdminCampagnesPage() {
     { key: "draft", label: "Brouillons", n: counts.draft },
     { key: "scheduled", label: "Programmées", n: counts.scheduled },
     { key: "sent", label: "Envoyées", n: counts.sent },
+    { key: "archived", label: "Archivées", n: counts.archived },
   ];
 
   return (
@@ -167,6 +186,12 @@ export function AdminCampagnesPage() {
         .cmp-empty { text-align:center; color:var(--ls-text-muted); font-size:14px; padding:40px 16px; border:1px dashed var(--ls-border2); border-radius:16px; }
         .cmp-del { background:none; border:0; font-size:14px; cursor:pointer; opacity:.5; padding:2px 4px; border-radius:6px; line-height:1; }
         .cmp-del:hover { opacity:1; background:var(--ls-coral-bg); }
+        .cmp-arch { background:none; border:0; font-size:14px; cursor:pointer; opacity:.5; padding:2px 4px; border-radius:6px; line-height:1; }
+        .cmp-arch:hover { opacity:1; background:var(--ls-surface2); }
+        .cmp-archrow { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--ls-border); }
+        .cmp-archrow button { flex:1; font:600 12px 'DM Sans'; padding:9px; border-radius:10px; cursor:pointer; border:1px solid var(--ls-border2); background:var(--ls-surface2); color:var(--ls-text); }
+        .cmp-archrow button.danger { border-color:var(--ls-coral-bg); color:var(--ls-coral); background:transparent; }
+        .cmp-archrow button.danger:hover { background:var(--ls-coral-bg); }
       `}</style>
 
       <h1 className="cmp-h1">Campagnes</h1>
@@ -235,6 +260,20 @@ export function AdminCampagnesPage() {
                     🗑
                   </button>
                 )}
+                {r.status === "sent" && (
+                  <button
+                    type="button"
+                    className="cmp-arch"
+                    aria-label="Archiver la campagne"
+                    title="Archiver"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void setArchived(r.id, true);
+                    }}
+                  >
+                    🗄
+                  </button>
+                )}
               </div>
               <h3>{r.title || "Sans titre"}</h3>
               <p className="cmp-meta">
@@ -255,6 +294,29 @@ export function AdminCampagnesPage() {
                     <div className="n o">{r.clicked_count}</div>
                     <div className="l">Cliqués {pct(r.clicked_count, r.delivered_count)}</div>
                   </div>
+                </div>
+              )}
+              {r.status === "archived" && (
+                <div className="cmp-archrow">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void setArchived(r.id, false);
+                    }}
+                  >
+                    ↩ Désarchiver
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void deleteCampaign(r.id, r.title);
+                    }}
+                  >
+                    🗑 Supprimer définitivement
+                  </button>
                 </div>
               )}
             </div>
