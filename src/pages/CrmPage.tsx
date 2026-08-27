@@ -458,9 +458,16 @@ export function CrmPage() {
   };
   // Combien de rendez-vous attendent : sert au libellé du bloc replié, pour
   // qu'un repli ne cache jamais un chiffre.
+  //
+  // ⚠️ 27/08 — c'était `l.rdv && !l.rdv.passe`, qui donnait 0 alors que Thomas
+  // avait 6 RDV calés : `l.rdv` n'est pas peuplé pour les résas du tunnel club.
+  // Un bloc replié qui annonce « 0 à venir » au-dessus de RDV bien réels, c'est
+  // pire que pas de chiffre. On prend EXACTEMENT le compte « RDV calé » de la
+  // jauge juste au-dessus (`etapeDuLead === "qualified"` sur les leads
+  // dédoublonnés) : le bloc et la jauge affichent alors le même nombre.
   const rdvAVenirCount = useMemo(
-    () => leads.filter((l) => l.rdv && !l.rdv.passe).length,
-    [leads],
+    () => leadsEntonnoir.filter((l) => !l.dormant && etapeDuLead(l) === "qualified").length,
+    [leadsEntonnoir],
   );
   const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
 
