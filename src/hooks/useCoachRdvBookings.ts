@@ -61,6 +61,19 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
       .from("rdv_bookings")
       .select("id, first_name, last_name, contact, mode, slot_start, slot_end, status, confirm_email_sent_at, reminder_email_sent_at, booking_type, metadata")
       .eq("coach_user_id", coachUserId)
+      // ⚠️ 26/08 — LES RÉSERVATIONS DU CLUB ONT LEUR PROPRE BLOC.
+      //
+      // Depuis le 19/08, un rendez-vous du club porte un `coach_user_id` (sans
+      // ça personne ne le voyait dans son agenda). Effet de bord invisible :
+      // il remontait AUSSI ici, et la même personne s'affichait deux fois à
+      // l'écran — une fois dans « RDV demandés », une fois dans
+      // « RDV découverte du club », chacune avec ses propres boutons.
+      //
+      // Mesuré le 26/08 sur la capture de Thomas : 9 rendez-vous sur 10
+      // s'affichaient en double. Ce bloc ne montre donc plus que ce qui vient
+      // des pages du coach (`club_id` à NULL) ; le club a le sien, juste en
+      // dessous, avec les gestes qui lui sont propres (déplacer, confirmer).
+      .is("club_id", null)
       .neq("status", "canceled")
       .gte("slot_start", new Date().toISOString())
       .order("slot_start", { ascending: true })

@@ -186,7 +186,21 @@ export function CrmPage() {
   // Ouvert à l'arrivée (Mélanie, 19/08 : « pas caché quand on ouvre la page »).
   // Il l'était pour garder le premier écran court — mais c'est d'ici que part
   // l'email d'acceptation, et un bloc replié se traduit par des RDV oubliés.
-  const [rdvOuverts, setRdvOuverts] = useState(true);
+  //
+  // ⚠️ 26/08 — OUVERT SUR GRAND ÉCRAN, REPLIÉ SUR TÉLÉPHONE.
+  // Thomas, capture à l'appui : « trop d'info sur mobile, c'est affreux ».
+  // Il devait faire défiler NEUF grosses cartes de rendez-vous avant
+  // d'atteindre ses leads — son vrai travail. Sur un écran de 390 px, ces
+  // blocs ne cadrent pas le premier écran : ils le confisquent.
+  // Le souhait de Mélanie (« pas caché quand on ouvre la page ») reste servi
+  // sur ordinateur, là où la place existe.
+  const [rdvOuverts, setRdvOuverts] = useState(() => {
+    try {
+      return window.innerWidth >= 768;
+    } catch {
+      return true;
+    }
+  });
   // Le tri vit désormais chez le parent : il a rejoint le panneau, et sa
   // valeur sert aussi à savoir si un réglage est actif.
   const [sortKey, setSortKey] = useState<SortKey>("echeance");
@@ -442,6 +456,12 @@ export function CrmPage() {
     if (l.relanceDue) return "relance";
     return l.status; // new | contacted
   };
+  // Combien de rendez-vous attendent : sert au libellé du bloc replié, pour
+  // qu'un repli ne cache jamais un chiffre.
+  const rdvAVenirCount = useMemo(
+    () => leads.filter((l) => l.rdv && !l.rdv.passe).length,
+    [leads],
+  );
   const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
 
   // La file du board mise à plat, dans l'ordre des colonnes — support des
@@ -652,7 +672,10 @@ export function CrmPage() {
           aria-expanded={rdvOuverts}
           style={replisBtn}
         >
-          🗓️ Rendez-vous demandés {rdvOuverts ? "▲" : "▼"}
+          {/* Le compte s'affiche quand c'est replié : un bloc fermé qui ne dit
+              pas ce qu'il contient, c'est un rendez-vous oublié. */}
+          🗓️ Rendez-vous {rdvOuverts ? "" : `· ${rdvAVenirCount} à venir `}
+          {rdvOuverts ? "▲" : "▼"}
         </button>
         {rdvOuverts ? (
           <div style={{ marginTop: 10 }}>
@@ -993,6 +1016,28 @@ export function CrmPage() {
       </div>
       ) : null}
 
+      {/* ⚠️ 26/08 — SUR TÉLÉPHONE, LA FILE GAGNE TOUJOURS.
+          La file du jour ne s'affichait QUE dans le mode Liste. Thomas ayant
+          choisi « Pipeline » sur son ordinateur — et ce choix étant désormais
+          mémorisé — son téléphone héritait du board : cinq colonnes côte à côte,
+          coupées au bord de l'écran. Capture à l'appui, c'était illisible.
+          Un board en colonnes est une idée d'ordinateur ; sur un écran de 390 px
+          il n'y a de place que pour UNE colonne qui se lit de haut en bas.
+          Le mode reste respecté sur grand écran. */}
+      <style>{".crm-file-mobile{display:none}@media(max-width:767.98px){.crm-vues-desktop{display:none}.crm-file-mobile{display:block}}"}</style>
+      {!loading && view === "active" ? (
+        <div className="crm-file-mobile">
+          <CrmFileDuJour
+            leads={regroupes}
+            maintenant={new Date()}
+            onOuvrir={(l) => setPanneauLead(l)}
+            onWhatsApp={ouvrirWhatsApp}
+            onAlors={(l) => setQualifApresDrop(l)}
+          />
+        </div>
+      ) : null}
+
+      <div className={!loading && view === "active" ? "crm-vues-desktop" : undefined}>
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
       ) : viewMode === "list" ? (
@@ -1034,23 +1079,7 @@ export function CrmPage() {
               }
             />
           );
-          if (view !== "active") return vueListe;
-          return (
-            <>
-              <style>{".crm-file-mobile{display:none}@media(max-width:767.98px){.crm-liste-desktop{display:none}.crm-file-mobile{display:block}}"}</style>
-              <div className="crm-liste-desktop">{vueListe}</div>
-              <div className="crm-file-mobile">
-                <CrmFileDuJour
-                  leads={regroupes}
-                  maintenant={new Date()}
-                  onOuvrir={(l) => setPanneauLead(l)}
-                  onWhatsApp={ouvrirWhatsApp}
-                  onAlors={(l) => setQualifApresDrop(l)}
-                  onEntonnoir={() => setViewMode("pipeline")}
-                />
-              </div>
-            </>
-          );
+          return vueListe;
         })()
       ) : regroupes.length === 0 ? (
         <div style={emptyState}>
@@ -1123,6 +1152,7 @@ export function CrmPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Lead → RDV agenda (wagon 2 chantier 3) : prospect pré-rempli, et le
           lead passe automatiquement en Qualifié/Contacté à la création. */}
