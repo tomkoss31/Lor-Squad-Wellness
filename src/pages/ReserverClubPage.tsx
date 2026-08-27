@@ -12,7 +12,7 @@
 // scratchpad/maquette/reserver.html. Copy + photos = WIP (itérations à venir).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -114,6 +114,59 @@ export function ReserverClubPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
+  /**
+   * CHOISIR UN CRÉNEAU AMÈNE À CE QUI RESTE À FAIRE.
+   *
+   * Mesuré le 27/08 sur trois semaines : 21 personnes atteignent cet écran,
+   * 11 confirment. La moitié se perd ici, et le parcours explique pourquoi —
+   * on choisit son heure, et RIEN ne se passe : le bouton de validation est
+   * plus bas, grisé, et la phrase qui dit ce qui manque est encore en dessous
+   * de lui. Sur téléphone, le créneau choisi et le bouton ne tiennent jamais
+   * dans le même écran. Ce n'est pas un renoncement, c'est quelqu'un qui croit
+   * que ça a bugué.
+   *
+   * Donc : le clic sur l'heure fait descendre jusqu'à la question, et une
+   * barre reste collée en bas avec le geste suivant. La question, elle, ne
+   * devient pas facultative — c'est le seul moyen de savoir quel flyer a
+   * fonctionné, le QR imprimé étant le même sur tous les papiers.
+   */
+  const provRef = useRef<HTMLElement | null>(null);
+
+  const actionRef = useRef<HTMLDivElement | null>(null);
+  const [actionAEcran, setActionAEcran] = useState(false);
+
+  /** Le vrai bouton est-il sous les yeux ? Mesuré, jamais supposé. */
+  const majActionAEcran = useCallback(() => {
+    const el = actionRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setActionAEcran(r.top < window.innerHeight - 40 && r.bottom > 0);
+  }, []);
+
+
+  const versLaQuestion = useCallback(() => {
+    const cible = provRef.current;
+    if (!cible) return;
+    const depart = window.scrollY;
+    // Doux quand le navigateur veut bien, sec quand il refuse.
+    //
+    // `behavior:"smooth"` est IGNORÉ dans plusieurs cas réels : onglet qui ne
+    // compose pas, « réduire les animations » activé dans les réglages du
+    // téléphone, certaines webviews. Vérifié le 27/08 : dans un onglet non
+    // ramené au premier plan, `smooth` laisse la page à 0 et `auto` descend
+    // bien. Sans ce repli, le geste ne marche que là où on le teste.
+    cible.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => {
+      if (Math.abs(window.scrollY - depart) < 8) {
+        cible.scrollIntoView({ behavior: "auto", block: "center" });
+      }
+      // On remesure nous-mêmes : un défilement programmé n'émet pas toujours
+      // l'événement `scroll` — sans ça, la barre resterait affichée sous le
+      // bouton jusqu'au premier geste de la personne.
+      majActionAEcran();
+    }, 320);
+  }, [majActionAEcran]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,11 +182,70 @@ export function ReserverClubPage() {
   //     après — cf. « L'ORDRE COMPTE » dans `confirmBooking`.
   const [leadId, setLeadId] = useState<string | null>(null);
 
+  /**
+   * LA FICHE SE CRÉE PENDANT QU'ELLE CHOISIT SON CRÉNEAU, PLUS AVANT.
+   *
+   * « Choisir mon créneau » attendait la réponse de `submit-prospect-lead`
+   * avant d'afficher quoi que ce soit. L'edge à froid met plusieurs secondes :
+   * mesuré jusqu'à 7 s le 27/08, pendant lesquelles le bouton affiche « … » et
+   * l'écran ne bouge pas. Sur un téléphone en 4G, c'est un abandon.
+   *
+   * Le commentaire d'origine disait « non bloquant » : c'était vrai de
+   * l'ÉCHEC (un lead raté n'empêchait pas la réservation), faux du TEMPS.
+   * L'appel part maintenant en arrière-plan et l'écran des créneaux s'affiche
+   * tout de suite ; la promesse est gardée parce que deux choses en ont besoin
+   * plus tard — la provenance et « aucun horaire ne me va ». Toutes deux
+   * arrivent au moins plusieurs secondes après, largement le temps.
+   *
+   * Le ref sert aussi de garde-fou contre le double envoi : `leadId` n'est
+   * posé qu'au retour, deux validations rapides créaient donc deux fiches.
+   */
+  const leadPromesse = useRef<Promise<string | null> | null>(null);
+
+  const attendreLeadId = useCallback(async (): Promise<string | null> => {
+    if (leadId) return leadId;
+    if (!leadPromesse.current) return null;
+    try {
+      return await leadPromesse.current;
+    } catch {
+      return null;
+    }
+  }, [leadId]);
+
   // La réponse à « comment tu as connu le club ? », posée sous les créneaux.
   // Le canal est obligatoire pour réserver, le prénom jamais : c'est une simple
   // case à écrire, laissée vide par tous ceux qui ne savent pas.
   const [canal, setCanal] = useState<ProvenanceCanalTunnel | null>(null);
   const [prenomSource, setPrenomSource] = useState("");
+
+  /**
+   * LA BARRE S'EFFACE QUAND LE VRAI BOUTON EST SOUS LES YEUX.
+   *
+   * Sans ça, on affiche deux fois « Confirmer ma réservation » l'un au-dessus
+   * de l'autre dès qu'on arrive en bas — et on se demande lequel compte. La
+   * barre n'est pas un second bouton : c'est le raccourci vers celui-là, tant
+   * qu'il est hors champ.
+   */
+
+  useEffect(() => {
+    if (screen !== "dispo") {
+      setActionAEcran(false);
+      return;
+    }
+    // Un calcul au défilement, et pas un IntersectionObserver : vérifié le
+    // 27/08, l'observateur ne notifie JAMAIS dans un onglet qui ne peint pas
+    // (même famille de piquûre que `behavior:"smooth"` ignoré plus haut). Or
+    // si sa notification n'arrive pas, la barre reste collée sous le vrai
+    // bouton et on affiche deux fois la même chose. `scroll` est un simple
+    // événement DOM : il part toujours.
+    majActionAEcran();
+    window.addEventListener("scroll", majActionAEcran, { passive: true });
+    window.addEventListener("resize", majActionAEcran);
+    return () => {
+      window.removeEventListener("scroll", majActionAEcran);
+      window.removeEventListener("resize", majActionAEcran);
+    };
+  }, [screen, selectedSlot, canal, majActionAEcran]);
 
   // « Aucun horaire ne me va » — cf. le bloc `rc-dispo` plus bas. Replié par
   // défaut : c'est une porte de secours, elle ne doit pas concurrencer les
@@ -191,13 +303,21 @@ export function ReserverClubPage() {
       return;
     }
     setError(null);
-    setSubmitting(true);
-    const sb = await getSupabaseClient();
-    // Crée le lead CRM (non bloquant : un échec ne doit pas empêcher la résa).
+
+    // L'écran des créneaux s'affiche MAINTENANT. La fiche CRM part en
+    // arrière-plan (cf. `leadPromesse`) : c'est une information pour le coach,
+    // elle n'a aucune raison de faire patienter la personne qui réserve.
+    setScreen("dispo");
+    void loadAvailability();
+
     // `leadId` garde la trace de la fiche déjà créée : repasser par cet écran
     // via « ← Modifier mes infos » ne doit plus en fabriquer une deuxième.
-    try {
-      if (sb && !leadId) {
+    if (leadId || leadPromesse.current) return;
+
+    leadPromesse.current = (async (): Promise<string | null> => {
+      const sb = await getSupabaseClient();
+      if (!sb) return null;
+      try {
         const { data: creation } = await sb.functions.invoke("submit-prospect-lead", {
           body: {
             first_name: prenom.trim(),
@@ -219,13 +339,14 @@ export function ReserverClubPage() {
             },
           },
         });
-        const id = (creation as { id?: string } | null)?.id;
+        const id = (creation as { id?: string } | null)?.id ?? null;
         if (id) setLeadId(id);
+        return id;
+      } catch {
+        // Lead best-effort : la réservation, elle, ne dépend pas de ça.
+        return null;
       }
-    } catch { /* lead best-effort */ }
-    setSubmitting(false);
-    setScreen("dispo");
-    void loadAvailability();
+    })();
   }
 
   /**
@@ -280,13 +401,16 @@ export function ReserverClubPage() {
    */
   async function envoyerDisponibilites() {
     const texte = dispoTexte.trim();
-    if (!leadId || !texte || dispoEtat === "envoi") return;
+    if (!texte || dispoEtat === "envoi") return;
     setDispoEtat("envoi");
     try {
+      // La fiche se crée en arrière-plan depuis le 27/08 : ici on l'attend,
+      // au lieu de renoncer parce qu'elle n'est pas encore revenue.
+      const idDuLead = await attendreLeadId();
       const sb = await getSupabaseClient();
-      if (!sb) { setDispoEtat("erreur"); return; }
+      if (!sb || !idDuLead) { setDispoEtat("erreur"); return; }
       const { data, error } = await sb.rpc("noter_disponibilites_lead", {
-        p_lead_id: leadId,
+        p_lead_id: idDuLead,
         p_texte: texte.slice(0, DISPO_MAX),
       });
       // La RPC répond « ok », « vide », « introuvable » ou « trop_tard ». Tout
@@ -346,7 +470,10 @@ export function ReserverClubPage() {
     // qui répond `{ success: true, id }`. S'il manque (edge en échec, réseau),
     // on réserve quand même et on ne pose rien : il n'y a pas de fiche sur
     // laquelle écrire, et ce n'est pas à la personne de le savoir.
-    if (leadId) void noterProvenance(leadId, canal, prenomSource);
+    void (async () => {
+      const idDuLead = await attendreLeadId();
+      if (idDuLead) await noterProvenance(idDuLead, canal, prenomSource);
+    })();
   }
 
   // « Ajouter à mon agenda » : génère un .ics téléchargeable (iOS/Android/desktop).
@@ -570,7 +697,8 @@ export function ReserverClubPage() {
 
       {/* ── ÉCRAN 2 — DISPO ── */}
       {screen === "dispo" && (
-        <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
+        <>
+        <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: selectedSlot && !actionAEcran ? "calc(clamp(48px,7vw,80px) + 96px)" : "clamp(48px,7vw,80px)" }}>
           <div style={{ maxWidth: 640 }}>
             {/* Le retour vit ICI, au-dessus du titre (19/08). Il existait déjà,
                 mais enterré dans la colonne de gauche : on le croisait en
@@ -642,7 +770,7 @@ export function ReserverClubPage() {
                       return (
                         <button type="button" key={s.iso} className="rc-slot" disabled={full} aria-pressed={on}
                           style={on ? { borderColor: "var(--orange)", boxShadow: "0 10px 24px -14px rgba(224,83,42,.55)" } : undefined}
-                          onClick={() => setSelectedSlot(s)}>
+                          onClick={() => { setSelectedSlot(s); if (!canal) versLaQuestion(); }}>
                           <span className="tm">{s.time}</span>
                           <span className="pl"><span className="rc-dot" style={{ background: full ? "#C9B0A6" : s.remaining === 1 ? "#E8A93A" : "#5F9E6E" }} />{full ? "Complet" : `${s.remaining} place${s.remaining > 1 ? "s" : ""}`}</span>
                         </button>
@@ -741,7 +869,7 @@ export function ReserverClubPage() {
               que deux, et la moitié des recommandations viennent d'ailleurs
               (une adhérente, une amie). Une case vide à écrire, le coach lit la
               réponse dans le CRM. */}
-          <section className="rc-card rc-prov" aria-labelledby="rc-prov-titre">
+          <section className="rc-card rc-prov" aria-labelledby="rc-prov-titre" ref={provRef}>
             <h2 id="rc-prov-titre" className="rc-prov-titre">Comment tu as connu le club&nbsp;?</h2>
             <p className="rc-prov-sub">Une seule question, et on te laisse tranquille. C'est ce qui nous dit ce qui marche vraiment.</p>
 
@@ -791,7 +919,7 @@ export function ReserverClubPage() {
 
             {error && <div className="rc-err" role="alert">{error}</div>}
 
-            <div className="rc-prov-valider">
+            <div className="rc-prov-valider" ref={actionRef}>
               <button
                 type="button"
                 className="rc-cta"
@@ -813,6 +941,32 @@ export function ReserverClubPage() {
             </div>
           </section>
         </main>
+
+        {/* LA BARRE QUI DIT TOUJOURS LE GESTE SUIVANT.
+            Elle apparaît dès qu'une heure est choisie et ne quitte plus
+            l'écran. Le bouton n'est JAMAIS grisé : tant que la question n'a pas
+            de réponse, il y descend au lieu de refuser. Un bouton inerte
+            n'apprend rien à personne — c'est ce qui coûtait la moitié de cet
+            écran. */}
+        {selectedSlot && !actionAEcran && (
+          <div className="rc-sticky" role="region" aria-label="Finaliser ma réservation">
+            <div className="rc-sticky-in">
+              <div className="rc-sticky-txt">
+                <span className="rc-sticky-quand">{creneauCourt}</span>
+                <span className="rc-sticky-etat">{canal ? "Tout est prêt" : "Une dernière question"}</span>
+              </div>
+              <button
+                type="button"
+                className="rc-cta rc-sticky-cta"
+                disabled={submitting}
+                onClick={() => { if (canal) void confirmBooking(); else versLaQuestion(); }}
+              >
+                {submitting ? "…" : canal ? "Confirmer ma réservation" : "Continuer"}
+              </button>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       {/* ── ÉCRAN 3 — CONFIRMATION ── */}
