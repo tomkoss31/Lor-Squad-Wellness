@@ -30,11 +30,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
-import {
-  PROVENANCE_CANAUX_TUNNEL,
-  provenanceDesigneQuelquun,
-  type ProvenanceCanalTunnel,
-} from "../types/domain";
 import { useClubHead } from "./club/useClubHead";
 import "./ReserverClubPage.css";
 
@@ -67,19 +62,6 @@ function capitalize(s: string): string { return s ? s.charAt(0).toUpperCase() + 
 
 interface Slot { iso: string; time: string; remaining: number }
 
-// ── « Comment tu as connu le club ? » ───────────────────────────────────────
-// Les VALEURS viennent de `domain.ts` — source unique partagée avec le CRM, les
-// deux bilans et le vocabulaire fermé de la RPC. Seules les PHRASES sont propres
-// à cet écran.
-const LIBELLES_CANAL: Record<ProvenanceCanalTunnel, { emoji: string; libelle: string }> = {
-  flyer: { emoji: "📬", libelle: "Un flyer dans ma boîte aux lettres" },
-  parle: { emoji: "💬", libelle: "Quelqu'un m'en a parlé" },
-  reseaux: { emoji: "📱", libelle: "Instagram ou Facebook" },
-  autre: { emoji: "✨", libelle: "Autrement" },
-};
-
-// Même borne qu'en base (`left(v_libre, 80)` dans `noter_provenance_lead`).
-const PRENOM_MAX = 80;
 // Même borne que la RPC `noter_disponibilites_lead`.
 const DISPO_MAX = 300;
 
@@ -118,10 +100,6 @@ export function ReserverClubPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // La réponse à « comment tu as connu le club ? », posée à l'écran coordonnées.
-  const [canal, setCanal] = useState<ProvenanceCanalTunnel | null>(null);
-  const [prenomSource, setPrenomSource] = useState("");
 
   // « Aucun horaire ne me va » — porte de secours sur l'écran créneaux. Comme la
   // fiche ne se crée plus en amont (mode « simple »), cette boîte capte elle-même
@@ -208,28 +186,6 @@ export function ReserverClubPage() {
   }
 
   /**
-   * Écrit la provenance sur la fiche. Best-effort, APRÈS la réservation.
-   * UNE SEULE réponse par lead (`deja_repondu`) : canal et prénom ensemble.
-   */
-  async function noterProvenance(idDuLead: string, c: ProvenanceCanalTunnel, prenomTape: string) {
-    try {
-      const sb = await getSupabaseClient();
-      if (!sb) return;
-      const { error } = await sb.rpc("noter_provenance_lead", {
-        p_lead_id: idDuLead,
-        p_canal: c,
-        p_libre: provenanceDesigneQuelquun(c) ? prenomTape.trim().slice(0, PRENOM_MAX) || null : null,
-      });
-      // Repli si la migration `20261215100000` n'est pas encore appliquée
-      // (l'ancienne fonction n'a pas `p_libre` → PGRST202) : on repose sans le
-      // prénom, le canal étant l'essentiel récupérable.
-      if (error?.code === "PGRST202") {
-        await sb.rpc("noter_provenance_lead", { p_lead_id: idDuLead, p_canal: c });
-      }
-    } catch { /* la réponse est un bonus, jamais un obstacle */ }
-  }
-
-  /**
    * « Aucun horaire ne me va » — la personne dicte ses disponibilités.
    * Se suffit à elle-même : crée la fiche avec son prénom + numéro, puis y écrit
    * les dispos (aussi rangées dans metadata, au cas où la RPC tombe). L'échec est
@@ -272,9 +228,6 @@ export function ReserverClubPage() {
       setError("Complète tes coordonnées pour réserver.");
       return;
     }
-    // Le canal est la seule chose qu'on demande en échange (« Autrement » est la
-    // sortie) : c'est ce qui dit quel flyer a marché, indevinable autrement.
-    if (!canal) { setError("Dis-nous comment tu as connu le club pour valider."); return; }
     setSubmitting(true);
     setError(null);
     const sb = await getSupabaseClient();
@@ -311,15 +264,10 @@ export function ReserverClubPage() {
     setScreen("confirm");
 
     // ── L'ORDRE COMPTE ────────────────────────────────────────────────────
-    // Le rendez-vous d'abord, la fiche + la provenance ensuite, jamais l'inverse :
-    // une information ne doit pas pouvoir faire échouer une réservation. On ne
-    // les attend pas non plus — l'écran de confirmation est déjà affiché.
-    const canalChoisi = canal;
-    const prenomProv = prenomSource;
-    void (async () => {
-      const idDuLead = await creerFiche();
-      if (idDuLead) await noterProvenance(idDuLead, canalChoisi, prenomProv);
-    })();
+    // Le rendez-vous d'abord, la fiche CRM ensuite, jamais l'inverse : une
+    // information ne doit pas pouvoir faire échouer une réservation. On ne
+    // l'attend pas non plus — l'écran de confirmation est déjà affiché.
+    void creerFiche();
   }
 
   // « Ajouter à mon agenda » : génère un .ics téléchargeable. Réduit les no-shows.
@@ -624,45 +572,13 @@ export function ReserverClubPage() {
             </div>
             <label style={{ display: "block", marginTop: 14 }}><span className="rc-lbl">Email <span style={{ fontWeight: 400, color: "var(--muted)" }}>· pour ta confirmation</span></span><input className="rc-field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="marie.dupont@email.com" /></label>
 
-            {/* « Comment tu as connu le club ? » — obligatoire pour valider.
-                Seul moyen de savoir quel flyer marche : le QR imprimé est le même
-                sur tous les papiers, on ne peut que demander. */}
-            <div style={{ marginTop: 26, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
-              <h2 id="rc-prov-titre" className="rc-prov-titre" style={{ fontSize: "clamp(18px,2vw,22px)" }}>Comment tu as connu le club&nbsp;?</h2>
-              <p className="rc-prov-sub">Une seule question, et on te laisse tranquille. C'est ce qui nous dit ce qui marche vraiment.</p>
-              <div className="rc-prov-choix" role="radiogroup" aria-labelledby="rc-prov-titre" aria-required="true">
-                {PROVENANCE_CANAUX_TUNNEL.map((cle) => {
-                  const { emoji, libelle } = LIBELLES_CANAL[cle];
-                  return (
-                    <button key={cle} type="button" role="radio" aria-checked={canal === cle} className="rc-choix"
-                      onClick={() => { setCanal(cle); setError(null); }}>
-                      <span aria-hidden="true">{emoji}</span>{libelle}
-                    </button>
-                  );
-                })}
-              </div>
-              {canal && provenanceDesigneQuelquun(canal) && (
-                <div className="rc-prov-qui">
-                  <label className="rc-lbl" htmlFor="rc-prov-prenom">Son prénom <span className="rc-prov-opt">— facultatif</span></label>
-                  <input id="rc-prov-prenom" className="rc-field" type="text" value={prenomSource} maxLength={PRENOM_MAX} autoComplete="off" placeholder="Camille" onChange={(e) => setPrenomSource(e.target.value)} />
-                  <p className="rc-prov-aide">
-                    {canal === "flyer" ? "Il est peut-être écrit sur le flyer. Laisse vide si tu ne sais pas." : "Pour qu'on puisse la remercier. Laisse vide si tu ne sais pas."}
-                  </p>
-                </div>
-              )}
-            </div>
-
             {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
 
             <button type="submit" className="rc-cta" style={{ marginTop: 24, width: "100%", minHeight: 54 }} disabled={submitting}>
               {submitting ? "…" : "Confirmer ma réservation"}
             </button>
             <p className="rc-prov-manque" aria-live="polite" style={{ textAlign: "center" }}>
-              {!coordsCompletes
-                ? "Complète tes coordonnées pour valider."
-                : !canal
-                  ? "Dis-nous comment tu as connu le club pour valider."
-                  : `Tu réserves : ${creneauCourt}.`}
+              {!coordsCompletes ? "Complète tes coordonnées pour valider." : `Tu réserves : ${creneauCourt}.`}
             </p>
           </form>
         </main>
