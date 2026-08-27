@@ -254,3 +254,39 @@
 @media (prefers-reduced-motion: reduce){
   .rc .rc-dispo-ouvrir, .rc .rc-dispo-envoyer{ transition:none }
 }
+
+/* ── LA BARRE DU GESTE SUIVANT (27/08) ───────────────────────────────────
+   Elle sort dès qu'une heure est choisie, et ne quitte plus l'écran.
+   Pourquoi : sur téléphone, le créneau sélectionné et le bouton de
+   validation ne tiennent jamais ensemble dans la fenêtre — on choisit son
+   heure, rien ne bouge, et la phrase qui explique ce qui manque est encore
+   PLUS BAS que le bouton grisé. Mesuré sur trois semaines : 21 personnes
+   arrivent à cet écran, 11 confirment.
+   safe-area : sur iPhone, la barre système mange 34 px en bas. */
+.rc .rc-sticky{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  background:rgba(250,246,239,.97); backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  box-shadow:0 -14px 34px -22px rgba(30,51,48,.55);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+.rc .rc-sticky-in{
+  max-width:980px; margin:0 auto;
+  display:flex; align-items:center; gap:14px;
+}
+.rc .rc-sticky-txt{ display:flex; flex-direction:column; min-width:0; flex:1 1 auto }
+.rc .rc-sticky-quand{
+  font-family:Poppins,sans-serif; font-weight:700; font-size:15px; color:#26302C;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rc .rc-sticky-etat{ font-size:13px; line-height:1.4; color:var(--sub) }
+.rc .rc-sticky-cta{ width:auto; flex:0 0 auto; min-height:50px; padding:13px 26px; font-size:16px }
+
+/* Sous 520 px le libellé du créneau et le bouton se disputent la largeur :
+   le bouton passe pleine largeur, sous le texte. */
+@media (max-width:520px){
+  .rc .rc-sticky-in{ flex-direction:column; align-items:stretch; gap:8px }
+  .rc .rc-sticky-txt{ flex-direction:row; justify-content:space-between; gap:10px; align-items:baseline }
+  .rc .rc-sticky-etat{ flex:0 0 auto }
+  .rc .rc-sticky-cta{ width:100% }
+}
