@@ -2,17 +2,31 @@
 // ReserverClubPage — tunnel public "RDV découverte" du Breakfast Club.
 // Route : /reserver  (et /reserver/:clubSlug, défaut "verdun").
 //
-// Écran 1 capture  → crée un lead CRM (edge submit-prospect-lead, source=site-club).
-// Écran 2 dispo    → vrais créneaux (RPC get_club_discovery_availability), puis « comment
-//                    tu as connu le club ? » juste sous les créneaux, puis réservation
-//                    (edge book-club-discovery : capacité N atomique + email + notif).
-// Écran 3 confirmation.
+// PARCOURS ALLÉGÉ (27/08, validé Thomas — maquette v4).
+// Mesuré le 27/08 : 7 personnes arrivent, 2 SEULEMENT touchent quoi que ce soit,
+// 0 atteint les créneaux. La fuite est tout en haut — la page ouvrait sur une
+// grosse carte récap + un formulaire de 7 champs. Trop, trop tôt.
 //
-// Identité crème PROPRE au club (≠ thème app). Maquette validée :
-// scratchpad/maquette/reserver.html. Copy + photos = WIP (itérations à venir).
+// Écran 1 objectif → un seul tap (⚖️/💪/⚡). Rien d'autre. C'est l'accroche qui
+//                    qualifie le lead, et via ?objectif= la pub Meta y atterrit
+//                    déjà cochée → on saute direct aux créneaux.
+// Écran 2 dispo    → vrais créneaux (RPC get_club_discovery_availability). Choisir
+//                    une heure fait AVANCER à l'écran coordonnées. « Aucun horaire
+//                    ne me va » reste ici (capte les dispos à rappeler).
+// Écran 3 coordonnées → Prénom/Nom/Tél/Ville/Email + « comment tu as connu le
+//                    club ? » (obligatoire : seule mesure du flyer qui marche).
+//                    « Simple » : la fiche CRM se crée MAINTENANT, à la
+//                    validation — pas avant. Qui lâche ici ne laisse pas de trace.
+// Écran 4 confirmation.
+//
+// La réservation (book-club-discovery) est atomique ; la fiche CRM
+// (submit-prospect-lead, idempotent depuis le 24/08) et la provenance partent
+// APRÈS, en arrière-plan : une information ne doit jamais faire échouer un RDV.
+//
+// Identité crème PROPRE au club (≠ thème app).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -25,22 +39,21 @@ import { useClubHead } from "./club/useClubHead";
 import "./ReserverClubPage.css";
 
 import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
-type Screen = "capture" | "dispo" | "confirm";
+type Screen = "objectif" | "dispo" | "coordonnees" | "confirm";
 type Objectif = "poids" | "muscle" | "energie";
 
 // En-tête sur fond crème → wordmark AVEC le cœur rouge (logo-heart), le même
-// que le menu du site. `logo-wordmark-dark` en est la version SANS cœur : elle
-// était utilisée ici, d'où le « y'a plus le petit cœur rouge en haut de la page »
-// de Thomas (2026-08-09).
+// que le menu du site.
 const LOGO = "/brand/breakfast-club/logo-heart.png";
 const HEART = "/brand/breakfast-club/logo-heart.png";
-const OBJECTIFS: { id: Objectif; label: string; icon: string }[] = [
-  { id: "poids", label: "Perdre du poids", icon: "⚖️" },
-  { id: "muscle", label: "Reprendre du muscle", icon: "💪" },
-  { id: "energie", label: "Retrouver de l'énergie", icon: "⚡" },
+const OBJECTIFS: { id: Objectif; label: string; icon: string; sub: string }[] = [
+  { id: "poids", label: "Perdre du poids", icon: "⚖️", sub: "Retrouver la forme, durablement" },
+  { id: "muscle", label: "Reprendre du muscle", icon: "💪", sub: "Me tonifier, me renforcer" },
+  { id: "energie", label: "Retrouver de l'énergie", icon: "⚡", sub: "Mieux dans mes journées" },
 ];
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 const DOW = ["DIM.", "LUN.", "MAR.", "MER.", "JEU.", "VEN.", "SAM."];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const cellKey = (y: number, m: number, d: number) => `${y}-${p2(m + 1)}-${p2(d)}`;
@@ -56,12 +69,8 @@ interface Slot { iso: string; time: string; remaining: number }
 
 // ── « Comment tu as connu le club ? » ───────────────────────────────────────
 // Les VALEURS viennent de `domain.ts` — source unique partagée avec le CRM, les
-// deux bilans et le vocabulaire fermé de la RPC (un test lit le SQL et compare).
-// Seules les PHRASES sont propres à cet écran : ici on parle à quelqu'un qui a
-// ramassé un papier dans sa boîte aux lettres, le CRM affiche « 📬 Flyer ».
-//
-// `Record` sur le type fermé : ajouter un canal au vocabulaire sans lui écrire
-// de phrase devient une erreur de compilation, et non un bouton vide en prod.
+// deux bilans et le vocabulaire fermé de la RPC. Seules les PHRASES sont propres
+// à cet écran.
 const LIBELLES_CANAL: Record<ProvenanceCanalTunnel, { emoji: string; libelle: string }> = {
   flyer: { emoji: "📬", libelle: "Un flyer dans ma boîte aux lettres" },
   parle: { emoji: "💬", libelle: "Quelqu'un m'en a parlé" },
@@ -69,15 +78,9 @@ const LIBELLES_CANAL: Record<ProvenanceCanalTunnel, { emoji: string; libelle: st
   autre: { emoji: "✨", libelle: "Autrement" },
 };
 
-/**
- * Le prénom est tapé par un inconnu, sur un téléphone. Même borne qu'en base
- * (`left(v_libre, 80)` dans `noter_provenance_lead`) : couper à l'écran plutôt
- * que de laisser la RPC tronquer en silence une réponse déjà envoyée.
- */
+// Même borne qu'en base (`left(v_libre, 80)` dans `noter_provenance_lead`).
 const PRENOM_MAX = 80;
-// Même borne que la RPC `noter_disponibilites_lead`. De quoi écrire « seulement
-// le samedi matin, ou après 18h en semaine », pas de quoi raconter sa vie —
-// c'est une note qu'un coach doit lire d'un coup d'œil dans le CRM.
+// Même borne que la RPC `noter_disponibilites_lead`.
 const DISPO_MAX = 300;
 
 export function ReserverClubPage() {
@@ -86,43 +89,20 @@ export function ReserverClubPage() {
   const [searchParams] = useSearchParams();
   useClubHead("Réserver mon RDV découverte · The Breakfast Club");
 
-  const [screen, setScreen] = useState<Screen>("capture");
+  const [screen, setScreen] = useState<Screen>("objectif");
 
-  /**
-   * A-T-ELLE SEULEMENT COMMENCÉ À REMPLIR ?
-   *
-   * Sans cette mesure, l'entonnoir dit « 88 arrivent, 21 passent » sans jamais
-   * dire POURQUOI, et on en est réduit à supposer : la page ne convainc pas,
-   * ou le formulaire décourage ? Les deux se corrigent à l'opposé l'un de
-   * l'autre. Cette étape tranche : celui qui a tapé dans un champ ou choisi
-   * son objectif était convaincu — s'il ne va pas au bout, c'est le formulaire.
-   *
-   * « Commencer » = tout premier geste sur le formulaire, la frappe comme le
-   * choix d'un objectif : l'objectif est en haut, on peut donc le cocher puis
-   * renoncer sans jamais toucher un champ.
-   */
-  const [saisieCommencee, setSaisieCommencee] = useState(false);
-  const marquerSaisie = useCallback(() => setSaisieCommencee(true), []);
-  // Les trois écrans du tunnel, dans l'ordre : c'est ici qu'on saura enfin
-  // combien de gens laissent leurs coordonnées puis renoncent au créneau.
+  // Entonnoir du NOUVEAU parcours. Noms distincts de l'ancien jeu d'étapes
+  // (« coordonnees »/« saisie commencee »/« choix du creneau »/« confirme »)
+  // pour ne pas mélanger deux flux différents dans la même vue d'audience :
+  // l'ancien s'arrête, le nouveau démarre proprement.
   useEtapeTunnel(
     "reserver-club",
-    screen === "capture" ? "coordonnees" : screen === "dispo" ? "choix du creneau" : "confirme",
-    screen === "capture" ? 0 : screen === "dispo" ? 2 : 3,
+    screen === "objectif" ? "page objectif" : screen === "dispo" ? "voit les creneaux" : screen === "coordonnees" ? "saisit coordonnees" : "reserve",
+    screen === "objectif" ? 0 : screen === "dispo" ? 1 : screen === "coordonnees" ? 2 : 3,
   );
-  // Étape insérée AU MILIEU du tunnel le 27/08, donc les rangs suivants ont
-  // glissé (1→2, 2→3) — et l'historique déjà en base a été renuméroté avec
-  // eux. Sans ça, « choix du creneau » aurait porté deux rangs différents
-  // selon la date et l'entonnoir se serait réordonné tout seul.
-  // `noterEtape` déduplique par session : repasser par l'écran ne recompte pas.
-  useEtapeTunnel("reserver-club", saisieCommencee ? "saisie commencee" : null, 1);
 
   // Lead
   const [objectif, setObjectif] = useState<Objectif | "">("");
-  const [people, setPeople] = useState<1 | 2>(1);
-  const [partner, setPartner] = useState("");
-  const [partnerNom, setPartnerNom] = useState("");
-  const [partnerObjectif, setPartnerObjectif] = useState<Objectif | "">("");
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -136,151 +116,21 @@ export function ReserverClubPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
-  /**
-   * CHOISIR UN CRÉNEAU AMÈNE À CE QUI RESTE À FAIRE.
-   *
-   * Mesuré le 27/08 sur trois semaines : 21 personnes atteignent cet écran,
-   * 11 confirment. La moitié se perd ici, et le parcours explique pourquoi —
-   * on choisit son heure, et RIEN ne se passe : le bouton de validation est
-   * plus bas, grisé, et la phrase qui dit ce qui manque est encore en dessous
-   * de lui. Sur téléphone, le créneau choisi et le bouton ne tiennent jamais
-   * dans le même écran. Ce n'est pas un renoncement, c'est quelqu'un qui croit
-   * que ça a bugué.
-   *
-   * Donc : le clic sur l'heure fait descendre jusqu'à la question, et une
-   * barre reste collée en bas avec le geste suivant. La question, elle, ne
-   * devient pas facultative — c'est le seul moyen de savoir quel flyer a
-   * fonctionné, le QR imprimé étant le même sur tous les papiers.
-   */
-  const provRef = useRef<HTMLElement | null>(null);
-
-  const actionRef = useRef<HTMLDivElement | null>(null);
-  const [actionAEcran, setActionAEcran] = useState(false);
-
-  /** Le vrai bouton est-il sous les yeux ? Mesuré, jamais supposé. */
-  const majActionAEcran = useCallback(() => {
-    const el = actionRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setActionAEcran(r.top < window.innerHeight - 40 && r.bottom > 0);
-  }, []);
-
-
-  const versLaQuestion = useCallback(() => {
-    const cible = provRef.current;
-    if (!cible) return;
-    const depart = window.scrollY;
-    // Doux quand le navigateur veut bien, sec quand il refuse.
-    //
-    // `behavior:"smooth"` est IGNORÉ dans plusieurs cas réels : onglet qui ne
-    // compose pas, « réduire les animations » activé dans les réglages du
-    // téléphone, certaines webviews. Vérifié le 27/08 : dans un onglet non
-    // ramené au premier plan, `smooth` laisse la page à 0 et `auto` descend
-    // bien. Sans ce repli, le geste ne marche que là où on le teste.
-    cible.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => {
-      if (Math.abs(window.scrollY - depart) < 8) {
-        cible.scrollIntoView({ behavior: "auto", block: "center" });
-      }
-      // On remesure nous-mêmes : un défilement programmé n'émet pas toujours
-      // l'événement `scroll` — sans ça, la barre resterait affichée sous le
-      // bouton jusqu'au premier geste de la personne.
-      majActionAEcran();
-    }, 320);
-  }, [majActionAEcran]);
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // L'identifiant du lead créé à l'écran 1. Il sert à deux choses :
-  //
-  //  1. NE PAS RECRÉER de fiche quand on revient sur ses pas. « ← Modifier mes
-  //     infos » ramenait à l'écran 1, et chaque validation refaisait un lead :
-  //     mesuré en base le 16/08, Claire avait TROIS fiches créées en quatre
-  //     minutes avec le même numéro.
-  //  2. Écrire la provenance (« comment tu as connu le club ? ») une fois la
-  //     réservation acquise : elle a besoin de savoir sur quelle fiche poser la
-  //     réponse. La question est posée sous les créneaux, l'écriture vient
-  //     après — cf. « L'ORDRE COMPTE » dans `confirmBooking`.
-  const [leadId, setLeadId] = useState<string | null>(null);
-
-  /**
-   * LA FICHE SE CRÉE PENDANT QU'ELLE CHOISIT SON CRÉNEAU, PLUS AVANT.
-   *
-   * « Choisir mon créneau » attendait la réponse de `submit-prospect-lead`
-   * avant d'afficher quoi que ce soit. L'edge à froid met plusieurs secondes :
-   * mesuré jusqu'à 7 s le 27/08, pendant lesquelles le bouton affiche « … » et
-   * l'écran ne bouge pas. Sur un téléphone en 4G, c'est un abandon.
-   *
-   * Le commentaire d'origine disait « non bloquant » : c'était vrai de
-   * l'ÉCHEC (un lead raté n'empêchait pas la réservation), faux du TEMPS.
-   * L'appel part maintenant en arrière-plan et l'écran des créneaux s'affiche
-   * tout de suite ; la promesse est gardée parce que deux choses en ont besoin
-   * plus tard — la provenance et « aucun horaire ne me va ». Toutes deux
-   * arrivent au moins plusieurs secondes après, largement le temps.
-   *
-   * Le ref sert aussi de garde-fou contre le double envoi : `leadId` n'est
-   * posé qu'au retour, deux validations rapides créaient donc deux fiches.
-   */
-  const leadPromesse = useRef<Promise<string | null> | null>(null);
-
-  const attendreLeadId = useCallback(async (): Promise<string | null> => {
-    if (leadId) return leadId;
-    if (!leadPromesse.current) return null;
-    try {
-      return await leadPromesse.current;
-    } catch {
-      return null;
-    }
-  }, [leadId]);
-
-  // La réponse à « comment tu as connu le club ? », posée sous les créneaux.
-  // Le canal est obligatoire pour réserver, le prénom jamais : c'est une simple
-  // case à écrire, laissée vide par tous ceux qui ne savent pas.
+  // La réponse à « comment tu as connu le club ? », posée à l'écran coordonnées.
   const [canal, setCanal] = useState<ProvenanceCanalTunnel | null>(null);
   const [prenomSource, setPrenomSource] = useState("");
 
-  /**
-   * LA BARRE S'EFFACE QUAND LE VRAI BOUTON EST SOUS LES YEUX.
-   *
-   * Sans ça, on affiche deux fois « Confirmer ma réservation » l'un au-dessus
-   * de l'autre dès qu'on arrive en bas — et on se demande lequel compte. La
-   * barre n'est pas un second bouton : c'est le raccourci vers celui-là, tant
-   * qu'il est hors champ.
-   */
-
-  useEffect(() => {
-    if (screen !== "dispo") {
-      setActionAEcran(false);
-      return;
-    }
-    // Un calcul au défilement, et pas un IntersectionObserver : vérifié le
-    // 27/08, l'observateur ne notifie JAMAIS dans un onglet qui ne peint pas
-    // (même famille de piquûre que `behavior:"smooth"` ignoré plus haut). Or
-    // si sa notification n'arrive pas, la barre reste collée sous le vrai
-    // bouton et on affiche deux fois la même chose. `scroll` est un simple
-    // événement DOM : il part toujours.
-    majActionAEcran();
-    window.addEventListener("scroll", majActionAEcran, { passive: true });
-    window.addEventListener("resize", majActionAEcran);
-    return () => {
-      window.removeEventListener("scroll", majActionAEcran);
-      window.removeEventListener("resize", majActionAEcran);
-    };
-  }, [screen, selectedSlot, canal, majActionAEcran]);
-
-  // « Aucun horaire ne me va » — cf. le bloc `rc-dispo` plus bas. Replié par
-  // défaut : c'est une porte de secours, elle ne doit pas concurrencer les
-  // créneaux affichés juste au-dessus.
+  // « Aucun horaire ne me va » — porte de secours sur l'écran créneaux. Comme la
+  // fiche ne se crée plus en amont (mode « simple »), cette boîte capte elle-même
+  // le minimum pour rappeler : un prénom, un numéro, et les disponibilités.
   const [dispoOuvert, setDispoOuvert] = useState(false);
+  const [dispoPrenom, setDispoPrenom] = useState("");
+  const [dispoTel, setDispoTel] = useState("");
   const [dispoTexte, setDispoTexte] = useState("");
   const [dispoEtat, setDispoEtat] = useState<"repos" | "envoi" | "fait" | "erreur">("repos");
-
-  // Pré-sélection objectif via ?objectif=
-  useEffect(() => {
-    const q = searchParams.get("objectif");
-    if (q === "poids" || q === "muscle" || q === "energie") setObjectif(q);
-  }, [searchParams]);
 
   const loadAvailability = useCallback(async () => {
     setLoading(true);
@@ -308,86 +158,58 @@ export function ReserverClubPage() {
     setLoading(false);
   }, [slug]);
 
-  async function submitCapture(e: FormEvent) {
-    e.preventDefault();
-    // L'objectif qualifie le lead dès son arrivée dans le CRM : sans lui, le
-    // coach reçoit un prénom et un téléphone sans savoir ce que la personne
-    // vient chercher. Les boutons ne sont pas des <input>, la validation
-    // native du formulaire ne les couvre donc pas.
-    if (!objectif) {
-      setError("Choisis ton objectif pour continuer.");
-      document.getElementById("rc-objectif")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (people === 2 && (!partner.trim() || !partnerNom.trim() || !partnerObjectif)) {
-      setError("Complète le prénom, le nom et l'objectif de la personne qui t'accompagne.");
-      document.getElementById("rc-binome")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
+  // Choisir son objectif AMÈNE aux créneaux. Un seul geste, et l'écran change :
+  // c'est l'inverse exact de l'ancienne page, où l'objectif était noyé dans un
+  // formulaire de sept champs qu'il fallait finir avant de voir une seule heure.
+  const allerAuxCreneaux = useCallback((o: Objectif) => {
+    setObjectif(o);
     setError(null);
-
-    // L'écran des créneaux s'affiche MAINTENANT. La fiche CRM part en
-    // arrière-plan (cf. `leadPromesse`) : c'est une information pour le coach,
-    // elle n'a aucune raison de faire patienter la personne qui réserve.
     setScreen("dispo");
     void loadAvailability();
+  }, [loadAvailability]);
 
-    // `leadId` garde la trace de la fiche déjà créée : repasser par cet écran
-    // via « ← Modifier mes infos » ne doit plus en fabriquer une deuxième.
-    if (leadId || leadPromesse.current) return;
+  // Pré-sélection objectif via ?objectif= : la pub Meta pointe vers
+  // /reserver?objectif=poids → on atterrit DIRECTEMENT sur les créneaux, l'ad
+  // ayant déjà répondu « c'est pour quoi ». Une seule fois, au montage.
+  useEffect(() => {
+    const q = searchParams.get("objectif");
+    if (q === "poids" || q === "muscle" || q === "energie") {
+      setObjectif(q);
+      setScreen("dispo");
+      void loadAvailability();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    leadPromesse.current = (async (): Promise<string | null> => {
+  /** Crée (ou reprend) la fiche CRM. Idempotent côté edge depuis le 24/08. */
+  async function creerFiche(): Promise<string | null> {
+    try {
       const sb = await getSupabaseClient();
       if (!sb) return null;
-      try {
-        const { data: creation } = await sb.functions.invoke("submit-prospect-lead", {
-          body: {
-            first_name: prenom.trim(),
-            phone: tel.trim(),
-            city: ville.trim(),
-            email: email.trim(),
-            source: "site-club",
-            coach_slug: slug,
-            utm_source: searchParams.get("utm_source") ?? undefined,
-            utm_medium: searchParams.get("utm_medium") ?? undefined,
-            utm_campaign: searchParams.get("utm_campaign") ?? undefined,
-            metadata: {
-              nom: nom.trim(),
-              objectif: objectif || null,
-              people_count: people,
-              partner_first_name: people === 2 ? partner.trim() || null : null,
-              partner_last_name: people === 2 ? partnerNom.trim() || null : null,
-              partner_objectif: people === 2 ? partnerObjectif || null : null,
-            },
-          },
-        });
-        const id = (creation as { id?: string } | null)?.id ?? null;
-        if (id) setLeadId(id);
-        return id;
-      } catch {
-        // Lead best-effort : la réservation, elle, ne dépend pas de ça.
-        return null;
-      }
-    })();
+      const { data: creation } = await sb.functions.invoke("submit-prospect-lead", {
+        body: {
+          first_name: prenom.trim(),
+          phone: tel.trim(),
+          city: ville.trim(),
+          email: email.trim(),
+          source: "site-club",
+          coach_slug: slug,
+          utm_source: searchParams.get("utm_source") ?? undefined,
+          utm_medium: searchParams.get("utm_medium") ?? undefined,
+          utm_campaign: searchParams.get("utm_campaign") ?? undefined,
+          metadata: { nom: nom.trim(), objectif: objectif || null, people_count: 1 },
+        },
+      });
+      return (creation as { id?: string } | null)?.id ?? null;
+    } catch {
+      // Fiche best-effort : la réservation, elle, est déjà acquise.
+      return null;
+    }
   }
 
   /**
-   * Écrit la réponse sur la fiche du lead.
-   *
-   * Best-effort de bout en bout, et appelée APRÈS que la réservation est
-   * acquise : la provenance est une INFORMATION, jamais une condition. Si la
-   * RPC tombe, la personne voit sa confirmation exactement pareil — elle n'a
-   * aucun moyen de savoir que quelque chose a raté, et il n'y a rien à
-   * rattraper de son côté.
-   *
-   * UNE SEULE réponse : la fonction en base n'en accepte qu'une par lead
-   * (`deja_repondu`), donc le canal et le prénom partent ensemble. Ne jamais
-   * découper en deux appels — le second repartirait avec « deja_repondu » et le
-   * prénom serait perdu. Le repli ci-dessous n'est pas une seconde réponse :
-   * c'est la même, reposée après que la première a été REFUSÉE sans rien écrire.
-   *
-   * `p_qui` existe toujours côté base (l'ancien choix dans la liste d'équipe),
-   * on ne l'envoie simplement plus : cet écran ne propose aucun nom de coach.
+   * Écrit la provenance sur la fiche. Best-effort, APRÈS la réservation.
+   * UNE SEULE réponse par lead (`deja_repondu`) : canal et prénom ensemble.
    */
   async function noterProvenance(idDuLead: string, c: ProvenanceCanalTunnel, prenomTape: string) {
     try {
@@ -396,18 +218,11 @@ export function ReserverClubPage() {
       const { error } = await sb.rpc("noter_provenance_lead", {
         p_lead_id: idDuLead,
         p_canal: c,
-        // Un prénom n'a de sens que pour un flyer ou du bouche-à-oreille :
-        // personne ne distribue Instagram. La RPC applique la même règle.
         p_libre: provenanceDesigneQuelquun(c) ? prenomTape.trim().slice(0, PRENOM_MAX) || null : null,
       });
-      // Tant que la migration `20261215100000` n'est pas appliquée, la fonction
-      // en base n'a que trois paramètres : PostgREST ne trouve alors AUCUNE
-      // signature qui accepte `p_libre` (PGRST202) et la réponse serait perdue
-      // ENTIÈRE, canal compris. On la repose donc sans le prénom — le canal est
-      // l'essentiel, et c'est la seule partie récupérable. `p_qui` et `p_libre`
-      // ont tous deux une valeur par défaut, donc cet appel-là fonctionne avec
-      // l'ancienne fonction comme avec la nouvelle : le repli se retire tout
-      // seul le jour où la migration passe.
+      // Repli si la migration `20261215100000` n'est pas encore appliquée
+      // (l'ancienne fonction n'a pas `p_libre` → PGRST202) : on repose sans le
+      // prénom, le canal étant l'essentiel récupérable.
       if (error?.code === "PGRST202") {
         await sb.rpc("noter_provenance_lead", { p_lead_id: idDuLead, p_canal: c });
       }
@@ -416,37 +231,50 @@ export function ReserverClubPage() {
 
   /**
    * « Aucun horaire ne me va » — la personne dicte ses disponibilités.
-   *
-   * Contrairement à la provenance, l'échec est DIT. On lui promet un rappel :
-   * si la phrase n'est pas arrivée, la promesse serait fausse, et elle a le
-   * droit de le savoir pour retenter ou passer un coup de fil.
+   * Se suffit à elle-même : crée la fiche avec son prénom + numéro, puis y écrit
+   * les dispos (aussi rangées dans metadata, au cas où la RPC tombe). L'échec est
+   * DIT : on lui a promis un rappel, elle a le droit de savoir s'il n'est pas parti.
    */
   async function envoyerDisponibilites() {
     const texte = dispoTexte.trim();
     if (!texte || dispoEtat === "envoi") return;
+    if (!dispoPrenom.trim() || dispoTel.replace(/\D/g, "").length < 6) { setDispoEtat("erreur"); return; }
     setDispoEtat("envoi");
     try {
-      // La fiche se crée en arrière-plan depuis le 27/08 : ici on l'attend,
-      // au lieu de renoncer parce qu'elle n'est pas encore revenue.
-      const idDuLead = await attendreLeadId();
       const sb = await getSupabaseClient();
-      if (!sb || !idDuLead) { setDispoEtat("erreur"); return; }
+      if (!sb) { setDispoEtat("erreur"); return; }
+      const { data: creation } = await sb.functions.invoke("submit-prospect-lead", {
+        body: {
+          first_name: dispoPrenom.trim(),
+          phone: dispoTel.trim(),
+          source: "site-club",
+          coach_slug: slug,
+          utm_source: searchParams.get("utm_source") ?? undefined,
+          utm_medium: searchParams.get("utm_medium") ?? undefined,
+          utm_campaign: searchParams.get("utm_campaign") ?? undefined,
+          metadata: { objectif: objectif || null, dispo_souhaitee: texte.slice(0, DISPO_MAX) },
+        },
+      });
+      const idDuLead = (creation as { id?: string } | null)?.id ?? null;
+      if (!idDuLead) { setDispoEtat("erreur"); return; }
       const { data, error } = await sb.rpc("noter_disponibilites_lead", {
         p_lead_id: idDuLead,
         p_texte: texte.slice(0, DISPO_MAX),
       });
-      // La RPC répond « ok », « vide », « introuvable » ou « trop_tard ». Tout
-      // ce qui n'est pas « ok » n'a RIEN écrit : l'annoncer comme envoyé
-      // enverrait la personne attendre un appel qui ne viendrait jamais.
       setDispoEtat(!error && data === "ok" ? "fait" : "erreur");
     } catch { setDispoEtat("erreur"); }
   }
 
-  async function confirmBooking() {
-    // Deux garde-fous, doublés par l'état `disabled` du bouton : le créneau
-    // parce qu'il n'y a rien à réserver sans lui, le canal parce que c'est la
-    // seule chose qu'on demande en échange (« Autrement » est la sortie).
-    if (!selectedSlot || !canal) return;
+  async function confirmBooking(e?: FormEvent) {
+    e?.preventDefault();
+    if (!selectedSlot) { setError("Choisis d'abord ton créneau."); return; }
+    if (!prenom.trim() || !nom.trim() || tel.replace(/\D/g, "").length < 6 || !ville.trim() || !EMAIL_RE.test(email.trim())) {
+      setError("Complète tes coordonnées pour réserver.");
+      return;
+    }
+    // Le canal est la seule chose qu'on demande en échange (« Autrement » est la
+    // sortie) : c'est ce qui dit quel flyer a marché, indevinable autrement.
+    if (!canal) { setError("Dis-nous comment tu as connu le club pour valider."); return; }
     setSubmitting(true);
     setError(null);
     const sb = await getSupabaseClient();
@@ -460,19 +288,18 @@ export function ReserverClubPage() {
         contact: email.trim(),
         phone: tel.trim(),
         city: ville.trim(),
-        peopleCount: people,
-        partnerFirstName: people === 2 ? partner.trim() : "",
-        partnerLastName: people === 2 ? partnerNom.trim() : "",
-        partnerObjectif: people === 2 ? partnerObjectif || "" : "",
+        peopleCount: 1,
         objectif: objectif || "",
       },
     });
     const res = data as { success?: boolean; error?: string } | null;
     if (invErr || !res?.success) {
       if (res?.error === "creneau_pris") {
-        setError("Ce créneau vient d'être pris. Choisis-en un autre.");
+        // On le renvoie choisir : l'erreur s'affiche sur l'écran des créneaux.
         setSelectedSlot(null);
         setSelectedDay(null);
+        setScreen("dispo");
+        setError("Ce créneau vient d'être pris. Choisis-en un autre.");
         void loadAvailability();
       } else {
         setError("La réservation a échoué. Réessaie dans un instant.");
@@ -484,22 +311,18 @@ export function ReserverClubPage() {
     setScreen("confirm");
 
     // ── L'ORDRE COMPTE ────────────────────────────────────────────────────
-    // Le rendez-vous d'abord, la provenance ensuite, et jamais l'inverse : une
-    // information ne doit pas pouvoir faire échouer une réservation. On ne
-    // l'attend pas non plus — l'écran de confirmation est déjà affiché.
-    //
-    // `leadId` est posé à l'écran des coordonnées par `submit-prospect-lead`,
-    // qui répond `{ success: true, id }`. S'il manque (edge en échec, réseau),
-    // on réserve quand même et on ne pose rien : il n'y a pas de fiche sur
-    // laquelle écrire, et ce n'est pas à la personne de le savoir.
+    // Le rendez-vous d'abord, la fiche + la provenance ensuite, jamais l'inverse :
+    // une information ne doit pas pouvoir faire échouer une réservation. On ne
+    // les attend pas non plus — l'écran de confirmation est déjà affiché.
+    const canalChoisi = canal;
+    const prenomProv = prenomSource;
     void (async () => {
-      const idDuLead = await attendreLeadId();
-      if (idDuLead) await noterProvenance(idDuLead, canal, prenomSource);
+      const idDuLead = await creerFiche();
+      if (idDuLead) await noterProvenance(idDuLead, canalChoisi, prenomProv);
     })();
   }
 
-  // « Ajouter à mon agenda » : génère un .ics téléchargeable (iOS/Android/desktop).
-  // Réduit les no-shows — l'événement + le rappel natif du téléphone.
+  // « Ajouter à mon agenda » : génère un .ics téléchargeable. Réduit les no-shows.
   function addToCalendar() {
     if (!selectedSlot) return;
     const start = new Date(selectedSlot.iso);
@@ -514,7 +337,7 @@ export function ReserverClubPage() {
       `DTEND:${z(end)}`,
       "SUMMARY:RDV découverte · The Breakfast Club",
       "LOCATION:11 rue Saint Pierre\\, 55100 Verdun",
-      "DESCRIPTION:Ton body scan + bilan bien-être\\, offerts. On t'attend au club !",
+      "DESCRIPTION:Ton bilan bien-être\\, ton body scan et ta boisson\\, offerts. On t'attend au club !",
       "END:VEVENT", "END:VCALENDAR",
     ].join("\r\n");
     const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
@@ -587,24 +410,17 @@ export function ReserverClubPage() {
     return cells;
   }
 
-  const confPeople = people === 2 ? (partner.trim() ? `Pour toi et ${partner.trim()} (2 personnes)` : "Pour toi et ton binôme (2 personnes)") : "Pour toi (1 personne)";
   const confWhen = selectedSlot
     ? `${capitalize(new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(new Date(selectedSlot.iso)))} à ${selectedSlot.time}.`
     : "";
-  // Le même créneau, en plus court : sous le bouton de validation, il rappelle
-  // ce qu'on est en train de réserver sans répéter l'année.
   const creneauCourt = selectedSlot
     ? `${capitalize(new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Paris" }).format(new Date(selectedSlot.iso)))} à ${selectedSlot.time}`
     : "";
+  const coordsCompletes = !!prenom.trim() && !!nom.trim() && tel.replace(/\D/g, "").length >= 6 && !!ville.trim() && EMAIL_RE.test(email.trim());
 
   return (
     <div className="rc">
       <header className="rc-header"><div className="rc-wrap in">
-        {/* Le logo ramène au SITE, pas au formulaire (corrigé le 19/08).
-            Avant, il faisait `setScreen("capture")` : cliquer le logo — le
-            geste le plus universel du web pour « aller à l'accueil » — effaçait
-            le créneau choisi, et depuis l'écran de confirmation relançait le
-            formulaire alors que le rendez-vous était déjà pris. */}
         <a href="/club" aria-label="Aller au site du Breakfast Club">
           <img src={LOGO} alt="The Breakfast Club by La Base" />
         </a>
@@ -614,129 +430,50 @@ export function ReserverClubPage() {
         </div>
       </div></header>
 
-      {/* ── ÉCRAN 1 — CAPTURE ── */}
-      {screen === "capture" && (
+      {/* ── ÉCRAN 1 — OBJECTIF (1 tap) ── */}
+      {screen === "objectif" && (
         <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
-          <div style={{ maxWidth: 640 }}>
-            <p className="rc-eyebrow">Étape 1 sur 2 · Réservation</p>
-            <h1 style={{ marginTop: 12, fontSize: "clamp(30px,4.4vw,48px)" }}>Ton RDV découverte commence ici.</h1>
+          <div style={{ maxWidth: 620 }}>
+            <p className="rc-eyebrow">Étape 1 sur 3 · Ton bilan découverte</p>
+            <h1 style={{ marginTop: 12, fontSize: "clamp(28px,4.4vw,48px)" }}>Réserve ton bilan découverte offert</h1>
             <p style={{ margin: "14px 0 0", fontSize: "clamp(15px,1.4vw,17px)", lineHeight: 1.6, color: "var(--sub)" }}>
-              Dis-nous où tu en es, puis choisis ton créneau. Le body scan et le bilan bien-être sont <strong>offerts</strong>, sans aucun engagement.
+              Choisis ce qui te ressemble, puis ton créneau. Bilan bien-être, body scan et une boisson — <strong>offerts</strong>, sans aucun engagement.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))", gap: "clamp(20px,3vw,32px)", alignItems: "start", marginTop: "clamp(24px,3vw,36px)" }}>
-            {/* récap */}
-            <div>
-              <aside className="rc-card" style={{ padding: "clamp(26px,3vw,38px)" }}>
-                <p className="rc-eyebrow" style={{ fontSize: 12, letterSpacing: ".22em" }}>Ce que tu réserves</p>
-                <h2 style={{ marginTop: 12, fontSize: "clamp(26px,3.2vw,38px)" }}>RDV découverte</h2>
-                <p style={{ margin: "8px 0 0", fontSize: 16, color: "#5F7154" }}>≈ 45 min avec un coach, au club de Verdun.</p>
-                <ul style={{ listStyle: "none", margin: "24px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 13 }}>
-                  {["Analyse de composition corporelle (body scan)", "Bilan bien-être personnalisé", "Tes objectifs, à ton rythme", "Seul·e ou à deux — comme tu veux", "Aucun paiement, aucun engagement"].map((t) => (
-                    <li key={t} style={{ display: "grid", gridTemplateColumns: "22px 1fr", gap: 12, fontSize: 16, lineHeight: 1.4, color: "#3A443F" }}>
-                      <span aria-hidden="true" style={{ color: "var(--orange)", fontWeight: 700 }}>✓</span>{t}
-                    </li>
-                  ))}
-                </ul>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginTop: 26, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
-                  <span style={{ fontWeight: 700, fontSize: 17 }}>À régler aujourd'hui</span>
-                  <span style={{ fontFamily: "Anton", fontSize: 34, color: "#5F7154" }}>0 €</span>
-                </div>
-              </aside>
-              <div style={{ display: "flex", justifyContent: "center", padding: "clamp(24px,4vw,40px) 0 0" }}>
-                <img src={HEART} alt="" aria-hidden="true" style={{ width: "clamp(200px,24vw,280px)", height: "auto" }} />
-              </div>
-            </div>
+          <p className="rc-eyebrow" style={{ marginTop: "clamp(24px,3vw,34px)" }}>C'est pour quoi&nbsp;?</p>
+          {/* Le seul geste demandé : un tap. C'est l'accroche, pas de l'administratif. */}
+          <div className="rc-obj-hero" role="radiogroup" aria-label="Ton objectif" style={{ marginTop: 12, maxWidth: 620 }}>
+            {OBJECTIFS.map((o) => (
+              <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} className="rc-obj-big" onClick={() => allerAuxCreneaux(o.id)}>
+                <span className="ic" aria-hidden="true">{o.icon}</span>
+                <span className="txt"><span className="t">{o.label}</span><span className="s">{o.sub}</span></span>
+                <span className="go" aria-hidden="true">→</span>
+              </button>
+            ))}
+          </div>
 
-            {/* formulaire */}
-            <form className="rc-card" style={{ padding: "clamp(26px,3vw,40px)" }} onSubmit={submitCapture} onChange={marquerSaisie}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 999, background: "var(--grad)", color: "#fff", fontFamily: "Anton", fontSize: 16 }}>1</span>
-                <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--orange)" }}>Tes informations</span>
-              </div>
-              <h2 style={{ marginTop: 14, fontSize: "clamp(24px,3.2vw,34px)" }}>Qui es-tu ?</h2>
-
-              <p id="rc-objectif" style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Ton objectif</p>
-              <div className="rc-obj" role="radiogroup" aria-label="Ton objectif" aria-required="true" style={{ marginTop: 12 }}>
-                {OBJECTIFS.map((o) => (
-                  <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} onClick={() => { setObjectif(o.id); setError(null); marquerSaisie(); }}>
-                    <span className="ic" aria-hidden="true">{o.icon}</span><span className="t">{o.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              <p style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Tu viens…</p>
-              <div className="rc-seg" role="radiogroup" aria-label="Nombre de personnes" style={{ marginTop: 12 }}>
-                <button type="button" aria-pressed={people === 1} onClick={() => setPeople(1)}><span aria-hidden="true">🙋</span>Seul·e</button>
-                <button type="button" aria-pressed={people === 2} onClick={() => setPeople(2)}><span aria-hidden="true">👫</span>À deux</button>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 22 }}>
-                <label><span className="rc-lbl">Ton prénom</span><input className="rc-field" type="text" required value={prenom} onChange={(e) => setPrenom(e.target.value)} autoComplete="given-name" placeholder="Marie" /></label>
-                <label><span className="rc-lbl">Ton nom</span><input className="rc-field" type="text" required value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="family-name" placeholder="Dupont" /></label>
-              </div>
-              <label style={{ display: "block", marginTop: 14 }}><span className="rc-lbl">Email</span><input className="rc-field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="marie.dupont@email.com" /></label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
-                <label><span className="rc-lbl">Téléphone</span><input className="rc-field" type="tel" required value={tel} onChange={(e) => setTel(e.target.value)} autoComplete="tel" placeholder="06 79 44 87 59" /></label>
-                <label><span className="rc-lbl">Ville</span><input className="rc-field" type="text" required value={ville} onChange={(e) => setVille(e.target.value)} autoComplete="address-level2" placeholder="Verdun" /></label>
-              </div>
-
-              {people === 2 && (
-                <div id="rc-binome" style={{ marginTop: 26, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span aria-hidden="true" style={{ fontSize: 20 }}>👫</span>
-                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--orange)" }}>La personne qui t'accompagne</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 }}>
-                    <label><span className="rc-lbl">Son prénom</span><input className="rc-field" type="text" required value={partner} onChange={(e) => setPartner(e.target.value)} placeholder="Alex" /></label>
-                    <label><span className="rc-lbl">Son nom</span><input className="rc-field" type="text" required value={partnerNom} onChange={(e) => setPartnerNom(e.target.value)} placeholder="Martin" /></label>
-                  </div>
-                  <p style={{ margin: "18px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Son objectif</p>
-                  <div className="rc-obj" role="radiogroup" aria-label="Objectif de la personne qui t'accompagne" aria-required="true" style={{ marginTop: 12 }}>
-                    {OBJECTIFS.map((o) => (
-                      <button type="button" key={o.id} role="radio" aria-checked={partnerObjectif === o.id} onClick={() => { setPartnerObjectif(o.id); setError(null); }}>
-                        <span className="ic" aria-hidden="true">{o.icon}</span><span className="t">{o.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
-              <button type="submit" className="rc-cta" style={{ marginTop: 26 }} disabled={submitting}>{submitting ? "…" : "Choisir mon créneau →"}</button>
-              {/* Retirés le 2026-08-09 (Thomas) : la ligne « tes infos restent
-                  chez nous · jamais revendues » et le repli « pas prêt à choisir
-                  un créneau ? appelle-nous ». Le bandeau « Sans engagement » en
-                  haut de page le dit déjà, et proposer d'appeler juste sous le
-                  bouton principal offrait une porte de sortie au moment où la
-                  personne allait valider. Le numéro reste joignable ailleurs
-                  (pied de page du site, mail de confirmation). */}
-            </form>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: "clamp(28px,3.5vw,40px)", maxWidth: 620, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
+            <img src={HEART} alt="" aria-hidden="true" style={{ width: 54, height: "auto", flex: "none" }} />
+            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: "#5F7154" }}>
+              <strong style={{ color: "var(--ink)" }}>≈ 45 min</strong> avec un coach, au club de Verdun · 11 rue Saint&nbsp;Pierre. Aucun paiement, aucun engagement.
+            </p>
           </div>
         </main>
       )}
 
       {/* ── ÉCRAN 2 — DISPO ── */}
       {screen === "dispo" && (
-        <>
-        <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: selectedSlot && !actionAEcran ? "calc(clamp(48px,7vw,80px) + 96px)" : "clamp(48px,7vw,80px)" }}>
+        <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
           <div style={{ maxWidth: 640 }}>
-            {/* Le retour vit ICI, au-dessus du titre (19/08). Il existait déjà,
-                mais enterré dans la colonne de gauche : on le croisait en
-                descendant VERS le bouton de réservation, ce qui est exactement
-                l'endroit où il ne faut pas proposer de partir. */}
-            <button
-              type="button"
-              onClick={() => setScreen("capture")}
-              className="rc-retour"
-              aria-label="Revenir à mes coordonnées"
-            >
+            <button type="button" onClick={() => setScreen("objectif")} className="rc-retour" aria-label="Revenir à mon objectif">
               <span aria-hidden="true">←</span> Retour
             </button>
-            <p className="rc-eyebrow" style={{ marginTop: 14 }}>Étape 2 sur 2 · Ton créneau</p>
+            <p className="rc-eyebrow" style={{ marginTop: 14 }}>Étape 2 sur 3 · Ton créneau</p>
             <h1 style={{ marginTop: 14, fontSize: "clamp(30px,5vw,52px)" }}>Choisis quand on t'accueille.</h1>
           </div>
+
+          {error && <div className="rc-err" role="alert" style={{ marginTop: 20, maxWidth: 640 }}>{error}</div>}
 
           <div className="rc-card rc-grid3" style={{ marginTop: "clamp(24px,3.5vw,36px)" }}>
             <aside className="rc-col info">
@@ -745,14 +482,14 @@ export function ReserverClubPage() {
                 <span style={{ fontWeight: 600, fontSize: 15, color: "#3A443F" }}>Breakfast Club · Verdun</span>
               </div>
               <h2 style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>RDV découverte</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Body scan + bilan bien-être</p>
+              <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Bilan bien-être · body scan · boisson offerte</p>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 13, fontSize: 15, color: "var(--sub)" }}>
                 <div>🕒 45 min de RDV · créneau réservé 1h</div>
                 <div>📍 En personne · 11 rue Saint&nbsp;Pierre</div>
-                <div>👥 {people === 2 ? "Pour 2 personnes" : "Pour 1 personne"}</div>
+                <div>🎁 Offert · sans engagement</div>
               </div>
               <p style={{ margin: "20px 0 0", fontSize: 14, lineHeight: 1.55, color: "#5F7154", paddingTop: 18, borderTop: "1px solid rgba(30,51,48,.1)" }}>
-                Réservation <strong style={{ color: "var(--ink)" }}>gratuite et sans engagement</strong>. On t'accueille pour ton body scan et un vrai point sur tes objectifs.
+                On t'accueille pour ton body scan et un vrai point sur tes objectifs. Tu laisseras tes coordonnées juste après avoir choisi ton heure.
               </p>
             </aside>
 
@@ -785,213 +522,153 @@ export function ReserverClubPage() {
               ) : (
                 <div>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{capitalize(new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Paris" }).format(new Date(daySlots[0]?.iso ?? selectedDay)))}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>Choisis une heure — tu laisses tes coordonnées juste après.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14, maxHeight: 320, overflow: "auto" }}>
                     {daySlots.map((s) => {
                       const full = s.remaining <= 0;
-                      const on = selectedSlot?.iso === s.iso;
                       return (
-                        <button type="button" key={s.iso} className="rc-slot" disabled={full} aria-pressed={on}
-                          style={on ? { borderColor: "var(--orange)", boxShadow: "0 10px 24px -14px rgba(224,83,42,.55)" } : undefined}
-                          onClick={() => { setSelectedSlot(s); if (!canal) versLaQuestion(); }}>
+                        <button type="button" key={s.iso} className="rc-slot" disabled={full}
+                          onClick={() => { setSelectedSlot(s); setError(null); setScreen("coordonnees"); window.scrollTo({ top: 0, behavior: "auto" }); }}>
                           <span className="tm">{s.time}</span>
                           <span className="pl"><span className="rc-dot" style={{ background: full ? "#C9B0A6" : s.remaining === 1 ? "#E8A93A" : "#5F9E6E" }} />{full ? "Complet" : `${s.remaining} place${s.remaining > 1 ? "s" : ""}`}</span>
                         </button>
                       );
                     })}
                   </div>
-                  {/* Ni l'erreur ni le bouton de validation ne vivent plus ici :
-                      les deux sont descendus dans le bloc ci-dessous, avec la
-                      question. « Ce créneau vient d'être pris » remet d'ailleurs
-                      `selectedDay` à null — l'erreur affichée dans cette colonne
-                      disparaissait donc avec la liste, à l'instant même où elle
-                      devenait utile. */}
                 </div>
               )}
             </section>
           </div>
 
-          {/* ── « Aucun horaire ne me va » (19/08) ────────────────────────────
-              LA FUITE, mesurée en base du 15 au 19 août : 51 personnes laissent
-              leurs coordonnées, 14 arrivent au choix du créneau, 7 réservent.
-              Et sur les 6 vrais rendez-vous pris, QUATRE sont à 9h ou 10h — le
-              premier créneau du jour — quand personne n'a jamais réservé à 13h.
-              Quand tout le monde s'entasse sur le créneau le plus tôt, c'est en
-              général qu'il en faudrait un avant.
-
-              Thomas ne veut PAS ouvrir 7h-8h avant l'ouverture du club le
-              7 septembre — et il a raison, ce serait deviner. Alors on demande.
-              La personne dicte quand elle peut, le coach rappelle. Au bout de
-              quelques semaines, les réponses diront d'elles-mêmes quels créneaux
-              manquent, sans avoir eu à parier.
-
-              Replié, et SOUS les créneaux : c'est une porte de secours. Ouverte
-              d'emblée, elle offrirait le choix de ne pas choisir à des gens qui
-              auraient très bien trouvé leur horaire.
-
-              Rien sans `leadId` : sans fiche au CRM, on n'aurait ni son nom ni
-              son numéro, et « on te rappelle » serait un mensonge. */}
-          {leadId && (
-            <section className="rc-dispo" aria-labelledby="rc-dispo-titre">
-              {dispoEtat === "fait" ? (
-                <p className="rc-dispo-ok" role="status">
-                  <span aria-hidden="true">✓</span> C'est noté. On te rappelle pour te proposer un horaire qui te va.
-                </p>
-              ) : !dispoOuvert ? (
-                <button type="button" className="rc-dispo-ouvrir" onClick={() => setDispoOuvert(true)}>
-                  Aucun horaire ne te va&nbsp;? <span className="rc-dispo-ouvrir-fort">Dis-nous quand tu peux</span>
-                </button>
-              ) : (
-                <div className="rc-dispo-boite">
-                  <h2 id="rc-dispo-titre" className="rc-dispo-titre">Dis-nous quand tu es disponible</h2>
-                  <p className="rc-dispo-sub">On s'adapte. Écris tes créneaux comme tu les dis&nbsp;: on te rappelle pour caler le rendez-vous.</p>
-                  <label className="rc-lbl" htmlFor="rc-dispo-texte">Tes disponibilités</label>
-                  <textarea
-                    id="rc-dispo-texte"
-                    className="rc-dispo-texte"
-                    rows={3}
-                    value={dispoTexte}
-                    maxLength={DISPO_MAX}
-                    placeholder="Ex. : tôt le matin avant 8h, ou le samedi dans la journée."
-                    onChange={(e) => { setDispoTexte(e.target.value); if (dispoEtat === "erreur") setDispoEtat("repos"); }}
-                  />
-                  <div className="rc-dispo-pied">
-                    <button
-                      type="button"
-                      className="rc-dispo-envoyer"
-                      disabled={!dispoTexte.trim() || dispoEtat === "envoi"}
-                      onClick={() => void envoyerDisponibilites()}
-                    >
-                      {dispoEtat === "envoi" ? "…" : "Envoyer mes disponibilités"}
-                    </button>
-                    <p className="rc-dispo-aide" aria-live="polite">
-                      {dispoEtat === "erreur"
-                        ? "L'envoi n'est pas passé. Réessaie, ou appelle-nous directement."
-                        : "Ça ne réserve rien — c'est nous qui revenons vers toi."}
-                    </p>
-                  </div>
+          {/* ── « Aucun horaire ne me va » — porte de secours, sous les créneaux.
+              Se suffit à elle-même (prénom + tél + dispos) puisque la fiche ne se
+              crée plus en amont. La personne dicte quand elle peut, on rappelle. */}
+          <section className="rc-dispo" aria-labelledby="rc-dispo-titre" style={{ maxWidth: 900 }}>
+            {dispoEtat === "fait" ? (
+              <p className="rc-dispo-ok" role="status">
+                <span aria-hidden="true">✓</span> C'est noté. On te rappelle pour te proposer un horaire qui te va.
+              </p>
+            ) : !dispoOuvert ? (
+              <button type="button" className="rc-dispo-ouvrir" onClick={() => setDispoOuvert(true)}>
+                Aucun horaire ne te va&nbsp;? <span className="rc-dispo-ouvrir-fort">Dis-nous quand tu peux</span>
+              </button>
+            ) : (
+              <div className="rc-dispo-boite">
+                <h2 id="rc-dispo-titre" className="rc-dispo-titre">Dis-nous quand tu es disponible</h2>
+                <p className="rc-dispo-sub">On s'adapte. Laisse-nous de quoi te rappeler, et écris tes créneaux comme tu les dis.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <label><span className="rc-lbl">Ton prénom</span><input className="rc-field" type="text" value={dispoPrenom} onChange={(e) => { setDispoPrenom(e.target.value); if (dispoEtat === "erreur") setDispoEtat("repos"); }} placeholder="Marie" /></label>
+                  <label><span className="rc-lbl">Ton téléphone</span><input className="rc-field" type="tel" value={dispoTel} onChange={(e) => { setDispoTel(e.target.value); if (dispoEtat === "erreur") setDispoEtat("repos"); }} placeholder="06 12 34 56 78" /></label>
                 </div>
-              )}
-            </section>
-          )}
-
-          {/* ── « Comment tu as connu le club ? » ────────────────────────────
-              ICI, sous les créneaux, et plus sur l'écran de confirmation.
-              Mesuré en base sur deux jours : 11 personnes laissent leurs
-              coordonnées, 5 arrivent au choix du créneau, UNE SEULE atteint la
-              confirmation. Poser la question là-bas, c'était la poser à presque
-              personne — et c'est aussi pour ça que la validation se fait
-              maintenant d'un seul geste, ici, avec la réponse.
-
-              C'est le seul moyen de savoir qui a distribué un flyer : le QR
-              imprimé est le MÊME sur tous les papiers, le serveur reçoit donc
-              exactement la même chose pour tout le monde. Aucune technique ne
-              peut le deviner — il faut demander.
-
-              Plus aucun nom de coach (Thomas + Mélanie, 17/08) : ils ne sont
-              que deux, et la moitié des recommandations viennent d'ailleurs
-              (une adhérente, une amie). Une case vide à écrire, le coach lit la
-              réponse dans le CRM. */}
-          <section className="rc-card rc-prov" aria-labelledby="rc-prov-titre" ref={provRef}>
-            <h2 id="rc-prov-titre" className="rc-prov-titre">Comment tu as connu le club&nbsp;?</h2>
-            <p className="rc-prov-sub">Une seule question, et on te laisse tranquille. C'est ce qui nous dit ce qui marche vraiment.</p>
-
-            <div className="rc-prov-choix" role="radiogroup" aria-labelledby="rc-prov-titre" aria-required="true">
-              {PROVENANCE_CANAUX_TUNNEL.map((cle) => {
-                const { emoji, libelle } = LIBELLES_CANAL[cle];
-                return (
-                  <button
-                    key={cle}
-                    type="button"
-                    role="radio"
-                    aria-checked={canal === cle}
-                    className="rc-choix"
-                    onClick={() => { setCanal(cle); setError(null); }}
-                  >
-                    <span aria-hidden="true">{emoji}</span>{libelle}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Une case vide, facultative — jamais une liste de prénoms. Elle
-                n'apparaît que là où quelqu'un est réellement derrière : « le
-                prénom de qui ? » n'a aucun sens pour Instagram. */}
-            {canal && provenanceDesigneQuelquun(canal) && (
-              <div className="rc-prov-qui">
-                <label className="rc-lbl" htmlFor="rc-prov-prenom">
-                  Son prénom <span className="rc-prov-opt">— facultatif</span>
-                </label>
-                <input
-                  id="rc-prov-prenom"
-                  className="rc-field"
-                  type="text"
-                  value={prenomSource}
-                  maxLength={PRENOM_MAX}
-                  autoComplete="off"
-                  placeholder="Camille"
-                  onChange={(e) => setPrenomSource(e.target.value)}
+                <label className="rc-lbl" htmlFor="rc-dispo-texte">Tes disponibilités</label>
+                <textarea
+                  id="rc-dispo-texte"
+                  className="rc-dispo-texte"
+                  rows={3}
+                  value={dispoTexte}
+                  maxLength={DISPO_MAX}
+                  placeholder="Ex. : tôt le matin avant 8h, ou le samedi dans la journée."
+                  onChange={(e) => { setDispoTexte(e.target.value); if (dispoEtat === "erreur") setDispoEtat("repos"); }}
                 />
-                <p className="rc-prov-aide">
-                  {canal === "flyer"
-                    ? "Il est peut-être écrit sur le flyer. Laisse vide si tu ne sais pas."
-                    : "Pour qu'on puisse la remercier. Laisse vide si tu ne sais pas."}
-                </p>
+                <div className="rc-dispo-pied">
+                  <button
+                    type="button"
+                    className="rc-dispo-envoyer"
+                    disabled={!dispoTexte.trim() || !dispoPrenom.trim() || dispoTel.replace(/\D/g, "").length < 6 || dispoEtat === "envoi"}
+                    onClick={() => void envoyerDisponibilites()}
+                  >
+                    {dispoEtat === "envoi" ? "…" : "Envoyer mes disponibilités"}
+                  </button>
+                  <p className="rc-dispo-aide" aria-live="polite">
+                    {dispoEtat === "erreur"
+                      ? "L'envoi n'est pas passé — vérifie ton prénom et ton numéro, ou appelle-nous."
+                      : "Ça ne réserve rien — c'est nous qui revenons vers toi."}
+                  </p>
+                </div>
               </div>
             )}
-
-            {error && <div className="rc-err" role="alert">{error}</div>}
-
-            <div className="rc-prov-valider" ref={actionRef}>
-              <button
-                type="button"
-                className="rc-cta"
-                disabled={!selectedSlot || !canal || submitting}
-                aria-describedby="rc-prov-manque"
-                onClick={() => void confirmBooking()}
-              >
-                {submitting ? "…" : "Confirmer ma réservation"}
-              </button>
-              {/* Ce qui manque, dit en toutes lettres : un bouton grisé sans
-                  explication, c'est un cul-de-sac. */}
-              <p id="rc-prov-manque" className="rc-prov-manque" aria-live="polite">
-                {!selectedSlot
-                  ? "Choisis d'abord ton créneau ci-dessus."
-                  : !canal
-                    ? "Dis-nous comment tu as connu le club pour valider."
-                    : `Ton créneau : ${creneauCourt}.`}
-              </p>
-            </div>
           </section>
         </main>
-
-        {/* LA BARRE QUI DIT TOUJOURS LE GESTE SUIVANT.
-            Elle apparaît dès qu'une heure est choisie et ne quitte plus
-            l'écran. Le bouton n'est JAMAIS grisé : tant que la question n'a pas
-            de réponse, il y descend au lieu de refuser. Un bouton inerte
-            n'apprend rien à personne — c'est ce qui coûtait la moitié de cet
-            écran. */}
-        {selectedSlot && !actionAEcran && (
-          <div className="rc-sticky" role="region" aria-label="Finaliser ma réservation">
-            <div className="rc-sticky-in">
-              <div className="rc-sticky-txt">
-                <span className="rc-sticky-quand">{creneauCourt}</span>
-                <span className="rc-sticky-etat">{canal ? "Tout est prêt" : "Une dernière question"}</span>
-              </div>
-              <button
-                type="button"
-                className="rc-cta rc-sticky-cta"
-                disabled={submitting}
-                onClick={() => { if (canal) void confirmBooking(); else versLaQuestion(); }}
-              >
-                {submitting ? "…" : canal ? "Confirmer ma réservation" : "Continuer"}
-              </button>
-            </div>
-          </div>
-        )}
-        </>
       )}
 
-      {/* ── ÉCRAN 3 — CONFIRMATION ── */}
+      {/* ── ÉCRAN 3 — COORDONNÉES ── */}
+      {screen === "coordonnees" && (
+        <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
+          <div style={{ maxWidth: 640 }}>
+            <button type="button" onClick={() => setScreen("dispo")} className="rc-retour" aria-label="Revenir aux créneaux">
+              <span aria-hidden="true">←</span> Changer de créneau
+            </button>
+            <p className="rc-eyebrow" style={{ marginTop: 14 }}>Étape 3 sur 3 · Tes coordonnées</p>
+            <h1 style={{ marginTop: 14, fontSize: "clamp(28px,4.4vw,46px)" }}>Presque fini&nbsp;!</h1>
+          </div>
+
+          {/* Le créneau choisi, rappelé en haut : elle sait ce qu'elle valide. */}
+          {selectedSlot && (
+            <div className="rc-recap" style={{ maxWidth: 640, marginTop: 18 }}>
+              <span aria-hidden="true" style={{ fontSize: 22 }}>📅</span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 15.5, color: "var(--ink)" }}>{creneauCourt}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 13.5, color: "#5F7154" }}>Bilan bien-être + body scan + boisson · 11 rue Saint Pierre, Verdun</p>
+              </div>
+            </div>
+          )}
+
+          <form className="rc-card" style={{ padding: "clamp(24px,3vw,38px)", maxWidth: 640, marginTop: 18 }} onSubmit={confirmBooking}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <label><span className="rc-lbl">Ton prénom</span><input className="rc-field" type="text" required value={prenom} onChange={(e) => setPrenom(e.target.value)} autoComplete="given-name" placeholder="Marie" /></label>
+              <label><span className="rc-lbl">Ton nom</span><input className="rc-field" type="text" required value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="family-name" placeholder="Dupont" /></label>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
+              <label><span className="rc-lbl">Téléphone</span><input className="rc-field" type="tel" required value={tel} onChange={(e) => setTel(e.target.value)} autoComplete="tel" placeholder="06 79 44 87 59" /></label>
+              <label><span className="rc-lbl">Ville</span><input className="rc-field" type="text" required value={ville} onChange={(e) => setVille(e.target.value)} autoComplete="address-level2" placeholder="Verdun" /></label>
+            </div>
+            <label style={{ display: "block", marginTop: 14 }}><span className="rc-lbl">Email <span style={{ fontWeight: 400, color: "var(--muted)" }}>· pour ta confirmation</span></span><input className="rc-field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="marie.dupont@email.com" /></label>
+
+            {/* « Comment tu as connu le club ? » — obligatoire pour valider.
+                Seul moyen de savoir quel flyer marche : le QR imprimé est le même
+                sur tous les papiers, on ne peut que demander. */}
+            <div style={{ marginTop: 26, paddingTop: 22, borderTop: "1px solid var(--line)" }}>
+              <h2 id="rc-prov-titre" className="rc-prov-titre" style={{ fontSize: "clamp(18px,2vw,22px)" }}>Comment tu as connu le club&nbsp;?</h2>
+              <p className="rc-prov-sub">Une seule question, et on te laisse tranquille. C'est ce qui nous dit ce qui marche vraiment.</p>
+              <div className="rc-prov-choix" role="radiogroup" aria-labelledby="rc-prov-titre" aria-required="true">
+                {PROVENANCE_CANAUX_TUNNEL.map((cle) => {
+                  const { emoji, libelle } = LIBELLES_CANAL[cle];
+                  return (
+                    <button key={cle} type="button" role="radio" aria-checked={canal === cle} className="rc-choix"
+                      onClick={() => { setCanal(cle); setError(null); }}>
+                      <span aria-hidden="true">{emoji}</span>{libelle}
+                    </button>
+                  );
+                })}
+              </div>
+              {canal && provenanceDesigneQuelquun(canal) && (
+                <div className="rc-prov-qui">
+                  <label className="rc-lbl" htmlFor="rc-prov-prenom">Son prénom <span className="rc-prov-opt">— facultatif</span></label>
+                  <input id="rc-prov-prenom" className="rc-field" type="text" value={prenomSource} maxLength={PRENOM_MAX} autoComplete="off" placeholder="Camille" onChange={(e) => setPrenomSource(e.target.value)} />
+                  <p className="rc-prov-aide">
+                    {canal === "flyer" ? "Il est peut-être écrit sur le flyer. Laisse vide si tu ne sais pas." : "Pour qu'on puisse la remercier. Laisse vide si tu ne sais pas."}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {error && <div className="rc-err" role="alert" style={{ marginTop: 18 }}>{error}</div>}
+
+            <button type="submit" className="rc-cta" style={{ marginTop: 24, width: "100%", minHeight: 54 }} disabled={submitting}>
+              {submitting ? "…" : "Confirmer ma réservation"}
+            </button>
+            <p className="rc-prov-manque" aria-live="polite" style={{ textAlign: "center" }}>
+              {!coordsCompletes
+                ? "Complète tes coordonnées pour valider."
+                : !canal
+                  ? "Dis-nous comment tu as connu le club pour valider."
+                  : `Tu réserves : ${creneauCourt}.`}
+            </p>
+          </form>
+        </main>
+      )}
+
+      {/* ── ÉCRAN 4 — CONFIRMATION ── */}
       {screen === "confirm" && (
         <main className="rc-wrap" style={{ paddingTop: "clamp(24px,3.6vw,44px)", paddingBottom: "clamp(48px,7vw,80px)" }}>
           <div style={{ maxWidth: 640 }}>
@@ -1001,35 +678,23 @@ export function ReserverClubPage() {
               <h2 style={{ marginTop: 22, fontSize: "clamp(28px,3.6vw,42px)" }}>{prenom.trim() ? `C'est réservé, ${prenom.trim()} !` : "C'est réservé !"}</h2>
               <p style={{ margin: "14px 0 0", fontSize: 18, lineHeight: 1.6, color: "#3A443F" }}>{confWhen}</p>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 11, fontSize: 16, color: "var(--sub)" }}>
-                <div>👤 {confPeople}</div>
                 <div>📍 11 rue Saint&nbsp;Pierre, Verdun</div>
                 <div>✉️ On t'envoie la confirmation et le rappel par email.</div>
               </div>
               <p style={{ margin: "22px 0 0", padding: "18px 20px", borderRadius: 16, background: "var(--panel)", fontSize: 15, lineHeight: 1.55, color: "#5F7154" }}>
-                Ton bilan et ton body scan sont offerts. Après le rendez-vous, tu pourras choisir ta carte de visites si tu veux continuer — aucun engagement d'ici là.
+                Ton bilan bien-être, ton body scan et ta boisson sont offerts. Après le rendez-vous, tu pourras choisir ta carte de visites si tu veux continuer — aucun engagement d'ici là.
               </p>
               <button type="button" className="rc-cta" style={{ marginTop: 22, minHeight: 54, width: "100%" }} onClick={addToCalendar}>
                 <span aria-hidden="true">📅</span> Ajouter à mon agenda
               </button>
               <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13.5, color: "var(--sub)" }}>Comme ça, tu n'oublies pas — et ton téléphone te rappelle.</p>
 
-              {/* ── LA SORTIE (19/08) ────────────────────────────────────
-                  Des LIENS, pas des boutons : elle vient de dire oui, on ne
-                  lui vend plus rien. Ils descendent sous le CTA agenda pour
-                  ne jamais lui disputer l'attention. */}
               <div className="rc-sorties">
                 <p className="rc-sorties-titre">En attendant ton rendez-vous</p>
                 <a href="/club/le-rituel">Le rituel du matin, en 3 minutes</a>
                 <a href="/club/resultats">Les résultats des membres</a>
                 <a href="/club">Découvrir le club</a>
               </div>
-
-              {/* « Comment tu as connu le club ? » ne se pose PLUS ici : la
-                  question est passée sous les créneaux, à l'écran précédent, où
-                  il y a encore du monde. Ne pas la remettre ici — la RPC
-                  n'accepte qu'une réponse par lead (`deja_repondu`), donc la
-                  seconde serait perdue en silence, et la personne répondrait
-                  deux fois à la même chose. */}
             </div>
           </div>
         </main>
