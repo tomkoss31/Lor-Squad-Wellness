@@ -87,13 +87,35 @@ export function ReserverClubPage() {
   useClubHead("Réserver mon RDV découverte · The Breakfast Club");
 
   const [screen, setScreen] = useState<Screen>("capture");
+
+  /**
+   * A-T-ELLE SEULEMENT COMMENCÉ À REMPLIR ?
+   *
+   * Sans cette mesure, l'entonnoir dit « 88 arrivent, 21 passent » sans jamais
+   * dire POURQUOI, et on en est réduit à supposer : la page ne convainc pas,
+   * ou le formulaire décourage ? Les deux se corrigent à l'opposé l'un de
+   * l'autre. Cette étape tranche : celui qui a tapé dans un champ ou choisi
+   * son objectif était convaincu — s'il ne va pas au bout, c'est le formulaire.
+   *
+   * « Commencer » = tout premier geste sur le formulaire, la frappe comme le
+   * choix d'un objectif : l'objectif est en haut, on peut donc le cocher puis
+   * renoncer sans jamais toucher un champ.
+   */
+  const [saisieCommencee, setSaisieCommencee] = useState(false);
+  const marquerSaisie = useCallback(() => setSaisieCommencee(true), []);
   // Les trois écrans du tunnel, dans l'ordre : c'est ici qu'on saura enfin
   // combien de gens laissent leurs coordonnées puis renoncent au créneau.
   useEtapeTunnel(
     "reserver-club",
     screen === "capture" ? "coordonnees" : screen === "dispo" ? "choix du creneau" : "confirme",
-    screen === "capture" ? 0 : screen === "dispo" ? 1 : 2,
+    screen === "capture" ? 0 : screen === "dispo" ? 2 : 3,
   );
+  // Étape insérée AU MILIEU du tunnel le 27/08, donc les rangs suivants ont
+  // glissé (1→2, 2→3) — et l'historique déjà en base a été renuméroté avec
+  // eux. Sans ça, « choix du creneau » aurait porté deux rangs différents
+  // selon la date et l'entonnoir se serait réordonné tout seul.
+  // `noterEtape` déduplique par session : repasser par l'écran ne recompte pas.
+  useEtapeTunnel("reserver-club", saisieCommencee ? "saisie commencee" : null, 1);
 
   // Lead
   const [objectif, setObjectif] = useState<Objectif | "">("");
@@ -628,7 +650,7 @@ export function ReserverClubPage() {
             </div>
 
             {/* formulaire */}
-            <form className="rc-card" style={{ padding: "clamp(26px,3vw,40px)" }} onSubmit={submitCapture}>
+            <form className="rc-card" style={{ padding: "clamp(26px,3vw,40px)" }} onSubmit={submitCapture} onChange={marquerSaisie}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 999, background: "var(--grad)", color: "#fff", fontFamily: "Anton", fontSize: 16 }}>1</span>
                 <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--orange)" }}>Tes informations</span>
@@ -638,7 +660,7 @@ export function ReserverClubPage() {
               <p id="rc-objectif" style={{ margin: "24px 0 0", fontWeight: 700, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase" }}>Ton objectif</p>
               <div className="rc-obj" role="radiogroup" aria-label="Ton objectif" aria-required="true" style={{ marginTop: 12 }}>
                 {OBJECTIFS.map((o) => (
-                  <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} onClick={() => { setObjectif(o.id); setError(null); }}>
+                  <button type="button" key={o.id} role="radio" aria-checked={objectif === o.id} onClick={() => { setObjectif(o.id); setError(null); marquerSaisie(); }}>
                     <span className="ic" aria-hidden="true">{o.icon}</span><span className="t">{o.label}</span>
                   </button>
                 ))}
