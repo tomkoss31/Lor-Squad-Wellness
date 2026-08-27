@@ -312,7 +312,13 @@ export function ClubShell({
                   menu desktop et n'était visible que dans le menu mobile plein
                   écran. Recrutement ≠ parcourir le site → sa propre place à
                   côté du CTA principal, pas une 7e entrée dans la nav. */}
-              <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Devenir coach</Link>
+              {/* Pas de bouton vers la page où l'on se trouve déjà. Sur
+                  /club/rejoindre il doublait le bouton principal — deux
+                  pastilles « Devenir coach » côte à côte, dont une qui ne
+                  mène nulle part (relevé par Thomas le 27/08). */}
+              {pathname !== "/club/rejoindre" && (
+                <Link className="cl-hcta-ghost cl-hcta-desk" to="/club/rejoindre">Devenir coach</Link>
+              )}
               <a className="cl-hcta cl-hcta-desk" href={ctaHref}>{ctaCourt}</a>
               <button type="button" className="cl-burger" aria-label="Ouvrir le menu" aria-expanded={open} onClick={() => setOpen(true)}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
