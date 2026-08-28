@@ -70,6 +70,22 @@
 .rc-obj .ic{font-size:22px}
 .rc-obj .t{font-weight:600;font-size:15px;line-height:1.2}
 
+/* Objectif « hero » (écran 1, parcours allégé 27/08) : un seul tap, en pleine
+   largeur, avec le sous-titre et la flèche qui disent « ça t'amène plus loin ». */
+.rc-obj-hero{display:flex;flex-direction:column;gap:12px}
+.rc-obj-big{display:flex;align-items:center;gap:16px;width:100%;padding:18px 20px;border-radius:16px;background:var(--panel);border:2px solid rgba(30,51,48,.14);cursor:pointer;text-align:left;transition:border-color .16s,background .16s,box-shadow .16s,transform .12s}
+.rc-obj-big:hover{border-color:var(--orange);background:#fff}
+.rc-obj-big:active{transform:scale(.99)}
+.rc-obj-big[aria-checked="true"]{border-color:var(--orange);background:#fff;box-shadow:0 10px 24px -14px rgba(224,83,42,.55)}
+.rc-obj-big .ic{font-size:30px;flex:none;line-height:1}
+.rc-obj-big .txt{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.rc-obj-big .t{font-weight:700;font-size:17px;line-height:1.2;color:var(--ink)}
+.rc-obj-big .s{font-size:13.5px;color:#5F7154;line-height:1.3}
+.rc-obj-big .go{font-size:22px;color:var(--orange);flex:none;font-weight:700}
+
+/* Récap du créneau choisi, en haut de l'écran coordonnées : elle sait ce qu'elle valide. */
+.rc-recap{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:#EAF1E4;border:1px solid rgba(95,113,84,.3)}
+
 .rc-grid3{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) minmax(0,300px);gap:0;overflow:hidden}
 .rc-col{padding:clamp(22px,2.4vw,30px)}
 .rc-col.info{border-right:1px solid rgba(30,51,48,.1)}
@@ -253,4 +269,40 @@
 
 @media (prefers-reduced-motion: reduce){
   .rc .rc-dispo-ouvrir, .rc .rc-dispo-envoyer{ transition:none }
+}
+
+/* ── LA BARRE DU GESTE SUIVANT (27/08) ───────────────────────────────────
+   Elle sort dès qu'une heure est choisie, et ne quitte plus l'écran.
+   Pourquoi : sur téléphone, le créneau sélectionné et le bouton de
+   validation ne tiennent jamais ensemble dans la fenêtre — on choisit son
+   heure, rien ne bouge, et la phrase qui explique ce qui manque est encore
+   PLUS BAS que le bouton grisé. Mesuré sur trois semaines : 21 personnes
+   arrivent à cet écran, 11 confirment.
+   safe-area : sur iPhone, la barre système mange 34 px en bas. */
+.rc .rc-sticky{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  background:rgba(250,246,239,.97); backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  box-shadow:0 -14px 34px -22px rgba(30,51,48,.55);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+.rc .rc-sticky-in{
+  max-width:980px; margin:0 auto;
+  display:flex; align-items:center; gap:14px;
+}
+.rc .rc-sticky-txt{ display:flex; flex-direction:column; min-width:0; flex:1 1 auto }
+.rc .rc-sticky-quand{
+  font-family:Poppins,sans-serif; font-weight:700; font-size:15px; color:#26302C;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rc .rc-sticky-etat{ font-size:13px; line-height:1.4; color:var(--sub) }
+.rc .rc-sticky-cta{ width:auto; flex:0 0 auto; min-height:50px; padding:13px 26px; font-size:16px }
+
+/* Sous 520 px le libellé du créneau et le bouton se disputent la largeur :
+   le bouton passe pleine largeur, sous le texte. */
+@media (max-width:520px){
+  .rc .rc-sticky-in{ flex-direction:column; align-items:stretch; gap:8px }
+  .rc .rc-sticky-txt{ flex-direction:row; justify-content:space-between; gap:10px; align-items:baseline }
+  .rc .rc-sticky-etat{ flex:0 0 auto }
+  .rc .rc-sticky-cta{ width:100% }
 }

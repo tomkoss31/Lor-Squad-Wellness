@@ -68,7 +68,7 @@ export function ClubRejoindrePage() {
       description="Deviens coach au Breakfast Club de Verdun : tu démarres accompagné(e), tu fais grandir ta communauté, et tu peux ouvrir ton propre club de nutrition."
       ctaHref="/club/rejoindre/rdv?utm_source=site-club"
       ctaLabel="Découvrir l'opportunité coach"
-      ctaCourt="Devenir coach"
+      ctaCourt="En parler avec nous"
     >
       <InnerHero
         pill="Rejoindre l'équipe"
