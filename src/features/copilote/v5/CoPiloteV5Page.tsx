@@ -29,17 +29,17 @@ import { useTheme } from "../../../hooks/useTheme";
 // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
 import { useTimeContext } from "./hooks/useTimeContext";
 
-import { EcranDuJourBranche } from "./components/EcranDuJourBranche";
+// Co-pilote minimal (2026-08-28, maquette validée par Thomas) : le RDV du jour
+// remplace l'écran du jour complet. « La seule chose dont j'ai besoin, c'est le
+// rendez-vous d'aujourd'hui — juste un rappel de l'agenda. »
+import { RdvDuJour } from "./components/RdvDuJour";
 import { BandeauDemarrage } from "./components/BandeauDemarrage";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
 
-import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
-// Liste privée « à relancer » (in-app, sans email/push) — 2026-06-30.
-import { DeclarationActiviteCard } from "../../../components/copilote/DeclarationActiviteCard";
 // Salle des Opérations (onboarding distri) : switch de rendu §3.
 import { SalleOpsQuotidien } from "../salle-ops/SalleOpsQuotidien";
 import { useSalleOps } from "../salle-ops/useSalleOps";
@@ -226,33 +226,20 @@ export function CoPiloteV5Page() {
           Académie ci-dessus — lequel fait la même chose en mieux (en base,
           7 étapes, repris chaque jour). Une seule porte de démarrage. */}
 
-      {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
-          du Co-pilote qui s affiche si au moins un client a un anniv
-          aujourd hui (naissance ou +1m/+3m/+6m programme). Auto-hidden
-          si aucun event. Bouton WhatsApp avec message pre-rempli. */}
-      <CelebrationCard />
+      {/* ═══ LE RDV DU JOUR (Co-pilote minimal, 2026-08-28) ═══════════════════
+          Maquette validée par Thomas à 390 px. On retire tout ce qui retapait
+          Supabase à l'ouverture sans jamais servir : l'écran du jour complet
+          (`EcranDuJourBranche` : dormants RPC, listes clients/équipe calculées),
+          la carte anniversaires (`CelebrationCard`, RPC `get_today_celebrations`
+          à chaque chargement) et le bandeau déclaration d'activité
+          (`DeclarationActiviteCard`, lecture `users.legal_siret` — « l'INFO INPI
+          que personne ne lit »). Les trois composants restent dans le repo si on
+          veut les rebrancher, mais ils ne sont plus montés ici.
 
-      {/* Liste privee « a relancer » retiree au menage du 12/08/2026 :
-          2 rappels crees en 90 jours, dernier il y a 38 jours — pour un cron
-          qui tournait 48 fois par jour. */}
-
-      {/* Déclaration d'activité : seul écran vu par 100 % des distris, alors que
-          l'obligation les concerne tous. Disparaît dès que le SIRET est saisi. */}
-      <DeclarationActiviteCard />
-
-      {/* ═══ PLAN DU JOUR (refonte chantier 1, design Claude Design validé) ═══
-          Le nouveau héros : file d'actions priorisée (RDV + relances propres +
-          inbox) dans le shell premium (warm dark + G3 + Fraunces + médaillon
-          tournant + 360). Remplace : hero éditorial, RentabJourney (gros bloc +
-          leaderboard → Mon équipe ch.4), ReferrerStatsCard (« Tes leads » =
-          doublon CRM), StatsRow3, DormantClientsWidget, PvActionPlanAlert,
-          Liste100 (→ Outils ch.3), rangée TodayTimeline+SideStack (carte FLEX). */}
-      {/* Refonte 2026-08-12 : l'ecran du jour remplace le Plan du jour.
-          Un seul ecran qui descend — une seule personne en haut (jamais deux,
-          cf. ceQuiCompte), puis ta journee, tes clients, ton equipe.
-          `ops` est passe en PROP : remonter useSalleOps ici declencherait un
-          fetch `distributor_starter_progress` de plus, non cache. */}
-      <EcranDuJourBranche data={data} ops={ops} />
+          Ne reste que ce qui compte au réveil : qui je vois aujourd'hui, dans
+          combien de temps, avec qui. `RdvDuJour` lit `useCopiloteData`, qui
+          dérive tout d'`AppContext` (aucune requête en plus). */}
+      <RdvDuJour data={data} now={now} />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.
