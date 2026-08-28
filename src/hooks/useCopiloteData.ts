@@ -57,6 +57,10 @@ export interface CopiloteData {
 
   // Hero
   nextAction: CopiloteNextAction | null;
+  /** Le prochain RDV APRÈS aujourd'hui — sert l'état « aucun RDV du jour » du
+   *  Co-pilote minimal (« prochain : demain… »). Même source que l'agenda du
+   *  jour, borné au futur au-delà de ce soir. Dérivé, aucune requête en plus. */
+  nextRdvBeyondToday: { name: string; time: Date; type: string; isProspect: boolean } | null;
 
   // Agenda / suivis (max 3 préservés, reste comptabilisé dans moreCount)
   todayAgenda: CopiloteAgendaItem[];
@@ -177,6 +181,44 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
     todayAgendaRaw.sort((a, b) => a.time.getTime() - b.time.getTime());
     const todayAgenda = todayAgendaRaw.slice(0, 3);
     const todayAgendaMoreCount = Math.max(0, todayAgendaRaw.length - 3);
+
+    // ─── Prochain RDV APRÈS aujourd'hui ─────────────────────────────────────
+    // Même source que l'agenda du jour (suivis clients + prospects planifiés),
+    // bornée au-delà de ce soir. Sert l'état « aucun RDV aujourd'hui » du
+    // Co-pilote minimal, qui montre alors « prochain : demain… ».
+    const futureRdvRaw: NonNullable<CopiloteData["nextRdvBeyondToday"]>[] = [];
+    for (const f of myFollowUps) {
+      if (f.status !== "scheduled") continue;
+      const d = new Date(f.dueDate);
+      if (d >= endOfToday) {
+        const client = myClients.find((c) => c.id === f.clientId);
+        if (!client) continue;
+        futureRdvRaw.push({
+          name: `${client.firstName} ${client.lastName}`.trim(),
+          time: d,
+          type: f.type || "Suivi",
+          isProspect: false,
+        });
+      }
+    }
+    for (const p of myProspects) {
+      if (p.status !== "scheduled") continue;
+      try {
+        const d = new Date(p.rdvDate);
+        if (d >= endOfToday) {
+          futureRdvRaw.push({
+            name: `${p.firstName} ${p.lastName}`.trim(),
+            time: d,
+            type: "Prospect · 1er contact",
+            isProspect: true,
+          });
+        }
+      } catch {
+        // skip mauvaise date
+      }
+    }
+    futureRdvRaw.sort((a, b) => a.time.getTime() - b.time.getTime());
+    const nextRdvBeyondToday = futureRdvRaw[0] ?? null;
 
     // ─── Suivis à faire (protocole) ─────────────────────────────────────────
     const loggedKey = (clientId: string, day: number) => `${clientId}::j${day}`;
@@ -331,6 +373,7 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
       todayAppointmentsCount: todayAgendaRaw.length,
       todayFollowupsCount: pendingFollowupsRaw.length,
       nextAction,
+      nextRdvBeyondToday,
       todayAgenda,
       todayAgendaAll: todayAgendaRaw,
       todayAgendaMoreCount,
@@ -382,6 +425,7 @@ function emptyData(now: Date): CopiloteData {
     todayAppointmentsCount: 0,
     todayFollowupsCount: 0,
     nextAction: null,
+    nextRdvBeyondToday: null,
     todayAgenda: [],
     todayAgendaAll: [],
     todayAgendaMoreCount: 0,
