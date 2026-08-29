@@ -26,7 +26,7 @@
 // Identité crème PROPRE au club (≠ thème app).
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -98,6 +98,34 @@ export function ReserverClubPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
+  /**
+   * CHOISIR UN JOUR DOIT MONTRER LES CRENEAUX.
+   *
+   * Mesure du 29/08 sur la page en ligne, ecran de 812 px : la colonne des
+   * creneaux commence a 1119 px. On cliquait un jour et RIEN ne bougeait a
+   * l ecran — exactement le cul-de-sac corrige le 27/08, reintroduit par la
+   * refonte du parcours. Sur telephone, carte info + calendrier + creneaux
+   * s empilent : les creneaux tombent sous la ligne de flottaison.
+   *
+   * smooth est IGNORE dans plusieurs cas reels (onglet qui ne compose pas,
+   * « reduire les animations » actif) : on remesure et on repasse en auto
+   * si rien n a bouge.
+   */
+  const creneauxRef = useRef<HTMLElement | null>(null);
+  const versLesCreneaux = useCallback(() => {
+    const cible = creneauxRef.current;
+    if (!cible) return;
+    const depart = window.scrollY;
+    cible.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    window.setTimeout(() => {
+      if (Math.abs(window.scrollY - depart) < 8) cible.scrollIntoView({ behavior: "auto", block: "nearest" });
+    }, 320);
+  }, []);
+
+  // On change d ecran → on repart du haut. Sinon l ecran suivant s ouvre deja
+  // defile, la ou on avait laisse le precedent.
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, [screen]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,6 +157,12 @@ export function ReserverClubPage() {
     if (firstKey) {
       const [y, m] = firstKey.split("-").map(Number);
       setCal({ year: y, month: m - 1 });
+      // LE PREMIER JOUR DISPONIBLE EST DEJA CHOISI.
+      // Mesure du 29/08 sur la vraie page : la colonne des creneaux affichait
+      // « Choisis un jour pour voir les creneaux » et rien d autre. Il fallait
+      // deviner quelle case cliquer dans un calendrier majoritairement grise —
+      // 26 personnes ont vu ce calendrier, 4 seulement ont choisi une heure.
+      setSelectedDay(firstKey);
     } else {
       const now = new Date();
       setCal({ year: now.getFullYear(), month: now.getMonth() });
@@ -341,17 +375,23 @@ export function ReserverClubPage() {
       const clickable = status === "open" || status === "few";
       const on = selectedDay === key;
       const st: CSSProperties = { cursor: clickable ? "pointer" : "not-allowed" };
-      if (on) Object.assign(st, { background: "#1E3330", color: "#FAF6EF", boxShadow: "0 8px 18px -8px rgba(30,51,48,.5)" });
-      else if (status === "past") Object.assign(st, { background: "transparent", color: "rgba(30,51,48,.20)" });
-      else if (status === "off") Object.assign(st, { background: "repeating-linear-gradient(-45deg,#EBE5DA,#EBE5DA 4px,#F5F1E9 4px,#F5F1E9 8px)", color: "rgba(30,51,48,.34)" });
-      else if (status === "full") Object.assign(st, { background: "#F4E0D9", color: "#B06A54" });
-      else if (status === "few") Object.assign(st, { background: "#FBEBCF", color: "#8A6412" });
-      else Object.assign(st, { background: "#E2EFD9", color: "#2F5136" });
+      // CE QUI EST OUVERT DOIT SAUTER AUX YEUX, LE RESTE SE TAIRE.
+      // Les jours fermes portaient des hachures diagonales : le motif le plus
+      // BRUYANT de la grille etait pose sur ce qui n interesse personne, et un
+      // mois a moitie ferme ressemblait a un mur. Ils deviennent un aplat sourd,
+      // les jours ouverts gagnent en contraste, et le jour choisi porte un
+      // anneau — sur telephone on doit le retrouver d un coup d oeil.
+      if (on) Object.assign(st, { background: "#1E3330", color: "#FAF6EF", boxShadow: "0 0 0 3px rgba(224,83,42,.65), 0 8px 18px -8px rgba(30,51,48,.5)" });
+      else if (status === "past") Object.assign(st, { background: "transparent", color: "rgba(30,51,48,.16)" });
+      else if (status === "off") Object.assign(st, { background: "#F1ECE1", color: "rgba(30,51,48,.26)" });
+      else if (status === "full") Object.assign(st, { background: "#F6E7E0", color: "#B58B7A" });
+      else if (status === "few") Object.assign(st, { background: "#FBEBCF", color: "#7C5A0F", fontWeight: 700 });
+      else Object.assign(st, { background: "#D3E8C4", color: "#255030", fontWeight: 700 });
       cells.push(
         <div className="rc-cell" key={key}>
           <button type="button" className="rc-day" style={st} disabled={!clickable}
             aria-pressed={on}
-            onClick={() => { setSelectedDay(key); setSelectedSlot(null); }}>{d}</button>
+            onClick={() => { setSelectedDay(key); setSelectedSlot(null); versLesCreneaux(); }}>{d}</button>
         </div>,
       );
     }
@@ -429,14 +469,18 @@ export function ReserverClubPage() {
                 <span style={{ flex: "none", width: 44, height: 44, borderRadius: 999, background: "#E7DCC4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }} aria-hidden="true">☕</span>
                 <span style={{ fontWeight: 600, fontSize: 15, color: "#3A443F" }}>Breakfast Club · Verdun</span>
               </div>
-              <h2 style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>RDV découverte</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Bilan bien-être · body scan · boisson offerte</p>
-              <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 13, fontSize: 15, color: "var(--sub)" }}>
+              {/* Sur telephone, tout ce bloc est replie (cf. .rc-info-detail dans
+                  le CSS) : mesure du 29/08, il poussait les creneaux a 1119 px,
+                  hors ecran. Le resume d une ligne le remplace. */}
+              <p className="rc-info-resume">45 min · bilan bien-être + body scan + boisson · <strong>offert</strong></p>
+              <h2 className="rc-info-detail" style={{ marginTop: 18, fontSize: "clamp(22px,2.4vw,27px)" }}>RDV découverte</h2>
+              <p className="rc-info-detail" style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>Bilan bien-être · body scan · boisson offerte</p>
+              <div className="rc-info-detail" style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 13, fontSize: 15, color: "var(--sub)" }}>
                 <div>🕒 45 min de RDV · créneau réservé 1h</div>
                 <div>📍 En personne · 11 rue Saint&nbsp;Pierre</div>
                 <div>🎁 Offert · sans engagement</div>
               </div>
-              <p style={{ margin: "20px 0 0", fontSize: 14, lineHeight: 1.55, color: "#5F7154", paddingTop: 18, borderTop: "1px solid rgba(30,51,48,.1)" }}>
+              <p className="rc-info-detail" style={{ margin: "20px 0 0", fontSize: 14, lineHeight: 1.55, color: "#5F7154", paddingTop: 18, borderTop: "1px solid rgba(30,51,48,.1)" }}>
                 On t'accueille pour ton body scan et un vrai point sur tes objectifs. Tu laisseras tes coordonnées juste après avoir choisi ton heure.
               </p>
             </aside>
@@ -454,14 +498,14 @@ export function ReserverClubPage() {
                 {loading ? <div style={{ gridColumn: "1 / -1", padding: "30px 0", textAlign: "center", color: "var(--muted)" }}>Chargement des créneaux…</div> : renderCalendar()}
               </div>
               <div className="rc-legend">
-                <span><span className="rc-sw" style={{ background: "#E2EFD9" }} />Disponible</span>
+                <span><span className="rc-sw" style={{ background: "#D3E8C4" }} />Disponible</span>
                 <span><span className="rc-sw" style={{ background: "#FBEBCF" }} />Dernières places</span>
-                <span><span className="rc-sw" style={{ background: "#F4E0D9" }} />Complet</span>
-                <span><span className="rc-sw" style={{ background: "repeating-linear-gradient(-45deg,#EBE5DA,#EBE5DA 3px,#F5F1E9 3px,#F5F1E9 6px)" }} />Fermé</span>
+                <span><span className="rc-sw" style={{ background: "#F6E7E0" }} />Complet</span>
+                <span><span className="rc-sw" style={{ background: "#F1ECE1" }} />Fermé</span>
               </div>
             </section>
 
-            <section className="rc-col slots">
+            <section className="rc-col slots" ref={creneauxRef}>
               {!selectedDay ? (
                 <div style={{ minHeight: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 12, color: "var(--muted)" }}>
                   <span style={{ fontSize: 30 }} aria-hidden="true">📅</span>

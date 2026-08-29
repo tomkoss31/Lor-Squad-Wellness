@@ -106,10 +106,27 @@
 .rc-dot{width:8px;height:8px;border-radius:999px;display:inline-block}
 .rc-err{margin:14px 0 0;padding:12px 16px;border-radius:12px;background:#F4E0D9;color:#8A3B22;font-size:14px;font-weight:600}
 
+/* Le resume d une ligne ne sert que sur telephone : sur ordinateur la
+   colonne de gauche a toute la place, on garde le detail. */
+.rc-info-resume{display:none}
+
 @media (max-width:900px){
   .rc-grid3{grid-template-columns:1fr}
   .rc-col.info{border-right:none;border-bottom:1px solid rgba(30,51,48,.1)}
   .rc-col.slots{border-left:none;border-top:1px solid rgba(30,51,48,.1)}
+
+  /* LA CARTE INFO PASSAIT DEVANT LES CRENEAUX (mesure du 29/08).
+     414 px de hauteur en haut de page, plus le calendrier : la colonne des
+     creneaux demarrait a 1119 px sur un ecran de 812. On replie le detail,
+     il reste le nom du club et une ligne qui dit ce qu on reserve. */
+  .rc-col.info{padding:14px 18px}
+  /* !important ASSUME : ces blocs portent un style en ligne (display:flex),
+     et un style en ligne BAT une media query. Sans ca, un des quatre blocs
+     restait affiche — 94 px de plus, mesures a l appui. Meme piege que la
+     barre des relances du CRM (18/08). */
+  .rc-info-detail{display:none !important}
+  .rc-info-resume{display:block;margin:10px 0 0;font-size:13.5px;line-height:1.5;color:#5F7154}
+  .rc-info-resume strong{color:var(--ink)}
 }
 @media (prefers-reduced-motion:reduce){.rc *{transition:none!important}}
 
