@@ -20,7 +20,7 @@
 // coach. Tokens var(--ls-*) uniquement.
 // =============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
@@ -52,7 +52,7 @@ import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
 import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
-import { caseDuLead, compterParCase, type CaseActive } from "../features/crm/caseLead";
+import { caseDuLead, compterParCase, demandeUnGeste, type CaseActive } from "../features/crm/caseLead";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { clesDoublon, grouperParPersonne } from "../features/crm/cleDoublon";
@@ -234,9 +234,15 @@ export function CrmPage() {
     };
   }, [currentUser?.name]);
 
-  const filtered = useMemo(
-    () =>
-      leads.filter((l) => {
+  // ⚠️ 28/08 — UN SEUL PRÉDICAT, DEUX USAGES.
+  // La jauge comptait `leadsEntonnoir` (tout le périmètre, sans filtre) pendant
+  // que la liste, elle, appliquait vue + périmètre + source + recherche.
+  // Vérifié sur dev : la jauge annonçait « 12 à relancer » et le filtre en
+  // affichait 5 — les leads de l'équipe étaient comptés mais pas montrés.
+  // Le prédicat vit désormais ici, en un seul endroit, et la jauge s'en sert
+  // avec `avecCase = false` : elle décrit EXACTEMENT ce qu'un tap produira.
+  const passeFiltres = useCallback(
+    (l: CrmLead, avecCase: boolean): boolean => {
         // Un lead pas encore accepté n'est NULLE PART dans l'entonnoir (CRM
         // Board V2, lot 2) : ni dans une colonne, ni dans l'historique, ni
         // dans les compteurs. Il attend dans la boîte d'arrivée, au-dessus.
@@ -286,16 +292,25 @@ export function CrmPage() {
           )
             return false;
         }
-        // Le segment de jauge tapé, s'il y en a un — même règle que le compte.
-        if (caseFiltre && caseDuLead(l) !== caseFiltre) return false;
+        // Le segment de jauge tapé. `avecCase = false` sert à calculer ce que
+        // la jauge ANNONCE : la population telle qu'elle serait sans son
+        // propre filtre. Sans ça, la jauge décrirait un monde et la liste un
+        // autre — le bug qu'on est en train de supprimer.
+        if (avecCase && caseFiltre && caseDuLead(l) !== caseFiltre) return false;
 
         // Les questions de qualification (température, signaux, objectif).
         if (!passeQualif(l, qualif)) return false;
 
         return true;
-      }),
-    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, caseFiltre, qualif],
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [view, canFilterTeam, scope, currentUser?.id, isAdmin, line1Ids, line2Ids, filterSource, search, caseFiltre, qualif],
   );
+
+  const filtered = useMemo(() => leads.filter((l) => passeFiltres(l, true)), [leads, passeFiltres]);
+
+  /** La population que la jauge décrit : tout sauf son propre filtre. */
+  const baseJauge = useMemo(() => leads.filter((l) => passeFiltres(l, false)), [leads, passeFiltres]);
 
   // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
   //
@@ -358,11 +373,16 @@ export function CrmPage() {
    * en n'affirmant que du mesuré, et elle annonce l'ordre dans lequel la liste
    * est rangée juste en dessous.
    */
+  // ⚠️ 28/08 — L'EN-TÊTE DISAIT AUTRE CHOSE QUE LA LISTE.
+  // Il comptait avec `groupeDe(...) === "aujourdhui"` et sa propre définition
+  // de « jamais contacté » : sur dev, il annonçait « 11 personnes t'attendent,
+  // 5 à qui personne n'a parlé » au-dessus d'une jauge qui affichait
+  // « 0 Nouveau » et d'une section « À faire aujourd'hui · 5 ». Trois chiffres,
+  // trois calculs. Il lit désormais la MÊME règle que la section.
   const capDuJour = useMemo(() => {
-    const maintenant = new Date();
-    const ici = regroupes.filter((l) => groupeDe(l, maintenant) === "aujourdhui");
-    const jamais = ici.filter((l) => !l.contactedAt && l.derniereReponse === null && l.status === "new").length;
-    const retard = ici.filter((l) => l.relanceDue).length;
+    const ici = regroupes.filter((l) => demandeUnGeste(l));
+    const jamais = ici.filter((l) => caseDuLead(l) === "nouveau").length;
+    const retard = ici.filter((l) => caseDuLead(l) === "relance").length;
     return { total: ici.length, jamais, retard };
   }, [regroupes]);
 
@@ -395,7 +415,11 @@ export function CrmPage() {
   // Les compteurs de la jauge. Ils lisent la population dédoublonnée du
   // périmètre — et NON `filtered`, sinon la jauge se recalculerait sur son
   // propre filtre et afficherait 100 % partout dès qu'on tape un segment.
-  const comptesParCase = useMemo(() => compterParCase(leadsEntonnoir), [leadsEntonnoir]);
+  const jaugeRegroupee = useMemo(
+    () => grouperParPersonne(baseJauge).map((g) => fusionnerGroupe(g).vue),
+    [baseJauge],
+  );
+  const comptesParCase = useMemo(() => compterParCase(jaugeRegroupee), [jaugeRegroupee]);
 
   // La boîte d'arrivée : ce qui attend un geste, le plus récent d'abord.
   // On ne la filtre PAS par la recherche ni par les onglets — c'est une file
@@ -1099,7 +1123,7 @@ export function CrmPage() {
       ) : (
         <CrmListe
           leads={regroupes}
-          total={leadsEntonnoir.length}
+          total={jaugeRegroupee.length}
           maintenant={new Date()}
           onOuvrir={(l) => setPanneauLead(l)}
           onAppeler={appeler}
