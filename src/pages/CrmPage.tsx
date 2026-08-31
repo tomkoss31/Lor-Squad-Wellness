@@ -38,7 +38,6 @@ import {
 import { buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
-import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 // Étape « À conclure » (28/08) : un rendez-vous passé doit produire une réponse.
 import { CrmAConclure, type CibleAConclure } from "../components/crm/CrmAConclure";
 import { EFFET_ISSUE, type IssueRdv } from "../features/crm/aConclure";
@@ -47,11 +46,11 @@ import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
 import { useActiveClubId } from "../hooks/useActiveClubId";
 import { rdvAConclure } from "../features/crm/aConclure";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
-import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
 import { CrmRdvLigne } from "../components/crm/CrmRdvLigne";
+import { CrmDemandesRdv, type DemandeRdv } from "../components/crm/CrmDemandesRdv";
 import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
 import { caseDuLead, compterParCase, demandeUnGeste, type CaseActive } from "../features/crm/caseLead";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
@@ -590,10 +589,42 @@ export function CrmPage() {
 
   /** Les demandes jamais acceptées. C'est la SEULE raison de déplier les blocs
    *  de rendez-vous : accepter n'existe nulle part ailleurs dans l'app. */
-  const demandesEnAttente = useMemo(
-    () => rdvFuturs.filter((b) => b.status === "requested").length,
+  /** Les demandes jamais acceptées. Accepter est la SEULE action de l'ancien
+   *  pavé qui n'existe nulle part ailleurs : c'est elle qui envoie le mail
+   *  « c'est confirmé ». */
+  const demandesRdv: DemandeRdv[] = useMemo(
+    () =>
+      rdvFuturs
+        .filter((b) => b.status === "requested")
+        .map((b) => ({
+          id: b.id,
+          nom: `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Sans nom",
+          slotStart: b.slot_start,
+          contact: b.contact,
+        })),
     [rdvFuturs],
   );
+
+  async function accepterDemande(d: DemandeRdv) {
+    // Chemin unique : c'est lui qui envoie le « c'est confirmé » à la personne.
+    const { error } = await setRdvBookingStatus(d.id, "confirmed");
+    pushToast(
+      error
+        ? { tone: "warning", title: "Demande non acceptée", message: error instanceof Error ? error.message : "Droits insuffisants ?" }
+        : { tone: "success", title: `${d.nom} · rendez-vous confirmé`, message: "Le mail de confirmation vient de partir." },
+    );
+    if (!error) await rechargerRdv();
+  }
+
+  async function refuserDemande(d: DemandeRdv) {
+    const { error } = await setRdvBookingStatus(d.id, "canceled");
+    pushToast(
+      error
+        ? { tone: "warning", title: "Refus non enregistré", message: error instanceof Error ? error.message : "Droits insuffisants ?" }
+        : { tone: "success", title: `${d.nom} · demande refusée`, message: "Le créneau est libéré." },
+    );
+    if (!error) await rechargerRdv();
+  }
 
   async function handleConclure(cible: CibleAConclure & { contact?: string | null }, issue: IssueRdv) {
     const effet = EFFET_ISSUE[issue];
@@ -764,16 +795,16 @@ export function CrmPage() {
         onOuvrirAgenda={() => navigate("/agenda")}
       />
 
-      {demandesEnAttente > 0 ? (
-        <div style={{ margin: "10px 0 0" }}>
-          <p style={demandeTitre}>
-            ⚠️ {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""} attend
-            {demandesEnAttente > 1 ? "ent" : ""} ta réponse
-          </p>
-          <RdvBookingsWidget />
-          <ClubDiscoveryWidget />
-        </div>
-      ) : null}
+      {/* ⚠️ 31/08 — ERREUR CORRIGÉE LE JOUR MÊME. Ici, je rallumais les deux
+          widgets d'origine dès qu'une demande arrivait : mesuré sur dev, UNE
+          demande faisait revenir les huit rendez-vous et la page repassait à
+          près de 7 000 px. On avait juste remplacé un pavé permanent par un
+          pavé conditionnel. On ne montre plus QUE ce qui attend une réponse. */}
+      <CrmDemandesRdv
+        demandes={demandesRdv}
+        onAccepter={accepterDemande}
+        onRefuser={refuserDemande}
+      />
 
       {error ? (
         <div style={errorBanner}>
@@ -1299,14 +1330,6 @@ const CRM_COLS_CSS = `
 `;
 
 /** Le repli des blocs de rendez-vous et le panneau de filtres. */
-const demandeTitre: React.CSSProperties = {
-  margin: "0 0 8px 2px",
-  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
-  fontSize: 11,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  color: "var(--ls-coral)",
-};
 
 
 const panneauFiltres: React.CSSProperties = {
