@@ -135,15 +135,22 @@ function Ligne({
     return (
       <div style={ligneCompacte}>
         <button type="button" onClick={() => onOuvrir(lead)} style={zoneTexteCompacte} aria-label={`Ouvrir la fiche de ${nom}`}>
-          <span style={ligneNom}>
+          {/* ⚠️ 31/08 — la pastille d'état RÉPÉTAIT la phrase (« RDV CALÉ » au-
+              dessus de « Rendez-vous pris ») et poussait la ligne à trois
+              lignes, soit 89 px au lieu de 60. On garde la phrase, qui dit la
+              même chose en plus précis, et la couleur du point porte l'état. */}
+          <span style={ligneNomCompacte}>
+            <span style={{ ...pointEtat, background: TEINTE[c] }} aria-hidden="true" />
             <span style={nomCompact}>{nom}</span>
             {chaud && <span aria-label="Chaud" title="Chaud">🔥</span>}
-            <span style={{ ...pastilleEtat, color: TEINTE[c] }}>{LIBELLE_CASE[c]}</span>
             {fiches > 0 && (
               <span style={marqueDoublon} title={`${fiches + 1} fiches réunies sous cette personne`}>⚠️</span>
             )}
           </span>
-          <span style={raisonCompacte}>{phraseEtat(pourPhrase, maintenant)}</span>
+          <span style={raisonCompacte}>
+            <span className="ls-sr-only">{LIBELLE_CASE[c]} — </span>
+            {phraseEtat(pourPhrase, maintenant)}
+          </span>
         </button>
         <button type="button" onClick={() => onPlus(lead)} style={plusCompact} aria-label={`Actions pour ${nom}`}>
           ⋯
@@ -287,7 +294,28 @@ const zoneTexteCompacte: React.CSSProperties = {
   font: "inherit",
 };
 
+/** Nom + repères sur UNE seule ligne, jamais deux. */
+const ligneNomCompacte: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 7,
+  minWidth: 0,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+};
+
+/** L'état, réduit à un point coloré : la phrase juste en dessous le dit déjà
+ *  en toutes lettres, et un lecteur d'écran l'entend via `sr-only`. */
+const pointEtat: React.CSSProperties = {
+  width: 7,
+  height: 7,
+  borderRadius: "50%",
+  flex: "none",
+};
+
 const nomCompact: React.CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
   fontFamily: "Syne, sans-serif",
   fontWeight: 700,
   fontSize: 14.5,

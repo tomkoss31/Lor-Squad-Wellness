@@ -80,8 +80,14 @@ export function CrmAConclure({ cibles, onRepondre, maintenant }: Props) {
       {/* ⚠️ 31/08 — la phrase d'explication est passée dans l'en-tête, sur la
           même ligne que le compte : elle disait la même chose et coûtait
           40 px par affichage, tous les jours. */}
+      {/* ⚠️ 31/08 — UNE CARTE À LA FOIS. Deux cartes complètes faisaient 562 px,
+          soit un tiers du premier écran. Or on ne répond qu'à une personne à la
+          fois : la plus ancienne passe devant (elle traîne depuis le plus
+          longtemps), et la suivante apparaît dès qu'on a répondu. Le compte
+          reste écrit en tête, donc rien n'est caché — c'est une file, pas un
+          empilement. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
-        {cibles.map((c) => {
+        {cibles.slice(0, 1).map((c) => {
           const occupe = enCours === c.id;
           return (
             <div key={c.id} style={carte(occupe)}>
@@ -130,6 +136,11 @@ export function CrmAConclure({ cibles, onRepondre, maintenant }: Props) {
             </div>
           );
         })}
+        {cibles.length > 1 ? (
+          <p style={suite}>
+            puis {cibles.length - 1} autre{cibles.length > 2 ? "s" : ""} — une à la fois
+          </p>
+        ) : null}
       </div>
     </section>
   );
@@ -161,6 +172,13 @@ const titre: React.CSSProperties = {
   fontSize: 16,
   color: "var(--ls-text)",
   letterSpacing: "-0.01em",
+};
+
+const suite: React.CSSProperties = {
+  margin: "2px 0 0 2px",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 10.5,
+  color: "var(--ls-text-muted)",
 };
 
 const rappel: React.CSSProperties = {
