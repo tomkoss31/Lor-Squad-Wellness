@@ -51,6 +51,7 @@ import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
+import { CrmRdvLigne } from "../components/crm/CrmRdvLigne";
 import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
 import { caseDuLead, compterParCase, demandeUnGeste, type CaseActive } from "../features/crm/caseLead";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
@@ -187,20 +188,6 @@ export function CrmPage() {
   // Il l'était pour garder le premier écran court — mais c'est d'ici que part
   // l'email d'acceptation, et un bloc replié se traduit par des RDV oubliés.
   //
-  // ⚠️ 26/08 — OUVERT SUR GRAND ÉCRAN, REPLIÉ SUR TÉLÉPHONE.
-  // Thomas, capture à l'appui : « trop d'info sur mobile, c'est affreux ».
-  // Il devait faire défiler NEUF grosses cartes de rendez-vous avant
-  // d'atteindre ses leads — son vrai travail. Sur un écran de 390 px, ces
-  // blocs ne cadrent pas le premier écran : ils le confisquent.
-  // Le souhait de Mélanie (« pas caché quand on ouvre la page ») reste servi
-  // sur ordinateur, là où la place existe.
-  const [rdvOuverts, setRdvOuverts] = useState(() => {
-    try {
-      return window.innerWidth >= 768;
-    } catch {
-      return true;
-    }
-  });
   // Le tri vit désormais chez le parent : il a rejoint le panneau, et sa
   // valeur sert aussi à savoir si un réglage est actif.
   const [sortKey, setSortKey] = useState<SortKey>("echeance");
@@ -398,15 +385,6 @@ export function CrmPage() {
     }
     return by;
   }, [leads, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids]);
-  // La jauge d'entonnoir comptait les DOUBLONS : elle lisait `leads` brut,
-  // alors que la liste, elle, regroupe. claire y pesait 3 personnes et Manon 3
-  // — mesuré le 24/08 : 8 lignes en trop sur 42, soit ~19 % de gonflement sur
-  // tous les chiffres du haut de page. Elle lit désormais le même monde que le
-  // reste de l'écran.
-  const leadsEntonnoir = useMemo(
-    () => grouperParPersonne(leads.filter((l) => !l.enAttente)).map((g) => fusionnerGroupe(g).vue),
-    [leads],
-  );
 
   // Les compteurs de la jauge. Ils lisent la population dédoublonnée du
   // périmètre — et NON `filtered`, sinon la jauge se recalculerait sur son
@@ -460,19 +438,6 @@ export function CrmPage() {
     if (l.relanceDue) return "relance";
     return l.status; // new | contacted
   };
-  // Combien de rendez-vous attendent : sert au libellé du bloc replié, pour
-  // qu'un repli ne cache jamais un chiffre.
-  //
-  // ⚠️ 27/08 — c'était `l.rdv && !l.rdv.passe`, qui donnait 0 alors que Thomas
-  // avait 6 RDV calés : `l.rdv` n'est pas peuplé pour les résas du tunnel club.
-  // Un bloc replié qui annonce « 0 à venir » au-dessus de RDV bien réels, c'est
-  // pire que pas de chiffre. On prend EXACTEMENT le compte « RDV calé » de la
-  // jauge juste au-dessus (`etapeDuLead === "qualified"` sur les leads
-  // dédoublonnés) : le bloc et la jauge affichent alors le même nombre.
-  const rdvAVenirCount = useMemo(
-    () => leadsEntonnoir.filter((l) => !l.dormant && etapeDuLead(l) === "qualified").length,
-    [leadsEntonnoir],
-  );
 
   // La file du board mise à plat, dans l'ordre des colonnes — support des
   // flèches ↑↓ du volet.
@@ -558,7 +523,11 @@ export function CrmPage() {
   // troisième n'était pas rattaché à Thomas. En ne lisant que les rendez-vous
   // du coach (`club_id is null`), ce bloc serait resté VIDE — la fonctionnalité
   // aurait eu l'air livrée sans rien montrer.
-  const { aConclure: rdvCoach, reload: rechargerCoach } = useCoachRdvBookings(currentUser?.id ?? null);
+  const {
+    aConclure: rdvCoach,
+    bookings: rdvCoachAVenir,
+    reload: rechargerCoach,
+  } = useCoachRdvBookings(currentUser?.id ?? null);
   const clubIdActif = useActiveClubId();
   const { bookings: rdvClub, reload: rechargerClub } = useClubDiscoveryBookings(
     isAdmin ? clubIdActif : null,
@@ -599,6 +568,32 @@ export function CrmPage() {
   const rechargerRdv = async () => {
     await Promise.all([rechargerCoach(), rechargerClub()]);
   };
+
+  /** Les rendez-vous VRAIMENT devant nous, toutes sources confondues.
+   *  ⚠️ `rdvCoach` ne contient que les rendez-vous PASSÉS à solder : compter
+   *  dessus donnait un « 0 à venir » au-dessus de six créneaux bien réels. */
+  const rdvFuturs = useMemo(() => {
+    const maintenant = Date.now();
+    const vus = new Set<string>();
+    return [...rdvCoachAVenir, ...rdvClub]
+      .filter((b) => {
+        if (vus.has(b.id)) return false;
+        vus.add(b.id);
+        return (
+          b.status !== "canceled" && new Date(b.slot_start).getTime() >= maintenant
+        );
+      })
+      .sort((a, b) => a.slot_start.localeCompare(b.slot_start));
+  }, [rdvCoachAVenir, rdvClub]);
+
+  const prochainRdvIso = rdvFuturs[0]?.slot_start ?? null;
+
+  /** Les demandes jamais acceptées. C'est la SEULE raison de déplier les blocs
+   *  de rendez-vous : accepter n'existe nulle part ailleurs dans l'app. */
+  const demandesEnAttente = useMemo(
+    () => rdvFuturs.filter((b) => b.status === "requested").length,
+    [rdvFuturs],
+  );
 
   async function handleConclure(cible: CibleAConclure & { contact?: string | null }, issue: IssueRdv) {
     const effet = EFFET_ISSUE[issue];
@@ -748,28 +743,37 @@ export function CrmPage() {
         onFiltrer={setCaseFiltre}
       />
 
-      {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
-          d'ici que part l'email d'acceptation, qui n'existe nulle part
-          ailleurs. */}
-      <div style={{ margin: "14px 0 0" }}>
-        <button
-          type="button"
-          onClick={() => setRdvOuverts((v) => !v)}
-          aria-expanded={rdvOuverts}
-          style={replisBtn}
-        >
-          {/* Le compte s'affiche quand c'est replié : un bloc fermé qui ne dit
-              pas ce qu'il contient, c'est un rendez-vous oublié. */}
-          🗓️ Rendez-vous {rdvOuverts ? "" : `· ${rdvAVenirCount} à venir `}
-          {rdvOuverts ? "▲" : "▼"}
-        </button>
-        {rdvOuverts ? (
-          <div style={{ marginTop: 10 }}>
-            <RdvBookingsWidget />
-            <ClubDiscoveryWidget />
-          </div>
-        ) : null}
-      </div>
+      {/* ═══ LES RENDEZ-VOUS : UNE LIGNE, PAS UN PAVÉ ════════════════════════
+          Thomas, 31/08 : « j'ai toujours tous les RDV affichés, ça fait un bloc
+          énorme ». Mesuré : 758 px sur ordinateur, 663 px sur téléphone — le
+          premier écran entier, tous les jours.
+
+          Le chiffre qui tranche : sur 30 jours, UNE SEULE réservation a eu
+          besoin d'être acceptée ; les six à venir sont arrivées déjà
+          confirmées. Une action mensuelle ne mérite pas la meilleure place de
+          l'écran chaque matin. C'est l'arbitrage validé le 28/08 : les
+          rendez-vous vivent dans l'Agenda, le CRM fait avancer des gens.
+
+          Rien n'est perdu — vérifié avant de retirer : déplacer et annuler sont
+          sur la fiche du lead, « venue / pas venue » est dans « À conclure »,
+          et accepter une demande reste ci-dessous, mais SEULEMENT quand il y en
+          a une. Zéro demande = zéro pixel. */}
+      <CrmRdvLigne
+        aVenir={rdvFuturs.length}
+        prochain={prochainRdvIso}
+        onOuvrirAgenda={() => navigate("/agenda")}
+      />
+
+      {demandesEnAttente > 0 ? (
+        <div style={{ margin: "10px 0 0" }}>
+          <p style={demandeTitre}>
+            ⚠️ {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""} attend
+            {demandesEnAttente > 1 ? "ent" : ""} ta réponse
+          </p>
+          <RdvBookingsWidget />
+          <ClubDiscoveryWidget />
+        </div>
+      ) : null}
 
       {error ? (
         <div style={errorBanner}>
@@ -1295,21 +1299,15 @@ const CRM_COLS_CSS = `
 `;
 
 /** Le repli des blocs de rendez-vous et le panneau de filtres. */
-const replisBtn: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 7,
-  minHeight: 40,
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-surface)",
-  color: "var(--ls-text-muted)",
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 12.5,
-  fontWeight: 600,
-  cursor: "pointer",
+const demandeTitre: React.CSSProperties = {
+  margin: "0 0 8px 2px",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 11,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "var(--ls-coral)",
 };
+
 
 const panneauFiltres: React.CSSProperties = {
   border: "1px solid var(--ls-border)",
