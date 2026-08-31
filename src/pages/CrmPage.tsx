@@ -67,7 +67,6 @@ import {
   type FiltreQualif,
   type VueSauvee,
 } from "../features/crm/filtresQualification";
-import { groupeDe } from "../features/crm/echeances";
 import { OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
 import { formatLeadDate as formatDate } from "../lib/leadDateFormat";
@@ -353,13 +352,10 @@ export function CrmPage() {
   // attendent un geste AUJOURD'HUI. Les cinq compteurs par statut (Nouveaux,
   // Contactés, Qualifiés…) ne disaient pas quoi faire — ils sont descendus
   // dans « Plus de filtres ».
-  const nbAujourdhui = useMemo(
-    () => {
-      const maintenant = new Date();
-      return regroupes.filter((l) => groupeDe(l, maintenant) === "aujourdhui").length;
-    },
-    [regroupes],
-  );
+  // ⚠️ 28/08 — c'était un QUATRIÈME compteur, sur encore une autre règle
+  // (`groupeDe(...) === "aujourdhui"`). Il annonçait « 11 personnes
+  // t'attendent » au-dessus d'une section « À faire aujourd'hui · 5 ».
+  // Il lit maintenant le même compte que la section : `capDuJour.total`.
 
   /**
    * Le cap du jour (CRM Board V2, lot 4). La maquette met en tête de la file
@@ -716,9 +712,9 @@ export function CrmPage() {
         <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ls-text-muted)" }}>
           {loading
             ? "Chargement…"
-            : nbAujourdhui === 0
+            : capDuJour.total === 0
               ? "Personne n'attend de toi aujourd'hui. 👌"
-              : `${nbAujourdhui} personne${nbAujourdhui > 1 ? "s" : ""} t'${nbAujourdhui > 1 ? "attendent" : "attend"} aujourd'hui.`}
+              : `${capDuJour.total} personne${capDuJour.total > 1 ? "s" : ""} t'${capDuJour.total > 1 ? "attendent" : "attend"} aujourd'hui.`}
         </p>
         {!loading && capDuJour.total > 0 ? (
           <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ls-text-muted)" }}>
