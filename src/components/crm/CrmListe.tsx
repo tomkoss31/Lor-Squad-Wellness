@@ -82,7 +82,7 @@ export function CrmListe({ leads, total, maintenant, onOuvrir, onAppeler, onEcri
           {reste.length > 0 && (
             <Section titre="Le reste de ta liste" compte={reste.length} teinte="var(--ls-text-hint)">
               {reste.map((l) => (
-                <Ligne key={l.key} lead={l} maintenant={maintenant} fiches={doublonsDe?.get(l.key)?.length ?? 0} {...{ onOuvrir, onAppeler, onEcrire, onPlus }} />
+                <Ligne key={l.key} lead={l} compact maintenant={maintenant} fiches={doublonsDe?.get(l.key)?.length ?? 0} {...{ onOuvrir, onAppeler, onEcrire, onPlus }} />
               ))}
             </Section>
           )}
@@ -111,9 +111,9 @@ function Section({
 }
 
 function Ligne({
-  lead, urgent, maintenant, fiches, onOuvrir, onAppeler, onEcrire, onPlus,
+  lead, urgent, compact, maintenant, fiches, onOuvrir, onAppeler, onEcrire, onPlus,
 }: {
-  lead: CrmLead; urgent?: boolean; maintenant: Date; fiches: number;
+  lead: CrmLead; urgent?: boolean; compact?: boolean; maintenant: Date; fiches: number;
   onOuvrir: (l: CrmLead) => void; onAppeler: (l: CrmLead) => void;
   onEcrire: (l: CrmLead) => void; onPlus: (l: CrmLead) => void;
 }) {
@@ -124,6 +124,33 @@ function Ligne({
   const pourPhrase = { ...lead, rdv: etatRdvDe(lead.rdv, maintenant) };
   const tel = lead.phone ?? (lead.contactIsPhone ? lead.contact : null);
   const nom = `${lead.firstName} ${lead.lastName ?? ""}`.trim();
+
+  // ── LIGNE COMPACTE — « le reste de ta liste » ────────────────────────────
+  // Mesuré le 31/08 : les lignes riches font ~150 px. Quinze d'entre elles
+  // faisaient 2 236 px à elles seules. Or cette zone n'est pas celle où l'on
+  // agit — c'est celle où l'on CHERCHE quelqu'un. C'est le partage que font
+  // Gmail, Superhuman ou Things : une ligne reste une ligne, et les actions
+  // arrivent quand on l'ouvre. « À faire aujourd'hui » garde ses boutons.
+  if (compact) {
+    return (
+      <div style={ligneCompacte}>
+        <button type="button" onClick={() => onOuvrir(lead)} style={zoneTexteCompacte} aria-label={`Ouvrir la fiche de ${nom}`}>
+          <span style={ligneNom}>
+            <span style={nomCompact}>{nom}</span>
+            {chaud && <span aria-label="Chaud" title="Chaud">🔥</span>}
+            <span style={{ ...pastilleEtat, color: TEINTE[c] }}>{LIBELLE_CASE[c]}</span>
+            {fiches > 0 && (
+              <span style={marqueDoublon} title={`${fiches + 1} fiches réunies sous cette personne`}>⚠️</span>
+            )}
+          </span>
+          <span style={raisonCompacte}>{phraseEtat(pourPhrase, maintenant)}</span>
+        </button>
+        <button type="button" onClick={() => onPlus(lead)} style={plusCompact} aria-label={`Actions pour ${nom}`}>
+          ⋯
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="crm-ligne" style={{ ...ligne, borderLeftColor: urgent ? "var(--ls-coral)" : "transparent" }}>
@@ -234,6 +261,60 @@ const pastilleEtat: React.CSSProperties = {
 };
 
 const raison: React.CSSProperties = { fontSize: 13, lineHeight: 1.45 };
+
+const ligneCompacte: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  background: "var(--ls-surface)",
+  border: "1px solid var(--ls-border)",
+  borderRadius: 12,
+  padding: "8px 10px",
+};
+
+const zoneTexteCompacte: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  background: "transparent",
+  border: 0,
+  padding: 0,
+  textAlign: "left",
+  cursor: "pointer",
+  color: "inherit",
+  font: "inherit",
+};
+
+const nomCompact: React.CSSProperties = {
+  fontFamily: "Syne, sans-serif",
+  fontWeight: 700,
+  fontSize: 14.5,
+  color: "var(--ls-text)",
+};
+
+/** Une seule ligne, coupée proprement — on cherche un nom, on ne lit pas. */
+const raisonCompacte: React.CSSProperties = {
+  fontSize: 12,
+  color: "var(--ls-text-muted)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+};
+
+const plusCompact: React.CSSProperties = {
+  flex: "none",
+  width: 44,
+  height: 44,
+  borderRadius: 999,
+  border: "1px solid var(--ls-border2)",
+  background: "transparent",
+  color: "var(--ls-text-muted)",
+  cursor: "pointer",
+  fontSize: 15,
+};
 
 const marqueDoublon: React.CSSProperties = {
   fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",

@@ -1290,12 +1290,17 @@ export function CrmPage() {
         />
       ) : null}
 
-      <footer style={footerHint}>
-        💡 Clique sur un lead pour ouvrir sa fiche complète (réponses, conversion, RDV,
-        notes). Les <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients
-        dans leur simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au
-        parrain.
-      </footer>
+      {/* ⚠️ 31/08 — ce paragraphe était PERMANENT et faisait quatre lignes.
+          « Clique sur un lead pour ouvrir sa fiche » s'apprend au premier tap
+          et n'a plus à être écrit ensuite ; l'explication des « Intentions »,
+          elle, ne sert que si on en a. Elle ne s'affiche donc que dans ce
+          cas — une aide qui parle quand elle est utile, pas tous les jours. */}
+      {regroupes.some((l) => l.source === "intention") ? (
+        <footer style={footerHint}>
+          💡 Les <strong>💭 Intentions</strong> sont les prénoms confiés par tes clients dans
+          leur simulateur VIP : pas encore de numéro — le bouton t'aide à le demander au parrain.
+        </footer>
+      ) : null}
     </div>
   );
 }

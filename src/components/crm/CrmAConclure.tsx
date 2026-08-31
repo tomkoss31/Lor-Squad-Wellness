@@ -33,9 +33,9 @@ interface Props {
 
 const JOUR_HEURE = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "Europe/Paris",
-  weekday: "long",
+  weekday: "short",
   day: "numeric",
-  month: "long",
+  month: "short",
   hour: "2-digit",
   minute: "2-digit",
 });
@@ -75,12 +75,12 @@ export function CrmAConclure({ cibles, onRepondre, maintenant }: Props) {
             ? "1 rendez-vous attend ta réponse"
             : `${cibles.length} rendez-vous attendent ta réponse`}
         </span>
+        <span style={rappel}>sinon elle ne revient nulle part</span>
       </div>
-      <p style={sousTitre}>
-        Sans réponse, la personne ne revient dans aucune liste. Un tap suffit.
-      </p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
+      {/* ⚠️ 31/08 — la phrase d'explication est passée dans l'en-tête, sur la
+          même ligne que le compte : elle disait la même chose et coûtait
+          40 px par affichage, tous les jours. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
         {cibles.map((c) => {
           const occupe = enCours === c.id;
           return (
@@ -145,7 +145,7 @@ const bloc: React.CSSProperties = {
   margin: "14px 0 0",
 };
 
-const enTete: React.CSSProperties = { display: "flex", alignItems: "center", gap: 9 };
+const enTete: React.CSSProperties = { display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" };
 
 const pastille: React.CSSProperties = {
   width: 8,
@@ -163,9 +163,8 @@ const titre: React.CSSProperties = {
   letterSpacing: "-0.01em",
 };
 
-const sousTitre: React.CSSProperties = {
-  margin: "5px 0 0",
-  fontSize: 13,
+const rappel: React.CSSProperties = {
+  fontSize: 12,
   color: "var(--ls-text-muted)",
 };
 
