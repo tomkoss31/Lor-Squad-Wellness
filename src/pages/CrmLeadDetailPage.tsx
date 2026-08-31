@@ -199,13 +199,31 @@ export function CrmLeadDetailPage() {
   useEffect(() => {
     if (convertAutoRef.current) return;
     if (searchParams.get("convert") !== "1") return;
-    if (!bilanRow || bilanRow.converted_to_client_id) return;
+    // ⚠️ 31/08 — CE GARDE EXIGEAIT UN BILAN EN LIGNE, DONC IL BLOQUAIT TOUT LE RESTE.
+    //
+    // Trouvé par la revue d'avant-prod : `bilanRow` est null pour toute table
+    // autre que `online_bilans`. Or « Venue · elle démarre », dans « À conclure »,
+    // renvoie ici avec ?convert=1 — et la MAJORITÉ des rendez-vous du club sont
+    // des `prospect_leads`. La modale ne s'ouvrait donc jamais pour eux : aucune
+    // fiche cliente créée, le lead restait non converti, et le rendez-vous venait
+    // d'être marqué « honored » — donc il disparaissait de « À conclure ». La
+    // seule porte qui posait la question se refermait sans rien produire.
+    //
+    // La modale prospect_leads existait pourtant juste en dessous ; elle n'était
+    // atteignable qu'en cliquant le bouton à la main.
+    const dejaConverti =
+      lead?.table === "online_bilans"
+        ? Boolean(bilanRow?.converted_to_client_id)
+        : Boolean(lead?.convertedClientId);
+    const pretAConvertir =
+      lead?.table === "online_bilans" ? Boolean(bilanRow) : lead?.table === "prospect_leads";
+    if (!pretAConvertir || dejaConverti) return;
     convertAutoRef.current = true;
     setShowConvert(true);
     const next = new URLSearchParams(searchParams);
     next.delete("convert");
     setSearchParams(next, { replace: true });
-  }, [searchParams, bilanRow, setSearchParams]);
+  }, [searchParams, bilanRow, lead, setSearchParams]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
   const [showMove, setShowMove] = useState(false);

@@ -35,7 +35,6 @@ import {
   type CrmSource,
   type CrmStatus,
 } from "../hooks/useCrmLeads";
-import { buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 // Étape « À conclure » (28/08) : un rendez-vous passé doit produire une réponse.
@@ -58,7 +57,11 @@ import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { clesDoublon, grouperParPersonne } from "../features/crm/cleDoublon";
 import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
 import { etapeDuLead } from "../features/crm/etapeLead";
-import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
+import {
+  buildCrmWhatsAppLink as buildWa,
+  buildCrmMailLink,
+  objetPourLead,
+} from "../lib/crmMessages";
 import {
   FILTRE_VIDE,
   lireVues,
@@ -464,10 +467,38 @@ export function CrmPage() {
     window.location.href = `tel:${numero}`;
   }
 
-  function ouvrirWhatsApp(lead: CrmLead) {
+  /**
+   * « Écrire » — WhatsApp si on a un numéro, MAIL sinon.
+   *
+   * ⚠️ 31/08 — trouvé par la revue d'avant-prod. Ce bouton envoyait TOUJOURS sur
+   * WhatsApp, sans regarder si le contact était un téléphone. Or le formulaire
+   * du bilan en ligne accepte « un téléphone OU un email » : pour quelqu'un qui
+   * n'a laissé qu'une adresse, `buildCrmWhatsAppLink` retirait tout ce qui n'est
+   * pas un chiffre — « sarah2024@gmail.com » devenait `wa.me/2024`, un
+   * destinataire inventé. Et comme « Appeler » est déjà masqué faute de numéro,
+   * ce lead n'avait plus AUCUN moyen d'être contacté depuis la liste.
+   *
+   * Les deux rendus supprimés géraient ce cas (« ✉️ Par mail » quand le contact
+   * n'était pas un téléphone) ; je l'avais perdu en les retirant.
+   */
+  function ecrireAuLead(lead: CrmLead) {
     const msg = `Bonjour ${lead.firstName}, ${msgCtx.coachFirstName} de La Base 360. Je reviens vers toi 🙂`;
-    const url = buildWa(lead.contact, msg);
-    if (url) window.open(url, "_blank", "noopener");
+    const tel = lead.phone ?? (lead.contactIsPhone ? lead.contact : null);
+    if (tel) {
+      const url = buildWa(tel, msg);
+      if (url) window.open(url, "_blank", "noopener");
+      return;
+    }
+    const mail = lead.email ?? (lead.contact && !lead.contactIsPhone ? lead.contact : null);
+    if (mail) {
+      window.location.href = buildCrmMailLink(mail, msg, objetPourLead(lead, msgCtx));
+      return;
+    }
+    pushToast({
+      tone: "warning",
+      title: `${lead.firstName} — aucun moyen de la joindre`,
+      message: "Cette fiche n'a ni téléphone ni adresse. Ouvre-la pour en ajouter un.",
+    });
   }
   const historiqueCount = useMemo(
     () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
@@ -1043,7 +1074,7 @@ export function CrmPage() {
                       </span>
                       {c.contactIsPhone ? (
                         <a
-                          href={buildCrmWhatsAppLink(c.contact, msg)}
+                          href={buildWa(c.contact, msg)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={actionBtn("#25D366")}
@@ -1158,7 +1189,7 @@ export function CrmPage() {
           maintenant={new Date()}
           onOuvrir={(l) => setPanneauLead(l)}
           onAppeler={appeler}
-          onEcrire={ouvrirWhatsApp}
+          onEcrire={ecrireAuLead}
           onPlus={(l) => setMenuLead(l)}
           doublonsDe={doublonsDe}
           messageVide={
@@ -1269,7 +1300,7 @@ export function CrmPage() {
               const suivant = ordreBoard[idx + d];
               if (suivant) setPanneauLead(suivant);
             }}
-            onWhatsApp={ouvrirWhatsApp}
+            onWhatsApp={ecrireAuLead}
             onAlors={(lead) => { setPanneauLead(null); setQualifApresDrop(lead); }}
             onFiche={(lead) => navigate(`/crm/leads/${lead.key}`)}
             onConvertir={(lead) => navigate(`/crm/leads/${lead.key}?convert=1`)}
