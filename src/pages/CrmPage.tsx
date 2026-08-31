@@ -21,14 +21,12 @@
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { JargonTip } from "../components/ui/JargonTip";
-import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import {
   computeCrmStats,
-  CRM_EDITABLE_SOURCES,
   CRM_SOURCE_META,
   CRM_STATUS_META,
   statusOptionsFor,
@@ -37,13 +35,9 @@ import {
   type CrmSource,
   type CrmStatus,
 } from "../hooks/useCrmLeads";
-import {
-  buildCrmSmsLink,
-  buildCrmWhatsAppLink,
-} from "../lib/crmMessages";
+import { buildCrmWhatsAppLink } from "../lib/crmMessages";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
-import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
 // Étape « À conclure » (28/08) : un rendez-vous passé doit produire une réponse.
 import { CrmAConclure, type CibleAConclure } from "../components/crm/CrmAConclure";
@@ -55,14 +49,15 @@ import { rdvAConclure } from "../features/crm/aConclure";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
-import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
-import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
+import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
+import { CrmListe } from "../components/crm/CrmListe";
+import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
+import { caseDuLead, compterParCase, type CaseActive } from "../features/crm/caseLead";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
-import { clesDoublon, grouperParPersonne, normaliserTelephone } from "../features/crm/cleDoublon";
+import { clesDoublon, grouperParPersonne } from "../features/crm/cleDoublon";
 import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
 import { etapeDuLead } from "../features/crm/etapeLead";
-import { CrmFileDuJour } from "../components/crm/CrmFileDuJour";
 import { buildCrmWhatsAppLink as buildWa } from "../lib/crmMessages";
 import {
   FILTRE_VIDE,
@@ -73,15 +68,11 @@ import {
   type VueSauvee,
 } from "../features/crm/filtresQualification";
 import { groupeDe } from "../features/crm/echeances";
-import { CrmLeadsListView, OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
+import { OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
 import { Tabs } from "../components/ui/Tabs";
-import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "../lib/leadDateFormat";
-import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
-import { isStagnant, stagnationDays } from "../lib/leadActivity";
-import { tableSupportsAssignment } from "../lib/leadRouting";
+import { formatLeadDate as formatDate } from "../lib/leadDateFormat";
 import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
-import { estQualifiable } from "../features/crm/ecrireQualification";
 
 const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
@@ -110,7 +101,7 @@ function lireVueMode(): "list" | "pipeline" {
 }
 
 export function CrmPage() {
-  const { currentUser, clients, users } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
   const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, accepter, setDormant, deleteLead } = useCrmLeads();
@@ -130,7 +121,11 @@ export function CrmPage() {
   // Le filtre posé en tapant un segment de la jauge (CRM Board V2, lot 3).
   // Une étape OU le signal « à relancer », jamais les deux : deux filtres
   // cumulés sur une seule barre donnent une liste vide qu'on ne s'explique pas.
-  const [jauge, setJauge] = useState<JaugeFiltre>({ etape: null, relance: false });
+  // ⚠️ 28/08 — UNE SEULE NOTION DE CASE. L'ancien filtre comparait `l.status`
+  // brut alors que la jauge, elle, comptait un entonnoir cumulé : taper
+  // « Contacté 18 » rendait 7 lignes dont aucune contactée. On filtre
+  // désormais avec `caseDuLead`, la fonction qui sert AUSSI à compter.
+  const [caseFiltre, setCaseFiltre] = useState<CaseActive | null>(null);
   const isAdmin = currentUser?.role === "admin";
 
   // ── Filtre par ligne (2026-06-15) : par défaut chacun voit SES leads. Un
@@ -157,10 +152,6 @@ export function CrmPage() {
 
   const [filterSource, setFilterSource] = useState<CrmSource | "all">("all");
   const [search, setSearch] = useState("");
-  // Upgrade V1.1 : drag & drop des cards entre colonnes (HTML5 DnD —
-  // desktop ; sur mobile le select par card reste le moyen principal).
-  const [dragOverStatus, setDragOverStatus] = useState<CrmStatus | null>(null);
-  const [draggingKey, setDraggingKey] = useState<string | null>(null);
   // Le volet lead docké (lot 4) : la carte cliquée. La navigation ↑↓ se fait
   // sur `ordreBoard`, la file dans l'ordre des colonnes.
   const [panneauLead, setPanneauLead] = useState<CrmLead | null>(null);
@@ -169,6 +160,8 @@ export function CrmPage() {
   const [qualifApresDrop, setQualifApresDrop] = useState<CrmLead | null>(null);
   // Wagon 2 chantier 3 : lead chaud → RDV agenda en 1 clic (prospect pré-rempli).
   const [agendaLead, setAgendaLead] = useState<CrmLead | null>(null);
+  // Le « ⋯ » d'une ligne : tout ce qui n'est pas joindre la personne.
+  const [menuLead, setMenuLead] = useState<CrmLead | null>(null);
   // Wagon 3 chantier 6 : panneau stats par source (toggle).
   const [showStats, setShowStats] = useState(false);
   // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
@@ -229,28 +222,7 @@ export function CrmPage() {
   // leur adresse étaient déclarés doublons. Vérifié en base le 24/08 : pas
   // encore d'explosion, mais c'est le bug « Manon Legrand héritait du RDV de
   // Manon PERRIN ». On passe sur la clé unique et testée.
-  const dupeInfo = useMemo(() => {
-    const clientPhones = new Map<string, string>();
-    for (const c of clients ?? []) {
-      const p = normaliserTelephone(c.phone);
-      if (p) clientPhones.set(p, `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim());
-    }
-    const leadPhoneCount = new Map<string, number>();
-    for (const l of leads) {
-      const p = normaliserTelephone(l.phone) ?? normaliserTelephone(l.contact);
-      if (p) leadPhoneCount.set(p, (leadPhoneCount.get(p) ?? 0) + 1);
-    }
-    return { clientPhones, leadPhoneCount };
-  }, [clients, leads]);
 
-  function dupeFlagFor(lead: CrmLead): { kind: "client" | "dupe"; label: string } | null {
-    const p = normaliserTelephone(lead.phone) ?? normaliserTelephone(lead.contact);
-    if (!p) return null;
-    const clientName = dupeInfo.clientPhones.get(p);
-    if (clientName) return { kind: "client", label: `déjà client (${clientName})` };
-    if ((dupeInfo.leadPhoneCount.get(p) ?? 0) > 1) return { kind: "dupe", label: "doublon pipeline" };
-    return null;
-  }
 
   const msgCtx = useMemo(() => {
     const slug = normalizeSlug((currentUser?.name ?? "").split(/\s+/)[0] ?? "");
@@ -314,16 +286,15 @@ export function CrmPage() {
           )
             return false;
         }
-        // Le segment de jauge tapé, s'il y en a un.
-        if (jauge.etape && l.status !== jauge.etape) return false;
-        if (jauge.relance && !l.relanceDue) return false;
+        // Le segment de jauge tapé, s'il y en a un — même règle que le compte.
+        if (caseFiltre && caseDuLead(l) !== caseFiltre) return false;
 
         // Les questions de qualification (température, signaux, objectif).
         if (!passeQualif(l, qualif)) return false;
 
         return true;
       }),
-    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, jauge, qualif],
+    [leads, filterSource, search, view, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids, caseFiltre, qualif],
   );
 
   // ── Une personne = une ligne (2026-08-12) ─────────────────────────────────
@@ -347,7 +318,7 @@ export function CrmPage() {
   // Le regroupement se fait APRÈS le filtrage : filtrer sur « Colis » ne doit
   // pas faire disparaître une fiche colis parce qu'elle serait absorbée par
   // une fiche d'une autre source.
-  const { regroupes, doublonsDe, fusionsDe } = useMemo(() => {
+  const { regroupes, doublonsDe } = useMemo(() => {
     const principaux: CrmLead[] = [];
     const doublons = new Map<string, CrmLead[]>();
     const fusions = new Map<string, Fusion<CrmLead>>();
@@ -421,6 +392,11 @@ export function CrmPage() {
     [leads],
   );
 
+  // Les compteurs de la jauge. Ils lisent la population dédoublonnée du
+  // périmètre — et NON `filtered`, sinon la jauge se recalculerait sur son
+  // propre filtre et afficherait 100 % partout dès qu'on tape un segment.
+  const comptesParCase = useMemo(() => compterParCase(leadsEntonnoir), [leadsEntonnoir]);
+
   // La boîte d'arrivée : ce qui attend un geste, le plus récent d'abord.
   // On ne la filtre PAS par la recherche ni par les onglets — c'est une file
   // d'attente, pas une vue. La masquer derrière un filtre reviendrait à
@@ -477,7 +453,6 @@ export function CrmPage() {
     () => leadsEntonnoir.filter((l) => !l.dormant && etapeDuLead(l) === "qualified").length,
     [leadsEntonnoir],
   );
-  const perdusCount = useMemo(() => leads.filter((l) => !l.dormant && l.status === "lost").length, [leads]);
 
   // La file du board mise à plat, dans l'ordre des colonnes — support des
   // flèches ↑↓ du volet.
@@ -490,6 +465,21 @@ export function CrmPage() {
 
   // WhatsApp direct depuis la carte du board (variante en retard). Message de
   // relance douce ; les templates fins vivent dans la fiche.
+  // ⚠️ 28/08 — IL N'Y AVAIT AUCUN MOYEN D'APPELER. Vérifié en base : les 25
+  // leads ont TOUS un téléphone, et la moitié des lignes disent « appelé·e,
+  // pas de réponse — tu devais rappeler il y a 2 jours ». L'action que la fiche
+  // réclamait était la seule que l'écran ne proposait pas : zéro lien `tel:`
+  // dans tout le CRM, ni sur ordinateur ni sur téléphone.
+  function appeler(lead: CrmLead) {
+    const brut = lead.phone ?? (lead.contactIsPhone ? lead.contact : null);
+    if (!brut) return;
+    // On garde le « + » international et les chiffres, rien d'autre : les
+    // espaces et points d'un numéro saisi à la main cassent le lien tel:.
+    const numero = brut.replace(/[^\d+]/g, "");
+    if (!numero) return;
+    window.location.href = `tel:${numero}`;
+  }
+
   function ouvrirWhatsApp(lead: CrmLead) {
     const msg = `Bonjour ${lead.firstName}, ${msgCtx.coachFirstName} de La Base 360. Je reviens vers toi 🙂`;
     const url = buildWa(lead.contact, msg);
@@ -660,55 +650,6 @@ export function CrmPage() {
     );
   }
 
-  // ── DÉPOSER UNE CARTE POSE LA QUESTION (CRM Board V2, lot 1) ─────────────
-  //
-  // Avant : le drop écrivait le statut À SEC (`handleStatusChange`). Une carte
-  // glissée sur « Contacté » changeait de colonne SANS date de suite — donc la
-  // personne sortait de tous les radars de relance. C'est le bug que la
-  // maquette V2 nomme : « l'étape ne change jamais sans sa date de suite ».
-  //
-  // Depuis : le drop OUVRE « Et alors ? ». La réponse choisie écrit l'issue ET
-  // la date, par le même chemin que partout ailleurs (`handleQualifier`) — il
-  // n'y a pas deux façons de faire avancer un lead dans l'app.
-  //
-  // ⚠️ La colonne cible ne décide de RIEN. Elle a servi à ouvrir la question,
-  // c'est la réponse qui fait foi : déposer sur « Contacté » puis répondre
-  // « pas de réponse » laisse la carte à relancer, et c'est juste. Prétendre
-  // l'inverse rendrait le geste menteur.
-  function handleDrop(leadKey: string, target: CrmStatus) {
-    setDragOverStatus(null);
-    const lead = leads.find((l) => l.key === leadKey);
-    if (!lead || lead.status === target) return;
-
-    // Converti reste verrouillé au glisser-déposer : créer une fiche client
-    // demande un nom, un sexe, un point de départ. Ça passe par la fiche.
-    if (target === "converted") {
-      pushToast({
-        tone: "warning",
-        title: "La conversion passe par la fiche",
-        message: "Ouvre le contact pour créer sa fiche client — un glisser-déposer ne peut pas saisir son bilan.",
-      });
-      return;
-    }
-
-    if (!statusOptionsFor(lead.table).includes(target)) {
-      pushToast({
-        tone: "warning",
-        title: "Pas par ici",
-        message: "Ce statut n'est pas disponible pour cette source.",
-      });
-      return;
-    }
-
-    if (!estQualifiable(lead.table)) {
-      // Une source sans qualification (reco, intention) garde l'ancien chemin :
-      // pour elle, le statut EST l'information, il n'y a pas de date à poser.
-      void handleStatusChange(lead, target);
-      return;
-    }
-
-    setQualifApresDrop(lead);
-  }
 
   async function copyMessage(text: string) {
     try {
@@ -781,7 +722,11 @@ export function CrmPage() {
       {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
           périmètre — et NON `filtered` : une jauge qui se recalcule sur son
           propre filtre afficherait 100 % partout dès qu'on tape un segment. */}
-      <CrmJaugeEntonnoir leads={leadsEntonnoir} filtre={jauge} onFiltrer={setJauge} />
+      <CrmJaugeFiltre
+        comptes={comptesParCase}
+        filtre={caseFiltre}
+        onFiltrer={setCaseFiltre}
+      />
 
       {/* Les deux blocs de rendez-vous, repliés. Ils restent à un tap — c'est
           d'ici que part l'email d'acceptation, qui n'existe nulle part
@@ -1136,144 +1081,56 @@ export function CrmPage() {
       </div>
       </div>
       ) : null}
+      {/* ═══ LA LISTE — UNE SEULE, POUR TOUS LES ÉCRANS ══════════════════════
+          Chantier 2 de la refonte, maquette validée par Thomas.
 
-      {/* ⚠️ 26/08 — SUR TÉLÉPHONE, LA FILE GAGNE TOUJOURS.
-          La file du jour ne s'affichait QUE dans le mode Liste. Thomas ayant
-          choisi « Pipeline » sur son ordinateur — et ce choix étant désormais
-          mémorisé — son téléphone héritait du board : cinq colonnes côte à côte,
-          coupées au bord de l'écran. Capture à l'appui, c'était illisible.
-          Un board en colonnes est une idée d'ordinateur ; sur un écran de 390 px
-          il n'y a de place que pour UNE colonne qui se lit de haut en bas.
-          Le mode reste respecté sur grand écran. */}
-      <style>{".crm-file-mobile{display:none}@media(max-width:767.98px){.crm-vues-desktop{display:none}.crm-file-mobile{display:block}}"}</style>
-      {!loading && view === "active" ? (
-        <div className="crm-file-mobile">
-          <CrmFileDuJour
-            leads={regroupes}
-            maintenant={new Date()}
-            onOuvrir={(l) => setPanneauLead(l)}
-            onWhatsApp={ouvrirWhatsApp}
-            onAlors={(l) => setQualifApresDrop(l)}
-          />
-        </div>
-      ) : null}
+          Ce qui disparaît ici : la vue Liste (ordinateur), le tableau en
+          colonnes (ordinateur) et la file du jour (téléphone) — trois codes
+          pour la même donnée, avec trois idées différentes de ce qu'on peut
+          faire d'un lead. Sur téléphone, la file ne montrait QUE les gestes du
+          jour : mesuré le 28/08, 19 personnes sur 31 n'étaient atteignables ni
+          par la jauge, ni par la recherche, ni par un filtre.
 
-      <div className={!loading && view === "active" ? "crm-vues-desktop" : undefined}>
+          `CrmListe` montre tout le monde, met « Appeler » et « Écrire » sur la
+          ligne, et compte ce qu'elle affiche. Une seule règle CSS la fait
+          passer de la colonne (téléphone) à la ligne (ordinateur). */}
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
-      ) : viewMode === "list" ? (
-        (() => {
-          // Desktop : la vue Liste. Mobile : la file du jour (lot 6), la même
-          // donnée rangée par geste. Swap CSS pur — les deux se rendent, le
-          // media query en montre une. Seulement en vue Active (la file ne
-          // parle que des gestes du jour, pas des archivés).
-          const vueListe = (
-            <CrmLeadsListView
-              triExterne={{ valeur: view === "archived" ? "recent" : sortKey, onChange: setSortKey }}
-              leads={regroupes}
-              doublonsDe={doublonsDe}
-          conflitsDe={new Map([...fusionsDe].map(([k, f]) => [k, f.conflits]))}
-              msgCtx={msgCtx}
-              archived={view === "archived"}
-              onStatusChange={(lead, s) => void handleStatusChange(lead, s)}
-              onSourceChange={(lead, s) => void handleSourceChange(lead, s)}
-              onCopy={(text) => void copyMessage(text)}
-              onAgenda={(lead) => setAgendaLead(lead)}
-              dupeFlagFor={dupeFlagFor}
-              onDormant={(lead) => void handleDormant(lead, true)}
-              onWake={(lead) => void handleDormant(lead, false)}
-              onDelete={isAdmin ? (lead) => void handleDelete(lead) : undefined}
-              onQualifier={(lead, r, enLot) => {
-                // On RENVOIE la promesse : la barre en lot l'attend pour écrire une
-                // fiche à la fois. Un `void` ici et les cinq écritures partaient
-                // d'un coup sur une base qui tient sur une t4g.nano.
-                return handleQualifier(lead, r, enLot);
-              }}
-              emptyMessage={
-                view === "archived"
-                  ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
-                  : view === "historique"
-                  ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
-                  : leads.length === 0
-                  ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
-                  : "Aucun lead ne correspond aux filtres."
-              }
-            />
-          );
-          return vueListe;
-        })()
-      ) : regroupes.length === 0 ? (
-        <div style={emptyState}>
-          {view === "archived"
-            ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa carte."
-            : view === "historique"
-            ? "Aucun converti ni perdu pour l'instant. Dès qu'un lead passe en ✅ Converti ou 🌙 Perdu, il arrive ici automatiquement."
-            : leads.length === 0
-            ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
-            : "Aucun lead ne correspond aux filtres."}
-        </div>
-      ) : view === "archived" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 560 }}>
-          {regroupes.map((lead) => (
-            <LeadCard
-              key={lead.key}
-              lead={lead}
-              msgCtx={msgCtx}
-              onStatusChange={(s) => void handleStatusChange(lead, s)}
-              onSourceChange={(s) => void handleSourceChange(lead, s)}
-              onCopy={(text) => void copyMessage(text)}
-              onAgenda={() => setAgendaLead(lead)}
-              dupeFlag={dupeFlagFor(lead)}
-              archived
-              onWake={() => void handleDormant(lead, false)}
-              onDelete={isAdmin ? () => void handleDelete(lead) : undefined}
-            />
-          ))}
-        </div>
       ) : (
-        // ── Le board V2 : 5 colonnes par zone + Perdus/Endormis repliés ──────
-        // Les cartes ouvrent la FICHE (où vivent toutes les actions), plus 2
-        // gestes directs sur la carte urgente. Le drop ouvre « Et alors ? »
-        // (garde-fou du lot 1) via handleDrop — inchangé.
-        <div>
-          <div style={columnsWrap}>
-            {BOARD_COLONNES.map((c) => (
-              <CrmColonneEtape
-                key={c.cle}
-                label={c.label}
-                teinte={c.teinte}
-                leads={regroupes.filter((l) => colonneDe(l) === c.cle)}
-                cibleDrop={c.drop}
-                survole={c.drop !== null && dragOverStatus === c.drop}
-                onDragOver={() => c.drop && setDragOverStatus(c.drop)}
-                onDragLeave={() => setDragOverStatus(null)}
-                onDrop={() => {
-                  const key = draggingKey;
-                  if (key && c.drop) handleDrop(key, c.drop);
-                  setDragOverStatus(null);
-                }}
-                onOuvrir={(lead) => setPanneauLead(lead)}
-                onWhatsApp={ouvrirWhatsApp}
-                onAlors={(lead) => setQualifApresDrop(lead)}
-                onDragStartCard={(lead) => setDraggingKey(lead.key)}
-                onDragEndCard={() => setDraggingKey(null)}
-              />
-            ))}
-          </div>
-
-          {/* Perdus / Endormis : deux lignes repliées sous les colonnes, comme
-              la maquette. Un tap ouvre la vue correspondante. */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            <button type="button" onClick={() => setView("historique")} style={ligneRepliee()}>
-              🌙 Perdus <strong style={{ marginLeft: 6 }}>{perdusCount}</strong>
-            </button>
-            <button type="button" onClick={() => setView("archived")} style={ligneRepliee()}>
-              💤 Endormis <strong style={{ marginLeft: 6 }}>{dormantCount}</strong>
-            </button>
-          </div>
-        </div>
+        <CrmListe
+          leads={regroupes}
+          total={leadsEntonnoir.length}
+          maintenant={new Date()}
+          onOuvrir={(l) => setPanneauLead(l)}
+          onAppeler={appeler}
+          onEcrire={ouvrirWhatsApp}
+          onPlus={(l) => setMenuLead(l)}
+          doublonsDe={doublonsDe}
+          messageVide={
+            view === "archived"
+              ? "Aucun lead endormi. Mets un lead froid de côté avec 💤 sur sa fiche."
+              : view === "historique"
+              ? "Aucun converti ni perdu pour l'instant."
+              : leads.length === 0
+              ? "Aucun contact pour l'instant. Partage ton lien bilan online ou ta page Club VIP pour remplir ta liste 🌱"
+              : "Personne ne correspond aux filtres."
+          }
+        />
       )}
-      </div>
+
+      {menuLead ? (
+        <CrmMenuLigne
+          lead={menuLead}
+          onFermer={() => setMenuLead(null)}
+          onQualifier={() => { const l = menuLead; setMenuLead(null); setQualifApresDrop(l); }}
+          onCalerRdv={() => { const l = menuLead; setMenuLead(null); setAgendaLead(l); }}
+          onFiche={() => { const l = menuLead; setMenuLead(null); navigate(`/crm/leads/${l.key}`); }}
+          onEndormir={() => { const l = menuLead; setMenuLead(null); void handleDormant(l, true); }}
+          onReveiller={() => { const l = menuLead; setMenuLead(null); void handleDormant(l, false); }}
+          onSupprimer={isAdmin ? () => { const l = menuLead; setMenuLead(null); void handleDelete(l); } : undefined}
+          onSource={(src) => { const l = menuLead; setMenuLead(null); void handleSourceChange(l, src); }}
+        />
+      ) : null}
 
       {/* Lead → RDV agenda (wagon 2 chantier 3) : prospect pré-rempli, et le
           lead passe automatiquement en Qualifié/Contacté à la création. */}
@@ -1390,411 +1247,10 @@ export function CrmPage() {
 
 // ─── LeadCard ────────────────────────────────────────────────────────────────
 
-function LeadCard({
-  lead,
-  msgCtx,
-  onStatusChange,
-  onSourceChange,
-  onCopy,
-  onAgenda,
-  dupeFlag,
-  onDormant,
-  onWake,
-  onDelete,
-  archived,
-}: {
-  lead: CrmLead;
-  msgCtx: { coachFirstName: string; bilanUrl: string; vipUrl: string };
-  onStatusChange: (s: CrmStatus) => void;
-  onSourceChange?: (s: CrmSource) => void;
-  onCopy: (text: string) => void;
-  onAgenda: () => void;
-  dupeFlag: { kind: "client" | "dupe"; label: string } | null;
-  onDormant?: () => void;
-  onWake?: () => void;
-  onDelete?: () => void;
-  archived?: boolean;
-}) {
-  const { users } = useAppContext();
-  const { push: pushToast } = useToast();
-  const navigate = useNavigate();
-  const src = CRM_SOURCE_META[lead.source];
-  // Provenance bilan online : nom du coach dont le lien a servi (via ownerUserId
-  // quand un slug est présent) — sinon « lien public ».
-  const bilanVia =
-    lead.table === "online_bilans"
-      ? lead.bilanCoachSlug
-        ? (users.find((u) => u.id === lead.ownerUserId)?.name ?? lead.bilanCoachSlug)
-        : null
-      : null;
-  const [menuOpen, setMenuOpen] = useState(false);
-  // Logique message/canal/IA/touch — extraite dans useLeadQuickActions (chantier
-  // refonte CRM Liste/Pipeline 2026-07), partagée avec la vue Liste.
-  const {
-    isIntention,
-    message,
-    messageLabel,
-    aiMessage,
-    setAiMessage,
-    aiLoading,
-    generateAi,
-    lastTouch,
-    recordTouch,
-  } = useLeadQuickActions(lead, msgCtx);
-  // Score/température unifiés + badge de stagnation (Phase 3).
-  const { temperature } = computeLeadScore(lead);
-  const temp = TEMP_META[temperature];
-  const stagnant = isStagnant(lead);
 
-  return (
-    <div
-      style={card}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData("text/plain", lead.key);
-        e.dataTransfer.effectAllowed = "move";
-      }}
-      title="Glisse-moi dans une autre colonne (ou utilise le sélecteur de statut)"
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span title={temp.label} aria-hidden="true">{temp.emoji}</span>
-        <strong style={{ fontFamily: "Syne, sans-serif", fontSize: 14, color: "var(--ls-text)" }}>
-          {lead.firstName}
-        </strong>
-        {lead.table === "prospect_leads" && onSourceChange ? (
-          <select
-            value={lead.source}
-            onChange={(e) => onSourceChange(e.target.value as CrmSource)}
-            title="Re-catégoriser la source de ce lead"
-            style={{ ...srcBadge, cursor: "pointer", appearance: "none", WebkitAppearance: "none", paddingRight: 18 }}
-          >
-            {CRM_EDITABLE_SOURCES.map((s) => (
-              <option key={s} value={s}>
-                {CRM_SOURCE_META[s].emoji} {CRM_SOURCE_META[s].label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span style={srcBadge}>
-            {src.emoji} {src.label}
-          </span>
-        )}
-        {lead.relanceDue ? <span style={relanceBadge}>🔔 Relance due</span> : null}
-        {dupeFlag ? (
-          <span style={dupeFlag.kind === "client" ? clientBadge : dupeBadge}>⚠️ {dupeFlag.label}</span>
-        ) : null}
-        {stagnant ? (
-          <span title={`Aucun mouvement depuis ${stagnationDays(lead)} jour(s)`} style={stagnantBadge}>
-            ⏳ {stagnationDays(lead)}j
-          </span>
-        ) : null}
-        {!lead.ownerUserId && tableSupportsAssignment(lead.table) ? (
-          <span title="Non attribué — ouvre la fiche pour assigner" style={clientBadge}>
-            👤 Non attribué
-          </span>
-        ) : null}
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
-          {formatDate(lead.createdAt)}
-        </span>
-      </div>
-
-      <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
-        {lead.viaName ? <>🤝 via <strong>{lead.viaName}</strong> · </> : null}
-        {lead.extra ? <>{lead.extra} · </> : null}
-        {lead.city ? <>{lead.city} · </> : null}
-        {lead.contact ?? (isIntention ? "contact à demander au parrain" : "pas de contact")}
-        {lastTouch ? (
-          <span style={{ color: "var(--ls-teal)" }}> · 📨 contacté {relativeDays(lastTouch)}</span>
-        ) : null}
-      </div>
-
-      {/* Réponses du questionnaire funnel Opportunité (repliable) */}
-      {lead.funnelAnswers && Object.keys(lead.funnelAnswers).length > 0 ? (
-        <FunnelAnswers
-          answers={lead.funnelAnswers}
-          temperature={lead.funnelTemperature}
-          score={lead.funnelScore}
-        />
-      ) : null}
-
-      {/* Bilan online : résumé clé INLINE (objectifs · cible · motivation) —
-          comme les réponses funnel — + bouton vers le détail complet (modale).
-          Avant : seul le bouton était affiché, l'info restait cachée. */}
-      {lead.table === "online_bilans" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {/* Provenance : via le lien d'un distri, ou lien public générique */}
-          <div style={{ fontSize: 11.5, fontWeight: 600, color: bilanVia ? "var(--ls-purple)" : "var(--ls-text-hint)" }}>
-            {bilanVia ? <>🔗 via {bilanVia}</> : <>🌐 Lien public (pas de distri)</>}
-          </div>
-          {(lead.bilanObjectives && lead.bilanObjectives.length > 0) ||
-          lead.bilanWeightTarget != null ||
-          lead.bilanMotivation != null ? (
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-              {(lead.bilanObjectives ?? []).map((o) => (
-                <span key={o} style={{ fontSize: 11.5, fontWeight: 600, color: "var(--ls-teal)", background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)", borderRadius: 999, padding: "2px 9px" }}>
-                  {BILAN_OBJECTIVE_LABELS[o] ?? o}
-                </span>
-              ))}
-              {lead.bilanWeightTarget != null ? (
-                <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>🎯 −{lead.bilanWeightTarget} kg</span>
-              ) : null}
-              {lead.bilanMotivation != null ? (
-                <span style={{ fontSize: 11.5, color: "var(--ls-text-muted)" }}>🔥 {lead.bilanMotivation}/10</span>
-              ) : null}
-              {lead.bilanAge != null ? (
-                <span style={{ fontSize: 11.5, color: "var(--ls-text-hint)" }}>· {lead.bilanAge} ans</span>
-              ) : null}
-            </div>
-          ) : null}
-          <Link
-            to={`/crm/leads/${lead.key}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              width: "100%",
-              padding: "8px 11px",
-              borderRadius: 9,
-              border: "1px solid color-mix(in srgb, var(--ls-teal) 32%, var(--ls-border))",
-              background: "color-mix(in srgb, var(--ls-teal) 7%, var(--ls-surface))",
-              color: "var(--ls-text)",
-              fontSize: 12.5,
-              fontWeight: 600,
-              fontFamily: "DM Sans, sans-serif",
-              textDecoration: "none",
-              boxSizing: "border-box",
-            }}
-          >
-            📋 Voir tout le bilan (habitudes, repas, sommeil…)
-            <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-teal)" }}>→</span>
-          </Link>
-        </div>
-      ) : null}
-
-      {/* Actions — menu déroulant (aéré sur mobile, Noaly explicite) */}
-      <div style={{ position: "relative" }}>
-        <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-expanded={menuOpen}
-          style={{ ...actionBtn("var(--ls-teal)"), fontWeight: 700 }}
-        >
-          ⚡ Actions {menuOpen ? "▴" : "▾"}
-        </button>
-        {menuOpen ? (
-          <>
-            <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} aria-hidden="true" />
-            <div style={actionMenu}>
-              {isIntention && lead.parrainPhone ? (
-                <MenuItem
-                  onClick={() => {
-                    recordTouch();
-                    window.open(buildCrmWhatsAppLink(lead.parrainPhone!, message), "_blank", "noopener,noreferrer");
-                    setMenuOpen(false);
-                  }}
-                >
-                  📱 Demander à {(lead.viaName ?? "").split(/\s+/)[0] || "ton client"}
-                </MenuItem>
-              ) : null}
-              {!isIntention && lead.contactIsPhone ? (
-                <>
-                  <MenuItem
-                    onClick={() => {
-                      recordTouch();
-                      window.open(buildCrmWhatsAppLink(lead.contact, message), "_blank", "noopener,noreferrer");
-                      setMenuOpen(false);
-                    }}
-                  >
-                    📱 WhatsApp
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      recordTouch();
-                      window.location.href = buildCrmSmsLink(lead.contact, message);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    💬 SMS
-                  </MenuItem>
-                </>
-              ) : null}
-              <MenuItem
-                onClick={() => {
-                  recordTouch();
-                  onCopy(message);
-                  setMenuOpen(false);
-                }}
-              >
-                📋 Copier {messageLabel.toLowerCase()}
-              </MenuItem>
-              {lead.status !== "converted" && lead.status !== "lost" ? (
-                <MenuItem
-                  onClick={() => {
-                    onAgenda();
-                    setMenuOpen(false);
-                  }}
-                >
-                  📅 Caler un RDV
-                </MenuItem>
-              ) : null}
-              <MenuItem
-                onClick={() => {
-                  navigate(`/crm/leads/${lead.key}`);
-                  setMenuOpen(false);
-                }}
-              >
-                📂 Voir la fiche complète
-              </MenuItem>
-              {lead.resultToken ? (
-                <MenuItem
-                  onClick={() => {
-                    recordTouch();
-                    const origin = typeof window !== "undefined" ? window.location.origin : "";
-                    void navigator.clipboard?.writeText(`${origin}/resultat-bilan/${lead.resultToken}`).then(() =>
-                      pushToast({
-                        tone: "success",
-                        title: "Lien Résultat copié",
-                        message: "Page premium personnalisée — envoie-la à ton prospect 🌿",
-                      }),
-                    );
-                    setMenuOpen(false);
-                  }}
-                >
-                  🔗 Copier le lien Résultat
-                </MenuItem>
-              ) : null}
-              <MenuItem
-                disabled={aiLoading}
-                onClick={() => {
-                  setMenuOpen(false);
-                  // Anti-gaspillage IA : génération seulement si confirmée.
-                  if (
-                    !window.confirm(
-                      "✨ Noaly va rédiger un message personnalisé avec l'IA. Ça consomme des crédits — générer ?",
-                    )
-                  )
-                    return;
-                  void generateAi();
-                }}
-              >
-                ✨ {aiLoading ? "Noaly écrit…" : "Noaly écrit un message IA"}
-              </MenuItem>
-            </div>
-          </>
-        ) : null}
-      </div>
-
-      {/* Message IA généré (wagon 3 chantier 8) */}
-      {aiMessage ? (
-        <div style={aiPanel}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ls-purple)", marginBottom: 6 }}>
-            ✨ Proposition de Noaly — édite avant d'envoyer
-          </div>
-          <textarea
-            value={aiMessage}
-            onChange={(e) => setAiMessage(e.target.value)}
-            rows={6}
-            style={aiTextarea}
-          />
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-            {lead.contactIsPhone ? (
-              <a
-                href={buildCrmWhatsAppLink(lead.contact, aiMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={actionBtn("#25D366")}
-              >
-                📱 WhatsApp
-              </a>
-            ) : null}
-            {isIntention && lead.parrainPhone ? (
-              <a
-                href={buildCrmWhatsAppLink(lead.parrainPhone, aiMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={actionBtn("#25D366")}
-              >
-                📱 Au parrain
-              </a>
-            ) : null}
-            <button type="button" onClick={() => onCopy(aiMessage)} style={actionBtn("var(--ls-teal)")}>
-              📋 Copier
-            </button>
-            <button type="button" onClick={() => setAiMessage(null)} style={actionBtn("var(--ls-text-muted)")}>
-              ✕ Fermer
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Statut */}
-      <select
-        value={lead.status}
-        onChange={(e) => onStatusChange(e.target.value as CrmStatus)}
-        style={statusSelect(CRM_STATUS_META[lead.status].color)}
-        aria-label={`Statut de ${lead.firstName}`}
-      >
-        {statusOptionsFor(lead.table).map((s) => (
-          <option key={s} value={s}>
-            {CRM_STATUS_META[s].emoji} {CRM_STATUS_META[s].label}
-          </option>
-        ))}
-        {/* Statut courant hors options natives (ex: converti via kanban) */}
-        {!statusOptionsFor(lead.table).includes(lead.status) ? (
-          <option value={lead.status}>
-            {CRM_STATUS_META[lead.status].emoji} {CRM_STATUS_META[lead.status].label}
-          </option>
-        ) : null}
-      </select>
-
-      {/* Actions endormir / réveiller / supprimer (2026-06-14) */}
-      {(onDormant || onWake || onDelete) && (
-        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-          {archived && onWake ? (
-            <button type="button" onClick={onWake} style={cardActionBtn}>
-              ☀️ Réveiller
-            </button>
-          ) : null}
-          {!archived && onDormant ? (
-            <button type="button" onClick={onDormant} style={cardActionBtn} title="Mettre de côté — sort du flux, plus de relance">
-              💤 Endormir
-            </button>
-          ) : null}
-          {onDelete ? (
-            <button type="button" onClick={onDelete} style={{ ...cardActionBtn, color: "var(--ls-coral)", borderColor: "color-mix(in srgb, var(--ls-coral) 35%, var(--ls-border))" }}>
-              🗑 Supprimer
-            </button>
-          ) : null}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const cardActionBtn: React.CSSProperties = {
-  padding: "5px 10px",
-  borderRadius: 8,
-  border: "0.5px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text-muted)",
-  fontSize: 11.5,
-  fontWeight: 600,
-  cursor: "pointer",
-  fontFamily: "DM Sans, sans-serif",
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-function ligneRepliee(): React.CSSProperties {
-  return {
-    display: "flex", alignItems: "center", gap: 6,
-    padding: "9px 13px", borderRadius: 11,
-    background: "color-mix(in srgb, var(--ls-bg) 40%, var(--ls-surface))",
-    border: "1px solid var(--ls-border)",
-    color: "var(--ls-text-muted)", fontSize: 12, fontWeight: 600,
-    cursor: "pointer", fontFamily: "DM Sans, sans-serif",
-  };
-}
 
 const pageWrap: React.CSSProperties = {
   maxWidth: 1280,
@@ -1926,13 +1382,6 @@ const searchInput: React.CSSProperties = {
   outline: "none",
 };
 
-const columnsWrap: React.CSSProperties = {
-  display: "flex",
-  gap: 12,
-  overflowX: "auto",
-  paddingBottom: 12,
-  alignItems: "flex-start",
-};
 
 // (Les anciens styles column / columnHeader / columnCount sont retirés : le
 //  board V2 les remplace par CrmColonneEtape, lot 3.)
@@ -1944,70 +1393,13 @@ const columnEmpty: React.CSSProperties = {
   padding: "18px 0",
 };
 
-const card: React.CSSProperties = {
-  background: "var(--ls-surface)",
-  border: "0.5px solid var(--ls-border)",
-  borderRadius: 12,
-  padding: "12px 12px",
-  display: "flex",
-  flexDirection: "column",
-  gap: 9,
-  fontFamily: "DM Sans, sans-serif",
-  cursor: "grab",
-};
 
-const srcBadge: React.CSSProperties = {
-  fontSize: 10.5,
-  fontWeight: 700,
-  padding: "2px 8px",
-  borderRadius: 999,
-  background: "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
-  color: "var(--ls-teal)",
-  whiteSpace: "nowrap",
-};
 
-const relanceBadge: React.CSSProperties = {
-  fontSize: 10.5,
-  fontWeight: 700,
-  padding: "2px 8px",
-  borderRadius: 999,
-  background: "color-mix(in srgb, var(--ls-coral) 12%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
-  color: "var(--ls-coral)",
-  whiteSpace: "nowrap",
-};
 
-const clientBadge: React.CSSProperties = {
-  fontSize: 10,
-  fontWeight: 700,
-  padding: "2px 8px",
-  borderRadius: 999,
-  background: "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 40%, transparent)",
-  color: "var(--ls-purple)",
-  whiteSpace: "nowrap",
-};
 
 // Badge de stagnation ⏳ Nj (Phase 3, 2026-07-16) — neutre volontairement
 // (pas rouge/urgent comme relanceBadge) : c'est une info, pas une alerte.
-const stagnantBadge: React.CSSProperties = {
-  fontSize: 10.5,
-  fontWeight: 700,
-  padding: "2px 8px",
-  borderRadius: 999,
-  background: "color-mix(in srgb, var(--ls-text-muted) 10%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-text-muted) 30%, transparent)",
-  color: "var(--ls-text-muted)",
-  whiteSpace: "nowrap",
-};
 
-const dupeBadge: React.CSSProperties = {
-  ...clientBadge,
-  background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
-  color: "var(--ls-teal)",
-};
 
 const curiousPanel: React.CSSProperties = {
   marginBottom: 16,
@@ -2103,111 +1495,12 @@ const actionBtn = (accent: string): React.CSSProperties => ({
   fontFamily: "DM Sans, sans-serif",
 });
 
-const actionMenu: React.CSSProperties = {
-  position: "absolute",
-  top: "100%",
-  left: 0,
-  marginTop: 6,
-  minWidth: 220,
-  maxWidth: "min(260px, 90vw)",
-  zIndex: 41,
-  background: "var(--ls-surface)",
-  border: "1px solid var(--ls-border)",
-  borderRadius: 12,
-  boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
-  padding: 6,
-  display: "flex",
-  flexDirection: "column",
-  gap: 2,
-};
 
 // Libellés courts des objectifs bilan online (résumé inline carte CRM).
-const BILAN_OBJECTIVE_LABELS: Record<string, string> = {
-  weight_loss: "Perte de poids",
-  mass_gain: "Prise de masse",
-  energy: "Énergie",
-  sleep: "Sommeil",
-  wellbeing: "Bien-être",
-  perf_pro: "Perf pro",
-};
 
-function MenuItem({
-  onClick,
-  disabled,
-  children,
-}: {
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        width: "100%",
-        textAlign: "left",
-        padding: "10px 12px",
-        borderRadius: 9,
-        border: "none",
-        background: "transparent",
-        color: "var(--ls-text)",
-        fontSize: 13,
-        fontWeight: 500,
-        fontFamily: "DM Sans, sans-serif",
-        cursor: disabled ? "wait" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-        minHeight: 40,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--ls-surface2)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "transparent";
-      }}
-    >
-      {children}
-    </button>
-  );
-}
 
-const aiPanel: React.CSSProperties = {
-  marginTop: 4,
-  padding: "10px 12px",
-  borderRadius: 10,
-  background: "color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface2))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
-};
 
-const aiTextarea: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "0.5px solid var(--ls-border)",
-  background: "var(--ls-surface)",
-  color: "var(--ls-text)",
-  fontSize: 12.5,
-  lineHeight: 1.5,
-  fontFamily: "DM Sans, sans-serif",
-  resize: "vertical",
-  outline: "none",
-};
 
-const statusSelect = (color: string): React.CSSProperties => ({
-  padding: "6px 10px",
-  fontSize: 12,
-  borderRadius: 9,
-  border: `1px solid color-mix(in srgb, ${color} 45%, var(--ls-border))`,
-  background: `color-mix(in srgb, ${color} 8%, var(--ls-surface2))`,
-  color: "var(--ls-text)",
-  fontWeight: 600,
-  cursor: "pointer",
-  fontFamily: "DM Sans, sans-serif",
-});
 
 const hint: React.CSSProperties = {
   marginTop: 20,
@@ -2216,17 +1509,6 @@ const hint: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
 };
 
-const emptyState: React.CSSProperties = {
-  padding: "40px 20px",
-  textAlign: "center",
-  color: "var(--ls-text-muted)",
-  background: "var(--ls-surface)",
-  border: "0.5px dashed var(--ls-border)",
-  borderRadius: 14,
-  fontSize: 13.5,
-  lineHeight: 1.6,
-  fontFamily: "DM Sans, sans-serif",
-};
 
 const footerHint: React.CSSProperties = {
   marginTop: 20,
