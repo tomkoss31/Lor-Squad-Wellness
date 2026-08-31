@@ -28,7 +28,13 @@ export type CleReponse =
   | "ne_sait_pas"
   | "pas_maintenant"
   | "plus_interesse"
-  | "rdv";
+  | "rdv"
+  // ── Étape « À conclure » (28/08/2026) — les deux issues d'un rendez-vous
+  //    passé qui renvoient la personne dans la file. Elles ne réutilisent pas
+  //    `pas_de_reponse` exprès : son libellé (« Appelé·e, pas de réponse »)
+  //    serait faux sur la fiche de quelqu'un qui a manqué son rendez-vous.
+  | "pas_venue"
+  | "venue_pas_demarre";
 
 export interface Reponse {
   cle: CleReponse;
@@ -113,7 +119,40 @@ export const REPONSES: Reponse[] = [
     statut: "qualified",
     teinte: "var(--ls-lime)",
   },
+  // ── Étape « À conclure » : les deux issues d'un rendez-vous passé ─────────
+  // Délais validés par Thomas le 28/08. Elles ne sont PAS proposées dans la
+  // barre de qualification ordinaire (cf. REPONSES_APPEL) : on ne peut y
+  // répondre que face à un rendez-vous réellement passé.
+  {
+    cle: "pas_venue",
+    titre: "Pas venue",
+    quand: "On la relance dans 2 jours",
+    resume: "N'est pas venue au rendez-vous",
+    jours: 2,
+    statut: "to_recontact",
+    teinte: "var(--ls-coral)",
+  },
+  {
+    cle: "venue_pas_demarre",
+    titre: "Venue, pas démarré",
+    quand: "On revoit dans 7 jours",
+    resume: "Venue au rendez-vous, n'a pas démarré",
+    jours: 7,
+    statut: "to_recontact",
+    teinte: "var(--ls-amber)",
+  },
 ];
+
+/**
+ * Les réponses de la barre de qualification ORDINAIRE (après un appel).
+ * `pas_venue` et `venue_pas_demarre` en sont exclues : elles n'ont de sens
+ * qu'en face d'un rendez-vous passé, et c'est l'étape « À conclure » qui les
+ * propose. Les afficher partout rendrait la barre plus longue et permettrait
+ * de déclarer un lapin à quelqu'un qui n'avait pas de rendez-vous.
+ */
+export const REPONSES_APPEL: Reponse[] = REPONSES.filter(
+  (r) => r.cle !== "pas_venue" && r.cle !== "venue_pas_demarre",
+);
 
 export const REPONSE_PAR_CLE: Record<CleReponse, Reponse> = Object.fromEntries(
   REPONSES.map((r) => [r.cle, r]),

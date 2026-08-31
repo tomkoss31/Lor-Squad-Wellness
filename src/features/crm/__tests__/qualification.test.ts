@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   REPONSES,
+  REPONSES_APPEL,
   REPONSE_PAR_CLE,
   HEURE_DE_RELANCE,
   dateDeRetour,
@@ -22,8 +23,12 @@ import {
 const T0 = new Date("2026-08-13T09:10:00+02:00");
 
 describe("les six réponses", () => {
-  it("couvre exactement ce que Thomas a demandé", () => {
-    expect(REPONSES.map((r) => r.cle)).toEqual([
+  it("la barre d'appel couvre exactement ce que Thomas a demandé", () => {
+    // ⚠️ 28/08 — l'étape « À conclure » a ajouté deux réponses à REPONSES.
+    // La garantie qui compte ici n'a PAS changé : la barre proposée après un
+    // appel montre toujours ces six-là, et rien de plus. `pas_venue` et
+    // `venue_pas_demarre` n'ont de sens qu'en face d'un rendez-vous passé.
+    expect(REPONSES_APPEL.map((r) => r.cle)).toEqual([
       "pas_de_reponse",
       "rappellera",
       "ne_sait_pas",
@@ -31,6 +36,13 @@ describe("les six réponses", () => {
       "plus_interesse",
       "rdv",
     ]);
+  });
+
+  it("les deux réponses de « À conclure » existent, hors de la barre d'appel", () => {
+    expect(REPONSES.map((r) => r.cle)).toContain("pas_venue");
+    expect(REPONSES.map((r) => r.cle)).toContain("venue_pas_demarre");
+    expect(REPONSES_APPEL.map((r) => r.cle)).not.toContain("pas_venue");
+    expect(REPONSES_APPEL.map((r) => r.cle)).not.toContain("venue_pas_demarre");
   });
 
   it("annonce toujours ce qui va se passer — aucun tap ne doit surprendre", () => {

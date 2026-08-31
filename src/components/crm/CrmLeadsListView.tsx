@@ -23,7 +23,7 @@ import { grouperParZone, phraseEtat, type CleZone } from "../../features/crm/zon
 import { etatRdvDe } from "../../features/crm/etapes";
 import { FeuilleQualification } from "../../features/crm/FeuilleQualification";
 import { estQualifiable } from "../../features/crm/ecrireQualification";
-import { quandCourt, REPONSES, type Reponse } from "../../features/crm/qualification";
+import { quandCourt, REPONSES_APPEL, type Reponse } from "../../features/crm/qualification";
 import { useLeadQuickActions } from "../../hooks/useLeadQuickActions";
 import { buildCrmMailLink, buildCrmSmsLink, buildCrmWhatsAppLink, objetPourLead, type CrmMessageContext } from "../../lib/crmMessages";
 import { formatLeadDate, relativeLeadDays } from "../../lib/leadDateFormat";
@@ -439,7 +439,7 @@ export function CrmLeadsListView({
             {/* Les réponses qui FERMENT le dossier (« plus intéressé », « RDV
                 calé ») ne sont pas ici : on ne raye pas cinq personnes d'un
                 geste, et un rendez-vous se prend une par une. */}
-            {REPONSES.filter((r) => r.jours !== null).map((r) => (
+            {REPONSES_APPEL.filter((r) => r.jours !== null).map((r) => (
               <button
                 key={r.cle}
                 type="button"

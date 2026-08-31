@@ -10,7 +10,7 @@
 // se passer (« Revient demain ») : aucun tap ne doit surprendre.
 // =============================================================================
 
-import { REPONSES, type Reponse } from "./qualification";
+import { REPONSES_APPEL, type Reponse } from "./qualification";
 
 export interface FeuilleQualificationProps {
   /** Prénom, pour que la confirmation parle de quelqu'un et pas d'« un lead ». */
@@ -29,7 +29,7 @@ export function FeuilleQualification({ prenom, onChoisir, onIgnorer }: FeuilleQu
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {REPONSES.map((r) => (
+        {REPONSES_APPEL.map((r) => (
           <button key={r.cle} type="button" onClick={() => onChoisir(r)} style={choix}>
             <span aria-hidden="true" style={{ ...pastille, background: r.teinte }} />
             <span style={{ flex: 1, minWidth: 0 }}>

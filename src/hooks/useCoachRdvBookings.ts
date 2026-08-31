@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
+import { rdvAConclure, FENETRE_A_CONCLURE_MS } from "../features/crm/aConclure";
 
 export interface RdvBookingMetadata {
   last_name?: string | null;
@@ -24,7 +25,7 @@ export interface RdvBooking {
   mode: "presentiel" | "visio";
   slot_start: string;
   slot_end: string;
-  status: "requested" | "confirmed" | "canceled";
+  status: "requested" | "confirmed" | "canceled" | "honored" | "no_show";
   confirm_email_sent_at: string | null;
   reminder_email_sent_at: string | null;
   // Recrutement « ouvrir un club » (tunnel /club/rejoindre/rdv). 'bilan' = défaut
@@ -34,26 +35,31 @@ export interface RdvBooking {
 }
 
 interface Result {
+  /** Les rendez-vous À VENIR — ce que montre « RDV demandés ». Inchangé. */
   bookings: RdvBooking[];
+  /** Les rendez-vous PASSÉS et non soldés, du plus ancien au plus récent.
+   *  Ils alimentent l'étape « À conclure » (28/08) : sans elle, ils restaient
+   *  « confirmed » pour toujours — 5 étaient dans ce cas en prod. */
+  aConclure: RdvBooking[];
   loading: boolean;
   reload: () => Promise<void>;
   setStatus: (id: string, status: RdvBooking["status"]) => Promise<void>;
 }
 
 export function useCoachRdvBookings(coachUserId: string | null): Result {
-  const [bookings, setBookings] = useState<RdvBooking[]>([]);
+  const [toutes, setToutes] = useState<RdvBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
     if (!coachUserId) {
-      setBookings([]);
+      setToutes([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     const sb = await getSupabaseClient();
     if (!sb) {
-      setBookings([]);
+      setToutes([]);
       setLoading(false);
       return;
     }
@@ -75,13 +81,24 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
       // dessous, avec les gestes qui lui sont propres (déplacer, confirmer).
       .is("club_id", null)
       .neq("status", "canceled")
-      .gte("slot_start", new Date().toISOString())
+      // ⚠️ 28/08 — ON REMONTE AUSSI LE PASSÉ RÉCENT (étape « À conclure »).
+      //
+      // Il y avait ici `.gte("slot_start", maintenant)` : un rendez-vous passé
+      // disparaissait de l'écran, et avec lui le seul endroit où dire « elle
+      // est venue » ou « elle n'est pas venue ». Mesuré en base le 28/08 :
+      // 5 rendez-vous encore « confirmed » alors qu'ils étaient passés, et
+      // UN SEUL `honored` sur 31. Ils ne pouvaient plus être soldés.
+      //
+      // On ramène donc les 14 derniers jours. Le tri se fait ci-dessous :
+      // `bookings` garde EXACTEMENT ce qu'il montrait (les rendez-vous à
+      // venir), `aConclure` reçoit les passés non soldés.
+      .gte("slot_start", new Date(Date.now() - FENETRE_A_CONCLURE_MS).toISOString())
       .order("slot_start", { ascending: true })
-      .limit(50);
+      .limit(100);
     if (error) {
-      setBookings([]);
+      setToutes([]);
     } else {
-      setBookings((data ?? []) as RdvBooking[]);
+      setToutes((data ?? []) as RdvBooking[]);
     }
     setLoading(false);
   }, [coachUserId]);
@@ -97,7 +114,7 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
       const { error } = await setRdvBookingStatus(id, status);
       if (!error) {
         // Annulé → retiré de la liste ; confirmé → maj statut local.
-        setBookings((prev) =>
+        setToutes((prev) =>
           status === "canceled"
             ? prev.filter((b) => b.id !== id)
             : prev.map((b) => (b.id === id ? { ...b, status } : b)),
@@ -107,5 +124,16 @@ export function useCoachRdvBookings(coachUserId: string | null): Result {
     [],
   );
 
-  return { bookings, loading, reload, setStatus };
+  // Le partage se fait ici, une seule fois, avec la règle de `aConclure.ts` —
+  // pas de « slot_start < now » recopié à la main dans chaque écran.
+  const maintenant = new Date();
+  const bookings = toutes.filter(
+    (b) => new Date(b.slot_start).getTime() >= maintenant.getTime(),
+  );
+  const aConclure = rdvAConclure(
+    toutes.map((b) => ({ ...b, slotStart: b.slot_start })),
+    maintenant,
+  );
+
+  return { bookings, aConclure, loading, reload, setStatus };
 }

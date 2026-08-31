@@ -45,13 +45,21 @@ import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 import { useLeadQuickActions } from "../hooks/useLeadQuickActions";
 import { RdvBookingsWidget } from "../components/crm/RdvBookingsWidget";
+// Étape « À conclure » (28/08) : un rendez-vous passé doit produire une réponse.
+import { CrmAConclure, type CibleAConclure } from "../components/crm/CrmAConclure";
+import { EFFET_ISSUE, type IssueRdv } from "../features/crm/aConclure";
+import { useCoachRdvBookings } from "../hooks/useCoachRdvBookings";
+import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
+import { useActiveClubId } from "../hooks/useActiveClubId";
+import { rdvAConclure } from "../features/crm/aConclure";
+import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { ClubDiscoveryWidget } from "../components/crm/ClubDiscoveryWidget";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeEntonnoir, type JaugeFiltre } from "../components/crm/CrmJaugeEntonnoir";
 import { CrmColonneEtape } from "../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
-import { grouperParPersonne, normaliserTelephone } from "../features/crm/cleDoublon";
+import { clesDoublon, grouperParPersonne, normaliserTelephone } from "../features/crm/cleDoublon";
 import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
 import { etapeDuLead } from "../features/crm/etapeLead";
 import { CrmFileDuJour } from "../components/crm/CrmFileDuJour";
@@ -71,7 +79,7 @@ import { formatLeadDate as formatDate, relativeLeadDays as relativeDays } from "
 import { computeLeadScore, TEMP_META } from "../lib/leadScoring";
 import { isStagnant, stagnationDays } from "../lib/leadActivity";
 import { tableSupportsAssignment } from "../lib/leadRouting";
-import { dateDeRetour, quandRevient, type Reponse } from "../features/crm/qualification";
+import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
 import { estQualifiable } from "../features/crm/ecrireQualification";
 
@@ -529,6 +537,102 @@ export function CrmPage() {
     });
   }
 
+  // ── ÉTAPE « À CONCLURE » (28/08) ──────────────────────────────────────────
+  // Mesuré en base ce jour-là : 5 rendez-vous encore « confirmed » alors que
+  // leur créneau était passé, et UN SEUL `honored` sur 31. Rien ne posait la
+  // question, donc personne n'y répondait, et ces gens ne revenaient dans
+  // aucune file. Ce bloc la pose, en haut, et ne descend pas avant réponse.
+  //
+  // ⚠️ IL FAUT LES DEUX SOURCES. Vérifié en base le 28/08 : sur les 3 rendez-vous
+  // passés non soldés, DEUX portaient un `club_id` (Marie Rose, Manon) et le
+  // troisième n'était pas rattaché à Thomas. En ne lisant que les rendez-vous
+  // du coach (`club_id is null`), ce bloc serait resté VIDE — la fonctionnalité
+  // aurait eu l'air livrée sans rien montrer.
+  const { aConclure: rdvCoach, reload: rechargerCoach } = useCoachRdvBookings(currentUser?.id ?? null);
+  const clubIdActif = useActiveClubId();
+  const { bookings: rdvClub, reload: rechargerClub } = useClubDiscoveryBookings(
+    isAdmin ? clubIdActif : null,
+  );
+
+  const ciblesAConclure: CibleAConclure[] = useMemo(() => {
+    const duCoach = rdvCoach.map((b) => ({
+      id: b.id,
+      slotStart: b.slot_start,
+      status: b.status,
+      nom: `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Sans nom",
+      detail: b.mode === "visio" ? "visio" : "présentiel",
+      contact: b.contact,
+    }));
+    // Le hook du club remonte déjà les 14 derniers jours non soldés : on lui
+    // applique la MÊME règle qu'au coach plutôt qu'un second filtre maison.
+    const duClub = rdvAConclure(
+      rdvClub.map((b) => ({
+        id: b.id,
+        slotStart: b.slot_start,
+        status: b.status,
+        nom: `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Sans nom",
+        detail: b.objectif ?? "découverte du club",
+        contact: b.contact,
+      })),
+      new Date(),
+    );
+    // Une même personne ne peut pas apparaître deux fois : on dédoublonne par
+    // identifiant de rendez-vous (les deux requêtes peuvent se recouvrir).
+    const vus = new Set<string>();
+    return [...duCoach, ...duClub].filter((c) => {
+      if (vus.has(c.id)) return false;
+      vus.add(c.id);
+      return true;
+    });
+  }, [rdvCoach, rdvClub]);
+
+  const rechargerRdv = async () => {
+    await Promise.all([rechargerCoach(), rechargerClub()]);
+  };
+
+  async function handleConclure(cible: CibleAConclure & { contact?: string | null }, issue: IssueRdv) {
+    const effet = EFFET_ISSUE[issue];
+
+    // 1. Solder le rendez-vous. On passe par le chemin unique.
+    const { error } = await setRdvBookingStatus(cible.id, effet.statutRdv);
+    if (error) {
+      pushToast({
+        tone: "warning",
+        title: "Rendez-vous non rangé",
+        message: error instanceof Error ? error.message : "Droits insuffisants ?",
+      });
+      return;
+    }
+
+    // 2. Retrouver la personne dans le CRM. On réutilise l'appariement du
+    //    dédoublonnage — `contact = phone || email` a déjà coûté assez cher.
+    const cles = clesDoublon({ contact: cible.contact ?? null });
+    const lead = cles.length
+      ? leads.find((l) => clesDoublon(l).some((k) => cles.includes(k)))
+      : undefined;
+
+    // 3. La renvoyer dans la file avec son échéance (J+2 / J+7), ou la sortir.
+    if (effet.reponseLead && lead) {
+      await handleQualifier(lead, REPONSE_PAR_CLE[effet.reponseLead]);
+    } else if (effet.sortDuCrm && lead) {
+      // « Elle démarre » : on ouvre la conversion — c'est elle qui crée la
+      // fiche cliente. On ne l'écrit pas ici en double.
+      navigate(`/crm/leads/${lead.key}?convert=1`);
+    } else {
+      // Aucun lead retrouvé : le rendez-vous est rangé quand même, mais on le
+      // DIT — un succès muet ferait croire que la relance est posée.
+      pushToast({
+        tone: effet.reponseLead ? "warning" : "success",
+        title: `${cible.nom} · ${effet.libelle}`,
+        message: effet.reponseLead
+          ? "Rendez-vous rangé, mais aucune fiche CRM ne correspond — pense à la relancer à la main."
+          : "Rendez-vous rangé.",
+      });
+    }
+
+    await rechargerRdv();
+  }
+
   async function handleSourceChange(lead: CrmLead, next: CrmSource) {
     const err = await updateSource(lead, next);
     if (err) pushToast({ tone: "warning", title: "Source non modifiée", message: err });
@@ -663,6 +767,16 @@ export function CrmPage() {
           </p>
         ) : null}
       </header>
+
+      {/* ═══ À CONCLURE — tout en haut, avant tout le reste ══════════════════
+          Un rendez-vous passé sans réponse est un trou : la personne ne revient
+          dans aucune file. Ce bloc passe DEVANT la jauge et les rendez-vous à
+          venir, et disparaît de lui-même dès que tout est soldé. */}
+      <CrmAConclure
+        cibles={ciblesAConclure}
+        maintenant={new Date()}
+        onRepondre={(cible, issue) => handleConclure(cible, issue)}
+      />
 
       {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
           périmètre — et NON `filtered` : une jauge qui se recalcule sur son
