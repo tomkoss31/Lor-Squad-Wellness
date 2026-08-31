@@ -94,6 +94,11 @@ export function CrmAConclure({ cibles, onRepondre, maintenant }: Props) {
                 {c.detail ? ` · ${c.detail}` : ""}
               </p>
 
+              {/* ⚠️ 28/08 — MESURÉ SUR DEV : ce bloc prenait 663 px pour DEUX
+                  personnes, parce que trois boutons de même largeur
+                  s'empilaient en colonne sur 390 px. La victoire prend la
+                  ligne du haut (c'est la réponse qu'on espère), les deux
+                  retours dans la file se partagent celle du bas. */}
               <div style={actions}>
                 <button
                   type="button"
@@ -103,22 +108,24 @@ export function CrmAConclure({ cibles, onRepondre, maintenant }: Props) {
                 >
                   {EFFET_ISSUE.venue_demarre.libelle}
                 </button>
-                <button
-                  type="button"
-                  disabled={occupe}
-                  onClick={() => void repondre(c, "venue_pas_demarre")}
-                  style={btn}
-                >
-                  {EFFET_ISSUE.venue_pas_demarre.libelle}
-                </button>
-                <button
-                  type="button"
-                  disabled={occupe}
-                  onClick={() => void repondre(c, "pas_venue")}
-                  style={{ ...btn, ...btnLapin }}
-                >
-                  {EFFET_ISSUE.pas_venue.libelle}
-                </button>
+                <div style={ligneSecondaire}>
+                  <button
+                    type="button"
+                    disabled={occupe}
+                    onClick={() => void repondre(c, "venue_pas_demarre")}
+                    style={{ ...btn, ...btnSecondaire }}
+                  >
+                    Venue, pas démarré
+                  </button>
+                  <button
+                    type="button"
+                    disabled={occupe}
+                    onClick={() => void repondre(c, "pas_venue")}
+                    style={{ ...btn, ...btnSecondaire, ...btnLapin }}
+                  >
+                    Pas venue
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -134,7 +141,7 @@ const bloc: React.CSSProperties = {
   background: "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface))",
   border: "1px solid color-mix(in srgb, var(--ls-coral) 34%, transparent)",
   borderRadius: 18,
-  padding: "16px 16px 18px",
+  padding: "14px 14px 15px",
   margin: "14px 0 0",
 };
 
@@ -157,8 +164,8 @@ const titre: React.CSSProperties = {
 };
 
 const sousTitre: React.CSSProperties = {
-  margin: "6px 0 0",
-  fontSize: 13.5,
+  margin: "5px 0 0",
+  fontSize: 13,
   color: "var(--ls-text-muted)",
 };
 
@@ -166,7 +173,7 @@ const carte = (occupe: boolean): React.CSSProperties => ({
   background: "var(--ls-surface)",
   border: "1px solid var(--ls-border)",
   borderRadius: 14,
-  padding: "12px 13px",
+  padding: "11px 12px",
   opacity: occupe ? 0.55 : 1,
   transition: "opacity .15s ease",
 });
@@ -200,14 +207,15 @@ const meta: React.CSSProperties = {
 
 const actions: React.CSSProperties = {
   display: "flex",
-  gap: 7,
-  marginTop: 11,
-  flexWrap: "wrap",
+  flexDirection: "column",
+  gap: 6,
+  marginTop: 10,
 };
 
+const ligneSecondaire: React.CSSProperties = { display: "flex", gap: 6 };
+
 const btn: React.CSSProperties = {
-  flex: "1 1 auto",
-  minWidth: 118,
+  width: "100%",
   minHeight: 44,
   borderRadius: 999,
   border: "1px solid var(--ls-border2)",
@@ -227,6 +235,8 @@ const btnVictoire: React.CSSProperties = {
   borderColor: "transparent",
   fontWeight: 700,
 };
+
+const btnSecondaire: React.CSSProperties = { flex: 1, fontSize: 12.5, padding: "0 8px" };
 
 const btnLapin: React.CSSProperties = {
   borderColor: "color-mix(in srgb, var(--ls-coral) 45%, transparent)",

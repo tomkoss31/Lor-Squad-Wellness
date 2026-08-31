@@ -26,7 +26,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
-import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
+import { rdvEmailHtml, expediteurPour } from "../_shared/rdvEmail.ts";
 import { createCalendarEvent } from "../_shared/googleCalendar.ts";
 import { buildIcs } from "../_shared/icsInvite.ts";
 
@@ -72,11 +72,12 @@ async function sendViaResend(
   html: string,
   replyTo?: string,
   attachments?: MailAttachment[],
+  from?: string,
 ): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const payload: Record<string, unknown> = {
-      from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html,
+      from: from ?? FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html,
     };
     if (attachments?.length) payload.attachments = attachments;
     const res = await fetch("https://api.resend.com/emails", {
@@ -346,7 +347,16 @@ serve(async (req: Request) => {
         // Prospect du club : aucun compte, donc pas de bouton « mon espace ».
         hasAccount: false,
       });
-      confirmEmailSent = await sendViaResend(contact, "✅ Ton RDV découverte est réservé", html);
+      confirmEmailSent = await sendViaResend(
+        contact,
+        "✅ Ton RDV découverte est réservé",
+        html,
+        undefined,
+        undefined,
+        // Elle a réservé sur le site du Breakfast Club : sa boîte doit
+        // afficher le Breakfast Club, pas une marque qu'elle ne connaît pas.
+        expediteurPour("club"),
+      );
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")

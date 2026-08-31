@@ -18,7 +18,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
-import { rdvEmailHtml, notifInterneHtml } from "../_shared/rdvEmail.ts";
+import { rdvEmailHtml, notifInterneHtml, expediteurPour } from "../_shared/rdvEmail.ts";
 
 const SLOT_MIN = 30;
 
@@ -60,13 +60,13 @@ function parisHourLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 }
 
-async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string, replyTo?: string, from?: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify({ from: from ?? FROM_DEFAULT, to: [to], subject, reply_to: replyTo || REPLY_TO_DEFAULT, html }),
     });
     return res.ok;
   } catch {
@@ -315,6 +315,9 @@ serve(async (req: Request) => {
       const whereLine = mode === "visio"
         ? "En visio — le lien te sera envoyé avant le RDV"
         : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "ton club La Base");
+      // Même règle que la notification interne : une candidature « ouvrir un
+      // club » relève du Breakfast Club, un bilan relève de La Base 360.
+      const themeClient = isRecrut ? ("club" as const) : ("app" as const);
       const html = rdvEmailHtml({
         kind: "requested",
         firstName,
@@ -322,6 +325,11 @@ serve(async (req: Request) => {
         dateLabel: parisDateLabel(slotStart.toISOString()),
         hour: parisHourLabel(slotStart.toISOString()),
         location: whereLine,
+        // ⚠️ 28/08 — le mail au client ne portait AUCUN thème (donc « app »),
+        // alors que la notification interne, elle, suivait déjà `entete.theme`.
+        // Un candidat « ouvrir un club » recevait donc une lettre La Base 360
+        // pour une démarche Breakfast Club. Même source, même charte.
+        theme: themeClient,
         // Tunnel public : la personne réserve son 1er rendez-vous, elle n'a pas
         // de compte. Pas de bouton « mon espace », il ne mènerait qu'à un écran
         // de connexion (retour Thomas 2026-08-09).
@@ -330,7 +338,7 @@ serve(async (req: Request) => {
       // Le RDV est créé en `requested` : ce mail accuse réception d'une
       // DEMANDE, il ne confirme rien. Le « c'est confirmé » part quand le
       // coach accepte dans le CRM (edge rdv-accepted-notify, 2026-08-11).
-      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html);
+      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html, undefined, expediteurPour(themeClient));
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")

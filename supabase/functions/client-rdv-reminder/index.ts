@@ -23,7 +23,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from "../_shared/push.ts";
-import { rdvEmailHtml } from "../_shared/rdvEmail.ts";
+import { rdvEmailHtml, expediteurPour, type RdvEmailTheme } from "../_shared/rdvEmail.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
@@ -55,13 +55,13 @@ function parisDateLabel(iso: string): string {
     month: "long",
   }).format(new Date(iso));
 }
-async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
+async function sendViaResend(to: string, subject: string, html: string, from?: string): Promise<boolean> {
   if (!RESEND_API_KEY || !to) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
+      body: JSON.stringify({ from: from ?? FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
     });
     return res.ok;
   } catch {
@@ -233,7 +233,11 @@ serve(async (req) => {
       // d'1h, rappels ratés/erronés. parisDateStr gère le fuseau correctement.
       const { data: bookings } = await sb
         .from("rdv_bookings")
-        .select("id, coach_user_id, first_name, contact, mode, slot_start")
+        // ⚠️ 28/08 — `club_id` sert à choisir la CHARTE du rappel. Sans lui, une
+        // personne qui réserve sur le site du Breakfast Club recevait sa
+        // confirmation en crème et orange, puis un rappel vert La Base 360 la
+        // veille : deux marques pour un même rendez-vous.
+        .select("id, coach_user_id, club_id, first_name, contact, mode, slot_start")
         // ⚠️ 25/08 — c'était `.neq("status", "canceled")`, donc le rappel partait
         // AUSSI sur les demandes jamais acceptées : toute réservation du club
         // naît en « requested ». La personne recevait « ton rendez-vous, c'est
@@ -270,15 +274,17 @@ serve(async (req) => {
           const where = (b.mode as string) === "visio"
             ? "En visio — le lien te sera envoyé avant le RDV"
             : ((cid && cLoc.get(cid)) || "ton club La Base");
+          const themeRdv: RdvEmailTheme = b.club_id ? "club" : "app";
           const html = rdvEmailHtml({
             kind: "reminder",
+            theme: themeRdv,
             firstName: String((b.first_name as string) ?? "").split(/\s+/)[0] || "",
             coachName: (cid && cFull.get(cid)) || "ton coach",
             dateLabel: parisDateLabel(b.slot_start as string),
             hour: parisHourLabel(b.slot_start as string),
             location: where,
           });
-          const ok = await sendViaResend(String(b.contact), "📅 Ton rendez-vous, c'est demain", html);
+          const ok = await sendViaResend(String(b.contact), "📅 Ton rendez-vous, c'est demain", html, expediteurPour(themeRdv));
           if (ok) {
             await sb.from("rdv_bookings").update({ reminder_email_sent_at: new Date().toISOString() }).eq("id", b.id);
             prospectEmails += 1;

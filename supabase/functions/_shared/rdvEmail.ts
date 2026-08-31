@@ -119,6 +119,25 @@ export interface RdvEmailParams {
   hasAccount?: boolean;
 }
 
+/**
+ * L'EXPÉDITEUR SUIT L'IDENTITÉ (28/08/2026).
+ *
+ * Le corps des mails respectait déjà les deux chartes (thèmes « app » et
+ * « club », 09-11/08). Mais TOUT partait sous « La Base 360 » : quelqu'un
+ * réservait sur le site du Breakfast Club, recevait une lettre crème et
+ * orange… annoncée dans sa boîte par une marque qu'il n'avait jamais vue.
+ * La ligne de l'expéditeur est pourtant la PREMIÈRE chose qu'on lit.
+ *
+ * Le domaine reste `labase360.fr` — c'est lui qui est vérifié chez Resend, et
+ * en changer demanderait une nouvelle validation DNS. Seul le nom affiché
+ * change, et c'est lui qu'on voit dans la liste des messages.
+ */
+export function expediteurPour(theme: RdvEmailTheme | undefined): string {
+  return theme === "club"
+    ? "The Breakfast Club <rdv@labase360.fr>"
+    : "La Base 360 <rdv@labase360.fr>";
+}
+
 export function rdvEmailHtml(p: RdvEmailParams): string {
   const t = THEMES[p.theme ?? "app"];
   const first = esc(p.firstName || "");
