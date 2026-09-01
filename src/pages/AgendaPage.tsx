@@ -573,6 +573,11 @@ export function AgendaPage() {
     // lead dans le CRM, qui prime. Le propriétaire du club n'est plus qu'un
     // dernier recours, pour un club mal configuré.
     if (entityFilter === "all" || entityFilter === "discovery") {
+      // Dernier recours pour un club mal configuré. Depuis le 01/09,
+      // `activeClub` est résolu pour les DEUX coachs, donc cette valeur est
+      // enfin le vrai propriétaire pour tout le monde — et non plus « soi »
+      // par accident quand on ne possédait pas le club. Sans effet mesurable :
+      // aucune réservation n'a de `coach_user_id` nul (0 sur 36 au 01/09).
       const clubOwnerId = activeClub?.ownerUserId ?? currentUser?.id ?? "";
       for (const b of clubDiscoveries) {
         const d = new Date(b.slot_start);
@@ -595,15 +600,25 @@ export function AgendaPage() {
         //
         // L'exception ne vaut QUE pour « Moi » : si on demande explicitement
         // l'agenda d'un autre distributeur, on respecte ce choix.
-        // (`activeClub` n'existe que pour le propriétaire — useBbcMode filtre
-        // sur `owner_user_id`.)
         // La règle vit dans `visibiliteRdvClub.ts`, avec ses 9 tests — dont
         // les DEUX cassages réels, un dans chaque sens.
+        //
+        // ⚠️ 01/09 — ON COMPARE MAINTENANT LE PROPRIÉTAIRE, PAS LA PRÉSENCE.
+        // Ce test s'écrivait `!!activeClub`, en s'appuyant sur un commentaire
+        // qui disait « activeClub n'existe que pour le propriétaire ». C'était
+        // vrai jusqu'à ce que `useBbcMode` soit corrigé le même jour pour rendre
+        // AUSSI le club auquel on est rattaché — sans quoi Mélanie perdait
+        // 6 de ses 16 rendez-vous de la semaine en mode BBC.
+        //
+        // Laisser `!!activeClub` aurait donc changé en silence ce que Mélanie
+        // voit dans l'agenda CLASSIQUE, sous « Mes RDV », comme effet de bord
+        // d'un correctif fait ailleurs. On dit explicitement ce qu'on veut
+        // dire : suis-je le propriétaire de ce club ?
         if (!voitCeRdvDuClub({
           aQui,
           moi: currentUser?.id ?? null,
           filtre: agendaFilter,
-          proprietaireDuClub: !!activeClub,
+          proprietaireDuClub: !!activeClub && activeClub.ownerUserId === currentUser?.id,
           estAdmin: currentUser?.role === "admin",
         })) continue;
 
