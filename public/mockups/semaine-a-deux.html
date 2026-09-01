@@ -1,0 +1,303 @@
+<title>La semaine à deux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  /* ── Jetons du mode BBC, repris à l'identique de src/styles/bbc-tokens.css ──
+       Dark d'abord (c'est l'écran réel), light redéfini pour les trois états. */
+  :root {
+    --bg:#162624; --s1:#1E3330; --s2:#26403B; --s3:#2E4A44;
+    --line:rgba(244,239,228,.12); --line2:rgba(244,239,228,.20);
+    --text:#F4EFE4; --muted:rgba(244,239,228,.68); --hint:rgba(244,239,228,.46);
+    --lime:#C5F82A; --teal:#2DD4BF; --coral:#F2775F; --amber:#E8A93A; --violet:#A78BFA;
+    --lime-ink:#06241F;
+    --display:"Anton",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --body:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:#FAF7F0; --s1:#FFFFFF; --s2:#F5F1EB; --s3:#EFEAE1;
+      --line:rgba(30,51,48,.07); --line2:rgba(30,51,48,.13);
+      --text:#17201C; --muted:#55605A; --hint:#626B66;
+      --lime:#4C7A00; --teal:#0E8F81; --coral:#C7452C; --amber:#96650A; --violet:#6D4FC7;
+      --lime-ink:#FFFFFF;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#FAF7F0; --s1:#FFFFFF; --s2:#F5F1EB; --s3:#EFEAE1;
+    --line:rgba(30,51,48,.07); --line2:rgba(30,51,48,.13);
+    --text:#17201C; --muted:#55605A; --hint:#626B66;
+    --lime:#4C7A00; --teal:#0E8F81; --coral:#C7452C; --amber:#96650A; --violet:#6D4FC7;
+    --lime-ink:#FFFFFF;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  .wrap{max-width:430px;margin:0 auto;padding:22px 16px 60px}
+
+  /* ── En-tête ─────────────────────────────────────────────────────────── */
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);margin:0 0 6px}
+  h1{font-family:var(--display);font-size:34px;line-height:1;letter-spacing:.01em;text-transform:uppercase;margin:0}
+  .plage{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 0}
+
+  /* ── Lot 3 : la portée ───────────────────────────────────────────────── */
+  .portee{display:flex;gap:6px;margin:18px 0 4px}
+  .portee button{
+    flex:1;min-height:40px;border-radius:10px;cursor:pointer;
+    font-family:var(--body);font-size:13px;font-weight:600;
+    border:1px solid var(--line2);background:var(--s1);color:var(--muted);
+    transition:background .14s ease,color .14s ease,border-color .14s ease;
+  }
+  .portee button[aria-pressed="true"]{background:var(--lime);color:var(--lime-ink);border-color:var(--lime);font-weight:700}
+  .portee button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .compte{font-family:var(--mono);font-size:11px;color:var(--hint);margin:8px 2px 0;min-height:16px}
+
+  /* ── Les jours ───────────────────────────────────────────────────────── */
+  .jour{margin-top:22px}
+  .jour-tete{display:flex;align-items:baseline;gap:9px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .jour-nom{font-family:var(--display);font-size:15px;text-transform:uppercase;letter-spacing:.02em}
+  .jour-date{font-family:var(--mono);font-size:11px;color:var(--hint)}
+  .jour-vide{font-family:var(--mono);font-size:11.5px;color:var(--hint);padding:12px 2px}
+
+  .ev{
+    display:grid;grid-template-columns:52px 3px 1fr;gap:0 11px;align-items:stretch;
+    width:100%;text-align:left;background:transparent;border:0;padding:11px 0;cursor:pointer;
+    border-bottom:1px solid var(--line);font-family:var(--body);color:inherit;
+  }
+  .ev:focus-visible{outline:2px solid var(--teal);outline-offset:-2px;border-radius:6px}
+  .ev .h{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+  .ev .bar{border-radius:2px;background:var(--line2)}
+  .ev.thomas .bar{background:var(--teal)}
+  .ev.melanie .bar{background:var(--violet)}
+  .ev .t{font-weight:600;font-size:15.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ev .s{font-family:var(--mono);font-size:11.5px;color:var(--hint);margin-top:3px}
+
+  /* ── Lot 2 : à qui est ce rendez-vous ────────────────────────────────── */
+  .qui{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+    padding:2px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap;
+  }
+  .ev.thomas .qui{color:var(--teal)}
+  .ev.melanie .qui{color:var(--violet)}
+
+  /* ── Lot 4 : la feuille de bascule ───────────────────────────────────── */
+  .voile{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:40}
+  .voile.on{display:flex}
+  .feuille{
+    width:100%;max-width:430px;margin:0 auto;background:var(--s1);
+    border-radius:18px 18px 0 0;border-top:1px solid var(--line2);padding:18px 18px 26px;
+    animation:monte .18s ease-out;
+  }
+  @keyframes monte{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion:reduce){.feuille{animation:none}}
+  .feuille h2{font-family:var(--display);font-size:21px;text-transform:uppercase;margin:0 0 2px;letter-spacing:.01em}
+  .feuille .quand{font-family:var(--mono);font-size:12px;color:var(--hint);margin:0 0 16px}
+  .feuille .actuel{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--hint);margin:0 0 10px;
+  }
+  .actions{display:flex;flex-direction:column;gap:8px}
+  .act{
+    min-height:46px;border-radius:11px;cursor:pointer;font-family:var(--body);font-size:15px;font-weight:600;
+    border:1px solid var(--line2);background:var(--s2);color:var(--text);text-align:left;padding:0 15px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .act:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .act.primaire{background:var(--lime);color:var(--lime-ink);border-color:var(--lime);font-weight:700}
+  .act.discret{background:transparent;color:var(--muted);border-color:transparent;justify-content:center}
+  .pastille{width:9px;height:9px;border-radius:50%;flex:none}
+
+  /* ── Ce que la maquette change ───────────────────────────────────────── */
+  .notes{margin-top:34px;border-top:1px solid var(--line);padding-top:18px}
+  .notes h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);margin:0 0 12px;font-weight:400}
+  .note{display:grid;grid-template-columns:22px 1fr;gap:10px;margin-bottom:13px;font-size:14px;color:var(--muted);line-height:1.55}
+  .note b{color:var(--text);font-weight:600}
+  .note .n{font-family:var(--display);font-size:15px;color:var(--lime);line-height:1.2}
+
+  .toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:60;
+    background:var(--s3);color:var(--text);border:1px solid var(--line2);
+    border-radius:11px;padding:11px 16px;font-size:14px;font-weight:500;
+    box-shadow:0 8px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s ease;
+    max-width:calc(100% - 32px);
+  }
+  .toast.on{opacity:1}
+</style>
+
+<div class="wrap">
+
+  <p class="kicker">Mode BBC · maquette</p>
+  <h1>La semaine</h1>
+  <p class="plage">mar. 1 → sam. 5 septembre · club ouvert le 7</p>
+
+  <div class="portee" role="group" aria-label="De qui voit-on les rendez-vous">
+    <button type="button" data-portee="moi" aria-pressed="false">Moi</button>
+    <button type="button" data-portee="club" aria-pressed="true">Le club</button>
+    <button type="button" data-portee="melanie" aria-pressed="false">Mélanie</button>
+  </div>
+  <p class="compte" id="compte"></p>
+
+  <div id="semaine"></div>
+
+  <div class="notes">
+    <h3>Ce que ça change</h3>
+    <div class="note">
+      <span class="n">2</span>
+      <span>Chaque rendez-vous dit <b>à qui il est</b>. Aujourd'hui tu vois déjà les 7 découvertes
+      de Mélanie dans ta semaine — sans aucun moyen de savoir que ce sont les siennes.</span>
+    </div>
+    <div class="note">
+      <span class="n">3</span>
+      <span>La portée, c'est <b>« le club »</b> — vous deux — pas « toute l'équipe » (12 personnes,
+      dont 9 qui n'ont jamais rien fait). Et elle <b>reste</b> d'un écran à l'autre : aujourd'hui
+      elle retombe sur « Moi » à chaque fois.</span>
+    </div>
+    <div class="note">
+      <span class="n">4</span>
+      <span>Tape un rendez-vous → <b>« Passer à… »</b>. Aujourd'hui il faut ouvrir le CRM,
+      trouver la fiche du lead, changer son propriétaire. Deux écrans pour un geste
+      que tu fais plusieurs fois par semaine.</span>
+    </div>
+  </div>
+</div>
+
+<div class="voile" id="voile" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
+  <div class="feuille" id="feuille">
+    <h2 id="feuille-titre">—</h2>
+    <p class="quand" id="feuille-quand">—</p>
+    <p class="actuel" id="feuille-actuel">—</p>
+    <div class="actions">
+      <button type="button" class="act primaire" id="basculer"></button>
+      <button type="button" class="act">📅 Déplacer le créneau</button>
+      <button type="button" class="act">👤 Ouvrir la fiche</button>
+      <button type="button" class="act discret" id="fermer">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // Données réelles du 01/09/2026 — les 11 rendez-vous club à venir plus les
+  // suivis de la semaine. Rien n'est inventé : ce sont les noms en base.
+  const RDV = [
+    { j:"mar. 1",  d:"1 sept.",  h:"13:00", t:"Natacha Udot",      s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
+    { j:"mar. 1",  d:"1 sept.",  h:"16:30", t:"Jermy Vedran",      s:"Suivi client",                               c:"melanie" },
+    { j:"mer. 2",  d:"2 sept.",  h:"15:00", t:"Gaëlle Grandet",    s:"RDV découverte · perte de poids",            c:"melanie" },
+    { j:"mer. 2",  d:"2 sept.",  h:"17:00", t:"Robin De Bernard",  s:"Suivi client",                               c:"melanie" },
+    { j:"jeu. 3",  d:"3 sept.",  h:"14:00", t:"Agnès Florentin",   s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"13:00", t:"Virgile Famibelle", s:"Suivi client",                               c:"thomas"  },
+    { j:"ven. 4",  d:"4 sept.",  h:"14:00", t:"Amandine Romane",   s:"RDV découverte · perte de poids",            c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"15:00", t:"Géraldine Harmand", s:"RDV découverte · confirmé",                  c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"17:30", t:"Laurine Guillemin", s:"Suivi client",                               c:"thomas"  },
+    { j:"sam. 5",  d:"5 sept.",  h:"10:30", t:"Emilie Greinhofer", s:"RDV découverte · regain d'énergie · confirmé",c:"melanie" },
+    { j:"sam. 5",  d:"5 sept.",  h:"11:30", t:"Amrane Tchatchi",   s:"RDV découverte · perte de poids · confirmé", c:"thomas"  },
+  ];
+  const JOURS = ["mar. 1","mer. 2","jeu. 3","ven. 4","sam. 5"];
+  const NOM = { thomas:"Thomas", melanie:"Mélanie" };
+
+  let portee = "club";
+  let ouvert = null;
+
+  const $ = (s) => document.querySelector(s);
+  const semaine = $("#semaine");
+
+  function visibles() {
+    if (portee === "club") return RDV;
+    return RDV.filter((r) => r.c === (portee === "moi" ? "thomas" : "melanie"));
+  }
+
+  function rendre() {
+    const liste = visibles();
+    const t = liste.filter((r) => r.c === "thomas").length;
+    const m = liste.filter((r) => r.c === "melanie").length;
+    $("#compte").textContent =
+      portee === "club"
+        ? `${liste.length} rendez-vous · ${t} toi · ${m} Mélanie`
+        : `${liste.length} rendez-vous`;
+
+    semaine.innerHTML = "";
+    for (const jour of JOURS) {
+      const duJour = liste.filter((r) => r.j === jour);
+      const bloc = document.createElement("section");
+      bloc.className = "jour";
+      const date = RDV.find((r) => r.j === jour).d;
+      bloc.innerHTML =
+        '<div class="jour-tete"><span class="jour-nom">' + jour.replace(/\./g, "") +
+        '</span><span class="jour-date">' + date + "</span></div>";
+      if (duJour.length === 0) {
+        const v = document.createElement("p");
+        v.className = "jour-vide";
+        v.textContent = "rien de calé";
+        bloc.appendChild(v);
+      }
+      for (const r of duJour) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ev " + r.c;
+        b.innerHTML =
+          '<span class="h">' + r.h + '</span>' +
+          '<span class="bar"></span>' +
+          '<span><span class="t">' + r.t +
+            '<span class="qui">' + NOM[r.c] + '</span></span>' +
+          '<span class="s">' + r.s + "</span></span>";
+        b.addEventListener("click", () => ouvrir(r));
+        bloc.appendChild(b);
+      }
+      semaine.appendChild(bloc);
+    }
+  }
+
+  function ouvrir(r) {
+    ouvert = r;
+    const autre = r.c === "thomas" ? "melanie" : "thomas";
+    $("#feuille-titre").textContent = r.t;
+    $("#feuille-quand").textContent = r.j + " · " + r.h + " · " + r.s;
+    $("#feuille-actuel").innerHTML = "actuellement chez " + NOM[r.c];
+    const b = $("#basculer");
+    b.innerHTML = '<span class="pastille" style="background:var(--' +
+      (autre === "thomas" ? "teal" : "violet") + ')"></span>Passer à ' + NOM[autre];
+    $("#voile").classList.add("on");
+    b.focus();
+  }
+
+  function fermer() {
+    $("#voile").classList.remove("on");
+    ouvert = null;
+  }
+
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.classList.remove("on"), 2600);
+  }
+
+  $("#basculer").addEventListener("click", () => {
+    if (!ouvert) return;
+    const avant = ouvert.c;
+    ouvert.c = avant === "thomas" ? "melanie" : "thomas";
+    toast(ouvert.t + " passe à " + NOM[ouvert.c] + " — son rendez-vous suit.");
+    fermer();
+    rendre();
+  });
+  $("#fermer").addEventListener("click", fermer);
+  $("#voile").addEventListener("click", (e) => { if (e.target === $("#voile")) fermer(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermer(); });
+
+  for (const b of document.querySelectorAll(".portee button")) {
+    b.addEventListener("click", () => {
+      portee = b.dataset.portee;
+      for (const x of document.querySelectorAll(".portee button")) {
+        x.setAttribute("aria-pressed", String(x === b));
+      }
+      rendre();
+    });
+  }
+
+  rendre();
+</script>
