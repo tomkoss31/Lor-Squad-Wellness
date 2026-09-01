@@ -1,0 +1,325 @@
+<title>Caler chez un autre coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  /* Jetons repris de src/styles/globals.css — l'app classique. */
+  :root {
+    --bg:#FAF7F0; --s1:#FFFFFF; --s2:#F5F1EB;
+    --line:rgba(30,51,48,.07); --line2:rgba(30,51,48,.13);
+    --text:#17201C; --muted:#55605A; --hint:#68716C;
+    --teal:#0F766E; --lime:#5E7A09; --coral:#BC432C; --amber:#9A631A; --purple:#6D28D9;
+    --on-teal:#FFFFFF;
+    --display:Syne,system-ui,sans-serif;
+    --body:"DM Sans",system-ui,-apple-system,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#162624; --s1:#1E3330; --s2:#26403B;
+      --line:rgba(244,239,228,.10); --line2:rgba(244,239,228,.17);
+      --text:#F4EFE4; --muted:#9BAAA3; --hint:#7E8E86;
+      --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+      --on-teal:#08211D;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#162624; --s1:#1E3330; --s2:#26403B;
+    --line:rgba(244,239,228,.10); --line2:rgba(244,239,228,.17);
+    --text:#F4EFE4; --muted:#9BAAA3; --hint:#7E8E86;
+    --teal:#2DD4BF; --lime:#C5F82A; --coral:#F2775F; --amber:#E8A93A; --purple:#A78BFA;
+    --on-teal:#08211D;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:430px;margin:0 auto;padding:22px 16px 64px}
+
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);margin:0 0 6px}
+  h1{font-family:var(--display);font-weight:800;font-size:29px;line-height:1.08;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .sous{margin:9px 0 0;color:var(--muted);font-size:14.5px}
+
+  /* ── Étapes ─────────────────────────────────────────────────────────── */
+  .etapes{display:flex;gap:5px;margin:20px 0 16px}
+  .etapes div{flex:1;height:3px;border-radius:2px;background:var(--line2)}
+  .etapes div.on{background:var(--teal)}
+
+  .bloc{background:var(--s1);border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:12px}
+  .bloc h2{font-family:var(--display);font-weight:700;font-size:16.5px;margin:0 0 3px}
+  .bloc p.aide{margin:0 0 12px;font-size:13.5px;color:var(--muted)}
+
+  /* ── Choix du coach ─────────────────────────────────────────────────── */
+  .coachs{display:flex;gap:7px;flex-wrap:wrap}
+  .coach{
+    flex:1 1 118px;min-height:56px;border-radius:12px;cursor:pointer;padding:9px 11px;text-align:left;
+    border:1px solid var(--line2);background:var(--s2);color:var(--text);font-family:var(--body);
+    display:flex;flex-direction:column;justify-content:center;gap:2px;
+  }
+  .coach[aria-pressed="true"]{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,var(--s2))}
+  .coach:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .coach b{font-family:var(--display);font-weight:700;font-size:15px}
+  .coach span{font-family:var(--mono);font-size:10.5px;color:var(--hint)}
+
+  /* ── Le mur de confidentialité ──────────────────────────────────────── */
+  .mur{
+    margin:12px 0 0;padding:11px 13px;border-radius:11px;
+    background:color-mix(in srgb,var(--teal) 8%,var(--s1));
+    border-left:3px solid var(--teal);font-size:13px;color:var(--muted);line-height:1.5;
+  }
+  .mur b{color:var(--text)}
+
+  /* ── Jours + créneaux ───────────────────────────────────────────────── */
+  .jours{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+  .jour{
+    flex:none;min-width:60px;min-height:56px;border-radius:12px;cursor:pointer;padding:7px 4px;
+    border:1px solid var(--line2);background:var(--s2);color:var(--text);font-family:var(--body);text-align:center;
+  }
+  .jour[aria-pressed="true"]{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,var(--s2))}
+  .jour .j{font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--hint);display:block}
+  .jour .n{font-family:var(--display);font-weight:800;font-size:17px;display:block;line-height:1.25}
+  .jour .libres{font-family:var(--mono);font-size:9.5px;color:var(--teal);display:block}
+  .jour.plein .libres{color:var(--hint)}
+
+  .creneaux{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .cr{
+    min-height:46px;border-radius:11px;cursor:pointer;font-family:var(--mono);font-size:13.5px;font-weight:500;
+    border:1px solid var(--line2);background:var(--s2);color:var(--text);
+  }
+  .cr[aria-pressed="true"]{background:var(--teal);color:var(--on-teal);border-color:var(--teal);font-weight:700}
+  .cr:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .cr.occupe{
+    cursor:not-allowed;color:var(--hint);background:transparent;
+    border-style:dashed;text-decoration:line-through;text-decoration-thickness:1px;
+  }
+
+  .legende{display:flex;gap:14px;margin-top:11px;font-family:var(--mono);font-size:10.5px;color:var(--hint);flex-wrap:wrap}
+  .legende span{display:flex;align-items:center;gap:5px}
+  .puce{width:10px;height:10px;border-radius:3px;border:1px solid var(--line2)}
+  .puce.libre{background:var(--s2)}
+  .puce.pris{border-style:dashed;background:transparent}
+
+  /* ── Confirmation ───────────────────────────────────────────────────── */
+  .cta{
+    width:100%;min-height:50px;border-radius:13px;cursor:pointer;margin-top:4px;
+    font-family:var(--body);font-size:15.5px;font-weight:700;
+    background:var(--teal);color:var(--on-teal);border:1px solid var(--teal);
+  }
+  .cta[disabled]{opacity:.4;cursor:not-allowed}
+  .cta:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+  .recap{margin:0 0 11px;font-size:14px;color:var(--muted)}
+  .recap b{color:var(--text)}
+
+  .fait{
+    background:color-mix(in srgb,var(--lime) 12%,var(--s1));
+    border:1px solid color-mix(in srgb,var(--lime) 45%,transparent);
+    border-radius:14px;padding:15px;margin-bottom:12px;
+  }
+  .fait h2{font-family:var(--display);font-weight:800;font-size:18px;margin:0 0 6px;color:var(--text)}
+  .fait ul{margin:8px 0 0;padding-left:19px;font-size:13.5px;color:var(--muted);line-height:1.65}
+  .fait li b{color:var(--text)}
+
+  /* ── Notes ──────────────────────────────────────────────────────────── */
+  .notes{margin-top:28px;border-top:1px solid var(--line);padding-top:17px}
+  .notes h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);margin:0 0 12px;font-weight:400}
+  .note{display:grid;grid-template-columns:20px 1fr;gap:10px;margin-bottom:13px;font-size:13.5px;color:var(--muted);line-height:1.55}
+  .note b{color:var(--text)}
+  .note .p{color:var(--teal);font-family:var(--display);font-weight:800}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<div class="wrap">
+
+  <p class="kicker">Agenda d'équipe · maquette</p>
+  <h1>Caler un rendez-vous chez un autre coach</h1>
+  <p class="sous">Maria veut voir Mélanie pour sa formation. Elle pose le créneau elle-même, sans passer par personne.</p>
+
+  <div class="etapes" aria-hidden="true">
+    <div class="on" id="e1"></div><div id="e2"></div><div id="e3"></div>
+  </div>
+
+  <section class="bloc">
+    <h2>Avec qui ?</h2>
+    <p class="aide">Les coachs qui acceptent les rendez-vous internes.</p>
+    <div class="coachs" role="group" aria-label="Choisir un coach">
+      <button type="button" class="coach" data-coach="melanie" aria-pressed="true">
+        <b>Mélanie</b><span>formation · club</span>
+      </button>
+      <button type="button" class="coach" data-coach="thomas" aria-pressed="false">
+        <b>Thomas</b><span>business · PV</span>
+      </button>
+      <button type="button" class="coach" data-coach="mandy" aria-pressed="false">
+        <b>Mandy</b><span>référente</span>
+      </button>
+    </div>
+
+    <p class="mur">
+      <b>Tu vois QUAND elle est prise, jamais avec qui.</b> Aucun nom de client,
+      aucun motif — seulement des créneaux occupés. C'est ce qui permet d'ouvrir
+      l'agenda à toute l'équipe sans ouvrir les dossiers.
+    </p>
+  </section>
+
+  <section class="bloc">
+    <h2>Quel jour ?</h2>
+    <p class="aide" id="aide-jour">Semaine du 1<sup>er</sup> septembre.</p>
+    <div class="jours" role="group" aria-label="Choisir un jour" id="jours"></div>
+
+    <div class="creneaux" role="group" aria-label="Choisir un créneau" id="creneaux"></div>
+    <div class="legende">
+      <span><i class="puce libre"></i> libre</span>
+      <span><i class="puce pris"></i> déjà pris</span>
+    </div>
+  </section>
+
+  <section class="bloc" id="bloc-confirm">
+    <h2>On valide ?</h2>
+    <p class="recap" id="recap">Choisis un créneau libre au-dessus.</p>
+    <button type="button" class="cta" id="valider" disabled>Réserver ce créneau</button>
+  </section>
+
+  <div class="notes">
+    <h3>Ce que ça implique</h3>
+    <div class="note">
+      <span class="p">1</span>
+      <span><b>Une nouvelle façon de lire, très étroite.</b> Aujourd'hui Maria ne peut
+      voir <em>aucun</em> rendez-vous de Mélanie — ni les suivis, ni les prospects, ni le club.
+      Vérifié dans les droits : un distributeur ne voit que le sien. Plutôt que d'ouvrir
+      ces tables, on ajoute une lecture qui ne rend <b>que des plages occupées</b> : pas de nom,
+      pas de motif, pas de fiche.</span>
+    </div>
+    <div class="note">
+      <span class="p">2</span>
+      <span><b>Le créneau se bloque vraiment.</b> Aujourd'hui, le contrôle de collision est
+      un simple message « tu as déjà quelque chose ? » qu'on peut ignorer, et il ne regarde
+      que ton propre agenda — pas les réservations du club. Ici, un créneau pris n'est plus
+      proposé, et la réservation est refusée par le serveur si quelqu'un l'a pris entre-temps.</span>
+    </div>
+    <div class="note">
+      <span class="p">3</span>
+      <span><b>Chaque coach dit s'il est joignable.</b> Un coach qui ne veut pas de
+      rendez-vous internes n'apparaît pas dans la liste. Ce n'est pas une case à cocher de
+      plus : c'est ce qui empêche que « agenda partagé » veuille dire « tout le monde peut
+      me remplir la journée ».</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Créneaux du 1er au 5 septembre. « pris » = ce que l'agenda de Mélanie
+  // contient déjà cette semaine (suivis, RDV club, prospects) — vu comme une
+  // occupation, sans jamais dire de quoi il s'agit.
+  const SEMAINE = {
+    melanie: {
+      "mar. 1": { n: 1, j: "MAR", pris: ["13:00", "16:30", "17:00"] },
+      "mer. 2": { n: 2, j: "MER", pris: ["15:00", "17:00"] },
+      "jeu. 3": { n: 3, j: "JEU", pris: ["14:00"] },
+      "ven. 4": { n: 4, j: "VEN", pris: ["14:00", "15:00", "16:00", "17:00", "18:00"] },
+      "sam. 5": { n: 5, j: "SAM", pris: ["10:30"] },
+    },
+    thomas: {
+      "mar. 1": { n: 1, j: "MAR", pris: [] },
+      "mer. 2": { n: 2, j: "MER", pris: ["10:00"] },
+      "jeu. 3": { n: 3, j: "JEU", pris: [] },
+      "ven. 4": { n: 4, j: "VEN", pris: ["13:00", "17:30"] },
+      "sam. 5": { n: 5, j: "SAM", pris: ["11:30"] },
+    },
+    mandy: {
+      "mar. 1": { n: 1, j: "MAR", pris: [] },
+      "mer. 2": { n: 2, j: "MER", pris: [] },
+      "jeu. 3": { n: 3, j: "JEU", pris: [] },
+      "ven. 4": { n: 4, j: "VEN", pris: [] },
+      "sam. 5": { n: 5, j: "SAM", pris: ["09:00"] },
+    },
+  };
+  const HEURES = ["09:00","10:00","10:30","11:00","13:00","14:00","15:00","16:00","16:30","17:00","17:30","18:00"];
+  const NOM = { melanie: "Mélanie", thomas: "Thomas", mandy: "Mandy" };
+
+  let coach = "melanie";
+  let jour = "mar. 1";
+  let creneau = null;
+  let reserve = null;
+
+  const $ = (s) => document.querySelector(s);
+
+  function libresDu(j) {
+    const d = SEMAINE[coach][j];
+    return HEURES.filter((h) => !d.pris.includes(h) && !(reserve && reserve.coach === coach && reserve.jour === j && reserve.h === h)).length;
+  }
+
+  function rendreJours() {
+    const box = $("#jours");
+    box.innerHTML = "";
+    for (const [cle, d] of Object.entries(SEMAINE[coach])) {
+      const n = libresDu(cle);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "jour" + (n === 0 ? " plein" : "");
+      b.setAttribute("aria-pressed", String(cle === jour));
+      b.innerHTML = '<span class="j">' + d.j + '</span><span class="n">' + d.n +
+        '</span><span class="libres">' + (n === 0 ? "complet" : n + " libres") + "</span>";
+      b.addEventListener("click", () => { jour = cle; creneau = null; rendre(); });
+      box.appendChild(b);
+    }
+  }
+
+  function rendreCreneaux() {
+    const box = $("#creneaux");
+    box.innerHTML = "";
+    const d = SEMAINE[coach][jour];
+    for (const h of HEURES) {
+      const dejaPris = d.pris.includes(h) ||
+        (reserve && reserve.coach === coach && reserve.jour === jour && reserve.h === h);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cr" + (dejaPris ? " occupe" : "");
+      b.textContent = h;
+      if (dejaPris) {
+        b.disabled = true;
+        b.innerHTML = h + '<span class="sr"> — déjà pris</span>';
+      } else {
+        b.setAttribute("aria-pressed", String(creneau === h));
+        b.addEventListener("click", () => { creneau = h; rendre(); });
+      }
+      box.appendChild(b);
+    }
+  }
+
+  function rendre() {
+    rendreJours();
+    rendreCreneaux();
+    for (const b of document.querySelectorAll(".coach")) {
+      b.setAttribute("aria-pressed", String(b.dataset.coach === coach));
+    }
+    $("#e2").classList.toggle("on", !!jour);
+    $("#e3").classList.toggle("on", !!creneau);
+    $("#recap").innerHTML = creneau
+      ? "Rendez-vous avec <b>" + NOM[coach] + "</b>, <b>" + jour + " septembre à " + creneau + "</b>. Il apparaîtra dans son agenda et bloquera le créneau."
+      : "Choisis un créneau libre au-dessus.";
+    $("#valider").disabled = !creneau;
+  }
+
+  for (const b of document.querySelectorAll(".coach")) {
+    b.addEventListener("click", () => { coach = b.dataset.coach; creneau = null; rendre(); });
+  }
+
+  $("#valider").addEventListener("click", () => {
+    reserve = { coach, jour, h: creneau };
+    const bloc = $("#bloc-confirm");
+    bloc.className = "fait";
+    bloc.innerHTML =
+      "<h2>C'est calé ✓</h2>" +
+      "<p class='recap'>Avec <b>" + NOM[coach] + "</b>, <b>" + jour + " septembre à " + creneau + "</b>.</p>" +
+      "<ul>" +
+      "<li>Le créneau <b>n'est plus proposé</b> à personne — regarde la grille au-dessus.</li>" +
+      "<li>Il apparaît dans <b>l'agenda de " + NOM[coach] + "</b>, à ton nom.</li>" +
+      "<li>Le tunnel public du club <b>ne peut plus le vendre</b> non plus.</li>" +
+      "</ul>";
+    creneau = null;
+    rendre();
+    bloc.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  rendre();
+</script>
