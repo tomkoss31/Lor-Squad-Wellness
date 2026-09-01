@@ -142,10 +142,16 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const shifts = useClubShifts(clubId, openHours, lundi);
   const calls = useBbcCalls(userId, settings);
   const { members } = useBbcMembers(userId);
-  // RDV découverte réservés via le tunnel public (/reserver) : résas "club"
-  // (coach = null), lisibles par les admins (RLS 2026-07-31). Contrairement aux
-  // RDV ci-dessous, elles ne sont rattachées à aucun coach → on les affiche pour
-  // le club, pas pour une personne.
+  // RDV découverte réservés via le tunnel public (/reserver), lisibles par les
+  // admins (RLS 2026-07-31). On les affiche pour LE CLUB : les deux coachs les
+  // voient tous, pas seulement les leurs.
+  //
+  // ⚠️ 01/09 — CE COMMENTAIRE DISAIT « elles ne sont rattachées à aucun coach ».
+  // C'est FAUX, et c'est ce qui a fait accepter qu'on ne montre aucun nom :
+  // mesuré ce jour-là, **0 ligne sur 36** de `rdv_bookings` a un
+  // `coach_user_id` nul — le tunnel les attribue à l'insertion
+  // (`discovery.default_coach_user_id`). Les afficher pour le club reste le bon
+  // choix ; ne pas dire À QUI ils sont, non. C'est le lot suivant du chantier.
   const { bookings: decouvertesResa, setStatus: setStatutDecouverte } = useClubDiscoveryBookings(clubId);
 
   // RDV découverte dont la feuille est ouverte — le booking, pas juste son

@@ -47,6 +47,9 @@ export interface MonProfil {
   streak_count: number | null;
   streak_last_active: string | null;
   lifetime_login_count: number | null;
+  /** Le club où ce coach TRAVAILLE — il n'en est pas forcément propriétaire.
+   *  C'est ce qui permet à Mélanie de voir la semaine du club de Thomas. */
+  club_id: string | null;
   [autre: string]: unknown;
 }
 

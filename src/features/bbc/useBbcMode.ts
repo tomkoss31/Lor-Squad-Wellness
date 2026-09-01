@@ -13,6 +13,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+
+/** Garde-fou : `club_id` part dans un filtre `or()` construit en chaîne.
+ *  Une valeur non-uuid n'a rien à y faire. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 import type { Club } from "../../types/domain";
 import { lireMonProfil } from "../../services/monProfil";
 
@@ -117,11 +121,37 @@ export function useBbcMode(
         const cm = u?.club_model;
         if (!cancelled && (cm === "bbc" || cm === "classic")) setClubModel(cm);
 
-        const { data: rows } = await sb
-          .from("clubs")
-          .select("*")
-          .eq("owner_user_id", userId)
-          .eq("active", true);
+        // ⚠️ 01/09 — MÉLANIE PERDAIT UN TIERS DE SA SEMAINE.
+        //
+        // Cette requête ne rendait que le club DONT ON EST PROPRIÉTAIRE. Thomas
+        // possède « La Base Nutrition » ; Mélanie y travaille sans en être
+        // propriétaire. Elle recevait donc `club = null`, d'où `clubId = null`
+        // dans BbcSemaine, d'où un `useClubDiscoveryBookings(null)` qui sort à
+        // vide : mesuré le 01/09, **6 de ses 16 rendez-vous de la semaine**
+        // n'apparaissaient nulle part dans son app. Et c'est elle qui porte la
+        // charge — 17 rendez-vous sur 7 jours contre 5 pour Thomas.
+        //
+        // `users.club_id` existe précisément pour ça (migration
+        // `20261215110000_users_club_id` : « le club où ce coach travaille…
+        // quand le coach n'en est pas le propriétaire ») et il est renseigné
+        // pour les deux. On lit donc « le club que je possède OU celui auquel
+        // je suis rattaché ».
+        //
+        // Ça n'élargit AUCUN droit : la RLS `clubs_owner_manage` autorisait
+        // déjà la lecture au propriétaire ou à un admin — c'est d'ailleurs sur
+        // ce constat qu'existe `useActiveClubId`, qui résout le même problème
+        // pour l'agenda et le CRM. Ici on garde `useBbcMode` parce qu'il faut
+        // l'objet club ENTIER (horaires, jours fériés), pas seulement son id.
+        const monClubId =
+          typeof u?.club_id === "string" && UUID.test(u.club_id) ? u.club_id : null;
+
+        let q = sb.from("clubs").select("*").eq("active", true);
+        q = monClubId
+          ? q.or(`owner_user_id.eq.${userId},id.eq.${monClubId}`)
+          : q.eq("owner_user_id", userId);
+        // Ordre stable : si un jour quelqu'un possède un club ET travaille
+        // dans un autre, on ne veut pas que l'écran change au rechargement.
+        const { data: rows } = await q.order("created_at", { ascending: true });
         if (!cancelled && Array.isArray(rows)) {
           setClubs(
             rows.map((r: Record<string, unknown>) => ({
