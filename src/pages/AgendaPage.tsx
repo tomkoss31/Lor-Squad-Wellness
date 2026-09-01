@@ -37,6 +37,7 @@ import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
 import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
 import { AgendaJourPleinEcran } from "../features/agenda/AgendaJourPleinEcran";
+import { CalerChezUnCoach } from "../features/agenda/CalerChezUnCoach";
 import { useClubShifts } from "../features/agenda/useClubShifts";
 import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
@@ -266,6 +267,8 @@ export function AgendaPage() {
   // bouton, et la pastille s'allume dès qu'un réglage n'est plus au défaut — on
   // ne peut pas filtrer sans le savoir. C'est la règle appliquée au CRM.
   const [filtresOuverts, setFiltresOuverts] = useState(false);
+  /** L'écran « caler chez un collègue » (chantier agenda d'équipe, 01/09). */
+  const [calerOuvert, setCalerOuvert] = useState(false);
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
   const isCalendarView = view === "week" || view === "month";
@@ -1447,7 +1450,31 @@ export function AgendaPage() {
           Il remplace 267 px de contrôles toujours ouverts : le sélecteur de
           vue, la période et le statut. La pastille dit combien de réglages ne
           sont plus au défaut — on ne peut donc pas filtrer sans le savoir. */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 10 }}>
+        {/* ── CALER CHEZ UN COLLÈGUE (chantier agenda d'équipe, 01/09) ────
+            Ici, et pas dans une entrée de menu à part : « une feature = un seul
+            endroit », et poser un rendez-vous se fait depuis l'agenda. */}
+        <button
+          type="button"
+          onClick={() => setCalerOuvert(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            minHeight: 40,
+            padding: "0 14px",
+            borderRadius: 999,
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            background: "var(--ls-surface)",
+            color: "var(--ls-teal)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 45%, transparent)",
+          }}
+        >
+          🤝 Caler chez un coach
+        </button>
         <button
           type="button"
           onClick={() => setFiltresOuverts((v) => !v)}
@@ -2151,6 +2178,13 @@ export function AgendaPage() {
       ) : null}
 
       {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
+      {calerOuvert ? (
+        <CalerChezUnCoach
+          onFermer={() => setCalerOuvert(false)}
+          onReserve={() => void rechargerDiscoveries()}
+        />
+      ) : null}
+
       {/* La journée en grand, ouverte depuis le mois. */}
       {jourPleinEcran ? (
         <AgendaJourPleinEcran
