@@ -354,24 +354,84 @@ vis-à-vis des clés étrangères.
 
 ---
 
-## ⚠️ Migrations — vérifier le registre après toute application hors `db push`
+## ⚠️ Migrations — le registre et le dépôt ne parlent pas le même langage
 
-Constat du 2026-07-29 : `supabase_migrations.schema_migrations` s'arrêtait à
-`20261203270000` alors que **46 migrations postérieures étaient appliquées**
-(boutique, Qualif, BBC, agenda). Le SQL était passé, la comptabilité ne l'avait
-pas enregistré — ça arrive dès qu'on applique autrement que par
-`supabase db push` (MCP, éditeur SQL du dashboard).
+> **Réparé le 2026-09-01 : 48 fichiers enregistrés, 0 écart restant.**
+> Le `max(version)` ne veut RIEN dire ici — voir pourquoi plus bas.
 
-Conséquence évitée de justesse : au prochain `db push --include-all`, ces 46
-fichiers auraient été **rejoués**.
+### La cause, et elle n'est pas « on a oublié d'enregistrer »
 
-```sql
-select max(version) from supabase_migrations.schema_migrations;
+Le dépôt numérote ses migrations sur une **suite choisie à la main**
+(`202612xxxxxxxx`). Or `apply_migration` (MCP) et l'éditeur SQL du dashboard
+enregistrent la migration sous **l'horodatage du jour où elle est appliquée**.
+La même migration existe donc sous DEUX identités :
+
+| Fichier du dépôt | Entrée du registre |
+|---|---|
+| `20261211180000_menage_12_08_coupe_le_cron_des_rappels_coach.sql` | `20260812085348` · même nom |
+| `20261215270000_rdv_a_conclure_online_bilans.sql` | `20260831210712` · même nom |
+
+D'où l'état trouvé le 01/09 : **133 entrées sans fichier** ET **48 fichiers sans
+entrée** — les mêmes migrations, comptées deux fois de deux façons.
+
+### Le danger, précisément
+
+`db push` compare les **versions des FICHIERS** au registre. Un fichier dont la
+version manque est **rejoué**. Ce qui attendait ici :
+`20260801120000_club_discovery_hours_preopening` aurait **remis les horaires du
+club à 09:00–14:00** alors qu'ils valent 08:00–15:00 depuis l'ouverture.
+Silencieux, et en plein tunnel de réservation.
+
+### Le contrôle qui fait foi (pas `max(version)`)
+
+`max(version)` affichait `20261211170000` alors que des migrations d'août
+étaient enregistrées : la suite du dépôt et l'horodatage réel se croisent. Ce
+qu'il faut comparer, ce sont les **ensembles**, par empreinte :
+
+```bash
+ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | paste -sd, - | tr -d '
+' | md5sum
 ```
 
-Si ça diverge des fichiers : `supabase migration repair --status applied <version>`.
-**Vérifier chaque migration en base AVANT de la marquer appliquée** — sinon on
-efface du vrai travail en silence.
+```sql
+-- doit rendre 0
+with fichiers(v) as (select unnest(string_to_array('<la liste ci-dessus>', ',')))
+select count(*) from fichiers f
+  left join supabase_migrations.schema_migrations m on m.version = f.v
+ where m.version is null;
+```
+
+### La règle qui a évité une catastrophe
+
+**Vérifier chaque migration EN BASE avant de la marquer appliquée** — l'objet
+qu'elle crée existe-t-il vraiment ? Marquer une migration non appliquée efface
+du vrai travail en silence.
+
+Trois pièges rencontrés en le faisant :
+1. **Une chaîne de `create or replace`** (quatre migrations qui remplacent la
+   même fonction) : l'existence ne prouve rien. Chercher un marqueur propre à
+   la DERNIÈRE version dans `pg_get_functiondef`.
+2. **Les migrations qui ne créent rien** (un `update`, un `cron.alter_job`) : se
+   vérifient sur la donnée. Attention à écrire la bonne assertion — j'ai
+   d'abord testé « le cron est absent » alors que la migration le **désactive**,
+   et j'ai conclu à tort qu'elle n'était pas passée.
+3. **Une donnée modifiée depuis** : les horaires du club ne correspondaient plus
+   à la migration. Preuve trouvée ailleurs — seules deux migrations écrivent
+   `duration_min`/`slot_step_min`, et la base porte les valeurs de celle-ci.
+
+### Le dépôt ne décrivait pas toute la base
+
+`client_messages_jeton_via_fonction_definer` était appliquée en production sans
+aucun fichier. Récupérée depuis `schema_migrations.statements` et recommittée
+(`20261211165000`). **Toute migration appliquée par MCP doit aussi exister en
+fichier**, sinon une reconstruction depuis zéro produit une base incomplète —
+ici, la messagerie publique aurait été cassée.
+
+### Reste connu, sans danger
+
+Une entrée `20261211150000` porte un nom dont le fichier est numéroté
+`20261211160000` (décalage d'un cran). Inoffensif : un rejeu exige un FICHIER
+dont la version manque, jamais l'inverse.
 
 Vérifier aussi les **doublons de numéro** quand plusieurs branches créent des
 migrations le même jour (le numéro est la clé primaire du registre) :
