@@ -403,16 +403,26 @@ export function CrmPage() {
     [leads],
   );
 
-  // ⚠️ 31/08 — CES DEUX PASTILLES MENTAIENT.
-  // Elles comptaient sur `leads` BRUT : toute la base, sans périmètre d'équipe,
-  // sans filtre de source, sans recherche, et en incluant les leads pas encore
-  // acceptés. « Endormis (9) » puis 2 lignes à l'écran. Elles passent par le
-  // même périmètre que la liste — une pastille annonce ce qu'un tap montre,
-  // c'est la règle de tout ce chantier.
-  const dormantCount = useMemo(
-    () => leads.filter((l) => passePerimetre(l) && passeVue(l, "archived")).length,
+  // ⚠️ 31/08 — CES DEUX PASTILLES MENTAIENT, ET DE DEUX FAÇONS.
+  //
+  // 1. Elles comptaient sur `leads` BRUT : toute la base, sans périmètre
+  //    d'équipe, sans filtre de source, sans recherche, et en incluant les
+  //    leads pas encore acceptés.
+  // 2. Vérifié sur dev APRÈS le premier correctif : « Historique (7) » puis
+  //    5 lignes à l'écran. La pastille comptait des FICHES, la liste des
+  //    PERSONNES — les doublons y sont réunis en une seule ligne. Sans le
+  //    même regroupement, le chiffre reste faux dès que quelqu'un a rempli
+  //    deux formulaires, ce qui est le cas courant, pas l'exception.
+  //
+  // Une pastille annonce EXACTEMENT ce qu'un tap montre. C'est la règle de
+  // tout ce chantier, et elle s'applique jusqu'au regroupement.
+  const compterVue = useCallback(
+    (vue: "active" | "historique" | "archived"): number =>
+      grouperParPersonne(leads.filter((l) => passePerimetre(l) && passeVue(l, vue))).length,
     [leads, passePerimetre, passeVue],
   );
+
+  const dormantCount = useMemo(() => compterVue("archived"), [compterVue]);
 
   /** L'ordre du volet — LE MÊME QUE CELUI DE L'ÉCRAN.
    *
@@ -483,10 +493,7 @@ export function CrmPage() {
       message: "Cette fiche n'a ni téléphone ni adresse. Ouvre-la pour en ajouter un.",
     });
   }
-  const historiqueCount = useMemo(
-    () => leads.filter((l) => passePerimetre(l) && passeVue(l, "historique")).length,
-    [leads, passePerimetre, passeVue],
-  );
+  const historiqueCount = useMemo(() => compterVue("historique"), [compterVue]);
 
   const sourcesPresent = useMemo(() => {
     const set = new Set<CrmSource>();
