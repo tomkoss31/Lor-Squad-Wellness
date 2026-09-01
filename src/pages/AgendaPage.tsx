@@ -1970,7 +1970,17 @@ export function AgendaPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <ProspectCard
                           prospect={entry.prospect}
-                          ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                          ownerName={
+                            // ⚠️ 01/09 — MÊME RÈGLE QUE LA SEMAINE BBC.
+                            // Avant : réservé aux admins, et affiché MÊME sur ses
+                            // propres rendez-vous — donc du bruit sur chaque ligne
+                            // pour Thomas, et rien du tout pour Mandy ou Maria.
+                            // On nomme quand plusieurs coachs sont à l'écran, et
+                            // seulement quand ce n'est pas le sien.
+                            showOwner && entry.distributorId !== currentUser?.id
+                              ? ownerNameMap.get(entry.distributorId)
+                              : undefined
+                          }
                           showDate={label !== "Aujourd'hui" && label !== "Demain"}
                           onClick={handleCardClick}
                         />
@@ -1984,7 +1994,17 @@ export function AgendaPage() {
                       key={`c-${entry.id}`}
                       followUp={entry.followUp}
                       client={entry.client}
-                      ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                      ownerName={
+                            // ⚠️ 01/09 — MÊME RÈGLE QUE LA SEMAINE BBC.
+                            // Avant : réservé aux admins, et affiché MÊME sur ses
+                            // propres rendez-vous — donc du bruit sur chaque ligne
+                            // pour Thomas, et rien du tout pour Mandy ou Maria.
+                            // On nomme quand plusieurs coachs sont à l'écran, et
+                            // seulement quand ce n'est pas le sien.
+                            showOwner && entry.distributorId !== currentUser?.id
+                              ? ownerNameMap.get(entry.distributorId)
+                              : undefined
+                          }
                       showDate={label !== "Aujourd'hui" && label !== "Demain"}
                     />
                   );
