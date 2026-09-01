@@ -49,12 +49,29 @@ interface Result {
   setStatus: (id: string, status: ClubDiscoveryBooking["status"]) => Promise<boolean>;
 }
 
-export function useClubDiscoveryBookings(clubId: string | null | undefined): Result {
+/**
+ * Les réservations du club — et, à défaut de club, LES SIENNES.
+ *
+ * ⚠️ 01/09 — MANDY NE VOYAIT PAS SON PROPRE RENDEZ-VOUS.
+ * Le club se résout par `useActiveClubId`, dont la policy exige d'être
+ * propriétaire ou admin. Mandy est référente : elle lit ZÉRO club, donc
+ * `clubId` valait null, donc ce hook sortait immédiatement sur une liste vide.
+ * Son unique rendez-vous de la semaine (Amrane, 05/09) n'apparaissait nulle
+ * part — alors que la policy `rdv_bookings_coach_read` l'autorise à le lire.
+ * Le blocage n'était pas dans les droits, il était dans le chemin.
+ *
+ * On passe donc `moi` : sans club connu, on remonte ce qui est à soi. Aucun
+ * droit élargi — c'est exactement ce que la RLS permettait déjà.
+ */
+export function useClubDiscoveryBookings(
+  clubId: string | null | undefined,
+  moi?: string | null,
+): Result {
   const [bookings, setBookings] = useState<ClubDiscoveryBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    if (!clubId) {
+    if (!clubId && !moi) {
       setBookings([]);
       setLoading(false);
       return;
@@ -71,7 +88,8 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
       .select(
         "id, first_name, last_name, coach_user_id, contact, slot_start, slot_end, status, people_count, partner_first_name, objectif, confirm_email_sent_at, reminder_email_sent_at",
       )
-      .eq("club_id", clubId)
+      // Le club quand on le connaît ; sinon les siennes (cf. l'en-tête).
+      .eq(clubId ? "club_id" : "coach_user_id", clubId ?? moi!)
       // ⚠️ Il y avait ici un `.is("coach_user_id", null)`. Il servait à isoler
       // les réservations du club de celles du tunnel /rdv/<prénom> — mais
       // `club_id` fait déjà exactement ça, et lui ne ment pas : les RDV d'un
@@ -103,7 +121,7 @@ export function useClubDiscoveryBookings(clubId: string | null | undefined): Res
       setBookings((data ?? []) as ClubDiscoveryBooking[]);
     }
     setLoading(false);
-  }, [clubId]);
+  }, [clubId, moi]);
 
   useEffect(() => {
     void reload();

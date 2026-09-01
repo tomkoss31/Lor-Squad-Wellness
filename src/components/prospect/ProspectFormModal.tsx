@@ -22,6 +22,14 @@ interface ProspectFormModalProps {
     /** Date/heure du RDV pré-remplie (ISO). Agenda V2 2026-07-27 : clic sur un
         créneau vide de la grille semaine → le formulaire s'ouvre à cette heure. */
     rdvDate?: string;
+    /** ⚠️ 01/09 — DANS L'AGENDA DE QUI ON VIENT DE CLIQUER.
+     *
+     *  Le pré-remplissage ne transportait QUE la date. Un admin qui regardait
+     *  l'agenda d'un autre coach, cliquait un créneau vide et créait le
+     *  rendez-vous… CHEZ LUI, en silence : le formulaire retombait sur
+     *  `currentUser.id`. Le rendez-vous n'apparaissait alors plus dans la vue
+     *  qu'on regardait, ce qui donne l'impression que rien ne s'est passé. */
+    distributorId?: string;
   };
   onClose: () => void;
   onSaved?: (prospect: Prospect) => void;
@@ -95,7 +103,11 @@ export function ProspectFormModal({ initial, prefill, onClose, onSaved }: Prospe
   const [durationMin, setDurationMin] = useState<number | null>(initial?.durationMin ?? null);
   const [sourceDetail, setSourceDetail] = useState(initial?.sourceDetail ?? prefill?.sourceDetail ?? "");
   const [note, setNote] = useState(initial?.note ?? prefill?.note ?? "");
-  const [distributorId, setDistributorId] = useState(initial?.distributorId ?? currentUser?.id ?? "");
+  // L'ordre compte : une fiche existante d'abord, puis l'agenda dans lequel on
+  // vient de cliquer, et seulement ensuite « moi ».
+  const [distributorId, setDistributorId] = useState(
+    initial?.distributorId ?? prefill?.distributorId ?? currentUser?.id ?? "",
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

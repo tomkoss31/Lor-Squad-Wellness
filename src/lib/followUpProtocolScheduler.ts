@@ -196,7 +196,16 @@ export function computeDaysSinceInitial(initialDate: Date, today: Date = new Dat
  */
 export function getFollowUpsDue(
   clients: Client[],
-  currentUserId: string,
+  /**
+   * À QUI on s'intéresse.
+   *
+   * ⚠️ 01/09 — `null` = ne filtre sur personne. L'agenda passait toujours
+   * `currentUser.id` : choisir « 👤 Mandy » dans le sélecteur de vue donnait
+   * alors ses prospects et ses clients… mélangés aux suivis protocole de
+   * THOMAS, dans les mêmes journées. Un onglet sur cinq répondait à une autre
+   * question que les quatre autres, sans que rien ne le dise à l'écran.
+   */
+  currentUserId: string | null,
   protocolLogs: FollowUpProtocolLog[],
   options: GetFollowUpsDueOptions = {}
 ): FollowUpDueItem[] {
@@ -213,7 +222,7 @@ export function getFollowUpsDue(
   const ACTIVE_STEPS = FOLLOW_UP_PROTOCOL.filter((s) => s.dayOffset <= PROTOCOL_MAX_DAYS_ELIGIBLE);
 
   for (const client of clients) {
-    if (client.distributorId !== currentUserId) continue;
+    if (currentUserId !== null && client.distributorId !== currentUserId) continue;
 
     // Filtres d'éligibilité : trop vieux / inactif / pas de programme /
     // pas de body scan → le client est exclu entièrement des listes agrégées.

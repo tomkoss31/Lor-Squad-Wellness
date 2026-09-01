@@ -36,6 +36,7 @@ import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 import { LegalFooter } from "../components/ui/LegalFooter";
 import { AgendaWeekGrid } from "../features/agenda/AgendaWeekGrid";
 import { AgendaMonthGrid } from "../features/agenda/AgendaMonthGrid";
+import { AgendaJourPleinEcran } from "../features/agenda/AgendaJourPleinEcran";
 import { useClubShifts } from "../features/agenda/useClubShifts";
 import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
@@ -208,7 +209,13 @@ export function AgendaPage() {
   // Le CRM s'en sert depuis toujours ; l'agenda, lui, avait pris l'autre. Une
   // feature, un seul endroit : on prend celui qui existe.
   const clubIdAgenda = useActiveClubId();
-  const { bookings: clubDiscoveries, reload: rechargerDiscoveries } = useClubDiscoveryBookings(clubIdAgenda);
+  // ⚠️ 01/09 — `moi` en second : sans club lisible (Mandy est référente, elle
+  // n'en lit aucun), on remonte au moins SES rendez-vous. Le sien n'apparaissait
+  // nulle part alors que la RLS l'y autorisait.
+  const { bookings: clubDiscoveries, reload: rechargerDiscoveries } = useClubDiscoveryBookings(
+    clubIdAgenda,
+    currentUser?.id ?? null,
+  );
 
   // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
   // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
@@ -240,6 +247,8 @@ export function AgendaPage() {
   /** Jour imposé à la vue mobile (« Aujourd'hui », clic dans le mois).
    *  null = la grille choisit elle-même (aujourd'hui, sinon le lundi). */
   const [focusDay, setFocusDay] = useState<Date | null>(null);
+  /** La journée ouverte en grand depuis la vue Mois (Thomas, 01/09). */
+  const [jourPleinEcran, setJourPleinEcran] = useState<Date | null>(null);
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
   const isCalendarView = view === "week" || view === "month";
@@ -470,6 +479,23 @@ export function AgendaPage() {
   // le périmètre et par la vue. Un chiffre en haut d'écran doit décrire ce
   // qu'on voit en dessous, sinon il n'apprend rien — c'est la leçon du CRM.
 
+  /** À qui s'intéresse l'onglet « Protocole ».
+   *
+   *  ⚠️ 01/09 — IL IGNORAIT LE SÉLECTEUR DE VUE. On lui passait toujours
+   *  `currentUser.id` : choisir « 👤 Mandy » affichait ses prospects et ses
+   *  clients, mais les suivis protocole de THOMAS, mélangés dans les mêmes
+   *  journées. Un onglet sur cinq répondait à une autre question que les
+   *  quatre autres, sans que rien ne le signale.
+   *
+   *  `null` = toute l'équipe (le filtre « 👥 »), sinon le coach demandé. */
+  const porteeProtocole = useMemo<string | null>(() => {
+    if (!currentUser) return null;
+    if (currentUser.role !== "admin") return currentUser.id;
+    if (agendaFilter === "all") return null;
+    if (agendaFilter === "mine") return currentUser.id;
+    return agendaFilter;
+  }, [currentUser, agendaFilter]);
+
   // ─── Scope distributeur commun (prospects + clients) ─────────────────
   // Détermine si un distributorId entre dans le périmètre actif.
   const isInScope = useCallback((distributorId: string): boolean => {
@@ -554,7 +580,7 @@ export function AgendaPage() {
     // Scope strictement personnel (getFollowUpsDue filtre déjà sur currentUserId).
     // includeUpcoming=true pour que l'onglet Suivis montre aussi les prochains.
     if ((entityFilter === "all" || entityFilter === "followups") && currentUser) {
-      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+      const dueItems = getFollowUpsDue(clients, porteeProtocole, followUpProtocolLogs, {
         now,
         includeUpcoming: true,
         maxDaysUpcoming: 30,
@@ -669,7 +695,7 @@ export function AgendaPage() {
     }
 
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter, users]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, effectiveStatusFilter, effectiveDateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter, users, porteeProtocole]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -750,7 +776,7 @@ export function AgendaPage() {
     // Suivis protocole — Chantier Protocole Agenda+Dashboard (2026-04-20).
     let protocolCount = 0;
     if (currentUser) {
-      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+      const dueItems = getFollowUpsDue(clients, porteeProtocole, followUpProtocolLogs, {
         now,
         includeUpcoming: true,
         maxDaysUpcoming: 30,
@@ -799,7 +825,7 @@ export function AgendaPage() {
       discovery: discoveryCount,
       all: clientCount + prospectCount + protocolCount + discoveryCount,
     };
-  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter]);
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter, porteeProtocole]);
 
   // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
   // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
@@ -1785,13 +1811,17 @@ export function AgendaPage() {
               setShowForm(true);
             }}
             onSelectEvent={handleCalendarEventClick}
-            onSelectDay={(day) => {
-              setWeekAnchor(startOfWeekMonday(day));
-              // Le jour touché, pas le lundi de sa semaine : c'est toute la
-              // raison d'être de la vue Mois (correctif 2026-07-27).
-              setFocusDay(day);
-              setView("week");
-            }}
+            // ⚠️ 01/09 — TAPER UN JOUR FAISAIT DEUX CHOSES NON DEMANDÉES.
+            // On basculait en vue Semaine ET on posait le détail de la journée
+            // tout en bas, après la grille, la légende et les bandes de
+            // permanence. Mesuré sur 390 × 844 : page de 900 px, le détail
+            // tombait juste sous le pli. Thomas : « ça ouvre le RDV en bas, pas
+            // visible ; il faut que ce soit pleine page avec une croix pour
+            // fermer et revenir en arrière. »
+            //
+            // On ouvre donc la journée PAR-DESSUS le mois, sans changer de vue :
+            // la croix referme et le mois est exactement là où il était.
+            onSelectDay={(day) => setJourPleinEcran(day)}
           />
         </div>
       ) : /* ═══ Vue semaine (Agenda V2, 2026-07-27) ═══════════════════════
@@ -1990,7 +2020,21 @@ export function AgendaPage() {
       {showForm && (
         <ProspectFormModal
           initial={editing}
-          prefill={prefillRdvDate ? { rdvDate: prefillRdvDate.toISOString() } : undefined}
+          // ⚠️ 01/09 — ON DIT DANS QUEL AGENDA ON A CLIQUÉ.
+          // Sans ça, un admin qui regarde l'agenda d'un autre coach, clique un
+          // créneau vide et crée le rendez-vous… chez lui. Il disparaît de la
+          // vue qu'on regardait, donc on croit que le clic n'a rien fait.
+          // `agendaFilter` vaut un identifiant de coach quand on en a
+          // sélectionné un ; « mine » et « all » retombent sur soi.
+          prefill={
+            prefillRdvDate
+              ? {
+                  rdvDate: prefillRdvDate.toISOString(),
+                  distributorId:
+                    agendaFilter !== "mine" && agendaFilter !== "all" ? agendaFilter : undefined,
+                }
+              : undefined
+          }
           onClose={() => { setShowForm(false); setEditing(undefined); setPrefillRdvDate(null); }}
           onSaved={() => {
             pushToast({
@@ -2060,6 +2104,25 @@ export function AgendaPage() {
       ) : null}
 
       {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
+      {/* La journée en grand, ouverte depuis le mois. */}
+      {jourPleinEcran ? (
+        <AgendaJourPleinEcran
+          day={jourPleinEcran}
+          events={calendarEvents.filter((e) => isSameDay(new Date(e.start), jourPleinEcran))}
+          colorOf={colorOf}
+          ownerName={ownerName}
+          showOwner={showOwner}
+          onSelectEvent={(ev) => handleCalendarEventClick({ entry: ev.entry })}
+          onCreateAt={(at) => {
+            setJourPleinEcran(null);
+            setEditing(undefined);
+            setPrefillRdvDate(at);
+            setShowForm(true);
+          }}
+          onFermer={() => setJourPleinEcran(null)}
+        />
+      ) : null}
+
       {clientRdv ? (
         <ClientRdvSheet
           client={clientRdv.client}
