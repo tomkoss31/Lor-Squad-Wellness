@@ -52,17 +52,26 @@ export function CrmDemandesRdv({ demandes, onAccepter, onRefuser }: Props) {
     }
   };
 
+  // ⚠️ 31/08 — UNE DEMANDE À LA FOIS, comme « À conclure ».
+  // Mesuré sur dev : trois demandes faisaient 499 px, soit tout un écran de
+  // téléphone pour un geste qui arrive une fois par semaine. Or on n'accepte
+  // qu'une personne à la fois, et le nombre de taps est EXACTEMENT le même :
+  // répondre à la première fait apparaître la suivante. La plus proche passe
+  // devant — c'est elle qui attend son mail depuis le plus longtemps.
+  const [premiere, ...suivantes] = demandes;
+
   return (
     <section style={bloc} aria-label="Demandes de rendez-vous">
       <p style={titre}>
         {demandes.length} demande{demandes.length > 1 ? "s" : ""} de rendez-vous
         {demandes.length > 1 ? " attendent" : " attend"} ta réponse
       </p>
-      {demandes.map((d) => {
+      {(() => {
+        const d = premiere;
         const occupe = enCours === d.id;
         return (
-          <div key={d.id} style={{ ...carte, opacity: occupe ? 0.55 : 1 }}>
-            <div>
+          <div style={{ ...carte, opacity: occupe ? 0.55 : 1 }}>
+            <div style={{ minWidth: 0 }}>
               <span style={nom}>{d.nom}</span>
               <p style={meta}>
                 {QUAND.format(new Date(d.slotStart))}
@@ -79,7 +88,12 @@ export function CrmDemandesRdv({ demandes, onAccepter, onRefuser }: Props) {
             </div>
           </div>
         );
-      })}
+      })()}
+      {suivantes.length > 0 && (
+        <p style={puis}>
+          puis {suivantes.length} autre{suivantes.length > 1 ? "s" : ""} — une à la fois
+        </p>
+      )}
     </section>
   );
 }
@@ -106,6 +120,7 @@ const titre: React.CSSProperties = {
 const carte: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
+  minWidth: 0,
   alignItems: "center",
   justifyContent: "space-between",
   gap: 10,
@@ -129,6 +144,17 @@ const meta: React.CSSProperties = {
   fontSize: 12,
   color: "var(--ls-text-muted)",
   fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  // Une adresse longue passait la carte à trois lignes. Elle se coupe.
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const puis: React.CSSProperties = {
+  margin: "8px 0 0 2px",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 11,
+  color: "var(--ls-text-hint)",
 };
 
 const actions: React.CSSProperties = { display: "flex", gap: 6, flex: "none" };
