@@ -249,6 +249,23 @@ export function AgendaPage() {
   const [focusDay, setFocusDay] = useState<Date | null>(null);
   /** La journée ouverte en grand depuis la vue Mois (Thomas, 01/09). */
   const [jourPleinEcran, setJourPleinEcran] = useState<Date | null>(null);
+
+  // ── DÉGRAISSAGE (maquette validée par Thomas, 01/09) ────────────────────
+  //
+  // MESURE AVANT, sur l'agenda réel en vue Liste, écran de 390 × 844 :
+  //   bandeau + 3 tuiles de compteurs ....... 334 px
+  //   sélecteur « Vue » ..................... 66
+  //   cinq onglets en grille ................ 144
+  //   Liste / Semaine / Mois ................ 68
+  //   Période + Statut, toujours ouverts .... 201
+  //   ------------------------------------------
+  //   avant le PREMIER rendez-vous .......... 813 px  (l'écran en fait 844)
+  // Sur bureau : 545 px sur 900. On ouvrait son agenda et on voyait des boutons.
+  //
+  // Rien n'est supprimé : « De qui », « Quand » et « État » passent derrière ce
+  // bouton, et la pastille s'allume dès qu'un réglage n'est plus au défaut — on
+  // ne peut pas filtrer sans le savoir. C'est la règle appliquée au CRM.
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
   // La grille dessine une semaine entière : elle a besoin de TOUTES les entrées
   // et fait son propre découpage. Le filtre Période ne s'applique qu'à la liste.
   const isCalendarView = view === "week" || view === "month";
@@ -267,6 +284,14 @@ export function AgendaPage() {
       return currentUser?.role === "admin" ? "mine" : "all";
     }
   });
+  /** Combien de réglages ne sont plus au défaut — c'est le chiffre de la
+   *  pastille. Sans lui, replier reviendrait à cacher un filtre actif, ce qui
+   *  est bien pire qu'une barre trop haute. */
+  const reglagesActifs =
+    (dateFilter !== "all" ? 1 : 0) +
+    (statusFilter !== "upcoming" ? 1 : 0) +
+    (currentUser?.role === "admin" && agendaFilter !== "mine" ? 1 : 0);
+
   // Chantier Agenda unifié (2026-04-20) : onglet entité (tous / clients /
   // prospects / suivis). La query ?tab=followups prime sur localStorage.
   const [entityFilter, setEntityFilter] = useState<EntityFilter>(() => {
@@ -1199,6 +1224,13 @@ export function AgendaPage() {
                 }}
               />
               Agenda · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+              {/* Le seul chiffre qui méritait de rester des trois tuiles :
+                  ce qui tombe AUJOURD'HUI, dans le périmètre affiché. */}
+              {compteDuJour > 0 ? (
+                <span style={{ color: "var(--ls-text-muted)" }}>
+                  {" · "}{compteDuJour} aujourd'hui
+                </span>
+              ) : null}
             </div>
             <h1
               className="ls-agenda-title"
@@ -1272,64 +1304,13 @@ export function AgendaPage() {
           </div>
         </div>
 
-        {/* 3 stats horizontaux dans le hero */}
-        <div
-          className="ls-agenda-stats"
-          style={{
-            position: "relative",
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 10,
-          }}
-        >
-          {[
-            { icon: "📅", label: "Aujourd'hui", value: compteDuJour, color: heroGradient.primary },
-            { icon: "📆", label: "Cette semaine", value: entityCounts.all, color: heroGradient.secondary },
-            { icon: "🎯", label: "Suivis", value: entityCounts.followups, color: heroGradient.tertiary },
-          ].map((s) => (
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
-            <div
-              key={s.label}
-              className="ls-agenda-stat"
-              style={{
-                background: "color-mix(in srgb, var(--ls-surface) 95%, transparent)",
-                border: `0.5px solid color-mix(in srgb, ${s.color} 25%, var(--ls-border))`,
-                borderRadius: 14,
-                padding: "10px 14px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `0 6px 18px -8px ${heroGradient.glow}`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              <span style={{ fontSize: 22 }}>{s.icon}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
-                  {s.label}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "Syne, sans-serif",
-                    fontSize: 22,
-                    fontWeight: 800,
-                    color: s.color,
-                    lineHeight: 1,
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {s.value}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* ⚠️ 01/09 — LES TROIS TUILES DE COMPTEURS SONT PARTIES.
+            « Aujourd'hui », « Cette semaine » et « Suivis » coûtaient 120 px
+            au milieu du bandeau, et répétaient trois chiffres que les puces
+            d'onglets donnent déjà juste en dessous (Tous · Clients · Club ·
+            Protocole · Prospects), celles-là cliquables. Mesuré ce matin :
+            813 px de contrôles avant le premier rendez-vous, sur un écran de
+            844. Le compte du jour reste, en une ligne, dans l'en-tête. */}
       </div>
 
       {/* Prochain RDV countdown V2 (2026-04-29) — hero card flottant si <12h */}
@@ -1462,8 +1443,52 @@ export function AgendaPage() {
         );
       })()}
 
+      {/* ── LE BOUTON « FILTRES » (dégraissage 01/09) ────────────────────
+          Il remplace 267 px de contrôles toujours ouverts : le sélecteur de
+          vue, la période et le statut. La pastille dit combien de réglages ne
+          sont plus au défaut — on ne peut donc pas filtrer sans le savoir. */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button
+          type="button"
+          onClick={() => setFiltresOuverts((v) => !v)}
+          aria-expanded={filtresOuverts}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            minHeight: 40,
+            padding: "0 14px",
+            borderRadius: 999,
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            background: "var(--ls-surface)",
+            color: reglagesActifs > 0 ? "var(--ls-teal)" : "var(--ls-text-muted)",
+            border: `1px solid ${reglagesActifs > 0 ? "var(--ls-teal)" : "var(--ls-border)"}`,
+          }}
+        >
+          ⋯ Filtres
+          {reglagesActifs > 0 ? (
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "1px 6px",
+                borderRadius: 999,
+                background: "var(--ls-teal)",
+                color: "var(--ls-bg)",
+              }}
+            >
+              {reglagesActifs}
+            </span>
+          ) : null}
+        </button>
+      </div>
+
       {/* Dropdown distributeur — admin only — refonte premium 2026-04-29 */}
-      {currentUser?.role === "admin" && (
+      {filtresOuverts && currentUser?.role === "admin" && (
         <div
           style={{
             display: "inline-flex",
@@ -1717,10 +1742,12 @@ export function AgendaPage() {
           déjà forcés à « all » : on affichait donc 9 pastilles inertes, plus
           une phrase en gris pour prévenir qu'elles ne servaient à rien. On
           retire les deux. */}
-      {!isCalendarView ? (
+      {!isCalendarView && filtresOuverts ? (
       <>
       {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
-          conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
+          conteneur Card lourd. Eyebrows uppercase + chips compacts.
+          ⚠️ 01/09 — repliés derrière « ⋯ Filtres » : 201 px permanents pour des
+          réglages qu'on touche rarement. Ils ne sont pas supprimés. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div>
           <div
