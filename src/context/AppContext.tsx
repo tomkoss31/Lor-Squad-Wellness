@@ -20,6 +20,7 @@ import {
   persistPvTransactions
 } from "../services/appDataService";
 import { isSupabaseUnavailable, getSupabaseClient } from "../services/supabaseClient";
+import { marquerDernierAcces } from "../services/sb/touchLastAccess";
 import {
   fetchAssessmentQuestionnaires,
   fetchSupabaseAssessment,
@@ -318,6 +319,19 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
+
+    // ⚠️ 01/09 — « QUI UTILISE ENCORE L'APP ? » N'AVAIT PAS DE RÉPONSE JUSTE.
+    // `users.last_access_at` n'était écrit qu'à la connexion par mot de passe,
+    // et cette app est une PWA à session persistante : on n'y repasse jamais.
+    // Résultat mesuré : 62 jours de retard sur Alexis, et `null` sur Sohyer
+    // qui faisait 3 bilans dans le mois. C'est pourtant CE chiffre qu'on lit
+    // pour décider de supprimer une fonctionnalité.
+    //
+    // Ici, on marque le passage réel. Détaché volontairement (`void`) : la
+    // mesure ne doit rien retarder ni rien casser pour celui qui travaille.
+    // La fréquence est bornée en base (une écriture par heure), pas ici.
+    if (nextUser) void marquerDernierAcces();
+
     try {
       // DEUX REQUÊTES RETIRÉES LE 2026-08-11 — les tables n'existent plus.
       //
