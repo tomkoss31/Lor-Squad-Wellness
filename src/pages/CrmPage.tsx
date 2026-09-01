@@ -45,18 +45,21 @@ import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
 import { useActiveClubId } from "../hooks/useActiveClubId";
 import { rdvAConclure } from "../features/crm/aConclure";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
+import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
 import { CrmRdvLigne } from "../components/crm/CrmRdvLigne";
 import { CrmDemandesRdv, type DemandeRdv } from "../components/crm/CrmDemandesRdv";
+import { CrmAlerteConfirmation } from "../components/crm/CrmAlerteConfirmation";
+import { CrmCandidatsEquipe, type CandidatEquipe } from "../components/crm/CrmCandidatsEquipe";
+import { confirmationsRatees } from "../features/crm/confirmationRatee";
 import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
 import { caseDuLead, compterParCase, demandeUnGeste, type CaseActive } from "../features/crm/caseLead";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { clesDoublon, grouperParPersonne } from "../features/crm/cleDoublon";
 import { fusionnerGroupe, type Fusion } from "../features/crm/fusionFiches";
-import { etapeDuLead } from "../features/crm/etapeLead";
 import {
   buildCrmWhatsAppLink as buildWa,
   buildCrmMailLink,
@@ -70,13 +73,11 @@ import {
   type FiltreQualif,
   type VueSauvee,
 } from "../features/crm/filtresQualification";
-import { OPTIONS_DE_TRI, type SortKey } from "../components/crm/CrmLeadsListView";
-import { Tabs } from "../components/ui/Tabs";
+import { OPTIONS_TRI, trierLeads, type CleTri } from "../features/crm/tri";
 import { formatLeadDate as formatDate } from "../lib/leadDateFormat";
 import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
 
-const STATUS_ORDER: CrmStatus[] = ["new", "contacted", "qualified", "converted", "lost"];
 
 function normalizeSlug(input: string): string {
   return input
@@ -87,21 +88,6 @@ function normalizeSlug(input: string): string {
     .trim();
 }
 
-// Le choix Liste / Pipeline, persisté : ouvrir une fiche puis revenir remonte
-// la page, et sans mémoire on retombait toujours sur Liste — alors que le
-// travail est sur le board (retour Thomas 21/08 : « c'est soit l'un ou
-// l'autre »). localStorage et pas l'URL : c'est une préférence d'appareil, pas
-// un état à partager par lien.
-const VUE_MODE_CLE = "ls-crm-vue-mode";
-function lireVueMode(): "list" | "pipeline" {
-  try {
-    const v = window.localStorage.getItem(VUE_MODE_CLE);
-    return v === "pipeline" || v === "list" ? v : "list";
-  } catch {
-    return "list";
-  }
-}
-
 export function CrmPage() {
   const { currentUser, users } = useAppContext();
   const { push: pushToast } = useToast();
@@ -109,17 +95,6 @@ export function CrmPage() {
   const { leads, loading, error, refetch, qualifier, updateStatus, updateSource, accepter, setDormant, deleteLead } = useCrmLeads();
   // Vue : Actifs (pipeline ouvert) · Historique (convertis/perdus) · Endormis.
   const [view, setView] = useState<"active" | "historique" | "archived">("active");
-  // Liste (défaut, type Attio) vs Pipeline (kanban existant) — chantier refonte
-  // CRM 2026-07, demande Thomas « arrêter le kanban empilé comme vue principale ».
-  // Persisté (cf. lireVueMode) : le choix survit à l'aller-retour vers une fiche.
-  const [viewMode, setViewMode] = useState<"list" | "pipeline">(() => lireVueMode());
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(VUE_MODE_CLE, viewMode);
-    } catch {
-      // Navigation privée / stockage plein : le confort saute, pas la page.
-    }
-  }, [viewMode]);
   // Le filtre posé en tapant un segment de la jauge (CRM Board V2, lot 3).
   // Une étape OU le signal « à relancer », jamais les deux : deux filtres
   // cumulés sur une seule barre donnent une liste vide qu'on ne s'explique pas.
@@ -154,8 +129,8 @@ export function CrmPage() {
 
   const [filterSource, setFilterSource] = useState<CrmSource | "all">("all");
   const [search, setSearch] = useState("");
-  // Le volet lead docké (lot 4) : la carte cliquée. La navigation ↑↓ se fait
-  // sur `ordreBoard`, la file dans l'ordre des colonnes.
+  // Le volet lead docké (lot 4) : la carte cliquée. La navigation ↑↓ suit
+  // `ordreEcran` — exactement l'ordre des lignes affichées.
   const [panneauLead, setPanneauLead] = useState<CrmLead | null>(null);
   // Le contact déposé, en attente de sa question. Tant qu'il est là, la feuille
   // « Et alors ? » est ouverte et rien n'a encore été écrit.
@@ -192,7 +167,7 @@ export function CrmPage() {
   //
   // Le tri vit désormais chez le parent : il a rejoint le panneau, et sa
   // valeur sert aussi à savoir si un réglage est actif.
-  const [sortKey, setSortKey] = useState<SortKey>("echeance");
+  const [sortKey, setSortKey] = useState<CleTri>("echeance");
 
   useEffect(() => {
     document.title = "La Base 360 — CRM";
@@ -229,70 +204,90 @@ export function CrmPage() {
   // affichait 5 — les leads de l'équipe étaient comptés mais pas montrés.
   // Le prédicat vit désormais ici, en un seul endroit, et la jauge s'en sert
   // avec `avecCase = false` : elle décrit EXACTEMENT ce qu'un tap produira.
-  const passeFiltres = useCallback(
-    (l: CrmLead, avecCase: boolean): boolean => {
-        // Un lead pas encore accepté n'est NULLE PART dans l'entonnoir (CRM
-        // Board V2, lot 2) : ni dans une colonne, ni dans l'historique, ni
-        // dans les compteurs. Il attend dans la boîte d'arrivée, au-dessus.
-        // Sans cette ligne il apparaîtrait aux deux endroits, et « rien
-        // n'entre sans ton geste » ne voudrait plus rien dire.
-        if (l.enAttente) return false;
+  /** LE PÉRIMÈTRE — tout sauf la vue et le segment de jauge.
+   *
+   *  Séparé le 31/08 pour une raison précise : les pastilles des onglets
+   *  (« Historique (12) », « Endormis (4) ») comptaient sur la population
+   *  ENTIÈRE, sans périmètre, sans recherche. On tapait « Historique (12) » et
+   *  on voyait 3 lignes. C'est le même mensonge que la jauge d'avant — une
+   *  pastille doit annoncer EXACTEMENT ce qu'un tap va montrer. */
+  const passePerimetre = useCallback(
+    (l: CrmLead): boolean => {
+      // Un lead pas encore accepté n'est NULLE PART dans l'entonnoir (CRM
+      // Board V2, lot 2) : ni dans une colonne, ni dans l'historique, ni
+      // dans les compteurs. Il attend dans la boîte d'arrivée, au-dessus.
+      // Sans cette ligne il apparaîtrait aux deux endroits, et « rien
+      // n'entre sans ton geste » ne voudrait plus rien dire.
+      if (l.enAttente) return false;
 
-        // Répartition par vue :
-        //   - Endormis  → uniquement les archivés (dormant)
-        //   - Historique→ non-dormant + statut clos (converti / perdu)
-        //   - Actifs    → non-dormant + pipeline ouvert (nouveau/contacté/qualifié)
-        const closed = l.status === "converted" || l.status === "lost";
-        if (l.dormant) {
-          if (view !== "archived") return false;
-        } else {
-          if (view === "archived") return false;
-          if (view === "historique" && !closed) return false;
-          if (view === "active" && closed) return false;
-        }
-        // Périmètre par ligne. Sans droit d'équipe → toujours "moi".
-        const effScope = canFilterTeam ? scope : "me";
-        const owner = l.ownerUserId;
-        if (effScope === "me") {
-          // Admin : voit aussi les leads NON attribués (coach null) — sinon un
-          // lien /bilan-online sans slug donne un lead invisible.
-          // + Campagne club « colis » (funnel /colis, référent Mélanie par
-          //   défaut) : visible sous « Moi » pour TOUS les admins — décision
-          //   Thomas 2026-07-24, les 2 admins pilotent la même campagne.
-          const isMine = owner === currentUser?.id || (isAdmin && !owner) || (isAdmin && l.source === "colis");
-          if (!isMine) return false;
-        } else if (effScope === "l1") {
-          if (!owner || !line1Ids.has(owner)) return false;
-        } else if (effScope === "l2") {
-          if (!owner || !line2Ids.has(owner)) return false;
-        } else if (effScope === "all") {
-          /* admin : aucun filtre propriétaire */
-        } else {
-          if (owner !== effScope) return false; // distributeur précis
-        }
-        if (filterSource !== "all" && l.source !== filterSource) return false;
-        if (search.trim()) {
-          const q = search.trim().toLowerCase();
-          if (
-            !l.firstName.toLowerCase().includes(q) &&
-            !(l.viaName ?? "").toLowerCase().includes(q) &&
-            !(l.contact ?? "").toLowerCase().includes(q)
-          )
-            return false;
-        }
-        // Le segment de jauge tapé. `avecCase = false` sert à calculer ce que
-        // la jauge ANNONCE : la population telle qu'elle serait sans son
-        // propre filtre. Sans ça, la jauge décrirait un monde et la liste un
-        // autre — le bug qu'on est en train de supprimer.
-        if (avecCase && caseFiltre && caseDuLead(l) !== caseFiltre) return false;
-
-        // Les questions de qualification (température, signaux, objectif).
-        if (!passeQualif(l, qualif)) return false;
-
-        return true;
+      // Périmètre par ligne. Sans droit d'équipe → toujours "moi".
+      const effScope = canFilterTeam ? scope : "me";
+      const owner = l.ownerUserId;
+      if (effScope === "me") {
+        // Admin : voit aussi les leads NON attribués (coach null) — sinon un
+        // lien /bilan-online sans slug donne un lead invisible.
+        // + Campagne club « colis » (funnel /colis, référent Mélanie par
+        //   défaut) : visible sous « Moi » pour TOUS les admins — décision
+        //   Thomas 2026-07-24, les 2 admins pilotent la même campagne.
+        const isMine = owner === currentUser?.id || (isAdmin && !owner) || (isAdmin && l.source === "colis");
+        if (!isMine) return false;
+      } else if (effScope === "l1") {
+        if (!owner || !line1Ids.has(owner)) return false;
+      } else if (effScope === "l2") {
+        if (!owner || !line2Ids.has(owner)) return false;
+      } else if (effScope === "all") {
+        /* admin : aucun filtre propriétaire */
+      } else {
+        if (owner !== effScope) return false; // distributeur précis
+      }
+      if (filterSource !== "all" && l.source !== filterSource) return false;
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        if (
+          !l.firstName.toLowerCase().includes(q) &&
+          !(l.viaName ?? "").toLowerCase().includes(q) &&
+          !(l.contact ?? "").toLowerCase().includes(q)
+        )
+          return false;
+      }
+      // Les questions de qualification (température, signaux, objectif).
+      if (!passeQualif(l, qualif)) return false;
+      return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [view, canFilterTeam, scope, currentUser?.id, isAdmin, line1Ids, line2Ids, filterSource, search, caseFiltre, qualif],
+    [canFilterTeam, scope, currentUser?.id, isAdmin, line1Ids, line2Ids, filterSource, search, qualif],
+  );
+
+  /** Dans quelle VUE ce lead se range. Une seule notion de case pour toute la
+   *  page : ce test lisait `l.status` brut, c'est-à-dire une deuxième
+   *  définition de « converti / perdu » à côté de `caseDuLead`. */
+  const passeVue = useCallback((l: CrmLead, vue: "active" | "historique" | "archived"): boolean => {
+    const c = caseDuLead(l);
+    if (c === "endormi") return vue === "archived";
+    if (vue === "archived") return false;
+    const clos = c === "converti" || c === "perdu";
+    return vue === "historique" ? clos : !clos;
+  }, []);
+
+  // ⚠️ 28/08 — UN SEUL PRÉDICAT, DEUX USAGES.
+  // La jauge comptait `leadsEntonnoir` (tout le périmètre, sans filtre) pendant
+  // que la liste, elle, appliquait vue + périmètre + source + recherche.
+  // Vérifié sur dev : la jauge annonçait « 12 à relancer » et le filtre en
+  // affichait 5 — les leads de l'équipe étaient comptés mais pas montrés.
+  // Le prédicat vit désormais ici, en un seul endroit, et la jauge s'en sert
+  // avec `avecCase = false` : elle décrit EXACTEMENT ce qu'un tap produira.
+  const passeFiltres = useCallback(
+    (l: CrmLead, avecCase: boolean): boolean => {
+      if (!passeVue(l, view)) return false;
+      if (!passePerimetre(l)) return false;
+      // Le segment de jauge tapé. `avecCase = false` sert à calculer ce que
+      // la jauge ANNONCE : la population telle qu'elle serait sans son
+      // propre filtre. Sans ça, la jauge décrirait un monde et la liste un
+      // autre — le bug qu'on est en train de supprimer.
+      if (avecCase && caseFiltre && caseDuLead(l) !== caseFiltre) return false;
+      return true;
+    },
+    [view, caseFiltre, passeVue, passePerimetre],
   );
 
   const filtered = useMemo(() => leads.filter((l) => passeFiltres(l, true)), [leads, passeFiltres]);
@@ -333,9 +328,11 @@ export function CrmPage() {
         fusions.set(f.vue.key, f);
       }
     }
-    principaux.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return { regroupes: principaux, doublonsDe: doublons, fusionsDe: fusions };
-  }, [filtered]);
+    // ⚠️ 31/08 — L'ORDRE VIENT DU SÉLECTEUR, PAS D'UN `sort` ÉCRIT ICI.
+    // Il y avait à cette ligne un tri par date d'arrivée en dur, pendant que
+    // « Trier » affichait « Par échéance » et n'était lu par personne.
+    return { regroupes: trierLeads(principaux, sortKey), doublonsDe: doublons, fusionsDe: fusions };
+  }, [filtered, sortKey]);
 
   // Le seul chiffre qui mérite d'être en haut de l'écran : combien de gens
   // attendent un geste AUJOURD'HUI. Les cinq compteurs par statut (Nouveaux,
@@ -371,22 +368,18 @@ export function CrmPage() {
     return { total: ici.length, jamais, retard };
   }, [regroupes]);
 
-  // Combien de réglages ne sont PAS à leur valeur par défaut : le badge du
-  // Compteurs cohérents avec la vue Actifs (endormis hors flux) ET le périmètre.
-  const counts = useMemo(() => {
-    const by: Record<CrmStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
-    const effScope = canFilterTeam ? scope : "me";
-    for (const l of leads) {
-      if (l.dormant) continue;
-      const owner = l.ownerUserId;
-      if (effScope === "me") { if (!(owner === currentUser?.id || (isAdmin && !owner) || (isAdmin && l.source === "colis"))) continue; }
-      else if (effScope === "l1") { if (!owner || !line1Ids.has(owner)) continue; }
-      else if (effScope === "l2") { if (!owner || !line2Ids.has(owner)) continue; }
-      else if (effScope !== "all") { if (owner !== effScope) continue; }
-      by[l.status] += 1;
-    }
-    return by;
-  }, [leads, scope, canFilterTeam, currentUser?.id, isAdmin, line1Ids, line2Ids]);
+  // ⚠️ 31/08 — LES CINQ COMPTEURS PAR STATUT SONT PARTIS.
+  //
+  // Ils recopiaient le filtre de périmètre À LA MAIN (scope, admin, colis)
+  // et comptaient sur `l.status` BRUT, pendant que la jauge juste au-dessus
+  // compte avec `caseDuLead`. Les deux se contredisaient donc par
+  // construction : quelqu'un qui a un créneau confirmé demain est « RDV calé »
+  // pour la jauge et « Nouveau » pour la bande, parce que sa colonne `status`
+  // en base n'a jamais été touchée. C'est le bug du 25/08, reproduit à
+  // l'identique deux lignes plus bas.
+  //
+  // La jauge dit déjà tout, elle, et elle est CLIQUABLE — y compris le
+  // « Hors flux : X convertis · Y perdus · Z endormis ». Rien n'est perdu.
 
   // Les compteurs de la jauge. Ils lisent la population dédoublonnée du
   // périmètre — et NON `filtered`, sinon la jauge se recalculerait sur son
@@ -409,46 +402,35 @@ export function CrmPage() {
     [leads],
   );
 
-  const dormantCount = useMemo(() => leads.filter((l) => l.dormant).length, [leads]);
+  // ⚠️ 31/08 — CES DEUX PASTILLES MENTAIENT.
+  // Elles comptaient sur `leads` BRUT : toute la base, sans périmètre d'équipe,
+  // sans filtre de source, sans recherche, et en incluant les leads pas encore
+  // acceptés. « Endormis (9) » puis 2 lignes à l'écran. Elles passent par le
+  // même périmètre que la liste — une pastille annonce ce qu'un tap montre,
+  // c'est la règle de tout ce chantier.
+  const dormantCount = useMemo(
+    () => leads.filter((l) => passePerimetre(l) && passeVue(l, "archived")).length,
+    [leads, passePerimetre, passeVue],
+  );
 
-  // ── Le board V2 : 5 colonnes par ZONE (CRM Board V2, lot 3) ──────────────
-  // « À relancer » n'est pas un statut mais un DÉRIVÉ (relanceDue) — comme dans
-  // la jauge. Un lead à relancer va dans cette colonne quelle que soit son
-  // étape réelle. Converti/perdu/endormi ne sont pas des colonnes ouvertes.
-  const BOARD_COLONNES: Array<{ cle: string; label: string; teinte: string; drop: CrmStatus | null }> = [
-    { cle: "new", label: "Nouveau", teinte: "var(--ls-lime)", drop: "new" },
-    { cle: "contacted", label: "Contacté", teinte: "var(--ls-teal)", drop: "contacted" },
-    { cle: "relance", label: "À relancer", teinte: "var(--ls-coral)", drop: null },
-    { cle: "qualified", label: "RDV calé", teinte: "var(--ls-purple)", drop: "qualified" },
-    { cle: "converted", label: "Converti", teinte: "var(--ls-amber)", drop: null },
-  ];
-  const colonneDe = (l: CrmLead): string => {
-    if (l.status === "converted") return "converted";
-    if (l.status === "lost" || l.dormant) return "hors";
-    // ⚠️ 25/08 — le board ne regardait QUE `status`, jamais le rendez-vous.
-    // Ghislaine, Amandine et Cassandre avaient un créneau CONFIRMÉ le jour même
-    // et s'affichaient en « Nouveau », parce que leur colonne `status` en base
-    // était restée à `new`. Pendant ce temps la vue Liste, elle, les rangeait
-    // bien dans « Rendez-vous calés » — `zones.ts` regarde le RDV. Le même lead
-    // était donc à deux endroits différents selon la vue qu'on ouvrait.
-    //
-    // On reprend EXACTEMENT la règle de `zoneDe` (features/crm/zones.ts), y
-    // compris son ordre : un rendez-vous passe AVANT l'échéance de relance —
-    // quelqu'un qui a un créneau vendredi n'est pas « à relancer » parce qu'une
-    // date de rappel traîne, il faut le recevoir.
-    if (etapeDuLead(l) === "qualified") return "qualified";
-    if (l.relanceDue) return "relance";
-    return l.status; // new | contacted
-  };
-
-  // La file du board mise à plat, dans l'ordre des colonnes — support des
-  // flèches ↑↓ du volet.
-  const ordreBoard = useMemo(() => {
-    const parCle: Record<string, CrmLead[]> = {};
-    for (const l of regroupes) { const c = colonneDe(l); (parCle[c] ??= []).push(l); }
-    return BOARD_COLONNES.flatMap((c) => parCle[c.cle] ?? []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regroupes]);
+  /** L'ordre du volet — LE MÊME QUE CELUI DE L'ÉCRAN.
+   *
+   *  ⚠️ 31/08 — Il y avait ici tout un modèle de colonnes de board
+   *  (`BOARD_COLONNES` + `colonneDe`) conservé pour une seule chose : ranger
+   *  les flèches ↑↓ du volet. Deux problèmes. D'abord ce board n'existe plus,
+   *  donc « suivant » emmenait sur une ligne située ailleurs à l'écran.
+   *  Ensuite c'était une TROISIÈME définition de la case d'un lead, à côté de
+   *  `caseDuLead` et du filtre de vue — et trois définitions finissent
+   *  toujours par diverger.
+   *
+   *  Le volet suit désormais l'ordre réellement affiché par `CrmListe` :
+   *  ce qui presse d'abord, le reste ensuite. « Suivant » veut dire « la
+   *  ligne d'en dessous », ce qui est la seule chose qu'on attend d'une
+   *  flèche. */
+  const ordreEcran = useMemo(
+    () => [...regroupes.filter(demandeUnGeste), ...regroupes.filter((l) => !demandeUnGeste(l))],
+    [regroupes],
+  );
 
   // WhatsApp direct depuis la carte du board (variante en retard). Message de
   // relance douce ; les templates fins vivent dans la fiche.
@@ -501,8 +483,8 @@ export function CrmPage() {
     });
   }
   const historiqueCount = useMemo(
-    () => leads.filter((l) => !l.dormant && (l.status === "converted" || l.status === "lost")).length,
-    [leads],
+    () => leads.filter((l) => passePerimetre(l) && passeVue(l, "historique")).length,
+    [leads, passePerimetre, passeVue],
   );
 
   const sourcesPresent = useMemo(() => {
@@ -636,6 +618,36 @@ export function CrmPage() {
     [rdvFuturs],
   );
 
+  /** ⚠️ 31/08 — DEUX CHOSES QUE J'AVAIS PERDUES AVEC LE PAVÉ DES RENDEZ-VOUS.
+   *
+   *  Elles vivaient toutes les deux dans les widgets retirés le 31/08. Aucune
+   *  ne rentre dans « une ligne vers l'Agenda » : la première est une PANNE
+   *  (cf. l'incident Ghislaine du 21/08 dans `confirmationRatee.ts`), la
+   *  seconde un candidat qui veut rejoindre l'équipe et dont on ne voyait plus
+   *  ni le motif ni le mot. Même règle que les demandes : rien à dire = rien
+   *  à l'écran. */
+  const confirmationsKO = useMemo(
+    () => confirmationsRatees(rdvFuturs, new Date()),
+    [rdvFuturs],
+  );
+
+  const candidatsEquipe: CandidatEquipe[] = useMemo(
+    () =>
+      rdvCoachAVenir
+        .filter((b) => b.booking_type === "recrutement" && b.status !== "canceled")
+        .map((b) => ({
+          id: b.id,
+          nom: `${b.first_name ?? ""} ${b.last_name ?? b.metadata?.last_name ?? ""}`.trim() || "Sans nom",
+          slotStart: b.slot_start,
+          contact: b.contact,
+          cherche: b.metadata?.looking ?? null,
+          delai: b.metadata?.timing ?? null,
+          ville: b.metadata?.city ?? null,
+          mot: b.metadata?.note ?? null,
+        })),
+    [rdvCoachAVenir],
+  );
+
   async function accepterDemande(d: DemandeRdv) {
     // Chemin unique : c'est lui qui envoie le « c'est confirmé » à la personne.
     const { error } = await setRdvBookingStatus(d.id, "confirmed");
@@ -660,7 +672,41 @@ export function CrmPage() {
   async function handleConclure(cible: CibleAConclure & { contact?: string | null }, issue: IssueRdv) {
     const effet = EFFET_ISSUE[issue];
 
-    // 1. Solder le rendez-vous. On passe par le chemin unique.
+    // 1. Retrouver la personne dans le CRM. On réutilise l'appariement du
+    //    dédoublonnage — `contact = phone || email` a déjà coûté assez cher.
+    const cles = clesDoublon({ contact: cible.contact ?? null });
+    const lead = cles.length
+      ? leads.find((l) => clesDoublon(l).some((k) => cles.includes(k)))
+      : undefined;
+
+    // 2. LA RELANCE D'ABORD, LE RANGEMENT ENSUITE.
+    //
+    // ⚠️ L'ORDRE EST LA CORRECTION (revue d'avant-prod, 31/08). Il était
+    // inverse : on soldait le rendez-vous, PUIS on posait la relance. Si la
+    // seconde écriture échouait — droits, contrainte, réseau — la personne
+    // avait déjà quitté « À conclure » (son rendez-vous n'était plus en
+    // attente) sans être revenue dans aucune file. Elle disparaissait, et
+    // c'est précisément le trou que cette étape existe pour boucher.
+    //
+    // Dans cet ordre, un échec laisse tout en place : le rendez-vous reste à
+    // conclure, la question se re-pose demain, rien n'est perdu.
+    if (effet.reponseLead) {
+      if (!lead) {
+        pushToast({
+          tone: "warning",
+          title: `${cible.nom} · aucune fiche CRM`,
+          message: "Le rendez-vous n'a pas été rangé : sans fiche, elle ne reviendrait dans aucune file. Ouvre sa fiche pour la créer.",
+        });
+        return;
+      }
+      const err = await qualifier(lead, REPONSE_PAR_CLE[effet.reponseLead]);
+      if (err) {
+        pushToast({ tone: "warning", title: "Relance non posée", message: `${err} Le rendez-vous reste à conclure.` });
+        return;
+      }
+    }
+
+    // 3. Solder le rendez-vous. On passe par le chemin unique.
     const { error } = await setRdvBookingStatus(cible.id, effet.statutRdv);
     if (error) {
       pushToast({
@@ -668,31 +714,25 @@ export function CrmPage() {
         title: "Rendez-vous non rangé",
         message: error instanceof Error ? error.message : "Droits insuffisants ?",
       });
+      await rechargerRdv();
       return;
     }
 
-    // 2. Retrouver la personne dans le CRM. On réutilise l'appariement du
-    //    dédoublonnage — `contact = phone || email` a déjà coûté assez cher.
-    const cles = clesDoublon({ contact: cible.contact ?? null });
-    const lead = cles.length
-      ? leads.find((l) => clesDoublon(l).some((k) => cles.includes(k)))
-      : undefined;
+    // 4. Le mot à la personne. Même chemin que l'Agenda depuis le 31/08 :
+    //    avant, seul l'Agenda l'envoyait, et « pas venue » depuis le CRM
+    //    laissait la personne sans nouvelles.
+    if (effet.proposerMail) void envoyerMailApresRdv(cible.id, "pas_venue");
 
-    // 3. La renvoyer dans la file avec son échéance (J+2 / J+7), ou la sortir.
-    if (effet.reponseLead && lead) {
-      await handleQualifier(lead, REPONSE_PAR_CLE[effet.reponseLead]);
-    } else if (effet.sortDuCrm && lead) {
+    if (effet.sortDuCrm && lead) {
       // « Elle démarre » : on ouvre la conversion — c'est elle qui crée la
       // fiche cliente. On ne l'écrit pas ici en double.
       navigate(`/crm/leads/${lead.key}?convert=1`);
     } else {
-      // Aucun lead retrouvé : le rendez-vous est rangé quand même, mais on le
-      // DIT — un succès muet ferait croire que la relance est posée.
       pushToast({
-        tone: effet.reponseLead ? "warning" : "success",
+        tone: "success",
         title: `${cible.nom} · ${effet.libelle}`,
         message: effet.reponseLead
-          ? "Rendez-vous rangé, mais aucune fiche CRM ne correspond — pense à la relancer à la main."
+          ? `Rendez-vous rangé, elle revient dans ta file — ${REPONSE_PAR_CLE[effet.reponseLead].quand.toLowerCase()}.`
           : "Rendez-vous rangé.",
       });
     }
@@ -837,6 +877,14 @@ export function CrmPage() {
         onRefuser={refuserDemande}
       />
 
+      {/* Quelqu'un attend son horaire et ne le sait pas. Voir l'incident du
+          21/08 : trois confirmations tombées dans le vide, en silence. */}
+      <CrmAlerteConfirmation ratees={confirmationsKO} />
+
+      {/* Un candidat équipe n'est pas un rendez-vous comme un autre : on dit
+          ce qu'il cherche, sous quel délai, et son mot. */}
+      <CrmCandidatsEquipe candidats={candidatsEquipe} />
+
       {error ? (
         <div style={errorBanner}>
           ⚠️ Une source n'a pas pu charger : {error}
@@ -971,18 +1019,6 @@ export function CrmPage() {
         >
           📊 Stats {showStats ? "▲" : "▼"}
         </button>
-      </div>
-
-      {/* Les cinq compteurs par statut. Ils ne sont pas cliquables et ne
-          disent pas quoi faire — ils ont quitté le haut de page, pas l'app. */}
-      <div style={statsRow}>
-        {STATUS_ORDER.map((s) => (
-          <div key={s} style={statChip(CRM_STATUS_META[s].color)}>
-            <span aria-hidden="true">{CRM_STATUS_META[s].emoji}</span>
-            <strong style={{ fontFamily: "Syne, sans-serif" }}>{counts[s]}</strong>
-            <span style={{ fontSize: 11 }}>{CRM_STATUS_META[s].label}</span>
-          </div>
-        ))}
       </div>
 
       {/* Stats par source (wagon 3 chantier 6) */}
@@ -1126,20 +1162,10 @@ export function CrmPage() {
         ))}
       </div>
 
-      {/* Switch Liste (défaut) / Pipeline — chantier refonte CRM 2026-07 */}
-      <div style={{ marginBottom: 2 }}>
-        <Tabs
-          tabs={[
-            { key: "list" as const, label: "Liste", icon: "📋" },
-            { key: "pipeline" as const, label: "Pipeline", icon: "🗂️" },
-          ]}
-          active={viewMode}
-          onChange={setViewMode}
-          variant="soft"
-          ariaLabel="Vue Liste ou Pipeline"
-        />
-      </div>
-
+      {/* ⚠️ 31/08 — LE SÉLECTEUR « Liste / Pipeline » EST PARTI.
+          Le board a disparu avec la refonte : il ne restait qu'un choix entre
+          la liste et… la liste. Un onglet qui ne change rien fait croire à une
+          panne. Une seule liste, pour tous les écrans. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <label htmlFor="crm-tri" style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
           Trier :
@@ -1147,7 +1173,7 @@ export function CrmPage() {
         <select
           id="crm-tri"
           value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
+          onChange={(e) => setSortKey(e.target.value as CleTri)}
           style={{
             minHeight: 40,
             padding: "0 10px",
@@ -1160,7 +1186,7 @@ export function CrmPage() {
             cursor: "pointer",
           }}
         >
-          {OPTIONS_DE_TRI.map((o) => (
+          {OPTIONS_TRI.map((o) => (
             <option key={o.valeur} value={o.valeur}>{o.label}</option>
           ))}
         </select>
@@ -1214,7 +1240,15 @@ export function CrmPage() {
           onEndormir={() => { const l = menuLead; setMenuLead(null); void handleDormant(l, true); }}
           onReveiller={() => { const l = menuLead; setMenuLead(null); void handleDormant(l, false); }}
           onSupprimer={isAdmin ? () => { const l = menuLead; setMenuLead(null); void handleDelete(l); } : undefined}
-          onSource={(src) => { const l = menuLead; setMenuLead(null); void handleSourceChange(l, src); }}
+          // La provenance n'est modifiable que sur `prospect_leads` (les autres
+          // tables n'ont pas cette colonne). Le sélecteur s'affichait pour
+          // tout le monde et rendait « Source non modifiée » : un contrôle qui
+          // ne marche qu'une fois sur deux vaut mieux caché que grisé.
+          onSource={
+            menuLead.table === "prospect_leads"
+              ? (src) => { const l = menuLead; setMenuLead(null); void handleSourceChange(l, src); }
+              : undefined
+          }
         />
       ) : null}
 
@@ -1288,16 +1322,16 @@ export function CrmPage() {
       {/* Le volet lead docké (lot 4). Ouvert par une carte du board ; la fiche
           pleine reste a un clic (route inchangee). */}
       {panneauLead ? (() => {
-        const i = ordreBoard.findIndex((l) => l.key === panneauLead.key);
+        const i = ordreEcran.findIndex((l) => l.key === panneauLead.key);
         const idx = i >= 0 ? i : 0;
         return (
           <CrmPanneauLead
             lead={panneauLead}
             index={idx + 1}
-            total={Math.max(1, ordreBoard.length)}
+            total={Math.max(1, ordreEcran.length)}
             onFermer={() => setPanneauLead(null)}
             onNaviguer={(d) => {
-              const suivant = ordreBoard[idx + d];
+              const suivant = ordreEcran[idx + d];
               if (suivant) setPanneauLead(suivant);
             }}
             onWhatsApp={ecrireAuLead}
@@ -1386,25 +1420,6 @@ const heroTitle: React.CSSProperties = {
   color: "var(--ls-text)",
   lineHeight: 1.02,
 };
-
-const statsRow: React.CSSProperties = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-};
-
-const statChip = (color: string): React.CSSProperties => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: `color-mix(in srgb, ${color} 10%, var(--ls-surface))`,
-  border: `0.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
-  fontSize: 12.5,
-  color: "var(--ls-text)",
-  fontFamily: "DM Sans, sans-serif",
-});
 
 const errorBanner: React.CSSProperties = {
   marginTop: 14,

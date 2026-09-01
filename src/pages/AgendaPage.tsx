@@ -14,6 +14,9 @@ import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
 import { marquerRdvQualifie } from "../services/sb/qualifierRdv";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
+import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
+import { patchQualification } from "../features/crm/ecrireQualification";
+import { REPONSE_PAR_CLE } from "../features/crm/qualification";
 import type { OnlineBilanRow } from "../hooks/useOnlineBilans";
 
 // Chargées à la demande : ce sont deux gros formulaires qui ne servent qu'au
@@ -337,24 +340,8 @@ export function AgendaPage() {
    * création a échoué. On le DIT en revanche, plutôt que d'afficher « c'est
    * réglé » sur un rangement à moitié fait.
    */
-  /**
-   * Le mail d'après-rendez-vous (25/08). Best-effort et SILENCIEUX en cas
-   * d'échec : le geste du coach — marquer venue ou pas venue — a déjà réussi
-   * et compte pour lui. Un mail qui ne part pas ne doit pas faire croire que
-   * le rangement a raté.
-   */
-  const envoyerMailApresRdv = useCallback(
-    async (bookingId: string, type: "demarre" | "pas_venue") => {
-      try {
-        const sb = await getSupabaseClient();
-        if (!sb) return;
-        await sb.functions.invoke("club-mail-apres-rdv", { body: { booking_id: bookingId, type } });
-      } catch (e) {
-        console.warn("[agenda] mail après RDV non envoyé :", e);
-      }
-    },
-    [],
-  );
+  // Le mot d'après-rendez-vous vit dans `services/sb/mailApresRdv` depuis le
+  // 31/08 : il en existait une copie ici et le CRM, lui, n'en envoyait aucun.
 
   /**
    * « Elle n'est pas venue » (25/08).
@@ -378,8 +365,15 @@ export function AgendaPage() {
       });
       return;
     }
-    // La ramener dans la file : un filet à demain, et l'échéance ROUVERTE
-    // (sinon elle ne sonne jamais — sémantique de `crm-relance-notifier`).
+    // La ramener dans la file.
+    //
+    // ⚠️ 31/08 — LE MÊME GESTE DOIT PRODUIRE LE MÊME EFFET, D'OÙ QU'ON CLIQUE.
+    // Il y avait ici une écriture écrite à la main : retour DEMAIN, motif
+    // « appelé·e, pas de réponse ». Depuis le CRM, le même bouton posait un
+    // retour à DEUX JOURS avec le motif « n'est pas venue au rendez-vous »
+    // (délais validés par Thomas le 28/08). La personne revenait donc à une
+    // date différente selon l'écran, et sa fiche affichait un motif faux.
+    // Les deux passent maintenant par le même patch.
     const cles = clesDoublon({ contact: session.contact });
     if (cles.length > 0) {
       const sb = await getSupabaseClient();
@@ -389,10 +383,9 @@ export function AgendaPage() {
           .filter((l) => clesDoublon(l).some((k) => cles.includes(k)))
           .map((l) => l.id);
         if (ids.length > 0) {
-          const demain = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           await sb
             .from("prospect_leads")
-            .update({ relance_due_at: demain, relance_done_at: null, derniere_reponse: "pas_de_reponse" })
+            .update(patchQualification("prospect_leads", REPONSE_PAR_CLE.pas_venue, new Date()))
             .in("id", ids);
         }
       }
@@ -402,9 +395,9 @@ export function AgendaPage() {
     pushToast({
       tone: "success",
       title: "Noté",
-      message: `${session.firstName} revient dans ta file demain, et reçoit un mot pour reprendre un créneau.`,
+      message: `${session.firstName} revient dans ta file dans 2 jours, et reçoit un mot pour reprendre un créneau.`,
     });
-  }, [qualif, pushToast, rechargerDiscoveries, envoyerMailApresRdv]);
+  }, [qualif, pushToast, rechargerDiscoveries]);
 
   const finaliserQualification = useCallback(async () => {
     if (!qualif) return;
@@ -429,7 +422,7 @@ export function AgendaPage() {
     // Elle a démarré : on le lui dit. Court, chaleureux, et on s'arrête là.
     void envoyerMailApresRdv(bookingId, "demarre");
     void rechargerDiscoveries();
-  }, [qualif, pushToast, rechargerDiscoveries, envoyerMailApresRdv]);
+  }, [qualif, pushToast, rechargerDiscoveries]);
   /** Replanification du RDV client ouvert. */
   const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);

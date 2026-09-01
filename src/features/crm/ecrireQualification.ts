@@ -68,6 +68,14 @@ export function patchQualification(
 /**
  * Écrit la qualification. Rend `null` si tout s'est bien passé, sinon le
  * message d'erreur — l'appelant décide quoi en faire (toast, rollback).
+ *
+ * ⚠️ LE `.select()` N'EST PAS DÉCORATIF (revue d'avant-prod, 31/08).
+ * Un `update` que la RLS refuse ne renvoie AUCUNE erreur : il touche zéro
+ * ligne, et PostgREST répond 204. Sans `.select()`, l'app affichait donc
+ * « Marie revient mardi » sur une écriture qui n'avait jamais eu lieu — et
+ * Marie ne revenait jamais. C'est très exactement le trou que ce chantier
+ * ferme partout ailleurs. Le seul moyen de le voir est de demander la ligne
+ * en retour et de compter ce qu'on récupère.
  */
 export async function ecrireQualification(
   table: TableQualifiable,
@@ -78,11 +86,16 @@ export async function ecrireQualification(
   try {
     const sb = await getSupabaseClient();
     if (!sb) return "Service indisponible.";
-    const { error } = await sb
+    const { data, error } = await sb
       .from(table)
       .update(patchQualification(table, reponse, maintenant))
-      .eq("id", id);
-    return error?.message ?? null;
+      .eq("id", id)
+      .select("id");
+    if (error) return error.message;
+    if (!data || data.length === 0) {
+      return "Cette fiche n'a pas été modifiée — elle ne t'appartient peut-être plus. Recharge la page.";
+    }
+    return null;
   } catch (e) {
     return e instanceof Error ? e.message : "Écriture impossible.";
   }
