@@ -7,7 +7,6 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
-import { useGlobalView } from "../hooks/useGlobalView";
 // GlobalViewToggle retire 2026-04-29 — toggle inutile en haut d'agenda
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
@@ -431,14 +430,24 @@ export function AgendaPage() {
     try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
   }, [agendaFilter]);
 
-  // Chantier Quick Wins (2026-04-24) : sync avec toggle global partagé
-  // (Co-pilote / Messagerie / Clients / PV). Admin ON → all, OFF → mine.
-  const [globalView] = useGlobalView();
-  useEffect(() => {
-    if (currentUser?.role === "admin") {
-      setAgendaFilter(globalView ? "all" : "mine");
-    }
-  }, [globalView, currentUser?.role]);
+  // ⚠️ 01/09 — LE SÉLECTEUR DE VUE NE TENAIT PAS, ET VOICI POURQUOI.
+  //
+  // Il y avait ici un effet qui réalignait `agendaFilter` sur `useGlobalView`
+  // à chaque fois que `globalView` ou le rôle changeait. Deux choses :
+  //   · `globalView` vaut `false` EN PERMANENCE — le seul composant qui l'écrit
+  //     (`GlobalViewToggle`) n'est rendu NULLE PART depuis son retrait de
+  //     l'agenda (29/04) et de la Messagerie ;
+  //   · le rôle passe de `undefined` à « admin » au montage, ce qui suffit à
+  //     déclencher l'effet.
+  // Résultat mesuré : on choisissait « 👥 Toute l'équipe », l'effet forçait
+  // « 🏠 Mes RDV », et l'effet de persistance juste au-dessus écrivait ce
+  // « mine » par-dessus le choix. Le sélecteur marchait le temps d'une session
+  // et se réinitialisait dès qu'on quittait la page. Personne ne s'en servait —
+  // et c'est ce qui a fait croire qu'il n'existait pas de vue d'équipe.
+  //
+  // On retire le couplage : un interrupteur invisible ne doit pas écraser un
+  // contrôle que l'utilisateur voit et vient de toucher. Le choix vit
+  // désormais dans `AGENDA_FILTER_KEY`, relu au montage, et il tient.
   useEffect(() => {
     try { localStorage.setItem(AGENDA_ENTITY_KEY, entityFilter); } catch { /* ignore */ }
   }, [entityFilter]);
@@ -448,6 +457,18 @@ export function AgendaPage() {
   // les deps de `filtered`/`grouped` → invalidation systématique des memos.
   // Les bornes (todayStart, todayEnd, weekEnd) sont désormais calculées à
   // l'intérieur de chaque memo, sans être exposées dans les deps.
+
+  // ⚠️ 01/09 — LA TUILE « AUJOURD'HUI » NE RESPECTAIT AUCUN FILTRE.
+  //
+  // Elle comptait `prospects` et `clients` BRUTS : pour un admin, elle
+  // additionnait donc toute l'équipe même avec le sélecteur sur « Mes RDV ».
+  // Elle lisait en plus `clients.next_follow_up` quand la liste, elle, lit
+  // `follow_ups` — deux sources différentes pour le même chiffre, donc deux
+  // réponses différentes à la même question.
+  //
+  // Elle compte maintenant ce que la liste montre : `filtered`, déjà passé par
+  // le périmètre et par la vue. Un chiffre en haut d'écran doit décrire ce
+  // qu'on voit en dessous, sinon il n'apprend rien — c'est la leçon du CRM.
 
   // ─── Scope distributeur commun (prospects + clients) ─────────────────
   // Détermine si un distributorId entre dans le périmètre actif.
@@ -664,6 +685,17 @@ export function AgendaPage() {
     return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
   }, [agendaEntries]);
 
+  /** Ce qui tombe AUJOURD'HUI, dans le périmètre affiché. Voir le bloc
+   *  d'explication plus haut : la tuile comptait toute l'équipe, sur une autre
+   *  source que la liste. */
+  const compteDuJour = useMemo(() => {
+    const t = new Date();
+    return agendaEntries.filter((e) => {
+      const d = new Date(e.date);
+      return !Number.isNaN(d.getTime()) && d.toDateString() === t.toDateString();
+    }).length;
+  }, [agendaEntries]);
+
   // Prochain RDV imminent (2026-04-29) — pour le hero countdown card
   const nextRdv = useMemo(() => {
     const now = Date.now();
@@ -738,12 +770,25 @@ export function AgendaPage() {
     // RDV découverte du club (chantier RDV du club) : le hook ne remonte
     // déjà que les résas à venir et non annulées, seul le filtre de date reste
     // à appliquer pour rester cohérent avec les autres compteurs.
+    // ⚠️ 01/09 — CE COMPTEUR NE PASSAIT PAS PAR `voitCeRdvDuClub`, alors que
+    // la liste, elle, l'applique. L'onglet « Club » annonçait donc des
+    // rendez-vous que la liste ne montrait pas — et le compteur « Tous » les
+    // additionnait aussi. Même défaut que la pastille du CRM ce matin :
+    // un compteur doit annoncer EXACTEMENT ce qu'un tap va montrer.
     let discoveryCount = 0;
+    const proprietaireDuClubIci = !!activeClub && activeClub.ownerUserId === currentUser?.id;
     for (const b of clubDiscoveries) {
       const d = new Date(b.slot_start);
       if (Number.isNaN(d.getTime())) continue;
       if (dateFilter === "today" && !isSameDay(d, todayStart)) continue;
       if (dateFilter === "week" && (d < todayStart || d > weekEnd)) continue;
+      if (!voitCeRdvDuClub({
+        aQui: b.coach_user_id ?? activeClub?.ownerUserId ?? currentUser?.id ?? "",
+        moi: currentUser?.id ?? null,
+        filtre: agendaFilter,
+        proprietaireDuClub: proprietaireDuClubIci,
+        estAdmin: currentUser?.role === "admin",
+      })) continue;
       discoveryCount += 1;
     }
 
@@ -754,7 +799,7 @@ export function AgendaPage() {
       discovery: discoveryCount,
       all: clientCount + prospectCount + protocolCount + discoveryCount,
     };
-  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries]);
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs, clubDiscoveries, activeClub, agendaFilter]);
 
   // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
   // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
@@ -1212,16 +1257,7 @@ export function AgendaPage() {
           }}
         >
           {[
-            { icon: "📅", label: "Aujourd'hui", value: prospects.filter((p) => {
-              const d = new Date(p.rdvDate);
-              const t = new Date();
-              return d.toDateString() === t.toDateString();
-            }).length + clients.filter((c) => {
-              if (!c.nextFollowUp) return false;
-              const d = new Date(c.nextFollowUp);
-              const t = new Date();
-              return d.toDateString() === t.toDateString();
-            }).length, color: heroGradient.primary },
+            { icon: "📅", label: "Aujourd'hui", value: compteDuJour, color: heroGradient.primary },
             { icon: "📆", label: "Cette semaine", value: entityCounts.all, color: heroGradient.secondary },
             { icon: "🎯", label: "Suivis", value: entityCounts.followups, color: heroGradient.tertiary },
           ].map((s) => (
