@@ -1,0 +1,256 @@
+<title>L'agenda sans le décor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#FAF7F0;--s1:#FFFFFF;--s2:#F5F1EB;
+    --line:rgba(30,51,48,.07);--line2:rgba(30,51,48,.13);
+    --text:#17201C;--muted:#55605A;--hint:#68716C;
+    --teal:#0F766E;--lime:#5E7A09;--coral:#BC432C;--amber:#9A631A;--purple:#6D28D9;--on-teal:#fff;
+    --display:Syne,system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#162624;--s1:#1E3330;--s2:#26403B;
+    --line:rgba(244,239,228,.10);--line2:rgba(244,239,228,.17);
+    --text:#F4EFE4;--muted:#9BAAA3;--hint:#7E8E86;
+    --teal:#2DD4BF;--lime:#C5F82A;--coral:#F2775F;--amber:#E8A93A;--purple:#A78BFA;--on-teal:#08211D;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#162624;--s1:#1E3330;--s2:#26403B;
+    --line:rgba(244,239,228,.10);--line2:rgba(244,239,228,.17);
+    --text:#F4EFE4;--muted:#9BAAA3;--hint:#7E8E86;
+    --teal:#2DD4BF;--lime:#C5F82A;--coral:#F2775F;--amber:#E8A93A;--purple:#A78BFA;--on-teal:#08211D;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:430px;margin:0 auto;padding:16px 14px 60px}
+
+  /* ── Le bandeau : UNE ligne ─────────────────────────────────────────── */
+  .tete{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .tete .d{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hint)}
+  .tete h1{font-family:var(--display);font-weight:800;font-size:22px;margin:2px 0 0;letter-spacing:-.01em}
+  .tete .n{font-family:var(--mono);font-size:11.5px;color:var(--teal);white-space:nowrap}
+
+  /* ── La barre : vue + filtres, sur une ligne ────────────────────────── */
+  .barre{display:flex;gap:6px;margin-bottom:6px}
+  .seg{display:flex;flex:1;background:var(--s2);border:1px solid var(--line2);border-radius:11px;padding:2px;gap:2px}
+  .seg button{
+    flex:1;min-height:36px;border:0;border-radius:9px;cursor:pointer;background:transparent;
+    color:var(--muted);font-family:var(--body);font-size:13px;font-weight:600;
+  }
+  .seg button[aria-pressed="true"]{background:var(--s1);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .filtres{
+    flex:none;min-height:40px;padding:0 13px;border-radius:11px;cursor:pointer;
+    border:1px solid var(--line2);background:var(--s1);color:var(--muted);
+    font-family:var(--body);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;
+  }
+  .filtres[aria-expanded="true"],.filtres.actif{border-color:var(--teal);color:var(--teal)}
+  .pastille{background:var(--teal);color:var(--on-teal);font-family:var(--mono);font-size:10px;border-radius:999px;padding:1px 6px;font-weight:700}
+
+  /* ── Le tiroir ──────────────────────────────────────────────────────── */
+  .tiroir{display:none;background:var(--s1);border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:8px}
+  .tiroir.on{display:block}
+  .tiroir h3{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--hint);margin:0 0 7px;font-weight:400}
+  .tiroir h3+div{margin-bottom:14px}
+  .puces{display:flex;gap:6px;flex-wrap:wrap}
+  .puce{
+    min-height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--line2);background:var(--s2);color:var(--muted);
+    font-family:var(--body);font-size:12.5px;font-weight:600;
+  }
+  .puce[aria-pressed="true"]{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,var(--s2));color:var(--text)}
+
+  /* ── Les familles, en une ligne qui défile ──────────────────────────── */
+  .familles{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
+  .familles::-webkit-scrollbar{display:none}
+  .fam{
+    flex:none;min-height:36px;padding:0 12px;border-radius:999px;cursor:pointer;white-space:nowrap;
+    border:1px solid var(--line2);background:var(--s1);color:var(--muted);
+    font-family:var(--body);font-size:12.5px;font-weight:600;
+  }
+  .fam[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:700}
+  .fam b{font-family:var(--mono);font-weight:700;opacity:.75;margin-left:5px}
+
+  /* ── La liste ───────────────────────────────────────────────────────── */
+  .groupe{margin-top:16px}
+  .groupe h2{
+    font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--hint);margin:0 0 7px;font-weight:400;padding-bottom:6px;border-bottom:1px solid var(--line);
+  }
+  .rdv{display:grid;grid-template-columns:50px 3px 1fr;gap:0 11px;align-items:stretch;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left;font-family:var(--body);color:inherit}
+  .rdv:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+  .rdv .h{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+  .rdv .bar{border-radius:2px}
+  .rdv.club .bar{background:var(--coral)}
+  .rdv.client .bar{background:var(--teal)}
+  .rdv.suivi .bar{background:var(--purple)}
+  .rdv .nom{display:block;font-weight:600;font-size:15px;line-height:1.3}
+  .rdv .sous{display:block;font-family:var(--mono);font-size:11px;color:var(--hint);margin-top:3px;line-height:1.4}
+
+  .mesure{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  .mesure h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--hint);margin:0 0 12px;font-weight:400}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  td{padding:5px 0;border-bottom:1px solid var(--line);color:var(--muted)}
+  td:last-child{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--text)}
+  tr.total td{font-weight:700;color:var(--text);border-bottom:0;padding-top:9px}
+  .gain{margin-top:12px;padding:11px 13px;border-radius:11px;background:color-mix(in srgb,var(--lime) 12%,var(--s1));border-left:3px solid var(--lime);font-size:13.5px;color:var(--muted)}
+  .gain b{color:var(--text)}
+</style>
+
+<div class="wrap">
+
+  <div class="tete">
+    <div>
+      <div class="d">Mardi 1<sup>er</sup> septembre</div>
+      <h1>Ton agenda</h1>
+    </div>
+    <div class="n" id="compte">2 aujourd'hui</div>
+  </div>
+
+  <div class="barre">
+    <div class="seg" role="group" aria-label="Mode d'affichage">
+      <button type="button" data-vue="liste" aria-pressed="true">Liste</button>
+      <button type="button" data-vue="semaine" aria-pressed="false">Semaine</button>
+      <button type="button" data-vue="mois" aria-pressed="false">Mois</button>
+    </div>
+    <button type="button" class="filtres" id="btn-filtres" aria-expanded="false" aria-controls="tiroir">
+      Filtres <span class="pastille" id="badge" hidden>1</span>
+    </button>
+  </div>
+
+  <div class="tiroir" id="tiroir">
+    <h3>De qui</h3>
+    <div class="puces" role="group" aria-label="De qui">
+      <button type="button" class="puce" data-qui="moi" aria-pressed="true">Mes RDV</button>
+      <button type="button" class="puce" data-qui="equipe" aria-pressed="false">Toute l'équipe</button>
+      <button type="button" class="puce" data-qui="melanie" aria-pressed="false">Mélanie</button>
+      <button type="button" class="puce" data-qui="mandy" aria-pressed="false">Mandy</button>
+    </div>
+    <h3>Quand</h3>
+    <div class="puces" role="group" aria-label="Période">
+      <button type="button" class="puce" data-quand="tous" aria-pressed="true">Tous</button>
+      <button type="button" class="puce" data-quand="jour" aria-pressed="false">Aujourd'hui</button>
+      <button type="button" class="puce" data-quand="semaine" aria-pressed="false">Cette semaine</button>
+    </div>
+    <h3>État</h3>
+    <div class="puces" role="group" aria-label="Statut">
+      <button type="button" class="puce" data-etat="venir" aria-pressed="true">À venir</button>
+      <button type="button" class="puce" data-etat="faits" aria-pressed="false">Effectués</button>
+      <button type="button" class="puce" data-etat="tous" aria-pressed="false">Tous</button>
+    </div>
+  </div>
+
+  <div class="familles" role="group" aria-label="Type de rendez-vous">
+    <button type="button" class="fam" data-fam="tous" aria-pressed="true">Tous<b>37</b></button>
+    <button type="button" class="fam" data-fam="client" aria-pressed="false">Clients<b>20</b></button>
+    <button type="button" class="fam" data-fam="club" aria-pressed="false">Club<b>11</b></button>
+    <button type="button" class="fam" data-fam="suivi" aria-pressed="false">Protocole<b>4</b></button>
+    <button type="button" class="fam" data-fam="prospect" aria-pressed="false">Prospects<b>2</b></button>
+  </div>
+
+  <div id="liste"></div>
+
+  <div class="mesure">
+    <h3>Ce qu'on récupère</h3>
+    <table>
+      <tr><td>Bandeau + trois tuiles de compteurs</td><td>334 → 58</td></tr>
+      <tr><td>Sélecteur « 👁️ Vue »</td><td>66 → 0*</td></tr>
+      <tr><td>Cinq onglets en grille</td><td>144 → 44</td></tr>
+      <tr><td>Liste / Semaine / Mois</td><td>68 → 40</td></tr>
+      <tr><td>Période + Statut, toujours ouverts</td><td>201 → 0*</td></tr>
+      <tr class="total"><td>Avant le premier rendez-vous</td><td>813 → 189</td></tr>
+    </table>
+    <p class="gain">
+      <b>* replié, pas supprimé.</b> Rien ne disparaît : « De qui », « Quand » et
+      « État » vivent dans le tiroir, et une pastille s'allume dès qu'un réglage
+      n'est plus au défaut — on ne peut pas filtrer sans le savoir.
+      <br><br>
+      Mesuré sur ton agenda ce matin : <b>813 px de contrôles</b> avant le premier
+      rendez-vous, sur un écran de 844. Tu ouvrais ton agenda et tu voyais des
+      boutons. Sur bureau, 545 px sur 900.
+    </p>
+  </div>
+</div>
+
+<script>
+  const RDV = [
+    { g:"Aujourd'hui", h:"J+7",   n:"Jordan Fontaine",   s:"👑 Découvrir le VIP",                  f:"suivi"   },
+    { g:"Aujourd'hui", h:"13:00", n:"Natacha Udot",      s:"RDV découverte · perte de poids",      f:"club"    },
+    { g:"Demain",      h:"15:00", n:"Gaëlle Grandet",    s:"RDV découverte · perte de poids",      f:"club"    },
+    { g:"Cette semaine", h:"14:00", n:"Agnès Florentin", s:"3 sept. · RDV découverte · confirmé",  f:"club"    },
+    { g:"Cette semaine", h:"J+10",  n:"Jordan Fontaine", s:"4 sept. · 🌙 Énergie & sommeil",       f:"suivi"   },
+    { g:"Cette semaine", h:"09:00", n:"Géraldine Harmand", s:"4 sept. · RDV découverte · confirmé",f:"club"    },
+    { g:"Cette semaine", h:"13:00", n:"Virgile Famibelle", s:"4 sept. · Body scan · Découverte",   f:"client"  },
+    { g:"Cette semaine", h:"14:00", n:"Amandine Romane", s:"4 sept. · RDV découverte",             f:"club"    },
+    { g:"Cette semaine", h:"16:00", n:"Angelique Carlu", s:"4 sept. · Body scan · Premium",        f:"client"  },
+    { g:"Cette semaine", h:"10:00", n:"Jeremy Maria",    s:"5 sept. · Body scan · À l'unité",      f:"client"  },
+    { g:"Cette semaine", h:"10:30", n:"Emilie Greinhofer", s:"5 sept. · RDV découverte · énergie", f:"club"    },
+    { g:"Cette semaine", h:"11:30", n:"Amrane Tchatchi", s:"5 sept. · RDV découverte · confirmé",  f:"club"    },
+    { g:"Plus tard",   h:"10:00", n:"Céline Ducastelle", s:"8 sept. · RDV découverte · muscle",    f:"club"    },
+    { g:"Plus tard",   h:"13:00", n:"Jordan Fontaine",  s:"9 sept. · Premier suivi · À l'unité",   f:"client"  },
+  ];
+  const ORDRE = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard"];
+  let famille = "tous";
+  const $ = (s) => document.querySelector(s);
+
+  function rendre() {
+    const box = $("#liste");
+    box.innerHTML = "";
+    const vus = famille === "tous" ? RDV : RDV.filter((r) => r.f === famille);
+    for (const g of ORDRE) {
+      const items = vus.filter((r) => r.g === g);
+      if (!items.length) continue;
+      const sec = document.createElement("section");
+      sec.className = "groupe";
+      sec.innerHTML = "<h2>" + g + " · " + items.length + (items.length > 1 ? " rendez-vous" : " rendez-vous") + "</h2>";
+      for (const r of items) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "rdv " + r.f;
+        b.innerHTML = '<span class="h">' + r.h + '</span><span class="bar"></span>' +
+          '<span><span class="nom">' + r.n + '</span><span class="sous">' + r.s + "</span></span>";
+        sec.appendChild(b);
+      }
+      box.appendChild(sec);
+    }
+    $("#compte").textContent = RDV.filter((r) => r.g === "Aujourd'hui").length + " aujourd'hui";
+  }
+
+  $("#btn-filtres").addEventListener("click", () => {
+    const t = $("#tiroir"), b = $("#btn-filtres");
+    const ouvert = t.classList.toggle("on");
+    b.setAttribute("aria-expanded", String(ouvert));
+  });
+
+  function groupe(sel, attr) {
+    for (const b of document.querySelectorAll(sel)) {
+      b.addEventListener("click", () => {
+        for (const x of document.querySelectorAll(sel)) x.setAttribute("aria-pressed", String(x === b));
+        if (attr === "fam") { famille = b.dataset.fam; rendre(); }
+        majBadge();
+      });
+    }
+  }
+  function majBadge() {
+    const defauts = { qui: "moi", quand: "tous", etat: "venir" };
+    let n = 0;
+    for (const [k, d] of Object.entries(defauts)) {
+      const actif = document.querySelector('[data-' + k + '][aria-pressed="true"]');
+      if (actif && actif.dataset[k] !== d) n += 1;
+    }
+    const badge = $("#badge"), btn = $("#btn-filtres");
+    badge.hidden = n === 0;
+    badge.textContent = String(n);
+    btn.classList.toggle("actif", n > 0);
+  }
+  groupe("[data-qui]", "qui");
+  groupe("[data-quand]", "quand");
+  groupe("[data-etat]", "etat");
+  groupe("[data-fam]", "fam");
+  groupe("[data-vue]", "vue");
+
+  rendre();
+</script>
