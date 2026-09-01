@@ -348,7 +348,10 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     }
 
     return out;
-  }, [prospects, followUps, clients, currentUser?.id, idsMembres, lundi]);
+  // ⚠️ `visible` DOIT être ici : c'est lui qui porte la portée. Sans lui, le
+  // memo garde le prédicat du premier rendu et taper « Moi » ne change rien
+  // à l'écran — vérifié sur dev le 01/09, la liste restait celle du club.
+  }, [prospects, followUps, clients, idsMembres, lundi, visible]);
 
   // ── Les RDV découverte de la semaine (tunnel /reserver) ─────────────
   // Même fenêtre que les RDV. Portée = le CLUB (pas un coach) : ces résas n'ont
@@ -383,7 +386,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
       });
     }
     return out;
-  }, [decouvertesResa, lundi]);
+  }, [decouvertesResa, lundi, visible]);
 
   // ── Assemblage jour par jour ────────────────────────────────────────────
   const semaine = useMemo(() => {
