@@ -46,6 +46,7 @@ import { useActiveClubId } from "../hooks/useActiveClubId";
 import { rdvAConclure } from "../features/crm/aConclure";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
+import { estQualifiable } from "../features/crm/ecrireQualification";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
 import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
@@ -690,16 +691,18 @@ export function CrmPage() {
     //
     // Dans cet ordre, un échec laisse tout en place : le rendez-vous reste à
     // conclure, la question se re-pose demain, rien n'est perdu.
-    if (effet.reponseLead) {
-      if (!lead) {
-        pushToast({
-          tone: "warning",
-          title: `${cible.nom} · aucune fiche CRM`,
-          message: "Le rendez-vous n'a pas été rangé : sans fiche, elle ne reviendrait dans aucune file. Ouvre sa fiche pour la créer.",
-        });
-        return;
-      }
+    // Y a-t-il seulement quelque chose sur quoi écrire ? Un rendez-vous du
+    // club peut concerner quelqu'un qui n'est dans aucune fiche, et les recos
+    // ou intentions ne portent pas d'échéance. Dans ces cas-là, réessayer ne
+    // servirait jamais à rien : on range le rendez-vous quand même — sinon sa
+    // carte resterait dans « À conclure » POUR TOUJOURS, sans aucun moyen de
+    // la faire partir — et on le DIT au lieu de faire croire à une relance.
+    const relanceEcrivable = Boolean(effet.reponseLead && lead && estQualifiable(lead.table));
+
+    if (effet.reponseLead && relanceEcrivable && lead) {
       const err = await qualifier(lead, REPONSE_PAR_CLE[effet.reponseLead]);
+      // Un échec ICI est réessayable (droits, réseau, contrainte) : on
+      // s'arrête avant de solder, et la question se re-pose demain intacte.
       if (err) {
         pushToast({ tone: "warning", title: "Relance non posée", message: `${err} Le rendez-vous reste à conclure.` });
         return;
@@ -731,9 +734,11 @@ export function CrmPage() {
       pushToast({
         tone: "success",
         title: `${cible.nom} · ${effet.libelle}`,
-        message: effet.reponseLead
+        message: !effet.reponseLead
+          ? "Rendez-vous rangé."
+          : relanceEcrivable
           ? `Rendez-vous rangé, elle revient dans ta file — ${REPONSE_PAR_CLE[effet.reponseLead].quand.toLowerCase()}.`
-          : "Rendez-vous rangé.",
+          : "Rendez-vous rangé, mais aucune fiche CRM ne correspond — pense à la relancer à la main.",
       });
     }
 
