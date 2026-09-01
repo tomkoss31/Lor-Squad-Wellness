@@ -225,6 +225,33 @@ export interface ClubSettings {
   /** Liens du club à partager (Zoom des rituels, avis Google…). */
   links?: { zoom_appel?: string; zoom_atelier?: string; google_review?: string };
   /**
+   * Les rendez-vous découverte (tunnel public `/reserver`).
+   *
+   * ⚠️ 01/09 — CE BLOC N'ÉTAIT PAS TYPÉ, et `coach_user_ids` n'était lu NULLE
+   * PART dans `src/` : le front ignorait donc que deux personnes tiennent le
+   * même club, et la seule façon de voir l'autre était « toute l'équipe »,
+   * c'est-à-dire les douze comptes actifs. C'est ce qui a rendu nécessaire la
+   * portée « Le club ».
+   *
+   * Côté serveur, ces mêmes clés pilotent `get_club_discovery_availability`
+   * (quels agendas vident les créneaux) et `book-club-discovery` (à qui la
+   * réservation est attribuée). Ne pas en inventer de nouvelles ici sans
+   * regarder ce que le SQL en fait.
+   */
+  discovery?: {
+    /** Les coachs qui tiennent le club. Vide/absent = le propriétaire seul. */
+    coach_user_ids?: string[];
+    /** À qui revient une réservation qui n'a pas de coach désigné. */
+    default_coach_user_id?: string;
+    hours?: Record<string, Array<[string, string]>>;
+    hours_by_date?: Record<string, Array<[string, string]>>;
+    holidays?: string[];
+    capacity?: number;
+    duration_min?: number;
+    slot_step_min?: number;
+    opening_date?: string;
+  };
+  /**
    * La recette du club : par référence produit, `doses` = nombre de portions
    * tirées d'un contenant (le tarif Herbalife ne le donne pas). C'est la SEULE
    * clé encore lue — elle donne le coût de revient d'une visite, saisie dans

@@ -26,7 +26,7 @@
 // une intention explicite de l'utilisateur : là, il a le droit de tout réduire.
 // =============================================================================
 
-import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { useBbcCalls } from "../useBbcCalls";
 import { useBbcMembers } from "../useBbcMembers";
@@ -40,6 +40,14 @@ import { setClubDayClosed } from "../../../services/sb/club-bookings";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
+import {
+  coachsDuClub, dansLaPortee, idsCoachsDuClub, porteeValide, prenomDe,
+  type CoachDuClub, type Portee,
+} from "../coachsDuClub";
+import { basculerRdvVersCoach } from "../../../services/sb/basculerRdvCoach";
+
+/** Le choix « de qui on regarde la semaine », par appareil. */
+const CLE_PORTEE = "ls-bbc-semaine-portee";
 
 /** Objectif du RDV découverte → libellé lisible (tunnel /reserver). */
 const OBJECTIF_LABEL: Record<string, string> = {
@@ -72,6 +80,12 @@ interface Evenement {
   /** id rdv_bookings — présent uniquement sur les RDV découverte, ouvre la
    *  feuille Confirmer/Annuler au lieu de la feuille permanence. */
   bookingId?: string;
+  /** À QUI est ce rendez-vous (lot 2 du chantier agenda, 01/09).
+   *
+   *  Sans lui, Thomas voyait déjà les découvertes de Mélanie dans sa semaine —
+   *  les 7 — sans le moindre moyen de savoir que c'étaient les siennes.
+   *  `null` = au club, à personne en particulier. */
+  proprietaire?: string | null;
 }
 
 const CHIPS: Array<{ k: Filtre; label: string }> = [
@@ -152,7 +166,65 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   // `coach_user_id` nul — le tunnel les attribue à l'insertion
   // (`discovery.default_coach_user_id`). Les afficher pour le club reste le bon
   // choix ; ne pas dire À QUI ils sont, non. C'est le lot suivant du chantier.
-  const { bookings: decouvertesResa, setStatus: setStatutDecouverte } = useClubDiscoveryBookings(clubId);
+  const { bookings: decouvertesResa, setStatus: setStatutDecouverte, reload: rechargerDecouvertes } =
+    useClubDiscoveryBookings(clubId);
+
+  // ── LOT 3 — DE QUI ON REGARDE LA SEMAINE ────────────────────────────────
+  //
+  // Thomas et Mélanie tiennent le même club. Le front l'ignorait :
+  // `discovery.coach_user_ids` existait en base et n'était lu nulle part, si
+  // bien que voir l'autre imposait « toute l'équipe » — douze comptes, dont
+  // neuf n'ayant jamais rien fait. Ici, la portée c'est LE CLUB : eux deux.
+  //
+  // ⚠️ ELLE DOIT SURVIVRE À UNE NAVIGATION. Le même réglage existait déjà dans
+  // l'agenda classique et se faisait réécrire à « Moi » à chaque montage : on
+  // choisissait « toute l'équipe », on ouvrait une fiche, on revenait, et la
+  // vue perso était revenue sans qu'on ait rien demandé. Personne ne s'en
+  // servait. D'où le stockage local, relu une seule fois à l'ouverture.
+  const idsClub = useMemo(
+    () => idsCoachsDuClub(settings, club?.ownerUserId ?? null),
+    [settings, club?.ownerUserId],
+  );
+  const nomsCoachs = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const u of users) if (u?.id) m.set(u.id, u.name ?? "");
+    return m;
+  }, [users]);
+  const coachs = useMemo(
+    () => coachsDuClub(settings, club?.ownerUserId ?? null, nomsCoachs),
+    [settings, club?.ownerUserId, nomsCoachs],
+  );
+  const [portee, setPortee] = useState<Portee>(() => {
+    try {
+      return porteeValide(window.localStorage.getItem(CLE_PORTEE), []);
+    } catch {
+      return "club";
+    }
+  });
+  // Les coachs arrivent après le premier rendu (le club se charge) : on revalide
+  // le choix mémorisé une fois qu'on sait qui tient le club.
+  useEffect(() => {
+    if (idsClub.length === 0) return;
+    setPortee((p) => porteeValide(p, idsClub));
+  }, [idsClub]);
+  const choisirPortee = useCallback((p: Portee) => {
+    setPortee(p);
+    try {
+      window.localStorage.setItem(CLE_PORTEE, p);
+    } catch {
+      // Navigation privée : le choix vaut pour la session, c'est tout.
+    }
+  }, []);
+  const ctxPortee = useMemo(
+    () => ({ moi: currentUser?.id ?? null, club: idsClub }),
+    [currentUser?.id, idsClub],
+  );
+  /** Un seul prédicat pour les trois sources — comme le CRM depuis le 28/08 :
+   *  deux filtres écrits séparément finissent toujours par diverger. */
+  const visible = useCallback(
+    (proprietaire: string | null | undefined) => dansLaPortee(portee, proprietaire, ctxPortee),
+    [portee, ctxPortee],
+  );
 
   // RDV découverte dont la feuille est ouverte — le booking, pas juste son
   // id : dérivé de `decouvertesResa` pour rester réactif (ex. la feuille se
@@ -226,7 +298,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     const out: Array<Evenement & { at: Date }> = [];
 
     for (const p of prospects) {
-      if (p.distributorId !== currentUser?.id) continue;
+      if (!visible(p.distributorId)) continue;
       // Un RDV annulé, perdu ou refroidi encombrerait la semaine sans rien
       // apprendre — et ferait croire à une matinée pleine. On garde en
       // revanche `done` et `converted` : ces RDV-là ont bien eu lieu.
@@ -249,6 +321,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         titre: nom,
         sous: membre ? "bilan · membre du club" : "bilan · prospect",
         tag: membre ? "membre" : "hors club",
+        proprietaire: p.distributorId ?? null,
       });
     }
 
@@ -256,7 +329,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     for (const fu of followUps) {
       if (fu.status !== "scheduled" && fu.status !== "pending") continue;
       const c = clientsParId.get(fu.clientId);
-      if (!c || c.distributorId !== currentUser?.id) continue;
+      if (!c || !visible(c.distributorId)) continue;
       if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
       const at = dansLaSemaine(fu.dueDate);
       if (!at) continue;
@@ -270,6 +343,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         titre: nom,
         sous: membre ? `suivi · ${fu.type || "membre du club"}` : `suivi · client classique`,
         tag: membre ? "membre" : "hors club",
+        proprietaire: c.distributorId ?? null,
       });
     }
 
@@ -284,6 +358,11 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     finSemaine.setDate(finSemaine.getDate() + 7);
     const out: Array<Evenement & { at: Date }> = [];
     for (const b of decouvertesResa) {
+      // ⚠️ Cette boucle n'avait AUCUN filtre : Thomas voyait les 7 découvertes
+      // de Mélanie sans le savoir, et Mélanie n'en voyait aucune (son club se
+      // résolvait à null — corrigé le même jour dans `useBbcMode`). Elles
+      // passent maintenant par le même prédicat que les deux autres sources.
+      if (!visible(b.coach_user_id)) continue;
       const at = new Date(b.slot_start);
       if (Number.isNaN(at.getTime()) || at < lundi || at >= finSemaine) continue;
       const prenom = (b.first_name ?? "").trim() || "Prospect";
@@ -300,6 +379,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           .join(" · "),
         tag: "découverte",
         bookingId: b.id,
+        proprietaire: b.coach_user_id ?? null,
       });
     }
     return out;
@@ -412,6 +492,51 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         {fmtJour(jours[0])} → {fmtJour(jours[6])} · ouverture {openHours} du lundi au samedi
       </div>
 
+      {/* ── LOT 3 — DE QUI ? ─────────────────────────────────────────────
+          Séparé des chips de famille juste dessous : « de qui » et « quoi »
+          sont deux questions, les mélanger sur une ligne donne une barre qu'on
+          n'ose plus toucher. Ne s'affiche qu'à partir de DEUX coachs — un club
+          tenu seul n'a rien à trancher. */}
+      {coachs.length > 1 ? (
+        <div
+          role="group"
+          aria-label="De qui voit-on les rendez-vous"
+          style={{ display: "flex", gap: 6, marginBottom: 12 }}
+        >
+          {[
+            { k: "moi" as Portee, label: "Moi" },
+            { k: "club" as Portee, label: "Le club" },
+            ...coachs
+              .filter((c) => c.id !== currentUser?.id)
+              .map((c) => ({ k: c.id as Portee, label: c.prenom })),
+          ].map((o) => {
+            const on = o.k === portee;
+            return (
+              <button
+                key={o.k}
+                type="button"
+                aria-pressed={on}
+                onClick={() => choisirPortee(o.k)}
+                style={{
+                  flex: 1,
+                  minHeight: 38,
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontFamily: "var(--ls-bbc-font-body)",
+                  fontSize: 13,
+                  fontWeight: on ? 700 : 600,
+                  border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`,
+                  background: on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s1)",
+                  color: on ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",
+                }}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {/* ── Chips de filtre ─────────────────────────────────────────────── */}
       <div role="group" aria-label="Filtrer la semaine" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 12, marginBottom: 4, borderBottom: "1px solid var(--ls-bbc-line)" }}>
         {CHIPS.map((c) => {
@@ -511,6 +636,14 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
               <LigneEvenement
                 key={ev.id}
                 ev={ev}
+                // On ne nomme QUE s'il y a plusieurs coachs ET que ce n'est pas
+                // le sien : écrire « Thomas » sur ses propres rendez-vous, chez
+                // Thomas, c'est du bruit sur chaque ligne.
+                prenomProprietaire={
+                  coachs.length > 1 && ev.proprietaire && ev.proprietaire !== currentUser?.id
+                    ? prenomDe(nomsCoachs.get(ev.proprietaire))
+                    : null
+                }
                 onClick={
                   ev.jour
                     ? () => ouvrirFeuille(ev.jour!)
@@ -563,6 +696,26 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           booking={decouverteOuverte}
           erreur={erreurDecouverte}
           onFermer={fermerDecouverte}
+          coachs={coachs}
+          // LOT 4 — « ce rendez-vous est pour moi ». Le geste existait déjà,
+          // mais à l'envers et deux écrans plus loin (CRM → fiche du lead →
+          // changer le propriétaire → le rendez-vous suit). Ici, depuis la
+          // semaine, en un tap.
+          onBasculer={async (versCoachId) => {
+            setErreurDecouverte(null);
+            const r = await basculerRdvVersCoach({
+              bookingId: decouverteOuverte.id,
+              contact: decouverteOuverte.contact,
+              versCoachId,
+            });
+            if (r.erreur) {
+              setErreurDecouverte(r.erreur);
+              return;
+            }
+            // La liste vient du serveur : on la relit plutôt que de deviner.
+            await rechargerDecouvertes();
+            fermerDecouverte();
+          }}
           onConfirmer={async () => {
             setErreurDecouverte(null);
             const ok = await setStatutDecouverte(decouverteOuverte.id, "confirmed");
@@ -635,7 +788,17 @@ function EnTeteJour({
   );
 }
 
-function LigneEvenement({ ev, onClick }: { ev: Evenement; onClick?: () => void }) {
+function LigneEvenement({
+  ev,
+  onClick,
+  prenomProprietaire,
+}: {
+  ev: Evenement;
+  onClick?: () => void;
+  /** LOT 2 — le prénom de qui reçoit. Absent = inutile de le dire (club tenu
+   *  seul, ou rendez-vous qui n'appartient à personne). */
+  prenomProprietaire?: string | null;
+}) {
   const teinte = ev.vide ? "var(--ls-bbc-amber)" : TEINTE[ev.famille];
   const contenu = (
     <>
@@ -643,7 +806,32 @@ function LigneEvenement({ ev, onClick }: { ev: Evenement; onClick?: () => void }
         {ev.heure}
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontSize: 13.5, fontWeight: 600 }}>{ev.titre}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 13.5, fontWeight: 600 }}>
+          {ev.titre}
+          {/* ⚠️ 01/09 — SANS CETTE PASTILLE, Thomas voyait les 7 découvertes de
+              Mélanie dans sa semaine sans pouvoir le deviner : le code les
+              affichait « pour le club », et un commentaire affirmait à tort
+              qu'elles n'avaient pas de coach. Un rendez-vous qu'on voit sans
+              savoir s'il est à soi ne sert à rien. */}
+          {prenomProprietaire ? (
+            <span
+              style={{
+                fontFamily: "var(--ls-bbc-font-mono)",
+                fontSize: 9,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                padding: "1.5px 6px",
+                borderRadius: 999,
+                border: "1px solid currentColor",
+                color: "var(--ls-bbc-hint)",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {prenomProprietaire}
+            </span>
+          ) : null}
+        </span>
         <span style={{ display: "block", fontSize: 11.5, marginTop: 1, color: ev.vide ? "var(--ls-bbc-amber)" : "var(--ls-bbc-hint)" }}>
           {ev.sous}
         </span>
@@ -903,19 +1091,24 @@ function FeuilleDecouverte({
   onFermer,
   onConfirmer,
   onAnnuler,
+  coachs,
+  onBasculer,
 }: {
   booking: ClubDiscoveryBooking;
   erreur: string | null;
   onFermer: () => void;
   onConfirmer: () => Promise<void>;
   onAnnuler: () => Promise<void>;
+  /** Les coachs du club — vide ou seul = pas de bascule à proposer. */
+  coachs: CoachDuClub[];
+  onBasculer: (versCoachId: string) => Promise<void>;
 }) {
   // L'écriture passe par un aller-retour réseau : sans cet état, un appui
   // pendant le vol relançait un second update pour rien (même pattern que
   // FeuilleAffectation ci-dessus).
-  const [envoi, setEnvoi] = useState<"confirmer" | "annuler" | null>(null);
+  const [envoi, setEnvoi] = useState<"confirmer" | "annuler" | string | null>(null);
 
-  const lancer = async (geste: "confirmer" | "annuler", action: () => Promise<void>) => {
+  const lancer = async (geste: "confirmer" | "annuler" | string, action: () => Promise<void>) => {
     if (envoi) return;
     setEnvoi(geste);
     try {
@@ -965,6 +1158,52 @@ function FeuilleDecouverte({
           {obj ? ` · ${obj}` : ""}
           {aDeux ? " · à deux" : ""}
         </div>
+
+        {/* ── LOT 4 — À QUI EST CE RENDEZ-VOUS ─────────────────────────
+            Le tunnel du club attribue chaque réservation au coach par défaut
+            (aujourd'hui Mélanie) : mesuré le 01/09, 9 des 11 à venir. Pour le
+            reprendre, il fallait jusqu'ici ouvrir le CRM, trouver la fiche du
+            lead et changer son propriétaire — deux écrans pour un geste
+            hebdomadaire. La bascule écrit DES DEUX CÔTÉS (le rendez-vous ET la
+            fiche), sinon la prochaine réattribution dans le CRM le ramènerait
+            d'où il vient. */}
+        {coachs.length > 1 ? (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ls-bbc-hint)", marginBottom: 7 }}>
+              {booking.coach_user_id
+                ? `Actuellement chez ${prenomDe(coachs.find((c) => c.id === booking.coach_user_id)?.prenom, "un coach")}`
+                : "Ce rendez-vous n'est chez personne"}
+            </div>
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              {coachs
+                .filter((c) => c.id !== booking.coach_user_id)
+                .map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    disabled={envoi !== null}
+                    onClick={() => void lancer(c.id, () => onBasculer(c.id))}
+                    style={{
+                      flex: 1,
+                      minWidth: 130,
+                      minHeight: 44,
+                      borderRadius: 11,
+                      border: "1px solid var(--ls-bbc-lime)",
+                      background: "var(--ls-bbc-lime)",
+                      color: "var(--ls-bbc-lime-ink)",
+                      fontFamily: "var(--ls-bbc-font-body)",
+                      fontSize: 14.5,
+                      fontWeight: 700,
+                      cursor: envoi ? "default" : "pointer",
+                      opacity: envoi && envoi !== c.id ? 0.5 : 1,
+                    }}
+                  >
+                    {envoi === c.id ? "…" : `Passer à ${c.prenom}`}
+                  </button>
+                ))}
+            </div>
+          </div>
+        ) : null}
 
         <div
           style={{
