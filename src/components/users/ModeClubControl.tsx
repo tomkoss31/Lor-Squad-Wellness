@@ -93,6 +93,8 @@ export function ModeClubControl({ user }: { user: User }) {
   const [pret, setPret] = useState(false);
   const [saving, setSaving] = useState(false);
   const [retour, setRetour] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+  const [confirmeMail, setConfirmeMail] = useState(false);
+  const [mailEnvoye, setMailEnvoye] = useState<string | null>(null);
 
   const dire = useCallback((type: "ok" | "err", msg: string) => {
     setRetour({ type, msg });
@@ -206,11 +208,44 @@ export function ModeClubControl({ user }: { user: User }) {
     }
   }
 
+  // ── Le mail « ton accès a changé » ────────────────────────────────────────
+  //
+  // Un bouton, jamais un automatisme (décision Thomas, 02/09) : la promotion se
+  // fait en deux gestes, et un envoi accroché au premier annoncerait « coach
+  // BBC » à quelqu'un qui ne l'est pas encore. Deux clics, parce qu'un mail
+  // part chez une vraie personne et qu'on ne défait pas un envoi.
+  async function envoyerLeMail() {
+    if (saving) return;
+    setSaving(true);
+    setRetour(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { data: s } = await sb.auth.getSession();
+      const jeton = s?.session?.access_token;
+      if (!jeton) throw new Error("Session expirée — reconnecte-toi.");
+      const { data, error } = await sb.functions.invoke("mail-acces-coach", {
+        body: { user_id: user.id },
+        headers: { Authorization: `Bearer ${jeton}` },
+      });
+      const r = (data ?? {}) as { ok?: boolean; to?: string; error?: string };
+      if (error || !r.ok) throw new Error(r.error || error?.message || "Envoi refusé");
+      setMailEnvoye(r.to ?? "");
+      dire("ok", `Mail envoyé à ${r.to ?? "son adresse"}`);
+    } catch (e) {
+      dire("err", e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setConfirmeMail(false);
+      setSaving(false);
+    }
+  }
+
   if (!pret) {
     return <div style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>chargement…</div>;
   }
 
   const clubConnu = clubs.find((c) => c.id === clubId)?.name;
+  const prenom = user.name?.split(" ")[0] || "cette personne";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -279,6 +314,66 @@ export function ModeClubControl({ user }: { user: User }) {
           </p>
         </>
       ) : null}
+
+      {/* Prévenir la personne. Deux clics : un mail part chez quelqu'un et ne
+          se rattrape pas. L'adresse est écrite en toutes lettres AVANT le
+          second clic — c'est l'adresse de CONNEXION, qui peut différer de
+          celle de sa fiche client (chez Thomas, les deux diffèrent). */}
+      <div style={{ paddingTop: 10, borderTop: "1px solid var(--ls-border)", display: "flex", flexDirection: "column", gap: 7 }}>
+        <div style={eyebrow}>Prévenir {prenom}</div>
+        {confirmeMail ? (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={() => void envoyerLeMail()}
+              disabled={saving}
+              style={{
+                padding: "8px 14px", borderRadius: 10, border: "none",
+                background: "var(--ls-teal)", color: "#fff", fontSize: 12.5, fontWeight: 700,
+                cursor: saving ? "wait" : "pointer", fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              {saving ? "Envoi…" : "Confirmer l'envoi"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmeMail(false)}
+              disabled={saving}
+              style={{
+                padding: "8px 12px", borderRadius: 10, border: "1px solid var(--ls-border)",
+                background: "transparent", color: "var(--ls-text-muted)", fontSize: 12.5,
+                cursor: "pointer", fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setConfirmeMail(true); setRetour(null); }}
+            disabled={saving}
+            style={{
+              alignSelf: "flex-start",
+              padding: "8px 14px", borderRadius: 10,
+              border: "1px solid var(--ls-border)", background: "var(--ls-surface)",
+              color: "var(--ls-text)", fontSize: 12.5, fontWeight: 600,
+              cursor: "pointer", fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            ✉️ {mailEnvoye ? "Renvoyer le mail d'accès" : "Envoyer le mail « ton accès a changé »"}
+          </button>
+        )}
+        <p style={{ margin: 0, fontSize: 11.5, color: "var(--ls-text-muted)", lineHeight: 1.5, fontFamily: "DM Sans, sans-serif" }}>
+          {confirmeMail ? (
+            <>Part à <b>{user.email || "son adresse de connexion"}</b> — son adresse de connexion.</>
+          ) : mailEnvoye ? (
+            <>Déjà envoyé à <b>{mailEnvoye}</b> pendant cette session.</>
+          ) : (
+            <>Lui annonce son accès coach et rappelle que <b>ses identifiants ne changent pas</b>. Aucun mot de passe, aucun lien de connexion dans le mail.</>
+          )}
+        </p>
+      </div>
 
       {retour ? (
         <span style={{ fontSize: 12, fontWeight: 600, fontFamily: "DM Sans, sans-serif", color: retour.type === "ok" ? "var(--ls-teal)" : "#EF4444" }}>
