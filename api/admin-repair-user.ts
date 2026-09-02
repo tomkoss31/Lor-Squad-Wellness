@@ -303,18 +303,37 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    // Rattacher la fiche au sponsor si demandé (sinon elle reste chez son coach).
+    // ── À qui appartient sa fiche nutrition après la promotion ────────────────
+    //
+    // Trois destinations, et la 3e (« elle-même ») est celle qui décide combien
+    // d'applis cette personne aura pour toujours.
+    //
+    // Une coach dont la fiche appartient à quelqu'un d'autre ne peut PAS la
+    // lire : la policy `clients select own or admin` dit « mes fiches, ou
+    // admin ». Elle ne se voit donc pas dans ses propres Membres, et doit
+    // garder son espace client à côté — deux applis, deux connexions, pour
+    // toujours. En lui donnant sa fiche, ses pesées atterrissent là où elle les
+    // consulte déjà : dans son app de coach. C'est exactement le montage de
+    // Thomas (fiche « Thomas Houbert », 19 bilans, `distributor_id` = lui-même).
+    //
+    // `distributor_name` est écrit AVEC `distributor_id` : la colonne est
+    // dupliquée en base et sert à l'affichage. L'ancien code ne mettait à jour
+    // que l'id — la fiche continuait donc d'afficher le nom de son ancien coach.
     let ficheReassigned = false;
-    if (String(payload.ficheOwner ?? "keep").trim() === "sponsor") {
+    const destination = String(payload.ficheOwner ?? "keep").trim();
+    if (destination === "sponsor" || destination === "self") {
+      const versSoi = destination === "self";
+      const cibleId = versSoi ? authUser.id : sponsorId;
+      const cibleNom = versSoi ? promoteName : sponsor.name;
       const fiche = await loadFiche(authUser.id, authUser.email);
       // loadFiche renvoie la ligne brute : le propriétaire est `distributor_id`
       // (c'est l'action `lookup` qui l'expose sous le nom `currentOwnerId`).
       // Lire `currentOwnerId` ici donnait undefined → le garde-fou « déjà chez
-      // le bon sponsor » ne filtrait jamais rien.
-      if (fiche?.id && fiche.distributor_id !== sponsorId) {
+      // la bonne personne » ne filtrait jamais rien.
+      if (fiche?.id && fiche.distributor_id !== cibleId) {
         const { error: reassignError } = await admin
           .from("clients")
-          .update({ distributor_id: sponsorId })
+          .update({ distributor_id: cibleId, distributor_name: cibleNom })
           .eq("id", fiche.id);
         ficheReassigned = !reassignError;
       }

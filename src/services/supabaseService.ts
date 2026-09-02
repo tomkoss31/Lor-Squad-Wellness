@@ -2176,7 +2176,10 @@ export function promoteMemberToDistributor(payload: {
   userId?: string;
   sponsorId: string;
   name?: string;
-  ficheOwner: "keep" | "sponsor";
+  // « self » = la fiche passe à la personne promue. C'est ce choix qui décide
+  // si elle aura UNE appli ou deux : une coach qui ne possède pas sa fiche ne
+  // peut pas la lire, donc ne se voit pas dans ses propres Membres.
+  ficheOwner: "keep" | "sponsor" | "self";
   herbalifeId?: string;
 }) {
   return callPromoteMember<PromoteResult>({ action: "promote", ...payload });

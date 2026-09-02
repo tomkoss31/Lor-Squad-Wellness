@@ -17,6 +17,21 @@ import { InviteDistributorModal } from "./InviteDistributorModal";
 
 type Step = "email" | "configure" | "invite" | "done";
 
+// ── À qui va sa fiche nutrition (2026-09-02) ─────────────────────────────────
+//
+// Ce menu ne décide pas d'une ligne en base : il décide COMBIEN D'APPLIS cette
+// personne aura, pour toujours.
+//
+// La policy `clients select own or admin` dit « mes fiches, ou admin ». Une
+// coach dont la fiche appartient à quelqu'un d'autre ne peut donc pas la lire :
+// elle ne se voit pas dans ses propres Membres, et doit garder son espace
+// client à côté pour suivre son poids. Deux applis, deux connexions.
+//
+// « Elle-même » referme ça : ses pesées atterrissent là où elle regarde déjà.
+// C'est le montage de Thomas — sa fiche « Thomas Houbert », 19 bilans, lui
+// appartient, et il n'a aucun espace membre séparé.
+type FicheOwner = "keep" | "sponsor" | "self";
+
 const label: CSSProperties = {
   display: "block",
   fontSize: 11,
@@ -58,7 +73,7 @@ export function PromoteMemberPanel() {
   const [lookup, setLookup] = useState<PromoteLookupResult | null>(null);
 
   const [sponsorId, setSponsorId] = useState(currentUser?.id ?? "");
-  const [ficheOwner, setFicheOwner] = useState<"keep" | "sponsor">("keep");
+  const [ficheOwner, setFicheOwner] = useState<FicheOwner>("keep");
   const [name, setName] = useState("");
   const [herbalifeId, setHerbalifeId] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -79,6 +94,12 @@ export function PromoteMemberPanel() {
   const sponsorName = useMemo(
     () => (users ?? []).find((u) => u.id === sponsorId)?.name ?? "",
     [users, sponsorId]
+  );
+
+  /** Le prénom de la personne promue — pour que la note parle d'elle, pas de « ce membre ». */
+  const prenomPromu = useMemo(
+    () => firstWord(name) || firstWord(lookup?.fiche?.name) || firstWord(lookup?.suggestedName) || "Elle",
+    [name, lookup]
   );
 
   function resetAll() {
@@ -296,7 +317,7 @@ export function PromoteMemberPanel() {
                 <select
                   id="promote-fiche"
                   value={ficheOwner}
-                  onChange={(e) => setFicheOwner(e.target.value as "keep" | "sponsor")}
+                  onChange={(e) => setFicheOwner(e.target.value as FicheOwner)}
                   style={field}
                 >
                   <option value="keep">
@@ -305,12 +326,47 @@ export function PromoteMemberPanel() {
                   <option value="sponsor">
                     {sponsorName ? `${sponsorName} — le sponsor` : "Le sponsor"}
                   </option>
+                  <option value="self">
+                    {prenomPromu} — elle-même · une seule appli
+                  </option>
                 </select>
-                <p style={{ fontSize: 11.5, color: "var(--ls-text-hint)", margin: "8px 0 0", lineHeight: 1.5 }}>
-                  {lookup.fiche.currentOwnerId === sponsorId
-                    ? "La fiche est déjà chez ce sponsor → il garde le suivi nutrition + les chiffres."
-                    : "Par défaut on ne bouge rien. Choisis « le sponsor » s'il doit faire le suivi nutrition."}
-                </p>
+
+                {/* La note change avec le choix : une explication figée serait
+                    lue une fois puis ignorée. Ici elle répond toujours à la
+                    seule question qui compte — « et concrètement, ça donne
+                    quoi pour elle ? ». */}
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: ficheOwner === "self" ? "color-mix(in srgb, var(--ls-teal) 10%, transparent)" : "var(--ls-surface2)",
+                    border: `1px solid ${ficheOwner === "self" ? "color-mix(in srgb, var(--ls-teal) 40%, transparent)" : "var(--ls-border)"}`,
+                  }}
+                >
+                  <p style={{ fontSize: 12, color: "var(--ls-text)", margin: 0, lineHeight: 1.55, fontWeight: 600 }}>
+                    {ficheOwner === "self"
+                      ? `${prenomPromu} devient sa propre cliente.`
+                      : ficheOwner === "sponsor"
+                        ? `${sponsorName || "Le sponsor"} garde le suivi nutrition.`
+                        : `${currentOwnerName || "Son coach actuel"} garde le suivi nutrition.`}
+                  </p>
+                  <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: "5px 0 0", lineHeight: 1.55 }}>
+                    {ficheOwner === "self" ? (
+                      <>
+                        Ses pesées et ses chiffres apparaissent <b>dans son app de coach</b>, onglet
+                        Membres — comme les tiens. Elle n'a plus besoin de son espace client :
+                        <b> une seule appli, une seule connexion</b>.
+                      </>
+                    ) : (
+                      <>
+                        Une coach ne peut lire que <b>ses propres</b> fiches. {prenomPromu} ne se
+                        verra donc pas dans son app de coach, et devra garder son espace client à
+                        côté pour suivre son poids — <b>deux applis</b>.
+                      </>
+                    )}
+                  </p>
+                </div>
               </>
             ) : (
               <p style={{ fontSize: 11.5, color: "var(--ls-text-hint)", margin: "10px 0 0", lineHeight: 1.5 }}>
@@ -472,8 +528,16 @@ export function PromoteMemberPanel() {
             </li>
             <li style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--ls-border)" }}>
               <span style={{ color: "var(--ls-text-muted)" }}>Suivi nutrition de la fiche</span>
+              {/* Annoncer « rattachée au sponsor » après un rattachement à
+                  elle-même serait un mensonge sur l'écran de confirmation —
+                  celui qu'on relit trois semaines plus tard pour comprendre ce
+                  qui a été fait. */}
               <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>
-                {doneReassigned ? `${sponsorName} (rattachée)` : currentOwnerName ?? "coach actuel"}
+                {doneReassigned
+                  ? ficheOwner === "self"
+                    ? `${doneName || prenomPromu} · elle-même`
+                    : `${sponsorName} (rattachée)`
+                  : currentOwnerName ?? "coach actuel"}
               </span>
             </li>
             <li style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
