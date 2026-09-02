@@ -7,6 +7,7 @@ import { canSponsorDistributors, getRoleLabel } from "../lib/auth";
 import { InviteDistributorModal } from "../components/users/InviteDistributorModal";
 import { PendingInvitationsList } from "../components/users/PendingInvitationsList";
 import { PromoteMemberPanel } from "../components/users/PromoteMemberPanel";
+import { ModeClubControl } from "../components/users/ModeClubControl";
 import { getPortfolioMetrics } from "../lib/portfolio";
 import type { User, HerbalifeRank } from "../types/domain";
 import { RANK_LABELS, RANK_ORDER } from "../types/domain";
@@ -555,6 +556,21 @@ export function UsersPage() {
                             </div>
                             <UserInlineAppLevelControl user={user} />
                           </div>
+
+                          {/* Mode club (2026-09-02) — passer un coach en BBC,
+                              le rattacher au club, poser sa marche. Reproposé
+                              exactement à la condition posée le 19/08 : quand
+                              une 3e personne rejoint le club (Romane). Avant
+                              ça, les deux gestes n'existaient QUE en SQL —
+                              `set_bbc_role_override` n'avait aucun appelant. */}
+                          {isAdmin ? (
+                            <div>
+                              <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                                Mode club
+                              </div>
+                              <ModeClubControl user={user} />
+                            </div>
+                          ) : null}
 
                           {/* Beta access formation (2026-11-05) — toggle
                               pour ouvrir /formation à un distri/référent
