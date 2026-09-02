@@ -153,11 +153,87 @@ export function ModeClubControl({ user }: { user: User }) {
         setClubId(clubVise);
       }
       setMode(suivant);
-      dire("ok", suivant === "bbc" ? "Passée en mode club (BBC)" : "Retour à l'app classique");
+      if (suivant === "bbc") {
+        const fiche = await marquerSaFicheMembreDuClub(sb, clubVise);
+        dire(
+          "ok",
+          fiche
+            ? "En mode club — et sa propre fiche est maintenant dans les Membres du club."
+            : "En mode club. Aucune fiche personnelle trouvée à son nom : elle n'apparaîtra pas dans ses propres Membres.",
+        );
+      } else {
+        dire("ok", "Retour à l'app classique");
+      }
     } catch (e) {
       dire("err", e instanceof Error ? e.message : "Erreur");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /**
+   * Le 3e geste, celui qu'on ne devrait pas avoir à faire.
+   *
+   * ── CE QUI MANQUAIT (constaté sur Romane, 02/09) ──────────────────────────
+   * Une coach passée en club BBC avec sa propre fiche ne se voyait TOUJOURS
+   * pas dans ses Membres : `useBbcMembers` filtre sur `clients.ebe_bbc = true`,
+   * et une fiche de cliente ordinaire ne porte pas ce drapeau. Il fallait donc
+   * un TROISIÈME passage — retrouver sa fiche, l'ouvrir, cocher « Passer en
+   * membre BBC ». Trois écrans pour un seul geste métier : « elle travaille au
+   * club ». Thomas, mot pour mot : « c'est trop compliqué trop flou ».
+   *
+   * Passer quelqu'un en club BBC, c'est dire qu'il travaille au club. Sa propre
+   * fiche y appartient donc aussi — on la marque, et on le DIT dans le retour
+   * plutôt que de le laisser deviner.
+   *
+   * On retrouve sa fiche comme le serveur le fait (api/admin-repair-user) :
+   * son espace client d'abord, son adresse de connexion ensuite. Jamais
+   * l'inverse — les deux adresses divergent pour de vrai (Thomas se connecte
+   * avec une adresse, sa fiche en porte une autre), donc l'email seul raterait
+   * la fiche des personnes les plus anciennes.
+   *
+   * Sans effet de bord au retour en classique : on ne DÉ-marque pas. Retirer
+   * quelqu'un du club ne retire pas sa carte de membre.
+   */
+  async function marquerSaFicheMembreDuClub(
+    sb: NonNullable<Awaited<ReturnType<typeof getSupabaseClient>>>,
+    club: string,
+  ): Promise<string | null> {
+    try {
+      let ficheId: string | null = null;
+      const { data: espace } = await sb
+        .from("client_app_accounts")
+        .select("client_id")
+        .eq("auth_user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const viaEspace = (espace as { client_id?: string | null } | null)?.client_id;
+      if (viaEspace) ficheId = String(viaEspace);
+
+      if (!ficheId && user.email) {
+        const { data: parEmail } = await sb
+          .from("clients")
+          .select("id")
+          .ilike("email", user.email)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        const id = (parEmail as { id?: string } | null)?.id;
+        if (id) ficheId = String(id);
+      }
+      if (!ficheId) return null;
+
+      const { data } = await sb
+        .from("clients")
+        .update({ ebe_bbc: true, club_id: club })
+        .eq("id", ficheId)
+        .select("first_name");
+      const ligne = Array.isArray(data) ? (data[0] as { first_name?: string } | undefined) : undefined;
+      return ligne ? String(ligne.first_name ?? "sa fiche") : null;
+    } catch {
+      // Jamais bloquant : la bascule en mode club, elle, a réussi.
+      return null;
     }
   }
 
