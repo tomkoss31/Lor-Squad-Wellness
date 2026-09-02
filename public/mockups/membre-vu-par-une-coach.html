@@ -1,0 +1,208 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ce que Romane voit d'un membre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#162624; --s1:#1E3330; --s2:#26403B; --s3:#2E4A44;
+    --line:rgba(244,239,228,.12); --line2:rgba(244,239,228,.20);
+    --text:#F4EFE4; --muted:rgba(244,239,228,.68); --hint:rgba(244,239,228,.46);
+    --lime:#C5F82A; --teal:#2DD4BF; --coral:#F2775F; --amber:#E8A93A;
+    --lime-ink:#06241F;
+    --display:"Anton",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --body:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);
+       -webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 18px 72px}
+
+  .eye{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--hint);margin:0 0 8px}
+  h1{font-family:var(--display);text-transform:uppercase;font-size:clamp(30px,6vw,46px);
+     line-height:.98;margin:0 0 12px;letter-spacing:.01em;text-wrap:balance}
+  .lede{color:var(--muted);font-size:15.5px;max-width:64ch;margin:0 0 6px}
+  .lede b{color:var(--text);font-weight:600}
+
+  .rule{height:1px;background:var(--line);margin:26px 0}
+
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));align-items:start}
+
+  .opt{background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+       display:flex;flex-direction:column}
+  .opt.reco{border-color:rgba(197,248,42,.42);box-shadow:0 0 0 1px rgba(197,248,42,.10)}
+  .opt header{padding:14px 16px 12px;border-bottom:1px solid var(--line);
+              display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+       padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .t-now{background:rgba(242,119,95,.16);color:var(--coral);border:1px solid rgba(242,119,95,.36)}
+  .t-reco{background:var(--lime);color:var(--lime-ink);font-weight:700}
+  .t-no{background:rgba(244,239,228,.08);color:var(--hint);border:1px solid var(--line2)}
+  .opt h2{font-family:var(--display);text-transform:uppercase;font-size:18px;margin:0;
+          letter-spacing:.02em;flex:1;min-width:150px}
+  .opt .body{padding:16px}
+
+  /* ── la carte membre, telle qu'elle serait au bar ── */
+  .card{background:var(--s2);border:1px solid var(--line2);border-radius:14px;padding:14px}
+  .card.void{border-style:dashed;border-color:rgba(242,119,95,.4)}
+  .who{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .av{width:40px;height:40px;border-radius:11px;background:var(--s3);display:grid;place-items:center;
+      font-family:var(--display);font-size:16px;color:var(--teal);flex:none;letter-spacing:.02em}
+  .av.hidden{color:var(--coral);font-family:var(--mono);font-size:17px}
+  .nm{font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .nm.unknown{color:var(--coral);font-family:var(--mono);font-size:13px;font-weight:500}
+  .sub{font-family:var(--mono);font-size:11px;color:var(--hint);letter-spacing:.05em;margin-top:1px}
+
+  .rows{display:flex;flex-direction:column;gap:1px;background:var(--line);
+        border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       background:var(--s1);padding:9px 12px}
+  .row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hint)}
+  .row .v{font-size:13.5px;font-weight:600}
+  .v.lime{color:var(--lime)} .v.teal{color:var(--teal)} .v.amber{color:var(--amber)}
+  .v.gone{color:var(--coral);font-family:var(--mono);font-size:12px;font-weight:500}
+
+  .cta{margin-top:12px;width:100%;border:0;border-radius:11px;padding:11px;font-family:var(--body);
+       font-weight:700;font-size:14px;background:var(--lime);color:var(--lime-ink);cursor:default}
+  .cta.dead{background:var(--s3);color:var(--hint);border:1px dashed var(--line2)}
+
+  .note{margin:13px 0 0;font-size:13.5px;color:var(--muted)}
+  .note b{color:var(--text);font-weight:600}
+
+  ul.pts{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:7px}
+  ul.pts li{font-size:13px;color:var(--muted);padding-left:19px;position:relative}
+  ul.pts li::before{content:"";position:absolute;left:4px;top:8px;width:5px;height:5px;
+                    border-radius:50%;background:var(--hint)}
+  ul.pts li.ok::before{background:var(--lime)} ul.pts li.ok{color:var(--text)}
+  ul.pts li.no::before{background:var(--coral)}
+
+  .never{margin-top:26px;background:var(--s1);border:1px solid var(--line);
+         border-left:3px solid var(--coral);border-radius:0 14px 14px 0;padding:16px 18px}
+  .never h3{font-family:var(--display);text-transform:uppercase;font-size:15px;margin:0 0 8px;letter-spacing:.03em}
+  .never p{margin:0;color:var(--muted);font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+  .chip{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:8px;
+        background:rgba(242,119,95,.10);border:1px solid rgba(242,119,95,.3);color:var(--coral)}
+
+  footer{margin-top:30px;font-family:var(--mono);font-size:11.5px;color:var(--hint);letter-spacing:.04em}
+</style>
+
+<div class="wrap">
+  <p class="eye">Club multi-coach · lot 2</p>
+  <h1>Ce que Romane voit<br>d'un membre du club</h1>
+  <p class="lede">Le club est désormais lisible par les coachs qui y travaillent — <b>horaires, rituels, barème</b>. Reste la vraie question : au bar, à 7 h, que voit une coach stagiaire de la personne en face d'elle ? Mesuré ce matin : <b>aujourd'hui, zéro</b> — elle lit 0 des 8 membres.</p>
+
+  <div class="rule"></div>
+
+  <div class="grid">
+
+    <!-- A -->
+    <section class="opt">
+      <header>
+        <span class="tag t-now">Aujourd'hui</span>
+        <h2>Rien du tout</h2>
+      </header>
+      <div class="body">
+        <div class="card void">
+          <div class="who">
+            <div class="av hidden">?</div>
+            <div>
+              <div class="nm unknown">client_id 4f2a…b61c</div>
+              <div class="sub">AUCUN ACCÈS</div>
+            </div>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="k">Carte</span><span class="v gone">illisible</span></div>
+            <div class="row"><span class="k">Visites</span><span class="v gone">illisible</span></div>
+            <div class="row"><span class="k">Cœurs</span><span class="v gone">illisible</span></div>
+          </div>
+          <button class="cta dead">Pointer la visite</button>
+        </div>
+        <p class="note">La RLS de <b>clients</b> dit « mes fiches, ou admin ». Les 8 membres appartiennent à Thomas et Mélanie : Romane ne peut ni les nommer, ni les pointer.</p>
+        <ul class="pts">
+          <li class="no">Elle ne peut pas tenir le bar seule</li>
+          <li class="no">Chaque visite doit passer par toi ou Mélanie</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- B -->
+    <section class="opt reco">
+      <header>
+        <span class="tag t-reco">Ma reco</span>
+        <h2>Le strict comptoir</h2>
+      </header>
+      <div class="body">
+        <div class="card">
+          <div class="who">
+            <div class="av">SL</div>
+            <div>
+              <div class="nm">Sandrine L.</div>
+              <div class="sub">MEMBRE DEPUIS LE 12/08</div>
+            </div>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="k">Carte</span><span class="v teal">10 visites</span></div>
+            <div class="row"><span class="k">Reste</span><span class="v lime">4 visites</span></div>
+            <div class="row"><span class="k">Expire</span><span class="v amber">le 18/09</span></div>
+            <div class="row"><span class="k">Cœurs</span><span class="v">2 ❤︎</span></div>
+          </div>
+          <button class="cta">Pointer la visite</button>
+        </div>
+        <p class="note">Une fonction serveur qui <b>exige le club</b> et ne rend que ces colonnes-là. Pas une RLS élargie sur <b>clients</b> : la fonction ne <i>peut pas</i> divulguer ce qu'elle ne sélectionne pas.</p>
+        <ul class="pts">
+          <li class="ok">Elle tient le bar toute seule</li>
+          <li class="ok">Le dossier santé reste fermé</li>
+          <li class="ok">Même motif que l'agenda d'équipe du 01/09</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- C -->
+    <section class="opt">
+      <header>
+        <span class="tag t-no">Écarté</span>
+        <h2>La fiche entière</h2>
+      </header>
+      <div class="body">
+        <div class="card">
+          <div class="who">
+            <div class="av">SL</div>
+            <div>
+              <div class="nm">Sandrine Lefèvre</div>
+              <div class="sub">06 12 34 56 78 · TOUT LE DOSSIER</div>
+            </div>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="k">Poids</span><span class="v">78,4 kg → 71,9</span></div>
+            <div class="row"><span class="k">Objectif</span><span class="v">−12 kg</span></div>
+            <div class="row"><span class="k">Masse grasse</span><span class="v">34,1 %</span></div>
+            <div class="row"><span class="k">Notes coach</span><span class="v">« divorce en… »</span></div>
+          </div>
+          <button class="cta">Pointer la visite</button>
+        </div>
+        <p class="note">C'est ce qu'on obtient en passant Romane <b>admin</b> — le raccourci qui fait marcher Mélanie. Ça marche, et ça ouvre les <b>143 fiches</b> de toute l'équipe, pas seulement les 8 du club.</p>
+        <ul class="pts">
+          <li class="no">Le dossier santé de gens qu'elle ne suit pas</li>
+          <li class="no">Irréversible dans les têtes : on ne retire pas un accès sans le dire</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="never">
+    <h3>Ce que B ne montre jamais</h3>
+    <p>La liste est fermée à l'écriture de la fonction, pas à l'affichage. Ajouter une colonne demandera une migration — donc une décision, pas un oubli.</p>
+    <div class="chips">
+      <span class="chip">poids</span><span class="chip">masse grasse</span><span class="chip">objectif</span>
+      <span class="chip">notes du coach</span><span class="chip">bilans</span><span class="chip">téléphone</span>
+      <span class="chip">email</span><span class="chip">programme</span><span class="chip">PV / achats</span>
+    </div>
+  </div>
+
+  <footer>La Base 360 · maquette du 02/09/2026 · chiffres mesurés en base ce matin</footer>
+</div>
