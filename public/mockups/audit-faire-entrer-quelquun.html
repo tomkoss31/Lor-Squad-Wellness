@@ -1,0 +1,179 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faire entrer quelqu'un</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#162624; --s1:#1E3330; --s2:#26403B; --s3:#2E4A44;
+    --line:rgba(244,239,228,.12); --line2:rgba(244,239,228,.22);
+    --text:#F4EFE4; --muted:rgba(244,239,228,.70); --hint:rgba(244,239,228,.46);
+    --lime:#C5F82A; --teal:#2DD4BF; --coral:#F2775F; --amber:#E8A93A;
+    --lime-ink:#06241F;
+    --display:"Anton",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --body:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:780px;margin:0 auto;padding:26px 16px 70px}
+
+  .eye{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--hint);margin:0 0 8px}
+  h1{font-family:var(--display);text-transform:uppercase;font-size:clamp(29px,7vw,44px);line-height:.98;margin:0 0 14px;text-wrap:balance}
+  h2{font-family:var(--display);text-transform:uppercase;font-size:19px;letter-spacing:.02em;margin:0 0 12px}
+  .lede{color:var(--muted);font-size:15.5px;margin:0;max-width:60ch}
+  .lede b{color:var(--text);font-weight:600}
+
+  section{margin-top:30px}
+  .num{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hint);margin:0 0 6px}
+
+  /* chiffres */
+  .kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px}
+  .kpi{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .kpi .n{font-family:var(--display);font-size:32px;line-height:1;letter-spacing:.01em}
+  .kpi .n.bad{color:var(--coral)} .kpi .n.warn{color:var(--amber)} .kpi .n.ok{color:var(--lime)}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+
+  .card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:16px 17px}
+  .card + .card{margin-top:12px}
+  .card.bad{border-left:3px solid var(--coral);border-radius:0 16px 16px 0}
+  .card.good{border-color:rgba(197,248,42,.42);box-shadow:0 0 0 1px rgba(197,248,42,.09)}
+  .card p{margin:0;font-size:13.5px;color:var(--muted)}
+  .card p + p{margin-top:8px}
+  .card b{color:var(--text);font-weight:600}
+  .card h3{font-family:var(--display);text-transform:uppercase;font-size:15.5px;margin:0 0 8px;letter-spacing:.03em}
+
+  /* les portes */
+  .portes{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .porte{background:var(--s2);padding:11px 13px;display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}
+  .porte .nom{font-family:var(--mono);font-size:12.5px;color:var(--text);font-weight:700;min-width:150px}
+  .porte .d{font-size:12.5px;color:var(--muted);flex:1;min-width:180px}
+
+  /* avant / apres */
+  .duo{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));align-items:start}
+  ol.pas{list-style:none;counter-reset:p;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:8px}
+  ol.pas li{counter-increment:p;position:relative;padding-left:30px;font-size:13.5px;color:var(--muted)}
+  ol.pas li::before{content:counter(p);position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;
+                    background:var(--s3);color:var(--hint);font-family:var(--mono);font-size:10.5px;
+                    display:grid;place-items:center;font-weight:700}
+  ol.pas.win li::before{background:var(--lime);color:var(--lime-ink)}
+  ol.pas.win li{color:var(--text)}
+  ol.pas li b{color:var(--text);font-weight:600}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+       padding:4px 9px;border-radius:999px;margin-bottom:8px}
+  .t-bad{background:rgba(242,119,95,.16);color:var(--coral);border:1px solid rgba(242,119,95,.36)}
+  .t-win{background:var(--lime);color:var(--lime-ink);font-weight:700}
+
+  ul.v{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+  ul.v li{font-size:13px;color:var(--muted);padding-left:19px;position:relative}
+  ul.v li::before{content:"";position:absolute;left:4px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--hint)}
+  ul.v li.ko::before{background:var(--coral)} ul.v li.ok::before{background:var(--lime)}
+  ul.v li b{color:var(--text);font-weight:600}
+
+  footer{margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--hint);letter-spacing:.04em}
+</style>
+
+<div class="wrap">
+  <p class="eye">Audit · 02/09/2026</p>
+  <h1>Faire entrer<br>quelqu'un</h1>
+  <p class="lede">Tout est mesuré en base, rien n'est estimé. Le parcours de Romane t'a paru trop flou — il l'est. Mais le trou le plus cher n'est <b>pas</b> de ton côté de l'écran.</p>
+
+  <!-- 1 -->
+  <section>
+    <p class="num">01 · le chiffre qu'on ne regardait pas</p>
+    <div class="kpis">
+      <div class="kpi"><div class="n">15</div><div class="l">invitations envoyées depuis avril</div></div>
+      <div class="kpi"><div class="n ok">9</div><div class="l">sont devenues un compte</div></div>
+      <div class="kpi"><div class="n bad">6</div><div class="l">n'ont jamais abouti</div></div>
+      <div class="kpi"><div class="n bad">2</div><div class="l">personnes perdues pour de bon</div></div>
+    </div>
+    <div class="card bad">
+      <h3>Le lien meurt au bout de 7 jours, en silence</h3>
+      <p>Les six invitations non abouties ont <b>toutes</b> expiré — jamais une seule relance, jamais un mot. Deux sont des tests. Les quatre autres sont de vraies personnes.</p>
+      <p><b>Sébastien</b> et <b>Clément</b> sont dans l'app aujourd'hui : quelqu'un a refait le geste autrement, à la main. <b>Vanessa</b> (30/04) et <b>Emma</b> (04/05) n'y sont jamais entrées, et personne n'a été prévenu que leur lien était mort.</p>
+      <p>C'est <b>4 invitations sur 10</b> qui tombent dans le vide. Le parcours d'admin est pénible ; celui-là coûte des gens.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <p class="num">02 · pourquoi c'est flou</p>
+    <h2>Quatre portes, et il faut deviner la bonne</h2>
+    <p class="lede" style="margin-bottom:12px">Sur <b>/users</b>, quatre chemins mènent au même but — « que cette personne ait un accès qui marche ». Il faut savoir <b>avant de commencer</b> lequel s'applique. Or c'est précisément ce qu'on ignore.</p>
+    <div class="portes">
+      <div class="porte"><span class="nom">+ Inviter</span><span class="d">quelqu'un qui n'a rien</span></div>
+      <div class="porte"><span class="nom">Nouveau compte</span><span class="d">créer à la main</span></div>
+      <div class="porte"><span class="nom">Réparer un compte</span><span class="d">demande un identifiant du style <code style="font-family:var(--mono);font-size:11px">2c6653c6-525a-48b7…</code></span></div>
+      <div class="porte"><span class="nom">Promouvoir</span><span class="d">un membre qui monte coach</span></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>Et la porte universelle existe déjà — mal nommée</h3>
+      <p><b>« Promouvoir » sait déjà tout faire.</b> Tu tapes un email, elle détecte : a-t-il un compte ? un mot de passe ? une fiche ? est-il déjà coach ? — et si la personne n'a aucun compte, <b>elle bascule toute seule sur l'invitation</b>.</p>
+      <p>Elle couvre trois portes sur quatre. Elle s'appelle juste comme si elle n'en couvrait qu'une.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <p class="num">03 · ce qu'on vient de vivre</p>
+    <div class="duo">
+      <div class="card">
+        <span class="tag t-bad">Aujourd'hui · Romane</span>
+        <ol class="pas">
+          <li>onglet <b>Promouvoir</b> — email, sponsor, fiche, nom, ID Herbalife</li>
+          <li>retour onglet <b>Membres</b></li>
+          <li>chercher Romane, <b>déplier</b> sa ligne</li>
+          <li>descendre au 4ᵉ bloc sur 5 — <b>Mode club</b></li>
+          <li>ouvrir <b>sa fiche client</b> pour la passer membre BBC <span style="color:var(--lime)">(supprimé aujourd'hui)</span></li>
+          <li>revenir la prévenir par mail</li>
+        </ol>
+        <ul class="v">
+          <li class="ko"><b>2 onglets</b>, 3 écrans, ~10 champs</li>
+          <li class="ko">le sponsor est demandé <b>deux fois</b></li>
+          <li class="ko">rien, à la fin de « Promouvoir », n'indique la suite</li>
+        </ul>
+      </div>
+
+      <div class="card good">
+        <span class="tag t-win">Ce que je propose</span>
+        <ol class="pas win">
+          <li><b>Un email.</b> L'app dit ce qu'elle a trouvé.</li>
+          <li><b>Ses réglages</b> — sponsor, fiche, nom.</li>
+          <li><b>« Elle travaille au club ? »</b> — le mode et la marche, ici.</li>
+          <li><b>La prévenir</b> + le récap de ce qui a été fait.</li>
+        </ol>
+        <ul class="v">
+          <li class="ok"><b>Un seul écran</b>, du début à la fin</li>
+          <li class="ok">on ne choisit plus sa porte : on tape un email</li>
+          <li class="ok">plus rien d'invisible à faire après</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <p class="num">04 · et le trou du 01</p>
+    <div class="card">
+      <h3>Une invitation ne doit pas pouvoir mourir sans bruit</h3>
+      <p>Trois gestes, indépendants de la refonte ci-dessus :</p>
+      <ul class="v">
+        <li><b>Voir</b> les invitations en attente et leur date de mort — aujourd'hui elles n'existent nulle part à l'écran.</li>
+        <li><b>Relancer</b> en un clic, et <b>rallonger</b> le lien plutôt que tout refaire.</li>
+        <li><b>Être prévenu</b> quand un lien expire sans avoir servi. Vanessa et Emma seraient peut-être là.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <p class="num">05 · ce que je ne touche pas</p>
+    <div class="card">
+      <p>Aucun droit, aucune RLS, aucun calcul. C'est un <b>regroupement d'écrans</b> : les quatre portes continuent d'exister par leur URL, rien de ce qui marche aujourd'hui ne casse. On arrête juste de demander à quelqu'un de choisir sa porte avant de savoir où il va.</p>
+    </div>
+  </section>
+
+  <footer>La Base 360 · audit du 02/09/2026 · tous les chiffres relevés en base ce jour</footer>
+</div>
