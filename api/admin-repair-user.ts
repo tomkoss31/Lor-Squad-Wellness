@@ -140,29 +140,62 @@ export default async function handler(req: any, res: any) {
   }
 
   // Fiche client liée (via compte PWA sur le même auth_user_id, sinon par email).
+  //
+  // ⚠️ CORRECTIF 02/09/2026 — CET ÉCRAN N'A JAMAIS RATTACHÉ UNE SEULE FICHE.
+  //
+  // Les deux branches demandaient `clients.name`, une colonne qui n'existe pas
+  // (c'est `first_name` / `last_name`, et aucune migration ne l'a jamais créée).
+  // Postgres répond `column "name" does not exist`, `data` vaut null, et l'écran
+  // conclut « Aucune fiche client détectée — rien à rattacher ». Mesuré sur
+  // Romane GAVROY : sa fiche existe, 11 bilans, son espace client est relié à
+  // son compte — et l'écran ne la trouvait pas.
+  //
+  // L'erreur était invisible parce que `error` n'était jamais lu : un select
+  // fautif et un membre sans fiche rendaient exactement la même chose. D'où le
+  // `console.warn` — sans lui, la prochaine faute de colonne se rejouera à
+  // l'identique, silencieusement.
+  type FicheRow = { id: string; first_name: string | null; last_name: string | null; distributor_id: string | null };
+  const COLONNES = "id, first_name, last_name, distributor_id";
+  const composerNom = (f: FicheRow) =>
+    [f.first_name, f.last_name].map((p) => (p ?? "").trim()).filter(Boolean).join(" ") || null;
+
   async function loadFiche(authId: string | null, byEmail: string) {
     if (authId) {
-      const { data: acc } = await admin
+      // `limit(1)` avant `maybeSingle()` : un même compte peut porter deux
+      // espaces client (réinvitation), et `maybeSingle` LÈVE au-delà d'une
+      // ligne — ça retomberait sur « pas de fiche », le bug qu'on corrige.
+      const { data: acc, error: accErr } = await admin
         .from("client_app_accounts")
         .select("client_id")
         .eq("auth_user_id", authId)
+        .order("created_at", { ascending: true })
+        .limit(1)
         .maybeSingle<{ client_id: string | null }>();
+      if (accErr) console.warn("[promote] espace client illisible :", accErr.message);
       if (acc?.client_id) {
-        const { data: fiche } = await admin
+        const { data: fiche, error } = await admin
           .from("clients")
-          .select("id, name, distributor_id")
+          .select(COLONNES)
           .eq("id", acc.client_id)
-          .maybeSingle<{ id: string; name: string | null; distributor_id: string | null }>();
-        if (fiche) return fiche;
+          .maybeSingle<FicheRow>();
+        if (error) console.warn("[promote] fiche par espace client illisible :", error.message);
+        if (fiche) return { id: fiche.id, name: composerNom(fiche), distributor_id: fiche.distributor_id };
       }
     }
     if (byEmail) {
-      const { data: fiche } = await admin
+      // Trois adresses portent DEUX fiches en base (mesuré le 02/09). Sans
+      // `limit(1)`, ces personnes-là resteraient introuvables après le
+      // correctif ci-dessus — même symptôme, autre cause. On prend la plus
+      // ancienne : c'est la fiche historique, celle qui porte les bilans.
+      const { data: fiche, error } = await admin
         .from("clients")
-        .select("id, name, distributor_id")
+        .select(COLONNES)
         .ilike("email", byEmail)
-        .maybeSingle<{ id: string; name: string | null; distributor_id: string | null }>();
-      if (fiche) return fiche;
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle<FicheRow>();
+      if (error) console.warn("[promote] fiche par email illisible :", error.message);
+      if (fiche) return { id: fiche.id, name: composerNom(fiche), distributor_id: fiche.distributor_id };
     }
     return null;
   }
