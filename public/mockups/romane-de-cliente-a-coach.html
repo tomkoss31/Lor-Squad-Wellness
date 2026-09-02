@@ -1,0 +1,200 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Romane, de cliente à coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#162624; --s1:#1E3330; --s2:#26403B; --s3:#2E4A44;
+    --line:rgba(244,239,228,.12); --line2:rgba(244,239,228,.22);
+    --text:#F4EFE4; --muted:rgba(244,239,228,.70); --hint:rgba(244,239,228,.46);
+    --lime:#C5F82A; --teal:#2DD4BF; --coral:#F2775F; --amber:#E8A93A;
+    --lime-ink:#06241F;
+    --display:"Anton",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --body:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);
+       line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:26px 16px 70px}
+
+  .eye{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--hint);margin:0 0 8px}
+  h1{font-family:var(--display);text-transform:uppercase;font-size:clamp(30px,7vw,44px);
+     line-height:.98;margin:0 0 14px;text-wrap:balance}
+  .lede{color:var(--muted);font-size:15.5px;margin:0 0 4px;max-width:60ch}
+  .lede b{color:var(--text);font-weight:600}
+
+  /* ── le rail des étapes ── */
+  .rail{margin-top:28px;position:relative;padding-left:34px}
+  .rail::before{content:"";position:absolute;left:11px;top:14px;bottom:44px;width:2px;
+                background:linear-gradient(var(--coral) 0%,var(--amber) 42%,var(--lime) 68%,var(--teal) 100%);
+                opacity:.55;border-radius:2px}
+
+  .etape{position:relative;margin-bottom:20px}
+  .puce{position:absolute;left:-34px;top:14px;width:24px;height:24px;border-radius:50%;
+        display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;
+        background:var(--s3);color:var(--text);border:2px solid var(--bg);
+        box-shadow:0 0 0 2px var(--line2)}
+  .puce.now{background:var(--coral);color:#3A0F06}
+  .puce.act{background:var(--amber);color:#3A2606}
+  .puce.win{background:var(--lime);color:var(--lime-ink)}
+  .puce.next{background:var(--s2);color:var(--hint)}
+
+  .box{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:16px 17px}
+  .box.win{border-color:rgba(197,248,42,.45);box-shadow:0 0 0 1px rgba(197,248,42,.10)}
+
+  .quand{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+         color:var(--hint);margin:0 0 5px}
+  .box h2{font-family:var(--display);text-transform:uppercase;font-size:20px;margin:0 0 4px;
+          letter-spacing:.02em;line-height:1.06}
+  .geste{margin:0 0 13px;font-size:13px;color:var(--muted)}
+  .geste code{font-family:var(--mono);font-size:12px;background:var(--s3);padding:2px 6px;
+              border-radius:5px;color:var(--text)}
+
+  /* combien d'applis */
+  .apps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .app{flex:1;min-width:132px;border-radius:12px;padding:10px 12px;border:1px solid var(--line2);
+       background:var(--s2)}
+  .app .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+          color:var(--hint);margin-bottom:3px}
+  .app .n{font-weight:700;font-size:14px;letter-spacing:-.01em}
+  .app .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .app.off{opacity:.4;border-style:dashed}
+  .app.off .n{text-decoration:line-through}
+  .app.plein{border-color:rgba(197,248,42,.45);background:rgba(197,248,42,.07)}
+
+  ul.v{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+  ul.v li{font-size:13.5px;color:var(--muted);padding-left:20px;position:relative}
+  ul.v li::before{content:"";position:absolute;left:4px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--hint)}
+  ul.v li.ok{color:var(--text)} ul.v li.ok::before{background:var(--lime)}
+  ul.v li.ko::before{background:var(--coral)}
+  ul.v li b{color:var(--text);font-weight:600}
+
+  .manque{margin-top:12px;background:rgba(242,119,95,.09);border:1px solid rgba(242,119,95,.34);
+          border-radius:12px;padding:12px 13px}
+  .manque .t{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+             color:var(--coral);margin-bottom:5px}
+  .manque p{margin:0;font-size:13px;color:var(--muted)}
+  .manque b{color:var(--text);font-weight:600}
+
+  /* marches */
+  .marches{display:flex;flex-direction:column;gap:1px;background:var(--line);
+           border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:4px}
+  .m{display:flex;align-items:center;gap:11px;background:var(--s2);padding:10px 13px}
+  .m .nom{font-weight:700;font-size:13.5px;flex:1;min-width:96px}
+  .m .cnt{font-family:var(--mono);font-size:11.5px;color:var(--teal);white-space:nowrap}
+  .m .cnt.zero{color:var(--coral)}
+  .m .cnt.tout{color:var(--lime)}
+  .m .qui{font-size:11.5px;color:var(--hint);flex-basis:100%;margin-top:-4px;padding-left:0}
+
+  .preuve{margin-top:26px;background:var(--s1);border:1px solid var(--line);
+          border-left:3px solid var(--teal);border-radius:0 14px 14px 0;padding:15px 17px}
+  .preuve h3{font-family:var(--display);text-transform:uppercase;font-size:15px;margin:0 0 7px;letter-spacing:.03em}
+  .preuve p{margin:0;font-size:13.5px;color:var(--muted)}
+  .preuve b{color:var(--text);font-weight:600}
+
+  footer{margin-top:28px;font-family:var(--mono);font-size:11px;color:var(--hint);letter-spacing:.04em}
+</style>
+
+<div class="wrap">
+  <p class="eye">Le trajet, en clair</p>
+  <h1>Romane,<br>de cliente à coach</h1>
+  <p class="lede">Le but : <b>une seule appli à la fin</b>, tout en BBC. Pas deux. Sa fiche et ses pesées vivent dans son app de coach, exactement comme les tiennes.</p>
+
+  <div class="rail">
+
+    <!-- 0 -->
+    <section class="etape">
+      <div class="puce now">0</div>
+      <div class="box">
+        <p class="quand">Aujourd'hui</p>
+        <h2>Elle est cliente</h2>
+        <p class="geste">Rien à faire — c'est l'état actuel.</p>
+        <div class="apps">
+          <div class="app"><div class="t">son appli</div><div class="n">Espace membre</div><div class="d">un lien, pas de menu coach</div></div>
+        </div>
+        <ul class="v">
+          <li class="ok"><b>11 bilans</b> · 76,3 kg → 74 kg</li>
+          <li>sa courbe, ses valeurs, ses mensurations</li>
+          <li class="ko">sa fiche appartient à <b>Mélanie</b></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 1 -->
+    <section class="etape">
+      <div class="puce act">1</div>
+      <div class="box">
+        <p class="quand">Toi · 2 minutes</p>
+        <h2>Tu la promeus coach</h2>
+        <p class="geste"><code>/users</code> → onglet <b>Promouvoir</b> → son email</p>
+        <ul class="v">
+          <li class="ok">elle garde son email et son mot de passe</li>
+          <li class="ok">ses 11 bilans ne bougent pas</li>
+          <li class="ko">à ce stade elle a <b>deux</b> applis — c'est le moment moche, il dure 2 minutes</li>
+        </ul>
+        <div class="manque">
+          <div class="t">⚠ ce qui manque aujourd'hui</div>
+          <p>L'écran propose « sa fiche reste suivie par <b>Mélanie</b> » ou « par <b>le sponsor</b> ».
+          Il manque le seul choix qui compte ici : <b>par elle-même</b>. Sans lui, elle ne se verra
+          jamais dans sa propre appli. <b>Une option à ajouter — c'est mon boulot.</b></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="etape">
+      <div class="puce win">2</div>
+      <div class="box win">
+        <p class="quand">Toi · 30 secondes</p>
+        <h2>Tu la passes en club BBC</h2>
+        <p class="geste"><code>/users</code> → déplier Romane → <b>Mode club</b> → Club BBC + La Base Nutrition</p>
+        <div class="apps">
+          <div class="app off"><div class="t">avant</div><div class="n">Espace membre</div><div class="d">plus besoin</div></div>
+          <div class="app plein"><div class="t">désormais</div><div class="n">Son app BBC</div><div class="d">tout est dedans</div></div>
+        </div>
+        <ul class="v">
+          <li class="ok"><b>Une seule appli.</b> Une seule connexion.</li>
+          <li class="ok">elle se retrouve dans son onglet <b>Membres</b>, avec ses chiffres</li>
+          <li class="ok">sa pesée au club atterrit sur sa fiche, qu'elle voit elle-même</li>
+          <li>exactement ton fonctionnement</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="etape">
+      <div class="puce next">3</div>
+      <div class="box">
+        <p class="quand">Après · quand tu veux</p>
+        <h2>Sa marche</h2>
+        <p class="geste">Même écran, menu <b>Marche BBC</b>. Ça ne règle <b>qu'une</b> chose : quels modules de Formation sont ouverts. Rien d'autre dans toute l'app.</p>
+        <div class="marches">
+          <div class="m"><span class="nom">Rien de posé</span><span class="cnt tout">10 / 10</span>
+            <span class="qui">le défaut — elle voit tout</span></div>
+          <div class="m"><span class="nom">Membre</span><span class="cnt zero">0 / 10</span>
+            <span class="qui">à ne pas mettre : ferme tout</span></div>
+          <div class="m"><span class="nom">Coach stagiaire</span><span class="cnt">7 / 10</span>
+            <span class="qui">son métier : invitation, EBE, suivi, bilan 10 visites, appels, cœurs</span></div>
+          <div class="m"><span class="nom">Junior partner</span><span class="cnt tout">10 / 10</span>
+            <span class="qui">+ ouvrir son propre club : pré-lancement, modèle éco, check-lists</span></div>
+          <div class="m"><span class="nom">Propriétaire</span><span class="cnt tout">10 / 10</span>
+            <span class="qui">le jour où elle a son club à elle</span></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="preuve">
+    <h3>La preuve que ça marche</h3>
+    <p>C'est déjà ton cas. En base : <b>Thomas Houbert</b>, 19 bilans, membre BBC du club,
+    fiche <b>suivie par toi-même</b>. Tu n'as pas d'espace membre séparé — tu te vois dans tes
+    propres Membres. Romane aura la même chose, à une option près.</p>
+  </div>
+
+  <footer>La Base 360 · 02/09/2026 · chiffres relevés en base</footer>
+</div>
