@@ -1281,6 +1281,15 @@ button, a, [role="button"] { min-height: 44px; }
   .users-perimeter-hint span {
     display: none !important;
   }
+  /* Les 4 onglets tiennent en 2 lignes au lieu de sortir du cadre : sur
+     telephone, « Promouvoir » etait entierement hors ecran derriere un
+     defilement horizontal que rien n'annonce. On resserre pour que chaque
+     ligne en porte deux. */
+  .users-tabs-bar > button {
+    padding: 11px 13px !important;
+    flex: 1 1 auto;
+    justify-content: center;
+  }
 }
 
 /* ═══ SUIVI PV V2 — Responsive complet ═══ */

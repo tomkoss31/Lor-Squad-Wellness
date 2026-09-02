@@ -219,7 +219,13 @@ export function UsersPage() {
       {/* CARD PRINCIPALE avec 3 ONGLETS */}
       <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
         {/* Barre d'onglets */}
-        <div className="users-tabs-bar" style={{ display: "flex", borderBottom: "1px solid var(--ls-border)", overflowX: "auto" }}>
+        {/* ⚠️ 02/09 — « le parcours pour aller vers Promouvoir est laborieux ».
+            Les 4 onglets font ~580 px sur une seule ligne ; sur un téléphone il
+            en reste ~360 de visibles. « Promouvoir » était donc ENTIÈREMENT
+            hors écran, derrière un défilement horizontal que rien n'annonce :
+            l'onglet n'était pas dur à atteindre, il était invisible.
+            `wrap` : ils passent à la ligne au lieu de sortir du cadre. */}
+        <div className="users-tabs-bar" style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid var(--ls-border)" }}>
           {(
             [
               {
