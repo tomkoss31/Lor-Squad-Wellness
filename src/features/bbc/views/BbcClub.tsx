@@ -74,7 +74,16 @@ export function BbcClub({ userId, club }: BbcClubProps) {
         ) : members.length === 0 ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0" }}>Aucun membre pour l'instant — tes clients apparaîtront ici pour le pointage.</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+          <div
+            /* ⚠️ 03/09 — capture de Thomas : « Fabien… », « Ghislai… »,
+               « Virgini… ». DIX prénoms coupés sur un écran large, et
+               « carte 10 · 10 restantes » replié sur trois lignes. La tuile
+               tenait dans 260 px : une fois la pastille, le bouton carte et le
+               « +1 » posés (tous en `flex: none`), il restait ~70 px au nom.
+               Au comptoir on lit un prénom en diagonale — coupé, il ne sert
+               plus à rien. */
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14 }}
+          >
             {members.map((m) => {
               // Carte expirée = alerte au même titre qu'une carte finie.
               const lvl = m.card?.expired ? "bilan" : visitLevel(m.card?.used ?? 0, m.card?.type);
@@ -82,8 +91,8 @@ export function BbcClub({ userId, club }: BbcClubProps) {
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
                   <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.card ? m.card.used : m.visits}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: levelColor(lvl) }}>
+                    <div title={m.name} style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
+                    <div style={{ fontSize: 11, color: levelColor(lvl), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {m.card
                         ? m.card.expired
                           ? `carte ${m.card.type} EXPIRÉE · à renouveler`
