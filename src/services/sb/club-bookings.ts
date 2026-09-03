@@ -29,6 +29,8 @@ export interface ClubDiscoverySettings {
   durationMin: number;
   /** Jours fermés, au format YYYY-MM-DD. */
   holidays: string[];
+  /** Exceptions par DATE : { "2026-09-07": [["12:00","15:00"]] }. Prime sur `hours`. */
+  hoursByDate: Record<string, Array<[string, string]>>;
 }
 
 export interface ClubInfo {
@@ -66,9 +68,11 @@ function parseDiscovery(settings: Record<string, unknown> | null): ClubDiscovery
   const raw = (settings?.discovery ?? {}) as Record<string, unknown>;
   const hours = (raw.hours ?? {}) as ClubDiscoverySettings["hours"];
   const holidays = Array.isArray(raw.holidays) ? (raw.holidays as string[]) : [];
+  const hoursByDate = (raw.hours_by_date ?? {}) as ClubDiscoverySettings["hoursByDate"];
   return {
     hours,
     holidays,
+    hoursByDate,
     capacity: Number(raw.capacity) || DEFAULTS.capacity,
     slotStepMin: Number(raw.slot_step_min) || DEFAULTS.slotStepMin,
     durationMin: Number(raw.duration_min) || DEFAULTS.durationMin,
@@ -177,6 +181,61 @@ export async function setClubDayClosed(
   if (writeErr) throw writeErr;
 
   return next;
+}
+
+/**
+ * Règle les HORAIRES de réservation d'une journée précise (YYYY-MM-DD).
+ *
+ * ── POURQUOI (Thomas, 03/09) ────────────────────────────────────────────────
+ * « J'ai dû aujourd'hui fermer l'agenda de réservation des rdv au club. Il faut
+ * que l'on puisse manuellement fermer ou ouvrir les horaires que l'on
+ * souhaite. » Jusqu'ici c'était TOUT OU RIEN : la pastille de « La semaine »
+ * ferme la journée entière (`discovery.holidays`), et rien d'autre. Impossible
+ * de dire « demain, seulement de 9 h à 12 h » — les 7 dates déjà présentes dans
+ * `hours_by_date` avaient été posées à la main, hors de l'app.
+ *
+ * `plage = null` retire l'exception : la journée revient à l'horaire habituel
+ * de son jour de semaine. On ne laisse JAMAIS une case vide en base — une
+ * exception vide et « pas d'exception » ne veulent pas dire la même chose côté
+ * serveur.
+ *
+ * Effet immédiat sur le tunnel public : `get_club_discovery_availability` lit
+ * cette même clé (vérifié en base le 03/09).
+ *
+ * Relit les settings juste avant d'écrire, comme `setClubDayClosed` : deux
+ * coachs peuvent régler la semaine en même temps.
+ */
+export async function setClubDayHours(
+  clubId: string,
+  dayKey: string,
+  plage: [string, string] | null,
+): Promise<Record<string, Array<[string, string]>>> {
+  const supabase = await requireSupabase();
+
+  const { data: current, error: readErr } = await supabase
+    .from("clubs")
+    .select("settings")
+    .eq("id", clubId)
+    .single();
+  if (readErr) throw readErr;
+
+  const settings = ((current as { settings: Record<string, unknown> | null })?.settings ??
+    {}) as Record<string, unknown>;
+  const discovery = { ...((settings.discovery ?? {}) as Record<string, unknown>) };
+  const parDate = { ...((discovery.hours_by_date ?? {}) as Record<string, Array<[string, string]>>) };
+
+  if (plage) parDate[dayKey] = [plage];
+  else delete parDate[dayKey];
+
+  discovery.hours_by_date = parDate;
+
+  const { error: writeErr } = await supabase
+    .from("clubs")
+    .update({ settings: { ...settings, discovery } })
+    .eq("id", clubId);
+  if (writeErr) throw writeErr;
+
+  return parDate;
 }
 
 /** Confirme ou annule une réservation club. */

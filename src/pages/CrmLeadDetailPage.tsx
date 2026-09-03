@@ -13,7 +13,7 @@
 // les hooks sont déclarés avant le moindre `if (!lead) return`.
 // =============================================================================
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
@@ -32,6 +32,26 @@ import { CrmResponsePanel } from "../components/crm/CrmResponsePanel";
 import { LeadDetailBilanSections } from "../components/leads/LeadDetailBilanSections";
 import { FunnelAnswers } from "../components/crm/FunnelAnswers";
 import { LeadConvertModal } from "../components/leads/LeadConvertModal";
+// ── La MÊME question que l'agenda, posée ici aussi (02/09) ───────────────────
+//
+// Thomas, après le rendez-vous de Gaëlle : « la notif du CRM ouvre une modale
+// […] on manque réellement d'information sur le membre, pas de valeur complète
+// ni de carte choisie. À l'inverse sur l'agenda on peut qualifier : elle démarre
+// BBC ou suivi classique. Les deux sources ne se parlent pas et sont
+// diamétralement différentes. »
+//
+// Elles l'étaient : `LeadConvertModal` ne contient NI `ebe_bbc` NI `member_card`
+// — elle ne sait pas que le club existe. Elle crée une fiche classique, point.
+// L'agenda, lui, pose la question puis route vers le bon outil.
+//
+// On ne réécrit rien : on met la MÊME feuille devant, et la branche « club »
+// mène à la MÊME feuille membre (fiche + bilan, drapeau club, accès + QR,
+// cœurs, carte). Une feature, un seul endroit.
+import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
+import { useBbcMode } from "../features/bbc/useBbcMode";
+const BbcNewMemberSheet = lazy(() =>
+  import("../features/bbc/BbcNewMemberSheet").then((m) => ({ default: m.BbcNewMemberSheet })),
+);
 import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { MoveClubBookingDialog } from "../components/crm/MoveClubBookingDialog";
@@ -191,6 +211,65 @@ export function CrmLeadDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
+  /**
+   * Par où passe la conversion : la question d'abord, puis le club ou le
+   * classique. `choix` tant qu'on n'a pas répondu.
+   *
+   * ⚠️ On ne pose la question QUE si un club est lisible. Les dix distributeurs
+   * hors club n'ont rien à répondre à « elle prend sa carte de membre » : pour
+   * eux l'écran ne bouge pas d'un pixel, la modale s'ouvre comme avant. Zéro
+   * régression sur ceux qui n'ont jamais vu le BBC.
+   */
+  const [voieConvert, setVoieConvert] = useState<"choix" | "membre" | "classique">("choix");
+  const bbc = useBbcMode(currentUser?.id, isAdmin);
+  const clubActif = bbc.activeClub;
+  const ouvrirConversion = () => {
+    setVoieConvert(clubActif ? "choix" : "classique");
+    setShowConvert(true);
+  };
+  const fermerConversion = () => {
+    setShowConvert(false);
+    setVoieConvert("choix");
+  };
+
+  /**
+   * Ranger le lead une fois la fiche créée — quel que soit le chemin.
+   *
+   * La branche « club » écrit sa fiche elle-même (feuille membre) ; sans ce
+   * rangement, le lead resterait « à convertir » pour toujours et le rendez-vous
+   * reviendrait dans « À conclure » alors que la personne a sa carte en main.
+   * Même garde-fou que la branche classique : on n'écrase jamais une conversion
+   * déjà faite, sinon la première fiche devient orpheline.
+   */
+  async function apresConversion(clientId: string) {
+    if (!lead) return;
+    if (lead.table === "online_bilans" && bilanRow) {
+      await onlineBilans.convertLead(bilanRow.id, clientId);
+      await onlineBilans.refetch();
+    } else if (lead.table === "prospect_leads") {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        const { error } = await sb
+          .from("prospect_leads")
+          .update({
+            status: "converted",
+            converted_to_client_id: clientId,
+            converted_at: new Date().toISOString(),
+            relance_due_at: null,
+            relance_done_at: new Date().toISOString(),
+          })
+          .eq("id", lead.id)
+          .is("converted_to_client_id", null)
+          .select("id");
+        if (error) {
+          pushToast({ tone: "warning", title: "Fiche creee, lead non range", message: error.message });
+        }
+      }
+    }
+    await refetch();
+    fermerConversion();
+    pushToast({ tone: "success", title: "Membre du club créé", message: "Fiche, bilan et carte enregistrés" });
+  }
   // Ouverture directe du modal de conversion depuis la LISTE (bouton « Convertir »
   // → /crm/leads/:id?convert=1). On ouvre une seule fois, dès que le bilan est
   // chargé et pas déjà converti, puis on nettoie le param.
@@ -219,7 +298,7 @@ export function CrmLeadDetailPage() {
       lead?.table === "online_bilans" ? Boolean(bilanRow) : lead?.table === "prospect_leads";
     if (!pretAConvertir || dejaConverti) return;
     convertAutoRef.current = true;
-    setShowConvert(true);
+    ouvrirConversion();
     const next = new URLSearchParams(searchParams);
     next.delete("convert");
     setSearchParams(next, { replace: true });
@@ -801,7 +880,7 @@ export function CrmLeadDetailPage() {
               </button>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <button type="button" onClick={() => setShowConvert(true)} disabled={!bilanRow} style={primaryBtn}>
+                <button type="button" onClick={() => ouvrirConversion()} disabled={!bilanRow} style={primaryBtn}>
                   ✅ Valider le bilan → créer la fiche client
                 </button>
               </div>
@@ -816,7 +895,7 @@ export function CrmLeadDetailPage() {
                 ✅ Fiche créée — Ouvrir la fiche →
               </button>
             ) : (
-              <button type="button" onClick={() => setShowConvert(true)} style={primaryBtn}>
+              <button type="button" onClick={() => ouvrirConversion()} style={primaryBtn}>
                 ✅ Valider → créer la fiche client
               </button>
             )
@@ -1073,10 +1152,53 @@ export function CrmLeadDetailPage() {
           On réutilise la MÊME modale (une feature, un seul endroit) en lui
           présentant le lead sous la forme qu'elle sait lire — exactement le
           motif déjà employé par l'agenda pour les RDV du club. */}
-      {showConvert && !bilanRow && lead.table === "prospect_leads" ? (
+      {/* ── LA QUESTION, D'ABORD — la même qu'à l'agenda ────────────────────
+          « Elle est venue. Et alors ? » Sans elle, le CRM créait une fiche
+          classique sans jamais demander si la personne prenait sa carte. */}
+      {showConvert && voieConvert === "choix" && clubActif ? (
+        <QualifierRdvSheet
+          cible={{
+            nomComplet: [lead.firstName, lead.lastName].filter(Boolean).join(" ") || "cette personne",
+            heure: lead.rdv?.label ?? "son rendez-vous",
+            jour: null,
+            objectif: lead.objectif ? objectifLabel(lead.objectif) : null,
+            contact: lead.contact,
+            partenaire: null,
+          }}
+          onMembre={() => setVoieConvert("membre")}
+          onClassique={() => setVoieConvert("classique")}
+          onPasEncore={fermerConversion}
+          onFermer={fermerConversion}
+        />
+      ) : null}
+
+      {/* ── VOIE CLUB — la MÊME feuille que l'agenda ────────────────────────
+          Fiche + bilan complet, drapeau membre + club, accès à l'app + QR,
+          cœurs, carte de fidélité. C'est tout ce qui manquait à la conversion
+          du CRM : sur Gaëlle (03/09), le bilan était complet mais la carte,
+          l'accès et le QR n'existaient pas. */}
+      {showConvert && voieConvert === "membre" ? (
+        <Suspense fallback={null}>
+          <BbcNewMemberSheet
+            userId={currentUser?.id}
+            coachName={currentUser?.name}
+            club={clubActif}
+            prefill={{
+              prenom: lead.firstName,
+              nom: lead.lastName ?? null,
+              tel: lead.phone ?? (lead.contactIsPhone ? lead.contact : null),
+              email: lead.email ?? (lead.contactIsPhone ? null : lead.contact),
+            }}
+            onClose={fermerConversion}
+            onCreated={(clientId) => void apresConversion(clientId)}
+          />
+        </Suspense>
+      ) : null}
+
+      {showConvert && voieConvert === "classique" && !bilanRow && lead.table === "prospect_leads" ? (
         <LeadConvertModal
           bilan={bilanDepuisProspectLead(lead)}
-          onClose={() => setShowConvert(false)}
+          onClose={fermerConversion}
           onConverted={async (clientId) => {
             const sb = await getSupabaseClient();
             if (sb) {
@@ -1114,10 +1236,10 @@ export function CrmLeadDetailPage() {
         />
       ) : null}
 
-      {showConvert && bilanRow ? (
+      {showConvert && voieConvert === "classique" && bilanRow ? (
         <LeadConvertModal
           bilan={bilanRow}
-          onClose={() => setShowConvert(false)}
+          onClose={fermerConversion}
           onConverted={async (clientId) => {
             await onlineBilans.convertLead(bilanRow.id, clientId);
             await onlineBilans.refetch();

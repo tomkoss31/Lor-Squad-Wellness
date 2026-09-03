@@ -36,7 +36,7 @@ import {
   useClubDiscoveryBookings,
   type ClubDiscoveryBooking,
 } from "../../../hooks/useClubDiscoveryBookings";
-import { setClubDayClosed } from "../../../services/sb/club-bookings";
+import { setClubDayClosed, setClubDayHours } from "../../../services/sb/club-bookings";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
@@ -265,6 +265,56 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
       }
     },
     [clubId, joursFermes],
+  );
+
+  // ── LES HEURES, pas seulement « ouvert / fermé » (03/09) ──────────────────
+  //
+  // Thomas : « il faut que l'on puisse manuellement fermer ou ouvrir les
+  // horaires que l'on souhaite ». La pastille ci-dessus ne sait faire que tout
+  // ou rien. Ici on règle la plage d'UNE journée — « demain, 9 h-12 h » — sans
+  // fermer le reste. `discovery.hours_by_date` prime sur l'horaire du jour de
+  // semaine, et `get_club_discovery_availability` lit déjà cette clé : l'effet
+  // est immédiat sur le tunnel public.
+  const reglagesDecouverte = (club?.settings as {
+    discovery?: { hours?: Record<string, Array<[string, string]>>; hours_by_date?: Record<string, Array<[string, string]>> };
+  } | null)?.discovery;
+  const horairesSemaine = useMemo(() => reglagesDecouverte?.hours ?? {}, [reglagesDecouverte]);
+  const [horairesParDate, setHorairesParDate] = useState<Record<string, Array<[string, string]>>>(
+    () => reglagesDecouverte?.hours_by_date ?? {},
+  );
+
+  /** L'horaire réellement appliqué ce jour-là : l'exception, sinon l'habituel. */
+  const plageDuJour = useCallback(
+    (jour: Date): [string, string] | null => {
+      const exception = horairesParDate[cleJour(jour)];
+      if (Array.isArray(exception) && exception[0]) return exception[0];
+      // getDay() rend 0 pour dimanche ; les réglages sont en ISO (1 = lundi).
+      const iso = jour.getDay() === 0 ? 7 : jour.getDay();
+      const habituel = horairesSemaine[String(iso)];
+      return Array.isArray(habituel) && habituel[0] ? habituel[0] : null;
+    },
+    [horairesParDate, horairesSemaine],
+  );
+
+  const reglerPlage = useCallback(
+    async (jour: Date, plage: [string, string] | null) => {
+      if (!clubId) return;
+      const cle = cleJour(jour);
+      const avant = horairesParDate;
+      // Optimiste, comme la pastille : l'écran répond tout de suite.
+      setHorairesParDate((p) => {
+        const n = { ...p };
+        if (plage) n[cle] = [plage];
+        else delete n[cle];
+        return n;
+      });
+      try {
+        setHorairesParDate(await setClubDayHours(clubId, cle, plage));
+      } catch {
+        setHorairesParDate(avant);
+      }
+    },
+    [clubId, horairesParDate],
   );
 
   const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
@@ -634,6 +684,9 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
               aujourdhui={isSameDay(jour, new Date())}
               ferme={joursFermes.includes(cleJour(jour))}
               onBasculer={clubId ? () => void basculerJour(jour) : undefined}
+              plage={plageDuJour(jour)}
+              plageExceptionnelle={Boolean(horairesParDate[cleJour(jour)])}
+              onReglerPlage={clubId ? (p) => void reglerPlage(jour, p) : undefined}
             />
             {evs.map((ev) => (
               <LigneEvenement
@@ -739,11 +792,20 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
 // ─── Briques d'affichage ─────────────────────────────────────────────────────
 
+/** « 07:00 » → « 7h », « 09:30 » → « 9h30 ». Ce que Thomas dit à l'oral. */
+function heureCourte(hhmm: string): string {
+  const [h, m] = hhmm.split(":");
+  return m && m !== "00" ? `${Number(h)}h${m}` : `${Number(h)}h`;
+}
+
 function EnTeteJour({
   libelle,
   aujourdhui,
   ferme,
   onBasculer,
+  plage,
+  plageExceptionnelle,
+  onReglerPlage,
 }: {
   libelle: string;
   aujourdhui?: boolean;
@@ -751,8 +813,35 @@ function EnTeteJour({
   ferme?: boolean;
   /** Absent = journée non pilotable (pas de club, ou pas d'ouverture ce jour). */
   onBasculer?: () => void;
+  /** L'horaire appliqué ce jour-là — l'exception si elle existe, sinon l'habituel. */
+  plage?: [string, string] | null;
+  /** Vrai si cette journée porte une exception (donc « revenir à l'habituel » a un sens). */
+  plageExceptionnelle?: boolean;
+  /** `null` retire l'exception. Absent = pas de club, donc rien à régler. */
+  onReglerPlage?: (plage: [string, string] | null) => void;
 }) {
+  // L'éditeur est refermé par défaut : la semaine doit rester une LISTE, pas un
+  // formulaire. On ne l'ouvre que quand on vient changer quelque chose.
+  const [ouvert, setOuvert] = useState(false);
+  const [debut, setDebut] = useState(plage?.[0] ?? "07:00");
+  const [fin, setFin] = useState(plage?.[1] ?? "11:00");
+  useEffect(() => {
+    setDebut(plage?.[0] ?? "07:00");
+    setFin(plage?.[1] ?? "11:00");
+  }, [plage]);
+
+  const chip: React.CSSProperties = {
+    flex: "none",
+    fontFamily: "var(--ls-bbc-font-mono)",
+    fontSize: 9.5,
+    fontWeight: 700,
+    padding: "3px 9px",
+    borderRadius: 999,
+    cursor: "pointer",
+  };
+
   return (
+    <>
     <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 7 }}>
       <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ls-bbc-muted)" }}>
         {libelle}
@@ -787,9 +876,119 @@ function EnTeteJour({
           {ferme ? "réservations fermées" : "réservations ouvertes"}
         </button>
       ) : null}
+
+      {/* Les HEURES. Masqué quand la journée est fermée : régler une plage sur
+          un jour fermé ne veut rien dire, et deux réglages contradictoires côte
+          à côte, c'est comme ça qu'on ouvre le club sans le savoir. */}
+      {onReglerPlage && !ferme && plage ? (
+        <button
+          type="button"
+          onClick={() => setOuvert((o) => !o)}
+          aria-expanded={ouvert}
+          title={plageExceptionnelle ? "Horaire spécial ce jour — toucher pour changer" : "Régler les heures de ce jour"}
+          style={{
+            ...chip,
+            border: `1px solid ${plageExceptionnelle ? "var(--ls-bbc-teal)" : "var(--ls-bbc-line)"}`,
+            background: plageExceptionnelle ? "color-mix(in srgb, var(--ls-bbc-teal) 16%, transparent)" : "transparent",
+            color: plageExceptionnelle ? "var(--ls-bbc-teal)" : "var(--ls-bbc-muted)",
+          }}
+        >
+          {heureCourte(plage[0])} → {heureCourte(plage[1])}
+        </button>
+      ) : null}
     </div>
+
+    {ouvert && onReglerPlage ? (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: 9,
+          padding: "10px 12px",
+          borderRadius: 12,
+          background: "var(--ls-bbc-s2)",
+          border: "1px solid var(--ls-bbc-line)",
+        }}
+      >
+        <span style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>de</span>
+        <input
+          type="time"
+          value={debut}
+          onChange={(e) => setDebut(e.target.value)}
+          aria-label="Heure d'ouverture des réservations"
+          style={champHeure}
+        />
+        <span style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>à</span>
+        <input
+          type="time"
+          value={fin}
+          onChange={(e) => setFin(e.target.value)}
+          aria-label="Heure de fin des réservations"
+          style={champHeure}
+        />
+        <button
+          type="button"
+          disabled={fin <= debut}
+          onClick={() => {
+            onReglerPlage([debut, fin]);
+            setOuvert(false);
+          }}
+          style={{
+            padding: "7px 13px",
+            borderRadius: 10,
+            border: "none",
+            background: fin <= debut ? "var(--ls-bbc-s3)" : "var(--ls-bbc-lime)",
+            color: fin <= debut ? "var(--ls-bbc-hint)" : "var(--ls-bbc-lime-ink)",
+            fontWeight: 700,
+            fontSize: 12.5,
+            cursor: fin <= debut ? "not-allowed" : "pointer",
+          }}
+        >
+          Enregistrer
+        </button>
+        {/* Ne s'affiche que s'il y a une exception à retirer : proposer
+            « revenir à l'habituel » quand on Y EST déjà ne ferait que semer le
+            doute sur ce qui est appliqué. */}
+        {plageExceptionnelle ? (
+          <button
+            type="button"
+            onClick={() => {
+              onReglerPlage(null);
+              setOuvert(false);
+            }}
+            style={{
+              padding: "7px 11px",
+              borderRadius: 10,
+              border: "1px solid var(--ls-bbc-line)",
+              background: "transparent",
+              color: "var(--ls-bbc-muted)",
+              fontSize: 12.5,
+              cursor: "pointer",
+            }}
+          >
+            Horaire habituel
+          </button>
+        ) : null}
+        <span style={{ flexBasis: "100%", fontSize: 11.5, color: "var(--ls-bbc-hint)", lineHeight: 1.45 }}>
+          Ne vaut que pour ce jour. Effet immédiat sur les réservations du site.
+        </span>
+      </div>
+    ) : null}
+    </>
   );
 }
+
+const champHeure: React.CSSProperties = {
+  padding: "7px 9px",
+  borderRadius: 10,
+  border: "1px solid var(--ls-bbc-line2)",
+  background: "var(--ls-bbc-s1)",
+  color: "var(--ls-bbc-text)",
+  fontFamily: "var(--ls-bbc-font-mono)",
+  fontSize: 13,
+};
 
 function LigneEvenement({
   ev,
