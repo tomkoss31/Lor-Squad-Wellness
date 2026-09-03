@@ -48,6 +48,8 @@ export type CrmSource =
   | "simulateur"
   | "business"
   | "welcome"
+  /** Formulaire de la pub Meta (Centre de prospects). */
+  | "meta-ads"
   | "colis"
   /** Tunnel « Réserver au club » (/reserver). 4 leads en base au 2026-08-11,
    *  tous affichés « Site web » faute d'exister ici. */
@@ -292,6 +294,7 @@ export const CRM_SOURCE_META: Record<CrmSource, { label: string; emoji: string }
   welcome: { label: "Site web", emoji: "🌐" },
   colis: { label: "Colis", emoji: "🎁" },
   "site-club": { label: "Réserver au club", emoji: "🏠" },
+  "meta-ads": { label: "Pub Meta", emoji: "📣" },
   inconnue: { label: "Source inconnue", emoji: "❓" },
 };
 
@@ -351,6 +354,11 @@ function mapProspectSource(source: string | null | undefined): CrmSource {
   if (s.startsWith("business")) return "business";
   if (s === "colis") return "colis";
   if (s === "site-club") return "site-club";
+  // Les leads du formulaire Meta. Ils portaient TOUS « site-club » jusqu'au
+  // 03/09/2026, donc rien ne distinguait la pub du site du club — c'est ce qui
+  // rendait le CRM illisible (« je galère à savoir qui vient d'où »). La bascule
+  // en base sans cette ligne les aurait fait tomber sur « inconnue ».
+  if (s === "meta-ads" || s === "meta" || s === "meta-lead") return "meta-ads";
   // Les valeurs historiques du site vitrine, listées explicitement.
   if (s === "welcome" || s === "welcome_page" || s === "site" || s === "") return "welcome";
   // Tout le reste : on le DIT. Le défaut d'avant renvoyait « welcome », donc

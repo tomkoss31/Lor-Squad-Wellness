@@ -24,6 +24,10 @@ import {
   buildAskContactMessage,
   buildCrmMessage,
   buildCrmRelanceMessage,
+  messageClubRelance,
+  objectifDuLead,
+  ouvertureClub,
+  vocatif,
   type CrmMessageContext,
 } from "./crmMessages";
 
@@ -38,23 +42,46 @@ export interface CrmTone {
 }
 
 const OBJECTIVE_HUMAN: Record<string, string> = {
-  weight_loss: "ton objectif perte de poids",
-  mass_gain: "ta prise de masse",
-  energy: "ton énergie au quotidien",
-  sleep: "ton sommeil et ta récupération",
-  wellbeing: "ton bien-être global",
-  perf_pro: "ta performance au travail",
+  weight_loss: "perdre du poids",
+  mass_gain: "prendre de la masse",
+  energy: "retrouver de l'énergie au quotidien",
+  sleep: "mieux dormir et mieux récupérer",
+  wellbeing: "vous sentir mieux au quotidien",
+  perf_pro: "être plus performante au travail",
 };
 
-// Seul online_bilans porte des objectifs structurés (bilanObjectives) — les
-// autres sources retombent sur une formule générique, éditable par le coach.
-function objectivePhrase(lead: CrmLead): string {
+/**
+ * Ce que cette personne nous a dit vouloir — sa formulation, pas la nôtre.
+ *
+ * ⚠️ Cette fonction ne lisait QUE `bilanObjectives`, qui n'existe que pour
+ * online_bilans. Résultat : un lead venu du club ou de la pub Meta recevait
+ * « ton objectif » alors que la base savait qu'il voulait perdre du poids —
+ * `prospect_leads.metadata.objectif` est exposé sur `CrmLead.objectif` depuis
+ * le tunnel « Réserver au club ». On lit donc celui-là EN PREMIER.
+ *
+ * Renvoie `null` quand on ne sait pas : au lieu d'une formule creuse, la phrase
+ * appelante se referme proprement (cf. `pour()` / `sur()`).
+ */
+function objectivePhrase(lead: CrmLead): string | null {
+  const club = objectifDuLead(lead);
+  if (club) return club;
+
   const objs = lead.bilanObjectives ?? [];
-  if (objs.length === 0) return "ton objectif";
-  if (objs.length === 1) return OBJECTIVE_HUMAN[objs[0]] ?? "ton objectif";
-  return "tes objectifs";
+  if (objs.length === 1) return OBJECTIVE_HUMAN[objs[0]] ?? null;
+  if (objs.length > 1) return null;
+  return null;
 }
 
+function sur(lead: CrmLead): string {
+  const o = objectivePhrase(lead);
+  return o ? ` sur ${o}` : "";
+}
+
+/** Là où on envoie quelqu'un choisir son heure. */
+const LIEN_RESERVER = "labase-nutrition.com/reserver";
+
+// Le cas « club » vit désormais DANS les builders de crmMessages.ts, pour que
+// le 1-clic du board (useLeadQuickActions) et ce panneau disent la même chose.
 function autoMessage(lead: CrmLead, ctx: CrmMessageContext): string {
   if (lead.source === "intention") return buildAskContactMessage(lead, ctx);
   if (lead.status === "contacted") return buildCrmRelanceMessage(lead, ctx);
@@ -72,76 +99,58 @@ export const CRM_TONES: CrmTone[] = [
   {
     id: "welcome_rdv",
     emoji: "👋",
-    label: "Accueil + propose RDV",
-    description: "Premier contact chaud, propose un appel ou RDV.",
-    render: (lead, ctx) => {
-      const f = lead.firstName.trim() || "toi";
-      const obj = objectivePhrase(lead);
-      return [
-        `Salut ${f} 👋`,
-        ``,
-        `C'est ${ctx.coachFirstName} de La Base 360. J'ai bien reçu ton message, merci pour ta confiance 🙏`,
-        ``,
-        `J'ai vu que tu visais ${obj}. J'ai des idées concrètes pour toi.`,
-        ``,
-        `On se cale un appel cette semaine (30 min, gratuit) ? Dis-moi ce qui t'arrange le mieux.`,
-      ].join("\n");
+    // Renommé : l'ancien libellé promettait un « RDV » et le texte vendait un
+    // appel de 30 min. L'offre du club, c'est le bilan sur place.
+    label: "Accueil + réserver",
+    description: "Premier contact : on offre le bilan et on laisse choisir l'heure.",
+    render: (lead) => {
+      const o = objectivePhrase(lead);
+      return (
+        `${ouvertureClub(lead)} Merci d'avoir laissé vos coordonnées` +
+        (o ? ` — on a bien vu que vous vouliez ${o}.` : `.`) +
+        ` Ça nous ferait vraiment plaisir de vous accueillir au club et de vous offrir ` +
+        `votre bilan : 45 min, body scan et boisson comprise. Vous choisissez votre ` +
+        `heure ici : ${LIEN_RESERVER}` +
+        `\n\nMerci d'avance.\nMélanie et Thomas`
+      );
     },
   },
   {
     id: "welcome_questions",
     emoji: "💬",
-    label: "Accueil + ouverture conversation",
-    description: "Soft : pas de RDV immédiat, ouvre la discussion.",
-    render: (lead, ctx) => {
-      const f = lead.firstName.trim() || "toi";
-      const obj = objectivePhrase(lead);
-      return [
-        `Salut ${f} ! 🌿`,
-        ``,
-        `${ctx.coachFirstName} de La Base 360 — merci pour ton message, je l'ai bien lu.`,
-        ``,
-        `Avant qu'on parle stratégie sur ${obj}, juste 2 questions rapides :`,
-        `1. Sur quelle période tu veux des résultats ?`,
-        `2. Qu'est-ce qui te bloque le plus aujourd'hui ?`,
-        ``,
-        `Réponds quand t'as 2 min, à ton rythme 🙂`,
-      ].join("\n");
-    },
+    label: "Accueil + une question",
+    description: "Soft : on ne propose rien encore, on ouvre la discussion.",
+    // Une seule question, pas deux : un questionnaire numéroté par SMS se
+    // répond rarement. Et ici la personne PEUT répondre — WhatsApp et SMS
+    // partent du téléphone du coach, contrairement aux envois Twilio.
+    render: (lead) => (
+      `${ouvertureClub(lead)} Merci d'avoir laissé vos coordonnées. Avant de vous ` +
+      `proposer quoi que ce soit, on préfère vous demander : qu'est-ce qui vous ` +
+      `freine le plus en ce moment ? Répondez quand vous avez un moment, on vous lit.` +
+      `\n\nMélanie et Thomas`
+    ),
   },
   {
     id: "relance_j3",
     emoji: "🔔",
     label: "Relance douce (sans réponse)",
     description: "Relance après quelques jours de silence.",
-    render: (lead, ctx) => {
-      const f = lead.firstName.trim() || "toi";
-      return [
-        `Re ${f} 🙂`,
-        ``,
-        `Je voulais m'assurer que mon dernier message t'est bien arrivé.`,
-        ``,
-        `Pas de stress si t'es occupé·e — dis-moi juste si tu veux qu'on en parle ou si tu préfères qu'on remette ça à plus tard. Je m'adapte 🤝`,
-        ``,
-        `${ctx.coachFirstName}`,
-      ].join("\n");
-    },
+    render: (lead) => messageClubRelance(lead),
   },
   {
     id: "redirect_team",
     emoji: "🤝",
-    label: "Redirection vers l'équipe",
-    description: "Si tu n'es pas la bonne personne pour ce profil.",
-    render: (lead) => {
-      const f = lead.firstName.trim() || "toi";
-      return [
-        `Salut ${f} 👋`,
-        ``,
-        `Merci pour ton message ! Pour bien t'accompagner sur ${objectivePhrase(lead)}, je te mets en relation avec une coach de l'équipe La Base 360 qui sera plus adaptée à ton profil.`,
-        ``,
-        `Elle te recontacte sous 24-48h. À très vite 🙏`,
-      ].join("\n");
-    },
+    label: "Passer la main",
+    description: "Quand quelqu'un d'autre de l'équipe est plus adapté.",
+    // L'ancien texte présumait une femme (« Elle te recontacte ») et promettait
+    // « sous 24-48h », un délai que personne ne tient. Le prénom du coéquipier
+    // est éditable dans l'aperçu — c'est plus honnête qu'un genre deviné.
+    render: (lead, ctx) => (
+      `Bonjour${vocatif(lead)}, c'est ${ctx.coachFirstName} du Breakfast Club à Verdun. ` +
+      `Pour bien vous accompagner${sur(lead)}, je préfère vous confier à un membre ` +
+      `de notre équipe : c'est vraiment son domaine. Il ou elle vous écrit très vite.` +
+      `\n\nMerci de votre confiance.\n${ctx.coachFirstName}`
+    ),
   },
 ];
 
