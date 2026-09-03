@@ -91,7 +91,7 @@ export interface RdvEmailParams {
    *   (rdv-confirm-client), dont le RDV est confirmé dès sa création.
    * `reminder` — le rappel de la veille.
    */
-  kind: "confirm" | "reminder" | "requested";
+  kind: "confirm" | "reminder" | "requested" | "moved" | "canceled";
   firstName: string;
   coachName: string;
   dateLabel: string; // ex « mardi 1 juillet »
@@ -146,32 +146,46 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
   const vocatif = first ? `, ${first}` : "";
   const coach = esc(p.coachName || "votre coach");
   const isDemande = p.kind === "requested";
+  const isAnnule = p.kind === "canceled";
+  const isDeplace = p.kind === "moved";
   // `requested` partage toute la mise en page de `confirm` — seuls le titre et
   // l'accroche changent, parce que la promesse n'est pas la même.
   const isConfirm = p.kind === "confirm" || isDemande;
 
-  const heading = isDemande
-    ? `On a bien reçu votre demande${vocatif}`
-    : isConfirm
+  const heading = isAnnule
+    ? `C'est annulé${vocatif}`
+    : isDeplace
       ? `C'est noté${vocatif} ✅`
-      : `À demain${vocatif} 🌿`;
-  const intro = isDemande
-    ? `Votre demande de rendez-vous avec <b style="color:${t.heading};">${coach}</b> est arrivée. On vous confirme le créneau très vite, par email.`
-    : isConfirm
-      ? `Votre rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de vous voir 🌿`
-      : `Petit rappel : votre rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
+      : isDemande
+        ? `On a bien reçu votre demande${vocatif}`
+        : isConfirm
+          ? `C'est noté${vocatif} ✅`
+          : `À demain${vocatif} 🌿`;
+  const intro = isAnnule
+    ? `On a bien enregistré l'annulation de votre rendez-vous. Vous n'avez rien d'autre à faire.`
+    : isDeplace
+      ? `Votre rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien déplacé. L'ancien créneau est libéré.`
+      : isDemande
+      ? `Votre demande de rendez-vous avec <b style="color:${t.heading};">${coach}</b> est arrivée. On vous confirme le créneau très vite, par email.`
+      : isConfirm
+        ? `Votre rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de vous voir 🌿`
+        : `Petit rappel : votre rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
   // Avec un lien de gestion, on invite à se servir tout seul plutôt qu'à écrire.
-  const closing = isDemande
-    ? (p.manageUrl
-        ? `Vous recevrez la confirmation dès qu'on aura validé le créneau. Besoin de le changer d'ici là ? Vous pouvez le faire vous-même 👇`
-        : `Vous recevrez la confirmation dès qu'on aura validé le créneau. Une question d'ici là ? Répondez simplement à cet email 💬`)
-    : p.manageUrl
-      ? (isConfirm
-          ? `Un rappel vous arrivera la veille. Un empêchement ? Vous pouvez déplacer ou annuler vous-même, en deux clics 👇`
-          : `Pensez à bien vous hydrater d'ici là 💧 Un empêchement ? Déplacez ou annulez vous-même 👇`)
-      : (isConfirm
-          ? `Un rappel vous arrivera la veille. Un empêchement ? Répondez simplement à cet email, on s'arrange 💬`
-          : `Pensez à bien vous hydrater d'ici là 💧 Un empêchement ? Répondez à cet email, on s'arrange.`);
+  const closing = isAnnule
+    ? `Quand vous voudrez reprendre une heure, elle vous attend — votre body scan de 45 min vous reste offert. Au plaisir de vous accueillir 🌿`
+    : isDeplace
+      ? `Un rappel vous arrivera la veille. Un nouvel empêchement ? Vous pouvez redéplacer ou annuler vous-même 👇`
+      : isDemande
+        ? (p.manageUrl
+            ? `Vous recevrez la confirmation dès qu'on aura validé le créneau. Besoin de le changer d'ici là ? Vous pouvez le faire vous-même 👇`
+            : `Vous recevrez la confirmation dès qu'on aura validé le créneau. Une question d'ici là ? Répondez simplement à cet email 💬`)
+        : p.manageUrl
+          ? (isConfirm
+              ? `Un rappel vous arrivera la veille. Un empêchement ? Vous pouvez déplacer ou annuler vous-même, en deux clics 👇`
+              : `Un empêchement ? Vous pouvez déplacer ou annuler vous-même, en deux clics 👇`)
+          : (isConfirm
+              ? `Un rappel vous arrivera la veille. Un empêchement ? Répondez simplement à cet email, on s'arrange 💬`
+              : `Un empêchement ? Répondez simplement à cet email, on s'arrange 💬`);
 
   /**
    * Le délai de prévenance. Demandé par Mélanie à 24 h, ramené à 12 h par
@@ -200,11 +214,13 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
   // de compte, l'envoyer sur une page de connexion serait une impasse.
   // La condition porte donc sur `hasAccount`, la vraie raison — et non sur le
   // thème, qui ne dit rien de qui reçoit le mail.
-  const cta = p.manageUrl
-    ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", t.accent, t.accentInk)
-    : (p.hasAccount ?? true)
-      ? btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk)
-      : "";
+  const cta = isAnnule
+    ? btn(`${CLUB_URL}/reserver`, "Choisir un nouveau créneau", t.accent, t.accentInk)
+    : p.manageUrl
+      ? btn(p.manageUrl, "Modifier / annuler mon rendez-vous", t.accent, t.accentInk)
+      : (p.hasAccount ?? true)
+        ? btn(APP_URL, "Accéder à mon espace →", t.accent, t.accentInk)
+        : "";
 
   // En-tête. Côté club, le logo SEUL : il porte déjà « by La Base », répéter
   // « by La Base · Verdun » en dessous faisait doublon (retour Thomas
@@ -215,21 +231,21 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
     : `<div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:${t.accent};font-weight:700;">${t.eyebrow}</div>
     <div style="font-size:11px;color:${t.faint};letter-spacing:.04em;margin-top:2px;">${t.tagline}</div>`;
 
-  // Bloc du bas — il ne raconte pas la même chose selon le destinataire.
+  // Bloc du bas — présent côté APP seulement.
   //
-  // Côté CLUB, le jeu « tente de gagner ta boisson » posait deux problèmes
-  // (retour Thomas 2026-08-09) : il mélangeait le Breakfast Club et le bar,
-  // qui sont deux ambiances du MÊME lieu, et surtout il promettait une boisson
-  // à quelqu'un qui vient le MATIN — alors que le bar n'ouvre qu'à 11h. On
-  // remplace donc par une simple information, exacte et sans promesse : la
-  // même adresse, l'après-midi. Aucun bouton : rien d'utile à faire tout de
-  // suite, la personne a déjà son rendez-vous.
+  // ⚠️ 03/09/2026 — côté CLUB, il n'y en a plus. Il a d'abord porté le jeu
+  // « tente de gagner ta boisson », retiré le 09/08 parce qu'il promettait une
+  // boisson à quelqu'un qui vient le matin alors que le bar ouvre à 11h. Son
+  // remplaçant — « le même lieu, l'après-midi » — écrivait « à partir de 11h »
+  // et « jusqu'à 17h30 » en toutes lettres, dans un mail envoyé tous les
+  // jours : au premier changement d'horaires il se met à mentir, et personne
+  // ne pense à relire un gabarit. Thomas l'a coupé.
+  //
+  // Les vrais horaires vivent dans CLUB_HOURS, une seule constante, et
+  // figurent déjà au pied de page. Un mail de rendez-vous n'a rien d'autre à
+  // vendre : il dit quand, où, et comment changer d'avis.
   const bottom = (p.theme ?? "app") === "club"
-    ? `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
-      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
-      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Le même lieu, l'après-midi</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0;">Votre rendez-vous est le matin, à l'heure du Breakfast Club. À partir de 11h, la même adresse devient un bar healthy : smoothies, shakes et boissons saines à emporter, jusqu'à 17h30.</p>
-    </div>`
+    ? ""
     : `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
       <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
       <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tentez de gagner votre boisson 🎁</div>

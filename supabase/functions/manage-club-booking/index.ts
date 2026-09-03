@@ -19,12 +19,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { deleteCalendarEvent } from "../_shared/googleCalendar.ts";
+import { rdvEmailHtml, expediteurPour } from "../_shared/rdvEmail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const TEAM_EMAIL = "labaseverdun@gmail.com";
+const CLUB_SITE = "https://www.labase-nutrition.com";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -56,13 +58,13 @@ function esc(s: string): string {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 }
 
-async function sendMail(to: string, subject: string, html: string): Promise<void> {
+async function sendMail(to: string, subject: string, html: string, from = FROM_DEFAULT): Promise<void> {
   if (!RESEND_API_KEY || !to) return;
   try {
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_DEFAULT, to: [to], subject, html }),
+      body: JSON.stringify({ from, to: [to], subject, html }),
     });
   } catch {
     // best-effort : l'action du prospect est déjà enregistrée
@@ -103,6 +105,50 @@ function staffHtml(title: string, lines: string[]): string {
 </body></html>`.trim();
 }
 
+/**
+ * Le mail vers LA PERSONNE (03/09/2026).
+ *
+ * Jusqu'ici cette fonction ne prevenait QUE les coachs : quelqu'un annulait
+ * depuis son email, l'ecran changeait, et il ne recevait rien. Aucune trace
+ * ecrite de son annulation, et aucune porte laissee ouverte — alors que c'est
+ * exactement le moment ou elle compte.
+ *
+ * Best-effort, comme notifyStaff : l'action est deja enregistree en base, on
+ * ne la refuse pas parce qu'un mail n'est pas parti.
+ */
+async function mailPersonne(
+  b: { first_name: string; contact: string | null; manage_token: string | null },
+  kind: "canceled" | "moved",
+  dateLabel: string,
+  hour: string,
+  location: string,
+): Promise<void> {
+  const to = (b.contact ?? "").trim();
+  if (!to || !EMAIL_RE.test(to)) return;
+  const html = rdvEmailHtml({
+    kind,
+    theme: "club",
+    firstName: (b.first_name ?? "").trim(),
+    coachName: "l'équipe du Breakfast Club",
+    dateLabel,
+    hour,
+    location,
+    // Un rendez-vous annule n'a plus rien a gerer : son bouton renvoie vers la
+    // reservation. Un rendez-vous deplace, si.
+    manageUrl:
+      kind === "moved" && b.manage_token
+        ? `${CLUB_SITE}/rdv/gerer/${b.manage_token}`
+        : undefined,
+    hasAccount: false,
+  });
+  await sendMail(
+    to,
+    kind === "canceled" ? "Votre rendez-vous est bien annulé" : "Votre nouveau créneau est noté",
+    html,
+    expediteurPour("club"),
+  );
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ success: false, error: "method_not_allowed" }, 405);
@@ -122,7 +168,7 @@ serve(async (req: Request) => {
 
   const { data: booking, error: bErr } = await sb
     .from("rdv_bookings")
-    .select("id, first_name, slot_start, slot_end, status, people_count, partner_first_name, club_id, google_event_id")
+    .select("id, first_name, contact, manage_token, slot_start, slot_end, status, people_count, partner_first_name, club_id, google_event_id")
     .eq("manage_token", token)
     .maybeSingle();
 
@@ -131,6 +177,7 @@ serve(async (req: Request) => {
 
   const b = booking as {
     id: string; first_name: string; slot_start: string; slot_end: string;
+    contact: string | null; manage_token: string | null;
     status: string; people_count: number; partner_first_name: string | null; club_id: string | null;
   };
 
@@ -195,6 +242,8 @@ serve(async (req: Request) => {
       }
     }
 
+    await mailPersonne(b, "canceled", parisDateLabel(b.slot_start), parisHour(b.slot_start), publicBooking.location);
+
     await notifyStaff(
       sb,
       `❌ Annulation — ${b.first_name} · ${parisDateLabel(b.slot_start)} ${parisHour(b.slot_start)}`,
@@ -225,6 +274,8 @@ serve(async (req: Request) => {
     if (result === "past") return json({ success: false, error: "creneau_passe" }, 400);
     if (result !== "ok") return json({ success: false, error: "lien_invalide" }, 404);
 
+    await mailPersonne(b, "moved", parisDateLabel(start.toISOString()), parisHour(start.toISOString()), publicBooking.location);
+
     await notifyStaff(
       sb,
       `🔄 RDV déplacé — ${b.first_name} · ${parisDateLabel(start.toISOString())} ${parisHour(start.toISOString())}`,
@@ -236,7 +287,9 @@ serve(async (req: Request) => {
     );
     return json({
       success: true,
-      booking: { ...publicBooking, slotStart: start.toISOString(), status: "requested", isPast: false },
+      // Le deplacement ne repasse plus le RDV en « demande » (decision Thomas
+      // 03/09) : on renvoie donc son vrai statut, pas une valeur en dur.
+      booking: { ...publicBooking, slotStart: start.toISOString(), status: b.status, isPast: false },
     });
   }
 
