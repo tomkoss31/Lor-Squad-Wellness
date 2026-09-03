@@ -11,6 +11,9 @@ import { BbcNewMemberButton } from "../BbcNewMemberButton";
 import { BbcMemberCorps } from "./BbcMemberCorps";
 import { objectifAffichable } from "../bilan10Pesee";
 import { BbcPeseeSheet } from "../BbcPeseeSheet";
+import { BbcCardSheet } from "../BbcCardSheet";
+import { getSupabaseClient } from "../../../services/supabaseClient";
+import type { Club } from "../../../types/domain";
 import { BbcSupprimerMembre } from "./BbcSupprimerMembre";
 import { useAppContext } from "../../../context/AppContext";
 
@@ -58,16 +61,24 @@ interface BbcCrmProps {
   userId?: string;
   /** Ouvre la feuille « Évaluation bien-être » (montée par BbcApp). */
   onNouveauMembre?: () => void;
+  /** Le club actif : donne le prix et la duree des cartes, jamais en dur. */
+  club?: Club | null;
 }
 
-export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
-  const { members: tous, loading } = useBbcMembers(userId);
+export function BbcCrm({ userId, onNouveauMembre, club }: BbcCrmProps) {
+  const { members: tous, loading, refetch: rechargerMembres } = useBbcMembers(userId);
   const [open, setOpen] = useState<string | null>(null);
   // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
   // pour retrouver les siens vite — il ne cache rien qu'on ne puisse rouvrir.
   const [filtre, setFiltre] = useState<"club" | "moi">("club");
   // La feuille de pesée, ouverte depuis une fiche dépliée.
   const [pesee, setPesee] = useState<BbcMember | null>(null);
+  // ⚠️ 03/09 — Thomas : « il faut que je puisse agir sur les cartes en allant
+  // dans membre, cliquer sur le membre non ? ». La carte ne se posait que
+  // depuis « Les visites ». C'est ici qu'on ouvre la fiche de quelqu'un —
+  // c'est donc ici qu'on doit pouvoir lui vendre sa carte.
+  const [carteFor, setCarteFor] = useState<BbcMember | null>(null);
+  const [carteCle, setCarteCle] = useState(0);
   // Change après chaque écriture : force le rechargement des relevés.
   const [cleCorps, setCleCorps] = useState(0);
   // Combien de pesées chaque membre a déjà : remonté par la fiche dépliée, il
@@ -181,7 +192,7 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
-              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} />
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} />
           ))
         )}
       </div>
@@ -204,6 +215,32 @@ export function BbcCrm({ userId, onNouveauMembre }: BbcCrmProps) {
             } catch (e) {
               return e instanceof Error ? e.message : "La suppression n'a pas abouti.";
             }
+          }}
+        />
+      ) : null}
+
+      {carteFor ? (
+        <BbcCardSheet
+          key={carteCle}
+          memberName={carteFor.name}
+          currentCard={carteFor.card}
+          cardsConfig={club?.settings?.cards ?? null}
+          ouvertureIso={club?.settings?.opening_date ?? null}
+          onClose={() => setCarteFor(null)}
+          onAssign={async (type, priceEur, days, debutIso) => {
+            const sb = await getSupabaseClient();
+            if (!sb) return false;
+            const { error } = await sb.rpc("bbc_assign_card", {
+              p_client_id: carteFor.id,
+              p_type: type,
+              p_price: priceEur ?? null,
+              p_days: days ?? null,
+              p_started_at: debutIso ?? null,
+            });
+            if (error) return false;
+            await rechargerMembres();
+            setCarteCle((k) => k + 1);
+            return true;
           }}
         />
       ) : null}
@@ -274,10 +311,12 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
 }
 
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
   onSupprimer: (m: BbcMember) => void;
+  /** Ouvre la feuille carte pour ce membre (03/09). */
+  onCarte: (m: BbcMember) => void;
   onPesee?: (m: BbcMember) => void; cleCorps?: number;
   onCorpsCharge?: (id: string, nb: number) => void;
 }) {
@@ -453,6 +492,24 @@ function MemberRow({
             >
               📋 Sa fiche complète
             </a>
+            {/* La carte, ici aussi. Elle ne vivait que sur « Les visites » —
+                or c'est en ouvrant quelqu'un qu'on se demande où il en est. */}
+            <button
+              type="button"
+              onClick={() => onCarte(m)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 12,
+                background: m.card ? "var(--ls-bbc-s2)" : "color-mix(in srgb, var(--ls-bbc-lime) 16%, transparent)",
+                border: `1px solid ${m.card ? "var(--ls-bbc-line)" : "color-mix(in srgb, var(--ls-bbc-lime) 45%, transparent)"}`,
+                color: m.card ? "var(--ls-bbc-text)" : "var(--ls-bbc-lime-text)",
+                fontWeight: 600,
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
+            >
+              🎟️ {m.card ? `Carte ${m.card.type} · ${m.card.remaining} restantes` : "Lui donner une carte"}
+            </button>
             <button
               type="button"
               onClick={() => onSupprimer(m)}

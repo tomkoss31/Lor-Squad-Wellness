@@ -423,7 +423,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
-        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} onNouveauMembre={() => setNouveauMembre(true)} />}
+        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} club={club ?? null} onNouveauMembre={() => setNouveauMembre(true)} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}

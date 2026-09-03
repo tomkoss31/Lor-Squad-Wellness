@@ -37,6 +37,13 @@ import {
   type ClubDiscoveryBooking,
 } from "../../../hooks/useClubDiscoveryBookings";
 import { setClubDayClosed, setClubDayHours } from "../../../services/sb/club-bookings";
+// ⚠️ 03/09 — Thomas : « comment j'ajoute un rdv ??? manuellement ? ». En mode
+// BBC, la semaine se LISAIT sans qu'on puisse rien y poser : pour bloquer un
+// créneau (rendez-vous médical, formation), il fallait repasser en interface
+// classique. On réutilise le formulaire de l'agenda plutôt que d'en écrire un
+// second — c'est la même table `prospects`, donc le créneau du site se ferme
+// tout seul (get_club_discovery_availability lit ces rendez-vous).
+import { ProspectFormModal } from "../../../components/prospect/ProspectFormModal";
 import { startOfWeekMonday, weekDays, isSameDay } from "../../agenda/calendarEvents";
 import { DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
 import type { Club } from "../../../types/domain";
@@ -282,6 +289,8 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   const [horairesParDate, setHorairesParDate] = useState<Record<string, Array<[string, string]>>>(
     () => reglagesDecouverte?.hours_by_date ?? {},
   );
+  /** Le jour sur lequel on vient de demander « + rdv ». */
+  const [nouveauRdv, setNouveauRdv] = useState<Date | null>(null);
 
   /** L'horaire réellement appliqué ce jour-là : l'exception, sinon l'habituel. */
   const plageDuJour = useCallback(
@@ -684,6 +693,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
               aujourdhui={isSameDay(jour, new Date())}
               ferme={joursFermes.includes(cleJour(jour))}
               onBasculer={clubId ? () => void basculerJour(jour) : undefined}
+              onAjouterRdv={() => setNouveauRdv(jour)}
               plage={plageDuJour(jour)}
               plageExceptionnelle={Boolean(horairesParDate[cleJour(jour)])}
               onReglerPlage={clubId ? (p) => void reglerPlage(jour, p) : undefined}
@@ -786,6 +796,17 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           }}
         />
       ) : null}
+
+      {/* Poser un rendez-vous depuis le mode BBC. `prospects` est la table que
+          lit la disponibilité du site : le créneau perd une place aussitôt. */}
+      {nouveauRdv ? (
+        <ModaleNouveauRdv
+          jour={nouveauRdv}
+          moi={currentUser?.id}
+          onFerme={() => setNouveauRdv(null)}
+          onEnregistre={() => { void rechargerDecouvertes(); }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -798,11 +819,33 @@ function heureCourte(hhmm: string): string {
   return m && m !== "00" ? `${Number(h)}h${m}` : `${Number(h)}h`;
 }
 
+function ModaleNouveauRdv({ jour, moi, onFerme, onEnregistre }: {
+  jour: Date;
+  moi?: string;
+  onFerme: () => void;
+  onEnregistre: () => void;
+}) {
+  // 9 h par défaut : une heure ouvrée, pas minuit. Le formulaire laisse
+  // corriger — on propose, on n'impose pas.
+  const debut = new Date(jour.getFullYear(), jour.getMonth(), jour.getDate(), 9, 0, 0, 0);
+  return (
+    <ProspectFormModal
+      prefill={{ rdvDate: debut.toISOString(), distributorId: moi }}
+      onClose={onFerme}
+      onSaved={() => {
+        onEnregistre();
+        onFerme();
+      }}
+    />
+  );
+}
+
 function EnTeteJour({
   libelle,
   aujourdhui,
   ferme,
   onBasculer,
+  onAjouterRdv,
   plage,
   plageExceptionnelle,
   onReglerPlage,
@@ -813,6 +856,8 @@ function EnTeteJour({
   ferme?: boolean;
   /** Absent = journée non pilotable (pas de club, ou pas d'ouverture ce jour). */
   onBasculer?: () => void;
+  /** Ouvre le formulaire de rendez-vous sur ce jour. */
+  onAjouterRdv?: () => void;
   /** L'horaire appliqué ce jour-là — l'exception si elle existe, sinon l'habituel. */
   plage?: [string, string] | null;
   /** Vrai si cette journée porte une exception (donc « revenir à l'habituel » a un sens). */
@@ -874,6 +919,25 @@ function EnTeteJour({
           }}
         >
           {ferme ? "réservations fermées" : "réservations ouvertes"}
+        </button>
+      ) : null}
+
+      {/* Poser un rendez-vous SANS quitter le mode BBC. Il atterrit dans la
+          table `prospects` — celle que lit la disponibilité du site — donc il
+          retire une place du créneau au passage. */}
+      {onAjouterRdv ? (
+        <button
+          type="button"
+          onClick={onAjouterRdv}
+          title="Ajouter un rendez-vous ce jour-là"
+          style={{
+            ...chip,
+            border: "1px solid var(--ls-bbc-line)",
+            background: "transparent",
+            color: "var(--ls-bbc-muted)",
+          }}
+        >
+          + rdv
         </button>
       ) : null}
 
