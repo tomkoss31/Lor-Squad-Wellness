@@ -150,7 +150,21 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   // Semaine courante uniquement (lundi → dimanche), conformément à la maquette
   // validée. `startOfWeekMonday` / `weekDays` viennent du moteur de l'agenda
   // classique : la semaine française y est déjà définie une seule fois.
-  const lundi = useMemo(() => startOfWeekMonday(new Date()), []);
+  // ⚠️ 03/09 — Thomas : « l'agenda doit s'ouvrir sur la date du jour ! pas le
+  // 1 septembre, obligé de scroller pour rien ! possible de revenir en arrière
+  // facilement sur les dates antérieures, et futur aussi ».
+  //
+  // La semaine était figée sur la semaine courante, et elle commençait au lundi
+  // — donc un jeudi, on ouvrait sur trois journées déjà passées avant d'arriver
+  // à aujourd'hui. Deux corrections liées : on peut changer de semaine, et la
+  // semaine EN COURS démarre à aujourd'hui (le passé reste à un tap).
+  const [decalage, setDecalage] = useState(0);
+  const [voirPasse, setVoirPasse] = useState(false);
+  const lundi = useMemo(() => {
+    const d = startOfWeekMonday(new Date());
+    d.setDate(d.getDate() + decalage * 7);
+    return d;
+  }, [decalage]);
   const jours = useMemo(() => weekDays(lundi), [lundi]);
 
   const settings = club?.settings ?? null;
@@ -535,9 +549,20 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   };
 
   const bilansVisibles = garde("bilan") ? aCaler : [];
-  const joursVisibles = semaine
+  const minuitAujourdhui = new Date();
+  minuitAujourdhui.setHours(0, 0, 0, 0);
+  const joursDuFiltre = semaine
     .map((d) => ({ ...d, evs: d.evs.filter((e) => garde(e.famille)) }))
     .filter((d) => d.evs.length > 0);
+  // Le passé n'est masqué que sur la semaine EN COURS : sur une semaine
+  // précédente, tout est passé — le cacher rendrait l'écran vide.
+  const cachePasse = decalage === 0 && !voirPasse;
+  const joursPasses = cachePasse
+    ? joursDuFiltre.filter((d) => d.jour.getTime() < minuitAujourdhui.getTime()).length
+    : 0;
+  const joursVisibles = cachePasse
+    ? joursDuFiltre.filter((d) => d.jour.getTime() >= minuitAujourdhui.getTime())
+    : joursDuFiltre;
   const rienAAfficher = joursVisibles.length === 0 && bilansVisibles.length === 0;
 
   const shiftDuJourChoisi = feuille ? shifts.parJour.get(cleJour(feuille)) : undefined;
@@ -550,7 +575,28 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           faisait mentir l'en-tête sur ce que l'écran couvre, au risque qu'on
           rate ce qui s'y trouve. Seule la PERMANENCE saute le dimanche — d'où
           la précision « du lundi au samedi » accolée aux horaires. */}
-      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, lineHeight: 1.5, color: "var(--ls-bbc-hint)", marginTop: -14, marginBottom: 16 }}>
+      {/* Changer de semaine. « Aujourd'hui » ne s'affiche que si on s'en est
+          éloigné : un bouton qui ne fait rien use la confiance dans les autres. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: -10, marginBottom: 10 }}>
+        <button type="button" onClick={() => setDecalage((d) => d - 1)} aria-label="Semaine précédente" style={navSemaine}>‹</button>
+        <button type="button" onClick={() => setDecalage((d) => d + 1)} aria-label="Semaine suivante" style={navSemaine}>›</button>
+        {decalage !== 0 ? (
+          <button
+            type="button"
+            onClick={() => { setDecalage(0); setVoirPasse(false); }}
+            style={{ ...navSemaine, width: "auto", padding: "0 12px", background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", border: "none", fontWeight: 700 }}
+          >
+            aujourd'hui
+          </button>
+        ) : null}
+        {decalage !== 0 ? (
+          <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-amber)", letterSpacing: "0.06em" }}>
+            {decalage < 0 ? `il y a ${-decalage} semaine${-decalage > 1 ? "s" : ""}` : `dans ${decalage} semaine${decalage > 1 ? "s" : ""}`}
+          </span>
+        ) : null}
+      </div>
+
+      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, lineHeight: 1.5, color: "var(--ls-bbc-hint)", marginTop: 0, marginBottom: 16 }}>
         {fmtJour(jours[0])} → {fmtJour(jours[6])} · ouverture {openHours} du lundi au samedi
       </div>
 
@@ -686,6 +732,27 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
           </div>
         ) : null}
 
+        {joursPasses > 0 ? (
+          <button
+            type="button"
+            onClick={() => setVoirPasse(true)}
+            style={{
+              alignSelf: "flex-start",
+              marginBottom: 10,
+              padding: "6px 12px",
+              borderRadius: 999,
+              border: "1px dashed var(--ls-bbc-line2)",
+              background: "transparent",
+              color: "var(--ls-bbc-muted)",
+              fontFamily: "var(--ls-bbc-font-mono)",
+              fontSize: 10.5,
+              cursor: "pointer",
+            }}
+          >
+            ↑ voir le début de la semaine ({joursPasses} jour{joursPasses > 1 ? "s" : ""})
+          </button>
+        ) : null}
+
         {joursVisibles.map(({ jour, evs }) => (
           <div key={cleJour(jour)}>
             <EnTeteJour
@@ -724,7 +791,9 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
 
         {rienAAfficher ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "24px 0", textAlign: "center" }}>
-            Rien de ce type cette semaine.
+            {/* Dire « rien cette semaine » alors qu'on masque des journées
+                passées serait faux — et le bouton juste au-dessus, incompris. */}
+            {joursPasses > 0 ? "Rien à partir d'aujourd'hui." : "Rien de ce type cette semaine."}
           </div>
         ) : null}
       </div>
@@ -810,6 +879,19 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
     </div>
   );
 }
+
+const navSemaine: React.CSSProperties = {
+  width: 34,
+  height: 34,
+  flex: "none",
+  borderRadius: 10,
+  border: "1px solid var(--ls-bbc-line2)",
+  background: "var(--ls-bbc-s2)",
+  color: "var(--ls-bbc-text)",
+  fontSize: 17,
+  lineHeight: 1,
+  cursor: "pointer",
+};
 
 // ─── Briques d'affichage ─────────────────────────────────────────────────────
 
