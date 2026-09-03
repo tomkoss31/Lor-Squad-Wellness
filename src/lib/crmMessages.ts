@@ -43,12 +43,21 @@ export interface CrmMessageContext {
 
 const LIEN_RESERVER = "labase-nutrition.com/reserver";
 
-/** « , Laure » — ou rien. Le repli valait `"toi"` : sans prénom, la personne
- *  recevait littéralement « Salut toi 👋 ». On ne bouche plus un prénom absent
- *  par un mot creux, le vocatif disparaît avec lui, virgule comprise. */
+/**
+ * « Laure » précédé d'une espace — ou rien du tout.
+ *
+ * Le repli valait `"toi"` : sans prénom, la personne recevait littéralement
+ * « Salut toi 👋 ». On ne bouche plus un prénom absent par un mot creux.
+ *
+ * ⚠️ Cette fonction ne porte PAS de virgule, et c'est volontaire : elle
+ * s'insère dans « Bonjour<ici>, c'est… », qui a déjà la sienne. Un premier jet
+ * renvoyait « , Laure » et produisait « Bonjour, Eric, c'est… » — deux virgules,
+ * parti en prod le 03/09 avant d'être vu à l'écran. Les deux cas doivent tomber
+ * juste : « Bonjour Eric, c'est… » et, sans prénom, « Bonjour, c'est… ».
+ */
 export function vocatif(lead: CrmLead): string {
   const f = lead.firstName.trim();
-  return f ? `, ${f}` : "";
+  return f ? ` ${f}` : "";
 }
 
 /** L'ouverture du club. « c'est », jamais « ici » : pas un robot. */
