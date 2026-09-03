@@ -345,6 +345,11 @@ serve(async (req) => {
             ? "En visio — le lien te sera envoyé avant le RDV"
             : ((cid && cLoc.get(cid)) || "votre club La Base");
           const themeRdv: RdvEmailTheme = b.club_id ? "club" : "app";
+          // ⚠️ 03/09/2026 — le rappel ne passait PAS `manageUrl`, alors que le
+          // jeton est lu juste au-dessus pour le SMS. Le gabarit retombait donc
+          // sur « Accéder à mon espace → », envoyé a des PROSPECTS qui n'ont
+          // aucun compte : une page de connexion en guise de porte de sortie.
+          // Agnes Florentin a du annuler par mail le 03/09 faute de bouton.
           const html = rdvEmailHtml({
             kind: "reminder",
             theme: themeRdv,
@@ -353,6 +358,11 @@ serve(async (req) => {
             dateLabel: parisDateLabel(b.slot_start as string),
             hour: parisHourLabel(b.slot_start as string),
             location: where,
+            manageUrl: b.manage_token
+              ? `https://www.labase-nutrition.com/rdv/gerer/${b.manage_token}`
+              : undefined,
+            // Sans jeton : aucun bouton plutot qu'un cul-de-sac.
+            hasAccount: false,
           });
           const ok = await sendViaResend(String(b.contact), "📅 Votre rendez-vous, c'est demain", html, expediteurPour(themeRdv));
           if (ok) {
@@ -420,6 +430,9 @@ serve(async (req) => {
             dateLabel: parisDateLabel(p.rdv_date as string),
             hour: parisHourLabel(p.rdv_date as string),
             location: (cid && pLoc.get(cid)) || "votre club La Base",
+            // RDV saisi a la main depuis l'agenda : la personne n'a ni espace
+            // client ni lien de gestion. Mieux vaut aucun bouton.
+            hasAccount: false,
           });
           const ok = await sendViaResend(String(p.email), "📅 Votre rendez-vous, c'est demain", html);
           if (ok) {
