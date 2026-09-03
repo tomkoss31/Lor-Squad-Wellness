@@ -63,7 +63,21 @@ export interface UseBbcVisitsResult {
   refetch: () => Promise<void>;
 }
 
-export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
+/**
+ * @param clubId  Le club où l'on tient le comptoir. Quand il est connu, cet
+ *   écran liste les membres DU CLUB et plus seulement « mes fiches ».
+ *
+ *   ⚠️ 03/09 — Thomas : « pour les cartes je fais comment ? j'ai cliqué sur
+ *   leur profil mais rien ne se passe ». Le bouton « carte » vit ICI, et
+ *   Gaëlle n'y était pas : sa fiche est chez Mélanie, la requête filtrait
+ *   sur `distributor_id = moi`. La base autorisait déjà le geste (les RPC
+ *   `bbc_active_cards` / `bbc_visit_counts` prévoient l'admin du club) —
+ *   c'est l'écran qui ne montrait pas la personne.
+ *
+ *   La RLS de `clients` reste seule juge : un coach non-admin ne verra
+ *   toujours que ses propres fiches, club renseigné ou non.
+ */
+export function useBbcVisits(userId?: string | null, clubId?: string | null): UseBbcVisitsResult {
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [cards, setCards] = useState<Record<string, MemberCard>>({});
@@ -81,14 +95,18 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
         setLoading(false);
         return;
       }
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
       const [clientsRes, countsRes, cardsRes, todayRes] = await Promise.all([
         // Seuls les MEMBRES BBC entrent dans l'environnement BBC.
-        sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).eq("ebe_bbc", true).order("first_name"),
+        (clubId
+          ? sb.from("clients").select("id, first_name, last_name").eq("club_id", clubId)
+          : sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId)
+        ).eq("ebe_bbc", true).order("first_name"),
         sb.rpc("bbc_visit_counts"),
         sb.rpc("bbc_active_cards"),
-        sb.from("club_visits").select("client_id").eq("coach_user_id", userId).gte("visited_at", startOfDay.toISOString()),
+        // Passe par la RPC : la policy de `club_visits` ne rend que MES
+        // pointages, donc un membre pointé par l'autre coach reviendrait
+        // « pas encore pointé » et serait compté deux fois.
+        sb.rpc("bbc_visits_today"),
       ]);
       if (Array.isArray(todayRes.data)) {
         setToday(new Set((todayRes.data as Array<Record<string, unknown>>).map((r) => String(r.client_id))));
@@ -129,7 +147,7 @@ export function useBbcVisits(userId?: string | null): UseBbcVisitsResult {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, clubId]);
 
   useEffect(() => {
     void refetch();

@@ -24,7 +24,7 @@ interface BbcClubProps {
 }
 
 export function BbcClub({ userId, club }: BbcClubProps) {
-  const { members, loading, addVisit, removeVisit, assignCard, refetch } = useBbcVisits(userId);
+  const { members, loading, addVisit, removeVisit, assignCard, refetch } = useBbcVisits(userId, club?.id ?? null);
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
