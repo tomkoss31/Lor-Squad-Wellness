@@ -120,7 +120,7 @@ serve(async (req) => {
 
   // Le nom du coach, tel que la personne le connaît. On tente l'id, puis le
   // slug ; à défaut on reste vague plutôt que d'écrire un nom faux.
-  let coachName = "ton coach";
+  let coachName = "votre coach";
   let lieuCoach = "";
   if (booking.coach_user_id) {
     const { data: u } = await sb
@@ -152,7 +152,7 @@ serve(async (req) => {
   // tout coach qui ne reçoit pas au club de Verdun.
   const enVisio = String(booking.mode ?? "").trim() === "visio";
   const [adr1, adr2] = enVisio
-    ? ["En visio", "Le lien t'arrive avant le rendez-vous"]
+    ? ["En visio", "Le lien vous arrive avant le rendez-vous"]
     : (lieuCoach ? couperAdresse(lieuCoach) : [ADRESSE_1, ADRESSE_2]);
   const lieuIcs = enVisio
     ? "Visioconférence — lien envoyé par email"
@@ -182,8 +182,8 @@ serve(async (req) => {
     end: fin,
     summary: `Bilan bien-être avec ${coachName} — La Base 360`,
     description:
-      `On prend le temps de parler de toi, on mesure où tu en es, et on pose un cap. ` +
-      `Rien à décider sur place. Prévois ${dureeMin} minutes.`,
+      `On prend le temps de parler de vous, on mesure où vous en êtes, et on pose un cap. ` +
+      `Rien à décider sur place. Prévoyez ${dureeMin} minutes.`,
     location: lieuIcs,
     attendee: contact,
     attendeeName: prenom || "Invité",

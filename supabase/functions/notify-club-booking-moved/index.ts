@@ -111,7 +111,7 @@ serve(async (req: Request) => {
 
   const html = rdvEmailHtml({
     kind: "confirm",
-    firstName: (booking.first_name ?? "").trim() || "toi",
+    firstName: (booking.first_name ?? "").trim(),
     coachName: "un coach du Breakfast Club",
     dateLabel: parisDateLabel(booking.slot_start),
     hour: parisHourLabel(booking.slot_start),
@@ -129,7 +129,7 @@ serve(async (req: Request) => {
   <div style="background:#FFF4E8;border:1px solid #F6C6A0;border-radius:14px;padding:16px 18px;">
     <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#E0532A;font-weight:700;">Changement d'horaire</div>
     <p style="font-size:14.5px;line-height:1.55;color:#17201C;margin:8px 0 0;">
-      On a dû décaler ton rendez-vous${prev ? ` (initialement le <b>${prev}</b>)` : ""}. Voici le nouveau créneau — si l'heure ne te convient pas, tu peux en rechoisir une plus bas.
+      On a dû décaler votre rendez-vous${prev ? ` (initialement le <b>${prev}</b>)` : ""}. Voici le nouveau créneau — si l'heure ne vous convient pas, vous pouvez en rechoisir une plus bas.
     </p>
   </div>
 </div>`.trim();
@@ -147,7 +147,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         from: FROM_DEFAULT,
         to: [booking.contact],
-        subject: "🕘 Ton RDV découverte a changé d'heure",
+        subject: "🕘 Votre RDV découverte a changé d'heure",
         reply_to: REPLY_TO_DEFAULT,
         html: finalHtml,
       }),

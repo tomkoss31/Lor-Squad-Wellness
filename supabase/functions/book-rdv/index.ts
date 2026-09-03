@@ -311,10 +311,10 @@ serve(async (req: Request) => {
         .select("name, rdv_location, city")
         .eq("id", coachUserId)
         .single();
-      const coachName = String((coach?.name as string) ?? "").trim() || "ton coach La Base";
+      const coachName = String((coach?.name as string) ?? "").trim() || "votre coach La Base";
       const whereLine = mode === "visio"
         ? "En visio — le lien te sera envoyé avant le RDV"
-        : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "ton club La Base");
+        : (String((coach?.rdv_location as string) || (coach?.city as string) || "").trim() || "votre club La Base");
       // Même règle que la notification interne : une candidature « ouvrir un
       // club » relève du Breakfast Club, un bilan relève de La Base 360.
       const themeClient = isRecrut ? ("club" as const) : ("app" as const);
@@ -338,7 +338,7 @@ serve(async (req: Request) => {
       // Le RDV est créé en `requested` : ce mail accuse réception d'une
       // DEMANDE, il ne confirme rien. Le « c'est confirmé » part quand le
       // coach accepte dans le CRM (edge rdv-accepted-notify, 2026-08-11).
-      confirmEmailSent = await sendViaResend(contact, "On a bien reçu ta demande de rendez-vous", html, undefined, expediteurPour(themeClient));
+      confirmEmailSent = await sendViaResend(contact, "On a bien reçu votre demande de rendez-vous", html, undefined, expediteurPour(themeClient));
       if (confirmEmailSent) {
         await sb
           .from("rdv_bookings")

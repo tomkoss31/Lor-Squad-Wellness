@@ -31,10 +31,17 @@ export interface MailEntonnoir {
   cta?: { label: string; url: string };
 }
 
-/** Le prénom en tête de phrase, sans jamais laisser un « , » orphelin. */
-function prenomOu(prenom: string | null | undefined, defaut = "toi"): string {
+/** Le prénom, ou RIEN. On ne bouche jamais un prénom manquant par un mot
+ *  creux : « On ne vous a pas vue, vous » sonne comme un mailing de masse,
+ *  et c'est exactement l'inverse de ce qu'on cherche. */
+function prenomOu(prenom: string | null | undefined): string | null {
   const p = (prenom ?? "").trim();
-  return p || defaut;
+  return p || null;
+}
+
+/** « , Sophie » — ou une chaîne vide, sans jamais laisser un « , » orphelin. */
+function vocatif(p: string | null): string {
+  return p ? `, ${p}` : "";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,13 +55,15 @@ function prenomOu(prenom: string | null | undefined, defaut = "toi"): string {
 export function mailCreneauManquant(prenom: string | null): MailEntonnoir {
   const p = prenomOu(prenom);
   return {
-    objet: `${p}, il te reste juste à choisir ton heure`,
-    titre: `On a bien tes coordonnées, ${p}`,
+    objet: p
+      ? `${p}, il vous reste juste à choisir votre heure`
+      : `Il vous reste juste à choisir votre heure`,
+    titre: `On a bien vos coordonnées${vocatif(p)}`,
     message: [
-      "Il ne manque qu'une chose : l'heure qui t'arrange. Ça prend trente secondes, et tu peux la changer quand tu veux.",
-      "Au rendez-vous, on parle de toi — ton quotidien, ton énergie, ce qui coince depuis un moment. On mesure où tu en es, simplement, pour avoir un point de départ. Et tu repars avec un cap clair.",
-      "C'est gratuit, ça dure 45 minutes, et tu repars avec quelque chose d'utile même si tu ne fais rien ensuite.",
-      "Une question ? Réponds simplement à cet email.",
+      "Il ne manque qu'une chose : l'heure qui vous arrange. Ça prend trente secondes, et vous pouvez la changer quand vous voulez.",
+      "Au rendez-vous, on parle de vous — votre quotidien, votre énergie, ce qui coince depuis un moment. On mesure où vous en êtes, simplement, pour avoir un point de départ. Et vous repartez avec un cap clair.",
+      "C'est gratuit, ça dure 45 minutes, et vous repartez avec quelque chose d'utile même si vous ne faites rien ensuite.",
+      "Une question ? Répondez simplement à cet email.",
     ].join("\n\n"),
     cta: { label: "Choisir mon créneau", url: URL_RESERVER },
   };
@@ -73,11 +82,11 @@ export function mailCreneauManquant(prenom: string | null): MailEntonnoir {
 export function mailDemarrage(prenom: string | null): MailEntonnoir {
   const p = prenomOu(prenom);
   return {
-    objet: `Bienvenue ${p} 🌿`,
-    titre: `C'est parti, ${p}`,
+    objet: p ? `Bienvenue ${p} 🌿` : `Bienvenue au club 🌿`,
+    titre: `C'est parti${vocatif(p)}`,
     message: [
-      "Content de t'avoir rencontrée aujourd'hui. Tu as maintenant ton point de départ — et c'est la seule chose qu'on ne peut jamais refaire après coup.",
-      "Les premiers jours sont les plus importants. Si quelque chose coince — une question, un doute, une envie de tout arrêter à 17 h — écris-moi. C'est exactement pour ça que je suis là.",
+      "Content de vous avoir rencontrée aujourd'hui. Vous avez maintenant votre point de départ — et c'est la seule chose qu'on ne peut jamais refaire après coup.",
+      "Les premiers jours sont les plus importants. Si quelque chose coince — une question, un doute, une envie de tout arrêter à 17 h — écrivez-moi. C'est exactement pour ça que je suis là.",
       "À très vite au club 🌿",
     ].join("\n\n"),
   };
@@ -97,15 +106,15 @@ export function mailPasVenue(prenom: string | null, heure: string | null): MailE
   const p = prenomOu(prenom);
   // Sans heure fiable, on ne l'invente pas : la phrase se referme proprement.
   const rappelCreneau = heure
-    ? `Ton créneau de ${heure} t'était réservé et on n'a pas eu de nouvelles.`
-    : `Ton créneau t'était réservé et on n'a pas eu de nouvelles.`;
+    ? `Votre créneau de ${heure} vous était réservé et on n'a pas eu de nouvelles.`
+    : `Votre créneau vous était réservé et on n'a pas eu de nouvelles.`;
   return {
-    objet: `On t'a gardé ta place, ${p}`,
-    titre: `On ne t'a pas vue, ${p}`,
+    objet: `On vous a gardé votre place${vocatif(p)}`,
+    titre: `On ne vous a pas vue${vocatif(p)}`,
     message: [
       `${rappelCreneau} Un empêchement, ça arrive — vraiment, ce n'est pas grave.`,
-      "Si tu veux toujours faire le point, reprends simplement une heure qui te va mieux. C'est le même rendez-vous, toujours gratuit, toujours 45 minutes.",
-      "Et si ce n'est plus d'actualité, dis-le-moi d'un mot : je ne te relancerai plus.",
+      "Si vous voulez toujours faire le point, reprenez simplement une heure qui vous va mieux. C'est le même rendez-vous, toujours gratuit, toujours 45 minutes.",
+      "Et si ce n'est plus d'actualité, dites-le-moi d'un mot : je ne vous relancerai plus.",
     ].join("\n\n"),
     cta: { label: "Reprendre un rendez-vous", url: URL_RESERVER },
   };
@@ -146,16 +155,16 @@ export function mailRelanceDormant(
 
   const ouverture =
     contexte === "a_annule"
-      ? `Tu avais réservé un créneau au Breakfast Club ${depuis}, puis tu as dû l'annuler — et on n'a pas eu l'occasion d'en recaler un autre.`
-      : `Tu as laissé tes coordonnées au Breakfast Club ${depuis}, et on n'a pas encore réussi à se parler. Ça arrive — la vie va vite.`;
+      ? `Vous aviez réservé un créneau au Breakfast Club ${depuis}, puis vous avez dû l'annuler — et on n'a pas eu l'occasion d'en recaler un autre.`
+      : `Vous avez laissé vos coordonnées au Breakfast Club ${depuis}, et on n'a pas encore réussi à se parler. Ça arrive — la vie va vite.`;
 
   return {
-    objet: `Toujours envie de faire le point, ${p} ?`,
-    titre: `Ça tient toujours, ${p} ?`,
+    objet: `Toujours envie de faire le point${vocatif(p)} ?`,
+    titre: `Ça tient toujours${vocatif(p)} ?`,
     message: [
       ouverture,
-      "Si l'envie est toujours là, il te suffit de choisir une heure. C'est gratuit, ça dure 45 minutes, et tu repars avec quelque chose de clair même si tu ne fais rien ensuite.",
-      "Et si ce n'est plus d'actualité, réponds-moi juste « non merci » : je ne te relancerai plus, sans rancune.",
+      "Si l'envie est toujours là, il vous suffit de choisir une heure. C'est gratuit, ça dure 45 minutes, et vous repartez avec quelque chose de clair même si vous ne faites rien ensuite.",
+      "Et si ce n'est plus d'actualité, répondez-moi juste « non merci » : je ne vous relancerai plus, sans rancune.",
     ].join("\n\n"),
     cta: { label: "Choisir mon créneau", url: URL_RESERVER },
   };

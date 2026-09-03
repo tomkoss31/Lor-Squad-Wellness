@@ -120,7 +120,7 @@ serve(async (req) => {
 
     const contenu = mailCreneauManquant((l.first_name as string | null) ?? null);
     const html = clubMessageHtml({
-      prenom: (l.first_name as string | null) ?? "toi",
+      prenom: (l.first_name as string | null) ?? "",
       titre: contenu.titre,
       message: contenu.message,
       signature: { nom: "L'équipe du Breakfast Club", role: "Verdun" },

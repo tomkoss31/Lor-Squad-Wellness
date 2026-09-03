@@ -91,8 +91,8 @@ serve(async (req) => {
     const to = String((client?.email as string) ?? "").trim();
     if (!to || !EMAIL_RE.test(to)) return jsonResponse({ ok: true, skipped: "no_email" });
 
-    let coachName = "ton coach La Base";
-    let location = "ton club La Base";
+    let coachName = "votre coach La Base";
+    let location = "votre club La Base";
     if (client?.distributor_id) {
       const { data: coach } = await sb
         .from("users")
@@ -111,7 +111,7 @@ serve(async (req) => {
       hour: parisHourLabel(fu.due_date as string),
       location,
     });
-    const ok = await sendViaResend(to, "✅ Ton prochain rendez-vous est confirmé", html);
+    const ok = await sendViaResend(to, "✅ Votre prochain rendez-vous est confirmé", html);
     if (ok) {
       const { error: markErr } = await sb.from("client_rdv_reminders_sent").upsert(
         {

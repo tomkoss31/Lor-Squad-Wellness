@@ -141,34 +141,37 @@ export function expediteurPour(theme: RdvEmailTheme | undefined): string {
 export function rdvEmailHtml(p: RdvEmailParams): string {
   const t = THEMES[p.theme ?? "app"];
   const first = esc(p.firstName || "");
-  const coach = esc(p.coachName || "ton coach");
+  // « , Sophie » — ou rien. Sans ça, un lead sans prénom reçoit un titre qui
+  // se termine par une virgule en l'air (« On a bien reçu votre demande, »).
+  const vocatif = first ? `, ${first}` : "";
+  const coach = esc(p.coachName || "votre coach");
   const isDemande = p.kind === "requested";
   // `requested` partage toute la mise en page de `confirm` — seuls le titre et
   // l'accroche changent, parce que la promesse n'est pas la même.
   const isConfirm = p.kind === "confirm" || isDemande;
 
   const heading = isDemande
-    ? `On a bien reçu ta demande, ${first}`
+    ? `On a bien reçu votre demande${vocatif}`
     : isConfirm
-      ? `C'est noté, ${first} ✅`
-      : `À demain, ${first} 🌿`;
+      ? `C'est noté${vocatif} ✅`
+      : `À demain${vocatif} 🌿`;
   const intro = isDemande
-    ? `Ta demande de rendez-vous avec <b style="color:${t.heading};">${coach}</b> est arrivée. On te confirme le créneau très vite, par email.`
+    ? `Votre demande de rendez-vous avec <b style="color:${t.heading};">${coach}</b> est arrivée. On vous confirme le créneau très vite, par email.`
     : isConfirm
-      ? `Ton rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de te voir 🌿`
-      : `Petit rappel : ton rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
+      ? `Votre rendez-vous avec <b style="color:${t.heading};">${coach}</b> est bien calé. On a hâte de vous voir 🌿`
+      : `Petit rappel : votre rendez-vous avec <b style="color:${t.heading};">${coach}</b>, c'est demain.`;
   // Avec un lien de gestion, on invite à se servir tout seul plutôt qu'à écrire.
   const closing = isDemande
     ? (p.manageUrl
-        ? `Tu recevras la confirmation dès qu'on aura validé le créneau. Besoin de le changer d'ici là ? Tu peux le faire toi-même 👇`
-        : `Tu recevras la confirmation dès qu'on aura validé le créneau. Une question d'ici là ? Réponds simplement à cet email 💬`)
+        ? `Vous recevrez la confirmation dès qu'on aura validé le créneau. Besoin de le changer d'ici là ? Vous pouvez le faire vous-même 👇`
+        : `Vous recevrez la confirmation dès qu'on aura validé le créneau. Une question d'ici là ? Répondez simplement à cet email 💬`)
     : p.manageUrl
       ? (isConfirm
-          ? `Un rappel t'arrivera la veille. Un empêchement ? Tu peux déplacer ou annuler toi-même, en deux clics 👇`
-          : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Déplace ou annule toi-même 👇`)
+          ? `Un rappel vous arrivera la veille. Un empêchement ? Vous pouvez déplacer ou annuler vous-même, en deux clics 👇`
+          : `Pensez à bien vous hydrater d'ici là 💧 Un empêchement ? Déplacez ou annulez vous-même 👇`)
       : (isConfirm
-          ? `Un rappel t'arrivera la veille. Un empêchement ? Réponds simplement à cet email, on s'arrange 💬`
-          : `Pense à bien t'hydrater d'ici là 💧 Un empêchement ? Réponds à cet email, on s'arrange.`);
+          ? `Un rappel vous arrivera la veille. Un empêchement ? Répondez simplement à cet email, on s'arrange 💬`
+          : `Pensez à bien vous hydrater d'ici là 💧 Un empêchement ? Répondez à cet email, on s'arrange.`);
 
   /**
    * Le délai de prévenance. Demandé par Mélanie à 24 h, ramené à 12 h par
@@ -225,12 +228,12 @@ export function rdvEmailHtml(p: RdvEmailParams): string {
     ? `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
       <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
       <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Le même lieu, l'après-midi</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0;">Ton rendez-vous est le matin, à l'heure du Breakfast Club. À partir de 11h, la même adresse devient un bar healthy : smoothies, shakes et boissons saines à emporter, jusqu'à 17h30.</p>
+      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0;">Votre rendez-vous est le matin, à l'heure du Breakfast Club. À partir de 11h, la même adresse devient un bar healthy : smoothies, shakes et boissons saines à emporter, jusqu'à 17h30.</p>
     </div>`
     : `<div style="background:${t.contestBg};border:1px solid ${t.contestBorder};border-radius:16px;padding:18px 20px;">
       <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:700;">🥤 La Base Shakes&amp;Drinks</div>
-      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tente de gagner ta boisson 🎁</div>
-      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0 0 14px;">Connais-tu La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À ton prochain rendez-vous, participe au tirage et repars avec ta boisson offerte.</p>
+      <div style="font-size:17px;font-weight:700;color:${t.heading};margin:6px 0 4px;">Tentez de gagner votre boisson 🎁</div>
+      <p style="font-size:13.5px;line-height:1.5;color:${t.text};margin:0 0 14px;">Connaissez-vous La Base Shakes&amp;Drinks, notre bar healthy de boissons saines à emporter ? À votre prochain rendez-vous, participez au tirage et repartez avec votre boisson offerte.</p>
       ${btn(CONTEST_URL, "Je tente ma chance →", t.contestBtnBg, t.contestBtnInk)}
     </div>`;
 
@@ -309,7 +312,8 @@ export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
   const t = THEMES[p.theme ?? "app"];
   const club = (p.theme ?? "app") === "club";
   const first = esc(p.firstName || "");
-  const coach = esc(p.coachName || "ton coach");
+  const vocatif = first ? `, ${first}` : "";
+  const coach = esc(p.coachName || "votre coach");
   const duree = p.durationMin ?? 45;
   const mono = "ui-monospace,Menlo,Consolas,monospace";
 
@@ -354,9 +358,9 @@ export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
 
     ${marque}
 
-    <h1 style="font-size:26px;line-height:1.15;margin:22px 0 6px;color:${t.heading};letter-spacing:-.02em;">C'est confirmé, ${first}</h1>
+    <h1 style="font-size:26px;line-height:1.15;margin:22px 0 6px;color:${t.heading};letter-spacing:-.02em;">C'est confirmé${vocatif}</h1>
     <p style="font-size:15px;line-height:1.6;color:${t.text};margin:8px 0 22px;">
-      <b style="color:${t.heading};">${coach}</b> vient de bloquer ce créneau dans son agenda. On a hâte de te rencontrer et de comprendre ce que tu veux changer.
+      <b style="color:${t.heading};">${coach}</b> vient de bloquer ce créneau dans son agenda. On a hâte de vous rencontrer et de comprendre ce que vous voulez changer.
     </p>
 
     <div style="background:${t.surface};border:1px solid ${t.border};border-radius:16px;padding:18px 20px;">
@@ -370,14 +374,14 @@ export function rdvAccepteEmailHtml(p: RdvAccepteParams): string {
 
     <div style="font-family:${mono};font-size:11px;color:${t.hint};text-transform:uppercase;letter-spacing:.14em;margin-bottom:14px;">Ce qu'on va faire ensemble</div>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
-      ${etape("1", "On parle de toi", "Ton quotidien, ton énergie, ce qui coince depuis un moment. C'est le plus long, et le plus utile.")}
-      ${etape("2", "On mesure où tu en es", "Un point de départ, simplement. Pas de jugement &mdash; juste des chiffres pour savoir d'où on part.")}
-      ${etape("3", "On pose un cap", "Tu repars avec quelque chose de clair. Rien à décider sur place.")}
+      ${etape("1", "On parle de vous", "Votre quotidien, votre énergie, ce qui coince depuis un moment. C'est le plus long, et le plus utile.")}
+      ${etape("2", "On mesure où vous en êtes", "Un point de départ, simplement. Pas de jugement &mdash; juste des chiffres pour savoir d'où on part.")}
+      ${etape("3", "On pose un cap", "Vous repartez avec quelque chose de clair. Rien à décider sur place.")}
     </table>
 
     <div style="background:${t.surface};border:1px solid ${t.border};border-radius:14px;padding:15px 18px;margin-top:4px;">
       <p style="font-size:14px;line-height:1.6;color:${t.text};margin:0;">
-        Prévois <b style="color:${t.heading};">${duree} minutes</b>, et viens comme tu es. Un rappel t'arrivera la veille.
+        Prévoyez <b style="color:${t.heading};">${duree} minutes</b>, et venez comme vous êtes. Un rappel vous arrivera la veille.
       </p>
       <!-- Délai de prévenance (Mélanie, ramené de 24 h à 12 h par Thomas). Ce mail-ci
            n'ouvre volontairement aucune porte de sortie (décision Thomas :

@@ -349,7 +349,7 @@ serve(async (req: Request) => {
       });
       confirmEmailSent = await sendViaResend(
         contact,
-        "✅ Ton RDV découverte est réservé",
+        "✅ Votre RDV découverte est réservé",
         html,
         undefined,
         undefined,

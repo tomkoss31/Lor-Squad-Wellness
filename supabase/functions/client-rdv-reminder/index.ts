@@ -6,12 +6,25 @@
 //      PUSH + EMAIL. Anti-doublon client_rdv_reminders_sent (imminent2h/eve/
 //      eve_email).
 //   2. rdv_bookings (prospect via réservation publique) : EMAIL « veille 18h »
-//      uniquement (pas de push). Anti-doublon rdv_bookings.reminder_email_sent_at.
+//      + SMS si un téléphone existe (anti-doublon reminder_email_sent_at /
+//      reminder_sms_sent_at). Pas de push.
 //   3. prospects (RDV ajouté À LA MAIN par le coach dans l'Agenda) : EMAIL
 //      « veille 18h » uniquement, si un email a été renseigné. Anti-doublon
 //      prospects.reminder_email_sent_at.
 //
 // Push via sendPushToClient. Email via Resend (nom du coach + lieu de RDV).
+//
+// SMS (02/09, chantier no-show RDV club) — pourquoi seulement rdv_bookings :
+// c'est LA source où le lapin coûte cher (créneau perdu, personne d'autre ne
+// peut le prendre) et où l'email seul s'est révélé insuffisant (mesuré :
+// 4 lapins sur 7 depuis le 25/08, les 7 avaient pourtant reçu leur rappel
+// email). `rdv_bookings` n'a pas de colonne téléphone — on le récupère par
+// email dans `prospect_leads` (best-effort : si aucune fiche ou pas de
+// téléphone, on envoie l'email seul, jamais d'erreur bloquante). Expéditeur
+// alphanumérique Twilio (TWILIO_SENDER) : sens unique, transactionnel donc
+// pas de fenêtre horaire imposée par les opérateurs français. Message SANS
+// EMOJI volontairement — un seul emoji fait basculer le SMS de l'encodage
+// GSM-7 (160 car./segment) à l'UCS-2 (70 car./segment) = jusqu'à ×3 le prix.
 //
 // Deploy : supabase functions deploy client-rdv-reminder
 // =============================================================================
@@ -29,6 +42,10 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_DEFAULT = "La Base 360 <rdv@labase360.fr>";
 const REPLY_TO_DEFAULT = "labaseverdun@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+const TWILIO_SENDER = Deno.env.get("TWILIO_SENDER") ?? "";
 
 function parisHour(d: Date): number {
   return Number(
@@ -63,6 +80,38 @@ async function sendViaResend(to: string, subject: string, html: string, from?: s
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: from ?? FROM_DEFAULT, to: [to], subject, reply_to: REPLY_TO_DEFAULT, html }),
     });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Les numéros en base sont saisis à la main sous 4 formats au moins :
+// 0672831599 / +33608338106 / 06 28 28 68 78 / 07 63 92 01 09. Twilio exige
+// du E.164 strict (+33XXXXXXXXX). Rend null plutôt que d'envoyer à l'aveugle
+// sur un numéro mal formé (fixe, incomplet, étranger non géré).
+function toE164FR(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, "");
+  if (digits.startsWith("+33") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `+33${digits.slice(1)}`;
+  if (digits.startsWith("33") && digits.length === 11) return `+${digits}`;
+  return null;
+}
+
+async function sendViaTwilio(to: string, body: string): Promise<boolean> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_SENDER || !to) return false;
+  try {
+    const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const params = new URLSearchParams({ To: to, From: TWILIO_SENDER, Body: body });
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString(),
+      },
+    );
     return res.ok;
   } catch {
     return false;
@@ -132,8 +181,8 @@ serve(async (req) => {
         .in("id", [...distributorIds]);
       for (const u of users ?? []) {
         const full = String((u.name as string) ?? "").trim();
-        coachFirst.set(u.id as string, full.split(/\s+/)[0] || "ton coach");
-        coachFull.set(u.id as string, full || "ton coach");
+        coachFirst.set(u.id as string, full.split(/\s+/)[0] || "votre coach");
+        coachFull.set(u.id as string, full || "votre coach");
         coachLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
       }
     }
@@ -166,7 +215,7 @@ serve(async (req) => {
       const due = new Date(fu.due_date as string);
       const minsUntil = (due.getTime() - now.getTime()) / 60000;
       const dist = distFor(clientId);
-      const coachP = (dist && coachFirst.get(dist)) || "ton coach";
+      const coachP = (dist && coachFirst.get(dist)) || "votre coach";
       const hour = parisHourLabel(fu.due_date as string);
       const jourRdv = parisDateStr(due);
 
@@ -175,7 +224,7 @@ serve(async (req) => {
       if (imminent && sentSet.has(cle(fid, "imminent2h", jourRdv))) dejaFait += 1;
       if (imminent && !sentSet.has(cle(fid, "imminent2h", jourRdv))) {
         const r = await sendPushToClient(sb, clientId, {
-          title: "⏰ Ton RDV dans 2h",
+          title: "⏰ Votre RDV dans 2h",
           body: `Avec ${coachP} à ${hour}. À tout à l'heure 🌿`,
           url: "/",
           type: "rdv_reminder",
@@ -208,12 +257,12 @@ serve(async (req) => {
           const html = rdvEmailHtml({
             kind: "reminder",
             firstName: clientFirst.get(clientId) || "",
-            coachName: (dist && coachFull.get(dist)) || "ton coach",
+            coachName: (dist && coachFull.get(dist)) || "votre coach",
             dateLabel: parisDateLabel(fu.due_date as string),
             hour,
-            location: (dist && coachLoc.get(dist)) || "ton club La Base",
+            location: (dist && coachLoc.get(dist)) || "votre club La Base",
           });
-          const ok = await sendViaResend(to, "📅 Ton rendez-vous, c'est demain", html);
+          const ok = await sendViaResend(to, "📅 Votre rendez-vous, c'est demain", html);
           if (ok) {
             await mark(fid, "eve_email", jourRdv);
             emails += 1;
@@ -237,7 +286,7 @@ serve(async (req) => {
         // personne qui réserve sur le site du Breakfast Club recevait sa
         // confirmation en crème et orange, puis un rappel vert La Base 360 la
         // veille : deux marques pour un même rendez-vous.
-        .select("id, coach_user_id, club_id, first_name, contact, mode, slot_start")
+        .select("id, coach_user_id, club_id, first_name, contact, mode, slot_start, manage_token, reminder_sms_sent_at")
         // ⚠️ 25/08 — c'était `.neq("status", "canceled")`, donc le rappel partait
         // AUSSI sur les demandes jamais acceptées : toute réservation du club
         // naît en « requested ». La personne recevait « ton rendez-vous, c'est
@@ -265,30 +314,67 @@ serve(async (req) => {
         if (coachIds.length > 0) {
           const { data: us } = await sb.from("users").select("id, name, rdv_location, city").in("id", coachIds);
           for (const u of us ?? []) {
-            cFull.set(u.id as string, String((u.name as string) ?? "").trim() || "ton coach");
+            cFull.set(u.id as string, String((u.name as string) ?? "").trim() || "votre coach");
             cLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
           }
         }
+
+        // Téléphone du prospect — best-effort. `rdv_bookings` n'a pas de
+        // colonne téléphone, on le cherche dans `prospect_leads` par email
+        // (seule clé commune). Un lead absent, sans téléphone, ou un numéro
+        // qui ne se normalise pas en E.164 ne bloque JAMAIS l'email : le SMS
+        // est un plus, jamais une condition.
+        const phoneByEmail = new Map<string, string>();
+        const contactEmails = validBookings.map((b) => String(b.contact ?? "").toLowerCase()).filter(Boolean);
+        if (contactEmails.length > 0) {
+          const { data: leads } = await sb
+            .from("prospect_leads")
+            .select("email, phone")
+            .not("phone", "is", null)
+            .limit(1000);
+          for (const l of leads ?? []) {
+            const em = String((l.email as string) ?? "").toLowerCase();
+            if (em && contactEmails.includes(em)) phoneByEmail.set(em, String(l.phone as string));
+          }
+        }
+
         for (const b of validBookings) {
           const cid = b.coach_user_id as string | null;
-          const where = (b.mode as string) === "visio"
+          const isVisio = (b.mode as string) === "visio";
+          const where = isVisio
             ? "En visio — le lien te sera envoyé avant le RDV"
-            : ((cid && cLoc.get(cid)) || "ton club La Base");
+            : ((cid && cLoc.get(cid)) || "votre club La Base");
           const themeRdv: RdvEmailTheme = b.club_id ? "club" : "app";
           const html = rdvEmailHtml({
             kind: "reminder",
             theme: themeRdv,
             firstName: String((b.first_name as string) ?? "").split(/\s+/)[0] || "",
-            coachName: (cid && cFull.get(cid)) || "ton coach",
+            coachName: (cid && cFull.get(cid)) || "votre coach",
             dateLabel: parisDateLabel(b.slot_start as string),
             hour: parisHourLabel(b.slot_start as string),
             location: where,
           });
-          const ok = await sendViaResend(String(b.contact), "📅 Ton rendez-vous, c'est demain", html, expediteurPour(themeRdv));
+          const ok = await sendViaResend(String(b.contact), "📅 Votre rendez-vous, c'est demain", html, expediteurPour(themeRdv));
           if (ok) {
             await sb.from("rdv_bookings").update({ reminder_email_sent_at: new Date().toISOString() }).eq("id", b.id);
             prospectEmails += 1;
           } else skipped += 1;
+
+          if (!b.reminder_sms_sent_at) {
+            const phone = toE164FR(phoneByEmail.get(String(b.contact ?? "").toLowerCase()));
+            if (phone) {
+              const whereSms = isVisio ? "en visio (lien envoye par email)" : (where || "votre club La Base");
+              const manageUrl = b.manage_token ? `https://www.labase-nutrition.com/rdv/gerer/${b.manage_token}` : null;
+              const smsBody = [
+                `Rappel : votre RDV decouverte est demain ${parisHourLabel(b.slot_start as string)}, ${whereSms}.`,
+                manageUrl ? `Empechement ? ${manageUrl}` : "Empechement ? Contactez-nous.",
+              ].join(" ");
+              const smsOk = await sendViaTwilio(phone, smsBody);
+              if (smsOk) {
+                await sb.from("rdv_bookings").update({ reminder_sms_sent_at: new Date().toISOString() }).eq("id", b.id);
+              }
+            }
+          }
         }
       }
     }
@@ -321,7 +407,7 @@ serve(async (req) => {
         if (coachIds.length > 0) {
           const { data: us } = await sb.from("users").select("id, name, rdv_location, city").in("id", coachIds);
           for (const u of us ?? []) {
-            pFull.set(u.id as string, String((u.name as string) ?? "").trim() || "ton coach");
+            pFull.set(u.id as string, String((u.name as string) ?? "").trim() || "votre coach");
             pLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
           }
         }
@@ -330,12 +416,12 @@ serve(async (req) => {
           const html = rdvEmailHtml({
             kind: "reminder",
             firstName: String((p.first_name as string) ?? "").split(/\s+/)[0] || "",
-            coachName: (cid && pFull.get(cid)) || "ton coach",
+            coachName: (cid && pFull.get(cid)) || "votre coach",
             dateLabel: parisDateLabel(p.rdv_date as string),
             hour: parisHourLabel(p.rdv_date as string),
-            location: (cid && pLoc.get(cid)) || "ton club La Base",
+            location: (cid && pLoc.get(cid)) || "votre club La Base",
           });
-          const ok = await sendViaResend(String(p.email), "📅 Ton rendez-vous, c'est demain", html);
+          const ok = await sendViaResend(String(p.email), "📅 Votre rendez-vous, c'est demain", html);
           if (ok) {
             await sb.from("prospects").update({ reminder_email_sent_at: new Date().toISOString() }).eq("id", p.id);
             manualProspectEmails += 1;
