@@ -167,3 +167,9 @@ verify_jwt = false
 verify_jwt = false
 [functions.stripe-manual-reconcile]
 verify_jwt = false
+
+# 03/09/2026 — cette fonction envoie des SMS factures. Elle avait ete deployee
+# en --no-verify-jwt : ouverte a tout internet. Le flag se pose ICI, sinon le
+# reglage precedent de la fonction persiste au redeploiement.
+[functions.test-twilio-sms]
+verify_jwt = true
