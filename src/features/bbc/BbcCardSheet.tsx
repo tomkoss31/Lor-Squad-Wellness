@@ -96,7 +96,14 @@ export function BbcCardSheet({ memberName, currentCard, cardsConfig, ouvertureIs
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(0,0,0,.65)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={(e) => e.stopPropagation()} className="bbc-mode" style={{ width: "100%", maxWidth: 460, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "24px 24px 0 0", padding: "20px 22px calc(24px + env(safe-area-inset-bottom))", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)" }}>
+      {/* ⚠️ 03/09 — Thomas, sur son téléphone : « juste impossible le scroll et
+          cliquer sur validé ». Cette feuille n'avait NI hauteur maximale NI
+          défilement : sur un écran de téléphone elle dépassait le bas, et le
+          bouton de validation devenait inatteignable — la feuille s'ouvrait
+          pour rien. Les autres feuilles de l'app (QualifierRdvSheet…) portent
+          `maxHeight: 88vh` + `overflowY: auto` depuis le début ; celle-ci était
+          la seule à ne pas l'avoir. */}
+      <div onClick={(e) => e.stopPropagation()} className="bbc-mode" style={{ width: "100%", maxWidth: 460, maxHeight: "88vh", overflowY: "auto", overscrollBehavior: "contain", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "24px 24px 0 0", padding: "20px 22px calc(24px + env(safe-area-inset-bottom))", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 20 }}>{currentCard ? "Renouveler la carte" : "Attribuer une carte"}</div>
