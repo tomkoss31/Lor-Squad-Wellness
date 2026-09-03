@@ -62,7 +62,7 @@ serve(async (req) => {
     }
 
     // Lookup coach (pour le titre "Thomas t'a répondu").
-    let coachFirstName = "Ton coach";
+    let coachFirstName = "Votre coach";
     if (payload.distributor_id) {
       const { data: coach } = await sb
         .from("users")
@@ -70,7 +70,7 @@ serve(async (req) => {
         .eq("id", payload.distributor_id)
         .maybeSingle();
       if (coach?.name) {
-        coachFirstName = coach.name.trim().split(/\s+/)[0] || "Ton coach";
+        coachFirstName = coach.name.trim().split(/\s+/)[0] || "Votre coach";
       }
     }
 
@@ -91,7 +91,7 @@ serve(async (req) => {
       : "/";
 
     const result = await sendPushToClient(sb, clientId, {
-      title: `💬 ${coachFirstName} t'a répondu`,
+      title: `💬 ${coachFirstName} vous a répondu`,
       body: bodyText,
       url,
       type: "coach_message",

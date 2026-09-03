@@ -14,7 +14,7 @@
 // t'arrange ») — pas de pression, ton La Base 360.
 // =============================================================================
 
-import type { CrmLead } from "../hooks/useCrmLeads";
+import { objectifCourt, type CrmLead } from "../hooks/useCrmLeads";
 
 export interface CrmMessageContext {
   coachFirstName: string;
@@ -24,7 +24,90 @@ export interface CrmMessageContext {
   vipUrl: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Les leads du club (03/09/2026) — textes validés sur maquette par Thomas.
+//
+// POURQUOI ICI ET PAS DANS crmResponseTemplates : la règle « quel message pour
+// ce lead » était déjà recopiée à DEUX endroits — `autoMessage` (panneau de la
+// fiche) et `useLeadQuickActions` (1-clic du board). Poser le cas « club »
+// seulement dans le premier aurait donné DEUX messages différents à la même
+// personne selon le bouton. On le pose donc dans les builders, que les deux
+// chaînes appellent déjà. Cf. reference_crm_etat_lead : une seule réponse par
+// question.
+//
+// Le patron dicté par Thomas : on salue, on rappelle factuellement pourquoi
+// elle est venue (avec SON objectif), on dit que ça nous ferait plaisir, on
+// OFFRE le body scan, on rend la main sur l'horaire, on remercie. Jamais de
+// compte à rebours, jamais « vous n'avez pas réservé ».
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LIEN_RESERVER = "labase-nutrition.com/reserver";
+
+/**
+ * « Laure » précédé d'une espace — ou rien du tout.
+ *
+ * Le repli valait `"toi"` : sans prénom, la personne recevait littéralement
+ * « Salut toi 👋 ». On ne bouche plus un prénom absent par un mot creux.
+ *
+ * ⚠️ Cette fonction ne porte PAS de virgule, et c'est volontaire : elle
+ * s'insère dans « Bonjour<ici>, c'est… », qui a déjà la sienne. Un premier jet
+ * renvoyait « , Laure » et produisait « Bonjour, Eric, c'est… » — deux virgules,
+ * parti en prod le 03/09 avant d'être vu à l'écran. Les deux cas doivent tomber
+ * juste : « Bonjour Eric, c'est… » et, sans prénom, « Bonjour, c'est… ».
+ */
+export function vocatif(lead: CrmLead): string {
+  const f = lead.firstName.trim();
+  return f ? ` ${f}` : "";
+}
+
+/** L'ouverture du club. « c'est », jamais « ici » : pas un robot. */
+export function ouvertureClub(lead: CrmLead): string {
+  return `Bonjour${vocatif(lead)}, c'est Mélanie et Thomas du Breakfast Club à Verdun.`;
+}
+
+/**
+ * Ce que cette personne a dit vouloir, dans ses mots — ou `null`.
+ *
+ * `CrmLead.objectif` vient du tunnel « Réserver au club » et de la pub Meta.
+ * Il était ignoré : les textes ne lisaient que `bilanObjectives`, réservé aux
+ * bilans en ligne, et écrivaient « ton objectif » à quelqu'un dont la base
+ * savait qu'il voulait perdre du poids.
+ */
+export function objectifDuLead(lead: CrmLead): string | null {
+  const l = objectifCourt(lead.objectif);
+  if (l && l !== "—") return l.toLowerCase();
+  return null;
+}
+
+/** Les sources venues du club. Un lead VIP ou Opportunité parle d'autre chose
+ *  et garde le message de sa source. */
+export function estLeadDuClub(lead: CrmLead): boolean {
+  return lead.source === "site-club" || lead.source === "meta-ads" || lead.source === "welcome";
+}
+
+function messageClubPremierContact(lead: CrmLead): string {
+  const o = objectifDuLead(lead);
+  return (
+    `${ouvertureClub(lead)} Vous aviez rempli vos coordonnées${o ? ` pour ${o}` : ""}. ` +
+    `Ça nous ferait vraiment plaisir de pouvoir vous accompagner, en vous offrant ` +
+    `votre body scan de 45 min. Vous pouvez réserver directement suivant vos ` +
+    `disponibilités : ${LIEN_RESERVER}` +
+    `\n\nMerci d'avance.\nMélanie et Thomas`
+  );
+}
+
+export function messageClubRelance(lead: CrmLead): string {
+  return (
+    `${ouvertureClub(lead)} On revient vers vous simplement, au cas où notre ` +
+    `message serait passé inaperçu. Notre proposition tient toujours : votre ` +
+    `body scan de 45 min vous est offert, quand ça vous arrange. ${LIEN_RESERVER}` +
+    `\n\nMerci d'avance.\nMélanie et Thomas`
+  );
+}
+
 export function buildCrmMessage(lead: CrmLead, ctx: CrmMessageContext): string {
+  if (estLeadDuClub(lead)) return messageClubPremierContact(lead);
+
   const f = lead.firstName.trim() || "toi";
   const c = ctx.coachFirstName;
 
@@ -94,6 +177,8 @@ export function buildAskContactMessage(lead: CrmLead, ctx: CrmMessageContext): s
 
 /** Message de relance douce (J+3 sans réponse), toutes sources. */
 export function buildCrmRelanceMessage(lead: CrmLead, ctx: CrmMessageContext): string {
+  if (estLeadDuClub(lead)) return messageClubRelance(lead);
+
   const f = lead.firstName.trim() || "toi";
   return (
     `Hello ${f} ! 🌿\n\n` +

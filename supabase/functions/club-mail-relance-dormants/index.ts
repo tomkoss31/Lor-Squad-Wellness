@@ -111,7 +111,7 @@ serve(async (req) => {
         subject: contenu.objet,
         reply_to: REPLY_TO,
         html: clubMessageHtml({
-          prenom: (l.first_name as string | null) ?? "toi",
+          prenom: (l.first_name as string | null) ?? "",
           titre: contenu.titre,
           message: contenu.message,
           signature: { nom: "L'équipe du Breakfast Club", role: "Verdun" },

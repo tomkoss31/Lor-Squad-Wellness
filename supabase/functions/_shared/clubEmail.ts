@@ -83,7 +83,7 @@ export function clubCardEmailHtml(p: ClubCardEmailParams): string {
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${C.bg};">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Ta carte ${esc(String(p.cardType))} visites est validée — garde ce mail, il fait office de preuve d'achat.</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Votre carte ${esc(String(p.cardType))} visites est validée — gardez ce mail, il fait office de preuve d'achat.</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:26px 14px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:${C.surface};border:1px solid ${C.border};border-radius:18px;overflow:hidden;">
@@ -94,28 +94,28 @@ export function clubCardEmailHtml(p: ClubCardEmailParams): string {
 
         <tr><td style="padding:18px 26px 0 26px;">
           <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${C.highlight};font-weight:800;">Paiement reçu</p>
-          <h1 style="margin:8px 0 0 0;font-size:25px;line-height:1.25;color:${C.heading};">Ta carte est validée, ${esc(p.firstName)} 🎉</h1>
+          <h1 style="margin:8px 0 0 0;font-size:25px;line-height:1.25;color:${C.heading};">Votre carte est validée, ${esc(p.firstName)} 🎉</h1>
           <p style="margin:12px 0 0 0;font-size:15px;line-height:1.65;color:${C.text};">
-            On t'attend demain matin. <strong style="color:${C.heading};">Garde ce mail</strong> — c'est lui qui fait foi au comptoir pour ta carte.
+            On vous attend demain matin. <strong style="color:${C.heading};">Gardez ce mail</strong> — c'est lui qui fait foi au comptoir pour votre carte.
           </p>
         </td></tr>
 
         <tr><td style="padding:18px 26px 0 26px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.softBg};border:1px solid ${C.border};border-radius:14px;padding:4px 16px;">
-            ${line("Ta carte", `${p.cardType} visites`, true)}
+            ${line("Votre carte", `${p.cardType} visites`, true)}
             ${line("Montant payé", `${p.amountEur} €`, true)}
             ${line("Soit", `${perVisit} € la visite`)}
             ${line("Valable", `${p.validityDays} jours — jusqu'au ${p.expiresLabel}`)}
           </table>
           <p style="margin:10px 2px 0 2px;font-size:12.5px;line-height:1.6;color:${C.hint};">
-            Les visites non utilisées à cette date sont perdues, et la carte n'est pas remboursable. Un imprévu sérieux&nbsp;? Appelle-nous, on regarde ensemble.
+            Les visites non utilisées à cette date sont perdues, et la carte n'est pas remboursable. Un imprévu sérieux&nbsp;? Appelez-nous, on regarde ensemble.
           </p>
         </td></tr>
 
         <tr><td style="padding:20px 26px 4px 26px;">
-          <p style="margin:0 0 10px 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${C.hint};font-weight:800;">Ta première visite</p>
+          <p style="margin:0 0 10px 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${C.hint};font-weight:800;">Votre première visite</p>
           <p style="margin:0;font-size:15px;line-height:1.7;color:${C.text};">
-            Tu passes quand tu veux pendant les horaires — pas besoin de rendez-vous. Dis simplement ton nom en arrivant&nbsp;: on retrouve ta carte, et on te sert ton aloé, ton thé et ton smoothie.
+            Vous passez quand vous voulez pendant les horaires — pas besoin de rendez-vous. Dites simplement votre nom en arrivant&nbsp;: on retrouve votre carte, et on vous sert votre aloé, votre thé et votre smoothie.
           </p>
         </td></tr>
 

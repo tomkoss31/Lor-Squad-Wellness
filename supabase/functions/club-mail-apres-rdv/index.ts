@@ -101,7 +101,7 @@ serve(async (req) => {
     type === "demarre" ? mailDemarrage(prenom) : mailPasVenue(prenom, heureParis(slot));
 
   const html = clubMessageHtml({
-    prenom: prenom ?? "toi",
+    prenom: prenom ?? "",
     titre: contenu.titre,
     message: contenu.message,
     signature: { nom: signataire, role: "Breakfast Club · Verdun" },

@@ -53,11 +53,11 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     const url = account?.token ? `/client/${account.token}?tab=refer` : "/";
-    const who = prospectFirstName || "ta recommandation";
+    const who = prospectFirstName || "votre recommandation";
 
     const result = await sendPushToClient(sb, parrainClientId, {
-      title: "🎉 Ta reco a porté ses fruits !",
-      body: `${who} vient de démarrer grâce à toi. Merci — ta remise te dit merci aussi 👑`,
+      title: "🎉 Votre reco a porté ses fruits !",
+      body: `${who} vient de démarrer grâce à vous. Merci — votre remise vous dit merci aussi 👑`,
       url,
       type: "referral_converted",
     });
