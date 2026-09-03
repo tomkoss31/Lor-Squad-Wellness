@@ -981,6 +981,10 @@ function EnTeteJour({
 }
 
 const champHeure: React.CSSProperties = {
+  // Largeur fixe : sans elle, un `input[type=time]` s'étire sur toute la ligne
+  // et « de … à … » se déplie sur quatre lignes. Mesuré sur la prod du 03/09.
+  width: 118,
+  flex: "none",
   padding: "7px 9px",
   borderRadius: 10,
   border: "1px solid var(--ls-bbc-line2)",
