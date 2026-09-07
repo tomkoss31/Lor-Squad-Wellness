@@ -32,11 +32,26 @@
 // un test dédié les y maintient.
 // =============================================================================
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const RACINE = "src/features/bbc";
+/**
+ * Les sources des écrans BBC, lues par Vite — PAS par `node:fs`.
+ *
+ * `tsc -b` type-vérifie ce fichier avec la config de l'application, qui ne
+ * connaît pas les types Node : `readFileSync` y casse le build alors que les
+ * tests passent. `import.meta.glob` est natif à Vite, donc valable dans les
+ * deux mondes.
+ */
+const SOURCES = import.meta.glob("../**/*.tsx", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+/** Le chemin tel qu'on l'écrit dans le budget, depuis celui que rend Vite. */
+function cheminNormalise(cle: string): string {
+  return `src/features/bbc/${cle.replace(/^\.\.\//, "")}`;
+}
 
 /** Le budget toléré par fichier. Ne JAMAIS l'augmenter sans le justifier. */
 const BUDGET: Record<string, { micro: number; petits: number }> = {
@@ -78,16 +93,6 @@ const DEJA_PROPRES = [
   "src/features/bbc/BbcBilan10Scan.tsx",
 ];
 
-function fichiersTsx(dossier: string): string[] {
-  const sortie: string[] = [];
-  for (const nom of readdirSync(dossier)) {
-    const chemin = join(dossier, nom);
-    if (statSync(chemin).isDirectory()) sortie.push(...fichiersTsx(chemin));
-    else if (nom.endsWith(".tsx")) sortie.push(chemin.split("\\").join("/"));
-  }
-  return sortie;
-}
-
 /**
  * Compte les manquements d'un fichier.
  *
@@ -117,7 +122,10 @@ function compter(source: string): { micro: number; petits: number } {
 }
 
 describe("garde-fou visuel du BBC", () => {
-  const fichiers = fichiersTsx(RACINE);
+  const fichiers = Object.entries(SOURCES).map(([cle, src]) => ({
+    nom: cheminNormalise(cle),
+    src,
+  }));
 
   it("trouve bien les ecrans a analyser", () => {
     expect(fichiers.length).toBeGreaterThan(20);
@@ -126,9 +134,9 @@ describe("garde-fou visuel du BBC", () => {
   it("aucun fichier ne depasse son budget de texte sous 11 px", () => {
     const depassements: string[] = [];
     for (const f of fichiers) {
-      const { micro } = compter(readFileSync(f, "utf-8"));
-      const tolere = BUDGET[f]?.micro ?? 0;
-      if (micro > tolere) depassements.push(`${f} : ${micro} au lieu de ${tolere} max`);
+      const { micro } = compter(f.src);
+      const tolere = BUDGET[f.nom]?.micro ?? 0;
+      if (micro > tolere) depassements.push(`${f.nom} : ${micro} au lieu de ${tolere} max`);
     }
     expect(depassements).toEqual([]);
   });
@@ -136,17 +144,19 @@ describe("garde-fou visuel du BBC", () => {
   it("aucun fichier ne depasse son budget de cibles sous 44 px", () => {
     const depassements: string[] = [];
     for (const f of fichiers) {
-      const { petits } = compter(readFileSync(f, "utf-8"));
-      const tolere = BUDGET[f]?.petits ?? 0;
-      if (petits > tolere) depassements.push(`${f} : ${petits} au lieu de ${tolere} max`);
+      const { petits } = compter(f.src);
+      const tolere = BUDGET[f.nom]?.petits ?? 0;
+      if (petits > tolere) depassements.push(`${f.nom} : ${petits} au lieu de ${tolere} max`);
     }
     expect(depassements).toEqual([]);
   });
 
   it("les trois ecrans nettoyes le 07/09 restent a zero", () => {
-    for (const f of DEJA_PROPRES) {
-      expect(BUDGET[f]).toBeUndefined();
-      expect(compter(readFileSync(f, "utf-8"))).toEqual({ micro: 0, petits: 0 });
+    for (const nom of DEJA_PROPRES) {
+      expect(BUDGET[nom]).toBeUndefined();
+      const f = fichiers.find((x) => x.nom === nom);
+      expect(f, `${nom} introuvable`).toBeDefined();
+      expect(compter(f!.src)).toEqual({ micro: 0, petits: 0 });
     }
   });
 });
