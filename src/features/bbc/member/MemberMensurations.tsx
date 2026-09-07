@@ -346,6 +346,15 @@ export function MemberMensurations({ token, measurements, titre, ecrire }: Props
               width: "100%",
               maxWidth: 460,
               margin: "0 auto",
+              // La feuille mesure ~480 px : elle tient sur un 812 px, mais plus
+              // dès que le clavier du téléphone s'ouvre pour taper la valeur —
+              // et c'est précisément ce qu'on demande ici. Sans plafond ni
+              // défilement, « valider » sortait alors de l'écran, hors
+              // d'atteinte. Même recette que `BbcCardSheet` (corrigée le
+              // 03/09 pour ce motif exact).
+              maxHeight: "88vh",
+              overflowY: "auto",
+              overscrollBehavior: "contain",
               background: "var(--ls-bbc-s1)",
               border: "1px solid var(--ls-bbc-line2)",
               borderRadius: "26px 26px 0 0",

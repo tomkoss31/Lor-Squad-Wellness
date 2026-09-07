@@ -149,7 +149,18 @@ export function BbcClientApp(props: BbcClientAppProps) {
       </div>
 
       {/* content */}
-      <div style={{ padding: "8px 16px 96px", display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* ⚠️ 07/09 — Thomas : « le bouton de validation sur mobile est caché par
+          le menu en bas de page » (constaté en saisissant ses mensurations).
+          La marge du bas était `96px` FIXE alors que la barre de navigation,
+          elle, mesure 86 px PLUS `env(safe-area-inset-bottom)`. Sur un
+          téléphone à barre gestuelle (21 à 34 px), la barre grandit et la
+          marge non : le bas de CHAQUE onglet passait sous le menu — ici le
+          bouton « enregistrer mes mesures », qui est le dernier élément de la
+          page tant qu'aucune session n'a encore été enregistrée.
+          La coquille COACH avait déjà la bonne recette (`.bbc-main` en
+          `calc(84px + env(safe-area-inset-bottom))` pour une barre de 69 px) :
+          on l'aligne dessus, même respiration de ~14 px. */}
+      <div style={{ padding: "8px 16px calc(100px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 14 }}>
         {tab === "accueil" ? (
           <>
             {/* HERO carte membre + QR */}
