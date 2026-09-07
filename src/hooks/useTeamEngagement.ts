@@ -7,7 +7,7 @@
 // activité, engagement, statut).
 // =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
 
 export type TeamMemberStatus = "active" | "idle" | "stuck" | "decroche" | "never_started";
@@ -70,13 +70,42 @@ export const STATUS_META: Record<TeamMemberStatus, { label: string; color: strin
   never_started: { label: "Pas démarré", color: "var(--ls-text-muted)", emoji: "⚪" },
 };
 
-export function useTeamEngagement(rootUserId: string | null): UseTeamEngagementResult {
+/**
+ * L'engagement de l'équipe, sous une racine — ou sous PLUSIEURS.
+ *
+ * ⚠️ 07/09 — POURQUOI PLUSIEURS RACINES. Thomas et Mélanie sont deux comptes
+ * pour un seul distributeur Herbalife, et les douze recrues portent
+ * l'identifiant de Thomas. `get_team_engagement` étant récursive sur un SEUL
+ * `sponsor_id`, l'appeler pour Mélanie ne rendait qu'elle-même : ses onglets
+ * Membres, Engagement et Apprentissage étaient vides. `/team` avait déjà réglé
+ * ça pour l'ARBRE (`useCoupleTeamTree`, 26/04) mais pas pour l'engagement —
+ * un oubli, pas un choix.
+ *
+ * On accepte donc une liste, et on fusionne par `user_id` : un distri
+ * rattaché aux deux (ou double-parrainé en base) ne compte qu'une fois.
+ *
+ * Passer une simple chaîne reste valable et se comporte exactement comme
+ * avant — `RentabilitePage` s'appuie dessus, et on ne touche à rien de ce qui
+ * calcule des PV.
+ */
+export function useTeamEngagement(
+  rootUserId: string | string[] | null,
+): UseTeamEngagementResult {
   const [members, setMembers] = useState<TeamMemberEngagement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const roots = useMemo(() => {
+    const l = typeof rootUserId === "string" ? [rootUserId] : rootUserId ?? [];
+    return l.filter((id): id is string => typeof id === "string" && id.length > 0);
+  }, [rootUserId]);
+  // Une liste reconstruite à chaque render relancerait l'effet en boucle : on
+  // ne dépend que du contenu, pas de l'objet.
+  const cle = roots.slice().sort().join("|");
+
   const fetchAll = useCallback(async () => {
-    if (!rootUserId) {
+    const ids = cle ? cle.split("|") : [];
+    if (ids.length === 0) {
       setMembers([]);
       setLoading(false);
       return;
@@ -89,24 +118,35 @@ export function useTeamEngagement(rootUserId: string | null): UseTeamEngagementR
       setLoading(false);
       return;
     }
-    const { data, error: e } = await sb.rpc("get_team_engagement", {
-      p_root_user_id: rootUserId,
-    });
-    if (e) {
-      console.warn("[useTeamEngagement] RPC error:", e.message, e);
-      setError(e.message);
+    const reponses = await Promise.all(
+      ids.map((id) =>
+        sb.rpc("get_team_engagement", { p_root_user_id: id }).then((r) => ({ id, ...r })),
+      ),
+    );
+    const echec = reponses.find((r) => r.error);
+    if (echec?.error) {
+      console.warn("[useTeamEngagement] RPC error:", echec.error.message, echec.error);
+      setError(echec.error.message);
       setMembers([]);
       setLoading(false);
       return;
     }
-    const rows = (data ?? []) as TeamMemberEngagement[];
+    // Fusion par `user_id` — le premier rencontré gagne, comme dans
+    // `useCoupleTeamTree`, pour que l'ordre ne bouge pas d'un render à l'autre.
+    const parId = new Map<string, TeamMemberEngagement>();
+    for (const r of reponses) {
+      for (const row of (r.data ?? []) as TeamMemberEngagement[]) {
+        if (!parId.has(row.user_id)) parId.set(row.user_id, row);
+      }
+    }
+    const rows = Array.from(parId.values());
     console.info(
-      `[useTeamEngagement] rootId=${rootUserId} -> ${rows.length} members`,
+      `[useTeamEngagement] roots=${ids.join(",")} -> ${rows.length} members`,
       rows.map((r) => `${r.name} (xp=${r.xp_total})`),
     );
     setMembers(rows);
     setLoading(false);
-  }, [rootUserId]);
+  }, [cle]);
 
   useEffect(() => {
     void fetchAll();

@@ -255,13 +255,33 @@ export function TeamPage() {
 
   // Hub équipe (2026-05-04) : engagement aggregé pour tous les membres du
   // sous-arbre. Sert pour onglets Vue d'ensemble, Engagement, Apprentissage.
-  // Fix bug 2026-05-05 : on utilise TOUJOURS rootId (= admin courant) pour
-  // le team tree, jamais coupleMemberIds[0] qui pouvait pointer vers Mel
-  // (sub-tree solo) au lieu de Thomas (sub-tree complet 4 distri). Le couple
-  // mode reste pertinent uniquement pour l'agrégation rentabilité/clients.
+  //
+  // ⚠️ 07/09 — CE BLOC PORTAIT UN CONTOURNEMENT, PAS UNE RÈGLE. Il disait :
+  // « on utilise TOUJOURS rootId (= admin courant), jamais coupleMemberIds[0]
+  // qui pouvait pointer vers Mel (sub-tree solo) au lieu de Thomas (sub-tree
+  // complet) ». C'était vrai du problème, faux de la solution : prendre UN des
+  // deux ne pouvait que marcher pour l'un et casser pour l'autre. Mesuré en
+  // base le 07/09 : sous la racine Thomas, 16 personnes ; sous la racine
+  // Mélanie, 4. Connectée, elle ne voyait donc que 3 membres au lieu de 18.
+  //
+  // On interroge maintenant les DEUX racines et on fusionne (le hook
+  // déduplique par `user_id`) : la liste est la même quel que soit celui des
+  // deux qui regarde. C'est ce que `/team` faisait déjà pour l'arbre depuis le
+  // 26/04 — l'engagement avait juste été oublié.
+  const engagementRoots = useMemo(
+    () => (useCoupleMode ? coupleMemberIds : rootId ? [rootId] : []),
+    [useCoupleMode, coupleMemberIds, rootId],
+  );
   const engagementRootId = rootId;
-  const { members: engagementMembers, loading: engagementLoading } =
-    useTeamEngagement(engagementRootId);
+  const { members: engagementMembersBruts, loading: engagementLoading } =
+    useTeamEngagement(engagementRoots);
+  // Le couple ne figure jamais dans sa propre équipe. Les écrans excluaient
+  // déjà la racine (`excludeRootId`), mais une seule : sans ça, Thomas
+  // apparaîtrait dans la liste de Mélanie et réciproquement.
+  const engagementMembers = useMemo(
+    () => engagementMembersBruts.filter((m) => !engagementRoots.includes(m.user_id)),
+    [engagementMembersBruts, engagementRoots],
+  );
   const drilldownMember = drilldownMemberId
     ? engagementMembers.find((m) => m.user_id === drilldownMemberId) ?? null
     : null;

@@ -78,6 +78,7 @@ import { OPTIONS_TRI, trierLeads, type CleTri } from "../features/crm/tri";
 import { formatLeadDate as formatDate } from "../lib/leadDateFormat";
 import { dateDeRetour, quandRevient, REPONSE_PAR_CLE, type Reponse } from "../features/crm/qualification";
 import { FeuilleQualification } from "../features/crm/FeuilleQualification";
+import { parrainsDeLaVue } from "../config/teamConfig";
 
 
 function normalizeSlug(input: string): string {
@@ -113,15 +114,26 @@ export function CrmPage() {
   const { line1Ids, line2Ids, downlineMembers, canFilterTeam } = useMemo(() => {
     const l1 = new Set<string>();
     const l2 = new Set<string>();
-    const uid = currentUser?.id;
-    if (uid) {
-      for (const u of users ?? []) if (u.sponsorId === uid) l1.add(u.id);
+    // ⚠️ 07/09 — le couple compte pour UN SEUL parrain : une recrue signée par
+    // l'un est dans la ligne des deux. Sans ça, Mélanie — qui n'a parrainé
+    // personne sous son propre nom — n'avait aucune ligne du tout.
+    const parrains = parrainsDeLaVue(currentUser?.id, users ?? []);
+    if (parrains.length > 0) {
+      for (const u of users ?? []) {
+        if (u.sponsorId && parrains.includes(u.sponsorId) && !parrains.includes(u.id)) l1.add(u.id);
+      }
       for (const u of users ?? []) if (u.sponsorId && l1.has(u.sponsorId)) l2.add(u.id);
     }
     const members = (users ?? [])
       .filter((u) => l1.has(u.id) || l2.has(u.id))
-      .map((u) => ({ id: u.id, name: u.name, line: l1.has(u.id) ? 1 : 2 }))
-      .sort((a, b) => a.line - b.line || a.name.localeCompare(b.name));
+      .map((u) => ({ id: u.id, name: u.name, line: l1.has(u.id) ? 1 : 2 }));
+    // L'autre membre du couple n'est dans AUCUNE ligne — il est à côté, pas
+    // dessous. Il faut quand même pouvoir filtrer le board sur ses leads, d'où
+    // son ajout ici. `line: 0` le range en tête et lui évite l'étiquette
+    // « L1 », qui serait fausse.
+    const partenaire = (users ?? []).find((u) => parrains.includes(u.id) && u.id !== currentUser?.id);
+    if (partenaire) members.push({ id: partenaire.id, name: partenaire.name, line: 0 });
+    members.sort((a, b) => a.line - b.line || a.name.localeCompare(b.name));
     return { line1Ids: l1, line2Ids: l2, downlineMembers: members, canFilterTeam: isAdmin || l1.size > 0 };
   }, [users, currentUser?.id, isAdmin]);
 
@@ -975,7 +987,7 @@ export function CrmPage() {
               Tous
             </button>
           )}
-          {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line === 1)).length > 0 && (
+          {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).length > 0 && (
             <select
               value={["me", "l1", "l2", "all"].includes(scope) ? "" : scope}
               onChange={(e) => e.target.value && setScope(e.target.value)}
@@ -993,9 +1005,9 @@ export function CrmPage() {
               }}
             >
               <option value="">Un distributeur…</option>
-              {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line === 1)).map((m) => (
+              {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).map((m) => (
                 <option key={m.id} value={m.id}>
-                  L{m.line} · {m.name}
+                  {m.line === 0 ? m.name : `L${m.line} · ${m.name}`}
                 </option>
               ))}
             </select>

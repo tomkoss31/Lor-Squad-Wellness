@@ -35,9 +35,11 @@ export function FormationMyTeamPage() {
   // Ils sont deux comptes pour UN SEUL distributeur Herbalife (c'est déjà ce
   // que dit `teamConfig.ts`, et ce que fait `/team` depuis le 26/04). Or ici le
   // filtre était `u.sponsorId === currentUser.id`, strictement personnel :
-  // toutes les recrues portent l'identifiant de Thomas, donc Mélanie tombait
-  // sur l'état vide « Bientôt ton équipe » alors qu'ils en ont douze ensemble.
-  // C'était le seul écran de l'audit du jour SANS porte de sortie admin.
+  // chacun ne voyait que les recrues qu'il a signées de son propre nom.
+  //
+  // Compté en base le 07/09 : Thomas en a parrainé 10, Mélanie 3. Aucun des
+  // deux ne voyait les 13. Cet écran n'a aucune porte de sortie « admin » —
+  // le rôle ne rattrape rien ici, contrairement au reste de l'app.
   //
   // Une recrue parrainée par l'un est parrainée par le couple.
   const parrains = useMemo(

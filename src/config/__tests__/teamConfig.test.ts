@@ -2,15 +2,13 @@
 // LE COUPLE COMPTE POUR UN SEUL PARRAIN.
 //
 // Thomas et Mélanie sont deux comptes pour UN SEUL distributeur Herbalife. Les
-// recrues portent l'identifiant de celui qui a signé le parrainage — en base,
-// c'est Thomas pour les douze. Mesuré le 07/09 : Mélanie ne parraine personne
-// sous son propre nom, et `sponsor_id` des deux vaut `null` (ils sont en haut
-// de la lignée, c'est normal).
+// recrues portent l'identifiant de celui qui a signé le parrainage. Compté en
+// base le 07/09 : **10 pour Thomas, 3 pour Mélanie**, et `sponsor_id` des deux
+// vaut `null` (ils sont en haut de la lignée, c'est normal).
 //
 // Conséquence sur tout écran qui filtre en `u.sponsorId === currentUser.id` :
-// Mélanie voit un écran VIDE. Sur `/formation/mon-equipe` il n'y avait même
-// aucune porte de sortie « admin » pour la rattraper — elle lisait
-// « Bientôt ton équipe » devant douze filleuls.
+// chacun ne voit que sa moitié, jamais les 13. Sur `/formation/mon-equipe` il
+// n'existe même aucune porte de sortie « admin » pour rattraper ça.
 //
 // Thomas, mot pour mot : « mon appli = la sienne en fonctionnalité ».
 // =============================================================================

@@ -98,11 +98,10 @@ export function isCoupleVirtualId(id: string | null | undefined): boolean {
  * la même équipe que moi, mon appli = la sienne en fonctionnalité ».
  *
  * Un membre du couple voit l'équipe DES DEUX : les recrues portent
- * l'identifiant de celui qui a signé le parrainage, alors qu'elles appartiennent
- * au couple. Sans ça, celui des deux qui n'a parrainé sous son propre nom
- * personne tombe sur un écran vide — c'est exactement ce qui arrivait à Mélanie
- * sur `/formation/mon-equipe`, où aucune porte de sortie « admin » ne la
- * rattrapait.
+ * l'identifiant de celui qui a signé le parrainage, alors qu'elles
+ * appartiennent au couple. Sans ça, chacun ne voit que sa moitié — compté en
+ * base le 07/09 : 10 recrues signées par Thomas, 3 par Mélanie, et aucun des
+ * deux ne voyait les 13.
  *
  * Pour tout le monde d'autre : soi-même, et rien de plus. La fonction rend
  * toujours une liste, jamais `null` — un appelant qui l'oublierait afficherait

@@ -42,6 +42,7 @@ import { currentMonthIso } from "../lib/herbalifeFormulas";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { PilotageLevelBadge } from "../components/team/PilotageLevelBadge";
 import type { HerbalifeRank } from "../types/domain";
+import { parrainsDeLaVue } from "../config/teamConfig";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
   active: { label: "Actif", tone: "active" },
@@ -87,7 +88,12 @@ export function DistributorPortfolioPage() {
   // du currentUser. Si le distri n'est pas dans son arbre (rare cas admin
   // qui visite un user out-of-tree), member sera null et la vue d'ensemble
   // riche n'apparaitra pas (fallback : clients tab par defaut).
-  const { members } = useTeamEngagement(currentUser?.id ?? null);
+  //
+  // ⚠️ 07/09 — « rare cas », disait ce commentaire. Pour Mélanie c'était
+  // PERMANENT : elle n'est pas dans l'arbre de Thomas (ils sont partenaires,
+  // pas l'un sous l'autre), donc ouvrir sa fiche ne montrait jamais la vue
+  // d'ensemble riche. On regarde donc sous les deux racines du couple.
+  const { members } = useTeamEngagement(parrainsDeLaVue(currentUser?.id, users));
   const member = useMemo(
     () => members.find((m) => m.user_id === distributorId) ?? null,
     [members, distributorId],
