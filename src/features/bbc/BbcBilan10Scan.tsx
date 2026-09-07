@@ -33,11 +33,10 @@ import { UnitToggle } from "../../components/bbc/UnitToggle";
 import {
   POIDS_MANQUANT_MESSAGE,
   compareReadings,
-  displayMetric,
+  decimalsOf,
   isConvertibleMetric,
   isWeightUsable,
   nativeUnitOf,
-  toNativeValue,
   type BodyMetricKey,
   type DisplayUnit,
   type Goal,
@@ -66,29 +65,6 @@ interface Mesure {
   echelle?: Record<DisplayUnit, number>;
 }
 
-/**
- * Ce que la DERNIÈRE bascule d'unité a écrit dans les champs, et la valeur
- * native d'origine de chacun.
- *
- * Sans cette ancre, l'affichage devient la donnée : 31,1 % de 70,3 kg s'affiche
- * « 21,9 » kg (arrondi au dixième), et relire 21,9 kg redonne 31,2 %. Deux
- * allers-retours sur l'inverseur suffisaient à faire dériver la mesure d'un
- * dixième, à retourner le verdict affiché — et c'est la valeur dérivée qui
- * partait en base. Or l'inverseur ne doit changer QUE l'affichage.
- *
- * La règle : un champ dont le texte n'a pas bougé depuis la bascule garde sa
- * valeur d'origine ; un champ retapé est relu, forcément.
- *
- * Conséquence assumée : corriger le POIDS après une bascule ne réécrit pas les
- * champs graisse / muscle (on ne réécrit jamais pendant qu'on tape). La mesure
- * reste juste — c'est bien le % lu sur la balance qui est conservé — mais son
- * affichage en kilos ne se rafraîchit qu'à la bascule suivante.
- */
-interface Ancrage {
-  unit: DisplayUnit;
-  texte: Record<BodyMetricKey, string>;
-  natifs: ScanValues;
-}
 
 /** Les 3 mesures qu'on lit à bout de bras pendant le rendez-vous. */
 const EN_TETE: Mesure[] = [
@@ -222,32 +198,33 @@ export function BbcBilan10Scan({
   const [goal, setGoal] = useState<Goal>(objectifInitial);
   const [detailOuvert, setDetailOuvert] = useState(false);
 
-  // Le champ contient ce que le coach a tapé, DANS L'UNITÉ AFFICHÉE. La valeur
-  // native (celle qui partira en base) en est déduite, jamais l'inverse.
+  // ⚠️ LE CHAMP CONTIENT EXACTEMENT CE QUE LA BALANCE AFFICHE (07/09).
+  //
+  // Avant, il contenait « ce que le coach a tapé, dans l'unité affichée » — donc
+  // l'inverseur % | kg décidait de l'unité de SAISIE. C'était faux par
+  // construction : la balance donne la masse grasse en % et le muscle en KG.
+  // Une seule bascule ne peut pas rendre les deux natifs, donc quelle que soit
+  // sa position, l'un des deux champs demandait une unité que la balance
+  // n'affiche pas.
+  //
+  // Ce que ça a coûté, le 07/09 au club : sur `%` (le défaut), Thomas tape les
+  // 43,7 kg de muscle lus sur la balance, l'app comprend « 43,7 % de 73,4 kg »
+  // et enregistre 32,1. Deux fiches faussées d'un tiers en huit minutes, sans
+  // le moindre message — Romane et Fabienne. Le chiffre s'écrit, il est juste
+  // faux.
+  //
+  // Désormais chaque champ est dans SON unité native : graisse en %, muscle en
+  // kg, poids en kg. L'inverseur ne touche plus à la saisie — il ne sert plus
+  // qu'à LIRE l'évolution (départ → aujourd'hui, écart), là où il est utile et
+  // sans danger.
   const [texte, setTexte] = useState<Record<BodyMetricKey, string>>(() =>
-    texteDepuisNatif(dejaEnregistre ?? null, "percent", dejaEnregistre?.weight ?? null),
-  );
-
-  // L'ancre de la dernière bascule (cf. `Ancrage`). À l'ouverture d'une feuille
-  // déjà enregistrée, elle porte les valeurs telles qu'elles sont en base : une
-  // bascule immédiate repart donc du chiffre écrit, pas de son arrondi affiché.
-  const [ancrage, setAncrage] = useState<Ancrage | null>(() =>
-    dejaEnregistre
-      ? {
-          unit: "percent",
-          texte: texteDepuisNatif(dejaEnregistre, "percent", dejaEnregistre.weight),
-          natifs: dejaEnregistre,
-        }
-      : null,
+    texteNatif(dejaEnregistre ?? null),
   );
 
   const poidsAujourdhui = parseNombre(texte.weight);
   const poidsUtilisable = isWeightUsable(poidsAujourdhui);
 
-  const natifs = useMemo<ScanValues>(
-    () => natifsDepuisTexte(texte, unit, poidsAujourdhui, ancrage),
-    [texte, unit, poidsAujourdhui, ancrage],
-  );
+  const natifs = useMemo<ScanValues>(() => natifsDepuisTexte(texte), [texte]);
 
   const comparaisons = useMemo(() => {
     const sortie = {} as Record<BodyMetricKey, MetricComparison>;
@@ -264,29 +241,15 @@ export function BbcBilan10Scan({
   }, [depart, natifs, poidsAujourdhui, unit, goal]);
 
   /**
-   * Bascule d'unité : on relit d'abord les natifs sous l'ANCIENNE unité, puis on
-   * réécrit les champs sous la nouvelle. Sans ce passage par le natif, on
-   * relirait « 31,1 » comme des kilos après avoir tapé des pourcentages.
+   * Bascule d'unité — elle ne change QUE la lecture.
    *
-   * Deux garde-fous, chacun pour un dégât constaté :
-   *  • les natifs viennent de l'ancre quand le champ n'a pas bougé, sinon
-   *    l'arrondi d'affichage deviendrait la donnée à chaque aller-retour ;
-   *  • seuls la graisse et le muscle sont réécrits : reformater le poids
-   *    changerait « 82,45 » en « 82,5 », c'est-à-dire le dénominateur de toutes
-   *    les conversions — et le champ en cours de frappe.
+   * ⚠️ Elle réécrivait les champs de saisie, avec toute une mécanique d'ancrage
+   * pour que l'arrondi d'affichage ne devienne pas la donnée. Tout ça a disparu
+   * avec la cause : les champs sont natifs et ne bougent plus. Un aller-retour
+   * % → kg → % ne peut donc plus abîmer un chiffre tapé, puisqu'il n'y touche
+   * pas.
    */
-  const changerUnite = useCallback(
-    (suivante: DisplayUnit) => {
-      if (suivante === unit) return;
-      const poids = parseNombre(texte.weight);
-      const natifsAvant = natifsDepuisTexte(texte, unit, poids, ancrage);
-      const apres = texteApresBascule(texte, natifsAvant, suivante, poids);
-      setTexte(apres);
-      setAncrage({ unit: suivante, texte: apres, natifs: natifsAvant });
-      setUnit(suivante);
-    },
-    [unit, texte, ancrage],
-  );
+  const changerUnite = useCallback((suivante: DisplayUnit) => setUnit(suivante), []);
 
   function saisir(key: BodyMetricKey, valeur: string) {
     setTexte((avant) => ({ ...avant, [key]: valeur }));
@@ -506,14 +469,18 @@ export function BbcBilan10Scan({
               lineHeight: 1.4,
             }}
           >
-            graisse &amp; muscle affichés en
+            {/* « ÉVOLUTION » et pas « affichés » : depuis le 07/09 l'inverseur ne
+                touche plus à ce qu'on tape. Le dire ici évite qu'un coach le
+                bascule en croyant changer l'unité de saisie — c'est cette
+                confusion qui a faussé deux fiches. */}
+            évolution lue en
           </span>
           <UnitToggle
             unit={unit}
             onChange={changerUnite}
             disabled={!poidsUtilisable}
             disabledReason={POIDS_MANQUANT_MESSAGE}
-            label="Unité d'affichage de la graisse et du muscle"
+            label="Unité de lecture de l'évolution (la saisie reste en % pour la graisse et en kg pour le muscle)"
           />
         </div>
 
@@ -641,7 +608,7 @@ export function BbcBilan10Scan({
                   inputMode="decimal"
                   value={texte[m.key]}
                   onChange={(e) => saisir(m.key, e.target.value)}
-                  aria-label={`${m.label} aujourd'hui, en ${cmp.unit}`}
+                  aria-label={`${m.label} aujourd'hui, en ${nativeUnitOf(m.key)}`}
                   style={{
                     width: 72,
                     height: 40,
@@ -668,7 +635,10 @@ export function BbcBilan10Scan({
                     flex: "none",
                   }}
                 >
-                  {cmp.unit}
+                  {/* L'unité de SAISIE — celle de la balance —, pas celle de
+                      l'inverseur. Depuis le 07/09 les deux peuvent différer :
+                      on peut lire l'évolution en % tout en tapant des kilos. */}
+                  {nativeUnitOf(m.key)}
                 </span>
                 <span
                   style={{
@@ -865,7 +835,7 @@ export function BbcBilan10Scan({
                               marginTop: 2,
                             }}
                           >
-                            {cmp.unit}
+                            {nativeUnitOf(m.key)}
                           </span>
                         </td>
                         <td
@@ -892,7 +862,7 @@ export function BbcBilan10Scan({
                             inputMode="decimal"
                             value={texte[m.key]}
                             onChange={(e) => saisir(m.key, e.target.value)}
-                            aria-label={`${m.label} aujourd'hui, en ${cmp.unit}`}
+                            aria-label={`${m.label} aujourd'hui, en ${nativeUnitOf(m.key)}`}
                             style={{
                               width: "100%",
                               height: 36,
@@ -1074,24 +1044,15 @@ function ThDtl({ children, align = "left" }: { children: string; align?: "left" 
 // -----------------------------------------------------------------------------
 
 /**
- * Réécrit les 8 champs dans l'unité demandée, à partir des valeurs natives et
- * du poids du relevé. Une valeur qu'on ne sait pas convertir (poids manquant)
- * laisse le champ VIDE : mieux vaut un champ à remplir qu'un nombre inventé.
- *
- * Réservé à l'INITIALISATION de la feuille (les 8 champs partent de la base).
- * Une bascule d'unité, elle, passe par `texteApresBascule` — elle n'a pas le
- * droit de reformater ce que le coach a tapé.
+ * Les 8 champs, chacun dans SON unité native — celle de la balance et celle de
+ * la base. Aucune conversion, donc aucun poids à fournir : un champ ne peut
+ * plus finir vide faute de dénominateur, ni dériver d'un arrondi.
  */
-function texteDepuisNatif(
-  natifs: ScanValues | null,
-  unit: DisplayUnit,
-  poids: number | null,
-): Record<BodyMetricKey, string> {
+function texteNatif(natifs: ScanValues | null): Record<BodyMetricKey, string> {
   const sortie = {} as Record<BodyMetricKey, string>;
   for (const m of TOUTES) {
     const valeur = natifs?.[m.key] ?? null;
-    const affiche = displayMetric(m.key, unit, { value: valeur, weight: poids });
-    sortie[m.key] = affiche.value == null ? "" : fmt(affiche.value, affiche.decimals);
+    sortie[m.key] = valeur == null ? "" : fmt(valeur, decimalsOf(nativeUnitOf(m.key)));
   }
   return sortie;
 }
@@ -1103,38 +1064,13 @@ function texteDepuisNatif(
  */
 function natifsDepuisTexte(
   texte: Record<BodyMetricKey, string>,
-  unit: DisplayUnit,
-  poids: number | null,
-  ancrage: Ancrage | null,
 ): ScanValues {
+  // Plus AUCUNE conversion : ce qui est tapé est déjà dans l'unité de stockage.
+  // C'est tout l'objet du correctif du 07/09 — voir le commentaire de `texte`.
   const sortie = { ...SCAN_VIDE };
   for (const m of TOUTES) {
-    const intact =
-      ancrage !== null && ancrage.unit === unit && ancrage.texte[m.key] === texte[m.key];
-    sortie[m.key] = intact
-      ? ancrage.natifs[m.key]
-      : toNativeValue(m.key, unit, parseNombre(texte[m.key]), poids);
+    sortie[m.key] = parseNombre(texte[m.key]);
   }
   return sortie;
 }
 
-/**
- * Les champs après une bascule d'unité : SEULES la graisse et le muscle sont
- * réécrits. Les six autres mesures n'ont rien à convertir — les reformater
- * ferait de « 82,45 » un « 82,5 » (deux poids différents, et c'est le second
- * qui servirait ensuite de dénominateur à toutes les conversions).
- */
-function texteApresBascule(
-  avant: Record<BodyMetricKey, string>,
-  natifs: ScanValues,
-  unit: DisplayUnit,
-  poids: number | null,
-): Record<BodyMetricKey, string> {
-  const sortie = { ...avant };
-  for (const m of TOUTES) {
-    if (!isConvertibleMetric(m.key)) continue;
-    const affiche = displayMetric(m.key, unit, { value: natifs[m.key], weight: poids });
-    sortie[m.key] = affiche.value == null ? "" : fmt(affiche.value, affiche.decimals);
-  }
-  return sortie;
-}
