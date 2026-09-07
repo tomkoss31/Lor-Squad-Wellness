@@ -65,7 +65,6 @@ export function ProfilTab() {
       /* localStorage indisponible — silencieux */
     }
   }
-  const [sponsorId, setSponsorId] = useState(currentUser?.sponsorId ?? "");
   const [coachReferentUserId, setCoachReferentUserId] = useState(
     currentUser?.coachReferentUserId ?? "",
   );
@@ -185,11 +184,6 @@ export function ProfilTab() {
       setError(`Format ID Herbalife invalide. ${HERBALIFE_ID_HELP}`);
       return;
     }
-    const sponsorNormalized = sponsorId.trim().toUpperCase();
-    if (sponsorNormalized && !HERBALIFE_ID_REGEX.test(sponsorNormalized)) {
-      setError(`Format ID sponsor invalide. ${HERBALIFE_ID_HELP}`);
-      return;
-    }
     // Validation objectif PV : entier positif raisonnable (1000 - 100000).
     const pvTargetNum = Number(monthlyPvTarget);
     if (
@@ -210,7 +204,9 @@ export function ProfilTab() {
         .update({
           name: trimmed,
           herbalife_id: herbalifeNormalized || null,
-          sponsor_id: sponsorNormalized || null,
+          // `sponsor_id` n'est PLUS écrit ici : cet écran le remplissait avec un
+          // identifiant Herbalife alors que la colonne est un uuid. Il se règle
+          // dans `/users` et dans l'Arborescence.
           coach_referent_user_id: coachReferentUserId || null,
           monthly_pv_target: pvTargetNum,
           // V2 (2026-04-30) : bio (avatar_url est save par AvatarUploader directement)
@@ -808,33 +804,20 @@ export function ProfilTab() {
                   Format : 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610)
                 </div>
               </LabeledField>
-              <LabeledField label="ID de ton sponsor Herbalife">
-                <input
-                  value={sponsorId}
-                  onChange={(e) => setSponsorId(e.target.value)}
-                  disabled={saving}
-                  placeholder="21Y0103610"
-                  pattern={HERBALIFE_ID_PATTERN}
-                  maxLength={10}
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  data-tour-id="profile-sponsor"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1px solid var(--ls-border)",
-                    background: "var(--ls-surface2)",
-                    color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                  }}
-                />
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-                  L&apos;identifiant Herbalife de la personne qui t&apos;a parrainé.
-                </div>
-              </LabeledField>
+              {/* ⚠️ 07/09 — LE CHAMP « ID DE TON SPONSOR HERBALIFE » A ÉTÉ RETIRÉ.
+                  Il demandait un identifiant Herbalife (texte, « 21Y0103610 »)
+                  et l'écrivait dans `users.sponsor_id`, qui est une colonne
+                  **uuid**. Deux conséquences, mesurées ce jour-là sur les 12
+                  personnes qui ont un parrain :
+                    · le champ s'ouvrait pré-rempli avec l'uuid du parrain, qui
+                      ne passe évidemment pas le format Herbalife → « Format ID
+                      sponsor invalide » → PLUS AUCUN enregistrement du profil
+                      possible (ni nom, ni ville, ni bio, ni objectif PV) ;
+                    · le seul contournement était de vider le champ, ce qui
+                      écrivait `null` et EFFAÇAIT le lien de parrainage.
+                  Le parrain se règle dans `/users` et dans l'Arborescence, où
+                  la valeur écrite est bien un uuid. Décision Thomas : retirer,
+                  plutôt que faire cohabiter deux sens pour un même champ. */}
               <LabeledField label="Ton coach référent">
                 <select
                   value={coachReferentUserId}

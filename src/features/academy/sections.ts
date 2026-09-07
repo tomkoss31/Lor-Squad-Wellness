@@ -114,16 +114,10 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         requiredRole: "distributor",
         advanceOn: { event: "input", valueMatch: "^\\d{2}[A-Za-z]\\d{7}$", debounceMs: 400 },
       },
-      {
-        id: "sponsor",
-        target: '[data-tour-id="profile-sponsor"]',
-        placement: "bottom",
-        route: "/parametres",
-        title: "Le numéro de ton parrain",
-        body: "La personne qui t'a inscrit chez Herbalife (même format de numéro). Souvent c'est ton coach, mais pas toujours — on les sépare pour être sûr.",
-        manualAdvance: true,
-        requiredRole: "distributor",
-      },
+      // ⚠️ 07/09 — L'étape « Le numéro de ton parrain » a été retirée avec le
+      // champ qu'elle désignait (cf. `ProfilTab`). Elle était en
+      // `manualAdvance` sur une cible qui n'existe plus : le tour d'un nouveau
+      // distributeur se serait arrêté là, sur un encart pointant le vide.
       {
         id: "coach-referent",
         target: '[data-tour-id="profile-coach-referent"]',
