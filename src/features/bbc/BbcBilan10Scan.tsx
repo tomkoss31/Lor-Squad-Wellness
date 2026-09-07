@@ -26,6 +26,8 @@
 // Jetons --ls-bbc-* uniquement. Le lime ne sert JAMAIS de couleur de texte
 // (2,18:1 sur blanc) : c'est --ls-bbc-lime-text pour l'encre, --ls-bbc-lime
 // pour les aplats.
+// ⚠️ AUCUN texte sous 11 px ici (audit du 07/09). Onze elements y etaient
+// sous le seuil, sur un ecran qu'on montre au membre en face de soi.
 // =============================================================================
 
 import { useCallback, useMemo, useState } from "react";
@@ -294,7 +296,7 @@ export function BbcBilan10Scan({
           <div
             style={{
               fontFamily: "var(--ls-bbc-font-mono)",
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               color: "var(--ls-bbc-muted)",
@@ -413,7 +415,7 @@ export function BbcBilan10Scan({
             style={{
               display: "block",
               fontFamily: "var(--ls-bbc-font-mono)",
-              fontSize: 9,
+              fontSize: 11,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               color: "var(--ls-bbc-hint)",
@@ -462,7 +464,7 @@ export function BbcBilan10Scan({
               flex: 1,
               minWidth: 0,
               fontFamily: "var(--ls-bbc-font-mono)",
-              fontSize: 9,
+              fontSize: 11,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               color: "var(--ls-bbc-hint)",
@@ -488,7 +490,7 @@ export function BbcBilan10Scan({
           <p
             style={{
               margin: "0 0 10px",
-              fontSize: 10.5,
+              fontSize: 11,
               lineHeight: 1.5,
               color: "var(--ls-bbc-amber)",
             }}
@@ -505,7 +507,7 @@ export function BbcBilan10Scan({
             alignItems: "center",
             gap: 6,
             fontFamily: "var(--ls-bbc-font-mono)",
-            fontSize: 9,
+            fontSize: 11,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "var(--ls-bbc-hint)",
@@ -630,7 +632,7 @@ export function BbcBilan10Scan({
                 <span
                   style={{
                     fontFamily: "var(--ls-bbc-font-mono)",
-                    fontSize: 10,
+                    fontSize: 11,
                     color: "var(--ls-bbc-hint)",
                     flex: "none",
                   }}
@@ -713,7 +715,7 @@ export function BbcBilan10Scan({
 
               <div
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 11,
                   lineHeight: 1.45,
                   color: "var(--ls-bbc-hint)",
                   marginTop: 9,
@@ -762,7 +764,7 @@ export function BbcBilan10Scan({
             <span
               style={{
                 fontFamily: "var(--ls-bbc-font-mono)",
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: "var(--ls-bbc-hint)",
@@ -830,7 +832,7 @@ export function BbcBilan10Scan({
                             style={{
                               display: "block",
                               fontFamily: "var(--ls-bbc-font-mono)",
-                              fontSize: 9,
+                              fontSize: 11,
                               color: "var(--ls-bbc-hint)",
                               marginTop: 2,
                             }}
@@ -900,7 +902,7 @@ export function BbcBilan10Scan({
               </table>
               <p
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   color: "var(--ls-bbc-hint)",
                   lineHeight: 1.5,
                   margin: "10px 0 4px",
@@ -980,7 +982,7 @@ export function BbcBilan10Scan({
           }}
         >
           <span aria-hidden="true">📱</span>
-          <p style={{ margin: 0, fontSize: 10.5, lineHeight: 1.5, color: "var(--ls-bbc-muted)" }}>
+          <p style={{ margin: 0, fontSize: 11, lineHeight: 1.5, color: "var(--ls-bbc-muted)" }}>
             <b style={{ color: "var(--ls-bbc-violet)" }}>Ce que le membre voit de son côté.</b> Ces
             mêmes chiffres allument sa courbe dans son app : il lui fallait deux relevés pour
             qu'elle existe, celui d'aujourd'hui est le second.
@@ -1000,7 +1002,10 @@ function Badge({ tone, children }: { tone: "lime" | "teal"; children: string }) 
     <span
       style={{
         fontFamily: "var(--ls-bbc-font-mono)",
-        fontSize: 8,
+        // 11 px minimum, comme tout le reste de cet ecran (audit 07/09) : a
+        // 8 px ces pastilles etaient illisibles — or ce sont elles qui disent
+        // QUELLE ligne compte et laquelle a ete convertie.
+        fontSize: 11,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         padding: "3px 6px",
@@ -1024,7 +1029,10 @@ function ThDtl({ children, align = "left" }: { children: string; align?: "left" 
       scope="col"
       style={{
         fontFamily: "var(--ls-bbc-font-mono)",
-        fontSize: 8,
+        // 11 px minimum, comme tout le reste de cet ecran (audit 07/09) : a
+        // 8 px ces pastilles etaient illisibles — or ce sont elles qui disent
+        // QUELLE ligne compte et laquelle a ete convertie.
+        fontSize: 11,
         fontWeight: 600,
         letterSpacing: "0.05em",
         textTransform: "uppercase",

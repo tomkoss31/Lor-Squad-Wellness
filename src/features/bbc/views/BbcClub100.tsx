@@ -2,6 +2,10 @@
 // BbcClub100 — le tableau de bord du modèle + le calculateur de rentabilité.
 // Deux zones nettement séparées : les REPÈRES (sourcés Notion) et TON CALCUL
 // (tes chiffres → résultats calculés, formules affichées). Rien d'inventé.
+// ⚠️ AUCUN texte sous 11 px ici (audit du 07/09). Cet ecran est lu en
+// diagonale pendant un rendez-vous, sur la tablette du comptoir : 21
+// elements y etaient sous le seuil. Ne pas redescendre pour gagner de la
+// place — c'est l'ecran des CHIFFRES, ils doivent se lire.
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
@@ -126,7 +130,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
           <Repere v={`~${CLUB100.superviseursTotal}`} l="superviseurs au total" s="dans l'organisation" />
           <Repere v={num(CLUB100.pvOrganisation)} l="PV d'organisation" s="club à maturité" />
         </div>
-        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
+        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
           source · Formation 09 « Le modèle économique » (Clare &amp; Dan)
         </div>
       </div>
@@ -182,7 +186,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
           ))}
         </div>
 
-        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 12, lineHeight: 1.6 }}>
+        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 12, lineHeight: 1.6 }}>
           {coutVisite != null
             ? `une visite te coûte ${eur2(coutVisite)} · prix public × (1 − ${palier} %) ÷ doses, shake + boisson`
             : "renseigne les 4 doses pour obtenir le coût d'une visite"}
@@ -232,7 +236,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
 
         {/* point mort */}
         <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
-          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", marginBottom: 6 }}>
+          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", marginBottom: 6 }}>
             ton point mort
           </div>
           {!chargesRenseignees ? (
@@ -268,11 +272,11 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
               </div>
               <div style={{ fontSize: 11.5, color: "var(--ls-bbc-muted)", marginTop: 4 }}>~{e.superviseurs} superviseurs</div>
               <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 14, fontWeight: 700, marginTop: 6 }}>~{num(e.pv)} PV</div>
-              {e.clubs === 3 ? <div style={{ fontSize: 10.5, color: "var(--ls-bbc-lime-text)", marginTop: 4 }}>🎯 ta cible</div> : null}
+              {e.clubs === 3 ? <div style={{ fontSize: 11, color: "var(--ls-bbc-lime-text)", marginTop: 4 }}>🎯 ta cible</div> : null}
             </div>
           ))}
         </div>
-        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
+        <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 12 }}>
           source · Formation 09 — échelle organisation
         </div>
       </div>
@@ -294,7 +298,7 @@ function Repere({ v, l, s }: { v: string; l: string; s: string }) {
     <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "14px 16px" }}>
       <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 24, color: "var(--ls-bbc-text)", lineHeight: 1 }}>{v}</div>
       <div style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>{l}</div>
-      <div style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{s}</div>
+      <div style={{ fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 2 }}>{s}</div>
     </div>
   );
 }
@@ -305,7 +309,7 @@ function Out({ v, l, f, tone }: { v: string; l: string; f: string; tone?: "lime"
     <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "13px 15px" }}>
       <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 19, color, lineHeight: 1.1 }}>{v}</div>
       <div style={{ fontSize: 11.5, fontWeight: 600, marginTop: 5 }}>{l}</div>
-      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-hint)", marginTop: 3 }}>{f}</div>
+      <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 3 }}>{f}</div>
     </div>
   );
 }
@@ -354,7 +358,7 @@ function Field({
         {suffix ? <span style={{ fontSize: 12, color: "var(--ls-bbc-muted)" }}>{suffix}</span> : null}
       </span>
       {hint ? (
-        <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, color: "var(--ls-bbc-hint)", marginTop: 4 }}>
+        <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", marginTop: 4 }}>
           {hint}
         </span>
       ) : null}

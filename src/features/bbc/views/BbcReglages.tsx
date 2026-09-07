@@ -110,7 +110,13 @@ export function BbcReglages({ club, onSaved }: BbcReglagesProps) {
                       type="button"
                       onClick={() => toggleDay(key, d)}
                       style={{
-                        minHeight: 36, padding: "7px 12px", borderRadius: 999, cursor: "pointer",
+                        // 44 px : le minimum pour un doigt. Ces puces etaient a
+                        // 36 de haut et 42-49 de large — mesure du 07/09, 21
+                        // cibles sous le seuil sur cet ecran, le seul de tout
+                        // le BBC. Or c'est ici qu'on regle les horaires du
+                        // club, debout, sur la tablette du comptoir : un tap
+                        // rate y ouvre ou ferme un creneau par erreur.
+                        minHeight: 44, minWidth: 44, padding: "7px 14px", borderRadius: 999, cursor: "pointer",
                         fontSize: 11.5, fontWeight: 700, fontFamily: "var(--ls-bbc-font-body)",
                         background: on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)",
                         color: on ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",

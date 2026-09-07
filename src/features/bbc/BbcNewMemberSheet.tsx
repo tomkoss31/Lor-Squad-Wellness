@@ -1241,7 +1241,12 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
                     ⚠️ Sans email : pas de rappel de RDV la veille à 18 h, et pas de connexion par mot de passe. Le QR et les notifications marchent quand même.
                   </div>
                 </Champ>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8, marginBottom: 13 }}>
+                {/* `1fr 2fr` debordait de 25 px a 375 px (mesure du 07/09) :
+                    deux steppers cote a cote, chacun avec ses boutons − et +,
+                    ne tiennent pas sur une ligne de telephone. `auto-fit` les
+                    met cote a cote des qu'il y a la place et les empile sinon,
+                    sans qu'on ait a choisir une largeur d'ecran a la main. */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 8, marginBottom: 13 }}>
                   <Champ label="Âge">
                     <Stepper value={f.age} unite="ans" pas={1} min={14} max={100} onChange={(v) => maj({ age: v })} />
                   </Champ>
