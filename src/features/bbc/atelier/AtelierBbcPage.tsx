@@ -63,7 +63,7 @@ import { BbcMessages } from "../views/BbcMessages";
 import { BbcPrelancement } from "../views/BbcPrelancement";
 import { BbcReglages } from "../views/BbcReglages";
 import { BbcScripts } from "../views/BbcScripts";
-import { BbcSemaine } from "../views/BbcSemaine";
+import { BbcSemaine, FeuilleAffectation } from "../views/BbcSemaine";
 import {
   ATELIER_CLUB,
   ATELIER_CLUBS,
@@ -92,6 +92,7 @@ type ScreenKey =
   | "reglages"
   | "membre"
   | "saisie"
+  | "permanence"
   | "qualifier"
   | "supprimer"
   | "arrivees"
@@ -186,6 +187,12 @@ const SCREENS: Screen[] = [
     label: "Supprimer un membre",
     source: "props",
     note: "La confirmation avant d'effacer quelqu'un (19/08). Tout est en props → écran complet. Le bouton rouge ne s'active qu'une fois le prénom recopié — c'est le garde-fou qu'on vérifie ici. Rien n'est supprimé depuis l'atelier.",
+  },
+  {
+    k: "permanence",
+    label: "Qui tient le bar ?",
+    source: "props",
+    note: "La feuille d'affectation d'une permanence (07/09). Tout est en props → écran complet, alors que sur « La semaine » elle s'ouvre vide faute de session. Les deux coachs du club sont proposés d'emblée ; le reste de l'équipe est replié derrière « Quelqu'un d'autre de mon équipe ». Rien n'est écrit depuis l'atelier.",
   },
   {
     k: "qualifier",
@@ -617,6 +624,35 @@ function AtelierScene({
           onConfirmer={async () => "Atelier : rien n'est supprimé ici."}
         />
       </div>
+    );
+  }
+
+  if (screen === "permanence") {
+    // L'équipe telle qu'elle est vraiment : Thomas et Mélanie tiennent le club,
+    // le reste est de la downline qui ne met jamais les pieds au bar.
+    return (
+      <FeuilleAffectation
+        jour={new Date()}
+        creneauTexte="6h45-11h"
+        equipe={{
+          club: [
+            { id: "u-thomas", name: "Thomas Kossmann", role: "superviseur · toi" },
+            { id: "u-melanie", name: "Mélanie Vidal", role: "coach" },
+          ],
+          autres: [
+            { id: "u-1", name: "Jeremy Bazard", role: "coach" },
+            { id: "u-2", name: "Romane Delcourt", role: "coach" },
+            { id: "u-3", name: "Gabriel Marin", role: "distributeur" },
+            { id: "u-4", name: "Virginie Aubert", role: "distributeur" },
+            { id: "u-5", name: "Gaëlle Grandet", role: "distributeur" },
+          ],
+        }}
+        actuelId={null}
+        erreur={null}
+        onFermer={() => undefined}
+        onAffecter={async () => undefined}
+        onLiberer={async () => undefined}
+      />
     );
   }
 

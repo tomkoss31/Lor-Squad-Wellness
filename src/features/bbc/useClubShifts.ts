@@ -94,10 +94,26 @@ export interface Affectable {
  * requête pour reconstruire une arborescence complète coûterait un aller-retour
  * de plus à chaque ouverture de l'onglet, pour un club qui compte 3 personnes.
  */
-export function equipeAffectable(users: User[], currentUserId?: string | null): Affectable[] {
+export function equipeAffectable(
+  users: User[],
+  currentUserId?: string | null,
+  /**
+   * ⚠️ 07/09 — LES COACHS DU CLUB NE SONT PAS FORCÉMENT DE LA DOWNLINE.
+   *
+   * Mesuré en base ce jour-là : `users.sponsor_id` de Mélanie vaut **null**.
+   * Elle tient pourtant le club avec Thomas (`discovery.coach_user_ids` les
+   * porte tous les deux). Le filtre « moi + ma downline directe » l'excluait
+   * donc de la feuille : la seule autre personne qui ouvre réellement le bar
+   * était la seule qu'on ne pouvait PAS y affecter, et rien ne le disait.
+   *
+   * On les rattache donc explicitement, en plus de la downline.
+   */
+  idsClub: string[] = [],
+): Affectable[] {
   if (!currentUserId) return [];
+  const duClub = new Set(idsClub.filter(Boolean));
   return users
-    .filter((u) => u.active && (u.id === currentUserId || u.sponsorId === currentUserId))
+    .filter((u) => u.active && (u.id === currentUserId || u.sponsorId === currentUserId || duClub.has(u.id)))
     .map((u) => ({
       id: u.id,
       name: u.name,
@@ -105,6 +121,54 @@ export function equipeAffectable(users: User[], currentUserId?: string | null): 
     }))
     // Soi-même d'abord : dans les faits, c'est le coach qui ouvre 5 matins sur 6.
     .sort((a, b) => (a.id === currentUserId ? -1 : b.id === currentUserId ? 1 : a.name.localeCompare(b.name)));
+}
+
+/** L'équipe rangée par pertinence pour la feuille « Qui tient le bar ? ». */
+export interface EquipeClassee {
+  /** Ceux qui tiennent CE club : proposés d'emblée, sans un geste de plus. */
+  club: Affectable[];
+  /** Tout le reste de l'équipe : replié derrière un bouton. */
+  autres: Affectable[];
+}
+
+/**
+ * Range l'équipe : les coachs du club devant, le reste derrière un repli.
+ *
+ * ⚠️ 07/09 — Thomas : « il faut que ce soit Mélanie et Thomas à la sélection
+ * puis les autres en menu déroulant à cliquer, pas toute la liste ! imagine
+ * j'ai 200 coachs et je dois défiler une liste de personnes qui ne sont pas
+ * BBC ».
+ *
+ * Une permanence de club se confie, dans les faits, à l'un des deux coachs du
+ * club. Les faire chercher dans toute la downline, c'est faire payer à chaque
+ * matin affecté le prix d'une équipe qui grandit — alors que la bonne réponse
+ * est connue d'avance et tient en deux lignes.
+ *
+ * On ne RETIRE personne pour autant : le repli garde le geste possible (un
+ * remplaçant, un jour), il cesse juste d'être le cas par défaut.
+ *
+ * `currentUserId` rejoint toujours le premier groupe : c'est lui qui ouvre
+ * cinq matins sur six, club déclaré ou pas.
+ */
+export function equipeParClub(
+  equipe: Affectable[],
+  idsClub: string[],
+  currentUserId?: string | null,
+): EquipeClassee {
+  const devant = new Set<string>();
+  for (const id of idsClub) if (id) devant.add(id);
+  if (currentUserId) devant.add(currentUserId);
+
+  const club = equipe.filter((p) => devant.has(p.id));
+  const autres = equipe.filter((p) => !devant.has(p.id));
+
+  // Un club dont les coachs ne sont pas déclarés (`discovery.coach_user_ids`
+  // vide ET propriétaire absent de la liste) replierait TOUT LE MONDE derrière
+  // un bouton : la feuille s'ouvrirait sur une liste vide. On retombe alors sur
+  // le comportement d'avant — montrer trop plutôt que cacher en silence, la
+  // même règle que `porteeValide`.
+  if (club.length === 0) return { club: autres, autres: [] };
+  return { club, autres };
 }
 
 export interface UseClubShiftsResult {

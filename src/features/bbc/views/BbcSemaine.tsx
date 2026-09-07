@@ -31,7 +31,7 @@ import { useAppContext } from "../../../context/AppContext";
 import { useBbcCalls } from "../useBbcCalls";
 import { useBbcMembers } from "../useBbcMembers";
 import { getCallsForWeek } from "../data/bbcCalls";
-import { useClubShifts, equipeAffectable, cleJour, type Affectable } from "../useClubShifts";
+import { useClubShifts, equipeAffectable, equipeParClub, cleJour, type Affectable, type EquipeClassee } from "../useClubShifts";
 import {
   useClubDiscoveryBookings,
   type ClubDiscoveryBooking,
@@ -341,7 +341,16 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   );
 
   const nomsUsers = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
-  const equipe = useMemo(() => equipeAffectable(users, currentUser?.id), [users, currentUser?.id]);
+  const equipe = useMemo(
+    () => equipeAffectable(users, currentUser?.id, idsClub),
+    [users, currentUser?.id, idsClub],
+  );
+  // Les coachs du club devant, le reste de l'équipe replié : une permanence se
+  // confie à l'un des deux coachs, pas à une downline entière (Thomas, 07/09).
+  const equipeClassee = useMemo(
+    () => equipeParClub(equipe, idsClub, currentUser?.id),
+    [equipe, idsClub, currentUser?.id],
+  );
 
   // Un membre BBC est un client comme un autre côté RDV : c'est cet ensemble
   // qui permet de dire « membre » plutôt que « hors club » — sans jamais
@@ -803,7 +812,7 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
         <FeuilleAffectation
           jour={feuille}
           creneauTexte={openHours}
-          equipe={equipe}
+          equipe={equipeClassee}
           actuelId={shiftDuJourChoisi?.userId ?? null}
           erreur={erreurFeuille}
           onFermer={fermerFeuille}
@@ -1239,7 +1248,9 @@ function LigneEvenement({
   );
 }
 
-function FeuilleAffectation({
+/** Exportée pour l'atelier (`/atelier-bbc?screen=permanence`) : sans session,
+ *  l'équipe est vide et l'écran ne montre rien de ce qui est réglé ici. */
+export function FeuilleAffectation({
   jour,
   creneauTexte,
   equipe,
@@ -1251,7 +1262,7 @@ function FeuilleAffectation({
 }: {
   jour: Date;
   creneauTexte: string;
-  equipe: Affectable[];
+  equipe: EquipeClassee;
   actuelId: string | null;
   /** Message d'échec du dernier geste — null quand tout va bien. */
   erreur: string | null;
@@ -1263,6 +1274,47 @@ function FeuilleAffectation({
   // L'écriture passe par un aller-retour réseau : sans cet état, un appui pendant
   // le vol relançait un second RPC (qui efface puis réinsère) pour rien.
   const [envoi, setEnvoi] = useState(false);
+  // Le reste de l'équipe est replié. Il s'ouvre d'office si la permanence en
+  // cours appartient à quelqu'un qui s'y trouve : sinon on afficherait
+  // « Changer la permanence » sans montrer qui la tient.
+  const [voirAutres, setVoirAutres] = useState(
+    () => !!actuelId && equipe.autres.some((p) => p.id === actuelId),
+  );
+
+  /** Une personne de la liste — même carte pour les deux groupes. */
+  const carte = (p: Affectable) => {
+    const on = choisi === p.id;
+    return (
+      <button
+        key={p.id}
+        type="button"
+        aria-pressed={on}
+        onClick={() => setChoisi(p.id)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 11,
+          width: "100%",
+          textAlign: "left",
+          padding: "12px 13px",
+          borderRadius: 12,
+          marginBottom: 7,
+          cursor: "pointer",
+          fontFamily: "var(--ls-bbc-font-body)",
+          fontSize: 14,
+          color: "var(--ls-bbc-text)",
+          background: on ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)",
+          border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`,
+        }}
+      >
+        <Avatar nom={p.name} />
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontWeight: 600 }}>{p.name}</span>
+          <span style={{ display: "block", fontSize: 11, color: "var(--ls-bbc-hint)" }}>{p.role}</span>
+        </span>
+      </button>
+    );
+  };
 
   const lancer = async (geste: () => Promise<void>) => {
     if (envoi) return;
@@ -1305,44 +1357,50 @@ function FeuilleAffectation({
           {fmtJour(jour)} · {creneauTexte}
         </div>
 
-        {equipe.length === 0 ? (
+        {equipe.club.length === 0 && equipe.autres.length === 0 ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "10px 0" }}>
             Personne à afficher — ton équipe est vide pour l'instant.
           </div>
         ) : (
-          equipe.map((p) => {
-            const on = choisi === p.id;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setChoisi(p.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 11,
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "12px 13px",
-                  borderRadius: 12,
-                  marginBottom: 7,
-                  cursor: "pointer",
-                  fontFamily: "var(--ls-bbc-font-body)",
-                  fontSize: 14,
-                  color: "var(--ls-bbc-text)",
-                  background: on ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)",
-                  border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`,
-                }}
-              >
-                <Avatar nom={p.name} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontWeight: 600 }}>{p.name}</span>
-                  <span style={{ display: "block", fontSize: 11, color: "var(--ls-bbc-hint)" }}>{p.role}</span>
-                </span>
-              </button>
-            );
-          })
+          <>
+            {equipe.club.map(carte)}
+
+            {/* Le reste de l'équipe : replié. Ce sont, dans leur immense
+                majorité, des gens qui ne mettront jamais les pieds au club —
+                les dérouler par défaut ferait payer à chaque matin affecté le
+                prix d'une équipe qui grandit. */}
+            {equipe.autres.length > 0 ? (
+              <>
+                <button
+                  type="button"
+                  aria-expanded={voirAutres}
+                  onClick={() => setVoirAutres((v) => !v)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 9,
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "11px 13px",
+                    marginTop: 4,
+                    marginBottom: 7,
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    background: "transparent",
+                    border: "1px dashed var(--ls-bbc-line2)",
+                    color: "var(--ls-bbc-muted)",
+                    fontFamily: "var(--ls-bbc-font-body)",
+                    fontSize: 13,
+                  }}
+                >
+                  <span aria-hidden="true" style={{ display: "inline-block", transition: "transform .18s ease", transform: voirAutres ? "rotate(90deg)" : "none" }}>›</span>
+                  <span style={{ flex: 1 }}>Quelqu'un d'autre de mon équipe</span>
+                  <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11 }}>{equipe.autres.length}</span>
+                </button>
+                {voirAutres ? equipe.autres.map(carte) : null}
+              </>
+            ) : null}
+          </>
         )}
 
         {/* L'échec s'affiche juste au-dessus du bouton qui vient de refuser —
