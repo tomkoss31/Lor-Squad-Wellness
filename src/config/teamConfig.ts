@@ -90,3 +90,34 @@ export function isCoupleUser(userId: string, users: User[]): boolean {
 export function isCoupleVirtualId(id: string | null | undefined): boolean {
   return id === COUPLE_VIRTUAL_ID;
 }
+
+/**
+ * Sous quels identifiants regarder « mon équipe », quand on est ce viewer.
+ *
+ * ⚠️ 07/09 — Thomas : « Mélanie a le même ID Herbalife que moi, elle doit voir
+ * la même équipe que moi, mon appli = la sienne en fonctionnalité ».
+ *
+ * Un membre du couple voit l'équipe DES DEUX : les recrues portent
+ * l'identifiant de celui qui a signé le parrainage, alors qu'elles appartiennent
+ * au couple. Sans ça, celui des deux qui n'a parrainé sous son propre nom
+ * personne tombe sur un écran vide — c'est exactement ce qui arrivait à Mélanie
+ * sur `/formation/mon-equipe`, où aucune porte de sortie « admin » ne la
+ * rattrapait.
+ *
+ * Pour tout le monde d'autre : soi-même, et rien de plus. La fonction rend
+ * toujours une liste, jamais `null` — un appelant qui l'oublierait afficherait
+ * l'équipe de quelqu'un d'autre.
+ *
+ * ⚠️ NE PAS « RÉGLER » ÇA EN BASE en donnant à Mélanie `sponsor_id = Thomas` :
+ * elle deviendrait sa filleule pour `herbalifeFormulas.ts`, donc pour le calcul
+ * des PV, des paliers et des qualifications. Ils sont partenaires, pas l'un
+ * sous l'autre. Cf. `docs/HERBALIFE_PALIERS_REGLES.md`.
+ */
+export function parrainsDeLaVue(
+  currentUserId: string | null | undefined,
+  users: User[],
+): string[] {
+  if (!currentUserId) return [];
+  const couple = resolveCoupleUserIds(users);
+  return couple.includes(currentUserId) ? couple : [currentUserId];
+}

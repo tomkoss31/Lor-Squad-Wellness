@@ -8,11 +8,12 @@
 // en Phase F quand le contenu Notion sera importe.
 // =============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { EmptyState } from "../components/ui/EmptyState";
 import { useAppContext } from "../context/AppContext";
+import { parrainsDeLaVue } from "../config/teamConfig";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { RecruteFormationCard } from "../components/formation/RecruteFormationCard";
 import { useFormationReviewQueue } from "../features/formation";
@@ -26,11 +27,34 @@ export function FormationMyTeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Recrues = users avec parent_user_id = currentUser.id (lignee directe N+1)
+  // ⚠️ 07/09 — LE COUPLE COMPTE POUR UN SEUL PARRAIN.
+  //
+  // Thomas, mot pour mot : « Mélanie a le même ID Herbalife que moi, elle doit
+  // voir la même équipe que moi, mon appli = la sienne en fonctionnalité ».
+  //
+  // Ils sont deux comptes pour UN SEUL distributeur Herbalife (c'est déjà ce
+  // que dit `teamConfig.ts`, et ce que fait `/team` depuis le 26/04). Or ici le
+  // filtre était `u.sponsorId === currentUser.id`, strictement personnel :
+  // toutes les recrues portent l'identifiant de Thomas, donc Mélanie tombait
+  // sur l'état vide « Bientôt ton équipe » alors qu'ils en ont douze ensemble.
+  // C'était le seul écran de l'audit du jour SANS porte de sortie admin.
+  //
+  // Une recrue parrainée par l'un est parrainée par le couple.
+  const parrains = useMemo(
+    () => parrainsDeLaVue(currentUser?.id, users ?? []),
+    [currentUser?.id, users],
+  );
+
+  // Recrues = lignee directe N+1 du parrain (ou du couple).
   // Phase C : on prend uniquement N+1 pour focus coaching. Lignee complete
   // (N+2+) reservee a /team standard et a /formation/admin.
-  const myDirectRecruits: User[] =
-    users?.filter((u) => u.sponsorId === currentUser?.id && u.id !== currentUser?.id) ?? [];
+  const myDirectRecruits: User[] = useMemo(
+    () =>
+      (users ?? []).filter(
+        (u) => u.sponsorId != null && parrains.includes(u.sponsorId) && !parrains.includes(u.id),
+      ),
+    [users, parrains],
+  );
 
   // Charge les progressions de chaque recrue (RLS laisse passer car lignee)
   useEffect(() => {
