@@ -14,6 +14,7 @@ import { RANK_LABELS, RANK_ORDER } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { hiddenFeatures, toAppLevel, type AppLevel } from "../config/appVisibility";
+import { idHerbalifeDeLaVue } from "../config/teamConfig";
 
 type TabKey = "members" | "new" | "repair" | "promote";
 type RoleFilter = "all" | "admin" | "referent" | "distributor";
@@ -549,6 +550,49 @@ export function UsersPage() {
                               Rang Herbalife
                             </div>
                             <UserInlineRankForm user={user} />
+                          </div>
+
+                          {/* ID Herbalife (07/09) — LECTURE SEULE, et il faut
+                              savoir pourquoi avant de vouloir le rendre
+                              modifiable ici.
+
+                              `users.herbalife_id` porte un index UNIQUE partiel
+                              (`users_herbalife_id_unique`) : deux comptes ne
+                              peuvent pas porter le même. Or Thomas et Mélanie
+                              sont UN SEUL distributeur Herbalife — vérifié le
+                              07/09, la base refuse l'écriture du doublon avec
+                              « duplicate key value violates unique constraint ».
+
+                              On ne lève pas la contrainte pour autant : elle dit
+                              « un ID = un compte », ce qui reste vrai pour tous
+                              les autres. L'identifiant se partage donc à la
+                              LECTURE (`idHerbalifeDeLaVue`), et cette ligne
+                              montre lequel s'applique réellement — c'est celui
+                              qui part dans les invitations Club VIP. */}
+                          <div>
+                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                              ID Herbalife
+                            </div>
+                            {(() => {
+                              const propre = user.herbalifeId?.trim();
+                              const effectif = idHerbalifeDeLaVue(user.id, users);
+                              const emprunte = !propre && !!effectif;
+                              const preteur = emprunte
+                                ? users.find((u) => u.id !== user.id && u.herbalifeId?.trim() === effectif)
+                                : null;
+                              return (
+                                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", fontFamily: "DM Sans, sans-serif" }}>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: effectif ? "var(--ls-text)" : "var(--ls-text-hint)", letterSpacing: "0.5px" }}>
+                                    {effectif ?? "non renseigné"}
+                                  </span>
+                                  {emprunte ? (
+                                    <span style={{ fontSize: 11, color: "var(--ls-teal)" }}>
+                                      partagé avec {preteur?.name?.split(/\s+/)[0] ?? "son binôme"} — même distributeur Herbalife
+                                    </span>
+                                  ) : null}
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* Niveau d'app (Simplification 2026-07-27) — règle
