@@ -436,7 +436,7 @@ function messageErreur(e: unknown): string {
 // Les 5 étapes d'écriture
 // -----------------------------------------------------------------------------
 
-type EtapeId = "fiche" | "membre" | "acces" | "coeurs" | "carte";
+type EtapeId = "fiche" | "membre" | "acces" | "coeurs" | "parrain" | "carte";
 type Statut = "attente" | "encours" | "ok" | "echec" | "ignore";
 
 const ETAPES: Array<{ id: EtapeId; icone: string; titre: string; detail: string }> = [
@@ -444,6 +444,7 @@ const ETAPES: Array<{ id: EtapeId; icone: string; titre: string; detail: string 
   { id: "membre", icone: "☕", titre: "Membre BBC + club", detail: "Le drapeau membre et le rattachement au club vont toujours ensemble." },
   { id: "acces", icone: "📱", titre: "Son accès à l'app + son QR", detail: "Créé maintenant pour que le QR existe dès la première visite. Rien n'est envoyé." },
   { id: "coeurs", icone: "❤️", titre: "Les cœurs « à valider »", detail: "Ils apparaissent tout de suite dans l'onglet Cœurs. Un cœur ne compte que quand tu confirmes." },
+  { id: "parrain", icone: "🫶", titre: "Le cœur de celle qui l'amène", detail: "Crédité tout de suite, et déjà validé : cette personne ne recommande pas quelqu'un, elle a fait DÉMARRER quelqu'un — la fiche existe, c'est acquis." },
   { id: "carte", icone: "🎟️", titre: "La carte de fidélité", detail: "Le pointage et le bilan se déclenchent dessus, jamais sur le cumul à vie." },
 ];
 
@@ -486,6 +487,15 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
   // c'est le seul bouton du comptoir. Une cliente suivie depuis un an qui
   // prend sa carte se retrouvait avec une DEUXIÈME fiche : deux bilans
   // initiaux, deux accès à l'app, deux QR, et son historique coupé en deux.
+  // ── « Qui l'amène ? » (07/09) ───────────────────────────────────────────
+  // Thomas : « on veut créer la fiche d'Audrey et que ça donne direct un cœur à
+  // Romane ». Le champ « Qui ? » existait déjà juste à côté, mais en texte
+  // libre, et il portait la mention « personne n'est crédité ici ». C'était
+  // vrai, et c'était le manque : le geste qui compte — amener quelqu'un jusqu'à
+  // une fiche — ne se voyait nulle part.
+  const [parrainId, setParrainId] = useState("");
+  const [membres, setMembres] = useState<Array<{ id: string; nom: string; distributorId: string }>>([]);
+
   const [doublon, setDoublon] = useState<{ id: string; nom: string; indice: string } | null>(null);
   const [doublonEcarte, setDoublonEcarte] = useState(false);
   const [etats, setEtats] = useState<Record<EtapeId, Statut>>({
@@ -493,6 +503,7 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
     membre: "attente",
     acces: "attente",
     coeurs: "attente",
+    parrain: "attente",
     carte: "attente",
   });
   const [erreurs, setErreurs] = useState<Partial<Record<EtapeId, string>>>({});
@@ -929,6 +940,68 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
     if (token) setTokenApp(token);
   }
 
+  // Les membres déjà là : ce sont eux qui peuvent amener quelqu'un. On lit
+  // large (la RLS de `clients` fait seule le tri : un coach ordinaire ne verra
+  // que les siens, l'admin ceux du club) et on trie par prénom, parce qu'au
+  // comptoir on cherche un prénom, jamais une date.
+  useEffect(() => {
+    let vivant = true;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data } = await sb
+        .from("clients")
+        .select("id, first_name, last_name, distributor_id")
+        .eq("ebe_bbc", true)
+        .order("first_name");
+      if (!vivant) return;
+      setMembres(
+        ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+          id: String(r.id),
+          nom: `${String(r.first_name ?? "")} ${String(r.last_name ?? "")}`.trim(),
+          distributorId: String(r.distributor_id ?? ""),
+        })),
+      );
+    })();
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  /**
+   * 4 bis. Le cœur de celle qui l'amène.
+   *
+   * ⚠️ `coach_id` n'est PAS le coach connecté, contrairement aux 3 cœurs de
+   * l'étape 4. La seule policy d'INSERT vérifie
+   * `client_app_account_is_valid(from_client_id, coach_id)` : le coach visé doit
+   * être celui du compte d'app du PARRAIN, ou le distributeur de SA fiche. Si
+   * Thomas inscrit Audrey amenée par Romane, le cœur s'écrit donc au nom du
+   * coach de Romane — sinon la base refuse. Il reste lisible par l'admin du
+   * club depuis la migration `20261215350000`.
+   *
+   * Statut `converted` et pas `new` : les 3 cœurs de l'étape 4 sont des noms sur
+   * un papier, à valider plus tard. Celui-ci est d'une autre nature — la
+   * personne amenée EST devenue membre, sa fiche vient d'être créée. Le faire
+   * passer par « à valider » obligerait à confirmer une chose déjà faite.
+   */
+  async function crediterLeParrain(clientId: string): Promise<void> {
+    const parrain = membres.find((m) => m.id === parrainId);
+    if (!parrain) return;
+    const sb = await getSupabaseClient();
+    if (!sb) throw new Error("Supabase indisponible");
+    const { error } = await sb.from("client_referrals").insert({
+      from_client_id: parrain.id,
+      from_client_name: parrain.nom,
+      coach_id: parrain.distributorId,
+      referred_name: `${f.prenom.trim()} ${f.nom.trim()}`.trim(),
+      // NOT NULL sans défaut : une chaîne vide, jamais null.
+      referred_contact: f.tel.trim() || f.email.trim(),
+      referred_client_id: clientId,
+      status: "converted",
+    });
+    if (error) throw error;
+  }
+
   /** 4. les 3 cœurs. Une ligne vide n'est pas insérée. */
   async function creerLesCoeurs(clientId: string): Promise<void> {
     const sb = await getSupabaseClient();
@@ -1052,6 +1125,12 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
       } else {
         await etape("coeurs", () => creerLesCoeurs(clientId));
       }
+    }
+
+    if (!parrainId) {
+      poser("parrain", "ignore");
+    } else if (etats.parrain !== "ok") {
+      await etape("parrain", () => crediterLeParrain(clientId));
     }
 
     if (f.carte === "0") poser("carte", "ignore");
@@ -1211,8 +1290,51 @@ export function BbcNewMemberSheet({ userId, coachName, club, onClose, onCreated,
                     />
                   </div>
                   <div style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)", marginTop: 6, lineHeight: 1.45 }}>
-                    Une information, pas un cœur : personne n'est crédité ici. Un cœur ne compte que si la personne démarre.
+                    Une information, pas un cœur. Si c'est un membre du club, dis-le juste en dessous — là, le cœur part.
                   </div>
+                </Champ>
+
+                {/* ── Le cœur de celle qui l'amène (07/09) ────────────────────
+                    Séparé du champ « Qui ? » au-dessus, et c'est voulu : celui-là
+                    accepte n'importe quel nom (une voisine, une collègue) et ne
+                    crédite rien. Celui-ci ne propose QUE des membres du club,
+                    parce qu'un cœur se crédite à quelqu'un qui existe en base —
+                    sans quoi on ne pourrait ni le compter ni le lui montrer.
+
+                    Une liste déroulante et pas une recherche : le club a douze
+                    membres. À cinquante, il faudra un champ qui filtre. */}
+                <Champ label="Amenée par un membre du club ?" aide="crédite un cœur, tout de suite">
+                  <select
+                    value={parrainId}
+                    onChange={(e) => setParrainId(e.target.value)}
+                    aria-label="Le membre qui l'a amenée, facultatif"
+                    style={{
+                      width: "100%",
+                      minHeight: 46,
+                      borderRadius: 12,
+                      border: "1px solid var(--ls-bbc-line2)",
+                      background: "var(--ls-bbc-bg)",
+                      color: "var(--ls-bbc-text)",
+                      fontFamily: "var(--ls-bbc-font-body)",
+                      // 16 px : en dessous, iOS zoome le champ à l'ouverture de
+                      // la liste et déplace tout l'écran sous les doigts.
+                      fontSize: 16,
+                      padding: "0 12px",
+                    }}
+                  >
+                    <option value="">— personne / elle est venue seule —</option>
+                    {membres.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nom}
+                      </option>
+                    ))}
+                  </select>
+                  {parrainId ? (
+                    <div style={{ fontSize: 10.5, color: "var(--ls-bbc-lime-text)", marginTop: 6, lineHeight: 1.45 }}>
+                      ❤️ Un cœur sera crédité à {membres.find((m) => m.id === parrainId)?.nom ?? "cette personne"} dès
+                      l'enregistrement — et déjà validé : elle n'a pas donné un nom, elle a fait démarrer quelqu'un.
+                    </div>
+                  ) : null}
                 </Champ>
               </Bloc>
 
@@ -1681,7 +1803,7 @@ function reinitialiser(
   coeursEcritsRef: MutableRefObject<boolean[]>,
 ) {
   setF((prec) => ({ ...brouillonVide(), carte: prec.carte, cartePrix: prec.cartePrix}));
-  setEtats({ fiche: "attente", membre: "attente", acces: "attente", coeurs: "attente", carte: "attente" });
+  setEtats({ fiche: "attente", membre: "attente", acces: "attente", coeurs: "attente", parrain: "attente", carte: "attente" });
   setErreurs({});
   clientIdRef.current = null;
   coeursEcritsRef.current = [false, false, false];
