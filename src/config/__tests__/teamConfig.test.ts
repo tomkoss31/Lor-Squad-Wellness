@@ -14,7 +14,7 @@
 // =============================================================================
 
 import { describe, it, expect } from "vitest";
-import { parrainsDeLaVue, COUPLE_USER_IDS_HARDCODED } from "../teamConfig";
+import { parrainsDeLaVue, idHerbalifeDeLaVue, COUPLE_USER_IDS_HARDCODED } from "../teamConfig";
 import type { User } from "../../types/domain";
 
 const [THOMAS, MELANIE] = COUPLE_USER_IDS_HARDCODED;
@@ -60,6 +60,29 @@ describe("parrainsDeLaVue", () => {
       (u) => u.sponsorId != null && p.includes(u.sponsorId) && !p.includes(u.id),
     );
     expect(recrues.map((r) => r.id)).toEqual([FILLEUL]);
+  });
+
+  it("l'identifiant Herbalife : le couple partage celui qui est renseigne", () => {
+    // En base : Thomas porte 21Y0103610, celui de Mélanie est vide — et la
+    // colonne est UNIQUE, donc on ne peut pas le dupliquer. Elle l'emprunte.
+    const base = USERS.map((u) =>
+      u.id === THOMAS ? ({ ...u, herbalifeId: "21Y0103610" } as User) : u,
+    );
+    expect(idHerbalifeDeLaVue(THOMAS, base)).toBe("21Y0103610");
+    expect(idHerbalifeDeLaVue(MELANIE, base)).toBe("21Y0103610");
+    // Personne d'autre n'emprunte quoi que ce soit.
+    expect(idHerbalifeDeLaVue(FILLEUL, base)).toBeUndefined();
+  });
+
+  it("un identifiant propre n'est jamais ecrase par celui du partenaire", () => {
+    const base = USERS.map((u) =>
+      u.id === THOMAS
+        ? ({ ...u, herbalifeId: "21Y0103610" } as User)
+        : u.id === MELANIE
+          ? ({ ...u, herbalifeId: "22A0000001" } as User)
+          : u,
+    );
+    expect(idHerbalifeDeLaVue(MELANIE, base)).toBe("22A0000001");
   });
 
   it("quelqu'un d'autre ne regarde que sous son propre identifiant", () => {

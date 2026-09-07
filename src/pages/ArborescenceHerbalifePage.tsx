@@ -35,6 +35,7 @@ import type { HerbalifeRank, User } from "../types/domain";
 import { Avatar, avatarHue, initialsOf } from "../components/rentability/shared/Avatar";
 import { rankProgression } from "../lib/herbalifeFormulas";
 import { PV_BREAKDOWN_UPDATED_EVENT } from "../hooks/usePvBreakdowns";
+import { COUPLE_DISPLAY_NAME, COUPLE_INITIALS, COUPLE_SUBTITLE, parrainsDeLaVue } from "../config/teamConfig";
 
 const RANK_OPTIONS: Array<{ value: HerbalifeRank; label: string }> = [
   { value: "distributor_25", label: "Distributor — 25%" },
@@ -145,14 +146,31 @@ export function ArborescenceHerbalifePage() {
   const isAdmin = currentUser?.role === "admin";
   const externals = useMemo(() => users.filter((u) => u.isExternal), [users]);
 
+  // ⚠️ 07/09 — LA RACINE, C'EST LE COUPLE, PAS UNE PERSONNE.
+  //
+  // Ce scope n'excluait que soi-même. L'AUTRE membre du couple restait donc
+  // dans la liste, sans parent : sa clé de regroupement vaut `""` et
+  // `rootChildren` ne lit que les seaux des admins → il n'était rendu NULLE
+  // PART. Mélanie n'apparaissait dans l'arbre que si on tapait son nom dans la
+  // recherche (le filtre `:692` laisse passer les sans-sponsor).
+  //
+  // Elle n'est pas un enfant de la racine — elle EST la racine avec Thomas,
+  // exactement comme `/team` l'affiche depuis le 26/04. On les retire donc
+  // tous les deux des enfants, et le bloc racine porte le nom du couple.
+  const coupleIds = useMemo(
+    () => parrainsDeLaVue(currentUser?.id, users),
+    [currentUser?.id, users],
+  );
+  const enCouple = coupleIds.length > 1;
+
   // Scope effectif (chantier #5) : externes seuls OU toute l'équipe
-  // (externes + vrais distri actifs/inactifs, mais EXCLU toi-même qui es la racine).
+  // (externes + vrais distri actifs/inactifs, mais EXCLUE la racine).
   const scopedUsers = useMemo(() => {
     if (scopeMode === "all") {
-      return users.filter((u) => u.id !== currentUser?.id);
+      return users.filter((u) => !coupleIds.includes(u.id));
     }
     return externals;
-  }, [scopeMode, users, externals, currentUser]);
+  }, [scopeMode, users, externals, coupleIds]);
 
   // Filtre search (chantier #2)
   const searchLower = searchQuery.trim().toLowerCase();
@@ -674,15 +692,20 @@ export function ArborescenceHerbalifePage() {
           )}
 
           <div className="lr-arbo-tree" style={treeWrapStyle}>
-            {/* Racine = currentUser (toi), affichée juste pour le contexte */}
+            {/* Racine = toi — ou le couple, qui compte pour un seul distri. */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <Avatar initials={initialsOf(currentUser.name)} hue={avatarHue(currentUser.name)} size={44} />
+              <Avatar
+                initials={enCouple ? COUPLE_INITIALS : initialsOf(currentUser.name)}
+                hue={avatarHue(enCouple ? COUPLE_DISPLAY_NAME : currentUser.name)}
+                size={44}
+              />
               <div>
                 <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ls-text)" }}>
-                  {currentUser.name} <span style={{ color: "var(--ls-teal)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
+                  {enCouple ? COUPLE_DISPLAY_NAME : currentUser.name}{" "}
+                  <span style={{ color: "var(--ls-teal)", fontSize: 12, marginLeft: 4 }}>(toi · racine)</span>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
-                  {RANK_LABELS[currentUser.currentRank ?? "distributor_25"] ?? "—"}
+                  {enCouple ? COUPLE_SUBTITLE : RANK_LABELS[currentUser.currentRank ?? "distributor_25"] ?? "—"}
                 </div>
               </div>
             </div>

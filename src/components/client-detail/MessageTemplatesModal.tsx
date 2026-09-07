@@ -27,6 +27,7 @@ import {
   type MessageTemplate,
 } from "../../lib/messageTemplates";
 import type { Client } from "../../types/domain";
+import { idHerbalifeDeLaVue } from "../../config/teamConfig";
 
 interface MessageTemplatesModalProps {
   client: Client;
@@ -42,7 +43,7 @@ export function MessageTemplatesModal({
   onClose,
   preselectedTemplateId,
 }: MessageTemplatesModalProps) {
-  const { currentUser, visibleFollowUps } = useAppContext();
+  const { currentUser, users, visibleFollowUps } = useAppContext();
 
   const ctx = useMemo(
     () => {
@@ -56,13 +57,13 @@ export function MessageTemplatesModal({
       const firstWord = (currentUser?.name ?? "").trim().split(/\s+/)[0] || "Ton coach";
       return {
         coachFirstName: firstWord,
-        coachSponsorId: currentUser?.herbalifeId || undefined,
+        coachSponsorId: idHerbalifeDeLaVue(currentUser?.id, users),
         coachSponsorLetters: storedLetters ? storedLetters.toUpperCase() : undefined,
         followUps: visibleFollowUps,
         now: new Date(),
       };
     },
-    [currentUser, visibleFollowUps],
+    [currentUser, users, visibleFollowUps],
   );
 
   const applicable = useMemo(() => getApplicableTemplates(client, ctx), [client, ctx]);

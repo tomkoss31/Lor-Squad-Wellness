@@ -20,6 +20,7 @@ import { useAppContext } from "../../context/AppContext";
 import type { Client } from "../../types/domain";
 import { MessageTemplatesModal } from "./MessageTemplatesModal";
 import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
+import { idHerbalifeDeLaVue } from "../../config/teamConfig";
 
 interface ClientTier {
   pct: number;
@@ -42,13 +43,15 @@ export function ClientVipPitchTab({
   onManage?: () => void;
 }) {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const [modalOpen, setModalOpen] = useState(false);
 
   const status = client.vipStatus ?? "none";
   const isAmbassador = status === "ambassador";
   const activeTier = CLIENT_TIERS.find((t) => t.statuses.includes(status)) ?? null;
-  const hasSponsorId = Boolean(currentUser?.herbalifeId);
+  // Un membre du couple emprunte l'identifiant de son partenaire : ils sont un
+  // seul distributeur Herbalife, mais la colonne est UNIQUE (cf. teamConfig).
+  const hasSponsorId = Boolean(idHerbalifeDeLaVue(currentUser?.id, users));
   const hasLetters =
     typeof localStorage !== "undefined" && Boolean(localStorage.getItem("ls-vip-sponsor-letters"));
   const setupIncomplete = !hasSponsorId || !hasLetters;

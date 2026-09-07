@@ -112,6 +112,40 @@ export function isCoupleVirtualId(id: string | null | undefined): boolean {
  * des PV, des paliers et des qualifications. Ils sont partenaires, pas l'un
  * sous l'autre. Cf. `docs/HERBALIFE_PALIERS_REGLES.md`.
  */
+/**
+ * L'identifiant Herbalife à utiliser AU NOM de ce viewer.
+ *
+ * ⚠️ 07/09 — Thomas : « l'ID de Mélanie est le même que le mien, 21Y0103610 ».
+ * Vrai du **business** — ils sont un seul distributeur — mais impossible à
+ * écrire tel quel : `users.herbalife_id` porte un index UNIQUE partiel
+ * (`users_herbalife_id_unique`), et Thomas le détient déjà. Le dupliquer
+ * échouerait, et forcer le dédoublonnage rendrait AMBIGUË la résolution
+ * « quel coach porte cet identifiant ? » (`substituteTemplate`), qui prend le
+ * premier trouvé.
+ *
+ * On le résout donc à la lecture : un membre du couple sans identifiant emprunte
+ * celui de son partenaire. Un seul identifiant en base, les deux comptes qui
+ * s'en servent — ce qui est exactement la réalité Herbalife.
+ *
+ * Concrètement, c'est ce qui permet à Mélanie d'envoyer une invitation Club VIP :
+ * l'écran la bloquait sur « identifiant sponsor manquant ».
+ */
+export function idHerbalifeDeLaVue(
+  currentUserId: string | null | undefined,
+  users: User[],
+): string | undefined {
+  if (!currentUserId) return undefined;
+  const moi = users.find((u) => u.id === currentUserId);
+  const mien = moi?.herbalifeId?.trim();
+  if (mien) return mien;
+  for (const id of parrainsDeLaVue(currentUserId, users)) {
+    if (id === currentUserId) continue;
+    const sien = users.find((u) => u.id === id)?.herbalifeId?.trim();
+    if (sien) return sien;
+  }
+  return undefined;
+}
+
 export function parrainsDeLaVue(
   currentUserId: string | null | undefined,
   users: User[],
