@@ -19,6 +19,8 @@
 // =============================================================================
 
 import type { ComponentProps } from "react";
+import type { VisitMember } from "../useBbcVisits";
+import type { BbcMember } from "../useBbcMembers";
 import type { Club } from "../../../types/domain";
 import type { BbcClientApp } from "../BbcClientApp";
 
@@ -327,4 +329,273 @@ export const ATELIER_SCAN_AUJOURDHUI: Record<string, number | null> = {
   metabolicAge: 43,
   bmr: 1395,
   boneMass: 2.5,
+};
+
+// -----------------------------------------------------------------------------
+// « Les visites » — le pointage du matin (07/09)
+// -----------------------------------------------------------------------------
+//
+// Cet écran allait chercher ses membres lui-même : hors session il rendait une
+// page vide, donc l'audit visuel du 07/09 n'a rien pu en mesurer. C'est
+// pourtant l'écran qu'on ouvre TOUS LES MATINS au comptoir — exactement celui
+// où les régressions passent inaperçues.
+//
+// La liste ci-dessous couvre les cas qui changent la mise en page, pas une
+// jolie moyenne :
+//   · un prénom long avec un nom composé (c'est lui qui coupe les tuiles) ;
+//   · une carte neuve, une presque finie, une TERMINÉE (bilan à faire) ;
+//   · une carte PÉRIMÉE, qui a son propre affichage ;
+//   · quelqu'un sans carte du tout ;
+//   · quelqu'un déjà pointé aujourd'hui, seul cas où « annuler » apparaît.
+export const ATELIER_VISITES: VisitMember[] = [
+  {
+    id: "atelier-v1",
+    name: "Marie-Charlotte Vandenberghe",
+    visits: 3,
+    visitedToday: true,
+    card: { cardId: "c1", type: 10, used: 3, remaining: 7, expiresAt: dansNJours(27), expired: false },
+  },
+  {
+    id: "atelier-v2",
+    name: "Sarah Benali",
+    visits: 1,
+    visitedToday: false,
+    card: { cardId: "c2", type: 10, used: 1, remaining: 9, expiresAt: dansNJours(29), expired: false },
+  },
+  {
+    id: "atelier-v3",
+    name: "Nadia Cherif",
+    visits: 9,
+    visitedToday: false,
+    card: { cardId: "c3", type: 10, used: 9, remaining: 1, expiresAt: dansNJours(4), expired: false },
+  },
+  {
+    id: "atelier-v4",
+    name: "Lucie Petit",
+    visits: 10,
+    visitedToday: false,
+    card: { cardId: "c4", type: 10, used: 10, remaining: 0, expiresAt: dansNJours(11), expired: false },
+  },
+  {
+    id: "atelier-v5",
+    name: "Karim Bensaïd",
+    visits: 22,
+    visitedToday: false,
+    card: { cardId: "c5", type: 30, used: 22, remaining: 8, expiresAt: ilYAnJours(3), expired: true },
+  },
+  {
+    id: "atelier-v6",
+    name: "Élodie Roux",
+    visits: 0,
+    visitedToday: false,
+    card: null,
+  },
+];
+
+/**
+ * « Mes membres » — le pipeline du club.
+ *
+ * Cet écran ne prenait AUCUNE prop : tout venait de `useBbcMembers(userId)`,
+ * donc l'atelier n'en montrait qu'une page blanche. C'est pourtant la liste
+ * la plus consultée du mode BBC.
+ *
+ * Les huit personnes couvrent ce qui change l'affichage :
+ *   • une cobaye pas encore démarrée, et une démarrée du jour ;
+ *   • un nom long ET un prénom composé, pour voir où ça coupe ;
+ *   • des cœurs acquis et des cœurs EN ATTENTE (le liseré d'alerte) ;
+ *   • une carte finie (bilan des 10 à faire) et une carte périmée ;
+ *   • quelqu'un sans carte et sans visite — l'état « inscrit, jamais venu » ;
+ *   • deux propriétaires différents, sinon le filtre « club / moi » n'a
+ *     rien à filtrer et son bug ne se voit pas.
+ */
+export const ATELIER_MEMBRES: BbcMember[] = [
+  {
+    id: "atelier-m1",
+    name: "Marie-Charlotte Vandenberghe",
+    phone: "06 12 34 56 78",
+    email: "mc.vandenberghe@example.com",
+    objective: "weight-loss",
+    program: "Programme Équilibre",
+    lifecycleStatus: "active",
+    started: true,
+    startDate: ilYAnJours(24),
+    nextFollowUp: dansNJours(2),
+    visits: 12,
+    hearts: 3,
+    pendingHearts: 1,
+    visitedToday: true,
+    card: { type: 10, used: 3, remaining: 7, expired: false },
+    ownerId: ATELIER_USER_ID,
+    ownerName: "Thomas",
+  },
+  {
+    id: "atelier-m2",
+    name: "Lucie Petit",
+    phone: "06 22 33 44 55",
+    objective: "weight-loss",
+    program: "Programme Découverte",
+    lifecycleStatus: "active",
+    started: true,
+    startDate: ilYAnJours(40),
+    nextFollowUp: ilYAnJours(3),
+    visits: 10,
+    hearts: 0,
+    pendingHearts: 0,
+    visitedToday: false,
+    card: { type: 10, used: 10, remaining: 0, expired: false },
+    ownerId: ATELIER_USER_ID,
+    ownerName: "Thomas",
+  },
+  {
+    id: "atelier-m3",
+    name: "Karim Bensaïd",
+    phone: "06 44 55 66 77",
+    objective: "sport",
+    program: "Programme Sport",
+    lifecycleStatus: "active",
+    started: true,
+    startDate: ilYAnJours(95),
+    nextFollowUp: null,
+    visits: 22,
+    hearts: 5,
+    pendingHearts: 0,
+    visitedToday: false,
+    card: { type: 30, used: 22, remaining: 8, expired: true },
+    ownerId: "00000000-0000-4000-8000-0000000000ff",
+    ownerName: "Mélanie",
+  },
+  {
+    id: "atelier-m4",
+    name: "Audrey Lemoine",
+    phone: "06 77 88 99 00",
+    objective: "weight-loss",
+    lifecycleStatus: "prospect",
+    started: false,
+    startDate: null,
+    nextFollowUp: dansNJours(1),
+    visits: 2,
+    hearts: 0,
+    pendingHearts: 2,
+    visitedToday: true,
+    card: { type: 10, used: 2, remaining: 8, expired: false },
+    ownerId: ATELIER_USER_ID,
+    ownerName: "Thomas",
+  },
+  {
+    id: "atelier-m5",
+    name: "Élodie Roux",
+    lifecycleStatus: "prospect",
+    started: false,
+    startDate: null,
+    nextFollowUp: null,
+    visits: 0,
+    hearts: 0,
+    pendingHearts: 0,
+    visitedToday: false,
+    card: null,
+    ownerId: "00000000-0000-4000-8000-0000000000ff",
+    ownerName: "Mélanie",
+  },
+  {
+    id: "atelier-m6",
+    name: "Jean-Baptiste Le Gall",
+    phone: "06 10 20 30 40",
+    email: "jb.legall@example.com",
+    objective: "sport",
+    program: "Programme Sport",
+    lifecycleStatus: "active",
+    started: true,
+    startDate: ilYAnJours(6),
+    nextFollowUp: dansNJours(7),
+    visits: 5,
+    hearts: 1,
+    pendingHearts: 0,
+    visitedToday: true,
+    card: { type: 10, used: 5, remaining: 5, expired: false },
+    ownerId: ATELIER_USER_ID,
+    ownerName: "Thomas",
+  },
+];
+
+/**
+ * « Messages » — la messagerie du club.
+ *
+ * Même angle mort : l'écran allait chercher ses fils lui-même, donc l'atelier
+ * n'affichait que l'état vide. On ne pouvait vérifier ni la lisibilité d'une
+ * bulle, ni ce que devient un message long, ni le non-lu.
+ *
+ * Trois fils : un non-lu récent, un fil où le coach a répondu en dernier, et
+ * un message très long pour voir comment la bulle se comporte.
+ */
+export const ATELIER_MESSAGES: {
+  membres: Array<{ id: string; name: string }>;
+  messages: Array<{
+    id: string;
+    clientId: string;
+    clientName: string;
+    message: string | null;
+    productName: string | null;
+    sender: string;
+    read: boolean;
+    createdAt: string;
+  }>;
+} = {
+  membres: [
+    { id: "atelier-m1", name: "Marie-Charlotte Vandenberghe" },
+    { id: "atelier-m2", name: "Lucie Petit" },
+    { id: "atelier-m6", name: "Jean-Baptiste Le Gall" },
+  ],
+  messages: [
+    {
+      id: "msg-1",
+      clientId: "atelier-m1",
+      clientName: "Marie-Charlotte Vandenberghe",
+      message: "Bonjour Thomas, je ne pourrai pas venir demain matin, je decale a jeudi si c'est possible ?",
+      productName: null,
+      sender: "client",
+      read: false,
+      createdAt: ilYAnJours(0),
+    },
+    {
+      id: "msg-2",
+      clientId: "atelier-m2",
+      clientName: "Lucie Petit",
+      message: "J'ai fait la pesee ce matin, 2,1 kg en moins depuis le depart. Je suis contente !",
+      productName: null,
+      sender: "client",
+      read: true,
+      createdAt: ilYAnJours(1),
+    },
+    {
+      id: "msg-3",
+      clientId: "atelier-m2",
+      clientName: "Lucie Petit",
+      message: "Bravo Lucie, c'est regulier et c'est ca qui compte. On refait le point vendredi.",
+      productName: null,
+      sender: "coach",
+      read: true,
+      createdAt: ilYAnJours(1),
+    },
+    {
+      id: "msg-4",
+      clientId: "atelier-m6",
+      clientName: "Jean-Baptiste Le Gall",
+      message:
+        "Bonjour, j'ai une question sur les collations : je m'entraine a 19h et je rentre vers 21h, du coup je ne sais pas s'il faut que je prenne quelque chose avant la seance ou si j'attends le repas du soir. Et est-ce que je garde le shake du matin comme d'habitude les jours ou je fais du sport le soir ? Merci d'avance.",
+      productName: null,
+      sender: "client",
+      read: false,
+      createdAt: ilYAnJours(2),
+    },
+    {
+      id: "msg-5",
+      clientId: "atelier-m1",
+      clientName: "Marie-Charlotte Vandenberghe",
+      message: null,
+      productName: "Formula 1 Vanille",
+      sender: "client",
+      read: false,
+      createdAt: ilYAnJours(3),
+    },
+  ],
 };

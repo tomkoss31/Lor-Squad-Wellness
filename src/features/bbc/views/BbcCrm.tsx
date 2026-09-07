@@ -63,10 +63,25 @@ interface BbcCrmProps {
   onNouveauMembre?: () => void;
   /** Le club actif : donne le prix et la duree des cartes, jamais en dur. */
   club?: Club | null;
+  /**
+   * Membres imposes de l'exterieur — UNIQUEMENT pour l'atelier (`/atelier-bbc`).
+   *
+   * Sans session Supabase le hook ne rend rien, et cet ecran — la liste la plus
+   * consultee du mode BBC — s'affichait donc VIDE dans l'atelier. Rien n'y a
+   * jamais ete relu : ni un nom long, ni un liseré de cœurs en attente, ni le
+   * filtre « club / moi ».
+   *
+   * En production la prop est absente et le hook reste seul maitre : aucune
+   * donnee de demonstration ne peut atteindre un vrai club.
+   */
+  apercu?: BbcMember[];
 }
 
-export function BbcCrm({ userId, onNouveauMembre, club }: BbcCrmProps) {
-  const { members: tous, loading, refetch: rechargerMembres } = useBbcMembers(userId);
+export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
+  const live = useBbcMembers(userId);
+  const tous = apercu ?? live.members;
+  const loading = apercu ? false : live.loading;
+  const rechargerMembres = live.refetch;
   const [open, setOpen] = useState<string | null>(null);
   // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
   // pour retrouver les siens vite — il ne cache rien qu'on ne puisse rouvrir.

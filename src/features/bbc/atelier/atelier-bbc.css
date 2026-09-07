@@ -78,7 +78,12 @@
 .atelier-viewport {
   flex: 1;
   min-height: 640px;
-  width: 100%;
+  /* 390 px = la largeur d'un iPhone courant, et la largeur que cite le
+     commentaire ci-dessous. En `100%`, l'iframe valait « la fenetre moins le
+     cadre de l'atelier » : mesure le 07/09 a 341 px alors que l'ecran emule
+     faisait 375. On auditait donc un telephone qui n'existe pas, plus etroit
+     que le vrai — verdict pessimiste, et faux. */
+  width: min(100%, 390px);
   border: 1px solid var(--ls-bbc-line2);
   border-radius: 14px;
   background: var(--ls-bbc-bg);

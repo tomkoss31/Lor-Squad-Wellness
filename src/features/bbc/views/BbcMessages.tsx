@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 
-interface Msg {
+export interface Msg {
   id: string;
   clientId: string;
   clientName: string;
@@ -23,6 +23,15 @@ interface Msg {
 interface BbcMessagesProps {
   userId?: string;
   coachName?: string;
+  /**
+   * Fils imposes de l'exterieur — UNIQUEMENT pour l'atelier (`/atelier-bbc`).
+   *
+   * Cet ecran allait chercher ses messages lui-meme : hors session il ne
+   * montrait que l'etat vide, donc on n'a jamais pu y relire une bulle, un
+   * message tres long, ni le non-lu. Quand la prop est la, on n'interroge pas
+   * la base du tout — ni au montage, ni toutes les 20 s.
+   */
+  apercu?: { membres: Array<{ id: string; name: string }>; messages: Msg[] };
 }
 
 function timeLabel(iso: string) {
@@ -34,16 +43,17 @@ function timeLabel(iso: string) {
     : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
-export function BbcMessages({ userId }: BbcMessagesProps) {
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [members, setMembers] = useState<Array<{ id: string; name: string }>>([]);
+export function BbcMessages({ userId, apercu }: BbcMessagesProps) {
+  const [messages, setMessages] = useState<Msg[]>(apercu?.messages ?? []);
+  const [members, setMembers] = useState<Array<{ id: string; name: string }>>(apercu?.membres ?? []);
   const [active, setActive] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!apercu);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const refresh = useCallback(async () => {
+    if (apercu) return;
     if (!userId) {
       setLoading(false);
       return;
@@ -91,13 +101,14 @@ export function BbcMessages({ userId }: BbcMessagesProps) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, apercu]);
 
   useEffect(() => {
+    if (apercu) return;
     void refresh();
     const id = window.setInterval(() => void refresh(), 20000);
     return () => window.clearInterval(id);
-  }, [refresh]);
+  }, [refresh, apercu]);
 
   // Fils : un par membre BBC, trié par dernier message.
   const threads = useMemo(() => {
@@ -165,7 +176,9 @@ export function BbcMessages({ userId }: BbcMessagesProps) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)", gap: 20, height: 600 }}>
+    // La grille vit dans `bbc-tokens.css` : ecrite ici en inline, elle battait
+    // le media query et la conversation tombait a 13 px sur telephone.
+    <div className="bbc-messages-grid" style={{ height: 600 }}>
       {/* fils */}
       <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: 14, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", padding: "4px 6px 10px" }}>

@@ -128,9 +128,35 @@
   margin-left: 57px;
 }
 
+/* La messagerie du club : liste des fils a gauche, conversation a droite.
+
+   ⚠️ Meme faute que la grille Formation juste au-dessus, trouvee le 07/09 en
+   donnant enfin des donnees a l'atelier. La grille etait ecrite EN INLINE dans
+   `BbcMessages.tsx`, donc aucun media query ne pouvait la reprendre. Sur un
+   telephone de 390 px : les fils gardaient leurs 320 px et il restait
+   **13 px** a la conversation — le champ d'ecriture etait reduit a 33 px et le
+   bouton d'envoi tombait HORS DE L'ECRAN. Autrement dit un coach ne pouvait
+   pas repondre a un membre depuis son telephone.
+
+   Sur mobile on empile : les fils en haut (hauteur bornee, ils defilent tout
+   seuls), la conversation dessous. On ne passe PAS en `height: auto` — les
+   deux panneaux defilent en interne dans une hauteur fixe, les liberer ferait
+   grandir la page au lieu du fil. */
+.bbc-messages-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 20px;
+}
+
 @media (max-width: 900px) {
   .bbc-formation-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .bbc-messages-grid {
+    grid-template-columns: minmax(0, 1fr);
+    /* 200 px = ~3 fils visibles : assez pour choisir sans repousser la
+       conversation hors de vue. Le reste va au fil ouvert. */
+    grid-template-rows: minmax(0, 200px) minmax(0, 1fr);
   }
   /* Sur mobile la lisibilité passe avant l'alignement : on ne garde que de quoi
      laisser respirer le rail (21 px) et rester visiblement en retrait. */

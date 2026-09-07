@@ -6,7 +6,7 @@
 // =============================================================================
 
 import { useState } from "react";
-import { useBbcVisits, visitLevel, type VisitLevel } from "../useBbcVisits";
+import { useBbcVisits, visitLevel, type VisitLevel, type VisitMember } from "../useBbcVisits";
 import { BbcScanner } from "../BbcScanner";
 import { BbcBilan10 } from "../BbcBilan10";
 import { BbcCardSheet } from "../BbcCardSheet";
@@ -21,10 +21,26 @@ function levelBg(l: VisitLevel) {
 interface BbcClubProps {
   userId?: string;
   club?: Club | null;
+  /**
+   * Membres imposés de l'extérieur — UNIQUEMENT pour l'atelier (`/atelier-bbc`).
+   *
+   * Sans ça, l'écran s'y affichait VIDE : le hook interroge Supabase avec
+   * l'identité du coach, que l'atelier n'a pas. Un écran muet ne se relit pas,
+   * donc « Les visites » n'a jamais été auditée — alors que c'est l'écran du
+   * comptoir, celui qu'on tape debout tous les matins.
+   *
+   * La prop ne fait qu'AJOUTER une porte : en production elle est absente et
+   * le hook reste seul maître. Aucune donnée de démonstration n'atteint un
+   * vrai club.
+   */
+  apercu?: VisitMember[];
 }
 
-export function BbcClub({ userId, club }: BbcClubProps) {
-  const { members, loading, addVisit, removeVisit, assignCard, refetch } = useBbcVisits(userId, club?.id ?? null);
+export function BbcClub({ userId, club, apercu }: BbcClubProps) {
+  const live = useBbcVisits(userId, club?.id ?? null);
+  const members = apercu ?? live.members;
+  const loading = apercu ? false : live.loading;
+  const { addVisit, removeVisit, assignCard, refetch } = live;
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);

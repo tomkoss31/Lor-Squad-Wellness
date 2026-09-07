@@ -73,6 +73,9 @@ import {
   ATELIER_SCAN_DEPART,
   ATELIER_SCAN_DEPART_DATE,
   ATELIER_USER_ID,
+  ATELIER_VISITES,
+  ATELIER_MEMBRES,
+  ATELIER_MESSAGES,
 } from "./bbcAtelierFixtures";
 
 type ScreenKey =
@@ -127,10 +130,10 @@ const SCREENS: Screen[] = [
     note: "Coquille complète (BbcApp) : sidebar, onglets, bottom-nav mobile. Le Cockpit n'existe qu'ici — il n'est pas exporté séparément. Ses compteurs (membres, cœurs, suivis) viennent de hooks Supabase : sans session ils affichent leurs états vides. Les rituels, eux, sont calculés depuis les réglages du club et s'affichent pour de vrai.",
   },
   { k: "semaine", label: "La semaine", source: "mixte", note: "Grille de la semaine calculée depuis `open_hours` (6h45-11h ici) + les rituels des réglages. Les permanences (`club_shifts`) et les RDV viennent de la base : tous les matins apparaissent donc « non couverts », ce qui est exactement l'état à contrôler." },
-  { k: "visites", label: "Les visites", source: "hooks", note: "Pointage du matin : liste alimentée par `useBbcMembers` / `useBbcVisits`. Hors session → état vide. On y vérifie la mise en page de l'en-tête, des filtres et du message vide." },
+  { k: "visites", label: "Les visites", source: "props", note: "Pointage du matin, alimenté par `ATELIER_VISITES` depuis le 07/09 — avant, cet écran rendait une page vide hors session et rien n'y était vérifiable. Les six membres couvrent ce qui change la mise en page : un nom très long, une carte neuve, une presque finie, une terminée (bilan à faire), une périmée, et quelqu'un sans carte. La ligne déjà pointée est la seule à proposer « annuler »." },
   { k: "appels", label: "Les appels", source: "mixte", note: "Les occurrences des rituels sont dérivées des réglages du club (donc visibles) ; les inscrits viennent de `club_call_registrations` (donc vides)." },
-  { k: "membres", label: "Mes membres", source: "hooks", note: "Pipeline cobayes/membres : entièrement issu de la base. Hors session → état vide." },
-  { k: "messages", label: "Messages", source: "hooks", note: "Messagerie du club : entièrement issue de la base. Hors session → état vide." },
+  { k: "membres", label: "Mes membres", source: "props", note: "Le pipeline du club, alimenté par `ATELIER_MEMBRES` depuis le 07/09 — avant, cet écran rendait une page vide hors session. Les six personnes couvrent ce qui change la mise en page : un nom très long, une cobaye pas encore démarrée, des cœurs EN ATTENTE, une carte finie, une périmée, et quelqu'un sans carte ni visite. Deux propriétaires différents, pour que le filtre « club / moi » ait quelque chose à filtrer." },
+  { k: "messages", label: "Messages", source: "props", note: "La messagerie, alimentée par `ATELIER_MESSAGES` depuis le 07/09 — avant, seul l'état vide s'affichait. Trois fils : un non-lu du jour, un fil où le coach a répondu en dernier, et un message très long pour voir jusqu'où la bulle s'étire. Un message porte un produit et pas de texte : c'est la commande passée depuis l'app membre. L'envoi échouera (pas de session), on ne regarde que le rendu." },
   { k: "coeurs", label: "Cœurs", source: "mixte", note: "Le barème des paliers vient des réglages du club (visible) ; les cœurs des membres viennent de la base (vide)." },
   { k: "scripts", label: "Scripts & liens", source: "props", note: "Entièrement alimenté par les réglages du club → écran complet, rien de vide." },
   { k: "formation", label: "Formation", source: "mixte", note: "Les 9 modules viennent d'un fichier de données local → écran complet. Seule la progression (cases cochées) vient de la base." },
@@ -762,13 +765,18 @@ function vue(screen: ScreenKey): ReactNode {
     case "semaine":
       return <BbcSemaine userId={ATELIER_USER_ID} club={ATELIER_CLUB} />;
     case "visites":
-      return <BbcClub userId={ATELIER_USER_ID} club={ATELIER_CLUB} />;
+      // `apercu` : les membres viennent de la fixture, pas de la base. Sans
+      // lui cet ecran rendait une page vide hors session — donc rien a
+      // verifier avant de livrer, sur l'ecran du comptoir ouvert chaque matin.
+      return <BbcClub userId={ATELIER_USER_ID} club={ATELIER_CLUB} apercu={ATELIER_VISITES} />;
     case "appels":
       return <BbcAppels userId={ATELIER_USER_ID} club={ATELIER_CLUB} />;
     case "membres":
-      return <BbcCrm userId={ATELIER_USER_ID} />;
+      // `apercu` : la liste vient de la fixture. Sans lui, l'ecran le plus
+      // consulte du mode BBC s'affichait vide dans l'atelier.
+      return <BbcCrm userId={ATELIER_USER_ID} club={ATELIER_CLUB} apercu={ATELIER_MEMBRES} />;
     case "messages":
-      return <BbcMessages userId={ATELIER_USER_ID} coachName={ATELIER_COACH_NAME} />;
+      return <BbcMessages userId={ATELIER_USER_ID} coachName={ATELIER_COACH_NAME} apercu={ATELIER_MESSAGES} />;
     case "coeurs":
       return <BbcCoeurs userId={ATELIER_USER_ID} club={ATELIER_CLUB} />;
     case "scripts":
