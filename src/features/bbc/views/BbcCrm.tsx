@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { useBbcMembers, type BbcMember } from "../useBbcMembers";
+import { RattacherMembre } from "../RattacherMembre";
 import { visitLevel } from "../useBbcVisits";
 import { BbcNewMemberButton } from "../BbcNewMemberButton";
 import { BbcMemberCorps } from "./BbcMemberCorps";
@@ -207,7 +208,7 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
-              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} />
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} />
           ))
         )}
       </div>
@@ -326,7 +327,7 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
 }
 
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
   onSupprimer: (m: BbcMember) => void;
@@ -334,6 +335,8 @@ function MemberRow({
   onCarte: (m: BbcMember) => void;
   onPesee?: (m: BbcMember) => void; cleCorps?: number;
   onCorpsCharge?: (id: string, nb: number) => void;
+  /** Recharge la liste apres un changement de coach. */
+  onRattache?: () => void;
 }) {
   const lvlColor = levelColor(m);
   // On ne le dit que quand c'est une information : « inscrite par moi » n'en
@@ -525,6 +528,11 @@ function MemberRow({
             >
               🎟️ {m.card ? `Carte ${m.card.type} · ${m.card.remaining} restantes` : "Lui donner une carte"}
             </button>
+            {/* Changer le coach qui suit la fiche. Placé AVANT « retirer » :
+                dans neuf cas sur dix, quand on veut sortir quelqu'un de sa
+                liste, c'est qu'il est suivi par un autre — le retirer du club
+                serait la mauvaise réponse. */}
+            {onRattache ? <RattacherMembre membre={m} userId={userId} onFait={onRattache} /> : null}
             <button
               type="button"
               onClick={() => onSupprimer(m)}

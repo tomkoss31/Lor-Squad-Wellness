@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { limiterAuxMiens, perimetreDuCoach } from "./perimetre";
 import { isHeart } from "./useBbcHearts";
 
 export interface BbcMember {
@@ -76,25 +77,17 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
-      // Le périmètre : le club pour un admin, sinon ses propres clients.
-      // `users.club_id` (migration du 17/08) dit où le coach travaille — un
-      // admin qui ne POSSÈDE pas le club en fait partie quand même.
-      const { data: moi } = await sb
-        .from("users")
-        .select("role, club_id")
-        .eq("id", userId)
-        .maybeSingle();
-      const monRole = String((moi as { role?: string } | null)?.role ?? "");
-      const monClub = (moi as { club_id?: string | null } | null)?.club_id ?? null;
-      const vueClub = monRole === "admin" && !!monClub;
+      // Le périmètre vit dans `perimetre.ts` — une seule définition pour tous
+      // les écrans. Il était recopié ici à la main, et l'oubli du même geste
+      // dans Messages et Appels a coûté une journée (cf. l'en-tête du fichier).
+      const perimetre = await perimetreDuCoach(sb, userId);
 
-      let requeteClients = sb
-        .from("clients")
-        .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up, distributor_id, distributor_name")
-        .eq("ebe_bbc", true);
-      requeteClients = vueClub
-        ? requeteClients.eq("club_id", monClub)
-        : requeteClients.eq("distributor_id", userId);
+      const requeteClients = limiterAuxMiens(
+        sb
+          .from("clients")
+          .select("id, first_name, last_name, phone, email, objective, current_program, lifecycle_status, started, start_date, next_follow_up, distributor_id, distributor_name"),
+        perimetre,
+      ).eq("ebe_bbc", true);
 
       const [clientsRes, countsRes, refsRes, cardsRes] = await Promise.all([
         requeteClients.order("first_name"),

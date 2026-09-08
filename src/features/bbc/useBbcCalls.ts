@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { limiterAuxMiens, perimetreDuCoach } from "./perimetre";
 import { getNextCalls, type NextCall } from "./data/bbcCalls";
 import type { ClubSettings } from "../../types/domain";
 
@@ -56,14 +57,21 @@ export function useBbcCalls(userId?: string | null, settings?: ClubSettings | nu
       // Fenêtre : 30 jours en arrière (suivis en retard) → 30 jours en avant.
       const from = new Date();
       from.setDate(from.getDate() - 30);
+      // Le perimetre : le club entier pour un admin, sinon ses fiches. Avant le
+      // 07/09, les deux requetes etaient filtrees sur le coach connecte —
+      // Thomas ne pouvait donc inviter a un atelier que ses 4 membres sur 14,
+      // ni voir qu'une personne suivie par Melanie etait deja inscrite.
+      const perimetre = await perimetreDuCoach(sb, userId);
+      // Les INSCRIPTIONS ne se filtrent plus a la main : la policy
+      // `club_call_reg_club` (migration 20261215370000) rend les siennes, plus
+      // celles du club a un admin. Un filtre front en plus les recacherait.
       const [regRes, clientsRes] = await Promise.all([
         sb
           .from("club_call_registrations")
           .select("id, client_id, call_key, scheduled_at, attended, followed_up_at")
-          .eq("coach_user_id", userId)
           .gte("scheduled_at", from.toISOString())
           .order("scheduled_at", { ascending: true }),
-        sb.from("clients").select("id, first_name, last_name").eq("distributor_id", userId).eq("ebe_bbc", true),
+        limiterAuxMiens(sb.from("clients").select("id, first_name, last_name"), perimetre).eq("ebe_bbc", true),
       ]);
 
       const nameMap: Record<string, string> = {};

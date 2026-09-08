@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseClient } from "../../../services/supabaseClient";
+import { limiterAuxMiens, perimetreDuCoach } from "../perimetre";
 
 export interface Msg {
   id: string;
@@ -61,11 +62,14 @@ export function BbcMessages({ userId, apercu }: BbcMessagesProps) {
     try {
       const sb = await getSupabaseClient();
       if (!sb) return;
-      const { data: clients } = await sb
-        .from("clients")
-        .select("id, first_name, last_name")
-        .eq("distributor_id", userId)
-        .eq("ebe_bbc", true);
+      // Le perimetre : le club entier pour un admin, sinon ses fiches.
+      // Avant le 07/09 c'etait `.eq("distributor_id", userId)` en dur : Thomas,
+      // proprietaire du club, ne pouvait ecrire qu'a 4 membres sur 14.
+      const perimetre = await perimetreDuCoach(sb, userId);
+      const { data: clients } = await limiterAuxMiens(
+        sb.from("clients").select("id, first_name, last_name"),
+        perimetre,
+      ).eq("ebe_bbc", true);
       const list = (clients ?? []).map((c: Record<string, unknown>) => ({
         id: String(c.id),
         name: `${String(c.first_name ?? "").trim()} ${String(c.last_name ?? "").trim()}`.trim() || "—",
@@ -75,10 +79,15 @@ export function BbcMessages({ userId, apercu }: BbcMessagesProps) {
         setMessages([]);
         return;
       }
+      // PAS de filtre sur `client_messages.distributor_id` : cette colonne porte
+      // le coach du jour ou le message a ete ecrit, et elle ne bouge pas quand
+      // une fiche change de main. Filtrer dessus ferait DISPARAITRE tout
+      // l'historique d'un membre le jour de son rattachement (cf. Audrey et
+      // Anais, passees a Romane le 07/09). La liste des membres ci-dessus porte
+      // deja le perimetre — `client_id` suffit.
       const { data: msgs } = await sb
         .from("client_messages")
         .select("id, client_id, client_name, message, product_name, sender, read, created_at")
-        .eq("distributor_id", userId)
         .in("client_id", list.map((m) => m.id))
         .order("created_at", { ascending: true })
         .limit(500);
