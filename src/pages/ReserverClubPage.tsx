@@ -66,7 +66,7 @@ interface Slot { iso: string; time: string; remaining: number }
 const DISPO_MAX = 300;
 
 export function ReserverClubPage() {
-  const { clubSlug } = useParams<{ clubSlug?: string }>();
+  const { clubSlug, leadToken } = useParams<{ clubSlug?: string; leadToken?: string }>();
   const slug = (clubSlug ?? "verdun").trim() || "verdun";
   const [searchParams] = useSearchParams();
   useClubHead("Réserver mon RDV découverte · The Breakfast Club");
@@ -179,6 +179,44 @@ export function ReserverClubPage() {
     setScreen("dispo");
     void loadAvailability();
   }, [loadAvailability]);
+
+  // Lien personnel /r/<jeton> — chantier du 08/09/2026.
+  //
+  // Le SMS d'accueil envoie chaque personne sur SON lien. Deux effets :
+  //   · on horodate le clic, donc un clic SANS réservation devient visible.
+  //     C'est le meilleur signal qu'on ait : quelqu'un d'assez intéressé pour
+  //     cliquer, que quelque chose a arrêté. C'est lui qu'on rappelle.
+  //   · on pré-remplit le formulaire. Il demande cinq champs, on en connaît
+  //     quatre : ne lui laisser que sa ville à taper, c'est autant de raisons
+  //     d'abandonner en moins.
+  //
+  // Le jeton reste dans l'URL, JAMAIS les coordonnées : un nom et un numéro
+  // dans une adresse fuient par l'historique et les référents.
+  //
+  // Silencieux par construction : si l'appel échoue, la personne voit le
+  // formulaire vide et réserve quand même. Rien ne doit se mettre entre elle
+  // et son créneau.
+  useEffect(() => {
+    if (!leadToken) return;
+    let annule = false;
+    void (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { data } = await sb.functions.invoke("lead-clic", { body: { token: leadToken } });
+        if (annule || !data?.trouve) return;
+        if (data.prenom) setPrenom(capitalize(String(data.prenom).trim()));
+        if (data.nom) setNom(String(data.nom).trim());
+        if (data.email) setEmail(String(data.email).trim());
+        if (data.tel) setTel(String(data.tel).trim());
+        if (data.ville) setVille(String(data.ville).trim());
+      } catch {
+        // Volontairement muet : cf. commentaire ci-dessus.
+      }
+    })();
+    return () => { annule = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pré-sélection objectif via ?objectif= : la pub Meta pointe vers
   // /reserver?objectif=poids → on atterrit DIRECTEMENT sur les créneaux, l'ad

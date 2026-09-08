@@ -767,6 +767,13 @@ export default function App() {
               club. QR flyer → /reserver. Défaut clubSlug = "verdun". */}
           <Route path="/reserver" element={<ReserverClubPage />} />
           <Route path="/reserver/:clubSlug" element={<ReserverClubPage />} />
+          {/* Lien PERSONNEL du SMS d'accueil (chantier 08/09/2026). Même page,
+              mais le jeton `prospect_leads.lien_token` permet deux choses : on
+              horodate le clic — un clic sans réservation est le meilleur signal
+              qu'on ait pour décider qui rappeler — et on pré-remplit les quatre
+              champs qu'on connaît déjà. Chemin court volontairement : chaque
+              caractère compte dans un SMS à accents (67 par segment). */}
+          <Route path="/r/:leadToken" element={<ReserverClubPage />} />
           {/* « Modifier / annuler mon rendez-vous » — cible du lien envoyé dans
               l'email de confirmation (jeton rdv_bookings.manage_token). Placée
               après /rdv/:coachSlug : 3 segments, aucun conflit de résolution. */}
