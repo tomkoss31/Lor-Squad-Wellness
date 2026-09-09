@@ -17,7 +17,7 @@
 // =============================================================================
 
 export type DimensionKey =
-  | "food" | "water" | "sleep" | "mind" | "activity" | "social";
+  | "food" | "water" | "sleep" | "mind" | "activity" | "social" | "morning";
 
 export interface DimensionScore {
   key: DimensionKey;
@@ -72,6 +72,31 @@ export interface ScoringInput {
    * paliers ("2"|"4"|"8"|"10"), les nouveaux "3"|"6"|"9"|"12"|"15+".
    */
   daily_food_budget?: string;
+
+  // ── Le matin (bilan « Mon point de départ », 2026-09-09) ─────────────────
+  //
+  // Dimension EXCLUSIVE au bilan Breakfast Club. Le bilan La Base 360 ne pose
+  // pas ces questions : quand aucune n'est renseignée, la dimension n'existe
+  // pas et `computeBilanResults` rend les 6 dimensions historiques, à
+  // l'identique. Aucun appelant existant n'est impacté.
+  //
+  // Pourquoi elle existe : un club qui s'appelle The Breakfast Club, dont le
+  // service tourne de 7h à 11h, avait un bilan qui ne parlait jamais du
+  // petit-déjeuner. « Repas déséquilibrés » est trop vague pour agir dès
+  // demain ; « le petit-déj sucré ne tient pas jusqu'à midi » se travaille le
+  // lendemain matin.
+  breakfast_freq?: "daily" | "sometimes" | "never" | "";
+  breakfast_time?: "before7" | "7to9" | "after9" | "varies" | "";
+  breakfast_type?: "coffee_only" | "sweet" | "cereal_fruit" | "savory" | "";
+  breakfast_holds?: "yes" | "no" | "unsure" | "";
+}
+
+/** Vrai dès qu'une seule question du matin a été renseignée. */
+export function aRepondusurLeMatin(input: ScoringInput): boolean {
+  return Boolean(
+    input.breakfast_freq || input.breakfast_time ||
+    input.breakfast_type || input.breakfast_holds,
+  );
 }
 
 function clamp(v: number, min = 0, max = 100): number {
@@ -181,6 +206,44 @@ function scoreActivity(input: ScoringInput): number {
   return Math.round(clamp(s));
 }
 
+/**
+ * Le matin (bilan Breakfast Club uniquement).
+ *
+ * Hiérarchie des poids, dans l'ordre : ce qu'on mange pèse plus que l'heure,
+ * et « est-ce que ça tient jusqu'au repas suivant ? » pèse le plus de tout.
+ * C'est la seule question qui dit si le petit-déjeuner FONCTIONNE — prendre
+ * une viennoiserie tous les jours à 7h est régulier, et ne tient pas.
+ *
+ * Si la personne ne petit-déjeune jamais, le formulaire n'affiche pas les
+ * questions suivantes : les `undefined` sont donc normaux, pas une anomalie.
+ */
+function scoreMorning(input: ScoringInput): number {
+  let s: number;
+  switch (input.breakfast_freq) {
+    case "daily": s = 65; break;
+    case "sometimes": s = 38; break;
+    case "never": s = 12; break;
+    default: s = 45;
+  }
+  switch (input.breakfast_type) {
+    case "savory": s += 18; break;
+    case "cereal_fruit": s += 8; break;
+    case "sweet": s -= 10; break;
+    case "coffee_only": s -= 18; break;
+  }
+  switch (input.breakfast_holds) {
+    case "yes": s += 20; break;
+    case "no": s -= 15; break;
+  }
+  switch (input.breakfast_time) {
+    case "7to9": s += 5; break;
+    case "before7": s += 3; break;
+    case "after9": s -= 5; break;
+    case "varies": s -= 8; break;
+  }
+  return Math.round(clamp(s));
+}
+
 function scoreSocial(input: ScoringInput): number {
   switch (input.social_circle) {
     case "family": return 82;
@@ -201,6 +264,7 @@ function dimensionMeta(key: DimensionKey): { emoji: string; label: string } {
     case "mind": return { emoji: "🧠", label: "Mental" };
     case "activity": return { emoji: "💪", label: "Activité" };
     case "social": return { emoji: "👥", label: "Entourage" };
+    case "morning": return { emoji: "🌅", label: "Le matin" };
   }
 }
 
@@ -282,6 +346,24 @@ function priorityFor(dim: DimensionScore): PriorityInsight {
       insight: "Tu bouges déjà — gros plus.",
       advice: "On va optimiser la récup' et la nutrition autour du sport." };
   }
+  if (key === "morning") {
+    // On nomme l'effet en cascade : le matin ne se répare pas pour lui-même,
+    // il se répare parce qu'il commande les fringales du reste de la journée.
+    // C'est ce que le club fait tous les matins de 7h à 11h.
+    if (score < 40) {
+      return { key, emoji, title: `${label} : c'est par là qu'on commence`,
+        insight: "Ton petit-déjeuner ne tient pas jusqu'au repas suivant — et c'est souvent lui qui commande les fringales du reste de la journée.",
+        advice: "On met des protéines au petit-déj. Un seul changement, et le grignotage du soir tombe souvent tout seul." };
+    }
+    if (score < 65) {
+      return { key, emoji, title: `${label} : presque là`,
+        insight: "Tu prends quelque chose le matin, mais pas toujours ce qu'il faut ni toujours à la même heure.",
+        advice: "On cale une heure fixe et on ajoute une source de protéines. Le reste suit." };
+    }
+    return { key, emoji, title: `${label} : c'est ta force`,
+      insight: "Ton matin est déjà solide — c'est rare, et ça porte toute la journée.",
+      advice: "On garde ce socle, et on l'ajuste juste au moment où l'activité augmente." };
+  }
   // social
   if (score < 50) {
     return { key, emoji, title: `${label} : ton entourage compte`,
@@ -337,6 +419,16 @@ export function computeBilanResults(input: ScoringInput): BilanResults {
     { key: "activity", ...dimensionMeta("activity"), score: scoreActivity(input) },
     { key: "social", ...dimensionMeta("social"), score: scoreSocial(input) },
   ];
+
+  // Le matin n'entre dans le calcul QUE si on a posé la question. Sans ça,
+  // les bilans La Base 360 hériteraient d'une 7e note inventée à partir de
+  // rien, qui ferait bouger leur score global et leur top 3 — y compris pour
+  // les 13 bilans déjà en base, relus par la page « Résultat Bilan ».
+  if (aRepondusurLeMatin(input)) {
+    rawDims.unshift({
+      key: "morning", ...dimensionMeta("morning"), score: scoreMorning(input),
+    });
+  }
 
   const globalScore = Math.round(
     rawDims.reduce((sum, d) => sum + d.score, 0) / rawDims.length,
