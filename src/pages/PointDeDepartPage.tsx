@@ -311,6 +311,18 @@ export default function PointDeDepartPage() {
     setEcran((e) => e + 1);
   }, [bloquant, ecran, poserBrouillon]);
 
+  /**
+   * Combien de temps on accepte de faire attendre quelqu'un après son dernier
+   * tap. Mesuré le 09/09 : l'edge met **8,2 secondes** à répondre, parce
+   * qu'elle appelle Noaly (l'IA), Resend et le push AVANT de renvoyer quoi que
+   * ce soit. Huit secondes d'écran figé après cinq écrans remplis, c'est là
+   * qu'on ferme l'onglet.
+   *
+   * Or la page résultats ne dépend de RIEN du serveur : elle recalcule tout
+   * depuis la session. On peut donc y aller sans attendre.
+   */
+  const PATIENCE_MS = 1500;
+
   const envoyer = useCallback(async () => {
     if (bloquant) { setErreur(bloquant); return; }
     setEnvoi(true);
@@ -322,7 +334,7 @@ export default function PointDeDepartPage() {
       // veut dire perte de poids, sinon c'est du bien-être. Si Thomas veut le
       // demander explicitement, c'est un tap de plus à l'écran 1.
       const objectives = form.weight_loss_target_kg.trim() ? ["weight_loss"] : ["wellbeing"];
-      const { data, error } = await sb.functions.invoke("submit-online-bilan", {
+      const requete = sb.functions.invoke("submit-online-bilan", {
         body: {
           draft_id: brouillonId.current,
           coach_slug: slug || null,
@@ -362,25 +374,51 @@ export default function PointDeDepartPage() {
             suite: { venir_matin: form.venir_matin, frein: form.frein.trim() || null },
           },
         },
+      }).then(async ({ data, error }) => {
+        // L'edge peut répondre 200 avec `{ success: false, error }` : tester
+        // `error` seul laisserait passer un refus de validation en silence.
+        const ok = (data as { success?: boolean } | null)?.success === true;
+        if (error || !ok) {
+          throw new Error(await extractFunctionError(data, error, "L'envoi n'est pas passé."));
+        }
+        return (data as { id?: string } | null)?.id ?? null;
       });
-      // L'edge peut répondre 200 avec `{ success: false, error }` : tester
-      // `error` seul laisserait passer un refus de validation en silence.
-      const ok = (data as { success?: boolean } | null)?.success === true;
-      if (error || !ok) {
-        throw new Error(await extractFunctionError(
-          data, error,
-          "L'envoi n'est pas passé.",
-        ));
-      }
-      const id = (data as { id?: string } | null)?.id ?? null;
+      // On laisse une courte chance à la réponse d'arriver. Si elle traîne, on
+      // affiche les résultats sans elle et la requête finit en arrière-plan.
+      //
+      // Ce qui rend ça sûr : la personne existe DÉJÀ dans le CRM depuis
+      // l'écran 1 (le brouillon « Curieux » porte son prénom et son
+      // téléphone). Même si l'écriture complète échouait, on ne perdrait que
+      // le détail des réponses — jamais le contact.
+      let idRecu: string | null = null;
+      let echec: Error | null = null;
+      const suivi = requete.then(
+        (id) => { idRecu = id; return true; },
+        (e: unknown) => { echec = e instanceof Error ? e : new Error(String(e)); return false; },
+      );
+      const issue = await Promise.race([
+        suivi,
+        new Promise<null>((r) => { setTimeout(() => r(null), PATIENCE_MS); }),
+      ]);
+      // Échec ARRIVÉ À TEMPS : on peut encore le dire à la personne.
+      if (issue === false) throw echec ?? new Error("L'envoi n'est pas passé.");
 
       sessionStorage.setItem(CLE_RESULTATS(slug), JSON.stringify(scoringInput));
       sessionStorage.setItem(CLE_META(slug), JSON.stringify({
         first_name: form.first_name.trim(),
         venir_matin: form.venir_matin,
-        bilan_id: id,
+        bilan_id: idRecu,
       }));
-      localStorage.removeItem(CLE_BROUILLON);
+      // Le brouillon local ne s'efface qu'une fois l'écriture CONFIRMÉE : tant
+      // qu'on n'a pas la réponse, il reste, et un retour en arrière retrouve
+      // les réponses.
+      if (issue === true) {
+        try { localStorage.removeItem(CLE_BROUILLON); } catch { /* stockage refusé */ }
+      } else {
+        void suivi.then((abouti) => {
+          if (abouti) { try { localStorage.removeItem(CLE_BROUILLON); } catch { /* idem */ } }
+        });
+      }
       navigate(`/point-de-depart${slug ? `/${slug}` : ""}/resultats`);
     } catch (e) {
       // Un message qui dit quoi faire, pas « Erreur inconnue » — le bilan
