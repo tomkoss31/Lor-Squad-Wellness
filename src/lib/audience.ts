@@ -30,6 +30,8 @@ export const CHEMINS = [
   "/bilan-online/merci",
   "/bilan-online/:coach", "/bilan-online/:coach/formulaire",
   "/bilan-online/:coach/resultats", "/bilan-online/:coach/merci",
+  "/point-de-depart", "/point-de-depart/resultats",
+  "/point-de-depart/:coach", "/point-de-depart/:coach/resultats",
   "/resultat-bilan/:token", "/qualif/:token",
   "/rdv", "/rdv/:coach", "/rdv/gerer/:token",
   "/reserver", "/reserver/:club",

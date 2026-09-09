@@ -417,8 +417,16 @@ export function computeBilanResults(input: ScoringInput): BilanResults {
     { key: "sleep", ...dimensionMeta("sleep"), score: scoreSleep(input) },
     { key: "mind", ...dimensionMeta("mind"), score: scoreMind(input) },
     { key: "activity", ...dimensionMeta("activity"), score: scoreActivity(input) },
-    { key: "social", ...dimensionMeta("social"), score: scoreSocial(input) },
   ];
+
+  // L'entourage ne se note que s'il a été demandé. Le bilan du club ne pose pas
+  // la question (« job & cercle » sonde l'envie de changer de vie — c'est du
+  // recrutement, pas de la santé), et sans cette garde il héritait d'un 55 par
+  // défaut : un axe affiché sur le radar, entrant dans la moyenne, tiré d'une
+  // question jamais posée. Même règle que pour le matin, dans l'autre sens.
+  if (input.social_circle) {
+    rawDims.push({ key: "social", ...dimensionMeta("social"), score: scoreSocial(input) });
+  }
 
   // Le matin n'entre dans le calcul QUE si on a posé la question. Sans ça,
   // les bilans La Base 360 hériteraient d'une 7e note inventée à partir de

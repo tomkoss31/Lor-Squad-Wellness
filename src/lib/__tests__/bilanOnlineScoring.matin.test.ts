@@ -97,6 +97,37 @@ describe("un bilan Breakfast Club", () => {
   });
 });
 
+describe("aucune dimension n'est notée depuis une question non posée", () => {
+  // La règle vaut dans les deux sens. Le bilan du club ne demande pas
+  // l'entourage : sans cette garde, il héritait d'un 55 par défaut — un axe
+  // affiché sur le radar et compté dans la moyenne, tiré de rien.
+  const { social_circle: _ignore, ...SANS_ENTOURAGE } = SANS_MATIN;
+
+  it("retire l'entourage quand la question n'a pas été posée", () => {
+    const r = computeBilanResults(SANS_ENTOURAGE);
+    expect(r.dimensions.map((d) => d.key)).not.toContain("social");
+    expect(r.dimensions).toHaveLength(5);
+  });
+
+  it("le garde dès qu'il y a une réponse", () => {
+    expect(computeBilanResults(SANS_MATIN).dimensions.map((d) => d.key)).toContain("social");
+  });
+
+  it("compose avec le matin : le bilan du club a 6 dimensions, dont le matin", () => {
+    const r = computeBilanResults({
+      ...SANS_ENTOURAGE,
+      breakfast_freq: "sometimes", breakfast_time: "7to9",
+      breakfast_type: "sweet", breakfast_holds: "no",
+    });
+    expect(r.dimensions.map((d) => d.key)).toEqual([
+      "morning", "food", "water", "sleep", "mind", "activity",
+    ]);
+    // 18 + 17 + 27 + 27 + 45 + 12 = 146 / 6
+    expect(r.globalScore).toBe(24);
+    expect(r.priorities.map((p) => p.key)).toEqual(["activity", "food", "morning"]);
+  });
+});
+
 describe("l'échelle du matin", () => {
   const note = (m: Partial<ScoringInput>) =>
     computeBilanResults({ ...SANS_MATIN, ...m })

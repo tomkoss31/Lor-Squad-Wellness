@@ -291,6 +291,10 @@ const BilanOnlineMerciPage = lazy(() =>
     default: module.BilanOnlineMerciPage,
   })),
 );
+// « Mon point de départ » — le bilan du Breakfast Club (09/09/2026). Identité
+// crème du club, écran « Ton matin » en plus, et une fin à deux portes.
+const PointDeDepartPage = lazy(() => import("./pages/PointDeDepartPage"));
+const PointDeDepartResultatsPage = lazy(() => import("./pages/PointDeDepartResultatsPage"));
 const RdvBookingPage = lazy(() =>
   import("./pages/RdvBookingPage").then((module) => ({
     default: module.RdvBookingPage,
@@ -757,6 +761,13 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
           <Route path="/bilan-online/:coachSlug/resultats" element={<BilanOnlineResultatsPage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
+          {/* « Mon point de départ » — le bilan du club. Les 5 étapes vivent
+              DANS la page (état d'écran), comme /reserver : une seule route
+              publique, un brouillon local pour la reprise. */}
+          <Route path="/point-de-depart" element={<PointDeDepartPage />} />
+          <Route path="/point-de-depart/resultats" element={<PointDeDepartResultatsPage />} />
+          <Route path="/point-de-depart/:coachSlug" element={<PointDeDepartPage />} />
+          <Route path="/point-de-depart/:coachSlug/resultats" element={<PointDeDepartResultatsPage />} />
           <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
           <Route path="/qualif/:token" element={<QualifPage />} />
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
