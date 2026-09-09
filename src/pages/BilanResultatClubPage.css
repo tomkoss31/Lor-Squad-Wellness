@@ -1,0 +1,94 @@
+/* =============================================================================
+   BilanResultatClubPage.css — l'habit Breakfast Club de la page de résultats.
+
+   Thomas, 09/09 : « on garde la même page sur le modèle 360, mais avec une
+   identité graphique BBC — duplique la page ».
+
+   ── POURQUOI UNE FEUILLE ET PAS 220 STYLES RÉÉCRITS ───────────────────────
+   La page premium ne code presque aucune couleur en dur : elle lit les
+   variables posées par `PublicShell` (`--cream`, `--ink`, `--teal`, `--hair`…).
+   Il suffit donc de REDÉFINIR ces mêmes variables avec les valeurs du club
+   pour que les 220 styles inline changent d'identité sans être touchés.
+
+   `className` de `PublicShell` atterrit sur `.ps-shell`, à l'intérieur de
+   l'élément qui porte les variables du thème : celles posées ici sont donc
+   plus proches, et tout le contenu en hérite.
+
+   ── LES VALEURS ───────────────────────────────────────────────────────────
+   Reprises À L'IDENTIQUE de `.cl` (site club) et `.pdd` (tunnel). Aucune
+   couleur n'est inventée ici : c'est la même marque, il ne doit pas exister
+   deux crèmes ni deux oranges selon la page où l'on se trouve.
+
+   ⚠️ CE N'EST PAS UNE INVERSION DU THÈME SOMBRE. Le clair du club est un
+   matin : fond crème, encre verte, ombres teintées douces. Le sombre de
+   La Base 360 est une nuit premium. Reprendre le sombre en négatif donnerait
+   des contrastes faux — le lime #C5F82A du dégradé 360, par exemple, est
+   parfaitement illisible sur du crème (c'est pour ça que `GRAD` passe à
+   l'orange dans le composant, et pas seulement ici).
+   ========================================================================= */
+
+.ps-shell.rbc {
+  /* ── Fonds ─────────────────────────────────────────────────────────────
+     En thème clair, `--ink` porte le FOND et `--cream` porte le TEXTE :
+     les deux noms sont hérités du système 360, on ne les renomme pas pour
+     ne pas avoir à toucher la page. */
+  --ink: #FCF8F1;
+  --ink-2: #F7F1E5;
+
+  /* ── Texte ─────────────────────────────────────────────────────────────
+     L'encre du club est verte, jamais noire. */
+  --cream: #17201C;
+  --cream-2: #1E3330;
+  --cream-soft: rgba(23, 32, 28, 0.92);
+  --cream-muted: rgba(23, 32, 28, 0.62);
+  --cream-hint: rgba(23, 32, 28, 0.40);
+
+  /* ── Filets ────────────────────────────────────────────────────────────
+     Presque invisibles à dessein : sur crème, un filet marqué salit. */
+  --hair: rgba(30, 51, 48, 0.09);
+  --hair-strong: rgba(30, 51, 48, 0.17);
+
+  /* ── Accents ───────────────────────────────────────────────────────────
+     L'orange du club remplace le teal ; l'ambre remplace le lime (qui
+     disparaît sur crème) ; la sauge remplace le violet. */
+  --teal: #FF6A2B;
+  --teal-dark: #C4361F;
+  --teal-text: #E0532A;
+  --lime: #E8A93A;
+  --violet: #93A67E;
+  --violet-dark: #5F7154;
+  --violet-text: #5F7154;
+  --coral: #E11D2E;
+  --coral-text: #C4361F;
+
+  /* ── Verre ─────────────────────────────────────────────────────────────
+     Sur un fond crème, le verre doit être plus opaque que sur du sombre,
+     sinon les cartes se dissolvent dans la page. */
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-strong: rgba(255, 255, 255, 0.90);
+
+  /* Le corps du club, hérité par tout ce qui ne fixe pas sa police. */
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+/* Anton n'existe que sur les titres : poids 400 et capitales, toujours.
+   La règle vaut aussi pour les `h1`/`h2` que la page pose en inline — ceux-ci
+   déclarent déjà Anton, on ne fait que garantir l'allure. */
+.ps-shell.rbc h1,
+.ps-shell.rbc h2 {
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+}
+
+/* Le fond de page derrière la coquille : `PublicShell` peint son propre
+   crème (#FBF7F0), très proche mais pas identique à celui du club. On aligne,
+   sinon une couture claire apparaît sur les bords en plein écran. */
+.public-shell:has(> .ps-shell.rbc) {
+  background: #FCF8F1;
+}
+
+/* Le maillage coloré de fond est une signature 360 (radials teal/violet/coral).
+   Il n'a rien à faire sur une page du club, où le fond est un aplat crème. */
+.public-shell:has(> .ps-shell.rbc) .ps-bg-mesh {
+  display: none;
+}

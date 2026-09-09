@@ -327,6 +327,11 @@ const BilanResultatPremiumPage = lazy(() =>
     default: module.BilanResultatPremiumPage,
   })),
 );
+const BilanResultatClubPage = lazy(() =>
+  import("./pages/BilanResultatClubPage").then((module) => ({
+    default: module.BilanResultatClubPage,
+  })),
+);
 // Chantier Qualif (2026-07-16) : parcours post-paiement, même token que
 // /resultat-bilan/:token.
 const QualifPage = lazy(() =>
@@ -769,6 +774,9 @@ export default function App() {
           <Route path="/point-de-depart/:coachSlug" element={<PointDeDepartPage />} />
           <Route path="/point-de-depart/:coachSlug/resultats" element={<PointDeDepartResultatsPage />} />
           <Route path="/resultat-bilan/:token" element={<BilanResultatPremiumPage />} />
+          {/* Même page, habit Breakfast Club (09/09). Copie assumée : la page
+              premium porte le paiement en prod, on n'y touche pas. */}
+          <Route path="/resultat-club/:token" element={<BilanResultatClubPage />} />
           <Route path="/qualif/:token" element={<QualifPage />} />
           {/* Prise de RDV (V1 manuelle 2026-06-14) — Calendly-like présentiel/visio */}
           <Route path="/rdv" element={<RdvBookingPage />} />
