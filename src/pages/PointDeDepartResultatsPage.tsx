@@ -141,8 +141,11 @@ export default function PointDeDepartResultatsPage() {
   if (!resultats) return null;
 
   const prenom = (meta.first_name ?? "").trim();
-  // « Verdun c'est loin » et « je préfère à distance » : le club en premier
-  // serait une porte fermée. On inverse.
+  // Qui a EXPLICITEMENT choisi « à distance » (dont tous les leads de la
+  // campagne zone large) ne voit QUE la porte distance : lui remettre le club
+  // de Verdun sous les yeux serait une porte fermée, et une contradiction.
+  const distanceSeul = meta.venir_matin === "distance";
+  // « Verdun c'est loin » : on n'impose pas, mais on met la distance en premier.
   const clubDabord = meta.venir_matin !== "loin" && meta.venir_matin !== "distance";
 
   const porteClub = (
@@ -244,14 +247,16 @@ export default function PointDeDepartResultatsPage() {
           </div>
 
           <h2 className="pdd-title" style={{ fontSize: 24, marginTop: 28 }}>
-            Deux façons<br />de commencer
+            {distanceSeul ? <>Et maintenant&nbsp;?</> : <>Deux façons<br />de commencer</>}
           </h2>
           <p className="pdd-sub">
             Ton bilan dit <b>quoi</b>. La suite sert à trouver le <b>comment</b> —
             celui qui tient dans tes journées.
           </p>
 
-          {clubDabord ? <>{porteClub}{porteDistance}</> : <>{porteDistance}{porteClub}</>}
+          {distanceSeul
+            ? porteDistance
+            : (clubDabord ? <>{porteClub}{porteDistance}</> : <>{porteDistance}{porteClub}</>)}
 
           <p className="pdd-foot" style={{ marginTop: 24 }}>
             The Breakfast Club · 11 rue Saint-Pierre, Verdun<br />

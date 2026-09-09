@@ -33,7 +33,7 @@
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
@@ -41,6 +41,7 @@ import type { ScoringInput } from "../lib/bilanOnlineScoring";
 import "./PointDeDepartPage.css";
 
 import { PointDeDepartAccueil } from "./PointDeDepartAccueil";
+import { PointDeDepartAccueilDistance } from "./PointDeDepartAccueilDistance";
 const LOGO = "/brand/breakfast-club/logo-heart.png";
 
 /** Clé du brouillon local. Versionnée : un changement de forme du formulaire
@@ -172,6 +173,13 @@ export default function PointDeDepartPage() {
   const { coachSlug } = useParams<{ coachSlug?: string }>();
   const slug = useMemo(() => normalizeSlug(coachSlug ?? ""), [coachSlug]);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+
+  // Mode « distance » (campagne zone large) : ?mode=distance. Change l'accueil
+  // (jumeau non-Verdun) et fait sauter la question « tu peux passer le matin ? »
+  // — pour ce public, tout mène à « démarre d'ici ». Le tunnel, le score et les
+  // résultats sont identiques.
+  const distance = params.get("mode") === "distance";
 
   const [ecran, setEcran] = useState(0); // 0 = accueil, 1..5 = étapes
   const [form, setForm] = useState<Form>(VIDE);
@@ -181,6 +189,7 @@ export default function PointDeDepartPage() {
   const hautRef = useRef<HTMLDivElement | null>(null);
 
   useEtapeTunnel("point-de-depart", ETAPES[ecran] ?? null, ecran + 1);
+
 
   // Reprise du brouillon local — quelqu'un qui ferme l'onglet à l'écran 3 et
   // revient ne recommence pas à zéro.
@@ -301,12 +310,12 @@ export default function PointDeDepartPage() {
       return null;
     }
     if (ecran === 5) {
-      if (!form.venir_matin) return "Dis-nous si tu peux passer au club le matin.";
+      if (!distance && !form.venir_matin) return "Dis-nous si tu peux passer au club le matin.";
       if (!form.consent) return "Il nous faut ton accord pour transmettre tes réponses à l'équipe.";
       return null;
     }
     return null;
-  }, [ecran, form]);
+  }, [ecran, form, distance]);
 
   const suivant = useCallback(() => {
     if (bloquant) { setErreur(bloquant); return; }
@@ -337,6 +346,11 @@ export default function PointDeDepartPage() {
       // veut dire perte de poids, sinon c'est du bien-être. Si Thomas veut le
       // demander explicitement, c'est un tap de plus à l'écran 1.
       const objectives = form.weight_loss_target_kg.trim() ? ["weight_loss"] : ["wellbeing"];
+      // En distance, la question « venir le matin » n'est pas posée : on force
+      // la valeur ici, au moment de l'envoi. Robuste — contrairement à un effet,
+      // aucun risque que la reprise du brouillon la réécrase. C'est cette valeur
+      // qui fait que l'écran de résultats n'affiche QUE « démarre d'ici ».
+      const venirMatin = distance ? "distance" : form.venir_matin;
       const requete = sb.functions.invoke("submit-online-bilan", {
         body: {
           draft_id: brouillonId.current,
@@ -355,7 +369,9 @@ export default function PointDeDepartPage() {
           payload: {
             // Marqueur de variante : c'est ce qui distingue un bilan du club
             // d'un bilan La Base 360 dans une table partagée.
-            variante: "bbc",
+            // "bbc-distance" pour la campagne zone large, "bbc" pour le club.
+            // Permet de filtrer les leads distance dans le CRM et l'analyse.
+            variante: distance ? "bbc-distance" : "bbc",
             matin: {
               freq: form.breakfast_freq, heure: form.breakfast_time,
               type: form.breakfast_type, tient: form.breakfast_holds,
@@ -374,7 +390,7 @@ export default function PointDeDepartPage() {
             },
             active_daily: form.active_daily,
             sport_frequency: form.sport_frequency,
-            suite: { venir_matin: form.venir_matin, frein: form.frein.trim() || null },
+            suite: { venir_matin: venirMatin, frein: form.frein.trim() || null },
           },
         },
       }).then(async ({ data, error }) => {
@@ -411,7 +427,7 @@ export default function PointDeDepartPage() {
       sessionStorage.setItem(CLE_RESULTATS(slug), JSON.stringify(scoringInput));
       sessionStorage.setItem(CLE_META(slug), JSON.stringify({
         first_name: form.first_name.trim(),
-        venir_matin: form.venir_matin,
+        venir_matin: venirMatin,
         bilan_id: idRecu,
         result_token: jetonRecu,
       }));
@@ -445,7 +461,7 @@ export default function PointDeDepartPage() {
       setErreur(`${cause} Tes réponses sont gardées sur ce téléphone — réessaie dans un instant.`);
       setEnvoi(false);
     }
-  }, [bloquant, form, slug, scoringInput, navigate]);
+  }, [bloquant, form, slug, scoringInput, navigate, distance]);
 
   // ── Rendu ─────────────────────────────────────────────────────────────────
 
@@ -482,7 +498,9 @@ export default function PointDeDepartPage() {
             capture (miroir, ce qu'on reçoit, exemple légendé, bandeau vert,
             preuve, CTA collant) au lieu du court écran d'ouverture. Le tunnel
             lui-même — les 5 écrans et les résultats — ne bouge pas. */}
-        {ecran === 0 && <PointDeDepartAccueil onStart={() => setEcran(1)} />}
+        {ecran === 0 && (distance
+          ? <PointDeDepartAccueilDistance onStart={() => setEcran(1)} />
+          : <PointDeDepartAccueil onStart={() => setEcran(1)} />)}
 
         {/* ══ 1 · On fait connaissance ═════════════════════════════════════ */}
         {ecran === 1 && (
@@ -774,23 +792,30 @@ export default function PointDeDepartPage() {
             <p className="pdd-eyebrow">Dernier écran</p>
             <h1 className="pdd-title">Et pour<br />la suite&nbsp;?</h1>
 
-            <div className="pdd-grp">
-              <span className="pdd-glab">
-                Le club est ouvert dès 7h, à Verdun. Tu pourrais passer un matin&nbsp;?
-              </span>
-              <Choix cols={1} value={form.venir_matin} onPick={(v) => set("venir_matin", v)}
-                     options={[
-                       { key: "matin_ok", label: "Oui, le matin ça me va", emoji: "☀️", wide: true },
-                       { key: "fin_matinee", label: "Plutôt en fin de matinée", emoji: "🕓", wide: true },
-                       { key: "loin", label: "Verdun c'est loin pour moi", emoji: "🚗", wide: true },
-                       { key: "distance", label: "Je préfère à distance", emoji: "💻", wide: true },
-                     ]} />
-            </div>
+            {/* En distance, cette question n'a pas de sens (personne ne vient
+                à Verdun le matin) : on la masque, `venir_matin` vaut déjà
+                "distance", et la fin mène droit à « démarre d'ici ». */}
+            {!distance && (
+              <>
+                <div className="pdd-grp">
+                  <span className="pdd-glab">
+                    Le club est ouvert dès 7h, à Verdun. Tu pourrais passer un matin&nbsp;?
+                  </span>
+                  <Choix cols={1} value={form.venir_matin} onPick={(v) => set("venir_matin", v)}
+                         options={[
+                           { key: "matin_ok", label: "Oui, le matin ça me va", emoji: "☀️", wide: true },
+                           { key: "fin_matinee", label: "Plutôt en fin de matinée", emoji: "🕓", wide: true },
+                           { key: "loin", label: "Verdun c'est loin pour moi", emoji: "🚗", wide: true },
+                           { key: "distance", label: "Je préfère à distance", emoji: "💻", wide: true },
+                         ]} />
+                </div>
 
-            <div className="pdd-hint">
-              <span className="i" aria-hidden="true">💡</span>
-              <span>Ça ne bloque rien. C'est juste pour te proposer la bonne suite à la fin.</span>
-            </div>
+                <div className="pdd-hint">
+                  <span className="i" aria-hidden="true">💡</span>
+                  <span>Ça ne bloque rien. C'est juste pour te proposer la bonne suite à la fin.</span>
+                </div>
+              </>
+            )}
 
             <div className="pdd-grp">
               <span className="pdd-glab">S'il y a un truc qui te freine, dis-le en une phrase</span>
