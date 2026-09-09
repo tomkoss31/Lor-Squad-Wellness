@@ -40,8 +40,8 @@ import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 import type { ScoringInput } from "../lib/bilanOnlineScoring";
 import "./PointDeDepartPage.css";
 
+import { PointDeDepartAccueil } from "./PointDeDepartAccueil";
 const LOGO = "/brand/breakfast-club/logo-heart.png";
-const PHOTO_SALLE = "/brand/breakfast-club/photos/club-salle.jpg";
 
 /** Clé du brouillon local. Versionnée : un changement de forme du formulaire
  *  doit invalider les brouillons incompatibles plutôt que planter au relire. */
@@ -461,71 +461,11 @@ export default function PointDeDepartPage() {
         )}
 
         {/* ══ Accueil ══════════════════════════════════════════════════════ */}
-        {ecran === 0 && (
-          <section className="pdd-screen">
-            <img className="pdd-wm" src={LOGO} alt="" style={{ width: 230, marginTop: 12 }} />
-            <div style={{ textAlign: "center", marginTop: 16 }}>
-              <span className="pdd-pill">Mon point de départ</span>
-            </div>
-            <h1 className="pdd-title" style={{ textAlign: "center", marginTop: 14 }}>
-              On commence<br />par quoi&nbsp;?
-            </h1>
-            <p className="pdd-sub" style={{ textAlign: "center" }}>
-              Tu as sans doute déjà essayé des choses. Cinq écrans, et on te dit{" "}
-              <b>ce qui compte vraiment dans ton cas</b> — et par quoi attaquer demain matin.
-            </p>
-
-            {/* Montrer le résultat plutôt que le promettre. */}
-            <div className="pdd-peek">
-              <span className="pdd-peek-tag">Sylvie, 59 ans, Verdun</span>
-              <div className="pdd-peek-body">
-                <svg viewBox="0 0 96 96" width="72" height="72" aria-hidden="true">
-                  <g fill="none" stroke="#DCD2C0" strokeWidth="1">
-                    <polygon points="48,10 80,25 88,60 62,86 34,86 8,60 16,25" />
-                    <polygon points="48,29 69,39 74,62 57,79 39,79 22,62 27,39" />
-                  </g>
-                  <polygon points="48,36 55,41 62,49 55,58 40,66 44,48 20,29"
-                           fill="rgba(255,106,43,.22)" stroke="#FF6A2B" strokeWidth="1.8" strokeLinejoin="round" />
-                </svg>
-                <div className="pdd-peek-lines">
-                  <span className="pdd-pl"><i>1</i>Bouger <b>12</b></span>
-                  <span className="pdd-pl"><i>2</i>L'assiette <b>17</b></span>
-                  <span className="pdd-pl on"><i>3</i>Le matin <b>20</b></span>
-                </div>
-              </div>
-              <p className="pdd-peek-foot">
-                «&nbsp;Ton petit-déjeuner ne tient pas jusqu'à midi — et c'est lui qui commande
-                ton grignotage du soir.&nbsp;»
-              </p>
-            </div>
-
-            <figure className="pdd-place">
-              <img src={PHOTO_SALLE} alt="Six personnes attablées au Breakfast Club de Verdun, un matin." />
-              <figcaption>
-                <b>Le club, 11 rue Saint-Pierre à Verdun</b>
-                <span>Mélanie &amp; Thomas, tous les matins dès 7h</span>
-              </figcaption>
-            </figure>
-
-            <blockquote className="pdd-proof">
-              <span className="stars" aria-label="5 étoiles sur 5">★★★★★</span>
-              <p>
-                «&nbsp;Après plusieurs essais de régimes, je perdais puis je reprenais aussitôt.
-                Au début j'étais sceptique. Depuis le 2 mars&nbsp;: <b>6,9 kg</b>, un peu plus de{" "}
-                <b>10 cm de tour de taille</b>, et j'ai repris du muscle.&nbsp;»
-              </p>
-              <footer>Virginie — avis vérifié</footer>
-            </blockquote>
-
-            <div className="pdd-actions">
-              <button type="button" className="pdd-cta" onClick={() => setEcran(1)}>Je commence</button>
-              <p className="pdd-foot">
-                3 minutes, c'est offert.<br />
-                Résultats individuels — ils varient d'une personne à l'autre.
-              </p>
-            </div>
-          </section>
-        )}
+        {/* Refondu le 09/09 sur la maquette de Thomas : une vraie page de
+            capture (miroir, ce qu'on reçoit, exemple légendé, bandeau vert,
+            preuve, CTA collant) au lieu du court écran d'ouverture. Le tunnel
+            lui-même — les 5 écrans et les résultats — ne bouge pas. */}
+        {ecran === 0 && <PointDeDepartAccueil onStart={() => setEcran(1)} />}
 
         {/* ══ 1 · On fait connaissance ═════════════════════════════════════ */}
         {ecran === 1 && (

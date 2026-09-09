@@ -20,6 +20,13 @@
   --grad:linear-gradient(135deg,#FF7A2F,#FF1E3C);
   --sage:#93A67E; --sage-d:#5F7154; --sage-bg:#EDF3E9;
   --peach:#F6C6A0;
+  /* Ajoutés le 09/09 pour l'écran d'accueil refondu (bandeau vert, cartes,
+     témoignage). Valeurs reprises À L'IDENTIQUE du site club (`.cl` dans
+     ClubLandingPage.css) : c'est la MÊME marque, il ne doit pas exister deux
+     jaunes ni deux verts foncés selon la page où l'on se trouve. */
+  --pink:#F5178F; --yellow:#F1E27E; --amber:#E8A93A;
+  --on-dark:#F4EFE4; --on-dark-2:#C3CCC7;
+  --shadow:0 34px 60px -34px rgba(30,51,48,.34);
   --dot:rgba(30,51,48,.07);
 
   min-height:100vh; background:var(--cream); color:var(--ink);
