@@ -565,6 +565,14 @@ serve(async (req) => {
     return json({
       success: true,
       id: inserted.id,
+      // ⚠️ 09/09 — LE JETON MANQUAIT, ET C'EST TOUT CE QUI BLOQUAIT.
+      // Il était déjà lu en base (`.select("id, result_token")` plus haut) mais
+      // jamais rendu : la page de fin ne pouvait donc pas construire le lien
+      // vers le résultat détaillé, et sa porte « démarrer d'ici » retombait sur
+      // le tunnel de réservation du club — en promettant trois choses qu'elle
+      // ne tenait pas. Le jeton est celui de `online_bilans.result_token`,
+      // c'est-à-dire exactement celui que le coach envoie déjà à la main.
+      result_token: inserted.result_token,
       coach_resolved: !!coachUserId,
       ai_analysis: aiAnalysis,
     });

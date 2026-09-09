@@ -25,7 +25,7 @@ import { useEtapeTunnel } from "../features/audience/useEtapeTunnel";
 import {
   computeBilanResults, type BilanResults, type ScoringInput,
 } from "../lib/bilanOnlineScoring";
-import { CLE_META, CLE_RESULTATS, type VenirMatin } from "./PointDeDepartPage";
+import { CLE_META, CLE_RESULTATS, EVT_META_TARDIVE, type VenirMatin } from "./PointDeDepartPage";
 import "./PointDeDepartPage.css";
 
 const LOGO = "/brand/breakfast-club/logo-heart.png";
@@ -34,6 +34,8 @@ interface Meta {
   first_name?: string;
   venir_matin?: VenirMatin | "";
   bilan_id?: string | null;
+  /** `online_bilans.result_token` — ouvre le résultat détaillé du club. */
+  result_token?: string | null;
 }
 
 function normalizeSlug(input: string): string {
@@ -106,6 +108,20 @@ export default function PointDeDepartResultatsPage() {
 
   useEtapeTunnel("point-de-depart", resultats ? "resultats" : null, 7);
 
+  // ⚠️ Cet écran s'affiche AVANT que la réponse du serveur soit forcément
+  // arrivée (correctif des 8,2 s : on n'attend que 1,5 s). Le jeton peut donc
+  // atterrir alors qu'on est déjà là. Sans cette écoute, la porte « démarrer
+  // d'ici » resterait sur son repli pour toute personne dont la réponse a mis
+  // plus d'une seconde et demie — c'est-à-dire souvent.
+  useEffect(() => {
+    const tardive = (e: Event) => {
+      const d = (e as CustomEvent).detail as Meta | undefined;
+      if (d) setMeta((m) => ({ ...m, ...d }));
+    };
+    window.addEventListener(EVT_META_TARDIVE, tardive);
+    return () => window.removeEventListener(EVT_META_TARDIVE, tardive);
+  }, []);
+
   useEffect(() => {
     let entree: ScoringInput | null = null;
     try {
@@ -153,15 +169,27 @@ export default function PointDeDepartResultatsPage() {
         <li><span className="c" aria-hidden="true">✓</span><span>Le programme qui correspond, avec son prix</span></li>
         <li><span className="c" aria-hidden="true">✓</span><span>Le suivi par l'équipe, à distance</span></li>
       </ul>
-      {/* La page détaillée `/resultat-bilan/:token` existe depuis juin, mais son
-          jeton n'est pas rendu au navigateur — c'est le coach qui l'envoie à la
-          main. Tant que ce n'est pas branché, on demande à être rappelée
-          plutôt que de promettre un lien qui n'arrivera pas. */}
-      <a className="pdd-cta"
-         href={`/reserver?utm_source=point-de-depart&mode=distance${
-           prenom ? `&prenom=${encodeURIComponent(prenom)}` : ""}`}>
-        Être rappelée
-      </a>
+      {/* ⚠️ 09/09 — CETTE PORTE TENAIT ENFIN SES PROMESSES.
+          Elle annonce trois choses (résultats détaillés, programme avec son
+          prix, suivi à distance) et menait à `/reserver?mode=distance` : on
+          envoyait réserver un créneau PHYSIQUE à quelqu'un qui venait de cocher
+          « Verdun c'est loin pour moi ». La page qui tient ces promesses existe
+          depuis juin ; il manquait seulement que l'edge renvoie le jeton.
+
+          Le repli reste indispensable : la réponse du serveur peut n'être
+          jamais arrivée (hors ligne, edge en échec). Dans ce cas on ne promet
+          pas un lien qu'on n'a pas — on propose le rappel, comme avant. */}
+      {meta.result_token ? (
+        <a className="pdd-cta" href={`/resultat-club/${meta.result_token}`}>
+          Voir mon résultat complet
+        </a>
+      ) : (
+        <a className="pdd-cta"
+           href={`/reserver?utm_source=point-de-depart&mode=distance${
+             prenom ? `&prenom=${encodeURIComponent(prenom)}` : ""}`}>
+          Être rappelé·e
+        </a>
+      )}
     </div>
   );
 

@@ -110,6 +110,9 @@ const VIDE: Form = {
   venir_matin: "", frein: "", consent: false,
 };
 
+/** La méta complétée après coup, quand la réponse arrive passé `PATIENCE_MS`. */
+export const EVT_META_TARDIVE = "pdd:meta-tardive";
+
 const TOTAL = 5;
 const TITRES = ["On fait connaissance", "Ton matin", "Ton assiette", "Ton énergie", "Et pour la suite"];
 
@@ -381,7 +384,8 @@ export default function PointDeDepartPage() {
         if (error || !ok) {
           throw new Error(await extractFunctionError(data, error, "L'envoi n'est pas passé."));
         }
-        return (data as { id?: string } | null)?.id ?? null;
+        const d = data as { id?: string; result_token?: string } | null;
+        return { id: d?.id ?? null, jeton: d?.result_token ?? null };
       });
       // On laisse une courte chance à la réponse d'arriver. Si elle traîne, on
       // affiche les résultats sans elle et la requête finit en arrière-plan.
@@ -391,9 +395,10 @@ export default function PointDeDepartPage() {
       // téléphone). Même si l'écriture complète échouait, on ne perdrait que
       // le détail des réponses — jamais le contact.
       let idRecu: string | null = null;
+      let jetonRecu: string | null = null;
       let echec: Error | null = null;
       const suivi = requete.then(
-        (id) => { idRecu = id; return true; },
+        ({ id, jeton }) => { idRecu = id; jetonRecu = jeton; return true; },
         (e: unknown) => { echec = e instanceof Error ? e : new Error(String(e)); return false; },
       );
       const issue = await Promise.race([
@@ -408,6 +413,7 @@ export default function PointDeDepartPage() {
         first_name: form.first_name.trim(),
         venir_matin: form.venir_matin,
         bilan_id: idRecu,
+        result_token: jetonRecu,
       }));
       // Le brouillon local ne s'efface qu'une fois l'écriture CONFIRMÉE : tant
       // qu'on n'a pas la réponse, il reste, et un retour en arrière retrouve
@@ -416,7 +422,18 @@ export default function PointDeDepartPage() {
         try { localStorage.removeItem(CLE_BROUILLON); } catch { /* stockage refusé */ }
       } else {
         void suivi.then((abouti) => {
-          if (abouti) { try { localStorage.removeItem(CLE_BROUILLON); } catch { /* idem */ } }
+          if (!abouti) return;
+          try { localStorage.removeItem(CLE_BROUILLON); } catch { /* idem */ }
+          // La réponse est arrivée après coup : on complète la méta déjà écrite
+          // et on prévient l'écran de résultats, qui est déjà à l'affiche.
+          try {
+            const brut = sessionStorage.getItem(CLE_META(slug));
+            const meta = brut ? JSON.parse(brut) : {};
+            meta.bilan_id = idRecu;
+            meta.result_token = jetonRecu;
+            sessionStorage.setItem(CLE_META(slug), JSON.stringify(meta));
+            window.dispatchEvent(new CustomEvent(EVT_META_TARDIVE, { detail: meta }));
+          } catch { /* stockage refusé : la porte garde son repli, rien ne casse */ }
         });
       }
       navigate(`/point-de-depart${slug ? `/${slug}` : ""}/resultats`);
