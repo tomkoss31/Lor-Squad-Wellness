@@ -21,6 +21,20 @@ import { useEffect } from "react";
 import type { CrmLead } from "../../hooks/useCrmLeads";
 import { computeLeadScore, TEMP_META } from "../../lib/leadScoring";
 import { nomAffiche } from "../../features/crm/nomPropre";
+import { FunnelAnswers } from "./FunnelAnswers";
+import { FUNNEL_OPTION_LABEL } from "../../lib/opportunityFunnelLabels";
+
+/** Les deux réponses qui décident d'un lead opportunité : POURQUOI il vient, et
+ *  s'il est chaud pour une visio. Remontées en pastilles au-dessus du pli — un
+ *  recruteur les lit avant tout le reste. Rendu seulement si elles existent et
+ *  sont mappées (sinon pas de pastille plutôt qu'un code brut). */
+const CLES_PASTILLE = ["why_now", "wants_visio"] as const;
+function pastilles(answers: Record<string, string> | null | undefined) {
+  if (!answers) return [];
+  return CLES_PASTILLE
+    .map((cle) => FUNNEL_OPTION_LABEL[cle]?.[answers[cle]])
+    .filter((o): o is { emoji: string; label: string } => Boolean(o));
+}
 
 interface Props {
   lead: CrmLead;
@@ -47,6 +61,8 @@ const CSS = `
 .crm-vol-corps{padding:16px;display:flex;flex-direction:column;gap:16px}
 .crm-vol-nom{font-family:Syne,sans-serif;font-weight:800;font-size:20px}
 .crm-vol-sous{font-size:12px;color:var(--ls-text-muted);margin-top:2px}
+.crm-vol-pastilles{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.crm-vol-pastille{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:color-mix(in srgb,var(--ls-coral) 14%,transparent);border:1px solid color-mix(in srgb,var(--ls-coral) 32%,transparent);color:color-mix(in srgb,var(--ls-coral) 78%,var(--ls-text))}
 .crm-vol-eyebrow{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ls-text-muted);font-weight:600;margin-bottom:8px}
 .crm-vol-bloc{background:var(--ls-surface2);border:1px solid var(--ls-border);border-radius:14px;padding:13px 14px}
 .crm-vol-score{display:flex;align-items:center;gap:14px}
@@ -77,6 +93,7 @@ function Anneau({ valeur, couleur }: { valeur: number; couleur: string }) {
 
 export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWhatsApp, onAlors, onFiche, onConvertir }: Props) {
   const { score100, temperature, details } = computeLeadScore(lead);
+  const chips = pastilles(lead.funnelAnswers);
 
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => {
@@ -111,6 +128,15 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
           <div>
             <div className="crm-vol-nom">{nomAffiche(lead.firstName, lead.lastName)}</div>
             {sous ? <div className="crm-vol-sous">{sous}</div> : null}
+            {chips.length ? (
+              <div className="crm-vol-pastilles">
+                {chips.map((c) => (
+                  <span key={c.label} className="crm-vol-pastille">
+                    <span aria-hidden="true">{c.emoji}</span> {c.label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           {/* Score + son détail auditable. */}
@@ -130,15 +156,34 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
             </div>
           </div>
 
-          {/* Coordonnées. */}
+          {/* Coordonnées. L'email s'affiche s'il existe ET n'est pas déjà la
+              valeur de `contact` (un lead sans numéro a son email en contact). */}
           <div className="crm-vol-bloc crm-vol-coord">
             <div><span className="k">Contact</span><br />{lead.contact ?? "—"}</div>
+            {lead.email && lead.email !== lead.contact ? (
+              <div><span className="k">Email</span><br />{lead.email}</div>
+            ) : null}
             {lead.objectif ? <div><span className="k">Objectif</span><br />{lead.objectif}</div> : null}
             {(lead.bilanObjectives ?? []).length ? (
               <div><span className="k">Bilan</span><br />{(lead.bilanObjectives ?? []).join(" · ")}
                 {typeof lead.bilanWeightTarget === "number" ? ` · 🎯 −${Math.abs(lead.bilanWeightTarget)} kg` : ""}</div>
             ) : null}
           </div>
+
+          {/* Le questionnaire Opportunité. Contrairement aux 14 réponses du
+              bilan nutrition (lourdes, laissées à la fiche pleine), celles-ci
+              sont légères et SONT tout le lead : sans elles le volet ne dit pas
+              qui est la personne. Ouvert d'emblée pour les leads CHAUDS — c'est
+              là qu'on décroche son téléphone tout de suite ; replié sinon, pour
+              qu'un lead froid ne déroule pas 11 lignes. */}
+          {lead.funnelAnswers ? (
+            <FunnelAnswers
+              answers={lead.funnelAnswers}
+              temperature={lead.funnelTemperature}
+              score={lead.funnelScore}
+              defaultOpen={temperature === "hot"}
+            />
+          ) : null}
 
           {/* Gestes. WhatsApp seulement s'il a un numéro. */}
           <div>

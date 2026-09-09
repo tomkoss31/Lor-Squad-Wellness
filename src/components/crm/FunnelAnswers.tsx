@@ -18,12 +18,16 @@ export function FunnelAnswers({
   answers,
   temperature,
   score,
+  defaultOpen = false,
 }: {
   answers: Record<string, string>;
   temperature?: string | null;
   score?: number | null;
+  /** Ouvert d'emblée (volet lead : seulement les leads chauds). La fiche
+   *  plein écran ne passe pas ce prop → reste repliée comme avant. */
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const rows = buildFunnelSummary(answers);
   if (rows.length === 0) return null;
   const temp = temperature && temperature in TEMP_META ? TEMP_META[temperature as LeadTemperature] : null;

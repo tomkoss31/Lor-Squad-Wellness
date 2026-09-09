@@ -893,7 +893,15 @@ export function useCrmLeads() {
           sourceRaw: (row.source as string | null) ?? null,
           lastName: nomPropre(
             (row.last_name as string | null)
-            ?? (typeof meta.nom === "string" ? (meta.nom as string) : null),
+            ?? (typeof meta.nom === "string" ? (meta.nom as string) : null)
+            // Parcours Opportunité « gated » : le nom part dans metadata sous
+            // `last_name` / `answers.lastName`, jamais dans `meta.nom`. Sans ces
+            // deux replis, la fiche n'affichait que le prénom (vu sur Amandine
+            // Lisiak, 08/09). La colonne `last_name` reste prioritaire.
+            ?? (typeof meta.last_name === "string" ? (meta.last_name as string) : null)
+            ?? (typeof (meta.answers as Record<string, unknown> | undefined)?.lastName === "string"
+              ? ((meta.answers as Record<string, string>).lastName)
+              : null),
           ) || null,
           objectif: typeof meta.objectif === "string" ? (meta.objectif as string) : null,
           peopleCount: typeof meta.people_count === "number" ? (meta.people_count as number) : null,
