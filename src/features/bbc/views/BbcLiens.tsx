@@ -42,11 +42,28 @@ export function BbcLiens({ coachName, settings, clubName }: BbcLiensProps) {
   const links = settings?.links ?? {};
 
   const LINKS: QuickLink[] = [
+    // ⚠️ 10/09 — LE BILAN DU CLUB PASSE DEVANT, ET IL EST MARQUÉ.
+    // Thomas : « les deux, le nouveau en premier indiqué BBC ».
+    // Il est en prod depuis le 09/09 et n'était atteignable QUE si on tapait
+    // l'URL à la main : « Mes liens » n'offrait que l'ancien bilan La Base 360,
+    // si bien qu'envoyer un bilan depuis cet écran envoyait au mauvais endroit.
+    // Les deux cohabitent volontairement — le club pour les gens du matin,
+    // l'ancien pour tout le reste — d'où l'étiquette, sans quoi rien ne les
+    // distingue dans la liste.
+    {
+      key: "point-de-depart",
+      icon: "🌅",
+      title: "Mon point de départ · BBC",
+      hint: "le bilan du club · parle du matin",
+      url: `${origin}/point-de-depart/${slug}`,
+      message: (u) =>
+        `Coucou 😊 Je t'offre le bilan du ${club} : 3 min, 12 questions, et tu sais tout de suite par quoi commencer demain matin. C'est par ici : ${u}`,
+    },
     {
       key: "bilan",
       icon: "📋",
-      title: "Bilan bien-être offert",
-      hint: "la porte d'entrée · à envoyer à un cobaye",
+      title: "Bilan bien-être offert · La Base 360",
+      hint: "l'historique · body scan, hors club",
       url: `${origin}/bilan-online/${slug}`,
       message: (u) =>
         `Coucou 😊 Je t'offre un bilan bien-être + scan corporel (valeur 50 €) pour m'entraîner. Tu remplis en 2 min ici : ${u}`,
