@@ -207,11 +207,14 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
                   ⚠️ Les deux bilans n'ont PAS la même page de résultats : celui
                   du club a la sienne, en identité Breakfast Club. Envoyer un
                   bilan BBC vers la page 360 ferait changer de marque au
-                  moment de vérifier. */}
+                  moment de vérifier.
+                  ⚠️ La variante vaut « bbc » OU « bbc-distance » (version zone
+                  large) : on teste le PRÉFIXE, sinon un bilan à distance
+                  retomberait sur la page 360. */}
               {lead.resultToken ? (
                 <a
                   className="crm-vol-btn"
-                  href={`${lead.bilanVariante === "bbc" ? "/resultat-club" : "/resultat-bilan"}/${lead.resultToken}`}
+                  href={`${lead.bilanVariante?.startsWith("bbc") ? "/resultat-club" : "/resultat-bilan"}/${lead.resultToken}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

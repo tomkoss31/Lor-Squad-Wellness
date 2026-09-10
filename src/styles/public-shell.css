@@ -26,16 +26,7 @@
   --cream-2: #F2EBDF;
   --cream-soft: rgba(251, 247, 240, 0.92);
   --cream-muted: rgba(251, 247, 240, 0.58);
-    /* ⚠️ 10/09 — RELEVÉ AU-DESSUS DU SEUIL LISIBLE, DANS LES DEUX THÈMES.
-     Mesuré en WCAG (gamma + composition alpha) sur les fonds réels de la page
-     et des cartes : 2,50 / 2,47 en clair et 2,73 / 2,80 en sombre — soit
-     au-dessous de 4,5:1 PARTOUT, depuis toujours. Ce n'est pas un gris
-     discret, c'est du texte qu'on ne lit pas : il portait « Objectif »,
-     « Choisir cette formule », les sur-titres des tuiles…
-     Les opacités ci-dessous sont le MINIMUM qui passe (4,54 à 4,68), pas un
-     choix esthétique — on assombrit le moins possible pour garder la
-     hiérarchie voulue. ⚠️ Token PARTAGÉ par les 9 pages publiques. */
-  --cream-hint: rgba(251, 247, 240, 0.47);
+  --cream-hint: rgba(251, 247, 240, 0.32);
   --hair: rgba(251, 247, 240, 0.10);
   --hair-strong: rgba(251, 247, 240, 0.18);
 
@@ -95,16 +86,7 @@
   --cream: #0B0D11;
   --cream-soft: rgba(11, 13, 17, 0.92);
   --cream-muted: rgba(11, 13, 17, 0.62);
-    /* ⚠️ 10/09 — RELEVÉ AU-DESSUS DU SEUIL LISIBLE, DANS LES DEUX THÈMES.
-     Mesuré en WCAG (gamma + composition alpha) sur les fonds réels de la page
-     et des cartes : 2,50 / 2,47 en clair et 2,73 / 2,80 en sombre — soit
-     au-dessous de 4,5:1 PARTOUT, depuis toujours. Ce n'est pas un gris
-     discret, c'est du texte qu'on ne lit pas : il portait « Objectif »,
-     « Choisir cette formule », les sur-titres des tuiles…
-     Les opacités ci-dessous sont le MINIMUM qui passe (4,54 à 4,68), pas un
-     choix esthétique — on assombrit le moins possible pour garder la
-     hiérarchie voulue. ⚠️ Token PARTAGÉ par les 9 pages publiques. */
-  --cream-hint: rgba(11, 13, 17, 0.58);
+  --cream-hint: rgba(11, 13, 17, 0.38);
   --hair: rgba(11, 13, 17, 0.10);
   --hair-strong: rgba(11, 13, 17, 0.18);
 
