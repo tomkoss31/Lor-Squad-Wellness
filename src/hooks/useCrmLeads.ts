@@ -132,6 +132,9 @@ export interface CrmLead {
   convertedClientId?: string | null;
   /** Token de la page premium « Résultat Bilan » (online_bilans uniquement). */
   resultToken: string | null;
+  /** « bbc » pour un bilan du club, sinon La Base 360. Décide de la page de
+   *  résultats à ouvrir : les deux existent et n'ont pas la même identité. */
+  bilanVariante: string | null;
   /** Le lead a cliqué « Fais-toi rappeler » sur sa page Résultat Bilan
       (online_bilans.callback_requested_at). Signal fort : il attend un appel.
       Null = pas de demande. Surfacé en badge dans la liste + le détail. */
@@ -631,7 +634,7 @@ export function useCrmLeads() {
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
           // pipeline qualifié — ils ont leur section dédiée (useCuriousLeads).
           .select(
-            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, derniere_reponse, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement",
+            "id, first_name, phone, email, city, lead_status, converted_to_client_id, relance_due_at, relance_done_at, derniere_reponse, result_token, created_at, contacted_at, notes, coach_user_id, assigned_to_user_id, coach_slug, objectives, weight_loss_target_kg, motivation_score, age, callback_requested_at, engagement, variante:payload->>variante",
           )
           .not("completed_at", "is", null)
           .order("created_at", { ascending: false })
@@ -755,6 +758,7 @@ export function useCrmLeads() {
           bilanCoachSlug: (row.coach_slug as string | null) ?? null,
           ...relanceFields(row, now),
           resultToken: (row.result_token as string | null) ?? null,
+          bilanVariante: (row.variante as string | null) ?? null,
           callbackRequestedAt: (row.callback_requested_at as string | null) ?? null,
           engagement: (row.engagement as { score: number; tier: string; signals: string[] } | null) ?? null,
           createdAt: row.created_at as string,
@@ -885,6 +889,7 @@ export function useCrmLeads() {
           ownerUserId: (row.assigned_to_user_id as string | null) ?? (row.referrer_user_id as string | null) ?? null,
           ...relanceFields(row, now),
           resultToken: null,
+          bilanVariante: null,
           callbackRequestedAt: null,
           engagement: null,
           createdAt: row.created_at as string,
@@ -956,6 +961,7 @@ export function useCrmLeads() {
           relanceDueAt: null,
           derniereReponse: null,
           resultToken: null,
+          bilanVariante: null,
           callbackRequestedAt: null,
           engagement: null,
           createdAt: row.created_at as string,
@@ -994,6 +1000,7 @@ export function useCrmLeads() {
           relanceDueAt: null,
           derniereReponse: null,
           resultToken: null,
+          bilanVariante: null,
           callbackRequestedAt: null,
           engagement: null,
           createdAt: row.created_at,

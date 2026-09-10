@@ -99,6 +99,7 @@ const PLACEHOLDER_LEAD: CrmLead = {
   ownerUserId: null,
   relanceDue: false,
   resultToken: null,
+  bilanVariante: null,
   callbackRequestedAt: null,
   engagement: null,
   createdAt: new Date(0).toISOString(),

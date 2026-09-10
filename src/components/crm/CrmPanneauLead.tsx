@@ -194,6 +194,30 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
               ) : null}
               <button type="button" className="crm-vol-btn principal" onClick={() => onAlors(lead)}>🎯 Et alors ?</button>
               <button type="button" className="crm-vol-btn" onClick={() => onConvertir(lead)}>✅ Valider → fiche client</button>
+              {/* ⚠️ 10/09 — Thomas : « si j'ai un lead bilan online je dois pouvoir
+                  voir le résultat pour pouvoir vérifier ». Le bouton existait
+                  déjà, mais sur la FICHE PLEINE, en 8e position de la colonne
+                  droite — sur téléphone, après les 9 sections du bilan puis 7
+                  blocs d'actions. Il n'était pas absent, il était enseveli.
+                  Ce volet est l'écran qu'il ouvre sur CHAQUE lead (tout tap de
+                  ligne y mène, et les flèches ↑↓ enchaînent sans le refermer) :
+                  c'est donc là que « je veux vérifier ce qu'il a vu » doit
+                  tomber sous le pouce. Raccourci vers la même page, pas une 2e
+                  implémentation (règle B9).
+                  ⚠️ Les deux bilans n'ont PAS la même page de résultats : celui
+                  du club a la sienne, en identité Breakfast Club. Envoyer un
+                  bilan BBC vers la page 360 ferait changer de marque au
+                  moment de vérifier. */}
+              {lead.resultToken ? (
+                <a
+                  className="crm-vol-btn"
+                  href={`${lead.bilanVariante === "bbc" ? "/resultat-club" : "/resultat-bilan"}/${lead.resultToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  👁️ Voir son résultat
+                </a>
+              ) : null}
               <button type="button" className="crm-vol-btn" onClick={() => onFiche(lead)}>↗ Fiche complète</button>
             </div>
           </div>
