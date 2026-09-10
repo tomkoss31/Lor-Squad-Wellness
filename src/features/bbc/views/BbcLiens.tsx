@@ -59,6 +59,19 @@ export function BbcLiens({ coachName, settings, clubName }: BbcLiensProps) {
       message: (u) =>
         `Coucou 😊 Je t'offre le bilan du ${club} : 3 min, 12 questions, et tu sais tout de suite par quoi commencer demain matin. C'est par ici : ${u}`,
     },
+    // La version zone large : même bilan, mais qui ne parle jamais de Verdun et
+    // mène au démarrage à distance. C'est la campagne Meta étendue (Longwy,
+    // Thionville, Metz…). Elle existe depuis le 10/09 côté app classique
+    // (`MesLiensPage`) — sans cette entrée, le mode BBC en était privé.
+    {
+      key: "point-de-depart-distance",
+      icon: "📡",
+      title: "Mon point de départ · à distance",
+      hint: "zone large · ne parle pas du club",
+      url: `${origin}/point-de-depart/${slug}?mode=distance`,
+      message: (u) =>
+        `Coucou 😊 Je t'offre un point de départ en 3 min — coaché à distance, où que tu sois. Tu sauras tout de suite par quoi commencer : ${u}`,
+    },
     {
       key: "bilan",
       icon: "📋",
