@@ -140,4 +140,49 @@ describe("fusionnerGroupe", () => {
     expect([r.maitre, ...r.autres]).toHaveLength(3);
     expect(r.autres).toEqual([a, b]); // dans l'ordre d'arrivee
   });
+
+  // ── LE CAS JUSTINE (mesure du 10/09) ─────────────────────────────────────
+  // Elle repond a un SMS de relance en revenant sur le site et en laissant ses
+  // disponibilites. Ca cree une 2e fiche, PAUVRE : un prenom, un numero. Sa
+  // fiche maitre Meta porte deja la note automatique de l'import, donc elle est
+  // plus RICHE. `notes` etait resolu par `premiere()` : sa reponse etait JETEE
+  // ici, avant d'atteindre le moindre ecran. Le lendemain, un rappel
+  // « deuxieme SMS sans reponse -> APPEL » etait pose sur elle.
+  it("LE CAS JUSTINE : la note de la fiche PAUVRE n'est plus jetee", () => {
+    const maitre = base({
+      createdAt: "2026-09-03T07:10:00.000Z",
+      lastName: "Santos", email: "j@ex.fr", phone: "0763920109", city: "Verdun",
+      notes: "Lead formulaire Meta recu le 03/09.",
+    });
+    const doublon = base({
+      createdAt: "2026-09-08T09:17:00.000Z",
+      phone: "0763920109",
+      notes: "Dispos indiquees : Apres 16h du lundi au mercredi",
+    });
+    const r = fusionnerGroupe([maitre, doublon]);
+    // Le maitre reste le plus riche — ca, c'etait deja juste.
+    expect(r.maitre).toBe(maitre);
+    // Mais sa disponibilite SURVIT desormais a la fusion.
+    expect(String(r.vue.notes)).toContain("Apres 16h");
+    expect(String(r.vue.notes)).toContain("Lead formulaire Meta");
+  });
+
+  it("les notes se rejoignent dans l'ordre du TEMPS, pas de la richesse", () => {
+    const ancienne = base({ createdAt: "2026-09-01T10:00:00.000Z", notes: "A", email: "x@y.fr", city: "Verdun" });
+    const recente = base({ createdAt: "2026-09-05T10:00:00.000Z", notes: "B" });
+    expect(String(fusionnerGroupe([ancienne, recente]).vue.notes)).toBe("A | B");
+  });
+
+  it("deux fiches portant la MEME note automatique n'en font qu'une", () => {
+    const a = base({ createdAt: "2026-09-01T10:00:00.000Z", notes: "Lead formulaire Meta", email: "x@y.fr" });
+    const b = base({ createdAt: "2026-09-02T10:00:00.000Z", notes: "Lead formulaire Meta" });
+    expect(String(fusionnerGroupe([a, b]).vue.notes)).toBe("Lead formulaire Meta");
+  });
+
+  it("un groupe sans aucune note ne fabrique pas de note vide", () => {
+    const a = base({ createdAt: "2026-09-01T10:00:00.000Z", email: "x@y.fr" });
+    const b = base({ createdAt: "2026-09-02T10:00:00.000Z" });
+    expect(fusionnerGroupe([a, b]).vue.notes).toBeUndefined();
+  });
+
 });

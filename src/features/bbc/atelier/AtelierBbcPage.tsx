@@ -505,7 +505,11 @@ function AtelierScene({
       contactedAt: new Date(Date.now() - 4 * 86400000).toISOString(), relanceDue: true,
       relanceDueAt: new Date(Date.now() - 3 * 86400000).toISOString(), objectif: "Perte de poids",
       bilanObjectives: ["Perte de poids", "Sommeil"], bilanWeightTarget: 9, bilanMotivation: 8,
-      bilanAge: 41, dormant: false } as unknown as Parameters<typeof CrmPanneauLead>[0]["lead"];
+      bilanAge: 41, dormant: false,
+      // La note du 10/09 : un fil réel, avec sa parole en tête et deux traces
+      // machine derrière. C'est ce que le volet doit savoir épingler.
+      notes: "Dispos indiquees : Apres 16h du lundi au mercredi | Lead formulaire Meta recu le 03/09, identifiant META-PETIT-4471. | Appelee le 07/09 par Romane : pas de reponse, a rappeler.",
+    } as unknown as Parameters<typeof CrmPanneauLead>[0]["lead"];
     return (
       <div style={{ position: "relative", minHeight: "100vh", background: "var(--ls-bg)" }}>
         <CrmPanneauLead lead={faux} index={2} total={7}

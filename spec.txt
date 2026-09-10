@@ -1,0 +1,134 @@
+CHANTIER « LE FIL DE LA NOTE » — 3 lots, dans cet ordre. Sans le lot 1, le lot 3 ne sauve pas Justine.
+
+═══════════════════════════════════════════════
+LOT 1 — `src/features/crm/fusionFiches.ts` (LE PRÉREQUIS, ~10 lignes)
+═══════════════════════════════════════════════
+Les notes ne s'ÉLISENT plus, elles se REJOIGNENT.
+
+1. Retirer `"notes"` du tableau `infos` (ligne 120). Ne PAS toucher à `richesse()` (l.75), qui compte `notes` pour +1 dans le choix du maître — c'est une autre décision, elle reste juste.
+2. Après le calcul de `parDate` (l.134), ajouter :
+
+```ts
+// Les notes ne s'ÉLISENT pas, elles se REJOIGNENT. `premiere()` gardait celle
+// de la fiche la plus RICHE : le 10/09, la dispo « après 16h » de Justine était
+// sur sa fiche la plus PAUVRE (prénom + numéro, laissée par le tunnel) pendant
+// que la fiche maître portait déjà la note automatique Meta. Sa réponse était
+// jetée AVANT d'arriver à l'écran — aucun rendu n'aurait pu la rattraper.
+// Ordre chronologique : le fil se lit dans le temps (cf. filNote.ts).
+const notesDuGroupe = parDate
+  .map((f) => String(champ(f, "notes") ?? "").trim())
+  .filter(Boolean);
+if (notesDuGroupe.length) ajouts.notes = [...new Set(notesDuGroupe)].join(" | ");
+```
+
+- Ordre = `parDate` (la plus ancienne fiche d'abord).
+- Dédoublonnage par `Set` : deux fiches peuvent porter la même note automatique.
+- Séparateur ` | ` = celui déjà écrit par `make-lead-entrant:302` et par Thomas au clavier ; `filNote` le reconnaît donc sans règle supplémentaire.
+- Un groupe d'une seule fiche sort au premier `if` (l.103) : inchangé.
+
+NON-RÉGRESSION VÉRIFIÉE, à ne pas re-débattre : aucun chemin d'écriture ne repart d'un lead fusionné. `updateNotes` (useCrmLeads.ts:1303) est le seul writer et n'est appelé que depuis `CrmLeadDetailPage`, qui lit le lead BRUT (`leads.find(...)`, l.160). Les deux autres lecteurs d'une note fusionnée ne font que LIRE et y gagnent : `CrmPage.tsx:1291` (préremplissage `note` de `ProspectFormModal`) et `useLeadQuickActions.ts:85` (contexte Noaly).
+
+TEST à ajouter dans `src/features/crm/__tests__/fusionFiches.test.ts` (aucune assertion sur `notes` aujourd'hui) :
+- maître riche note A + doublon pauvre note B, B créée après → `vue.notes === "A | B"` ;
+- deux notes identiques → une seule ;
+- une seule fiche avec note → note inchangée ;
+- groupe sans aucune note → `vue.notes` reste `null`.
+
+═══════════════════════════════════════════════
+LOT 2 — `src/features/crm/filNote.ts` (NOUVEAU, pur, ~60 lignes)
+═══════════════════════════════════════════════
+Aucun import React. Testable en isolation.
+
+```ts
+export type RangEntree = "trace" | "main" | "parole";
+export interface Entree { texte: string; rang: RangEntree }
+export interface Fil { entrees: Entree[]; epingle: Entree; apercu: string; tronque: boolean }
+export function filNote(notes: string | null | undefined): Fil | null
+```
+
+1) NORMALISATION — `const t = (notes ?? "").replace(/\r\n?/g, "\n").trim();` → si vide, `return null`.
+
+2) DÉCOUPE — `t.split(/\s*\|\s*|\s*\n+\s*|\s+·\s+(?=🕑)/).map(s => s.trim()).filter(Boolean)`. Si 0 entrée → `null`. Les trois séparateurs sont ceux réellement écrits en base, chacun tracé à sa source :
+   · `|`  → `make-lead-entrant/index.ts:302`, + la frappe de Thomas, + notre lot 1 ;
+   · `\n` → `submit-prospect-lead/index.ts:202` (« ↩︎ Revenu·e le … ») ;
+   · ` · ` UNIQUEMENT suivi de 🕑 → RPC `noter_disponibilites_lead` (migration `20261215200000`, l.63). Le lookahead est obligatoire : sans lui, un « · » de ponctuation couperait une phrase en deux.
+
+3) `norm(s) = s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")` — pour les tests seulement, JAMAIS pour l'affichage. La base mélange accentué (« Dispos indiquées ») et non accentué (« A ANNULE PAR MAIL »).
+
+4) CLASSEMENT — ordonné, premier test gagnant. L'ordre est ce qui rend l'ensemble sûr : une trace ne peut jamais être promue en parole.
+   a. `trace` — `norm(e)` contient l'un de : `"lead formulaire meta"`, `"arrive automatiquement via make"`, `"identifiant meta"`, `"numero normalise"`, `"prenom douteux"`, `"sms de premier contact"`, `"expediteur twilio"`, `"fusion du"`, `"fiche supprimee"`.
+      ⚠️ CONTRAT À ÉCRIRE EN COMMENTAIRE DU FICHIER : toute nouvelle écriture automatique dans `notes` (edge function, RPC, script ops) ajoute son motif ici. Même statut que la règle « tout insert `client_messages` utilise un type de l'union `domain.ts` ».
+   b. `parole` — l'entrée commence par `🕑` ou par `↩︎`, OU `norm(e)` matche
+      `/\b(dispos? indiquees|dispo\w*|joignable|rappelle[- ]moi|(apres|avant|entre|des|jusqu.?a) \d{1,2} ?h|uniquement le|que le (matin|soir|samedi|week))\b/`
+      ⚠️ AUCUN `\b\d{1,2} ?h\b` NU, jamais, même « pour élargir » : « son RDV du 03/09 14h » serait lu comme une disponibilité et ferait rappeler à 14 h quelqu'un qui a annulé. Toute reconnaissance d'horaire exige une préposition.
+   c. `main` — tout le reste.
+
+5) ÉPINGLE — la seule ligne visible au repos, choisie par NATURE et jamais par position :
+   · la DERNIÈRE entrée `parole` s'il en existe (une dispo redonnée remplace la précédente) ;
+   · sinon la DERNIÈRE entrée `main` ;
+   · sinon la DERNIÈRE `trace` (on montre quelque chose plutôt qu'une carte vide — elle sera en encre atténuée, ce qui dit d'un coup d'œil que personne n'a rien dit).
+   AUCUNE date n'est lue. `apercu` = `epingle.texte` avec `/\s+/g → " "`, coupé à 110 caractères à la dernière frontière de mot + « … » ; `tronque` dit si la coupe a eu lieu.
+
+6) TEST `src/features/crm/__tests__/filNote.test.ts` — fixtures = les 7 échantillons réels, plus : la note de Justine, une note de 1038 caractères, une note 100 % traces, une note vide, `null`, une note d'une seule entrée courte, et « A ANNULE PAR MAIL son RDV du 03/09 14h » (doit être `main`, PAS `parole`).
+
+═══════════════════════════════════════════════
+LOT 3 — `src/components/crm/CrmPanneauLead.tsx` (~35 lignes)
+═══════════════════════════════════════════════
+OÙ — nouvel enfant direct de `.crm-vol-corps`, inséré ligne 172 : après le `</div>` du bloc coordonnées (l.171), AVANT le commentaire de `FunnelAnswers` (l.173). C'est le dernier emplacement au-dessus du pli sur téléphone, et il est au-dessus de « 🎯 Et alors ? » — le bouton qui a posé la relance de Justine. Sur un lead chaud, c'est `FunnelAnswers` (`defaultOpen`) qui passe dessous, pas la note.
+
+RENDU — composant local `<FilNote lead={lead} key={lead.key} />`. La `key` remonte le composant à chaque lead : les flèches ↑↓ ne referment pas le volet, donc sans elle l'état « déplié » resterait collé au lead précédent. Un seul `useState(false)`, aucun `useEffect`.
+
+`const fil = filNote(lead.notes);` → si `null`, on ne rend RIEN (pas d'état vide).
+`const depliable = fil.entrees.length > 1 || fil.tronque;`
+
+AU REPOS (~84-102 px, gouttière comprise) :
+```
+NOTE · 4 ENTRÉES                        ▾
+🕑 Dispos indiquées : Après 16h du
+lundi au mercredi
+```
+· Tête : `.crm-vol-eyebrow` avec `style={{ margin: 0 }}` (ses 8 px de marge s'ajouteraient aux 13 px de padding). Libellé : `note` si une entrée, `note · N entrées` sinon. Le compteur est TOUJOURS visible dès qu'il y a plus d'une entrée : rien n'est masqué en silence.
+· À droite, `margin-left:auto`, le chevron `▾` / `▴` — rendu SEULEMENT si `depliable`.
+· L'aperçu en encre pleine `var(--ls-text)`, 12,5 px — pas `.crm-vol-detail` (72 %) : la ligne épinglée est le sujet du bloc. Exception : si `epingle.rang === "trace"`, l'aperçu prend `var(--ls-text-hint)`.
+· ÉLÉMENT : si `depliable`, le bloc ENTIER est `<button type="button" className="crm-vol-bloc crm-vol-fil" aria-expanded={ouvert} onClick={…}>` — cible tactile ≥ 84 px, les 44 px acquis sans un pixel ajouté. Sinon un `<div className="crm-vol-bloc">` : pas d'affordance morte.
+
+DÉPLIÉ — l'aperçu DISPARAÎT (pas de doublon), remplacé par la liste des entrées dans l'ORDRE DU CHAMP, jamais retriée, sans troncature, séparées par un filet 1 px `var(--ls-border)`. `parole` et `main` en `var(--ls-text)`, `trace` en `var(--ls-text-hint)` : présentes, visiblement de second rang, jamais supprimées. Conteneur plafonné `max-height:44vh; overflow-y:auto; overscroll-behavior:contain` — une note de 1038 caractères ne doit jamais repousser les cinq boutons d'action hors de l'écran. Second tap = referme.
+
+CSS — 6 règles ajoutées à la template string `const CSS` (l.55-77 ; il n'existe aucune feuille externe). Zéro hex, zéro nouvelle famille visuelle (le fond, la bordure, le rayon et le padding viennent de `.crm-vol-bloc`, porté conjointement) :
+```css
+.crm-vol-fil{width:100%;display:block;text-align:left;cursor:pointer;font-family:inherit;font-size:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+.crm-vol-fil-tete{display:flex;align-items:baseline;gap:8px}
+.crm-vol-fil-plus{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ls-teal);white-space:nowrap}
+.crm-vol-fil-l{margin-top:6px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;-webkit-user-select:text;user-select:text}
+.crm-vol-fil-e+.crm-vol-fil-e{margin-top:8px;padding-top:8px;border-top:1px solid var(--ls-border)}
+.crm-vol-fil-tout{margin-top:6px;max-height:44vh;overflow-y:auto;overscroll-behavior:contain}
+.crm-vol-fil-auto{color:var(--ls-text-hint)}
+```
+`font-family:inherit` + `color:inherit` sont OBLIGATOIRES (un `<button>` n'hérite ni de l'un ni de l'autre — `.crm-vol-btn` l.74 et `.crm-vol-nav button` l.60 le redéclarent déjà). `overflow-wrap:anywhere` est OBLIGATOIRE (`.crm-vol` est `overflow-y:auto`, donc son `overflow-x` calculé vaut `auto` : l'URL de la trace Twilio ferait défiler latéralement le volet entier, tête sticky comprise). `white-space:pre-wrap` préserve les `\n`. Pas de `-webkit-line-clamp` : il exige `display:-webkit-box`, incompatible avec `pre-wrap` — la coupe est faite en amont sur la chaîne. Tokens `--ls-text-hint` / `--ls-text-muted` / `--ls-surface2` vérifiés présents dans les DEUX thèmes (`globals.css` l.112-115 et l.255-256).
+
+LECTURE SEULE, stricte. Aucun champ de saisie : l'écouteur `window` (l.98-106) fait `preventDefault` sur ↑↓ sans filtrer `e.target` et ferme sur Échap. L'édition reste sur la fiche pleine (« ↗ Fiche complète », déjà le dernier bouton). Corollaire assumé : une note modifiée ailleurs ne se reflète qu'à la réouverture du volet (instantané `panneauLead`, CrmPage.tsx:147) — sans conséquence puisqu'on n'écrit rien.
+
+AUCUNE PROP AJOUTÉE — `AtelierBbcPage.tsx:511` compile inchangé ; son faux lead n'a pas de `notes`, le bloc n'est simplement pas rendu.
+
+═══════════════════════════════════════════════
+CAS LIMITES — comportement imposé
+═══════════════════════════════════════════════
+· NOTE VIDE / `null` / que des blancs → `filNote` rend `null` → aucun bloc. Jamais de « aucune note ».
+· `client_referrals` → `notes` est câblé `null` en dur (useCrmLeads.ts:970) → aucun bloc. Jamais de « pas de note pour ce type de lead ».
+· UNE SEULE ENTRÉE COURTE (cas Justine, 51 c.) → texte intégral, tête « NOTE », pas de chevron, `<div>` et non `<button>`, ~78 px, posé juste au-dessus de « 🎯 Et alors ? ».
+· UNE SEULE ENTRÉE LONGUE (> 110 c.) → aperçu tronqué + chevron, tête « NOTE » (sans compteur : il n'y a qu'une entrée, mais quelque chose est bien caché).
+· NOTE TRÈS LONGUE (1038 c., 5-8 entrées) → aperçu = dernière `parole` s'il y en a une, sinon dernière `main` (« RAPPEL POSE au 11/09 : … »), tête « NOTE · 7 ENTRÉES ▾ », ~102 px. Déplié : les 1038 caractères en entier, traces atténuées, plafonné à 44vh avec défilement interne.
+· NOTE 100 % AUTOMATIQUE → dernière `trace` épinglée en `var(--ls-text-hint)`, compteur visible. Thomas voit d'un coup d'œil que personne n'a rien dit.
+· NOTE SANS AUCUN MARQUEUR → tout est `main`, la dernière est épinglée. Aucune famille n'est inventée, aucun libellé éditorial n'est affiché.
+· `|` TAPÉ À LA MAIN DANS UNE PHRASE → coupe en deux entrées ; les deux moitiés restent lisibles dans le fil (zéro perte), le compteur ment d'une unité. Sans gravité, constaté dans aucun des 7 échantillons.
+· DEUX FICHES PORTANT LA MÊME NOTE → dédoublonnées par le lot 1.
+
+═══════════════════════════════════════════════
+CE QUE CE CHANTIER NE COUVRE PAS (à dire à Thomas)
+═══════════════════════════════════════════════
+Sur un lead qui REVIENT, les dispos n'arrivent JAMAIS dans `notes`. `submit-prospect-lead` renvoie l'id de la fiche EXISTANTE en cas de reprise (l.388), et `noter_disponibilites_lead` refuse d'écrire sur une fiche de plus d'un jour (migration `20261215200000` l.55, retour `trop_tard`). Or « répondre à un SMS de relance en revenant sur le site » EST une reprise. Les disponibilités meurent alors dans `metadata.dispo_souhaitee`, que `CrmLead` n'expose pas. Justine n'a eu sa note que parce que sa fiche a été créée neuve. Lot séparé : ouvrir la fenêtre de la RPC pour ce cas, ou surfacer `metadata.dispo_souhaitee`. Et à terme, sortir « 🕑 Dispos indiquées » du texte libre pour lui donner sa propre colonne — tant qu'une information vitale vit dans une note, toute lecture reste devinatoire.
+
+═══════════════════════════════════════════════
+COÛT ET VALIDATION
+═══════════════════════════════════════════════
+~150 lignes : `fusionFiches.ts` +10, `filNote.ts` ~60, `filNote.test.ts` ~45, `fusionFiches.test.ts` +15, `CrmPanneauLead.tsx` ~35 (6 règles CSS + composant local + 1 ligne d'insertion). Zéro migration, zéro requête, zéro écriture, zéro prop, zéro fichier CSS, aucune modification de l'écouteur clavier ni du passage de `panneauLead`. Valider avec `npm run build` (PAS `tsc --noEmit` : `noUnusedLocals` strict en prod) + `filNote.test.ts` et `fusionFiches.test.ts` au vert. Réversible par `git revert` de 3 fichiers.

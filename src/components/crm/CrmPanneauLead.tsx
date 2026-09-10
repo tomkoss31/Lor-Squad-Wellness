@@ -17,7 +17,8 @@
 // partout. Le volet n'invente aucun chemin d'écriture.
 // =============================================================================
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { filNote, type Entree } from "../../features/crm/filNote";
 import type { CrmLead } from "../../hooks/useCrmLeads";
 import { computeLeadScore, TEMP_META } from "../../lib/leadScoring";
 import { nomAffiche } from "../../features/crm/nomPropre";
@@ -70,6 +71,12 @@ const CSS = `
 .crm-vol-detail b{color:var(--ls-text)}
 .crm-vol-coord{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .crm-vol-coord .k{font-size:10.5px;color:var(--ls-text-muted)}
+.crm-vol-fil{width:100%;text-align:left;display:block;font-family:inherit;color:inherit;cursor:pointer}
+.crm-vol-fil-tete{display:flex;align-items:center;gap:8px}
+.crm-vol-fil-ap{font-size:12.5px;line-height:1.5;margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
+.crm-vol-fil-liste{margin-top:9px;max-height:44vh;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}
+.crm-vol-fil-e{font-size:12.5px;line-height:1.5;padding:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;border-top:1px solid var(--ls-border)}
+.crm-vol-fil-e:first-child{border-top:0;padding-top:0}
 .crm-vol-actions{display:flex;flex-direction:column;gap:8px}
 .crm-vol-btn{min-height:44px;border-radius:11px;border:1px solid var(--ls-border);background:var(--ls-surface2);color:var(--ls-text);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
 .crm-vol-btn.wa{background:var(--ls-wa,#25D366);color:var(--ls-wa-ink,#04210f);border:0}
@@ -170,6 +177,17 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
             ) : null}
           </div>
 
+          {/* ⚠️ 10/09 — LA NOTE, ET POURQUOI ELLE EST ICI PRÉCISÉMENT.
+              Le volet n'affichait pas les notes du tout : Justine avait répondu
+              « dispos après 16h », et un rappel « sans réponse → APPEL » a été
+              posé sur elle le lendemain. Placée ICI, elle est le dernier bloc
+              au-dessus du pli sur téléphone, et surtout elle est AU-DESSUS du
+              bouton « 🎯 Et alors ? » — celui qui pose la relance. On lit avant
+              d'agir seulement si on la traverse en descendant vers le bouton.
+              (Un cran plus bas, le questionnaire s'ouvre d'office sur un lead
+              chaud et la ferait passer sous le pli au moment où elle sert.) */}
+          <FilNote notes={lead.notes} key={lead.key} />
+
           {/* Le questionnaire Opportunité. Contrairement aux 14 réponses du
               bilan nutrition (lourdes, laissées à la fiche pleine), celles-ci
               sont légères et SONT tout le lead : sans elles le volet ne dit pas
@@ -227,5 +245,71 @@ export function CrmPanneauLead({ lead, index, total, onFermer, onNaviguer, onWha
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * La note du lead, lue comme un fil.
+ *
+ * ⚠️ AU REPOS, UNE SEULE LIGNE — celle qui compte, choisie par NATURE et jamais
+ * par position (cf. `filNote.ts`). Le volet vit de sa densité : il s'ouvre sur
+ * CHAQUE lead et s'enchaîne aux flèches ↑↓ sans se refermer. Un bloc qui y
+ * déverserait 400 caractères le détruirait — et 71 notes sur 85 dépassent 200.
+ *
+ * ⚠️ RIEN N'EST MASQUÉ EN SILENCE : le compteur « · N entrées » est toujours
+ * visible dès qu'il y en a plus d'une, et le fil complet est à un tap. C'est la
+ * leçon de Justine — une règle qui choisit quoi montrer choisit aussi quoi
+ * cacher, donc elle doit au moins avouer qu'elle cache.
+ */
+function FilNote({ notes }: { notes: string | null }) {
+  const [ouvert, setOuvert] = useState(false);
+  const fil = filNote(notes);
+  // Pas d'état vide inventé : 6 leads sur 91 n'ont aucune note, et une table
+  // n'a même pas la colonne. Dans ces cas le bloc n'existe pas, c'est tout.
+  if (!fil) return null;
+
+  const depliable = fil.entrees.length > 1 || fil.tronque;
+  const titre = fil.entrees.length > 1 ? `note · ${fil.entrees.length} entrées` : "note";
+  // Une trace machine épinglée s'affiche en encre atténuée : elle dit d'un coup
+  // d'œil que personne n'a rien dit, sans pour autant disparaître.
+  const encre = (e: Entree) => (e.rang === "trace" ? "var(--ls-text-hint)" : "var(--ls-text)");
+
+  const dedans = (
+    <>
+      <div className="crm-vol-fil-tete">
+        <span className="crm-vol-eyebrow" style={{ margin: 0 }}>{titre}</span>
+        {depliable ? (
+          <span aria-hidden="true" style={{ marginLeft: "auto", color: "var(--ls-text-muted)", fontSize: 12 }}>
+            {ouvert ? "▴" : "▾"}
+          </span>
+        ) : null}
+      </div>
+      {ouvert ? (
+        <div className="crm-vol-fil-liste">
+          {fil.entrees.map((e, i) => (
+            <div key={i} className="crm-vol-fil-e" style={{ color: encre(e) }}>{e.texte}</div>
+          ))}
+        </div>
+      ) : (
+        <div className="crm-vol-fil-ap" style={{ color: encre(fil.epingle) }}>{fil.apercu}</div>
+      )}
+    </>
+  );
+
+  // L'affordance n'existe que s'il y a vraiment quelque chose derrière : sans
+  // repli possible, c'est un `div` — pas de chevron mort, pas de curseur
+  // trompeur. Le bloc entier fait la cible tactile (~84 px), les 44 px exigés
+  // sont acquis sans ajouter un pixel.
+  return depliable ? (
+    <button
+      type="button"
+      className="crm-vol-bloc crm-vol-fil"
+      aria-expanded={ouvert}
+      onClick={() => setOuvert((v) => !v)}
+    >
+      {dedans}
+    </button>
+  ) : (
+    <div className="crm-vol-bloc">{dedans}</div>
   );
 }

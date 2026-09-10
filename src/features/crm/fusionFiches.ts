@@ -117,7 +117,7 @@ export function fusionnerGroupe<T extends FicheFusionnable>(groupe: T[]): Fusion
 
   // Les champs d'INFORMATION se prennent chez le plus riche qui les porte.
   const infos = [
-    "phone", "email", "contact", "city", "lastName", "notes", "objectif",
+    "phone", "email", "contact", "city", "lastName", "objectif",
     "bilanObjectives", "bilanMotivation", "bilanAge", "bilanWeightTarget",
     "funnelAnswers", "colisAnswers", "funnelScore", "funnelTemperature", "funnelProfile",
     "resultToken", "callbackRequestedAt", "engagement", "rdv", "rdvLabel",
@@ -132,6 +132,31 @@ export function fusionnerGroupe<T extends FicheFusionnable>(groupe: T[]): Fusion
 
   // Les champs de SUIVI ont chacun leur règle.
   const parDate = [...groupe].sort((a, b) => (tempsDe(a.createdAt) || 0) - (tempsDe(b.createdAt) || 0));
+
+  // ⚠️ 10/09 — LES NOTES NE S'ÉLISENT PAS, ELLES SE REJOIGNENT.
+  //
+  // `notes` était dans `infos` juste au-dessus, donc résolu par `premiere()` :
+  // la note de la fiche la plus RICHE gagnait, les autres étaient jetées.
+  //
+  // Ce que ça a coûté, le 10/09 : Justine a répondu à un SMS en revenant sur le
+  // site et en laissant « Dispos : après 16h du lundi au mercredi ». Ça a créé
+  // une 2e fiche, PAUVRE (un prénom, un numéro). Sa fiche maître Meta, elle,
+  // portait déjà la note automatique de l'import — donc plus riche. Sa réponse
+  // a été jetée ICI, avant d'atteindre le moindre écran. Un rappel « deuxième
+  // SMS sans réponse → APPEL » a été posé sur quelqu'un qui venait de répondre.
+  //
+  // Aucun rendu n'aurait pu rattraper ça : afficher fidèlement une note déjà
+  // amputée donne seulement l'illusion d'avoir réglé le problème.
+  //
+  // ⚠️ `richesse()` continue de compter `notes` pour +1 dans le CHOIX du maître
+  // (l.75) — c'est une autre décision, et elle reste juste.
+  const notesDuGroupe = parDate
+    .map((f) => String(champ(f, "notes") ?? "").trim())
+    .filter(Boolean);
+  // Dédoublonnage : deux fiches d'un même groupe portent souvent la même note
+  // automatique. Le séparateur ` | ` est celui déjà écrit par l'import Meta et
+  // par Thomas au clavier — `filNote` le reconnaît donc sans règle en plus.
+  if (notesDuGroupe.length) ajouts.notes = [...new Set(notesDuGroupe)].join(" | ");
 
   // Depuis quand cette personne existe : sa PREMIÈRE apparition.
   ajouts.createdAt = parDate[0].createdAt;
