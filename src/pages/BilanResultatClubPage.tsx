@@ -27,6 +27,12 @@
 //     Anton capitales ;
 //   · le dégradé signature teal→lime devient orange→rouge. Ce n'est pas qu'une
 //     question de marque : le lime #C5F82A est ILLISIBLE sur du crème.
+//
+// ⚠️ CORRECTION DU 10/09 — j'avais aussi remplacé l'encre posée SUR le dégradé
+// (#06241f) par du BLANC, en croyant améliorer. Mesuré depuis : le blanc ne
+// donne que 2,60:1 à la borne orange du dégradé, contre 6,41 pour l'encre du
+// club. L'original avait raison, et pour une raison qui vaut pour les deux
+// pages : un dégradé chaud et clair veut une encre foncée, jamais du blanc.
 // La logique — chargement par jeton, caisse, rappel, polling — est identique,
 // caractère pour caractère.
 //
@@ -572,9 +578,9 @@ export function BilanResultatClubPage() {
     ?? `${coachName} prépare ta lecture personnalisée à partir de ton bilan — tu la recevras lors de votre échange. En attendant, voici tes fondations et les formules ci-dessous.`;
 
   const stats = [
-    primaryObjective ? { label: "Objectif", value: primaryObjective, color: "var(--teal)" } : null,
+    primaryObjective ? { label: "Objectif", value: primaryObjective, color: "var(--teal-text)" } : null,
     bilan.currentWeightKg != null ? { label: "Poids actuel", value: `${bilan.currentWeightKg} kg`, color: "var(--cream)" } : null,
-    bilan.weightLossTargetKg != null ? { label: "Objectif poids", value: `−${bilan.weightLossTargetKg} kg`, color: "var(--lime)" } : null,
+    bilan.weightLossTargetKg != null ? { label: "Objectif poids", value: `−${bilan.weightLossTargetKg} kg`, color: "var(--lime-text)" } : null,
     bilan.motivationScore != null ? { label: "Ta motivation", value: `${bilan.motivationScore} / 10`, color: "var(--cream)" } : null,
   ].filter(Boolean) as { label: string; value: string; color: string }[];
 
@@ -608,10 +614,10 @@ export function BilanResultatClubPage() {
   const GRAD = "linear-gradient(135deg, #FF7A2F, #FF1E3C)";
   const gradText: React.CSSProperties = { background: GRAD, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" };
   const kickerHint: React.CSSProperties = { fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "var(--cream-hint)" };
-  const acteEyebrow: React.CSSProperties = { fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: "var(--teal)" };
+  const acteEyebrow: React.CSSProperties = { fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: "var(--teal-text)" };
   const h2Sec: React.CSSProperties = { fontFamily: "'Anton', sans-serif", fontWeight: 400, textTransform: "uppercase", fontSize: 28, letterSpacing: ".005em", margin: "0 0 10px" };
   const inkCard: React.CSSProperties = { background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: 16 };
-  const gradBtn: React.CSSProperties = { background: GRAD, color: "#FFFFFF", border: "none", borderRadius: 14, fontFamily: "'Poppins', sans-serif", fontWeight: 700, cursor: "pointer" };
+  const gradBtn: React.CSSProperties = { background: GRAD, color: "#17201C", border: "none", borderRadius: 14, fontFamily: "'Poppins', sans-serif", fontWeight: 700, cursor: "pointer" };
 
   return (
     // maxWidth:none → on casse la contrainte 560px de .ps-shell (page pleine largeur).
@@ -655,7 +661,7 @@ export function BilanResultatClubPage() {
               </h1>
               <p style={{ fontSize: 16.5, lineHeight: 1.55, color: "var(--cream-muted)", maxWidth: 560, margin: "0 0 22px" }}>Tu as pris le temps de faire ton bilan — c'est déjà un vrai pas. Voici ta lecture perso, et le plan que {coachName} te propose. Tout est déjà calé sur ce que tu as répondu.</p>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 26 }}>
-                <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, var(--teal), var(--lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: "#FFFFFF" }}>{coachInitial}</div>
+                <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, var(--teal), var(--lime))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: "#17201C" }}>{coachInitial}</div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14 }}>Préparé par {coachName}</div>
                   <div style={{ fontSize: 12.5, color: "var(--cream-hint)" }}>Coach du Breakfast Club · Verdun</div>
@@ -676,7 +682,7 @@ export function BilanResultatClubPage() {
                   <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "rgba(255,106,43,0.14)", border: "1px solid rgba(255,106,43,0.30)" }}>
                     <LineIcon d={ICON.spark} size={17} />
                   </span>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--teal)" }}>L'analyse de Noaly</div>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14.5, color: "var(--teal-text)" }}>L'analyse de Noaly</div>
                 </div>
                 <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.6, color: "var(--cream)", whiteSpace: "pre-wrap" }}>{noalyText}</p>
                 <div style={{ fontSize: 12, color: "var(--cream-hint)", marginTop: 14 }}>Lecture générée à partir de ton bilan · validée par ton coach</div>
@@ -692,11 +698,11 @@ export function BilanResultatClubPage() {
               <div style={{ display: "grid", gap: 10, marginTop: 22 }}>
                 {stratItems.map((s) => (
                   <div key={s.n} style={{ display: "flex", gap: 16, alignItems: "flex-start", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: "16px 18px" }}>
-                    <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)", lineHeight: 1, minWidth: 22 }}>{s.n}</div>
+                    <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal-text)", lineHeight: 1, minWidth: 22 }}>{s.n}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                         <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5 }}>{s.title}</span>
-                        {s.foundation && <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: "var(--teal)", border: "1px solid rgba(255,106,43,0.4)", borderRadius: 999, padding: "2px 8px" }}>Fondation</span>}
+                        {s.foundation && <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: "var(--teal-text)", border: "1px solid rgba(255,106,43,0.4)", borderRadius: 999, padding: "2px 8px" }}>Fondation</span>}
                       </div>
                       <p style={{ margin: "5px 0 0", fontSize: 14, lineHeight: 1.5, color: "var(--cream-muted)" }}>{s.text}</p>
                     </div>
@@ -713,7 +719,7 @@ export function BilanResultatClubPage() {
                       return (
                         <div key={id} style={{ background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 14, padding: "15px 16px" }}>
                           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14.5 }}>{h.title}</div>
-                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--teal)", fontWeight: 600, marginTop: 3 }}>{PRODUCT_SHORT[id] ?? id}</div>
+                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--teal-text)", fontWeight: 600, marginTop: 3 }}>{PRODUCT_SHORT[id] ?? id}</div>
                           <div style={{ fontSize: 13, color: "var(--cream-muted)", marginTop: 6 }}>{h.detail}</div>
                         </div>
                       );
@@ -725,8 +731,8 @@ export function BilanResultatClubPage() {
               {/* Parlons vrai */}
               {selDailyNum != null && selectedProg && (
                 <div style={{ marginTop: 30, background: "linear-gradient(180deg, rgba(232,169,58,0.06), rgba(252,248,241,0.5))", border: "1px solid rgba(232,169,58,0.24)", borderRadius: 16, padding: 24 }}>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 8 }}>Parlons vrai · les chiffres exacts</div>
-                  <h3 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 23, margin: "0 0 16px" }}>Tu dépenses <span style={{ color: "var(--lime)" }}>déjà cet argent</span></h3>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime-text)", marginBottom: 8 }}>Parlons vrai · les chiffres exacts</div>
+                  <h3 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 23, margin: "0 0 16px" }}>Tu dépenses <span style={{ color: "var(--lime-text)" }}>déjà cet argent</span></h3>
                   <div id="rb-anchortiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
                     <div style={{ background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 12, padding: 16 }}>
                       <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--cream-hint)" }}>Ta pause déjeuner</div>
@@ -734,12 +740,12 @@ export function BilanResultatClubPage() {
                       <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 6 }}>Coût moyen d'un déjeuner en France — enquête <strong style={{ color: "var(--cream)" }}>Edenred / Ifop</strong>. Un seul repas, et faim à 16 h.</div>
                     </div>
                     <div style={{ background: "var(--ink)", border: "1.5px solid rgba(255,106,43,0.5)", borderRadius: 12, padding: 16 }}>
-                      <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--teal)" }}>Ta routine {selName} · / jour</div>
+                      <div style={{ fontSize: 11, letterSpacing: "0.4px", textTransform: "uppercase", fontWeight: 700, color: "var(--teal-text)" }}>Ta routine {selName} · / jour</div>
                       <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 38, marginTop: 8, lineHeight: 1, ...gradText }}>{selPerDay}</div>
                       <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 6 }}>Ton petit-déj complet + ton hydratation + ton boost. Toute la journée.</div>
                     </div>
                   </div>
-                  <button type="button" onClick={() => setShowBreakdown((v) => !v)} style={{ marginTop: 14, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--teal)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <button type="button" onClick={() => setShowBreakdown((v) => !v)} style={{ marginTop: 14, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--teal-text)", display: "inline-flex", alignItems: "center", gap: 6 }}>
                     {showBreakdown ? "Masquer le détail du calcul ▲" : "Voir le détail du calcul (produit par produit) ▾"}
                   </button>
                   {showBreakdown && (
@@ -750,12 +756,12 @@ export function BilanResultatClubPage() {
                           <div key={b.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, paddingBottom: 8, borderBottom: "1px solid var(--hair)" }}>
                             <span style={{ fontSize: 13.5, fontWeight: 600 }}>{b.name}</span>
                             <span style={{ fontSize: 12, color: "var(--cream-hint)", fontFamily: "'JetBrains Mono', monospace", marginLeft: "auto" }}>tient {b.days}</span>
-                            <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--lime)", minWidth: 78, textAlign: "right" }}>{b.perDay} / j</span>
+                            <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--lime-text)", minWidth: 78, textAlign: "right" }}>{b.perDay} / j</span>
                           </div>
                         ))}
                         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, paddingTop: 4 }}>
                           <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 14, fontWeight: 700 }}>Total {selName}</span>
-                          <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 15, fontWeight: 800, color: "var(--teal)" }}>{selPerDay} / jour</span>
+                          <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 15, fontWeight: 800, color: "var(--teal-text)" }}>{selPerDay} / jour</span>
                         </div>
                       </div>
                       <div style={{ fontSize: 11, color: "var(--cream-hint)", marginTop: 12 }}>Durées réelles à la dose prescrite. Prix produits issus du catalogue.</div>
@@ -804,20 +810,20 @@ export function BilanResultatClubPage() {
                       borderRadius: 16, padding: reco ? "26px 18px 18px" : 18, cursor: "pointer", textAlign: "left", width: "100%",
                       display: "flex", flexDirection: "column", position: "relative", color: "var(--cream)",
                     }}>
-                      {reco && <div style={{ position: "absolute", top: -10, left: 16, background: GRAD, color: "#FFFFFF", fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 10.5, letterSpacing: "0.5px", padding: "4px 11px", borderRadius: 999, whiteSpace: "nowrap" }}>★ RECOMMANDÉ</div>}
+                      {reco && <div style={{ position: "absolute", top: -10, left: 16, background: GRAD, color: "#17201C", fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 10.5, letterSpacing: "0.5px", padding: "4px 11px", borderRadius: 999, whiteSpace: "nowrap" }}>★ RECOMMANDÉ</div>}
                       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cream-muted)" }}>{PROGRAMME_SUBTITLE_BY_ID[p.id] ?? "Pour aller plus loin"}</div>
                       <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, marginTop: 3 }}>{prettyProgramName(p.name)}</div>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "10px 0 2px" }}>
                         <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 34, lineHeight: 1 }}>{p.price}</span>
-                        <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 20, color: "var(--teal)" }}>€</span>
+                        <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 20, color: "var(--teal-text)" }}>€</span>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--cream-muted)", marginBottom: 12, minHeight: 15 }}>{d != null ? <>soit <strong style={{ color: "var(--lime)" }}>{formatEur(d)}</strong> / jour</> : null}</div>
+                      <div style={{ fontSize: 12, color: "var(--cream-muted)", marginBottom: 12, minHeight: 15 }}>{d != null ? <>soit <strong style={{ color: "var(--lime-text)" }}>{formatEur(d)}</strong> / jour</> : null}</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
                         {p.products.map((pr) => (
-                          <div key={pr.id} style={{ fontSize: 13, color: "var(--cream)", display: "flex", gap: 7 }}><span style={{ color: "var(--teal)" }}>•</span>{PRODUCT_SHORT[pr.id] ?? pr.name}</div>
+                          <div key={pr.id} style={{ fontSize: 13, color: "var(--cream)", display: "flex", gap: 7 }}><span style={{ color: "var(--teal-text)" }}>•</span>{PRODUCT_SHORT[pr.id] ?? pr.name}</div>
                         ))}
                       </div>
-                      <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: on ? "var(--teal)" : "var(--cream-hint)" }}>{on ? "✓ Sélectionné" : "Choisir cette formule"}</div>
+                      <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: on ? "var(--teal-text)" : "var(--cream-hint)" }}>{on ? "✓ Sélectionné" : "Choisir cette formule"}</div>
                     </button>
                   );
                 })}
@@ -833,10 +839,10 @@ export function BilanResultatClubPage() {
                       <LineIcon d={ICON.moon} size={19} color="var(--lime)" />
                     </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime)" }}>Suivant tes réponses</div>
-                      <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, margin: "4px 0 6px" }}>On te conseille aussi <span style={{ color: "var(--lime)" }}>{addOn.title}</span></div>
-                      <p style={{ margin: "0 0 6px", fontSize: 14, fontStyle: "italic", color: "var(--teal)" }}>« {addOn.reason} »</p>
-                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>{addOn.benefit}{perDay != null && <> <strong style={{ color: "var(--lime)" }}>{formatEur(perDay)} / jour</strong>, à ajouter si tu le souhaites.</>}</p>
+                      <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime-text)" }}>Suivant tes réponses</div>
+                      <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, margin: "4px 0 6px" }}>On te conseille aussi <span style={{ color: "var(--lime-text)" }}>{addOn.title}</span></div>
+                      <p style={{ margin: "0 0 6px", fontSize: 14, fontStyle: "italic", color: "var(--teal-text)" }}>« {addOn.reason} »</p>
+                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: "var(--cream-muted)" }}>{addOn.benefit}{perDay != null && <> <strong style={{ color: "var(--lime-text)" }}>{formatEur(perDay)} / jour</strong>, à ajouter si tu le souhaites.</>}</p>
                     </div>
                   </div>
                 );
@@ -848,12 +854,12 @@ export function BilanResultatClubPage() {
                 <p style={{ fontSize: 15, color: "var(--cream-muted)", maxWidth: 560, margin: "0 0 16px" }}>Un programme, tout le monde peut t'en vendre un. Ce qui change tout, c'est ce qui se passe les semaines suivantes. En démarrant, tu rejoins <strong style={{ color: "var(--cream)" }}>We Do Transformations</strong>.</p>
                 <div style={{ background: "linear-gradient(135deg, rgba(255,106,43,0.12), rgba(232,169,58,0.08))", border: "1px solid rgba(232,169,58,0.32)", borderRadius: 18, padding: 26, display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ flex: 1, minWidth: 240 }}>
-                    <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 6 }}>Le Challenge We Do · 21 jours</div>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--lime-text)", marginBottom: 6 }}>Le Challenge We Do · 21 jours</div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
                       <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 52, lineHeight: 0.9, ...gradText }}>10 000 $</span>
                       <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: "var(--cream)" }}>en jeu</span>
                     </div>
-                    <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: "var(--cream)" }}>…pour les <strong style={{ color: "var(--lime)" }}>10 plus belles transformations</strong>. 3 semaines pour changer, tous niveaux — nutrition + activité, guidé jour après jour.</p>
+                    <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: "var(--cream)" }}>…pour les <strong style={{ color: "var(--lime-text)" }}>10 plus belles transformations</strong>. 3 semaines pour changer, tous niveaux — nutrition + activité, guidé jour après jour.</p>
                   </div>
                   <div style={{ flex: 1, minWidth: 240, background: "var(--ink)", border: "1px solid var(--hair)", borderRadius: 14, padding: 18 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -874,7 +880,7 @@ export function BilanResultatClubPage() {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                       {communityStats.map((s) => (
                         <div key={s.label} style={{ textAlign: "center" }}>
-                          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)", lineHeight: 1 }}>{s.n}</div>
+                          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal-text)", lineHeight: 1 }}>{s.n}</div>
                           <div style={{ fontSize: 10.5, color: "var(--cream-hint)", marginTop: 3, lineHeight: 1.2 }}>{s.label}</div>
                         </div>
                       ))}
@@ -907,7 +913,7 @@ export function BilanResultatClubPage() {
                       <button key={f.q} type="button" onClick={() => setOpenFaq(open ? -1 : i)} style={{ textAlign: "left", width: "100%", background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 12, padding: "15px 18px", cursor: "pointer", color: "var(--cream)" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                           <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14.5 }}>{f.q}</span>
-                          <span style={{ color: "var(--teal)", fontSize: 18, lineHeight: 1 }}>{open ? "−" : "+"}</span>
+                          <span style={{ color: "var(--teal-text)", fontSize: 18, lineHeight: 1 }}>{open ? "−" : "+"}</span>
                         </div>
                         {open && <p style={{ margin: "10px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "var(--cream-muted)" }}>{f.a}</p>}
                       </button>
@@ -920,7 +926,7 @@ export function BilanResultatClubPage() {
             {/* ══ DÉMARRER ══ */}
             <section id="demarrer" style={{ scrollMarginTop: 80 }}>
               <div style={{ textAlign: "center", background: "linear-gradient(180deg, rgba(255,106,43,0.1), rgba(252,248,241,0.6))", border: "1px solid var(--hair-strong)", borderRadius: 20, padding: "40px 28px" }}>
-                <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: "clamp(24px, 3vw, 32px)", lineHeight: 1.12, margin: "0 0 12px" }}>Prêt·e à démarrer, <span style={{ color: "var(--teal)" }}>{firstName || "toi"}</span> ?</h2>
+                <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: "clamp(24px, 3vw, 32px)", lineHeight: 1.12, margin: "0 0 12px" }}>Prêt·e à démarrer, <span style={{ color: "var(--teal-text)" }}>{firstName || "toi"}</span> ?</h2>
                 <p style={{ fontSize: 15.5, color: "var(--cream-muted)", maxWidth: 440, margin: "0 auto 22px" }}>{selectedProg ? <>Ton choix : <strong style={{ color: "var(--cream)" }}>{selName} · {selectedProg.price} €</strong> {selPerDay && <span style={{ color: "var(--cream-hint)" }}>({selPerDay}/jour)</span>}. On démarre quand tu veux.</> : <>On démarre quand tu veux. La première étape, c'est juste un échange.</>}</p>
 
                 {paidConfirmed ? (
@@ -947,7 +953,7 @@ export function BilanResultatClubPage() {
                     {/* #5 · Réassurance transactionnelle collée au CTA */}
                     <div style={{ fontSize: 12, color: "var(--cream-muted)" }}>Sans engagement · saveur échangeable · suivi {coachName} inclus</div>
                     {callbackState === "done" ? (
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--teal)" }}>✓ C'est noté — {coachName} te recontacte.</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--teal-text)" }}>✓ C'est noté — {coachName} te recontacte.</div>
                     ) : (
                       <>
                         <div style={{ fontSize: 12.5, color: "var(--cream-hint)", marginTop: 4 }}>
@@ -956,7 +962,7 @@ export function BilanResultatClubPage() {
                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
                           {/* #3 · Réservation RDV — créneaux réels du coach (par slug) */}
                           {coach.slug && (
-                            <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ padding: "11px 20px", background: "transparent", color: "var(--teal)", border: "1px solid rgba(255,106,43,0.5)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Je réserve 15 min avec {coachName} →</button>
+                            <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ padding: "11px 20px", background: "transparent", color: "var(--teal-text)", border: "1px solid rgba(255,106,43,0.5)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Je réserve 15 min avec {coachName} →</button>
                           )}
                           <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ padding: "11px 20px", background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : `Fais-toi rappeler`}</button>
                         </div>
@@ -972,18 +978,18 @@ export function BilanResultatClubPage() {
           {/* ══ RAIL DE DÉCISION ══ */}
           <aside id="rb-rail" style={{ position: "sticky", top: 84 }}>
             <div style={{ background: "var(--ink2)", border: "1px solid var(--hair-strong)", borderRadius: 18, padding: 22, boxShadow: "0 18px 50px -20px rgba(0,0,0,0.75)" }}>
-              <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--teal)" }}>Ta sélection</div>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--teal-text)" }}>Ta sélection</div>
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, margin: "6px 0 2px" }}>{selName}</div>
               <div style={{ fontSize: 12.5, color: "var(--cream-muted)" }}>{selSubtitle}</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 5, margin: "16px 0 2px" }}>
                 <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 44, lineHeight: 1 }}>{selectedProg?.price ?? "—"}</span>
-                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal)" }}>€</span>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, color: "var(--teal-text)" }}>€</span>
               </div>
-              {selPerDay && <div style={{ fontSize: 13, color: "var(--cream-muted)" }}>soit <strong style={{ color: "var(--lime)" }}>{selPerDay}</strong> / jour · {selVsLunch}</div>}
+              {selPerDay && <div style={{ fontSize: 13, color: "var(--cream-muted)" }}>soit <strong style={{ color: "var(--lime-text)" }}>{selPerDay}</strong> / jour · {selVsLunch}</div>}
               <div style={{ height: 1, background: "var(--hair)", margin: "18px 0" }} />
               {paidConfirmed ? (
                 <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 700, fontSize: 14, color: "var(--teal)", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 700, fontSize: 14, color: "var(--teal-text)", marginBottom: 14 }}>
                     <LineIcon d={ICON.check} size={18} />Paiement reçu
                   </div>
                   <button type="button" onClick={() => navigate(`/qualif/${token}`)} style={{ ...gradBtn, width: "100%", padding: 14, borderRadius: 12, fontSize: 14.5 }}>Continuer mon inscription →</button>
@@ -994,12 +1000,12 @@ export function BilanResultatClubPage() {
                   {/* #5 · Réassurance collée au CTA */}
                   <div style={{ textAlign: "center", fontSize: 11, color: "var(--cream-muted)", lineHeight: 1.4 }}>Sans engagement · saveur échangeable · suivi inclus</div>
                   {callbackState === "done" ? (
-                    <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 600, color: "var(--teal)" }}>✓ {coachName} te recontacte</div>
+                    <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 600, color: "var(--teal-text)" }}>✓ {coachName} te recontacte</div>
                   ) : (
                     <>
                       {/* #3 · Réservation d'un créneau réel du coach */}
                       {coach.slug && (
-                        <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--teal)", border: "1px solid rgba(255,106,43,0.5)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>Je réserve 15 min →</button>
+                        <button type="button" onClick={() => navigate(`/rdv/${coach.slug}?firstName=${encodeURIComponent(firstName)}`)} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--teal-text)", border: "1px solid rgba(255,106,43,0.5)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>Je réserve 15 min →</button>
                       )}
                       <button type="button" disabled={callbackState === "sending"} onClick={() => void requestCallback()} style={{ width: "100%", padding: 11, background: "transparent", color: "var(--cream-muted)", border: "1px solid var(--hair-strong)", borderRadius: 12, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: callbackState === "sending" ? 0.6 : 1 }}>{callbackState === "sending" ? "Envoi…" : "Fais-toi rappeler"}</button>
                     </>
@@ -1021,15 +1027,15 @@ export function BilanResultatClubPage() {
           <div style={{ maxWidth: 1180, margin: "0 auto", padding: "44px 24px 56px" }}>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
               <div>
-                <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime)", marginBottom: 8 }}>Et juste après ton paiement</div>
+                <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "var(--lime-text)", marginBottom: 8 }}>Et juste après ton paiement</div>
                 <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 26, margin: 0 }}>2 minutes pour finaliser, et tu es lancé·e</h2>
               </div>
-              <div style={{ fontSize: 13, color: "var(--cream-hint)", maxWidth: 320 }}>Tout est guidé sur <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "var(--teal)" }}>/qualif</span> — self-serve, ta fiche se crée toute seule. {coachName} est notifié à chaque étape.</div>
+              <div style={{ fontSize: 13, color: "var(--cream-hint)", maxWidth: 320 }}>Tout est guidé sur <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "var(--teal-text)" }}>/qualif</span> — self-serve, ta fiche se crée toute seule. {coachName} est notifié à chaque étape.</div>
             </div>
             <div id="rb-qualif" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
               {qualifSteps.map((q) => (
                 <div key={q.n} style={{ background: "var(--ink2)", border: "1px solid var(--hair)", borderRadius: 16, padding: "20px 18px" }}>
-                  <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 15, color: "#FFFFFF", background: "linear-gradient(135deg, var(--teal), var(--lime))", width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>{q.n}</div>
+                  <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 15, color: "#17201C", background: "linear-gradient(135deg, var(--teal), var(--lime))", width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>{q.n}</div>
                   <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, margin: "14px 0 6px" }}>{q.title}</div>
                   <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--cream-muted)" }}>{q.text}</div>
                 </div>

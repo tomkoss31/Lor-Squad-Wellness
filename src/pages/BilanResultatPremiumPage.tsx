@@ -789,7 +789,7 @@ export function BilanResultatPremiumPage() {
                           <div key={pr.id} style={{ fontSize: 13, color: "var(--cream)", display: "flex", gap: 7 }}><span style={{ color: "var(--teal-text)" }}>•</span>{PRODUCT_SHORT[pr.id] ?? pr.name}</div>
                         ))}
                       </div>
-                      <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: on ? "var(--teal)" : "var(--cream-hint)" }}>{on ? "✓ Sélectionné" : "Choisir cette formule"}</div>
+                      <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: on ? "var(--teal-text)" : "var(--cream-hint)" }}>{on ? "✓ Sélectionné" : "Choisir cette formule"}</div>
                     </button>
                   );
                 })}

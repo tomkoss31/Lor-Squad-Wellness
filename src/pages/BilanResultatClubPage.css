@@ -41,7 +41,11 @@
   --cream-2: #1E3330;
   --cream-soft: rgba(23, 32, 28, 0.92);
   --cream-muted: rgba(23, 32, 28, 0.62);
-  --cream-hint: rgba(23, 32, 28, 0.40);
+  /* Relevé de 0,40 (2,38 à 2,47:1 — sous le seuil) à 0,63 : 4,50 à 4,87:1.
+     ⚠️ Contrairement au token PARTAGÉ de public-shell.css, celui-ci est LOCAL
+     à cette page : le relever n'affecte aucune autre. Et la hiérarchie tient —
+     `--muted` reste plus foncé (5,34 à 6,55). */
+  --cream-hint: rgba(23, 32, 28, 0.63);
 
   /* ── Filets ────────────────────────────────────────────────────────────
      Presque invisibles à dessein : sur crème, un filet marqué salit. */
@@ -53,7 +57,16 @@
      disparaît sur crème) ; la sauge remplace le violet. */
   --teal: #FF6A2B;
   --teal-dark: #C4361F;
-  --teal-text: #E0532A;
+  /* ⚠️ 10/09 — MESURÉ : #E0532A ne donne que 3,15:1 sur la carte crème, et
+     l'orange vif #FF6A2B tombe à 2,33. Or la page les employait comme COULEUR
+     DE TEXTE à 42 endroits — dont les prix. C'est exactement l'erreur que la
+     page 360 avait, et que je venais d'y corriger : les fonds et les bordures
+     gardent la couleur vive, seul le TEXTE fonce. #B23217 donne 5,09 à 6,25:1
+     sur les trois fonds réels de la page (crème, carte, blanc). */
+  --teal-text: #B23217;
+  /* Le jumeau texte de l'ambre. #E8A93A mesurait 1,68:1 : les prix — l'argument
+     de la page — étaient les plus illisibles de tous. #7A5410 : 5,52 à 6,77:1. */
+  --lime-text: #7A5410;
   --lime: #E8A93A;
   --violet: #93A67E;
   --violet-dark: #5F7154;
