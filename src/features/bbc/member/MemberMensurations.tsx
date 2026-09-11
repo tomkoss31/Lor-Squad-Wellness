@@ -90,6 +90,26 @@ function valeurDe(session: Measurement | undefined, key: MeasurementKey): number
   return repli ? num(session[repli]) : null;
 }
 
+/**
+ * Balaie l'historique (dans l'ordre donné) et rend la première valeur
+ * non-nulle trouvée pour cette zone — jamais juste "la session la plus
+ * proche", qui peut très bien ne PAS porter cette zone : une session ici,
+ * c'est ce qui a été tapé ce jour-là, pas un instantané des 10 zones.
+ *
+ * Même bug, même cause, corrigé le même jour côté classique — cf.
+ * `mergeLatestPerZone` dans measurementCalculations.ts (cas Catherine
+ * DAUMAIL, 11/09/2026) : prendre `sessions[sessions.length-1]` telle quelle
+ * fait retomber la valeur affichée sur une mesure bien plus ancienne dès
+ * que la personne mesure une zone à la fois.
+ */
+function chercherValeur(sessionsOrdre: Measurement[], key: MeasurementKey): number | null {
+  for (const s of sessionsOrdre) {
+    const v = valeurDe(s, key);
+    if (v != null) return v;
+  }
+  return null;
+}
+
 const eyebrow: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -108,8 +128,9 @@ export function MemberMensurations({ token, measurements, titre, ecrire }: Props
     () => [...measurements].sort((a, b) => (a.measured_at ?? "").localeCompare(b.measured_at ?? "")),
     [measurements],
   );
-  const premiere = sessions[0];
-  const derniere = sessions[sessions.length - 1];
+  // Le plus récent d'abord, pour "chercherValeur" — `sessions` reste
+  // ascendant (utilisé tel quel pour "depart" et pour l'historique affiché).
+  const sessionsDesc = useMemo(() => [...sessions].reverse(), [sessions]);
 
   // La saisie du jour, gardée localement après enregistrement : la donnée
   // serveur arrivera au prochain chargement, l'écran ne doit pas « oublier »
@@ -124,8 +145,8 @@ export function MemberMensurations({ token, measurements, titre, ecrire }: Props
 
   const zones = POINTS.map((p) => {
     const g = getGuide(p.key);
-    const cur = locales[p.key] ?? valeurDe(derniere, p.key);
-    const depart = valeurDe(premiere, p.key);
+    const cur = locales[p.key] ?? chercherValeur(sessionsDesc, p.key);
+    const depart = chercherValeur(sessions, p.key);
     // Écart « à la manière du coach » : positif = des centimètres en moins.
     const perdu = cur != null && depart != null ? Math.round((depart - cur) * 10) / 10 : null;
     return {

@@ -13,9 +13,11 @@ import { MEASUREMENT_GUIDES, type MeasurementKey } from "../../data/measurementG
 import {
   calculateTotalCmLost,
   countFilledKeys,
-  getInitialSession,
   getLatestSession,
   getZoneDelta,
+  mergeInitialPerZone,
+  mergeLatestPerZone,
+  zonesToSnapshot,
   type ClientMeasurement,
 } from "../../lib/measurementCalculations";
 
@@ -95,14 +97,21 @@ export function MeasurementsPanel({
   const [committing, setCommitting] = useState(false);
   const [graphOpen, setGraphOpen] = useState(false);
 
+  // `latest` (brute) ne sert plus qu'à la MÉTADONNÉE de la dernière ligne —
+  // sa date, son auteur. Ses champs ne sont PLUS lus comme si cette ligne
+  // portait l'état des 10 zones (cf. mergeLatestPerZone dans
+  // measurementCalculations.ts, le cas Daumail du 11/09/2026).
   const latest = useMemo(() => getLatestSession(sessions), [sessions]);
-  const initial = useMemo(() => getInitialSession(sessions), [sessions]);
-  const merged = useMemo(() => mergeWithDraft(latest, draft), [latest, draft]);
+  const latestByZone = useMemo(() => mergeLatestPerZone(sessions), [sessions]);
+  const initialByZone = useMemo(() => mergeInitialPerZone(sessions), [sessions]);
+  const latestSnapshot = useMemo(() => zonesToSnapshot(latestByZone), [latestByZone]);
+  const initialSnapshot = useMemo(() => zonesToSnapshot(initialByZone), [initialByZone]);
+  const merged = useMemo(() => mergeWithDraft(latestSnapshot, draft), [latestSnapshot, draft]);
   const draftCount = Object.keys(draft).length;
-  const filledLatest = countFilledKeys(latest);
+  const filledLatest = countFilledKeys(latestSnapshot);
   const totalLost = useMemo(
-    () => calculateTotalCmLost(initial, latest),
-    [initial, latest],
+    () => calculateTotalCmLost(initialSnapshot, latestSnapshot),
+    [initialSnapshot, latestSnapshot],
   );
 
   const activeGuide = activeKey
@@ -110,8 +119,10 @@ export function MeasurementsPanel({
     : null;
   const activeCurrent =
     (activeKey && (merged as Record<string, number | null>)[activeKey]) ?? null;
-  const activePrevious =
-    (activeKey && initial ? (initial[activeKey] as number | null | undefined) : null) ?? null;
+  // La VRAIE dernière valeur connue de CETTE zone, pas la 1ère session de
+  // tous les temps (l'ancien bug : `initial[activeKey]`).
+  const activePrevious = activeKey ? latestByZone[activeKey].value : null;
+  const activePreviousDate = activeKey ? latestByZone[activeKey].measuredAt : null;
 
   async function handleSaveOne(value: number) {
     if (!activeKey) return;
@@ -259,7 +270,7 @@ export function MeasurementsPanel({
             {MEASUREMENT_GUIDES.map((g) => {
               const current = (merged as Record<string, number | null>)[g.key] ?? null;
               const inDraft = draft[g.key] != null;
-              const delta = getZoneDelta(initial, merged, g.key);
+              const delta = getZoneDelta(initialSnapshot, merged, g.key);
               return (
                 <button
                   key={g.key}
@@ -501,7 +512,7 @@ export function MeasurementsPanel({
         zoneKey={activeKey}
         currentValue={activeCurrent}
         previousValue={activePrevious}
-        previousDate={initial?.measured_at ?? null}
+        previousDate={activePreviousDate}
         onClose={() => setActiveKey(null)}
         onSave={handleSaveOne}
       />

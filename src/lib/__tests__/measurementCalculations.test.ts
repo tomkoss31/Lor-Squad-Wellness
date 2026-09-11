@@ -10,6 +10,9 @@ import {
   getLatestSession,
   getInitialSession,
   getZoneDelta,
+  mergeLatestPerZone,
+  mergeInitialPerZone,
+  zonesToSnapshot,
   type ClientMeasurement,
 } from "../measurementCalculations";
 
@@ -116,6 +119,62 @@ describe("getLatestSession / getInitialSession", () => {
   it("null si vide", () => {
     expect(getLatestSession([])).toBeNull();
     expect(getInitialSession([])).toBeNull();
+  });
+});
+
+describe("mergeLatestPerZone / mergeInitialPerZone — le cas Catherine DAUMAIL (11/09/2026)", () => {
+  // Reconstitution fidèle de sa fiche : la 1ère session porte les 10 zones,
+  // puis elle mesure une zone à la fois sur plusieurs passages — exactement
+  // le motif qui a fait remonter "Dernière mesure : 42 cm · 07 juin" alors
+  // que son tour de cou avait été mesuré à 40,5 cm le 27/08.
+  const session1erJuin = makeSession("2026-06-07T13:55:00Z", {
+    neck: 42, chest: 102, waist: 110, hips: 115,
+    thigh_left: 55, thigh_right: 55, arm_left: 30, arm_right: 30, calf_left: 22, calf_right: 22,
+  });
+  const waist27aout = makeSession("2026-08-27T19:35:00Z", { waist: 97, measured_by_type: "client" });
+  const neck27aout = makeSession("2026-08-27T16:55:00Z", { neck: 40.5, measured_by_type: "client" });
+  const hips27aout = makeSession("2026-08-27T17:03:00Z", { hips: 110, measured_by_type: "client" });
+  const toutesLesLignes = [session1erJuin, waist27aout, neck27aout, hips27aout];
+
+  it("« dernière mesure » d'une zone = la ligne la plus RÉCENTE qui la porte, pas la ligne la plus récente tout court", () => {
+    const parZone = mergeLatestPerZone(toutesLesLignes);
+    // AVANT le fix : lire juste la ligne la plus récente (waist27aout,
+    // 19:35) aurait rendu neck=null → repli sur la 1ère session (42, 07/06).
+    expect(parZone.neck.value).toBe(40.5);
+    expect(parZone.neck.measuredAt).toBe("2026-08-27T16:55:00Z");
+  });
+
+  it("une zone jamais retouchée depuis la 1ère session garde sa valeur d'origine", () => {
+    const parZone = mergeLatestPerZone(toutesLesLignes);
+    expect(parZone.chest.value).toBe(102);
+    expect(parZone.thigh_left.value).toBe(55);
+  });
+
+  it("mergeInitialPerZone reste la toute première valeur connue par zone", () => {
+    const parZone = mergeInitialPerZone(toutesLesLignes);
+    expect(parZone.neck.value).toBe(42);
+    expect(parZone.neck.measuredAt).toBe("2026-06-07T13:55:00Z");
+  });
+
+  it("le compteur « X/10 zones » compte l'historique fusionné, pas la seule dernière ligne", () => {
+    // AVANT le fix : `countFilledKeys(getLatestSession(...))` lisait la
+    // ligne la plus récente (waist27aout) telle quelle → 1/10, alors que
+    // 10 zones sont réellement connues (7 depuis la 1ère session, 3
+    // rafraîchies fin août).
+    expect(countFilledKeys(waist27aout)).toBe(1); // ce qu'affichait l'ancien code, à tort
+    const snapshot = zonesToSnapshot(mergeLatestPerZone(toutesLesLignes));
+    expect(countFilledKeys(snapshot)).toBe(10); // ce que l'app doit vraiment afficher
+  });
+
+  it("zone jamais mesurée : value et measuredAt restent null des deux côtés", () => {
+    const uneSeuleLigne = [makeSession("2026-01-01", { waist: 80 })];
+    expect(mergeLatestPerZone(uneSeuleLigne).neck).toEqual({ value: null, measuredAt: null });
+    expect(mergeInitialPerZone(uneSeuleLigne).neck).toEqual({ value: null, measuredAt: null });
+  });
+
+  it("liste vide : toutes les zones à null, pas de crash", () => {
+    const parZone = mergeLatestPerZone([]);
+    expect(parZone.waist).toEqual({ value: null, measuredAt: null });
   });
 });
 

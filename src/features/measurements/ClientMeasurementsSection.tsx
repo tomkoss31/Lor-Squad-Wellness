@@ -7,7 +7,13 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { MeasurementsPanel } from "./MeasurementsPanel";
-import { calculateTotalCmLost, getInitialSession, getLatestSession, type ClientMeasurement } from "../../lib/measurementCalculations";
+import {
+  calculateTotalCmLost,
+  mergeInitialPerZone,
+  mergeLatestPerZone,
+  zonesToSnapshot,
+  type ClientMeasurement,
+} from "../../lib/measurementCalculations";
 
 interface Props {
   clientId: string;
@@ -41,10 +47,15 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
         .eq("client_id", clientId)
         .order("measured_at", { ascending: false });
       const list = (sessions ?? []) as ClientMeasurement[];
-      const latest = getLatestSession(list);
-      const initial = getInitialSession(list);
+      // Encart motivation : "tu as perdu X cm" doit lire l'historique
+      // complet par zone, pas la seule ligne la plus récente — sinon une
+      // cliente qui mesure une zone à la fois se voit annoncer une perte
+      // minuscule (parfois nulle), calculée sur 1-2 zones au lieu des
+      // vraies. Cf. mergeLatestPerZone, cas Daumail du 11/09/2026.
+      const latestSnapshot = zonesToSnapshot(mergeLatestPerZone(list));
+      const initialSnapshot = zonesToSnapshot(mergeInitialPerZone(list));
       setMotivationData({
-        totalLost: calculateTotalCmLost(initial, latest),
+        totalLost: calculateTotalCmLost(initialSnapshot, latestSnapshot),
         sessions: list.length,
       });
     })();
