@@ -77,19 +77,31 @@ export function BbcScanner({ onClose, onScanned }: BbcScannerProps) {
         if (rpcErr) {
           setResult("❌ QR non reconnu");
         } else {
-          // La RPC renvoie total_visits + l'état de la carte (card_used/card_type).
+          // La RPC renvoie total_visits + l'état de la carte (card_used/card_type),
+          // et `already_counted` quand elle a REFUSÉ le doublon des 10 minutes.
+          // `bbc_scan_visit` ne fait que déléguer à `bbc_add_visit` : son verdict
+          // arrive ici tel quel.
           const r = data as {
             client_name?: string;
             total_visits?: number;
             card_type?: number | null;
             card_used?: number | null;
             card_remaining?: number | null;
+            already_counted?: boolean;
           } | null;
           const solde =
             r?.card_type != null
               ? `carte ${r.card_used ?? 0}/${r.card_type}${(r.card_remaining ?? 0) === 0 ? " · bilan à faire" : ""}`
               : `${r?.total_visits ?? 0} visite${(r?.total_visits ?? 0) > 1 ? "s" : ""}`;
-          setResult(`✅ ${r?.client_name ?? "membre"} · ${solde}`);
+          // Un scan en double annonçait « ✅ » comme s'il venait de compter :
+          // au comptoir, deux coups de caméra sur le même QR font croire à deux
+          // visites. On dit ce qui s'est réellement passé. (12/09/2026, même
+          // angle mort que le tap dans BbcClub.)
+          setResult(
+            r?.already_counted
+              ? `🕑 ${r?.client_name ?? "membre"} déjà pointé·e · ${solde}`
+              : `✅ ${r?.client_name ?? "membre"} · ${solde}`,
+          );
           onScannedRef.current?.();
         }
       } catch {
