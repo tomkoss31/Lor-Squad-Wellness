@@ -135,8 +135,19 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                tenait dans 260 px : une fois la pastille, le bouton carte et le
                « +1 » posés (tous en `flex: none`), il restait ~70 px au nom.
                Au comptoir on lit un prénom en diagonale — coupé, il ne sert
-               plus à rien. */
-            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14 }}
+               plus à rien.
+
+               ⚠️ 12/09 — REVENU, et c'est moi qui l'avais rouvert. Passer
+               « +1 » à « pointé ✓ » (39 → 74 px) sur les lignes déjà
+               pointées, qui portent DÉJÀ un « −1 », ne laissait plus que
+               ~55 px au texte à la largeur minimale : Thomas relisait
+               « Audrey … » et « carte 10 · 7… ». Mesuré : 145 px de texte
+               sur une ligne pointée contre 229 sur une normale.
+               340 → 420 px. Une colonne de moins sur un écran large, mais
+               le nombre de visites restantes — la seule chose qu'on lit au
+               comptoir — tient dans les DEUX états. Toute addition de
+               bouton dans cette tuile se repaie ici. */
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 14 }}
           >
             {members.map((m) => {
               // Carte expirée = alerte au même titre qu'une carte finie.
