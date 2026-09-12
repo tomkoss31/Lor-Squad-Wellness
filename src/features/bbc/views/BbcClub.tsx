@@ -44,6 +44,26 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [scan, setScan] = useState(false);
   const [bilan, setBilan] = useState<{ id: string; name: string } | null>(null);
+  /**
+   * Le retour du tap. Au comptoir on tape debout, souvent à deux (Thomas et
+   * Romane sur la même liste) : sans un mot à l'écran, un pointage refusé
+   * parce que l'autre vient de le faire est indiscernable d'une panne.
+   * C'est exactement ce qui est remonté le 12/09 sur Audrey Marque.
+   */
+  const [mot, setMot] = useState<{ texte: string; ton: "ok" | "deja" } | null>(null);
+
+  async function pointer(id: string, nomAffiche: string) {
+    const r = await addVisit(id);
+    const nom = (r.name || nomAffiche).trim();
+    if (!r.ok) {
+      setMot({ texte: `le pointage de ${nom} n'est pas parti — réessaie.`, ton: "deja" });
+    } else if (r.alreadyCounted) {
+      setMot({ texte: `${nom} était déjà pointé·e il y a moins de 10 min — c'est bon, la visite est comptée.`, ton: "deja" });
+    } else {
+      setMot({ texte: `${nom} : +1 visite ✓`, ton: "ok" });
+    }
+    window.setTimeout(() => setMot(null), 4000);
+  }
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
   // Bilan à faire = carte consommée (pas le cumul à vie).
   const bilans = members.filter((m) => m.card && m.card.used >= m.card.type);
@@ -85,6 +105,24 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
           <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />pointage du matin
         </div>
         <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 16 }}>1 tap = +1 visite. (Le scan QR caméra du membre viendra compléter le tap.)</div>
+        {mot ? (
+          <div
+            role="status"
+            style={{
+              marginBottom: 14,
+              padding: "11px 14px",
+              borderRadius: 12,
+              fontSize: 12.5,
+              fontWeight: 600,
+              lineHeight: 1.45,
+              background: mot.ton === "ok" ? "rgba(45,212,191,.12)" : "rgba(233,162,59,.14)",
+              border: `1px solid ${mot.ton === "ok" ? "rgba(45,212,191,.30)" : "rgba(233,162,59,.32)"}`,
+              color: mot.ton === "ok" ? "var(--ls-bbc-teal)" : "var(--ls-bbc-amber)",
+            }}
+          >
+            {mot.texte}
+          </div>
+        ) : null}
         {loading ? (
           <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)", padding: "12px 0" }}>chargement…</div>
         ) : members.length === 0 ? (
@@ -136,7 +174,29 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                       −1
                     </button>
                   ) : null}
-                  <button type="button" onClick={() => void addVisit(m.id)} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 13px", borderRadius: 10, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", flex: "none" }}>+1</button>
+                  {/* Déjà pointé·e aujourd'hui : le bouton le DIT, au lieu de
+                      rester un « +1 » vert identique à tous les autres. Il
+                      reste cliquable — la RPC autorise une 2e visite passé
+                      10 min, et ça arrive (un membre qui repasse). */}
+                  <button
+                    type="button"
+                    onClick={() => void pointer(m.id, m.name)}
+                    title={m.visitedToday ? "Déjà pointé·e aujourd'hui — taper à nouveau pour une 2e visite" : "Pointer la visite du jour"}
+                    style={{
+                      border: m.visitedToday ? "1px solid var(--ls-bbc-teal)" : 0,
+                      cursor: "pointer",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      padding: "8px 13px",
+                      borderRadius: 10,
+                      background: m.visitedToday ? "rgba(45,212,191,.12)" : "var(--ls-bbc-lime)",
+                      color: m.visitedToday ? "var(--ls-bbc-teal)" : "var(--ls-bbc-lime-ink)",
+                      flex: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {m.visitedToday ? "pointé ✓" : "+1"}
+                  </button>
                 </div>
               );
             })}

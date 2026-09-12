@@ -44,10 +44,30 @@ export interface VisitMember {
   visitedToday: boolean;
 }
 
+/**
+ * Ce que rend un tap sur « +1 ».
+ *
+ * ⚠️ 12/09/2026 — Thomas au comptoir : « j'ai cliqué mais rien ne se passe,
+ * elle est déjà à 3 visites ». Audrey Marque AVAIT bien été pointée, par
+ * Romane, cinq minutes plus tôt : la RPC `bbc_add_visit` refuse un doublon
+ * dans les 10 minutes et rend `already_counted = true`, SANS erreur. Le hook
+ * jetait cette réponse — il ne lisait que `error` — donc l'écran restait
+ * muet et le chiffre revenait à sa valeur après le refetch. Un garde-fou qui
+ * fonctionne, mais que personne ne voit, se lit exactement comme une panne.
+ */
+export interface AddVisitResult {
+  /** L'appel est passé (même si aucune ligne n'a été écrite). */
+  ok: boolean;
+  /** Déjà pointé·e dans les 10 dernières minutes — rien n'a été ajouté. */
+  alreadyCounted: boolean;
+  /** Le prénom rendu par la RPC, pour l'écrire dans le message. */
+  name: string;
+}
+
 export interface UseBbcVisitsResult {
   members: VisitMember[];
   loading: boolean;
-  addVisit: (clientId: string) => Promise<void>;
+  addVisit: (clientId: string) => Promise<AddVisitResult>;
   removeVisit: (clientId: string) => Promise<void>;
   /** `days` vient de `clubs.settings.cards.<type>.days` : sans lui, la RPC
    *  retombe sur ses défauts et la date d'expiration contredit ce que l'écran
@@ -173,18 +193,36 @@ export function useBbcVisits(userId?: string | null, clubId?: string | null): Us
   );
 
   const addVisit = useCallback(
-    async (clientId: string) => {
+    async (clientId: string): Promise<AddVisitResult> => {
+      const rate = () => setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
       // optimiste
       setCounts((prev) => ({ ...prev, [clientId]: (prev[clientId] ?? 0) + 1 }));
       try {
         const sb = await getSupabaseClient();
-        if (!sb) return;
-        const { error } = await sb.rpc("bbc_add_visit", { p_client_id: clientId });
-        if (error) setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
+        if (!sb) {
+          rate();
+          return { ok: false, alreadyCounted: false, name: "" };
+        }
+        const { data, error } = await sb.rpc("bbc_add_visit", { p_client_id: clientId });
+        if (error) {
+          rate();
+          return { ok: false, alreadyCounted: false, name: "" };
+        }
+        // La RPC rend un objet, pas un booléen : `already_counted` dit qu'elle
+        // a REFUSÉ le doublon. Sans erreur — donc sans ce test, l'écran croit
+        // que tout s'est bien passé et le +1 optimiste retombe tout seul au
+        // refetch : c'est le « rien ne se passe » du 12/09.
+        const r = (data ?? {}) as Record<string, unknown>;
+        const alreadyCounted = r.already_counted === true;
+        // On retire le +1 tout de suite plutôt que d'attendre le refetch :
+        // un chiffre qui monte puis redescend se lit comme un bug de plus.
+        if (alreadyCounted) rate();
         // relit compteurs + carte (la carte a pu se fermer)
         void refetch();
+        return { ok: true, alreadyCounted, name: String(r.client_name ?? "") };
       } catch {
-        setCounts((prev) => ({ ...prev, [clientId]: Math.max(0, (prev[clientId] ?? 1) - 1) }));
+        rate();
+        return { ok: false, alreadyCounted: false, name: "" };
       }
     },
     [refetch],
