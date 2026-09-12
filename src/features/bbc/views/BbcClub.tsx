@@ -51,18 +51,47 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
    * C'est exactement ce qui est remonté le 12/09 sur Audrey Marque.
    */
   const [mot, setMot] = useState<{ texte: string; ton: "ok" | "deja" } | null>(null);
+  /**
+   * Le membre dont le bouton demande « annuler ? ».
+   *
+   * UN SEUL BOUTON porte l'état ET l'annulation : « pointé ✓ » au repos, un
+   * tap le passe en « annuler ? », le second annule. Il y avait deux boutons
+   * (« −1 » puis « pointé ✓ ») ; c'est ce qui coupait le texte sur l'écran de
+   * Thomas le 12/09.
+   *
+   * La confirmation en deux temps n'est pas un ornement : le geste est
+   * DESTRUCTEUR, et un bouton qui annonce « pointé ✓ » ne doit pas effacer
+   * une visite payée au premier doigt posé de travers, à 7h30, debout.
+   */
+  const [annuleFor, setAnnuleFor] = useState<string | null>(null);
+
+  function direEtEffacer(texte: string, ton: "ok" | "deja") {
+    setMot({ texte, ton });
+    window.setTimeout(() => setMot(null), 4000);
+  }
 
   async function pointer(id: string, nomAffiche: string) {
     const r = await addVisit(id);
     const nom = (r.name || nomAffiche).trim();
     if (!r.ok) {
-      setMot({ texte: `le pointage de ${nom} n'est pas parti — réessaie.`, ton: "deja" });
+      direEtEffacer(`le pointage de ${nom} n'est pas parti — réessaie.`, "deja");
     } else if (r.alreadyCounted) {
-      setMot({ texte: `${nom} était déjà pointé·e il y a moins de 10 min — c'est bon, la visite est comptée.`, ton: "deja" });
+      direEtEffacer(`${nom} était déjà pointé·e il y a moins de 10 min — c'est bon, la visite est comptée.`, "deja");
     } else {
-      setMot({ texte: `${nom} : +1 visite ✓`, ton: "ok" });
+      direEtEffacer(`${nom} : +1 visite ✓`, "ok");
     }
-    window.setTimeout(() => setMot(null), 4000);
+  }
+
+  /** Premier tap : on demande. Second tap : on annule pour de bon. */
+  function demanderAnnulation(id: string) {
+    setAnnuleFor(id);
+    window.setTimeout(() => setAnnuleFor((v) => (v === id ? null : v)), 4000);
+  }
+
+  async function annuler(id: string, nom: string) {
+    setAnnuleFor(null);
+    await removeVisit(id);
+    direEtEffacer(`${nom.trim()} : visite du jour retirée.`, "deja");
   }
   const totalVisits = members.reduce((s, m) => s + m.visits, 0);
   // Bilan à faire = carte consommée (pas le cumul à vie).
@@ -139,14 +168,24 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
 
                ⚠️ 12/09 — REVENU, et c'est moi qui l'avais rouvert. Passer
                « +1 » à « pointé ✓ » (39 → 74 px) sur les lignes déjà
-               pointées, qui portent DÉJÀ un « −1 », ne laissait plus que
-               ~55 px au texte à la largeur minimale : Thomas relisait
-               « Audrey … » et « carte 10 · 7… ». Mesuré : 145 px de texte
-               sur une ligne pointée contre 229 sur une normale.
-               340 → 420 px. Une colonne de moins sur un écran large, mais
-               le nombre de visites restantes — la seule chose qu'on lit au
-               comptoir — tient dans les DEUX états. Toute addition de
-               bouton dans cette tuile se repaie ici. */
+               pointées, qui portaient alors AUSSI un « −1 », ne laissait
+               plus que ~55 px au texte : Thomas relisait « Audrey … » et
+               « carte 10 · 7… ».
+
+               340 → 420 px, et le « −1 » a été fusionné dans le bouton
+               d'état. ⚠️ LA FUSION SEULE N'AURAIT PAS SUFFI — mesuré après
+               coup, nombre de lignes dont les « restantes » sont coupées :
+
+                 largeur    340px   380px   420px
+                 1150         3       0       0
+                 1208 (Thomas) 1      0       0
+                 1300         1       1       0
+                 1400         0       0       0
+                 1920         3       0       0     (340 → 5 colonnes tassées)
+
+               420 est le seul palier propre partout, et il rend DAVANTAGE
+               de colonnes sur grand écran (4 lisibles à 1920 contre 5
+               illisibles). Ne pas redescendre sans refaire ce tableau. */
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 14 }}
           >
             {members.map((m) => {
@@ -171,28 +210,48 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                   {lvl === "bilan" ? (
                     <button type="button" onClick={() => setBilan({ id: m.id, name: m.name })} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff", flex: "none" }}>bilan</button>
                   ) : null}
-                  {/* Le « −1 » n'apparaît que sur un membre déjà pointé aujourd'hui :
-                      c'est le seul cas où l'on corrige, et ça évite de retirer par
-                      mégarde une visite d'un autre jour. */}
-                  {m.visitedToday ? (
+                  {/* UN SEUL bouton, trois états — c'est lui qui porte à la fois
+                      l'information et l'action :
+                        · pas encore pointé·e  → « +1 » lime, le geste du matin ;
+                        · pointé·e             → « pointé ✓ » teal, calme ;
+                        · pointé·e + tapé      → « annuler ? » coral, 4 s.
+
+                      Le « −1 » séparé a disparu : deux boutons sur la même ligne
+                      coupaient le texte (12/09). Et l'annulation demande deux
+                      taps parce qu'elle DÉTRUIT une visite payée — on ne met pas
+                      ça sous un doigt posé de travers à 7h30.
+
+                      Ce qui se perd, assumé : on ne peut plus poser une 2e visite
+                      le même jour d'un tap (le scan QR le fait encore). Vérifié
+                      le 12/09 : 39 visites depuis l'ouverture, 39 couples
+                      (membre, jour) distincts — ça n'est jamais arrivé. */}
+                  {m.visitedToday && annuleFor === m.id ? (
                     <button
                       type="button"
-                      onClick={() => void removeVisit(m.id)}
-                      title="Annuler le dernier pointage"
-                      aria-label={`Annuler le pointage de ${m.name}`}
-                      style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: "var(--ls-bbc-muted)", flex: "none" }}
+                      onClick={() => void annuler(m.id, m.name)}
+                      title="Confirmer : retirer la visite du jour"
+                      aria-label={`Confirmer le retrait de la visite de ${m.name}`}
+                      style={{
+                        border: "1px solid var(--ls-bbc-coral)",
+                        cursor: "pointer",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        padding: "8px 13px",
+                        borderRadius: 10,
+                        background: "rgba(251,113,133,.14)",
+                        color: "var(--ls-bbc-coral)",
+                        flex: "none",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      −1
+                      annuler ?
                     </button>
-                  ) : null}
-                  {/* Déjà pointé·e aujourd'hui : le bouton le DIT, au lieu de
-                      rester un « +1 » vert identique à tous les autres. Il
-                      reste cliquable — la RPC autorise une 2e visite passé
-                      10 min, et ça arrive (un membre qui repasse). */}
+                  ) : (
                   <button
                     type="button"
-                    onClick={() => void pointer(m.id, m.name)}
-                    title={m.visitedToday ? "Déjà pointé·e aujourd'hui — taper à nouveau pour une 2e visite" : "Pointer la visite du jour"}
+                    onClick={() => (m.visitedToday ? demanderAnnulation(m.id) : void pointer(m.id, m.name))}
+                    title={m.visitedToday ? "Pointé·e aujourd'hui — taper pour retirer cette visite" : "Pointer la visite du jour"}
+                    aria-label={m.visitedToday ? `${m.name} est pointé·e — taper pour retirer sa visite` : `Pointer ${m.name}`}
                     style={{
                       border: m.visitedToday ? "1px solid var(--ls-bbc-teal)" : 0,
                       cursor: "pointer",
@@ -208,6 +267,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                   >
                     {m.visitedToday ? "pointé ✓" : "+1"}
                   </button>
+                  )}
                 </div>
               );
             })}
