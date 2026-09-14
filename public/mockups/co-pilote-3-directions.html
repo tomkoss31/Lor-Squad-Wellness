@@ -145,7 +145,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 #c .av{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;
   font-family:var(--edito);font-weight:800;font-size:16px;color:#08201C;position:relative}
 /* Le nom et sa raison sont deux lignes : sans `display:block` ils se collaient
-   en un seul paragraphe (« Matheo Manapany Suivi en retard · 44 jours »). */
+   en un seul paragraphe (« Maxime B. Suivi en retard · 44 jours »). */
 #c .p .n{display:block;font-size:15px;font-weight:600;line-height:1.25}
 #c .p .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
 #c .p .go{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
@@ -209,7 +209,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
     <div class="thread">
       <div class="ev hot">
         <div class="t">En retard · 44 jours</div>
-        <div class="n">Matheo Manapany</div>
+        <div class="n">Maxime B.</div>
         <div class="s">Un point que tu avais calé, jamais fait.</div>
         <div class="slot">
           <button data-slot>Demain 9 h</button>
@@ -220,7 +220,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 
       <div class="ev hot">
         <div class="t">Sans réponse · 4 jours</div>
-        <div class="n">Florian</div>
+        <div class="n">Fabien</div>
         <div class="s">A laissé son numéro sur le tunnel colis.</div>
         <div class="slot">
           <button data-slot>Ce soir</button>
@@ -236,7 +236,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 
       <div class="ev">
         <div class="t">Quand tu veux</div>
-        <div class="n">Clément · Gerald</div>
+        <div class="n">Cédric · Gilles</div>
         <div class="s">Plus de commande depuis 111 et 87 jours. Ils n'attendent rien — c'est toi qui décides.</div>
       </div>
     </div>
@@ -305,49 +305,49 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 </div>
 </div>
 
-<p class="note">Maquette — rien n'est branché, mais <b>les noms, les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026). Testée à 390 px.</p>
+<p class="note">Maquette — rien n'est branché, mais <b>les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026), les noms sont fictifs. Testée à 390 px.</p>
 
 <script>
-/* ─── Données réelles du 12/08/2026, compte de Thomas ─────────────────────── */
+/* ─── Chiffres du 12/08/2026, compte de Thomas — noms fictifs ─────────────────────── */
 const FILE = [
-  { qui:"Matheo", nom:"Matheo Manapany", pourquoi:"Suivi en retard",
+  { qui:"Maxime", nom:"Maxime B.", pourquoi:"Suivi en retard",
     ctx:"Un point que tu avais calé ensemble, et qui n'a jamais eu lieu.",
     depuis:"Ça fait 44 jours.", teinte:"var(--coral)",
-    mot:"Salut Matheo 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?",
+    mot:"Salut Maxime 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?",
     cta:"Lui écrire" },
-  { qui:"Florian", nom:"Florian", pourquoi:"Jamais rappelé",
+  { qui:"Fabien", nom:"Fabien", pourquoi:"Jamais rappelé",
     ctx:"Il a laissé son numéro sur le tunnel colis. Personne ne l'a rappelé.",
     depuis:"Ça fait 4 jours.", teinte:"var(--coral)",
-    mot:"Bonjour Florian 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?",
+    mot:"Bonjour Fabien 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?",
     cta:"Lui écrire" },
-  { qui:"Clément", nom:"Clément Clotte", pourquoi:"Plus de commande",
+  { qui:"Cédric", nom:"Cédric P.", pourquoi:"Plus de commande",
     ctx:"Il prenait le Thé 51 g. Plus rien depuis longtemps — il ne demande rien, mais il est encore là.",
     depuis:"111 jours sans commande.", teinte:"var(--amber)",
-    mot:"Salut Clément 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?",
+    mot:"Salut Cédric 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?",
     cta:"Prendre de ses nouvelles" },
-  { qui:"Gerald", nom:"Delfraissy Gerald", pourquoi:"Plus de commande",
+  { qui:"Gilles", nom:"Gilles R.", pourquoi:"Plus de commande",
     ctx:"Formula 1. Il s'est éteint doucement, sans rien dire.",
     depuis:"87 jours sans commande.", teinte:"var(--amber)",
-    mot:"Salut Gerald 👋 Ça fait un moment ! Comment tu vas en ce moment ?",
+    mot:"Salut Gilles 👋 Ça fait un moment ! Comment tu vas en ce moment ?",
     cta:"Prendre de ses nouvelles" },
   { qui:"Le club", nom:"7 personnes", pourquoi:"Chez ton équipe",
-    ctx:"Laure, Manon, Fatiha, Armonie et 3 autres sont venues par le site du club. Personne ne les a rappelées.",
+    ctx:"Lucie, Margaux, Farida, Aurélie et 3 autres sont venues par le site du club. Personne ne les a rappelées.",
     depuis:"La plus ancienne attend depuis 5 jours.", teinte:"var(--coral)",
     mot:"", cta:"Voir chez qui c'est" },
 ];
 
 const GENS = [
-  { i:"M", n:"Matheo Manapany", s:"Suivi en retard · 44 jours", c:"var(--coral)", wa:1 },
-  { i:"F", n:"Florian",         s:"Jamais rappelé · 4 jours",   c:"var(--coral)", wa:1 },
-  { i:"C", n:"Clément Clotte",  s:"111 j sans commande",        c:"var(--amber)", wa:1 },
-  { i:"G", n:"Delfraissy Gerald", s:"87 j sans commande",       c:"var(--amber)", wa:1 },
+  { i:"M", n:"Maxime B.", s:"Suivi en retard · 44 jours", c:"var(--coral)", wa:1 },
+  { i:"F", n:"Fabien",         s:"Jamais rappelé · 4 jours",   c:"var(--coral)", wa:1 },
+  { i:"C", n:"Cédric P.",  s:"111 j sans commande",        c:"var(--amber)", wa:1 },
+  { i:"G", n:"Gilles R.", s:"87 j sans commande",       c:"var(--amber)", wa:1 },
   { i:"T", n:"Ton lead colis",  s:"Jamais rappelé · 25 jours",  c:"var(--coral)", wa:1 },
 ];
 const EQUIPE = [
-  { i:"L", n:"Laure",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
-  { i:"M", n:"Manon",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
-  { i:"F", n:"Fatiha",  s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
-  { i:"C", n:"Cavalec", s:"Bilan en ligne · 5 jours",   r:"Victoria", c:"var(--coral)" },
+  { i:"L", n:"Lucie",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"M", n:"Margaux",   s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"F", n:"Farida",  s:"Site du club · hier",        r:"Mélanie",  c:"var(--teal)" },
+  { i:"C", n:"Coralie", s:"Bilan en ligne · 5 jours",   r:"Victoria", c:"var(--coral)" },
 ];
 
 /* ─── Onglets ─────────────────────────────────────────────────────────────── */

@@ -181,20 +181,20 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-  // Données réelles du 01/09/2026 — les 11 rendez-vous club à venir plus les
-  // suivis de la semaine. Rien n'est inventé : ce sont les noms en base.
+  // Semaine du 01/09/2026 — les 11 rendez-vous club à venir plus les
+  // suivis de la semaine. Les noms sont fictifs ; créneaux et types viennent de la base.
   const RDV = [
-    { j:"mar. 1",  d:"1 sept.",  h:"13:00", t:"Natacha Udot",      s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
-    { j:"mar. 1",  d:"1 sept.",  h:"16:30", t:"Jermy Vedran",      s:"Suivi client",                               c:"melanie" },
-    { j:"mer. 2",  d:"2 sept.",  h:"15:00", t:"Gaëlle Grandet",    s:"RDV découverte · perte de poids",            c:"melanie" },
-    { j:"mer. 2",  d:"2 sept.",  h:"17:00", t:"Robin De Bernard",  s:"Suivi client",                               c:"melanie" },
-    { j:"jeu. 3",  d:"3 sept.",  h:"14:00", t:"Agnès Florentin",   s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
-    { j:"ven. 4",  d:"4 sept.",  h:"13:00", t:"Virgile Famibelle", s:"Suivi client",                               c:"thomas"  },
-    { j:"ven. 4",  d:"4 sept.",  h:"14:00", t:"Amandine Romane",   s:"RDV découverte · perte de poids",            c:"melanie" },
-    { j:"ven. 4",  d:"4 sept.",  h:"15:00", t:"Géraldine Harmand", s:"RDV découverte · confirmé",                  c:"melanie" },
-    { j:"ven. 4",  d:"4 sept.",  h:"17:30", t:"Laurine Guillemin", s:"Suivi client",                               c:"thomas"  },
-    { j:"sam. 5",  d:"5 sept.",  h:"10:30", t:"Emilie Greinhofer", s:"RDV découverte · regain d'énergie · confirmé",c:"melanie" },
-    { j:"sam. 5",  d:"5 sept.",  h:"11:30", t:"Amrane Tchatchi",   s:"RDV découverte · perte de poids · confirmé", c:"thomas"  },
+    { j:"mar. 1",  d:"1 sept.",  h:"13:00", t:"Nadège B.",      s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
+    { j:"mar. 1",  d:"1 sept.",  h:"16:30", t:"Jonas L.",      s:"Suivi client",                               c:"melanie" },
+    { j:"mer. 2",  d:"2 sept.",  h:"15:00", t:"Gisèle M.",    s:"RDV découverte · perte de poids",            c:"melanie" },
+    { j:"mer. 2",  d:"2 sept.",  h:"17:00", t:"Rémi D.",  s:"Suivi client",                               c:"melanie" },
+    { j:"jeu. 3",  d:"3 sept.",  h:"14:00", t:"Annie P.",   s:"RDV découverte · perte de poids · confirmé", c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"13:00", t:"Victor D.", s:"Suivi client",                               c:"thomas"  },
+    { j:"ven. 4",  d:"4 sept.",  h:"14:00", t:"Adèle S.",   s:"RDV découverte · perte de poids",            c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"15:00", t:"Gabrielle T.", s:"RDV découverte · confirmé",                  c:"melanie" },
+    { j:"ven. 4",  d:"4 sept.",  h:"17:30", t:"Léna F.", s:"Suivi client",                               c:"thomas"  },
+    { j:"sam. 5",  d:"5 sept.",  h:"10:30", t:"Eva K.", s:"RDV découverte · regain d'énergie · confirmé",c:"melanie" },
+    { j:"sam. 5",  d:"5 sept.",  h:"11:30", t:"Adam N.",   s:"RDV découverte · perte de poids · confirmé", c:"thomas"  },
   ];
   const JOURS = ["mar. 1","mer. 2","jeu. 3","ven. 4","sam. 5"];
   const NOM = { thomas:"Thomas", melanie:"Mélanie" };

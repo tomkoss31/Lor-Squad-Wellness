@@ -168,9 +168,9 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
     <button data-m="0" aria-current="true">Ce soir<br>20 h</button>
     <button data-m="1" aria-current="false">RDV dans<br>20 min</button>
     <button data-m="2" aria-current="false">Tout est<br>traité</button>
-    <button data-m="3" aria-current="false">Manuela<br>écrit</button>
-    <button data-m="4" aria-current="false">Manon<br>a payé</button>
-    <button data-m="5" aria-current="false">Vu par<br>Charlène</button>
+    <button data-m="3" aria-current="false">Muriel<br>écrit</button>
+    <button data-m="4" aria-current="false">Margaux<br>a payé</button>
+    <button data-m="5" aria-current="false">Vu par<br>Chloé</button>
   </div>
 </div>
 
@@ -193,7 +193,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
     <div class="eyebrow" id="titre-gens"></div>
     <div id="gens"></div>
     <div class="equipe" id="bloc-club">
-      <p><b>7 personnes</b> venues du site du club n'ont été rappelées par personne — Laure, Manon, Fatiha, Armonie et 3 autres.</p>
+      <p><b>7 personnes</b> venues du site du club n'ont été rappelées par personne — Lucie, Margaux, Farida, Aurélie et 3 autres.</p>
       <button class="lien">Voir chez qui c'est</button>
     </div>
   </section>
@@ -224,12 +224,12 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 </div>
 </div>
 
-<p class="note">Maquette — rien n'est branché, mais <b>les noms, les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026). Testée à 390 px.<br>
+<p class="note">Maquette — rien n'est branché, mais <b>les délais et les chiffres sont les tiens</b> (lus en base le 12/08/2026), les noms sont fictifs. Testée à 390 px.<br>
 Les trois versions concurrentes de tout à l'heure restent sur <b>co-pilote-3-directions.html</b>.</p>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   Données réelles du 12/08/2026, compte de Thomas.
+   Chiffres du 12/08/2026, compte de Thomas — noms fictifs.
 
    LA REGLE DE LA ZONE 1 : elle ne montre JAMAIS deux choses. Ce qu'elle
    montre change selon le moment de la journee — c'est tout l'interet, sinon
@@ -240,49 +240,49 @@ Les trois versions concurrentes de tout à l'heure restent sur <b>co-pilote-3-di
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const GENS = [
-  { court:"Matheo", nom:"Matheo Manapany", ini:"M", quoi:"Suivi en retard",
+  { court:"Maxime", nom:"Maxime B.", ini:"M", quoi:"Suivi en retard",
     ligne:"Suivi en retard · 44 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
     ctx:"Un point que tu avais calé ensemble, et qui n'a jamais eu lieu.",
     depuis:"Ça fait 44 jours.", cta:"Lui écrire",
-    mot:"Salut Matheo 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?" },
+    mot:"Salut Maxime 👋 On devait faire un point ensemble et je n'ai pas donné suite, désolé ! Où tu en es en ce moment ?" },
   { court:"Ton lead", nom:"Ton lead colis", ini:"T", quoi:"Jamais rappelé",
     ligne:"Jamais rappelé · 25 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
     ctx:"Un contact du tunnel colis, resté sans réponse depuis presque un mois.",
     depuis:"Ça fait 25 jours.", cta:"Lui écrire",
     mot:"Bonjour 👋 C'est Thomas de La Base 360 — tu avais laissé tes coordonnées, je reviens vers toi. Toujours d'actualité ?" },
-  { court:"Florian", nom:"Florian", ini:"F", quoi:"Jamais rappelé",
+  { court:"Fabien", nom:"Fabien", ini:"F", quoi:"Jamais rappelé",
     ligne:"Jamais rappelé · 4 jours", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
     ctx:"Il a laissé son numéro sur le tunnel colis. Personne ne l'a rappelé.",
     depuis:"Ça fait 4 jours.", cta:"Lui écrire",
-    mot:"Bonjour Florian 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?" },
-  /* Trouve en base le 12/08 : 5 liens de paiement generes, ZERO paye. Djamal
+    mot:"Bonjour Fabien 👋 C'est Thomas de La Base 360 — tu as laissé tes coordonnées, je reviens vers toi comme promis. Tu as un moment cette semaine ?" },
+  /* Trouve en base le 12/08 : 5 liens de paiement generes, ZERO paye. Damien
      a recu deux fois un lien a 234 €. Quelqu'un qui a failli acheter et ne
      l'a pas fait n'apparait aujourd'hui sur AUCUN ecran de l'app. */
-  { court:"Djamal", nom:"Djamal", ini:"D", quoi:"Paiement jamais réglé",
+  { court:"Damien", nom:"Damien", ini:"D", quoi:"Paiement jamais réglé",
     ligne:"Lien à 234 € envoyé, jamais payé", teinte:"var(--coral)", glow:"rgba(242,119,95,.18)",
     ctx:"Programme Premium à 234 €. Le lien lui a été envoyé deux fois — il n'a jamais réglé.",
     depuis:"Il a failli acheter.", cta:"Lui reparler",
-    mot:"Salut Djamal 👋 Je vois que le paiement n'est pas passé — souci technique, ou tu préfères qu'on en reparle avant ? Dis-moi 🙂" },
-  { court:"Clément", nom:"Clément Clotte", ini:"C", quoi:"Plus de commande",
+    mot:"Salut Damien 👋 Je vois que le paiement n'est pas passé — souci technique, ou tu préfères qu'on en reparle avant ? Dis-moi 🙂" },
+  { court:"Cédric", nom:"Cédric P.", ini:"C", quoi:"Plus de commande",
     ligne:"111 j sans commande", teinte:"var(--amber)", glow:"rgba(232,169,58,.16)",
     ctx:"Il prenait le Thé 51 g. Plus rien depuis longtemps — il ne demande rien, mais il est encore là.",
     depuis:"111 jours sans commande.", cta:"Prendre de ses nouvelles",
-    mot:"Salut Clément 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?" },
-  { court:"Gerald", nom:"Delfraissy Gerald", ini:"G", quoi:"Plus de commande",
+    mot:"Salut Cédric 👋 Ça fait un moment ! Je repensais à ton suivi — où tu en es en ce moment ?" },
+  { court:"Gilles", nom:"Gilles R.", ini:"G", quoi:"Plus de commande",
     ligne:"87 j sans commande", teinte:"var(--amber)", glow:"rgba(232,169,58,.16)",
     ctx:"Formula 1. Il s'est éteint doucement, sans rien dire.",
     depuis:"87 jours sans commande.", cta:"Prendre de ses nouvelles",
-    mot:"Salut Gerald 👋 Ça fait un moment ! Comment tu vas en ce moment ?" },
+    mot:"Salut Gilles 👋 Ça fait un moment ! Comment tu vas en ce moment ?" },
 ];
 
 /* ─── L'EQUIPE, lue en base le 12/08/2026 ────────────────────────────────
    Chaque ligne porte UN signal et UN outil. Pas un tableau de bord de 12
    lignes : les trois ou quatre chez qui quelque chose est coince. */
 const EQUIPE = [
-  { ini:"C", nom:"Charlène Soyer", teinte:"var(--coral)",
+  { ini:"C", nom:"Chloé V.", teinte:"var(--coral)",
     quoi:"Inscrite, zéro client, aucun bilan. Elle n'a jamais commencé.",
     outil:"🚀 Lui faire faire son 1er bilan" },
-  { ini:"V", nom:"Vivien Thumelin", teinte:"var(--coral)",
+  { ini:"V", nom:"Vincent L.", teinte:"var(--coral)",
     quoi:"Même chose : jamais démarré depuis son inscription.",
     outil:"🚀 Lui faire faire son 1er bilan" },
   { ini:"M", nom:"Mandy", teinte:"var(--amber)",
@@ -327,14 +327,14 @@ const MOMENTS = [
     journee:[
       {c:"now",  t:"Maintenant · 20 h", n:"Ta journée est finie", s:"Aucun rendez-vous aujourd'hui."},
       {c:"next", t:"Jeudi 14 · 09:00",  n:"Rendez-vous client",  s:"Ton seul RDV calé cette semaine."},
-      {c:"",     t:"Quand tu veux",     n:"Clément · Gerald",    s:"Ils n'attendent rien — c'est toi qui décides."},
+      {c:"",     t:"Quand tu veux",     n:"Cédric · Gilles",    s:"Ils n'attendent rien — c'est toi qui décides."},
     ] },
 
   { quand:"Jeudi 14 août · 08 h 40", type:"rdv", debut:0, faits:[],
     journee:[
       {c:"now",  t:"Dans 20 minutes", n:"Rendez-vous client · 09:00", s:"Bilan de suivi. Son dernier point date du 3 juillet."},
-      {c:"",     t:"Ensuite",         n:"3 personnes attendent",      s:"Matheo, ton lead colis, Florian."},
-      {c:"",     t:"Quand tu veux",   n:"Clément · Gerald",           s:"Ils n'attendent rien — c'est toi qui décides."},
+      {c:"",     t:"Ensuite",         n:"3 personnes attendent",      s:"Maxime, ton lead colis, Fabien."},
+      {c:"",     t:"Quand tu veux",   n:"Cédric · Gilles",           s:"Ils n'attendent rien — c'est toi qui décides."},
     ] },
 
   { quand:"Vendredi 15 août · 11 h", type:"vide", debut:99, faits:[0,1,2,3,4,5],
@@ -348,24 +348,24 @@ const MOMENTS = [
      la file, et derriere un seul truc — un RDV deja cale. */
   { quand:"Mercredi 12 août · 20 h", type:"message", debut:0, faits:[],
     journee:[
-      {c:"now",  t:"Il y a 6 minutes", n:"Manuela t'a écrit",   s:"Elle attend une réponse, là, maintenant."},
+      {c:"now",  t:"Il y a 6 minutes", n:"Muriel t'a écrit",   s:"Elle attend une réponse, là, maintenant."},
       {c:"next", t:"Jeudi 14 · 09:00", n:"Rendez-vous client",  s:"Ton seul RDV calé cette semaine."},
-      {c:"",     t:"Ensuite",          n:"5 personnes attendent", s:"Matheo, ton lead colis, Florian, Clément, Gerald."},
+      {c:"",     t:"Ensuite",          n:"5 personnes attendent", s:"Maxime, ton lead colis, Fabien, Cédric, Gilles."},
     ] },
 
   /* AMELIORATION 1 — l'argent qui rentre. C'est la SEULE chose qui merite
      vraiment le lime (regle de la charte : lime = victoires uniquement).
      ⚠️ Constat du 12/08 : 5 liens de paiement generes, ZERO paye. Le meme
      ecran doit donc aussi savoir dire « envoye, jamais paye » — voir la
-     ligne Djamal ajoutee dans « tes clients ». */
+     ligne Damien ajoutee dans « tes clients ». */
   { quand:"Jeudi 14 août · 11 h 20", type:"paiement", debut:0, faits:[],
     journee:[
-      {c:"now",  t:"Il y a 3 minutes",  n:"Manon a payé · 135,15 €", s:"Formula 1, Aloe Vera, Thé Classique."},
-      {c:"",     t:"En attente",        n:"Djamal · 234 €",          s:"Lien envoyé deux fois, jamais réglé."},
+      {c:"now",  t:"Il y a 3 minutes",  n:"Margaux a payé · 135,15 €", s:"Formula 1, Aloe Vera, Thé Classique."},
+      {c:"",     t:"En attente",        n:"Damien · 234 €",          s:"Lien envoyé deux fois, jamais réglé."},
       {c:"",     t:"Ensuite",           n:"5 personnes attendent",   s:"Rien d'urgent, mais elles sont là."},
     ] },
 
-  /* Le meme ecran, vu par quelqu'un qui n'a jamais commence. Charlene :
+  /* Le meme ecran, vu par quelqu'un qui n'a jamais commence. Chloe :
      inscrite, zero client, aucun bilan. Elle n'a ni file, ni journee, ni
      equipe — donc le demarrage PREND la zone 1. Il n'est pas un lien en
      haut qu'on ignore depuis des mois : il EST l'ecran, tant qu'il compte. */
@@ -401,7 +401,7 @@ function zone1(mo){
     z.style.setProperty('--glow','rgba(45,212,191,.20)');
     z.innerHTML = `
       <span class="why" style="color:var(--teal)">Elle t'écrit · il y a 6 minutes</span>
-      <h2 class="who">Manuela</h2>
+      <h2 class="who">Muriel</h2>
       <div class="mot" style="margin-top:0">
         <b>Son message</b>« Coucou ! J'ai fini ma boîte de Formula 1, je reprends quoi ?
         Et j'ai perdu 1,8 kg depuis le dernier point 🙂 »</div>
@@ -418,14 +418,14 @@ function zone1(mo){
     z.innerHTML = `
       <span class="why" style="color:var(--lime)">Paiement reçu · il y a 3 minutes</span>
       <h2 class="who" style="color:var(--lime)">135,15 €</h2>
-      <p class="ctx">Manon vient de régler son programme — Formula 1, Aloe Vera, Thé Classique.</p>
+      <p class="ctx">Margaux vient de régler son programme — Formula 1, Aloe Vera, Thé Classique.</p>
       <div class="since" style="color:var(--lime)">Elle peut venir chercher sa commande.</div>
-      <div class="mot"><b>Message prêt</b>Merci Manon ! 🙌 C'est bien reçu — ta commande t'attend au club quand tu veux. On se voit vite !</div>
+      <div class="mot"><b>Message prêt</b>Merci Margaux ! 🙌 C'est bien reçu — ta commande t'attend au club quand tu veux. On se voit vite !</div>
       <div class="acts">
         <button class="prim">La remercier</button>
         <button class="sec">La commande</button>
       </div>
-      <div class="reste">En attente <i></i> Djamal · 234 €, jamais réglé</div>`;
+      <div class="reste">En attente <i></i> Damien · 234 €, jamais réglé</div>`;
     return;
   }
 

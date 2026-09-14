@@ -143,7 +143,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 
     <section class="zone1">
       <span class="why">Jamais rappelée · site du club</span>
-      <h2 class="who">Laure</h2>
+      <h2 class="who">Lucie</h2>
       <p class="ctx">A laissé son numéro sur le site du club. Ça fait 2 jours.</p>
       <button class="prim" id="ecrire">Lui écrire</button>
     </section>
@@ -182,9 +182,9 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 
     <section class="zone1">
       <span class="why" style="color:var(--teal)">Tu avais dit de la rappeler</span>
-      <h2 class="who">Laure</h2>
+      <h2 class="who">Lucie</h2>
       <p class="ctx">Tu l'as appelée hier à 9 h 10, elle n'a pas répondu. C'était il y a 24 heures.</p>
-      <div class="mot"><b>Message prêt · 2<sup>e</sup> tentative</b>Bonjour Laure 👋 C'est Thomas de La Base 360, je vous ai appelée hier sans réussir à vous joindre. Je réessaie — dites-moi quel moment vous arrange 🙂</div>
+      <div class="mot"><b>Message prêt · 2<sup>e</sup> tentative</b>Bonjour Lucie 👋 C'est Thomas de La Base 360, je vous ai appelée hier sans réussir à vous joindre. Je réessaie — dites-moi quel moment vous arrange 🙂</div>
       <div class="acts">
         <button class="a1">Lui écrire</button>
         <button class="a2">Plus tard</button>
@@ -202,7 +202,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 </div>
 </div>
 
-<p class="note">Maquette — rien n'est branché. <b>Les prénoms, les sources et les délais sont réels</b> (lus en base le 13/08/2026). Testée à 390 px.</p>
+<p class="note">Maquette — rien n'est branché. <b>Les sources et les délais sont réels</b> (lus en base le 13/08/2026), les prénoms sont fictifs. Testée à 390 px.</p>
 
 <script>
 /* ─── Les six réponses possibles ─────────────────────────────────────────
@@ -218,16 +218,16 @@ const REPONSES = [
   { cle:"rdv",            t:"RDV calé",              quand:"Elle passe dans l'agenda",      jours:0,  couleur:"var(--lime)" },
 ];
 
-/* Les vraies personnes en attente, lues en base le 13/08. */
+/* La file du 13/08, avec des prénoms fictifs. */
 const GENS = [
-  { n:"Laure",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"L", pourquoi:"Appelée hier, pas de réponse" },
-  { n:"Manon",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"M", pourquoi:"Jamais rappelée" },
-  { n:"Fatiha",    src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"F", pourquoi:"Jamais rappelée" },
-  { n:"Benedicte", src:"Site du club · hier",            q:"Lundi",        ton:"var(--amber)", ini:"B", pourquoi:"Elle rappellera" },
-  { n:"Armonie",   src:"Site du club · hier",            q:"Mardi",        ton:"var(--amber)", ini:"A", pourquoi:"Répondu, ne sait pas" },
-  { n:"Florian",   src:"Tunnel colis · il y a 6 jours",  q:"12 sept.",     ton:"var(--purple)", ini:"F", pourquoi:"Pas maintenant" },
-  { n:"Djamal",    src:"Paiement ouvert · 234 €",        q:"Demain",       ton:"var(--coral)", ini:"D", pourquoi:"Lien jamais réglé" },
-  { n:"Cavalec",   src:"Bilan en ligne · il y a 6 jours", q:"Refermé",     ton:"var(--hint)",  ini:"C", pourquoi:"Plus intéressée" },
+  { n:"Lucie",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"L", pourquoi:"Appelée hier, pas de réponse" },
+  { n:"Margaux",     src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"M", pourquoi:"Jamais rappelée" },
+  { n:"Farida",    src:"Site du club · il y a 2 jours",  q:"Aujourd'hui",  ton:"var(--coral)", ini:"F", pourquoi:"Jamais rappelée" },
+  { n:"Brigitte", src:"Site du club · hier",            q:"Lundi",        ton:"var(--amber)", ini:"B", pourquoi:"Elle rappellera" },
+  { n:"Aurélie",   src:"Site du club · hier",            q:"Mardi",        ton:"var(--amber)", ini:"A", pourquoi:"Répondu, ne sait pas" },
+  { n:"Fabien",   src:"Tunnel colis · il y a 6 jours",  q:"12 sept.",     ton:"var(--purple)", ini:"F", pourquoi:"Pas maintenant" },
+  { n:"Damien",    src:"Paiement ouvert · 234 €",        q:"Demain",       ton:"var(--coral)", ini:"D", pourquoi:"Lien jamais réglé" },
+  { n:"Coralie",   src:"Bilan en ligne · il y a 6 jours", q:"Refermé",     ton:"var(--hint)",  ini:"C", pourquoi:"Plus intéressée" },
 ];
 
 document.querySelectorAll('.onglets button').forEach(b=>b.addEventListener('click',()=>{
@@ -263,10 +263,10 @@ function feuille(){
 
 function confirme(r){
   const quand = r.jours === null
-    ? "Laure ne reviendra plus dans ta file. Rien n'est perdu : elle reste dans le CRM, refermée proprement."
+    ? "Lucie ne reviendra plus dans ta file. Rien n'est perdu : elle reste dans le CRM, refermée proprement."
     : r.jours === 0
-      ? "Laure quitte le CRM et rejoint ton agenda. Elle n'a plus rien à faire ici."
-      : `Laure remontera <strong style="color:var(--text)">dans ta zone 1</strong> ${r.jours === 1 ? "demain matin" : `dans ${r.jours} jours`}, avec un message de 2<sup>e</sup> tentative déjà écrit.`;
+      ? "Lucie quitte le CRM et rejoint ton agenda. Elle n'a plus rien à faire ici."
+      : `Lucie remontera <strong style="color:var(--text)">dans ta zone 1</strong> ${r.jours === 1 ? "demain matin" : `dans ${r.jours} jours`}, avec un message de 2<sup>e</sup> tentative déjà écrit.`;
   suite.innerHTML = `
     <div class="confirme">
       <div class="rond">✓</div>
