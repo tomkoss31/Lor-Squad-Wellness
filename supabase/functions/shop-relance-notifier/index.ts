@@ -21,6 +21,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { fetchLecturesAvecReessais } from "../_shared/reessais.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -79,7 +80,9 @@ async function sendEmail(
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok");
 
-  const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+  // Robot planifié : sa première lecture cale souvent ~5 s (incident Nano,
+  // 14/09). On la relance — lectures seulement, cf. `_shared/reessais.ts`.
+  const sb = createClient(SUPABASE_URL, SERVICE_KEY, { global: { fetch: fetchLecturesAvecReessais } });
   const nowIso = new Date().toISOString();
   const result = { abandoned: 0, coach_alerts: 0, review: 0 };
 

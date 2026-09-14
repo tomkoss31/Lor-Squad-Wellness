@@ -14,6 +14,7 @@
 
 import webpush from "https://esm.sh/web-push@3.6.7";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fetchLecturesAvecReessais } from "./reessais.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -45,8 +46,15 @@ function ensureVapid(): void {
   }
 }
 
-export function getServiceClient(): SupabaseClient {
-  return createClient(SUPABASE_URL, SERVICE_KEY);
+/**
+ * `reessais: true` relance les LECTURES qui calent (cf. `reessais.ts`, incident
+ * Nano du 14/09). Réservé aux robots planifiés. Par défaut RIEN ne change pour
+ * les autres fonctions qui passent par ici — dont la réservation publique.
+ */
+export function getServiceClient(options: { reessais?: boolean } = {}): SupabaseClient {
+  return options.reessais
+    ? createClient(SUPABASE_URL, SERVICE_KEY, { global: { fetch: fetchLecturesAvecReessais } })
+    : createClient(SUPABASE_URL, SERVICE_KEY);
 }
 
 export interface PushPayload {

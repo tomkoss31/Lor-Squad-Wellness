@@ -64,7 +64,9 @@ serve(async (req) => {
     return jsonResponse({ success: true, envoyes: 0, raison: "resend_non_configure" });
   }
 
-  const sb = getServiceClient();
+  // Robot planifié : sa première lecture cale souvent ~5 s (incident Nano,
+  // 14/09). On la relance — lectures seulement, cf. `_shared/reessais.ts`.
+  const sb = getServiceClient({ reessais: true });
   const maintenant = Date.now();
   const pasAvant = new Date(maintenant - HEURES_MAX * 60 * 60 * 1000).toISOString();
   const pasApres = new Date(maintenant - MINUTES_MIN * 60 * 1000).toISOString();
