@@ -115,7 +115,9 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const sb = getServiceClient();
+  // Robot planifié : sa première lecture cale souvent ~5 s (incident Nano,
+  // 14/09). On la relance — lectures seulement, cf. `_shared/reessais.ts`.
+  const sb = getServiceClient({ reessais: true });
   const now = new Date();
 
   try {
