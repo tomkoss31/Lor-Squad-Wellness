@@ -6,7 +6,7 @@
 // une interface allégée (Co-pilote + Académie + Messagerie + Paramètres,
 // pas de fiches clients ni de portefeuille).
 //
-// Cas d'usage : Aurélie de Mouttes — Supervisor 50% qui ne fait pas le
+// Cas d'usage : une Supervisor 50% qui ne fait pas le
 // business mais veut tracker ses royalties.
 // =============================================================================
 
@@ -257,12 +257,12 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
         <div style={{ padding: "22px 26px 24px" }}>
           {!result ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <Field label="Nom complet" hint="ex. Aurélie de Mouttes">
+              <Field label="Nom complet" hint="ex. Claire de Montval">
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Aurélie de Mouttes"
+                  placeholder="Claire de Montval"
                   style={inputStyle}
                   disabled={submitting}
                   maxLength={80}

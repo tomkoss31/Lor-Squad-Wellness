@@ -464,7 +464,7 @@ export function BoutiqueAdminPage() {
             style={input}
             value={lgEntity}
             onChange={(e) => setLgEntity(e.target.value)}
-            placeholder="Ex. Victoria Cavalec"
+            placeholder="Ex. Camille Durand"
           />
           <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 5 }}>
             En VDI ou en auto-entrepreneur, c'est simplement ton prénom + nom.

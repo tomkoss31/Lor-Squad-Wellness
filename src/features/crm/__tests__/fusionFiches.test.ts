@@ -1,4 +1,5 @@
-// Cas construits sur les doublons REELS mesures en base le 24/08.
+// Cas construits sur le modele des doublons reels mesures en base le 24/08
+// (noms et numeros remplaces par des valeurs fictives).
 import { describe, expect, it } from "vitest";
 import { fusionnerGroupe, type FicheFusionnable } from "../fusionFiches";
 
@@ -31,7 +32,7 @@ describe("fusionnerGroupe", () => {
   it("LE CAS FLORIAN : le bilan gagne meme s'il etait arrive AVANT", () => {
     const club = base({
       table: "prospect_leads", createdAt: "2026-08-07T20:23:00.000Z", // le PLUS RECENT
-      lastName: "D.", phone: "0656767578",
+      lastName: "D.", phone: "0645454545",
     });
     const bilan = base({
       table: "online_bilans", createdAt: "2026-08-07T20:22:00.000Z", // le plus ancien
@@ -44,7 +45,7 @@ describe("fusionnerGroupe", () => {
     expect(r.vue.bilanObjectives).toEqual(["Perte de poids", "Sommeil", "Energie"]);
     // …sans PERDRE ce que portait la fiche club :
     expect(r.vue.lastName).toBe("D.");
-    expect(r.vue.phone).toBe("0656767578");
+    expect(r.vue.phone).toBe("0645454545");
   });
 
   it("signale l'arrivee par deux portes, sans la masquer", () => {
@@ -151,12 +152,12 @@ describe("fusionnerGroupe", () => {
   it("LE CAS JUSTINE : la note de la fiche PAUVRE n'est plus jetee", () => {
     const maitre = base({
       createdAt: "2026-09-03T07:10:00.000Z",
-      lastName: "Santos", email: "j@ex.fr", phone: "0763920109", city: "Verdun",
+      lastName: "Morel", email: "j@ex.fr", phone: "0712345678", city: "Verdun",
       notes: "Lead formulaire Meta recu le 03/09.",
     });
     const doublon = base({
       createdAt: "2026-09-08T09:17:00.000Z",
-      phone: "0763920109",
+      phone: "0712345678",
       notes: "Dispos indiquees : Apres 16h du lundi au mercredi",
     });
     const r = fusionnerGroupe([maitre, doublon]);

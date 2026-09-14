@@ -2,7 +2,7 @@
 -- « trop_tard » sur une fiche qu'on vient de reprendre — le garde-fou de
 -- noter_disponibilites_lead ne connaissait qu'un seul cas.
 --
--- LE CONSTAT (10-11/09/2026, cas Justine Santos). `submit-prospect-lead`
+-- LE CONSTAT (10-11/09/2026, cas d'une lead Meta). `submit-prospect-lead`
 -- reconnaît depuis le 24/08 une personne qui revient et REPREND sa fiche
 -- existante au lieu d'en créer une deuxième (cf. migration doublons CRM).
 -- Mais `noter_disponibilites_lead` juge encore la fraîcheur d'une saisie sur

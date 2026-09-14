@@ -48,7 +48,7 @@ export interface VisitMember {
  * Ce que rend un tap sur « +1 ».
  *
  * ⚠️ 12/09/2026 — Thomas au comptoir : « j'ai cliqué mais rien ne se passe,
- * elle est déjà à 3 visites ». Audrey Marque AVAIT bien été pointée, par
+ * elle est déjà à 3 visites ». Cette membre AVAIT bien été pointée, par
  * Romane, cinq minutes plus tôt : la RPC `bbc_add_visit` refuse un doublon
  * dans les 10 minutes et rend `already_counted = true`, SANS erreur. Le hook
  * jetait cette réponse — il ne lisait que `error` — donc l'écran restait

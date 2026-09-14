@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Fix XP RPCs : token lookup en cascade 3 tables (2026-05-28)
 -- =============================================================================
--- Bug remonté Thomas : Isabelle Tondeur (et tout client qui ouvre l'app via un
+-- Bug remonté Thomas : une cliente (et tout client qui ouvre l'app via un
 -- lien recap/évolution post-bilan) se connecte, mais le bandeau XP reste à 0
 -- ad vitam.
 --

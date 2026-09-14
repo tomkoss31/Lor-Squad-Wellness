@@ -86,7 +86,7 @@ export function SalleOpsPreview() {
               view={DEMO_VIEW}
               /* Un admin n'a pas de parrain : sans ce parrain de
                  démonstration, le bloc resterait invisible à Thomas. */
-              demoParrain={{ nom: "Victoria Cavalec", telephone: "0676298049" }}
+              demoParrain={{ nom: "Camille Durand", telephone: "0612345678" }}
             />}
       {screen === "live" && <SalleOpsQuotidien view={ops} />}
     </div>

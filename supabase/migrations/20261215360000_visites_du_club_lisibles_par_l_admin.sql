@@ -3,7 +3,7 @@
 --
 -- Thomas, jour d'ouverture : « j'ai pointé des membres aujourd'hui dans les
 -- visites mais je ne vois que 2 personnes dans Ce matin ». Mesure du jour :
---   Thomas  2 pointages   (Ghislaine, Thomas Houbert)
+--   Thomas  2 pointages   (une membre, Thomas lui-même)
 --   Mélanie 6 pointages
 --   Romane  1 pointage
 --   -> 9 au total, et il en voyait exactement 2 : les siens.
@@ -34,7 +34,7 @@
 -- Vérifié après coup, sous chaque identité :
 --   Thomas (admin)              9 sur 9
 --   Mélanie (admin)             9 sur 9
---   Alexis Bourgoin (distri)    0 — il n'a rien pointé, il ne voit rien
+--   un distributeur          0 — il n'a rien pointé, il ne voit rien
 -- =============================================================================
 
 create policy club_visits_club_admin_read on public.club_visits

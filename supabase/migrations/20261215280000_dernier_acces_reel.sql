@@ -10,11 +10,11 @@
 -- saisie de mot de passe, parfois des mois plus tôt.
 --
 -- MESURÉ LE 01/09 (dernier accès déclaré vs bilan réellement créé) :
---   Sohyer Clément .... (vide)  vs 29/08 · 3 bilans en 30 jours
---   Alexis Bourgoin ... 29/06   vs 30/08   → 62 jours de retard
---   ZANARDI Sébastien . 15/06   vs 21/07   → 36 jours
---   Maria catalano .... 26/07   vs 17/08   → 22 jours
---   Manon MARTIN ...... 10/08   vs 30/08   → 20 jours
+--   distri A .......... (vide)  vs 29/08 · 3 bilans en 30 jours
+--   distri B .......... 29/06   vs 30/08   → 62 jours de retard
+--   distri C .......... 15/06   vs 21/07   → 36 jours
+--   distri D .......... 26/07   vs 17/08   → 22 jours
+--   distri E .......... 10/08   vs 30/08   → 20 jours
 -- On ne crée pas un bilan sans ouvrir l'app.
 --
 -- ⚠️ POURQUOI ÇA COMPTE PLUS QUE ÇA N'EN A L'AIR

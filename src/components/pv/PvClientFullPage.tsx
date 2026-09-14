@@ -876,7 +876,7 @@ function PremiumOrderBuilder({
     setSubmitting(true);
 
     // Fallback responsable (2026-04-29) : si record synthetique sans
-    // distributorId valide (cas Sylvie Chaumont sans tracking actif),
+    // distributorId valide (cas d'une cliente sans tracking actif),
     // on utilise currentUser pour ne pas faire planter l'INSERT.
     const safeResponsibleId =
       record.responsibleId && record.responsibleId.length > 0

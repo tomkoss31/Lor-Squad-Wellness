@@ -1,4 +1,5 @@
-// Les cas sont ceux MESURÉS en base le 24/08, pas des cas inventés.
+// Les cas reprennent la FORME de ceux mesurés en base le 24/08 (noms, numéros
+// et adresses remplacés par des valeurs fictives).
 import { describe, expect, it } from "vitest";
 import {
   clesDoublon,
@@ -17,10 +18,10 @@ describe("normaliserTelephone", () => {
   });
 
   it("REFUSE un email — c'etait le bug du badge", () => {
-    // `sarah123456@gmail.com` devenait le « telephone » 123456.
-    expect(normaliserTelephone("sarah123456@gmail.com")).toBeNull();
-    expect(normaliserTelephone("fatihaa4399@gmail.com")).toBeNull();
-    expect(normaliserTelephone("manon.perrin.55@gmail.com")).toBeNull();
+    // `sarah123456@exemple.fr` devenait le « telephone » 123456.
+    expect(normaliserTelephone("sarah123456@exemple.fr")).toBeNull();
+    expect(normaliserTelephone("sonia.r4399@exemple.fr")).toBeNull();
+    expect(normaliserTelephone("manon.dupuis.55@exemple.fr")).toBeNull();
   });
 
   it("refuse ce qui est trop court pour identifier quelqu'un", () => {
@@ -33,7 +34,7 @@ describe("normaliserTelephone", () => {
 
 describe("normaliserEmail", () => {
   it("met en minuscules et enleve les espaces", () => {
-    expect(normaliserEmail("  Manon.PERRIN.55@Gmail.com ")).toBe("manon.perrin.55@gmail.com");
+    expect(normaliserEmail("  Manon.DUPUIS.55@Exemple.fr ")).toBe("manon.dupuis.55@exemple.fr");
   });
 
   it("refuse ce qui n'est pas une adresse", () => {
@@ -74,7 +75,7 @@ describe("memePersonne", () => {
   });
 
   it("ne rapproche PAS deux inconnus qui partagent des chiffres dans leur adresse", () => {
-    expect(memePersonne({ contact: "fatihaa4399@gmail.com" }, { contact: "milmel4399@gmail.com" })).toBe(false);
+    expect(memePersonne({ contact: "sonia.r4399@exemple.fr" }, { contact: "julie.m4399@exemple.fr" })).toBe(false);
   });
 
   it("ne rapproche personne quand on ne sait rien", () => {
@@ -85,9 +86,9 @@ describe("memePersonne", () => {
 describe("grouperParPersonne", () => {
   it("regroupe les 3 fiches de claire (formulaire soumis 3x en 4 minutes)", () => {
     const fiches = [
-      { id: "a", phone: "0625014946", email: null },
-      { id: "b", phone: "06 25 01 49 46", email: null },
-      { id: "c", phone: "+33625014946", email: null },
+      { id: "a", phone: "0655443322", email: null },
+      { id: "b", phone: "06 55 44 33 22", email: null },
+      { id: "c", phone: "+33655443322", email: null },
     ];
     const groupes = grouperParPersonne(fiches);
     expect(groupes).toHaveLength(1);
@@ -113,8 +114,8 @@ describe("grouperParPersonne", () => {
 
   it("ne melange pas deux personnes differentes", () => {
     const groupes = grouperParPersonne([
-      { id: "manon-perrin", phone: "0608338106", email: "manon.perrin.55@gmail.com" },
-      { id: "manon-legrand", phone: "0699887766", email: "manon.legrand@gmail.com" },
+      { id: "manon-dupuis", phone: "0600112233", email: "manon.dupuis.55@exemple.fr" },
+      { id: "manon-garnier", phone: "0699887766", email: "manon.garnier@exemple.fr" },
     ]);
     expect(groupes).toHaveLength(2);
   });

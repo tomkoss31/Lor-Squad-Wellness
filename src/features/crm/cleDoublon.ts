@@ -13,11 +13,11 @@
 //      personnes. L'ambre « doublon » ne s'allumait que sur une saisie
 //      strictement identique — donc presque jamais.
 //   2. Le badge ne teste pas la présence d'un « @ » avant d'extraire les
-//      chiffres : `sarah123456@gmail.com` devient le « téléphone » `123456`,
+//      chiffres : `sarah123456@exemple.fr` devient le « téléphone » `123456`,
 //      six chiffres, seuil atteint. Deux inconnus partageant six chiffres dans
 //      leur adresse étaient déclarés doublons. Vérifié en base le 24/08 : la
 //      mine n'a pas encore explosé (tout le monde a un vrai numéro), mais c'est
-//      exactement le bug « Manon Legrand héritait du RDV de Manon PERRIN ».
+//      exactement le bug « une Manon héritait du RDV d'une autre Manon ».
 //
 // ── POURQUOI PLUSIEURS CLÉS ET PAS UNE ────────────────────────────────────
 // `CrmLead.contact` vaut `phone || email` : une personne qui laisse son

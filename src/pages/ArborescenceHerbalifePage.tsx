@@ -3,7 +3,7 @@
 //
 // Page admin pour reconstruire son arborescence Herbalife historique et
 // saisir les PV mensuels de chaque distri externe (ceux qui ne sont PAS
-// dans l'app : Virgile, Aurélie Urbes, Ophélie, etc.).
+// dans l'app : uplines historiques, anciens distri, etc.).
 //
 // Vue :
 //   - Header : compteur externes + chip mois en cours
@@ -455,7 +455,7 @@ export function ArborescenceHerbalifePage() {
           <textarea
             value={csvRaw}
             onChange={(e) => setCsvRaw(e.target.value)}
-            placeholder={`Virgile L.,success_builder_42,\nAurélie Urbes,senior_consultant_35,Virgile L.\nOphélie M.,success_builder_42,`}
+            placeholder={`Julien L.,success_builder_42,\nClaire M.,senior_consultant_35,Julien L.\nSonia R.,success_builder_42,`}
             style={textareaStyle}
             disabled={importing}
             rows={6}

@@ -1,24 +1,24 @@
 // =============================================================================
 // Écrire le nom des gens correctement.
 //
-// Les trois premiers cas sont de VRAIES lignes de la base de prod, relevées le
-// 16/08 : c'est ce qui s'affichait en gros en titre de fiche.
+// Les trois premiers cas reprennent la FORME de vraies lignes de la base de prod,
+// relevées le 16/08 (noms remplacés) : c'est ce qui s'affichait en titre de fiche.
 // =============================================================================
 
 import { describe, expect, it } from "vitest";
 import { nomPropre } from "../nomPropre";
 
 describe("les cas réels de la base", () => {
-  it("« claire dehaese » → « Claire Dehaese »", () => {
-    expect(nomPropre("claire dehaese")).toBe("Claire Dehaese");
+  it("« claire lefranc » → « Claire Lefranc »", () => {
+    expect(nomPropre("claire lefranc")).toBe("Claire Lefranc");
   });
 
-  it("« Fatiha Lamri zeggar » → « Fatiha Lamri Zeggar »", () => {
-    expect(nomPropre("Fatiha Lamri zeggar")).toBe("Fatiha Lamri Zeggar");
+  it("« Sonia Roche martel » → « Sonia Roche Martel »", () => {
+    expect(nomPropre("Sonia Roche martel")).toBe("Sonia Roche Martel");
   });
 
-  it("« PERRIN » crié en majuscules → « Perrin »", () => {
-    expect(nomPropre("PERRIN")).toBe("Perrin");
+  it("« DUPUIS » crié en majuscules → « Dupuis »", () => {
+    expect(nomPropre("DUPUIS")).toBe("Dupuis");
   });
 });
 
@@ -61,6 +61,6 @@ describe("les entrées vides", () => {
   });
 
   it("les espaces en trop sont ravalés", () => {
-    expect(nomPropre("  claire   dehaese  ")).toBe("Claire Dehaese");
+    expect(nomPropre("  claire   lefranc  ")).toBe("Claire Lefranc");
   });
 });

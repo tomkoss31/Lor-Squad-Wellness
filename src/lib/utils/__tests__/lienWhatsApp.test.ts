@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { lienWhatsApp, numeroPourWhatsApp } from "../lienWhatsApp";
 
 // wa.me refuse le zéro initial : « 0679448759 » n'ouvre aucune conversation.
-// Ces tests portent les VRAIS numéros de l'équipe (12/08/2026) — s'ils
+// Ces tests portent des numéros au format de ceux de l'équipe (12/08/2026) — s'ils
 // tombent, c'est que quelqu'un a repassé un numéro national dans un lien.
 
 describe("le numéro passé à wa.me", () => {
   it("convertit un numéro français national en international", () => {
     expect(numeroPourWhatsApp("0679448759")).toBe("33679448759");
     expect(numeroPourWhatsApp("0630860345")).toBe("33630860345");
-    expect(numeroPourWhatsApp("0769409822")).toBe("33769409822");
+    expect(numeroPourWhatsApp("0712345678")).toBe("33712345678");
   });
 
   it("accepte les espaces et la ponctuation de saisie", () => {

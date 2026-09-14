@@ -58,10 +58,10 @@ Total en jeu : **1 791,10 €**.
 
 ## 2. Ce n'est PAS « personne n'a payé »
 
-**Laurence MORAUX est devenue cliente de Mélanie le 17/07 — le jour même où son
+**Laurence M. est devenue cliente de Mélanie le 17/07 — le jour même où son
 lien de 324 € a été créé — avec 5 produits et le statut `active`.**
 
-Jeremy Maria est client de Thomas depuis le 25/07, actif, 1 produit. Son bilan
+Jeremy M. est client de Thomas depuis le 25/07, actif, 1 produit. Son bilan
 en ligne est marqué `qualified` et `converti`.
 
 Des gens ont donc payé. **L'application ne l'a simplement jamais su.**

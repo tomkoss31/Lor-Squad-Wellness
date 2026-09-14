@@ -194,11 +194,11 @@ export function CrmPage() {
   //
   // ⚠️ 24/08 — la normalisation maison était une mine. `(s).replace(/\D/g,"")`
   // ne vérifiait pas qu'il s'agissait d'un téléphone : appliquée à une adresse,
-  // elle n'en gardait que les chiffres (« sarah123456@gmail.com » → « 123456 »,
+  // elle n'en gardait que les chiffres (« sarah123456@exemple.fr » → « 123456 »,
   // six chiffres, seuil atteint). Deux inconnus partageant six chiffres dans
   // leur adresse étaient déclarés doublons. Vérifié en base le 24/08 : pas
-  // encore d'explosion, mais c'est le bug « Manon Legrand héritait du RDV de
-  // Manon PERRIN ». On passe sur la clé unique et testée.
+  // encore d'explosion, mais c'est le bug « une Manon héritait du RDV d'une
+  // autre Manon ». On passe sur la clé unique et testée.
 
 
   const msgCtx = useMemo(() => {
@@ -480,7 +480,7 @@ export function CrmPage() {
    * WhatsApp, sans regarder si le contact était un téléphone. Or le formulaire
    * du bilan en ligne accepte « un téléphone OU un email » : pour quelqu'un qui
    * n'a laissé qu'une adresse, `buildCrmWhatsAppLink` retirait tout ce qui n'est
-   * pas un chiffre — « sarah2024@gmail.com » devenait `wa.me/2024`, un
+   * pas un chiffre — « sarah2024@exemple.fr » devenait `wa.me/2024`, un
    * destinataire inventé. Et comme « Appeler » est déjà masqué faute de numéro,
    * ce lead n'avait plus AUCUN moyen d'être contacté depuis la liste.
    *

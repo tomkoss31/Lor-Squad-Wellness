@@ -237,7 +237,7 @@ export function HerbalifeUplinkPanel({ client }: Props) {
                   </div>
                   <input
                     type="text"
-                    placeholder="Nom (ex: Virgile, Aurélie Urbes)"
+                    placeholder="Nom (ex: Julien, Claire Martin)"
                     value={newExtName}
                     onChange={(e) => setNewExtName(e.target.value)}
                     style={{ ...inputStyle, marginBottom: 8 }}

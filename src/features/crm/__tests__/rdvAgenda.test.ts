@@ -12,7 +12,7 @@ import {
 // Le 14/09 à 16 h (Paris) : le moment où Romane a calé le rendez-vous.
 const MAINTENANT = Date.parse("2026-09-14T14:00:00Z");
 
-/** La ligne réelle de Nathalie Duhayon dans `prospects`, à peine anonymisée. */
+/** Une ligne calquée sur le cas du 14/09 dans `prospects`, valeurs fictives. */
 function ligne(o: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: "agenda-1",
@@ -21,9 +21,9 @@ function ligne(o: Record<string, unknown> = {}): Record<string, unknown> {
     duration_min: null,
     distributor_id: "romane",
     first_name: "Nathalie",
-    last_name: "Duhayon",
-    phone: "0645770460",
-    email: "nathalieduhayon51@gmail.com",
+    last_name: "Lemaire",
+    phone: "0645123456",
+    email: "nathalielemaire51@exemple.fr",
     ...o,
   };
 }
@@ -66,23 +66,23 @@ describe("rdvDepuisAgenda", () => {
   });
 });
 
-describe("rdvAgendaDuLead — le cas de Nathalie Duhayon", () => {
+describe("rdvAgendaDuLead — le cas du 14/09", () => {
   const index = indexerAgenda([ligne()], MAINTENANT);
 
   it("retrouve le rendez-vous calé depuis le CRM, même numéro écrit autrement", () => {
-    const rdv = rdvAgendaDuLead({ phone: "+33 6 45 77 04 60", email: null }, index);
+    const rdv = rdvAgendaDuLead({ phone: "+33 6 45 12 34 56", email: null }, index);
     expect(rdv?.id).toBe("agenda-1");
   });
 
   it("retrouve par l'adresse, sans tenir compte des majuscules", () => {
-    const rdv = rdvAgendaDuLead({ phone: null, email: "NathalieDuhayon51@Gmail.com" }, index);
+    const rdv = rdvAgendaDuLead({ phone: null, email: "NathalieLemaire51@Exemple.fr" }, index);
     expect(rdv?.id).toBe("agenda-1");
   });
 
   it("retrouve par le nom complet quand le contact manque des deux côtés", () => {
     const sansContact = indexerAgenda([ligne({ phone: null, email: null })], MAINTENANT);
     const rdv = rdvAgendaDuLead(
-      { phone: null, email: null, firstName: "nathalie", lastName: "DUHAYON" },
+      { phone: null, email: null, firstName: "nathalie", lastName: "LEMAIRE" },
       sansContact,
     );
     expect(rdv?.id).toBe("agenda-1");
@@ -125,17 +125,17 @@ describe("meilleurRdv", () => {
       [ligne({ id: "passe", rdv_date: "2026-09-01T08:00:00Z" }), ligne({ id: "demain" })],
       MAINTENANT,
     );
-    expect(rdvAgendaDuLead({ phone: "0645770460", email: null }, index)?.id).toBe("demain");
+    expect(rdvAgendaDuLead({ phone: "0645123456", email: null }, index)?.id).toBe("demain");
   });
 });
 
 describe("prefillRdvDepuisLead", () => {
   const lead: LeadPourRdv = {
     firstName: "Nathalie",
-    lastName: "Duhayon",
-    phone: "0645770460",
-    email: "nathalieduhayon51@gmail.com",
-    contact: "0645770460",
+    lastName: "Lemaire",
+    phone: "0645123456",
+    email: "nathalielemaire51@exemple.fr",
+    contact: "0645123456",
     contactIsPhone: true,
     source: "meta-ads",
     viaName: null,
@@ -145,9 +145,9 @@ describe("prefillRdvDepuisLead", () => {
 
   it("transmet le nom ET l'email — c'était le trou du 14/09", () => {
     const p = prefillRdvDepuisLead(lead, "Pub Meta");
-    expect(p.lastName).toBe("Duhayon");
-    expect(p.email).toBe("nathalieduhayon51@gmail.com");
-    expect(p.phone).toBe("0645770460");
+    expect(p.lastName).toBe("Lemaire");
+    expect(p.email).toBe("nathalielemaire51@exemple.fr");
+    expect(p.phone).toBe("0645123456");
   });
 
   it("range un lead de la pub dans la source « Meta Ads » de l'agenda", () => {
@@ -167,7 +167,7 @@ describe("prefillRdvDepuisLead", () => {
 
   it("garde le téléphone de l'ancien champ quand la colonne dédiée manque", () => {
     const p = prefillRdvDepuisLead({ ...lead, phone: null, email: null }, "Pub Meta");
-    expect(p.phone).toBe("0645770460");
+    expect(p.phone).toBe("0645123456");
     expect(p.email).toBeUndefined();
   });
 

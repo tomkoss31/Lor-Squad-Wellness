@@ -35,11 +35,11 @@
 --     - Gold   (35% market.) → 0.6360 (-36.4% effectif)
 --     - Ambassador (42%)     → 0.5835 (-41.7%, extrapolé sur distri 42%)
 --
--- Vérification Virginie DAUTEL (Silver, 5 produits 324€ catalog) :
+-- Vérification sur la même facture cliente (Silver, 5 produits 324€ catalog) :
 --   Revenue V5 = 324 × 0.7189 = 232,92 € (vs facture 235,04 €, gap 2€
 --   dû au drift Dec 2025 → Mar 2026)
 --
--- Marge Mandy au rang Senior Consultant 35% pour Virginie Silver :
+-- Marge Mandy au rang Senior Consultant 35% pour cette cliente Silver :
 --   margin = 324 × (0.7189 - 0.6421) = 324 × 0.0768 = 24,88 €
 --   (vs V4c qui calculait 81 € au rang 25% → bien plus réaliste)
 -- =============================================================================
