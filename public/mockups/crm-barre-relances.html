@@ -225,12 +225,12 @@ Ci-dessous, la vraie barre dans 390 px.</p>
 <script>
 const GENS = [
   ["zc","À relancer",3,"var(--ls-coral)",[
-    ["Djamal","Contacté·e il y a 13 jours · aucune suite prévue",0],
-    ["Armonie Chaumont","Appelé·e, pas de réponse · tu devais rappeler il y a 3 jours",1],
-    ["Malone","Contacté·e hier · aucune suite prévue",0]]],
+    ["Damien","Contacté·e il y a 13 jours · aucune suite prévue",0],
+    ["Aurélie P.","Appelé·e, pas de réponse · tu devais rappeler il y a 3 jours",1],
+    ["Maël","Contacté·e hier · aucune suite prévue",0]]],
   ["zt","Rendez-vous calés",2,"var(--ls-teal)",[
-    ["Mylène","Rendez-vous pris",0],
-    ["Anthony Adeline","Rendez-vous pris · Réseaux · Verdun",0]]],
+    ["Maud","Rendez-vous pris",0],
+    ["Arnaud B.","Rendez-vous pris · Réseaux · Verdun",0]]],
 ];
 function peupler(id, coches){
   const el = document.getElementById(id);
@@ -244,8 +244,8 @@ function peupler(id, coches){
       ).join("")
   ).join("");
 }
-peupler("liste-a", ["Djamal","Armonie Chaumont","Malone"]);
-peupler("liste-b", ["Djamal","Armonie Chaumont","Malone"]);
+peupler("liste-a", ["Damien","Aurélie P.","Maël"]);
+peupler("liste-b", ["Damien","Aurélie P.","Maël"]);
 
 function carte(id, cartes){
   document.getElementById(id).innerHTML = cartes
