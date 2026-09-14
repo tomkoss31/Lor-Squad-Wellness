@@ -991,8 +991,13 @@ export function CrmPage() {
           <button
             type="button"
             onClick={() => {
+              // Le libellé promet « tout le monde » : la case de jauge et les
+              // filtres du tiroir sautent aussi (relecture avant prod, 14/09).
+              // Le périmètre reste — ce n'est pas un filtre qu'on oublie.
               setView("active");
               setFilterSource("all");
+              setCaseFiltre(null);
+              setQualif(FILTRE_VIDE);
             }}
             style={sourceChip(false, "var(--ls-teal)")}
           >
@@ -1011,7 +1016,14 @@ export function CrmPage() {
           onAppeler={appeler}
           onEcrire={ecrireAuLead}
           onPlus={(l) => setMenuLead(l)}
-          ouvrirTout={search.trim() !== "" || caseFiltre !== null || nbFiltresQualif(qualif) > 0}
+          ouvrirTout={
+            /* Relecture avant prod (14/09) : la vue et la source réglées dans
+               le tiroir filtrent comme le reste — on cherche quelqu'un, on
+               ouvre. Pas le périmètre : une vue d'équipe n'est pas une
+               recherche, elle ne doit pas déplier la liste pour toujours. */
+            search.trim() !== "" || caseFiltre !== null || nbFiltresQualif(qualif) > 0 ||
+            view !== "active" || filterSource !== "all"
+          }
           doublonsDe={doublonsDe}
           messageVide={
             view === "archived"
@@ -1139,6 +1151,12 @@ export function CrmPage() {
           leads={regroupes}
           qualif={qualif}
           setQualif={setQualif}
+          autresReglages={nbReglages - nbFiltresQualif(qualif)}
+          onEffacerAutres={() => {
+            setScope("me");
+            setFilterSource("all");
+            setView("active");
+          }}
           vues={vues}
           setVues={setVues}
           onFermer={() => setQualifOuvert(false)}

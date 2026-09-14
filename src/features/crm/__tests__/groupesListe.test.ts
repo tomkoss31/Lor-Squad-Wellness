@@ -8,7 +8,7 @@
 // =============================================================================
 
 import { describe, it, expect } from "vitest";
-import { GROUPES, grouperPourListe, ordreDeListe } from "../groupesListe";
+import { GROUPES, grouperPourListe, ordreDeListe, sectionsOuvertes } from "../groupesListe";
 import { demandeUnGeste } from "../caseLead";
 import type { LeadEtape } from "../etapeLead";
 
@@ -61,5 +61,23 @@ describe("ordreDeListe — l'ordre des flèches du volet = l'ordre de l'écran",
   it("suit l'ordre déclaré par GROUPES", () => {
     expect(GROUPES.map((g) => g.cle)).toEqual(["nouveaux", "relance", "reste"]);
     expect(GROUPES.map((g) => g.urgent)).toEqual([true, true, false]);
+  });
+});
+
+describe("sectionsOuvertes — au premier affichage, la première section NON VIDE est ouverte", () => {
+  it("avec des nouveaux : seuls les nouveaux", () => {
+    expect(sectionsOuvertes(["nouveaux", "relance", "reste"], {}, false)).toEqual({ nouveaux: true, relance: false, reste: false });
+  });
+
+  it("un jour sans nouveau lead : les relances s'ouvrent — pas rien (relecture avant prod, 14/09)", () => {
+    expect(sectionsOuvertes(["relance", "reste"], {}, false)).toEqual({ nouveaux: false, relance: true, reste: false });
+  });
+
+  it("le choix du coach l'emporte sur le défaut", () => {
+    expect(sectionsOuvertes(["relance", "reste"], { relance: false, reste: true }, false)).toEqual({ nouveaux: false, relance: false, reste: true });
+  });
+
+  it("forcée (recherche, filtre) : toutes les sections non vides, même celles que le coach a fermées", () => {
+    expect(sectionsOuvertes(["nouveaux", "reste"], { nouveaux: false }, true)).toEqual({ nouveaux: true, relance: false, reste: true });
   });
 });

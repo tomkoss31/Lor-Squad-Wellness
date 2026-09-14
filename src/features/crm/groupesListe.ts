@@ -59,3 +59,24 @@ export function ordreDeListe<T extends LeadEtape>(leads: readonly T[]): T[] {
   const g = grouperPourListe(leads);
   return GROUPES.flatMap(({ cle }) => g[cle]);
 }
+
+/** Ce que le coach a lui-même ouvert ou fermé. Clé absente = rien décidé. */
+export type ChoixOuverture = Partial<Record<CleGroupe, boolean>>;
+
+/** Quelles sections sont ouvertes :
+ *  · forcée (recherche, filtre, une seule section à l'écran) → toutes ;
+ *  · sinon le choix du coach, s'il en a fait un ;
+ *  · sinon la PREMIÈRE SECTION NON VIDE — et non la clé « nouveaux ».
+ *    Relecture avant prod (14/09) : un jour sans nouveau lead, rien n'était
+ *    déplié, et les relances du jour restaient cachées sous « commence en
+ *    haut ». Les leads Meta n'arrivant plus seuls depuis le 08/09, ce jour-là
+ *    est fréquent. */
+export function sectionsOuvertes(
+  nonVides: readonly CleGroupe[],
+  choix: ChoixOuverture,
+  forcee: boolean,
+): Record<CleGroupe, boolean> {
+  const ouvertes: Record<CleGroupe, boolean> = { nouveaux: false, relance: false, reste: false };
+  for (const cle of nonVides) ouvertes[cle] = forcee || (choix[cle] ?? cle === nonVides[0]);
+  return ouvertes;
+}

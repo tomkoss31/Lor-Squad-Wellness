@@ -46,7 +46,7 @@
 import { useState } from "react";
 import type { CrmLead } from "../../hooks/useCrmLeads";
 import { caseDuLead, LIBELLE_CASE, type CaseLead } from "../../features/crm/caseLead";
-import { GROUPES, grouperPourListe, type CleGroupe } from "../../features/crm/groupesListe";
+import { GROUPES, grouperPourListe, sectionsOuvertes, type ChoixOuverture, type CleGroupe } from "../../features/crm/groupesListe";
 // On réutilise la phrase d'état et le score existants : ce sont eux qui
 // écrivent déjà « tu devais rappeler il y a 2 jours » ailleurs dans le CRM.
 // En réécrire une version ici recréerait le problème qu'on est en train de
@@ -95,20 +95,27 @@ const TEINTE_GROUPE: Record<CleGroupe, string> = {
 };
 
 /** Ce qui est replié se retrouve replié le lendemain : c'est un confort de
- *  l'appareil, pas une donnée — localStorage suffit. */
-const CLE_STOCKAGE = "crm-sections-ouvertes";
-const OUVERTES_PAR_DEFAUT: Record<CleGroupe, boolean> = { nouveaux: true, relance: false, reste: false };
+ *  l'appareil, pas une donnée — localStorage suffit. On n'y garde que les
+ *  sections que le coach a lui-même ouvertes ou fermées ; les autres suivent
+ *  le défaut (`sectionsOuvertes`). Clé renommée le 14/09 : l'ancienne
+ *  enregistrait aussi les défauts, comme s'ils avaient été choisis. */
+const CLE_STOCKAGE = "crm-sections-choix";
 
-function lireOuvertes(): Record<CleGroupe, boolean> {
+function lireChoix(): ChoixOuverture {
   try {
     const brut: unknown = JSON.parse(window.localStorage.getItem(CLE_STOCKAGE) ?? "null");
     if (brut && typeof brut === "object") {
-      return { ...OUVERTES_PAR_DEFAUT, ...(brut as Partial<Record<CleGroupe, boolean>>) };
+      const choix: ChoixOuverture = {};
+      for (const { cle } of GROUPES) {
+        const v = (brut as Record<string, unknown>)[cle];
+        if (typeof v === "boolean") choix[cle] = v;
+      }
+      return choix;
     }
   } catch {
     /* stockage indisponible (navigation privée…) : les défauts suffisent */
   }
-  return OUVERTES_PAR_DEFAUT;
+  return {};
 }
 
 /** 🔥 / ❄️ / 🧊 — rien pour « tiède ». */
@@ -120,19 +127,23 @@ function repereTemperature(lead: CrmLead) {
 export function CrmListe({
   leads, total, maintenant, onOuvrir, onAppeler, onEcrire, onPlus, doublonsDe, messageVide, ouvrirTout = false,
 }: Props) {
-  const [ouvertes, setOuvertes] = useState<Record<CleGroupe, boolean>>(lireOuvertes);
+  const [choix, setChoix] = useState<ChoixOuverture>(lireChoix);
   const groupes = grouperPourListe(leads);
   const nonVides = GROUPES.filter((g) => groupes[g.cle].length > 0);
+  const clesNonVides = nonVides.map((g) => g.cle);
   // Une seule section à l'écran (filtre de jauge, recherche étroite) : la
   // replier ne laisserait qu'un titre. Et quand on cherche quelqu'un, on ne
   // doit pas avoir à deviner dans quelle section il est rangé.
   const forcee = ouvrirTout || nonVides.length === 1;
-  const estOuverte = (cle: CleGroupe) => forcee || ouvertes[cle];
+  const ouvertes = sectionsOuvertes(clesNonVides, choix, forcee);
+  const estOuverte = (cle: CleGroupe) => ouvertes[cle];
   const dansDesRepliees = nonVides.filter((g) => !estOuverte(g.cle)).reduce((n, g) => n + groupes[g.cle].length, 0);
 
   function basculer(cle: CleGroupe) {
-    setOuvertes((prev) => {
-      const suivant = { ...prev, [cle]: !prev[cle] };
+    setChoix((prev) => {
+      // On inverse ce qui est AFFICHÉ, pas la valeur stockée : une section
+      // ouverte par défaut n'a encore aucun choix enregistré.
+      const suivant = { ...prev, [cle]: !sectionsOuvertes(clesNonVides, prev, forcee)[cle] };
       try {
         window.localStorage.setItem(CLE_STOCKAGE, JSON.stringify(suivant));
       } catch {

@@ -88,6 +88,32 @@ describe("leadScoring — « glacé »", () => {
     expect(computeLeadScore(lead({ ...opp, createdAt: ilYa(2) })).temperature).toBe("hot");
     expect(computeLeadScore(lead({ ...opp, createdAt: ilYa(50), contactedAt: ilYa(45) })).temperature).toBe("frozen");
   });
+
+  // Relecture avant prod, 14/09.
+  it("funnel Opportunité avec un rendez-vous pris : ne gèle pas non plus", () => {
+    const opp = { source: "opportunite" as const, funnelScore: 15, funnelTemperature: "hot" };
+    expect(computeLeadScore(lead({ ...opp, createdAt: ilYa(50), rdvLabel: "mar. 15 sept. 17:15" })).temperature).toBe("hot");
+    expect(computeLeadScore(lead({ ...opp, createdAt: ilYa(50), callbackRequestedAt: ilYa(40) })).temperature).toBe("hot");
+  });
+
+  it("un échange sans date connue (reco passée en « contacté ») ne devient pas « aucun échange »", () => {
+    const r = computeLeadScore(lead({ source: "reco-client", status: "contacted", createdAt: ilYa(35), contactedAt: null }));
+    expect(r.temperature).not.toBe("frozen");
+    expect(r.raison).not.toMatch(/aucun échange/);
+  });
+
+  it("une fiche close (convertie, perdue) n'est pas « glacée » : l'Historique ne ment pas", () => {
+    expect(computeLeadScore(lead({ status: "converted", createdAt: ilYa(80), contactedAt: ilYa(60) })).temperature).not.toBe("frozen");
+    expect(computeLeadScore(lead({ status: "lost", createdAt: ilYa(80), contactedAt: ilYa(60) })).temperature).not.toBe("frozen");
+  });
+
+  it("un RDV calé par la qualification (bilan en ligne, sans rdvLabel) ne gèle pas", () => {
+    expect(computeLeadScore(lead({ status: "qualified", createdAt: ilYa(80), contactedAt: ilYa(40) })).temperature).not.toBe("frozen");
+  });
+
+  it("… mais une reco à qui personne n'a parlé gèle comme les autres", () => {
+    expect(computeLeadScore(lead({ source: "reco-client", status: "new", createdAt: ilYa(35) })).temperature).toBe("frozen");
+  });
 });
 
 describe("TEMP_META", () => {

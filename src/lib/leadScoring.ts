@@ -56,6 +56,7 @@
 // =============================================================================
 
 import type { CrmLead } from "../hooks/useCrmLeads";
+import { caseDuLead } from "../features/crm/caseLead";
 import type { LeadTemperature as TemperatureFunnel } from "./opportunityLeadScore";
 
 /** Les quatre paliers du CRM. Le funnel Opportunité garde ses trois — il les
@@ -120,6 +121,19 @@ function joursDepuis(iso: string | null | undefined): number {
 /** Le temps gèle une fiche oubliée. Ne touche ni au score ni au détail : seule
  *  la température et sa raison changent. */
 function geleSiOubliee(r: UnifiedLeadScore, lead: CrmLead): UnifiedLeadScore {
+  // Relecture avant prod (14/09) — trois cas où « glacé » mentirait :
+  //  · un rendez-vous pris ou un rappel demandé ne gèle jamais, y compris pour
+  //    le funnel Opportunité, dont la branche passe AVANT ces gestes ;
+  //  · une fiche close (convertie, perdue) ou un RDV calé par la qualification
+  //    (bilan en ligne : pas de `rdvLabel`) n'est pas une fiche oubliée —
+  //    l'Historique affichait 🧊 sur des clients gagnés ;
+  //  · un échange a eu lieu mais sa date est inconnue (`client_referrals` n'a
+  //    pas de `contacted_at` : une reco passée en « contacté » gardait sa date
+  //    d'arrivée) — on ne peut pas écrire « aucun échange depuis N jours ».
+  if (lead.rdvLabel || lead.callbackRequestedAt) return r;
+  const c = caseDuLead(lead);
+  if (c === "converti" || c === "perdu" || c === "rdv") return r;
+  if (!lead.contactedAt && lead.status !== "new") return r;
   const jours = joursDepuis(lead.contactedAt ?? lead.createdAt);
   if (jours <= JOURS_SANS_ECHANGE_GLACE) return r;
   return { ...r, temperature: "frozen", raison: `aucun échange depuis ${jours} jours` };
