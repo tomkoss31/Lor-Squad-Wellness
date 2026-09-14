@@ -54,6 +54,7 @@ const BbcNewMemberSheet = lazy(() =>
 );
 import { LeadScheduleModal } from "../components/leads/LeadScheduleModal";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { prefillRdvDepuisLead } from "../features/crm/rdvAgenda";
 import { MoveClubBookingDialog } from "../components/crm/MoveClubBookingDialog";
 import { EtatRdvBloc } from "../components/crm/EtatRdvBloc";
 import { RepondreParMailModal } from "../components/crm/RepondreParMailModal";
@@ -367,7 +368,9 @@ export function CrmLeadDetailPage() {
   // d'acceptation ; à l'annulation, décision Thomas du 11/08 : aucun mail
   // automatique, on décroche son téléphone).
   async function handleAnnulerRdv() {
-    if (!lead?.rdv || annulationRdv) return;
+    // Un rendez-vous d'agenda ne s'annule pas par ici : `setRdvBookingStatus`
+    // cherche l'identifiant dans les réservations du site et ne toucherait rien.
+    if (!lead?.rdv || lead.rdv.origine === "agenda" || annulationRdv) return;
     const ok = window.confirm(
       `Annuler le rendez-vous de ${lead.firstName} (${lead.rdv.label}) ?\n\n` +
         "Aucun message ne part automatiquement : préviens-le·la toi-même.",
@@ -1264,18 +1267,17 @@ export function CrmLeadDetailPage() {
 
       {showAgenda ? (
         <ProspectFormModal
-          prefill={{
-            firstName: lead.firstName,
-            phone: lead.contactIsPhone ? lead.contact ?? undefined : undefined,
-            source: lead.source === "reco-client" || lead.source === "intention" ? "Parrainage" : "Autre",
-            sourceDetail: `CRM · ${src.label}${lead.viaName ? ` (via ${lead.viaName})` : ""}`,
-            note: lead.notes ?? undefined,
-          }}
+          // Nom, email, source Meta et coach du lead : cf. `prefillRdvDepuisLead`.
+          // Avant le 14/09 seuls le prénom et le téléphone suivaient.
+          prefill={prefillRdvDepuisLead(lead, src.label)}
           onClose={() => setShowAgenda(false)}
           onSaved={async () => {
             setShowAgenda(false);
             const next: CrmStatus = statusOptionsFor(lead.table).includes("qualified") ? "qualified" : "contacted";
             await updateStatus(lead, next);
+            // On relit : c'est ce qui fait apparaître le rendez-vous en haut de
+            // la fiche, au lieu de « Pas encore de rendez-vous ».
+            await refetch();
             pushToast({
               tone: "success",
               title: "RDV créé",

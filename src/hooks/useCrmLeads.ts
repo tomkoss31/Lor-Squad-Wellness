@@ -27,6 +27,7 @@ import { ecrireQualification, estQualifiable, statutPour } from "../features/crm
 import { nomPropre } from "../features/crm/nomPropre";
 import { cleIdentite } from "../features/crm/appariementRdv";
 import { clesDoublon } from "../features/crm/cleDoublon";
+import { indexerAgenda, meilleurRdv, rdvAgendaDuLead } from "../features/crm/rdvAgenda";
 import { ecrireCacheEcran, lireCacheEcran } from "../lib/cacheEcran";
 // Le vocabulaire de provenance a UNE source (src/types/domain.ts) : le tunnel,
 // les deux bilans et cet écran en dérivent tous. Deux listes recopiées, ce sont
@@ -59,7 +60,8 @@ export type CrmSource =
   | "inconnue";
 
 /**
- * Le rendez-vous apparié à un lead (table `rdv_bookings`).
+ * Le rendez-vous apparié à un lead — réservé sur le site (`rdv_bookings`) OU
+ * posé dans l'agenda (`prospects`), cf. `origine`.
  *
  * Il est apparié par contact ou par prénom, donc c'est un LIEN PROBABLE, pas
  * une clé étrangère : on s'en sert pour dire et pour agir sur un rendez-vous
@@ -74,6 +76,12 @@ export interface RdvLie {
   /** Le créneau est derrière nous — l'écran ne doit plus proposer d'y aller. */
   passe: boolean;
   label: string;
+  /**
+   * D'où il vient. `agenda` = posé à la main (« Caler un RDV », table
+   * `prospects`) : il ne se déplace ni ne s'annule depuis la fiche lead, ces
+   * gestes visent les réservations du site. Absent = une réservation du site.
+   */
+  origine?: "reservation" | "agenda";
 }
 
 export interface CrmLead {
@@ -628,7 +636,7 @@ export function useCrmLeads() {
       // est allé jusqu'au créneau. Sans ça, impossible de distinguer celui qui
       // a réservé de celui qui a abandonné à l'écran 1 — or c'est justement
       // celui-là qu'il faut rappeler (audit 2026-08-11).
-      const [bilansRes, prospectsRes, referralsRes, reservationsRes, intentionsRes] = await Promise.all([
+      const [bilansRes, prospectsRes, referralsRes, reservationsRes, intentionsRes, agendaRes] = await Promise.all([
         sb
           .from("online_bilans")
           // ONLINE-B : on EXCLUT les drafts « Curieux » (completed_at NULL) du
@@ -681,6 +689,19 @@ export function useCrmLeads() {
         //     .order("created_at", { ascending: false })
         //     .limit(500),
         Promise.resolve({ data: [] as IntentionRow[], error: null }),
+        // ⚠️ 14/09 — les rendez-vous posés À LA MAIN dans l'agenda. C'est là
+        // qu'écrit « Caler un RDV » du CRM… et le CRM ne relisait que les
+        // réservations du site. Nathalie Duhayon avait son rendez-vous dans
+        // l'agenda de Romane, et sa fiche disait « Pas encore de rendez-vous ».
+        // 30 jours en arrière suffisent : au-delà, un rendez-vous resté
+        // « prévu » ne dit plus rien d'utile sur l'étape du lead.
+        sb
+          .from("prospects")
+          .select("id, first_name, last_name, phone, email, rdv_date, duration_min, status, distributor_id")
+          .eq("status", "scheduled")
+          .gte("rdv_date", new Date(Date.now() - 30 * 86_400_000).toISOString())
+          .order("rdv_date", { ascending: true })
+          .limit(500),
       ]);
 
       // Garde-fou : on remonte la 1ère erreur au lieu d'un échec silencieux
@@ -794,15 +815,10 @@ export function useCrmLeads() {
       // de créneau », affirmé en gros sur la fiche. Pour 10 des 12 comptes
       // actifs, ç'aurait été faux à chaque fois. On préfère ne rien affirmer.
       let resasClubVues = 0;
-      const meilleur = (a: RdvLie | undefined, b: RdvLie): RdvLie => {
-        if (!a) return b;
-        // Un rendez-vous à venir bat toujours un rendez-vous passé.
-        if (a.passe !== b.passe) return a.passe ? b : a;
-        // À venir : le plus proche. Passés : le plus récent.
-        const aMs = new Date(a.slotStart).getTime();
-        const bMs = new Date(b.slotStart).getTime();
-        return a.passe ? (bMs > aMs ? b : a) : bMs < aMs ? b : a;
-      };
+      // « Lequel garder » vit dans `features/crm/rdvAgenda.ts` : la même règle
+      // sert désormais aux réservations ET à l'agenda. À venir bat passé ; à
+      // venir, le plus proche ; passés, le plus récent.
+      const meilleur = (a: RdvLie | undefined, b: RdvLie): RdvLie => meilleurRdv(a, b) ?? b;
       for (const b of (reservationsRes.data ?? []) as Array<Record<string, unknown>>) {
         const slotStart = String(b.slot_start);
         const t = new Date(slotStart).getTime();
@@ -819,6 +835,7 @@ export function useCrmLeads() {
             timeZone: "Europe/Paris", weekday: "short", day: "2-digit", month: "short",
             hour: "2-digit", minute: "2-digit",
           }).format(new Date(slotStart)),
+          origine: "reservation",
         };
         const c = String(b.contact ?? "").trim().toLowerCase();
         const identite = cleIdentite(b.first_name, b.last_name);
@@ -827,6 +844,15 @@ export function useCrmLeads() {
         // trouvable par son contact, jamais par ressemblance de prénom.
         if (identite) parIdentite.set(identite, meilleur(parIdentite.get(identite), rdv));
       }
+
+      // L'agenda, rangé pour être retrouvé lead par lead. Une erreur de lecture
+      // ne vide PAS le CRM : on perd seulement la mention du rendez-vous, et on
+      // le dit dans la console plutôt que de l'avaler.
+      if (agendaRes.error) console.warn(`[crm] agenda non relu : ${agendaRes.error.message}`);
+      const indexAgenda = indexerAgenda(
+        (agendaRes.data ?? []) as Array<Record<string, unknown>>,
+        maintenantMs,
+      );
 
       for (const row of prospectsRes.data ?? []) {
         const meta = (row.metadata ?? {}) as Record<string, unknown>;
@@ -862,10 +888,25 @@ export function useCrmLeads() {
         // Le contact d'abord (c'est lui qui identifie vraiment), le nom complet
         // ensuite — il rattrape les fautes de frappe dans l'adresse, sans jamais
         // confondre deux personnes qui partagent un prénom.
-        const rdvTrouve: RdvLie | null =
+        const rdvReserve: RdvLie | null =
           (cleContact ? parContact.get(cleContact) : undefined) ??
           (cleNom ? parIdentite.get(cleNom) : undefined) ??
           null;
+        // La réservation du site OU le rendez-vous calé au téléphone — le plus
+        // pertinent des deux. Sans la seconde source, « Caler un RDV » créait un
+        // rendez-vous que sa propre fiche ne voyait jamais.
+        const rdvTrouve: RdvLie | null = meilleurRdv(
+          rdvReserve,
+          rdvAgendaDuLead(
+            {
+              phone: (row.phone as string | null) ?? null,
+              email: (row.email as string | null) ?? null,
+              firstName: row.first_name,
+              lastName: row.last_name,
+            },
+            indexAgenda,
+          ),
+        );
 
         all.push({
           key: `prospect_leads:${row.id}`,

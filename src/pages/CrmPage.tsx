@@ -36,6 +36,7 @@ import {
   type CrmStatus,
 } from "../hooks/useCrmLeads";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { prefillRdvDepuisLead } from "../features/crm/rdvAgenda";
 import { useCuriousLeads } from "../hooks/useCuriousLeads";
 // Étape « À conclure » (28/08) : un rendez-vous passé doit produire une réponse.
 import { CrmAConclure, type CibleAConclure } from "../components/crm/CrmAConclure";
@@ -1280,16 +1281,9 @@ export function CrmPage() {
           lead passe automatiquement en Qualifié/Contacté à la création. */}
       {agendaLead ? (
         <ProspectFormModal
-          prefill={{
-            firstName: agendaLead.firstName,
-            phone: agendaLead.contactIsPhone ? agendaLead.contact ?? undefined : undefined,
-            source:
-              agendaLead.source === "reco-client" || agendaLead.source === "intention"
-                ? "Parrainage"
-                : "Autre",
-            sourceDetail: `CRM · ${CRM_SOURCE_META[agendaLead.source].label}${agendaLead.viaName ? ` (via ${agendaLead.viaName})` : ""}`,
-            note: agendaLead.notes ?? undefined,
-          }}
+          // Nom, email, source Meta et coach du lead : cf. `prefillRdvDepuisLead`.
+          // Avant le 14/09 seuls le prénom et le téléphone suivaient.
+          prefill={prefillRdvDepuisLead(agendaLead, CRM_SOURCE_META[agendaLead.source].label)}
           onClose={() => setAgendaLead(null)}
           onSaved={() => {
             const lead = agendaLead;
@@ -1298,7 +1292,9 @@ export function CrmPage() {
               const next: CrmStatus = statusOptionsFor(lead.table).includes("qualified")
                 ? "qualified"
                 : "contacted";
-              void handleStatusChange(lead, next);
+              // Puis on relit : sans ça la fiche restait « sans rendez-vous »
+              // jusqu'au prochain chargement de la page.
+              void Promise.resolve(handleStatusChange(lead, next)).then(() => refetch());
               pushToast({
                 tone: "success",
                 title: "RDV créé",

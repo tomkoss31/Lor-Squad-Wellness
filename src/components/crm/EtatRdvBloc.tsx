@@ -67,7 +67,13 @@ export function EtatRdvBloc({
     // Déplacer passe par les créneaux publics du club : sans club, la liste des
     // destinations n'existe pas. On masque le bouton plutôt que d'ouvrir une
     // fenêtre vide.
-    const deplacable = Boolean(lead.rdv.clubId) && peutModifierLeRdv;
+    // Un rendez-vous posé dans l'AGENDA (« Caler un RDV ») ne se déplace ni ne
+    // s'annule d'ici : ces deux boutons visent les réservations du site. Les
+    // montrer, c'était promettre un geste qui ne toucherait rien — l'annulation
+    // cherche son identifiant dans une autre table et rend zéro ligne.
+    const depuisAgenda = lead.rdv.origine === "agenda";
+    const deplacable = !depuisAgenda && Boolean(lead.rdv.clubId) && peutModifierLeRdv;
+    const annulable = !depuisAgenda && peutModifierLeRdv;
     const agenda = lienGoogleAgenda(lead.rdv, {
       titre: `RDV découverte — ${prenom}${lead.lastName ? ` ${lead.lastName}` : ""}`,
       details: lead.contact ? `Contact : ${lead.contact}` : undefined,
@@ -77,9 +83,11 @@ export function EtatRdvBloc({
         <div style={eyebrow}>Son rendez-vous</div>
         <h2 style={titre}>{creneauLong(lead.rdv.slotStart)}</h2>
         <p style={explication}>
-          {lead.rdv.clubId
-            ? `${prenom} a choisi ce créneau sur le site du club. `
-            : "Ce créneau est déjà réservé. "}
+          {depuisAgenda
+            ? "Ce rendez-vous est posé dans l'agenda. "
+            : lead.rdv.clubId
+              ? `${prenom} a choisi ce créneau sur le site du club. `
+              : "Ce créneau est déjà réservé. "}
           <strong style={{ color: "var(--ls-text)" }}>Tu n'as rien à caler</strong> — la place est
           prise.
         </p>
@@ -94,7 +102,7 @@ export function EtatRdvBloc({
               🕘 Déplacer
             </button>
           ) : null}
-          {peutModifierLeRdv ? (
+          {annulable ? (
             <button
               type="button"
               onClick={onAnnuler}
@@ -105,7 +113,11 @@ export function EtatRdvBloc({
             </button>
           ) : null}
         </div>
-        {!peutModifierLeRdv ? (
+        {depuisAgenda ? (
+          <p style={petiteNote}>
+            Pour le déplacer ou l'annuler, passe par l'agenda : c'est là qu'il vit.
+          </p>
+        ) : !peutModifierLeRdv ? (
           <p style={petiteNote}>
             Déplacer ou annuler ce créneau demande un accès administrateur — passe par Thomas ou
             Mélanie, ou appelle la personne directement.
