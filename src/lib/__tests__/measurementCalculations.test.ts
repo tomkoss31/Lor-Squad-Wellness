@@ -122,7 +122,7 @@ describe("getLatestSession / getInitialSession", () => {
   });
 });
 
-describe("mergeLatestPerZone / mergeInitialPerZone — le cas Catherine DAUMAIL (11/09/2026)", () => {
+describe("mergeLatestPerZone / mergeInitialPerZone — le cas du 11/09/2026", () => {
   // Reconstitution fidèle de sa fiche : la 1ère session porte les 10 zones,
   // puis elle mesure une zone à la fois sur plusieurs passages — exactement
   // le motif qui a fait remonter "Dernière mesure : 42 cm · 07 juin" alors

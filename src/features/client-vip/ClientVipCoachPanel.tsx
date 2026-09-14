@@ -75,7 +75,7 @@ export function ClientVipCoachPanel({ client }: Props) {
   const vipActive = Boolean(vipStartedAtValue);
   // Édition de la date d'activation VIP (2026-06-05, demande Thomas) : permet
   // de rétropédaler la date pour intégrer les commandes antérieures à
-  // l'activation manuelle (cas Huard : compte créé après les commandes).
+  // l'activation manuelle (cas d'une cliente : compte créé après les commandes).
   const [editingStartDate, setEditingStartDate] = useState(false);
   const [startDateInput, setStartDateInput] = useState<string>("");
   const [savingStartDate, setSavingStartDate] = useState(false);

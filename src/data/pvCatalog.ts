@@ -1407,7 +1407,7 @@ export function buildPvTrackingRecords(
 ): PvClientTrackingRecord[] {
   // 2026-04-29 : on inclut aussi les clients qui ont au moins un produit
   // tracke (pv_client_products) ou une transaction recente. Sinon les clients
-  // pas encore "started" (ex: Sylvie Chaumont en pause) restaient invisibles
+  // pas encore "started" (ex: une cliente en pause) restaient invisibles
   // meme apres qu'on leur ait enregistre une commande.
   const clientIdsWithProducts = new Set(
     persistedProducts.filter((p) => p.active).map((p) => p.clientId),

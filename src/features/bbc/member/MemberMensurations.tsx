@@ -97,8 +97,8 @@ function valeurDe(session: Measurement | undefined, key: MeasurementKey): number
  * c'est ce qui a été tapé ce jour-là, pas un instantané des 10 zones.
  *
  * Même bug, même cause, corrigé le même jour côté classique — cf.
- * `mergeLatestPerZone` dans measurementCalculations.ts (cas Catherine
- * DAUMAIL, 11/09/2026) : prendre `sessions[sessions.length-1]` telle quelle
+ * `mergeLatestPerZone` dans measurementCalculations.ts (cas du
+ * 11/09/2026) : prendre `sessions[sessions.length-1]` telle quelle
  * fait retomber la valeur affichée sur une mesure bien plus ancienne dès
  * que la personne mesure une zone à la fois.
  */

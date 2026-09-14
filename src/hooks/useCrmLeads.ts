@@ -691,7 +691,7 @@ export function useCrmLeads() {
         Promise.resolve({ data: [] as IntentionRow[], error: null }),
         // ⚠️ 14/09 — les rendez-vous posés À LA MAIN dans l'agenda. C'est là
         // qu'écrit « Caler un RDV » du CRM… et le CRM ne relisait que les
-        // réservations du site. Nathalie Duhayon avait son rendez-vous dans
+        // réservations du site. Une lead Meta avait son rendez-vous dans
         // l'agenda de Romane, et sa fiche disait « Pas encore de rendez-vous ».
         // 30 jours en arrière suffisent : au-delà, un rendez-vous resté
         // « prévu » ne dit plus rien d'utile sur l'étape du lead.
@@ -801,7 +801,7 @@ export function useCrmLeads() {
       // deux mois.
       const parContact = new Map<string, RdvLie>();
       // ⚠️ Par NOM COMPLET, plus par prénom seul (21/08). Un prénom n'identifie
-      // personne : « Manon Legrand » héritait du rendez-vous de « Manon PERRIN ».
+      // personne : une Manon héritait du rendez-vous d'une autre Manon.
       // Cf. `features/crm/appariementRdv.ts` pour l'histoire et la règle.
       const parIdentite = new Map<string, RdvLie>();
       const maintenantMs = Date.now();

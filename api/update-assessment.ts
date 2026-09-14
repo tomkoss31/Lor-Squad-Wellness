@@ -561,7 +561,7 @@ export default async function handler(req: any, res: any) {
       // Mais meme en reparant cette condition, la purge reste FAUSSE : la
       // composition PV d'un client n'est PAS derivee du seul bilan. Elle est
       // aussi alimentee par le comptoir / reassort / Mon panier (upsert dans
-      // supabaseService). Exemple reel : Lydie KEIL, cliente comptoir de longue
+      // supabaseService). Exemple reel : une cliente comptoir de longue
       // date, bilan sans produit retenu mais 3 produits reels en base — une
       // simple edition de son bilan les aurait tous effaces.
       //

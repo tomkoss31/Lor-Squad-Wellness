@@ -17,9 +17,9 @@
 import { describe, it, expect } from "vitest";
 import { filNote } from "../filNote";
 
-/** La vraie note de la fiche maître de Justine, mot pour mot. */
+/** La note de la fiche maître de Justine, dans sa forme réelle (nom cité remplacé). */
 const TRACE_META =
-  "Lead formulaire Meta recu le 03/09. ATTENTION : homonyme partiel - ne pas confondre avec Agnes FLORENTIN";
+  "Lead formulaire Meta recu le 03/09. ATTENTION : homonyme partiel - ne pas confondre avec Agnes MOREAU";
 /** Ce qu'elle a réellement laissé sur le site. */
 const SA_PAROLE = "🕑 Dispos indiquées : Après 16h du lundi au mercredi";
 
@@ -45,7 +45,7 @@ describe("filNote — le cas Justine", () => {
 
 describe("filNote — le piège horaire", () => {
   it("NE prend PAS « son RDV du 03/09 14h » pour une disponibilité", () => {
-    // Vécu : Agnès FLORENTIN a ANNULÉ son RDV de 14h. Le lire comme une dispo
+    // Vécu : une prospecte a ANNULÉ son RDV de 14h. Le lire comme une dispo
     // ferait rappeler à 14 h quelqu'un qui vient d'annuler.
     const fil = filNote("A ANNULE PAR MAIL son RDV du 03/09 14h. Elle a PREVENU.");
     expect(fil?.epingle.rang).not.toBe("parole");

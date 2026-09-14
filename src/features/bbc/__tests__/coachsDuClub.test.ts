@@ -61,7 +61,7 @@ describe("le prénom affiché", () => {
   it.each([
     ["Mélanie Dubois", "Mélanie"],
     ["Thomas", "Thomas"],
-    ["  ZANARDI Sébastien  ", "ZANARDI"],
+    ["  MARCHAND Julien  ", "MARCHAND"],
     ["", "Coach"],
     [null, "Coach"],
   ])("%s → %s", (entree, attendu) => {

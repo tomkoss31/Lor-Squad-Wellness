@@ -16,7 +16,7 @@
 -- le prix TTC public. Le discount réel est ~12-15 % en-dessous (logique
 -- comptable Herbalife : remise sur HT ajusté + TVA 5.5 % réintégrée).
 --
--- Vérification math sur facture Virginie DAUTEL (mai 2026, Silver) :
+-- Vérification math sur une facture cliente (mai 2026, Silver) :
 --   - Total HT avant remise : 287,05 €
 --   - Remise officielle :     -64,27 € (= 22,4 % de 287,05) ← match factor 0.776
 --   - HT après remise :       222,78 €

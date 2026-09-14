@@ -100,7 +100,7 @@ export function MeasurementsPanel({
   // `latest` (brute) ne sert plus qu'à la MÉTADONNÉE de la dernière ligne —
   // sa date, son auteur. Ses champs ne sont PLUS lus comme si cette ligne
   // portait l'état des 10 zones (cf. mergeLatestPerZone dans
-  // measurementCalculations.ts, le cas Daumail du 11/09/2026).
+  // measurementCalculations.ts, le cas du 11/09/2026).
   const latest = useMemo(() => getLatestSession(sessions), [sessions]);
   const latestByZone = useMemo(() => mergeLatestPerZone(sessions), [sessions]);
   const initialByZone = useMemo(() => mergeInitialPerZone(sessions), [sessions]);

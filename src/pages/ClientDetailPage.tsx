@@ -293,7 +293,7 @@ export function ClientDetailPage() {
   // Produits réellement commandés/actifs du client (Suivi PV). Sert de
   // fallback à la card "Programme actuel" quand aucun produit n'a été coché
   // au bilan : le coach a saisi les commandes via le réassort, elles doivent
-  // remonter dans le programme (fix 2026-06-05, cas Marjorie HUARD).
+  // remonter dans le programme (fix 2026-06-05, cas d'une cliente réelle).
   const activeClientProducts = pvClientProducts.filter(
     (p) => p.clientId === client.id && p.active,
   );

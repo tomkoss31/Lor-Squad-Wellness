@@ -103,7 +103,7 @@ export function getZoneDelta(
 }
 
 // =============================================================================
-// mergeLatestPerZone / mergeInitialPerZone — 11/09/2026, cas Catherine DAUMAIL.
+// mergeLatestPerZone / mergeInitialPerZone — 11/09/2026, cas d'une cliente.
 //
 // `saveSession` écrit UNE LIGNE par commit, avec seulement les zones saisies
 // ce jour-là (voulu, documenté dans useMeasurements.ts). Une personne qui
@@ -113,7 +113,7 @@ export function getZoneDelta(
 // comptait que SES champs, et la modale "Dernière mesure" retombait sur
 // `initial[key]` — la toute première session, jamais la vraie dernière.
 //
-// Chez Daumail (20 lignes, ~2 champs/ligne en moyenne) l'écart sautait aux
+// Chez elle (20 lignes, ~2 champs/ligne en moyenne) l'écart sautait aux
 // yeux : "Dernière mesure : 42 cm · 07 juin" quand son cou avait été mesuré
 // à 40,5 cm le 27/08. Chez les 27 autres clientes qui ont des mensurations,
 // le bug était DORMANT, pas absent : elles saisissent presque tout en un

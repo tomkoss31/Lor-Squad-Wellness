@@ -9,7 +9,7 @@
 --
 --   bbc_assign_card · bbc_add_visit · bbc_remove_visit · bbc_register_call
 --
--- Conséquence concrète, le jour où le club ouvre : Gaëlle Grandet a pris sa
+-- Conséquence concrète, le jour où le club ouvre : une membre a pris sa
 -- carte 10 visites, sa fiche est chez Mélanie — Thomas, PROPRIÉTAIRE du club et
 -- admin de l'app, ne peut pas la lui poser. Romane possède sa propre fiche :
 -- personne d'autre qu'elle ne peut lui vendre sa carte. Et l'écran répond

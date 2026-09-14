@@ -77,11 +77,11 @@ describe("aucune case invérifiable ne retient le fil", () => {
 });
 
 describe("les vrais coachs, relevés le 12/08/2026", () => {
-  it("Charlène, Sohyer, Vivien — aucune porte : on vise le 1er bilan", () => {
+  it("Charlène, Vivien et un 3e coach — aucune porte : on vise le 1er bilan", () => {
     expect(etapeMiseEnAvant(profil())).toBe("Présenter");
   });
 
-  it("Maria (41 bilans), Mandy (27), Alexis, Manon, ZANARDI — on vise le 1er pack", () => {
+  it("Maria (41 bilans), Mandy (27), Alexis, Manon et un 5e coach — on vise le 1er pack", () => {
     // AVANT ce chantier : toutes ces personnes voyaient « Étape 1 · S'équiper ».
     const elles = profil("premier_bilan");
     expect(etapeMiseEnAvant(elles)).toBe("Présenter");

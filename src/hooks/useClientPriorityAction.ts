@@ -47,7 +47,7 @@ export function computePriorityAction(
   // Les cas complete_initial / send_followup / request_share_consent n'ont
   // de sens QUE si le client est démarré. Sinon, le bloc "Action prioritaire"
   // affichait à tort "J+3 · Ressentis" pour des prospects "Programme à
-  // confirmer" (cas Ethan Feron). plan_rdv reste actif (légitime de planifier
+  // confirmer" (cas d'un prospect réel). plan_rdv reste actif (légitime de planifier
   // un RDV même pour un client non démarré).
   const isStarted = isClientProgramStarted(client);
   const latestAssessment = [...(client.assessments ?? [])].sort(

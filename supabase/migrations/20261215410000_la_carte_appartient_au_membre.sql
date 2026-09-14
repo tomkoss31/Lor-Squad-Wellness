@@ -3,8 +3,8 @@
 -- pas au coach qui l'a vendue.
 --
 -- ── LE CONSTAT (Thomas au comptoir, 12/09/2026) ────────────────────────────
--- Audrey Marque est venue 3 fois. Sa carte 10 affiche 1 visite utilisée.
--- Anaïs Boulangé est venue 2 fois : sa carte en affiche 1. Le pointage écrit
+-- Une membre est venue 3 fois. Sa carte 10 affiche 1 visite utilisée.
+-- Une autre est venue 2 fois : sa carte en affiche 1. Le pointage écrit
 -- bien une ligne dans `club_visits` — mais avec `card_id = NULL`, donc le
 -- compteur de la carte ne bouge jamais.
 --

@@ -1,10 +1,10 @@
 // =============================================================================
 // Rattacher un rendez-vous à un lead : la clé d'identité.
 //
-// LE BUG, remonté par Thomas le 21/08. Le CRM affichait pour **Manon Legrand**
-// un rendez-vous le 29/08 à 10h — le rendez-vous de **Manon PERRIN**. Deux
+// LE BUG, remonté par Thomas le 21/08. Le CRM affichait pour **une Manon**
+// un rendez-vous le 29/08 à 10h — le rendez-vous d'**une autre Manon**. Deux
 // personnes différentes, deux adresses, deux numéros. Personne n'avait rien
-// validé avec Manon Legrand, et elle n'a jamais reçu d'heure par mail : elle
+// validé avec la première, et elle n'a jamais reçu d'heure par mail : elle
 // n'a tout simplement JAMAIS réservé, elle a laissé ses coordonnées le 19/08 et
 // s'est arrêtée là.
 //

@@ -142,7 +142,7 @@ serve(async (req) => {
   // LE CONSTAT (mesure en base du 24/08). Cette fonction faisait un `.insert()`
   // sec, sans aucun contrôle. Chaque passage dans le tunnel du club créait donc
   // une fiche de plus — et comme une personne annule et re-réserve, les fiches
-  // s'empilaient. Le pire cas mesuré : **claire dehaese, 3 fiches en 4 minutes**
+  // s'empilaient. Le pire cas mesuré : **une même personne, 3 fiches en 4 minutes**
   // (10:15:52, 10:17:31, 10:19:54), avec des statuts DIVERGENTS (contacted /
   // new / contacted) — donc travaillées comme trois personnes différentes.
   // 3 des 5 groupes de doublons réels venaient de là.

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Rentabilité V4 — revenue = montant réellement payé par le client (2026-05-05)
 --
--- Bug remonté Thomas : la cliente Virginie DAUTEL (VIP Silver -25%) a
+-- Bug remonté Thomas : une cliente (VIP Silver -25%) a
 -- commandé pour 287,05 € HT et payé 235,04 € TTC après remise. L'app
 -- affichait 324 € (= prix retail brut, sans remise VIP appliquée).
 --

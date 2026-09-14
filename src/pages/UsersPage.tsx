@@ -756,11 +756,11 @@ export function UsersPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email Auth</label>
-                  <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="priscalexnutrition@gmail.com" />
+                  <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="prenom.nom@exemple.fr" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--ls-text-muted)]">ID Supabase (optionnel)</label>
-                  <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="2c6653c6-525a-48b7-8965-ee8439bf1798" />
+                  <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="00000000-0000-0000-0000-000000000000" />
                 </div>
               </div>
 

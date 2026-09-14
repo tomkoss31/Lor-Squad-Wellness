@@ -3,7 +3,7 @@
 //
 // Trouvé par la revue d'avant-prod du 31/08 : le bouton « Écrire » envoyait
 // TOUJOURS sur WhatsApp. Or `buildCrmWhatsAppLink` retire tout ce qui n'est pas
-// un chiffre : « sarah2024@gmail.com » devenait `wa.me/2024`, un destinataire
+// un chiffre : « sarah2024@exemple.fr » devenait `wa.me/2024`, un destinataire
 // inventé. Et comme « Appeler » est masqué faute de numéro, ce lead n'avait
 // plus AUCUN moyen d'être contacté depuis la liste.
 //
@@ -35,12 +35,12 @@ describe("le canal de contact suit ce qu'on a vraiment", () => {
 
   it("une adresse seule → MAIL, jamais WhatsApp", () => {
     // Le bug exact : ce lead partait sur wa.me/2024.
-    expect(canalPour({ phone: null, email: null, contact: "sarah2024@gmail.com", contactIsPhone: false }))
-      .toEqual({ canal: "mail", cible: "sarah2024@gmail.com" });
+    expect(canalPour({ phone: null, email: null, contact: "sarah2024@exemple.fr", contactIsPhone: false }))
+      .toEqual({ canal: "mail", cible: "sarah2024@exemple.fr" });
   });
 
   it("une adresse sans aucun chiffre aussi", () => {
-    expect(canalPour({ contact: "sarah@gmail.com", contactIsPhone: false }).canal).toBe("mail");
+    expect(canalPour({ contact: "sarah@exemple.fr", contactIsPhone: false }).canal).toBe("mail");
   });
 
   it("le téléphone prime quand on a les deux", () => {
@@ -54,14 +54,14 @@ describe("le canal de contact suit ce qu'on a vraiment", () => {
 
 describe("pourquoi la règle compte : ce que produisaient les constructeurs", () => {
   it("WhatsApp fabrique un numéro à partir d'une adresse — la preuve du bug", () => {
-    const url = buildCrmWhatsAppLink("sarah2024@gmail.com", "Bonjour");
+    const url = buildCrmWhatsAppLink("sarah2024@exemple.fr", "Bonjour");
     expect(url).toContain("2024");
     expect(url).not.toContain("@");
   });
 
   it("le lien mail, lui, garde l'adresse entière", () => {
-    const url = buildCrmMailLink("sarah2024@gmail.com", "Bonjour", "Ton bilan");
-    expect(url.startsWith("mailto:sarah2024@gmail.com?")).toBe(true);
+    const url = buildCrmMailLink("sarah2024@exemple.fr", "Bonjour", "Ton bilan");
+    expect(url.startsWith("mailto:sarah2024@exemple.fr?")).toBe(true);
   });
 
   it("un mailto sans adresse valide ne prétend pas en avoir une", () => {

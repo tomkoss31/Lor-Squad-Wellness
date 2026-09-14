@@ -48,9 +48,9 @@ describe("le lien", () => {
   });
 
   it("les accents et espaces du titre survivent à l'encodage", () => {
-    const url = lienGoogleAgenda(rdv, { titre: "Bilan — Mylène Roux", lieu: "La Base, Verdun" })!;
+    const url = lienGoogleAgenda(rdv, { titre: "Bilan — Mylène Lemaire", lieu: "La Base, Verdun" })!;
     const p = new URL(url).searchParams;
-    expect(p.get("text")).toBe("Bilan — Mylène Roux");
+    expect(p.get("text")).toBe("Bilan — Mylène Lemaire");
     expect(p.get("location")).toBe("La Base, Verdun");
   });
 

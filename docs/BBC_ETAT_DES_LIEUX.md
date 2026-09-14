@@ -2,7 +2,7 @@
 
 > Branche `feat/bbc`. Mis à jour 2026-07-24. Tout ce qui est « réel » est
 > branché en base + build vert. Données de démo seedées sur la fiche test
-> **Thomas Houbert** (client `97c88603`, token `961a1c58-0454-484d-8dd1-398d0ff4d971`).
+> **Thomas Houbert** (identifiants de la fiche retirés du dépôt public).
 
 ---
 

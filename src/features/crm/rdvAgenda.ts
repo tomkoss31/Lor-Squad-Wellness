@@ -1,7 +1,7 @@
 // =============================================================================
 // Le rendez-vous posé DANS L'AGENDA, rattaché à son lead.
 //
-// LE CONSTAT (Thomas, 14/09). Romane appelle Nathalie Duhayon, lead de la pub
+// LE CONSTAT (Thomas, 14/09). Romane appelle une lead de la pub
 // Meta, et lui cale un rendez-vous pour le lendemain avec « Caler un RDV »
 // depuis le CRM. Le rendez-vous est bien dans l'agenda. Mais la fiche du lead
 // reste « Pas encore de rendez-vous ».
@@ -164,7 +164,7 @@ function sourceAgenda(source: string): ProspectSource {
  * ⚠️ 14/09 — les deux boutons ne transmettaient que le prénom, le téléphone et
  * la note. Ni le NOM, ni l'EMAIL — alors que le formulaire sait les recevoir et
  * que l'email conditionne le rappel automatique de la veille. Romane a dû
- * retaper l'adresse de Nathalie Duhayon, pourtant présente sur sa fiche.
+ * retaper l'adresse de la lead, pourtant présente sur sa fiche.
  *
  * Le rendez-vous part dans l'agenda du coach À QUI LE LEAD EST CONFIÉ (Thomas,
  * 19/08 : « si dans le CRM on dit que ce lead est pour Mélanie, le RDV doit être

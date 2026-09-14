@@ -51,7 +51,7 @@ export function ClientMeasurementsSection({ clientId, coachFirstName, clientToke
       // complet par zone, pas la seule ligne la plus récente — sinon une
       // cliente qui mesure une zone à la fois se voit annoncer une perte
       // minuscule (parfois nulle), calculée sur 1-2 zones au lieu des
-      // vraies. Cf. mergeLatestPerZone, cas Daumail du 11/09/2026.
+      // vraies. Cf. mergeLatestPerZone, cas du 11/09/2026.
       const latestSnapshot = zonesToSnapshot(mergeLatestPerZone(list));
       const initialSnapshot = zonesToSnapshot(mergeInitialPerZone(list));
       setMotivationData({

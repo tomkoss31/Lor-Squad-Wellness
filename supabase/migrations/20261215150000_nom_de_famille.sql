@@ -6,7 +6,7 @@
 -- faux :
 --   • `ReserverClubPage.tsx:487` le demande, et il est OBLIGATOIRE ;
 --   • `submit-prospect-lead` le range dans `metadata.nom` — vérifié en base :
---     Catalano, Ducastelle, PERRIN, Legrand, Adeline, Daumail… tout y est ;
+--     une dizaine de noms de famille, tout y est ;
 --   • mais AUCUN écran ne le lit, et `rdv_bookings` ne l'a jamais reçu (la RPC
 --     ne le prend pas en paramètre).
 --

@@ -3,11 +3,11 @@ import { cleIdentite } from "../appariementRdv";
 
 describe("cleIdentite", () => {
   it("LE BUG DU 21/08 : deux Manon differentes ne doivent PAS se confondre", () => {
-    const legrand = cleIdentite("Manon", "Legrand");
-    const perrin = cleIdentite("Manon", "PERRIN");
-    expect(legrand).not.toBe(perrin);
-    expect(legrand).toBe("manon legrand");
-    expect(perrin).toBe("manon perrin");
+    const garnier = cleIdentite("Manon", "Garnier");
+    const dupuis = cleIdentite("Manon", "DUPUIS");
+    expect(garnier).not.toBe(dupuis);
+    expect(garnier).toBe("manon garnier");
+    expect(dupuis).toBe("manon dupuis");
   });
 
   it("sans nom de famille, on n'apparie pas — c'est tout le correctif", () => {
@@ -16,11 +16,11 @@ describe("cleIdentite", () => {
     expect(cleIdentite("Thomas", "")).toBeNull();
     expect(cleIdentite("Thomas", null)).toBeNull();
     expect(cleIdentite("Thomas", "   ")).toBeNull();
-    expect(cleIdentite("", "Veyrat")).toBeNull();
+    expect(cleIdentite("", "Morel")).toBeNull();
   });
 
   it("la meme personne reste appariee malgre la casse et les accents", () => {
-    expect(cleIdentite("claire", "dehaese")).toBe(cleIdentite("CLAIRE", "Dehaese"));
+    expect(cleIdentite("claire", "lefranc")).toBe(cleIdentite("CLAIRE", "Lefranc"));
     expect(cleIdentite("Mélanie", "Dupré")).toBe(cleIdentite("MELANIE", "dupre"));
   });
 

@@ -147,7 +147,7 @@ export default async function handler(req: any, res: any) {
   // (c'est `first_name` / `last_name`, et aucune migration ne l'a jamais créée).
   // Postgres répond `column "name" does not exist`, `data` vaut null, et l'écran
   // conclut « Aucune fiche client détectée — rien à rattacher ». Mesuré sur
-  // Romane GAVROY : sa fiche existe, 11 bilans, son espace client est relié à
+  // une coach de l'équipe : sa fiche existe, 11 bilans, son espace client est relié à
   // son compte — et l'écran ne la trouvait pas.
   //
   // L'erreur était invisible parce que `error` n'était jamais lu : un select

@@ -2,7 +2,7 @@
 // Le lien « répondre par mail ».
 //
 // Ce qu'on protège : le message arrive ENTIER et LISIBLE dans la messagerie.
-// Un encodage approximatif et le coach relit « Bonjour+Malone+!+👋 » avant
+// Un encodage approximatif et le coach relit « Bonjour+Sacha+!+👋 » avant
 // d'envoyer — il repartirait aussitôt au copier-coller.
 // =============================================================================
 
@@ -19,7 +19,7 @@ const CTX: CrmMessageContext = {
 const lead = (p: Partial<CrmLead> = {}): CrmLead =>
   ({
     key: "online_bilans:1", table: "online_bilans", id: "1",
-    firstName: "Malone", contact: "malone.muri9@gmail.com", contactIsPhone: false,
+    firstName: "Sacha", contact: "sacha.lemoine9@exemple.fr", contactIsPhone: false,
     city: null, source: "bilan-online", status: "contacted", viaName: null,
     parrainPhone: null, parrainClientId: null, extra: null, ownerUserId: null,
     relanceDue: false, relanceDueAt: null, derniereReponse: null, resultToken: null,
@@ -29,8 +29,8 @@ const lead = (p: Partial<CrmLead> = {}): CrmLead =>
 
 describe("le destinataire", () => {
   it("est bien la personne — plus besoin de copier son adresse", () => {
-    const url = buildCrmMailLink("malone.muri9@gmail.com", "Bonjour", "Objet");
-    expect(url.startsWith("mailto:malone.muri9@gmail.com?")).toBe(true);
+    const url = buildCrmMailLink("sacha.lemoine9@exemple.fr", "Bonjour", "Objet");
+    expect(url.startsWith("mailto:sacha.lemoine9@exemple.fr?")).toBe(true);
   });
 
   it("sans adresse, le mail s'ouvre quand même avec le message prêt", () => {
@@ -39,12 +39,12 @@ describe("le destinataire", () => {
   });
 
   it("un numéro de téléphone n'est pas un destinataire", () => {
-    expect(buildCrmMailLink("06 25 01 49 46", "Bonjour", "Objet").startsWith("mailto:?")).toBe(true);
+    expect(buildCrmMailLink("06 55 44 33 22", "Bonjour", "Objet").startsWith("mailto:?")).toBe(true);
   });
 });
 
 describe("le message arrive intact", () => {
-  const message = "Bonjour Malone ! 👋\n\nC'est Thomas, de La Base 360.\nÀ bientôt 🌿";
+  const message = "Bonjour Sacha ! 👋\n\nC'est Thomas, de La Base 360.\nÀ bientôt 🌿";
 
   it("les retours à la ligne et les accents survivent", () => {
     const u = new URL(buildCrmMailLink("a@b.fr", message, "Objet"));

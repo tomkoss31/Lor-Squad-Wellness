@@ -2,7 +2,7 @@
 -- Hotfix import clients (2026-04-21) — réparation des questionnaires
 -- incomplets sur les assessments importés via SQL brut.
 --
--- Contexte : 2 clientes (Isabelle Tondeur, Christelle Brico) ont été
+-- Contexte : 2 clientes ont été
 -- importées hier. Leur `assessments.questionnaire` n'a pas les sous-clés
 -- tableau (recommendations, selectedProductIds, detectedNeedIds) que le
 -- code app suppose toujours initialisées à []. Résultat : crash

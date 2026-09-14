@@ -48,7 +48,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
    * Le retour du tap. Au comptoir on tape debout, souvent à deux (Thomas et
    * Romane sur la même liste) : sans un mot à l'écran, un pointage refusé
    * parce que l'autre vient de le faire est indiscernable d'une panne.
-   * C'est exactement ce qui est remonté le 12/09 sur Audrey Marque.
+   * C'est exactement ce qui est remonté le 12/09 sur une membre.
    */
   const [mot, setMot] = useState<{ texte: string; ton: "ok" | "deja" } | null>(null);
   /**

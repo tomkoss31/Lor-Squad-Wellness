@@ -1,8 +1,8 @@
 // =============================================================================
 // nomPropre — écrire le nom des gens correctement, quoi qu'ils aient tapé.
 //
-// Les formulaires publics ne corrigent rien : la base contient « claire
-// dehaese », « Fatiha Lamri zeggar » et « Manon PERRIN ». Depuis que le nom de
+// Les formulaires publics ne corrigent rien : la base contient des « claire
+// lefranc », « Sonia Roche martel » ou « Manon DUPUIS » (exemples fictifs). Depuis que le nom de
 // famille est affiché en titre de fiche (16/08), ça se voit — et un prénom en
 // minuscule dans un message pré-rempli (« Hello claire ! ») fait négligé.
 //
@@ -19,7 +19,7 @@ function motPropre(mot: string): string {
   if (!mot) return mot;
 
   // Un mot entièrement en capitales n'est pas un choix typographique, c'est un
-  // formulaire rempli avec la touche majuscule enfoncée : « PERRIN » → « Perrin ».
+  // formulaire rempli avec la touche majuscule enfoncée : « DUPUIS » → « Dupuis ».
   const toutEnCapitales = mot === mot.toLocaleUpperCase("fr-FR");
   if (!toutEnCapitales) {
     // On ne préserve une majuscule intérieure que si le mot commence déjà par
@@ -33,7 +33,7 @@ function motPropre(mot: string): string {
 
   const bas = mot.toLocaleLowerCase("fr-FR");
   // Les composés se recomposent morceau par morceau : « jean-marc » →
-  // « Jean-Marc », « lamri-zeggar » → « Lamri-Zeggar », « d'artagnan » →
+  // « Jean-Marc », « roche-martel » → « Roche-Martel », « d'artagnan » →
   // « D'Artagnan ».
   return bas.replace(/(^|[-'’])([a-zà-þ])/g, (_, sep: string, lettre: string) =>
     sep + lettre.toLocaleUpperCase("fr-FR"),
@@ -59,13 +59,13 @@ export function nomPropre(brut: string | null | undefined): string {
 }
 
 /**
- * Le nom complet tel qu'on l'affiche : « Claire Dehaese », pas « claire » ni
- * « claire dehaese ». Le prénom seul si on n'a pas le nom, et le repli fourni
+ * Le nom complet tel qu'on l'affiche : « Claire Lefranc », pas « claire » ni
+ * « claire lefranc ». Le prénom seul si on n'a pas le nom, et le repli fourni
  * si on n'a ni l'un ni l'autre.
  *
  * Un seul endroit décide de cette règle — sinon chaque écran réinvente son
  * `${prenom} ${nom}` et l'un d'eux oublie la casse. Mesuré le 19/08 : la base
- * contient « dehaese », « PERRIN », « Lamri zeggar ». Aucune n'est écrite comme
+ * contient des « lefranc », « DUPUIS », « Roche martel ». Aucune n'est écrite comme
  * on l'écrirait à la main.
  */
 export function nomAffiche(

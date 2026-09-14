@@ -110,7 +110,7 @@ serve(async (req) => {
     // Avant ce fix, seule la table 1 était inspectée → ~85% des clients
     // qui ouvraient l'app via un lien recap/évolution recevaient
     // "invalid_token" puis le front fallback sur snapshot figé
-    // (cas Angélique Carlu, 8 bilans coach mais 1 visible côté client).
+    // (cas d'une cliente : 8 bilans coach mais 1 visible côté client).
     let resolvedClientId: string | null = null;
     let resolvedTable: string | null = null;
     let resolvedExpiresAt: string | null = null;
@@ -232,7 +232,7 @@ serve(async (req) => {
       // Fix 2026-05-28 : ordre DESC + reverse côté serveur. Avant : ASC +
       // limit(20) → si un client a >20 bilans, on gardait les 20 plus
       // ANCIENS et le hero "Aujourd'hui" plafonnait à un bilan obsolète
-      // (cas Isabelle Tondeur, 20+ bilans, hero figé sur 11 mars alors
+      // (cas d'une cliente à 20+ bilans, hero figé sur 11 mars alors
       // que le dernier coach-side était 2026-05-27). On garde l'output
       // ASC pour ne pas casser les consumers (getStartingAssessment /
       // getCurrentAssessment supposent ordre ASC).

@@ -552,7 +552,7 @@ function AtelierScene({
 
   if (screen === "volet-lead") {
     const faux = { key: "z", id: "z", table: "prospect_leads", firstName: "Laure", lastName: "Petit",
-      contact: "06 51 55 55 08", contactIsPhone: true, city: "Toulouse", viaName: "Jeremy",
+      contact: "06 12 34 56 78", contactIsPhone: true, city: "Toulouse", viaName: "Jeremy",
       status: "contacted", createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
       contactedAt: new Date(Date.now() - 4 * 86400000).toISOString(), relanceDue: true,
       relanceDueAt: new Date(Date.now() - 3 * 86400000).toISOString(), objectif: "Perte de poids",
@@ -647,11 +647,11 @@ function AtelierScene({
       { key: "a", id: "a", table: "prospect_leads", firstName: "nadia", lastName: "CHEVALIER",
         source: "site-club", contact: "nadia@exemple.fr",
         createdAt: new Date(Date.now() - 25 * 60000).toISOString() },
-      { key: "b", id: "b", table: "prospect_leads", firstName: "Fatiha", lastName: "Lamri",
-        source: "colis", contact: "fatiha@exemple.fr",
+      { key: "b", id: "b", table: "prospect_leads", firstName: "Sonia", lastName: "Roche",
+        source: "colis", contact: "sonia@exemple.fr",
         createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
-      { key: "b2", id: "b2", table: "online_bilans", firstName: "Fatiha", lastName: "Lamri",
-        source: "bilan-online", contact: "fatiha@exemple.fr",
+      { key: "b2", id: "b2", table: "online_bilans", firstName: "Sonia", lastName: "Roche",
+        source: "bilan-online", contact: "sonia@exemple.fr",
         createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
       { key: "c", id: "c", table: "online_bilans", firstName: "Marc", lastName: "Leroy",
         source: "bilan-online", contact: "marc@exemple.fr",
@@ -676,8 +676,8 @@ function AtelierScene({
     return (
       <div className="bbc-mode">
         <BbcSupprimerMembre
-          prenom="Gwendoline"
-          nomComplet="Gwendoline DROUET"
+          prenom="Pauline"
+          nomComplet="Pauline MARCHAND"
           visites={7}
           onFermer={() => undefined}
           onConfirmer={async () => "Atelier : rien n'est supprimé ici."}
@@ -699,11 +699,11 @@ function AtelierScene({
             { id: "u-melanie", name: "Mélanie Vidal", role: "coach" },
           ],
           autres: [
-            { id: "u-1", name: "Jeremy Bazard", role: "coach" },
-            { id: "u-2", name: "Romane Delcourt", role: "coach" },
-            { id: "u-3", name: "Gabriel Marin", role: "distributeur" },
-            { id: "u-4", name: "Virginie Aubert", role: "distributeur" },
-            { id: "u-5", name: "Gaëlle Grandet", role: "distributeur" },
+            { id: "u-1", name: "Julien Faure", role: "coach" },
+            { id: "u-2", name: "Léa Fontaine", role: "coach" },
+            { id: "u-3", name: "Hugo Perret", role: "distributeur" },
+            { id: "u-4", name: "Inès Caron", role: "distributeur" },
+            { id: "u-5", name: "Chloé Brunet", role: "distributeur" },
           ],
         }}
         actuelId={null}
@@ -719,11 +719,11 @@ function AtelierScene({
     return (
       <QualifierRdvSheet
         cible={{
-          nomComplet: "Céline Ducastelle",
+          nomComplet: "Céline Marchetti",
           heure: "09:00",
           jour: "mercredi 19 août",
           objectif: "perte de poids",
-          contact: "celine-ducastelle@outlook.fr",
+          contact: "celine-marchetti@exemple.fr",
           partenaire: null,
         }}
         onMembre={() => undefined}

@@ -718,7 +718,7 @@ export async function loginWithSupabaseCredentials(payload: {
   // RLS). La requête directe échouait pour TOUT client : la seule policy SELECT
   // de client_app_accounts est réservée aux COACHES (is_active_user()), donc un
   // client ne peut pas lire sa propre ligne → data vide → « compte pas lié à un
-  // espace », alors que le lien existait bien (cas Virgile Famibelle).
+  // espace », alors que le lien existait bien (constaté sur un client réel).
   const { data: clientToken } = await client.rpc("get_my_client_app_token");
 
   if (clientToken) {

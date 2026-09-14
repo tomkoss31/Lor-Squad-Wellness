@@ -142,7 +142,7 @@ async function sendViaResend(to: string, subject: string, html: string, from?: s
 }
 
 // Les numéros en base sont saisis à la main sous 4 formats au moins :
-// 0672831599 / +33608338106 / 06 28 28 68 78 / 07 63 92 01 09. Twilio exige
+// 06XXXXXXXX / +336XXXXXXXX / 06 XX XX XX XX / 07 XX XX XX XX. Twilio exige
 // du E.164 strict (+33XXXXXXXXX). Rend null plutôt que d'envoyer à l'aveugle
 // sur un numéro mal formé (fixe, incomplet, étranger non géré).
 function toE164FR(raw: string | null | undefined): string | null {
@@ -455,7 +455,7 @@ serve(async (req) => {
             // jeton est lu juste au-dessus pour le SMS. Le gabarit retombait donc
             // sur « Accéder à mon espace → », envoyé a des PROSPECTS qui n'ont
             // aucun compte : une page de connexion en guise de porte de sortie.
-            // Agnes Florentin a du annuler par mail le 03/09 faute de bouton.
+            // Une prospecte a du annuler par mail le 03/09 faute de bouton.
             const html = rdvEmailHtml({
               kind: "reminder",
               theme: themeRdv,

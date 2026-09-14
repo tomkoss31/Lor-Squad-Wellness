@@ -323,7 +323,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     // ⚠️ 01/09 — « QUI UTILISE ENCORE L'APP ? » N'AVAIT PAS DE RÉPONSE JUSTE.
     // `users.last_access_at` n'était écrit qu'à la connexion par mot de passe,
     // et cette app est une PWA à session persistante : on n'y repasse jamais.
-    // Résultat mesuré : 62 jours de retard sur Alexis, et `null` sur Sohyer
+    // Résultat mesuré : 62 jours de retard sur Alexis, et `null` sur un autre coach
     // qui faisait 3 bilans dans le mois. C'est pourtant CE chiffre qu'on lit
     // pour décider de supprimer une fonctionnalité.
     //
