@@ -43,9 +43,20 @@ interface Props {
   vues: VueSauvee[];
   setVues: (v: VueSauvee[]) => void;
   onFermer: () => void;
+  /** Les réglages posés dans `children` (périmètre, source, vue) : la pastille
+   *  du tiroir compte alors la même chose que « ⋯ Filtres · N » dans la barre,
+   *  et « Tout effacer » les remet aussi à zéro (relecture avant prod, 14/09). */
+  autresReglages?: number;
+  onEffacerAutres?: () => void;
+  /** Le périmètre (moi / équipe / ligne), les sources, la vue (actifs /
+   *  historique / endormis) et le tri. Ils vivaient dans « 📊 Périmètre &
+   *  sources », un second bouton de la barre, replié sous la liste ; Thomas
+   *  (14/09) : « périmètre passe en source » — un seul endroit pour filtrer. */
+  children?: React.ReactNode;
 }
 
-const TEMPS: LeadTemperature[] = ["hot", "warm", "cold"];
+// 14/09 — « glacé » rejoint les trois paliers (cf. leadScoring).
+const TEMPS: LeadTemperature[] = ["hot", "warm", "cold", "frozen"];
 
 const CSS = `
 .crm-flt-fond{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
@@ -80,11 +91,13 @@ function styleActif(couleur: string): React.CSSProperties {
   };
 }
 
-export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onFermer }: Props) {
+export function CrmPanneauFiltres({
+  leads, qualif, setQualif, vues, setVues, onFermer, autresReglages = 0, onEffacerAutres, children,
+}: Props) {
   // Compteurs de facette : indépendants les uns des autres, pour montrer ce que
   // vaut CHAQUE critère avant de cliquer (pas l'intersection courante).
   const parTemp = useMemo(() => {
-    const m: Record<string, number> = { hot: 0, warm: 0, cold: 0 };
+    const m: Record<string, number> = { hot: 0, warm: 0, cold: 0, frozen: 0 };
     for (const l of leads) m[computeLeadScore(l).temperature]++;
     return m;
   }, [leads]);
@@ -115,7 +128,7 @@ export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onF
       const next = arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
       return { ...prev, [cle]: next } as FiltreQualif;
     });
-  const total = nbActifs(qualif);
+  const total = nbActifs(qualif) + autresReglages;
 
   return (
     <div className="crm-flt-fond" onClick={onFermer}>
@@ -128,6 +141,14 @@ export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onF
         </div>
 
         <div className="crm-flt-corps">
+          {/* Périmètre & sources — en tête : c'est le filtre le plus fréquent. */}
+          {children ? (
+            <div className="crm-flt-fam">
+              <span className="crm-flt-eyebrow">Périmètre &amp; sources</span>
+              {children}
+            </div>
+          ) : null}
+
           {/* Température. */}
           <div className="crm-flt-fam">
             <span className="crm-flt-eyebrow">Température</span>
@@ -210,15 +231,18 @@ export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onF
         {/* Pied : résultat + sauver / effacer. */}
         <div className="crm-flt-pied">
           <div className="crm-flt-res"><b>{resultat}</b> lead{resultat > 1 ? "s" : ""} {estVide(qualif) ? "au total" : "correspondent"}</div>
-          {!estVide(qualif) ? (
+          {total > 0 ? (
             <div className="crm-flt-actions">
-              <button type="button" className="crm-flt-btn primaire" onClick={() => {
-                const nom = window.prompt("Nom de la vue ?", "Mes prioritaires")?.trim();
-                if (!nom) return;
-                const reste = [...vues.filter((v) => v.nom !== nom), { nom, filtre: qualif }];
-                setVues(reste); ecrireVues(reste);
-              }}>💾 Sauver comme vue</button>
-              <button type="button" className="crm-flt-btn" onClick={() => setQualif(FILTRE_VIDE)}>Tout effacer</button>
+              {/* Une vue sauvée ne retient que les questions qui qualifient. */}
+              {!estVide(qualif) ? (
+                <button type="button" className="crm-flt-btn primaire" onClick={() => {
+                  const nom = window.prompt("Nom de la vue ?", "Mes prioritaires")?.trim();
+                  if (!nom) return;
+                  const reste = [...vues.filter((v) => v.nom !== nom), { nom, filtre: qualif }];
+                  setVues(reste); ecrireVues(reste);
+                }}>💾 Sauver comme vue</button>
+              ) : null}
+              <button type="button" className="crm-flt-btn" onClick={() => { setQualif(FILTRE_VIDE); onEffacerAutres?.(); }}>Tout effacer</button>
             </div>
           ) : null}
         </div>

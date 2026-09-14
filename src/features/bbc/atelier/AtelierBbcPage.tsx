@@ -48,6 +48,9 @@ import { CrmColonneEtape } from "../../../components/crm/CrmColonneEtape";
 import { CrmPanneauLead } from "../../../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../../../components/crm/CrmPanneauFiltres";
 import { CrmFileDuJour } from "../../../components/crm/CrmFileDuJour";
+import { CrmListe } from "../../../components/crm/CrmListe";
+import { CrmJaugeFiltre } from "../../../components/crm/CrmJaugeFiltre";
+import { CrmRdvLigne } from "../../../components/crm/CrmRdvLigne";
 import { FILTRE_VIDE, lireVues, type FiltreQualif, type VueSauvee } from "../../../features/crm/filtresQualification";
 import { CrmJaugeEntonnoir } from "../../../components/crm/CrmJaugeEntonnoir";
 import { BbcAppels } from "../views/BbcAppels";
@@ -105,6 +108,7 @@ type ScreenKey =
   | "filtres-crm"
   | "file-du-jour"
   | "entonnoir"
+  | "liste-crm"
   | "bilan10";
 
 /**
@@ -148,6 +152,12 @@ const SCREENS: Screen[] = [
     label: "Jauge entonnoir (CRM)",
     source: "props",
     note: "La jauge cliquable du CRM (lot 3). Écran de l'app classique. Le pourcentage est un INSTANTANÉ (part de ceux arrivés à une étape qui sont allés plus loin) — la base ne garde aucun historique des changements d'étape, un vrai taux de passage serait inventé.",
+  },
+  {
+    k: "liste-crm",
+    label: "Liste CRM (14/09)",
+    source: "props",
+    note: "« Tes contacts » après le 14/09 : la bande (4 cases + RDV au bout), puis les sections repliables « Personne ne leur a encore parlé » / « À relancer » / « Le reste ». Huit leads fictifs couvrent ce qui change la mise en page : un nom très long, un lead sans téléphone (seul « Écrire »), un vrai chaud 🔥 (recommandé), des tièdes sans repère, un glacé 🧊 (45 jours sans échange), un RDV calé rangé dans le reste. Les sections se replient et s'en souviennent (localStorage) — au premier affichage seule la première est ouverte.",
   },
   {
     k: "file-du-jour",
@@ -491,6 +501,48 @@ function AtelierScene({
       <div style={{ minHeight: "100vh", background: "var(--ls-bg)", padding: 16 }}>
         <div style={{ maxWidth: 390, margin: "0 auto" }}>
           <CrmFileDuJour leads={L} maintenant={new Date()} onOuvrir={() => undefined} onWhatsApp={() => undefined} onAlors={() => undefined} onEntonnoir={() => undefined} />
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "liste-crm") {
+    const j = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+    const fut = (n: number) => new Date(Date.now() + n * 86400000).toISOString();
+    const b = {
+      table: "prospect_leads", source: "meta-ads", contact: "06 00 00 00 00", contactIsPhone: true, phone: "0600000000",
+      dormant: false, derniereReponse: null, rdv: undefined, rdvLabel: null, viaName: null, callbackRequestedAt: null,
+      abandonAvantCreneau: false, bilanMotivation: null, relanceDue: false, relanceDueAt: null,
+    };
+    const L = [
+      // Personne ne leur a encore parlé
+      { ...b, key: "n1", id: "n1", firstName: "François", lastName: "Delorme", status: "new", contactedAt: null, createdAt: j(2) },
+      { ...b, key: "n2", id: "n2", firstName: "Sandrine Charlotte", lastName: "Villeneuve-Delacour", status: "new", contactedAt: null, createdAt: j(0), viaName: "Mélanie" },
+      { ...b, key: "n3", id: "n3", firstName: "Nathalie", lastName: "Lemaire", status: "new", contactedAt: null, createdAt: j(1), contact: "nathalie@exemple.fr", contactIsPhone: false, phone: null },
+      // À relancer
+      { ...b, key: "r1", id: "r1", firstName: "Natacha", lastName: "Bret", status: "contacted", contactedAt: j(9), createdAt: j(18), relanceDue: true, relanceDueAt: j(7), derniereReponse: "pas_de_reponse" },
+      { ...b, key: "r2", id: "r2", firstName: "Armelle", lastName: "Picard", status: "contacted", contactedAt: j(7), createdAt: j(7), relanceDue: true, relanceDueAt: j(4), derniereReponse: "rappellera" },
+      { ...b, key: "r3", id: "r3", firstName: "Hervé", lastName: "Collin", status: "contacted", contactedAt: j(45), createdAt: j(58), relanceDue: true, relanceDueAt: j(2), derniereReponse: "pas_maintenant" },
+      // Le reste
+      { ...b, key: "s1", id: "s1", firstName: "Céline", lastName: "Marchetti", status: "qualified", contactedAt: j(3), createdAt: j(20), rdv: { slotStart: fut(1) }, rdvLabel: "mar. 15, 11:00" },
+      { ...b, key: "s2", id: "s2", firstName: "Justine", lastName: "Morel", status: "contacted", contactedAt: j(4), createdAt: j(20), relanceDueAt: fut(3) },
+    ] as unknown as Parameters<typeof CrmListe>[0]["leads"];
+    const comptes = { nouveau: 5, contacte: 33, relance: 24, rdv: 3, converti: 2, perdu: 4, endormi: 1 };
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--ls-bg)", padding: "18px 16px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <CrmJaugeFiltre comptes={comptes} filtre={null} onFiltrer={() => undefined}>
+            <CrmRdvLigne aVenir={4} prochain={fut(1)} onOuvrirAgenda={() => undefined} />
+          </CrmJaugeFiltre>
+          <CrmListe
+            leads={L}
+            total={L.length}
+            maintenant={new Date()}
+            onOuvrir={() => undefined}
+            onAppeler={() => undefined}
+            onEcrire={() => undefined}
+            onPlus={() => undefined}
+          />
         </div>
       </div>
     );
