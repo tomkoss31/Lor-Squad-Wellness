@@ -20,6 +20,12 @@
 // • Accepter une demande      → la SEULE action qui n'existait qu'ici. Elle
 //   reste, mais uniquement quand il y a vraiment quelque chose à accepter :
 //   zéro demande = zéro pixel.
+//
+// ── 14/09/2026 — AU BOUT DE LA BANDE ─────────────────────────────────────────
+// Elle n'est plus une bande violette à elle seule : elle se range au bout de la
+// bande des cases (`CrmJaugeFiltre`), sans fond ni bordure. Sur téléphone elle
+// passe sous les cases, pleine largeur. Le texte ne dit plus « Agenda › » : le
+// lien le dit par son nom accessible, et « › » suffit à l'œil.
 // =============================================================================
 
 const JOUR = new Intl.DateTimeFormat("fr-FR", {
@@ -41,52 +47,49 @@ interface Props {
 
 export function CrmRdvLigne({ aVenir, prochain, onOuvrirAgenda }: Props) {
   if (aVenir === 0) return null;
+  const quand = prochain ? JOUR.format(new Date(prochain)) : null;
 
   return (
-    <button type="button" onClick={onOuvrirAgenda} style={ligne}>
-      <span aria-hidden="true" style={{ display: "flex", color: "var(--ls-purple)" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-      </span>
-      <span style={texte}>
-        <b>{aVenir} rendez-vous</b> à venir
-        {prochain ? <span style={detail}> · prochain {JOUR.format(new Date(prochain))}</span> : null}
-      </span>
-      <span style={fleche}>Agenda ›</span>
-    </button>
+    <>
+      <style>{CSS}</style>
+      <button
+        type="button"
+        onClick={onOuvrirAgenda}
+        className="crm-rdv"
+        aria-label={`Ouvrir l'Agenda — ${aVenir} rendez-vous à venir${quand ? `, le prochain ${quand}` : ""}`}
+      >
+        <span className="crm-rdv-ico" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+        </span>
+        <span className="crm-rdv-txt">
+          <b>{aVenir} RDV</b> à venir{quand ? ` · prochain ${quand}` : ""}
+        </span>
+        <span className="crm-rdv-f" aria-hidden="true">›</span>
+      </button>
+    </>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const ligne: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  width: "100%",
-  minHeight: 46,
-  margin: "12px 0 0",
-  padding: "10px 13px",
-  borderRadius: 12,
-  background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface))",
-  border: "1px solid color-mix(in srgb, var(--ls-purple) 26%, transparent)",
-  color: "var(--ls-text)",
-  fontFamily: "'DM Sans', sans-serif",
-  fontSize: 13.5,
-  textAlign: "left",
-  cursor: "pointer",
-};
-
-const texte: React.CSSProperties = { flex: 1, minWidth: 0 };
-
-const detail: React.CSSProperties = { color: "var(--ls-text-muted)" };
-
-const fleche: React.CSSProperties = {
-  flex: "none",
-  color: "var(--ls-purple)",
-  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
-  fontSize: 12,
-};
+// Classes plutôt que `style={{}}` : la disposition change sous 768 px, et un
+// style en ligne rendrait la media query inerte (piège du 18/08).
+const CSS = `
+.crm-rdv{display:inline-flex;align-items:center;gap:7px;min-height:44px;max-width:100%;padding:0 8px 0 10px;border:0;border-radius:999px;background:transparent;color:var(--ls-text-muted);font-family:"DM Sans",sans-serif;font-size:13px;text-align:left;cursor:pointer}
+.crm-rdv:hover{background:color-mix(in srgb,var(--ls-purple) 8%,transparent)}
+.crm-rdv:focus-visible{outline:2px solid var(--ls-purple);outline-offset:2px}
+.crm-rdv-ico{display:flex;flex:none;color:var(--ls-purple)}
+.crm-rdv-txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm-rdv-txt b{color:var(--ls-text);font-weight:600}
+.crm-rdv-f{flex:none;color:var(--ls-purple);font-family:var(--lb360-mono,'JetBrains Mono',monospace);font-size:13px}
+@media (min-width:768px){
+  .crm-rdv{min-height:36px}
+}
+@media (max-width:767.98px){
+  .crm-rdv{padding:0 4px}
+  .crm-rdv-txt{white-space:normal}
+}
+`;

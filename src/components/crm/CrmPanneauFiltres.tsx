@@ -43,9 +43,15 @@ interface Props {
   vues: VueSauvee[];
   setVues: (v: VueSauvee[]) => void;
   onFermer: () => void;
+  /** Le périmètre (moi / équipe / ligne), les sources, la vue (actifs /
+   *  historique / endormis) et le tri. Ils vivaient dans « 📊 Périmètre &
+   *  sources », un second bouton de la barre, replié sous la liste ; Thomas
+   *  (14/09) : « périmètre passe en source » — un seul endroit pour filtrer. */
+  children?: React.ReactNode;
 }
 
-const TEMPS: LeadTemperature[] = ["hot", "warm", "cold"];
+// 14/09 — « glacé » rejoint les trois paliers (cf. leadScoring).
+const TEMPS: LeadTemperature[] = ["hot", "warm", "cold", "frozen"];
 
 const CSS = `
 .crm-flt-fond{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
@@ -80,11 +86,11 @@ function styleActif(couleur: string): React.CSSProperties {
   };
 }
 
-export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onFermer }: Props) {
+export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onFermer, children }: Props) {
   // Compteurs de facette : indépendants les uns des autres, pour montrer ce que
   // vaut CHAQUE critère avant de cliquer (pas l'intersection courante).
   const parTemp = useMemo(() => {
-    const m: Record<string, number> = { hot: 0, warm: 0, cold: 0 };
+    const m: Record<string, number> = { hot: 0, warm: 0, cold: 0, frozen: 0 };
     for (const l of leads) m[computeLeadScore(l).temperature]++;
     return m;
   }, [leads]);
@@ -128,6 +134,14 @@ export function CrmPanneauFiltres({ leads, qualif, setQualif, vues, setVues, onF
         </div>
 
         <div className="crm-flt-corps">
+          {/* Périmètre & sources — en tête : c'est le filtre le plus fréquent. */}
+          {children ? (
+            <div className="crm-flt-fam">
+              <span className="crm-flt-eyebrow">Périmètre &amp; sources</span>
+              {children}
+            </div>
+          ) : null}
+
           {/* Température. */}
           <div className="crm-flt-fam">
             <span className="crm-flt-eyebrow">Température</span>

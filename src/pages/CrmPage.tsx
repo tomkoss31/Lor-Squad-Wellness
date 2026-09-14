@@ -49,7 +49,7 @@ import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
 import { estQualifiable } from "../features/crm/ecrireQualification";
 import { CrmBoiteArrivee } from "../components/crm/CrmBoiteArrivee";
-import { CrmJaugeFiltre } from "../components/crm/CrmJaugeFiltre";
+import { CrmJaugeFiltre, HorsFlux } from "../components/crm/CrmJaugeFiltre";
 import { CrmListe } from "../components/crm/CrmListe";
 import { CrmRdvLigne } from "../components/crm/CrmRdvLigne";
 import { CrmDemandesRdv, type DemandeRdv } from "../components/crm/CrmDemandesRdv";
@@ -58,6 +58,7 @@ import { CrmCandidatsEquipe, type CandidatEquipe } from "../components/crm/CrmCa
 import { confirmationsRatees } from "../features/crm/confirmationRatee";
 import { CrmMenuLigne } from "../components/crm/CrmMenuLigne";
 import { caseDuLead, compterParCase, demandeUnGeste, type CaseActive } from "../features/crm/caseLead";
+import { ordreDeListe } from "../features/crm/groupesListe";
 import { CrmPanneauLead } from "../components/crm/CrmPanneauLead";
 import { CrmPanneauFiltres } from "../components/crm/CrmPanneauFiltres";
 import { clesDoublon, grouperParPersonne } from "../features/crm/cleDoublon";
@@ -158,13 +159,10 @@ export function CrmPage() {
   // ONLINE-B : section « Curieux » (commencé le bilan, pas fini) — repliable.
   const { curious, completionRate, loading: curiousLoading } = useCuriousLeads();
   const [showCurious, setShowCurious] = useState(false);
-  // Tout ce qui n'est pas « qui dois-je appeler aujourd'hui » passe derrière ce
-  // panneau. Mesure du 16/08 : 24 contrôles à traverser avant d'atteindre le
-  // premier lead, dont 5 pastilles de compteur qui ne sont même pas cliquables.
-  // Rien n'est supprimé — un tap et tout revient.
-  const [filtresOuverts, setFiltresOuverts] = useState(false);
-  // Le tiroir de qualification (CRM Board V2, lot 5), séparé du panneau
-  // périmètre/sources.
+  // Le tiroir « Filtres » (CRM Board V2, lot 5). Depuis le 14/09 il accueille
+  // AUSSI le périmètre, les sources, la vue et le tri, qui vivaient derrière un
+  // second bouton « 📊 Périmètre & sources ». Thomas : « périmètre passe en
+  // source » — un seul endroit pour régler ce que la liste montre.
   const [qualifOuvert, setQualifOuvert] = useState(false);
   // Les questions qui qualifient (CRM Board V2, lot 5) : température, signaux
   // d'alerte, objectif. Et les vues sauvées, en localStorage — une vue est un
@@ -382,6 +380,16 @@ export function CrmPage() {
     return { total: ici.length, jamais, retard };
   }, [regroupes]);
 
+  // Combien de réglages changent ce que montre la liste. Ils vivent tous dans
+  // le tiroir « Filtres » depuis le 14/09 : sans ce compteur sur le bouton, une
+  // vue « Historique » laissée ouverte transformerait la liste sans le dire.
+  // Le tri n'en fait pas partie : il range, il ne cache personne.
+  const nbReglages =
+    nbFiltresQualif(qualif) +
+    (scope !== "me" ? 1 : 0) +
+    (filterSource !== "all" ? 1 : 0) +
+    (view !== "active" ? 1 : 0);
+
   // ⚠️ 31/08 — LES CINQ COMPTEURS PAR STATUT SONT PARTIS.
   //
   // Ils recopiaient le filtre de périmètre À LA MAIN (scope, admin, colis)
@@ -451,10 +459,7 @@ export function CrmPage() {
    *  ce qui presse d'abord, le reste ensuite. « Suivant » veut dire « la
    *  ligne d'en dessous », ce qui est la seule chose qu'on attend d'une
    *  flèche. */
-  const ordreEcran = useMemo(
-    () => [...regroupes.filter(demandeUnGeste), ...regroupes.filter((l) => !demandeUnGeste(l))],
-    [regroupes],
-  );
+  const ordreEcran = useMemo(() => ordreDeListe(regroupes), [regroupes]);
 
   // WhatsApp direct depuis la carte du board (variante en retard). Message de
   // relance douce ; les templates fins vivent dans la fiche.
@@ -831,24 +836,23 @@ export function CrmPage() {
           chiffre qui appelle un geste. */}
       <header style={{ margin: "4px 0 2px" }}>
         <h1 style={heroTitle}>Tes contacts<JargonTip term="crm" /></h1>
-        <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ls-text-muted)" }}>
-          {loading
-            ? "Chargement…"
-            : capDuJour.total === 0
-              ? "Personne n'attend de toi aujourd'hui. 👌"
-              : `${capDuJour.total} personne${capDuJour.total > 1 ? "s" : ""} t'${capDuJour.total > 1 ? "attendent" : "attend"} aujourd'hui.`}
+        {/* 14/09 — une phrase, pas deux. La seconde (« 5 à qui personne n'a
+            parlé · 24 en retard ») répétait la bande et les titres de section :
+            le même chiffre était écrit trois fois sur le premier écran. */}
+        <p style={{ margin: "3px 0 0", fontSize: 14, color: "var(--ls-text-muted)" }}>
+          {loading ? (
+            "Chargement…"
+          ) : capDuJour.total === 0 ? (
+            "Personne n'attend de toi aujourd'hui. 👌"
+          ) : (
+            <>
+              <b style={{ color: "var(--ls-text)", fontWeight: 600 }}>
+                {capDuJour.total} personne{capDuJour.total > 1 ? "s" : ""} t'{capDuJour.total > 1 ? "attendent" : "attend"}
+              </b>{" "}
+              — commence en haut.
+            </>
+          )}
         </p>
-        {!loading && capDuJour.total > 0 ? (
-          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ls-text-muted)" }}>
-            {[
-              capDuJour.jamais > 0 ? `${capDuJour.jamais} à qui personne n'a parlé` : null,
-              capDuJour.retard > 0 ? `${capDuJour.retard} en retard` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "rangés du plus urgent au moins pressé"}
-            {capDuJour.jamais > 0 || capDuJour.retard > 0 ? " — commence en haut." : "."}
-          </p>
-        ) : null}
       </header>
 
       {/* ═══ À CONCLURE — tout en haut, avant tout le reste ══════════════════
@@ -864,11 +868,6 @@ export function CrmPage() {
       {/* L'entonnoir en une ligne. Il lit `leads` — la population entière du
           périmètre — et NON `filtered` : une jauge qui se recalcule sur son
           propre filtre afficherait 100 % partout dès qu'on tape un segment. */}
-      <CrmJaugeFiltre
-        comptes={comptesParCase}
-        filtre={caseFiltre}
-        onFiltrer={setCaseFiltre}
-      />
 
       {/* ═══ LES RENDEZ-VOUS : UNE LIGNE, PAS UN PAVÉ ════════════════════════
           Thomas, 31/08 : « j'ai toujours tous les RDV affichés, ça fait un bloc
@@ -885,11 +884,16 @@ export function CrmPage() {
           sur la fiche du lead, « venue / pas venue » est dans « À conclure »,
           et accepter une demande reste ci-dessous, mais SEULEMENT quand il y en
           a une. Zéro demande = zéro pixel. */}
-      <CrmRdvLigne
-        aVenir={rdvFuturs.length}
-        prochain={prochainRdvIso}
-        onOuvrirAgenda={() => navigate("/agenda")}
-      />
+      {/* 14/09 — la jauge et les rendez-vous tiennent sur UNE bande : c'étaient
+          deux zones empilées (quatre grosses cartes, puis une bande violette).
+          Les cases restent des filtres, avec exactement le même comptage. */}
+      <CrmJaugeFiltre comptes={comptesParCase} filtre={caseFiltre} onFiltrer={setCaseFiltre}>
+        <CrmRdvLigne
+          aVenir={rdvFuturs.length}
+          prochain={prochainRdvIso}
+          onOuvrirAgenda={() => navigate("/agenda")}
+        />
+      </CrmJaugeFiltre>
 
       {/* ⚠️ 31/08 — ERREUR CORRIGÉE LE JOUR MÊME. Ici, je rallumais les deux
           widgets d'origine dès qu'une demande arrivait : mesuré sur dev, UNE
@@ -949,275 +953,13 @@ export function CrmPage() {
         <button
           type="button"
           onClick={() => setQualifOuvert(true)}
-          style={sourceChip(nbFiltresQualif(qualif) > 0, "var(--ls-coral)")}
+          style={sourceChip(nbReglages > 0, "var(--ls-coral)")}
+          aria-label={nbReglages > 0 ? `Filtres, ${nbReglages} réglage${nbReglages > 1 ? "s" : ""} actif${nbReglages > 1 ? "s" : ""}` : "Filtres"}
         >
-          ⋯ Filtres{nbFiltresQualif(qualif) > 0 ? ` · ${nbFiltresQualif(qualif)}` : ""}
-        </button>
-        {/* Périmètre & sources : l'analytique, séparée du travail de qualif.
-            Neutre plutôt que violet (mesuré 4,08:1 en violet sur fond teinté). */}
-        <button
-          type="button"
-          onClick={() => setFiltresOuverts((v) => !v)}
-          aria-expanded={filtresOuverts}
-          style={sourceChip(filtresOuverts, "var(--ls-text)")}
-        >
-          📊 Périmètre & sources {filtresOuverts ? "▲" : "▼"}
+          ⋯ Filtres{nbReglages > 0 ? ` · ${nbReglages}` : ""}
         </button>
       </div>
 
-      {/* ── Tout le reste, replié ────────────────────────────────────────── */}
-      {filtresOuverts ? (
-      <div style={panneauFiltres}>
-      {/* Filtre par ligne (admin / référent uniquement) */}
-      {canFilterTeam && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
-          <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
-          <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>👤 Moi</button>
-          {line1Ids.size > 0 && (
-            <button type="button" onClick={() => setScope("l1")} style={sourceChip(scope === "l1", "var(--ls-teal)")}>
-              Ligne 1 ({line1Ids.size})
-            </button>
-          )}
-          {isAdmin && line2Ids.size > 0 && (
-            <button type="button" onClick={() => setScope("l2")} style={sourceChip(scope === "l2", "var(--ls-teal)")}>
-              Ligne 2 ({line2Ids.size})
-            </button>
-          )}
-          {isAdmin && (
-            <button type="button" onClick={() => setScope("all")} style={sourceChip(scope === "all", "var(--ls-purple)")}>
-              Tous
-            </button>
-          )}
-          {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).length > 0 && (
-            <select
-              value={["me", "l1", "l2", "all"].includes(scope) ? "" : scope}
-              onChange={(e) => e.target.value && setScope(e.target.value)}
-              aria-label="Filtrer par distributeur"
-              style={{
-                height: 32,
-                padding: "0 10px",
-                borderRadius: 999,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface)",
-                color: "var(--ls-text)",
-                fontSize: 12.5,
-                fontFamily: "DM Sans, sans-serif",
-                cursor: "pointer",
-              }}
-            >
-              <option value="">Un distributeur…</option>
-              {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.line === 0 ? m.name : `L${m.line} · ${m.name}`}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      )}
-
-      {/* Filtres par source + compteurs par statut */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
-        <button
-          type="button"
-          onClick={() => setFilterSource("all")}
-          style={sourceChip(filterSource === "all", "var(--ls-text)")}
-        >
-          Toutes sources
-        </button>
-        {(Object.keys(CRM_SOURCE_META) as CrmSource[])
-          .filter((s) => sourcesPresent.has(s))
-          .map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setFilterSource(filterSource === s ? "all" : s)}
-              style={sourceChip(filterSource === s, "var(--ls-teal)")}
-            >
-              {CRM_SOURCE_META[s].emoji} {CRM_SOURCE_META[s].label}
-            </button>
-          ))}
-        <button
-          type="button"
-          onClick={() => setShowStats((s) => !s)}
-          style={sourceChip(showStats, "var(--ls-purple)")}
-        >
-          📊 Stats {showStats ? "▲" : "▼"}
-        </button>
-      </div>
-
-      {/* Stats par source (wagon 3 chantier 6) */}
-      {showStats ? (
-        <div style={statsPanel}>
-          <div style={statsPanelHead}>
-            📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis<JargonTip term="conversion" /> (
-            {Math.round(stats.overall.conversionRate * 100)}%)
-          </div>
-          <div style={statsGrid}>
-            {stats.bySource.map((s) => (
-              <div key={s.source} style={statsCard}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)" }}>
-                  {CRM_SOURCE_META[s.source].emoji} {CRM_SOURCE_META[s.source].label}
-                </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 6, margin: "4px 0" }}>
-                  <span style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-teal)" }}>
-                    {Math.round(s.conversionRate * 100)}%
-                  </span>
-                  <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>conversion</span>
-                </div>
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-                  {s.total} lead{s.total > 1 ? "s" : ""} · {s.active} actifs · {s.converted} convertis · {s.lost} perdus
-                </div>
-                {/* Barre conversion */}
-                <div style={statsBarTrack}>
-                  <div style={{ ...statsBarFill, width: `${Math.max(2, Math.round(s.conversionRate * 100))}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Section Curieux (ONLINE-B) : commencé le bilan, pas fini.
-          Toujours visible dès qu'il y a de l'activité bilan (curieux OU bilans
-          complétés). État positif quand personne n'est en cours (avant : bug
-          « 0 a commencé … 100% » ; puis masquée à tort → « où est passée la
-          section ? » de Thomas 2026-07-15). */}
-      {!curiousLoading && (curious.length > 0 || completionRate > 0) ? (
-        <div style={curiousPanel}>
-          {curious.length === 0 ? (
-            // Tout le monde a fini son bilan → état sain, pas de relance à faire.
-            <div style={{ ...curiousHeader, cursor: "default" }}>
-              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
-                💭 Aucun lead en cours de bilan — ceux qui démarrent vont au bout 🎉
-              </span>
-              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
-                complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
-              </span>
-            </div>
-          ) : (
-          <>
-          <button
-            type="button"
-            onClick={() => setShowCurious((s) => !s)}
-            style={curiousHeader}
-            aria-expanded={showCurious}
-          >
-            <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
-              💭 Curieux — {curious.length} {curious.length > 1 ? "ont commencé" : "a commencé"} sans finir
-            </span>
-            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
-              taux de complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
-            </span>
-            <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{showCurious ? "▲" : "▼"}</span>
-          </button>
-          {showCurious ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
-              <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.5 }}>
-                Ces prospects ont saisi leur étape 1 mais n'ont pas terminé le bilan. Ils ne sont pas
-                dans ta liste de prospects qualifiés — relance-les en douceur, sans pression.
-              </p>
-              {curious.length === 0 ? (
-                <div style={columnEmpty}>Aucun curieux en attente 👏</div>
-              ) : (
-                curious.map((c) => {
-                  const msg = `Salut ${c.firstName} ! 🌿 Tu as commencé ton bilan bien-être mais tu ne l'as pas terminé — pas de souci. Si tu veux, on le finit ensemble en 2 minutes, ça me permet de te faire un retour perso. Dis-moi 🙂\n${msgCtx.coachFirstName}`;
-                  return (
-                    <div key={c.id} style={curiousRow}>
-                      <span style={{ fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
-                        {c.firstName}
-                      </span>
-                      <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
-                        {c.city ? `${c.city} · ` : ""}{c.contact ?? "—"}
-                      </span>
-                      <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
-                        {formatDate(c.createdAt)}
-                      </span>
-                      {c.contactIsPhone ? (
-                        <a
-                          href={buildWa(c.contact, msg)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={actionBtn("#25D366")}
-                          title="Relancer en douceur"
-                        >
-                          📱 Relancer
-                        </a>
-                      ) : (
-                        <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-teal)")}>
-                          📋 Message
-                        </button>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ) : null}
-          </>
-          )}
-        </div>
-      ) : null}
-
-      {/* Toggle Actifs / Historique / Endormis */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-        {([
-          { id: "active" as const, label: "📋 Actifs" },
-          { id: "historique" as const, label: `📜 Historique${historiqueCount ? ` (${historiqueCount})` : ""}` },
-          { id: "archived" as const, label: `💤 Endormis${dormantCount ? ` (${dormantCount})` : ""}` },
-        ]).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setView(t.id)}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 999,
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "DM Sans, sans-serif",
-              fontWeight: view === t.id ? 700 : 500,
-              background: view === t.id ? "var(--ls-text)" : "var(--ls-surface)",
-              color: view === t.id ? "var(--ls-bg)" : "var(--ls-text-muted)",
-              border: "1px solid var(--ls-border)",
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ⚠️ 31/08 — LE SÉLECTEUR « Liste / Pipeline » EST PARTI.
-          Le board a disparu avec la refonte : il ne restait qu'un choix entre
-          la liste et… la liste. Un onglet qui ne change rien fait croire à une
-          panne. Une seule liste, pour tous les écrans. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-        <label htmlFor="crm-tri" style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
-          Trier :
-        </label>
-        <select
-          id="crm-tri"
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as CleTri)}
-          style={{
-            minHeight: 40,
-            padding: "0 10px",
-            borderRadius: 999,
-            border: "1px solid var(--ls-border)",
-            background: "var(--ls-surface)",
-            color: "var(--ls-text)",
-            fontSize: 12.5,
-            fontFamily: "DM Sans, sans-serif",
-            cursor: "pointer",
-          }}
-        >
-          {OPTIONS_TRI.map((o) => (
-            <option key={o.valeur} value={o.valeur}>{o.label}</option>
-          ))}
-        </select>
-      </div>
-      </div>
-      ) : null}
       {/* ═══ LA LISTE — UNE SEULE, POUR TOUS LES ÉCRANS ══════════════════════
           Chantier 2 de la refonte, maquette validée par Thomas.
 
@@ -1231,6 +973,33 @@ export function CrmPage() {
           `CrmListe` montre tout le monde, met « Appeler » et « Écrire » sur la
           ligne, et compte ce qu'elle affiche. Une seule règle CSS la fait
           passer de la colonne (téléphone) à la ligne (ordinateur). */}
+      {/* 14/09 — la vue et la source vivent dans le tiroir : quand l'une n'est
+          pas celle par défaut, on le DIT au-dessus de la liste. Zéro pixel
+          sinon. Sans ça, « Historique » laissé ouvert changerait la liste en
+          silence. */}
+      {view !== "active" || filterSource !== "all" ? (
+        <p style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, margin: "6px 0 0", fontSize: 12.5, color: "var(--ls-text-muted)" }}>
+          <span>Tu regardes</span>
+          {view !== "active" ? (
+            <b style={{ color: "var(--ls-text)" }}>{view === "historique" ? "📜 l'historique" : "💤 les endormis"}</b>
+          ) : null}
+          {filterSource !== "all" ? (
+            <b style={{ color: "var(--ls-text)" }}>
+              {CRM_SOURCE_META[filterSource].emoji} {CRM_SOURCE_META[filterSource].label}
+            </b>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              setView("active");
+              setFilterSource("all");
+            }}
+            style={sourceChip(false, "var(--ls-teal)")}
+          >
+            Revoir tout le monde
+          </button>
+        </p>
+      ) : null}
       {loading ? (
         <div style={hint}>Chargement de tes leads…</div>
       ) : (
@@ -1242,6 +1011,7 @@ export function CrmPage() {
           onAppeler={appeler}
           onEcrire={ecrireAuLead}
           onPlus={(l) => setMenuLead(l)}
+          ouvrirTout={search.trim() !== "" || caseFiltre !== null || nbFiltresQualif(qualif) > 0}
           doublonsDe={doublonsDe}
           messageVide={
             view === "archived"
@@ -1372,7 +1142,257 @@ export function CrmPage() {
           vues={vues}
           setVues={setVues}
           onFermer={() => setQualifOuvert(false)}
-        />
+        >
+          {/* Filtre par ligne (admin / référent uniquement) */}
+          {canFilterTeam && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 12px" }}>
+              <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>Périmètre :</span>
+              <button type="button" onClick={() => setScope("me")} style={sourceChip(scope === "me", "var(--ls-teal)")}>👤 Moi</button>
+              {line1Ids.size > 0 && (
+                <button type="button" onClick={() => setScope("l1")} style={sourceChip(scope === "l1", "var(--ls-teal)")}>
+                  Ligne 1 ({line1Ids.size})
+                </button>
+              )}
+              {isAdmin && line2Ids.size > 0 && (
+                <button type="button" onClick={() => setScope("l2")} style={sourceChip(scope === "l2", "var(--ls-teal)")}>
+                  Ligne 2 ({line2Ids.size})
+                </button>
+              )}
+              {isAdmin && (
+                <button type="button" onClick={() => setScope("all")} style={sourceChip(scope === "all", "var(--ls-purple)")}>
+                  Tous
+                </button>
+              )}
+              {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).length > 0 && (
+                <select
+                  value={["me", "l1", "l2", "all"].includes(scope) ? "" : scope}
+                  onChange={(e) => e.target.value && setScope(e.target.value)}
+                  aria-label="Filtrer par distributeur"
+                  style={{
+                    height: 32,
+                    padding: "0 10px",
+                    borderRadius: 999,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface)",
+                    color: "var(--ls-text)",
+                    fontSize: 12.5,
+                    fontFamily: "DM Sans, sans-serif",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">Un distributeur…</option>
+                  {(isAdmin ? downlineMembers : downlineMembers.filter((m) => m.line <= 1)).map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.line === 0 ? m.name : `L${m.line} · ${m.name}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
+          {/* Filtres par source + compteurs par statut */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
+            <button
+              type="button"
+              onClick={() => setFilterSource("all")}
+              style={sourceChip(filterSource === "all", "var(--ls-text)")}
+            >
+              Toutes sources
+            </button>
+            {(Object.keys(CRM_SOURCE_META) as CrmSource[])
+              .filter((s) => sourcesPresent.has(s))
+              .map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setFilterSource(filterSource === s ? "all" : s)}
+                  style={sourceChip(filterSource === s, "var(--ls-teal)")}
+                >
+                  {CRM_SOURCE_META[s].emoji} {CRM_SOURCE_META[s].label}
+                </button>
+              ))}
+            <button
+              type="button"
+              onClick={() => setShowStats((s) => !s)}
+              style={sourceChip(showStats, "var(--ls-purple)")}
+            >
+              📊 Stats {showStats ? "▲" : "▼"}
+            </button>
+          </div>
+
+          {/* Stats par source (wagon 3 chantier 6) */}
+          {showStats ? (
+            <div style={statsPanel}>
+              <div style={statsPanelHead}>
+                📊 Performance par source · {stats.overall.converted}/{stats.overall.total} convertis<JargonTip term="conversion" /> (
+                {Math.round(stats.overall.conversionRate * 100)}%)
+              </div>
+              <div style={statsGrid}>
+                {stats.bySource.map((s) => (
+                  <div key={s.source} style={statsCard}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ls-text)" }}>
+                      {CRM_SOURCE_META[s.source].emoji} {CRM_SOURCE_META[s.source].label}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, margin: "4px 0" }}>
+                      <span style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-teal)" }}>
+                        {Math.round(s.conversionRate * 100)}%
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>conversion</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                      {s.total} lead{s.total > 1 ? "s" : ""} · {s.active} actifs · {s.converted} convertis · {s.lost} perdus
+                    </div>
+                    {/* Barre conversion */}
+                    <div style={statsBarTrack}>
+                      <div style={{ ...statsBarFill, width: `${Math.max(2, Math.round(s.conversionRate * 100))}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Section Curieux (ONLINE-B) : commencé le bilan, pas fini.
+              Toujours visible dès qu'il y a de l'activité bilan (curieux OU bilans
+              complétés). État positif quand personne n'est en cours (avant : bug
+              « 0 a commencé … 100% » ; puis masquée à tort → « où est passée la
+              section ? » de Thomas 2026-07-15). */}
+          {!curiousLoading && (curious.length > 0 || completionRate > 0) ? (
+            <div style={curiousPanel}>
+              {curious.length === 0 ? (
+                // Tout le monde a fini son bilan → état sain, pas de relance à faire.
+                <div style={{ ...curiousHeader, cursor: "default" }}>
+                  <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
+                    💭 Aucun lead en cours de bilan — ceux qui démarrent vont au bout 🎉
+                  </span>
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
+                    complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
+                  </span>
+                </div>
+              ) : (
+              <>
+              <button
+                type="button"
+                onClick={() => setShowCurious((s) => !s)}
+                style={curiousHeader}
+                aria-expanded={showCurious}
+              >
+                <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13.5 }}>
+                  💭 Curieux — {curious.length} {curious.length > 1 ? "ont commencé" : "a commencé"} sans finir
+                </span>
+                <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ls-text-muted)" }}>
+                  taux de complétion <strong style={{ color: "var(--ls-teal)" }}>{Math.round(completionRate * 100)}%</strong>
+                </span>
+                <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{showCurious ? "▲" : "▼"}</span>
+              </button>
+              {showCurious ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                    Ces prospects ont saisi leur étape 1 mais n'ont pas terminé le bilan. Ils ne sont pas
+                    dans ta liste de prospects qualifiés — relance-les en douceur, sans pression.
+                  </p>
+                  {curious.length === 0 ? (
+                    <div style={columnEmpty}>Aucun curieux en attente 👏</div>
+                  ) : (
+                    curious.map((c) => {
+                      const msg = `Salut ${c.firstName} ! 🌿 Tu as commencé ton bilan bien-être mais tu ne l'as pas terminé — pas de souci. Si tu veux, on le finit ensemble en 2 minutes, ça me permet de te faire un retour perso. Dis-moi 🙂\n${msgCtx.coachFirstName}`;
+                      return (
+                        <div key={c.id} style={curiousRow}>
+                          <span style={{ fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 13 }}>
+                            {c.firstName}
+                          </span>
+                          <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+                            {c.city ? `${c.city} · ` : ""}{c.contact ?? "—"}
+                          </span>
+                          <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-hint)" }}>
+                            {formatDate(c.createdAt)}
+                          </span>
+                          {c.contactIsPhone ? (
+                            <a
+                              href={buildWa(c.contact, msg)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={actionBtn("#25D366")}
+                              title="Relancer en douceur"
+                            >
+                              📱 Relancer
+                            </a>
+                          ) : (
+                            <button type="button" onClick={() => void copyMessage(msg)} style={actionBtn("var(--ls-teal)")}>
+                              📋 Message
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
+              </>
+              )}
+            </div>
+          ) : null}
+
+          {/* Toggle Actifs / Historique / Endormis */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            {([
+              { id: "active" as const, label: "📋 Actifs" },
+              { id: "historique" as const, label: `📜 Historique${historiqueCount ? ` (${historiqueCount})` : ""}` },
+              { id: "archived" as const, label: `💤 Endormis${dormantCount ? ` (${dormantCount})` : ""}` },
+            ]).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setView(t.id)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "DM Sans, sans-serif",
+                  fontWeight: view === t.id ? 700 : 500,
+                  background: view === t.id ? "var(--ls-text)" : "var(--ls-surface)",
+                  color: view === t.id ? "var(--ls-bg)" : "var(--ls-text-muted)",
+                  border: "1px solid var(--ls-border)",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <HorsFlux comptes={comptesParCase} />
+          {/* ⚠️ 31/08 — LE SÉLECTEUR « Liste / Pipeline » EST PARTI.
+              Le board a disparu avec la refonte : il ne restait qu'un choix entre
+              la liste et… la liste. Un onglet qui ne change rien fait croire à une
+              panne. Une seule liste, pour tous les écrans. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            <label htmlFor="crm-tri" style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
+              Trier :
+            </label>
+            <select
+              id="crm-tri"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as CleTri)}
+              style={{
+                minHeight: 40,
+                padding: "0 10px",
+                borderRadius: 999,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface)",
+                color: "var(--ls-text)",
+                fontSize: 12.5,
+                fontFamily: "DM Sans, sans-serif",
+                cursor: "pointer",
+              }}
+            >
+              {OPTIONS_TRI.map((o) => (
+                <option key={o.valeur} value={o.valeur}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </CrmPanneauFiltres>
       ) : null}
 
       {/* ⚠️ 31/08 — ce paragraphe était PERMANENT et faisait quatre lignes.
@@ -1422,13 +1442,6 @@ const CRM_COLS_CSS = `
 /** Le repli des blocs de rendez-vous et le panneau de filtres. */
 
 
-const panneauFiltres: React.CSSProperties = {
-  border: "1px solid var(--ls-border)",
-  borderRadius: 14,
-  background: "var(--ls-surface2)",
-  padding: "14px 14px 12px",
-  marginBottom: 14,
-};
 
 const heroTitle: React.CSSProperties = {
   margin: 0,

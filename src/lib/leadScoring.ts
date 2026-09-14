@@ -34,14 +34,39 @@
 //
 // Et la puce dit maintenant POURQUOI (« Chaud · sans créneau ») au lieu d'un
 // nombre sur 10 que personne ne sait interpréter.
+//
+// ── 14/09/2026 — « SUR LES VRAIS CHAUDS », ET UN PALIER GLACÉ ────────────────
+//
+// Thomas, capture de la liste : 🔥 sur les six personnes visibles. Cause :
+// « tout frais » (+4) + « a laissé son numéro » (+3) = 7, pile le seuil. TOUT
+// lead Meta arrivé depuis moins de deux jours avec un téléphone était chaud
+// d'office — la flamme ne distinguait plus personne.
+//   → Le seuil passe à 8, celui que le funnel Opportunité utilise déjà
+//     (`opportunityLeadScore`). Il faut désormais un signal de plus qu'un
+//     formulaire récent : recommandé, déjà contacté, motivation déclarée… Les
+//     gestes décisifs (RDV pris, rappel demandé, parti sans créneau) restent
+//     chauds sans condition.
+//
+// « Froid en froid, glacé pareil » : un palier de plus. Le barème ne punissait
+// le temps que pour un lead JAMAIS contacté ; un lead appelé il y a 45 jours
+// sans suite restait « tiède ». Glacé = aucun échange depuis plus de
+// JOURS_SANS_ECHANGE_GLACE jours, quel que soit le score.
+//   ⚠️ Le SCORE ne change pas quand une fiche gèle : il sert au tri, et le tri
+//   ne doit pas bouger sous les pieds du coach pour une raison d'affichage.
 // =============================================================================
 
 import type { CrmLead } from "../hooks/useCrmLeads";
-import type { LeadTemperature } from "./opportunityLeadScore";
+import type { LeadTemperature as TemperatureFunnel } from "./opportunityLeadScore";
 
-export type { LeadTemperature };
+/** Les quatre paliers du CRM. Le funnel Opportunité garde ses trois — il les
+ *  écrit en base à la soumission. « Glacé » n'existe que côté CRM, là où le
+ *  TEMPS peut refroidir une fiche que le questionnaire avait jugée chaude. */
+export type LeadTemperature = TemperatureFunnel | "frozen";
 
-/** Une contribution au score, avec son montant sur 100 (ex. « tout frais » +40). */
+/** Au-delà, sans aucun échange, une fiche est glacée — quel que soit son score.
+ *  Même repère que la stagnation de la Phase 3 : `contactedAt ?? createdAt`. */
+export const JOURS_SANS_ECHANGE_GLACE = 30;
+
 export interface MotifScore {
   motif: string;
   points: number;
@@ -71,19 +96,20 @@ export const TEMP_META: Record<LeadTemperature, { emoji: string; label: string; 
   hot: { emoji: "🔥", label: "Chaud", color: "var(--ls-coral)" },
   warm: { emoji: "🌤️", label: "Tiède", color: "var(--ls-teal)" },
   cold: { emoji: "❄️", label: "Froid", color: "var(--ls-text-muted)" },
+  frozen: { emoji: "🧊", label: "Glacé", color: "var(--ls-text-hint)" },
 };
 
 function clamp10(n: number): number {
   return Math.max(0, Math.min(10, Math.round(n)));
 }
 
-function scoreToTemperature(score: number): LeadTemperature {
-  if (score >= 7) return "hot";
+function scoreToTemperature(score: number): TemperatureFunnel {
+  if (score >= 8) return "hot";
   if (score >= 4) return "warm";
   return "cold";
 }
 
-/** Jours écoulés depuis l'arrivée du lead. */
+/** Jours écoulés depuis une date (999 si absente ou illisible). */
 function joursDepuis(iso: string | null | undefined): number {
   if (!iso) return 999;
   const t = new Date(iso).getTime();
@@ -91,21 +117,31 @@ function joursDepuis(iso: string | null | undefined): number {
   return Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
 }
 
+/** Le temps gèle une fiche oubliée. Ne touche ni au score ni au détail : seule
+ *  la température et sa raison changent. */
+function geleSiOubliee(r: UnifiedLeadScore, lead: CrmLead): UnifiedLeadScore {
+  const jours = joursDepuis(lead.contactedAt ?? lead.createdAt);
+  if (jours <= JOURS_SANS_ECHANGE_GLACE) return r;
+  return { ...r, temperature: "frozen", raison: `aucun échange depuis ${jours} jours` };
+}
+
 export function computeLeadScore(lead: CrmLead): UnifiedLeadScore {
   // ── Le funnel Opportunité a son propre score, calculé à la soumission sur
   //    les réponses au questionnaire. On ne le recalcule pas : deux scores qui
-  //    se contredisent seraient pires qu'un seul imparfait.
+  //    se contredisent seraient pires qu'un seul imparfait. Le temps, lui,
+  //    peut quand même le geler.
   if (lead.source === "opportunite" && typeof lead.funnelScore === "number") {
     const score = clamp10((lead.funnelScore / 15) * 10);
-    const temperature = (lead.funnelTemperature as LeadTemperature) || scoreToTemperature(score);
-    return { score, score100: score * 10, temperature, raison: "questionnaire", details: [] };
+    const temperature = (lead.funnelTemperature as TemperatureFunnel) || scoreToTemperature(score);
+    return geleSiOubliee({ score, score100: score * 10, temperature, raison: "questionnaire", details: [] }, lead);
   }
 
   const jours = joursDepuis(lead.createdAt);
   const jamaisContacte = !lead.contactedAt && lead.status === "new";
 
-  // ── Ce qu'il a FAIT. Deux gestes décident à eux seuls, parce qu'ils ne
-  //    laissent aucun doute sur l'intention.
+  // ── Ce qu'il a FAIT. Trois gestes décident à eux seuls, parce qu'ils ne
+  //    laissent aucun doute sur l'intention. Ce sont les « vrais chauds » : ils
+  //    ne gèlent pas, un rendez-vous pris reste un rendez-vous pris.
   if (lead.abandonAvantCreneau && jours <= 14) {
     return { score: 10, score100: 100, temperature: "hot", raison: "parti sans créneau", details: [{ motif: "parti sans réserver de créneau", points: 100 }] };
   }
@@ -151,7 +187,7 @@ export function computeLeadScore(lead: CrmLead): UnifiedLeadScore {
   }
 
   const score = clamp10(raw);
-  return {
+  return geleSiOubliee({
     score,
     // Le clamp ne bride qu'au-delà de raw=10 (rare) ; en dessous, la somme des
     // details ×10 = score100 exactement — c'est ce qui rend « Pourquoi 82 »
@@ -161,5 +197,5 @@ export function computeLeadScore(lead: CrmLead): UnifiedLeadScore {
     raison: motifs.slice(0, 2).join(" · ") || "rien de plus à dire",
     // Les contributions positives, de la plus forte à la plus faible.
     details: details.filter((d) => d.points > 0).sort((a, b) => b.points - a.points),
-  };
+  }, lead);
 }
