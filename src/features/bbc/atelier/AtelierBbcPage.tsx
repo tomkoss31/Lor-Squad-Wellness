@@ -516,16 +516,16 @@ function AtelierScene({
     };
     const L = [
       // Personne ne leur a encore parlé
-      { ...b, key: "n1", id: "n1", firstName: "François", lastName: "Verneau", status: "new", contactedAt: null, createdAt: j(2) },
-      { ...b, key: "n2", id: "n2", firstName: "Laetitia Christopher", lastName: "Vuillaume-Delacroix", status: "new", contactedAt: null, createdAt: j(0), viaName: "Mélanie" },
-      { ...b, key: "n3", id: "n3", firstName: "Nathalie", lastName: "Duhayon", status: "new", contactedAt: null, createdAt: j(1), contact: "nathalie@exemple.fr", contactIsPhone: false, phone: null },
+      { ...b, key: "n1", id: "n1", firstName: "François", lastName: "Delorme", status: "new", contactedAt: null, createdAt: j(2) },
+      { ...b, key: "n2", id: "n2", firstName: "Sandrine Charlotte", lastName: "Villeneuve-Delacour", status: "new", contactedAt: null, createdAt: j(0), viaName: "Mélanie" },
+      { ...b, key: "n3", id: "n3", firstName: "Nathalie", lastName: "Lemaire", status: "new", contactedAt: null, createdAt: j(1), contact: "nathalie@exemple.fr", contactIsPhone: false, phone: null },
       // À relancer
-      { ...b, key: "r1", id: "r1", firstName: "Natacha", lastName: "Udot", status: "contacted", contactedAt: j(9), createdAt: j(18), relanceDue: true, relanceDueAt: j(7), derniereReponse: "pas_de_reponse" },
-      { ...b, key: "r2", id: "r2", firstName: "Armelle", lastName: "Gaudin", status: "contacted", contactedAt: j(7), createdAt: j(7), relanceDue: true, relanceDueAt: j(4), derniereReponse: "rappellera" },
-      { ...b, key: "r3", id: "r3", firstName: "Hervé", lastName: "Dumas", status: "contacted", contactedAt: j(45), createdAt: j(58), relanceDue: true, relanceDueAt: j(2), derniereReponse: "pas_maintenant" },
+      { ...b, key: "r1", id: "r1", firstName: "Natacha", lastName: "Bret", status: "contacted", contactedAt: j(9), createdAt: j(18), relanceDue: true, relanceDueAt: j(7), derniereReponse: "pas_de_reponse" },
+      { ...b, key: "r2", id: "r2", firstName: "Armelle", lastName: "Picard", status: "contacted", contactedAt: j(7), createdAt: j(7), relanceDue: true, relanceDueAt: j(4), derniereReponse: "rappellera" },
+      { ...b, key: "r3", id: "r3", firstName: "Hervé", lastName: "Collin", status: "contacted", contactedAt: j(45), createdAt: j(58), relanceDue: true, relanceDueAt: j(2), derniereReponse: "pas_maintenant" },
       // Le reste
-      { ...b, key: "s1", id: "s1", firstName: "Céline", lastName: "Ducastelle", status: "qualified", contactedAt: j(3), createdAt: j(20), rdv: { slotStart: fut(1) }, rdvLabel: "mar. 15, 11:00" },
-      { ...b, key: "s2", id: "s2", firstName: "Justine", lastName: "Santos", status: "contacted", contactedAt: j(4), createdAt: j(20), relanceDueAt: fut(3) },
+      { ...b, key: "s1", id: "s1", firstName: "Céline", lastName: "Marchetti", status: "qualified", contactedAt: j(3), createdAt: j(20), rdv: { slotStart: fut(1) }, rdvLabel: "mar. 15, 11:00" },
+      { ...b, key: "s2", id: "s2", firstName: "Justine", lastName: "Morel", status: "contacted", contactedAt: j(4), createdAt: j(20), relanceDueAt: fut(3) },
     ] as unknown as Parameters<typeof CrmListe>[0]["leads"];
     const comptes = { nouveau: 5, contacte: 33, relance: 24, rdv: 3, converti: 2, perdu: 4, endormi: 1 };
     return (
