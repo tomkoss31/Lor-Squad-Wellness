@@ -85,8 +85,34 @@ let coachCourant: string | null = null;
 let pageCourante: string | null = null;
 let debutPage = 0;
 
+/**
+ * 15/09 — un APERÇU ne compte pas. Le bouton « Aperçu » des liens du mode BBC
+ * charge la vraie page publique dans une iframe : sans ce garde, chaque aperçu
+ * ajoutait une vue et une visite… au coach lui-même, dans « Mes liens ».
+ * « Ouvrir la vraie page » ajoute `?apercu=1` : retenu pour tout l'onglet, car
+ * le paramètre disparaît dès la première navigation interne. Jamais retenu
+ * depuis une iframe — elle partage le sessionStorage de l'onglet du coach.
+ */
+export function estApercu(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.self !== window.top) return true;
+  } catch {
+    return true; // accès au parent refusé : on est forcément encadré
+  }
+  try {
+    if (new URLSearchParams(window.location.search).get("apercu") === "1") {
+      window.sessionStorage.setItem("ls-apercu", "1");
+    }
+    return window.sessionStorage.getItem("ls-apercu") === "1";
+  } catch {
+    return false;
+  }
+}
+
 function estActif(): boolean {
   if (typeof window === "undefined") return false;
+  if (estApercu()) return false;
   // Respecter un refus explicite de pistage, même pour une mesure anonyme.
   if (navigator.doNotTrack === "1") return false;
   // Ne pas polluer les chiffres avec le dev local.

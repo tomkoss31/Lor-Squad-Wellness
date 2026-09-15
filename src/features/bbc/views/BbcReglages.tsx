@@ -181,7 +181,7 @@ export function BbcReglages({ club, onSaved }: BbcReglagesProps) {
       </Section>
 
       {/* Liens du club */}
-      <Section eye="les liens du club" hint="collés dans les messages depuis l'onglet Scripts & liens">
+      <Section eye="les liens du club" hint="collés dans les messages depuis « 🔗 Mes liens », dans Ressources">
         {([
           { k: "zoom_appel", label: "Zoom · Appel Ambassadeur", ph: "https://zoom.us/j/…" },
           { k: "zoom_atelier", label: "Zoom · Atelier Cœurs", ph: "https://zoom.us/j/…" },

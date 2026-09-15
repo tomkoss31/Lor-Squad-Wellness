@@ -34,7 +34,7 @@ import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
 import { BbcSemaine } from "./views/BbcSemaine";
-import { BbcLiens } from "./views/BbcLiens";
+import { BbcLiensTiroir, construireLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
 import { BbcCobayeSheet } from "./BbcCobayeSheet";
@@ -110,7 +110,9 @@ const SECTIONS: Section[] = [
     label: "Ressources",
     icon: "🎓",
     tabs: [
-      { k: "scripts", label: "Scripts & liens" },
+      // 15/09 — « Scripts & liens » devient « Scripts » : les liens ont leur
+      // bouton dédié au bout de ces onglets (tiroir `BbcLiensTiroir`).
+      { k: "scripts", label: "Scripts" },
       { k: "formation", label: "Formation" },
       // Le lexique était empilé en pied de la page Formation : 25 définitions
       // sous 10 modules, que personne ne scrollait. Il devient un onglet ICI
@@ -147,7 +149,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   semaine: { eye: "la semaine du club", title: "Cette semaine" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
   messages: { eye: "messagerie", title: "Messages" },
-  scripts: { eye: "tout ce que tu envoies", title: "Scripts & liens" },
+  scripts: { eye: "tout ce que tu envoies", title: "Scripts" },
   formation: { eye: "accès gradué", title: "Formation BBC" },
   lexique: { eye: "les mots du club", title: "Lexique" },
   clubs: { eye: "réseau bbc", title: "Mes clubs" },
@@ -163,6 +165,8 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
   // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
   // longtemps pour inscrire des membres à la mauvaise heure.
   const [reglagesFrais, setReglagesFrais] = useState<ClubSettings | null>(null);
+  /** Le tiroir « 🔗 Mes liens » (15/09, variante B validée par Thomas). */
+  const [liensOuverts, setLiensOuverts] = useState(false);
   /**
    * Le thème du mode BBC (Thomas, 18/08 : « faudrait aussi le toggle mode clair
    * pour l'app coach, pas only sombre »).
@@ -365,11 +369,8 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
 
         {/* Onglets de la section — masqués quand elle n'en a qu'un seul. */}
         {sectionCourante.tabs.length > 1 ? (
-          <div
-            role="tablist"
-            aria-label={sectionCourante.label}
-            style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 22, borderBottom: "1px solid var(--ls-bbc-line)", paddingBottom: 12 }}
-          >
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginBottom: 22, borderBottom: "1px solid var(--ls-bbc-line)", paddingBottom: 12 }}>
+          <div role="tablist" aria-label={sectionCourante.label} style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
             {sectionCourante.tabs.map((tab) => {
               const on = tab.k === view;
               return (
@@ -397,6 +398,38 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
               );
             })}
           </div>
+          {/* Le bouton dédié des liens : au bout des onglets de Ressources, là
+              où Thomas l'a dessiné. Il ouvre les liens PAR-DESSUS l'onglet en
+              cours, sans le quitter. */}
+          {sectionCourante.k === "ressources" ? (
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setLiensOuverts(true)}
+              style={{
+                marginLeft: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "9px 15px",
+                borderRadius: 11,
+                cursor: "pointer",
+                fontFamily: "var(--ls-bbc-font-body)",
+                fontSize: 13.5,
+                fontWeight: 700,
+                border: "1px solid var(--ls-bbc-teal)",
+                background: "color-mix(in srgb, var(--ls-bbc-teal) 10%, transparent)",
+                color: "var(--ls-bbc-teal)",
+              }}
+            >
+              <span aria-hidden="true">🔗</span>
+              Mes liens
+              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "color-mix(in srgb, var(--ls-bbc-teal) 18%, transparent)" }}>
+                {construireLiens(coachName, club?.settings ?? null, club?.name).filter((l) => !l.missing).length}
+              </span>
+            </button>
+          ) : null}
+          </div>
         ) : null}
 
         {view === "cockpit" && (
@@ -411,12 +444,10 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
             onGo={setView}
           />
         )}
-        {view === "scripts" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
-            <BbcLiens coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} />
-            <BbcScripts settings={club?.settings ?? null} />
-          </div>
-        )}
+        {view === "scripts" && <BbcScripts settings={club?.settings ?? null} />}
+        {liensOuverts ? (
+          <BbcLiensTiroir coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} onFermer={() => setLiensOuverts(false)} />
+        ) : null}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}
