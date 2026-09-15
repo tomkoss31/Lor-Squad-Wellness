@@ -16,9 +16,27 @@
 // L'appel est BEST-EFFORT et silencieux : le geste du coach — marquer venue ou
 // pas venue — a déjà réussi et compte pour lui. Un mail qui ne part pas ne doit
 // pas faire croire que le rangement a raté.
+//
+// ── POURQUOI PAS `sb.functions.invoke` (correctif du 15/09) ────────────────
+// Le mail « démarre » ne partait JAMAIS. En base, ZÉRO trace du `demarre` sur
+// les rendez-vous honorés depuis le 19/08, alors que le `pas_venue` partait.
+// Cause : l'appel se fait juste APRÈS la création de la fiche cliente, au
+// moment où l'écran se démonte (la feuille membre / la modale se ferme) ou
+// navigue (« Ouvrir la fiche », ou le CRM qui bascule sur la conversion). Un
+// `fetch` ordinaire lancé en « fire-and-forget » est ALORS annulé par le
+// navigateur — Safari le tue entre le préflight et le POST. Les journaux edge
+// le montraient exactement : `OPTIONS 200`, puis rien. (Chrome, plus tolérant,
+// laissait parfois passer le `pas_venue` — d'où l'asymétrie observée.)
+//
+// La correction tient en un mot : `keepalive: true`. Le navigateur s'engage
+// alors à finir la requête même si la page se démonte, navigue ou se ferme.
+// On appelle donc l'edge en direct (pas via `invoke`, qui ne l'expose pas), au
+// même endroit et avec les mêmes en-têtes que supabase-js. La fonction est en
+// `verify_jwt = false` (auth vérifiée dans la fonction) : la clé anon suffit,
+// pas besoin d'attendre la session — ce qui garde l'appel non bloquant.
 // =============================================================================
 
-import { getSupabaseClient } from "../supabaseClient";
+import { getSupabaseClient, resolveSupabaseConfig } from "../supabaseClient";
 
 export type TypeMailApresRdv = "demarre" | "pas_venue";
 
@@ -27,10 +45,29 @@ export async function envoyerMailApresRdv(
   type: TypeMailApresRdv,
 ): Promise<void> {
   try {
+    const config = await resolveSupabaseConfig();
+    if (!config) return;
+
+    // La session, si elle est DÉJÀ en cache — on ne l'attend pas : la clé anon
+    // suffit (verify_jwt = false). C'est ce qui rend l'appel instantané, donc
+    // envoyé avant tout démontage d'écran.
     const sb = await getSupabaseClient();
-    if (!sb) return;
-    await sb.functions.invoke("club-mail-apres-rdv", {
-      body: { booking_id: bookingId, type },
+    let jeton = config.supabaseAnonKey;
+    if (sb) {
+      const { data } = await sb.auth.getSession();
+      if (data.session?.access_token) jeton = data.session.access_token;
+    }
+
+    await fetch(`${config.supabaseUrl}/functions/v1/club-mail-apres-rdv`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: config.supabaseAnonKey,
+        Authorization: `Bearer ${jeton}`,
+      },
+      body: JSON.stringify({ booking_id: bookingId, type }),
+      // La seule chose qui compte ici : survivre à la navigation qui suit.
+      keepalive: true,
     });
   } catch (e) {
     console.warn("[rdv] mail après rendez-vous non envoyé :", e);

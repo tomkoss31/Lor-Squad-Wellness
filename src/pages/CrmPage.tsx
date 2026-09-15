@@ -746,10 +746,15 @@ export function CrmPage() {
       return;
     }
 
-    // 4. Le mot à la personne. Même chemin que l'Agenda depuis le 31/08 :
-    //    avant, seul l'Agenda l'envoyait, et « pas venue » depuis le CRM
-    //    laissait la personne sans nouvelles.
-    if (effet.proposerMail) void envoyerMailApresRdv(cible.id, "pas_venue");
+    // 4. Le mot à la personne. Même chemin que l'Agenda, même table de vérité
+    //    (`EFFET_ISSUE.mailApresRdv`).
+    //
+    //    ⚠️ 15/09 — LE CRM N'ENVOYAIT QUE « pas venue ». « Venue · elle démarre »
+    //    (le cas le plus fréquent) ne déclenchait AUCUN mot de bienvenue, alors
+    //    que l'Agenda, lui, l'envoie. On lit désormais quel mail part depuis
+    //    l'unique table : `demarre` pour « elle démarre », `pas_venue` pour le
+    //    lapin, rien pour « venue mais pas démarré ». Plus de vérité par écran.
+    if (effet.mailApresRdv) void envoyerMailApresRdv(cible.id, effet.mailApresRdv);
 
     if (effet.sortDuCrm && lead) {
       // « Elle démarre » : on ouvre la conversion — c'est elle qui crée la
