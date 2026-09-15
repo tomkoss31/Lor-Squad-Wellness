@@ -19,6 +19,16 @@
 // L'écran pourrait envoyer des valeurs périmées (un créneau déplacé entre
 // temps) — la base, elle, ne ment pas.
 //
+// ── UN SEUL MOT PAR ISSUE (idempotence, 15/09) ────────────────────────────
+// Depuis que l'envoi est fiable (keepalive côté front) ET appelé de deux
+// écrans (agenda + CRM), le même geste peut arriver deux fois : double-clic,
+// coach qui conclut depuis l'agenda puis rouvre le CRM, requête keepalive
+// rejouée. On grave donc un marqueur PAR TYPE dans `rdv_bookings.metadata`
+// (`apres_rdv_mails.{demarre|pas_venue}`) — même motif que
+// `rdv-accepted-notify` (`metadata.accepted_email_sent_at`). Le marqueur
+// n'est posé QU'APRÈS un envoi réussi : le graver avant perdrait la personne
+// au premier hoquet de Resend.
+//
 // Deploy: supabase functions deploy club-mail-apres-rdv
 // =============================================================================
 
@@ -71,12 +81,21 @@ serve(async (req) => {
 
   const { data: resa, error: eLecture } = await sb
     .from("rdv_bookings")
-    .select("first_name, last_name, contact, slot_start, coach_user_id")
+    .select("first_name, last_name, contact, slot_start, coach_user_id, metadata")
     .eq("id", bookingId)
     .maybeSingle();
 
   if (eLecture) return jsonResponse({ success: false, error: eLecture.message }, 500);
   if (!resa) return jsonResponse({ success: false, error: "reservation_introuvable" }, 404);
+
+  // Idempotence : ce type de mot a-t-il DÉJÀ été envoyé pour ce rendez-vous ?
+  // On préserve le reste de `metadata` (nom du funnel, accepted_email_sent_at…)
+  // en le fusionnant plus bas — on ne l'écrase jamais.
+  const meta = ((resa as { metadata?: Record<string, unknown> | null }).metadata ?? {}) as Record<string, unknown>;
+  const dejaEnvoye = (meta.apres_rdv_mails ?? {}) as Record<string, unknown>;
+  if (dejaEnvoye[type]) {
+    return jsonResponse({ success: true, envoye: false, raison: "deja_envoye" });
+  }
 
   const contact = String((resa as { contact?: string }).contact ?? "").trim();
   if (!EMAIL_RE.test(contact)) {
@@ -123,8 +142,19 @@ serve(async (req) => {
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     console.warn(`[club-mail-apres-rdv] Resend ${res.status} : ${detail.slice(0, 200)}`);
+    // Pas de marqueur sur un échec : la question pourra se re-poser et repartir.
     return jsonResponse({ success: false, error: "envoi_refuse", statut: res.status }, 502);
   }
+
+  // Envoi réussi : on grave le marqueur pour que ce type ne reparte pas deux
+  // fois. Best-effort — si l'écriture échoue, on a au pire un doublon possible,
+  // jamais un mail perdu.
+  await sb
+    .from("rdv_bookings")
+    .update({
+      metadata: { ...meta, apres_rdv_mails: { ...dejaEnvoye, [type]: new Date().toISOString() } },
+    })
+    .eq("id", bookingId);
 
   return jsonResponse({ success: true, envoye: true, a: contact });
 });
