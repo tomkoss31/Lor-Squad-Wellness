@@ -549,7 +549,19 @@ export function AppProvider({ children }: PropsWithChildren) {
         setPvTransactions(getStoredPvTransactions());
 
         try {
-          const restored = await restoreSupabaseSession();
+          // 15/09 — dans une iframe (l'Aperçu des liens du mode BBC), on ne
+          // restaure PAS la session : la page publique n'en a pas besoin, et
+          // chaque aperçu relançait sinon tout le chargement des données du
+          // coach sur la base (Nano). Une page de l'app n'est jamais encadrée
+          // ailleurs (les autres iframes chargent YouTube, Maps ou un srcdoc).
+          const dansUneIframe = (() => {
+            try {
+              return window.self !== window.top;
+            } catch {
+              return true;
+            }
+          })();
+          const restored = dansUneIframe ? null : await restoreSupabaseSession();
           if (restored) {
             setCurrentUser(restored.user);
             setCurrentSession(restored.session);

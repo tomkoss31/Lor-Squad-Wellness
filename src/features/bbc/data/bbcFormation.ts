@@ -358,7 +358,7 @@ export const BBC_FORMATION_MODULES: BbcFormationModule[] = [
     points: [
       "Ratios : temps complet = 1 h par jour = 20 contacts · temps choisi = 30 min = 10 contacts.",
       "Ta liste d'abord : famille, amis, collègues, clubs, hobbies. Sans préjuger de qui serait intéressé — on écrit jusqu'à 100 noms. (Pour un pré-lancement de club, la cible monte à 200 : module 08.)",
-      "Le message cobaye, c'est LA porte d'entrée d'un stagiaire : il l'envoie à 20-30 personnes pour décrocher ses 10 évaluations d'entraînement. Le verbatim est dans Ressources → Scripts & liens, et le compteur du jour est sur le Cockpit.",
+      "Le message cobaye, c'est LA porte d'entrée d'un stagiaire : il l'envoie à 20-30 personnes pour décrocher ses 10 évaluations d'entraînement. Le verbatim est dans Ressources → Scripts, et le compteur du jour est sur le Cockpit.",
       "Marché chaud : le message cobaye, les recommandations, la soirée dégustation (« information nutrition »), les réseaux.",
       "Marché froid : stands, boîtes à contact, badge, « 2 questions » en magasin, événements locaux, supermarchés, kermesses.",
       "⚠️ Règle Herbalife, pas une option : une sollicitation commerciale (mail, SMS, réseaux) ne s'envoie qu'à quelqu'un qui a donné son accord, ou qui est déjà client. Une demande d'arrêt se respecte immédiatement.",
