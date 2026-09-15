@@ -128,14 +128,22 @@ export function BottomNav() {
   }
 
   return (
+    // 15/09 — la barre du bas s'affichait SUR ORDINATEUR, en même temps que la
+    // barre latérale. Le `display: "flex"` écrit en style en ligne battait
+    // `lg:hidden xl:hidden` : un style en ligne l'emporte sur toute classe, la
+    // barre ne se masquait donc jamais. Mesuré à 1440 px : barre du bas `flex`
+    // ET barre latérale `grid`.
+    // `flex` passe en classe, et la barre se masque là où la barre latérale
+    // apparaît (`xl`, 1280 px — cf. `hidden xl:grid` dans AppLayout, comme
+    // l'en-tête mobile). Pas `lg` : entre 1024 et 1279 px il n'y aurait plus
+    // AUCUNE barre de navigation.
     <nav
-      className="bottom-nav fixed bottom-0 left-0 right-0 z-50 lg:hidden xl:hidden"
+      className="bottom-nav fixed bottom-0 left-0 right-0 z-50 flex xl:hidden"
       style={{
         background: "var(--ls-sidebar-bg)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         borderTop: "1px solid var(--ls-border)",
-        display: "flex",
         alignItems: "stretch",
         justifyContent: "space-around",
         padding: "0 4px env(safe-area-inset-bottom, 0px)",
