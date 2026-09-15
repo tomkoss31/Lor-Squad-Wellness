@@ -34,6 +34,13 @@ verify_jwt = false  # le lead gère son RDV depuis son email — l'auth est le j
 [functions.create-club-card-payment]
 verify_jwt = false  # achat d'une carte depuis le site du club
 
+# Le mot d'après-RDV, appelé depuis l'agenda/CRM en keepalive avec la clé anon
+# (le fetch survit à la navigation qui suit la création de fiche). À `true`, un
+# déploiement CLI sans --no-verify-jwt le renverrait en 401 → le mail « démarre »
+# / « pas venue » cesserait de partir. Créée le 25/08, oubliée du complément 13/08.
+[functions.club-mail-apres-rdv]
+verify_jwt = false
+
 # Webhook Square : l'authentification EST la signature HMAC, vérifiée dedans.
 [functions.square-payment-webhook]
 verify_jwt = false
