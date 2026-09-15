@@ -21,6 +21,7 @@
 
 import { RDV_GRACE_PERIOD_MS } from "../../lib/timeConstants";
 import type { CleReponse } from "./qualification";
+import type { TypeMailApresRdv } from "../../services/sb/mailApresRdv";
 
 /** Au-delà, on n'demande plus : le rendez-vous s'oublie. Même borne que
  *  `useClubDiscoveryBookings`, qui remonte les créneaux des 14 derniers jours. */
@@ -76,6 +77,18 @@ export interface EffetIssue {
   /** Faut-il proposer d'écrire à la personne ? (le lapin, oui ; le reste, non
    *  — elle vient de vous voir en face.) */
   proposerMail: boolean;
+  /**
+   * Le mot automatique à envoyer après ce rendez-vous — `null` quand on n'écrit
+   * rien. C'est la SEULE réponse à « quel mail après ce RDV ? », lue à la fois
+   * par l'Agenda et par le CRM (cf. `envoyerMailApresRdv`).
+   *
+   * ⚠️ Ne dépend PAS de `statutRdv` : `venue_demarre` et `venue_pas_demarre`
+   * écrivent tous deux `honored`, mais seule la première reçoit le mot. Un
+   * envoi côté serveur déclenché sur `honored` ne saurait pas les distinguer —
+   * la décision doit rester ici. `venue_pas_demarre` reste volontairement muet
+   * (le seul cas où la raison change à chaque personne, décision Thomas 25/08).
+   */
+  mailApresRdv: TypeMailApresRdv | null;
   /** Ce qu'on affiche sur le bouton. */
   libelle: string;
 }
@@ -94,6 +107,7 @@ export const EFFET_ISSUE: Record<IssueRdv, EffetIssue> = {
     reponseLead: null,
     sortDuCrm: true,
     proposerMail: false,
+    mailApresRdv: "demarre",
     libelle: "Venue · elle démarre",
   },
   venue_pas_demarre: {
@@ -101,6 +115,7 @@ export const EFFET_ISSUE: Record<IssueRdv, EffetIssue> = {
     reponseLead: "venue_pas_demarre",
     sortDuCrm: false,
     proposerMail: false,
+    mailApresRdv: null,
     libelle: "Venue · pas démarré",
   },
   pas_venue: {
@@ -108,6 +123,7 @@ export const EFFET_ISSUE: Record<IssueRdv, EffetIssue> = {
     reponseLead: "pas_venue",
     sortDuCrm: false,
     proposerMail: true,
+    mailApresRdv: "pas_venue",
     libelle: "Pas venue",
   },
 };

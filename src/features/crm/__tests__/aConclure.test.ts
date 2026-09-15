@@ -79,11 +79,13 @@ describe("retardEnJours", () => {
 });
 
 describe("EFFET_ISSUE — les trois issues", () => {
-  it("« venue, elle démarre » sort du CRM et n'écrit pas de relance", () => {
+  it("« venue, elle démarre » sort du CRM, n'écrit pas de relance, et envoie le mot « démarre »", () => {
     const e = EFFET_ISSUE.venue_demarre;
     expect(e.statutRdv).toBe("honored");
     expect(e.sortDuCrm).toBe(true);
     expect(e.reponseLead).toBeNull();
+    // Le trou du 15/09 : le CRM n'envoyait rien ici. La table doit le déclarer.
+    expect(e.mailApresRdv).toBe("demarre");
   });
 
   it("« venue, pas démarré » reste dans la file, sans mail automatique", () => {
@@ -91,13 +93,17 @@ describe("EFFET_ISSUE — les trois issues", () => {
     expect(e.statutRdv).toBe("honored");
     expect(e.sortDuCrm).toBe(false);
     expect(e.proposerMail).toBe(false);
+    // Volontairement muet — même statut « honored » que « elle démarre », mais
+    // pas le même mot : la décision ne peut donc pas vivre côté serveur.
+    expect(e.mailApresRdv).toBeNull();
   });
 
-  it("« pas venue » marque le lapin et propose d'écrire", () => {
+  it("« pas venue » marque le lapin, propose d'écrire, et envoie le mot « pas venue »", () => {
     const e = EFFET_ISSUE.pas_venue;
     expect(e.statutRdv).toBe("no_show");
     expect(e.sortDuCrm).toBe(false);
     expect(e.proposerMail).toBe(true);
+    expect(e.mailApresRdv).toBe("pas_venue");
   });
 
   it("les délais validés par Thomas : J+2 et J+7", () => {
