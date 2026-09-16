@@ -1,5 +1,5 @@
 // =============================================================================
-// QualifierRdvProspect — « ce RDV est passé. Elle est venue, et alors ? »
+// QualifierRdvProspect — « ce RDV, elle est venue, et alors ? »
 //
 // LE TROU (Thomas, 16/09) : cliquer un RDV réservé PAR la personne (tunnel du
 // club) ouvrait la qualification « membre / suivi / pas venue » ; mais un RDV
@@ -7,8 +7,8 @@
 // Meta comme Justine) tombait sur une simple fiche, SANS qualification. Deux
 // tables, deux clics — « on a un super outil mais trop compliqué ».
 //
-// Cette feuille pose la MÊME question pour un RDV `prospects` passé, en deux
-// écrans simples (maquette validée le 16/09) :
+// Cette feuille pose la MÊME question pour TOUT RDV `prospects` (passé comme à
+// venir — Thomas, 16/09, veut un seul comportement), en deux écrans simples :
 //   1. Elle démarre ? → membre du club · suivi classique · pas encore · pas venue
 //   2. (pas encore / pas venue) → je la relance · elle est perdue
 //
@@ -31,6 +31,8 @@ interface Props {
   /** Relancer : elle revient dans la file. `reflechit` = J+7, `pas_venue` = J+2. */
   onRelance: (motif: MotifRelance) => void;
   onPerdue: () => void;
+  /** Déplacer / modifier ce RDV (utile surtout pour un RDV à venir). */
+  onModifier: () => void;
   onFermer: () => void;
 }
 
@@ -83,7 +85,7 @@ const ico: React.CSSProperties = { fontSize: 20, flex: "none", lineHeight: 1.2 }
 const HEURE = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
 const JOUR = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "short", day: "numeric", month: "short" });
 
-export function QualifierRdvProspect({ prospect, onMembre, onClassique, onRelance, onPerdue, onFermer }: Props) {
+export function QualifierRdvProspect({ prospect, onMembre, onClassique, onRelance, onPerdue, onModifier, onFermer }: Props) {
   // `demarre` = l'écran d'entrée ; sinon on est sur « je la relance / perdue »,
   // avec le motif qui fixe le délai (réfléchit → 1 semaine, pas venue → 2 jours).
   const [etape, setEtape] = useState<"demarre" | MotifRelance>("demarre");
@@ -242,6 +244,28 @@ export function QualifierRdvProspect({ prospect, onMembre, onClassique, onRelanc
             </button>
           </>
         )}
+
+        <button
+          type="button"
+          onClick={onModifier}
+          style={{
+            display: "block",
+            width: "100%",
+            minHeight: 44,
+            marginTop: 4,
+            background: "none",
+            border: 0,
+            color: "var(--ls-text-muted)",
+            fontFamily: "inherit",
+            fontSize: 13,
+            padding: 11,
+            cursor: "pointer",
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+          }}
+        >
+          Déplacer ou modifier ce RDV
+        </button>
 
         <button
           type="button"

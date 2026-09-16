@@ -471,9 +471,11 @@ export function AgendaPage() {
 
   /** Clic sur un RDV prospect : passé → on qualifie ; à venir → on gère la
    *  fiche (déplacer, annuler…) comme avant. */
+  // 16/09 — Thomas : le MÊME écran sur TOUS les RDV d'une lead, passé comme à
+  // venir (il ne veut pas deux comportements selon la date). Pour déplacer un
+  // RDV à venir, la feuille porte un lien « Déplacer ou modifier ce RDV ».
   const ouvrirProspect = useCallback((prospect: Prospect) => {
-    if (new Date(prospect.rdvDate).getTime() < Date.now()) setQualifP(prospect);
-    else setDetailProspect(prospect);
+    setQualifP(prospect);
   }, []);
 
   /** La lead démarre en membre : sa fiche club est créée, le prospect se referme. */
@@ -2285,6 +2287,7 @@ export function AgendaPage() {
           onClassique={() => { const p = qualifP; setQualifP(null); navigate(`/assessments/new?prospectId=${p.id}`); }}
           onRelance={(motif) => { const p = qualifP; setQualifP(null); void relancerProspect(p, motif); }}
           onPerdue={() => { const p = qualifP; setQualifP(null); void handleQuickStatus(p, "lost"); }}
+          onModifier={() => { const p = qualifP; setQualifP(null); startTransition(() => { setEditing(p); setShowForm(true); }); }}
           onFermer={() => setQualifP(null)}
         />
       ) : null}
