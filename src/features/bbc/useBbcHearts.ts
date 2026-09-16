@@ -53,6 +53,9 @@ export function nextPalier(hearts: number): number | null {
 
 export function useBbcHearts(userId?: string | null): UseBbcHeartsResult {
   const [rows, setRows] = useState<HeartReferral[]>([]);
+  // Les cœurs gagnés par une boîte de contact (16/09). Ils ne sont pas des
+  // recos : rien à valider, ils sont déjà acquis quand le coupon est `demarre`.
+  const [coeursBoites, setCoeursBoites] = useState<Array<{ clientId: string; nom: string }>>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -66,10 +69,28 @@ export function useBbcHearts(userId?: string | null): UseBbcHeartsResult {
         setLoading(false);
         return;
       }
-      const { data } = await sb
-        .from("client_referrals")
-        .select("id, from_client_id, from_client_name, referred_name, referred_contact, status")
-        .order("created_at", { ascending: false });
+      const [{ data }, boitesRes] = await Promise.all([
+        sb
+          .from("client_referrals")
+          .select("id, from_client_id, from_client_name, referred_name, referred_contact, status")
+          .order("created_at", { ascending: false }),
+        sb
+          .from("contact_box_coupons")
+          .select("contact_boxes!inner(placed_by_client_id, placed_by_name)")
+          .eq("outcome", "demarre")
+          .not("contact_boxes.placed_by_client_id", "is", null),
+      ]);
+      if (Array.isArray(boitesRes.data)) {
+        const l: Array<{ clientId: string; nom: string }> = [];
+        for (const r of boitesRes.data as Array<Record<string, unknown>>) {
+          const lien = r.contact_boxes as unknown;
+          const b = (Array.isArray(lien) ? lien[0] : lien) as Record<string, unknown> | null | undefined;
+          if (typeof b?.placed_by_client_id === "string") {
+            l.push({ clientId: b.placed_by_client_id, nom: String(b.placed_by_name ?? "—") });
+          }
+        }
+        setCoeursBoites(l);
+      }
       if (Array.isArray(data)) {
         setRows(
           data.map((r: Record<string, unknown>) => ({
@@ -118,11 +139,18 @@ export function useBbcHearts(userId?: string | null): UseBbcHeartsResult {
       else if (r.status !== LOST) m.pending += 1;
       byMember.set(key, m);
     }
+    // Même clé que les recos (`from_client_id`) : une membre qui a à la fois
+    // recommandé et posé une boîte n'a qu'une ligne, avec la somme des deux.
+    for (const c of coeursBoites) {
+      const m = byMember.get(c.clientId) ?? { key: c.clientId, name: c.nom, hearts: 0, pending: 0 };
+      m.hearts += 1;
+      byMember.set(c.clientId, m);
+    }
     return {
       members: Array.from(byMember.values()).sort((a, b) => b.hearts - a.hearts),
       pending: rows.filter((r) => !isHeart(r.status) && r.status !== LOST),
     };
-  }, [rows]);
+  }, [rows, coeursBoites]);
 
   return { members, pending, loading, validate, refetch };
 }
