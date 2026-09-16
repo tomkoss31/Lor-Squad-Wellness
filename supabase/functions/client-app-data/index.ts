@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, visitDatesRes, heartsRes, entryRes, cardRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes, visitsRes, visitDatesRes, heartsRes, boxHeartsRes, entryRes, cardRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective, birth_date, ebe_bbc, club_id")
@@ -297,6 +297,18 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true })
         .eq("from_client_id", clientId)
         .in("status", ["started", "converted"]),
+
+      // Boîtes de contact (16/09) : un coupon de SA boîte qui démarre vaut aussi
+      // un cœur. Il ne passe pas par `client_referrals` — sa seule policy
+      // d'insertion exige un jeton d'app membre, le coach ne peut pas y écrire
+      // depuis son écran. On le compte donc ici, à la source. Même chiffre que
+      // le classement « qui pose, qui récolte » côté coach (`boites.ts`).
+      // Les deux ensembles sont disjoints : un coupon n'est jamais une reco.
+      supabase
+        .from("contact_box_coupons")
+        .select("id, contact_boxes!inner(placed_by_client_id)", { count: "exact", head: true })
+        .eq("outcome", "demarre")
+        .eq("contact_boxes.placed_by_client_id", clientId),
 
       // Chantier BBC : l'écran d'entrée a-t-il déjà été vu ?
       supabase
@@ -779,7 +791,9 @@ serve(async (req) => {
       visit_dates: (((visitDatesRes as { data?: Array<{ visited_at?: string }> }).data ?? [])
         .map((v) => v.visited_at)
         .filter((d): d is string => typeof d === "string" && d.length > 0)),
-      hearts_count: (heartsRes as { count?: number | null }).count ?? 0,
+      hearts_count:
+        ((heartsRes as { count?: number | null }).count ?? 0) +
+        ((boxHeartsRes as { count?: number | null }).count ?? 0),
       member_card: memberCard,
       club_settings: clubSettings,
       bbc_entry_seen: Boolean(

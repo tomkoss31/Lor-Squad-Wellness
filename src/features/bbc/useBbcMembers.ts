@@ -54,6 +54,25 @@ export interface UseBbcMembersResult {
   refetch: () => Promise<void>;
 }
 
+/**
+ * Les membres poseurs d'un lot de coupons démarrés, un par coupon.
+ *
+ * PostgREST rend la jointure `!inner` sous forme d'objet — ou de tableau selon
+ * que la relation est vue comme simple ou multiple. On accepte les deux plutôt
+ * que de dépendre d'un détail d'introspection.
+ */
+export function posesDemarres(data: unknown): string[] {
+  if (!Array.isArray(data)) return [];
+  const ids: string[] = [];
+  for (const r of data as Array<Record<string, unknown>>) {
+    const lien = r.contact_boxes as unknown;
+    const boite = Array.isArray(lien) ? (lien[0] as Record<string, unknown> | undefined) : (lien as Record<string, unknown> | null);
+    const id = boite?.placed_by_client_id;
+    if (typeof id === "string" && id) ids.push(id);
+  }
+  return ids;
+}
+
 export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -89,11 +108,19 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
         perimetre,
       ).eq("ebe_bbc", true);
 
-      const [clientsRes, countsRes, refsRes, cardsRes] = await Promise.all([
+      const [clientsRes, countsRes, refsRes, cardsRes, boitesRes] = await Promise.all([
         requeteClients.order("first_name"),
         sb.rpc("bbc_visit_counts"),
         sb.from("client_referrals").select("from_client_id, status"),
         sb.rpc("bbc_active_cards"),
+        // Un coupon démarré dans une boîte posée par un membre vaut un cœur :
+        // même règle que la PWA (`client-app-data`), sinon le membre annonce
+        // 3 cœurs et sa fiche en affiche 2.
+        sb
+          .from("contact_box_coupons")
+          .select("contact_boxes!inner(placed_by_client_id)")
+          .eq("outcome", "demarre")
+          .not("contact_boxes.placed_by_client_id", "is", null),
       ]);
 
       // Visites du jour et jetons : filtrés sur les membres AFFICHÉS, plus sur
@@ -140,6 +167,10 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
           // Même vocabulaire que useBbcHearts (BBC 'started' + CRM 'converted').
           if (isHeart(s)) h[k].done += 1;
           else if (s !== "lost") h[k].pending += 1;
+        }
+        for (const k of posesDemarres(boitesRes.data)) {
+          h[k] = h[k] ?? { done: 0, pending: 0 };
+          h[k].done += 1;
         }
         setHearts(h);
       }
