@@ -99,7 +99,7 @@ create table if not exists public.contact_box_coupons (
 );
 
 comment on table public.contact_box_coupons is
-  'Un coupon papier releve dans une boite. Porte le lead CRM cree ou rattache, et le coeur du poseur quand celui-ci est un membre.';
+  'Un coupon papier releve dans une boite. Porte le lead CRM cree, et l''issue de l''appel. Un coupon dont l''issue est demarre vaut un coeur pour le poseur de sa boite.';
 
 create index if not exists contact_box_coupons_boite
   on public.contact_box_coupons (box_id, created_at desc);
@@ -149,7 +149,7 @@ create policy contact_box_coupons_club on public.contact_box_coupons
 -- On le retire donc explicitement ici, TRUNCATE compris (il contourne le RLS).
 revoke all on public.contact_boxes from anon;
 revoke all on public.contact_box_coupons from anon;
-revoke truncate, delete, update on public.contact_boxes from authenticated;
+revoke truncate on public.contact_boxes from authenticated;
 revoke truncate on public.contact_box_coupons from authenticated;
 grant select, insert, update, delete on public.contact_boxes to authenticated;
 grant select, insert, update, delete on public.contact_box_coupons to authenticated;
