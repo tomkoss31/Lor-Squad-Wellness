@@ -30,6 +30,7 @@ import { BbcClubs } from "./views/BbcClubs";
 import { BbcFormation } from "./views/BbcFormation";
 import { BbcLexique } from "./views/BbcLexique";
 import { BbcCrm } from "./views/BbcCrm";
+import { BbcBoites } from "./views/BbcBoites";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
@@ -52,6 +53,7 @@ import { BBC_FORMATION_MODULES } from "./data/bbcFormation";
 type BbcView =
   | "cockpit"
   | "crm"
+  | "boites"
   | "club"
   | "semaine"
   | "coeurs"
@@ -101,6 +103,9 @@ const SECTIONS: Section[] = [
     icon: "👥",
     tabs: [
       { k: "crm", label: "Mes membres" },
+      // Les boîtes de contact vivent ICI et pas en 6e entrée de menu : la nav
+      // BBC tient à 5 sections, et une boîte ne sert qu'à faire entrer des gens.
+      { k: "boites", label: "Les boîtes" },
       { k: "messages", label: "Messages" },
     ],
   },
@@ -145,6 +150,7 @@ function sectionDe(view: BbcView): SectionKey {
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
   cockpit: { eye: "co-pilote du matin", title: "Bon matin" },
   crm: { eye: "cobayes & membres", title: "Ton pipeline" },
+  boites: { eye: "le terrain · coupons papier", title: "Les boîtes" },
   club: { eye: "pointage en direct", title: "Le club ce matin" },
   semaine: { eye: "la semaine du club", title: "Cette semaine" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
@@ -455,6 +461,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
         {view === "crm" && <BbcCrm key={rafraichir} userId={userId} club={club ?? null} onNouveauMembre={() => setNouveauMembre(true)} />}
+        {view === "boites" && <BbcBoites userId={userId} club={club ?? null} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
