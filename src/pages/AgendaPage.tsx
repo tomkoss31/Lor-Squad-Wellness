@@ -11,6 +11,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
+import { QualifierRdvProspect, type MotifRelance } from "../components/agenda/QualifierRdvProspect";
 import { marquerRdvQualifie } from "../services/sb/qualifierRdv";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
 import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
@@ -462,6 +463,49 @@ export function AgendaPage() {
   /** Replanification du RDV client ouvert. */
   const [rescheduleClient, setRescheduleClient] = useState<Client | null>(null);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
+  // 16/09 — qualifier un RDV `prospects` passé (calé depuis le CRM) avec la
+  // MÊME feuille que les RDV du club. `membreP` = ce prospect qu'on transforme
+  // en membre via BbcNewMemberSheet.
+  const [qualifP, setQualifP] = useState<Prospect | null>(null);
+  const [membreP, setMembreP] = useState<Prospect | null>(null);
+
+  /** Clic sur un RDV prospect : passé → on qualifie ; à venir → on gère la
+   *  fiche (déplacer, annuler…) comme avant. */
+  const ouvrirProspect = useCallback((prospect: Prospect) => {
+    if (new Date(prospect.rdvDate).getTime() < Date.now()) setQualifP(prospect);
+    else setDetailProspect(prospect);
+  }, []);
+
+  /** La lead démarre en membre : sa fiche club est créée, le prospect se referme. */
+  const finaliserProspectMembre = useCallback(async (clientId: string) => {
+    const p = membreP;
+    setMembreP(null);
+    if (!p) return;
+    try {
+      await updateProspect(p.id, { status: "converted", convertedClientId: clientId });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Fiche créée, mais le RDV n'a pas pu être rangé."));
+    }
+  }, [membreP, updateProspect, pushToast]);
+
+  /** « Je la relance » : elle revient dans la file, datée. J+2 si elle n'est
+   *  pas venue, J+7 si elle est venue mais réfléchit (mêmes délais que le CRM). */
+  const relancerProspect = useCallback(async (prospect: Prospect, motif: MotifRelance) => {
+    const jours = motif === "pas_venue" ? 2 : 7;
+    const raison = motif === "pas_venue" ? "Pas venue au RDV" : "Venue au RDV, réfléchit";
+    const coldUntil = new Date(Date.now() + jours * 86_400_000).toISOString();
+    try {
+      await updateProspect(prospect.id, { status: "cold", coldUntil, coldReason: raison });
+      pushToast({
+        tone: "success",
+        title: "Noté",
+        message: `${prospect.firstName} revient dans ta liste dans ${jours} jour${jours > 1 ? "s" : ""}.`,
+      });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de programmer la relance."));
+    }
+  }, [updateProspect, pushToast]);
+
 
   useEffect(() => {
     try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
@@ -933,7 +977,7 @@ export function AgendaPage() {
     (ev: { entry: AgendaEntry }) => {
       const entry = ev.entry;
       if (entry.kind === "prospect") {
-        setDetailProspect(entry.prospect);
+        ouvrirProspect(entry.prospect);
         return;
       }
       if (entry.kind === "protocol") {
@@ -997,8 +1041,8 @@ export function AgendaPage() {
   // Perf (2026-04-20) : handler stable pour ProspectCard.onClick. Sans ça,
   // la flèche inline était recréée à chaque render, défaisant React.memo côté carte.
   const handleCardClick = useCallback((prospect: Prospect) => {
-    setDetailProspect(prospect);
-  }, []);
+    ouvrirProspect(prospect);
+  }, [ouvrirProspect]);
 
   const handleQuickStatus = useCallback(async (prospect: Prospect, nextStatus: ProspectStatus) => {
     try {
@@ -2234,6 +2278,35 @@ export function AgendaPage() {
       ) : null}
 
       {/* Détail prospect */}
+      {qualifP ? (
+        <QualifierRdvProspect
+          prospect={qualifP}
+          onMembre={() => { setMembreP(qualifP); setQualifP(null); }}
+          onClassique={() => { const p = qualifP; setQualifP(null); navigate(`/assessments/new?prospectId=${p.id}`); }}
+          onRelance={(motif) => { const p = qualifP; setQualifP(null); void relancerProspect(p, motif); }}
+          onPerdue={() => { const p = qualifP; setQualifP(null); void handleQuickStatus(p, "lost"); }}
+          onFermer={() => setQualifP(null)}
+        />
+      ) : null}
+
+      {membreP ? (
+        <Suspense fallback={null}>
+          <BbcNewMemberSheet
+            userId={currentUser?.id}
+            coachName={currentUser?.name}
+            club={activeClub}
+            prefill={{
+              prenom: membreP.firstName,
+              nom: membreP.lastName,
+              tel: membreP.phone ?? null,
+              email: membreP.email ?? null,
+            }}
+            onClose={() => setMembreP(null)}
+            onCreated={(clientId) => void finaliserProspectMembre(clientId)}
+          />
+        </Suspense>
+      ) : null}
+
       {detailProspect && (
         <ProspectDetailModal
           prospect={detailProspect}
