@@ -26,6 +26,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import type { Club } from "../../../types/domain";
 import { useCoachsDuClub, type CoachRattache } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
+import { CalerRdvSheet } from "./CalerRdvSheet";
 import {
   aQualifier,
   cleJour,
@@ -72,6 +73,8 @@ export function BbcAgenda({ userId, club }: Props) {
   const [filtre, setFiltre] = useState<string>("tous");
   const [jourOuvert, setJourOuvert] = useState<string | null>(null);
   const [rdvOuvert, setRdvOuvert] = useState<RdvClub | null>(null);
+  /** La feuille « caler / déplacer » — null = fermée. */
+  const [caler, setCaler] = useState<{ jour: string; coach?: string | null; heure?: number | null; deplace?: RdvClub | null } | null>(null);
 
   const { coachs } = useCoachsDuClub(userId);
   const ouverture = plageOuverture(club?.settings?.open_hours ?? null);
@@ -91,7 +94,7 @@ export function BbcAgenda({ userId, club }: Props) {
     fin.setDate(fin.getDate() + 7);
     return { du: lundi, au: fin };
   }, [vue, semaines, lundi]);
-  const { rdvs, loading } = useAgendaDuClub(du, au, userId);
+  const { rdvs, loading, refetch } = useAgendaDuClub(du, au, userId);
 
   const visibles = useMemo(
     () => (filtre === "tous" ? rdvs : rdvs.filter((r) => r.coachId === filtre)),
@@ -172,8 +175,14 @@ export function BbcAgenda({ userId, club }: Props) {
           ouverture={ouverture}
           couleur={couleur}
           onRdv={setRdvOuvert}
+          onTrou={(coachId, heure) => setCaler({ jour: ancre, coach: coachId, heure })}
         />
       )}
+
+      {/* ＋ : toujours au même endroit, au-dessus du pouce. */}
+      <button type="button" onClick={() => setCaler({ jour: vue !== "mois" && ancre >= cleAuj ? ancre : cleAuj })} aria-label="Ajouter un rendez-vous" style={fab}>
+        ＋
+      </button>
 
       <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.5 }}>
         {loading ? "Chargement…" : vue === "mois" ? `${visibles.length} rendez-vous sur la période · touche un jour pour sa liste.` : vue === "semaine" ? "Touche un jour pour le voir coach par coach." : "Une colonne par coach. Touche un rendez-vous pour l'ouvrir."}
@@ -229,8 +238,40 @@ export function BbcAgenda({ userId, club }: Props) {
             ) : (
               <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)" }}>Pas de téléphone sur ce rendez-vous.</div>
             )}
+            {rdvOuvert.source === "prospect" && !marqueDe(rdvOuvert) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const r = rdvOuvert;
+                  setRdvOuvert(null);
+                  setCaler({ jour: cleJour(new Date(r.debut)), coach: r.coachId, deplace: r });
+                }}
+                style={boutonFantome}
+              >
+                Déplacer ce rendez-vous
+              </button>
+            ) : null}
           </div>
         </Feuille>
+      ) : null}
+
+      {caler ? (
+        <CalerRdvSheet
+          userId={userId}
+          coachs={coachs}
+          couleur={couleur}
+          jourInitial={caler.jour}
+          coachInitial={caler.coach ?? null}
+          heureInitiale={caler.heure ?? null}
+          deplace={caler.deplace ?? null}
+          onClose={() => setCaler(null)}
+          onFait={(jour) => {
+            setCaler(null);
+            setAncre(jour);
+            setVue("jour");
+            void refetch();
+          }}
+        />
       ) : null}
     </div>
   );
@@ -379,6 +420,7 @@ function VueJour({
   ouverture,
   couleur,
   onRdv,
+  onTrou,
 }: {
   cle: string;
   estAuj: boolean;
@@ -387,7 +429,10 @@ function VueJour({
   ouverture: { debut: number; fin: number } | null;
   couleur: (id: string | null) => string;
   onRdv: (r: RdvClub) => void;
+  /** On a touché un trou dans la colonne d'une coach, à cette heure (décimale). */
+  onTrou: (coachId: string, heure: number) => void;
 }) {
+  const passe = cle < cleJour(new Date());
   const refMaintenant = useRef<HTMLDivElement | null>(null);
   const now = new Date();
   const heureMaintenant = now.getHours() + now.getMinutes() / 60;
@@ -437,7 +482,17 @@ function VueJour({
           const miens = rdvs.filter((r) => r.coachId === c.id);
           const { items, nb } = couloirs(miens);
           return (
-            <div key={c.id ?? "club"} style={{ position: "relative", flex: 1, minWidth: 0, borderLeft: "1px solid var(--ls-bbc-line)" }}>
+            <div
+              key={c.id ?? "club"}
+              onClick={(e) => {
+                // Toucher un trou = caler chez cette coach à cette heure, au quart d'heure près.
+                if (!c.id || passe) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = H0 + Math.floor(((e.clientY - rect.top) / PX_PAR_HEURE) * 2) / 2;
+                if (x >= H0 && x < H1) onTrou(c.id, x);
+              }}
+              style={{ position: "relative", flex: 1, minWidth: 0, borderLeft: "1px solid var(--ls-bbc-line)", cursor: c.id && !passe ? "pointer" : "default" }}
+            >
               {heures.map((h) => (
                 <div key={h} style={{ position: "absolute", left: 0, right: 0, top: (h - H0) * PX_PAR_HEURE, borderTop: "1px solid var(--ls-bbc-line)", pointerEvents: "none" }} />
               ))}
@@ -461,7 +516,10 @@ function VueJour({
                   <button
                     key={`${rdv.source}-${rdv.id}`}
                     type="button"
-                    onClick={() => onRdv(rdv)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRdv(rdv);
+                    }}
                     title={`${heureDe(rdv.debut)} · ${libelleNature(rdv)} · ${nomComplet(rdv)}`}
                     style={{
                       ...bloc,
@@ -630,6 +688,15 @@ const vide: CSSProperties = { padding: "22px 0", textAlign: "center", fontSize: 
 const boutonPlein: CSSProperties = {
   width: "100%", minHeight: 52, marginTop: 12, border: 0, borderRadius: 14, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)",
   fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 800, cursor: "pointer",
+};
+const fab: CSSProperties = {
+  position: "fixed", right: 16, bottom: "calc(96px + env(safe-area-inset-bottom))", zIndex: 41,
+  width: 58, height: 58, minHeight: 44, borderRadius: 99, border: 0, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)",
+  fontSize: 30, lineHeight: 1, boxShadow: "0 8px 22px rgba(0,0,0,.35)", cursor: "pointer",
+};
+const boutonFantome: CSSProperties = {
+  width: "100%", minHeight: 46, marginTop: 6, borderRadius: 13, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)",
+  color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13.5, fontWeight: 700, cursor: "pointer",
 };
 const lienAction: CSSProperties = {
   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 44, borderRadius: 12,
