@@ -24,7 +24,12 @@ import type { CoachRattache } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
 import { useCreneauxOccupes } from "./useCreneauxOccupes";
 import { calerRdv, prevenirCoach } from "./calerRdv";
+import { poserIndispo } from "./indispos";
 import {
+  QUAND_INDISPO,
+  plageIndispo,
+  rdvSurLaPlage,
+  type QuandIndispo,
   auPlusTot,
   cleJour,
   creneauxLibres,
@@ -40,11 +45,15 @@ import {
 } from "./agendaClub";
 
 type Etape = "quand" | "qui";
-type TypeRdv = "bilan" | "suivi" | "autre";
+// « indispo » (18/09) n'est pas un rendez-vous : le même ＋, mais un seul écran —
+// quel jour, pour qui, matin / après-midi / journée. Sur TimeTree c'était une
+// ligne « Romane absente » ; ici elle retire en plus les créneaux proposés.
+type TypeRdv = "bilan" | "suivi" | "autre" | "indispo";
 const TYPES: Record<TypeRdv, { nom: string; duree: number }> = {
   bilan: { nom: "Bilan découverte", duree: 60 },
   suivi: { nom: "Suivi", duree: 30 },
   autre: { nom: "Autre", duree: 60 },
+  indispo: { nom: "Pas dispo", duree: 60 },
 };
 const CRENEAUX_VISIBLES = 6;
 
@@ -93,6 +102,12 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   const [note, setNote] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  // « Pas dispo » : pour qui (soi d'abord — c'est le cas de tous les jours) et quand.
+  const [coachIndispo, setCoachIndispo] = useState<string | null>(
+    () => coachInitial ?? (coachs.some((c) => c.id === userId) ? (userId ?? null) : (coachs[0]?.id ?? null)),
+  );
+  const [quandIndispo, setQuandIndispo] = useState<QuandIndispo | null>(null);
+  const [noteIndispo, setNoteIndispo] = useState("");
   const maintenant = Date.now();
   const duree = TYPES[type].duree;
 
@@ -204,6 +219,33 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     onFait(jour, coach);
   }
 
+  // ── « Pas dispo » ──
+  const cibleIndispo = coachIndispo ?? coachs[0]?.id ?? null;
+  const plageChoisie = quandIndispo ? plageIndispo(jour, quandIndispo) : null;
+  // Des rendez-vous déjà calés là ? On le DIT — on ne bloque pas : c'est elle
+  // qui sait si elle les déplace. (Lecture sur les 7 jours de la bande.)
+  const dejaCales = plageChoisie && cibleIndispo ? rdvSurLaPlage(rdvsSemaine, cibleIndispo, plageChoisie.debut, plageChoisie.fin) : 0;
+  const pretIndispo = Boolean(cibleIndispo && plageChoisie && plageChoisie.fin.getTime() > maintenant);
+
+  async function enregistrerIndispo() {
+    if (!pretIndispo || envoi || !cibleIndispo || !plageChoisie || !quandIndispo) return;
+    setEnvoi(true);
+    setErreur(null);
+    const res = await poserIndispo({ coachId: cibleIndispo, debut: plageChoisie.debut, fin: plageChoisie.fin, note: noteIndispo });
+    setEnvoi(false);
+    if (!res.ok) {
+      setErreur(res.message);
+      return;
+    }
+    void prevenirCoach(
+      cibleIndispo,
+      userId,
+      "Pas dispo noté dans l'agenda",
+      `${libelleJourCourt(jourDe(jour))} · ${QUAND_INDISPO[quandIndispo].nom.toLowerCase()}` + (moi ? ` · par ${moi.prenom}` : ""),
+    );
+    onFait(jour, cibleIndispo);
+  }
+
   const dJour = jourDe(jour);
   const finHeure = heure != null ? heure + duree / 60 : null;
 
@@ -213,8 +255,8 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
         <div style={{ width: 40, height: 5, borderRadius: 9, background: "var(--ls-bbc-line2)", margin: "10px auto 4px", flex: "none" }} />
         <div style={entete}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={titre}>{etape === "quand" ? (deplace ? "Déplacer le rendez-vous" : "Nouveau rendez-vous") : deplace ? "On le déplace ?" : "Pour qui ?"}</div>
-            <div style={sousTitre}>{etape === "quand" ? "étape 1 sur 2 · quand et avec qui" : "étape 2 sur 2"}</div>
+            <div style={titre}>{etape === "quand" ? (deplace ? "Déplacer le rendez-vous" : type === "indispo" ? "Pas dispo" : "Nouveau rendez-vous") : deplace ? "On le déplace ?" : "Pour qui ?"}</div>
+            <div style={sousTitre}>{etape === "quand" ? (type === "indispo" ? "personne ne calera rien sur cette plage" : "étape 1 sur 2 · quand et avec qui") : "étape 2 sur 2"}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={croix}>
             ✕
@@ -222,14 +264,15 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
         </div>
 
         {etape === "quand" ? (
+          <>
           <div style={corps}>
             {erreur ? <div style={alerte("coral")}>{erreur}</div> : null}
 
             {!deplace ? (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(Object.keys(TYPES) as TypeRdv[]).map((t) => (
-                  <button key={t} type="button" onClick={() => setType(t)} style={{ ...puce, background: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", borderColor: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)", color: type === t ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)" }}>
-                    {TYPES[t].nom} · {TYPES[t].duree === 30 ? "30 min" : "1 h"}
+                  <button key={t} type="button" onClick={() => { setType(t); setErreur(null); }} style={{ ...puce, background: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", borderColor: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)", color: type === t ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)" }}>
+                    {t === "indispo" ? "🚫 Pas dispo" : `${TYPES[t].nom} · ${TYPES[t].duree === 30 ? "30 min" : "1 h"}`}
                   </button>
                 ))}
               </div>
@@ -239,7 +282,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </div>
             )}
 
-            {plusTot ? (
+            {plusTot && type !== "indispo" ? (
               <button
                 type="button"
                 onClick={() => {
@@ -276,12 +319,63 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                   <button key={k} type="button" onClick={() => { setJour(k); setHeure(null); }} style={{ ...jb, background: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-s2)", borderColor: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-line)", color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>
                     <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, opacity: 0.75 }}>{i === 0 ? "auj." : libelleJourCourt(d).split(" ")[0]}</span>
                     <span style={{ display: "block", fontSize: 17, fontWeight: 800, marginTop: 2 }}>{d.getDate()}</span>
-                    <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-lime-text)", marginTop: 2 }}>{libres} libre{libres > 1 ? "s" : ""}</span>
+                    {type !== "indispo" ? (
+                      <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-lime-text)", marginTop: 2 }}>{libres} libre{libres > 1 ? "s" : ""}</span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
 
+            {type === "indispo" ? (
+              <>
+                <div style={etiquette}>pour qui ?</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {coachs.map((c) => {
+                    const on = c.id === cibleIndispo;
+                    return (
+                      <button key={c.id} type="button" onClick={() => setCoachIndispo(c.id)} aria-pressed={on} style={{ ...puce, display: "flex", alignItems: "center", gap: 7, background: on ? "var(--ls-bbc-s3)" : "var(--ls-bbc-s2)", borderColor: on ? couleur(c.id) : "var(--ls-bbc-line)", color: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)" }}>
+                        <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: couleur(c.id), flex: "none" }} />
+                        {c.id === userId ? "Moi" : c.prenom}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={etiquette}>quand ?</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(Object.keys(QUAND_INDISPO) as QuandIndispo[]).map((q) => {
+                    const on = quandIndispo === q;
+                    const passee = plageIndispo(jour, q).fin.getTime() <= maintenant;
+                    return (
+                      <button key={q} type="button" disabled={passee} onClick={() => setQuandIndispo(q)} aria-pressed={on} style={{ ...choixIndispo, borderColor: on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)", background: on ? "color-mix(in srgb, var(--ls-bbc-lime) 12%, var(--ls-bbc-s2))" : "var(--ls-bbc-s2)", opacity: passee ? 0.4 : 1 }}>
+                        <span style={{ flex: 1, fontSize: 15, fontWeight: 700 }}>{QUAND_INDISPO[q].nom}</span>
+                        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>
+                          {fmtHeure(QUAND_INDISPO[q].debut)} – {fmtHeure(QUAND_INDISPO[q].fin)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {dejaCales > 0 ? (
+                  <div style={alerte("amber")}>
+                    {dejaCales} rendez-vous {dejaCales > 1 ? "sont déjà calés" : "est déjà calé"} sur cette plage. Ils restent en place — pense à les déplacer.
+                  </div>
+                ) : null}
+
+                <div style={champ}>
+                  <label htmlFor="note-indispo" style={etiquette}>
+                    pourquoi · facultatif
+                  </label>
+                  <input id="note-indispo" value={noteIndispo} maxLength={60} placeholder="Ex. médecin, formation" onChange={(e) => setNoteIndispo(e.target.value)} style={saisie} />
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.45 }}>
+                  Toute l'équipe le voit dans l'agenda. Plus aucun créneau n'est proposé sur cette plage — ni ici, ni sur le site du club.
+                </div>
+              </>
+            ) : (
+              <>
             <div style={etiquette}>avec qui ?</div>
             {[...coachs]
               .sort((a, b) => Number(b.id === coachInitial) - Number(a.id === coachInitial))
@@ -318,7 +412,20 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                 );
               })}
             <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.45, padding: "10px 0 4px" }}>Seuls les créneaux libres sont proposés, de 8 h à 18 h. Ils sont revérifiés à l'enregistrement.</div>
+              </>
+            )}
           </div>
+          {type === "indispo" ? (
+            <div style={pied}>
+              <button type="button" onClick={() => void enregistrerIndispo()} disabled={!pretIndispo || envoi} style={{ ...boutonLime, background: pretIndispo && !envoi ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s3)", color: pretIndispo && !envoi ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-hint)" }}>
+                {envoi ? "Enregistrement…" : "Bloquer cette plage"}
+              </button>
+              <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", textAlign: "center", lineHeight: 1.45 }}>
+                {cibleIndispo && cibleIndispo !== userId ? `${coachs.find((c) => c.id === cibleIndispo)?.prenom ?? "La coach"} sera prévenue.` : "Tu pourras la libérer en la touchant dans l'agenda."}
+              </div>
+            </div>
+          ) : null}
+          </>
         ) : (
           <>
             <div style={corps}>
@@ -464,6 +571,7 @@ const champ: CSSProperties = { display: "flex", flexDirection: "column", gap: 6,
 const saisie: CSSProperties = { minHeight: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", padding: "0 14px", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16 };
 const ligneRes: CSSProperties = { display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 56, padding: "8px 0", border: 0, borderBottom: "1px solid var(--ls-bbc-line)", background: "transparent", color: "var(--ls-bbc-text)", textAlign: "left", fontFamily: "var(--ls-bbc-font-body)", cursor: "pointer" };
 const avatar: CSSProperties = { flex: "none", width: 36, height: 36, borderRadius: 99, background: "var(--ls-bbc-s3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 14, fontWeight: 700 };
+const choixIndispo: CSSProperties = { display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 56, padding: "0 16px", borderRadius: 14, border: "1.5px solid", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", textAlign: "left", cursor: "pointer" };
 const boutonLime: CSSProperties = { width: "100%", minHeight: 52, border: 0, borderRadius: 14, fontFamily: "var(--ls-bbc-font-body)", fontSize: 15.5, fontWeight: 800, cursor: "pointer" };
 function alerte(ton: "coral" | "amber"): CSSProperties {
   const c = ton === "coral" ? "var(--ls-bbc-coral)" : "var(--ls-bbc-amber)";

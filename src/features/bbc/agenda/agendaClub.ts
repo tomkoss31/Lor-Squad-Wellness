@@ -12,7 +12,8 @@
 
 import { fallbackOwnerColor } from "../../agenda/calendarEvents";
 
-export type SourceRdv = "prospect" | "reservation" | "suivi";
+/** « indispo » (18/09) : pas un rendez-vous, une plage où l'on ne cale rien. */
+export type SourceRdv = "prospect" | "reservation" | "suivi" | "indispo";
 
 export interface RdvClub {
   id: string;
@@ -34,7 +35,7 @@ export interface RdvClub {
 /** Une ligne de `agenda_du_club()` telle que la rend Supabase. */
 export function versRdvClub(r: Record<string, unknown>): RdvClub | null {
   const source = String(r.source ?? "");
-  if (source !== "prospect" && source !== "reservation" && source !== "suivi") return null;
+  if (source !== "prospect" && source !== "reservation" && source !== "suivi" && source !== "indispo") return null;
   const debut = typeof r.debut === "string" ? r.debut : "";
   if (!debut || Number.isNaN(new Date(debut).getTime())) return null;
   const fin = typeof r.fin === "string" && !Number.isNaN(new Date(r.fin).getTime()) ? r.fin : debut;
@@ -48,7 +49,7 @@ export function versRdvClub(r: Record<string, unknown>): RdvClub | null {
     nom: typeof r.nom === "string" && r.nom.trim() ? r.nom.trim() : null,
     telephone: typeof r.telephone === "string" && r.telephone.trim() ? r.telephone.trim() : null,
     statut: String(r.statut ?? ""),
-    nature: String(r.nature ?? "") || (source === "suivi" ? "suivi" : source === "reservation" ? "decouverte" : "bilan"),
+    nature: String(r.nature ?? "") || (source === "indispo" ? "indispo" : source === "suivi" ? "suivi" : source === "reservation" ? "decouverte" : "bilan"),
   };
 }
 
@@ -154,13 +155,25 @@ export function parJour(rdvs: readonly RdvClub[]): Map<string, RdvClub[]> {
 
 // ── Ce qu'on écrit sur la pastille ──────────────────────────────────────────
 
+/** Une plage « pas dispo » — elle occupe la coach, mais ce n'est pas un rendez-vous. */
+export function estIndispo(r: RdvClub): boolean {
+  return r.source === "indispo";
+}
+
+/** Les vrais rendez-vous : ce qu'on compte (« 3 rdv »), sans les « pas dispo ». */
+export function sansIndispos(rdvs: readonly RdvClub[]): RdvClub[] {
+  return rdvs.filter((r) => r.source !== "indispo");
+}
+
 /** « Justine » — la couleur dit déjà la coach, la place va à la personne. */
 export function prenomSeul(r: RdvClub): string {
+  if (r.source === "indispo") return "Pas dispo";
   return r.prenom || r.nom || "—";
 }
 
-/** « Justine Bernard » */
+/** « Justine Bernard » — pour un « pas dispo », sa note : « Pas dispo · médecin ». */
 export function nomComplet(r: RdvClub): string {
+  if (r.source === "indispo") return r.nom ? `Pas dispo · ${r.nom}` : "Pas dispo";
   return `${r.prenom} ${r.nom ?? ""}`.trim() || "—";
 }
 
@@ -169,6 +182,7 @@ const NATURES: Record<string, string> = {
   decouverte: "Découverte",
   suivi: "Suivi",
   recrutement: "Recrutement",
+  indispo: "Pas dispo",
 };
 
 /** « Bilan » · « Suivi » · « Découverte » — la nature, dite avec un mot. */
@@ -211,7 +225,7 @@ export function marqueDe(r: RdvClub): Marque | null {
 
 /** Ce rendez-vous est-il passé sans avoir été tranché ? Il doit sauter aux yeux. */
 export function aQualifier(r: RdvClub, maintenantMs: number): boolean {
-  if (r.source === "suivi") return false;
+  if (r.source === "suivi" || r.source === "indispo") return false;
   return new Date(r.fin).getTime() < maintenantMs && marqueDe(r) === null;
 }
 
@@ -246,6 +260,100 @@ export function plageOuverture(texte: string | null | undefined): { debut: numbe
   const fin = Number(m[3]) + Number(m[4] ?? 0) / 60;
   if (!(debut >= 0 && fin <= 24 && fin > debut)) return null;
   return { debut, fin };
+}
+
+/** Ce que le club fait d'une journée, côté réservations du site. */
+export interface HorairesDuJour {
+  /**
+   * « ouvert » : des heures s'appliquent · « ferme » : journée fermée à la main
+   * (férié, « demain je ne suis pas là ») · « repos » : aucun horaire ce
+   * jour-là de la semaine (le dimanche) — rien à signaler.
+   */
+  etat: "ouvert" | "ferme" | "repos";
+  /** Heures décimales. Plusieurs plages possibles (8 h–15 h puis 16 h–18 h). */
+  plages: Array<{ debut: number; fin: number }>;
+  /** Vrai si la journée porte un horaire spécial (`hours_by_date`). */
+  exception: boolean;
+  /** La première plage telle qu'écrite (« 08:00 », « 15:00 ») — pour l'éditeur. */
+  texte: [string, string] | null;
+}
+
+/** Les réglages qu'on lit — le sous-ensemble de `clubs.settings.discovery`. */
+export interface ReglagesHoraires {
+  hours?: Record<string, ReadonlyArray<ReadonlyArray<string>>> | null;
+  hours_by_date?: Record<string, ReadonlyArray<ReadonlyArray<string>>> | null;
+  holidays?: readonly string[] | null;
+}
+
+function heureDecimaleTexte(hhmm: string | undefined): number | null {
+  const m = String(hhmm ?? "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const x = Number(m[1]) + Number(m[2]) / 60;
+  return x >= 0 && x <= 24 ? x : null;
+}
+
+/**
+ * Les horaires réellement appliqués un jour donné — EXACTEMENT la règle de
+ * `get_club_discovery_availability` : fermé si le jour est dans `holidays`,
+ * sinon l'exception du jour (`hours_by_date`), sinon l'habituel de ce jour de
+ * semaine (`hours`, clés ISO : 1 = lundi … 7 = dimanche). Une plage peut porter
+ * un 3ᵉ élément (sa capacité) : on l'ignore ici.
+ */
+export function horairesDuJour(reglages: ReglagesHoraires | null | undefined, cle: string): HorairesDuJour {
+  if (reglages?.holidays?.includes(cle)) return { etat: "ferme", plages: [], exception: false, texte: null };
+  const d = jourDe(cle);
+  const iso = d.getDay() === 0 ? 7 : d.getDay();
+  const speciales = reglages?.hours_by_date?.[cle];
+  const exception = Array.isArray(speciales) && speciales.length > 0;
+  const brutes = exception ? speciales! : (reglages?.hours?.[String(iso)] ?? []);
+  const plages: Array<{ debut: number; fin: number }> = [];
+  let texte: [string, string] | null = null;
+  for (const p of brutes) {
+    const debut = heureDecimaleTexte(p?.[0]);
+    const fin = heureDecimaleTexte(p?.[1]);
+    if (debut == null || fin == null || fin <= debut) continue;
+    if (!texte) texte = [String(p[0]), String(p[1])];
+    plages.push({ debut, fin });
+  }
+  return { etat: plages.length ? "ouvert" : "repos", plages, exception, texte };
+}
+
+// ── « Pas dispo » ───────────────────────────────────────────────────────────
+
+export type QuandIndispo = "matin" | "aprem" | "journee";
+
+/**
+ * Les trois gestes proposés — calés sur les heures où l'on propose des RDV
+ * (8 h–18 h, cf. `PROPOSITION` plus bas : un test vérifie qu'ils restent alignés).
+ */
+export const QUAND_INDISPO: Record<QuandIndispo, { nom: string; debut: number; fin: number }> = {
+  matin: { nom: "Le matin", debut: 8, fin: 12 },
+  aprem: { nom: "L'après-midi", debut: 12, fin: 18 },
+  journee: { nom: "Toute la journée", debut: 8, fin: 18 },
+};
+
+/** Les deux bornes d'un « pas dispo », en heure locale. */
+export function plageIndispo(cle: string, quand: QuandIndispo): { debut: Date; fin: Date } {
+  const q = QUAND_INDISPO[quand];
+  const debut = jourDe(cle);
+  debut.setHours(q.debut, 0, 0, 0);
+  const fin = jourDe(cle);
+  fin.setHours(q.fin, 0, 0, 0);
+  return { debut, fin };
+}
+
+/** Combien de vrais rendez-vous tombent déjà sur cette plage, chez cette coach ? */
+export function rdvSurLaPlage(rdvs: readonly RdvClub[], coachId: string, debut: Date, fin: Date): number {
+  const d = debut.getTime();
+  const f = fin.getTime();
+  return rdvs.filter(
+    (r) =>
+      r.coachId === coachId &&
+      r.source !== "indispo" &&
+      marqueDe(r) === null &&
+      new Date(r.debut).getTime() < f &&
+      new Date(r.fin).getTime() > d,
+  ).length;
 }
 
 // ── Les blocs qui se chevauchent, côte à côte ───────────────────────────────

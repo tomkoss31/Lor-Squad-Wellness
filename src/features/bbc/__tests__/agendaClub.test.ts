@@ -22,6 +22,13 @@ import {
   prenomSeul,
   semaineDe,
   versRdvClub,
+  estIndispo,
+  sansIndispos,
+  horairesDuJour,
+  plageIndispo,
+  rdvSurLaPlage,
+  QUAND_INDISPO,
+  PROPOSITION,
   type RdvClub,
 } from "../agenda/agendaClub";
 import { fallbackOwnerColor } from "../../agenda/calendarEvents";
@@ -293,5 +300,103 @@ describe("la couleur", () => {
 
   it("un rendez-vous sans coach reste neutre", () => {
     expect(couleurCoach(null, coachs)).toBe("var(--ls-bbc-sage)");
+  });
+});
+
+// ── Étape 8 : « pas dispo », et les horaires du club jour par jour ───────────
+describe("« pas dispo »", () => {
+  const indispo = versRdvClub(
+    ligne({ source: "indispo", id: "i1", prenom: "Pas dispo", nom: "médecin", telephone: null, statut: "indispo", nature: "indispo" }),
+  )!;
+
+  it("est lu comme une quatrième source, pas jeté", () => {
+    expect(indispo).not.toBeNull();
+    expect(estIndispo(indispo)).toBe(true);
+    expect(estIndispo(versRdvClub(ligne())!)).toBe(false);
+  });
+
+  it("s'écrit « Pas dispo », avec sa note s'il y en a une", () => {
+    expect(prenomSeul(indispo)).toBe("Pas dispo");
+    expect(nomComplet(indispo)).toBe("Pas dispo · médecin");
+    expect(nomComplet({ ...indispo, nom: null })).toBe("Pas dispo");
+  });
+
+  it("n'est jamais « à qualifier », même passé, et ne porte aucune marque", () => {
+    const hier = { ...indispo, debut: new Date(2026, 8, 16, 8, 0).toISOString(), fin: new Date(2026, 8, 16, 12, 0).toISOString() };
+    expect(aQualifier(hier, MAINTENANT)).toBe(false);
+    expect(marqueDe(hier)).toBeNull();
+  });
+
+  it("ne compte pas comme un rendez-vous", () => {
+    expect(sansIndispos([indispo, versRdvClub(ligne())!]).map((r) => r.id)).toEqual(["r1"]);
+  });
+
+  it("bloque les créneaux comme n'importe quelle plage occupée", () => {
+    const { debut, fin } = plageIndispo("2026-09-18", "matin");
+    const libres = creneauxLibres([{ debut: debut.getTime(), fin: fin.getTime() }], new Date(2026, 8, 18), 60, MAINTENANT);
+    expect(libres[0]).toBe(12);
+  });
+
+  it("matin, après-midi, journée : en heure locale, alignés sur les heures proposées", () => {
+    const m = plageIndispo("2026-09-18", "matin");
+    expect([m.debut.getHours(), m.fin.getHours(), m.debut.getDate()]).toEqual([8, 12, 18]);
+    const a = plageIndispo("2026-09-18", "aprem");
+    expect([a.debut.getHours(), a.fin.getHours()]).toEqual([12, 18]);
+    expect(QUAND_INDISPO.journee.debut).toBe(PROPOSITION.debut);
+    expect(QUAND_INDISPO.journee.fin).toBe(PROPOSITION.fin);
+    expect(QUAND_INDISPO.matin.fin).toBe(QUAND_INDISPO.aprem.debut);
+  });
+
+  it("prévient des rendez-vous déjà calés sur la plage — sans compter les tranchés", () => {
+    const { debut, fin } = plageIndispo("2026-09-17", "matin");
+    const rdvs = [
+      versRdvClub(ligne())!, // Romane, 10 h–11 h, à venir
+      versRdvClub(ligne({ id: "r2", statut: "lost" }))!, // déjà perdue : ne gêne plus
+      versRdvClub(ligne({ id: "r3", coach_user_id: "mel" }))!, // une autre coach
+      versRdvClub(ligne({ id: "r4", debut: new Date(2026, 8, 17, 14, 0).toISOString(), fin: new Date(2026, 8, 17, 15, 0).toISOString() }))!,
+      indispo,
+    ];
+    expect(rdvSurLaPlage(rdvs, "romane", debut, fin)).toBe(1);
+  });
+});
+
+describe("les horaires du club, jour par jour (la règle du tunnel du site)", () => {
+  const reglages = {
+    hours: {
+      "1": [["08:00", "15:00"]],
+      "2": [["08:00", "15:00"], ["16:00", "18:00", "2"]],
+      "6": [["08:30", "11:00"]],
+    },
+    hours_by_date: { "2026-09-21": [["12:00", "15:00"]] },
+    holidays: ["2026-09-25", "2026-09-22"],
+  };
+
+  it("l'horaire habituel du jour de la semaine (clés ISO, 1 = lundi)", () => {
+    const lundi = horairesDuJour(reglages, "2026-09-28");
+    expect(lundi).toEqual({ etat: "ouvert", plages: [{ debut: 8, fin: 15 }], exception: false, texte: ["08:00", "15:00"] });
+    expect(horairesDuJour(reglages, "2026-09-19").plages).toEqual([{ debut: 8.5, fin: 11 }]);
+  });
+
+  it("plusieurs plages, et le 3ᵉ élément (la capacité) est ignoré", () => {
+    expect(horairesDuJour(reglages, "2026-09-29").plages).toEqual([{ debut: 8, fin: 15 }, { debut: 16, fin: 18 }]);
+  });
+
+  it("l'exception du jour prime sur l'habituel", () => {
+    const j = horairesDuJour(reglages, "2026-09-21");
+    expect(j.exception).toBe(true);
+    expect(j.plages).toEqual([{ debut: 12, fin: 15 }]);
+  });
+
+  it("une fermeture prime sur tout, même sur un mardi à deux plages", () => {
+    expect(horairesDuJour(reglages, "2026-09-22")).toEqual({ etat: "ferme", plages: [], exception: false, texte: null });
+  });
+
+  it("un jour sans horaire (dimanche) est « repos », pas « fermé »", () => {
+    expect(horairesDuJour(reglages, "2026-09-20").etat).toBe("repos");
+    expect(horairesDuJour(null, "2026-09-21").etat).toBe("repos");
+  });
+
+  it("une plage illisible ou à l'envers est ignorée plutôt qu'affichée fausse", () => {
+    expect(horairesDuJour({ hours: { "1": [["15:00", "08:00"], ["8h", "15h"]] } }, "2026-09-28").etat).toBe("repos");
   });
 });

@@ -10,7 +10,7 @@
 import { useMemo, type CSSProperties } from "react";
 import { useCoachsDuClub } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
-import { couleurCoach, heureDe, libelleNature, nomComplet, parJour, cleJour } from "./agendaClub";
+import { couleurCoach, estIndispo, heureDe, libelleNature, nomComplet, parJour, cleJour, sansIndispos } from "./agendaClub";
 
 interface Props {
   userId?: string;
@@ -36,7 +36,7 @@ export function RdvDuJour({ userId, onVoir }: Props) {
       <div style={oeilleton}>
         <span style={{ flex: 1 }}>📅 aujourd'hui</span>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", letterSpacing: 0, textTransform: "none" }}>
-          {loading ? "" : `${liste.length} rdv · toute l'équipe`}
+          {loading ? "" : `${sansIndispos(liste).length} rdv · toute l'équipe`}
         </span>
       </div>
       {loading ? (
@@ -50,9 +50,12 @@ export function RdvDuJour({ userId, onVoir }: Props) {
             <span style={{ flex: "none", width: 4, alignSelf: "stretch", borderRadius: 4, background: couleurCoach(r.coachId, coachs) }} />
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: "block", fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {libelleNature(r)} · {nomComplet(r)}
+                {/* Un « pas dispo » se lit aussi au comptoir : « Romane n'est pas là ce matin ». */}
+                {estIndispo(r) ? `${prenom(r.coachId)} · ${nomComplet(r).toLowerCase()}` : `${libelleNature(r)} · ${nomComplet(r)}`}
               </span>
-              <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>avec {prenom(r.coachId)}</span>
+              <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)" }}>
+                {estIndispo(r) ? `jusqu'à ${heureDe(r.fin)}` : `avec ${prenom(r.coachId)}`}
+              </span>
             </span>
           </button>
         ))
