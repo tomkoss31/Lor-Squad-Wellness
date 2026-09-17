@@ -17,7 +17,7 @@
 // =============================================================================
 
 import { useEffect, useRef, useState  } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
 import { useFormationStreak } from "../../hooks/useFormationStreak";
@@ -29,6 +29,7 @@ import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { useAppLevel } from "../../hooks/useAppLevel";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
+import { ADRESSE_ACCUEIL_BBC } from "../../features/bbc/bbcRoutes";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -51,6 +52,7 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
   // Bascule Classic/BBC sur mobile (correctif 2026-07-27) — sans elle, un
   // admin passé en Classic depuis son téléphone n'avait plus aucun retour.
   const bbcMode = useBbcMode(currentUser?.id, currentUser?.role === "admin");
+  const navigate = useNavigate();
 
   // ESC pour fermer
   useEffect(() => {
@@ -231,9 +233,14 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
                 la bascule doit donc y vivre aussi. */}
             {bbcMode.peutBasculer ? (
               <div style={{ padding: "6px 12px 2px", display: "flex", justifyContent: "center" }}>
+                {/* Ce tiroir n'existe QUE dans l'app standard : ce qu'on regarde
+                    est donc toujours « classic », même pour un coach BBC de
+                    passage (17/09 — BBC cède la place sur `/crm`, une fiche…).
+                    Et revenir à BBC, c'est revenir à une adresse que BBC sert. */}
                 <BbcModeSwitch
-                  value={bbcMode.isBbc ? "bbc" : "classic"}
+                  value="classic"
                   onChange={(v) => {
+                    if (v === "bbc") navigate(ADRESSE_ACCUEIL_BBC);
                     bbcMode.setPreview(v);
                     onClose();
                   }}
