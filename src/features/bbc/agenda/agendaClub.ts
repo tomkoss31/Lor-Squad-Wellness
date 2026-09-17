@@ -176,7 +176,7 @@ export function libelleNature(r: RdvClub): string {
   return NATURES[r.nature] ?? (r.nature ? r.nature.charAt(0).toUpperCase() + r.nature.slice(1) : "RDV");
 }
 
-export type CodeMarque = "demarre" | "fait" | "relance" | "pas_venue";
+export type CodeMarque = "demarre" | "fait" | "relance" | "pas_venue" | "perdue";
 
 export interface Marque {
   code: CodeMarque;
@@ -198,6 +198,7 @@ export function marqueDe(r: RdvClub): Marque | null {
     if (r.statut === "done") return { code: "fait", symbole: "✓", libelle: "fait" };
     if (r.statut === "no_show") return { code: "pas_venue", symbole: "✗", libelle: "pas venue" };
     if (r.statut === "cold") return { code: "relance", symbole: "⏳", libelle: "à relancer" };
+    if (r.statut === "lost") return { code: "perdue", symbole: "✗", libelle: "perdue" };
     return null;
   }
   if (r.source === "reservation") {
