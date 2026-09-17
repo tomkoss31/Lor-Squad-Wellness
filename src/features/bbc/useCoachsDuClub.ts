@@ -19,6 +19,10 @@ export interface CoachRattache {
   prenom: string;
   nom: string;
   proprietaire: boolean;
+  /** `users.calendar_color` — la même couleur que dans l'agenda classique.
+   *  `null` tant que la coach n'en a pas choisi : le lecteur applique le repli
+   *  de `fallbackOwnerColor`, jamais une couleur inventée ici. */
+  couleur: string | null;
 }
 
 export interface UseCoachsDuClubResult {
@@ -48,6 +52,7 @@ export function useCoachsDuClub(userId?: string | null): UseCoachsDuClubResult {
             prenom: String(r.prenom ?? "Coach"),
             nom: String(r.nom ?? "Coach"),
             proprietaire: Boolean(r.proprietaire),
+            couleur: typeof r.couleur === "string" && /^#[0-9A-Fa-f]{6}$/.test(r.couleur) ? r.couleur : null,
           })),
         );
       } catch {
