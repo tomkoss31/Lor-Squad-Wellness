@@ -100,25 +100,33 @@ export function BbcBoites({ userId, club }: Props) {
 
   return (
     <>
-      {/* 1. LE GESTE, avant toute donnée. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-        <button
-          type="button"
-          onClick={() => setSaisieSur(liste[0] ?? vivantes[0] ?? null)}
-          disabled={vivantes.length === 0}
-          style={boutonLime(vivantes.length > 0)}
-        >
-          ＋ Saisir un coupon
-        </button>
-        <div style={aideCentree}>
-          {vivantes.length
-            ? "Tu relèves une boîte ? La feuille enchaîne, tu ne ressors pas entre deux coupons."
-            : "Pose ta première boîte pour pouvoir saisir des coupons."}
+      {/* 1. LE GESTE, avant toute donnée. Tant qu'aucune boîte ne tourne, « Saisir
+          un coupon » est de toute façon mort — on promeut « Poser une boîte » en
+          lime pour que le bon geste du matin saute aux yeux (16/09). Dès qu'une
+          boîte est posée, on revient à l'ordre normal (saisir d'abord). */}
+      {vivantes.length === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          <button type="button" onClick={() => setPoser(true)} style={boutonLime(true)}>
+            ＋ Poser une boîte
+          </button>
+          <div style={aideCentree}>Pose ta première boîte pour commencer à ramasser des coupons.</div>
+          <button type="button" disabled style={boutonLime(false)}>
+            ＋ Saisir un coupon
+          </button>
         </div>
-        <button type="button" onClick={() => setPoser(true)} style={boutonFantome}>
-          ＋ Poser une boîte
-        </button>
-      </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          <button type="button" onClick={() => setSaisieSur(liste[0] ?? vivantes[0] ?? null)} style={boutonLime(true)}>
+            ＋ Saisir un coupon
+          </button>
+          <div style={aideCentree}>
+            Tu relèves une boîte ? La feuille enchaîne, tu ne ressors pas entre deux coupons.
+          </div>
+          <button type="button" onClick={() => setPoser(true)} style={boutonFantome}>
+            ＋ Poser une boîte
+          </button>
+        </div>
+      )}
 
       {/* 2. CE QUI FUIT — les gens d'abord. Rien du tout si tout va bien. */}
       {f.aAppeler.length || f.aRelever.length ? (
