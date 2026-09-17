@@ -147,17 +147,28 @@ export interface CalendarEvent {
 // ligne « il est telle heure » dans la grille. Un coach qui l'aurait choisie
 // aurait rendu ses RDV de la couleur du repère temporel. Retirée avant que
 // quiconque la choisisse — les 14 comptes ont calendar_color à NULL.
+//
+// ⚠️ 17/09 — CETTE PALETTE AVAIT UN DOUBLON ET UNE VALEUR INVALIDE. « Turquoise »
+// et « Cyan » portaient le MÊME #2DD4BF, et « Doré » valait `var(--ls-teal)` —
+// pas un hex, donc rejeté par le résolveur. Le repli par hachage tirait dans
+// ces six entrées : Thomas, Maria, Manon et Sohyer sont sortis tous turquoise.
+// Les quatre premières sont les couleurs de TimeTree, validées par Thomas —
+// celles que l'équipe reconnaît déjà : rose Mélanie, vert Thomas, violet
+// Romane, bleu Maria. Chacune est posée en base pour les coachs du club.
 export const CALENDAR_PALETTE: Array<{ hex: string; label: string }> = [
-  { hex: "#2DD4BF", label: "Turquoise" },
+  { hex: "#EC4899", label: "Rose" },
+  { hex: "#22C55E", label: "Vert" },
   { hex: "#A78BFA", label: "Violet" },
-  { hex: "var(--ls-teal)", label: "Doré" },
-  { hex: "#2DD4BF", label: "Cyan" },
-  { hex: "#8FBF3F", label: "Olive" },
-  { hex: "#F97316", label: "Orange" },
   { hex: "#3B82F6", label: "Bleu" },
+  { hex: "#F97316", label: "Orange" },
+  { hex: "#2DD4BF", label: "Turquoise" },
+  { hex: "#C9A84C", label: "Doré" },
+  { hex: "#8FBF3F", label: "Olive" },
 ];
 
-const FALLBACK_PALETTE = CALENDAR_PALETTE.slice(0, 6).map((c) => c.hex);
+/** Le repli : les huit, toutes distinctes — deux personnes ne tombent sur la
+ *  même que si elles sont neuf. */
+const FALLBACK_PALETTE = CALENDAR_PALETTE.map((c) => c.hex);
 
 /** Couleur de repli, dérivée de l'identifiant (stable, jamais aléatoire). */
 export function fallbackOwnerColor(ownerId: string): string {
