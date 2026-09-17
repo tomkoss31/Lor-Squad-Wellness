@@ -82,9 +82,16 @@ interface Props {
   userId?: string;
   coachName?: string;
   club: Club | null;
+  /**
+   * L'agenda vit aussi dans l'app standard (étape 9 — Maria n'est pas en mode
+   * BBC). Là-bas, un en-tête de 64 px reste collé en haut sur téléphone et le
+   * bouton Noaly occupe déjà le coin bas-droit : on décale ce qui colle et le ＋.
+   */
+  collantHaut?: string;
+  fabBas?: string;
 }
 
-export function BbcAgenda({ userId, coachName, club }: Props) {
+export function BbcAgenda({ userId, coachName, club, collantHaut = "0px", fabBas }: Props) {
   const cleAuj = cleJour(new Date());
   const [vue, setVue] = useState<Vue>("semaine");
   /** Le jour autour duquel on regarde — la clé d'un jour, quelle que soit la vue. */
@@ -275,6 +282,7 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
           rituelsParJour={rituelsParJour}
           quiOuvre={quiOuvre}
           permanenceEnChargement={shifts.loading}
+          collantHaut={collantHaut}
           onJour={(k) => {
             setAncre(k);
             setVue("jour");
@@ -295,6 +303,7 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
           rituels={rituelsParJour.get(ancre) ?? []}
           quiOuvre={quiOuvre(ancre)}
           permanenceEnChargement={shifts.loading}
+          collantHaut={collantHaut}
           couleur={couleur}
           onRdv={ouvrirRdv}
           onClub={() => {
@@ -306,7 +315,7 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
       )}
 
       {/* ＋ : toujours au même endroit, au-dessus du pouce. */}
-      <button type="button" onClick={() => setCaler({ jour: vue !== "mois" && ancre >= cleAuj ? ancre : cleAuj })} aria-label="Ajouter un rendez-vous ou un pas dispo" style={fab}>
+      <button type="button" onClick={() => setCaler({ jour: vue !== "mois" && ancre >= cleAuj ? ancre : cleAuj })} aria-label="Ajouter un rendez-vous ou un pas dispo" style={fabBas ? { ...fab, bottom: fabBas } : fab}>
         ＋
       </button>
 
@@ -620,10 +629,12 @@ function VueSemaine({
   rituelsParJour,
   quiOuvre,
   permanenceEnChargement,
+  collantHaut,
   onJour,
   onClub,
   onRdv,
 }: {
+  collantHaut: string;
   cles: string[];
   cleAuj: string;
   parJourMap: Map<string, RdvClub[]>;
@@ -679,8 +690,8 @@ function VueSemaine({
           })),
         ].sort((a, b) => a.t - b.t);
         return (
-          <div key={k} ref={estAuj ? refAuj : undefined} style={{ borderTop: "1px solid var(--ls-bbc-line)", scrollMarginTop: 8, background: horaires.etat === "ferme" ? "color-mix(in srgb, var(--ls-bbc-amber) 5%, transparent)" : "transparent" }}>
-            <div style={teteJourRangee}>
+          <div key={k} ref={estAuj ? refAuj : undefined} style={{ borderTop: "1px solid var(--ls-bbc-line)", scrollMarginTop: `calc(8px + ${collantHaut})`, background: horaires.etat === "ferme" ? "color-mix(in srgb, var(--ls-bbc-amber) 5%, transparent)" : "transparent" }}>
+            <div style={{ ...teteJourRangee, top: collantHaut }}>
               <button type="button" onClick={() => onJour(k)} style={teteJourListe}>
                 <span style={{ ...numeroListe, background: estAuj ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", color: estAuj ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>{d.getDate()}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>
@@ -717,11 +728,13 @@ function VueJour({
   rituels,
   quiOuvre,
   permanenceEnChargement,
+  collantHaut,
   couleur,
   onRdv,
   onClub,
   onTrou,
 }: {
+  collantHaut: string;
   cle: string;
   estAuj: boolean;
   coachs: CoachRattache[];
@@ -776,7 +789,7 @@ function VueJour({
         </span>
       </button>
 
-      <div style={{ display: "flex", position: "sticky", top: 0, zIndex: 3, background: "var(--ls-bbc-bg)", borderBottom: "1px solid var(--ls-bbc-line)" }}>
+      <div style={{ display: "flex", position: "sticky", top: collantHaut, zIndex: 3, background: "var(--ls-bbc-bg)", borderBottom: "1px solid var(--ls-bbc-line)" }}>
         <div style={{ flex: "none", width: 38 }} />
         {colonnes.map((c) => {
           const n = sansIndispos(rdvs.filter((r) => r.coachId === c.id)).length;
