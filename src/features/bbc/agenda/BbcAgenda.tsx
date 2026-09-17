@@ -298,7 +298,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             👋
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontSize: 14.5, fontWeight: 800 }}>L'agenda du club remplace TimeTree</span>
+            <span style={{ display: "block", fontSize: 14.5, fontWeight: 800 }}>Nouveau : l'agenda du club</span>
             <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.45 }}>Une minute pour voir comment caler, déplacer et noter un « pas dispo ».</span>
           </span>
           <button type="button" onClick={ouvrirGuide} style={boutonCarte}>

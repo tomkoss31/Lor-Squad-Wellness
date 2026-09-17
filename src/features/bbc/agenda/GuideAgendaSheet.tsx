@@ -1,5 +1,11 @@
 // =============================================================================
-// « L'agenda, mode d'emploi » — une minute, pour lâcher TimeTree (étape 10).
+// « L'agenda, mode d'emploi » — une minute pour bien démarrer (étape 10).
+//
+// ⚠️ LE TON (Thomas, 17/09, en relisant la 1re version) : « tu es dur avec
+// TimeTree, je n'impose rien, je propose juste un outil ». Ce texte PROPOSE :
+// ni « on lâche TimeTree », ni date butoir, ni « un RDV qui n'est pas ici
+// n'existe pas ». On dit ce que l'outil apporte, et on laisse chacune l'essayer.
+// Il sert aussi aux NOUVELLES coachs : rien qui date le texte.
 //
 // POURQUOI ICI ET PAS UNE ANNONCE : l'équipe ne lit pas les `app_announcements`
 // (Thomas, 13/06), le mode BBC ne les affiche même pas, et leur audience ne sait
@@ -7,9 +13,9 @@
 // donc LÀ OÙ L'ON S'EN SERT, derrière un « ? » toujours visible : jamais de
 // popup qui s'ouvre tout seul (règle du 2026 : « c'est chiant »).
 //
-// Le texte répond à la vraie question de l'équipe — « et TimeTree ? » — et dit
-// ce que l'agenda fait que TimeTree ne fera jamais : le rappel au client, le
-// site qui connaît les dispos, la suite donnée à chaque rendez-vous.
+// Le texte dit ce que l'agenda apporte EN PLUS d'un agenda personnel : le
+// rappel au client, le site qui connaît les dispos, la suite donnée à chaque
+// rendez-vous — sans rien demander d'abandonner.
 // =============================================================================
 
 import type { CSSProperties, ReactNode } from "react";
@@ -29,7 +35,7 @@ export function GuideAgendaSheet({ coachs, couleur, onClose }: Props) {
         <div style={entete}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22, lineHeight: 1.1 }}>L'agenda, mode d'emploi</div>
-            <div style={sousTitre}>une minute · on lâche TimeTree</div>
+            <div style={sousTitre}>une minute · pour bien démarrer</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={croix}>
             ✕
@@ -70,14 +76,16 @@ export function GuideAgendaSheet({ coachs, couleur, onClose }: Props) {
           </Point>
 
           <div style={encart}>
-            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>Et TimeTree ?</div>
-            On n'y met plus rien. Ce que l'agenda fait et que TimeTree ne fera jamais :
+            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>Ce que ça t'apporte</div>
+            Un rendez-vous noté ici travaille pour toi :
             <ul style={{ margin: "8px 0 0", paddingLeft: 18, display: "flex", flexDirection: "column", gap: 5 }}>
               <li>la personne reçoit son <b>rappel par mail la veille</b> (si tu as noté son mail) ;</li>
               <li>le <b>site du club</b> ne propose que tes heures vraiment libres ;</li>
               <li>chaque rendez-vous a une <b>suite</b> : membre, relance ou perdue — plus de lead oublié.</li>
             </ul>
-            <div style={{ marginTop: 10, fontWeight: 700, color: "var(--ls-bbc-text)" }}>La règle : un rendez-vous qui n'est pas ici n'existe pas.</div>
+            <div style={{ marginTop: 10, color: "var(--ls-bbc-text)" }}>
+              Tu as déjà ton agenda (TimeTree ou autre) ? Aucun souci : c'est un outil de plus, pas une obligation. Essaie-le sur tes prochains rendez-vous, et dis-nous ce qui manque.
+            </div>
           </div>
 
           <button type="button" onClick={onClose} style={boutonPlein}>
