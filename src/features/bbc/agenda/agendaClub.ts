@@ -214,6 +214,65 @@ export function aQualifier(r: RdvClub, maintenantMs: number): boolean {
   return new Date(r.fin).getTime() < maintenantMs && marqueDe(r) === null;
 }
 
+/** « 14 – 20 sept. » */
+export function libelleSemaine(lundi: Date): string {
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate() + 6);
+  const MC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  if (lundi.getMonth() === dimanche.getMonth()) return `${lundi.getDate()} – ${dimanche.getDate()} ${MC[dimanche.getMonth()]}`;
+  return `${lundi.getDate()} ${MC[lundi.getMonth()]} – ${dimanche.getDate()} ${MC[dimanche.getMonth()]}`;
+}
+
+/** La clé du jour décalé de `n` jours. */
+export function decalerJour(cle: string, n: number): string {
+  const d = jourDe(cle);
+  d.setDate(d.getDate() + n);
+  return cleJour(d);
+}
+
+// ── Les horaires du club ────────────────────────────────────────────────────
+
+/**
+ * « 7h-11h », « 7h30-11h », « 08:00-15:00 » → { debut: 7, fin: 11 } en heures
+ * décimales. `null` si on ne sait pas lire : la bande d'ouverture ne s'affiche
+ * pas plutôt que de s'afficher fausse.
+ */
+export function plageOuverture(texte: string | null | undefined): { debut: number; fin: number } | null {
+  if (!texte) return null;
+  const m = texte.replace(/\s+/g, "").match(/^(\d{1,2})(?:[h:](\d{2})?)?[-–>→]+(\d{1,2})(?:[h:](\d{2})?)?$/i);
+  if (!m) return null;
+  const debut = Number(m[1]) + Number(m[2] ?? 0) / 60;
+  const fin = Number(m[3]) + Number(m[4] ?? 0) / 60;
+  if (!(debut >= 0 && fin <= 24 && fin > debut)) return null;
+  return { debut, fin };
+}
+
+// ── Les blocs qui se chevauchent, côte à côte ───────────────────────────────
+
+export interface Couloir<T> {
+  rdv: T;
+  /** Le couloir (0 = le plus à gauche). */
+  couloir: number;
+}
+
+/**
+ * Place des rendez-vous qui se chevauchent dans des couloirs parallèles, pour
+ * qu'aucun bloc n'en cache un autre. Un rendez-vous qui commence à l'heure où
+ * le précédent finit reprend son couloir (10 h–11 h puis 11 h–12 h : un seul).
+ */
+export function couloirs<T extends { debut: string; fin: string }>(liste: readonly T[]): { items: Couloir<T>[]; nb: number } {
+  const tries = [...liste].sort((a, b) => new Date(a.debut).getTime() - new Date(b.debut).getTime());
+  const fins: number[] = [];
+  const items = tries.map((rdv) => {
+    const d = new Date(rdv.debut).getTime();
+    let c = 0;
+    while (c < fins.length && fins[c] > d) c += 1;
+    fins[c] = Math.max(new Date(rdv.fin).getTime(), d + 1);
+    return { rdv, couloir: c };
+  });
+  return { items, nb: Math.max(1, fins.length) };
+}
+
 // ── La couleur ──────────────────────────────────────────────────────────────
 
 /**
