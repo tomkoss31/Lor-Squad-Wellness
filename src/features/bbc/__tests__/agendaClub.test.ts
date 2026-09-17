@@ -3,7 +3,11 @@ import {
   aQualifier,
   cleJour,
   couleurCoach,
+  couloirs,
+  decalerJour,
   grilleMois,
+  libelleSemaine,
+  plageOuverture,
   heureDe,
   libelleJour,
   libelleMois,
@@ -151,6 +155,64 @@ describe("à qualifier", () => {
     expect(aQualifier(demain, MAINTENANT)).toBe(false);
     const suivi = versRdvClub(ligne({ source: "suivi", debut: new Date(2026, 8, 1, 10, 0).toISOString(), fin: new Date(2026, 8, 1, 10, 30).toISOString() }))!;
     expect(aQualifier(suivi, MAINTENANT)).toBe(false);
+  });
+});
+
+describe("les horaires du club", () => {
+  it("lit les formes qu'on trouve dans les réglages", () => {
+    expect(plageOuverture("7h-11h")).toEqual({ debut: 7, fin: 11 });
+    expect(plageOuverture("7h30-11h")).toEqual({ debut: 7.5, fin: 11 });
+    expect(plageOuverture("08:00-15:00")).toEqual({ debut: 8, fin: 15 });
+    expect(plageOuverture("8h → 15h")).toEqual({ debut: 8, fin: 15 });
+  });
+
+  it("ne rend rien plutôt que faux", () => {
+    expect(plageOuverture("")).toBeNull();
+    expect(plageOuverture(null)).toBeNull();
+    expect(plageOuverture("fermé")).toBeNull();
+    expect(plageOuverture("11h-7h")).toBeNull();
+  });
+});
+
+describe("les couloirs", () => {
+  const r = (id: string, h1: number, h2: number) => ({
+    id,
+    debut: new Date(2026, 8, 17, h1, 0).toISOString(),
+    fin: new Date(2026, 8, 17, h2, 0).toISOString(),
+  });
+
+  it("deux rendez-vous qui se chevauchent prennent deux couloirs", () => {
+    const { items, nb } = couloirs([r("a", 10, 11), r("b", 10, 11)]);
+    expect(nb).toBe(2);
+    expect(items.map((i) => i.couloir)).toEqual([0, 1]);
+  });
+
+  it("un rendez-vous qui commence quand l'autre finit reprend son couloir", () => {
+    const { items, nb } = couloirs([r("a", 10, 11), r("b", 11, 12)]);
+    expect(nb).toBe(1);
+    expect(items.map((i) => i.couloir)).toEqual([0, 0]);
+  });
+
+  it("trie par heure de début, quel que soit l'ordre d'arrivée", () => {
+    const { items } = couloirs([r("tard", 15, 16), r("tot", 8, 9)]);
+    expect(items.map((i) => i.rdv.id)).toEqual(["tot", "tard"]);
+  });
+
+  it("une liste vide donne quand même un couloir", () => {
+    expect(couloirs([]).nb).toBe(1);
+  });
+});
+
+describe("naviguer", () => {
+  it("décale d'un jour, d'une semaine, et passe les mois", () => {
+    expect(decalerJour("2026-09-30", 1)).toBe("2026-10-01");
+    expect(decalerJour("2026-09-14", 7)).toBe("2026-09-21");
+    expect(decalerJour("2026-09-01", -1)).toBe("2026-08-31");
+  });
+
+  it("la semaine se lit d'un coup", () => {
+    expect(libelleSemaine(new Date(2026, 8, 14))).toBe("14 – 20 sept.");
+    expect(libelleSemaine(new Date(2026, 8, 28))).toBe("28 sept. – 4 oct.");
   });
 });
 
