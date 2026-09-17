@@ -461,7 +461,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {liensOuverts ? (
           <BbcLiensTiroir coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} onFermer={() => setLiensOuverts(false)} />
         ) : null}
-        {view === "agenda" && <BbcAgenda userId={userId} club={club ?? null} />}
+        {view === "agenda" && <BbcAgenda userId={userId} coachName={coachName} club={club ?? null} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}

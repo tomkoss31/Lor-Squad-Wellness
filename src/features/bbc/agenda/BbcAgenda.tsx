@@ -27,6 +27,9 @@ import type { Club } from "../../../types/domain";
 import { useCoachsDuClub, type CoachRattache } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
 import { CalerRdvSheet } from "./CalerRdvSheet";
+import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
+import { qualifierRdvClub } from "./qualifierRdvClub";
+import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import {
   aQualifier,
   cleJour,
@@ -62,10 +65,11 @@ const PX_PAR_HEURE = 52;
 
 interface Props {
   userId?: string;
+  coachName?: string;
   club: Club | null;
 }
 
-export function BbcAgenda({ userId, club }: Props) {
+export function BbcAgenda({ userId, coachName, club }: Props) {
   const cleAuj = cleJour(new Date());
   const [vue, setVue] = useState<Vue>("semaine");
   /** Le jour autour duquel on regarde — la clé d'un jour, quelle que soit la vue. */
@@ -75,6 +79,12 @@ export function BbcAgenda({ userId, club }: Props) {
   const [rdvOuvert, setRdvOuvert] = useState<RdvClub | null>(null);
   /** La feuille « caler / déplacer » — null = fermée. */
   const [caler, setCaler] = useState<{ jour: string; coach?: string | null; heure?: number | null; deplace?: RdvClub | null } | null>(null);
+  /** Le rendez-vous qu'on qualifie — toucher un rendez-vous ouvre directement la question. */
+  const [qualif, setQualif] = useState<RdvClub | null>(null);
+  /** Le rendez-vous dont on crée la fiche membre (feuille pré-remplie). */
+  const [membrePour, setMembrePour] = useState<RdvClub | null>(null);
+  // Un suivi se règle depuis la fiche du membre : lui, on ne le qualifie pas ici.
+  const ouvrirRdv = (r: RdvClub) => (r.source === "suivi" ? setRdvOuvert(r) : setQualif(r));
 
   const { coachs } = useCoachsDuClub(userId);
   const ouverture = plageOuverture(club?.settings?.open_hours ?? null);
@@ -164,7 +174,7 @@ export function BbcAgenda({ userId, club }: Props) {
             setAncre(k);
             setVue("jour");
           }}
-          onRdv={setRdvOuvert}
+          onRdv={ouvrirRdv}
         />
       ) : (
         <VueJour
@@ -174,7 +184,7 @@ export function BbcAgenda({ userId, club }: Props) {
           rdvs={parJourMap.get(ancre) ?? []}
           ouverture={ouverture}
           couleur={couleur}
-          onRdv={setRdvOuvert}
+          onRdv={ouvrirRdv}
           onTrou={(coachId, heure) => setCaler({ jour: ancre, coach: coachId, heure })}
         />
       )}
@@ -195,7 +205,7 @@ export function BbcAgenda({ userId, club }: Props) {
             <div style={vide}>Rien de prévu ce jour-là.</div>
           ) : (
             (parJourMap.get(jourOuvert) ?? []).map((r) => (
-              <LigneRdv key={`${r.source}-${r.id}`} r={r} couleur={couleur(r.coachId)} coach={prenomCoach(r.coachId)} maintenant={maintenant} onClick={() => setRdvOuvert(r)} />
+              <LigneRdv key={`${r.source}-${r.id}`} r={r} couleur={couleur(r.coachId)} coach={prenomCoach(r.coachId)} maintenant={maintenant} onClick={() => ouvrirRdv(r)} />
             ))
           )}
           <button
@@ -253,6 +263,52 @@ export function BbcAgenda({ userId, club }: Props) {
             ) : null}
           </div>
         </Feuille>
+      ) : null}
+
+      {qualif ? (
+        <QualifierRdvClubSheet
+          rdv={qualif}
+          coachPrenom={prenomCoach(qualif.coachId)}
+          couleur={couleur(qualif.coachId)}
+          maintenant={maintenant}
+          onClose={() => setQualif(null)}
+          onMembre={() => {
+            setMembrePour(qualif);
+            setQualif(null);
+          }}
+          onQualifie={async (q) => {
+            const res = await qualifierRdvClub(qualif, q);
+            if (res.ok) {
+              setQualif(null);
+              void refetch();
+            }
+            return res;
+          }}
+          onDeplacer={
+            qualif.source === "prospect"
+              ? () => {
+                  const r = qualif;
+                  setQualif(null);
+                  setCaler({ jour: cleJour(new Date(r.debut)), coach: r.coachId, deplace: r });
+                }
+              : null
+          }
+        />
+      ) : null}
+
+      {membrePour ? (
+        <BbcNewMemberSheet
+          userId={userId}
+          coachName={coachName}
+          club={club}
+          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: membrePour.telephone, email: null }}
+          onClose={() => setMembrePour(null)}
+          onCreated={(clientId) => {
+            const r = membrePour;
+            setMembrePour(null);
+            if (r) void qualifierRdvClub(r, { issue: "membre", clientId }).then(() => refetch());
+          }}
+        />
       ) : null}
 
       {caler ? (
