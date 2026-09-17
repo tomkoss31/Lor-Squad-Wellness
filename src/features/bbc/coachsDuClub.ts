@@ -31,10 +31,18 @@ export interface CoachDuClub {
  * Le propriétaire est TOUJOURS dedans, même s'il ne figure pas dans le réglage :
  * un club sans son propriétaire n'existe pas, et l'oublier ferait disparaître
  * ses propres rendez-vous de sa propre vue « Le club ».
+ *
+ * ⚠️ 17/09 — « LE CLUB », CE SONT LES COACHS RATTACHÉS, pas le réglage.
+ * `discovery.coach_user_ids` liste ceux qui PRENNENT LES RÉSERVATIONS DU SITE
+ * (Thomas, Mélanie). Romane y est absente alors qu'elle a 7 rendez-vous à
+ * venir : Thomas ne les voyait pas. Les rattachés (`users.club_id`, lus par la
+ * RPC `coachs_du_club()`) passent donc AVANT le réglage — qui reste un filet
+ * tant que la RPC n'a pas répondu.
  */
 export function idsCoachsDuClub(
   settings: ClubSettings | null | undefined,
   ownerUserId: string | null | undefined,
+  rattaches: readonly string[] = [],
 ): string[] {
   const out: string[] = [];
   const vus = new Set<string>();
@@ -46,6 +54,7 @@ export function idsCoachsDuClub(
     out.push(s);
   };
   ajouter(ownerUserId);
+  for (const x of rattaches) ajouter(x);
   for (const x of settings?.discovery?.coach_user_ids ?? []) ajouter(x);
   return out;
 }
@@ -65,8 +74,9 @@ export function coachsDuClub(
   settings: ClubSettings | null | undefined,
   ownerUserId: string | null | undefined,
   noms: Map<string, string>,
+  rattaches: readonly string[] = [],
 ): CoachDuClub[] {
-  return idsCoachsDuClub(settings, ownerUserId).map((id) => ({
+  return idsCoachsDuClub(settings, ownerUserId, rattaches).map((id) => ({
     id,
     prenom: prenomDe(noms.get(id)),
   }));

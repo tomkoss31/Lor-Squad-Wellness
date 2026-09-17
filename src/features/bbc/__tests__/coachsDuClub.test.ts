@@ -55,6 +55,28 @@ describe("qui tient le club", () => {
   it("sans club connu, la liste est vide plutôt que fausse", () => {
     expect(idsCoachsDuClub(null, null)).toEqual([]);
   });
+
+  // ── 17/09 : le club, ce sont les RATTACHÉS ────────────────────────────────
+  const ROMANE = "22222222-2222-2222-2222-222222222222";
+  const MARIA = "33333333-3333-3333-3333-333333333333";
+
+  it("Romane, rattachée mais absente du réglage du site, EST dans le club", () => {
+    // C'est le bug du 17/09 : 7 rendez-vous à venir, invisibles dans « Le club ».
+    expect(idsCoachsDuClub(reglage([THOMAS, MELANIE]), THOMAS, [THOMAS, MELANIE, ROMANE, MARIA]))
+      .toEqual([THOMAS, MELANIE, ROMANE, MARIA]);
+  });
+
+  it("propriétaire d'abord, puis les rattachés, puis le réglage en filet", () => {
+    expect(idsCoachsDuClub(reglage([MELANIE]), THOMAS, [ROMANE])).toEqual([THOMAS, ROMANE, MELANIE]);
+  });
+
+  it("tant que la base n'a pas répondu, le réglage suffit — rien ne disparaît", () => {
+    expect(idsCoachsDuClub(reglage([THOMAS, MELANIE]), THOMAS, [])).toEqual([THOMAS, MELANIE]);
+  });
+
+  it("les rattachés et le réglage ne se comptent pas deux fois", () => {
+    expect(idsCoachsDuClub(reglage([THOMAS, MELANIE]), THOMAS, [MELANIE, THOMAS])).toEqual([THOMAS, MELANIE]);
+  });
 });
 
 describe("le prénom affiché", () => {
