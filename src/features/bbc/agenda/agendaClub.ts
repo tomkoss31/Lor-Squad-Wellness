@@ -273,6 +273,73 @@ export function couloirs<T extends { debut: string; fin: string }>(liste: readon
   return { items, nb: Math.max(1, fins.length) };
 }
 
+// ── Les créneaux libres ─────────────────────────────────────────────────────
+
+export interface Plage {
+  /** Millisecondes. */
+  debut: number;
+  fin: number;
+}
+
+/** Les heures de la journée où l'on propose un rendez-vous. */
+export const PROPOSITION = { debut: 8, fin: 18, pasMin: 30 };
+
+/**
+ * Les créneaux libres d'une coach un jour donné, en heures décimales.
+ *
+ * Un rendez-vous 10 h–11 h laisse 11 h libre (`<` et non `<=`) ; le dernier
+ * créneau ne déborde jamais la fin de plage ; rien dans le passé. Les plages
+ * occupées viennent de `creneaux_occupes()` : suivis, rendez-vous,
+ * réservations ET rituels — la même source que le tunnel du site.
+ */
+export function creneauxLibres(
+  occupes: readonly Plage[],
+  jour: Date,
+  dureeMin: number,
+  maintenantMs: number,
+  plage: { debut: number; fin: number; pasMin: number } = PROPOSITION,
+): number[] {
+  const out: number[] = [];
+  const base = new Date(jour.getFullYear(), jour.getMonth(), jour.getDate()).getTime();
+  const dureeMs = dureeMin * 60_000;
+  for (let x = plage.debut; x + dureeMin / 60 <= plage.fin + 1e-9; x += plage.pasMin / 60) {
+    const debut = base + x * 3_600_000;
+    if (debut < maintenantMs) continue;
+    const fin = debut + dureeMs;
+    const pris = occupes.some((o) => debut < o.fin && fin > o.debut);
+    if (!pris) out.push(Math.round(x * 100) / 100);
+  }
+  return out;
+}
+
+/** « 09:30 » depuis une heure décimale. */
+export function fmtHeure(x: number): string {
+  const h = Math.floor(x);
+  const m = Math.round((x - h) * 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Le premier créneau libre de toute l'équipe, jour après jour : la réponse à
+ * « vous êtes dispo quand ? » au téléphone. `null` si rien sur les jours donnés.
+ */
+export function auPlusTot(
+  occupesParCoach: ReadonlyMap<string, readonly Plage[]>,
+  jours: readonly string[],
+  dureeMin: number,
+  maintenantMs: number,
+): { jour: string; coachId: string; heure: number } | null {
+  for (const k of jours) {
+    let meilleur: { jour: string; coachId: string; heure: number } | null = null;
+    for (const [coachId, occupes] of occupesParCoach) {
+      const l = creneauxLibres(occupes, jourDe(k), dureeMin, maintenantMs);
+      if (l.length && (!meilleur || l[0] < meilleur.heure)) meilleur = { jour: k, coachId, heure: l[0] };
+    }
+    if (meilleur) return meilleur;
+  }
+  return null;
+}
+
 // ── La couleur ──────────────────────────────────────────────────────────────
 
 /**

@@ -4,8 +4,12 @@ import {
   cleJour,
   couleurCoach,
   couloirs,
+  creneauxLibres,
+  auPlusTot,
+  fmtHeure,
   decalerJour,
   grilleMois,
+  type Plage,
   libelleSemaine,
   plageOuverture,
   heureDe,
@@ -213,6 +217,64 @@ describe("naviguer", () => {
   it("la semaine se lit d'un coup", () => {
     expect(libelleSemaine(new Date(2026, 8, 14))).toBe("14 – 20 sept.");
     expect(libelleSemaine(new Date(2026, 8, 28))).toBe("28 sept. – 4 oct.");
+  });
+});
+
+describe("les créneaux libres", () => {
+  const JOUR = new Date(2026, 8, 17);
+  const plage = (h1: number, h2: number) => ({
+    debut: new Date(2026, 8, 17, Math.floor(h1), (h1 % 1) * 60).getTime(),
+    fin: new Date(2026, 8, 17, Math.floor(h2), (h2 % 1) * 60).getTime(),
+  });
+  const MINUIT = new Date(2026, 8, 16).getTime();
+
+  it("un rendez-vous 10 h–11 h laisse 11 h libre, pas 9 h 30 ni 10 h 30", () => {
+    const l = creneauxLibres([plage(10, 11)], JOUR, 60, MINUIT);
+    expect(l).toContain(11);
+    expect(l).toContain(9);
+    expect(l).not.toContain(9.5);
+    expect(l).not.toContain(10);
+    expect(l).not.toContain(10.5);
+  });
+
+  it("un suivi de 30 min tient à 9 h 30 avant un rendez-vous à 10 h", () => {
+    expect(creneauxLibres([plage(10, 11)], JOUR, 30, MINUIT)).toContain(9.5);
+  });
+
+  it("le dernier créneau ne déborde jamais 18 h", () => {
+    const l = creneauxLibres([], JOUR, 60, MINUIT);
+    expect(l[l.length - 1]).toBe(17);
+    expect(creneauxLibres([], JOUR, 30, MINUIT).pop()).toBe(17.5);
+  });
+
+  it("rien dans le passé", () => {
+    const onzeHeures = new Date(2026, 8, 17, 10, 45).getTime();
+    const l = creneauxLibres([], JOUR, 60, onzeHeures);
+    expect(l[0]).toBe(11);
+  });
+
+  it("une journée entièrement bloquée ne propose rien", () => {
+    expect(creneauxLibres([plage(8, 18)], JOUR, 60, MINUIT)).toEqual([]);
+  });
+
+  it("« au plus tôt » : le premier trou de toute l'équipe, jour après jour", () => {
+    const occ = new Map<string, Plage[]>([
+      ["mel", [plage(8, 12)]],
+      ["romane", [plage(8, 10)]],
+    ]);
+    expect(auPlusTot(occ, ["2026-09-17", "2026-09-18"], 60, MINUIT)).toEqual({ jour: "2026-09-17", coachId: "romane", heure: 10 });
+  });
+
+  it("« au plus tôt » passe au lendemain quand le jour est plein", () => {
+    const occ = new Map<string, Plage[]>([["mel", [plage(8, 18)]]]);
+    const r = auPlusTot(occ, ["2026-09-17", "2026-09-18"], 60, MINUIT);
+    expect(r?.jour).toBe("2026-09-18");
+    expect(r?.heure).toBe(8);
+  });
+
+  it("fmtHeure", () => {
+    expect(fmtHeure(9.5)).toBe("09:30");
+    expect(fmtHeure(14)).toBe("14:00");
   });
 });
 
