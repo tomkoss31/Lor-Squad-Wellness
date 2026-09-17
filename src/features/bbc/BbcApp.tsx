@@ -31,6 +31,8 @@ import { BbcFormation } from "./views/BbcFormation";
 import { BbcLexique } from "./views/BbcLexique";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcBoites } from "./views/BbcBoites";
+import { BbcAgenda } from "./agenda/BbcAgenda";
+import { RdvDuJour } from "./agenda/RdvDuJour";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
@@ -52,6 +54,7 @@ import { BBC_FORMATION_MODULES } from "./data/bbcFormation";
 
 type BbcView =
   | "cockpit"
+  | "agenda"
   | "crm"
   | "boites"
   | "club"
@@ -92,6 +95,9 @@ const SECTIONS: Section[] = [
     icon: "☕",
     tabs: [
       { k: "cockpit", label: "Ce matin" },
+      // L'agenda partagé (17/09). « La semaine » reste le temps que les
+      // permanences et fermetures y passent aussi — ensuite elle disparaît.
+      { k: "agenda", label: "L'agenda" },
       { k: "semaine", label: "La semaine" },
       { k: "club", label: "Les visites" },
       { k: "appels", label: "Les appels" },
@@ -149,6 +155,7 @@ function sectionDe(view: BbcView): SectionKey {
 
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
   cockpit: { eye: "co-pilote du matin", title: "Bon matin" },
+  agenda: { eye: "le club · toute l'équipe", title: "L'agenda" },
   crm: { eye: "cobayes & membres", title: "Ton pipeline" },
   boites: { eye: "le terrain · coupons papier", title: "Les boîtes" },
   club: { eye: "pointage en direct", title: "Le club ce matin" },
@@ -454,6 +461,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {liensOuverts ? (
           <BbcLiensTiroir coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} onFermer={() => setLiensOuverts(false)} />
         ) : null}
+        {view === "agenda" && <BbcAgenda userId={userId} club={club ?? null} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}
@@ -697,6 +705,10 @@ function Cockpit({ cobayes, target, onSend, onNouveauMembre, userId, club, onGo 
         onClick={onNouveauMembre}
         aide="La fiche papier se saisit ici, dans l'ordre où elle est remplie."
       />
+
+      {/* 📅 aujourd'hui — les rendez-vous de toute l'équipe (agenda partagé, 17/09).
+          Si le premier écran du matin ne dit pas qui vient, on rouvre TimeTree. */}
+      <RdvDuJour userId={userId} onVoir={() => onGo("agenda")} />
 
       {/* ☕ le club ce matin — réel */}
       <SectionCard eye="☕ le club ce matin" right={members.length ? `${pointes.length} / ${members.length} pointés` : ""}>
