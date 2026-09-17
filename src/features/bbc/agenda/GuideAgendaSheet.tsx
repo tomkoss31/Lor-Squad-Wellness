@@ -18,16 +18,38 @@
 // rendez-vous — sans rien demander d'abandonner.
 // =============================================================================
 
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { CoachRattache } from "../useCoachsDuClub";
+import { envoyerModeEmploi } from "./envoyerModeEmploi";
 
 interface Props {
   coachs: CoachRattache[];
   couleur: (id: string | null) => string;
+  userId?: string | null;
+  /** Propriétaire du club ou admin : peut envoyer le mode d'emploi par mail. */
+  peutEnvoyer: boolean;
   onClose: () => void;
 }
 
-export function GuideAgendaSheet({ coachs, couleur, onClose }: Props) {
+export function GuideAgendaSheet({ coachs, couleur, userId, peutEnvoyer, onClose }: Props) {
+  // L'envoi par mail — pour la coach qui arrive, ou celle qui préfère le lire
+  // tranquillement. Deux gestes (choisir, puis envoyer) : un mail ne part
+  // jamais sur un appui malheureux.
+  const [choisie, setChoisie] = useState<string | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(null);
+  const prenomChoisie = coachs.find((c) => c.id === choisie)?.prenom ?? "";
+
+  async function envoyer() {
+    if (!choisie || envoi) return;
+    setEnvoi(true);
+    setRetour(null);
+    const res = await envoyerModeEmploi(choisie);
+    setEnvoi(false);
+    setRetour(res.ok ? { ok: true, texte: `Envoyé à ${choisie === userId ? "toi" : prenomChoisie} ✓` } : { ok: false, texte: res.message });
+    if (res.ok) setChoisie(null);
+  }
+
   return (
     <div style={voile} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bbc-mode" style={panneau} role="dialog" aria-modal="true" aria-label="L'agenda, mode d'emploi">
@@ -88,6 +110,32 @@ export function GuideAgendaSheet({ coachs, couleur, onClose }: Props) {
             </div>
           </div>
 
+          {peutEnvoyer ? (
+            <div style={blocEnvoi}>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>✉️ L'envoyer par mail</div>
+              <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginTop: 3 }}>
+                Le même mode d'emploi, avec des visuels. Pour une coach qui arrive, ou qui préfère le lire tranquillement. À renvoyer autant de fois que tu veux.
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                {coachs.map((c) => {
+                  const on = c.id === choisie;
+                  return (
+                    <button key={c.id} type="button" aria-pressed={on} onClick={() => { setChoisie(on ? null : c.id); setRetour(null); }} style={{ ...puce, borderColor: on ? couleur(c.id) : "var(--ls-bbc-line)", background: on ? "var(--ls-bbc-s3)" : "var(--ls-bbc-s1)", color: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)" }}>
+                      <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: couleur(c.id), flex: "none" }} />
+                      {c.id === userId ? "Moi (pour voir)" : c.prenom}
+                    </button>
+                  );
+                })}
+              </div>
+              {choisie ? (
+                <button type="button" onClick={() => void envoyer()} disabled={envoi} style={{ ...boutonEnvoi, opacity: envoi ? 0.6 : 1 }}>
+                  {envoi ? "Envoi…" : `Envoyer à ${choisie === userId ? "moi" : prenomChoisie}`}
+                </button>
+              ) : null}
+              {retour ? <div style={{ marginTop: 10, fontSize: 13.5, fontWeight: 700, color: retour.ok ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-coral)" }}>{retour.texte}</div> : null}
+            </div>
+          ) : null}
+
           <button type="button" onClick={onClose} style={boutonPlein}>
             C'est compris
           </button>
@@ -122,4 +170,7 @@ const croix: CSSProperties = { flex: "none", width: 44, height: 44, minHeight: 4
 const corps: CSSProperties = { flex: 1, overflowY: "auto", overscrollBehavior: "contain", padding: "16px 18px calc(18px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 16 };
 const pastille: CSSProperties = { flex: "none", width: 40, height: 40, borderRadius: 12, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 };
 const encart: CSSProperties = { padding: "14px 16px", borderRadius: 16, border: "1px solid var(--ls-bbc-lime)", background: "color-mix(in srgb, var(--ls-bbc-lime) 8%, var(--ls-bbc-s2))", fontSize: 13.5, color: "var(--ls-bbc-muted)", lineHeight: 1.55 };
+const blocEnvoi: CSSProperties = { padding: "14px 16px", borderRadius: 16, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)" };
+const puce: CSSProperties = { display: "flex", alignItems: "center", gap: 7, minHeight: 44, padding: "0 13px", borderRadius: 11, border: "1px solid", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, cursor: "pointer" };
+const boutonEnvoi: CSSProperties = { width: "100%", minHeight: 48, marginTop: 10, borderRadius: 13, border: "1px solid var(--ls-bbc-lime)", background: "transparent", color: "var(--ls-bbc-lime-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14.5, fontWeight: 800, cursor: "pointer" };
 const boutonPlein: CSSProperties = { flex: "none", width: "100%", minHeight: 52, border: 0, borderRadius: 14, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15.5, fontWeight: 800, cursor: "pointer" };

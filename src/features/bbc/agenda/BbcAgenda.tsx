@@ -476,7 +476,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
         </Feuille>
       ) : null}
 
-      {guide ? <GuideAgendaSheet coachs={coachs} couleur={couleur} onClose={() => setGuide(false)} /> : null}
+      {guide ? <GuideAgendaSheet coachs={coachs} couleur={couleur} userId={userId} peutEnvoyer={peutRegler} onClose={() => setGuide(false)} /> : null}
 
       {/* ── Le club, ce jour-là : qui ouvre, heures, fermeture, rituels ─── */}
       {jourClub && !affecter ? (
