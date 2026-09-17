@@ -52,6 +52,7 @@ import {
   type CoachDuClub, type Portee,
 } from "../coachsDuClub";
 import { basculerRdvVersCoach } from "../../../services/sb/basculerRdvCoach";
+import { useCoachsDuClub } from "../useCoachsDuClub";
 
 /** Le choix « de qui on regarde la semaine », par appareil. */
 const CLE_PORTEE = "ls-bbc-semaine-portee";
@@ -202,18 +203,28 @@ export function BbcSemaine({ userId, club }: BbcSemaineProps) {
   // choisissait « toute l'équipe », on ouvrait une fiche, on revenait, et la
   // vue perso était revenue sans qu'on ait rien demandé. Personne ne s'en
   // servait. D'où le stockage local, relu une seule fois à l'ouverture.
+  //
+  // ⚠️ 17/09 — « LE CLUB », CE SONT LES COACHS RATTACHÉS. `coach_user_ids`
+  // liste ceux qui prennent les réservations du SITE (Thomas, Mélanie) : Romane
+  // et Maria, rattachées au club, n'y sont pas, et leurs rendez-vous étaient
+  // écartés par la portée. La RPC `coachs_du_club()` rend les rattachés — et
+  // leurs noms, car `users` n'est pas lisible par une distributrice.
+  const { coachs: rattaches } = useCoachsDuClub(userId);
+  const idsRattaches = useMemo(() => rattaches.map((c) => c.id), [rattaches]);
   const idsClub = useMemo(
-    () => idsCoachsDuClub(settings, club?.ownerUserId ?? null),
-    [settings, club?.ownerUserId],
+    () => idsCoachsDuClub(settings, club?.ownerUserId ?? null, idsRattaches),
+    [settings, club?.ownerUserId, idsRattaches],
   );
   const nomsCoachs = useMemo(() => {
     const m = new Map<string, string>();
     for (const u of users) if (u?.id) m.set(u.id, u.name ?? "");
+    // La base a le dernier mot : c'est la seule source qu'une distributrice lit.
+    for (const c of rattaches) m.set(c.id, c.nom);
     return m;
-  }, [users]);
+  }, [users, rattaches]);
   const coachs = useMemo(
-    () => coachsDuClub(settings, club?.ownerUserId ?? null, nomsCoachs),
-    [settings, club?.ownerUserId, nomsCoachs],
+    () => coachsDuClub(settings, club?.ownerUserId ?? null, nomsCoachs, idsRattaches),
+    [settings, club?.ownerUserId, nomsCoachs, idsRattaches],
   );
   const [portee, setPortee] = useState<Portee>(() => {
     try {
