@@ -28,7 +28,9 @@ export interface UseBbcModeResult {
   clubs: Club[];
   activeClub: Club | null;
   loading: boolean;
-  /** Aperçu admin actif ('classic' | 'bbc' | null). null = suit club_model. */
+  /** Admin, ou coach rattachée à un club : voit le bouton Classic ⇄ BBC. */
+  peutBasculer: boolean;
+  /** Aperçu actif ('classic' | 'bbc' | null). null = suit club_model. */
   preview: "classic" | "bbc" | null;
   /** Admin only : pose/retire l'aperçu (localStorage), sans toucher la DB. */
   setPreview: (v: "classic" | "bbc" | null) => void;
@@ -236,11 +238,23 @@ export function useBbcMode(
     [],
   );
 
-  const effectivePreview = isAdmin ? preview : null;
+  // ── QUI PEUT BASCULER Classic ⇄ BBC ────────────────────────────────────────
+  // Jusqu'au 17/09/2026 : les admins seulement (c'était un outil de recette).
+  // Conséquence mesurée : Romane, coach du club en mode BBC, était ENFERMÉE
+  // dans BBC — pas de CRM de ses leads, pas de fiche client complète — et
+  // passer Maria en BBC lui aurait fait perdre tout son espace standard.
+  // Décision de Thomas : toute coach du club MISE EN BBC a le bouton. BBC
+  // reste l'écran du quotidien ; le standard est à un geste, et restreint à
+  // quelques zones pour elles (cf. `ZONES_COACH_BBC` dans `appVisibility.ts`).
+  // C'est Thomas qui décide QUI entre dans BBC (`users.club_model`) : une
+  // coach restée en standard n'a pas le bouton — mais le jour où il la passe
+  // en BBC, elle ne perd plus rien. Sans club, rien ne change.
+  const activeClub = clubs[0] ?? null;
+  const peutBasculer = isAdmin || (activeClub !== null && clubModel === "bbc");
+  const effectivePreview = peutBasculer ? preview : null;
   const isBbc =
     effectivePreview === "bbc" ||
     (effectivePreview !== "classic" && clubModel === "bbc");
-  const activeClub = clubs[0] ?? null;
 
   return {
     isBbc,
@@ -248,6 +262,7 @@ export function useBbcMode(
     clubs,
     activeClub,
     loading,
+    peutBasculer,
     preview: effectivePreview,
     setPreview,
     createMyClub,
