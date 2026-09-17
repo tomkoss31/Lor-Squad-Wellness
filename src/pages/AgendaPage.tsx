@@ -43,6 +43,13 @@ import { useClubShifts } from "../features/agenda/useClubShifts";
 import { ClientRdvSheet } from "../features/agenda/ClientRdvSheet";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { useBbcMode } from "../features/bbc/useBbcMode";
+import { BasculeAgenda, ecrireModeAgenda, lireModeAgenda, type ModeAgenda } from "../features/bbc/agenda/BasculeAgenda";
+
+// L'agenda du club se charge à la demande : une coach sans club ne le
+// télécharge jamais (cf. `BasculeAgenda.tsx`).
+const AgendaDuClubStandard = lazy(() =>
+  import("../features/bbc/agenda/AgendaDuClubStandard").then((m) => ({ default: m.AgendaDuClubStandard })),
+);
 import { useClubDiscoveryBookings } from "../hooks/useClubDiscoveryBookings";
 import { voitCeRdvDuClub } from "../features/agenda/visibiliteRdvClub";
 import { useActiveClubId } from "../hooks/useActiveClubId";
@@ -226,6 +233,15 @@ export function AgendaPage() {
   const [searchParams] = useSearchParams();
   const initialDateFilter: DateFilter = searchParams.get("filter") === "today" ? "today" : "all";
   const initialEntityFromQuery = searchParams.get("tab") === "followups" ? "followups" : null;
+  // Agenda du club ou le sien ? Un lien qui vise un filtre précis (« les RDV
+  // d'aujourd'hui », « les suivis ») parle de l'agenda classique : on l'honore.
+  const [modeAgenda, setModeAgenda] = useState<ModeAgenda>(() =>
+    searchParams.get("filter") || searchParams.get("tab") ? "perso" : lireModeAgenda(),
+  );
+  const changerModeAgenda = (m: ModeAgenda) => {
+    setModeAgenda(m);
+    ecrireModeAgenda(m);
+  };
   const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
   // ─── Agenda V2 (2026-07-27) : vue Liste (historique) ou Semaine (grille) ───
@@ -1142,10 +1158,31 @@ export function AgendaPage() {
   // Counts pour le hero header (calcules apres les useMemo des filtres)
   const heroTodayCount = entityCounts.all > 0 ? entityCounts.all : 0;
 
+  // ── L'agenda du club (agenda partagé, étape 9 — 18/09) ────────────────────
+  // Une coach rattachée à un club voit d'abord L'AGENDA DU CLUB — le même
+  // composant que dans BBC : toute l'équipe, une couleur par coach, caler avec
+  // les dispos, qualifier au toucher. « Mon agenda » reste à un geste. Pour qui
+  // n'a pas de club, rien ne change : pas d'interrupteur, pas de requête.
+  if (activeClub && modeAgenda === "club") {
+    return (
+      <div className="space-y-4">
+        <BasculeAgenda mode={modeAgenda} onChange={changerModeAgenda} />
+        <Suspense fallback={<div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--ls-text-muted)" }}>Chargement de l'agenda du club…</div>}>
+          <AgendaDuClubStandard userId={currentUser?.id} coachName={currentUser?.name} club={activeClub} />
+        </Suspense>
+      </div>
+    );
+  }
+
   return (
     // En vue calendrier, la page occupe l'écran et seule la journée défile
     // (maquette validée 2026-07-27). En vue Liste, comportement inchangé.
     <div className={isCalendarView ? "agenda-fullpage" : "space-y-5"}>
+      {activeClub ? (
+        <div className="agenda-fixed" style={{ paddingBottom: isCalendarView ? 8 : 0 }}>
+          <BasculeAgenda mode={modeAgenda} onChange={changerModeAgenda} />
+        </div>
+      ) : null}
       {/* ═══ EN-TÊTE — masqué en vue calendrier (refonte 2026-07-27) ═══════
           Sur téléphone, il fallait traverser le hero, la carte « prochain
           RDV », les onglets d'entité puis 9 pastilles de filtres avant
