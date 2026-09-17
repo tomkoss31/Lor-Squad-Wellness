@@ -251,9 +251,12 @@ serve(async (req) => {
         const coachFirst = new Map<string, string>();
         const coachFull = new Map<string, string>();
         const coachLoc = new Map<string, string>();
+        // 17/09 — un coach qui tient un club (club_model='bbc') = mails de RDV en
+        // identité Breakfast Club (crème), comme la confirmation. Sinon La Base 360.
+        const coachClub = new Set<string>();
         if (distributorIds.size > 0) {
           const usersRes = await avecReessais(debut, () =>
-            sb.from("users").select("id, name, rdv_location, city").in("id", [...distributorIds]),
+            sb.from("users").select("id, name, rdv_location, city, club_model").in("id", [...distributorIds]),
           );
           if (usersRes.error) noter("lecture coachs (clients)", usersRes.error);
           for (const u of (usersRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -261,6 +264,7 @@ serve(async (req) => {
             coachFirst.set(u.id as string, full.split(/\s+/)[0] || "votre coach");
             coachFull.set(u.id as string, full || "votre coach");
             coachLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
+            if ((u.club_model as string) === "bbc") coachClub.add(u.id as string);
           }
         }
         const distFor = (clientId: string) => coachByClient.get(clientId) ?? null;
@@ -352,6 +356,7 @@ serve(async (req) => {
               const html = rdvEmailHtml({
                 kind: "reminder",
                 firstName: clientFirst.get(clientId) || "",
+                theme: (dist && coachClub.has(dist)) ? "club" : "app",
                 coachName: (dist && coachFull.get(dist)) || "votre coach",
                 dateLabel: parisDateLabel(fu.due_date as string),
                 hour,
@@ -415,14 +420,16 @@ serve(async (req) => {
           const coachIds = [...new Set(validBookings.map((b) => b.coach_user_id).filter(Boolean))] as string[];
           const cFull = new Map<string, string>();
           const cLoc = new Map<string, string>();
+          const cClub = new Set<string>();
           if (coachIds.length > 0) {
             const usRes = await avecReessais(debut, () =>
-              sb.from("users").select("id, name, rdv_location, city").in("id", coachIds),
+              sb.from("users").select("id, name, rdv_location, city, club_model").in("id", coachIds),
             );
             if (usRes.error) noter("lecture coachs (réservations)", usRes.error);
             for (const u of (usRes.data ?? []) as Array<Record<string, unknown>>) {
               cFull.set(u.id as string, String((u.name as string) ?? "").trim() || "votre coach");
               cLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
+              if ((u.club_model as string) === "bbc") cClub.add(u.id as string);
             }
           }
 
@@ -450,7 +457,7 @@ serve(async (req) => {
             const where = isVisio
               ? "En visio — le lien te sera envoyé avant le RDV"
               : ((cid && cLoc.get(cid)) || "votre club La Base");
-            const themeRdv: RdvEmailTheme = b.club_id ? "club" : "app";
+            const themeRdv: RdvEmailTheme = (b.club_id || (cid && cClub.has(cid))) ? "club" : "app";
             // ⚠️ 03/09/2026 — le rappel ne passait PAS `manageUrl`, alors que le
             // jeton est lu juste au-dessus pour le SMS. Le gabarit retombait donc
             // sur « Accéder à mon espace → », envoyé a des PROSPECTS qui n'ont
@@ -536,14 +543,16 @@ serve(async (req) => {
           const coachIds = [...new Set(validProspects.map((p) => p.distributor_id).filter(Boolean))] as string[];
           const pFull = new Map<string, string>();
           const pLoc = new Map<string, string>();
+          const pClub = new Set<string>();
           if (coachIds.length > 0) {
             const usRes = await avecReessais(debut, () =>
-              sb.from("users").select("id, name, rdv_location, city").in("id", coachIds),
+              sb.from("users").select("id, name, rdv_location, city, club_model").in("id", coachIds),
             );
             if (usRes.error) noter("lecture coachs (agenda)", usRes.error);
             for (const u of (usRes.data ?? []) as Array<Record<string, unknown>>) {
               pFull.set(u.id as string, String((u.name as string) ?? "").trim() || "votre coach");
               pLoc.set(u.id as string, String((u.rdv_location as string) || (u.city as string) || "").trim());
+              if ((u.club_model as string) === "bbc") pClub.add(u.id as string);
             }
           }
           for (const p of validProspects) {
@@ -551,6 +560,7 @@ serve(async (req) => {
             const html = rdvEmailHtml({
               kind: "reminder",
               firstName: String((p.first_name as string) ?? "").split(/\s+/)[0] || "",
+              theme: (cid && pClub.has(cid)) ? "club" : "app",
               coachName: (cid && pFull.get(cid)) || "votre coach",
               dateLabel: parisDateLabel(p.rdv_date as string),
               hour: parisHourLabel(p.rdv_date as string),

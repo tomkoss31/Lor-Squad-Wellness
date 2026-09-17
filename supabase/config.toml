@@ -58,7 +58,7 @@ verify_jwt = true
 
 # Cron (pg_net, clé de service).
 [functions.client-rdv-reminder]
-verify_jwt = true
+verify_jwt = false
 
 # Front coach authentifié — JWT du coach, re-contrôlé dans la fonction.
 [functions.notify-club-booking-moved]
