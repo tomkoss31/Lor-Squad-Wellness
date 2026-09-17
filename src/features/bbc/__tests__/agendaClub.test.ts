@@ -134,6 +134,7 @@ describe("la marque — trois tables, trois vocabulaires", () => {
     expect(marqueDe(p("done"))?.code).toBe("fait");
     expect(marqueDe(p("no_show"))?.code).toBe("pas_venue");
     expect(marqueDe(p("cold"))?.code).toBe("relance");
+    expect(marqueDe(p("lost"))?.code).toBe("perdue");
   });
 
   it("une réservation du site", () => {
