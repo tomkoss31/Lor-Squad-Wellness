@@ -89,11 +89,12 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     return min === 30 ? "suivi" : "bilan";
   });
   // Ouvert sur AUJOURD'HUI alors que la journée est finie (plus une seule heure
-  // proposable, même agenda vide) : on arrive sur demain. Vu sur la prod à
+  // proposable POUR LE TYPE PAR DÉFAUT — un bilan d'1 h —, même agenda vide) :
+  // on arrive sur demain. Vu sur la prod à
   // 17 h 20 — quatre coachs, quatre « complet », et il fallait deviner qu'il
   // suffisait de toucher le jour suivant.
   const [jour, setJour] = useState(() =>
-    heureInitiale == null && !deplace && jourInitial === aujourdhui && creneauxLibres([], new Date(), 30, Date.now()).length === 0
+    heureInitiale == null && !deplace && jourInitial === aujourdhui && creneauxLibres([], new Date(), TYPES.bilan.duree, Date.now()).length === 0
       ? decalerJour(jourInitial, 1)
       : jourInitial,
   );
