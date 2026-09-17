@@ -38,6 +38,7 @@ import { useAgendaDuClub } from "./useAgendaDuClub";
 import { CalerRdvSheet } from "./CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
 import { JourDuClubSheet, type RituelDuJour } from "./JourDuClubSheet";
+import { GuideAgendaSheet } from "./GuideAgendaSheet";
 import { qualifierRdvClub } from "./qualifierRdvClub";
 import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
@@ -71,6 +72,9 @@ import {
 } from "./agendaClub";
 
 type Vue = "jour" | "semaine" | "mois";
+
+/** « J'ai vu la carte d'accueil » — par navigateur, c'est un confort, pas une donnée. */
+const CLE_GUIDE = "ls-agenda-club-guide-vu";
 
 /** Au-delà, la case du mois n'affiche plus les pastilles mais « +N ». */
 const PASTILLES_MAX = 3;
@@ -109,6 +113,30 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
   // Un suivi se règle depuis la fiche du membre, un « pas dispo » se libère :
   // ni l'un ni l'autre ne se qualifie.
   const ouvrirRdv = (r: RdvClub) => (r.source === "suivi" || r.source === "indispo" ? setRdvOuvert(r) : setQualif(r));
+
+  // Le mode d'emploi (étape 10). La carte d'accueil ne s'affiche qu'une fois ;
+  // si le navigateur refuse le stockage, on ne la montre pas plutôt que de la
+  // remontrer à chaque visite.
+  const [guide, setGuide] = useState(false);
+  const [guideVu, setGuideVu] = useState(() => {
+    try {
+      return localStorage.getItem(CLE_GUIDE) === "1";
+    } catch {
+      return true;
+    }
+  });
+  const marquerGuideVu = () => {
+    setGuideVu(true);
+    try {
+      localStorage.setItem(CLE_GUIDE, "1");
+    } catch {
+      /* navigation privée */
+    }
+  };
+  const ouvrirGuide = () => {
+    setGuide(true);
+    marquerGuideVu();
+  };
 
   const { coachs } = useCoachsDuClub(userId);
   const { users, currentUser } = useAppContext();
@@ -249,13 +277,38 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
         </button>
       </div>
 
-      <div role="tablist" aria-label="Vue" style={segments}>
-        {(["jour", "semaine", "mois"] as Vue[]).map((v) => (
-          <button key={v} type="button" role="tab" aria-selected={vue === v} onClick={() => setVue(v)} style={{ ...segment, background: vue === v ? "var(--ls-bbc-s3)" : "transparent", color: vue === v ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)" }}>
-            {v === "jour" ? "Jour" : v === "semaine" ? "Semaine" : "Mois"}
-          </button>
-        ))}
+      <div style={{ display: "flex", gap: 8 }}>
+        <div role="tablist" aria-label="Vue" style={{ ...segments, flex: 1 }}>
+          {(["jour", "semaine", "mois"] as Vue[]).map((v) => (
+            <button key={v} type="button" role="tab" aria-selected={vue === v} onClick={() => setVue(v)} style={{ ...segment, background: vue === v ? "var(--ls-bbc-s3)" : "transparent", color: vue === v ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)" }}>
+              {v === "jour" ? "Jour" : v === "semaine" ? "Semaine" : "Mois"}
+            </button>
+          ))}
+        </div>
+        {/* Le mode d'emploi : toujours là, jamais imposé (étape 10). */}
+        <button type="button" onClick={ouvrirGuide} aria-label="L'agenda, mode d'emploi" title="Mode d'emploi" style={boutonGuide}>
+          ?
+        </button>
       </div>
+
+      {/* La première fois seulement : une carte DANS la page, pas un popup. */}
+      {!guideVu ? (
+        <div style={carteAccueil}>
+          <span aria-hidden="true" style={{ fontSize: 22, flex: "none" }}>
+            👋
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 14.5, fontWeight: 800 }}>L'agenda du club remplace TimeTree</span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.45 }}>Une minute pour voir comment caler, déplacer et noter un « pas dispo ».</span>
+          </span>
+          <button type="button" onClick={ouvrirGuide} style={boutonCarte}>
+            Voir
+          </button>
+          <button type="button" onClick={marquerGuideVu} aria-label="Masquer" style={croixCarte}>
+            ✕
+          </button>
+        </div>
+      ) : null}
 
       {/* ── Les coachs : « Tous », puis chacune avec sa couleur ───────────── */}
       <div style={rangeeCoachs}>
@@ -422,6 +475,8 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
           )}
         </Feuille>
       ) : null}
+
+      {guide ? <GuideAgendaSheet coachs={coachs} couleur={couleur} onClose={() => setGuide(false)} /> : null}
 
       {/* ── Le club, ce jour-là : qui ouvre, heures, fermeture, rituels ─── */}
       {jourClub && !affecter ? (
@@ -1051,6 +1106,21 @@ const numero: CSSProperties = {
 const pastille: CSSProperties = {
   display: "block", margin: "0 1px", padding: "2px 4px", borderRadius: 4, fontSize: 11, lineHeight: 1.25, fontWeight: 600,
   whiteSpace: "nowrap", overflow: "hidden", color: "var(--ls-bbc-text)",
+};
+const boutonGuide: CSSProperties = {
+  flex: "none", width: 48, minHeight: 48, borderRadius: 14, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s1)",
+  color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 17, fontWeight: 800, cursor: "pointer",
+};
+const carteAccueil: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, padding: "12px 12px 12px 14px", borderRadius: 16, border: "1px solid var(--ls-bbc-lime)",
+  background: "color-mix(in srgb, var(--ls-bbc-lime) 8%, var(--ls-bbc-s1))",
+};
+const boutonCarte: CSSProperties = {
+  flex: "none", minHeight: 44, padding: "0 16px", borderRadius: 12, border: 0, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)",
+  fontFamily: "var(--ls-bbc-font-body)", fontSize: 13.5, fontWeight: 800, cursor: "pointer",
+};
+const croixCarte: CSSProperties = {
+  flex: "none", width: 44, minHeight: 44, borderRadius: 12, border: 0, background: "transparent", color: "var(--ls-bbc-hint)", fontSize: 15, cursor: "pointer",
 };
 /** La tête d'un jour reste collée en haut pendant qu'on fait défiler ses rendez-vous. */
 const teteJourRangee: CSSProperties = { position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "stretch", background: "var(--ls-bbc-bg)" };
