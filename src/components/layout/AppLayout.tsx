@@ -23,7 +23,7 @@ import { BUSINESS_SHORTCUTS, isBusinessRoute } from "./businessShortcuts";
 import { lazy, Suspense, useState } from "react";
 import { useCrmBadge } from "../../hooks/useCrmBadge";
 import { useAppLevel } from "../../hooks/useAppLevel";
-import type { FeatureKey } from "../../config/appVisibility";
+import { ZONES_COACH_BBC, type FeatureKey } from "../../config/appVisibility";
 import { NoalyFab } from "../noaly/NoalyFab";
 import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
@@ -146,7 +146,14 @@ export function AppLayout() {
   // condition (« quand tu auras fait ton 1er bilan »). Un débutant doit savoir
   // que ça existe et ce qui l'ouvre — sinon il ne sait pas où il en est.
   // Une entrée masquée par le NIVEAU (essentiel/complet) disparaît, elle.
+  //
+  // 2026-09-17 — une coach du club qui VIT dans BBC et passe par le standard
+  // n'y trouve que quelques zones (`ZONES_COACH_BBC`) : CRM, agenda, messages,
+  // dossiers clients. Thomas : « l'app est bien complète mais complexe, même
+  // pour moi ». Les admins ne sont pas concernés.
+  const coachBbcEnVisite = bbc.clubModel === "bbc" && currentUser.role !== "admin";
   const navigation = allNavigation
+    .filter((item) => !coachBbcEnVisite || !item.feature || ZONES_COACH_BBC.has(item.feature))
     .filter((item) => !item.feature || can(item.feature) || isLocked(item.feature))
     .map((item) => ({
       ...item,
@@ -251,6 +258,7 @@ export function AppLayout() {
           coachName={currentUser.name}
           userId={currentUser.id}
           isAdmin={currentUser.role === "admin"}
+          peutBasculer={bbc.peutBasculer}
           onSetPreview={bbc.setPreview}
           club={bbc.activeClub}
           clubs={bbc.clubs}
@@ -649,9 +657,10 @@ export function AppLayout() {
           >
             {/* Bouton install PWA — visible si le navigateur expose le prompt */}
             <CoachInstallPwaButton />
-            {/* Chantier BBC : bascule Classic/BBC (admins) — entrée dans
-                l'environnement dédié. Aperçu localStorage, zéro impact DB. */}
-            {currentUser.role === "admin" ? (
+            {/* Chantier BBC : bascule Classic/BBC — admins, et depuis le 17/09
+                les coachs du club mises en BBC (elles y étaient enfermées).
+                Aperçu localStorage, zéro impact DB. */}
+            {bbc.peutBasculer ? (
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <BbcModeSwitch value="classic" onChange={(v) => bbc.setPreview(v)} compact />
               </div>

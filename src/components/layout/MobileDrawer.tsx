@@ -229,7 +229,7 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
                 retour vers son environnement BBC. Signalé par Thomas depuis
                 son iPhone. Le drawer est le seul menu qui existe sur mobile,
                 la bascule doit donc y vivre aussi. */}
-            {isAdmin ? (
+            {bbcMode.peutBasculer ? (
               <div style={{ padding: "6px 12px 2px", display: "flex", justifyContent: "center" }}>
                 <BbcModeSwitch
                   value={bbcMode.isBbc ? "bbc" : "classic"}

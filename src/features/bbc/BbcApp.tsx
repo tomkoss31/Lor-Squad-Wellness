@@ -74,6 +74,8 @@ interface BbcAppProps {
   coachName?: string;
   userId?: string;
   isAdmin?: boolean;
+  /** Admin, ou coach du club mise en BBC : voit le bouton Classic ⇄ BBC (17/09). */
+  peutBasculer?: boolean;
   onSetPreview?: (v: "classic" | "bbc" | null) => void;
   club?: Club | null;
   clubs?: Club[];
@@ -181,7 +183,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
-export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
+export function BbcApp({ coachName, userId, isAdmin, peutBasculer, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
   // Les réglages fraîchement enregistrés priment sur ceux chargés au montage :
   // `useBbcMode` ne les relit qu'au démarrage, et sans ça les appels, les cœurs
   // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
@@ -330,7 +332,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         </nav>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)" }}>
-          {isAdmin && onSetPreview ? (
+          {(isAdmin || peutBasculer) && onSetPreview ? (
             <BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} compact />
           ) : null}
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 4px" }}>
@@ -384,7 +386,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
               {view === "cockpit" ? (first ? `${salutation()}, ${first}` : salutation()) : t.title}
             </div>
           </div>
-          {isAdmin && onSetPreview ? (
+          {(isAdmin || peutBasculer) && onSetPreview ? (
             <BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} />
           ) : null}
         </div>

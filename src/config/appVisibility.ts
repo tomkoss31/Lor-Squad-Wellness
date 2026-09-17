@@ -189,6 +189,28 @@ export function hiddenFeatures(level: AppLevel): FeatureKey[] {
   );
 }
 
+// ─── Les zones du standard ouvertes à une coach qui vit dans BBC ─────────────
+//
+// 17/09/2026 — Thomas ouvre le bouton Classic ⇄ BBC aux coachs du club (elles
+// étaient enfermées dans BBC, sans CRM ni fiche client complète), « mais il
+// faudrait peut-être ne laisser l'accès qu'à certaines zones : l'app est bien
+// complète mais complexe, même pour moi ». Ce qu'il utilise LUI, au quotidien :
+// messages, CRM, agenda. C'est donc ça qu'elles trouvent en venant de BBC — et
+// la fiche client complète, qui est la raison d'y venir. Pas « Mon business »,
+// pas l'équipe, pas le développement.
+//
+// Même règle que tout ce fichier : ça masque un MENU, jamais une route ni une
+// donnée. Les admins ne sont pas concernés.
+export const ZONES_COACH_BBC: ReadonlySet<FeatureKey> = new Set<FeatureKey>([
+  "nav.copilote",
+  "nav.crm",
+  "nav.agenda",
+  "nav.messages",
+  "nav.clients",
+  "nav.nouveau-bilan",
+  "nav.parametres",
+]);
+
 /** Normalise une valeur venue de la base (colonne libre côté TS). */
 export function toAppLevel(value: unknown): AppLevel {
   return value === "complet" ? "complet" : DEFAULT_APP_LEVEL;
