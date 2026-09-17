@@ -155,6 +155,20 @@ export function parJour(rdvs: readonly RdvClub[]): Map<string, RdvClub[]> {
 
 // ── Ce qu'on écrit sur la pastille ──────────────────────────────────────────
 
+/**
+ * Comment joindre la personne. Le « contact » d'une réservation du site est
+ * un champ libre : c'est parfois une ADRESSE MAIL (vu sur la prod le 17/09).
+ * Fabriquer un `tel:` avec les chiffres d'un mail composerait un faux numéro —
+ * on propose alors d'écrire, pas d'appeler.
+ */
+export function contactDe(r: RdvClub): { tel: string | null; mail: string | null } {
+  const brut = (r.telephone ?? "").trim();
+  if (!brut) return { tel: null, mail: null };
+  if (brut.includes("@")) return { tel: null, mail: brut };
+  const chiffres = brut.replace(/\D/g, "");
+  return { tel: chiffres.length >= 6 ? chiffres : null, mail: null };
+}
+
 /** Une plage « pas dispo » — elle occupe la coach, mais ce n'est pas un rendez-vous. */
 export function estIndispo(r: RdvClub): boolean {
   return r.source === "indispo";

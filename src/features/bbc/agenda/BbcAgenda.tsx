@@ -43,6 +43,7 @@ import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import {
   aQualifier,
+  contactDe,
   cleJour,
   couleurCoach,
   couloirs,
@@ -91,7 +92,7 @@ interface Props {
   fabBas?: string;
 }
 
-export function BbcAgenda({ userId, coachName, club, collantHaut = "0px", fabBas }: Props) {
+export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas }: Props) {
   const cleAuj = cleJour(new Date());
   const [vue, setVue] = useState<Vue>("semaine");
   /** Le jour autour duquel on regarde — la clé d'un jour, quelle que soit la vue. */
@@ -269,7 +270,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "0px", fabBas
       </div>
 
       {vue === "mois" ? (
-        <VueMois semaines={semaines} moisAffiche={dAncre.getMonth()} cleAuj={cleAuj} parJourMap={parJourMap} couleur={couleur} horairesDe={horairesDe} onJour={setJourOuvert} />
+        <VueMois semaines={semaines} moisAffiche={dAncre.getMonth()} cleAuj={cleAuj} parJourMap={parJourMap} couleur={couleur} horairesDe={horairesDe} collantHaut={collantHaut} onJour={setJourOuvert} />
       ) : vue === "semaine" ? (
         <VueSemaine
           cles={semaineDe(lundi)}
@@ -392,12 +393,12 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "0px", fabBas
             ) : aQualifier(rdvOuvert, maintenant) ? (
               <Ligne couleur="var(--ls-bbc-coral)">Passé, pas encore qualifié</Ligne>
             ) : null}
-            {rdvOuvert.telephone ? (
+            {contactDe(rdvOuvert).tel ? (
               <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-                <a href={`tel:${rdvOuvert.telephone.replace(/\D/g, "")}`} style={lienAction}>
+                <a href={`tel:${contactDe(rdvOuvert).tel}`} style={lienAction}>
                   📞 Appeler
                 </a>
-                <a href={`sms:${rdvOuvert.telephone.replace(/\D/g, "")}`} style={lienAction}>
+                <a href={`sms:${contactDe(rdvOuvert).tel}`} style={lienAction}>
                   💬 SMS
                 </a>
               </div>
@@ -542,6 +543,7 @@ function VueMois({
   parJourMap,
   couleur,
   horairesDe,
+  collantHaut,
   onJour,
 }: {
   semaines: string[][];
@@ -550,11 +552,12 @@ function VueMois({
   parJourMap: Map<string, RdvClub[]>;
   couleur: (id: string | null) => string;
   horairesDe: (cle: string) => HorairesDuJour;
+  collantHaut: string;
   onJour: (k: string) => void;
 }) {
   return (
     <div>
-      <div style={teteJours}>
+      <div style={{ ...teteJours, top: collantHaut }}>
         {["lu", "ma", "me", "je", "ve", "sa", "di"].map((j) => (
           <span key={j} style={{ textAlign: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", letterSpacing: ".06em" }}>
             {j}

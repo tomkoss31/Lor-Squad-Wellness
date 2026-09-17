@@ -94,8 +94,39 @@
 .bbc-main {
   flex: 1;
   min-width: 0;
+  /* ⚠️ `clip`, PAS `hidden` (mesuré sur la prod le 17/09). `overflow-x: hidden`
+     fait calculer `overflow-y: auto` : `.bbc-main` devient alors LA zone de
+     défilement de référence pour tout `position: sticky` qu'il contient — sauf
+     qu'il ne défile jamais (c'est la fenêtre qui défile). Résultat : les prénoms
+     des coachs de la vue Jour et les têtes de jour de la vue Semaine ne
+     collaient jamais ; arrivé sur l'heure qu'il est, on ne savait plus quelle
+     colonne était à qui. `clip` coupe pareil ce qui déborde, sans créer de
+     zone de défilement. La 1re ligne reste le repli des vieux Safari (< 16). */
   overflow-x: hidden;
+  overflow-x: clip;
   padding: 24px 28px 40px;
+}
+
+/* ⚠️ Les champs de saisie de BBC suivent BBC, pas le thème de l'app standard.
+   `globals.css` force `html.theme-light input { background … !important }` :
+   un coach dont l'app standard est en CLAIR voyait donc des champs blancs dans
+   les feuilles sombres de BBC (vu sur la prod le 17/09 — « pourquoi », heures
+   du jour, recherche…). Les jetons `--ls-bbc-*` portent déjà le clair ET le
+   sombre de BBC : on les réimpose ici, avec la même force. */
+html.theme-light .bbc-mode input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+html.theme-light .bbc-mode select,
+html.theme-light .bbc-mode textarea {
+  background: var(--ls-bbc-s2) !important;
+  color: var(--ls-bbc-text) !important;
+  border-color: var(--ls-bbc-line) !important;
+}
+html.theme-light .bbc-mode input::placeholder,
+html.theme-light .bbc-mode textarea::placeholder {
+  color: var(--ls-bbc-hint) !important;
+}
+html.theme-light .bbc-mode select option {
+  background: var(--ls-bbc-s2) !important;
+  color: var(--ls-bbc-text) !important;
 }
 .bbc-bottomnav {
   display: none;

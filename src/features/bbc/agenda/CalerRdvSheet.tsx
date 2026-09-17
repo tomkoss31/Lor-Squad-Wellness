@@ -88,7 +88,15 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     const min = Math.round((new Date(deplace.fin).getTime() - new Date(deplace.debut).getTime()) / 60_000);
     return min === 30 ? "suivi" : "bilan";
   });
-  const [jour, setJour] = useState(jourInitial);
+  // Ouvert sur AUJOURD'HUI alors que la journée est finie (plus une seule heure
+  // proposable, même agenda vide) : on arrive sur demain. Vu sur la prod à
+  // 17 h 20 — quatre coachs, quatre « complet », et il fallait deviner qu'il
+  // suffisait de toucher le jour suivant.
+  const [jour, setJour] = useState(() =>
+    heureInitiale == null && !deplace && jourInitial === aujourdhui && creneauxLibres([], new Date(), 30, Date.now()).length === 0
+      ? decalerJour(jourInitial, 1)
+      : jourInitial,
+  );
   const [coach, setCoach] = useState<string | null>(coachInitial ?? null);
   const [heure, setHeure] = useState<number | null>(heureInitiale ?? null);
   const [tout, setTout] = useState<Set<string>>(new Set());
