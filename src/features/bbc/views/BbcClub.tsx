@@ -2,7 +2,7 @@
 // BbcClub — pointage du club, DONNÉES RÉELLES (chantier BBC).
 // Chaque membre = un client du coach ; « +1 visite » insère club_visits.
 // Alerte 7-9 = orange (bientôt bilan), 10+ = rouge (bilan des 10 à faire).
-// Le scan QR caméra (port Shake Bar) viendra compléter le tap.
+// Le pointage : un tap, ou le scan QR du membre (bouton en haut de page).
 // =============================================================================
 
 import { useState } from "react";
@@ -133,7 +133,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
           <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />pointage du matin
         </div>
-        <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 16 }}>1 tap = +1 visite. (Le scan QR caméra du membre viendra compléter le tap.)</div>
+        <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 16 }}>1 tap = +1 visite — ou scanne le QR du membre.</div>
         {mot ? (
           <div
             role="status"

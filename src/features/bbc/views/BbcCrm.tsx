@@ -146,8 +146,6 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
           aide={
             <>
               La fiche papier se saisit ici, dans l'ordre où elle est remplie.
-              <br />
-              Le même bouton est repris sur « Ce matin ».
             </>
           }
         />
