@@ -23,6 +23,7 @@ import "../../styles/bbc-tokens.css";
 import { useEffect, useState, type ReactNode } from "react";
 import type { Club, ClubSettings } from "../../types/domain";
 import { BbcModeSwitch } from "./BbcModeSwitch";
+import type { VueBbcParAdresse } from "./bbcRoutes";
 import { BbcScripts } from "./views/BbcScripts";
 import { BbcCoeurs } from "./views/BbcCoeurs";
 import { BbcClub } from "./views/BbcClub";
@@ -74,6 +75,11 @@ interface BbcAppProps {
   coachName?: string;
   userId?: string;
   isAdmin?: boolean;
+  /** L'onglet que l'ADRESSE demande (`bbcRoutes.ts`) : une notification vers `/agenda`
+   *  ouvre L'agenda, vers `/messages` les messages. `cleAdresse` change à chaque
+   *  navigation, même vers la même adresse. */
+  vueAdresse?: VueBbcParAdresse;
+  cleAdresse?: string;
   /** Admin, ou coach du club mise en BBC : voit le bouton Classic ⇄ BBC (17/09). */
   peutBasculer?: boolean;
   onSetPreview?: (v: "classic" | "bbc" | null) => void;
@@ -183,7 +189,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   reglages: { eye: "config du club", title: "Réglages" },
 };
 
-export function BbcApp({ coachName, userId, isAdmin, peutBasculer, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
+export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peutBasculer, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
   // Les réglages fraîchement enregistrés priment sur ceux chargés au montage :
   // `useBbcMode` ne les relit qu'au démarrage, et sans ça les appels, les cœurs
   // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
@@ -238,6 +244,18 @@ export function BbcApp({ coachName, userId, isAdmin, peutBasculer, onSetPreview,
   const club = clubProp && reglagesFrais ? { ...clubProp, settings: reglagesFrais } : clubProp;
   const [section, setSection] = useState<SectionKey>("club");
   const [view, setViewState] = useState<BbcView>("cockpit");
+
+  // L'ADRESSE choisit l'onglet (17/09/2026). Avant, BBC ignorait l'URL : une
+  // notification « nouveau rendez-vous » (`/agenda`) ouvrait « Ce matin ». On
+  // suit `cleAdresse` et non `vueAdresse` : deux notifications de suite vers la
+  // même adresse doivent rouvrir l'onglet, même si on en est parti entre-temps.
+  useEffect(() => {
+    if (!vueAdresse) return;
+    setSection(sectionDe(vueAdresse));
+    setViewState(vueAdresse);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleAdresse]);
+
   const [sheet, setSheet] = useState(false);
   // La feuille « Évaluation bien-être » vit ICI et pas dans une vue : elle
   // s'ouvre depuis « Mes membres » ET depuis « Ce matin », qui ne sont pas

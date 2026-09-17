@@ -28,6 +28,7 @@ import { NoalyFab } from "../noaly/NoalyFab";
 import { NotificationOptInPopup } from "../pwa/NotificationOptInPopup";
 import type { HerbalifeRank } from "../../types/domain";
 import { useBbcMode } from "../../features/bbc/useBbcMode";
+import { ADRESSE_ACCUEIL_BBC, vueBbcPourAdresse } from "../../features/bbc/bbcRoutes";
 import { BbcModeSwitch } from "../../features/bbc/BbcModeSwitch";
 import { LogoMark } from "../brand/LogoMark";
 // Chargé à la demande : un coach classique ne télécharge pas tout le module BBC.
@@ -251,13 +252,23 @@ export function AppLayout() {
   // Chantier BBC : prise de contrôle COMPLÈTE de l'écran quand le coach est
   // en BBC (club_model='bbc' ou aperçu admin). Remplace tout le chrome classic
   // par l'environnement BBC dédié (sa propre sidebar + ses écrans).
-  if (bbc.isBbc) {
+  //
+  // ⚠️ 17/09/2026 — « COMPLÈTE » avait un défaut : BBC ne regardait jamais
+  // l'adresse. Dix notifications pointent vers `/crm…` (nouveau lead, RDV pris,
+  // paiement, relance) : pour un coach BBC, le clic ouvrait « Ce matin ».
+  // Désormais l'ADRESSE décide (`bbcRoutes.ts`) : BBC sert l'accueil, l'agenda
+  // et les messages ; pour tout le reste il CÈDE la place au standard, et une
+  // barre « Retour au club » dit où l'on est.
+  const vueBbc = vueBbcPourAdresse(location.pathname);
+  if (bbc.isBbc && vueBbc) {
     return (
       <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0B0D11" }} />}>
         <BbcApp
           coachName={currentUser.name}
           userId={currentUser.id}
           isAdmin={currentUser.role === "admin"}
+          vueAdresse={vueBbc}
+          cleAdresse={location.key}
           peutBasculer={bbc.peutBasculer}
           onSetPreview={bbc.setPreview}
           club={bbc.activeClub}
@@ -662,7 +673,16 @@ export function AppLayout() {
                 Aperçu localStorage, zéro impact DB. */}
             {bbc.peutBasculer ? (
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <BbcModeSwitch value="classic" onChange={(v) => bbc.setPreview(v)} compact />
+                <BbcModeSwitch
+                  value="classic"
+                  onChange={(v) => {
+                    // Revenir à BBC, c'est aussi revenir à une adresse que BBC
+                    // sert : sinon on resterait sur `/crm`, donc dans le standard.
+                    if (v === "bbc") navigate(ADRESSE_ACCUEIL_BBC);
+                    bbc.setPreview(v);
+                  }}
+                  compact
+                />
               </div>
             ) : null}
             {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
@@ -882,6 +902,25 @@ export function AppLayout() {
             onLogout={handleLogout}
           />
 
+          {/* Un coach BBC de passage dans le standard (un lead ouvert depuis une
+              notification, une fiche client…) : on lui dit où il est, et le
+              chemin du retour est à un geste — la barre latérale qui porte le
+              bouton Classic/BBC est souvent hors de vue sur un portable. */}
+          {bbc.isBbc ? (
+            <button
+              type="button"
+              onClick={() => navigate(ADRESSE_ACCUEIL_BBC)}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 44, marginBottom: 14, padding: "0 14px",
+                borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", color: "var(--ls-text)",
+                fontFamily: "inherit", fontSize: 13.5, fontWeight: 600, textAlign: "left", cursor: "pointer",
+              }}
+            >
+              <span aria-hidden="true" style={{ color: "var(--ls-teal)", fontSize: 16 }}>←</span>
+              <span style={{ flex: 1, minWidth: 0 }}>Retour au club</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ls-text-muted)" }}>tu es dans l'app standard</span>
+            </button>
+          ) : null}
           <Outlet />
           {/* Padding for bottom nav on mobile — assez d'espace pour que le dernier bouton reste au-dessus */}
           <div className="h-32 xl:hidden" />
