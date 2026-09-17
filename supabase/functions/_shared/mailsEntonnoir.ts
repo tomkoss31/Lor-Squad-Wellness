@@ -110,7 +110,7 @@ export function mailPasVenue(prenom: string | null, heure: string | null): MailE
     : `Votre créneau vous était réservé et on n'a pas eu de nouvelles.`;
   return {
     objet: `On vous a gardé votre place${vocatif(p)}`,
-    titre: `On ne vous a pas vue${vocatif(p)}`,
+    titre: `On vous attendait${vocatif(p)}`,
     message: [
       `${rappelCreneau} Un empêchement, ça arrive — vraiment, ce n'est pas grave.`,
       "Si vous voulez toujours faire le point, reprenez simplement une heure qui vous va mieux. C'est le même rendez-vous, toujours gratuit, toujours 45 minutes.",

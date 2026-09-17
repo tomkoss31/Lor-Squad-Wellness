@@ -14,7 +14,7 @@ import { QualifierRdvSheet } from "../components/agenda/QualifierRdvSheet";
 import { QualifierRdvProspect, type MotifRelance } from "../components/agenda/QualifierRdvProspect";
 import { marquerRdvQualifie } from "../services/sb/qualifierRdv";
 import { setRdvBookingStatus } from "../services/sb/rdvBookingStatus";
-import { envoyerMailApresRdv } from "../services/sb/mailApresRdv";
+import { envoyerMailApresRdv, envoyerMailApresRdvProspect } from "../services/sb/mailApresRdv";
 import { patchQualification } from "../features/crm/ecrireQualification";
 import { REPONSE_PAR_CLE } from "../features/crm/qualification";
 import type { OnlineBilanRow } from "../hooks/useOnlineBilans";
@@ -498,10 +498,15 @@ export function AgendaPage() {
     const coldUntil = new Date(Date.now() + jours * 86_400_000).toISOString();
     try {
       await updateProspect(prospect.id, { status: "cold", coldUntil, coldReason: raison });
+      // « Pas venue » : le même mot que pour un RDV réservé — reprends un
+      // créneau. « Réfléchit » reste muet (la raison change à chaque personne).
+      if (motif === "pas_venue") void envoyerMailApresRdvProspect(prospect.id, "pas_venue");
       pushToast({
         tone: "success",
         title: "Noté",
-        message: `${prospect.firstName} revient dans ta liste dans ${jours} jour${jours > 1 ? "s" : ""}.`,
+        message: motif === "pas_venue"
+          ? `${prospect.firstName} revient dans 2 jours, et reçoit un mot pour reprendre un créneau.`
+          : `${prospect.firstName} revient dans ta liste dans ${jours} jour${jours > 1 ? "s" : ""}.`,
       });
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible de programmer la relance."));

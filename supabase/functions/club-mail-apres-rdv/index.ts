@@ -58,7 +58,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
 
-  let body: { booking_id?: string; type?: string };
+  let body: { booking_id?: string; prospect_id?: string; type?: string };
   try {
     body = await req.json();
   } catch {
@@ -66,8 +66,9 @@ serve(async (req) => {
   }
 
   const bookingId = (body.booking_id ?? "").trim();
+  const prospectId = (body.prospect_id ?? "").trim();
   const type = (body.type ?? "").trim();
-  if (!bookingId) return jsonResponse({ success: false, error: "booking_id_manquant" }, 400);
+  if (!bookingId && !prospectId) return jsonResponse({ success: false, error: "cible_manquante" }, 400);
   if (type !== "demarre" && type !== "pas_venue") {
     return jsonResponse({ success: false, error: "type_inconnu" }, 400);
   }
@@ -79,37 +80,60 @@ serve(async (req) => {
 
   const sb = getServiceClient();
 
-  const { data: resa, error: eLecture } = await sb
-    .from("rdv_bookings")
-    .select("first_name, last_name, contact, slot_start, coach_user_id, metadata")
-    .eq("id", bookingId)
-    .maybeSingle();
+  // Deux origines de RDV : réservation en ligne (`rdv_bookings`) ou RDV calé
+  // depuis le CRM (`prospects`, 17/09). Même mot, mêmes règles, autre table.
+  let prenom: string | null = null;
+  let contact = "";
+  let slot = "";
+  let coachId: string | null = null;
+  // Marqueur d'idempotence, posé APRÈS un envoi réussi. Côté réservation il vit
+  // dans `metadata`. Côté prospect, la table n'a pas de `metadata` — l'envoi
+  // est un geste unique du coach, sans 2e surface de déclenchement.
+  let marquerEnvoye: () => Promise<void> = async () => {};
 
-  if (eLecture) return jsonResponse({ success: false, error: eLecture.message }, 500);
-  if (!resa) return jsonResponse({ success: false, error: "reservation_introuvable" }, 404);
-
-  // Idempotence : ce type de mot a-t-il DÉJÀ été envoyé pour ce rendez-vous ?
-  // On préserve le reste de `metadata` (nom du funnel, accepted_email_sent_at…)
-  // en le fusionnant plus bas — on ne l'écrase jamais.
-  const meta = ((resa as { metadata?: Record<string, unknown> | null }).metadata ?? {}) as Record<string, unknown>;
-  const dejaEnvoye = (meta.apres_rdv_mails ?? {}) as Record<string, unknown>;
-  if (dejaEnvoye[type]) {
-    return jsonResponse({ success: true, envoye: false, raison: "deja_envoye" });
+  if (prospectId) {
+    const { data: p, error: e } = await sb
+      .from("prospects")
+      .select("first_name, email, rdv_date, distributor_id")
+      .eq("id", prospectId)
+      .maybeSingle();
+    if (e) return jsonResponse({ success: false, error: e.message }, 500);
+    if (!p) return jsonResponse({ success: false, error: "prospect_introuvable" }, 404);
+    prenom = (p as { first_name?: string }).first_name ?? null;
+    contact = String((p as { email?: string }).email ?? "").trim();
+    slot = String((p as { rdv_date?: string }).rdv_date ?? "");
+    coachId = (p as { distributor_id?: string | null }).distributor_id ?? null;
+  } else {
+    const { data: resa, error: eLecture } = await sb
+      .from("rdv_bookings")
+      .select("first_name, last_name, contact, slot_start, coach_user_id, metadata")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (eLecture) return jsonResponse({ success: false, error: eLecture.message }, 500);
+    if (!resa) return jsonResponse({ success: false, error: "reservation_introuvable" }, 404);
+    // Idempotence : ce type de mot a-t-il DÉJÀ été envoyé pour ce rendez-vous ?
+    // On préserve le reste de `metadata` (nom du funnel…) en le fusionnant.
+    const meta = ((resa as { metadata?: Record<string, unknown> | null }).metadata ?? {}) as Record<string, unknown>;
+    const dejaEnvoye = (meta.apres_rdv_mails ?? {}) as Record<string, unknown>;
+    if (dejaEnvoye[type]) return jsonResponse({ success: true, envoye: false, raison: "deja_envoye" });
+    prenom = (resa as { first_name?: string }).first_name ?? null;
+    contact = String((resa as { contact?: string }).contact ?? "").trim();
+    slot = String((resa as { slot_start?: string }).slot_start ?? "");
+    coachId = (resa as { coach_user_id?: string | null }).coach_user_id ?? null;
+    marquerEnvoye = async () => {
+      await sb.from("rdv_bookings").update({
+        metadata: { ...meta, apres_rdv_mails: { ...dejaEnvoye, [type]: new Date().toISOString() } },
+      }).eq("id", bookingId);
+    };
   }
 
-  const contact = String((resa as { contact?: string }).contact ?? "").trim();
   if (!EMAIL_RE.test(contact)) {
-    // Certaines réservations n'ont qu'un téléphone : rien à envoyer, et ce
-    // n'est pas une panne.
+    // Sans email fiable, rien à envoyer — et ce n'est pas une panne.
     return jsonResponse({ success: true, envoye: false, raison: "pas_d_email" });
   }
 
-  const prenom = (resa as { first_name?: string }).first_name ?? null;
-  const slot = String((resa as { slot_start?: string }).slot_start ?? "");
-
   // La signature : le coach qui menait le rendez-vous, à défaut l'équipe.
   let signataire = "L'équipe du Breakfast Club";
-  const coachId = (resa as { coach_user_id?: string | null }).coach_user_id;
   if (coachId) {
     const { data: u } = await sb.from("users").select("name").eq("id", coachId).maybeSingle();
     const n = (u as { name?: string } | null)?.name?.trim();
@@ -149,12 +173,7 @@ serve(async (req) => {
   // Envoi réussi : on grave le marqueur pour que ce type ne reparte pas deux
   // fois. Best-effort — si l'écriture échoue, on a au pire un doublon possible,
   // jamais un mail perdu.
-  await sb
-    .from("rdv_bookings")
-    .update({
-      metadata: { ...meta, apres_rdv_mails: { ...dejaEnvoye, [type]: new Date().toISOString() } },
-    })
-    .eq("id", bookingId);
+  await marquerEnvoye();
 
   return jsonResponse({ success: true, envoye: true, a: contact });
 });

@@ -40,15 +40,12 @@ import { getSupabaseClient, resolveSupabaseConfig } from "../supabaseClient";
 
 export type TypeMailApresRdv = "demarre" | "pas_venue";
 
-export async function envoyerMailApresRdv(
-  bookingId: string,
-  type: TypeMailApresRdv,
-): Promise<void> {
+async function poster(payload: Record<string, unknown>): Promise<void> {
   try {
     const config = await resolveSupabaseConfig();
     if (!config) return;
 
-    // La session, si elle est DÉJÀ en cache — on ne l'attend pas : la clé anon
+    // La session si elle est DÉJÀ en cache — on ne l'attend pas : la clé anon
     // suffit (verify_jwt = false). C'est ce qui rend l'appel instantané, donc
     // envoyé avant tout démontage d'écran.
     const sb = await getSupabaseClient();
@@ -65,11 +62,21 @@ export async function envoyerMailApresRdv(
         apikey: config.supabaseAnonKey,
         Authorization: `Bearer ${jeton}`,
       },
-      body: JSON.stringify({ booking_id: bookingId, type }),
+      body: JSON.stringify(payload),
       // La seule chose qui compte ici : survivre à la navigation qui suit.
       keepalive: true,
     });
   } catch (e) {
     console.warn("[rdv] mail après rendez-vous non envoyé :", e);
   }
+}
+
+/** RDV réservé en ligne (`rdv_bookings`). */
+export async function envoyerMailApresRdv(bookingId: string, type: TypeMailApresRdv): Promise<void> {
+  await poster({ booking_id: bookingId, type });
+}
+
+/** Même mot, pour un RDV calé depuis le CRM (`prospects`, 17/09). */
+export async function envoyerMailApresRdvProspect(prospectId: string, type: TypeMailApresRdv): Promise<void> {
+  await poster({ prospect_id: prospectId, type });
 }
