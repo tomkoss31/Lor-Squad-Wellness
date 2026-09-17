@@ -153,8 +153,18 @@ function sectionDe(view: BbcView): SectionKey {
   return SECTIONS.find((s) => s.tabs.some((t) => t.k === view))?.k ?? "club";
 }
 
+/**
+ * La salutation suit l'heure. « Bon matin, Thomas » à 17 h sonnait faux (vu
+ * sur la prod le 17/09) — et l'app classique, elle, disait « Belle après-midi ».
+ */
+function salutation(maintenant = new Date()): string {
+  const h = maintenant.getHours();
+  return h < 12 ? "Bon matin" : h < 18 ? "Bel après-midi" : "Bonne soirée";
+}
+
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
-  cockpit: { eye: "co-pilote du matin", title: "Bon matin" },
+  // Le titre du cockpit est remplacé à l'affichage par `salutation()`.
+  cockpit: { eye: "co-pilote du club", title: "Bon matin" },
   agenda: { eye: "le club · toute l'équipe", title: "L'agenda" },
   crm: { eye: "cobayes & membres", title: "Ton pipeline" },
   boites: { eye: "le terrain · coupons papier", title: "Les boîtes" },
@@ -371,7 +381,7 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
               {t.eye}
             </div>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 32, letterSpacing: "0.01em", lineHeight: 1.05, marginTop: 8 }}>
-              {view === "cockpit" && first ? `${t.title}, ${first}` : t.title}
+              {view === "cockpit" ? (first ? `${salutation()}, ${first}` : salutation()) : t.title}
             </div>
           </div>
           {isAdmin && onSetPreview ? (

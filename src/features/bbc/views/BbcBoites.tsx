@@ -165,7 +165,7 @@ export function BbcBoites({ userId, club }: Props) {
           <span style={point} />
           <span style={{ flex: 1 }}>📦 les boîtes posées</span>
           <span style={chiffresEntete}>
-            {vivantes.length} posées · {nbCoupons} coupons · {nbDemarrages} ❤
+            {vivantes.length} posée{vivantes.length > 1 ? "s" : ""} · {nbCoupons} coupon{nbCoupons > 1 ? "s" : ""} · {nbDemarrages} ❤
           </span>
         </div>
         <div style={phrase}>Tape une boîte pour voir ses coupons et en saisir.</div>

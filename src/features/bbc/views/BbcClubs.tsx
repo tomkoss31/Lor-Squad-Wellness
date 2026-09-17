@@ -169,10 +169,6 @@ function ClubCard({
           ) : null}
         </div>
       )}
-
-      <div style={{ paddingTop: 14, borderTop: "1px solid var(--ls-bbc-line)", fontSize: 11.5, color: "var(--ls-bbc-hint)" }}>
-        Stats (cobayes · membres · PV) branchées aux prochains lots.
-      </div>
     </div>
   );
 }
