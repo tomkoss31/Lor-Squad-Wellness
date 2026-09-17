@@ -18,17 +18,28 @@
 //   · la couleur dit la coach, la place de la pastille va au PRÉNOM ;
 //   · tout ce qu'on touche fait 44 px (garde-fou visuel BBC) ;
 //   · on arrive sur l'heure qu'il est, pas sur 7 h.
-// L'ajout, la qualification, les permanences et fermetures arrivent dans les
-// lots suivants, sur ce même socle.
+//
+// ÉTAPE 8 (18/09) — ce qui vivait dans « La semaine » est ici, et elle a pu
+// disparaître : QUI OUVRE le bar, les RITUELS (en violet, toute l'équipe), les
+// HEURES de réservation du jour et les FERMETURES (bande lime / hachures
+// ambre), et les « PAS DISPO » des coachs (hachures grises, posés depuis le ＋).
+// Tout ça se lit par tout le club ; régler le club reste aux responsables.
 // =============================================================================
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Club } from "../../../types/domain";
+import { useAppContext } from "../../../context/AppContext";
+import { setClubDayClosed, setClubDayHours } from "../../../services/sb/club-bookings";
 import { useCoachsDuClub, type CoachRattache } from "../useCoachsDuClub";
+import { useClubShifts, equipeAffectable, equipeParClub } from "../useClubShifts";
+import { getCallsForWeek } from "../data/bbcCalls";
+import { FeuilleAffectation } from "../views/BbcSemaine";
 import { useAgendaDuClub } from "./useAgendaDuClub";
 import { CalerRdvSheet } from "./CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
+import { JourDuClubSheet, type RituelDuJour } from "./JourDuClubSheet";
 import { qualifierRdvClub } from "./qualifierRdvClub";
+import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import {
   aQualifier,
@@ -36,9 +47,12 @@ import {
   couleurCoach,
   couloirs,
   decalerJour,
+  estIndispo,
+  fmtHeure,
   grilleMois,
   heureDe,
   heureDecimale,
+  horairesDuJour,
   jourDe,
   libelleJour,
   libelleMois,
@@ -48,9 +62,10 @@ import {
   marqueDe,
   nomComplet,
   parJour,
-  plageOuverture,
   prenomSeul,
+  sansIndispos,
   semaineDe,
+  type HorairesDuJour,
   type RdvClub,
 } from "./agendaClub";
 
@@ -83,14 +98,100 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
   const [qualif, setQualif] = useState<RdvClub | null>(null);
   /** Le rendez-vous dont on crée la fiche membre (feuille pré-remplie). */
   const [membrePour, setMembrePour] = useState<RdvClub | null>(null);
-  // Un suivi se règle depuis la fiche du membre : lui, on ne le qualifie pas ici.
-  const ouvrirRdv = (r: RdvClub) => (r.source === "suivi" ? setRdvOuvert(r) : setQualif(r));
+  // Un suivi se règle depuis la fiche du membre, un « pas dispo » se libère :
+  // ni l'un ni l'autre ne se qualifie.
+  const ouvrirRdv = (r: RdvClub) => (r.source === "suivi" || r.source === "indispo" ? setRdvOuvert(r) : setQualif(r));
 
   const { coachs } = useCoachsDuClub(userId);
-  const ouverture = plageOuverture(club?.settings?.open_hours ?? null);
+  const { users, currentUser } = useAppContext();
 
   const dAncre = jourDe(ancre);
   const lundi = useMemo(() => lundiDe(jourDe(ancre)), [ancre]);
+
+  // ── Le club, jour par jour (étape 8) ──────────────────────────────────────
+  const clubId = club?.id ?? null;
+  const creneauBar = club?.settings?.open_hours || "7h-11h";
+  // En base, régler le club est réservé à son propriétaire et aux admins.
+  const peutRegler = Boolean(clubId && (club?.ownerUserId === userId || currentUser?.role === "admin"));
+  /** Le jour dont la feuille « le club, ce jour-là » est ouverte. */
+  const [jourClub, setJourClub] = useState<string | null>(null);
+  /** Le jour dont on choisit qui ouvre. */
+  const [affecter, setAffecter] = useState<string | null>(null);
+  const [erreurClub, setErreurClub] = useState<string | null>(null);
+  const [erreurAffecter, setErreurAffecter] = useState<string | null>(null);
+  const [erreurRdv, setErreurRdv] = useState<string | null>(null);
+
+  const shifts = useClubShifts(clubId, club?.settings?.open_hours, lundi);
+  const quiOuvre = (cle: string): string | null => {
+    const id = shifts.parJour.get(cle)?.userId;
+    if (!id) return null;
+    return coachs.find((c) => c.id === id)?.prenom ?? users.find((u) => u.id === id)?.name?.split(" ")[0] ?? "Quelqu'un";
+  };
+  const idsClub = useMemo(() => coachs.map((c) => c.id), [coachs]);
+  const equipeClassee = useMemo(
+    () => equipeParClub(equipeAffectable(users, currentUser?.id, idsClub), idsClub, currentUser?.id),
+    [users, currentUser?.id, idsClub],
+  );
+
+  // Fermetures et heures du jour : on part de ce que porte le club, et on
+  // garde à jour ici après chaque geste (même patron que « La semaine »).
+  const decouverte = club?.settings?.discovery;
+  const [joursFermes, setJoursFermes] = useState<string[]>(() => decouverte?.holidays ?? []);
+  const [horairesParDate, setHorairesParDate] = useState<Record<string, Array<[string, string]>>>(() => decouverte?.hours_by_date ?? {});
+  // Le club arrive en différé (`useBbcMode`) : sans ce recalage, l'écran
+  // garderait les réglages vides du premier rendu.
+  useEffect(() => {
+    setJoursFermes(decouverte?.holidays ?? []);
+    setHorairesParDate(decouverte?.hours_by_date ?? {});
+  }, [clubId]);
+  const reglages = useMemo(
+    () => ({ hours: decouverte?.hours ?? null, hours_by_date: horairesParDate, holidays: joursFermes }),
+    [decouverte?.hours, horairesParDate, joursFermes],
+  );
+  const horairesDe = useCallback((cle: string) => horairesDuJour(reglages, cle), [reglages]);
+
+  const basculerFermeture = async (cle: string) => {
+    if (!clubId) return;
+    const ferme = joursFermes.includes(cle);
+    setErreurClub(null);
+    setJoursFermes((p) => (ferme ? p.filter((d) => d !== cle) : [...p, cle]));
+    try {
+      setJoursFermes(await setClubDayClosed(clubId, cle, !ferme));
+    } catch {
+      setJoursFermes((p) => (ferme ? [...p, cle] : p.filter((d) => d !== cle)));
+      setErreurClub("Impossible d'enregistrer — vérifie ta connexion, puis réessaie.");
+    }
+  };
+  const reglerPlage = async (cle: string, plage: [string, string] | null) => {
+    if (!clubId) return;
+    const avant = horairesParDate;
+    setErreurClub(null);
+    setHorairesParDate((p) => {
+      const n = { ...p };
+      if (plage) n[cle] = [plage];
+      else delete n[cle];
+      return n;
+    });
+    try {
+      setHorairesParDate(await setClubDayHours(clubId, cle, plage));
+    } catch {
+      setHorairesParDate(avant);
+      setErreurClub("Impossible d'enregistrer — vérifie ta connexion, puis réessaie.");
+    }
+  };
+
+  // Les rituels de la semaine affichée, rangés par jour.
+  const rituelsParJour = useMemo(() => {
+    const m = new Map<string, RituelDuJour[]>();
+    for (const r of getCallsForWeek(club?.settings ?? null, lundi)) {
+      const k = cleJour(r.at);
+      const l = m.get(k) ?? [];
+      l.push({ key: r.key, label: r.label, at: r.at });
+      m.set(k, l);
+    }
+    for (const l of m.values()) l.sort((a, b) => a.at.getTime() - b.at.getTime());
+    return m;
+  }, [club?.settings, lundi]);
   const semaines = useMemo(() => grilleMois(dAncre.getFullYear(), dAncre.getMonth()), [ancre]);
 
   // La fenêtre lue = ce qui est affiché, débords du mois compris.
@@ -161,7 +262,7 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
       </div>
 
       {vue === "mois" ? (
-        <VueMois semaines={semaines} moisAffiche={dAncre.getMonth()} cleAuj={cleAuj} parJourMap={parJourMap} couleur={couleur} onJour={setJourOuvert} />
+        <VueMois semaines={semaines} moisAffiche={dAncre.getMonth()} cleAuj={cleAuj} parJourMap={parJourMap} couleur={couleur} horairesDe={horairesDe} onJour={setJourOuvert} />
       ) : vue === "semaine" ? (
         <VueSemaine
           cles={semaineDe(lundi)}
@@ -170,9 +271,17 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
           couleur={couleur}
           prenomCoach={prenomCoach}
           maintenant={maintenant}
+          horairesDe={horairesDe}
+          rituelsParJour={rituelsParJour}
+          quiOuvre={quiOuvre}
+          permanenceEnChargement={shifts.loading}
           onJour={(k) => {
             setAncre(k);
             setVue("jour");
+          }}
+          onClub={(k) => {
+            setErreurClub(null);
+            setJourClub(k);
           }}
           onRdv={ouvrirRdv}
         />
@@ -182,25 +291,32 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
           estAuj={ancre === cleAuj}
           coachs={filtre === "tous" ? coachs : coachs.filter((c) => c.id === filtre)}
           rdvs={parJourMap.get(ancre) ?? []}
-          ouverture={ouverture}
+          horaires={horairesDe(ancre)}
+          rituels={rituelsParJour.get(ancre) ?? []}
+          quiOuvre={quiOuvre(ancre)}
+          permanenceEnChargement={shifts.loading}
           couleur={couleur}
           onRdv={ouvrirRdv}
+          onClub={() => {
+            setErreurClub(null);
+            setJourClub(ancre);
+          }}
           onTrou={(coachId, heure) => setCaler({ jour: ancre, coach: coachId, heure })}
         />
       )}
 
       {/* ＋ : toujours au même endroit, au-dessus du pouce. */}
-      <button type="button" onClick={() => setCaler({ jour: vue !== "mois" && ancre >= cleAuj ? ancre : cleAuj })} aria-label="Ajouter un rendez-vous" style={fab}>
+      <button type="button" onClick={() => setCaler({ jour: vue !== "mois" && ancre >= cleAuj ? ancre : cleAuj })} aria-label="Ajouter un rendez-vous ou un pas dispo" style={fab}>
         ＋
       </button>
 
       <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.5 }}>
-        {loading ? "Chargement…" : vue === "mois" ? `${visibles.length} rendez-vous sur la période · touche un jour pour sa liste.` : vue === "semaine" ? "Touche un jour pour le voir coach par coach." : "Une colonne par coach. Touche un rendez-vous pour l'ouvrir."}
+        {loading ? "Chargement…" : vue === "mois" ? `${sansIndispos(visibles).length} rendez-vous sur la période · touche un jour pour sa liste.` : vue === "semaine" ? "Touche un jour pour le voir coach par coach, ☕ pour le club ce jour-là." : "Une colonne par coach. Touche un trou pour caler, le ＋ pour un « pas dispo »."}
       </div>
 
       {/* ── La liste d'un jour (depuis le mois) ────────────────────────── */}
       {jourOuvert ? (
-        <Feuille onClose={() => setJourOuvert(null)} titre={libelleJour(jourDe(jourOuvert))} sous={`${(parJourMap.get(jourOuvert) ?? []).length} rendez-vous · ${filtre === "tous" ? "toute l'équipe" : prenomCoach(filtre)}`}>
+        <Feuille onClose={() => setJourOuvert(null)} titre={libelleJour(jourDe(jourOuvert))} sous={`${sansIndispos(parJourMap.get(jourOuvert) ?? []).length} rendez-vous · ${horairesDe(jourOuvert).etat === "ferme" ? "club fermé · " : ""}${filtre === "tous" ? "toute l'équipe" : prenomCoach(filtre)}`}>
           {(parJourMap.get(jourOuvert) ?? []).length === 0 ? (
             <div style={vide}>Rien de prévu ce jour-là.</div>
           ) : (
@@ -224,7 +340,38 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
 
       {/* ── Un rendez-vous ─────────────────────────────────────────────── */}
       {rdvOuvert ? (
-        <Feuille onClose={() => setRdvOuvert(null)} titre={nomComplet(rdvOuvert)} sous={`${libelleJour(new Date(rdvOuvert.debut))} · ${heureDe(rdvOuvert.debut)} – ${heureDe(rdvOuvert.fin)}`}>
+        <Feuille onClose={() => { setRdvOuvert(null); setErreurRdv(null); }} titre={estIndispo(rdvOuvert) ? "Pas dispo" : nomComplet(rdvOuvert)} sous={`${libelleJour(new Date(rdvOuvert.debut))} · ${heureDe(rdvOuvert.debut)} – ${heureDe(rdvOuvert.fin)}`}>
+          {estIndispo(rdvOuvert) ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px 0 6px" }}>
+              <Ligne couleur={couleur(rdvOuvert.coachId)}>
+                {prenomCoach(rdvOuvert.coachId)} n'est pas disponible
+                {rdvOuvert.nom ? <span style={{ color: "var(--ls-bbc-muted)" }}> · {rdvOuvert.nom}</span> : null}
+              </Ligne>
+              <div style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)", lineHeight: 1.5 }}>
+                Aucun créneau n'est proposé sur cette plage — ni dans « ＋ », ni sur le site du club.
+              </div>
+              {erreurRdv ? <div style={{ fontSize: 13, color: "var(--ls-bbc-coral)" }}>{erreurRdv}</div> : null}
+              {new Date(rdvOuvert.fin).getTime() > maintenant ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const r = rdvOuvert;
+                    setErreurRdv(null);
+                    const res = await libererIndispo(r.id);
+                    if (!res.ok) {
+                      setErreurRdv(res.message);
+                      return;
+                    }
+                    setRdvOuvert(null);
+                    void refetch();
+                  }}
+                  style={boutonFantome}
+                >
+                  Libérer cette plage
+                </button>
+              ) : null}
+            </div>
+          ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px 0 6px" }}>
             <Ligne couleur={couleur(rdvOuvert.coachId)}>
               {libelleNature(rdvOuvert)} <span style={{ color: "var(--ls-bbc-muted)" }}>avec {prenomCoach(rdvOuvert.coachId)}</span>
@@ -262,7 +409,52 @@ export function BbcAgenda({ userId, coachName, club }: Props) {
               </button>
             ) : null}
           </div>
+          )}
         </Feuille>
+      ) : null}
+
+      {/* ── Le club, ce jour-là : qui ouvre, heures, fermeture, rituels ─── */}
+      {jourClub && !affecter ? (
+        <JourDuClubSheet
+          cle={jourClub}
+          horaires={horairesDe(jourClub)}
+          creneauBar={creneauBar}
+          quiOuvre={quiOuvre(jourClub)}
+          permanenceEnChargement={shifts.loading}
+          rituels={rituelsParJour.get(jourClub) ?? []}
+          peutRegler={peutRegler}
+          erreur={erreurClub}
+          onClose={() => setJourClub(null)}
+          onChoisirQuiOuvre={() => {
+            setErreurAffecter(null);
+            setAffecter(jourClub);
+          }}
+          onBasculerFermeture={() => void basculerFermeture(jourClub)}
+          onReglerPlage={(plage) => void reglerPlage(jourClub, plage)}
+        />
+      ) : null}
+
+      {/* « Qui tient le bar ? » — LA feuille de « La semaine », pas une copie. */}
+      {affecter ? (
+        <FeuilleAffectation
+          jour={jourDe(affecter)}
+          creneauTexte={creneauBar}
+          equipe={equipeClassee}
+          actuelId={shifts.parJour.get(affecter)?.userId ?? null}
+          erreur={erreurAffecter}
+          onFermer={() => setAffecter(null)}
+          onAffecter={async (id) => {
+            setErreurAffecter(null);
+            // On ne referme QUE si la base a dit oui (même règle que « La semaine »).
+            if (await shifts.assign(jourDe(affecter), id)) setAffecter(null);
+            else setErreurAffecter("Impossible d'affecter — vérifie ta connexion, puis réessaie.");
+          }}
+          onLiberer={async () => {
+            setErreurAffecter(null);
+            if (await shifts.clear(jourDe(affecter))) setAffecter(null);
+            else setErreurAffecter("Impossible de libérer ce matin — réessaie.");
+          }}
+        />
       ) : null}
 
       {qualif ? (
@@ -340,6 +532,7 @@ function VueMois({
   cleAuj,
   parJourMap,
   couleur,
+  horairesDe,
   onJour,
 }: {
   semaines: string[][];
@@ -347,6 +540,7 @@ function VueMois({
   cleAuj: string;
   parJourMap: Map<string, RdvClub[]>;
   couleur: (id: string | null) => string;
+  horairesDe: (cle: string) => HorairesDuJour;
   onJour: (k: string) => void;
 }) {
   return (
@@ -363,10 +557,13 @@ function VueMois({
           {semaine.map((k, i) => {
             const d = jourDe(k);
             const horsMois = d.getMonth() !== moisAffiche;
-            const liste = parJourMap.get(k) ?? [];
+            // Dans une case de 50 px, la place va aux personnes : les « pas
+            // dispo » se lisent dans la liste du jour et dans la vue Jour.
+            const liste = sansIndispos(parJourMap.get(k) ?? []);
             const estAuj = k === cleAuj;
+            const ferme = horairesDe(k).etat === "ferme";
             return (
-              <button key={k} type="button" onClick={() => onJour(k)} style={caseJour}>
+              <button key={k} type="button" onClick={() => onJour(k)} style={{ ...caseJour, background: ferme ? "color-mix(in srgb, var(--ls-bbc-amber) 7%, transparent)" : "transparent" }}>
                 <span
                   style={{
                     ...numero,
@@ -377,6 +574,7 @@ function VueMois({
                 >
                   {d.getDate()}
                 </span>
+                {ferme ? <span style={{ ...pastille, background: "color-mix(in srgb, var(--ls-bbc-amber) 20%, transparent)", borderLeft: "3px solid var(--ls-bbc-amber)", color: "var(--ls-bbc-amber)" }}>fermé</span> : null}
                 {liste.slice(0, PASTILLES_MAX).map((r) => {
                   const m = marqueDe(r);
                   const c = couleur(r.coachId);
@@ -418,7 +616,12 @@ function VueSemaine({
   couleur,
   prenomCoach,
   maintenant,
+  horairesDe,
+  rituelsParJour,
+  quiOuvre,
+  permanenceEnChargement,
   onJour,
+  onClub,
   onRdv,
 }: {
   cles: string[];
@@ -427,7 +630,13 @@ function VueSemaine({
   couleur: (id: string | null) => string;
   prenomCoach: (id: string | null) => string;
   maintenant: number;
+  horairesDe: (cle: string) => HorairesDuJour;
+  rituelsParJour: Map<string, RituelDuJour[]>;
+  quiOuvre: (cle: string) => string | null;
+  permanenceEnChargement: boolean;
   onJour: (k: string) => void;
+  /** Ouvre « le club, ce jour-là ». */
+  onClub: (k: string) => void;
   onRdv: (r: RdvClub) => void;
 }) {
   const refAuj = useRef<HTMLDivElement | null>(null);
@@ -442,24 +651,55 @@ function VueSemaine({
       {cles.map((k) => {
         const d = jourDe(k);
         const liste = parJourMap.get(k) ?? [];
+        const nbRdv = sansIndispos(liste).length;
         const estAuj = k === cleAuj;
-        return (
-          <div key={k} ref={estAuj ? refAuj : undefined} style={{ borderTop: "1px solid var(--ls-bbc-line)", scrollMarginTop: 8 }}>
-            <button type="button" onClick={() => onJour(k)} style={teteJourListe}>
-              <span style={{ ...numeroListe, background: estAuj ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", color: estAuj ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>{d.getDate()}</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: 14, fontWeight: 700, textTransform: "capitalize" }}>{libelleJour(d).split(" ")[0]}</span>
-                <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)" }}>
-                  {liste.length ? `${liste.length} rdv` : "rien de prévu"}
+        const horaires = horairesDe(k);
+        const ouvre = quiOuvre(k);
+        // Personne n'ouvre un jour où le club reçoit : ça doit se voir. Un
+        // dimanche ou un jour fermé, ce n'est pas une alerte.
+        const aCouvrir = !permanenceEnChargement && !ouvre && horaires.etat === "ouvert" && k >= cleAuj;
+        // Rendez-vous et rituels dans le même fil, à leur heure.
+        const fil: Array<{ t: number; el: React.ReactNode }> = [
+          ...liste.map((r) => ({
+            t: new Date(r.debut).getTime(),
+            el: <LigneRdv key={`${r.source}-${r.id}`} r={r} couleur={couleur(r.coachId)} coach={prenomCoach(r.coachId)} maintenant={maintenant} onClick={() => onRdv(r)} retrait />,
+          })),
+          ...(rituelsParJour.get(k) ?? []).map((rt) => ({
+            t: rt.at.getTime(),
+            el: (
+              <div key={`rituel-${rt.key}-${rt.at.getTime()}`} style={ligneRituel}>
+                <span style={{ flex: "none", width: 46, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13.5, fontWeight: 700 }}>{fmtHeure(rt.at.getHours() + rt.at.getMinutes() / 60)}</span>
+                <span style={{ flex: "none", width: 4, alignSelf: "stretch", borderRadius: 4, background: "var(--ls-bbc-violet)" }} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{rt.label}</span>
+                  <span style={{ display: "block", fontSize: 11.5, color: "var(--ls-bbc-muted)", marginTop: 2 }}>rituel · toute l'équipe</span>
                 </span>
-              </span>
-              <span aria-hidden="true" style={{ color: "var(--ls-bbc-hint)", fontSize: 18 }}>
-                ›
-              </span>
-            </button>
-            {liste.map((r) => (
-              <LigneRdv key={`${r.source}-${r.id}`} r={r} couleur={couleur(r.coachId)} coach={prenomCoach(r.coachId)} maintenant={maintenant} onClick={() => onRdv(r)} retrait />
-            ))}
+              </div>
+            ),
+          })),
+        ].sort((a, b) => a.t - b.t);
+        return (
+          <div key={k} ref={estAuj ? refAuj : undefined} style={{ borderTop: "1px solid var(--ls-bbc-line)", scrollMarginTop: 8, background: horaires.etat === "ferme" ? "color-mix(in srgb, var(--ls-bbc-amber) 5%, transparent)" : "transparent" }}>
+            <div style={teteJourRangee}>
+              <button type="button" onClick={() => onJour(k)} style={teteJourListe}>
+                <span style={{ ...numeroListe, background: estAuj ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", color: estAuj ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>{d.getDate()}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 700, textTransform: "capitalize" }}>{libelleJour(d).split(" ")[0]}</span>
+                  <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)" }}>
+                    {nbRdv ? `${nbRdv} rdv` : "rien de prévu"}
+                  </span>
+                </span>
+              </button>
+              {/* Le club ce jour-là : qui ouvre, ou « fermé ». Un bouton à part —
+                  on ne met pas un bouton dans un bouton. */}
+              <button type="button" onClick={() => onClub(k)} aria-label="Le club ce jour-là" style={{ ...puceClub, color: horaires.etat === "ferme" || aCouvrir ? "var(--ls-bbc-amber)" : "var(--ls-bbc-muted)" }}>
+                {horaires.etat === "ferme" ? "fermé" : permanenceEnChargement ? "☕ …" : ouvre ? `☕ ${ouvre}` : aCouvrir ? "☕ à couvrir" : "☕ —"}
+                <span aria-hidden="true" style={{ color: "var(--ls-bbc-hint)", fontSize: 16 }}>
+                  ›
+                </span>
+              </button>
+            </div>
+            {fil.map((x) => x.el)}
           </div>
         );
       })}
@@ -473,18 +713,28 @@ function VueJour({
   estAuj,
   coachs,
   rdvs,
-  ouverture,
+  horaires,
+  rituels,
+  quiOuvre,
+  permanenceEnChargement,
   couleur,
   onRdv,
+  onClub,
   onTrou,
 }: {
   cle: string;
   estAuj: boolean;
   coachs: CoachRattache[];
   rdvs: RdvClub[];
-  ouverture: { debut: number; fin: number } | null;
+  /** Les heures de réservation de CE jour (exception, habituel, ou fermé). */
+  horaires: HorairesDuJour;
+  rituels: RituelDuJour[];
+  quiOuvre: string | null;
+  permanenceEnChargement: boolean;
   couleur: (id: string | null) => string;
   onRdv: (r: RdvClub) => void;
+  /** Ouvre « le club, ce jour-là ». */
+  onClub: () => void;
   /** On a touché un trou dans la colonne d'une coach, à cette heure (décimale). */
   onTrou: (coachId: string, heure: number) => void;
 }) {
@@ -508,12 +758,28 @@ function VueJour({
   const heures: number[] = [];
   for (let h = H0; h < H1; h += 1) heures.push(h);
 
+  const aCouvrir = !permanenceEnChargement && !quiOuvre && horaires.etat === "ouvert" && !passe;
+
   return (
     <div>
+      {/* Le club ce jour-là, en une ligne : qui ouvre · les heures du site. */}
+      <button type="button" onClick={onClub} style={{ ...bandeauClub, borderColor: horaires.etat === "ferme" || aCouvrir ? "var(--ls-bbc-amber)" : "var(--ls-bbc-line)" }}>
+        <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ color: aCouvrir ? "var(--ls-bbc-amber)" : "var(--ls-bbc-text)" }}>☕ {permanenceEnChargement ? "…" : quiOuvre ? `${quiOuvre} ouvre` : aCouvrir ? "personne n'ouvre" : "—"}</span>
+          <span style={{ color: "var(--ls-bbc-hint)" }}> · </span>
+          <span style={{ color: horaires.etat === "ferme" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-muted)" }}>
+            {horaires.etat === "ferme" ? "réservations fermées" : horaires.etat === "repos" ? "pas de créneau sur le site" : horaires.plages.map((p) => `${fmtHeure(p.debut)}–${fmtHeure(p.fin)}`).join(" · ")}
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ flex: "none", color: "var(--ls-bbc-hint)", fontSize: 18 }}>
+          ›
+        </span>
+      </button>
+
       <div style={{ display: "flex", position: "sticky", top: 0, zIndex: 3, background: "var(--ls-bbc-bg)", borderBottom: "1px solid var(--ls-bbc-line)" }}>
         <div style={{ flex: "none", width: 38 }} />
         {colonnes.map((c) => {
-          const n = rdvs.filter((r) => r.coachId === c.id).length;
+          const n = sansIndispos(rdvs.filter((r) => r.coachId === c.id)).length;
           return (
             <div key={c.id ?? "club"} style={{ flex: 1, minWidth: 0, padding: "8px 2px 8px", textAlign: "center" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -536,7 +802,10 @@ function VueJour({
         </div>
         {colonnes.map((c, i) => {
           const miens = rdvs.filter((r) => r.coachId === c.id);
-          const { items, nb } = couloirs(miens);
+          // Un « pas dispo » est un FOND, pas un bloc : rangé dans les couloirs,
+          // il couperait en deux la largeur des rendez-vous qu'il recouvre.
+          const indispos = miens.filter(estIndispo);
+          const { items, nb } = couloirs(sansIndispos(miens));
           return (
             <div
               key={c.id ?? "club"}
@@ -552,11 +821,54 @@ function VueJour({
               {heures.map((h) => (
                 <div key={h} style={{ position: "absolute", left: 0, right: 0, top: (h - H0) * PX_PAR_HEURE, borderTop: "1px solid var(--ls-bbc-line)", pointerEvents: "none" }} />
               ))}
-              {ouverture ? (
-                <div style={{ position: "absolute", left: 0, right: 0, top: (ouverture.debut - H0) * PX_PAR_HEURE, height: (ouverture.fin - ouverture.debut) * PX_PAR_HEURE, background: "color-mix(in srgb, var(--ls-bbc-lime) 7%, transparent)", pointerEvents: "none" }}>
-                  {i === 0 ? <span style={{ position: "absolute", left: 4, top: 3, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-lime-text)", letterSpacing: ".06em", textTransform: "uppercase" }}>club ouvert</span> : null}
+              {/* Les heures où le site propose des créneaux CE jour-là — pas un
+                  horaire théorique : l'exception du jour si elle existe. */}
+              {horaires.plages.map((p, n) => {
+                const d0 = Math.max(p.debut, H0);
+                const f0 = Math.min(p.fin, H1);
+                if (f0 <= d0) return null;
+                return (
+                  <div key={n} style={{ position: "absolute", left: 0, right: 0, top: (d0 - H0) * PX_PAR_HEURE, height: (f0 - d0) * PX_PAR_HEURE, background: "color-mix(in srgb, var(--ls-bbc-lime) 7%, transparent)", pointerEvents: "none" }}>
+                    {i === 0 && n === 0 ? <span style={{ position: "absolute", left: 4, top: 3, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-lime-text)", letterSpacing: ".06em", textTransform: "uppercase" }}>club ouvert</span> : null}
+                  </div>
+                );
+              })}
+              {horaires.etat === "ferme" ? (
+                <div style={{ position: "absolute", inset: 0, background: hachures("var(--ls-bbc-amber)", 12), pointerEvents: "none" }}>
+                  {i === 0 ? <span style={{ position: "absolute", left: 4, top: 3, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-amber)", letterSpacing: ".06em", textTransform: "uppercase" }}>club fermé</span> : null}
                 </div>
               ) : null}
+              {/* Les rituels : toute l'équipe, donc sur toutes les colonnes. On
+                  voit au travers et on touche au travers. */}
+              {rituels.map((rt) => {
+                const x = rt.at.getHours() + rt.at.getMinutes() / 60;
+                if (x < H0 || x >= H1) return null;
+                return (
+                  <div key={`${rt.key}-${rt.at.getTime()}`} style={{ position: "absolute", left: 0, right: 0, top: (x - H0) * PX_PAR_HEURE, height: Math.min(1, H1 - x) * PX_PAR_HEURE, background: "color-mix(in srgb, var(--ls-bbc-violet) 16%, transparent)", borderTop: "2px solid var(--ls-bbc-violet)", pointerEvents: "none", overflow: "hidden" }}>
+                    {i === 0 ? <span style={{ position: "absolute", left: 4, top: 3, right: 2, fontSize: 11, fontWeight: 700, color: "var(--ls-bbc-text)", whiteSpace: "nowrap" }}>{rt.label}</span> : null}
+                  </div>
+                );
+              })}
+              {indispos.map((rdv) => {
+                const d0 = Math.max(heureDecimale(rdv.debut), H0);
+                const f0 = Math.min(heureDecimale(rdv.debut) + (new Date(rdv.fin).getTime() - new Date(rdv.debut).getTime()) / 3_600_000, H1);
+                if (f0 <= d0) return null;
+                return (
+                  <button
+                    key={`indispo-${rdv.id}`}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRdv(rdv);
+                    }}
+                    title={nomComplet(rdv)}
+                    style={{ ...bloc, left: 0, width: "100%", top: (d0 - H0) * PX_PAR_HEURE, height: (f0 - d0) * PX_PAR_HEURE, borderRadius: 0, background: `${hachures("var(--ls-bbc-muted)", 30)}, color-mix(in srgb, var(--ls-bbc-bg) 55%, transparent)`, color: "var(--ls-bbc-muted)" }}
+                  >
+                    <span style={{ display: "block", fontSize: 11.5, fontWeight: 700 }}>Pas dispo</span>
+                    {rdv.nom ? <span style={{ display: "block", fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{rdv.nom}</span> : null}
+                  </button>
+                );
+              })}
               {estAuj && heureMaintenant >= H0 && heureMaintenant <= H1 ? (
                 <div ref={i === 0 ? refMaintenant : undefined} style={{ position: "absolute", left: 0, right: 0, top: (heureMaintenant - H0) * PX_PAR_HEURE, borderTop: "2px solid var(--ls-bbc-coral)", zIndex: 2, pointerEvents: "none", scrollMarginTop: 120 }}>
                   {i === 0 ? <span style={{ position: "absolute", left: -4, top: -5, width: 8, height: 8, borderRadius: 999, background: "var(--ls-bbc-coral)" }} /> : null}
@@ -614,10 +926,10 @@ function LigneRdv({ r, couleur, coach, maintenant, onClick, retrait }: { r: RdvC
       <span style={{ flex: "none", width: 4, alignSelf: "stretch", borderRadius: 4, background: couleur }} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: m?.code === "pas_venue" ? "line-through" : "none", opacity: m?.code === "pas_venue" ? 0.6 : 1 }}>
-          {libelleNature(r)} · {nomComplet(r)}
+          {estIndispo(r) ? nomComplet(r) : `${libelleNature(r)} · ${nomComplet(r)}`}
         </span>
         <span style={{ display: "block", fontSize: 11.5, color: urgent ? "var(--ls-bbc-coral)" : "var(--ls-bbc-muted)", marginTop: 2 }}>
-          avec {coach}
+          {estIndispo(r) ? `${coach} · jusqu'à ${heureDe(r.fin)}` : `avec ${coach}`}
           {m ? ` · ${m.symbole} ${m.libelle}` : urgent ? " · passé, à qualifier" : ""}
         </span>
       </span>
@@ -724,10 +1036,32 @@ const pastille: CSSProperties = {
   display: "block", margin: "0 1px", padding: "2px 4px", borderRadius: 4, fontSize: 11, lineHeight: 1.25, fontWeight: 600,
   whiteSpace: "nowrap", overflow: "hidden", color: "var(--ls-bbc-text)",
 };
+/** La tête d'un jour reste collée en haut pendant qu'on fait défiler ses rendez-vous. */
+const teteJourRangee: CSSProperties = { position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "stretch", background: "var(--ls-bbc-bg)" };
 const teteJourListe: CSSProperties = {
-  position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 50, padding: "6px 0",
-  border: 0, background: "var(--ls-bbc-bg)", color: "var(--ls-bbc-text)", textAlign: "left", fontFamily: "var(--ls-bbc-font-body)", cursor: "pointer",
+  flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, minHeight: 50, padding: "6px 0",
+  border: 0, background: "transparent", color: "var(--ls-bbc-text)", textAlign: "left", fontFamily: "var(--ls-bbc-font-body)", cursor: "pointer",
 };
+/** « ☕ Thomas › » — le club ce jour-là, à droite de la tête du jour. */
+const puceClub: CSSProperties = {
+  flex: "none", display: "flex", alignItems: "center", gap: 6, minHeight: 50, maxWidth: "46%", padding: "0 2px 0 10px", border: 0, background: "transparent",
+  fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer",
+};
+/** Un rituel dans la liste : même gabarit qu'un rendez-vous, mais il ne s'ouvre pas. */
+const ligneRituel: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 0 8px 46px", borderBottom: "1px solid var(--ls-bbc-line)",
+  color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)",
+};
+/** Le bandeau « le club ce jour-là » de la vue Jour. */
+const bandeauClub: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 8, width: "100%", minHeight: 44, padding: "0 12px", marginBottom: 8, borderRadius: 12,
+  border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s1)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)",
+  fontSize: 13, fontWeight: 600, textAlign: "left", cursor: "pointer",
+};
+/** Hachures : ambre = club fermé, gris = « pas dispo ». */
+function hachures(couleur: string, force: number): string {
+  return `repeating-linear-gradient(135deg, color-mix(in srgb, ${couleur} ${force}%, transparent) 0 6px, transparent 6px 12px)`;
+}
 const numeroListe: CSSProperties = {
   flex: "none", width: 34, height: 34, borderRadius: 999, textAlign: "center", lineHeight: "34px", fontSize: 15, fontWeight: 800,
 };

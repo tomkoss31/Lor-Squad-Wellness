@@ -36,7 +36,6 @@ import { RdvDuJour } from "./agenda/RdvDuJour";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
-import { BbcSemaine } from "./views/BbcSemaine";
 import { BbcLiensTiroir, construireLiens } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
@@ -58,7 +57,6 @@ type BbcView =
   | "crm"
   | "boites"
   | "club"
-  | "semaine"
   | "coeurs"
   | "messages"
   | "scripts"
@@ -95,10 +93,12 @@ const SECTIONS: Section[] = [
     icon: "☕",
     tabs: [
       { k: "cockpit", label: "Ce matin" },
-      // L'agenda partagé (17/09). « La semaine » reste le temps que les
-      // permanences et fermetures y passent aussi — ensuite elle disparaît.
+      // L'agenda partagé (17/09). Il a REMPLACÉ « La semaine » le 18/09, une
+      // fois les permanences, rituels, heures du jour et fermetures passés
+      // dedans — Thomas : « j'ai toujours la vue La semaine, qui fait doublon ».
+      // (`BbcSemaine` vit encore pour l'atelier et prête sa feuille « Qui tient
+      // le bar ? » à L'agenda.)
       { k: "agenda", label: "L'agenda" },
-      { k: "semaine", label: "La semaine" },
       { k: "club", label: "Les visites" },
       { k: "appels", label: "Les appels" },
     ],
@@ -159,7 +159,6 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   crm: { eye: "cobayes & membres", title: "Ton pipeline" },
   boites: { eye: "le terrain · coupons papier", title: "Les boîtes" },
   club: { eye: "pointage en direct", title: "Le club ce matin" },
-  semaine: { eye: "la semaine du club", title: "Cette semaine" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
   messages: { eye: "messagerie", title: "Messages" },
   scripts: { eye: "tout ce que tu envoies", title: "Scripts" },
@@ -464,7 +463,6 @@ export function BbcApp({ coachName, userId, isAdmin, onSetPreview, club: clubPro
         {view === "agenda" && <BbcAgenda userId={userId} coachName={coachName} club={club ?? null} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
-        {view === "semaine" && <BbcSemaine userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
