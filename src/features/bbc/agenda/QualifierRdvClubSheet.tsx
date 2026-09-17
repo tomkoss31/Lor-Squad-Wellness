@@ -18,7 +18,7 @@
 // =============================================================================
 
 import { useState, type CSSProperties } from "react";
-import { aQualifier, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
+import { aQualifier, contactDe, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
 import type { Qualification, ResultatQualif } from "./qualifierRdvClub";
 
 type Etape = "choix" | "reflechit" | "pasvenue" | "lapin";
@@ -49,7 +49,7 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
   const urgent = aQualifier(rdv, maintenant);
   const debut = new Date(rdv.debut);
   const quand = `${libelleJour(debut)} · ${heureDe(rdv.debut)} · ${coachPrenom}`;
-  const tel = rdv.telephone ? rdv.telephone.replace(/\D/g, "") : "";
+  const { tel, mail } = contactDe(rdv);
   const prenom = rdv.prenom || "Elle";
 
   async function repondre(q: Qualification) {
@@ -99,6 +99,13 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                   </a>
                   <a href={`sms:${tel}`} style={lienAction}>
                     💬 SMS
+                  </a>
+                </div>
+              ) : mail ? (
+                // Réservation du site laissée avec un mail : on écrit, on n'appelle pas.
+                <div style={{ display: "flex", gap: 8 }}>
+                  <a href={`mailto:${mail}`} style={lienAction}>
+                    ✉️ Lui écrire
                   </a>
                 </div>
               ) : null}

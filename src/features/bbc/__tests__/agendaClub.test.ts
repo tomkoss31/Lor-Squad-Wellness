@@ -22,6 +22,7 @@ import {
   prenomSeul,
   semaineDe,
   versRdvClub,
+  contactDe,
   estIndispo,
   sansIndispos,
   horairesDuJour,
@@ -300,6 +301,21 @@ describe("la couleur", () => {
 
   it("un rendez-vous sans coach reste neutre", () => {
     expect(couleurCoach(null, coachs)).toBe("var(--ls-bbc-sage)");
+  });
+});
+
+describe("comment joindre la personne", () => {
+  it("un numéro : on appelle, en chiffres seuls", () => {
+    expect(contactDe(versRdvClub(ligne({ telephone: "06 12 34 56 02" }))!)).toEqual({ tel: "0612345602", mail: null });
+  });
+
+  it("une adresse mail (réservation du site) : on ÉCRIT, on ne fabrique pas un faux numéro", () => {
+    expect(contactDe(versRdvClub(ligne({ telephone: "prenom.nom0273@exemple.fr" }))!)).toEqual({ tel: null, mail: "prenom.nom0273@exemple.fr" });
+  });
+
+  it("rien, ou trois chiffres perdus : ni l'un ni l'autre", () => {
+    expect(contactDe(versRdvClub(ligne({ telephone: null }))!)).toEqual({ tel: null, mail: null });
+    expect(contactDe(versRdvClub(ligne({ telephone: "poste 12" }))!)).toEqual({ tel: null, mail: null });
   });
 });
 
