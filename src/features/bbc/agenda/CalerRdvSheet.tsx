@@ -560,7 +560,7 @@ const boutonPlusTot: CSSProperties = {
   color: "var(--ls-bbc-text)", textAlign: "left", fontFamily: "var(--ls-bbc-font-body)", cursor: "pointer",
 };
 const etiquette: CSSProperties = { fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)" };
-const bande: CSSProperties = { display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", margin: "0 -18px", padding: "0 18px 4px" };
+const bande: CSSProperties = { flex: "none", display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", margin: "0 -18px", padding: "0 18px 4px" };
 const jb: CSSProperties = { flex: "none", width: 60, minHeight: 66, padding: "7px 0", borderRadius: 12, border: "1px solid", textAlign: "center", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)" };
 const creneau: CSSProperties = { minWidth: 64, minHeight: 44, padding: "0 10px", borderRadius: 10, border: "1.5px solid", background: "transparent", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13.5, fontWeight: 700, cursor: "pointer" };
 const recap: CSSProperties = { display: "flex", gap: 12, alignItems: "stretch", padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)" };
