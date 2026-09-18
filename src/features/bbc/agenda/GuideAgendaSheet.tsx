@@ -86,7 +86,7 @@ export function GuideAgendaSheet({ coachs, couleur, userId, peutEnvoyer, onClose
           </Point>
 
           <Point emoji="✅" titre="Toucher un rendez-vous = lui donner une suite">
-            ☕ elle prend sa carte · 📋 suivi classique · 🕓 pas encore (tu choisis quand elle revient dans ta liste d'appels) · 🚫 pas venue. C'est aussi là qu'on le <b>déplace</b>. Un rendez-vous passé sans suite reste en rouge : il t'attend.
+            ☕ elle prend sa carte · 📋 suivi classique · 🕓 pas encore (tu choisis quand elle revient dans ta liste d'appels) · 🚫 pas venue. C'est aussi là qu'on le <b>déplace</b>. Un rendez-vous passé sans suite reste en rouge : il t'attend. Un <b>suivi de cliente</b> a sa question à lui : ✅ venue, faire son bilan · ✓ venue, c'est fait · 🔁 déplacer · 🚫 pas venue, on la replanifie.
           </Point>
 
           <Point emoji="🚫" titre="Pas dispo">
