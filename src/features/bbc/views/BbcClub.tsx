@@ -12,6 +12,15 @@ import { BbcBilan10 } from "../BbcBilan10";
 import { BbcCardSheet } from "../BbcCardSheet";
 import type { Club } from "../../../types/domain";
 
+/** Le premier mot de « Prénom Nom » — celui qu'on lit au comptoir (18/09). */
+function prenom(nomComplet: string): string {
+  return nomComplet.trim().split(/\s+/)[0] ?? "";
+}
+/** Le reste — vide si la fiche ne porte qu'un prénom. */
+function nomDeFamille(nomComplet: string): string {
+  return nomComplet.trim().split(/\s+/).slice(1).join(" ");
+}
+
 function levelColor(l: VisitLevel) {
   return l === "bilan" ? "var(--ls-bbc-coral)" : l === "warn" ? "var(--ls-bbc-amber)" : "var(--ls-bbc-teal)";
 }
@@ -185,17 +194,35 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
 
                420 est le seul palier propre partout, et il rend DAVANTAGE
                de colonnes sur grand écran (4 lisibles à 1920 contre 5
-               illisibles). Ne pas redescendre sans refaire ce tableau. */
-            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 14 }}
+               illisibles). Ne pas redescendre sans refaire ce tableau.
+
+               ⚠️ 18/09 — ce tableau ne testait QUE des largeurs de bureau
+               (1150 → 1920). Sur téléphone (~375-430 px), `minmax(420px, …)`
+               forçait chaque carte à 420 px MINIMUM — plus large que l'écran
+               lui-même : Thomas voyait la ligne de boutons (carte / bilan /
+               pointé ✓) déborder à droite, avec une barre de défilement
+               horizontal. `minmax(min(420px, 100%), 1fr)` garde le palier de
+               420 sur grand écran (le tableau ci-dessus reste valable) et
+               laisse la carte se réduire à la largeur de l'écran sur
+               téléphone, sans jamais dépasser. */
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 14 }}
           >
             {members.map((m) => {
               // Carte expirée = alerte au même titre qu'une carte finie.
               const lvl = m.card?.expired ? "bilan" : visitLevel(m.card?.used ?? 0, m.card?.type);
               return (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
+                <div key={m.id} className="bbc-pointage-ligne" style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
                   <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.card ? m.card.used : m.visits}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div title={m.name} style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
+                    {/* Le prénom, celui qu'on lit au comptoir, garde sa taille ; le nom
+                        de famille rétrécit — il n'a jamais besoin d'être aussi visible,
+                        et c'est lui qui poussait « Gwendoline B… » hors de la carte
+                        quand les trois boutons (carte, bilan, pointé ✓) se disputent la
+                        même ligne (18/09). */}
+                    <div title={m.name} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>{prenom(m.name)}</span>
+                      {nomDeFamille(m.name) ? <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ls-bbc-muted)", marginLeft: 4 }}>{nomDeFamille(m.name)}</span> : null}
+                    </div>
                     <div style={{ fontSize: 11, color: levelColor(lvl), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {m.card
                         ? m.card.expired
@@ -204,6 +231,11 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                         : `${m.visits} visite${m.visits > 1 ? "s" : ""} au total · pas de carte`}
                     </div>
                   </div>
+                  {/* Les boutons vivent dans UN groupe : sur telephone il passe sous
+                      le nom (`.bbc-pointage-ligne`, bbc-tokens.css) au lieu de lui
+                      disputer la ligne — trois boutons ne laissaient plus rien a
+                      « Lucie Petit » a 375 px (18/09). */}
+                  <div className="bbc-pointage-actions" style={{ display: "flex", alignItems: "center", gap: 10, flex: "none" }}>
                   <button type="button" onClick={() => setCardFor(m.id)} title={m.card ? "Renouveler la carte" : "Attribuer une carte"} style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: m.card ? "var(--ls-bbc-muted)" : "var(--ls-bbc-lime-text)", flex: "none" }}>
                     {m.card ? "carte" : "+ carte"}
                   </button>
@@ -268,6 +300,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                     {m.visitedToday ? "pointé ✓" : "+1"}
                   </button>
                   )}
+                  </div>
                 </div>
               );
             })}
