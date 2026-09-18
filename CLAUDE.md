@@ -100,6 +100,31 @@ validée, chiffrage accepté (« il faut tout faire »). Branche `feat/club-5-on
 
 ---
 
+### Les créneaux proposés suivent les horaires du club (18/09/2026)
+
+`creneauxLibres` ne connaît que `PROPOSITION` (8 h–18 h, **tous les jours**). Elle ne doit
+plus être appelée directement pour proposer un rendez-vous : passer par
+**`creneauxDuJour(occupes, cle, duree, maintenant, reglages, horsHoraires)`**, qui applique
+`horairesDuJour` — la règle EXACTE du tunnel public (`get_club_discovery_availability`) :
+jour dans `holidays` → rien · jour sans horaire (dimanche à Verdun) → rien · sinon les plages
+de `hours` / `hours_by_date`, plusieurs par jour. Verdun : 8 h–15 h en semaine (+ 16 h–18 h
+mardi, 16 h–17 h vendredi), samedi 8 h 30–11 h, dimanche fermé, 20 jours fériés.
+Sans horaires réglés → repli 8 h–18 h, on ne bloque personne. Le bouton « hors horaires »
+de `CalerRdvSheet` rouvre 8 h–18 h : les coachs calent de vrais suivis le soir.
+⚠️ `CalerRdvSheet` a besoin de `reglages` — `BbcAgenda` les a déjà, `BbcApp` les prend sur
+`club.settings.discovery`. Sans la prop, la feuille reproposerait le dimanche en silence.
+
+### L'heure doit être vivante (18/09/2026)
+
+`Date.now()` lu au montage ne bouge plus : la tablette du comptoir et l'onglet de Thomas
+restent ouverts la nuit, et « aujourd'hui » restait sur la veille (« ton prochain rendez-vous »
+montrait 14 h 30 à 16 h 51). Tout écran qui affiche « aujourd'hui » ou une durée relative
+utilise **`useMaintenant()`** (`features/bbc/agenda/useMaintenant.ts`) : battement d'une minute
++ rattrapage sur `visibilitychange` / `focus` (iOS gèle les minuteurs d'un onglet caché).
+Un rendez-vous terminé reste en tête du « Matin » **une heure** (fenêtre de qualification).
+
+---
+
 ## 🔀 Workflow dev / prod
 
 Voir « Repères » en tête de fichier : `main` = prod, `dev/thomas-test` = dev, `feat/x` depuis dev,
