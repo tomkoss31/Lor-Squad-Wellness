@@ -120,9 +120,13 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   const maintenant = Date.now();
   const duree = TYPES[type].duree;
 
-  // Les sept prochains jours — pour la bande et « au plus tôt ». Lus une fois.
-  const semaine = useMemo(() => Array.from({ length: 7 }, (_, i) => decalerJour(aujourdhui, i)), [aujourdhui]);
-  const fenetre = useMemo(() => ({ du: jourDe(aujourdhui), au: jourDe(decalerJour(aujourdhui, 7)) }), [aujourdhui]);
+  // Sept jours à la fois, mais la bande peut avancer de semaine en semaine
+  // (urgence du 18/09 : Sandrine Miltgen au 7 octobre était hors des 7 jours
+  // fixes — aucun moyen d'y aller). `decalage` est un multiple de 7, jamais
+  // négatif : on ne recule pas avant aujourd'hui.
+  const [decalage, setDecalage] = useState(0);
+  const semaine = useMemo(() => Array.from({ length: 7 }, (_, i) => decalerJour(aujourdhui, decalage + i)), [aujourdhui, decalage]);
+  const fenetre = useMemo(() => ({ du: jourDe(decalerJour(aujourdhui, decalage)), au: jourDe(decalerJour(aujourdhui, decalage + 7)) }), [aujourdhui, decalage]);
   const { rdvs: rdvsSemaine } = useAgendaDuClub(fenetre.du, fenetre.au, userId);
   const idsCoachs = useMemo(() => coachs.map((c) => c.id), [coachs]);
   // Le jour choisi : la vraie occupation (rituels compris), lue en base.
@@ -291,7 +295,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </div>
             )}
 
-            {plusTot && type !== "indispo" ? (
+            {plusTot && type !== "indispo" && decalage === 0 ? (
               <button
                 type="button"
                 onClick={() => {
@@ -317,16 +321,29 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </button>
             ) : null}
 
-            <div style={etiquette}>quel jour ?</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <div style={etiquette}>quel jour ?</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <button type="button" disabled={decalage <= 0} onClick={() => { setDecalage((d) => Math.max(0, d - 7)); setHeure(null); }} aria-label="Semaine précédente" style={{ ...navSemaine, opacity: decalage <= 0 ? 0.35 : 1, cursor: decalage <= 0 ? "default" : "pointer" }}>
+                  ‹
+                </button>
+                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", minWidth: 84, textAlign: "center" }}>
+                  {decalage === 0 ? "7 prochains jours" : `dans ${decalage} j.`}
+                </span>
+                <button type="button" onClick={() => { setDecalage((d) => d + 7); setHeure(null); }} aria-label="Semaine suivante" style={navSemaine}>
+                  ›
+                </button>
+              </div>
+            </div>
             <div style={bande}>
-              {semaine.map((k, i) => {
+              {semaine.map((k) => {
                 const d = jourDe(k);
                 let libres = 0;
                 for (const id of idsCoachs) if (creneauxLibres(occupesSemaine.get(id) ?? [], d, duree, maintenant).length) libres += 1;
                 const on = k === jour;
                 return (
                   <button key={k} type="button" onClick={() => { setJour(k); setHeure(null); }} style={{ ...jb, background: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-s2)", borderColor: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-line)", color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>
-                    <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, opacity: 0.75 }}>{i === 0 ? "auj." : libelleJourCourt(d).split(" ")[0]}</span>
+                    <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, opacity: 0.75 }}>{k === aujourdhui ? "auj." : libelleJourCourt(d).split(" ")[0]}</span>
                     <span style={{ display: "block", fontSize: 17, fontWeight: 800, marginTop: 2 }}>{d.getDate()}</span>
                     {type !== "indispo" ? (
                       <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-lime-text)", marginTop: 2 }}>{libres} libre{libres > 1 ? "s" : ""}</span>
@@ -570,6 +587,7 @@ const boutonPlusTot: CSSProperties = {
 };
 const etiquette: CSSProperties = { fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)" };
 const bande: CSSProperties = { flex: "none", display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", margin: "0 -18px", padding: "0 18px 4px" };
+const navSemaine: CSSProperties = { flex: "none", width: 44, minHeight: 44, borderRadius: 11, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontSize: 17, fontWeight: 700, cursor: "pointer" };
 const jb: CSSProperties = { flex: "none", width: 60, minHeight: 66, padding: "7px 0", borderRadius: 12, border: "1px solid", textAlign: "center", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)" };
 const creneau: CSSProperties = { minWidth: 64, minHeight: 44, padding: "0 10px", borderRadius: 10, border: "1.5px solid", background: "transparent", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13.5, fontWeight: 700, cursor: "pointer" };
 const recap: CSSProperties = { display: "flex", gap: 12, alignItems: "stretch", padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)" };
