@@ -185,6 +185,12 @@ et `feat/*`, des erreurs TS temporaires sont tolérées.
 ## ⚠️ Migrations — le registre et le dépôt ne parlent pas le même langage
 
 > **Réparé le 2026-09-01 : 48 fichiers enregistrés, 0 écart restant.**
+> **Re-réparé le 2026-09-18 : 10 fichiers de septembre (310000→390000 + 20260903120000)
+> appliqués par MCP sous l'horodatage du jour, jamais enregistrés sous leur numéro de
+> fichier. Deux portaient même un NOM plus long dans le registre — retrouvés par le nom,
+> vérifiés en base (policy, signature de fonction), puis enregistrés. 0 écart.**
+> ⚠️ Le contrôle par empreinte ci-dessous est à refaire après CHAQUE chantier qui applique
+> une migration par MCP : `apply_migration` puis l'insert de la version du fichier, toujours.
 > Le `max(version)` ne veut RIEN dire ici — voir pourquoi plus bas.
 
 ### La cause, et elle n'est pas « on a oublié d'enregistrer »
