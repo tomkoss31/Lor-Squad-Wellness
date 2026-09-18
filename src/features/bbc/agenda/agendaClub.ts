@@ -435,6 +435,41 @@ export function creneauxLibres(
   return out;
 }
 
+/**
+ * Les créneaux proposables une DATE donnée, en respectant les horaires du club
+ * (18/09/2026). `creneauxLibres` ne connaît que 8 h–18 h, tous les jours : la
+ * feuille « Caler » proposait donc le dimanche — jour de repos —, le samedi
+ * après-midi alors que le club ferme à 11 h, et les jours fériés réglés dans
+ * `holidays`. On applique ici EXACTEMENT la règle du tunnel public
+ * (`horairesDuJour`), pour que les deux portes disent la même chose.
+ *
+ * `horsHoraires` rouvre volontairement 8 h–18 h : les coachs calent de vrais
+ * suivis le soir (16 h 30 un lundi, vu en production). On propose le normal,
+ * on n'interdit rien.
+ *
+ * Sans horaires réglés (autre club, atelier), on garde 8 h–18 h : mieux vaut
+ * trop proposer que bloquer tout le monde.
+ */
+export function creneauxDuJour(
+  occupes: readonly Plage[],
+  cle: string,
+  dureeMin: number,
+  maintenantMs: number,
+  reglages: ReglagesHoraires | null | undefined,
+  horsHoraires = false,
+): number[] {
+  const d = jourDe(cle);
+  const aDesHoraires = Boolean(reglages?.hours && Object.keys(reglages.hours).length > 0);
+  if (horsHoraires || !aDesHoraires) return creneauxLibres(occupes, d, dureeMin, maintenantMs);
+  const h = horairesDuJour(reglages, cle);
+  if (h.etat !== "ouvert") return [];
+  const out = new Set<number>();
+  for (const p of h.plages) {
+    for (const x of creneauxLibres(occupes, d, dureeMin, maintenantMs, { debut: p.debut, fin: p.fin, pasMin: PROPOSITION.pasMin })) out.add(x);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
 /** « 09:30 » depuis une heure décimale. */
 export function fmtHeure(x: number): string {
   const h = Math.floor(x);
@@ -451,11 +486,13 @@ export function auPlusTot(
   jours: readonly string[],
   dureeMin: number,
   maintenantMs: number,
+  reglages?: ReglagesHoraires | null,
+  horsHoraires = false,
 ): { jour: string; coachId: string; heure: number } | null {
   for (const k of jours) {
     let meilleur: { jour: string; coachId: string; heure: number } | null = null;
     for (const [coachId, occupes] of occupesParCoach) {
-      const l = creneauxLibres(occupes, jourDe(k), dureeMin, maintenantMs);
+      const l = creneauxDuJour(occupes, k, dureeMin, maintenantMs, reglages, horsHoraires);
       if (l.length && (!meilleur || l[0] < meilleur.heure)) meilleur = { jour: k, coachId, heure: l[0] };
     }
     if (meilleur) return meilleur;

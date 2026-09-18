@@ -444,6 +444,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           userId={userId}
           coachs={coachs}
           couleur={(id) => couleurCoach(id, coachs)}
+          reglages={club?.settings?.discovery ?? null}
           jourInitial={caler.deplace ? cleJour(new Date(caler.deplace.debut)) : cleJour(new Date())}
           coachInitial={caler.deplace?.coachId ?? userId ?? null}
           deplace={caler.deplace ?? null}
