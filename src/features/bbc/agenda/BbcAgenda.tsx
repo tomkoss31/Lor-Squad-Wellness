@@ -592,6 +592,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
           userId={userId}
           coachs={coachs}
           couleur={couleur}
+          reglages={reglages}
           jourInitial={caler.jour}
           coachInitial={caler.coach ?? null}
           heureInitiale={caler.heure ?? null}

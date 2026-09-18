@@ -32,7 +32,7 @@ import {
   type QuandIndispo,
   auPlusTot,
   cleJour,
-  creneauxLibres,
+  creneauxDuJour,
   decalerJour,
   fmtHeure,
   heureDe,
@@ -40,8 +40,10 @@ import {
   libelleJour,
   libelleJourCourt,
   nomComplet,
+  horairesDuJour,
   type Plage,
   type RdvClub,
+  type ReglagesHoraires,
 } from "./agendaClub";
 
 type Etape = "quand" | "qui";
@@ -76,11 +78,14 @@ interface Props {
   heureInitiale?: number | null;
   /** Le rendez-vous qu'on déplace (table `prospects` seulement). */
   deplace?: RdvClub | null;
+  /** Les horaires du club (`settings.discovery`) : jours de repos, fermetures,
+   *  plages du jour. Sans eux, on retombe sur 8 h–18 h tous les jours. */
+  reglages?: ReglagesHoraires | null;
   onClose: () => void;
   onFait: (jour: string, coachId: string) => void;
 }
 
-export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachInitial, heureInitiale, deplace, onClose, onFait }: Props) {
+export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachInitial, heureInitiale, deplace, reglages, onClose, onFait }: Props) {
   const aujourdhui = cleJour(new Date());
   const [etape, setEtape] = useState<Etape>(heureInitiale != null && coachInitial ? "qui" : "quand");
   const [type, setType] = useState<TypeRdv>(() => {
@@ -94,7 +99,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   // 17 h 20 — quatre coachs, quatre « complet », et il fallait deviner qu'il
   // suffisait de toucher le jour suivant.
   const [jour, setJour] = useState(() =>
-    heureInitiale == null && !deplace && jourInitial === aujourdhui && creneauxLibres([], new Date(), TYPES.bilan.duree, Date.now()).length === 0
+    heureInitiale == null && !deplace && jourInitial === aujourdhui && creneauxDuJour([], aujourdhui, TYPES.bilan.duree, Date.now(), reglages).length === 0
       ? decalerJour(jourInitial, 1)
       : jourInitial,
   );
@@ -119,6 +124,11 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   const [noteIndispo, setNoteIndispo] = useState("");
   const maintenant = Date.now();
   const duree = TYPES[type].duree;
+  /** Le club ferme le dimanche et à 15 h en semaine : on ne propose que ses
+   *  heures. Ce bouton rouvre 8 h–18 h pour les suivis du soir — proposer le
+   *  normal, n'interdire rien (Thomas, 18/09). */
+  const [horsHoraires, setHorsHoraires] = useState(false);
+  const libresDe = (occupes: readonly Plage[], cle: string) => creneauxDuJour(occupes, cle, duree, maintenant, reglages, horsHoraires);
 
   // Sept jours à la fois, mais la bande peut avancer de semaine en semaine
   // (urgence du 18/09 : Sandrine Miltgen au 7 octobre était hors des 7 jours
@@ -161,7 +171,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     return base.filter((p) => p.debut !== d0);
   };
 
-  const plusTot = useMemo(() => auPlusTot(occupesSemaine, semaine, duree, maintenant), [occupesSemaine, semaine, duree, maintenant]);
+  const plusTot = useMemo(() => auPlusTot(occupesSemaine, semaine, duree, maintenant, reglages, horsHoraires), [occupesSemaine, semaine, duree, maintenant, reglages, horsHoraires]);
   const moi = coachs.find((c) => c.id === userId);
 
   // ── CRM : chercher quelqu'un ──
@@ -266,6 +276,11 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
 
   const dJour = jourDe(jour);
   const finHeure = heure != null ? heure + duree / 60 : null;
+  /** Ce que le club fait du jour choisi — dit en clair sous les créneaux. */
+  const horairesJour = horairesDuJour(reglages, jour);
+  const texteHoraires = horairesJour.plages.length
+    ? horairesJour.plages.map((p) => `de ${fmtHeure(p.debut)} à ${fmtHeure(p.fin)}`).join(" et ")
+    : "aux heures du club";
 
   return (
     <div style={voile} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -358,15 +373,18 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
             <div style={bande}>
               {semaine.map((k) => {
                 const d = jourDe(k);
+                const etat = horsHoraires ? "ouvert" : horairesDuJour(reglages, k).etat;
                 let libres = 0;
-                for (const id of idsCoachs) if (creneauxLibres(occupesSemaine.get(id) ?? [], d, duree, maintenant).length) libres += 1;
+                for (const id of idsCoachs) if (libresDe(occupesSemaine.get(id) ?? [], k).length) libres += 1;
                 const on = k === jour;
                 return (
                   <button key={k} type="button" onClick={() => { setJour(k); setHeure(null); }} style={{ ...jb, background: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-s2)", borderColor: on ? "var(--ls-bbc-text)" : "var(--ls-bbc-line)", color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-text)" }}>
                     <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, opacity: 0.75 }}>{k === aujourdhui ? "auj." : libelleJourCourt(d).split(" ")[0]}</span>
                     <span style={{ display: "block", fontSize: 17, fontWeight: 800, marginTop: 2 }}>{d.getDate()}</span>
                     {type !== "indispo" ? (
-                      <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: on ? "var(--ls-bbc-bg)" : "var(--ls-bbc-lime-text)", marginTop: 2 }}>{libres} libre{libres > 1 ? "s" : ""}</span>
+                      <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: on ? "var(--ls-bbc-bg)" : etat === "ouvert" ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)", marginTop: 2 }}>
+                        {etat === "ferme" ? "fermé" : etat === "repos" ? "repos" : `${libres} coach${libres > 1 ? "s" : ""}`}
+                      </span>
                     ) : null}
                   </button>
                 );
@@ -422,11 +440,17 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </>
             ) : (
               <>
+            {!horsHoraires && horairesJour.etat !== "ouvert" ? (
+              <div style={alerte("amber")}>
+                {horairesJour.etat === "ferme" ? "Le club est fermé ce jour-là" : "Le club ne reçoit pas ce jour-là"} : aucun créneau n'est proposé.
+                Tu peux quand même caler quelque chose avec « hors horaires », plus bas.
+              </div>
+            ) : null}
             <div style={etiquette}>avec qui ?</div>
             {[...coachs]
               .sort((a, b) => Number(b.id === coachInitial) - Number(a.id === coachInitial))
               .map((c) => {
-                const l = creneauxLibres(occupesDe(c.id), dJour, duree, maintenant);
+                const l = libresDe(occupesDe(c.id), jour);
                 const ouvert = tout.has(c.id);
                 const montre = ouvert ? l : l.slice(0, CRENEAUX_VISIBLES);
                 return (
@@ -457,7 +481,14 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                   </div>
                 );
               })}
-            <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.45, padding: "10px 0 4px" }}>Seuls les créneaux libres sont proposés, de 8 h à 18 h. Ils sont revérifiés à l'enregistrement.</div>
+            <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.45, padding: "10px 0 4px" }}>
+              {horsHoraires
+                ? "Hors horaires : 8 h – 18 h, même les jours de fermeture. Les créneaux déjà pris restent exclus, et tout est revérifié à l'enregistrement."
+                : `Seuls les créneaux libres sont proposés, ${texteHoraires}. Ils sont revérifiés à l'enregistrement.`}
+            </div>
+            <button type="button" onClick={() => { setHorsHoraires((v) => !v); setHeure(null); }} style={lienBas}>
+              {horsHoraires ? "Revenir aux horaires du club" : "Proposer aussi hors horaires (8 h – 18 h)"}
+            </button>
               </>
             )}
           </div>
@@ -607,6 +638,7 @@ const boutonPlusTot: CSSProperties = {
 };
 const etiquette: CSSProperties = { fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)" };
 const bande: CSSProperties = { flex: "none", display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", margin: "0 -18px", padding: "0 18px 4px" };
+const lienBas: CSSProperties = { width: "100%", minHeight: 44, border: 0, background: "transparent", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 };
 const navSemaine: CSSProperties = { flex: "none", width: 44, minHeight: 44, borderRadius: 11, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontSize: 17, fontWeight: 700, cursor: "pointer" };
 const dateJump: CSSProperties = { flex: "none", minHeight: 44, maxWidth: 128, borderRadius: 11, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, padding: "0 8px" };
 const jb: CSSProperties = { flex: "none", width: 60, minHeight: 66, padding: "7px 0", borderRadius: 12, border: "1px solid", textAlign: "center", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)" };
