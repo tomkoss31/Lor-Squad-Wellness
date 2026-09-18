@@ -54,18 +54,23 @@ export function RecommanderTab({ coachName, token, clientId, coachId, clientName
       const isPhone = contact.replace(/\D/g, '').length >= 6 && !contact.includes('@')
       let routed = false
       if (isPhone) {
-        try {
-          const { error } = await sb.functions.invoke('submit-prospect-lead', {
-            body: {
-              first_name: name,
-              phone: contact,
-              source: 'reco-client',
-              referrer_user_id: coachId ?? undefined,
-              metadata: { from_client_id: clientId, from_client_name: clientName, source_page: 'pwa-recommander-v2' },
-            },
-          })
-          routed = !error
-        } catch { /* fallback ci-dessous */ }
+        const payload = {
+          first_name: name,
+          phone: contact,
+          source: 'reco-client',
+          referrer_user_id: coachId ?? undefined,
+          metadata: { from_client_id: clientId, from_client_name: clientName, source_page: 'pwa-recommander-v2' },
+        }
+        // Un aller-retour réseau raté (mobile, instance Supabase qui se réveille)
+        // ne doit pas condamner la reco au circuit sans suivi ci-dessous — une
+        // retentative après un court délai rattrape l'immense majorité des cas.
+        for (let tentative = 0; tentative < 2 && !routed; tentative++) {
+          try {
+            if (tentative > 0) await new Promise((r) => setTimeout(r, 1500))
+            const { error } = await sb.functions.invoke('submit-prospect-lead', { body: payload })
+            routed = !error
+          } catch { /* on retente, puis on tombe sur le fallback */ }
+        }
       }
       if (!routed) {
         await sb.from('client_referrals').insert({
