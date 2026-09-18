@@ -57,7 +57,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
   const aPointer = [...visites.members].sort((a, b) => Number(a.visitedToday) - Number(b.visitedToday) || (b.card?.used ?? 0) - (a.card?.used ?? 0)).slice(0, 8);
   const pointes = visites.members.filter((m) => m.visitedToday).length;
 
-  const aFaire = contacts.filter((c) => !faits.has(c.nom));
+  const aFaire = contacts.filter((c) => !faits.has(c.key));
   const aujourdhuiListe = [...aFaire.slice(0, 5)];
   const urgents = aFaire.filter((c) => c.raison === "lead_nouveau");
   const etapes = visites.members.filter((m) => m.card && (m.card.used >= m.card.type - 1)).slice(0, 4);

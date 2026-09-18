@@ -23,7 +23,7 @@ import "../../styles/bbc-tokens.css";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Club, ClubSettings } from "../../types/domain";
-import { useCrmLeads, type CrmLead } from "../../hooks/useCrmLeads";
+import { useCrmLeads } from "../../hooks/useCrmLeads";
 import type { Reponse } from "../crm/qualification";
 import { BbcModeSwitch } from "./BbcModeSwitch";
 import type { VueBbcParAdresse } from "./bbcRoutes";
@@ -49,7 +49,8 @@ import { BbcNewMemberSheet } from "./BbcNewMemberSheet";
 import { CalerRdvSheet } from "./agenda/CalerRdvSheet";
 import { cleJour, couleurCoach } from "./agenda/agendaClub";
 import { useCoachsDuClub } from "./useCoachsDuClub";
-import { useBbcCobayes } from "./useBbcCobayes";
+import { useContactsDuJour } from "./useContactsDuJour";
+import { useBbcSignaux } from "./useBbcSignaux";
 import { useBbcMembers } from "./useBbcMembers";
 import { useBbcHearts } from "./useBbcHearts";
 import { aContacter, type AContacter } from "./contacter";
@@ -224,37 +225,41 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
 
   // ── « Contacter aujourd'hui » : une seule source pour Le matin et l'onglet ──
   // Les leads viennent du hook du CRM standard (même liste que /crm) ; les
-  // membres et les cœurs des hooks BBC ; le compteur du jour et les « faits »
-  // de `outreach_messages` (ex-Cobayes du jour : même table, autre sens).
+  // membres et les cœurs des hooks BBC ; la dernière visite de chacune de la base
+  // (`bbc_dernieres_visites`) ; le compteur du jour et les « déjà fait » de la
+  // table `bbc_contacts` (livraison B).
   const leadsApi = useCrmLeads();
   const membresApi = useBbcMembers(userId);
   const heartsApi = useBbcHearts(userId);
-  const cob = useBbcCobayes(userId);
+  const { signaux } = useBbcSignaux(userId);
+  const cdj = useContactsDuJour(userId);
   const contacts = useMemo(
-    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members }),
-    [leadsApi.leads, membresApi.members, heartsApi.members],
+    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members, signaux }),
+    [leadsApi.leads, membresApi.members, heartsApi.members, signaux],
   );
-  const faits = useMemo(() => new Set(cob.faits), [cob.faits]);
+  const faits = useMemo(() => new Set(cdj.faits.keys()), [cdj.faits]);
   const [contact, setContact] = useState<AContacter | null>(null);
   const { coachs } = useCoachsDuClub(userId);
 
-  async function repondreLead(lead: CrmLead, r: Reponse): Promise<string | null> {
-    const err = await leadsApi.qualifier(lead, r);
+  async function repondreLead(c: AContacter, r: Reponse): Promise<string | null> {
+    if (!c.lead) return "Pas un lead.";
+    const err = await leadsApi.qualifier(c.lead, r);
     if (err) return err;
-    await cob.logCobaye(`lead:${r.cle}`, lead.firstName);
-    setToast(`${lead.firstName} · ${r.resume} — ${cob.count + 1} / ${cob.target}`);
+    const e2 = await cdj.noter({ cible: c.key, prenom: c.nom, raison: c.raison, reponse: r.cle });
+    if (e2) return e2;
+    setToast(`${c.nom} · ${r.resume} — ${cdj.count + 1} / ${cdj.target}`);
     return null;
   }
   async function faitMembre(c: AContacter, libelle: string): Promise<void> {
-    await cob.logCobaye(c.raison, c.nom);
-    setToast(`${c.nom} · ${libelle.toLowerCase()} — ${cob.count + 1} / ${cob.target}`);
+    const err = await cdj.noter({ cible: c.key, prenom: c.nom, raison: c.raison, reponse: libelle });
+    setToast(err ? `Pas enregistré : ${err}` : `${c.nom} · ${libelle.toLowerCase()} — ${cdj.count + 1} / ${cdj.target}`);
   }
 
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
   const clubCity = club?.city ?? "Verdun";
   const t = TITLES[view];
-  const restants = Math.max(0, cob.target - cob.count);
+  const restants = Math.max(0, cdj.target - cdj.count);
 
   return (
     <div className={clair ? "bbc-mode bbc-shell bbc-light" : "bbc-mode bbc-shell"}>
@@ -272,7 +277,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, overflowY: "auto", paddingTop: 4 }}>
           {BARRE.map((s) => (
-            <NavItem key={s.k} active={view === s.k} icone={s.icone} label={s.k === "contacter" ? `${s.label} · ${cob.count}/${cob.target}` : s.label} onClick={() => setView(s.k)} />
+            <NavItem key={s.k} active={view === s.k} icone={s.icone} label={s.k === "contacter" ? `${s.label} · ${cdj.count}/${cdj.target}` : s.label} onClick={() => setView(s.k)} />
           ))}
           <button type="button" className="bbc-pression" onClick={() => setGestes(true)} style={{ display: "flex", alignItems: "center", gap: 12, margin: "6px 0", padding: "11px 12px", borderRadius: 999, border: 0, cursor: "pointer", background: "var(--ls-bbc-grad)", color: "#fff", boxShadow: "var(--ls-bbc-grad-ombre)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 700 }}>
             <span aria-hidden="true" style={{ fontSize: 18, width: 20, textAlign: "center" }}>＋</span>
@@ -328,14 +333,14 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             club={club ?? null}
             contacts={contacts}
             faits={faits}
-            count={cob.count}
-            target={cob.target}
+            count={cdj.count}
+            target={cdj.target}
             onGo={setView}
             onContact={setContact}
             onLiens={() => setLiensOuverts(true)}
           />
         )}
-        {view === "contacter" && <BbcContacter contacts={contacts} faits={faits} count={cob.count} target={cob.target} onContact={setContact} />}
+        {view === "contacter" && <BbcContacter contacts={contacts} faits={faits} count={cdj.count} target={cdj.target} onContact={setContact} />}
         {view === "plus" && (
           <BbcPlus
             onGo={setView}
@@ -371,7 +376,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           <span className="bbc-plus-rond" aria-hidden="true">＋</span>
           <span>Ajouter</span>
         </button>
-        <BarreItem active={view === "contacter"} label="Contacter" onClick={() => setView("contacter")} icone={<Anneau fait={cob.count} sur={cob.target} />} badge={restants > 0 ? restants : undefined} />
+        <BarreItem active={view === "contacter"} label="Contacter" onClick={() => setView("contacter")} icone={<Anneau fait={cdj.count} sur={cdj.target} />} badge={restants > 0 ? restants : undefined} />
         <BarreItem active={view === "crm"} icone="👥" label="Membres" onClick={() => setView("crm")} />
       </nav>
 
@@ -407,7 +412,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
         <BbcContactSheet
           c={contact}
           coachPrenom={first}
-          fait={faits.has(contact.nom)}
+          coachUserId={userId}
+          fait={faits.has(contact.key)}
           onClose={() => setContact(null)}
           onReponseLead={repondreLead}
           onFaitMembre={faitMembre}
