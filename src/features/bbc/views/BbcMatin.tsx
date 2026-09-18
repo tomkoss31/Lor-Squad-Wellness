@@ -33,9 +33,13 @@ interface Props {
   onGo: (v: VueCible) => void;
   onContact: (c: AContacter) => void;
   onLiens: () => void;
+  /** Venue / Pas venue sur le prochain rendez-vous : la question de l'agenda, ici même (livraison C). */
+  onQualifier: (rdv: RdvClub, etape: "choix" | "pasvenue") => void;
+  /** Ouvre la fiche d'une membre dans « Membres », sur sa prochaine étape. */
+  onMembre: (id: string) => void;
 }
 
-export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, onContact, onLiens }: Props) {
+export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, onContact, onLiens, onQualifier, onMembre }: Props) {
   const { unreadMessageCount } = useAppContext();
   const aujourdhui = new Date();
   const debut = useMemo(() => new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate()), [cleJour(aujourdhui)]);
@@ -75,9 +79,19 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
           </div>
           <div style={{ fontSize: 13, opacity: 0.8 }}>{libelleNature(prochain)} · avec {prenom(prochain.coachId)}</div>
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Venue</button>
-            <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>Pas venue</button>
-            <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
+            {prochain.source === "suivi" ? (
+              // Un suivi (une membre) ne se « qualifie » pas : elle se pointe.
+              <>
+                <button type="button" className="bbc-pression" onClick={() => onGo("club")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Pointer</button>
+                <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "choix")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Venue</button>
+                <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "pasvenue")} style={heroBtn}>Pas venue</button>
+                <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
+              </>
+            )}
           </div>
         </div>
       ) : (
@@ -199,7 +213,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
       {/* 6 · Tes membres · prochaine étape */}
       <Carte eye="Tes membres · prochaine étape" tone="plein" right={<button type="button" onClick={() => onGo("crm")} style={lien}>Les {visites.members.length} →</button>}>
         {etapes.length === 0 ? (
-          <Vide>Personne à sa 9e ou 10e visite pour l'instant. Les cœurs et les appels sont dans la fiche de chaque membre.</Vide>
+          <Vide>Personne à sa 9e ou 10e visite pour l'instant. La prochaine étape de chacune est dans sa fiche, volet « Prochaine étape ».</Vide>
         ) : (
           etapes.map((m) => (
             <Ligne
@@ -209,7 +223,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
               sous={m.card && m.card.used >= m.card.type ? "Carte finie · bilan à faire, carte suivante à proposer" : `À sa ${m.card?.used}e visite · proposer le bilan de la ${m.card?.type}e`}
               action={m.card && m.card.used >= m.card.type ? "Bilan" : "Ouvrir"}
               actionTone={m.card && m.card.used >= m.card.type ? "fort" : "neutre"}
-              onClick={() => onGo(m.card && m.card.used >= m.card.type ? "club" : "crm")}
+              onClick={() => onMembre(m.id)}
             />
           ))
         )}

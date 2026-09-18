@@ -36,11 +36,12 @@ est dans `docs/CLAUDE_ARCHIVE_2026-09-18.md` — elle ne fait pas foi sur l'éta
 | « l'agenda » | `features/bbc/agenda/BbcAgenda.tsx` (+ `agendaClub.ts` = la logique) | `pages/AgendaPage.tsx`, qui affiche AUSSI `BbcAgenda` derrière « Agenda du club » |
 | « le CRM », « mes leads » | n'existe PAS en BBC (cède la place au standard) | `pages/CrmPage.tsx` + `hooks/useCrmLeads.ts` + `components/crm/` |
 | « mes membres » | `features/bbc/views/BbcCrm.tsx` (oui, le fichier s'appelle Crm) | — |
-| « la fiche client » | le récap membre dans `BbcCrm` | `pages/ClientDetailPage.tsx` (5 onglets) |
+| « la fiche client » | la fiche dépliée dans `BbcCrm` : 3 volets Visites & carte · Son corps · Prochaine étape (`prochaineEtape.ts`) | `pages/ClientDetailPage.tsx` (5 onglets) |
+| « contacter », « les 20 contacts » | `features/bbc/views/BbcContacter.tsx` + `contacter.ts` (les 6 règles, pures) + table `bbc_contacts` | `pages/CrmPage.tsx` |
 | « le bilan » | `features/bbc/BbcNewMemberSheet.tsx` (« Nouvelle évaluation ») | `pages/NewAssessmentPage.tsx` (le plus gros fichier) |
-| « ce matin », « l'accueil » | le cockpit, DANS `BbcApp.tsx` | `features/copilote/v5/CoPiloteV5Page.tsx` (« Co-pilote ») |
+| « ce matin », « l'accueil » | « Le matin », `features/bbc/views/BbcMatin.tsx` (l'adresse `/co-pilote` dit encore « cockpit ») | `features/copilote/v5/CoPiloteV5Page.tsx` (« Co-pilote ») |
 | « les réglages » | `features/bbc/views/BbcReglages.tsx` | `pages/ParametresPage.tsx` |
-| « le menu » | `BbcApp.tsx` (`SECTIONS`) | `components/layout/AppLayout.tsx` + `MobileDrawer` + `BottomNav` ; visibilité `config/appVisibility.ts` |
+| « le menu » | `BbcApp.tsx` (`BARRE` = 4 onglets + ＋, `PLUS` = le reste) | `components/layout/AppLayout.tsx` + `MobileDrawer` + `BottomNav` ; visibilité `config/appVisibility.ts` |
 
 ### Réflexes qui évitent de perdre une heure
 1. **Vérifier qu'un fichier est IMPORTÉ avant de le corriger.** Le 17/09, 74 fichiers du
@@ -64,6 +65,38 @@ est dans `docs/CLAUDE_ARCHIVE_2026-09-18.md` — elle ne fait pas foi sur l'éta
 - Le sort des fonctionnalités jamais servies (prospection froide, `/qualif`, appels BBC, partage public,
   Noaly…) : voir l'audit du 17/09 (mémoire `carte_app_02`), lot 3.
 - i18n 6 langues : aucun code amorcé.
+
+---
+
+## ☕ Le club en cinq onglets — mode BBC (livraisons A·B·C, 18/09/2026)
+
+Construit sur la journée de Thomas (« l'app est trop compliquée, même pour moi »), maquette v7
+validée, chiffrage accepté (« il faut tout faire »). Branche `feat/club-5-onglets` → dev.
+- **La barre** : Matin · Agenda · ＋ · Contacter · Membres ; le ＋ (bosse CSS, `bbc-tokens.css`)
+  ouvre les trois gestes du comptoir : Pointer (vue `club`), Caler (`CalerRdvSheet`), Nouvelle
+  évaluation (`BbcNewMemberSheet`). Tout le reste est derrière **⋯ Plus** (`PLUS`), inchangé.
+- **« Contacter aujourd'hui »** (le trou : « je ne contacte pas assez de monde », 20/jour) :
+  `contacter.ts` remplit la liste avec 6 règles PURES et testées — lead nouveau · relance due ·
+  9e visite / carte finie · absente ≥ 6 j (`bbc_dernieres_visites()`, hook `useBbcSignaux`) ·
+  régulière ≥ 3 semaines sans cœur (« lui demander une amie ») · à 1 cœur du palier. Chaque
+  « et alors ? » écrit une ligne dans **`bbc_contacts`** (`useContactsDuJour`) : compteur
+  personnel, « déjà fait » partagé par le club (si Mélanie a appelé Camille, Thomas ne la voit
+  plus), clé stable `lead:…` / `membre:<id>:<raison>`. Feuille : tel / WhatsApp / copier /
+  **✨ Noaly propose** (même edge `noaly`, mode `crm_message`, que la fiche lead du CRM).
+- **Le matin** (`BbcMatin`) : ton prochain RDV en gros → **Venue / Pas venue** ouvrent
+  `QualifierRdvClubSheet` sur place (`etapeInitiale`) ; « elle prend sa carte de membre » →
+  `BbcNewMemberSheet` pré-remplie → **`ApresCreation`** (« Et ensuite ? » : son 1er pointage,
+  `bbc_add_visit`) — après TOUTE création de fiche, aussi depuis le ＋ et depuis l'agenda
+  (`BbcAgenda` remonte `onMembreCree`). Un RDV de source `suivi` se pointe, il ne se qualifie pas.
+- **Passerelles vers le standard** (jamais une 2e implémentation) : « Sa fiche complète » →
+  `/clients/:id` ; « elle démarre en suivi classique » → `/assessments/new?prospectId=` (source
+  `prospect`) ; « Sa fiche de lead » → `/crm/leads/:key` ; « L'app complète » → mode Classic.
+- **Supprimés** : `BbcCobayeSheet`, `useBbcCobayes`, `agenda/RdvDuJour` (Cobayes du jour : 7
+  envois en 2 mois). La table `outreach_messages` n'est plus lue par le front — **à trancher
+  avec Thomas** avant de la supprimer.
+- **Garde-fou** `__tests__/gardeVisuelle.test.ts` : aucun `fontSize < 11` ni `minHeight < 44`
+  (bloc cliquable) hors budget → les nouveaux fichiers sont à 11 / 44 minimum.
+- ⚠️ Recette sur iPhone/iPad par Thomas avant tout cherry-pick sur `main`.
 
 ---
 

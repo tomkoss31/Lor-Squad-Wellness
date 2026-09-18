@@ -94,9 +94,13 @@ interface Props {
    */
   collantHaut?: string;
   fabBas?: string;
+  /** Livraison C : après « elle prend sa carte de membre », BbcApp enchaîne (son 1er pointage). */
+  onMembreCree?: (clientId: string, prenom: string) => void;
+  /** Livraison C : « elle démarre en suivi classique » → le bilan standard, tout de suite. */
+  onSuiviClassique?: (rdv: RdvClub) => void;
 }
 
-export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas }: Props) {
+export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas, onMembreCree, onSuiviClassique }: Props) {
   const cleAuj = cleJour(new Date());
   const [vue, setVue] = useState<Vue>("semaine");
   /** Le jour autour duquel on regarde — la clé d'un jour, quelle que soit la vue. */
@@ -538,6 +542,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             if (res.ok) {
               setQualif(null);
               void refetch();
+              if (q.issue === "fait") onSuiviClassique?.(qualif);
             }
             return res;
           }}
@@ -564,6 +569,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             const r = membrePour;
             setMembrePour(null);
             if (r) void qualifierRdvClub(r, { issue: "membre", clientId }).then(() => refetch());
+            onMembreCree?.(clientId, r?.prenom ?? "");
           }}
         />
       ) : null}

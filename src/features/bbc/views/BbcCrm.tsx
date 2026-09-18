@@ -1,10 +1,14 @@
 // =============================================================================
-// BbcCrm — « Cobayes & membres » : la liste RÉELLE des membres BBC du coach,
-// cliquable, avec un RÉCAP complet par membre (contact, objectif, programme,
-// statut, visites, cœurs, RDV). Données réelles via useBbcMembers.
+// BbcCrm — « Membres » : la liste RÉELLE des membres BBC du coach, cliquable.
+// La fiche dépliée a TROIS VOLETS (livraison C, 18/09, maquette v7) :
+//   Visites & carte · Son corps · Prochaine étape
+// « Prochaine étape » est calculée (prochaineEtape.ts) : bilan des 10 dès la
+// 9e visite, carte, recos, cœurs, appels. Deux passerelles vers l'app
+// standard : « Sa fiche complète » (/clients/:id) et « Les appels / cœurs ».
+// Données réelles via useBbcMembers.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBbcMembers, type BbcMember } from "../useBbcMembers";
 import { RattacherMembre } from "../RattacherMembre";
 import { visitLevel } from "../useBbcVisits";
@@ -13,6 +17,8 @@ import { BbcMemberCorps } from "./BbcMemberCorps";
 import { objectifAffichable } from "../bilan10Pesee";
 import { BbcPeseeSheet } from "../BbcPeseeSheet";
 import { BbcCardSheet } from "../BbcCardSheet";
+import { BbcBilan10 } from "../BbcBilan10";
+import { prochaineEtape, type ActionEtape } from "../prochaineEtape";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 import type { Club } from "../../../types/domain";
 import { BbcSupprimerMembre } from "./BbcSupprimerMembre";
@@ -76,14 +82,21 @@ interface BbcCrmProps {
    * donnee de demonstration ne peut atteindre un vrai club.
    */
   apercu?: BbcMember[];
+  /** Livraison C : « Prochaine étape » renvoie vers Les appels / Les cœurs. */
+  onGo?: (v: "appels" | "coeurs") => void;
+  /** La fiche à ouvrir en arrivant (depuis Le matin, « prochaine étape »). */
+  ouvrirId?: string | null;
 }
 
-export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
+export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId }: BbcCrmProps) {
   const live = useBbcMembers(userId);
   const tous = apercu ?? live.members;
   const loading = apercu ? false : live.loading;
   const rechargerMembres = live.refetch;
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(ouvrirId ?? null);
+  useEffect(() => { if (ouvrirId) setOpen(ouvrirId); }, [ouvrirId]);
+  // Le bilan des 10 (check-list en 9 points), ouvert depuis « Prochaine étape ».
+  const [bilan, setBilan] = useState<BbcMember | null>(null);
   // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
   // pour retrouver les siens vite — il ne cache rien qu'on ne puisse rouvrir.
   const [filtre, setFiltre] = useState<"club" | "moi">("club");
@@ -206,7 +219,7 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
-              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} />
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} onBilan={setBilan} onGo={onGo} />
           ))
         )}
       </div>
@@ -256,6 +269,16 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu }: BbcCrmProps) {
             setCarteCle((k) => k + 1);
             return true;
           }}
+        />
+      ) : null}
+
+      {bilan && userId ? (
+        <BbcBilan10
+          clientId={bilan.id}
+          clientName={bilan.name}
+          coachUserId={userId}
+          onClose={() => setBilan(null)}
+          onDone={() => void rechargerMembres()}
         />
       ) : null}
 
@@ -324,11 +347,18 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
   };
 }
 
+type Volet = "visites" | "corps" | "etape";
+const VOLETS: [Volet, string][] = [["visites", "Visites & carte"], ["corps", "Son corps"], ["etape", "Prochaine étape"]];
+const ICONE_ETAPE: Record<ActionEtape, string> = { bilan: "📋", carte: "🎟️", coeurs: "❤️", appels: "📞" };
+
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache, onBilan, onGo,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
   onSupprimer: (m: BbcMember) => void;
+  /** Ouvre le bilan des 10 pour ce membre (livraison C). */
+  onBilan: (m: BbcMember) => void;
+  onGo?: (v: "appels" | "coeurs") => void;
   /** Ouvre la feuille carte pour ce membre (03/09). */
   onCarte: (m: BbcMember) => void;
   onPesee?: (m: BbcMember) => void; cleCorps?: number;
@@ -337,6 +367,7 @@ function MemberRow({
   onRattache?: () => void;
 }) {
   const lvlColor = levelColor(m);
+  const [volet, setVolet] = useState<Volet>("visites");
   // On ne le dit que quand c'est une information : « inscrite par moi » n'en
   // est pas une. Le prénom suffit, c'est un club de deux personnes.
   const parQui = m.ownerId && m.ownerId !== userId ? (m.ownerName ?? "").trim().split(/\s+/)[0] : null;
@@ -387,58 +418,126 @@ function MemberRow({
             );
           })()}
 
-          {/* chiffres clés */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-            <Stat
-              label={m.card ? `carte ${m.card.type}` : "visites"}
-              value={visitLabel(m)}
-              color={lvlColor}
-              sub={
-                !m.card
-                  ? "pas de carte active"
-                  : visitLevel(m.card.used, m.card.type) === "bilan"
-                    ? "carte finie · bilan à faire"
-                    : visitLevel(m.card.used, m.card.type) === "warn"
-                      ? "bientôt le bilan"
-                      : `${m.card.remaining} restantes`
-              }
+          {/* ── TROIS VOLETS (livraison C, maquette v7) ─────────────────────
+              Visites & carte · Son corps · Prochaine étape. La fiche dépliée
+              empilait tout ; au comptoir on cherche UNE chose à la fois. */}
+          <div role="tablist" aria-label="La fiche" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, padding: 4, borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
+            {VOLETS.map(([k, l]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={volet === k}
+                onClick={() => setVolet(k)}
+                className="bbc-pression"
+                style={{
+                  minHeight: 44, borderRadius: 11, border: 0, cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)", fontSize: 12.5, fontWeight: 700, padding: "0 4px",
+                  background: volet === k ? "var(--ls-bbc-s1)" : "transparent", color: volet === k ? "var(--ls-bbc-orange-text)" : "var(--ls-bbc-muted)",
+                  boxShadow: volet === k ? "0 1px 4px color-mix(in srgb, var(--ls-bbc-text) 14%, transparent)" : undefined,
+                }}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {volet === "visites" ? (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                <Stat
+                  label={m.card ? `carte ${m.card.type}` : "visites"}
+                  value={visitLabel(m)}
+                  color={lvlColor}
+                  sub={
+                    !m.card
+                      ? "pas de carte active"
+                      : visitLevel(m.card.used, m.card.type) === "bilan"
+                        ? "carte finie · bilan à faire"
+                        : visitLevel(m.card.used, m.card.type) === "warn"
+                          ? "bientôt le bilan"
+                          : `${m.card.remaining} restantes`
+                  }
+                />
+                <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
+                <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
+              </div>
+
+              {/* La carte, ici : c'est en ouvrant quelqu'un qu'on se demande où
+                  il en est (Thomas, 03/09). */}
+              <button
+                type="button"
+                className="bbc-pression"
+                onClick={() => onCarte(m)}
+                style={{
+                  minHeight: 46, padding: "10px 16px", borderRadius: 12, cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, textAlign: "left",
+                  background: m.card ? "var(--ls-bbc-s2)" : "color-mix(in srgb, var(--ls-bbc-lime) 16%, transparent)",
+                  border: `1px solid ${m.card ? "var(--ls-bbc-line)" : "color-mix(in srgb, var(--ls-bbc-lime) 45%, transparent)"}`,
+                  color: m.card ? "var(--ls-bbc-text)" : "var(--ls-bbc-lime-text)",
+                }}
+              >
+                🎟️ {m.card ? `Carte ${m.card.type} · ${m.card.remaining} restantes — renouveler ou changer` : "Lui donner une carte"}
+              </button>
+
+              {/* ── CE QUI MANQUE, avec ce que ça coûte ──────────────────────
+                  « Email — » veut dire « pas de rappel la veille de son RDV ». */}
+              {!m.email ? (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 14, background: "color-mix(in srgb, var(--ls-bbc-amber) 9%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 32%, transparent)", fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-bbc-amber)" }}>
+                  <span aria-hidden="true">⚠️</span>
+                  <span>
+                    <strong>{m.phone ? "Pas d'email." : "Ni téléphone ni email."}</strong> Elle ne recevra aucun rappel la
+                    veille de son rendez-vous{m.nextFollowUp ? ` du ${fmtDate(m.nextFollowUp)}` : ""} — ce rappel part par mail.
+                    Son QR et son application marchent quand même.
+                  </span>
+                </div>
+              ) : null}
+
+              <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                <Line k="Objectif" v={objLabel(m.objective)} />
+                <Line k="Programme" v={m.program || "—"} />
+                <Line k="Démarré le" v={fmtDate(m.startDate)} />
+                <Line k="Prochain RDV" v={fmtDate(m.nextFollowUp)} />
+                <Line k="Téléphone" v={m.phone || "—"} />
+                <Line k="Email" v={m.email || "—"} />
+              </div>
+            </>
+          ) : volet === "corps" ? (
+            /* ── SON CORPS ── chargé paresseusement, seulement à l'ouverture. */
+            <BbcMemberCorps
+              clientId={m.id}
+              prenom={(m.name || "").trim().split(/\s+/)[0] || "elle"}
+              objectif={objectifAffichable(m.objective)}
+              onCharge={(c) => onCorpsCharge?.(m.id, c.releves.length)}
+              onNouvellePesee={onPesee ? () => onPesee(m) : undefined}
+              cle={cleCorps}
             />
-            <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
-            <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
-          </div>
-          {/* ── SON CORPS ── chargé paresseusement, seulement à l'ouverture. */}
-          <BbcMemberCorps
-            clientId={m.id}
-            prenom={(m.name || "").trim().split(/\s+/)[0] || "elle"}
-            objectif={objectifAffichable(m.objective)}
-            onCharge={(c) => onCorpsCharge?.(m.id, c.releves.length)}
-            onNouvellePesee={onPesee ? () => onPesee(m) : undefined}
-            cle={cleCorps}
-          />
-
-          {/* ── CE QUI MANQUE, avec ce que ça coûte ────────────────────────
-              Un tiret ne dit ni pourquoi c'est vide, ni le prix du vide.
-              « Email — » veut dire « pas de rappel la veille de son RDV ». */}
-          {!m.email ? (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 14, background: "color-mix(in srgb, var(--ls-bbc-amber) 9%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 32%, transparent)", fontSize: 12.5, lineHeight: 1.5, color: "var(--ls-bbc-amber)" }}>
-              <span aria-hidden="true">⚠️</span>
-              <span>
-                <strong>{m.phone ? "Pas d'email." : "Ni téléphone ni email."}</strong> Elle ne recevra aucun rappel la
-                veille de son rendez-vous{m.nextFollowUp ? ` du ${fmtDate(m.nextFollowUp)}` : ""} — ce rappel part par mail.
-                Son QR et son application marchent quand même.
-              </span>
-            </div>
-          ) : null}
-
-          {/* détails */}
-          <div style={{ background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
-            <Line k="Objectif" v={objLabel(m.objective)} />
-            <Line k="Programme" v={m.program || "—"} />
-            <Line k="Démarré le" v={fmtDate(m.startDate)} />
-            <Line k="Prochain RDV" v={fmtDate(m.nextFollowUp)} />
-            <Line k="Téléphone" v={m.phone || "—"} />
-            <Line k="Email" v={m.email || "—"} />
-          </div>
+          ) : (
+            /* ── PROCHAINE ÉTAPE ── calculée (prochaineEtape.ts), un bouton par ligne. */
+            <>
+              {prochaineEtape(m).map((e) => (
+                <button
+                  key={e.cle}
+                  type="button"
+                  className="bbc-pression"
+                  onClick={() => (e.action === "bilan" ? onBilan(m) : e.action === "carte" ? onCarte(m) : onGo?.(e.action))}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12, width: "100%", minHeight: 66, padding: "10px 14px", borderRadius: 14, textAlign: "left", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)",
+                    border: `1px solid ${e.fort ? "transparent" : "var(--ls-bbc-line2)"}`, background: e.fort ? "var(--ls-bbc-grad)" : "var(--ls-bbc-s2)",
+                    color: e.fort ? "#fff" : "var(--ls-bbc-text)", boxShadow: e.fort ? "var(--ls-bbc-grad-ombre)" : undefined,
+                  }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: 22, flex: "none" }}>{ICONE_ETAPE[e.action]}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 14.5, fontWeight: 700 }}>{e.titre}</span>
+                    <span style={{ display: "block", fontSize: 12.5, marginTop: 2, lineHeight: 1.4, color: e.fort ? "inherit" : "var(--ls-bbc-muted)", opacity: e.fort ? 0.9 : 1 }}>{e.detail}</span>
+                  </span>
+                  <span aria-hidden="true" style={{ fontSize: 16, opacity: 0.7 }}>›</span>
+                </button>
+              ))}
+              <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", lineHeight: 1.5 }}>
+                Le bilan des {m.card?.type ?? 10} s'ouvre dès la 9e visite : on le prépare, on ne le subit pas.
+              </div>
+            </>
+          )}
 
           {/* Voir l'app telle que le membre la voit — indispensable pour la
               recette : le coach ouvre la PWA du membre sans chercher son lien. */}
@@ -489,9 +588,9 @@ function MemberRow({
           {/* ── Sortir de là ────────────────────────────────────────────────
               Thomas (19/08) : « les clients rentrés par erreur sur l'app BBC —
               côté classique on peut tout faire depuis Actions, mais rien sur le
-              BBC. » Deux sorties, dans cet ordre : le lien vers sa fiche, qui
-              donne accès à TOUT le reste sans le redévelopper ici, puis la
-              suppression, qui n'existait nulle part côté club. */}
+              BBC. » Trois sorties : la PASSERELLE vers sa fiche complète (l'app
+              standard, avec « ← Retour au club »), le changement de coach, la
+              suppression. */}
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-bbc-line)", display: "flex", flexWrap: "wrap", gap: 9, alignItems: "center" }}>
             <a
               href={`/clients/${m.id}`}
@@ -506,26 +605,8 @@ function MemberRow({
                 textDecoration: "none",
               }}
             >
-              📋 Sa fiche complète
+              📋 Sa fiche complète →
             </a>
-            {/* La carte, ici aussi. Elle ne vivait que sur « Les visites » —
-                or c'est en ouvrant quelqu'un qu'on se demande où il en est. */}
-            <button
-              type="button"
-              onClick={() => onCarte(m)}
-              style={{
-                padding: "10px 16px",
-                borderRadius: 12,
-                background: m.card ? "var(--ls-bbc-s2)" : "color-mix(in srgb, var(--ls-bbc-lime) 16%, transparent)",
-                border: `1px solid ${m.card ? "var(--ls-bbc-line)" : "color-mix(in srgb, var(--ls-bbc-lime) 45%, transparent)"}`,
-                color: m.card ? "var(--ls-bbc-text)" : "var(--ls-bbc-lime-text)",
-                fontWeight: 600,
-                fontSize: 12.5,
-                cursor: "pointer",
-              }}
-            >
-              🎟️ {m.card ? `Carte ${m.card.type} · ${m.card.remaining} restantes` : "Lui donner une carte"}
-            </button>
             {/* Changer le coach qui suit la fiche. Placé AVANT « retirer » :
                 dans neuf cas sur dix, quand on veut sortir quelqu'un de sa
                 liste, c'est qu'il est suivi par un autre — le retirer du club
