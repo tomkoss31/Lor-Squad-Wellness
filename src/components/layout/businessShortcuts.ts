@@ -33,7 +33,7 @@ export const BUSINESS_SHORTCUTS: BusinessShortcut[] = [
   { label: "Ventes comptoir", path: "/ventes-comptoir", emoji: "🏪", feature: "business.ventes-comptoir" },
   // ── Partager / prospecter ─────────────────────────────────────────────
   { label: "Mes liens", path: "/mes-liens", emoji: "🔗", feature: "business.mes-liens" },
-  { label: "Prospecter", path: "/outils-prospection", emoji: "🎯", feature: "business.prospecter" },
+  { label: "Prospecter", path: "/prospection", emoji: "🎯", feature: "business.prospecter" },
   { label: "Ma boutique HL Skin", path: "/ma-boutique", emoji: "🌿", feature: "business.boutique" },
   // ── Mesurer ───────────────────────────────────────────────────────────
   { label: "Rentabilité", path: "/rentabilite", emoji: "💎", feature: "business.rentabilite" },

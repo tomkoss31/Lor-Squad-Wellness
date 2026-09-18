@@ -66,28 +66,6 @@ export const STARTER_TASKS: StarterTask[] = [
     linkPath: "/charte",
     linkLabel: "Signer ma charte",
   },
-  {
-    // key historique « liste_50 » conservée (persistée en DB :
-    // distributor_starter_progress.task_key) — l'intitulé s'aligne désormais
-    // sur la « Liste 100 » (méthode FRANK) utilisée partout dans l'app.
-    key: "liste_50",
-    week: 1,
-    emoji: "📒",
-    title: "Écris ta Liste 100",
-    why: "Ta matière première : 100 contacts. Sans liste, pas d'activité.",
-    isActivationGate: true,
-    linkPath: "/cahier-de-bord?tab=liste",
-    linkLabel: "Ouvrir ma Liste 100",
-  },
-  {
-    key: "cobaye_demarre",
-    week: 1,
-    emoji: "🥤",
-    title: "Démarre tes 21 jours cobaye",
-    why: "Teste les produits sur toi pour parler de ton vécu, pas d'un script.",
-    linkPath: "/cahier-de-bord?tab=cobaye",
-    linkLabel: "Ouvrir mon cahier",
-  },
 
   // ─── Semaine 2 — Premiers contacts ────────────────────────────────────────
   {

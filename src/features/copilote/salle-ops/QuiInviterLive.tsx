@@ -28,10 +28,10 @@ export function QuiInviterLive() {
       {candidates.length === 0 ? (
         <div style={emptyCard}>
           <div style={{ fontSize: 14, color: "var(--ls-ops-text3)", lineHeight: 1.5 }}>
-            Personne à relancer pour l'instant. Commence par écrire ta Liste 100 — tes 100 premiers contacts.
+            Personne à relancer pour l'instant. Tes contacts arrivent dans le CRM : leads Meta, site du club, recommandations.
           </div>
-          <button type="button" onClick={() => navigate("/cahier-de-bord?tab=liste")} style={emptyCta}>
-            Ouvrir ma Liste 100 →
+          <button type="button" onClick={() => navigate("/crm")} style={emptyCta}>
+            Ouvrir le CRM →
           </button>
         </div>
       ) : (

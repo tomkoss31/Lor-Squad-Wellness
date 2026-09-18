@@ -106,7 +106,7 @@ export function ReferrerStatsCard() {
           </p>
         </div>
         <Link
-          to="/outils-prospection"
+          to="/mes-liens"
           style={{
             padding: "8px 14px",
             borderRadius: 10,
@@ -120,7 +120,7 @@ export function ReferrerStatsCard() {
             whiteSpace: "nowrap",
           }}
         >
-          🎯 Mes outils →
+          🔗 Mes liens →
         </Link>
       </div>
     );
@@ -186,10 +186,10 @@ export function ReferrerStatsCard() {
             depuis tes liens partagés (?ref=)
           </p>
         </div>
-        {/* Raccourci Outils prospection (admin only) */}
+        {/* Raccourci Mes liens (admin only) */}
         {currentUser?.role === "admin" ? (
           <Link
-            to="/outils-prospection"
+            to="/mes-liens"
             style={{
               padding: "6px 12px",
               borderRadius: 999,

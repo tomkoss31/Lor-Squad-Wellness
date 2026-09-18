@@ -138,8 +138,8 @@ export function getProactiveSuggestion(focus: TimeFocus): ProactiveSuggestion {
     case "morning-prep":
       return {
         title: "Profite-en pour faire grandir ta base.",
-        ctaLabel: "Mes outils prospection",
-        ctaRoute: "/outils-prospection",
+        ctaLabel: "Mes liens à partager",
+        ctaRoute: "/mes-liens",
       };
     case "noon-rdv":
       return {
@@ -150,8 +150,8 @@ export function getProactiveSuggestion(focus: TimeFocus): ProactiveSuggestion {
     case "afternoon-action":
       return {
         title: "Profite-en pour faire grandir ta base.",
-        ctaLabel: "Mes outils prospection",
-        ctaRoute: "/outils-prospection",
+        ctaLabel: "Mes liens à partager",
+        ctaRoute: "/mes-liens",
       };
     case "evening-recap":
       return {

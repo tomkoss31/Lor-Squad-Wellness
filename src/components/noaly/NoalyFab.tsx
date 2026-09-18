@@ -54,7 +54,6 @@ const ALLOWED_ROUTES = new Set([
   "/pv",
   "/outils-prospection",
   "/developpement",
-  "/cahier-de-bord",
   "/parametres",
 ]);
 

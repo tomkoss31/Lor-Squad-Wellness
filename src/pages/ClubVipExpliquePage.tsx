@@ -95,10 +95,10 @@ export function ClubVipExpliquePage() {
         </button>
         <button
           type="button"
-          onClick={() => navigate("/outils-prospection")}
+          onClick={() => navigate("/mes-liens")}
           style={ghostBtn}
         >
-          ← Outil de prospection
+          ← Mes liens
         </button>
       </footer>
     </div>

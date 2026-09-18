@@ -34,6 +34,12 @@ export interface GoProStepDef {
 
 export const GO_PRO_STEPS: GoProStepDef[] = [
   { n: 1, key: "sequiper", label: "S'équiper", gates: ["commande_250pv"] },
+  // « Trouver » : la porte « liste_50 » reste DÉCLARATIVE (on la propose, elle ne
+  // retient pas le fil) mais elle ne compte plus pour l'activation depuis le
+  // 18/09/2026 — la Liste 100 a quitté l'app, les contacts arrivent par le CRM.
+  // Miroir serveur : migration 20261215510000_activation_sans_liste_50. Ne PAS
+  // la passer en gates: [] — ce serait la 1re étape « sans porte », donc celle
+  // sur laquelle tout le monde atterrirait une fois le parcours fini.
   { n: 2, key: "trouver", label: "Trouver", gates: ["liste_50"] },
   { n: 3, key: "inviter", label: "Inviter", gates: ["premiere_story"] },
   {
@@ -62,7 +68,6 @@ export const GO_PRO_TOTAL = GO_PRO_STEPS.length;
  * TOUT LE MONDE. L'étape reste dans le parcours, elle ne verrouille plus.
  */
 export const ACTIVATION_GATES = [
-  "liste_50",
   "premiere_story",
   "premier_bilan",
   "premier_pv_pack",

@@ -194,7 +194,6 @@ export function AppLayout() {
     if (p.startsWith("/pv")) return "Suivi PV";
     if (p === "/rentabilite") return "Rentabilité";
     if (p === "/outils") return "Mon business";
-    if (p === "/cahier-de-bord") return "Cahier de bord";
     if (p === "/developpement") return "Développement";
     if (p.startsWith("/developpement/")) return "Développement";
     if (p === "/formation" || p === "/guide") return "Formation";
@@ -356,7 +355,6 @@ export function AppLayout() {
                   location.pathname.startsWith("/formation") ||
                   location.pathname.startsWith("/guide") ||
                   location.pathname.startsWith("/academy") ||
-                  location.pathname.startsWith("/cahier-de-bord") ||
                   location.pathname.startsWith("/simulateur-ebe")
                 ));
 

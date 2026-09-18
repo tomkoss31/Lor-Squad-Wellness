@@ -87,8 +87,8 @@ export const ACADEMY_LESSONS: Record<string, AcademyLesson> = {
       "Le métier commence par une liste. 100 noms : famille, amis, collègues, gens du club. Pas de tri « il voudra jamais » — tu notes, tu trieras après. Repère tes profils rouges : les sportifs, les fonceurs, les énergiques. Sans liste, pas d'activité.",
     faire: {
       instruction: "Écris au moins 20 noms aujourd'hui (objectif 100), avec un moyen de les joindre.",
-      ctaLabel: "Ouvrir ma Liste 100",
-      linkPath: "/cahier-de-bord?tab=liste",
+      ctaLabel: "Ouvrir le CRM",
+      linkPath: "/crm",
     },
     preuve: "C'est gagné quand tu as posé au moins 20 noms — et tu continues vers 100.",
     noalyPrompt: "Aide-moi à trouver des noms pour ma Liste 100, je sèche. Pose-moi des questions pour débloquer.",

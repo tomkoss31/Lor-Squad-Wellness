@@ -125,17 +125,6 @@ const CARDS: HubCard[] = [
     section: "apprendre",
   },
   {
-    id: "cahier",
-    emoji: "📔",
-    title: "Cahier de bord",
-    description: "21 jours cobaye, liste 100 connaissances, journal EBE perso.",
-    cta: "Ouvrir mon cahier",
-    path: "/cahier-de-bord",
-    accent: "var(--ls-coral)",
-    section: "quotidien",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
-  },
-  {
     id: "simulateur",
     emoji: "🎯",
     title: "Simulateur EBE",
