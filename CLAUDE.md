@@ -1111,6 +1111,15 @@ policy permissive posée par erreur rouvre tout en silence. **Ne jamais
 re-`grant` DELETE/UPDATE à `anon`** : l'app client passe par les edge functions
 en `service_role`, les coachs sont `authenticated`.
 
+**Depuis le 18/09/2026 (lot 1 de l'audit), INSERT aussi révoqué pour `anon`**
+(migration `20261215490000`) : il ne peut plus écrire que dans `client_messages`,
+`client_referrals` et `rdv_change_requests` — les écritures à jeton de l'app
+cliente. Une nouvelle table où l'app cliente écrirait en direct doit recevoir son
+`grant insert … to anon` explicitement, sinon l'écriture échoue en « permission
+denied ». Même migration : plus d'INSERT public sur `prospect_leads` /
+`online_bilans` (tout passe par les edge), consentements visibles seulement si on
+voit la cliente, purge nocturne de `cron.job_run_details` (14 j).
+
 ### 4. Ne jamais conclure à une faille (ni à son absence) sur un code HTTP
 
 Un `DELETE` sur une ligne inexistante renvoie **204 même quand le RLS
