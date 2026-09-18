@@ -27,6 +27,7 @@
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Club } from "../../../types/domain";
 import { useAppContext } from "../../../context/AppContext";
 import { setClubDayClosed, setClubDayHours } from "../../../services/sb/club-bookings";
@@ -43,6 +44,7 @@ import { GuideAgendaSheet } from "./GuideAgendaSheet";
 import { qualifierRdvClub } from "./qualifierRdvClub";
 import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
+import { BbcBilan10 } from "../BbcBilan10";
 import {
   aQualifier,
   contactDe,
@@ -128,9 +130,16 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
   const [qualif, setQualif] = useState<RdvClub | null>(null);
   /** Le rendez-vous dont on crée la fiche membre (feuille pré-remplie). */
   const [membrePour, setMembrePour] = useState<RdvClub | null>(null);
+  const navigate = useNavigate();
+  /** Le bilan des 10 d'une cliente en fin de carte, ouvert depuis la question (18/09). */
+  const [bilan10, setBilan10] = useState<{ clientId: string; nom: string } | null>(null);
   // Un suivi se règle depuis la fiche du membre, un « pas dispo » se libère :
   // ni l'un ni l'autre ne se qualifie.
-  const ouvrirRdv = (r: RdvClub) => (r.source === "suivi" || r.source === "indispo" ? setRdvOuvert(r) : setQualif(r));
+  // Depuis le 18/09 (agenda unique), un SUIVI de cliente ouvre la même question
+  // qu'un prospect — avant il finissait dans une feuille « se règle depuis la
+  // fiche », une impasse pour les deux tiers de l'agenda. Seul « pas dispo »
+  // garde sa petite feuille.
+  const ouvrirRdv = (r: RdvClub) => (r.source === "indispo" ? setRdvOuvert(r) : setQualif(r));
 
   // Le mode d'emploi (étape 10). La carte d'accueil ne s'affiche qu'une fois ;
   // si le navigateur refuse le stockage, on ne la montre pas plutôt que de la
@@ -555,12 +564,24 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             if (res.ok) {
               setQualif(null);
               void refetch();
-              if (q.issue === "fait") onSuiviClassique?.(qualif);
+              if (q.issue === "fait" && qualif.source !== "suivi") onSuiviClassique?.(qualif);
             }
             return res;
           }}
+          onBilan={
+            qualif.source === "suivi" && qualif.clientId
+              ? () => {
+                  const r = qualif;
+                  setQualif(null);
+                  // Fin de carte → le bilan des 10 ; sinon son suivi, dans l'app standard.
+                  if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: nomComplet(r) });
+                  else navigate(`/clients/${r.clientId}/follow-up/new`);
+                }
+              : null
+          }
+          onFiche={qualif.source === "suivi" && qualif.clientId ? () => navigate(`/clients/${qualif.clientId}`) : null}
           onDeplacer={
-            qualif.source === "prospect"
+            qualif.source === "prospect" || qualif.source === "suivi"
               ? () => {
                   const r = qualif;
                   setQualif(null);
@@ -576,7 +597,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
           userId={userId}
           coachName={coachName}
           club={club}
-          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: membrePour.telephone, email: null }}
+          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: contactDe(membrePour).tel, email: contactDe(membrePour).mail }}
           onClose={() => setMembrePour(null)}
           onCreated={(clientId) => {
             const r = membrePour;
@@ -585,6 +606,10 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             onMembreCree?.(clientId, r?.prenom ?? "");
           }}
         />
+      ) : null}
+
+      {bilan10 && userId ? (
+        <BbcBilan10 clientId={bilan10.clientId} clientName={bilan10.nom} coachUserId={userId} onClose={() => setBilan10(null)} onDone={() => void refetch()} />
       ) : null}
 
       {caler ? (

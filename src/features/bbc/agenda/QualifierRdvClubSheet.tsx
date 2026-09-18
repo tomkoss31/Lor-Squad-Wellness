@@ -21,7 +21,7 @@ import { useState, type CSSProperties } from "react";
 import { aQualifier, contactDe, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
 import type { Qualification, ResultatQualif } from "./qualifierRdvClub";
 
-type Etape = "choix" | "reflechit" | "pasvenue" | "lapin";
+type Etape = "choix" | "reflechit" | "pasvenue" | "lapin" | "replanifier";
 
 interface Props {
   rdv: RdvClub;
@@ -34,13 +34,18 @@ interface Props {
   onQualifie: (q: Qualification) => Promise<ResultatQualif>;
   /** Déplacer ce rendez-vous — seulement pour un rendez-vous posé à la main. */
   onDeplacer: (() => void) | null;
+  /** Suivi de cliente (18/09) : « Venue · faire son bilan » — le bilan standard,
+   *  ou le bilan des 10 pour une fin de carte. Le parent décide lequel. */
+  onBilan?: (() => void) | null;
+  /** Suivi de cliente : « Sa fiche complète » (app standard). */
+  onFiche?: (() => void) | null;
   /** Depuis Le matin, « Pas venue » ouvre directement la bonne question (livraison C). */
   etapeInitiale?: "choix" | "pasvenue";
 }
 
 const JOURS_RELANCE = [3, 7, 15];
 
-export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer, etapeInitiale }: Props) {
+export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer, etapeInitiale, onBilan, onFiche }: Props) {
   const [etape, setEtape] = useState<Etape>(etapeInitiale ?? "choix");
   const [jours, setJours] = useState(7);
   const [envoi, setEnvoi] = useState(false);
@@ -53,6 +58,8 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
   const quand = `${libelleJour(debut)} · ${heureDe(rdv.debut)} · ${coachPrenom}`;
   const { tel, mail } = contactDe(rdv);
   const prenom = rdv.prenom || "Elle";
+  const suivi = rdv.source === "suivi";
+  const finDeCarte = /carte/i.test(rdv.nature);
 
   async function repondre(q: Qualification) {
     if (envoi) return;
@@ -74,7 +81,7 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
         <div style={{ width: 40, height: 5, borderRadius: 9, background: "var(--ls-bbc-line2)", margin: "10px auto 4px", flex: "none" }} />
         <div style={entete}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={titre}>{etape === "choix" ? nomComplet(rdv) : etape === "reflechit" ? "Elle réfléchit" : etape === "pasvenue" ? "Pas venue" : "Sans nouvelles"}</div>
+            <div style={titre}>{etape === "choix" ? nomComplet(rdv) : etape === "reflechit" ? "Elle réfléchit" : etape === "pasvenue" || etape === "replanifier" ? "Pas venue" : "Sans nouvelles"}</div>
             <div style={sousTitre}>{etape === "choix" ? `rdv ${quand}` : `${prenom} · ${quand}`}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={croix}>
@@ -123,6 +130,28 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
               ) : null}
 
               <div style={etiquette}>comment ça s'est passé ?</div>
+              {suivi ? (
+                <>
+                  {onBilan ? (
+                    <Choix
+                      emoji="✅"
+                      titre={finDeCarte ? "Venue · faire son bilan des 10" : "Venue · faire son bilan"}
+                      sous={finDeCarte ? "La check-list en 9 points : scan, carte suivante, recos." : "Le suivi s'ouvre tout de suite, avec ses derniers chiffres."}
+                      onClick={onBilan}
+                      victoire
+                    />
+                  ) : null}
+                  <Choix emoji="✓" titre="Venue · c'est fait" sous="Le suivi est coché. Rien d'autre à faire." onClick={() => void repondre({ issue: "fait" })} />
+                  {onDeplacer ? <Choix emoji="🔁" titre="Déplacer" sous="Un autre créneau, chez sa coach." onClick={onDeplacer} /> : null}
+                  <Choix emoji="🚫" titre="Pas venue" sous="On la replanifie dans 3, 7 ou 15 jours. Pas de SMS." onClick={() => setEtape("replanifier")} />
+                  {onFiche ? (
+                    <button type="button" onClick={onFiche} style={lienBas}>
+                      Sa fiche complète →
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <>
               <Choix emoji="☕" titre="Elle prend sa carte de membre" sous="Fiche créée dans le club, carte activée. Tout ce qu'on sait d'elle est déjà rempli." onClick={onMembre} victoire />
               <Choix
                 emoji="📋"
@@ -138,6 +167,8 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                   Déplacer ou modifier ce rendez-vous
                 </button>
               ) : null}
+                </>
+              )}
             </>
           ) : etape === "reflechit" ? (
             <>
@@ -173,6 +204,24 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                   Elle veut un autre créneau : recaler
                 </button>
               ) : null}
+              <button type="button" onClick={() => setEtape("choix")} style={lienBas}>
+                ‹ Retour
+              </button>
+            </>
+          ) : etape === "replanifier" ? (
+            <>
+              <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", lineHeight: 1.5 }}>Le suivi reste dans l'agenda, à la même heure, un autre jour. Pas de SMS : c'est toi qui la préviens.</div>
+              <div style={etiquette}>je la replanifie dans</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {JOURS_RELANCE.map((n) => (
+                  <button key={n} type="button" onClick={() => setJours(n)} style={{ ...puce, background: jours === n ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", borderColor: jours === n ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)", color: jours === n ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)" }}>
+                    {n} jours
+                  </button>
+                ))}
+              </div>
+              <button type="button" disabled={envoi} onClick={() => void repondre({ issue: "pas_venue", jours })} style={boutonLime}>
+                🔁 Je la replanifie le {dateDans(jours)}
+              </button>
               <button type="button" onClick={() => setEtape("choix")} style={lienBas}>
                 ‹ Retour
               </button>

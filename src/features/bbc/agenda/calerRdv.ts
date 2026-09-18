@@ -21,8 +21,10 @@ export interface DemandeRdv {
   email?: string | null;
   sourceDetail?: string | null;
   note?: string | null;
-  /** Le rendez-vous (table `prospects`) qu'on déplace, s'il y a lieu. */
+  /** Le rendez-vous qu'on déplace, s'il y a lieu. */
   rdvId?: string | null;
+  /** Sa table : un rendez-vous de l'agenda, ou un suivi de cliente (18/09). */
+  table?: "prospect" | "suivi";
 }
 
 export type ResultatRdv = { ok: true; id: string } | { ok: false; raison: "creneau_pris" | "refuse" | "reseau"; message: string };
@@ -33,6 +35,7 @@ const MESSAGES: Record<string, string> = {
   creneau_invalide: "Ce créneau n'est pas valable.",
   prenom_requis: "Il manque le prénom.",
   rendez_vous_introuvable: "Ce rendez-vous n'existe plus.",
+  suivi_reste_avec_sa_coach: "Un suivi reste avec sa coach : choisis un créneau chez elle.",
 };
 
 export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
@@ -51,6 +54,7 @@ export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
       p_source_detail: d.sourceDetail ?? "Agenda du club",
       p_note: d.note ?? null,
       p_rdv_id: d.rdvId ?? null,
+      p_table: d.table ?? "prospect",
     });
     if (error) {
       const cle = Object.keys(MESSAGES).find((k) => error.message.includes(k));
