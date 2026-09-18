@@ -31,6 +31,11 @@ import {
   type CoachJoignable,
 } from "../../services/sb/creneauxCoach";
 import { getSupabaseClient } from "../../services/supabaseClient";
+// Les horaires du club — LA règle du tunnel public et de l'agenda du club
+// (18/09/2026). Sans elle, cette feuille proposait 9 h–19 h tous les jours sauf
+// le dimanche : le samedi après-midi, les jours fériés, le mardi soir… alors
+// que l'autre agenda disait le contraire. Une règle, deux réponses.
+import { cleJour, horairesDuJour, type ReglagesHoraires } from "../bbc/agenda/agendaClub";
 
 /** Les bornes de la journée proposées par défaut, et le pas d'un créneau. */
 const OUVERTURE = enMinutes("09:00")!;
@@ -45,12 +50,16 @@ const JOUR_LONG = new Intl.DateTimeFormat("fr-FR", {
 const HEURE = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 
 export interface CalerChezUnCoachProps {
+  /** `clubs.settings.discovery` : jours de repos, fermetures, plages du jour.
+   *  Sans horaires réglés, on garde 9 h–19 h hors dimanche. */
+  reglages?: ReglagesHoraires | null;
   onFermer: () => void;
   /** Appelé après une réservation réussie — l'agenda se recharge. */
   onReserve?: () => void;
 }
 
-export function CalerChezUnCoach({ onFermer, onReserve }: CalerChezUnCoachProps) {
+export function CalerChezUnCoach({ reglages, onFermer, onReserve }: CalerChezUnCoachProps) {
+  const aDesHoraires = Boolean(reglages?.hours && Object.keys(reglages.hours).length > 0);
   const [coachs, setCoachs] = useState<CoachJoignable[]>([]);
   const [coach, setCoach] = useState<CoachJoignable | null>(null);
   const [occupees, setOccupees] = useState<Plage[] | null>(null);
@@ -99,25 +108,25 @@ export function CalerChezUnCoach({ onFermer, onReserve }: CalerChezUnCoachProps)
     for (let i = 0; i < JOURS_PROPOSES; i += 1) {
       const d = new Date(base);
       d.setDate(d.getDate() + i);
-      // Dimanche exclu : le club est fermé, et personne ne reçoit ce jour-là.
-      if (d.getDay() !== 0) out.push(d);
+      // Les jours où le club ne reçoit pas (repos, fermeture) ne sont pas
+      // proposés. Sans réglages : le dimanche seulement, comme avant.
+      const ouvert = aDesHoraires ? horairesDuJour(reglages, cleJour(d)).etat === "ouvert" : d.getDay() !== 0;
+      if (ouvert) out.push(d);
     }
     return out;
-  }, []);
+  }, [aDesHoraires, reglages]);
 
   const creneauxPour = useCallback(
-    (d: Date): Creneau[] =>
-      occupees === null
-        ? []
-        : creneauxDuJour({
-            jour: d,
-            ouvertureMin: OUVERTURE,
-            fermetureMin: FERMETURE,
-            pasMin: PAS,
-            occupees,
-            maintenant: new Date(),
-          }),
-    [occupees],
+    (d: Date): Creneau[] => {
+      if (occupees === null) return [];
+      const maintenant = new Date();
+      if (!aDesHoraires) return creneauxDuJour({ jour: d, ouvertureMin: OUVERTURE, fermetureMin: FERMETURE, pasMin: PAS, occupees, maintenant });
+      // Une plage par créneau d'ouverture (le mardi en a deux), dans l'ordre.
+      return horairesDuJour(reglages, cleJour(d)).plages.flatMap((p) =>
+        creneauxDuJour({ jour: d, ouvertureMin: Math.round(p.debut * 60), fermetureMin: Math.round(p.fin * 60), pasMin: PAS, occupees, maintenant }),
+      );
+    },
+    [occupees, aDesHoraires, reglages],
   );
 
   const creneauxDuJourChoisi = useMemo(() => creneauxPour(jour), [creneauxPour, jour]);

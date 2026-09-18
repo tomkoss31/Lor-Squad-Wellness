@@ -2268,6 +2268,7 @@ export function AgendaPage() {
       {/* Feuille d'action RDV client (2026-07-27) — boucler sans quitter. */}
       {calerOuvert ? (
         <CalerChezUnCoach
+          reglages={activeClub?.settings?.discovery ?? null}
           onFermer={() => setCalerOuvert(false)}
           onReserve={() => void rechargerDiscoveries()}
         />

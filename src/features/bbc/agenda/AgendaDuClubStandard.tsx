@@ -21,12 +21,14 @@
 // =============================================================================
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Club } from "../../../types/domain";
 import { BbcAgenda } from "./BbcAgenda";
 
 const MOBILE = "(max-width: 1279px)";
 
 export function AgendaDuClubStandard({ userId, coachName, club }: { userId?: string; coachName?: string; club: Club }) {
+  const navigate = useNavigate();
   // Sous 1280 px, l'app standard affiche son en-tête mobile collant.
   const [mobile, setMobile] = useState(() => (typeof window !== "undefined" && window.matchMedia ? window.matchMedia(MOBILE).matches : false));
   useEffect(() => {
@@ -63,6 +65,10 @@ export function AgendaDuClubStandard({ userId, coachName, club }: { userId?: str
         club={club}
         collantHaut={mobile ? "calc(64px + env(safe-area-inset-top, 0px))" : "0px"}
         fabBas={mobile ? "calc(152px + env(safe-area-inset-bottom, 0px))" : "96px"}
+        // PASSERELLE (lot 1 de l'agenda unique, 18/09) : « elle démarre en suivi
+        // classique » ouvre le bilan pré-rempli ICI aussi — jusque-là, côté
+        // standard, la réponse s'enregistrait et rien ne s'ouvrait.
+        onSuiviClassique={(rdv) => navigate(rdv.source === "prospect" ? `/assessments/new?prospectId=${rdv.id}` : "/assessments/new")}
       />
     </div>
   );
