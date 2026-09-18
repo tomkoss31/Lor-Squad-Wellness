@@ -400,11 +400,6 @@ const FrozenPage = lazy(() =>
     default: module.FrozenPage,
   })),
 );
-const SharePage = lazy(() =>
-  import("./pages/SharePage").then((module) => ({
-    default: module.SharePage,
-  })),
-);
 const LegalNoticePage = lazy(() => import("./pages/LegalNoticePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 const TermsOfSalePage = lazy(() => import("./pages/TermsOfSalePage"));
@@ -844,7 +839,6 @@ export default function App() {
               les users dont le compte est gele. Affiche patience.png +
               bouton 'Demander reactivation' qui INSERT unfreeze_requests. */}
           <Route path="/frozen" element={<FrozenPage />} />
-          <Route path="/partage/:token" element={<SharePage />} />
           {/* Atelier visuel BBC — jamais déclaré hors développement (cf. le
               commentaire au-dessus de la déclaration `AtelierBbcPage`). */}
           {AtelierBbcPage ? <Route path="/atelier-bbc" element={<AtelierBbcPage />} /> : null}

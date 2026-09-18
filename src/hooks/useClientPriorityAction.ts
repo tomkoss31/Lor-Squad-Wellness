@@ -7,7 +7,6 @@
 //   1. plan_rdv              — aucun RDV futur + dernier contact > 7j OU 1 seul bilan
 //   2. complete_initial      — height=0 OU age=0 OU weight premier bilan absent
 //   3. send_followup         — protocole 14j avec ≥1 point en retard > 2j (et !free_follow_up)
-//   4. request_share_consent — client ≥2 bilans mais !public_share_consent
 //   5. ok                    — tout est à jour (fallback teal)
 
 import { useMemo } from "react";
@@ -20,7 +19,6 @@ export type PriorityActionType =
   | "plan_rdv"
   | "complete_initial"
   | "send_followup"
-  | "request_share_consent"
   | "ok";
 
 export interface PriorityAction {
@@ -44,7 +42,7 @@ export function computePriorityAction(
   const assessmentsCount = client.assessments?.length ?? 0;
   const initialAssessment = client.assessments?.find((a) => a.type === "initial");
   // Garde-fou (Chantier 2026-04-27) : aligne sur evaluateProtocolEligibility.
-  // Les cas complete_initial / send_followup / request_share_consent n'ont
+  // Les cas complete_initial / send_followup n'ont
   // de sens QUE si le client est démarré. Sinon, le bloc "Action prioritaire"
   // affichait à tort "J+3 · Ressentis" pour des prospects "Programme à
   // confirmer" (cas d'un prospect réel). plan_rdv reste actif (légitime de planifier
@@ -141,17 +139,6 @@ export function computePriorityAction(
     }
   }
 
-  // ─── 4. request_share_consent ────────────────────────────────────────
-  if (isStarted && !client.publicShareConsent && assessmentsCount >= 2) {
-    return {
-      type: "request_share_consent",
-      icon: "📤",
-      title: "Demander l'accord de partage public",
-      meta: `Client avec ${assessmentsCount} bilans · transformation partageable`,
-      ctaLabel: "Demander →",
-      colorScheme: "gold",
-    };
-  }
 
   // ─── 5. fallback ok ──────────────────────────────────────────────────
   return {

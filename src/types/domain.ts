@@ -677,11 +677,6 @@ export interface Client {
     photo_before?: boolean;
     measurements?: boolean;
   };
-  // Chantier RGPD partage public (2026-04-24) : consentement explicite
-  // requis avant que le coach puisse créer un lien /partage/:token.
-  publicShareConsent?: boolean;
-  publicShareConsentAt?: string;
-  publicShareRevokedAt?: string;
   // Programme Client Privilégié Herbalife (Tier B Premium VIP — 2026-04-28).
   /** ID Herbalife format 21XY010361 (10 chars : 2 chiffres + 2 lettres + 6 chiffres).
    *  Saisi manuellement par le coach après inscription du client sur myherbalife.com.

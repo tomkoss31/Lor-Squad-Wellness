@@ -11,7 +11,7 @@
 // surface d'attaque : aucune mutation, juste des SELECT scopés au clientId
 // extrait du token validé.
 //
-// Pattern repris de supabase/functions/resolve-public-share/index.ts.
+// (Pattern hérité de l'ancienne resolve-public-share — partage public supprimé le 18/09/2026.)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
