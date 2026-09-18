@@ -421,3 +421,13 @@ html.theme-light .bbc-mode select option {
     z-index: 2;
   }
 }
+
+/* ── Pointage du club : sur téléphone, les boutons sous le nom ────────────────
+   18/09/2026, capture de Thomas : la ligne débordait à droite et « Lucie Petit »
+   était coupée dès que trois boutons (carte · bilan · pointé ✓) se partageaient
+   la ligne avec le nom. Sur grand écran rien ne change : la carte fait ses
+   420 px mesurés et tout tient sur une ligne. */
+@media (max-width: 560px) {
+  .bbc-pointage-ligne { flex-wrap: wrap; }
+  .bbc-pointage-actions { width: 100%; justify-content: flex-end; }
+}
