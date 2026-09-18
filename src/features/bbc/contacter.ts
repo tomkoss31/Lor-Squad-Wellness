@@ -9,20 +9,23 @@
 // Fonctions PURES, sans React ni base : testables, et la même liste sert à
 // « Le matin » (les 5 premiers) et à l'onglet « Contacter » (tout).
 //
-// Livraison A : les règles qu'on peut calculer côté app. « Absente depuis
-// 6 jours » attend la fonction en base de la livraison B (la date de dernière
-// visite n'est pas encore dans le hook des membres).
+// Livraison B : les 6 règles, avec la dernière visite de chaque membre lue en
+// base (`bbc_dernieres_visites`, hook useBbcSignaux) pour « absente depuis
+// 6 jours » et « contente depuis 3 semaines ».
 // =============================================================================
 
 import type { CrmLead } from "../../hooks/useCrmLeads";
 import type { BbcMember } from "./useBbcMembers";
 import { nextPalier, type HeartMember } from "./useBbcHearts";
+import type { SignalVisites } from "./useBbcSignaux";
 
 export type RaisonContact =
   | "lead_nouveau"
   | "relance_due"
   | "neuvieme_visite"
   | "carte_finie"
+  | "absente"
+  | "contente"
   | "coeur";
 
 export interface AContacter {
@@ -60,9 +63,13 @@ export function aContacter(args: {
   leads: CrmLead[];
   membres: BbcMember[];
   coeurs: HeartMember[];
+  /** Dernière visite et visites sur 30 j, par membre (livraison B). Sans elles, les règles
+   *  « absente » et « contente » ne s'appliquent pas — jamais de fausse alerte. */
+  signaux?: Map<string, SignalVisites>;
   maintenant?: Date;
 }): AContacter[] {
   const now = args.maintenant ?? new Date();
+  const JOUR = 24 * 60 * 60 * 1000;
   const out: AContacter[] = [];
 
   for (const l of args.leads) {
@@ -100,10 +107,17 @@ export function aContacter(args: {
 
   for (const m of args.membres) {
     if (!m.card || m.card.expired) continue;
+    const sig = args.signaux?.get(m.id);
+    const joursSans = sig?.derniereVisite ? (now.getTime() - new Date(sig.derniereVisite).getTime()) / JOUR : null;
+    const joursDepuisDebut = m.startDate ? (now.getTime() - new Date(m.startDate).getTime()) / JOUR : null;
     if (m.card.used >= m.card.type) {
       out.push({ key: `membre:${m.id}:carte`, nom: m.name, raison: "carte_finie", texte: `Carte ${m.card.type} finie : proposer le bilan et la carte suivante`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.card.used === m.card.type - 1) {
       out.push({ key: `membre:${m.id}:neuf`, nom: m.name, raison: "neuvieme_visite", texte: `${m.card.used}e visite : lui proposer le bilan de la ${m.card.type}e`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+    } else if (!m.visitedToday && joursSans !== null && joursSans >= 6) {
+      out.push({ key: `membre:${m.id}:absente`, nom: m.name, raison: "absente", texte: `Pas venue depuis ${Math.round(joursSans)} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+    } else if (m.hearts === 0 && joursDepuisDebut !== null && joursDepuisDebut >= 21 && (sig?.visites30j ?? 0) >= 6) {
+      out.push({ key: `membre:${m.id}:contente`, nom: m.name, raison: "contente", texte: `Vient depuis ${Math.floor(joursDepuisDebut / 7)} semaines, ${sig?.visites30j} visites ce mois : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: m.phone ?? null, membreId: m.id });
     }
   }
 
@@ -130,6 +144,10 @@ export function messagePour(c: AContacter, coachPrenom: string): string {
       return `${c.nom}, plus qu'une visite et on fait ton bilan ! On se cale ça au prochain passage ?`;
     case "carte_finie":
       return `${c.nom}, ta carte est finie, bravo ! On fait ton bilan et on parle de la suite au prochain passage ?`;
+    case "absente":
+      return `Salut ${c.nom} ! On ne t'a pas vue depuis quelques jours, tout va bien ? Le club t'attend demain matin, je te garde ton shake 🙂`;
+    case "contente":
+      return `${c.nom}, ça fait plaisir de te voir aussi régulière 💪 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
     case "coeur":
       return `${c.nom}, tu es à un cœur du palier suivant 💛 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
   }

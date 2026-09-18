@@ -5,7 +5,8 @@
 // =============================================================================
 
 import { useState } from "react";
-import type { CrmLead } from "../../../hooks/useCrmLeads";
+import { CRM_SOURCE_META, type CrmLead } from "../../../hooks/useCrmLeads";
+import { getSupabaseClient } from "../../../services/supabaseClient";
 import { REPONSES_APPEL, type Reponse } from "../../crm/qualification";
 import { messagePour, type AContacter } from "../contacter";
 import { BoutonDoux, BoutonFort, Carte, Choix, Feuille, Ligne, Rond, Vide } from "../ui";
@@ -22,12 +23,12 @@ interface Props {
 
 export function BbcContacter({ contacts, faits, count, target, onContact }: Props) {
   const [filtre, setFiltre] = useState<Filtre>("jour");
-  const aFaire = contacts.filter((c) => !faits.has(c.nom));
+  const aFaire = contacts.filter((c) => !faits.has(c.key));
   const liste =
     filtre === "jour" ? aFaire
     : filtre === "leads" ? aFaire.filter((c) => c.lead && c.raison === "lead_nouveau")
     : filtre === "relances" ? aFaire.filter((c) => c.raison === "relance_due")
-    : contacts.filter((c) => faits.has(c.nom));
+    : contacts.filter((c) => faits.has(c.key));
   const pct = Math.min(100, Math.round((count / target) * 100));
   const onglets: [Filtre, string][] = [
     ["jour", `Aujourd'hui · ${aFaire.length}`],
@@ -64,13 +65,13 @@ export function BbcContacter({ contacts, faits, count, target, onContact }: Prop
           liste.map((c) => (
             <Ligne
               key={c.key}
-              fait={faits.has(c.nom)}
+              fait={faits.has(c.key)}
               avant={<Rond tone={c.geste === "appeler" ? "lead" : "msg"}>{c.geste === "appeler" ? "📞" : "💬"}</Rond>}
               titre={c.nom}
-              sous={faits.has(c.nom) ? "✓ fait aujourd'hui" : c.texte}
-              sousTone={!faits.has(c.nom) && c.raison === "lead_nouveau" && (c.attenteMin ?? 0) >= 120 ? "alerte" : undefined}
-              action={faits.has(c.nom) ? "Revoir" : c.geste === "appeler" ? "Appeler" : "✨ Écrire"}
-              actionTone={faits.has(c.nom) ? "neutre" : c.geste === "appeler" ? "fort" : "neutre"}
+              sous={faits.has(c.key) ? "✓ fait aujourd'hui" : c.texte}
+              sousTone={!faits.has(c.key) && c.raison === "lead_nouveau" && (c.attenteMin ?? 0) >= 120 ? "alerte" : undefined}
+              action={faits.has(c.key) ? "Revoir" : c.geste === "appeler" ? "Appeler" : "✨ Écrire"}
+              actionTone={faits.has(c.key) ? "neutre" : c.geste === "appeler" ? "fort" : "neutre"}
               onClick={() => onContact(c)}
             />
           ))
@@ -82,8 +83,8 @@ export function BbcContacter({ contacts, faits, count, target, onContact }: Prop
 
       <Carte eye="Pourquoi ces personnes" tone="plein" right="l'ordre">
         <Vide>
-          1 · les leads qui attendent (pub, site, recommandations) · 2 · les relances à la date que tu as dite · 3 · la 9e visite et les cartes finies · 4 · les cœurs à demander.
-          Quand tu réponds « et alors ? », la ligne passe dans « Faits » et le compteur monte. Les membres absentes depuis 6 jours arrivent avec la prochaine livraison.
+          1 · les leads qui attendent (pub, site, recommandations) · 2 · les relances à la date que tu as dite · 3 · la 9e visite, les cartes finies, les absentes depuis 6 jours · 4 · les régulières depuis 3 semaines et les cœurs à demander.
+          Quand tu réponds « et alors ? », la ligne passe dans « Faits » et le compteur monte. Une personne appelée par une autre coach du club sort aussi de ta liste.
         </Vide>
       </Carte>
     </div>
@@ -94,6 +95,7 @@ export function BbcContacter({ contacts, faits, count, target, onContact }: Prop
 export function BbcContactSheet({
   c,
   coachPrenom,
+  coachUserId,
   fait,
   onClose,
   onReponseLead,
@@ -102,20 +104,53 @@ export function BbcContactSheet({
 }: {
   c: AContacter;
   coachPrenom: string;
+  coachUserId?: string;
   fait: boolean;
   onClose: () => void;
-  onReponseLead: (lead: CrmLead, r: Reponse) => Promise<string | null>;
+  onReponseLead: (c: AContacter, r: Reponse) => Promise<string | null>;
   onFaitMembre: (c: AContacter, libelle: string) => Promise<void>;
   onOuvrirLead: (lead: CrmLead) => void;
 }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [copie, setCopie] = useState(false);
-  const message = messagePour(c, coachPrenom);
+  // Le message prêt (gabarit), que Noaly peut réécrire avec le contexte de la personne.
+  const [message, setMessage] = useState(() => messagePour(c, coachPrenom));
+  const [ia, setIa] = useState(false);
   const tel = c.telephone?.replace(/\s+/g, "") ?? null;
+
+  // ✨ Noaly — le même mode `crm_message` que la fiche lead du CRM (useLeadQuickActions).
+  // Pour une membre, on lui donne le contexte de la règle (« 9e visite », « absente… »).
+  async function proposerNoaly() {
+    setIa(true); setErreur(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const lead = c.lead;
+      const { data, error } = await sb.functions.invoke("noaly", {
+        body: {
+          mode: lead && lead.status === "new" ? "first_contact" : "relance",
+          coachFirstName: coachPrenom,
+          coachUserId,
+          bilanDone: lead?.source === "bilan-online" || !!lead?.resultToken,
+          lead: lead
+            ? { firstName: lead.firstName, source: lead.source, sourceLabel: CRM_SOURCE_META[lead.source]?.label, viaName: lead.viaName, city: lead.city, status: lead.status, extra: lead.extra, notes: lead.notes }
+            : { firstName: c.nom, source: "club", sourceLabel: "membre du Breakfast Club", status: "membre", extra: c.texte },
+        },
+      });
+      const payload = data as { message?: string; error?: string } | null;
+      if (error || !payload?.message) throw new Error(payload?.message || "Noaly est indisponible — le message prêt reste là.");
+      setMessage(payload.message);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur IA.");
+    } finally {
+      setIa(false);
+    }
+  }
   const wa = tel ? `https://wa.me/${tel.replace(/^0/, "33").replace(/^\+/, "")}?text=${encodeURIComponent(message)}` : null;
 
   return (
     <Feuille titre={c.nom} sous={c.texte} onClose={onClose}>
+      {erreur ? <div style={{ fontSize: 12.5, color: "var(--ls-bbc-coral)" }}>{erreur}</div> : null}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <Info label={tel ? "Téléphone" : "Contact"}>{tel ?? c.lead?.email ?? "—"}</Info>
         <Info label={c.lead ? "D'où" : "Membre"}>{c.lead ? (c.lead.viaName ? `Recommandé·e par ${c.lead.viaName}` : c.lead.source) : "du club"}</Info>
@@ -126,7 +161,10 @@ export function BbcContactSheet({
           <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: 12, padding: "10px 12px", fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{message}</div>
           <div style={{ display: "grid", gap: 8 }}>
             {wa ? <BoutonFort href={wa} large>Envoyer sur WhatsApp</BoutonFort> : null}
-            <BoutonDoux large onClick={() => { void navigator.clipboard?.writeText(message); setCopie(true); }}>{copie ? "Message copié ✓" : "Copier le message"}</BoutonDoux>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <BoutonDoux large onClick={() => { void navigator.clipboard?.writeText(message); setCopie(true); }}>{copie ? "Copié ✓" : "Copier"}</BoutonDoux>
+              <BoutonDoux large onClick={() => void proposerNoaly()}>{ia ? "Noaly écrit…" : "✨ Noaly propose"}</BoutonDoux>
+            </div>
           </div>
         </>
       ) : (
@@ -149,7 +187,7 @@ export function BbcContactSheet({
           <div style={{ display: "grid", gap: 8 }}>
             {c.lead
               ? REPONSES_APPEL.map((r) => (
-                  <Choix key={r.cle} small={r.quand} onClick={async () => { const e = await onReponseLead(c.lead!, r); if (e) setErreur(e); else onClose(); }}>{r.titre}</Choix>
+                  <Choix key={r.cle} small={r.quand} onClick={async () => { const e = await onReponseLead(c, r); if (e) setErreur(e); else onClose(); }}>{r.titre}</Choix>
                 ))
               : [
                   ["Contactée", "on en reparle au club"],
@@ -159,7 +197,6 @@ export function BbcContactSheet({
                   <Choix key={t} small={s} onClick={async () => { await onFaitMembre(c, t); onClose(); }}>{t}</Choix>
                 ))}
           </div>
-          {erreur ? <div style={{ fontSize: 12.5, color: "var(--ls-bbc-coral)" }}>{erreur}</div> : null}
         </>
       ) : (
         <Vide>✓ Déjà fait aujourd'hui.</Vide>

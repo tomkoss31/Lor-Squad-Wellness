@@ -65,6 +65,35 @@ describe("qui contacter aujourd'hui", () => {
   });
 });
 
+describe("les signaux de visites (livraison B)", () => {
+  const sig = (id: string, derniere: string | null, v30: number) => new Map([[id, { derniereVisite: derniere, visites30j: v30 }]]);
+
+  it("absente depuis 6 jours ou plus → on écrit", () => {
+    const m = membre({ card: { type: 10, used: 4, remaining: 6, expired: false } });
+    const l = aContacter({ leads: [], membres: [m], coeurs: [], signaux: sig("m1", "2026-09-11T08:00:00+02:00", 3), maintenant: now });
+    expect(l[0]?.raison).toBe("absente");
+    expect(l[0]?.texte).toContain("7 jours");
+  });
+
+  it("vue il y a 3 jours, ou déjà pointée ce matin : rien", () => {
+    const m = membre({ card: { type: 10, used: 4, remaining: 6, expired: false } });
+    expect(aContacter({ leads: [], membres: [m], coeurs: [], signaux: sig("m1", "2026-09-15T08:00:00+02:00", 3), maintenant: now })).toHaveLength(0);
+    expect(aContacter({ leads: [], membres: [membre({ ...m, visitedToday: true })], coeurs: [], signaux: sig("m1", "2026-09-01T08:00:00+02:00", 3), maintenant: now })).toHaveLength(0);
+  });
+
+  it("contente depuis 3 semaines, régulière, sans cœur → lui demander une amie", () => {
+    const m = membre({ card: { type: 30, used: 12, remaining: 18, expired: false }, startDate: "2026-08-20", hearts: 0 });
+    const l = aContacter({ leads: [], membres: [m], coeurs: [], signaux: sig("m1", "2026-09-17T08:00:00+02:00", 8), maintenant: now });
+    expect(l[0]?.raison).toBe("contente");
+    expect(l[0]?.urgence).toBe(4);
+  });
+
+  it("sans signaux, ni absente ni contente : jamais de fausse alerte", () => {
+    const m = membre({ card: { type: 30, used: 12, remaining: 18, expired: false }, startDate: "2026-08-20", hearts: 0 });
+    expect(aContacter({ leads: [], membres: [m], coeurs: [], maintenant: now })).toHaveLength(0);
+  });
+});
+
 describe("les petites phrases", () => {
   it("attente", () => {
     expect(attente(21)).toBe("attend depuis 21 min");
