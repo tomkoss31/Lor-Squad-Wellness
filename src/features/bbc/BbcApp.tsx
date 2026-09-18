@@ -47,7 +47,10 @@ import { BbcContacter, BbcContactSheet } from "./views/BbcContacter";
 import { BbcPlus } from "./views/BbcPlus";
 import { BbcNewMemberSheet } from "./BbcNewMemberSheet";
 import { CalerRdvSheet } from "./agenda/CalerRdvSheet";
-import { cleJour, couleurCoach } from "./agenda/agendaClub";
+import { QualifierRdvClubSheet } from "./agenda/QualifierRdvClubSheet";
+import { qualifierRdvClub } from "./agenda/qualifierRdvClub";
+import { ApresCreation } from "./ApresCreation";
+import { cleJour, couleurCoach, type RdvClub } from "./agenda/agendaClub";
 import { useCoachsDuClub } from "./useCoachsDuClub";
 import { useContactsDuJour } from "./useContactsDuJour";
 import { useBbcSignaux } from "./useBbcSignaux";
@@ -211,7 +214,15 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const [nouveauMembre, setNouveauMembre] = useState(false);
   /** Le menu du ＋ : Pointer, Caler, Nouvelle évaluation. */
   const [gestes, setGestes] = useState(false);
-  const [caler, setCaler] = useState(false);
+  const [caler, setCaler] = useState<{ deplace?: RdvClub } | null>(null);
+  /** Livraison C — le prochain rendez-vous se qualifie depuis Le matin, sans changer d'écran. */
+  const [qualif, setQualif] = useState<{ rdv: RdvClub; etape: "choix" | "pasvenue" } | null>(null);
+  /** « Elle prend sa carte de membre » : la fiche papier, pré-remplie du rendez-vous. */
+  const [membrePour, setMembrePour] = useState<RdvClub | null>(null);
+  /** « Et ensuite ? » après TOUTE création de fiche : son premier pointage, un tap. */
+  const [apres, setApres] = useState<{ clientId: string; prenom?: string } | null>(null);
+  /** La fiche à ouvrir en arrivant sur « Membres » (depuis Le matin ou « Et ensuite ? »). */
+  const [membreOuvert, setMembreOuvert] = useState<string | null>(null);
   // Chaque vue monte sa PROPRE instance des hooks (pas de cache partagé, et
   // AppContext est sacré). Après une création, on bouge cette clé : la vue
   // affichée se remonte et refait sa lecture.
@@ -256,6 +267,17 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   }
 
   const first = (coachName ?? "").split(/\s+/)[0] || "";
+  const prenomCoach = (id: string | null) => coachs.find((c) => c.id === id)?.prenom ?? first;
+  /** PASSERELLE — « elle démarre en suivi classique » : le bilan standard, pré-rempli du
+   *  rendez-vous quand il vient de l'agenda (table prospects). L'app standard s'ouvre
+   *  avec « ← Retour au club » (bbcRoutes). */
+  function versSuiviClassique(rdv: RdvClub) {
+    navigate(rdv.source === "prospect" ? `/assessments/new?prospectId=${rdv.id}` : "/assessments/new");
+  }
+  function ouvrirMembre(id: string) {
+    setMembreOuvert(id);
+    setView("crm");
+  }
   const clubName = club?.name ?? "Mon club";
   const clubCity = club?.city ?? "Verdun";
   const t = TITLES[view];
@@ -338,6 +360,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             onGo={setView}
             onContact={setContact}
             onLiens={() => setLiensOuverts(true)}
+            onQualifier={(rdv, etape) => setQualif({ rdv, etape })}
+            onMembre={ouvrirMembre}
           />
         )}
         {view === "contacter" && <BbcContacter contacts={contacts} faits={faits} count={cdj.count} target={cdj.target} onContact={setContact} />}
@@ -352,13 +376,13 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           />
         )}
         {view === "scripts" && <BbcScripts settings={club?.settings ?? null} />}
-        {view === "agenda" && <BbcAgenda key={rafraichir} userId={userId} coachName={coachName} club={club ?? null} />}
+        {view === "agenda" && <BbcAgenda key={rafraichir} userId={userId} coachName={coachName} club={club ?? null} onMembreCree={(clientId, prenom) => setApres({ clientId, prenom })} onSuiviClassique={versSuiviClassique} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
-        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} club={club ?? null} onNouveauMembre={() => setNouveauMembre(true)} />}
+        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} club={club ?? null} onNouveauMembre={() => setNouveauMembre(true)} ouvrirId={membreOuvert} onGo={(v) => setView(v)} />}
         {view === "boites" && <BbcBoites userId={userId} club={club ?? null} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
@@ -385,7 +409,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
         <Feuille titre="Ajouter" sous="Les trois gestes du comptoir." onClose={() => setGestes(false)}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             <Geste icone="🔍" label="Pointer une visite" fort onClick={() => { setGestes(false); setView("club"); }} />
-            <Geste icone="📅" label="Caler un RDV" onClick={() => { setGestes(false); setCaler(true); }} />
+            <Geste icone="📅" label="Caler un RDV" onClick={() => { setGestes(false); setCaler({}); }} />
             <Geste icone="📝" label="Nouvelle évaluation" onClick={() => { setGestes(false); setNouveauMembre(true); }} />
           </div>
         </Feuille>
@@ -396,11 +420,12 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           userId={userId}
           coachs={coachs}
           couleur={(id) => couleurCoach(id, coachs)}
-          jourInitial={cleJour(new Date())}
-          coachInitial={userId ?? null}
-          onClose={() => setCaler(false)}
+          jourInitial={caler.deplace ? cleJour(new Date(caler.deplace.debut)) : cleJour(new Date())}
+          coachInitial={caler.deplace?.coachId ?? userId ?? null}
+          deplace={caler.deplace ?? null}
+          onClose={() => setCaler(null)}
           onFait={() => {
-            setCaler(false);
+            setCaler(null);
             setRafraichir((n) => n + 1);
             setView("agenda");
             setToast("Rendez-vous calé ✓");
@@ -431,7 +456,56 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           coachName={coachName}
           club={club ?? null}
           onClose={() => setNouveauMembre(false)}
-          onCreated={() => { setRafraichir((n) => n + 1); void membresApi.refetch(); }}
+          onCreated={(clientId) => { setRafraichir((n) => n + 1); void membresApi.refetch(); setApres({ clientId }); }}
+        />
+      ) : null}
+
+      {qualif ? (
+        <QualifierRdvClubSheet
+          rdv={qualif.rdv}
+          etapeInitiale={qualif.etape}
+          coachPrenom={prenomCoach(qualif.rdv.coachId)}
+          couleur={couleurCoach(qualif.rdv.coachId, coachs)}
+          maintenant={Date.now()}
+          onClose={() => setQualif(null)}
+          onMembre={() => { setMembrePour(qualif.rdv); setQualif(null); }}
+          onQualifie={async (q) => {
+            const res = await qualifierRdvClub(qualif.rdv, q);
+            if (res.ok) {
+              setQualif(null);
+              setRafraichir((n) => n + 1);
+              setToast(q.issue === "fait" ? "Rangé ✓ — son bilan s'ouvre" : "Rangé ✓");
+              if (q.issue === "fait") versSuiviClassique(qualif.rdv);
+            }
+            return res;
+          }}
+          onDeplacer={qualif.rdv.source === "prospect" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
+        />
+      ) : null}
+
+      {membrePour ? (
+        <BbcNewMemberSheet
+          userId={userId}
+          coachName={coachName}
+          club={club ?? null}
+          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: membrePour.telephone, email: null }}
+          onClose={() => setMembrePour(null)}
+          onCreated={(clientId) => {
+            const r = membrePour;
+            setMembrePour(null);
+            if (r) void qualifierRdvClub(r, { issue: "membre", clientId }).then(() => setRafraichir((n) => n + 1));
+            void membresApi.refetch();
+            setApres({ clientId, prenom: r?.prenom });
+          }}
+        />
+      ) : null}
+
+      {apres ? (
+        <ApresCreation
+          clientId={apres.clientId}
+          prenom={apres.prenom || membresApi.members.find((m) => m.id === apres.clientId)?.name.trim().split(/\s+/)[0]}
+          onClose={() => setApres(null)}
+          onFiche={() => { const id = apres.clientId; setApres(null); ouvrirMembre(id); }}
         />
       ) : null}
 

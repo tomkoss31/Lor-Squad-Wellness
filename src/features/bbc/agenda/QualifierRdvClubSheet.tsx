@@ -34,12 +34,14 @@ interface Props {
   onQualifie: (q: Qualification) => Promise<ResultatQualif>;
   /** Déplacer ce rendez-vous — seulement pour un rendez-vous posé à la main. */
   onDeplacer: (() => void) | null;
+  /** Depuis Le matin, « Pas venue » ouvre directement la bonne question (livraison C). */
+  etapeInitiale?: "choix" | "pasvenue";
 }
 
 const JOURS_RELANCE = [3, 7, 15];
 
-export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer }: Props) {
-  const [etape, setEtape] = useState<Etape>("choix");
+export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer, etapeInitiale }: Props) {
+  const [etape, setEtape] = useState<Etape>(etapeInitiale ?? "choix");
   const [jours, setJours] = useState(7);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
