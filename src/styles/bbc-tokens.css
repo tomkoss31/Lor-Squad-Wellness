@@ -31,15 +31,31 @@
      5e teinte : le lime dit « club », le teal « membre », le coral « urgent »,
      l'ambre « personne n'ouvre » — un rituel n'est rien de tout ça. */
   --ls-bbc-violet: #A78BFA;
-  --ls-bbc-lime-ink: #06241F;
+  /* ── 18/09/2026 : l'identité du site du club (labase-nutrition.com/club) entre
+     dans l'app — « une seule maison » pour l'app, le site et les mails. L'accent
+     « club » devient l'ORANGE du site (le jeton s'appelle toujours `lime`, il est
+     posé dans ~50 fichiers) ; le dégradé et l'ombre sont ceux du bouton
+     « Je réserve mon bilan offert » ; le jaune souligne (9e visite, rituels) ; la
+     sauge dit « ça va bien ». En sombre l'orange s'éclaircit pour tenir 5:1 sur le
+     vert profond, et son encre reste FONCÉE (mesuré : blanc sur #FF7A45 = 2,9). */
+  --ls-bbc-lime: #FF7A45;
+  --ls-bbc-lime-ink: #162624;
+  --ls-bbc-lime-text: #FF9A6B;
+  --ls-bbc-orange: #FF7A45;
+  --ls-bbc-orange2: #FF9A6B;
+  --ls-bbc-orange-text: #FF9A6B;
+  --ls-bbc-orange-ink: #162624;
+  --ls-bbc-grad: linear-gradient(135deg, #FF7A2F, #FF1E3C);
+  --ls-bbc-grad-ombre: 0 16px 34px -14px rgba(255, 45, 60, 0.6);
+  --ls-bbc-jaune: #F1E27E;
   /* L'encre posée SUR un aplat coral. Même logique que lime-ink : en sombre le
      coral est clair (#F2775F), donc il lui faut une encre foncée — mesuré le
      19/08, du blanc dessus tombe à 3,39. */
   --ls-bbc-coral-ink: #3A0F06;
-  --ls-bbc-lime-text: #C5F82A;
   --ls-bbc-font-display: "Anton", system-ui, sans-serif;
   --ls-bbc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --ls-bbc-font-body: "Inter", system-ui, -apple-system, sans-serif;
+  /* Poppins = la police du site du club (texte et boutons). Chargée par index.html. */
+  --ls-bbc-font-body: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
 }
 
 .bbc-mode.bbc-light {
@@ -56,19 +72,24 @@
      le gris à 3,16:1, le corail en texte à 3,51 — sous le seuil lisible.
      Les valeurs ci-dessous sont celles de `globals.css`, thème clair. ── */
   --ls-bbc-hint: #626B66;
-  --ls-bbc-lime: #5E7A09;
+  /* En clair : l'orange du site tel quel (#E0532A), encre blanche dessus comme sur
+     le site ; en TEXTE on fonce à #C1441F pour tenir 5,4:1 sur la crème. */
+  --ls-bbc-lime: #E0532A;
   --ls-bbc-teal: #0F766E;
   --ls-bbc-coral: #BC432C;
   --ls-bbc-sage: #5F7154;
   --ls-bbc-amber: #9A631A;
   --ls-bbc-violet: #6D28D9;
-  --ls-bbc-lime-text: #4D7A06;
-  /* ⚠️ L'ENCRE POSÉE SUR LE LIME n'était définie QUE dans le bloc sombre :
-     en clair, le #06241F du sombre atterrissait sur un lime devenu olive et
+  --ls-bbc-lime-text: #C1441F;
+  --ls-bbc-orange: #E0532A;
+  --ls-bbc-orange2: #FF6A2B;
+  --ls-bbc-orange-text: #C1441F;
+  --ls-bbc-orange-ink: #FFFFFF;
+  --ls-bbc-jaune: #F1E27E;
+  /* ⚠️ L'ENCRE POSÉE SUR L'ACCENT n'était définie QUE dans le bloc sombre :
+     en clair, le #06241F du sombre atterrissait sur un accent foncé et
      tombait à 4,22:1 — sur le bouton PRINCIPAL de toute l'app membre. En
-     clair le lime est foncé, donc son encre est blanche. Vérifié : `bbc-light`
-     n'est posé que par l'app membre et l'atelier, jamais par le mode coach —
-     les ~50 autres usages de `lime-ink` ne voient jamais cette valeur. */
+     clair l'accent est foncé, donc son encre est blanche. */
   --ls-bbc-lime-ink: #FFFFFF;
   /* En clair le coral fonce (#BC432C) : c'est le blanc qui se lit dessus. */
   --ls-bbc-coral-ink: #FFFFFF;
@@ -135,6 +156,151 @@ html.theme-light .bbc-mode select option {
   background: var(--ls-bbc-s2) !important;
 }
 
+/* ── Le club en cinq onglets (18/09/2026) — la coquille et le rendu iOS ──────
+   L'en-tête colle en haut sur du verre dépoli ; la barre du bas est un
+   rectangle de verre + une BOSSE de verre au milieu (deux pseudo-éléments : le
+   demi-disque recouvre le trait du haut, donc la silhouette se soulève d'un
+   seul tenant, comme sur le dessin de Thomas) ; le ＋ y est posé, avec le
+   dégradé et l'ombre du bouton du site. Les feuilles montent avec un ressort,
+   les cartes apparaissent en cascade, les boutons s'enfoncent sous le doigt.
+   Tout se coupe sous « réduire les animations ». */
+.bbc-entete {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -24px -28px 16px;
+  padding: 18px 28px 10px;
+  background: color-mix(in srgb, var(--ls-bbc-bg) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+.bbc-plus-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--ls-bbc-line2);
+  background: color-mix(in srgb, var(--ls-bbc-s1) 80%, transparent);
+  color: var(--ls-bbc-muted);
+  font-size: 18px;
+  line-height: 1;
+  place-items: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bbc-pression {
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s;
+}
+.bbc-pression:active {
+  transform: scale(0.96);
+}
+.bbc-pression:hover {
+  filter: brightness(1.04);
+}
+.bbc-ligne:active {
+  background: var(--ls-bbc-s2) !important;
+}
+.bbc-carte {
+  animation: bbc-apparait 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.bbc-carte:nth-child(2) { animation-delay: 0.04s; }
+.bbc-carte:nth-child(3) { animation-delay: 0.08s; }
+.bbc-carte:nth-child(4) { animation-delay: 0.12s; }
+.bbc-carte:nth-child(5) { animation-delay: 0.16s; }
+.bbc-carte:nth-child(n + 6) { animation-delay: 0.2s; }
+@keyframes bbc-apparait {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.bbc-feuille-voile {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: bbc-voile 0.22s ease-out both;
+}
+.bbc-feuille {
+  width: 100%;
+  max-width: 560px;
+  max-height: 86dvh;
+  overflow-y: auto;
+  background: var(--ls-bbc-bg);
+  color: var(--ls-bbc-text);
+  border-radius: 22px 22px 0 0;
+  padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 -20px 60px -30px rgba(0, 0, 0, 0.5);
+  animation: bbc-monte 0.42s cubic-bezier(0.32, 0.72, 0, 1) both;
+  font-family: var(--ls-bbc-font-body);
+}
+@keyframes bbc-monte {
+  from { transform: translateY(18%); opacity: 0.5; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes bbc-voile {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.bbc-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 1400;
+  background: var(--ls-bbc-text);
+  color: var(--ls-bbc-bg);
+  font-family: var(--ls-bbc-font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: 92vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: bbc-toast 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+@keyframes bbc-toast {
+  from { transform: translate(-50%, 12px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.bbc-plus-rond {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  background: var(--ls-bbc-grad);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  margin: -24px 0 -4px;
+  box-shadow: 0 10px 22px -10px rgba(255, 45, 60, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  display: grid;
+  place-items: center;
+  font-family: var(--ls-bbc-font-body);
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.bbc-bottomnav > button:active .bbc-plus-rond {
+  transform: scale(0.96);
+}
+@media (min-width: 901px) {
+  .bbc-feuille-voile { align-items: center; }
+  .bbc-feuille { border-radius: 22px; max-height: 88vh; }
+  .bbc-toast { bottom: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bbc-carte, .bbc-feuille, .bbc-feuille-voile, .bbc-toast { animation: none; }
+  .bbc-pression, .bbc-plus-rond { transition: none; }
+}
+
 /* Formation : rail de gauche + parcours à droite.
    La classe existait déjà dans le TSX mais n'était définie NULLE PART, et la
    grille était posée en style inline — donc plus prioritaire que n'importe
@@ -198,7 +364,17 @@ html.theme-light .bbc-mode select option {
     display: none;
   }
   .bbc-main {
-    padding: calc(16px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));
+  }
+  .bbc-entete {
+    margin: calc(-16px - env(safe-area-inset-top)) -16px 12px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 8px;
+  }
+  .bbc-seulement-large {
+    display: none;
+  }
+  .bbc-plus-btn {
+    display: grid;
   }
   .bbc-bottomnav {
     position: fixed;
@@ -206,9 +382,42 @@ html.theme-light .bbc-mode select option {
     right: 0;
     bottom: 0;
     z-index: 40;
-    display: flex;
-    background: var(--ls-bbc-s1);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    background: transparent;
+    border-top: 0;
+    padding: 10px 6px calc(10px + env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+  .bbc-bottomnav::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: color-mix(in srgb, var(--ls-bbc-s1) 86%, transparent);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
     border-top: 1px solid var(--ls-bbc-line);
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .bbc-bottomnav::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -26px;
+    width: 84px;
+    height: 84px;
+    margin-left: -42px;
+    border-radius: 999px;
+    z-index: 1;
+    background: color-mix(in srgb, var(--ls-bbc-s1) 86%, transparent);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 0 0 1px var(--ls-bbc-line), 0 -8px 20px -14px rgba(0, 0, 0, 0.35);
+    clip-path: inset(0 0 50% 0);
+  }
+  .bbc-bottomnav > button {
+    position: relative;
+    z-index: 2;
   }
 }
