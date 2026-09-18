@@ -327,12 +327,27 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                 <button type="button" disabled={decalage <= 0} onClick={() => { setDecalage((d) => Math.max(0, d - 7)); setHeure(null); }} aria-label="Semaine précédente" style={{ ...navSemaine, opacity: decalage <= 0 ? 0.35 : 1, cursor: decalage <= 0 ? "default" : "pointer" }}>
                   ‹
                 </button>
-                <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", minWidth: 84, textAlign: "center" }}>
-                  {decalage === 0 ? "7 prochains jours" : `dans ${decalage} j.`}
-                </span>
                 <button type="button" onClick={() => { setDecalage((d) => d + 7); setHeure(null); }} aria-label="Semaine suivante" style={navSemaine}>
                   ›
                 </button>
+                {/* Illimité, en un geste — urgence du 18/09 : cliquer 8 fois pour dans
+                    2 mois n'a pas de sens. Le calendrier natif accepte n'importe quelle
+                    date à venir ; `min`/`value` sont déjà au format YYYY-MM-DD de `jour`. */}
+                <input
+                  type="date"
+                  aria-label="Aller directement à une date"
+                  min={aujourdhui}
+                  value={jour}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) return;
+                    const diff = Math.round((jourDe(v).getTime() - jourDe(aujourdhui).getTime()) / 86_400_000);
+                    setDecalage(Math.max(0, diff));
+                    setJour(v);
+                    setHeure(null);
+                  }}
+                  style={dateJump}
+                />
               </div>
             </div>
             <div style={bande}>
@@ -588,6 +603,7 @@ const boutonPlusTot: CSSProperties = {
 const etiquette: CSSProperties = { fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)" };
 const bande: CSSProperties = { flex: "none", display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", margin: "0 -18px", padding: "0 18px 4px" };
 const navSemaine: CSSProperties = { flex: "none", width: 44, minHeight: 44, borderRadius: 11, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontSize: 17, fontWeight: 700, cursor: "pointer" };
+const dateJump: CSSProperties = { flex: "none", minHeight: 44, maxWidth: 128, borderRadius: 11, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, padding: "0 8px" };
 const jb: CSSProperties = { flex: "none", width: 60, minHeight: 66, padding: "7px 0", borderRadius: 12, border: "1px solid", textAlign: "center", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)" };
 const creneau: CSSProperties = { minWidth: 64, minHeight: 44, padding: "0 10px", borderRadius: 10, border: "1.5px solid", background: "transparent", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13.5, fontWeight: 700, cursor: "pointer" };
 const recap: CSSProperties = { display: "flex", gap: 12, alignItems: "stretch", padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)" };
