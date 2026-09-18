@@ -59,6 +59,9 @@ est dans `docs/CLAUDE_ARCHIVE_2026-09-18.md` — elle ne fait pas foi sur l'éta
 - Barre latérale en SVG, pas d'emojis (20/05).
 - Les annonces `app_announcements` sont **facultatives** : on les propose, on ne les impose pas.
 - Envers l'équipe (mails, modes d'emploi) : **on propose un outil, on n'impose rien**, jamais de date butoir.
+- Le bouton **« proposer aussi hors horaires (8 h – 18 h) »** de « Caler un RDV » est **gardé**
+  (18/09) : les coachs calent de vrais suivis le soir. Les horaires du club sont la proposition
+  par défaut, jamais une interdiction — ne pas reproposer de le retirer.
 
 ### En attente de Thomas (ne pas coder sans lui)
 - URLs YouTube des tutos (#6 : `src/data/tutorials.ts`, `TutorialLink` — infra gardée exprès, non câblée).
